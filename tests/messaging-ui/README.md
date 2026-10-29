@@ -214,3 +214,12 @@ node tests/messaging-ui/run-space-connectors.mjs   # 15/15 beklenir
 ```bash
 node tests/messaging-ui/run-space-board-tools.mjs   # 11/11 beklenir
 ```
+
+## Sohbet "+" menüsü ve Kişi bilgisi (`docs/history/268-*`)
+
+`run-chat-library.mjs` (14 senaryo): "+" alt sayfası (fotoğraf yükle → dosya seçici, prompt içe aktar → içe aktarma penceresi, kütüphaneden paylaş: Prompt/İstek/Workflow/Hazır ayar/Space), seçici (yalnız herkese açık içerik, tür sekmesi, tek seçim, "Ekle" → `?share<Tür>Id=` → banner → gönderim: `shared_prompt_id` / başlık + bağlantı bloğu / Space kartı, vazgeçme), Kişi bilgisi (avatar/ad/@kullanıcıadı, fotoğraflar + görünmeyen mesajın fotoğrafının gösterilmemesi, Ara/Profil, arşivle/temizle/sil onayları, iki adımlı engelleme, grup sohbetinde açılmaması, İngilizce, masaüstünde sağ panel). Space uçları testte küçük bir `context.route` ile taklit edilir (`setupSpaces` ile `setupCommunities` aynı `db.extraRoutes` kancasını kullandığı için birlikte kurulamaz). Gerçek Supabase'e KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium/chrome-linux/chrome node tests/messaging-ui/run-chat-library.mjs   # 14/14 beklenir
+```
+

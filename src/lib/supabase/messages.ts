@@ -511,6 +511,46 @@ export async function clearConversationUnread(conversationId: string): Promise<v
   if (error) throw new Error(error.message);
 }
 
+/** Kişi bilgisi için sohbetin fotoğrafları: en yeni medya mesajlarından en çok 100'ü (kişisel "temizle"/"benden sil"/silinmiş mesajlar HARİÇ — görünmeyen mesajın içeriği hiçbir yolla gösterilmez). */
+const PHOTO_MESSAGE_LIMIT = 100;
+
+export interface ConversationPhoto {
+  messageId: string;
+  attachment: MessageAttachment;
+}
+
+export async function fetchConversationPhotos(conversationId: string, viewerId: string): Promise<{ photos: ConversationPhoto[]; truncated: boolean }> {
+  const { data: membership, error: membershipError } = await supabase
+    .from("conversation_members")
+    .select("cleared_at")
+    .eq("conversation_id", conversationId)
+    .eq("user_id", viewerId)
+    .maybeSingle();
+  if (membershipError) throw new Error(membershipError.message);
+  const clearedAt = (membership as { cleared_at: string | null } | null)?.cleared_at ?? null;
+  let query = supabase
+    .from("messages")
+    .select("id, attachments, created_at")
+    .eq("conversation_id", conversationId)
+    .is("deleted_at", null)
+    // `attachments @> [{}]` = dizide en az bir öğe var (boş dizi eşleşmez).
+    .contains("attachments", [{}]);
+  if (clearedAt) query = query.gt("created_at", clearedAt);
+  const [{ data, error }, { data: hidden }] = await Promise.all([
+    query.order("created_at", { ascending: false }).limit(PHOTO_MESSAGE_LIMIT + 1),
+    supabase.from("message_hidden_for").select("message_id").eq("user_id", viewerId),
+  ]);
+  if (error) throw new Error(error.message);
+  const hiddenIds = new Set((hidden ?? []).map((row) => row.message_id as string));
+  const rows = (data ?? []) as { id: string; attachments: unknown }[];
+  const photos: ConversationPhoto[] = [];
+  for (const row of rows.slice(0, PHOTO_MESSAGE_LIMIT)) {
+    if (hiddenIds.has(row.id)) continue;
+    for (const attachment of parseAttachments(row.attachments)) photos.push({ messageId: row.id, attachment });
+  }
+  return { photos, truncated: rows.length > PHOTO_MESSAGE_LIMIT };
+}
+
 /**
  * Finds an existing real 1:1 conversation between these two real users, or
  * starts a new one — the entry point for a real profile's "Mesaj Gönder"

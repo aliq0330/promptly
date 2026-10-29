@@ -2,8 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Lock, SlidersHorizontal, Sparkles, Terminal, Users, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Lock, Shapes, SlidersHorizontal, Sparkles, Terminal, Users, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { buttonClassName } from "@/components/ui/button";
+import { CARD_SAVE_CLASS } from "@/features/content/action-styles";
+import { SaveButton } from "@/features/prompts/save-button";
+import { SpaceCoverArt } from "@/features/spaces/space-visuals";
+import { fetchSpace, type Space } from "@/lib/supabase/spaces";
+import { cn } from "@/lib/utils";
+import { spaceHref } from "@/lib/spaces";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
@@ -19,14 +26,16 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset, Prompt, PromptMedia, PromptRequest, Workflow } from "@/types";
 import { StorageImage } from "@/components/ui/storage-media";
 
-const CARD_CLASS =
-  "block w-60 space-y-1.5 rounded-xl border border-border-soft bg-surface p-2.5 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong";
+const CARD_CLASS = "block w-72 max-w-full space-y-2 rounded-2xl border border-border-soft bg-surface p-2 text-left shadow-card";
+
+/** Kaydedilebilen paylaşım türleri (istek ve Space kaydedilmez — docs/history/184-*). */
+type SaveTarget = { kind: "prompt" | "workflow" | "preset"; id: string };
 
 /**
- * One shared-content card for every kind (prompt / request / workflow / preset / community post): who owns it and what it is,
- * a small picture, the title and a two-line description. Content the viewer cannot read (hidden, private to a community they
- * are not in, or removed) is NOT a link and says so — "Sayfa gizli veya kaldırılmış" — instead of a card that loads forever
- * (docs/history/195-*).
+ * One shared-content card for every kind (prompt / request / workflow / preset / Space / community post), docs/history/268-*: a cover with
+ * the type chip over it, the title, who owns it, a two-line description, and one row of actions — "İçeriği aç" and (where the kind can be
+ * saved) the bookmark. Content the viewer cannot read (hidden, private to a community they are not in, or removed) is NOT a link and says
+ * so — "Sayfa gizli veya kaldırılmış" — instead of a card that loads forever (docs/history/195-*).
  */
 function SharedCard({
   state,
@@ -36,11 +45,13 @@ function SharedCard({
   ownerName,
   badge,
   thumbnail,
+  cover,
   title,
   description,
   openLabel,
   hiddenMessage,
   testId,
+  save,
 }: {
   state: "loading" | "hidden" | "ready";
   href: string;
@@ -49,17 +60,20 @@ function SharedCard({
   ownerName?: string | null;
   badge?: React.ReactNode;
   thumbnail?: PromptMedia | null;
+  /** A cover that is not a prompt-media picture (a Space's collage). */
+  cover?: React.ReactNode;
   title?: string | null;
   description?: string | null;
   openLabel: string;
   /** What a hidden card says (default: the page is hidden or removed). */
   hiddenMessage?: string;
   testId?: string;
+  save?: SaveTarget;
 }) {
   const { t } = useTranslation();
   if (state === "hidden") {
     return (
-      <div className={CARD_CLASS} data-shared-card="hidden" data-shared-post-card={testId === "post" ? "none" : undefined}>
+      <div className={cn(CARD_CLASS, "p-3")} data-shared-card="hidden" data-shared-post-card={testId === "post" ? "none" : undefined}>
         <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
           <Lock size={13} />
           {typeLabel}
@@ -68,28 +82,49 @@ function SharedCard({
       </div>
     );
   }
-  const line = ownerName ? `${ownerName} · ${typeLabel}` : typeLabel;
   return (
-    <Link href={href} className={CARD_CLASS} data-shared-card={state} data-shared-post-card={testId === "post" ? "ready" : undefined}>
-      <span className="flex items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-primary">
-          <Icon size={13} className="shrink-0" />
-          <span className="truncate" data-shared-owner>{line}</span>
+    <div className={CARD_CLASS} data-shared-card={state} data-shared-post-card={testId === "post" ? "ready" : undefined}>
+      <Link href={href} className="block space-y-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <span className="relative block h-32 w-full overflow-hidden rounded-xl bg-primary-soft">
+          {cover ??
+            (thumbnail ? (
+              <StorageImage src={thumbnail.url} alt={thumbnail.alt} fill sizes="288px" className="object-cover" />
+            ) : (
+              <span aria-hidden className="flex h-full w-full items-center justify-center text-primary/60">
+                <Icon size={36} strokeWidth={1.4} />
+              </span>
+            ))}
+          <span
+            data-shared-type
+            className="absolute left-2 top-2 inline-flex h-6 items-center gap-1 rounded-full bg-background/85 px-2 text-caption font-semibold text-text shadow-xs backdrop-blur"
+          >
+            <Icon size={13} className="shrink-0" aria-hidden />
+            {typeLabel}
+          </span>
+          {badge && <span className="absolute right-2 top-2">{badge}</span>}
         </span>
-        {badge}
-      </span>
-      {thumbnail && (
-        <span className="relative block h-24 w-full overflow-hidden rounded-sm bg-background">
-          <StorageImage src={thumbnail.url} alt={thumbnail.alt} fill sizes="240px" className="object-cover" />
+        <span className="block space-y-0.5 px-1.5">
+          <span className="line-clamp-2 font-display text-h3 font-bold leading-snug tracking-[-0.01em] text-text">{title ?? t("common.loading")}</span>
+          {ownerName && (
+            <span className="block truncate text-caption text-text-muted" data-shared-owner>
+              {ownerName}
+            </span>
+          )}
+          {description && <span className="line-clamp-2 pt-0.5 text-small leading-snug text-text-secondary">{description}</span>}
         </span>
-      )}
-      <span className="block truncate text-sm font-semibold text-text">{title ?? t("common.loading")}</span>
-      {description && <span className="line-clamp-2 block text-xs leading-snug text-text-muted">{description}</span>}
-      <span className="flex items-center gap-1 text-xs text-primary">
-        {openLabel}
-        <ArrowUpRight size={11} />
-      </span>
-    </Link>
+      </Link>
+      <div className="flex items-center gap-2 px-0.5 pb-0.5">
+        <Link href={href} className={buttonClassName({ className: "h-11 flex-1 gap-1.5" })} data-shared-open>
+          {openLabel}
+          <ArrowUpRight size={15} aria-hidden />
+        </Link>
+        {save && state === "ready" && (
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-text">
+            <SaveButton className={CARD_SAVE_CLASS} {...(save.kind === "prompt" ? { promptId: save.id } : save.kind === "workflow" ? { workflowId: save.id } : { presetId: save.id })} />
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -136,6 +171,7 @@ export function SharedPromptCard({ promptId }: { promptId: string }) {
       title={prompt?.title}
       description={prompt?.description}
       openLabel={t("messages.openContent")}
+      save={prompt ? { kind: "prompt", id: promptId } : undefined}
     />
   );
 }
@@ -160,6 +196,7 @@ export function SharedWorkflowCard({ workflowId }: { workflowId: string }) {
       title={value?.title}
       description={value?.description}
       openLabel={t("messages.openWorkflow")}
+      save={value ? { kind: "workflow", id: workflowId } : undefined}
     />
   );
 }
@@ -180,6 +217,25 @@ export function SharedPresetCard({ presetId }: { presetId: string }) {
       title={value?.title}
       description={value?.description}
       openLabel={t("messages.openPreset")}
+      save={value ? { kind: "preset", id: presetId } : undefined}
+    />
+  );
+}
+
+/** A message's shared-Space card — found by id (parsed from the plain-text share block, see `space-share-format.ts`); a Space the viewer cannot read is the "hidden or removed" card (the fetch returns nothing). */
+export function SharedSpaceCard({ spaceId }: { spaceId: string }) {
+  const { t } = useTranslation();
+  const { value, settled } = useSharedItem<Space>(null, () => fetchSpace(spaceId), spaceId);
+  return (
+    <SharedCard
+      state={settled && !value ? "hidden" : value ? "ready" : "loading"}
+      href={spaceHref(spaceId)}
+      icon={Shapes}
+      typeLabel={t("communities.feed.type.space")}
+      title={value?.title}
+      cover={value ? <SpaceCoverArt urls={value.coverUrl ? [value.coverUrl] : []} className="h-full w-full" iconSize={36} /> : undefined}
+      description={value?.description}
+      openLabel={t("messages.openSpace")}
     />
   );
 }
