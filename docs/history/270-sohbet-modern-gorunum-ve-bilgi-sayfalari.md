@@ -1,0 +1,27 @@
+# 270 — Sohbet: modern, kenarlıksız görünüm + Kişi/Topluluk bilgisi sayfaları
+
+**Durum: uygulandı (repoda).** İstemci kodu + bir ekleyici migration (`20261004100000_direct_chat_mute.sql`, yalnız `create or replace`, `drop` yok; **canlıya UYGULANMADI**). Kullanıcı iki ekran görüntüsüyle (birebir sohbet, topluluk sohbeti) kenarlıkların kalkmasını, topluluk başlığına dokununca birebir sohbetteki gibi bir bilgi sayfası açılmasını istedi; önce Artifact mockup'ı (4 ekran) onaylandı, sonra "birebir aynısını yap" denerek koda uygulandı.
+
+## Kullanıcı gözüyle
+- **Kenarlıksız:** mesaj baloncukları, başlıktaki arama ve ⋮ düğmeleri, yazma alanı ve "+" düğmesi, paylaşılan içerik kartı, duyuru kartı, yanıt çubuğu, sabit mesaj çubuğu — hepsi dolgulu (`bg-surface-soft` / `bg-surface`), çerçevesiz. Başlıkta alt çizgi yok.
+- **Baloncuk:** gelen `bg-surface-soft`, giden `bg-primary`; 20 px köşe, öbeğin son mesajında kuyruk köşesi (6 px). Saat (24 saat, `HH:mm`) + düzenlendi + sabit/yıldız işareti + okundu tikleri baloncuğun İÇİNDE sağ altta; kart/fotoğraf/silinmiş mesajda altında. Tepki, baloncuğun alt kenarına binen tek hap (`ring` ile arka plandan ayrılır). Yanıt önizlemesi çizgisiz dolgulu kutu.
+- **Gün ayracı** ("Bugün" · "Dün" · "12 Ekim") ve **öbekleme**: aynı kişinin ≤ 5 dk arayla aynı gün gönderdikleri tek öbek (`lib/chat-grouping.ts`, birim testli).
+- **Topluluk sohbeti:** başkasının mesajında avatar (öbeğin ilkinde) + renkli gönderen adı baloncuğun içinde (renk kişiye göre sabit: tema renkleri primary/secondary/success). Başlıkta "Topluluk sayfasına git" simgesi KALKTI; bekleyen istek sayısı rozeti avatarın köşesine taşındı (`data-community-link-badge`). Sabit mesaj tek satırlık yuvarlak şerit ("Sabit mesaj · …").
+- **Başlığa dokununca (iki sohbette de aynı iskelet):** `InfoPanelShell` — telefonda tam ekran, geniş ekranda sağdan panel; büyük avatar, ad, alt satır, açıklama, üç karo, dolgulu kartlar. ⋮ menüsünde Arşivle · Mesajları temizle · Sohbeti sil/Listemden kaldır.
+  - **Kişi bilgisi:** `@kullanıcı adı`, özgeçmiş, "N prompt · N takipçi · N takip" (`profile_content_stats` + profil sayaçları); karolar Profil · Ara · Sessize al; Paylaşılan fotoğraflar; Yıldızlı/Sabit mesajlar; Engelle · Şikâyet et (tehlike satırları).
+  - **Topluluk bilgisi** (`GroupInfoModal` yeniden yazıldı): görünürlük · üye sayısı · rol rozeti; karolar Topluluk sayfası (bekleyen istek sayısı rozetli) · Ara · Sessize al; üye avatar yığını (ilk 5 + "+N") — dokununca salt-okunur üye listesi açılır; Paylaşılan fotoğraflar; Sabit/Yıldızlı mesajlar, Bildirim tercihleri (topluluk sayfasına); Sohbet ayarları (kim yazar, geçmiş; yetkiliye düzenleme); yetkiliye "Topluluk ayarlarını aç"; Topluluktan ayrıl. Yönetim işleri (rol/çıkarma/davet/istek/ad-görünürlük/silme) hâlâ topluluk sayfasındadır (183 kuralı).
+- **Birebir sohbette Sessize al** (yeni): kişisel `conversation_members.muted_at` işareti; sohbet listesinde çan simgesi, üst menü noktası yanmaz, **mesaj bildirimi yazılmaz** (migration: `notify_new_message` alıcının `muted_at`'ine bakar; en son tanım olan `20260920170000_stories.sql`'deki gövdeyle aynı, yalnız `and muted_at is null` eklendi).
+
+## Kodda
+- Yeni: `features/messages/info-panel-kit.tsx` (`InfoPanelShell`, `InfoIdentity`, `InfoTiles/InfoTile`, `InfoCard`, `InfoRow` — yeni bir sohbet bilgi yüzeyi bunları kullanır), `info-photos-card.tsx`, `day-separator.tsx`, `lib/chat-grouping.ts`, `lib/i18n/translations-chat-redesign.ts`.
+- Değişen: `message-bubble.tsx` (yeniden yazıldı; `groupStart/groupEnd` prop'ları), `message-composer.tsx`, `pinned-messages-bar.tsx`, `pending-message-bubble.tsx`, `shared-content-card.tsx`, `reply-quote.tsx`, `local-conversation-view.tsx` (başlık, gün ayracı, bağlantılar), `contact-info-panel.tsx`, `groups/group-info-modal.tsx`, `groups/personal-prefs.tsx` (`useChatMute`, `LeaveCommunitySection compact`), `groups/chat-header-menu.tsx` (`label`, kenarlıksız), `moderation/report-button.tsx` (`row`).
+- Test: `supabase/tests/direct-chat-mute.sql` (5 kontrol; `and muted_at is null` silinince 3 ve 5 kırılır), `src/lib/chat-grouping.test.ts`; `run-chat-library` (⋮ menüsü), `run-groups` (karolar, İngilizce, yerleşim), `run-communities` (topluluk sayfası bağlantısı) güncellendi.
+- i18n: `chat.day.*`, `messages.contact.stats/statsNoPrompts/mute/unmute/mutedToast/unmutedToast`, `groups.info.title/communityPageTile/communityNotifyValue` — TR + EN eklendi.
+
+## Bilinçli sınırlar / yapılmadı
+- **Çevrimiçi durumu YOK** ("5 çevrimiçi", avatarda yeşil nokta mockup'ta vardı): bunun için herkesin herkese göstereceği bir "varlık" (presence) kanalı gerekir — gizlilik kararı + `realtime.messages` politikası ister; yapılmadı.
+- **Sistem satırları YOK** ("Zeynep topluluğa katıldı"): katılım olayları mesaj olarak saklanmıyor (yeni mesaj türü/migration ister).
+- **"Ortak topluluklar", "Paylaşılan içerik" sayıları ve "Medya ve bağlantılar" YOK:** iki kişi arası sayım RPC'si / bağlantı çıkarımı ister; yerine mevcut Paylaşılan fotoğraflar kartı korundu.
+- Üyeler satırı mockup'taki gibi avatar yığını; tam liste yerinde açılır (ayrı alt sayfa değil).
+- Birebir sessize alma yalnız bildirimi keser; sohbet mesajları ve okunmamış sayacı çalışmaya devam eder (liste çan simgesi + sönük rozet).
+- Gerçek Supabase'e / oturuma / iOS Safari'ye karşı denenmedi; migration canlıya uygulanmadı (uygulanmazsa Sessize al düğmesi çalışır ama birebirde bildirim kesmez).

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -37,6 +37,8 @@ import { useRealMessages } from "./real-messages-provider";
 import { MessageBubble, type DeleteMode, type MessageReactionEntry } from "./message-bubble";
 import { MessageComposer, useImageDrop } from "./message-composer";
 import { PendingMessageBubble, type PendingSend } from "./pending-message-bubble";
+import { DaySeparator } from "./day-separator";
+import { layoutChatMessages } from "@/lib/chat-grouping";
 import { useComposerImages } from "./use-composer-images";
 import { removeMessageImages, uploadMessageImage } from "@/lib/supabase/message-images";
 import {
@@ -58,7 +60,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, profileHref } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 import { communityHref } from "@/lib/communities";
@@ -1021,6 +1023,7 @@ export function LocalConversationView() {
     }
   }
 
+  // Hem grup hem birebir sohbette aynı kişisel işaret (`conversation_members.muted_at`).
   async function toggleGroupMute() {
     if (!id || !user || !conversation || actionBusy) return;
     const muting = !conversation.mutedAt;
@@ -1029,7 +1032,9 @@ export function LocalConversationView() {
       const mutedAt = await setChatGroupMuted(id, user.id, muting);
       setConversation((prev) => (prev ? { ...prev, mutedAt } : prev));
       patchConversation(id, { mutedAt });
-      showToast(muting ? t("groups.about.mutedToast") : t("groups.about.unmutedToast"));
+      showToast(
+        isGroup ? (muting ? t("groups.about.mutedToast") : t("groups.about.unmutedToast")) : muting ? t("messages.contact.mutedToast") : t("messages.contact.unmutedToast"),
+      );
     } catch (err) {
       console.error("setChatGroupMuted", err);
       showToast(toGroupError(err instanceof Error ? err : null).message);
@@ -1297,6 +1302,7 @@ export function LocalConversationView() {
       : formatTypingText(typingNames, typingIds.length - typingNames.length, isGroup, (key, params) => t(key as TranslationKey, params));
   // A pending bubble is hidden the instant its real message is in the thread (the INSERT response or the Realtime echo, whichever lands first) — never both at once.
   const visiblePending = pendingSends.filter((p) => !messagesById.has(p.id));
+  const messageLayout = layoutChatMessages(messages);
 
   return (
     <div
@@ -1304,12 +1310,12 @@ export function LocalConversationView() {
       {...imageDrop.handlers}
       className="fixed inset-x-0 top-0 z-10 flex flex-col bg-background bottom-0 md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
     >
-      <div className="flex items-center gap-1 border-b border-border-soft bg-surface px-2 py-2 max-md:pt-[calc(0.5rem+env(safe-area-inset-top))] lg:px-4">
+      <div className="flex items-center gap-1 bg-background px-1 py-2 max-md:pt-[calc(0.5rem+env(safe-area-inset-top))] md:px-2 lg:px-4">
         <button
           type="button"
           onClick={handleBack}
           aria-label={t("messages.backToListAriaLabel")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text md:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text md:hidden"
         >
           <ArrowLeft size={20} />
         </button>
@@ -1319,11 +1325,22 @@ export function LocalConversationView() {
             onClick={() => setGroupInfoFocus("overview")}
             aria-haspopup="dialog"
             aria-label={t("groups.chat.openInfoAria", { name: group.name })}
-            className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface-soft"
+            className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
           >
-            <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={36} badge />
+            <span className="relative shrink-0">
+              <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={42} badge />
+              {pendingRequestsForMe > 0 && (
+                <span
+                  data-community-link-badge
+                  aria-label={t("groups.info.pendingRequests", { count: pendingRequestsForMe })}
+                  className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground ring-2 ring-background"
+                >
+                  {pendingRequestsForMe > 9 ? "9+" : pendingRequestsForMe}
+                </span>
+              )}
+            </span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{group.name}</span>
+              <span className="block truncate font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{group.name}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
                   {typingText}
@@ -1343,11 +1360,11 @@ export function LocalConversationView() {
             aria-haspopup="dialog"
             aria-label={t("messages.contact.openAria", { name: participant.displayName })}
             data-contact-open
-            className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface-soft"
+            className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
           >
-            <Avatar src={participant.avatarUrl} alt={participant.displayName} size={36} />
+            <Avatar src={participant.avatarUrl} alt={participant.displayName} size={42} />
             <span className="min-w-0 leading-tight">
-              <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{participant.displayName}</span>
+              <span className="block truncate font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{participant.displayName}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
                   {typingText}
@@ -1357,21 +1374,6 @@ export function LocalConversationView() {
               )}
             </span>
           </button>
-        )}
-        {group && (
-          <Link
-            href={communityHref(group.id)}
-            aria-label={t("communities.chat.toCommunityAria")}
-            title={t("communities.chat.toCommunityAria")}
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
-          >
-            <Users size={16} />
-            {pendingRequestsForMe > 0 && (
-              <span data-community-link-badge className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
-                {pendingRequestsForMe > 9 ? "9+" : pendingRequestsForMe}
-              </span>
-            )}
-          </Link>
         )}
         <button
           type="button"
@@ -1385,7 +1387,7 @@ export function LocalConversationView() {
             searchOpen && "bg-primary-soft text-primary",
           )}
         >
-          <Search size={16} />
+          <Search size={20} />
         </button>
         {group ? (
           <ChatHeaderMenu>
@@ -1504,7 +1506,7 @@ export function LocalConversationView() {
         ref={listRef}
         // Message popovers stay inside this list's visible area (`useAnchoredPopover`, docs/history/212-*).
         data-chat-scroll
-        className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6"
+        className="min-h-0 flex-1 overflow-y-auto px-3 py-3 lg:px-6"
         onScroll={handleListScroll}
         onClick={(event) => {
           // A tap on truly blank list space (not on any message's own
@@ -1536,10 +1538,13 @@ export function LocalConversationView() {
             {t("messages.noMessagesYet")}
           </p>
         ) : (
-          messages.map((message) => (
+          messages.map((message, index) => (
+            <Fragment key={message.id}>
+            {messageLayout[index].dayStart && <DaySeparator iso={message.createdAt} />}
             <MessageBubble
-              key={message.id}
               message={message}
+              groupStart={messageLayout[index].groupStart}
+              groupEnd={messageLayout[index].groupEnd}
               isMe={message.senderId === user.id}
               replyPreview={message.replyToMessageId ? (messagesById.get(message.replyToMessageId) ?? null) : null}
               isEditingHere={editingId === message.id}
@@ -1577,6 +1582,7 @@ export function LocalConversationView() {
                   : undefined,
               }}
             />
+            </Fragment>
           ))
         )}
         {visiblePending.map((pending) => (
@@ -1727,6 +1733,9 @@ export function LocalConversationView() {
             setActionError(null);
             setConfirmKind(kind);
           }}
+          muted={Boolean(conversation.mutedAt)}
+          muteBusy={actionBusy}
+          onToggleMute={() => void toggleGroupMute()}
         />
       )}
       {libraryType && user && <ChatLibraryPicker userId={user.id} initialType={libraryType} onPick={attachLibraryItem} onClose={() => setLibraryType(null)} />}
@@ -1748,6 +1757,24 @@ export function LocalConversationView() {
         <GroupInfoModal
           conversation={conversation}
           focus={groupInfoFocus}
+          viewerId={user.id}
+          starredCount={starredIds.size}
+          pinnedCount={pinned.items.length}
+          busy={actionBusy}
+          onJumpToMessage={(messageId) => {
+            setGroupInfoFocus(null);
+            void jumpWithFeedback(messageId);
+          }}
+          onShowPinned={() => {
+            const first = pinned.items[0];
+            setGroupInfoFocus(null);
+            if (first) void jumpWithFeedback(first.message.id);
+          }}
+          onToggleArchive={() => void runChatAction(conversation.archivedAt ? "unarchive" : "archive")}
+          onAsk={(kind) => {
+            setActionError(null);
+            setConfirmKind(kind);
+          }}
           onClose={() => setGroupInfoFocus(null)}
           onGroupChanged={reloadGroup}
           onMutedChange={(mutedAt) => {

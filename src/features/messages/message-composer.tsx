@@ -173,7 +173,7 @@ export function MessageComposer({
     <form
       ref={formRef}
       onSubmit={onSubmit}
-      className="relative border-t border-border-soft bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4 lg:px-6"
+      className="relative bg-background px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:px-4 lg:px-6"
     >
       {dragActive && (
         <div className="pointer-events-none absolute inset-2 z-20 flex items-center justify-center rounded-xl border-2 border-dashed border-primary/60 bg-primary-soft/80 text-sm font-medium text-text">
@@ -189,7 +189,7 @@ export function MessageComposer({
               <img
                 src={image.previewUrl}
                 alt={t("messages.selectedPhotoAlt", { index: index + 1 })}
-                className="h-full w-full rounded-xl border border-border-soft object-cover"
+                className="h-full w-full rounded-xl object-cover"
                 draggable={false}
               />
               {image.status === "preparing" && (
@@ -226,13 +226,13 @@ export function MessageComposer({
           title={t("messages.attach.title")}
           aria-haspopup={onPickLibrary || onImport ? "dialog" : undefined}
           data-composer-plus
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface text-text transition-colors hover:bg-surface-soft focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
         >
           <Plus size={22} strokeWidth={1.9} aria-hidden />
         </button>
         <div
           className={cn(
-            "relative flex min-w-0 flex-1 items-end gap-0.5 rounded-3xl border border-border-soft bg-background px-3 py-1 pr-1.5 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15",
+            "relative flex min-w-0 flex-1 items-end gap-0.5 rounded-3xl bg-surface px-4 py-1.5 pr-2 transition-shadow duration-200 ease-soft focus-within:ring-2 focus-within:ring-primary/40",
             disabled && "opacity-50",
           )}
         >
@@ -292,7 +292,7 @@ export function MessageComposer({
           disabled={!canSend || disabled}
           aria-label={t("messages.sendMessageAria")}
           title={t("common.send")}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,background-color] duration-200 ease-soft hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,background-color] duration-200 ease-soft hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-40"
         >
           {isSending ? <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <ArrowUp size={22} strokeWidth={2.2} aria-hidden />}
         </button>

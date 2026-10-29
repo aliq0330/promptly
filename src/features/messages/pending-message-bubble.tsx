@@ -44,7 +44,7 @@ export function PendingMessageBubble({
   const displayBody = pending.body;
 
   return (
-    <div data-pending-message={pending.id} data-status={pending.status} className="flex flex-col items-end">
+    <div data-pending-message={pending.id} data-status={pending.status} className="mt-3 flex flex-col items-end">
       <div className="flex max-w-[75%] flex-col items-end gap-1.5">
         <MessageImageGrid
           images={pending.images.map((image) => ({ key: image.key, url: image.previewUrl, width: image.width, height: image.height }))}
@@ -54,7 +54,7 @@ export function PendingMessageBubble({
         {displayBody && (
           <div
             className={cn(
-              "w-fit self-end rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-sm leading-relaxed text-primary-foreground shadow-xs",
+              "w-fit self-end rounded-[20px] rounded-br-md bg-primary px-3.5 py-2 text-[15px] leading-[1.4] text-primary-foreground",
               pending.status === "sending" && "opacity-70",
             )}
           >
@@ -62,7 +62,7 @@ export function PendingMessageBubble({
           </div>
         )}
       </div>
-      <div className="mt-2 flex flex-wrap items-center justify-end gap-2 text-[11px] text-text-muted">
+      <div className="mt-1 flex flex-wrap items-center justify-end gap-2 px-1 text-[11px] text-text-muted">
         {pending.status === "sending" ? (
           <span>{t("messages.sendingEllipsis")}</span>
         ) : (
