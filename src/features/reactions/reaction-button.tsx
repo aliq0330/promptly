@@ -42,14 +42,15 @@ export function ReactionButton({
   const { anchorRef, panelRef, style } = useAnchoredPopover({ open, align: "start", onAway: closePicker });
   const iconRef = useRef<ReactionIconHandle>(null);
   const openedByKeyboard = useRef(false);
-  /** The reaction whose animation + effect play as soon as the icon shows it (the first reaction swaps the heart for the emoji). */
-  const playWhenShown = useRef<ReactionKey | null>(null);
+  /** The reaction whose animation + effect play as soon as the icon shows it (the first reaction swaps the heart for the emoji); `origin` = the tapped picker emoji. */
+  const playWhenShown = useRef<{ key: ReactionKey; origin?: { x: number; y: number } } | null>(null);
 
   useEffect(() => {
-    if (playWhenShown.current && playWhenShown.current === reaction) {
+    const pending = playWhenShown.current;
+    if (pending && pending.key === reaction) {
       playWhenShown.current = null;
       iconRef.current?.play();
-      playReactionEffect(reaction, iconRef.current?.element() ?? anchorRef.current);
+      playReactionEffect(pending.key, pending.origin ?? iconRef.current?.element() ?? anchorRef.current);
     }
   }, [reaction, anchorRef]);
 
@@ -76,12 +77,12 @@ export function ReactionButton({
     };
   }, [open, panelRef, anchorRef]);
 
-  function choose(next: ReactionKey | null) {
+  function choose(next: ReactionKey | null, origin?: { x: number; y: number }) {
     setOpen(false);
     anchorRef.current?.focus({ preventScroll: true });
     // Picking the reaction you already gave takes it back (the picker marks it as selected).
     if (next !== null && next === reaction) next = null;
-    if (next !== null) playWhenShown.current = next;
+    if (next !== null) playWhenShown.current = { key: next, origin };
     void react(next).then((result) => {
       if (result === "failed" || result === "ignored") playWhenShown.current = null;
     });
