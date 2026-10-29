@@ -9,14 +9,14 @@ import { useBlockState } from "@/features/moderation/use-block-state";
 import { FollowButtonView } from "./follow-button";
 import { ProfileMoreMenu } from "./profile-more-menu";
 import { useFollowState } from "./use-follow-state";
-import { profileHref } from "@/lib/utils";
+import { cn, profileHref } from "@/lib/utils";
 import { buttonClassName } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 
-const ICON_BUTTON_CLASS = "h-10 min-w-10 rounded-full px-3";
+const ICON_BUTTON_CLASS = "h-11 min-w-11 rounded-full border-0 bg-surface-soft px-3 text-text hover:bg-border-soft";
 /** The one primary pill: fills the row on phones, its natural width beside the name from `sm`. */
-const PRIMARY_CLASS = "flex-1 sm:flex-none sm:px-6";
+const PRIMARY_CLASS = "h-11 flex-1 sm:flex-none sm:px-6";
 
 /** The header's inline actions (docs/history/243-*): beside the name from `sm`, a full-width row under it on phones. */
 function ProfileActionsRow({ children }: { children: ReactNode }) {
@@ -39,7 +39,7 @@ export function OwnProfileActions({ user }: { user: UserProfile }) {
   const { t } = useTranslation();
   return (
     <ProfileActionsRow>
-      <Link href="/profile/edit" className={buttonClassName({ size: "md", className: PRIMARY_CLASS })}>
+      <Link href="/profile/edit" className={buttonClassName({ variant: "ghost", size: "md", className: cn(PRIMARY_CLASS, "bg-surface-soft text-text hover:bg-border-soft") })}>
         <Pencil size={16} aria-hidden />
         {t("profile.editProfileHeading")}
       </Link>
@@ -48,7 +48,7 @@ export function OwnProfileActions({ user }: { user: UserProfile }) {
         href="/settings"
         title={t("settings.pageTitle")}
         aria-label={t("settings.pageTitle")}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft"
       >
         <Settings size={18} />
       </Link>
@@ -70,14 +70,14 @@ export function OtherProfileActions({
     <ProfileActionsRow>
       <FollowButtonView {...followState} size="md" className={PRIMARY_CLASS} />
       {blockState.isBlocked ? (
-        <span className="inline-flex h-10 items-center rounded-full border border-border px-4 text-small text-text-muted">
+        <span className="inline-flex h-11 items-center rounded-full bg-surface-soft px-4 text-small text-text-muted">
           {t("profile.youBlockedThisUser")}
         </span>
       ) : (
         <MessageButton user={user} compact />
       )}
       <ShareButton url={profileHref(user)} title={t("profile.otherProfileShareTitle")} className={ICON_BUTTON_CLASS} />
-      <ProfileMoreMenu user={user} blockState={blockState} />
+      <ProfileMoreMenu user={user} blockState={blockState} triggerClassName="h-11 w-11 bg-surface-soft text-text hover:bg-border-soft" />
     </ProfileActionsRow>
   );
 }

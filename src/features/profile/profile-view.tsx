@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Heart, Info, Pencil, Quote as QuoteIcon, Bookmark, Shapes, SlidersHorizontal, SearchX, Sparkles, SquareTerminal, Folder, Workflow as WorkflowIcon } from "lucide-react";
+import Link from "next/link";
+import { Heart, Info, Pencil, Plus, Quote as QuoteIcon, Bookmark, Search, Shapes, SlidersHorizontal, SearchX, Sparkles, SquareTerminal, Folder, Workflow as WorkflowIcon, X } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { OtherProfileActions, OwnProfileActions } from "./profile-actions";
 import { ProfileRail } from "./profile-rail";
 import { useFollowState } from "./use-follow-state";
-import { ScrollRow } from "@/components/ui/scroll-row";
 import { Button } from "@/components/ui/button";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { CompactViewToggle } from "@/features/content/view-mode-switcher";
-import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
+import { CONTROL_ICON_BUTTON, SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import { FocusGrid } from "@/features/focus/focus-grid";
 import { ContributionMap } from "./contribution-map";
 import { ProfileFilterControl, type ProfileSortKey } from "./profile-toolbar";
@@ -53,11 +53,8 @@ function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   }
 }
 
-/** One flat set of sections since Meydan (docs/history/190-*). Since docs/history/243-* the four post types are tabs and the rest sit behind "Daha fazla ▾" (docs/history/233-* had them all in one menu). */
+/** One flat set of sections since Meydan (docs/history/190-*). Since docs/history/272-* ALL of them sit in ONE "Promptlar ▾" menu pill (the tabs + "Daha fazla" of 243-* are gone), like Topluluklar / Spaces. */
 export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "drafts" | "saved" | "collections" | "spaces" | "quotes" | "liked" | "about";
-
-/** The first sections are tabs; the rest live in the "Daha fazla" menu. */
-const MAIN_TAB_COUNT = 4;
 
 export function ProfileView({
   user,
@@ -120,6 +117,7 @@ export function ProfileView({
     return () => clearTimeout(id);
   }, [search]);
   const [viewMode] = useViewMode();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // The header numbers come from the database (`profile_content_stats`): the prompt list is read a page at a time, so its length is no count.
   const [stats, setStats] = useState<ProfileContentStats | null>(null);
@@ -221,14 +219,12 @@ export function ProfileView({
     setSearch("");
   }
 
-  const mainTabs = tabs.slice(0, MAIN_TAB_COUNT);
-  // The first menu entry never needs a divider above it.
-  const moreTabs = tabs.slice(MAIN_TAB_COUNT).map((item, index) => (index === 0 ? { ...item, dividerBefore: false } : item));
-  const activeItem = tabs.find((item) => item.key === activeTab) ?? tabs[0];
-  const activeInMore = moreTabs.some((item) => item.key === activeTab);
+  // The menu lists every section; the first entry never needs a divider above it.
+  const menuItems = tabs.map((item, index) => (index === 0 ? { ...item, dividerBefore: false } : item));
+  const searchable = filterable && showFilter;
 
   return (
-    // Sade (docs/history/243-*): header · rail (stories + collections) · tabs + "Daha fazla" · [title + tools] · list.
+    // Sade (docs/history/243-*, 272-*): header · rail (stories + collections) · [section menu pill + tools] · list.
     <ContentGridColumns value="sm:columns-2">
       <div className="w-full animate-rise-in pb-16">
         <ProfileHeader
@@ -243,52 +239,23 @@ export function ProfileView({
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
           <ProfileRail ownerId={user.id} isOwnProfile={isOwnProfile} collections={publicCollections} />
 
-          <div className="mt-5 flex items-end border-b border-border-soft" data-profile-tabs="">
-            <ScrollRow
-              role="tablist"
-              aria-label={t("profile.sectionsAriaLabel")}
-              wrapperClassName="flex-1 -mb-px"
-              className="-mx-4 px-4 sm:mx-0 sm:px-0"
-            >
-              {mainTabs.map((item) => {
-                const selected = item.key === activeTab;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={selected}
-                    data-profile-tab={item.key}
-                    onClick={() => setActiveTab(item.key)}
-                    className={cn(
-                      "inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                      selected ? "border-primary font-semibold text-text" : "border-transparent font-medium text-text-secondary hover:text-text",
-                    )}
-                  >
-                    {item.label}
-                    {item.meta ? <span className="text-small font-normal tabular-nums text-text-muted">{item.meta}</span> : null}
-                  </button>
-                );
-              })}
-            </ScrollRow>
-            <SectionMenu
-              items={moreTabs}
-              active={activeInMore ? activeTab : ("" as ProfileTabKey)}
-              onChange={setActiveTab}
-              ariaLabel={t("profile.sectionsAriaLabel")}
-              title={user.displayName}
-              variant="tab"
-              align="end"
-              placeholder={t("profile.moreSections")}
-            />
-          </div>
-
-          <div className="mt-4 flex items-center gap-1.5">
-            <h2 className="min-w-0 truncate text-h3 font-semibold text-text" data-profile-section-title="">
-              {activeItem?.label}
-              {activeItem?.meta ? <span className="ml-2 font-medium tabular-nums text-text-muted">{activeItem.meta}</span> : null}
-            </h2>
+          {/* Sade (docs/history/272-*): one control row — the section menu pill on the left, the section's tools on the right (search · filter · Kart|Izgara · "+" on one's own profile). */}
+          <div className="mt-5 flex min-w-0 items-center gap-1.5" data-profile-controls="">
+            <SectionMenu items={menuItems} active={activeTab} onChange={setActiveTab} ariaLabel={t("profile.sectionsAriaLabel")} title={user.displayName} />
             <span className="flex-1" />
+            {searchable && (
+              <button
+                type="button"
+                onClick={() => (searchOpen && search ? (setSearch(""), setSearchOpen(false)) : setSearchOpen((open) => !open))}
+                aria-label={t("profile.searchPlaceholder")}
+                title={t("profile.searchPlaceholder")}
+                aria-pressed={searchOpen}
+                data-profile-search=""
+                className={cn(CONTROL_ICON_BUTTON, searchOpen && "bg-surface-soft")}
+              >
+                {searchOpen ? <X size={22} strokeWidth={1.75} aria-hidden /> : <Search size={22} strokeWidth={1.75} aria-hidden />}
+              </button>
+            )}
             {showFilter && (
               <ProfileFilterControl
                 availableTypes={PROFILE_TYPE_OPTIONS}
@@ -298,13 +265,34 @@ export function ProfileView({
                 onSortChange={setSort}
                 search={search}
                 onSearchChange={setSearch}
-                showSearch={(list.total ?? list.items.length) > 8 || hasActiveFilters}
+                showSearch={false}
                 hasActiveFilters={hasActiveFilters}
-                onClear={clearFilters}
+                onClear={() => {
+                  clearFilters();
+                  setSearchOpen(false);
+                }}
               />
             )}
             {viewable && <CompactViewToggle />}
+            {isOwnProfile && (
+              <Link href="/create" aria-label={t("create.promptTitle")} title={t("create.promptTitle")} data-profile-create="" className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft")}>
+                <Plus size={22} strokeWidth={1.75} aria-hidden />
+              </Link>
+            )}
           </div>
+          {searchable && searchOpen && (
+            <label className="mt-2 flex h-11 items-center gap-2 rounded-full bg-surface-soft px-4 focus-within:ring-2 focus-within:ring-primary" data-profile-search-field="">
+              <Search size={16} className="shrink-0 text-text-muted" aria-hidden />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={t("profile.searchPlaceholder")}
+                aria-label={t("profile.searchPlaceholder")}
+                className="h-full w-full bg-transparent text-body text-text outline-none placeholder:text-text-muted"
+              />
+            </label>
+          )}
 
           <div className="mt-4 space-y-4">
             {activeTab === "about" ? (
