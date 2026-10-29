@@ -22,6 +22,7 @@ const BOUNDED_BY_DESIGN: Record<string, string> = {
   "collections.ts:fetchPublicCollectionsByOwner": "one person's public collections (capped by the product at 200)",
   "collections.ts:fetchFollowedCollections": "followed collections (capped at 200 by `collection_follows`)",
   "collections.ts:isPromptSaved": "one work",
+  "content-interest.ts:fetchContentInterests": "own answers for the posts of one list page (ids in parts of 100)",
   "collections.ts:fetchCollectionIdsContaining": "the collections holding ONE work",
   "comment-likes.ts:fetchLikedCommentIds": "ids of one thread's comments",
   "communities.ts:fetchCommunityPostsByIds": "ids come from one page",

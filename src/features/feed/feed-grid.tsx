@@ -11,6 +11,7 @@ import { QuoteCard } from "@/features/quotes/quote-card";
 import { AnnouncedProvider } from "@/features/communities/announced-chip";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
+import { InterestCardFrame, type InterestFeedback } from "./interest-feedback";
 import { Reveal } from "@/components/ui/reveal";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { prefersReducedMotion } from "@/lib/motion";
@@ -30,10 +31,13 @@ export function FeedGrid({
   layout = "grid",
   itemNote,
   flip = false,
+  interest,
 }: {
   items: FeedItem[];
   /** A short line drawn above a card ("Sana özel"'s reason, docs/history/209-*). */
   itemNote?: (item: FeedItem) => ReactNode;
+  /** "İlgimi çekiyor / çekmiyor" (docs/history/275-*): the answers in each card's ⋮ menu + the occasional question strip. Sana özel and Keşfet only. */
+  interest?: InterestFeedback;
   /** When the list is re-ordered (same posts, new ranking) the cards glide to their new places (FLIP). */
   flip?: boolean;
   /** "home" = Ana Sayfa's column next to its right rail (two columns at most); "grid" = the full-width lists (up to three). */
@@ -79,7 +83,13 @@ export function FeedGrid({
             <div key={feedItemKey(item)} data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>
               <Reveal index={index}>
                 {itemNote?.(item)}
-                {card(item)}
+                {interest ? (
+                  <InterestCardFrame interest={interest} item={item} index={index}>
+                    {card(item)}
+                  </InterestCardFrame>
+                ) : (
+                  card(item)
+                )}
               </Reveal>
             </div>
           ))}

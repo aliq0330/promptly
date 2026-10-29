@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, Download, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Shapes, Trash2 } from "lucide-react";
+import { Check, Copy, Download, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Shapes, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePostMenuExtras } from "./post-menu-extras";
 import { usePostScope } from "@/features/communities/post-scope";
@@ -296,17 +296,22 @@ export function PostMenu({
             <button
               key={extra.key}
               type="button"
-              role="menuitem"
+              role={extra.selected === undefined ? "menuitem" : "menuitemcheckbox"}
+              aria-checked={extra.selected}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
                 setOpen(false);
                 extra.onSelect();
               }}
-              className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-soft", extra.danger ? "text-danger" : "text-text")}
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-soft",
+                extra.danger ? "text-danger" : extra.selected ? "font-semibold text-primary" : "text-text",
+              )}
             >
               {extra.icon}
               {extra.label}
+              {extra.selected && <Check size={14} aria-hidden className="ml-auto" />}
             </button>
           ))}
           {collectionRemoval && (

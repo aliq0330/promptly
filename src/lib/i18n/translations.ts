@@ -551,7 +551,7 @@ export const translations = {
   "forYou.reasonTag": { tr: "Takip ettiğin #{{tag}} etiketinden", en: "From #{{tag}}, a tag you follow" },
   "forYou.reasonTool": { tr: "Takip ettiğin {{tool}} ile yapıldı", en: "Made with {{tool}}, a tool you follow" },
   "forYou.reasonInterest": { tr: "İlgi alanın: {{interest}}", en: "Your interest: {{interest}}" },
-  "forYou.reasonLikedTag": { tr: "Beğendiğin #{{tag}} gönderilerine benziyor", en: "Like the #{{tag}} posts you liked" },
+  "forYou.reasonLikedTag": { tr: "İlgilendiğin #{{tag}} gönderilerine benziyor", en: "Like the #{{tag}} posts you liked or were interested in" },
   "forYou.reasonPopular": { tr: "Toplulukta öne çıkıyor", en: "Standing out in the community" },
   "feed.emptyForYouLoginTitle": { tr: "Sana özel akış için giriş yap", en: "Sign in for a feed made for you" },
   "feed.emptyForYouLoginDescription": {

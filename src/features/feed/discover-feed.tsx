@@ -9,6 +9,7 @@ import { FeedItemsView } from "./feed-items-view";
 import { LoadMore } from "./load-more";
 import { DiscoverAside, DiscoverHighlightsSkeleton, PopularStrip, TopicStrip, useDiscoverHighlights } from "./discover-highlights";
 import { useFeedPages } from "./use-feed-pages";
+import { useInterestFeedback } from "./interest-feedback";
 import type { FeedKind } from "@/lib/supabase/feed";
 import { feedOrderForSort } from "@/lib/feed-cursor";
 import { DISCOVER_SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
@@ -130,6 +131,8 @@ export function DiscoverFeed() {
     },
     !entity,
   );
+  // "İlgimi çekiyor / çekmiyor" (docs/history/275-*): answers here only tune Ana Sayfa → Sana özel; Keşfet's ranking and list stay as they are.
+  const interest = useInterestFeedback(feed.items, { enabled: !entity, loadExisting: true, hideOnDislike: false });
   const creatorPages = useCreatorPages(section === "creators");
   const highlights = useDiscoverHighlights();
 
@@ -238,6 +241,7 @@ export function DiscoverFeed() {
           <>
             <FeedItemsView
               items={feed.items}
+              interest={interest}
               emptyTitle={t("discover.noMatchTitle")}
               emptyDescription={t("discover.noMatchDescription")}
               emptyAction={activeCount > 0 ? { label: t("feed.clearFilters"), onClick: clearFilters } : undefined}

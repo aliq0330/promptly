@@ -11,6 +11,8 @@ export interface PostMenuExtra {
   label: string;
   icon: ReactNode;
   danger?: boolean;
+  /** A two-state row ("İlgimi çekiyor" …): shown as ticked, `menuitemcheckbox` for assistive tech. */
+  selected?: boolean;
   onSelect: () => void;
 }
 
