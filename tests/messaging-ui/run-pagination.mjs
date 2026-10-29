@@ -187,8 +187,10 @@ await scenario("1. Profil (3016 prompt): sayı sunucudan (3016, 1000 değil); il
   withLibrary(db, U.bob);
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
   await titleLinks(page).first().waitFor();
-  const tab = page.getByRole("tab", { name: /^Promptlar/ });
-  assert.match(await tab.innerText(), /3016/, "sekme sayısı veritabanından");
+  await page.locator("[data-section-menu]").click();
+  const tab = page.getByRole("radio", { name: /^Promptlar/ });
+  assert.match(await tab.innerText(), /3016/, "menü sayısı veritabanından");
+  await page.keyboard.press("Escape");
   const first = db.promptQueries[0];
   assert.equal(first.limit, "24");
   assert.equal(first.offset, "0");
@@ -250,12 +252,11 @@ await scenario("4. Profilde arama sorguya gider: başlık/açıklama eşleşmesi
   withLibrary(db, U.bob, { total: 200 });
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
   await titleLinks(page).first().waitFor();
-  await page.locator("[data-profile-filter]").click();
-  const box = page.getByRole("dialog").getByRole("textbox");
+  await page.locator("[data-profile-search]").click();
+  const box = page.locator("[data-profile-search-field] input");
   await box.waitFor();
   const before = db.promptQueries.length;
   await box.pressSequentially("Prompt 15", { delay: 40 });
-  await page.getByRole("dialog").getByRole("button", { name: "Filtreleri Uygula" }).click();
   await page.waitForFunction(() => {
     const titles = [...document.querySelectorAll("main a[href*='/prompts/local']")].map((a) => (a.textContent ?? "").trim()).filter((t) => /^Prompt \d+$/.test(t));
     return titles.length > 0 && titles.every((t) => /^Prompt 15/.test(t));
@@ -363,8 +364,9 @@ await scenario("11. Profil → İstekler / Workflow'lar / Hazır ayarlar (60'ar)
   await titleLinks(page).first().waitFor();
   for (const [tab, table, re] of [[/^Prompt İstekleri/, "prompt_requests", /^İstek \d+$/], [/^Workflow/, "workflows", /^Akış \d+$/], [/^Hazır Ayarlar/, "presets", /^Ayar \d+$/]]) {
     const before = db.otherQueries.length;
-    const tabEl = page.getByRole("tab", { name: tab });
-    assert.match(await tabEl.innerText(), /60/, `${table}: sekme sayısı sunucudan`);
+    await page.locator("[data-section-menu]").click();
+    const tabEl = page.getByRole("radio", { name: tab });
+    assert.match(await tabEl.innerText(), /60/, `${table}: menü sayısı sunucudan`);
     await tabEl.click();
     await otherLinks(page, re).first().waitFor();
     const first = db.otherQueries.slice(before).find((x) => x.table === table);

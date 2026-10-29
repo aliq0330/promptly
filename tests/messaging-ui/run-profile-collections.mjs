@@ -150,23 +150,19 @@ function withPrompts(db, owner) {
   };
 }
 const menuRadios = (page) => page.getByRole("radiogroup", { name: /Profil bölümleri|Profile sections/ }).getByRole("radio");
-await scenario("7. Profil bölümleri: ilk dört bölüm sekme, kalanı 'Daha fazla ▾' menüsünde; kendi profilimde gruplar (Alıntılar · Taslaklar/Kaydedilenler/Beğeniler · Hakkında), ziyaretçide Taslak/Kaydedilen/Beğeni yok", async ({ page, db }) => {
+await scenario("7. Profil bölümleri: TEK menü hapı (sekme çubuğu yok) tüm bölümleri listeler; kendi profilimde gruplar (Alıntılar · Taslaklar/Kaydedilenler/Beğeniler · Hakkında), ziyaretçide Taslak/Kaydedilen/Beğeni yok", async ({ page, db }) => {
   withCollections(db, U.alice);
   await page.goto(`${BASE}/profile/real?username=${U.alice.username}`);
   const menu = page.locator("[data-section-menu]");
   await menu.waitFor();
-  const tabs = page.getByRole("tablist", { name: "Profil bölümleri" }).getByRole("tab");
-  assert.deepEqual((await tabs.allInnerTexts()).map((x) => x.replace(/\s*\d+$/, "").trim()), ["Promptlar", "Prompt İstekleri", "Workflow'lar", "Hazır Ayarlar"], "dört içerik bölümü sekme");
-  assert.equal(await tabs.first().getAttribute("aria-selected"), "true");
-  assert.match(await menu.textContent(), /Daha fazla/);
+  assert.equal(await page.getByRole("tablist", { name: "Profil bölümleri" }).count(), 0, "sekme çubuğu yok");
+  assert.match(await menu.textContent(), /Promptlar/, "etkin bölüm hapta yazar");
   await menu.click();
   const own = (await menuRadios(page).allInnerTexts()).map((x) => x.replace(/\s*\d+$/, "").trim());
-  assert.deepEqual(own, ["Alıntılar", "Taslaklar", "Kaydedilenler", "Beğeniler", "Hakkında"]);
+  assert.deepEqual(own, ["Promptlar", "Prompt İstekleri", "Workflow'lar", "Hazır Ayarlar", "Alıntılar", "Taslaklar", "Kaydedilenler", "Beğeniler", "Hakkında"]);
   assert.equal(await page.locator("[data-section-option]").evaluateAll((els) => els.filter((el) => el.className.includes("border-t")).length), 2, "iki ayırıcı: kütüphane grubu ve Hakkında");
   await page.getByRole("radio", { name: /Beğeniler/ }).click();
   assert.match(await menu.textContent(), /Beğeniler/, "etkin bölüm menü düğmesinde yazar");
-  assert.equal(await tabs.first().getAttribute("aria-selected"), "false");
-  assert.match(await page.locator("[data-profile-section-title]").textContent(), /Beğeniler/);
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
   await menu.waitFor();
   await menu.click();
@@ -250,7 +246,7 @@ await scenario("11. Moderasyon: 4 sekme yerine tek menü; şikâyet durumu Filtr
 });
 
 // 12 — Sade profil (docs/history/243-*): tek şerit (hikâye + koleksiyon, aralarında çizgi), sekme tıklayınca bölüm değişir, telefonda sekme satırı + "Daha fazla" tek satır
-await scenario("12. Sade profil: sekme seçimi başlığı değiştirir; şeritte koleksiyonlar tek kaydırma satırında; 390px'te sekmeler + Daha fazla tek satırda, taşma yok", async ({ page, db }) => {
+await scenario("12. Sade profil: menüden seçim hapı değiştirir; şeritte koleksiyonlar tek kaydırma satırında; 390px'te hap + araçlar tek satırda, kendi profilimde '+' var, taşma yok", async ({ page, db }) => {
   withCollections(db, U.bob);
   withPrompts(db, U.bob);
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
@@ -258,15 +254,21 @@ await scenario("12. Sade profil: sekme seçimi başlığı değiştirir; şeritt
   await rings(page).first().waitFor();
   assert.equal(await page.locator("[data-profile-rail]").count(), 1, "tek şerit");
   assert.equal(await page.locator("[data-profile-rail] [data-collection-rings]").count(), 1, "koleksiyonlar şeridin içinde");
-  const tab = (name) => page.getByRole("tab", { name: new RegExp(name) });
-  await tab("Workflow").click();
-  assert.equal(await tab("Workflow").getAttribute("aria-selected"), "true");
-  assert.match(await page.locator("[data-profile-section-title]").textContent(), /Workflow/);
-  const row = await page.locator("[data-profile-tabs]").evaluate((el) => {
+  const menu = page.locator("[data-section-menu]");
+  await menu.click();
+  await page.getByRole("radio", { name: /Workflow/ }).click();
+  assert.match(await menu.textContent(), /Workflow/, "hap seçili bölümü yazar");
+  await page.locator("[data-profile-controls] [data-section-menu]").waitFor();
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  await page.locator("[data-profile-filter]").waitFor();
+  const row = await page.locator("[data-profile-controls]").evaluate((el) => {
     const top = (node) => Math.round(node.getBoundingClientRect().top);
-    return [...el.querySelectorAll("[role=tab], [data-section-menu]")].map(top);
+    return [...el.querySelectorAll("[data-section-menu], [data-profile-search], [data-profile-filter], [data-view-toggle]")].map(top);
   });
-  assert.equal(new Set(row).size, 1, `sekmeler ve Daha fazla tek satırda ${JSON.stringify(row)}`);
+  assert.equal(new Set(row).size, 1, `hap ve araçlar tek satırda ${JSON.stringify(row)}`);
+  assert.equal(await page.locator("[data-profile-create]").count(), 0, "başkasının profilinde '+' yok");
+  await page.locator("[data-profile-search]").click();
+  await page.locator("[data-profile-search-field] input").fill("ışık");
   assert.equal(await overflowFree(page), true);
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/profile-sade-phone.png`, fullPage: true });
 }, { viewport: { width: 390, height: 844 } });

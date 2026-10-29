@@ -15,7 +15,7 @@ import type { UserProfile } from "@/types";
 // phones so the row (Takip et · Mesaj · Paylaş · ⋮) stays on one line.
 const CLASS_NAME = buttonClassName({ variant: "outline", size: "lg", className: "w-12 px-0 sm:w-auto sm:px-6" });
 // Profile header (docs/history/243-*): the same pill at the height of the inline Takip et beside it.
-const COMPACT_CLASS_NAME = buttonClassName({ variant: "outline", size: "md", className: "w-10 px-0 sm:w-auto sm:px-5" });
+const COMPACT_CLASS_NAME = buttonClassName({ variant: "ghost", size: "md", className: "h-11 w-11 bg-surface-soft px-0 text-text hover:bg-border-soft sm:w-auto sm:px-5" });
 const LABEL_CLASS = "hidden sm:inline";
 
 /** "Mesaj Gönder" — finds or starts a real 1:1 conversation and navigates to it (CLAUDE.md Bölüm 21 Faz 6). */
