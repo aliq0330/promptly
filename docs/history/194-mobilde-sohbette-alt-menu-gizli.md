@@ -11,3 +11,8 @@
 
 ## Açık
 - iOS klavyesi + safe-area ile composer'ın gerçek cihazdaki konumu denenmedi (klavye mantığı sandbox'ta yalnız saf fonksiyonla sınanabiliyor).
+
+## Ek: üst menü de gizli (telefon)
+- `components/layout/header.tsx`: yol `/messages/local` ile başlıyorsa üst menü `< md`'de gizlenir (`max-md:hidden`); sohbet paneli (`local-conversation-view.tsx`, `new-chat-draft-view.tsx`) telefonda `top-0`'dan başlar, başlık satırı `env(safe-area-inset-top)` kadar ek üst boşluk alır. Tablet/masaüstü değişmedi.
+- Sohbet başlığındaki arama düğmesinin kenarlığı kaldırıldı (yalnız hover/açık durumda dolgu). Grup sohbetindeki "Topluluğa git" düğmesi kenarlığını korur.
+- Çeviri: yeni metin yok. Yalnız `tsc` + `lint` çalıştırıldı; Playwright ve gerçek iPhone'da DENENMEDİ.
