@@ -264,6 +264,68 @@ await scenario("14. Masaüstü: Kişi bilgisi sağdan açılan panel (tam ekran 
   assert.equal(overflow, false, "yatay taşma yok");
 }, { setup: seed, viewport: { width: 1280, height: 860 } });
 
+await scenario("15. Kişi bilgisi: 'Medya ve bağlantılar' + 'Paylaşılan içerik' sayıları sunucudan, listeler açılır, satıra dokunmak mesaja götürür", async ({ page, db }) => {
+  const photo = db.addMessage(CONV, U.bob.id, null);
+  photo.attachments = [{ path: `${U.bob.id}/a.jpg`, width: 10, height: 10, mime: "image/jpeg" }, { path: `${U.bob.id}/b.jpg`, width: 10, height: 10, mime: "image/jpeg" }];
+  db.addMessage(CONV, U.bob.id, "Bak: https://example.com/makale");
+  db.addMessage(CONV, ME, `Harika akış\nhttp://localhost:4181/promptly/workflows/local?id=${ID.workflow}`);
+  const hidden = db.addMessage(CONV, U.bob.id, null);
+  hidden.attachments = [{ path: `${U.bob.id}/gizli.jpg`, width: 10, height: 10, mime: "image/jpeg" }];
+  hidden.deleted_at = new Date().toISOString();
+  await openThread(page);
+  await page.locator("[data-contact-open]").click();
+  const panel = page.locator("[data-contact-info]");
+  const media = panel.locator("[data-info-row='media-links']");
+  await media.getByText("3", { exact: true }).waitFor();
+  await panel.locator("[data-info-row='shared-content']").getByText("1", { exact: true }).waitFor();
+  assert.equal(await panel.locator("[data-contact-photo-count]").innerText().then((t) => t.trim()), "2", "silinmiş mesajın fotoğrafı sayılmaz");
+  await media.click();
+  const modal = page.locator("[data-chat-shared]");
+  await modal.locator("[data-chat-shared-photos] li").first().waitFor();
+  assert.equal(await modal.locator("[data-chat-shared-photos] li").count(), 2);
+  await modal.getByRole("tab", { name: "Bağlantılar" }).click();
+  await modal.getByText("https://example.com/makale", { exact: true }).waitFor();
+  assert.equal(await modal.locator("[data-chat-shared-list] li").count(), 1, "kart olarak paylaşılan içerik bağlantı sayılmaz");
+  await modal.getByText("https://example.com/makale", { exact: true }).click();
+  await modal.waitFor({ state: "detached" });
+  await panel.waitFor({ state: "detached" });
+  await page.locator("[data-contact-open]").click();
+  await panel.locator("[data-info-row='shared-content']").click();
+  await page.locator("[data-chat-shared-list] li").first().waitFor();
+  assert.equal(await page.locator("[data-chat-shared-list] li").count(), 1);
+}, { setup: seed });
+
+await scenario("16. Kişi bilgisi: 'Ortak topluluklar' yalnız ikinizin de üye olduğu toplulukları sayar ve listeler; engel varsa boş", async ({ page, db }) => {
+  db.addGroup(GROUP, { name: "Tasarım Atölyesi", visibility: "public", myRole: "member", members: [[U.bob, "member"]], texts: [[U.bob, "selam"]] });
+  db.addGroup("c0000000-0000-4000-8000-0000000000a2", { name: "Yalnız Ben", visibility: "public", myRole: "member", members: [[U.carol, "member"]], texts: [[U.carol, "hey"]] });
+  for (const g of db.groups) Object.assign(g, { category: "general", feed_policy: "members", rules: null, rules_required: false, closed_at: null, origin: "native", post_count: 0 });
+  await openThread(page);
+  await page.locator("[data-contact-open]").click();
+  const panel = page.locator("[data-contact-info]");
+  const row = panel.locator("[data-info-row='common-communities']");
+  await row.getByText("1", { exact: true }).waitFor();
+  await row.click();
+  const modal = page.locator("[data-common-communities]");
+  await modal.getByText("Tasarım Atölyesi").waitFor();
+  assert.equal(await modal.getByText("Yalnız Ben").count(), 0, "yalnız benim üye olduğum topluluk listelenmez");
+  assert.match((await modal.getByRole("link", { name: /Tasarım Atölyesi/ }).getAttribute("href")) ?? "", /communities\/local\/?\?id=/);
+}, { setup: seed });
+
+await scenario("17. Topluluk bilgisi: Medya ve bağlantılar / Paylaşılan içerik satırları topluluk sohbetinde de çalışır; İngilizce çevrili", async ({ page, db }) => {
+  db.addGroup(GROUP, { name: "Tasarım Atölyesi", visibility: "public", myRole: "owner", members: [[U.bob, "member"]], texts: [[U.bob, "https://example.com/rehber"]] });
+  Object.assign(db.groups[0], { category: "general", feed_policy: "members", rules: null, rules_required: false, closed_at: null, origin: "native", post_count: 0 });
+  await openThread(page, GROUP);
+  await page.locator("button[aria-haspopup='dialog'][aria-label*='Open info']").first().click();
+  const panel = page.locator("[data-community-info]");
+  const media = panel.locator("[data-info-row='media-links']");
+  await media.getByText("1", { exact: true }).waitFor();
+  await media.getByText("Media and links").waitFor();
+  await panel.getByText("Shared content").waitFor();
+  await media.click();
+  await page.locator("[data-chat-shared]").getByRole("tab", { name: "Links" }).click();
+  await page.locator("[data-chat-shared]").getByText("https://example.com/rehber", { exact: true }).waitFor();
+}, { setup: () => undefined, lang: "en" });
+
 await browser.close(); server.close();
 let failed = 0;
 for (const [s, n] of results) { if (s === "FAIL") failed++; console.log(`${s}  ${n}`); }

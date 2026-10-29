@@ -21,7 +21,7 @@
 ## Bilinçli sınırlar / yapılmadı
 - **Çevrimiçi durumu YOK** ("5 çevrimiçi", avatarda yeşil nokta mockup'ta vardı): bunun için herkesin herkese göstereceği bir "varlık" (presence) kanalı gerekir — gizlilik kararı + `realtime.messages` politikası ister; yapılmadı.
 - **Sistem satırları YOK** ("Zeynep topluluğa katıldı"): katılım olayları mesaj olarak saklanmıyor (yeni mesaj türü/migration ister).
-- **"Ortak topluluklar", "Paylaşılan içerik" sayıları ve "Medya ve bağlantılar" YOK:** iki kişi arası sayım RPC'si / bağlantı çıkarımı ister; yerine mevcut Paylaşılan fotoğraflar kartı korundu.
+- **(271'de yapıldı) "Ortak topluluklar", "Paylaşılan içerik" sayıları ve "Medya ve bağlantılar" ilk sürümde YOKTU:** iki kişi arası sayım RPC'si / bağlantı çıkarımı ister; yerine mevcut Paylaşılan fotoğraflar kartı korundu.
 - Üyeler satırı mockup'taki gibi avatar yığını; tam liste yerinde açılır (ayrı alt sayfa değil).
 - Birebir sessize alma yalnız bildirimi keser; sohbet mesajları ve okunmamış sayacı çalışmaya devam eder (liste çan simgesi + sönük rozet).
 - Gerçek Supabase'e / oturuma / iOS Safari'ye karşı denenmedi; migration canlıya uygulanmadı (uygulanmazsa Sessize al düğmesi çalışır ama birebirde bildirim kesmez).

@@ -10,6 +10,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { ChatActionItems, type ChatConfirmKind } from "@/features/messages/chat-actions";
 import { InfoCard, InfoIdentity, InfoPanelShell, InfoRow, InfoTile, InfoTiles } from "@/features/messages/info-panel-kit";
 import { InfoPhotosCard } from "@/features/messages/info-photos-card";
+import { InfoSharedRows } from "@/features/messages/info-shared-rows";
 import { ChatHeaderMenu } from "./chat-header-menu";
 import { GroupAvatar } from "./group-avatar";
 import { VisibilityLabel } from "@/features/communities/visibility-label";
@@ -41,7 +42,6 @@ export type GroupInfoFocus = "overview" | "members" | "settings";
 export function GroupInfoModal({
   conversation,
   focus = "overview",
-  viewerId,
   starredCount,
   pinnedCount,
   busy,
@@ -57,7 +57,6 @@ export function GroupInfoModal({
 }: {
   conversation: Conversation;
   focus?: GroupInfoFocus;
-  viewerId: string;
   starredCount: number;
   pinnedCount: number;
   /** Sohbet eylemi sürerken ⋮ menüsü pasif. */
@@ -212,7 +211,9 @@ export function GroupInfoModal({
         </Collapsible>
       </InfoCard>
 
-      <InfoPhotosCard conversationId={conversation.id} viewerId={viewerId} onJumpToMessage={onJumpToMessage} />
+      <InfoPhotosCard conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
+
+      <InfoSharedRows conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
 
       <InfoCard>
         <InfoRow icon={<Pin size={18} strokeWidth={1.75} />} onClick={pinnedCount > 0 ? onShowPinned : undefined} value={pinnedCount > 0 ? pinnedCount : t("messages.contact.none")} testId="pinned">

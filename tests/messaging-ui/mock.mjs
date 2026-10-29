@@ -367,6 +367,25 @@ export async function installMock(context, db, opts = {}) {
       if (!cid || !memberOf(cid)) return rows([]);
       return rows(db.pins.filter((x) => x.conversation_id === cid).sort((a, b) => b.pinned_at.localeCompare(a.pinned_at)));
     }
+    // Paylaşılan fotoğraf/içerik/bağlantı (docs/history/271-*): sunucudaki `chat_shared_stats` / `chat_shared_items` ile aynı kurallar.
+    if (table === "rpc/chat_shared_stats" || table === "rpc/chat_shared_items") {
+      const mine = memberOf(body.p_conversation_id);
+      const hidden = db.hidden ?? [];
+      const isContent = (m) => Boolean(m.shared_prompt_id || m.shared_request_id || /\/(workflows|presets|spaces)\/local\?id=[0-9a-f-]{36}|\/communities\/post\/local\?id=[0-9a-f-]{36}/i.test(m.body ?? ""));
+      const isLink = (m) => !isContent(m) && /https?:\/\/\S+/i.test(m.body ?? "");
+      const visible = mine ? db.messages.filter((x) => x.conversation_id === body.p_conversation_id && !x.deleted_at && (!mine.cleared_at || x.created_at > mine.cleared_at) && !hidden.some((h) => h.message_id === x.id && h.user_id === signedIn)) : [];
+      if (table === "rpc/chat_shared_stats") {
+        return json(200, { photos: visible.reduce((n, m) => n + (m.attachments ?? []).length, 0), content: visible.filter(isContent).length, links: visible.filter(isLink).length });
+      }
+      const pick = { photos: (m) => (m.attachments ?? []).length > 0, content: isContent, links: isLink }[body.p_kind];
+      const list = pick ? visible.filter(pick).sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id)) : [];
+      return json(200, list.slice(0, Math.min(Math.max(body.p_limit ?? 100, 1), 200)).map((m) => ({ id: m.id, created_at: m.created_at, sender_id: m.sender_id, body: m.body, attachments: m.attachments ?? [], shared_prompt_id: m.shared_prompt_id, shared_request_id: m.shared_request_id })));
+    }
+    if (table === "rpc/common_communities") {
+      if (!body.p_user || body.p_user === signedIn || db.isBlocked(signedIn, body.p_user)) return json(200, []);
+      const ids = db.groups.filter((g) => db.member(g.id, signedIn) && db.member(g.id, body.p_user)).map((g) => g.id);
+      return json(200, ids);
+    }
     if (table === "rpc/search_conversation_messages") {
       const term = String(body.p_query ?? "").trim();
       if (term.length < 2 || term.length > 100) return err("invalid_query");
@@ -503,6 +522,7 @@ export async function installMock(context, db, opts = {}) {
       if (method === "GET") {
         let list = filterRows(db.messages, q, ["id", "conversation_id", "created_at"]);
         // `.contains("attachments", [{}])` (Kişi bilgisi fotoğrafları) ve `deleted_at is null`.
+        if ((q.get("attachments") ?? "").includes("[object Object]")) return json(400, { code: "22P02", message: "invalid input syntax for type json" });
         if ((q.get("attachments") ?? "").startsWith("cs.")) list = list.filter((m) => Array.isArray(m.attachments) && m.attachments.length > 0);
         if (q.get("deleted_at") === "is.null") list = list.filter((m) => !m.deleted_at);
         const order = q.get("order") ?? "";

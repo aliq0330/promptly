@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, BellOff, Pin, Search, Star, User, Ban } from "lucide-react";
+import { Bell, BellOff, Pin, Search, Star, User, Ban, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { ReportButton } from "@/features/moderation/report-button";
 import type { useBlockState } from "@/features/moderation/use-block-state";
 import { ChatHeaderMenu } from "@/features/groups/chat-header-menu";
 import { fetchProfileContentStats } from "@/lib/supabase/prompts";
+import { fetchCommonCommunities } from "@/lib/supabase/communities";
+import type { CommunityCard } from "@/lib/supabase/chat-groups";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatCount, profileHref } from "@/lib/utils";
 import { ChatActionItems, type ChatConfirmKind } from "./chat-actions";
 import { InfoCard, InfoIdentity, InfoPanelShell, InfoRow, InfoTile, InfoTiles } from "./info-panel-kit";
 import { InfoPhotosCard } from "./info-photos-card";
+import { InfoSharedRows } from "./info-shared-rows";
+import { CommonCommunitiesModal } from "./common-communities-modal";
 import type { Conversation, UserProfile } from "@/types";
 
 /**
@@ -23,7 +27,6 @@ import type { Conversation, UserProfile } from "@/types";
 export function ContactInfoPanel({
   conversation,
   participant,
-  viewerId,
   starredCount,
   pinnedCount,
   blockState,
@@ -40,7 +43,6 @@ export function ContactInfoPanel({
 }: {
   conversation: Conversation;
   participant: UserProfile;
-  viewerId: string;
   starredCount: number;
   pinnedCount: number;
   blockState: ReturnType<typeof useBlockState>;
@@ -59,6 +61,8 @@ export function ContactInfoPanel({
   const { t } = useTranslation();
   const [confirmingBlock, setConfirmingBlock] = useState(false);
   const [stats, setStats] = useState<{ prompts: number } | null>(null);
+  const [common, setCommon] = useState<CommunityCard[] | null>(null);
+  const [commonOpen, setCommonOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -78,6 +82,20 @@ export function ContactInfoPanel({
     setConfirmingBlock(false);
     await blockState.toggle();
   }
+
+  useEffect(() => {
+    let alive = true;
+    fetchCommonCommunities(participant.id)
+      .then((cards) => {
+        if (alive) setCommon(cards);
+      })
+      .catch(() => {
+        if (alive) setCommon([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [participant.id]);
 
   const followers = formatCount(participant.followerCount);
   const following = formatCount(participant.followingCount);
@@ -126,9 +144,14 @@ export function ContactInfoPanel({
         />
       </InfoTiles>
 
-      <InfoPhotosCard conversationId={conversation.id} viewerId={viewerId} onJumpToMessage={onJumpToMessage} />
+      <InfoPhotosCard conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
+
+      <InfoSharedRows conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
 
       <InfoCard>
+        <InfoRow icon={<Users size={18} strokeWidth={1.75} />} onClick={common && common.length > 0 ? () => setCommonOpen(true) : undefined} value={common ? (common.length > 0 ? common.length : t("messages.contact.none")) : "…"} testId="common-communities">
+          {t("messages.contact.commonCommunities")}
+        </InfoRow>
         <InfoRow icon={<Star size={18} strokeWidth={1.75} />} href="/messages/starred" value={starredCount > 0 ? starredCount : t("messages.contact.none")} testId="starred">
           {t("messages.contact.starred")}
         </InfoRow>
@@ -147,6 +170,7 @@ export function ContactInfoPanel({
           <ReportButton targetType="user" targetId={participant.id} label={t("profile.reportThisUser")} menuItem={false} row />
         </div>
       </InfoCard>
+      {commonOpen && common && <CommonCommunitiesModal communities={common} name={participant.displayName} onClose={() => setCommonOpen(false)} />}
     </InfoPanelShell>
   );
 }

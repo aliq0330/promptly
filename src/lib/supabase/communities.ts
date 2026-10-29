@@ -169,6 +169,12 @@ export async function joinCommunityViaLink(
   return { outcome: data.outcome, groupId: data.group_id ?? null };
 }
 
+/** Çağıranla başka bir kişinin İKİSİNİN de üye olduğu topluluklar (docs/history/271-*; `common_communities` DEFINER, engel varsa/kendisi için boş). Kartlar `community_cards` yolundan gelir. */
+export async function fetchCommonCommunities(userId: string): Promise<CommunityCard[]> {
+  const ids = await callRpc<string[] | null>("common_communities", { p_user: userId });
+  return fetchCommunityCards(Array.isArray(ids) ? ids : []);
+}
+
 /** Tek kart; görülemeyen / tamamen kapalı / olmayan topluluk için null. */
 export { type CommunityCard };
 export async function fetchCommunityCard(id: string): Promise<CommunityCard | null> {
