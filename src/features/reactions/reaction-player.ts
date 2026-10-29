@@ -90,7 +90,7 @@ export function playReactionIn(container: HTMLElement, key: ReactionKey, kind: "
   };
 }
 
-const EFFECT_MAX = 260;
+const EFFECT_MAX = 156;
 let effectLayer: HTMLDivElement | null = null;
 
 function getEffectLayer(): HTMLDivElement {
@@ -105,21 +105,36 @@ function getEffectLayer(): HTMLDivElement {
   return layer;
 }
 
+/** Where the burst is centred: an element (followed while it moves) or a viewport point, e.g. the picker emoji that was just tapped. */
+export type EffectOrigin = Element | { x: number; y: number };
+
 /**
- * The Telegram "emoji effect": the big burst plays around `anchor` (the reaction's icon) for about three seconds, over the page, and removes
- * itself. It follows the anchor while the page scrolls. Quietly does nothing where animations are off.
+ * The Telegram "emoji effect": the big burst plays around `origin` — the emoji the viewer just picked — for about three seconds, over the
+ * page, and removes itself. It follows the origin while the page scrolls. Quietly does nothing where animations are off.
  */
-export function playReactionEffect(key: ReactionKey, anchor: Element | null): void {
-  if (!anchor || !canAnimateReactions()) return;
+export function playReactionEffect(key: ReactionKey, origin: EffectOrigin | null): void {
+  if (!origin || !canAnimateReactions()) return;
   const size = Math.min(EFFECT_MAX, document.documentElement.clientWidth - 24);
   const box = document.createElement("div");
   box.style.cssText = `position:absolute;width:${size}px;height:${size}px`;
   getEffectLayer().appendChild(box);
+  // A point is a spot on the page: it moves with the page scroll like an element would.
+  const scrollX0 = window.scrollX;
+  const scrollY0 = window.scrollY;
   const place = () => {
-    if (!anchor.isConnected) return;
-    const rect = anchor.getBoundingClientRect();
-    box.style.left = `${rect.left + rect.width / 2 - size / 2}px`;
-    box.style.top = `${rect.top + rect.height / 2 - size / 2}px`;
+    let x: number;
+    let y: number;
+    if (origin instanceof Element) {
+      if (!origin.isConnected) return;
+      const rect = origin.getBoundingClientRect();
+      x = rect.left + rect.width / 2;
+      y = rect.top + rect.height / 2;
+    } else {
+      x = origin.x - (window.scrollX - scrollX0);
+      y = origin.y - (window.scrollY - scrollY0);
+    }
+    box.style.left = `${x - size / 2}px`;
+    box.style.top = `${y - size / 2}px`;
   };
   place();
   window.addEventListener("scroll", place, true);
