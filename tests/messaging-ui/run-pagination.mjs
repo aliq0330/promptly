@@ -252,12 +252,11 @@ await scenario("4. Profilde arama sorguya gider: başlık/açıklama eşleşmesi
   withLibrary(db, U.bob, { total: 200 });
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
   await titleLinks(page).first().waitFor();
-  await page.locator("[data-profile-filter]").click();
-  const box = page.getByRole("dialog").getByRole("textbox");
+  await page.locator("[data-profile-search]").click();
+  const box = page.locator("[data-profile-search-field] input");
   await box.waitFor();
   const before = db.promptQueries.length;
   await box.pressSequentially("Prompt 15", { delay: 40 });
-  await page.getByRole("dialog").getByRole("button", { name: "Filtreleri Uygula" }).click();
   await page.waitForFunction(() => {
     const titles = [...document.querySelectorAll("main a[href*='/prompts/local']")].map((a) => (a.textContent ?? "").trim()).filter((t) => /^Prompt \d+$/.test(t));
     return titles.length > 0 && titles.every((t) => /^Prompt 15/.test(t));
