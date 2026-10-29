@@ -59,6 +59,9 @@ const CHECKS = [
   { name: "rpc admin_template_variables_candidates (docs/history/253-*)", rpc: "admin_template_variables_candidates", body: { p_scope: "own", p_limit: 1 }, deniedOk: true, soft: true },
   { name: "rpc admin_convert_template_variables (docs/history/253-*)", rpc: "admin_convert_template_variables", body: { p_ids: [], p_scope: "own" }, deniedOk: true, soft: true },
   { name: "rpc admin_bulk_set_prompt_taxonomy (docs/history/260-*)", rpc: "admin_bulk_set_prompt_taxonomy", body: { p_items: [], p_overwrite: false }, deniedOk: true, soft: true },
+  { name: "rpc chat_shared_stats (paylaşılan medya/içerik/bağlantı sayıları, docs/history/271-*; yalnız oturumlu)", rpc: "chat_shared_stats", body: { p_conversation_id: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
+  { name: "rpc chat_shared_items (docs/history/271-*)", rpc: "chat_shared_items", body: { p_conversation_id: "00000000-0000-4000-8000-000000000000", p_kind: "photos", p_limit: 1 }, deniedOk: true, soft: true },
+  { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
