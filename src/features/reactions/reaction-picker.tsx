@@ -20,8 +20,8 @@ export function ReactionPicker({
   panelRef: RefObject<HTMLDivElement | null>;
   style: CSSProperties;
   current: ReactionKey | null;
-  /** `null` = take the reaction back. `origin` = the centre (viewport px) of the emoji that was tapped, where the big effect starts. */
-  onChoose: (reaction: ReactionKey | null, origin?: { x: number; y: number }) => void;
+  /** `null` = take the reaction back. */
+  onChoose: (reaction: ReactionKey | null) => void;
 }) {
   const { t } = useTranslation();
   const icons = useRef<Partial<Record<ReactionKey, ReactionIconHandle | null>>>({});
@@ -54,10 +54,7 @@ export function ReactionPicker({
             type="button"
             role="menuitem"
             aria-current={current === key ? "true" : undefined}
-            onClick={(event) => {
-              const rect = (icons.current[key]?.element() ?? event.currentTarget).getBoundingClientRect();
-              onChoose(key, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-            }}
+            onClick={() => onChoose(key)}
             onPointerEnter={() => icons.current[key]?.play()}
             className={cn(
               "group flex min-w-0 flex-col items-center gap-0.5 rounded-[20px] pb-1.5 pt-2 text-caption transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
