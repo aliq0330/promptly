@@ -138,7 +138,7 @@ await scenario("3. üye: varsayılan sekme Sana özel; her kartta gerçek neden 
   await tab.waitFor();
   assert.equal(await tab.getAttribute("aria-selected"), "true");
   await page.getByText("Takip ettiğin #Resim etiketinden").first().waitFor();
-  await page.getByText("Beğendiğin #Resim gönderilerine benziyor").first().waitFor();
+  await page.getByText("İlgilendiğin #Resim gönderilerine benziyor").first().waitFor();
   assert.ok((await page.getByText("Toplulukta öne çıkıyor").count()) >= 1, "sinyalsiz kartın nedeni dürüst: öne çıkıyor, 'şu an popüler' değil");
   assert.equal(await page.getByText("Şu an popüler").count(), 0);
   await page.getByText(/Takip ettiğin .* paylaştı/).first().waitFor();

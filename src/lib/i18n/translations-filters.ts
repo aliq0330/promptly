@@ -41,6 +41,18 @@ export const filterTranslations = {
   "discover.toolsNoMatch": { tr: "Eşleşen araç yok.", en: "No matching tool." },
   "discover.toolPosts": { tr: "{{count}} gönderi", en: "{{count}} posts" },
 
+  // ---- İlgimi çekiyor / çekmiyor (docs/history/275-*) ----
+  "interest.promptTitle": { tr: "Bu gönderi ilgini çekiyor mu?", en: "Is this post interesting to you?" },
+  "interest.yes": { tr: "İlgimi çekiyor", en: "Interested" },
+  "interest.no": { tr: "İlgimi çekmiyor", en: "Not interested" },
+  "interest.dismiss": { tr: "Kapat", en: "Dismiss" },
+  "interest.thanks": { tr: "Teşekkürler", en: "Thanks" },
+  "interest.thanksHint": { tr: "Cevabın Sana özel akışını ayarlar.", en: "Your answer tunes your For you feed." },
+  "interest.hiddenTitle": { tr: "Bunun gibi gönderileri daha az göstereceğiz", en: "We'll show fewer posts like this" },
+  "interest.hiddenHint": { tr: "Sana özel akışını buna göre ayarlıyoruz.", en: "We're tuning your For you feed to match." },
+  "interest.undo": { tr: "Geri al", en: "Undo" },
+  "interest.failed": { tr: "Cevabın kaydedilemedi. Tekrar dene.", en: "Your answer couldn't be saved. Try again." },
+
   // ---- Sana özel: ayar penceresi, ilk kullanım bandı, yenile (docs/history/222-*, 227-*) ----
   "forYou.refresh": { tr: "Yenile", en: "Refresh" },
   "forYou.settings": { tr: "Sana özel'i ayarla", en: "Tune For you" },

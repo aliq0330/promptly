@@ -223,3 +223,13 @@ node tests/messaging-ui/run-space-board-tools.mjs   # 11/11 beklenir
 CHROMIUM_PATH=/opt/pw-browsers/chromium/chrome-linux/chrome node tests/messaging-ui/run-chat-library.mjs   # 14/14 beklenir
 ```
 
+## İlgimi çekiyor / çekmiyor (`docs/history/275-*`)
+
+`run-interest.mjs` (12 senaryo): Sana özel'de 7. gönderinin altında "Bu gönderi ilgini çekiyor mu?" kartı (iki düğme + ✕), cevap → `set_content_interest` gövdesi + teşekkür + kaybolma, "çekmiyor" → "Geri al" notu, ⋮ menüsündeki iki cevap (seçili işaretli, tekrar basınca geri alma), kendi gönderide yok, RPC hatasında geri alma + uyarı, ✕ ile 6 saatlik duraklatma, Takip Ettiklerim'de ve misafirde yok, Keşfet (gönderiyi gizlemez, önceden cevaplanmış seçili gelir), İngilizce + masaüstü taşma. Ağ taklidi: test içindeki küçük `context.route` (`content_interest` GET) + `db.rpc.set_content_interest`. Gerçek Supabase'e KARŞI DENENMEDİ — cevabın sıralamaya etkisi `supabase/tests/content-interest.sql`'dedir.
+
+```bash
+npm i --no-save playwright
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-interest.mjs   # 12/12 beklenir
+```
+

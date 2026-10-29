@@ -14,6 +14,7 @@ import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
 import { useFeedPages } from "./use-feed-pages";
 import { useForYouPages } from "./use-for-you-pages";
+import { useInterestFeedback } from "./interest-feedback";
 import { ForYouReasonNote, ForYouSettingsModal, ForYouSetupBanner, ForYouSheetSection } from "./for-you-parts";
 import {
   EMPTY_FOLLOWED_FILTER,
@@ -127,6 +128,9 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
   );
   const forYou = useForYouPages({ kind, taxonomy }, isForYou && enabled);
   const feed = isForYou ? { ...forYou, retry: forYou.refresh } : feedPages;
+  // "İlgimi çekiyor / çekmiyor" (docs/history/275-*): Sana özel only (Takip Ettiklerim is the strictly chronological list of people they chose).
+  // Sana özel never lists a post already answered, so there is nothing to read first; an answer of "çekmiyor" collapses the card with "Geri al".
+  const interest = useInterestFeedback(forYou.items, { enabled: isForYou && enabled, loadExisting: false, hideOnDislike: true });
   // Nothing to learn from yet (no interests, no followed person, tag or AI tool): "Sana özel" shows its first-time card instead of guessing.
   const coldStart =
     isForYou &&
@@ -241,6 +245,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
         >
           <FeedItemsView
             items={feed.items}
+            interest={isForYou ? interest : undefined}
             layout={layout}
             // "Sana özel": every card says why it is here, and a re-ranking (new interests) glides the cards into place.
             itemNote={isForYou ? (item) => <ForYouReasonNote item={item} reason={forYou.reasons[`${item.kind}-${item.data.id}`]} /> : undefined}
