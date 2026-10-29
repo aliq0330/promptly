@@ -22,6 +22,7 @@ import { spaceTranslations } from "./translations-spaces";
 import { workflowSpaceTranslations } from "./translations-workflow-space";
 import { spaceConnectionTranslations } from "./translations-space-connections";
 import { reactionTranslations } from "./translations-reactions";
+import { chatRedesignTranslations } from "./translations-chat-redesign";
 import { quoteTranslations } from "./translations-quotes";
 import { filterTranslations } from "./translations-filters";
 import { exchangeTranslations } from "./translations-exchange";
@@ -3166,6 +3167,7 @@ export const translations = {
   ...workflowSpaceTranslations,
   ...spaceConnectionTranslations,
   ...reactionTranslations,
+  ...chatRedesignTranslations,
   ...storyTranslations,
   ...quoteTranslations,
   ...filterTranslations,

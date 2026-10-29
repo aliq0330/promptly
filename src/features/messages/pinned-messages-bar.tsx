@@ -42,7 +42,7 @@ export function PinnedMessagesBar({
 
   return (
     <>
-      <div data-pinned-bar className="flex items-center gap-1 border-b border-border-soft bg-surface px-2 py-1 lg:px-4">
+      <div data-pinned-bar className="mx-3 mb-1 flex items-center gap-1 rounded-2xl bg-surface px-2 py-1 lg:mx-4">
         <button
           type="button"
           onClick={() => {
@@ -50,15 +50,15 @@ export function PinnedMessagesBar({
             setCursor(index + 1);
           }}
           aria-label={`${t("chat.pin.barLabel")}: ${messagePreviewText(current.message, t)}`}
-          className="group flex min-w-0 flex-1 items-center gap-2 rounded-md border-l-2 border-primary py-1 pl-2 pr-1 text-left transition-colors hover:bg-surface-soft"
+          className="group flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-xl py-1 pl-2 pr-1 text-left transition-colors hover:bg-surface-soft"
         >
           <Pin size={14} className="shrink-0 text-primary" aria-hidden />
-          <span className="min-w-0 leading-tight">
-            <span className="flex items-center gap-1.5 text-caption font-semibold text-primary">
+          <span className="flex min-w-0 items-baseline gap-1.5 text-small">
+            <span className="shrink-0 font-semibold text-text">
               {t("chat.pin.barLabel")}
-              {items.length > 1 && <span className="font-normal text-text-muted">{t("chat.pin.barPosition", { index: index + 1, total: items.length })}</span>}
+              {items.length > 1 && <span className="ml-1.5 font-normal text-text-muted">{t("chat.pin.barPosition", { index: index + 1, total: items.length })}</span>}
             </span>
-            <span className="block truncate text-small text-text-secondary">{messagePreviewText(current.message, t)}</span>
+            <span className="truncate text-text-secondary">{messagePreviewText(current.message, t)}</span>
           </span>
         </button>
         {canPin && (
@@ -85,7 +85,7 @@ export function PinnedMessagesBar({
       </div>
       {listOpen && (
         <Modal onClose={() => setListOpen(false)} labelledBy="pinned-list-title">
-          <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+          <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-5">
               <h2 id="pinned-list-title" className="flex items-center gap-2 text-base font-semibold text-text">
                 <Pin size={16} className="text-primary" aria-hidden /> {t("chat.pin.listTitle")}
@@ -101,7 +101,7 @@ export function PinnedMessagesBar({
             </div>
             <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-5 pt-1">
               {items.map(({ pin, message }) => (
-                <li key={pin.messageId} className="flex items-stretch gap-1 rounded-lg border border-border-soft bg-surface">
+                <li key={pin.messageId} className="flex items-stretch gap-1 rounded-xl bg-surface-soft">
                   <button
                     type="button"
                     onClick={() => {

@@ -575,7 +575,8 @@ await scenario("18. Sohbet: başlıktaki 'Sohbeti aç' Mesajlar çalışma alan�
   await open(page, C1);
   await page.locator("header, [data-community-actions]").getByRole("link", { name: "Sohbeti aç" }).click();
   await page.waitForURL(/messages\/local\/?\?id=/);
-  await page.getByRole("link", { name: "Topluluk sayfasına git" }).click();
+  await page.locator("button[aria-haspopup='dialog'][aria-label*='topluluk bilgisini aç']").first().click();
+  await page.getByRole("dialog").last().getByRole("link", { name: "Topluluk sayfası" }).click();
   await page.waitForURL(/communities\/local\/?\?id=/);
 }, { setup: (db) => seed(db, { myRole: "member", texts: [[U.bob, "Merhaba topluluk"]] }) });
 

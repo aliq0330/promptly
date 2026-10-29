@@ -78,8 +78,8 @@ await scenario("3. Üye: bilgi penceresi kompakt (sekme yok): topluluk bağlant�
   await openThread(page); await openInfo(page);
   assert.equal(await dlg(page).getByRole("tab").count(), 0, "no tab strip: the panel is not a second community page");
   await dlg(page).locator("[data-info-community-link]").waitFor();
-  await dlg(page).getByRole("switch", { name: /Topluluğu sessize al/ }).waitFor();
-  await dlg(page).getByRole("button", { name: "Sohbette ara" }).waitFor();
+  await dlg(page).getByRole("button", { name: "Sessize al" }).waitFor();
+  await dlg(page).getByRole("button", { name: "Ara", exact: true }).waitFor();
   await dlg(page).getByRole("button", { name: "Topluluktan ayrıl" }).waitFor();
   for (const hidden of ["Sohbet ayarları", "Davet", "Katılım istekleri", "Topluluk ayarlarını aç"]) assert.equal(await dlg(page).getByText(hidden, { exact: false }).count(), 0, `a plain member never sees "${hidden}" here`);
   assert.equal(await dlg(page).locator("[data-info-requests-link]").count(), 0);
@@ -229,8 +229,9 @@ await scenario("10. Sahip, başka üye varken ayrılamaz: devretmeye yönlendiri
 // 15
 await scenario("15. İngilizce: bilgi penceresi çevrilmiş (topluluk bağlantısı, sohbet ayarları bölümü)", async ({ page }) => {
   await openThread(page, G); await openInfo(page);
-  await dlg(page).getByText("Open the community page").waitFor();
-  await dlg(page).getByRole("button", { name: "Search in chat" }).waitFor();
+  await dlg(page).getByText("Community page", { exact: true }).waitFor();
+  await dlg(page).getByRole("button", { name: "Search", exact: true }).waitFor();
+  await dlg(page).getByRole("button", { name: "Mute" }).waitFor();
   await dlg(page).getByRole("button", { name: "Chat settings" }).click();
   await dlg(page).locator("#chat-posting-title").waitFor();
   await dlg(page).getByRole("button", { name: "Leave community" }).waitFor();
@@ -244,7 +245,7 @@ for (const [label, viewport, theme] of [["mobil 390x800", { width: 390, height: 
     assert.ok(overflow <= 1, `no horizontal page scroll (${overflow}px)`);
     await openInfo(page);
     await page.waitForTimeout(600); // açılış animasyonu bitsin
-    const panel = await dlg(page).locator("div.flex.max-h-\\[90vh\\]").first().boundingBox();
+    const panel = await dlg(page).locator("[data-community-info]").first().boundingBox();
     assert.ok(panel.x >= 0 && panel.x + panel.width <= viewport.width + 1 && panel.y >= 0 && panel.y + panel.height <= viewport.height + 1, `panel inside viewport ${JSON.stringify(panel)}`);
     const close = await dlg(page).getByRole("button", { name: "Kapat" }).first().boundingBox();
     assert.ok(close.width >= 36 && close.height >= 36, "close button is touch-sized");
@@ -512,13 +513,11 @@ await scenario("26b. Sıradan üye ve istek yokken: başlıkta kısayol, sayaç 
   assert.equal(await page.locator("[data-community-link-badge]").count(), 0);
 }, { setup: (db) => seed(db, { myRole: "member", pending: 3 }) });
 
-await scenario("27. Topluluk ↔ sohbet geçişi: başlıktaki 'Sohbeti aç' sohbeti, sohbet başlığındaki simge ve bilgi penceresi topluluk sayfasını açar", async ({ page }) => {
+await scenario("27. Topluluk ↔ sohbet geçişi: başlıktaki 'Sohbeti aç' sohbeti, bilgi sayfasındaki 'Topluluk sayfası' karosu topluluk sayfasını açar", async ({ page }) => {
   await openCommunity(page);
   await page.locator("[data-community-actions] a[data-open-chat]").click();
   await page.waitForURL(/messages\/local\/?\?id=/);
-  await page.getByRole("link", { name: "Topluluk sayfasına git" }).click();
-  await page.waitForURL(/communities\/local\/?\?id=/);
-  await openThread(page); await openInfo(page);
+  await openInfo(page);
   await dlg(page).locator("[data-info-community-link]").click();
   await page.waitForURL(/communities\/local\/?\?id=/);
   assert.equal(await tabIsActive(page, "Akış"), true);
@@ -531,7 +530,8 @@ await scenario("28. Hakkında: kişiye özel tercihler (topluluk bildirim düzey
   await page.getByText("Topluluk sessize alındı.").waitFor();
   assert.ok(db.member(G, ME).muted_at, "mute is stored on MY membership row");
   await openThread(page); await openInfo(page);
-  assert.equal(await dlg(page).getByRole("switch", { name: /Topluluğu sessize al/ }).getAttribute("aria-checked"), "true", "the chat panel reflects the same mute");
+  await dlg(page).getByRole("button", { name: "Sesi aç" }).waitFor();
+  assert.equal(await dlg(page).getByRole("button", { name: "Sesi aç" }).getAttribute("aria-pressed"), "true", "the chat panel reflects the same mute");
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 await browser.close(); server.close();

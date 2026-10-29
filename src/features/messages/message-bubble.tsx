@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Check, CheckCheck, Megaphone, MoreHorizontal, Pin, SmilePlus, Star } from "lucide-react";
+import { Check, CheckCheck, ChevronRight, Megaphone, MoreHorizontal, Pin, SmilePlus, Star } from "lucide-react";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "./emoji-picker";
@@ -17,7 +17,8 @@ import { parseWorkflowShareBody } from "./workflow-share-format";
 import { parsePresetShareBody } from "./preset-share-format";
 import { parseCommunityPostShareBody } from "./community-post-share-format";
 import { describeReplied, ReplyThumb, useRepliedItem } from "./reply-quote";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatClockTime } from "@/lib/chat-grouping";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ReadState } from "@/lib/chat-features";
 import type { Message, MessageAttachment } from "@/types";
@@ -87,7 +88,12 @@ export function MessageBubble({
   actions,
   sender,
   readState,
+  groupStart = true,
+  groupEnd = true,
 }: {
+  /** Öbeğin (aynı kişinin art arda mesajları) ilk/son mesajı: grup sohbetinde avatar + ad ilkinde, kuyruk köşesi sonda. */
+  groupStart?: boolean;
+  groupEnd?: boolean;
   message: Message;
   /** Yalnız birebir sohbette, benim mesajımda: karşı tarafın okundu durumu (grupta tik yok; ayrıntı "Mesaj bilgisi"nde). */
   readState?: ReadState | null;
@@ -288,6 +294,37 @@ export function MessageBubble({
     </div>
   );
 
+  // Saat baloncuğun içinde (metinli mesajda), kart/fotoğraf/silinmiş mesajda altında: sağ tarafta okundu tikleri, sabit/yıldız işaretleri.
+  const inlineMeta = Boolean(displayBody && !message.announcementId && !isDeleted && !isEditingHere);
+  const metaContent = (
+    <>
+      <span>
+        {formatClockTime(message.createdAt, language)}
+        {message.editedAt && !isDeleted && ` · ${t("comments.edited")}`}
+      </span>
+      {!isDeleted && actions.isPinned?.(message.id) && <Pin size={11} aria-label={t("chat.pin.barLabel")} />}
+      {!isDeleted && actions.isStarred?.(message.id) && <Star size={11} className="fill-current" aria-label={t("chat.star.unstar")} data-starred-mark />}
+      {!isDeleted && isMe && readState && (
+        <span
+          data-read-state={readState}
+          title={readState === "read" ? t("chat.read.read") : t("chat.read.sent")}
+          className={cn("inline-flex items-center", readState === "read" ? "text-primary-foreground" : undefined)}
+        >
+          {readState === "read" ? <CheckCheck size={14} aria-hidden /> : <Check size={14} aria-hidden />}
+          <span className="sr-only">{readState === "read" ? t("chat.read.read") : t("chat.read.sent")}</span>
+        </span>
+      )}
+    </>
+  );
+  const showSender = Boolean(sender && !isMe);
+  const senderLabel =
+    showSender && groupStart && sender ? (
+      <span data-message-sender className="flex basis-full items-center gap-1.5 text-caption font-semibold">
+        <span className={cn("max-w-[10rem] truncate", senderTone(message.senderId))}>{sender.displayName}</span>
+        {sender.role && <RoleBadge role={sender.role} />}
+      </span>
+    ) : null;
+
   return (
     <div
       data-message-id={message.id}
@@ -300,21 +337,16 @@ export function MessageBubble({
       className={cn(
         "group flex flex-col rounded-md transition-colors duration-700",
         isMe ? "items-end" : "items-start",
+        groupStart ? "mt-3 first:mt-0" : "mt-0.5",
         isHighlighted && "-mx-1.5 bg-primary/10 px-1.5 py-1 ring-1 ring-primary/40",
       )}
     >
-      {sender && !isMe && (
-        <div className="mb-1 flex items-center gap-1.5 text-caption" data-message-sender>
-          <Avatar src={sender.avatarUrl} alt={sender.displayName} size={20} />
-          <span className="max-w-[10rem] truncate font-semibold text-text-secondary">{sender.displayName}</span>
-          {sender.role && <RoleBadge role={sender.role} />}
-        </div>
-      )}
       {replyPreview && (
         <div
           className={cn(
-            "mb-1 flex max-w-[75%] items-center gap-1 rounded-lg border-l-2 border-primary bg-surface-soft px-2.5 py-1 text-xs text-text-muted",
-            isMe && "flex-row-reverse border-l-0 border-r-2 text-right",
+            "mb-1 flex max-w-[75%] items-center gap-1 rounded-xl bg-surface-soft px-2.5 py-1.5 text-xs text-text-muted",
+            isMe && "flex-row-reverse text-right",
+            showSender && "ml-9",
           )}
         >
           <span className="truncate">{replyPreviewText}</span>
@@ -323,8 +355,13 @@ export function MessageBubble({
       )}
 
       <div className={cn("flex items-stretch gap-1", isMe ? "flex-row-reverse" : "flex-row")}>
+        {showSender && sender && (
+          <span className="mr-1 flex w-7 shrink-0 items-end" data-message-avatar>
+            {groupStart && <Avatar src={sender.avatarUrl} alt={sender.displayName} size={28} />}
+          </span>
+        )}
         {isDeleted ? (
-          <div className="max-w-[75%] rounded-2xl border border-dashed border-border-soft px-3.5 py-2 text-sm italic text-text-muted">
+          <div className="max-w-[75%] rounded-[20px] bg-surface-soft/60 px-3.5 py-2 text-sm italic text-text-muted">
             {t("messages.thisMessageWasDeleted")}
           </div>
         ) : isEditingHere ? (
@@ -334,7 +371,7 @@ export function MessageBubble({
               onChange={(event) => actions.onEditDraftChange(event.target.value)}
               rows={2}
               autoFocus
-              className="w-full resize-none rounded-xl border border-border-soft bg-surface px-3 py-1.5 text-sm text-text shadow-xs focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="w-full resize-none rounded-2xl bg-surface-soft px-3.5 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
             <div className="flex items-center gap-2">
               <Button
@@ -352,7 +389,13 @@ export function MessageBubble({
             {actions.editError && <p className="text-xs text-danger">{actions.editError}</p>}
           </div>
         ) : (
-          <div className="relative flex max-w-[75%] flex-col gap-1.5">
+          <div className={cn("relative flex max-w-[75%] flex-col gap-1.5", reactions.length > 0 && "mb-3")}>
+            {!inlineMeta && senderLabel && (
+              <span data-message-sender className="flex items-center gap-1.5 text-caption font-semibold">
+                <span className={cn("max-w-[10rem] truncate", senderTone(message.senderId))}>{sender?.displayName}</span>
+                {sender?.role && <RoleBadge role={sender.role} />}
+              </span>
+            )}
             {message.isStoryReply && <StoryReplyCard storyId={message.storyId} isMe={isMe} />}
             {message.sharedPromptId && <SharedPromptCard promptId={message.sharedPromptId} />}
             {message.sharedRequestId && <SharedRequestCard requestId={message.sharedRequestId} />}
@@ -365,34 +408,47 @@ export function MessageBubble({
               <Link
                 href={communityHref(message.conversationId)}
                 data-announcement-card
-                className="w-fit max-w-full self-start rounded-2xl border border-primary/30 bg-primary-soft/50 px-3.5 py-2.5 text-sm text-text shadow-xs transition-colors hover:border-primary/50"
+                className="flex w-fit max-w-full flex-col gap-1 self-start rounded-[22px] bg-surface-soft px-4 py-3.5 text-sm text-text transition-colors hover:bg-surface-elevated"
               >
-                <span className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.06em] text-primary">
-                  <Megaphone size={12} aria-hidden /> {t("communities.chat.announcement")}
+                <span className="flex items-center gap-2 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-primary">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated">
+                    <Megaphone size={14} aria-hidden />
+                  </span>
+                  {t("communities.chat.announcement")}
                 </span>
-                <span className="mt-0.5 block break-words font-medium">{displayBody}</span>
-                <span className="mt-1 block text-caption text-primary">{t("communities.chat.announcementOpen")}</span>
+                <span className="mt-1 block break-words font-display text-[1.0625rem] font-semibold">{displayBody}</span>
+                <span className="inline-flex items-center gap-0.5 text-small text-primary">
+                  {t("communities.chat.announcementOpen")} <ChevronRight size={15} aria-hidden />
+                </span>
               </Link>
             )}
             {displayBody && !message.announcementId && (
               <div
                 className={cn(
-                  "w-fit rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-xs",
-                  isMe ? "self-end" : "self-start",
-                  isMe ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md border border-border-soft bg-surface text-text",
+                  "flex w-fit max-w-full flex-wrap items-end gap-x-2.5 rounded-[20px] px-3.5 py-2 text-[15px] leading-[1.4]",
+                  isMe ? "self-end bg-primary text-primary-foreground" : "self-start bg-surface-soft text-text",
+                  groupEnd && (isMe ? "rounded-br-md" : "rounded-bl-md"),
                 )}
               >
-                <p className="break-words">{displayBody}</p>
+                {senderLabel}
+                <p className="min-w-0 break-words">{displayBody}</p>
+                <span
+                  data-message-meta
+                  className={cn("ml-auto inline-flex shrink-0 items-center gap-1 pt-1 text-[11px] leading-none", isMe ? "text-primary-foreground/85" : "text-text-muted")}
+                >
+                  {metaContent}
+                </span>
               </div>
             )}
             {reactions.length > 0 && (
-              <div className={cn("absolute -bottom-2.5 flex gap-0.5", isMe ? "right-1" : "left-1")}>
+              <div
+                className={cn(
+                  "absolute -bottom-3 flex items-center gap-0.5 rounded-full bg-surface-elevated px-2 py-0.5 text-xs leading-none text-text ring-2 ring-background",
+                  isMe ? "right-2.5" : "left-2.5",
+                )}
+              >
                 {reactions.map((reaction) => (
-                  <span
-                    key={reaction.userId}
-                    data-reaction-emoji={reaction.emoji}
-                    className="flex h-5 w-5 items-center justify-center rounded-full border border-border-soft bg-surface text-[11px] leading-none shadow-sm"
-                  >
+                  <span key={reaction.userId} data-reaction-emoji={reaction.emoji}>
                     {reaction.emoji}
                   </span>
                 ))}
@@ -404,24 +460,19 @@ export function MessageBubble({
         {!isDeleted && !isEditingHere && iconButtons}
       </div>
 
-      <div className={cn("mt-2 flex flex-wrap items-center gap-2 text-[11px] text-text-muted", isMe && "flex-row-reverse")}>
-        <span>
-          {formatRelativeTime(message.createdAt, language)}
-          {message.editedAt && !isDeleted && ` · ${t("comments.edited")}`}
-        </span>
-        {!isDeleted && actions.isPinned?.(message.id) && <Pin size={11} className="text-primary" aria-label={t("chat.pin.barLabel")} />}
-        {!isDeleted && actions.isStarred?.(message.id) && <Star size={11} className="fill-current text-warning" aria-label={t("chat.star.unstar")} data-starred-mark />}
-        {!isDeleted && isMe && readState && (
-          <span
-            data-read-state={readState}
-            title={readState === "read" ? t("chat.read.read") : t("chat.read.sent")}
-            className={cn("inline-flex items-center", readState === "read" ? "text-primary" : "text-text-muted")}
-          >
-            {readState === "read" ? <CheckCheck size={14} aria-hidden /> : <Check size={14} aria-hidden />}
-            <span className="sr-only">{readState === "read" ? t("chat.read.read") : t("chat.read.sent")}</span>
-          </span>
-        )}
-      </div>
+      {!inlineMeta && !isEditingHere && (
+        <div data-message-meta className={cn("mt-1 flex items-center gap-1 px-1 text-[11px] text-text-muted", showSender && "ml-9")}>
+          {metaContent}
+        </div>
+      )}
     </div>
   );
+}
+
+/** Grup sohbetinde gönderen adının rengi: kişiye göre sabit, yalnız tema renkleriyle (koyu/açık temada okunur). */
+const SENDER_TONES = ["text-primary", "text-secondary", "text-success"] as const;
+function senderTone(senderId: string): string {
+  let hash = 0;
+  for (let i = 0; i < senderId.length; i += 1) hash = (hash * 31 + senderId.charCodeAt(i)) >>> 0;
+  return SENDER_TONES[hash % SENDER_TONES.length];
 }
