@@ -26,7 +26,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset, Prompt, PromptMedia, PromptRequest, Workflow } from "@/types";
 import { StorageImage } from "@/components/ui/storage-media";
 
-const CARD_CLASS = "block w-72 max-w-full space-y-2 rounded-2xl border border-border-soft bg-surface p-2 text-left shadow-card";
+const CARD_CLASS = "block w-72 max-w-full space-y-2 rounded-3xl bg-surface-soft p-2 text-left";
 
 /** Kaydedilebilen paylaşım türleri (istek ve Space kaydedilmez — docs/history/184-*). */
 type SaveTarget = { kind: "prompt" | "workflow" | "preset"; id: string };
@@ -119,7 +119,7 @@ function SharedCard({
           <ArrowUpRight size={15} aria-hidden />
         </Link>
         {save && state === "ready" && (
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-text">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-elevated text-text">
             <SaveButton className={CARD_SAVE_CLASS} {...(save.kind === "prompt" ? { promptId: save.id } : save.kind === "workflow" ? { workflowId: save.id } : { presetId: save.id })} />
           </span>
         )}

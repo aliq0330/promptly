@@ -12,11 +12,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { ChatGroup } from "@/types";
 
-/**
- * Sohbeti sessize alma (KİŞİYE ÖZEL: yalnız kendi `conversation_members.muted_at` satırı). Hem sohbet bilgi penceresi hem de topluluk
- * "Hakkında" sekmesi bu tek bileşeni kullanır; sunucudaki karşılığı `setChatGroupMuted` (başkasının tercihine dokunamaz).
- */
-export function ChatMuteToggle({
+/** Kişisel sessize alma eylemi (anahtar da karo da aynı yolu kullanır): kendi `conversation_members.muted_at` satırını değiştirir. */
+export function useChatMute({
   groupId,
   mutedAt,
   onMutedChange,
@@ -39,6 +36,28 @@ export function ChatMuteToggle({
     onMutedChange(next);
     onToast(next ? t("groups.about.mutedToast") : t("groups.about.unmutedToast"));
   }
+
+  return { muted, busy: mute.busy, error: mute.error, toggle };
+}
+
+/**
+ * Sohbeti sessize alma (KİŞİYE ÖZEL: yalnız kendi `conversation_members.muted_at` satırı). Hem sohbet bilgi penceresi hem de topluluk
+ * "Hakkında" sekmesi bu tek bileşeni kullanır; sunucudaki karşılığı `setChatGroupMuted` (başkasının tercihine dokunamaz).
+ */
+export function ChatMuteToggle({
+  groupId,
+  mutedAt,
+  onMutedChange,
+  onToast,
+}: {
+  groupId: string;
+  mutedAt: string | null;
+  onMutedChange: (mutedAt: string | null) => void;
+  onToast: (message: string) => void;
+}) {
+  const { t } = useTranslation();
+  const mute = useChatMute({ groupId, mutedAt, onMutedChange, onToast });
+  const { muted, toggle } = mute;
 
   return (
     <div className="space-y-1.5">
@@ -76,14 +95,48 @@ export function LeaveCommunitySection({
   group,
   onLeft,
   onGoToMembers,
+  compact = false,
 }: {
   group: ChatGroup;
   onLeft: () => void;
   onGoToMembers: () => void;
+  /** Sohbet bilgi sayfasında: kart içinde tek tehlike satırı (açıklama onay penceresinde ve altında). */
+  compact?: boolean;
 }) {
   const { t } = useTranslation();
   const [confirm, setConfirm] = useState(false);
   const outcome = leaveOutcome(group.myRole, group.memberCount);
+
+  if (compact) {
+    return (
+      <>
+        {outcome === "must_transfer" ? (
+          <div className="space-y-2 px-4 py-3.5">
+            <p className="text-small text-text-secondary">{t("groups.about.ownerMustTransfer")}</p>
+            <Button type="button" variant="outline" size="sm" onClick={onGoToMembers}>
+              {t("groups.about.goTransfer")}
+            </Button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirm(true)}
+            data-leave-community
+            className="flex h-14 w-full items-center gap-3.5 px-4 text-left text-body text-danger transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft" aria-hidden>
+              <LogOut size={18} strokeWidth={1.75} />
+            </span>
+            {t("groups.about.leave")}
+          </button>
+        )}
+        {outcome !== "must_transfer" && <p className="px-4 pb-3.5 text-caption leading-relaxed text-text-muted">{t("groups.about.leaveAlsoChat")}</p>}
+        {confirm && (
+          <LeaveCommunityDialog groupId={group.id} name={group.name} role={group.myRole} memberCount={group.memberCount} onLeft={onLeft} onClose={() => setConfirm(false)} />
+        )}
+      </>
+    );
+  }
 
   return (
     <section className="space-y-2 border-t border-border-soft pt-5" aria-labelledby="leave-community-section-title">

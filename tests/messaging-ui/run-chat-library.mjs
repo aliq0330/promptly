@@ -200,13 +200,17 @@ await scenario("10. Kişi bilgisi: Ara sohbet aramasını açar; fotoğrafa doku
   await panel.locator("[data-contact-photo]").first().click();
   await panel.waitFor({ state: "detached" });
   await page.locator("[data-contact-open]").click();
-  await panel.locator("[data-contact-row='clear']").click();
+  const panelMenu = () => panel.getByRole("button", { name: "Sohbet seçenekleri" }).click();
+  await panelMenu();
+  await panel.getByRole("menuitem", { name: "Mesajları temizle" }).click();
   await page.getByRole("dialog").getByRole("heading", { name: "Mesajları temizle" }).waitFor();
   await page.getByRole("dialog").getByRole("button", { name: "Vazgeç" }).click();
-  await panel.locator("[data-contact-row='archive']").click();
-  await page.waitForFunction(() => document.querySelector("[data-contact-row='archive']")?.textContent?.includes("Arşivden çıkar"));
+  await panelMenu();
+  await panel.getByRole("menuitem", { name: "Arşivle" }).click();
+  await panelMenu();
+  await panel.getByRole("menuitem", { name: "Arşivden çıkar" }).waitFor();
   assert.ok(db.member(CONV, ME).archived_at, "arşivlendi");
-  await panel.locator("[data-contact-row='delete']").click();
+  await panel.getByRole("menuitem", { name: "Sohbeti sil" }).click();
   await page.getByRole("dialog").getByRole("heading", { name: "Sohbeti sil" }).waitFor();
 }, { setup: seed });
 
