@@ -157,12 +157,12 @@ export function bandTint(color: string): string {
  *   │ [status]                             ( ▶ )    │  ← the post's picture, rounded, no frame; the small round
  *   │                                               │    glyph is the type (video/audio/text/workflow/preset/
  *   │              (the picture / the art)          │    request — not shown for an image prompt)
- *   │  ░ on hover/focus: kicker, title, @user · time │
+ *   │  ░ kicker (type · tool) + title, always       │
  *   └──────────────────────────────────────────────┘
  *   (·) Name                       ♥ 12  💬 3  🔖  ⋮
  *
- * No visible title or description: the title is revealed over the picture on hover/keyboard focus (it stays the card's real
- * link for keyboard and screen-reader users). `art` is whatever fills the picture (the output, a prompt text, the steps…) and
+ * The kicker (type · tool) and the title sit over the picture's bottom edge at all times (docs/history/277-*; they used to appear only on
+ * hover/focus — never on a phone); the title is the card's real link for keyboard and screen-reader users. No description is drawn. `art` is whatever fills the picture (the output, a prompt text, the steps…) and
  * sets its height; `status` is always visible (Taslak, Açık/Kapandı, Alıntı…); `badges` (kicker, announced chip) and `meta`
  * appear with the title. `children` are extra lines (a request-response's provenance, a quote's note) between the picture and
  * the footer. Nothing here creates a stacking context outside the picture (no `isolate`/transform on the card), so the ⋮ menu
@@ -183,7 +183,7 @@ export function ContentCardPost({
 }: {
   /** `null` = unknown/removed author (shown as a generic user, no profile link). */
   author: Pick<UserProfile, "username" | "displayName" | "avatarUrl"> | null;
-  /** Muted part of the author line — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün"; shown with the title on hover. */
+  /** Muted part of the author line — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün"; kept for assistive tech only (not drawn on the picture). */
   meta: string;
   /** The small round glyph on the picture: what kind of post this is (skipped for an image prompt, whose picture says it). */
   typeIcon?: LucideIcon;
@@ -191,7 +191,7 @@ export function ContentCardPost({
   titleInArt?: boolean;
   /** Always-visible chips in the picture's bottom-right corner (clear of the type glyph and of a text surface's title) (`Badge`s: Taslak, Açık/Kapandı, Alıntı, Sabit…). */
   status?: React.ReactNode;
-  /** The kicker row shown with the title on hover (`ContentTypePill`, announced chip…). */
+  /** The kicker row drawn above the title on the picture (`ContentTypePill`, announced chip…). */
   badges?: React.ReactNode;
   menu?: React.ReactNode;
   /** What fills the picture: the output, a prompt box, the steps… It sets the picture's height. */
@@ -219,11 +219,12 @@ export function ContentCardPost({
             <TypeIcon size={18} strokeWidth={1.75} />
           </span>
         )}
-        {/* Title + kicker over the picture on hover / keyboard focus. The overlay lets clicks through to the stretched link; the title link inside it is the keyboard way in. */}
-        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-[2] space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3.5 pb-3 pt-12 opacity-0 transition-opacity duration-200 ease-soft group-focus-within:opacity-100 group-hover:opacity-100 [&_a]:pointer-events-auto [&_h2]:text-white [&_p]:text-white/85 [&_span]:text-white", status && "pr-24", titleInArt && "sr-only")}>
+        {/* Kicker (type · tool) + title over the picture, ALWAYS visible (docs/history/277-*). The overlay lets clicks through to the stretched link; the title link inside it is the keyboard way in. */}
+        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-[2] space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3.5 pb-3 pt-12 [&_a]:pointer-events-auto [&_h2]:text-white [&_span]:text-white", status && "pr-24", titleInArt && "sr-only")}>
           {badges && <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">{badges}</div>}
           {title}
-          {meta && <p className="truncate text-small leading-tight">{meta}</p>}
+          {/* "@user · time" is not drawn on the picture (the author row below says who); it stays for assistive tech. */}
+          {meta && <p className="sr-only">{meta}</p>}
         </div>
       </div>
       {children && <div className="space-y-2 px-0.5 pt-2.5 empty:hidden">{children}</div>}

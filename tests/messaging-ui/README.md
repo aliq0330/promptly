@@ -241,3 +241,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-interest.mjs
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-feed-scroll.mjs   # 3/3 beklenir
 ```
 
+## Kart başlığı her zaman görünür (`docs/history/277-*`)
+
+`run-card-title.mjs` (4 senaryo): görsel prompt kartında "GÖRSEL PROMPT · araç" + başlık üzerine gelmeden görünür (telefon), "@kullanıcı · zaman" resme yazılmaz, çok görselli kartın "+N" çipi sol üstte ve başlıkla çakışmaz, masaüstünde hover düzeni oynatmaz, İngilizce. Ağ taklitli; gerçek cihaza KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-card-title.mjs   # 4/4 beklenir
+```
+
