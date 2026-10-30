@@ -8,7 +8,6 @@ import { RequestCard } from "@/features/requests/request-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { QuoteCard } from "@/features/quotes/quote-card";
-import { AnnouncedProvider } from "@/features/communities/announced-chip";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
 import { InterestCardFrame, type InterestFeedback } from "./interest-feedback";
@@ -79,33 +78,30 @@ export function FeedGrid({
   // Each loaded page is its OWN column block (docs/history/276-*): a single CSS-columns container re-balances every card whenever one is appended, so
   // posts already on screen jumped between columns while the next page loaded. Blocks of one page never change once drawn (the last, partial one balances itself).
   const blocks = chunk(items, FEED_PAGE_SIZE);
-  // "Duyuruldu" çipleri (docs/history/215-*): görünen içeriklerin başvuru gönderileri tek istekte okunur.
   return (
-    <AnnouncedProvider entries={items.flatMap((item) => (item.kind === "quote" ? [] : [{ kind: item.kind, id: item.data.id }]))}>
-      <div ref={gridRef}>
-        {blocks.map((block, blockIndex) => (
-          <ContentGrid key={`block-${blockIndex}`} columns={layout === "home" ? "sm:columns-2" : undefined}>
-            {block.map((item, offset) => {
-              const index = blockIndex * FEED_PAGE_SIZE + offset;
-              return (
-                <div key={feedItemKey(item)} data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>
-                  <Reveal index={index}>
-                    {itemNote?.(item)}
-                    {interest ? (
-                      <InterestCardFrame interest={interest} item={item} index={index}>
-                        {card(item)}
-                      </InterestCardFrame>
-                    ) : (
-                      card(item)
-                    )}
-                  </Reveal>
-                </div>
-              );
-            })}
-          </ContentGrid>
-        ))}
-      </div>
-    </AnnouncedProvider>
+    <div ref={gridRef}>
+      {blocks.map((block, blockIndex) => (
+        <ContentGrid key={`block-${blockIndex}`} columns={layout === "home" ? "sm:columns-2" : undefined}>
+          {block.map((item, offset) => {
+            const index = blockIndex * FEED_PAGE_SIZE + offset;
+            return (
+              <div key={feedItemKey(item)} data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>
+                <Reveal index={index}>
+                  {itemNote?.(item)}
+                  {interest ? (
+                    <InterestCardFrame interest={interest} item={item} index={index}>
+                      {card(item)}
+                    </InterestCardFrame>
+                  ) : (
+                    card(item)
+                  )}
+                </Reveal>
+              </div>
+            );
+          })}
+        </ContentGrid>
+      ))}
+    </div>
   );
 }
 

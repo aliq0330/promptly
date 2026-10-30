@@ -2519,8 +2519,6 @@ export const translations = {
   "compose.untitledWorkflow": { tr: "Adsız workflow", en: "Untitled workflow" },
   "shareExisting.help": { tr: "Yalnız herkese açık ve yayında olan içeriklerin listelenir; alıntılamak içeriği kopyalamaz.", en: "Only your public, published content is listed; quoting doesn't copy it." },
   "shareExisting.open": { tr: "İçeriği aç", en: "Open content" },
-  "announced.in": { tr: "{{name}} topluluğunda alıntılandı", en: "Quoted in {{name}}" },
-  "announced.inMany": { tr: "{{count}} toplulukta alıntılandı", en: "Quoted in {{count}} communities" },
   "announceReport.ok": { tr: "Alıntılandı: {{names}}", en: "Quoted in: {{names}}" },
   "announceReport.failed": { tr: "Şu topluluklarda alıntılanamadı:", en: "Couldn't quote in:" },
   "publish.whoSees": { tr: "Kim görsün?", en: "Who can see it?" },

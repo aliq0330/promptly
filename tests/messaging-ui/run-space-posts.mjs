@@ -259,14 +259,15 @@ await scenario("5. Oluştur menüsü: 'Space' karosu Spaces'te oluşturma pencer
   assert.equal(await overflowFree(page), true);
 });
 
-await scenario("6. Genel akış: alıntılanmış içeriğin kartında 'X topluluğunda alıntılandı' çipi (tek toplu sorgu); Space alıntı kartında çip yok", async ({ page, state }) => {
+await scenario("6. Genel akış: alıntılanmış içeriğin kartında 'X topluluğunda alıntılandı' çipi YOK ve topluluk gönderisi sorgusu yapılmaz (docs/history/278-*)", async ({ page, state }) => {
   await openNewest(page);
   const prompt = page.locator("main article").filter({ hasText: "Duyurulmuş prompt" }).first();
-  await prompt.locator("[data-announced-chip]").waitFor();
-  assert.match(await prompt.locator("[data-announced-chip]").innerText(), /Işık Kulübü topluluğunda alıntılandı/);
+  await prompt.waitFor();
   await spaceCard(page).waitFor();
-  assert.equal(await spaceCard(page).locator("[data-announced-chip]").count(), 0);
-  assert.equal(state.announcedQueries, 1, "one batched query for the visible page");
+  await page.waitForTimeout(600);
+  assert.equal(await page.locator("[data-announced-chip]").count(), 0);
+  assert.equal(await page.getByText(/topluluğunda alıntılandı/).count(), 0);
+  assert.equal(state.announcedQueries, 0, "the card list no longer asks which communities quoted each post");
 });
 
 await scenario("7. İngilizce + telefon: Space alıntı kartı çevrilmiş, yatay taşma yok", async ({ page }) => {
@@ -275,7 +276,7 @@ await scenario("7. İngilizce + telefon: Space alıntı kartı çevrilmiş, yata
   await card.waitFor();
   await card.getByText("shared").first().waitFor();
   const prompt = page.locator("main article").filter({ hasText: "Duyurulmuş prompt" }).first();
-  await prompt.getByText("Quoted in Işık Kulübü").waitFor();
+  assert.equal(await prompt.getByText(/Quoted in/).count(), 0, "no 'Quoted in …' chip on the card (docs/history/278-*)");
   await card.scrollIntoViewIfNeeded();
   await page.waitForTimeout(600);
   await shot(page, "sp-mobile-card");
