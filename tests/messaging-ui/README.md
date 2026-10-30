@@ -249,3 +249,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-feed-scroll.
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-card-title.mjs   # 4/4 beklenir
 ```
 
+
+## Takip edilecek kişiler şeridi (`docs/history/285-*`)
+
+`run-creator-suggestions.mjs` (15 senaryo): Ana Sayfa'da şeridin 12. gönderiden sonra çıkması (ve 45 gönderide 12. + 42.; ikinci şeritte tekrar yok), her neden cümlesi (ortak takip, beğenilen yazar, etiket, araç, yedek), örnek hesap rozeti, "ilgini çekiyor mu?" kartıyla birlikte, iki sekmede tek `suggest_creators` isteği, karttaki ✕ (`dismiss_creator_suggestion` gövdesi, hata → kişi geri gelir + uyarı), başlıktaki ✕ (6 saatlik duraklama, yenilenince istek yok, süre dolunca geri), öneri yok/hata/12'den az gönderi, misafir, İngilizce + masaüstü taşma, tablet genişliği, `/discover?section=creators`. Ağ taklidi: `db.rpc.suggest_creators` / `dismiss_creator_suggestion` + `profiles?id=in.(…)` rotası. Gerçek Supabase'e KARŞI DENENMEDİ — kişilerin kimler olduğu `supabase/tests/creator-suggestions.sql`'dedir.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-creator-suggestions.mjs   # 15/15 beklenir
+```

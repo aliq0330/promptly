@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { PageContainer } from "@/components/ui/page-header";
 import { DiscoverFeed } from "@/features/feed/discover-feed";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -10,7 +11,9 @@ export default function DiscoverPage() {
   return (
     <PageContainer>
       <h1 className="sr-only">{t("nav.discover")}</h1>
-      <DiscoverFeed />
+      <Suspense fallback={null}>
+        <DiscoverFeed />
+      </Suspense>
     </PageContainer>
   );
 }
