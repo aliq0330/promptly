@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Heart, Info, Pencil, Plus, Quote as QuoteIcon, Bookmark, Search, Shapes, SlidersHorizontal, SearchX, Sparkles, SquareTerminal, Folder, Workflow as WorkflowIcon, X } from "lucide-react";
+import { Heart, Images, Info, Pencil, Plus, Quote as QuoteIcon, Bookmark, Search, Shapes, SlidersHorizontal, SearchX, Sparkles, SquareTerminal, Folder, Workflow as WorkflowIcon, X } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { OtherProfileActions, OwnProfileActions } from "./profile-actions";
 import { ProfileRail } from "./profile-rail";
@@ -38,6 +38,8 @@ import type { Collection, Prompt, PromptContentType, UserProfile } from "@/types
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns } from "@/features/content/content-card";
 import { ProfileSpacesPanel, usePublicSpaces, type PublicSpaces } from "@/features/spaces/public-spaces";
 import { ProfileQuotesPanel } from "@/features/quotes/profile-quotes-panel";
+import { ProfileResultsPanel } from "./profile-results-panel";
+import { fetchProfileResultCount } from "@/lib/supabase/prompt-results";
 import { fetchProfileQuoteCount } from "@/lib/supabase/quotes";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
@@ -54,7 +56,7 @@ function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
 }
 
 /** One flat set of sections since Meydan (docs/history/190-*). Since docs/history/272-* ALL of them sit in ONE "Promptlar ▾" menu pill (the tabs + "Daha fazla" of 243-* are gone), like Topluluklar / Spaces. */
-export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "drafts" | "saved" | "collections" | "spaces" | "quotes" | "liked" | "about";
+export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "drafts" | "saved" | "collections" | "spaces" | "quotes" | "results" | "liked" | "about";
 
 export function ProfileView({
   user,
@@ -99,6 +101,16 @@ export function ProfileView({
   useEffect(() => {
     let cancelled = false;
     fetchProfileQuoteCount(user.id).then((count) => !cancelled && setQuoteCount(count));
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
+
+  // Sonuçlar (docs/history/282-*): kişinin paylaştığı kullanıcı sonuçları; hiç yoksa başkasının profilinde bölüm yok (kendi profilinde boş durum + ipucu).
+  const [resultCount, setResultCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    fetchProfileResultCount(user.id).then((count) => !cancelled && setResultCount(count));
     return () => {
       cancelled = true;
     };
@@ -165,6 +177,7 @@ export function ProfileView({
       { key: "presets", label: t("nav.presets"), icon: SlidersHorizontal, meta: postCounts.presets },
     ];
     if (quoteCount > 0 || isOwnProfile) base.push({ key: "quotes", label: t("quotes.profile.tab"), icon: QuoteIcon, meta: quoteCount });
+    if (resultCount > 0 || isOwnProfile) base.push({ key: "results", label: t("results.profile.tab"), icon: Images, meta: resultCount });
     let firstOfGroup = true;
     const group = (item: SectionMenuItem<ProfileTabKey>) => {
       base.push(firstOfGroup ? { ...item, dividerBefore: true } : item);
@@ -179,7 +192,7 @@ export function ProfileView({
     if (!isOwnProfile && publicCollections.length > 0) group({ key: "collections", label: t("profile.tabCollections"), icon: Folder, meta: publicCollections.length });
     base.push({ key: "about", label: t("profile.tabAbout"), icon: Info, dividerBefore: true });
     return base;
-  }, [postCounts, quoteCount, isOwnProfile, liked.total, publicCollections.length, spaceCount, t]);
+  }, [postCounts, quoteCount, resultCount, isOwnProfile, liked.total, publicCollections.length, spaceCount, t]);
 
   const normalizedSearch = search.trim().toLocaleLowerCase("tr");
 
@@ -337,6 +350,8 @@ export function ProfileView({
               </PagedListState>
             ) : activeTab === "quotes" ? (
               <ProfileQuotesPanel authorId={user.id} isOwn={isOwnProfile} />
+            ) : activeTab === "results" ? (
+              <ProfileResultsPanel creatorId={user.id} isOwn={isOwnProfile} />
             ) : activeTab === "presets" ? (
               <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} />
             ) : activeTab === "saved" ? (

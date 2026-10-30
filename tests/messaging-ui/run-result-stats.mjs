@@ -1,4 +1,4 @@
-// Sonuç kartı + İstatistik penceresi (docs/history/281-*): sonuç kartında yalnız görsel — sol altta yaratıcı, sağ altta tepki düğmesi;
+// Sonuç kartı + İstatistik penceresi (docs/history/281-*) + profildeki "Sonuçlar" bölümü (docs/history/282-*): sonuç kartında yalnız görsel — sol altta yaratıcı, sağ altta tepki düğmesi;
 // istatistik penceresinde özet kutuları = sekmeler, tepki dağılımı, tepki rozetli satırlar, yorum balonu. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
@@ -12,7 +12,8 @@ const server = await serve(PORT);
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? undefined, args: ["--no-sandbox"] });
 const results = [];
 const ONLY = process.env.ONLY ?? "";
-const json = (route, body, status = 200, headers = {}) => route.fulfill({ status, contentType: "application/json", headers, body: JSON.stringify(body) });
+const CORS = { "access-control-allow-origin": "*", "access-control-expose-headers": "content-range" };
+const json = (route, body, status = 200, headers = {}) => route.fulfill({ status, contentType: "application/json", headers: { ...CORS, ...headers }, body: JSON.stringify(body) });
 
 const profile = (u) => ({ id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 1, following_count: 1, created_at: "2026-01-01T00:00:00Z", interests: [], is_demo: false });
 const thumb = (a, b) => `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="${a}"/><circle cx="200" cy="200" r="90" fill="${b}"/></svg>`)}`;
@@ -28,10 +29,10 @@ const REACTORS = [
 ];
 const engager = (u, at, body = null) => ({ actor_id: u.id, actor_username: u.username, actor_display_name: u.display_name, actor_avatar_url: null, actor_follower_count: 1, interacted_at: at, comment_id: body ? "cm" : null, comment_body: body });
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr" } = {}) {
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", path = PAGES.prompt, noResults = false } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { engagerCalls: [] };
+  const state = { engagerCalls: [], resultCalls: [] };
   db.rpc.content_engagers = (body) => {
     state.engagerCalls.push(body);
     return { body: body.p_kind === "comments" ? [engager(U.bob, "2026-09-21T10:00:00Z", "Işığı çok iyi yakalamışsın.")] : [engager(U.carol, "2026-09-21T09:00:00Z")] };
@@ -41,8 +42,12 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   await installMock(context, db, {});
   await installDetailData(context);
   await context.route(/\/rest\/v1\/prompt_results/, (route) => {
-    const accept = route.request().headers().accept ?? "";
-    return json(route, accept.includes("vnd.pgrst.object") ? RESULTS[0] : RESULTS, 200, { "content-range": `0-${RESULTS.length - 1}/${RESULTS.length}` });
+    const req = route.request();
+    state.resultCalls.push({ method: req.method(), search: new URL(req.url()).search });
+    const rows = noResults ? [] : RESULTS;
+    if (req.method() === "HEAD") return route.fulfill({ status: 200, headers: { ...CORS, "content-range": `*/${rows.length}` }, body: "" });
+    const accept = req.headers().accept ?? "";
+    return json(route, accept.includes("vnd.pgrst.object") ? rows[0] ?? null : rows, 200, { "content-range": rows.length ? `0-${rows.length - 1}/${rows.length}` : "*/0" });
   });
   await context.route(/\/rest\/v1\/reaction_stats/, (route) => {
     const ids = (new URL(route.request().url()).searchParams.get("target_id") ?? "").replace(/^in\.\(|\)$/g, "").split(",").filter(Boolean);
@@ -64,8 +69,8 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   try {
-    await page.goto(BASE + PAGES.prompt);
-    await page.locator("[data-detail-actions]").waitFor();
+    await page.goto(BASE + path);
+    if (path === PAGES.prompt) await page.locator("[data-detail-actions]").waitFor();
     await fn({ page, state });
     assert.deepEqual(errors, [], "no uncaught page errors");
     results.push(["PASS", name]);
@@ -155,6 +160,51 @@ await scenario("2c. İstatistik telefonda (390px): kart %75 yüksekliği aşmaz,
   assert.ok(Math.abs(first.y - last.y) < 2, `tiles share one row (${first.y} vs ${last.y})`);
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 390, height: 844 }, lang: "en" });
+
+const openSection = async (page, key) => {
+  const menu = page.locator("[data-profile-controls] [data-section-menu]");
+  await menu.waitFor();
+  await menu.click();
+  await page.locator(`[data-section-option="${key}"]`).click();
+};
+/** The menu's rows ("Sonuçlar 2"), read with the menu open. */
+const sectionRows = async (page) => {
+  await page.locator("[data-profile-controls] [data-section-menu]").click();
+  const rows = await page.locator("[data-section-option]").evaluateAll((els) => els.map((el) => el.textContent.replace(/\s+/g, " ").trim()));
+  await page.keyboard.press("Escape");
+  return rows;
+};
+
+await scenario("3. Profil: 'Sonuçlar' bölümü menüde sayıyla (2); açınca kişinin sonuçları ResultCard olarak, sorgu creator_id + topluluğa özgü prompt dışı; karttan sonuç sayfasına gidilir", async ({ page, state }) => {
+  await page.locator("[data-profile-controls] [data-section-menu]").waitFor();
+  await page.waitForTimeout(300);
+  const items = await sectionRows(page);
+  assert.ok(items.some((n) => /Sonuçlar\s*2/.test(n)), `menu lists Sonuçlar 2: ${items.join(" | ")}`);
+  await openSection(page, "results");
+  const grid = page.locator("[data-profile-results]");
+  await grid.waitFor();
+  assert.equal(await grid.locator("div.group").count(), 2);
+  const call = state.resultCalls.find((c) => c.method === "GET" && /creator_id=eq\./.test(c.search) && /range|offset|limit/i.test(c.search + "range"));
+  assert.ok(call, "list was read by creator");
+  assert.match(call.search, new RegExp(`creator_id=eq\\.${U.bob.id}`));
+  assert.match(call.search, /prompts\.community_id=is\.null/, "community-only content is left out");
+  assert.match((await grid.locator("a[aria-label]").first().getAttribute("href")) ?? "", /\/results\/local\/?\?id=/);
+  assert.equal(await overflowFree(page), true);
+}, { path: `/profile/real?username=${U.bob.username}` });
+
+await scenario("3b. Profil: sonucu olmayan kişinin profilinde 'Sonuçlar' bölümü yok", async ({ page }) => {
+  await page.locator("[data-profile-controls] [data-section-menu]").waitFor();
+  await page.waitForTimeout(400);
+  const items = await sectionRows(page);
+  assert.ok(!items.some((n) => /Sonuçlar/.test(n)), `no Sonuçlar for a visitor: ${items.join(" | ")}`);
+}, { path: `/profile/real?username=${U.bob.username}`, noResults: true });
+
+await scenario("3c. Kendi profilim: sonuç yokken bölüm görünür ve boş durum prompt keşfetmeye yönlendirir; İngilizce", async ({ page }) => {
+  await page.locator("[data-profile-controls] [data-section-menu]").waitFor();
+  await openSection(page, "results");
+  await page.getByText("Results you share after using a prompt are collected here.").waitFor();
+  await page.getByRole("link", { name: /Explore|Keşfet/ }).first().waitFor();
+}, { path: `/profile/real?username=${U.alice.username}`, noResults: true, lang: "en" });
 
 console.log(results.map(([s, n]) => `${s === "PASS" ? "✓" : "✗"} ${n}`).join("\n"));
 const failed = results.filter(([s]) => s !== "PASS").length;

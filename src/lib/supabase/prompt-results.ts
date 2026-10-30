@@ -3,6 +3,7 @@ import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { audioPlaceholderCover, captureVideoPosterBlob, detectMediaTypeFromFile, prepareImageResultUploads } from "@/lib/prompt-result-media";
+import type { PagedResult } from "./paged";
 import type { PromptResult, PromptResultMediaType, PromptResultSummary } from "@/types";
 
 interface ResultSummaryRow {
@@ -71,6 +72,38 @@ export async function fetchResultsForPrompt(
     console.error("fetchResultsForPrompt", err);
     return { results: [], total: 0 };
   }
+}
+
+export const PROFILE_RESULTS_PAGE = 24;
+
+/**
+ * A person's shared results for the profile's "Sonuçlar" section (docs/history/282-*), newest first, a page at a time. The inner join on the
+ * prompt keeps results of a community's own content (`prompts.community_id` set) off the profile — community content never shows on an
+ * author's page; everything else is the table's own read rule (a result is readable wherever its prompt is).
+ */
+export async function fetchResultsByCreatorPage(creatorId: string, offset: number, limit = PROFILE_RESULTS_PAGE): Promise<PagedResult<PromptResultSummary>> {
+  const { data, error, count } = await supabase
+    .from("prompt_results")
+    .select(`${RESULT_LIST_SELECT}, prompts:prompt_id!inner ( community_id )`, offset === 0 ? { count: "exact" } : undefined)
+    .eq("creator_id", creatorId)
+    .is("prompts.community_id", null)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as ResultSummaryRow[];
+  return { items: rows.map(mapResultSummaryRow), total: offset === 0 ? count ?? null : null, nextOffset: rows.length === limit ? offset + limit : null };
+}
+
+/** How many results the profile section lists (the menu's number; a visitor only sees the section when it is above 0). */
+export async function fetchProfileResultCount(creatorId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("prompt_results")
+    .select("id, prompts:prompt_id!inner ( community_id )", { count: "exact", head: true })
+    .eq("creator_id", creatorId)
+    .is("prompts.community_id", null);
+  if (error) return 0;
+  return count ?? 0;
 }
 
 interface ResultDetailRow extends ResultSummaryRow {
