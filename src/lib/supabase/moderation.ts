@@ -1,13 +1,20 @@
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import type { ReportTargetType } from "./reports";
+import type { ReportReasonCode } from "@/lib/report-reasons";
 
 export type ReportStatus = "open" | "reviewed" | "dismissed";
 export type ModerationAction = "dismissed" | "reviewed" | "removed";
+/** Kuyruk neden süzgeci: hepsi, bir hazır neden ya da kodsuz eski (serbest metin) şikâyetler. */
+export type ReportReasonFilter = "all" | "legacy" | ReportReasonCode;
 
 export interface ModerationReport {
   id: string;
   status: ReportStatus;
+  /** Hazır neden kodu (docs/history/284-*); eski serbest metin şikâyetlerde null — o zaman `reason` ham metindir. */
+  reasonCode: ReportReasonCode | null;
+  /** Raportörün isteğe bağlı ek bilgisi. */
+  details: string | null;
   reason: string;
   createdAt: string;
   reviewedAt: string | null;
@@ -37,6 +44,8 @@ interface QueueRow {
   id: string;
   status: ReportStatus;
   reason: string;
+  reason_code?: ReportReasonCode | null;
+  details?: string | null;
   created_at: string;
   reviewed_at: string | null;
   resolution_note: string | null;
@@ -51,12 +60,18 @@ interface QueueRow {
   target_href: string | null;
 }
 
-export async function fetchReportQueue(status: ReportStatus | "all"): Promise<ModerationReport[]> {
-  const { data, error } = await supabase.rpc("moderation_report_queue", { p_status: status });
+export async function fetchReportQueue(status: ReportStatus | "all", reason: ReportReasonFilter = "all"): Promise<ModerationReport[]> {
+  let { data, error } = await supabase.rpc("moderation_report_queue", { p_status: status, p_reason: reason });
+  // Migration henüz uygulanmadıysa (iki argümanlı imza yok): eski tek argümanlı kuyruğa düş; neden kodu/ayrıntı gelmez, süzgeç istemcide uygulanmaz.
+  if (error && (error.code === "PGRST202" || /could not find the function/i.test(error.message))) {
+    ({ data, error } = await supabase.rpc("moderation_report_queue", { p_status: status }));
+  }
   if (error) throw new Error(error.message);
   return ((data ?? []) as QueueRow[]).map((row) => ({
     id: row.id,
     status: row.status,
+    reasonCode: row.reason_code ?? null,
+    details: row.details ?? null,
     reason: row.reason,
     createdAt: row.created_at,
     reviewedAt: row.reviewed_at,

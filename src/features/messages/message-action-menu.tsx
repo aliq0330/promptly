@@ -1,74 +1,30 @@
 "use client";
 
-import { useState, type CSSProperties, type RefObject } from "react";
+import type { CSSProperties, RefObject } from "react";
 import { CheckCheck, Copy, CornerUpLeft, Flag, Pencil, Pin, PinOff, ShieldAlert, Star, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fileReport } from "@/lib/supabase/reports";
+import { useReport } from "@/features/moderation/report-provider";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Message } from "@/types";
 import type { DeleteMode, MessageBubbleActions } from "./message-bubble-types";
 
-/** Compact inline "Şikayet Et" — this app has no modal (Bölüm 9.2), so it expands into a one-line reason field inside the menu itself instead of opening a second layer. */
-function ReportMessageMenuItem({ messageId }: { messageId: string }) {
+/** "Şikayet Et": merkezi şikâyet penceresini açar (docs/history/284-*); menü kapansa da pencere `ReportProvider`'da yaşar. */
+function ReportMessageMenuItem({ messageId, preview }: { messageId: string; preview: string | null }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
-
+  const { openReport } = useReport();
   if (!user) return null;
-  if (done) {
-    return <p className="px-3 py-2 text-sm text-text-muted">{t("messages.reported")}</p>;
-  }
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        role="menuitem"
-        onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
-      >
-        <Flag size={14} />
-        {t("messages.reportAction")}
-      </button>
-    );
-  }
-
-  async function handleSubmit() {
-    if (!reason.trim() || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await fileReport(user!.id, "message", messageId, reason);
-      setDone(true);
-    } catch (err) {
-      console.error("fileReport", err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
-    <div className="space-y-1.5 px-3 py-2">
-      <input
-        type="text"
-        value={reason}
-        onChange={(event) => setReason(event.target.value)}
-        placeholder={t("messages.reportReasonPlaceholder")}
-        autoFocus
-        className="h-8 w-full rounded border border-border bg-background px-2 text-xs text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
-      />
-      <div className="flex items-center gap-3 text-xs">
-        <button type="button" onClick={handleSubmit} disabled={!reason.trim() || isSubmitting} className="font-medium text-primary disabled:opacity-50">
-          {t("common.send")}
-        </button>
-        <button type="button" onClick={() => setOpen(false)} className="text-text-muted hover:text-text">
-          {t("common.cancelAction")}
-        </button>
-      </div>
-    </div>
+    <button
+      type="button"
+      role="menuitem"
+      onClick={() => openReport({ type: "message", id: messageId, title: preview })}
+      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+    >
+      <Flag size={14} />
+      {t("messages.reportAction")}
+    </button>
   );
 }
 
@@ -253,7 +209,7 @@ export function MessageActionMenu({
         </>
       ) : (
         <>
-          <ReportMessageMenuItem messageId={message.id} />
+          <ReportMessageMenuItem messageId={message.id} preview={message.body ? message.body.slice(0, 120) : null} />
           {actions.onReportToStaff && !message.deletedAt && (
             <MenuItem icon={<Flag size={14} />} label={t("communities.report.toStaff")} onClick={() => actions.onReportToStaff?.(message)} />
           )}

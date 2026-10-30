@@ -8,6 +8,7 @@ import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import { callRpc, fetchCommunityCards, PROFILE_EMBED, toGroupError, type CommunityCard } from "./chat-groups";
 import { fetchSpaceFeedCards, type SpaceFeedCard } from "./spaces";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/lib/chat-groups";
+import type { ReportReasonCode } from "@/lib/report-reasons";
 import { isDiscoverFeedSource, orderByIds, type DiscoverFeedSource } from "@/lib/community-home";
 import { parseInviteResult, parseGroupJoinToken, type InviteResult } from "@/lib/chat-groups";
 import {
@@ -982,10 +983,6 @@ export async function dispatchMyEventReminders(): Promise<number> {
 // Raporlar ve moderasyon kuyruğu
 // ---------------------------------------------------------------------------------------------
 
-export async function reportCommunityContent(groupId: string, kind: "post" | "message", targetId: string, reason: string): Promise<void> {
-  await callRpc("report_community_content", { p_group_id: groupId, p_kind: kind, p_target_id: targetId, p_reason: reason.trim() });
-}
-
 export interface CommunityReport {
   id: string;
   kind: "post" | "message";
@@ -994,6 +991,9 @@ export interface CommunityReport {
   postId: string | null;
   messageId: string | null;
   reason: string;
+  /** Hazır neden kodu (docs/history/284-*); eski serbest metin raporlarda null. */
+  reasonCode: ReportReasonCode | null;
+  details: string | null;
   status: "open" | "resolved" | "dismissed";
   resolution: string | null;
   createdAt: string;
@@ -1008,7 +1008,7 @@ export async function fetchCommunityReports(communityId: string, status: "open" 
   let query = supabase
     .from("community_reports")
     .select(
-      `id, target_kind, post_id, message_id, target_user_id, reason, status, resolution, created_at, resolved_at, reporter:reporter_id ( ${PROFILE_EMBED} ),
+      `id, target_kind, post_id, message_id, target_user_id, reason, reason_code, details, status, resolution, created_at, resolved_at, reporter:reporter_id ( ${PROFILE_EMBED} ),
        messages ( body, deleted_at ), community_posts ( content_type, prompts ( title ), prompt_requests ( title ), workflows ( title ), presets ( title ) )`,
     )
     .eq("community_id", communityId);
@@ -1016,7 +1016,7 @@ export async function fetchCommunityReports(communityId: string, status: "open" 
   const { data, error } = await query.order("id", { ascending: true }).limit(limit + 1);
   if (error) throw toGroupError(error);
   type Row = {
-    id: string; target_kind: "post" | "message"; post_id: string | null; message_id: string | null; target_user_id: string | null; reason: string;
+    id: string; target_kind: "post" | "message"; post_id: string | null; message_id: string | null; target_user_id: string | null; reason: string; reason_code: ReportReasonCode | null; details: string | null;
     status: "open" | "resolved" | "dismissed"; resolution: string | null; created_at: string; resolved_at: string | null; reporter: ProfileRow | null;
     messages: { body: string | null; deleted_at: string | null } | null;
     community_posts: { prompts: { title: string } | null; prompt_requests: { title: string } | null; workflows: { title: string } | null; presets: { title: string } | null } | null;
@@ -1026,7 +1026,7 @@ export async function fetchCommunityReports(communityId: string, status: "open" 
     const post = row.community_posts;
     return {
       id: row.id, kind: row.target_kind, reporter: row.reporter ? mapProfileRow(row.reporter) : null, targetUserId: row.target_user_id,
-      postId: row.post_id, messageId: row.message_id, reason: row.reason, status: row.status, resolution: row.resolution, createdAt: row.created_at, resolvedAt: row.resolved_at,
+      postId: row.post_id, messageId: row.message_id, reason: row.reason, reasonCode: row.reason_code ?? null, details: row.details ?? null, status: row.status, resolution: row.resolution, createdAt: row.created_at, resolvedAt: row.resolved_at,
       messagePreview: row.messages && !row.messages.deleted_at ? row.messages.body : null,
       postTitle: post ? (post.prompts?.title ?? post.prompt_requests?.title ?? post.workflows?.title ?? post.presets?.title ?? null) : null,
     };

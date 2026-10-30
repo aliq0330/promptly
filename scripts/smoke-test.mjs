@@ -65,6 +65,8 @@ const CHECKS = [
   { name: "rpc chat_shared_items (docs/history/271-*)", rpc: "chat_shared_items", body: { p_conversation_id: "00000000-0000-4000-8000-000000000000", p_kind: "photos", p_limit: 1 }, deniedOk: true, soft: true },
   { name: "rpc set_content_interest (İlgimi çekiyor / çekmiyor, docs/history/275-*; yalnız oturumlu)", rpc: "set_content_interest", body: { p_kind: "prompt", p_id: "00000000-0000-4000-8000-000000000000", p_value: null }, deniedOk: true, soft: true },
   { name: "content_interest (kişinin kendi cevapları; ziyaretçiye kapalı, docs/history/275-*)", get: () => `content_interest?select=${encodeURIComponent("id,prompt_id,request_id,workflow_id,preset_id,value")}&limit=1`, deniedOk: true, soft: true },
+  { name: "rpc submit_report (merkezi şikâyet, docs/history/284-*; yalnız oturumlu)", rpc: "submit_report", body: { p_target_type: "prompt", p_target_id: "00000000-0000-4000-8000-000000000000", p_reason_code: "spam", p_details: null }, deniedOk: true, soft: true },
+  { name: "rpc moderation_report_queue 2 argümanlı (neden kodu + ayrıntı, docs/history/284-*; yalnız moderatör)", rpc: "moderation_report_queue", body: { p_status: "open", p_reason: "all" }, deniedOk: true, soft: true },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 

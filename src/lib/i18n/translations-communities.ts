@@ -429,13 +429,6 @@ export const communityTranslations = {
   // ---- Rapor / moderasyon ----
   "communities.report.menu": { tr: "Topluluk yöneticilerine bildir", en: "Report to community staff" },
   "communities.report.toStaff": { tr: "Topluluk yöneticilerine bildir", en: "Report to community staff" },
-  "communities.report.postTitle": { tr: "Gönderiyi bildir", en: "Report this post" },
-  "communities.report.messageTitle": { tr: "Mesajı bildir", en: "Report this message" },
-  "communities.report.help": { tr: "Bildirimin yalnızca bu topluluğun yöneticilerine ve moderatörlerine gider; karar verildiğinde haberdar edilirsin.", en: "Your report goes to this community's admins and moderators only; you're notified when it's decided." },
-  "communities.report.reasonLabel": { tr: "Neden?", en: "Why?" },
-  "communities.report.reasonInvalid": { tr: "Neden {{min}}–{{max}} karakter olmalı.", en: "The reason must be {{min}}–{{max}} characters." },
-  "communities.report.submit": { tr: "Bildir", en: "Report" },
-  "communities.report.sentToast": { tr: "Bildirimin yöneticilere iletildi.", en: "Your report was sent to the staff." },
   "communities.moderation.title": { tr: "Moderasyon kuyruğu", en: "Moderation queue" },
   "communities.moderation.help": { tr: "Üyelerin bildirdiği gönderiler ve sohbet mesajları. Kararlar denetim kaydına yazılır.", en: "Posts and chat messages reported by members. Decisions are logged." },
   "communities.moderation.filterAria": { tr: "Rapor durumu", en: "Report status" },

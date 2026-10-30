@@ -15,7 +15,7 @@ import { ChatHeaderMenu } from "@/features/groups/chat-header-menu";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { GroupInfoModal, type GroupInfoFocus } from "@/features/groups/group-info-modal";
 import { LeaveCommunityDialog } from "@/features/groups/leave-community-dialog";
-import { ReportModal } from "@/features/communities/report-modal";
+import { useReport } from "@/features/moderation/report-provider";
 import { useGroupSenders } from "@/features/groups/use-group-senders";
 import { moderateChatGroupMessage, setChatGroupMuted, toGroupError } from "@/lib/supabase/chat-groups";
 import { can, canModerateMessage, canPostInGroup, leaveOutcome } from "@/lib/chat-groups";
@@ -214,7 +214,7 @@ export function LocalConversationView() {
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [searchOpen, setSearchOpen] = useState(false);
   const [infoMessage, setInfoMessage] = useState<Message | null>(null);
-  const [reportMessage, setReportMessage] = useState<Message | null>(null);
+  const { openReport } = useReport();
   const [hasNewer, setHasNewer] = useState(false);
   const hasNewerRef = useRef(false);
   const [ackVersion, setAckVersion] = useState(0);
@@ -1564,7 +1564,7 @@ export function LocalConversationView() {
                 onTogglePin: (target) => void setPinState(target, !pinned.pinnedIds.has(target.id)),
                 onCopy: copyMessage,
                 onShowInfo: isGroup ? setInfoMessage : undefined,
-                onReportToStaff: isGroup ? setReportMessage : undefined,
+                onReportToStaff: isGroup && group ? (message) => openReport({ type: "chat_message", id: message.id, title: message.body ? message.body.slice(0, 120) : null, subtitle: group.name }) : undefined,
                 onStartReply: setReplyingTo,
                 onStartEdit: startEdit,
                 onCancelEdit: () => setEditingId(null),
@@ -1740,18 +1740,6 @@ export function LocalConversationView() {
       {libraryType && user && <ChatLibraryPicker userId={user.id} initialType={libraryType} onPick={attachLibraryItem} onClose={() => setLibraryType(null)} />}
       {importOpen && <ImportPromptsModal onClose={() => setImportOpen(false)} onImported={() => showToast(t("messages.attach.imported"))} />}
       {infoMessage && <MessageInfoModal message={infoMessage} onClose={() => setInfoMessage(null)} />}
-      {reportMessage && group && (
-        <ReportModal
-          communityId={group.id}
-          kind="message"
-          targetId={reportMessage.id}
-          onClose={() => setReportMessage(null)}
-          onReported={() => {
-            setReportMessage(null);
-            setToast(t("communities.report.sentToast"));
-          }}
-        />
-      )}
       {groupInfoFocus && isGroup && (
         <GroupInfoModal
           conversation={conversation}

@@ -13,6 +13,7 @@ import { useAsyncAction } from "@/features/groups/use-async-action";
 import { fetchCommunityReports, resolveCommunityReport, type CommunityReport } from "@/lib/supabase/communities";
 import { communityChatHref } from "@/lib/communities";
 import { formatRelativeTime, profileHref } from "@/lib/utils";
+import { REPORT_REASON_TITLE } from "@/features/moderation/report-modal";
 import { useGrowingList } from "@/features/content/use-growing-list";
 import { LoadMore } from "@/features/feed/load-more";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -94,8 +95,9 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
               )}
               <p className="break-words text-small text-text-secondary">
                 <span className="font-medium text-text">{t("communities.moderation.reason")}: </span>
-                {report.reason}
+                {report.reasonCode ? t(REPORT_REASON_TITLE[report.reasonCode]) : report.reason}
               </p>
+              {report.details && <p className="whitespace-pre-line break-words text-small text-text-secondary">{report.details}</p>}
               {report.reporter && (
                 <p className="flex items-center gap-1.5 text-caption text-text-muted">
                   <Avatar src={report.reporter.avatarUrl} alt={report.reporter.displayName} size={16} />

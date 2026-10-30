@@ -9,7 +9,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { LoadMore } from "@/features/feed/load-more";
 import { blockUser } from "@/lib/supabase/blocks";
-import { fileReport } from "@/lib/supabase/reports";
+import { ReportModal } from "@/features/moderation/report-modal";
 import {
   addStoryToHighlight,
   fetchHighlights,
@@ -291,63 +291,9 @@ function SheetLoading() {
   );
 }
 
+/** Hikâye şikâyeti: merkezi şikâyet penceresi (docs/history/284-*); hikâye görüntüleyicisi açıkken oynatma durur (`sheet` durumu). */
 export function ReportStorySheet({ storyId, onClose }: { storyId: string; onClose: () => void }) {
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  const [reason, setReason] = useState("");
-  const [state, setState] = useState<"idle" | "sending" | "done">("idle");
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit() {
-    if (!user || !reason.trim()) return;
-    setState("sending");
-    setError(null);
-    try {
-      await fileReport(user.id, "story", storyId, reason);
-      setState("done");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("stories.error.generic"));
-      setState("idle");
-    }
-  }
-
-  return (
-    <ViewerSheet title={t("stories.report.title")} onClose={onClose} labelId="story-report-title">
-      {state === "done" ? (
-        <p role="status" className="py-4 text-small text-text">
-          {t("stories.report.done")}
-        </p>
-      ) : (
-        <form
-          className="space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void submit();
-          }}
-        >
-          <label className="block text-small text-text-secondary" htmlFor="story-report-reason">
-            {t("stories.report.reasonLabel")}
-          </label>
-          <textarea
-            id="story-report-reason"
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            rows={3}
-            maxLength={500}
-            className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
-          />
-          {error && (
-            <p role="alert" className="text-small text-danger">
-              {error}
-            </p>
-          )}
-          <Button type="submit" disabled={!reason.trim() || state === "sending"} className="w-full">
-            {state === "sending" ? t("common.sending") : t("stories.report.submit")}
-          </Button>
-        </form>
-      )}
-    </ViewerSheet>
-  );
+  return <ReportModal target={{ type: "story", id: storyId }} onClose={onClose} />;
 }
 
 export function ConfirmSheet({

@@ -10,7 +10,8 @@ import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useToast } from "@/features/groups/use-toast";
-import { ReportModal } from "./report-modal";
+import { ReportModal } from "@/features/moderation/report-modal";
+import { communityPostReportTarget } from "./post-report";
 import { DropdownMenu, MenuItem } from "./dropdown-menu";
 import { PostScopeProvider } from "./post-scope";
 import { summarizeContent } from "./content-summary";
@@ -227,16 +228,7 @@ export function CommunityPostPage() {
         />
       )}
       {dialog === "report" && (
-        <ReportModal
-          communityId={post.communityId}
-          kind="post"
-          targetId={post.id}
-          onClose={() => setDialog(null)}
-          onReported={() => {
-            setDialog(null);
-            show(t("communities.report.sentToast"));
-          }}
-        />
+        <ReportModal target={communityPostReportTarget(post)} onClose={() => setDialog(null)} />
       )}
       {toastNode}
     </div>

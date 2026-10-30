@@ -573,6 +573,17 @@ export function setupCommunities(db) {
       db.reports.push({ id: crypto.randomUUID(), community_id: body.p_group_id, reporter_id: signedIn, target_kind: body.p_kind, post_id: body.p_kind === "post" ? body.p_target_id : null, message_id: body.p_kind === "message" ? body.p_target_id : null, target_user_id: null, reason: body.p_reason, status: "open", resolution: null, created_at: db.stamp(), resolved_at: null });
       return json(200, crypto.randomUUID());
     }
+    // Merkezi şikâyet (docs/history/284-*): topluluk gönderisi / sohbet mesajı `community_reports`'a yönlenir.
+    if (table === "rpc/submit_report") {
+      log("submit_report", body);
+      const kind = body.p_target_type === "community_post" ? "post" : body.p_target_type === "chat_message" ? "message" : null;
+      if (!kind) return err("report_target_not_found");
+      const cid = kind === "post" ? db.posts.find((p) => p.id === body.p_target_id)?.community_id : db.messages.find((m) => m.id === body.p_target_id)?.conversation_id;
+      if (!cid) return err("report_target_not_found");
+      if (!db.member(cid, signedIn)) return err("forbidden");
+      db.reports.push({ id: crypto.randomUUID(), community_id: cid, reporter_id: signedIn, target_kind: kind, post_id: kind === "post" ? body.p_target_id : null, message_id: kind === "message" ? body.p_target_id : null, target_user_id: null, reason: body.p_reason_code, reason_code: body.p_reason_code, details: body.p_details, status: "open", resolution: null, created_at: db.stamp(), resolved_at: null });
+      return json(200, crypto.randomUUID());
+    }
     if (table === "community_reports" && method === "GET") {
       const cid = eq(q, "community_id");
       const status = q.get("status");
