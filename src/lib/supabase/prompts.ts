@@ -387,12 +387,17 @@ export async function searchPrompts(query: string, filters: ContentSearchFilters
  * now.)
  */
 export async function deleteRealPrompt(promptId: string): Promise<void> {
-  // DB satırları cascade ile gider ama Storage dosyaları gitmez — silmeden
-  // ÖNCE yolları topla, silme başarılı olursa dosyaları kaldır.
-  const [{ data: media }, { data: results }] = await Promise.all([
+  // DB satırları cascade ile gider ama Storage dosyaları gitmez — silmeden ÖNCE yolları topla, silme başarılı olursa dosyaları kaldır.
+  // Kullanıcı sonuçları artık promptla birlikte SİLİNMEZ (docs/history/283-*): yetim kalıp sahiplerinde durur, dosyaları da durur.
+  // Yalnız topluluğa özgü içeriğin sonuçları onunla gider (veritabanı tetikleyicisi); ancak o zaman dosyaları da kaldırılır.
+  const [{ data: media }, { data: promptRow }] = await Promise.all([
     supabase.from("prompt_media").select("url").eq("prompt_id", promptId),
-    supabase.from("prompt_results").select("media_url, thumbnail_url").eq("prompt_id", promptId),
+    supabase.from("prompts").select("community_id").eq("id", promptId).maybeSingle(),
   ]);
+  const goesWithPrompt = Boolean((promptRow as { community_id: string | null } | null)?.community_id);
+  const { data: results } = goesWithPrompt
+    ? await supabase.from("prompt_results").select("media_url, thumbnail_url").eq("prompt_id", promptId)
+    : { data: [] as Array<{ media_url: string | null; thumbnail_url: string | null }> };
   const { error } = await supabase.from("prompts").delete().eq("id", promptId);
   if (error) throw new Error(error.message);
   await removeStorageObjectsByUrl(
@@ -403,6 +408,35 @@ export async function deleteRealPrompt(promptId: string): Promise<void> {
     "result-media",
     ((results ?? []) as Array<{ media_url: string | null; thumbnail_url: string | null }>).flatMap((r) => [r.media_url, r.thumbnail_url]),
   );
+}
+
+export interface PromptDeleteImpact {
+  title: string;
+  likeCount: number;
+  commentCount: number;
+  /** A community's own content: its results go with it; otherwise they stay with their creators (docs/history/283-*). */
+  communityContent: boolean;
+  resultCount: number;
+  /** Up to three result pictures, newest first, for the confirmation's thumbnail strip. */
+  resultThumbnails: Array<string | null>;
+}
+
+/** What deleting this prompt takes along / leaves behind — read for the confirmation dialog; `null` when the prompt can't be read. */
+export async function fetchPromptDeleteImpact(promptId: string): Promise<PromptDeleteImpact | null> {
+  const [{ data: row }, { data: results, count }] = await Promise.all([
+    supabase.from("prompts").select("title, like_count, comment_count, community_id").eq("id", promptId).maybeSingle(),
+    supabase.from("prompt_results").select("thumbnail_url", { count: "exact" }).eq("prompt_id", promptId).order("created_at", { ascending: false }).range(0, 2),
+  ]);
+  const prompt = row as { title: string; like_count: number; comment_count: number; community_id: string | null } | null;
+  if (!prompt) return null;
+  return {
+    title: prompt.title,
+    likeCount: prompt.like_count,
+    commentCount: prompt.comment_count,
+    communityContent: Boolean(prompt.community_id),
+    resultCount: count ?? 0,
+    resultThumbnails: ((results ?? []) as Array<{ thumbnail_url: string | null }>).map((r) => r.thumbnail_url),
+  };
 }
 
 /** The viewer's own liked prompts, newest like first, one page at a time ("Beğeniler"). */

@@ -186,7 +186,10 @@ export type PromptResultMediaType = "image" | "video" | "audio" | "text" | "othe
  */
 export interface PromptResultSummary {
   id: string;
+  /** Empty for an orphaned result: its prompt was deleted and only its creator still sees it (docs/history/283-*). */
   promptId?: string;
+  /** The prompt's title, only on the profile list (`profile_results`); absent elsewhere and for an orphaned result. */
+  promptTitle?: string | null;
   creator: UserProfile;
   mediaType: PromptResultMediaType;
   /** A genuinely small preview — a resized image thumbnail, a captured video poster frame, or (for audio, which has no real extractable thumbnail) a deterministic offline placeholder cover. Never set for text/other. */

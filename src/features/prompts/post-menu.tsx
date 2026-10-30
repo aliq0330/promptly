@@ -16,6 +16,7 @@ import { deleteRealRequest } from "@/lib/supabase/requests";
 import { deletePromptResult } from "@/lib/supabase/prompt-results";
 import { ReportButton } from "@/features/moderation/report-button";
 import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
+import { DeletePromptDialog } from "./delete-prompt-dialog";
 import { ExportPromptsModal } from "@/features/exchange/export-prompts-modal";
 import { fetchPromptForExport } from "@/lib/supabase/prompt-exchange";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -127,6 +128,8 @@ export function PostMenu({
   const [removeError, setRemoveError] = useState<string | null>(null);
   const [spaceOpen, setSpaceOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  // A prompt's delete asks in a dialog that says what happens to its user results (docs/history/283-*); the other kinds keep the tap-twice confirm.
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   // "Space'e ekle" (docs/history/213-*): oturumlu kullanıcıya; sonuç ve topluluğa ait içerik hariç (içerik topluluktan çıkmaz).
   const canAddToSpace = Boolean(user) && !isResult && !communityId && !postScope;
@@ -169,13 +172,9 @@ export function PostMenu({
     }
   }
 
-  async function handleDelete(event: React.MouseEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!confirmingDelete) {
-      setConfirmingDelete(true);
-      return;
-    }
+  const asksInDialog = Boolean(promptId) && !isRequest && !isResult && !isWorkflow && !isPreset;
+
+  async function performDelete() {
     setIsDeleting(true);
     setError(null);
     try {
@@ -185,12 +184,29 @@ export function PostMenu({
       else if (isResult) await deletePromptResult(resultId!);
       else await deleteRealPrompt(promptId!);
       setOpen(false);
+      setDeleteDialogOpen(false);
       onDeleted?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("common.deleteFailed"));
       setIsDeleting(false);
       setConfirmingDelete(false);
     }
+  }
+
+  async function handleDelete(event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (asksInDialog) {
+      setOpen(false);
+      setError(null);
+      setDeleteDialogOpen(true);
+      return;
+    }
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+    await performDelete();
   }
 
   async function handleRemoveFromCollection(event: React.MouseEvent) {
@@ -378,7 +394,7 @@ export function PostMenu({
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
               >
                 {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                {confirmingDelete ? t("common.confirmDelete") : t("common.delete")}
+                {confirmingDelete && !asksInDialog ? t("common.confirmDelete") : t("common.delete")}
               </button>
             </>
           )}
@@ -391,6 +407,11 @@ export function PostMenu({
             </div>
           )}
           {error && <p className="px-3 py-1 text-xs text-danger">{error}</p>}
+        </div>
+      )}
+      {deleteDialogOpen && promptId && (
+        <div onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+          <DeletePromptDialog promptId={promptId} deleting={isDeleting} error={error} onConfirm={() => void performDelete()} onClose={() => !isDeleting && setDeleteDialogOpen(false)} />
         </div>
       )}
       {exportOpen && promptId && (

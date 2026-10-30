@@ -35,6 +35,7 @@ const PREVIEW_TEMPLATES: [prefix: string, key: string, hasNoPreviewForm: boolean
   ["Düzenleme önerini kabul etti", "notifMsg.acceptedSuggestion", false],
   ["Düzenleme önerini reddetti", "notifMsg.rejectedSuggestion", false],
   ["Promptun için bir sonuç paylaştı", "notifMsg.resultOnPrompt", false],
+  ["Sonucunun promptunu sildi", "notifMsg.resultPromptDeleted", false],
   // Grup sohbeti bildirimleri (docs/history/172-*): sunucu cümlesi sabit önek + tırnaklı grup adıdır.
   ["Katılma isteğini kabul etti", "notifMsg.groupRequestAccepted", false],
   ["Katılma isteğini reddetti", "notifMsg.groupRequestRejected", false],
