@@ -351,7 +351,7 @@ export function ProfileView({
             ) : activeTab === "quotes" ? (
               <ProfileQuotesPanel authorId={user.id} isOwn={isOwnProfile} />
             ) : activeTab === "results" ? (
-              <ProfileResultsPanel creatorId={user.id} isOwn={isOwnProfile} />
+              <ProfileResultsPanel creator={user} isOwn={isOwnProfile} />
             ) : activeTab === "presets" ? (
               <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} />
             ) : activeTab === "saved" ? (
