@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { studioChipClassName } from "@/features/content/compose-form";
 import { AnchoredPopover } from "./anchored-popover";
 import { InsertPicker, type PickerFilter, type PickerItem } from "./insert-picker";
 import { resolveInsertSurface, type InsertSurface } from "./insert-surface";
@@ -60,6 +61,12 @@ export const PromptComposer = forwardRef<
     leading?: React.ReactNode;
     /** Düzenleyiciyi gizle (durumu korunur) — ör. Önizleme sekmesi. */
     hideEditor?: boolean;
+    /** Prompt formunun tam ekran düzeni (docs/history/286-*): çip araç çubuğu + geniş düzenleyici. */
+    studio?: boolean;
+    /** Stüdyo araç çubuğunda "Değişken ekle"nin yanındaki ek çipler (Katalogdan, Görselden yardım). */
+    toolbarExtra?: React.ReactNode;
+    /** Düzenleyiciye odaklanma durumu (telefonda klavye üstü dock'u açar). */
+    onFocusChange?: (focused: boolean) => void;
     className?: string;
   }
 >(function PromptComposer(
@@ -81,6 +88,9 @@ export const PromptComposer = forwardRef<
     panelExtra,
     leading,
     hideEditor,
+    studio = false,
+    toolbarExtra,
+    onFocusChange,
     className,
   },
   ref,
@@ -363,26 +373,47 @@ export const PromptComposer = forwardRef<
 
   return (
     <div className={cn("space-y-2", className)}>
-      {/* Mobilde uzun metinde bile "Değişken ekle" ekranda kalsın: üst bar'ın altına yapışır. */}
-      <div className="flex flex-wrap items-center justify-between gap-2 max-lg:sticky max-lg:top-16 max-lg:z-20 max-lg:-mx-1 max-lg:bg-surface max-lg:px-1 max-lg:py-1.5">
-        <div className="min-w-0">{leading}</div>
-        <Button
-          ref={triggerRef}
-          type="button"
-          size="sm"
-          variant="outline"
-          data-insert-trigger
-          data-testid="composer-add"
-          disabled={hideEditor}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={() => (picker ? closePicker() : openPicker())}
-          aria-haspopup="dialog"
-          aria-expanded={Boolean(picker)}
-          title={t("composer.shortcutHint")}
-        >
-          <Plus size={14} /> {triggerLabel}
-        </Button>
-      </div>
+      {studio ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            ref={triggerRef}
+            type="button"
+            data-insert-trigger
+            data-testid="composer-add"
+            disabled={hideEditor}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => (picker ? closePicker() : openPicker())}
+            aria-haspopup="dialog"
+            aria-expanded={Boolean(picker)}
+            title={t("composer.shortcutHint")}
+            className={studioChipClassName(true)}
+          >
+            <Braces size={14} aria-hidden /> {triggerLabel}
+          </button>
+          {toolbarExtra}
+        </div>
+      ) : (
+        /* Mobilde uzun metinde bile "Değişken ekle" ekranda kalsın: üst bar'ın altına yapışır. */
+        <div className="flex flex-wrap items-center justify-between gap-2 max-lg:sticky max-lg:top-16 max-lg:z-20 max-lg:-mx-1 max-lg:bg-surface max-lg:px-1 max-lg:py-1.5">
+          <div className="min-w-0">{leading}</div>
+          <Button
+            ref={triggerRef}
+            type="button"
+            size="sm"
+            variant="outline"
+            data-insert-trigger
+            data-testid="composer-add"
+            disabled={hideEditor}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => (picker ? closePicker() : openPicker())}
+            aria-haspopup="dialog"
+            aria-expanded={Boolean(picker)}
+            title={t("composer.shortcutHint")}
+          >
+            <Plus size={14} /> {triggerLabel}
+          </Button>
+        </div>
+      )}
 
       <PromptDocEditor
         ref={editorRef}
@@ -395,8 +426,12 @@ export const PromptComposer = forwardRef<
         ariaLabel={ariaLabel}
         required={required}
         hidden={hideEditor}
+        studio={studio}
         onSelectionChange={setSelection}
-        onFocusChange={setFocused}
+        onFocusChange={(next) => {
+          setFocused(next);
+          onFocusChange?.(next);
+        }}
         onRequestInsert={() => openPicker()}
       />
 

@@ -88,6 +88,8 @@ export const PromptDocEditor = forwardRef<
     ariaDescribedBy?: string;
     required?: boolean;
     hidden?: boolean;
+    /** "studio": Prompt formunun tam ekran düzeni (docs/history/286-*) — daha geniş iç boşluk, 1.85 satır aralığı, yuvarlak köşe. */
+    studio?: boolean;
     className?: string;
     onSelectionChange?: (selection: EditorSelection) => void;
     onFocusChange?: (focused: boolean) => void;
@@ -106,6 +108,7 @@ export const PromptDocEditor = forwardRef<
     ariaDescribedBy,
     required,
     hidden,
+    studio = false,
     className,
     onSelectionChange,
     onFocusChange,
@@ -293,22 +296,26 @@ export const PromptDocEditor = forwardRef<
     [hidden, pointFor],
   );
 
+  const textMetrics = studio ? "text-[0.875rem] leading-[1.85] max-lg:text-[16px] max-lg:leading-[1.8]" : "text-sm leading-6 max-lg:text-[16px]";
+  const padding = studio ? "px-[18px] py-4 max-lg:px-3.5 max-lg:py-3" : "px-3 py-2";
   return (
     <div
       className={cn(
         "relative",
-        "rounded-lg border border-border bg-background shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60",
+        studio
+          ? "rounded-2xl border border-border bg-surface transition-colors duration-200 ease-soft focus-within:border-primary"
+          : "rounded-lg border border-border bg-background shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60",
         hidden && "hidden",
         className,
       )}
     >
       {/* Mobilde uzun metin sayfayı uzatmasın: ayna + textarea birlikte kayan tek kutuda (yazma ekranında sayfa kayar). */}
-      <div className={cn("rounded-lg", "max-lg:max-h-[min(46dvh,22rem)] max-lg:overflow-y-auto max-lg:overscroll-contain")} data-testid="editor-scroll">
+      <div className={cn(studio ? "rounded-2xl" : "rounded-lg", "max-lg:max-h-[min(46dvh,22rem)] max-lg:overflow-y-auto max-lg:overscroll-contain")} data-testid="editor-scroll">
       <div className="relative">
       <div
         ref={mirrorRef}
         aria-hidden
-        className={cn("pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words font-mono text-sm leading-6 text-text max-lg:text-[16px]", "px-3 py-2")}
+        className={cn("pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words font-mono text-text", textMetrics, padding)}
       >
         {segments.map((segment) =>
           segment.type === "token" ? (
@@ -369,8 +376,9 @@ export const PromptDocEditor = forwardRef<
           syncSelection();
         }}
         className={cn(
-          "relative block w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent font-mono text-sm leading-6 text-transparent caret-text outline-none placeholder:text-text-muted selection:bg-primary/25 selection:text-transparent",
-          "px-3 py-2",
+          "relative block w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent font-mono text-transparent caret-text outline-none placeholder:text-text-muted selection:bg-primary/25 selection:text-transparent",
+          textMetrics,
+          padding,
         )}
       />
       </div>
