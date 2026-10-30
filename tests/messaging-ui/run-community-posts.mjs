@@ -138,7 +138,8 @@ await scenario("3d. Başvuru gönderisinin sayfası Kaydet + İstatistik + Payla
   await bar3d.getByRole("button", { name: /İstatistik/i }).click();
   const d = dlg(page);
   await d.getByRole("tab", { name: /Tepki verenler/ }).waitFor();
-  await d.getByRole("tab", { name: /Kaydedenler/ }).waitFor();
+  // Reactions list comes from the reactors query (shared with the "Tepkiler" sheet); saves/comments still ask `content_engagers`.
+  await d.getByRole("tab", { name: /Kaydedenler/ }).click();
   await page.waitForTimeout(300);
   const stat = calls(db, "content_engagers", "RPC").at(-1);
   assert.equal(stat?.body.p_content_type, "community_post");

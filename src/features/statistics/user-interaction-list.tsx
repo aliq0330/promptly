@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { FollowButton } from "@/features/profile/follow-button";
+import { ReactionIcon } from "@/features/reactions/reaction-icon";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { ContentEngager, StatisticsKind } from "@/lib/supabase/content-statistics";
@@ -24,8 +25,8 @@ const EMPTY_KEYS: Record<StatisticsKind, TranslationKey> = {
 /** Same row height as a loaded row, so the sheet doesn't jump when data arrives. */
 function RowSkeleton() {
   return (
-    <li className="flex items-center gap-3 px-1 py-2.5">
-      <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+    <li className="flex items-center gap-3 px-5 py-3">
+      <Skeleton className="h-11 w-11 shrink-0 rounded-full" />
       <div className="min-w-0 flex-1 space-y-2">
         <Skeleton className="h-3.5 w-32" />
         <Skeleton className="h-3 w-20" />
@@ -42,8 +43,8 @@ function EngagerRow({ item, kind, onNavigate }: { item: ContentEngager; kind: St
   // Deleted account / missing public profile — a safe, non-linking fallback.
   if (!item.user) {
     return (
-      <li className="flex items-center gap-3 px-1 py-2.5">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-muted">
+      <li className="flex items-center gap-3 px-5 py-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-muted">
           <UserX size={18} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
@@ -58,19 +59,25 @@ function EngagerRow({ item, kind, onNavigate }: { item: ContentEngager; kind: St
   const showFollow = kind !== "comments" && viewer?.id !== profile.id;
 
   return (
-    <li className="flex items-start gap-3 px-1 py-2.5">
-      <Link href={profileHref(profile)} onClick={onNavigate} className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <Avatar src={profile.avatarUrl} alt={profile.displayName} size={40} />
+    <li className="flex items-start gap-3 px-5 py-3">
+      <Link href={profileHref(profile)} onClick={onNavigate} className="relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <Avatar src={profile.avatarUrl} alt={profile.displayName} size={44} />
+        {item.reaction && (
+          <span className="absolute -bottom-1 -right-1 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-surface ring-2 ring-surface">
+            <ReactionIcon reaction={item.reaction} size={18} />
+          </span>
+        )}
       </Link>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 pt-px">
         <Link href={profileHref(profile)} onClick={onNavigate} className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <span className="block truncate text-small font-semibold text-text">{profile.displayName}</span>
-          <span className="block truncate text-caption text-text-muted">@{profile.username}</span>
+          <span className="block truncate text-body font-semibold text-text">{profile.displayName}</span>
+          <span className="block truncate text-small text-text-muted">
+            @{profile.username} · {time}
+          </span>
         </Link>
         {kind === "comments" && item.commentBody && (
-          <p className="mt-1 line-clamp-2 break-words rounded-md bg-surface-soft px-2.5 py-1.5 text-small text-text-secondary">{item.commentBody}</p>
+          <p className="mt-2 line-clamp-3 break-words rounded-lg rounded-tl-sm bg-surface-soft px-3 py-2.5 text-small text-text-secondary">{item.commentBody}</p>
         )}
-        <p className="mt-0.5 text-caption text-text-muted">{time}</p>
       </div>
       {showFollow && <FollowButton user={profile} size="sm" className="shrink-0" />}
     </li>
@@ -125,12 +132,12 @@ export function UserInteractionList({
   }
 
   if (list.items.length === 0 && !list.hasMore) {
-    return <EmptyState compact icon={icon} title={t(EMPTY_KEYS[kind])} className="m-2" />;
+    return <EmptyState compact icon={icon} title={t(EMPTY_KEYS[kind])} className="m-4" />;
   }
 
   return (
     <div>
-      <ul className="divide-y divide-border-soft">
+      <ul>
         {list.items.map((item) => (
           <EngagerRow key={item.key} item={item} kind={kind} onNavigate={onNavigate} />
         ))}
