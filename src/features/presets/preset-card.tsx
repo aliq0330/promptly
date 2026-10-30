@@ -7,7 +7,6 @@ import { presetParameterEntries } from "@/lib/preset-utils";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
-import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +51,6 @@ export function PresetCard({
         badges={
           <>
             <ContentTypePill icon={SlidersHorizontal} label={t("preset.singular")} detail={category} />
-            <AnnouncedChip kind="preset" id={preset.id} />
           </>
         }
         menu={<PostTargetMenu preset={preset} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
