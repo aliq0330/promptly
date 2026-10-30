@@ -203,13 +203,13 @@ function InterestPromptStrip({ interest, target, answered }: { interest: Interes
 
   if (phase === "thanks") {
     return (
-      <div data-interest-thanks role="status" className="mt-2 rounded-lg bg-surface-soft px-3.5 py-3">
+      <StripShell data-interest-thanks role="status" className="px-3.5 py-3">
         <p className="flex items-center gap-2 text-label font-semibold text-text-secondary">
           <Check size={16} strokeWidth={2.2} aria-hidden className="text-primary" />
           {t("interest.thanks")}
         </p>
         <p className="mt-0.5 text-caption text-text-muted">{t("interest.thanksHint")}</p>
-      </div>
+      </StripShell>
     );
   }
 
@@ -219,7 +219,7 @@ function InterestPromptStrip({ interest, target, answered }: { interest: Interes
   }
 
   return (
-    <section data-interest-prompt aria-label={t("interest.promptTitle")} className="mt-2 rounded-lg border border-border-soft bg-surface-soft py-3 pl-3.5 pr-2.5">
+    <StripShell data-interest-prompt aria-label={t("interest.promptTitle")} className="py-3 pl-3.5 pr-2.5">
       <div className="flex items-start gap-2">
         <p className="min-w-0 flex-1 text-label font-semibold text-text">{t("interest.promptTitle")}</p>
         <button
@@ -242,6 +242,19 @@ function InterestPromptStrip({ interest, target, answered }: { interest: Interes
           {t("interest.yes")}
         </ReplyPill>
       </div>
+    </StripShell>
+  );
+}
+
+/**
+ * The box under a post: a small notch on its top edge points UP at the post it is about (docs/history/276-*). The notch is a rotated square that
+ * shares the box's fill and shows only its top-left borders, so it reads as one shape with the box.
+ */
+function StripShell({ className, children, ...rest }: React.HTMLAttributes<HTMLElement> & { [data: `data-${string}`]: string | undefined }) {
+  return (
+    <section {...rest} className={cn("relative mt-3 rounded-xl border border-border-soft bg-surface-soft", className)}>
+      <span aria-hidden data-interest-notch className="absolute -top-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 rounded-tl-[4px] border-l border-t border-border-soft bg-surface-soft" />
+      {children}
     </section>
   );
 }

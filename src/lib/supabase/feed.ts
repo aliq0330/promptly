@@ -57,7 +57,9 @@ export interface FeedPageParams {
   cursor?: FeedCursor | null;
 }
 
-const DEFAULT_LIMIT = 18;
+/** Posts per feed page (every feed query and `FeedGrid`'s column blocks share it, docs/history/276-*). */
+export const FEED_PAGE_SIZE = 18;
+const DEFAULT_LIMIT = FEED_PAGE_SIZE;
 
 interface FeedRow {
   kind: FeedKind;
