@@ -14,6 +14,7 @@ export function LikeButton({
   contentType = "prompt",
   size = 16,
   className,
+  tone,
 }: {
   id: string;
   likeCount: number;
@@ -21,6 +22,7 @@ export function LikeButton({
   contentType?: LikeableContentType;
   size?: number;
   className?: string;
+  tone?: "default" | "overlay";
 }) {
-  return <ReactionButton id={id} likeCount={likeCount} contentType={contentType} size={size} className={className} />;
+  return <ReactionButton id={id} likeCount={likeCount} contentType={contentType} size={size} className={className} tone={tone} />;
 }

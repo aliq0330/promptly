@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Play } from "lucide-react";
+import { FileText, Music, Video } from "lucide-react";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import { StorageAudio, StorageImage, StorageVideo } from "@/components/ui/storage-media";
@@ -21,6 +21,15 @@ type PreviewableResult = PromptResultSummary & Partial<Pick<PromptResult, "media
  * element. Only the detail page passes the full `PromptResult` (with
  * `mediaUrl` set), which is when a real player actually renders.
  */
+/** A card's media-kind mark (docs/history/281-*): a small translucent disc in the top-right corner instead of a play button over the picture. */
+function MediaBadge({ icon: Icon }: { icon: typeof Video }) {
+  return (
+    <span aria-hidden className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white">
+      <Icon size={14} />
+    </span>
+  );
+}
+
 export function ResultTypePreview({ result, size }: { result: PreviewableResult; size: "card" | "detail" }) {
   if (result.mediaType === "image") {
     if (size === "detail" && result.mediaUrl) {
@@ -61,11 +70,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
         {result.thumbnailUrl && (
           <StorageImage src={result.thumbnailUrl} alt="" fill sizes="(min-width: 1024px) 220px, 45vw" className="object-cover" />
         )}
-        <span className="absolute inset-0 flex items-center justify-center">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white">
-            <Play size={16} fill="currentColor" />
-          </span>
-        </span>
+        <MediaBadge icon={Video} />
       </div>
     );
   }
@@ -86,11 +91,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
         {result.thumbnailUrl && (
           <StorageImage src={result.thumbnailUrl} alt="" fill sizes="(min-width: 1024px) 220px, 45vw" className="object-cover" />
         )}
-        <span className="absolute inset-0 flex items-center justify-center">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white">
-            <Play size={16} fill="currentColor" />
-          </span>
-        </span>
+        <MediaBadge icon={Music} />
       </div>
     );
   }
@@ -100,7 +101,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
     <div
       className={cn(
         "flex flex-col gap-1.5 bg-surface-soft",
-        size === "card" ? "aspect-square w-full p-3" : "w-full rounded-lg border border-border-soft p-4",
+        size === "card" ? "aspect-square w-full p-3 pb-14" : "w-full rounded-lg border border-border-soft p-4",
       )}
     >
       <FileText size={size === "card" ? 15 : 18} className="shrink-0 text-text-muted" />

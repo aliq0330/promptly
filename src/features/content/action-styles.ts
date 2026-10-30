@@ -18,3 +18,12 @@ export function contentActionClassName(active?: boolean, className?: string) {
 
 /** A card's Kaydet icon: the count stays on the detail page; the compact card row keeps only the bookmark (`SaveButton` draws the count as its direct `<span>`). */
 export const CARD_SAVE_CLASS = "[&>span]:hidden";
+
+/** The reaction control laid over a picture (a result card's corner, docs/history/281-*): a translucent dark pill, white on any image. */
+export function overlayActionClassName(className?: string) {
+  return cn(
+    "relative z-10 inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-full bg-black/50 px-2.5 text-label font-semibold tabular-nums text-white backdrop-blur-sm",
+    "transition-[background-color,transform] duration-200 ease-soft active:scale-[0.94] hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+    className,
+  );
+}

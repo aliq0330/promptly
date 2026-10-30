@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Heart } from "lucide-react";
 import { formatCount } from "@/lib/utils";
 import { RollingCount } from "@/components/ui/like-toggle";
-import { contentActionClassName } from "@/features/content/action-styles";
+import { contentActionClassName, overlayActionClassName } from "@/features/content/action-styles";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAnchoredPopover } from "@/features/messages/use-anchored-popover";
 import { useLikeState } from "@/features/prompts/use-like-state";
@@ -27,12 +27,15 @@ export function ReactionButton({
   contentType = "prompt",
   size = 16,
   className,
+  tone = "default",
 }: {
   id: string;
   likeCount: number;
   contentType?: LikeableContentType;
   size?: number;
   className?: string;
+  /** "overlay": a translucent pill for laying over a picture; the count is left out while it is 0. */
+  tone?: "default" | "overlay";
 }) {
   const { reaction, likeCount: count, react, canLike } = useLikeState(id, likeCount, contentType);
   const { t } = useTranslation();
@@ -87,7 +90,9 @@ export function ReactionButton({
     });
   }
 
-  const classes = contentActionClassName(Boolean(reaction), className);
+  const overlay = tone === "overlay";
+  const classes = overlay ? overlayActionClassName(className) : contentActionClassName(Boolean(reaction), className);
+  const showCount = !overlay || count > 0;
 
   if (!canLike) {
     return (
@@ -104,7 +109,7 @@ export function ReactionButton({
         className={classes}
       >
         <Heart size={size} strokeWidth={1.75} />
-        <span aria-hidden>{formatCount(count)}</span>
+        {showCount && <span aria-hidden>{formatCount(count)}</span>}
       </button>
     );
   }
@@ -133,7 +138,7 @@ export function ReactionButton({
         ) : (
           <Heart size={size} strokeWidth={1.75} />
         )}
-        <RollingCount value={count} />
+        {showCount && <RollingCount value={count} />}
       </button>
       {/* `createPortal` directly (not `Portal`, which mounts one render late): the popover hook measures the panel in the commit that opens it. */}
       {open && createPortal(<ReactionPicker panelRef={panelRef} style={style} current={reaction} onChoose={choose} />, document.body)}

@@ -1,5 +1,7 @@
 import { supabase } from "./client";
 import { getBlockedIds } from "./blocked-users";
+import { fetchReactorsPage } from "./reactions";
+import type { ReactionKey } from "@/lib/reactions";
 import type { UserProfile } from "@/types";
 
 /** The first-class content types (CLAUDE.md Bölüm 1/9.59/9.60/9.83) + a community post (its OWN likes/comments, `community_post_id`). */
@@ -14,11 +16,15 @@ export interface ContentEngager {
   interactedAt: string;
   /** Only for `comments`: that user's most recent, non-deleted comment on this post. */
   commentBody: string | null;
+  /** Only for `likes`: the reaction this person gave (docs/history/281-*). */
+  reaction?: ReactionKey;
 }
 
 export interface EngagersCursor {
   at: string;
   actorId: string;
+  /** `likes` pages by offset (the reactors query, shared with the "Tepkiler" sheet), the other kinds by the keyset above. */
+  offset?: number;
 }
 
 export interface EngagersPage {
@@ -56,6 +62,14 @@ export async function fetchContentEngagers(
   kind: StatisticsKind,
   cursor?: EngagersCursor | null,
 ): Promise<EngagersPage> {
+  if (kind === "likes") {
+    // Every like is a reaction: the same reactors query as the "Tepkiler" sheet, so each row can show what the person gave.
+    const page = await fetchReactorsPage(contentType, contentId, null, cursor?.offset ?? 0, ENGAGERS_PAGE_SIZE);
+    return {
+      items: page.items.map<ContentEngager>((reactor) => ({ key: reactor.key, user: reactor.user, interactedAt: reactor.createdAt, commentBody: null, reaction: reactor.reaction })),
+      nextCursor: page.nextOffset === null ? null : { at: "", actorId: "", offset: page.nextOffset },
+    };
+  }
   const { data, error } = await supabase.rpc("content_engagers", {
     p_content_type: contentType,
     p_content_id: contentId,

@@ -4,7 +4,10 @@ import { useState } from "react";
 import { Bookmark, Copy, Heart, MessageCircle, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
-import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { useAuth } from "@/features/auth/auth-provider";
+import { ReactionIcon } from "@/features/reactions/reaction-icon";
+import { useReactionBreakdown } from "@/features/reactions/reaction-breakdown";
+import { REACTION_KEYS, REACTION_LABEL, type ReactionKey } from "@/lib/reactions";
 import { useEngagementEntry } from "@/features/content/engagement-store";
 import { useCommentCountDelta } from "@/features/prompts/comment-count-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -34,17 +37,27 @@ export interface StatisticsTarget {
   copyCount?: number;
 }
 
+/** The bar's colour per reaction — semantic tokens only; the emoji next to each count is what names it. */
+const REACTION_TONE: Record<ReactionKey, string> = {
+  love: "bg-danger",
+  fire: "bg-secondary",
+  wow: "bg-primary",
+  clap: "bg-success",
+  haha: "bg-warning",
+  idea: "bg-text-secondary",
+};
+
 /**
  * The ONE statistics surface for all four post types (prompt, prompt
- * request, generator, workflow — CLAUDE.md Bölüm 9.82): summary tiles +
- * Liked by / Commenters / Saved by tabs, real Supabase data, keyset
- * pagination. Bottom sheet on mobile, centered dialog from `sm` up (the
+ * request, generator, workflow — CLAUDE.md Bölüm 9.82): summary tiles that ARE the
+ * Reacted / Commenters / Saved-by tabs (docs/history/281-*), a reaction mix bar, real Supabase data, pagination. Bottom sheet on mobile, centered dialog from `sm` up (the
  * shared `Modal` shell); the panel has a FIXED height so switching tabs or
  * loading never makes it jump. Requests have no save feature, so they get
  * two tabs/tiles instead of three.
  */
 export function StatisticsModal({ target, onClose }: { target: StatisticsTarget; onClose: () => void }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { contentType, contentId } = target;
   const canSave = contentType === "request" || contentType === "space" || contentType === "quote" ? false : contentType === "community_post" ? target.savable === true : true;
   const kinds: StatisticsKind[] = canSave ? ["likes", "comments", "saves"] : ["likes", "comments"];
@@ -61,6 +74,8 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
     comments: Math.max(0, target.commentCount + commentDelta),
     saves,
   };
+  const breakdown = useReactionBreakdown(contentType, contentId, user?.id ?? null, active === "likes" && likes > 0);
+  const mix = REACTION_KEYS.filter((key) => breakdown.counts[key] > 0);
 
   // All three hooks always run (hooks can't be conditional); a tab's first
   // page is only fetched once it's been opened.
@@ -75,55 +90,79 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
     setOpened((previous) => (previous.has(kind) ? previous : new Set(previous).add(kind)));
   }
 
-  const tabItems: TabItem<StatisticsKind>[] = kinds.map((kind) => ({ key: kind, label: t(KIND_META[kind].tab), icon: KIND_META[kind].icon }));
   const activeMeta = KIND_META[active];
 
   return (
     <Modal onClose={onClose} labelledBy="statistics-title">
       <div
-        className="flex h-[88dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg sm:h-[640px] sm:max-h-[88dvh]"
+        className="flex h-[640px] max-h-[75dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border-soft bg-surface shadow-pop"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 px-4 pb-3 pt-4">
-          <h2 id="statistics-title" className="text-h3 font-semibold text-text">
+        <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3 pt-5">
+          <h2 id="statistics-title" className="font-display text-h2 font-bold text-text">
             {t("statistics.title")}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-md p-1.5 text-text-muted hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className={cn("grid gap-2 px-4", tileCount === 4 ? "grid-cols-2 sm:grid-cols-4" : tileCount === 3 ? "grid-cols-3" : "grid-cols-2")}>
+        <div role="tablist" aria-label={t("statistics.tabsAria")} className={cn("grid shrink-0 gap-2 px-4 sm:gap-2.5 sm:px-5", tileCount === 4 ? "grid-cols-4" : tileCount === 3 ? "grid-cols-3" : "grid-cols-2")}>
           {kinds.map((kind) => {
             const Icon = KIND_META[kind].icon;
+            const selected = active === kind;
             return (
-              <div key={kind} className="flex flex-col items-center gap-0.5 rounded-md border border-border-soft bg-surface-soft px-2 py-2.5">
-                <Icon size={16} strokeWidth={1.75} className="text-primary" aria-hidden />
-                <span className="text-h3 font-semibold tabular-nums text-text">{formatCount(totals[kind])}</span>
-                <span className="text-caption text-text-muted">{t(KIND_META[kind].tile)}</span>
-              </div>
+              <button
+                key={kind}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                aria-label={`${t(KIND_META[kind].tab)} ${formatCount(totals[kind])}`}
+                onClick={() => selectTab(kind)}
+                className={cn(
+                  "flex min-w-0 flex-col items-start gap-0.5 rounded-lg border-[1.5px] px-2 pb-2 pt-2.5 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-3.5 sm:pt-3",
+                  selected ? "border-primary bg-primary-soft text-primary" : "border-transparent bg-surface-soft text-text-secondary hover:bg-border-soft",
+                )}
+              >
+                <Icon size={16} strokeWidth={1.75} aria-hidden />
+                <span aria-hidden className="font-display text-h2 font-bold leading-tight tabular-nums">{formatCount(totals[kind])}</span>
+                <span aria-hidden className="max-w-full truncate text-caption font-medium">{t(KIND_META[kind].tile)}</span>
+              </button>
             );
           })}
           {copyCount !== undefined && (
-            <div className="flex flex-col items-center gap-0.5 rounded-md border border-border-soft bg-surface-soft px-2 py-2.5">
-              <Copy size={16} strokeWidth={1.75} className="text-primary" aria-hidden />
-              <span className="text-h3 font-semibold tabular-nums text-text">{formatCount(copyCount)}</span>
-              <span className="text-caption text-text-muted">{t("statistics.tileCopies")}</span>
+            <div className="flex min-w-0 flex-col items-start gap-0.5 rounded-lg border-[1.5px] border-dashed border-border px-2 pb-2 pt-2.5 text-text-secondary sm:px-3.5 sm:pt-3">
+              <Copy size={16} strokeWidth={1.75} aria-hidden />
+              <span className="font-display text-h2 font-bold leading-tight tabular-nums">{formatCount(copyCount)}</span>
+              <span className="max-w-full truncate text-caption font-medium">{t("statistics.tileCopies")}</span>
             </div>
           )}
         </div>
 
+        {active === "likes" && mix.length > 0 && (
+          <div className="shrink-0 px-5 pt-4">
+            <div aria-hidden className="flex h-2.5 gap-0.5">
+              {mix.map((key) => (
+                <span key={key} style={{ flexGrow: breakdown.counts[key], flexBasis: 0 }} className={cn("rounded-full", REACTION_TONE[key])} />
+              ))}
+            </div>
+            <ul className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
+              {mix.map((key) => (
+                <li key={key} aria-label={`${t(REACTION_LABEL[key])} ${breakdown.counts[key]}`} className="inline-flex items-center gap-1.5 text-small tabular-nums text-text-secondary">
+                  <ReactionIcon reaction={key} size={18} />
+                  <strong className="font-semibold text-text">{breakdown.counts[key]}</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        <div className="mt-3 px-4">
-          <Tabs items={tabItems} active={active} onChange={selectTab} ariaLabel={t("statistics.tabsAria")} />
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-1" role="tabpanel">
+        <div className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain border-t border-border-soft" role="tabpanel">
           <UserInteractionList
             key={active}
             kind={active}
@@ -136,4 +175,3 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
     </Modal>
   );
 }
-
