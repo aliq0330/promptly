@@ -33,7 +33,7 @@ export function friendlyServerErrors(baseFetch: typeof fetch): typeof fetch {
       const body = (await response.clone().json()) as { message?: unknown } | null;
       const friendly = friendlyServerMessage(body?.message);
       if (!friendly) return response;
-      if (!INLINE_ONLY.has(String(body?.message)) && !url.includes("/rest/v1/reports")) announceNotice(friendly);
+      if (!INLINE_ONLY.has(String(body?.message)) && !url.includes("/rest/v1/reports") && !url.includes("/rpc/submit_report")) announceNotice(friendly);
       const headers = new Headers(response.headers);
       headers.delete("content-length");
       return new Response(JSON.stringify({ ...body, message: friendly }), { status: response.status, statusText: response.statusText, headers });

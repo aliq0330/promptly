@@ -24,7 +24,9 @@ import { UsersPanel } from "@/features/moderation/admin/users-panel";
 import { ChallengesPanel } from "@/features/moderation/admin/challenges-panel";
 import { ListControlRow } from "@/features/content/list-control-row";
 import { SheetChips, SheetSection } from "@/features/content/list-toolbar";
-import { fetchReportQueue, moderateReport, type ModerationAction, type ModerationReport, type ReportStatus } from "@/lib/supabase/moderation";
+import { fetchReportQueue, moderateReport, type ModerationAction, type ModerationReport, type ReportReasonFilter, type ReportStatus } from "@/lib/supabase/moderation";
+import { REPORT_REASON_CODES } from "@/lib/report-reasons";
+import { REPORT_REASON_TITLE } from "@/features/moderation/report-modal";
 
 type Filter = ReportStatus | "all";
 const FILTERS: { id: Filter; key: TranslationKey }[] = [
@@ -49,7 +51,15 @@ const TYPE_KEY: Record<string, TranslationKey> = {
   story: "moderation.type.story",
   space: "moderation.type.space",
   quote: "moderation.type.quote",
+  community: "report.type.community",
 };
+
+/** Kuyruğun neden süzgeci: hepsi · 12 hazır neden · kodsuz eski şikâyetler (docs/history/284-*). */
+const REASON_FILTERS: { id: ReportReasonFilter; key: TranslationKey }[] = [
+  { id: "all", key: "moderation.reasonAll" },
+  ...REPORT_REASON_CODES.map((code) => ({ id: code as ReportReasonFilter, key: REPORT_REASON_TITLE[code] })),
+  { id: "legacy", key: "moderation.reasonLegacy" },
+];
 
 type AdminTab = "reports" | "stats" | "users" | "challenges";
 const TAB_IDS: AdminTab[] = ["reports", "stats", "users", "challenges"];
@@ -78,6 +88,7 @@ export function ModerationView() {
   });
   const [userId, setUserIdState] = useState<string | null>(() => readParam("user"));
   const [reportFilter, setReportFilter] = useState<Filter>("open");
+  const [reasonFilter, setReasonFilter] = useState<ReportReasonFilter>("all");
 
   function setTab(next: AdminTab) {
     setTabState(next);
@@ -123,23 +134,37 @@ export function ModerationView() {
           tab === "reports"
             ? {
                 sheetSections: (
-                  <SheetSection title={t("moderation.title")}>
-                    <SheetChips>
-                      {FILTERS.map((f) => (
-                        <Chip key={f.id} selected={reportFilter === f.id} onClick={() => setReportFilter(f.id)}>
-                          {t(f.key)}
-                        </Chip>
-                      ))}
-                    </SheetChips>
-                  </SheetSection>
+                  <>
+                    <SheetSection title={t("moderation.title")}>
+                      <SheetChips>
+                        {FILTERS.map((f) => (
+                          <Chip key={f.id} selected={reportFilter === f.id} onClick={() => setReportFilter(f.id)}>
+                            {t(f.key)}
+                          </Chip>
+                        ))}
+                      </SheetChips>
+                    </SheetSection>
+                    <SheetSection title={t("moderation.reason")}>
+                      <SheetChips>
+                        {REASON_FILTERS.map((f) => (
+                          <Chip key={f.id} selected={reasonFilter === f.id} onClick={() => setReasonFilter(f.id)} data-reason-filter={f.id}>
+                            {t(f.key)}
+                          </Chip>
+                        ))}
+                      </SheetChips>
+                    </SheetSection>
+                  </>
                 ),
-                activeCount: reportFilter === "open" ? 0 : 1,
-                onClear: () => setReportFilter("open"),
+                activeCount: (reportFilter === "open" ? 0 : 1) + (reasonFilter === "all" ? 0 : 1),
+                onClear: () => {
+                  setReportFilter("open");
+                  setReasonFilter("all");
+                },
               }
             : undefined
         }
       />
-      {tab === "reports" && <ReportsPanel filter={reportFilter} />}
+      {tab === "reports" && <ReportsPanel filter={reportFilter} reason={reasonFilter} />}
       {tab === "stats" && <SiteStatsPanel />}
       {tab === "users" && <UsersPanel userId={userId} onSelectUser={setUserId} />}
       {tab === "challenges" && <ChallengesPanel />}
@@ -147,7 +172,7 @@ export function ModerationView() {
   );
 }
 
-function ReportsPanel({ filter }: { filter: Filter }) {
+function ReportsPanel({ filter, reason }: { filter: Filter; reason: ReportReasonFilter }) {
   const { t } = useTranslation();
   const isModerator = useIsModerator();
   const [reports, setReports] = useState<ModerationReport[] | null>(null);
@@ -159,7 +184,7 @@ function ReportsPanel({ filter }: { filter: Filter }) {
   useEffect(() => {
     if (!isModerator) return;
     let cancelled = false;
-    fetchReportQueue(filter)
+    fetchReportQueue(filter, reason)
       .then((next) => {
         if (cancelled) return;
         setError(null);
@@ -173,7 +198,7 @@ function ReportsPanel({ filter }: { filter: Filter }) {
     return () => {
       cancelled = true;
     };
-  }, [isModerator, filter, t, reloadKey]);
+  }, [isModerator, filter, reason, t, reloadKey]);
 
   return (
     <div className="space-y-4">
@@ -201,7 +226,7 @@ function ReportCard({ report, onDone }: { report: ModerationReport; onDone: () =
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const canRemove = report.targetExists && report.targetType !== "user";
+  const canRemove = report.targetExists && report.targetType !== "user" && report.targetType !== "community";
 
   async function run(action: ModerationAction) {
     if (busy) return;
@@ -253,7 +278,18 @@ function ReportCard({ report, onDone }: { report: ModerationReport; onDone: () =
         <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
           {t("moderation.reason")} · {t("moderation.reportedBy")} @{report.reporterUsername}
         </p>
-        <p className="break-words text-small text-text">{report.reason}</p>
+        {report.reasonCode ? (
+          <>
+            <p data-report-reason-code={report.reasonCode} className="break-words text-small font-medium text-text">
+              {t(REPORT_REASON_TITLE[report.reasonCode])}
+            </p>
+            {report.details && <p data-report-details="" className="mt-0.5 whitespace-pre-line break-words text-small text-text-secondary">{report.details}</p>}
+          </>
+        ) : (
+          <p className="break-words text-small text-text">
+            {report.reason} <Badge variant="outline">{t("moderation.reasonLegacy")}</Badge>
+          </p>
+        )}
       </div>
 
       {report.status !== "open" ? (

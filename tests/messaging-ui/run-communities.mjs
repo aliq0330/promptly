@@ -351,10 +351,17 @@ await scenario("13d. Gönderi menüsü: yazar kendi gönderisini kaldırır (iç
   await page.getByRole("menuitem", { name: "Topluluk yöneticilerine bildir" }).waitFor();
   assert.equal(await page.getByRole("menuitem", { name: /Gönderiyi kaldır \(yönetici\)/ }).count(), 0);
   await page.getByRole("menuitem", { name: "Topluluk yöneticilerine bildir" }).click();
-  await dlg(page).getByLabel("Neden?").fill("Uygunsuz içerik");
-  await dlg(page).getByRole("button", { name: "Bildir" }).click();
-  await page.getByText("Bildirimin yöneticilere iletildi.").waitFor();
-  assert.equal(calls(db, "report_community_content", "RPC")[0].body.p_kind, "post");
+  // Merkezi şikâyet penceresi (docs/history/284-*): hazır neden + isteğe bağlı ek bilgi; topluluk yönetimine gider.
+  await page.locator("[data-report-modal]").getByText("Şikâyet nedeni").waitFor();
+  await page.locator("[data-report-modal]").getByText("Topluluk gönderisi").first().waitFor();
+  await page.locator("[data-report-reason='spam']").click();
+  await page.locator("[data-report-modal] textarea").fill("Uygunsuz içerik");
+  await page.locator("[data-report-submit]").click();
+  await page.locator("[data-report-success]").waitFor();
+  const sent = calls(db, "submit_report", "RPC")[0].body;
+  assert.equal(sent.p_target_type, "community_post");
+  assert.equal(sent.p_reason_code, "spam");
+  assert.equal(sent.p_details, "Uygunsuz içerik");
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Benim gönderim" }); db.addPost(C1, { author: U.bob, title: "Başkasının gönderisi" }); } });
 
 await scenario("13e. Moderatör: başkasının gönderisini sebeple kaldırır; sabitleme sınırı hatası gösterilir", async ({ page, db }) => {
@@ -589,11 +596,13 @@ await scenario("18b. Sohbette duyuru mesajı kart olarak çizilir ve duyuruya ba
   await page.getByText("normal mesaj").last().hover();
   await page.getByRole("button", { name: "Mesaj seçenekleri" }).last().click();
   await page.getByRole("menuitem", { name: "Topluluk yöneticilerine bildir" }).click();
-  await dlg(page).getByLabel("Neden?").fill("Hakaret içeriyor");
-  await dlg(page).getByRole("button", { name: "Bildir" }).click();
-  await page.getByText("Bildirimin yöneticilere iletildi.").waitFor();
-  const report = calls(db, "report_community_content", "RPC")[0].body;
-  assert.equal(report.p_kind, "message");
+  await page.locator("[data-report-reason='harassment']").click();
+  await page.locator("[data-report-modal] textarea").fill("Hakaret içeriyor");
+  await page.locator("[data-report-submit]").click();
+  await page.locator("[data-report-success]").waitFor();
+  const report = calls(db, "submit_report", "RPC")[0].body;
+  assert.equal(report.p_target_type, "chat_message");
+  assert.equal(report.p_reason_code, "harassment");
   assert.ok(db.messages.some((m) => m.announcement_id));
 }, { setup: (db) => { seed(db, { myRole: "member" }); const m = db.addMessage(C1, U.bob.id, "Haftalık buluşma"); m.announcement_id = "11111111-aaaa-4000-8000-000000000009"; db.addMessage(C1, U.dave.id, "normal mesaj"); } });
 

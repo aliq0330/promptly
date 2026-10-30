@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { DropdownMenu, MenuItem } from "@/features/communities/dropdown-menu";
 import { ReportButton } from "@/features/moderation/report-button";
+import { ReportModal } from "@/features/moderation/report-modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { deleteQuote, type Quote } from "@/lib/supabase/quotes";
 
@@ -54,24 +55,9 @@ export function QuoteDeleteDialog({ quote, onClose, onDeleted }: { quote: Quote;
   );
 }
 
-/** Başkasının alıntısını şikâyet penceresi (alıntı sayfasının ⋮ menüsünden açılır; moderatör kuyruğunda `quote` türü). */
+/** Başkasının alıntısını şikâyet penceresi (alıntı sayfasının ⋮ menüsünden açılır; moderatör kuyruğunda `quote` türü): merkezi şikâyet penceresi (docs/history/284-*). */
 export function QuoteReportDialog({ quote, onClose }: { quote: Quote; onClose: () => void }) {
-  const { t } = useTranslation();
-  return (
-    <Modal onClose={onClose} labelledBy="quote-report-title">
-      <div data-quote-report className="w-full max-w-sm space-y-3 rounded-t-2xl border border-border bg-surface-elevated p-5 shadow-pop sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
-        <h2 id="quote-report-title" className="text-h3 font-bold text-text">
-          {t("quotes.report.title")}
-        </h2>
-        <ReportButton targetType="quote" targetId={quote.id} menuItem={false} />
-        <div className="flex justify-end">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("common.close")}
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  );
+  return <ReportModal target={{ type: "quote", id: quote.id, title: quote.note, subtitle: quote.author.username ? `@${quote.author.username}` : null }} onClose={onClose} />;
 }
 
 /**

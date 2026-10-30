@@ -17,8 +17,6 @@ export const COMMUNITY_ANNOUNCEMENT_BODY_MAX = 2000;
 export const COMMUNITY_EVENT_DESCRIPTION_MAX = 2000;
 export const COMMUNITY_EVENT_LOCATION_MAX = 200;
 export const COMMUNITY_EVENT_URL_MAX = 500;
-export const COMMUNITY_REPORT_REASON_MIN = 3;
-export const COMMUNITY_REPORT_REASON_MAX = 300;
 export const COMMUNITY_PINNED_POSTS_MAX = 3;
 export const COMMUNITY_PINNED_ANNOUNCEMENTS_MAX = 3;
 /** Hatırlatma penceresi (sunucudaki `dispatch_my_event_reminders` ile aynı). */

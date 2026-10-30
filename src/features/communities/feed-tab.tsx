@@ -12,7 +12,8 @@ import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { DropdownMenu, MenuItem } from "./dropdown-menu";
-import { ReportModal } from "./report-modal";
+import { ReportModal } from "@/features/moderation/report-modal";
+import { communityPostReportTarget } from "./post-report";
 import { ShareToCommunityModal } from "./share-to-community-modal";
 import { StoryTray } from "@/features/stories/story-tray";
 import { CreatePostModal } from "./create-post-modal";
@@ -336,16 +337,7 @@ export function FeedTab(props: CommunityTabProps) {
         />
       )}
       {action?.kind === "report" && (
-        <ReportModal
-          communityId={group.id}
-          kind="post"
-          targetId={action.post.id}
-          onClose={() => setAction(null)}
-          onReported={() => {
-            setAction(null);
-            onToast(t("communities.report.sentToast"));
-          }}
-        />
+        <ReportModal target={communityPostReportTarget(action.post, group.name)} onClose={() => setAction(null)} />
       )}
     </div>
   );
