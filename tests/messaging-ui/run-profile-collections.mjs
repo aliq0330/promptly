@@ -150,7 +150,7 @@ function withPrompts(db, owner) {
   };
 }
 const menuRadios = (page) => page.getByRole("radiogroup", { name: /Profil bölümleri|Profile sections/ }).getByRole("radio");
-await scenario("7. Profil bölümleri: TEK menü hapı (sekme çubuğu yok) tüm bölümleri listeler; kendi profilimde gruplar (Alıntılar · Taslaklar/Kaydedilenler/Beğeniler · Hakkında), ziyaretçide Taslak/Kaydedilen/Beğeni yok", async ({ page, db }) => {
+await scenario("7. Profil bölümleri: TEK menü hapı (sekme çubuğu yok) tüm bölümleri listeler; kendi profilimde gruplar (Alıntılar · Sonuçlar · Taslaklar/Kaydedilenler/Beğeniler · Hakkında), ziyaretçide Taslak/Kaydedilen/Beğeni yok", async ({ page, db }) => {
   withCollections(db, U.alice);
   await page.goto(`${BASE}/profile/real?username=${U.alice.username}`);
   const menu = page.locator("[data-section-menu]");
@@ -159,7 +159,7 @@ await scenario("7. Profil bölümleri: TEK menü hapı (sekme çubuğu yok) tüm
   assert.match(await menu.textContent(), /Promptlar/, "etkin bölüm hapta yazar");
   await menu.click();
   const own = (await menuRadios(page).allInnerTexts()).map((x) => x.replace(/\s*\d+$/, "").trim());
-  assert.deepEqual(own, ["Promptlar", "Prompt İstekleri", "Workflow'lar", "Hazır Ayarlar", "Alıntılar", "Taslaklar", "Kaydedilenler", "Beğeniler", "Hakkında"]);
+  assert.deepEqual(own, ["Promptlar", "Prompt İstekleri", "Workflow'lar", "Hazır Ayarlar", "Alıntılar", "Sonuçlar", "Taslaklar", "Kaydedilenler", "Beğeniler", "Hakkında"]);
   assert.equal(await page.locator("[data-section-option]").evaluateAll((els) => els.filter((el) => el.className.includes("border-t")).length), 2, "iki ayırıcı: kütüphane grubu ve Hakkında");
   await page.getByRole("radio", { name: /Beğeniler/ }).click();
   assert.match(await menu.textContent(), /Beğeniler/, "etkin bölüm menü düğmesinde yazar");
