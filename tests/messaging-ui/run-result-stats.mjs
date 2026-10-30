@@ -21,6 +21,18 @@ const RESULTS = [
   { id: "c0000000-0000-4000-8000-000000000001", prompt_id: ID.prompt, media_type: "image", thumbnail_url: thumb("#3f6e8c", "#d9e4ee"), text_content: null, tool: "Midjourney", has_modification: true, like_count: 0, created_at: "2026-09-21T10:00:00Z", profiles: profile(U.bob) },
   { id: "c0000000-0000-4000-8000-000000000002", prompt_id: ID.prompt, media_type: "video", thumbnail_url: thumb("#8a5a44", "#f2d2b0"), text_content: null, tool: null, has_modification: false, like_count: 3, created_at: "2026-09-21T09:00:00Z", profiles: profile(U.carol) },
 ];
+const PROFILE_ROWS = [
+  { id: RESULTS[0].id, prompt_id: ID.prompt, prompt_title: "Sisli ormanda neon tilki", media_type: "image", thumbnail_url: RESULTS[0].thumbnail_url, text_content: null, tool: "Midjourney", has_modification: true, like_count: 0, created_at: "2026-09-21T10:00:00Z", total_count: 2 },
+  { id: "c0000000-0000-4000-8000-000000000009", prompt_id: null, prompt_title: null, media_type: "image", thumbnail_url: thumb("#2b3a67", "#f6c9a0"), text_content: null, tool: null, has_modification: false, like_count: 1, created_at: "2026-09-20T10:00:00Z", total_count: 2 },
+];
+/** A result whose prompt was deleted, as the detail query returns it (no `prompts` embed). */
+const ORPHAN_DETAIL = { id: "c0000000-0000-4000-8000-000000000009", prompt_id: null, media_type: "text", media_url: null, thumbnail_url: null, width: null, height: null, text_content: "Prompt silinmiş bir sonucun metni", tool: null, has_modification: false, modification_summary: null, modified_prompt_text: null, like_count: 1, comment_count: 2, created_at: "2026-09-20T10:00:00Z", profiles: profile(U.bob), prompts: null };
+const OWN_PROMPT = {
+  id: "b0000000-0000-4000-8000-0000000000e1", title: "Sisli ormanda neon tilki", description: "d", prompt_text: "metin", tool: null, tools: [], content_type: "text", category: null, subcategory: null,
+  status: "published", origin_type: "original", request_id: null, like_count: 48, save_count: 0, comment_count: 9, copy_count: 0, quote_count: 0, created_at: "2026-02-01T00:00:00Z", show_on_profile: true,
+  requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: "public", deleted_at: null, community_id: null,
+  profiles: profile(U.alice), prompt_media: [], prompt_tags: [],
+};
 /** 13 tepki: 8 sevdim, 3 ateş, 1 vay be, 1 faydalı. */
 const STATS = [{ reaction: "love", n: 8 }, { reaction: "fire", n: 3 }, { reaction: "wow", n: 1 }, { reaction: "idea", n: 1 }];
 const REACTORS = [
@@ -29,25 +41,43 @@ const REACTORS = [
 ];
 const engager = (u, at, body = null) => ({ actor_id: u.id, actor_username: u.username, actor_display_name: u.display_name, actor_avatar_url: null, actor_follower_count: 1, interacted_at: at, comment_id: body ? "cm" : null, comment_body: body });
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", path = PAGES.prompt, noResults = false } = {}) {
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", path = PAGES.prompt, noResults = false, orphanDetail = false, ownPrompts = false, communityPrompt = false } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { engagerCalls: [], resultCalls: [] };
+  const state = { engagerCalls: [], profileCalls: [], countCalls: [] };
   db.rpc.content_engagers = (body) => {
     state.engagerCalls.push(body);
     return { body: body.p_kind === "comments" ? [engager(U.bob, "2026-09-21T10:00:00Z", "Işığı çok iyi yakalamışsın.")] : [engager(U.carol, "2026-09-21T09:00:00Z")] };
   };
   db.rpc.reaction_friends = () => ({ body: [] });
+  db.rpc.profile_results = (body) => { state.profileCalls.push(body); return { body: noResults ? [] : PROFILE_ROWS }; };
+  db.rpc.profile_result_count = (body) => { state.countCalls.push(body); return { body: noResults ? 0 : PROFILE_ROWS.length }; };
+  if (ownPrompts) {
+    // alice's own profile lists her prompts (the card menu offers "Sil").
+    db.extraRoutes = async (ctx) => (ctx.table === "prompts" && ctx.q.get("author_id") ? ctx.rows([OWN_PROMPT]) : null);
+  }
   const context = await browser.newContext({ viewport });
   await installMock(context, db, {});
   await installDetailData(context);
   await context.route(/\/rest\/v1\/prompt_results/, (route) => {
     const req = route.request();
-    state.resultCalls.push({ method: req.method(), search: new URL(req.url()).search });
-    const rows = noResults ? [] : RESULTS;
-    if (req.method() === "HEAD") return route.fulfill({ status: 200, headers: { ...CORS, "content-range": `*/${rows.length}` }, body: "" });
+    const url = new URL(req.url());
     const accept = req.headers().accept ?? "";
-    return json(route, accept.includes("vnd.pgrst.object") ? rows[0] ?? null : rows, 200, { "content-range": rows.length ? `0-${rows.length - 1}/${rows.length}` : "*/0" });
+    // The delete dialog's impact read: three newest thumbnails + the total (12).
+    if (url.searchParams.get("select") === "thumbnail_url") return json(route, RESULTS.concat(RESULTS[0]).map((r) => ({ thumbnail_url: r.thumbnail_url })).slice(0, 3), 200, { "content-range": "0-2/12" });
+    if (url.searchParams.get("id")) {
+      const row = orphanDetail ? ORPHAN_DETAIL : RESULTS[0];
+      return json(route, accept.includes("vnd.pgrst.object") ? row : [row]);
+    }
+    return json(route, RESULTS, 200, { "content-range": `0-${RESULTS.length - 1}/${RESULTS.length}` });
+  });
+  await context.route(/\/rest\/v1\/prompts\?/, (route) => {
+    const url = new URL(route.request().url());
+    const select = url.searchParams.get("select") ?? "";
+    if (route.request().method() !== "GET" || url.searchParams.get("id") !== `eq.${OWN_PROMPT.id}`) return route.fallback();
+    if (select.startsWith("title")) return json(route, { title: OWN_PROMPT.title, like_count: 48, comment_count: 9, community_id: communityPrompt ? "c0000000-0000-4000-8000-0000000000aa" : null });
+    if (select === "community_id") return json(route, { community_id: communityPrompt ? "c0000000-0000-4000-8000-0000000000aa" : null });
+    return route.fallback();
   });
   await context.route(/\/rest\/v1\/reaction_stats/, (route) => {
     const ids = (new URL(route.request().url()).searchParams.get("target_id") ?? "").replace(/^in\.\(|\)$/g, "").split(",").filter(Boolean);
@@ -71,7 +101,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   try {
     await page.goto(BASE + path);
     if (path === PAGES.prompt) await page.locator("[data-detail-actions]").waitFor();
-    await fn({ page, state });
+    await fn({ page, state, db });
     assert.deepEqual(errors, [], "no uncaught page errors");
     results.push(["PASS", name]);
   } catch (e) {
@@ -82,6 +112,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   }
 }
 
+const shot = async (page, name) => { if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${name}.png` }); };
 const box = async (locator) => (await locator.boundingBox());
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const openStats = async (page) => {
@@ -175,7 +206,7 @@ const sectionRows = async (page) => {
   return rows;
 };
 
-await scenario("3. Profil: 'Sonuçlar' bölümü menüde sayıyla (2); açınca kişinin sonuçları ResultCard olarak, sorgu creator_id + topluluğa özgü prompt dışı; karttan sonuç sayfasına gidilir", async ({ page, state }) => {
+await scenario("3. Profil: 'Sonuçlar' menüde sayıyla (2); açınca kartlarda promptun adı (yazar adı değil), silinmiş promptun sonucu 'Prompt silindi'; RPC yaratıcıyla çağrılır; karttan sonuç sayfasına gidilir", async ({ page, state }) => {
   await page.locator("[data-profile-controls] [data-section-menu]").waitFor();
   await page.waitForTimeout(300);
   const items = await sectionRows(page);
@@ -184,10 +215,15 @@ await scenario("3. Profil: 'Sonuçlar' bölümü menüde sayıyla (2); açınca 
   const grid = page.locator("[data-profile-results]");
   await grid.waitFor();
   assert.equal(await grid.locator("div.group").count(), 2);
-  const call = state.resultCalls.find((c) => c.method === "GET" && /creator_id=eq\./.test(c.search) && /range|offset|limit/i.test(c.search + "range"));
-  assert.ok(call, "list was read by creator");
-  assert.match(call.search, new RegExp(`creator_id=eq\\.${U.bob.id}`));
-  assert.match(call.search, /prompts\.community_id=is\.null/, "community-only content is left out");
+  assert.equal(await grid.locator("[data-result-prompt]").first().textContent(), "Sisli ormanda neon tilki", "bottom-left is the prompt's title");
+  assert.equal(await grid.getByText("@" + U.bob.username).count(), 0, "no creator name on the profile cards");
+  const dead = grid.locator("div.group", { has: page.locator("[data-result-prompt-deleted]") });
+  assert.equal(await dead.count(), 1, "the deleted prompt's result");
+  await dead.getByText("Prompt silindi").waitFor();
+  await dead.getByText("Yalnız sen görürsün").waitFor();
+  await shot(page, "profile-results");
+  assert.equal(state.profileCalls.at(-1)?.p_creator, U.bob.id, "asked for this person's results");
+  assert.equal(state.countCalls.at(-1)?.p_creator, U.bob.id);
   assert.match((await grid.locator("a[aria-label]").first().getAttribute("href")) ?? "", /\/results\/local\/?\?id=/);
   assert.equal(await overflowFree(page), true);
 }, { path: `/profile/real?username=${U.bob.username}` });
@@ -205,6 +241,61 @@ await scenario("3c. Kendi profilim: sonuç yokken bölüm görünür ve boş dur
   await page.getByText("Results you share after using a prompt are collected here.").waitFor();
   await page.getByRole("link", { name: /Explore|Keşfet/ }).first().waitFor();
 }, { path: `/profile/real?username=${U.alice.username}`, noResults: true, lang: "en" });
+
+await scenario("4. Yetim sonuç sayfası: 'prompt silindi' notu, beğeni / yorum / paylaş yok; metin görünür", async ({ page }) => {
+  await page.getByText("Prompt silinmiş bir sonucun metni").first().waitFor();
+  await page.locator("[data-result-orphan]").waitFor();
+  assert.match((await page.locator("[data-result-orphan]").textContent()) ?? "", /Bu sonucun promptu silindi.*yalnızca sana görünür/);
+  assert.equal(await page.locator('[data-detail-actions] button[aria-haspopup="menu"]').count(), 0, "no reaction button");
+  assert.equal(await page.locator("#comments").count(), 0, "comments are closed");
+  await shot(page, "orphan-detail");
+  assert.equal(await page.locator("[data-detail-actions]").getByRole("button", { name: /Paylaş/ }).count(), 0, "no share");
+  assert.equal(await overflowFree(page), true);
+}, { path: "/results/local?id=c0000000-0000-4000-8000-000000000009", orphanDetail: true });
+
+const openOwnPromptDelete = async (page) => {
+  const trigger = page.getByRole("button", { name: /Gönderi seçenekleri|Post options/ }).first();
+  await trigger.evaluate((el) => el.scrollIntoView({ block: "start" })); // room for the menu under the card on a phone
+  await page.evaluate(() => window.scrollBy(0, -120));
+  await trigger.click();
+  await page.waitForTimeout(900); // the menu pops in (and a phone's chrome settles after the scroll)
+  await page.getByRole("menuitem", { name: "Sil", exact: true }).dispatchEvent("click");
+  const dialog = page.locator("[data-delete-prompt-dialog]");
+  await dialog.waitFor();
+  return dialog;
+};
+
+await scenario("5. Prompt silme: onay penceresi sonuçların SİLİNMEDİĞİNİ söyler (12, küçük resimler + '+9'), beğeni/yorum silinir, bildirim notu; Vazgeç silmez, onay DELETE yazar", async ({ page, db }) => {
+  await page.getByRole("link", { name: "Sisli ormanda neon tilki" }).first().waitFor();
+  const dialog = await openOwnPromptDelete(page);
+  await dialog.getByText("«Sisli ormanda neon tilki» kalıcı olarak silinir.").waitFor();
+  await dialog.getByText("12 kullanıcı sonucu silinmez").waitFor();
+  await dialog.getByText(/«Prompt silindi» notuyla kalır, yalnız sahibine görünür/).waitFor();
+  await dialog.getByText("+9").waitFor();
+  await dialog.getByText("Promptun 48 beğenisi ve 9 yorumu silinir").waitFor();
+  await dialog.getByText(/Sonuç sahiplerine bildirim gider/).waitFor();
+  await shot(page, "delete-desktop");
+  await dialog.getByRole("button", { name: "Vazgeç" }).click();
+  await dialog.waitFor({ state: "detached" });
+  assert.equal(db.calls.filter((c) => c.method === "DELETE" && c.table === "prompts").length, 0, "cancel deletes nothing");
+  await openOwnPromptDelete(page);
+  await page.locator("[data-delete-prompt-confirm]").click();
+  await page.waitForTimeout(500);
+  assert.equal(db.calls.filter((c) => c.method === "DELETE" && c.table === "prompts").length, 1, "the prompt is deleted");
+  assert.equal(db.calls.filter((c) => c.method === "DELETE" && c.table === "prompt_results").length, 0, "results are not deleted by the client");
+}, { path: `/profile/real?username=${U.alice.username}`, ownPrompts: true });
+
+await scenario("5b. Prompt silme (topluluğa özgü içerik): sonuçlar da silinir uyarısı; telefonda kart taşmaz", async ({ page }) => {
+  await page.getByRole("link", { name: "Sisli ormanda neon tilki" }).first().waitFor();
+  const dialog = await openOwnPromptDelete(page);
+  await dialog.getByText("12 kullanıcı sonucu da silinir").waitFor();
+  assert.equal(await dialog.getByText(/Sonuç sahiplerine bildirim gider/).count(), 0, "no notification note when the results go with the prompt");
+  await shot(page, "delete-community-390");
+  await page.waitForTimeout(500);
+  const b = await box(dialog);
+  assert.ok(b.x >= 0 && b.x + b.width <= 390 + 1, `dialog fits the phone (${b.x}+${b.width})`);
+  assert.equal(await overflowFree(page), true);
+}, { path: `/profile/real?username=${U.alice.username}`, ownPrompts: true, communityPrompt: true, viewport: { width: 390, height: 844 } });
 
 console.log(results.map(([s, n]) => `${s === "PASS" ? "✓" : "✗"} ${n}`).join("\n"));
 const failed = results.filter(([s]) => s !== "PASS").length;

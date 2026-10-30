@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, ChevronUp, FileText, SquareTerminal } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Lock, SquareTerminal } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
 import { StorageImage, StorageVideo } from "@/components/ui/storage-media";
 import {
@@ -95,6 +95,8 @@ export function ResultDetailView() {
     fetchResultById(id!).then((found) => setResult(found));
   }
 
+  // The prompt was deleted: the result stays, visible only to its creator, closed to likes and comments (docs/history/283-*).
+  const isOrphan = !result.promptId;
   const ratio = result.width && result.height ? clampedAspectRatio(result.width, result.height) : 1;
   const picture = result.mediaType === "image" ? result.mediaUrl : result.thumbnailUrl;
   const art =
@@ -144,10 +146,14 @@ export function ResultDetailView() {
               </Link>
             ) : undefined
           }
-          end={<ShareTriggerButton target={{ contentType: "prompt_result", result }} />}
+          end={isOrphan ? undefined : <ShareTriggerButton target={{ contentType: "prompt_result", result }} />}
         >
-          <LikeButton id={result.id} likeCount={result.likeCount} contentType="prompt_result" size={20} />
-          <CommentCountLink resultId={result.id} baseCount={result.commentCount} size={20} />
+          {!isOrphan && (
+            <>
+              <LikeButton id={result.id} likeCount={result.likeCount} contentType="prompt_result" size={20} />
+              <CommentCountLink resultId={result.id} baseCount={result.commentCount} size={20} />
+            </>
+          )}
         </DetailActionBar>
       }
       aside={
@@ -168,6 +174,12 @@ export function ResultDetailView() {
       }
     >
       <div className="space-y-10">
+        {isOrphan && (
+          <p className="flex items-start gap-2.5 rounded-[22px] bg-surface-soft px-4 py-3 text-small text-text-secondary" data-result-orphan="">
+            <Lock size={16} className="mt-0.5 shrink-0 text-text-muted" aria-hidden />
+            {t("result.orphanNotice")}
+          </p>
+        )}
         {(result.mediaType === "text" || result.mediaType === "other") && result.textContent && (
           <DetailSection title={t(RESULT_MEDIA_TYPE_LABELS[result.mediaType])}>
             <ResultTypePreview result={result} size="detail" />
@@ -215,9 +227,11 @@ export function ResultDetailView() {
           </section>
         )}
 
-        <DetailComments>
-          <CommentSection target={{ resultId: result.id }} headless />
-        </DetailComments>
+        {!isOrphan && (
+          <DetailComments>
+            <CommentSection target={{ resultId: result.id }} headless />
+          </DetailComments>
+        )}
       </div>
 
       {isEditOpen && <EditResultModal result={result} onClose={() => setIsEditOpen(false)} onUpdated={handleUpdated} />}
