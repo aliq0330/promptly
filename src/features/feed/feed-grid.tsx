@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
+import { Fragment, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import { Inbox, type LucideIcon } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCard } from "@/features/prompts/prompt-card";
@@ -11,6 +11,8 @@ import { QuoteCard } from "@/features/quotes/quote-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
 import { InterestCardFrame, type InterestFeedback } from "./interest-feedback";
+import { CreatorStripSlot, type CreatorStrips } from "./creator-suggestions";
+import { creatorStripOrdinal, isCreatorStripSlot } from "@/lib/creator-suggestions";
 import { Reveal } from "@/components/ui/reveal";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { prefersReducedMotion } from "@/lib/motion";
@@ -33,12 +35,15 @@ export function FeedGrid({
   itemNote,
   flip = false,
   interest,
+  creatorStrips,
 }: {
   items: FeedItem[];
   /** A short line drawn above a card ("Sana özel"'s reason, docs/history/209-*). */
   itemNote?: (item: FeedItem) => ReactNode;
   /** "İlgimi çekiyor / çekmiyor" (docs/history/275-*): the answers in each card's ⋮ menu + the occasional question strip. Sana özel and Keşfet only. */
   interest?: InterestFeedback;
+  /** "Takip edilecek kişiler" (docs/history/285-*): a strip of people to follow after the 12th post and every 30th. Ana Sayfa, signed in only. */
+  creatorStrips?: CreatorStrips;
   /** When the list is re-ordered (same posts, new ranking) the cards glide to their new places (FLIP). */
   flip?: boolean;
   /** "home" = Ana Sayfa's column next to its right rail (two columns at most); "grid" = the full-width lists (up to three). */
@@ -85,18 +90,27 @@ export function FeedGrid({
           {block.map((item, offset) => {
             const index = blockIndex * FEED_PAGE_SIZE + offset;
             return (
-              <div key={feedItemKey(item)} data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>
-                <Reveal index={index}>
-                  {itemNote?.(item)}
-                  {interest ? (
-                    <InterestCardFrame interest={interest} item={item} index={index}>
-                      {card(item)}
-                    </InterestCardFrame>
-                  ) : (
-                    card(item)
-                  )}
-                </Reveal>
-              </div>
+              <Fragment key={feedItemKey(item)}>
+                <div data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>
+                  <Reveal index={index}>
+                    {itemNote?.(item)}
+                    {interest ? (
+                      <InterestCardFrame interest={interest} item={item} index={index}>
+                        {card(item)}
+                      </InterestCardFrame>
+                    ) : (
+                      card(item)
+                    )}
+                  </Reveal>
+                </div>
+                {/* Full-width break inside the columns (column-span): the cards before and after it stay mounted. The wrapper is there from the
+                    first render whether or not a strip has anything to show, so people arriving later never re-flow the cards. */}
+                {creatorStrips && isCreatorStripSlot(index) && (
+                  <div data-creator-strip-slot className="[column-span:all]">
+                    <CreatorStripSlot strips={creatorStrips} ordinal={creatorStripOrdinal(index)} />
+                  </div>
+                )}
+              </Fragment>
             );
           })}
         </ContentGrid>

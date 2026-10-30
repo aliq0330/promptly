@@ -53,6 +53,18 @@ export const filterTranslations = {
   "interest.undo": { tr: "Geri al", en: "Undo" },
   "interest.failed": { tr: "Cevabın kaydedilemedi. Tekrar dene.", en: "Your answer couldn't be saved. Try again." },
 
+  // ---- Takip edilecek kişiler (docs/history/285-*) ----
+  "creators.strip.title": { tr: "Takip edilecek kişiler", en: "People to follow" },
+  "creators.strip.hide": { tr: "Bu önerileri şimdilik gizle", en: "Hide these suggestions for now" },
+  "creators.dismissPerson": { tr: "{{name}} kişisini önerme", en: "Don't suggest {{name}}" },
+  "creators.dismissFailed": { tr: "Kişi önerilerden kaldırılamadı. Tekrar dene.", en: "Couldn't remove this person from suggestions. Try again." },
+  "creators.reason.mutual": { tr: "{{name}} takip ediyor", en: "Followed by {{name}}" },
+  "creators.reason.mutualMany": { tr: "{{name}} ve {{count}} kişi daha takip ediyor", en: "Followed by {{name}} and {{count}} more" },
+  "creators.reason.liked": { tr: "Beğendiğin içeriklerin yazarı", en: "Wrote something you liked" },
+  "creators.reason.tag": { tr: "#{{tag}} etiketiyle üretiyor", en: "Creates with #{{tag}}" },
+  "creators.reason.tool": { tr: "Takip ettiğin bir AI aracıyla üretiyor", en: "Creates with an AI tool you follow" },
+  "creators.reason.active": { tr: "Son zamanlarda aktif", en: "Active lately" },
+
   // ---- Sana özel: ayar penceresi, ilk kullanım bandı, yenile (docs/history/222-*, 227-*) ----
   "forYou.refresh": { tr: "Yenile", en: "Refresh" },
   "forYou.settings": { tr: "Sana özel'i ayarla", en: "Tune For you" },
