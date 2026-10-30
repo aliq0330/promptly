@@ -102,7 +102,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const toolNames = useMemo(() => [...new Set(prompt.tools.map((ref) => findTool(parseToolRef(ref).toolId)?.name).filter((name): name is string => Boolean(name)))], [prompt.tools]);
   const promptInfoLine = [toolNames.length > 0 ? t("prompt.recommendedTool", { tool: toolNames.join(", ") }) : null, t("prompt.charCount", { count: displayText.length.toLocaleString(language) })].filter(Boolean).join(" · ");
 
-  // Rarely-used actions live in the band's ⋮ menu (docs/history/278-*); RelationMapMenu adds the relation-map row after these.
+  // Rarely-used actions live in the band's ⋮ menu (docs/history/279-*); RelationMapMenu adds the relation-map row after these.
   const menuExtras = useMemo<PostMenuExtra[]>(
     () => (user && !isOwn ? [{ key: "suggest-edit", label: t("prompt.suggestEdit"), icon: <PenLine size={14} />, onSelect: () => setIsSuggestModalOpen(true) }] : []),
     [user, isOwn, t],

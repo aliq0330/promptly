@@ -4,7 +4,6 @@ import { ArrowRight, Workflow as WorkflowIcon } from "lucide-react";
 import { workflowHref } from "@/lib/utils";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
-import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
@@ -43,7 +42,6 @@ export function WorkflowCard({
         badges={
           <>
             <ContentTypePill icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
-            <AnnouncedChip kind="workflow" id={workflow.id} />
           </>
         }
         menu={<PostTargetMenu workflow={workflow} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}

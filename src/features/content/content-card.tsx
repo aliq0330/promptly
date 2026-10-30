@@ -163,7 +163,7 @@ export function bandTint(color: string): string {
  *
  * The kicker (type · tool) and the title sit over the picture's bottom edge at all times (docs/history/277-*; they used to appear only on
  * hover/focus — never on a phone); the title is the card's real link for keyboard and screen-reader users. No description is drawn. `art` is whatever fills the picture (the output, a prompt text, the steps…) and
- * sets its height; `status` is always visible (Taslak, Açık/Kapandı, Alıntı…); `badges` (kicker, announced chip) and `meta`
+ * sets its height; `status` is always visible (Taslak, Açık/Kapandı, Alıntı…); `badges` (the kicker) and `meta`
  * appear with the title. `children` are extra lines (a request-response's provenance, a quote's note) between the picture and
  * the footer. Nothing here creates a stacking context outside the picture (no `isolate`/transform on the card), so the ⋮ menu
  * still opens over the next card; the controls are `relative z-10` above the card's stretched link and the menu `z-20`.
@@ -191,7 +191,7 @@ export function ContentCardPost({
   titleInArt?: boolean;
   /** Always-visible chips in the picture's bottom-right corner (clear of the type glyph and of a text surface's title) (`Badge`s: Taslak, Açık/Kapandı, Alıntı, Sabit…). */
   status?: React.ReactNode;
-  /** The kicker row drawn above the title on the picture (`ContentTypePill`, announced chip…). */
+  /** The kicker row drawn above the title on the picture (`ContentTypePill`…). */
   badges?: React.ReactNode;
   menu?: React.ReactNode;
   /** What fills the picture: the output, a prompt box, the steps… It sets the picture's height. */

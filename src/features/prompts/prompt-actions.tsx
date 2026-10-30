@@ -13,7 +13,7 @@ const SOFT = "h-11 flex-1 bg-surface-soft px-4 text-label text-text hover:bg-bor
 /**
  * The actions under a prompt's text (docs/history/229-*): ONE joined primary pill — Kopyala | Çalıştır (both hand the text out of Promptly) —
  * and two quiet buttons for trying it inside Promptly: Studio'da aç and Hazır ayarla dene (a sheet; nothing preset-related is drawn on the page).
- * Düzenleme öner lives in the ⋮ menu (docs/history/278-*), not here.
+ * Düzenleme öner lives in the ⋮ menu (docs/history/279-*), not here.
  */
 export function PromptActions({ prompt, text }: { prompt: Prompt; text: string }) {
   return (

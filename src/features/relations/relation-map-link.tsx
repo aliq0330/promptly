@@ -30,7 +30,7 @@ export function RelationMapLink({ kind, id, size = 18 }: { kind: RelatableKind; 
   );
 }
 
-/** The same entry point as a text row for a detail page's "Hakkında" card (docs/history/278-*); the action bar keeps only the everyday icons. */
+/** The same entry point as a text row for a detail page's "Hakkında" card (docs/history/279-*); the action bar keeps only the everyday icons. */
 export function RelationMapRow({ kind, id }: { kind: RelatableKind; id: string }) {
   const { t } = useTranslation();
   return (
@@ -46,7 +46,7 @@ export function RelationMapRow({ kind, id }: { kind: RelatableKind; id: string }
 }
 
 /**
- * Adds "İlişki haritasını aç" to the ⋮ menu of the `PostMenu` inside (docs/history/278-*, 279-*), after any rows the page itself brings (`extras`)
+ * Adds "İlişki haritasını aç" to the ⋮ menu of the `PostMenu` inside (docs/history/279-*, 280-*), after any rows the page itself brings (`extras`)
  * and after rows a page above already added (post / quote pages) — wraps the band's `menu`.
  */
 export function RelationMapMenu({ kind, id, extras = [], children }: { kind: RelatableKind; id: string; extras?: PostMenuExtra[]; children: ReactNode }) {

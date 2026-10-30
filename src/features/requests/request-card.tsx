@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { TextArt, TextArtTitle } from "@/features/content/text-art";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
-import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { StorageImage } from "@/components/ui/storage-media";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { contentActionClassName } from "@/features/content/action-styles";
@@ -66,7 +65,6 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         badges={
           <>
             <ContentTypePill icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
-            <AnnouncedChip kind="request" id={request.id} />
           </>
         }
         menu={<PostMenu requestId={request.id} communityId={request.communityId} authorId={request.author.id} onDeleted={onDeleted} />}

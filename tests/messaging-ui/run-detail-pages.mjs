@@ -80,7 +80,7 @@ await scenario("2. prompt: 'Kaynak ve lisans' kapalı satır + CC BY 4.0 rozeti;
   await notes.getByRole("link", { name: /x\.com\/egeberkina/ }).waitFor();
   assert.equal(await notes.getByRole("button", { name: /Kaynak ve lisans/ }).getAttribute("aria-expanded"), "true");
 });
-await scenario("2b. prompt: Kopyala | Çalıştır · Studio'da aç prompt bloğunun altında; 'Düzenleme öner' ve 'İlişki haritası' ⋮ menüsünde / Hakkında kartında (docs/history/278-*); araç adı çift yazılmaz", "prompt", async ({ page }) => {
+await scenario("2b. prompt: Kopyala | Çalıştır · Studio'da aç prompt bloğunun altında; 'Düzenleme öner' ve 'İlişki haritası' ⋮ menüsünde / Hakkında kartında (docs/history/279-*); araç adı çift yazılmaz", "prompt", async ({ page }) => {
   const card = page.locator("section#prompt-text");
   await card.waitFor();
   for (const name of [/Kopyala/, /Çalıştır/, /Studio/]) await card.getByRole("button", { name }).or(card.getByRole("link", { name })).first().waitFor();
@@ -99,7 +99,7 @@ await scenario("2b. prompt: Kopyala | Çalıştır · Studio'da aç prompt bloğ
   assert.ok(!/GPT Image GPT Image/.test(meta), "model name is not prefixed with the tool name twice");
 });
 for (const kind of ["workflow", "request"]) {
-  await scenario(`2d. ${kind}: prompt ile aynı düzen — İlişki haritası eylem satırında değil, Hakkında kartında ve ⋮ menüsünde (docs/history/279-*)`, kind, async ({ page }) => {
+  await scenario(`2d. ${kind}: prompt ile aynı düzen — İlişki haritası eylem satırında değil, Hakkında kartında ve ⋮ menüsünde (docs/history/280-*)`, kind, async ({ page }) => {
     await page.getByTestId("detail-meta").getByRole("link", { name: "İlişki haritasını aç" }).waitFor();
     assert.equal(await page.locator("[data-detail-actions] [data-relation-map-link], [data-detail-dock] [data-relation-map-link]").count(), 0, "action bar keeps only the everyday icons");
     assert.equal(await page.locator("[data-relation-map-link]").count(), 1, "one entry point on the page, in the Hakkında card");

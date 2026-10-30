@@ -1,4 +1,4 @@
-# 278 — Prompt detay sayfası sadeleştirme
+# 279 — Prompt detay sayfası sadeleştirme
 
 Kullanıcı "prompt local sayfaları karışık mı" diye sordu; mockup hazırlandı (Şimdi / Önerilen masaüstü / Önerilen telefon) ve onaylandı.
 Tek değişiklik: Studio'da aç butonu mockup'taki gibi Çalıştır menüsüne taşınmadı, yerinde (Kopyala | Çalıştır'ın yanında) kaldı.
