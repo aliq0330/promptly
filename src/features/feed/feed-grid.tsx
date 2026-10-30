@@ -15,6 +15,8 @@ import { InterestCardFrame, type InterestFeedback } from "./interest-feedback";
 import { Reveal } from "@/components/ui/reveal";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { prefersReducedMotion } from "@/lib/motion";
+import { FEED_PAGE_SIZE } from "@/lib/supabase/feed";
+import { chunk } from "@/lib/supabase/paged";
 
 /**
  * Same CSS-columns masonry as PromptGrid (see prompt-grid.tsx), but for a
@@ -74,51 +76,75 @@ export function FeedGrid({
       <WorkflowCard workflow={item.data} />
     );
 
+  // Each loaded page is its OWN column block (docs/history/276-*): a single CSS-columns container re-balances every card whenever one is appended, so
+  // posts already on screen jumped between columns while the next page loaded. Blocks of one page never change once drawn (the last, partial one balances itself).
+  const blocks = chunk(items, FEED_PAGE_SIZE);
   // "Duyuruldu" çipleri (docs/history/215-*): görünen içeriklerin başvuru gönderileri tek istekte okunur.
   return (
     <AnnouncedProvider entries={items.flatMap((item) => (item.kind === "quote" ? [] : [{ kind: item.kind, id: item.data.id }]))}>
       <div ref={gridRef}>
-        <ContentGrid columns={layout === "home" ? "sm:columns-2" : undefined}>
-          {items.map((item, index) => (
-            <div key={feedItemKey(item)} data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>
-              <Reveal index={index}>
-                {itemNote?.(item)}
-                {interest ? (
-                  <InterestCardFrame interest={interest} item={item} index={index}>
-                    {card(item)}
-                  </InterestCardFrame>
-                ) : (
-                  card(item)
-                )}
-              </Reveal>
-            </div>
-          ))}
-        </ContentGrid>
+        {blocks.map((block, blockIndex) => (
+          <ContentGrid key={`block-${blockIndex}`} columns={layout === "home" ? "sm:columns-2" : undefined}>
+            {block.map((item, offset) => {
+              const index = blockIndex * FEED_PAGE_SIZE + offset;
+              return (
+                <div key={feedItemKey(item)} data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>
+                  <Reveal index={index}>
+                    {itemNote?.(item)}
+                    {interest ? (
+                      <InterestCardFrame interest={interest} item={item} index={index}>
+                        {card(item)}
+                      </InterestCardFrame>
+                    ) : (
+                      card(item)
+                    )}
+                  </Reveal>
+                </div>
+              );
+            })}
+          </ContentGrid>
+        ))}
       </div>
     </AnnouncedProvider>
   );
 }
 
 /**
- * After a re-render, every card that is still there but sits somewhere else glides from its old box to the new one
+ * After a RE-RANKING (same posts, new order) every card that is still there but sits somewhere else glides from its old box to the new one
  * (First-Last-Invert-Play with the Web Animations API — nothing is left behind once it ends, so no stacking context
  * stays around a card's ⋮ menu). New cards just appear (their `Reveal`); reduced motion skips it.
+ *
+ * Only a changed ORDER animates (docs/history/276-*): a re-render with the same list, or one that only APPENDS the next page, moves nothing —
+ * comparing viewport boxes at every render took the user's own scrolling for movement and slid every card ("kayma" while the next page loaded).
+ * Boxes are kept in page coordinates (viewport + scroll) so a scroll between two renders is not a move either; a resized window is not a re-rank.
  */
 function useFlipReorder(ref: RefObject<HTMLElement | null>, enabled: boolean) {
-  const boxes = useRef(new Map<string, DOMRect>());
+  const boxes = useRef(new Map<string, { left: number; top: number }>());
+  const order = useRef<string[]>([]);
+  const width = useRef(0);
   useLayoutEffect(() => {
     const container = ref.current;
     if (!enabled || !container) {
       boxes.current.clear();
+      order.current = [];
       return;
     }
-    const next = new Map<string, DOMRect>();
+    const next = new Map<string, { left: number; top: number }>();
+    const keys: string[] = [];
     const cells = container.querySelectorAll<HTMLElement>("[data-flip-key]");
-    cells.forEach((cell) => next.set(cell.dataset.flipKey as string, cell.getBoundingClientRect()));
-    if (!prefersReducedMotion()) {
+    cells.forEach((cell) => {
+      const key = cell.dataset.flipKey as string;
+      const rect = cell.getBoundingClientRect();
+      keys.push(key);
+      next.set(key, { left: rect.left + window.scrollX, top: rect.top + window.scrollY });
+    });
+    const previous = order.current;
+    const onlyAppended = previous.every((key, i) => keys[i] === key);
+    if (!onlyAppended && width.current === window.innerWidth && !prefersReducedMotion()) {
       cells.forEach((cell) => {
-        const before = boxes.current.get(cell.dataset.flipKey as string);
-        const after = next.get(cell.dataset.flipKey as string);
+        const key = cell.dataset.flipKey as string;
+        const before = boxes.current.get(key);
+        const after = next.get(key);
         if (!before || !after) return;
         const dx = before.left - after.left;
         const dy = before.top - after.top;
@@ -130,5 +156,7 @@ function useFlipReorder(ref: RefObject<HTMLElement | null>, enabled: boolean) {
       });
     }
     boxes.current = next;
+    order.current = keys;
+    width.current = window.innerWidth;
   });
 }

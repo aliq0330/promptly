@@ -233,3 +233,11 @@ NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_K
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-interest.mjs   # 12/12 beklenir
 ```
 
+## Kaydırırken kayma (`docs/history/276-*`)
+
+`run-feed-scroll.mjs` (3 senaryo): Sana özel'de 60 gönderi 18'erli sayfalarla yüklenir; telefonda kaydırıp sonraki sayfalar gelince kartlara yeniden dizilme (FLIP) animasyonu uygulanmaz (`Element.prototype.animate` sayılır), önceki kartların sayfa konumu değişmez, masaüstü iki sütunda ilk sayfanın kartları sütun/konum değiştirmez. Ağ taklitli; gerçek Supabase'e / cihaza KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-feed-scroll.mjs   # 3/3 beklenir
+```
+
