@@ -331,7 +331,7 @@ await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken
   await page.locator("[data-compose-type] [data-taxonomy-type=image]").click();
   await images.first().waitFor();
   // Hazır ayar satırı eski pencereyi açar; Görselden yardım Şablon sekmesinde.
-  await page.getByRole("button", { name: /Hazır Ayarlar ve Ek Alan|Presets & Extra/ }).first().click();
+  await page.getByRole("button", { name: /Üretim ayarları|Generation settings/ }).first().click();
   await page.locator("[data-extra-panel]").waitFor();
   await page.keyboard.press("Escape");
   assert.equal(await overflowFree(page), true);

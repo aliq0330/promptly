@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
+import { useComposeStudio } from "@/features/content/compose-form";
 import { PresetFieldList } from "@/features/presets/preset-field-list";
 import { PresetLists, type PresetBundle } from "@/features/presets/preset-picker";
 import { PresetPreviewModal } from "@/features/presets/preset-preview-modal";
@@ -72,6 +73,7 @@ export function ExtraSettingsSection({
   tools?: string[];
 }) {
   const { t, language } = useTranslation();
+  const studio = useComposeStudio();
   const [open, setOpen] = useState(false);
   const recommended = useMemo(() => catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), [contentType, category, subcategory, tools]);
   const catalog = useMemo(() => mergeFields(recommended, catalogFieldsForType(contentType)), [recommended, contentType]);
@@ -83,20 +85,36 @@ export function ExtraSettingsSection({
 
   return (
     <div className="space-y-2">
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-haspopup="dialog"
-        className="flex w-full items-center gap-3 rounded-md border border-dashed border-border-strong bg-surface-soft px-3 py-2.5 text-left transition-colors hover:border-primary hover:bg-primary-soft"
-      >
-        <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
-        <span className="min-w-0 flex-1">
-          <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
-          <span className="block text-caption text-text-secondary">{t("extra.hint")}</span>
-        </span>
-        {count > 0 && <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{t("extra.count", { count })}</span>}
-        <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />
-      </button>
+      {studio ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-haspopup="dialog"
+          data-extra-settings-row=""
+          className="flex min-h-12 w-full items-center gap-2.5 border-y border-border-soft px-0.5 py-[13px] text-left text-[0.875rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <span className="min-w-0 shrink truncate font-semibold text-text">{t("studio.productionSettings")}</span>
+          <span className={cn("ml-auto min-w-0 truncate text-right text-[0.8125rem]", count > 0 ? "font-semibold text-primary" : "text-text-muted")}>
+            {count > 0 ? t("extra.count", { count }) : t("compose.notChosen")}
+          </span>
+          <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-haspopup="dialog"
+          className="flex w-full items-center gap-3 rounded-md border border-dashed border-border-strong bg-surface-soft px-3 py-2.5 text-left transition-colors hover:border-primary hover:bg-primary-soft"
+        >
+          <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
+            <span className="block text-caption text-text-secondary">{t("extra.hint")}</span>
+          </span>
+          {count > 0 && <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{t("extra.count", { count })}</span>}
+          <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />
+        </button>
+      )}
 
       {count > 0 && (
         <div className="space-y-2">

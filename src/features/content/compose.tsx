@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import { StorageImg } from "@/components/ui/storage-media";
 import { resetPendingAnnounce } from "@/features/communities/announce-picker";
 import { resetCreateDestination } from "@/features/communities/community-return";
+import { ComposeStudioProvider } from "@/features/content/compose-form";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,8 @@ import { cn } from "@/lib/utils";
  * (`html[data-compose-open]` → `[data-app-chrome]` yok), yerine yapışkan üst çubuk: ✕ · başlık (+ taslaklar) · durum · "Taslak" · "Paylaş".
  * "Paylaş" formun kendi yayın bölümünü (`PublishPanel`) çalıştırır; eksik varken soluktur ama basılabilir (eksikleri gösterir).
  * `aside` (canlı önizleme) yalnız `lg`+ sağ sütundur.
+ * `studio` (docs/history/286-*, Prompt formu): tam ekran iki sütun — solda kayan form, sağda (`lg`+) 408px sabit `aside`; `lg` altında tek
+ * sütun, sayfa kayar ve `bottom` (klavye üstü dock / alt çubuk) ekranın altına sabitlenir. Üst çubuk daha sade, Taslak/Taslaklar yalnız `lg`+'da.
  */
 export function ComposeShell({
   title,
@@ -29,6 +32,8 @@ export function ComposeShell({
   onSaveDraft,
   aside,
   wide = false,
+  studio = false,
+  bottom,
   children,
 }: {
   title: string;
@@ -46,6 +51,10 @@ export function ComposeShell({
   aside?: ReactNode;
   /** Geniş editörler (Workflow): sağ sütun yok, gövde tam genişlik. */
   wide?: boolean;
+  /** Tam ekran iki sütunlu stüdyo düzeni (yalnız Prompt formu). */
+  studio?: boolean;
+  /** Stüdyo düzeninde `lg` altında ekranın altına sabitlenen yuva. */
+  bottom?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -60,6 +69,60 @@ export function ComposeShell({
       resetCreateDestination();
     };
   }, []);
+
+  if (studio) {
+    return (
+      <ComposeStudioProvider value>
+        <div data-compose="" data-compose-studio="" className="flex min-h-dvh flex-col lg:h-dvh lg:min-h-0 lg:overflow-hidden">
+          <div className="sticky top-0 z-30 shrink-0 border-b border-border-soft bg-background lg:static">
+            <div className="flex h-11 items-center gap-2 px-1.5 lg:h-[52px] lg:px-3">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={t("common.close")}
+                data-compose-close=""
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text transition-colors hover:bg-surface-soft"
+              >
+                <X size={20} strokeWidth={1.9} />
+              </button>
+              <h1 className="shrink-0 text-small font-bold text-text lg:text-[0.9375rem]">{title}</h1>
+              <div className="hidden min-w-0 items-center lg:flex">{titleExtra}</div>
+              <div className="min-w-0 flex-1" />
+              {status && <div className="hidden shrink-0 whitespace-nowrap text-caption text-text-muted lg:block">{status}</div>}
+              <div className="flex shrink-0 items-center gap-2">
+                {onSaveDraft && (
+                  <Button type="button" variant="ghost" size="md" onClick={onSaveDraft} disabled={publishDisabled} data-compose-draft="" className="hidden shrink-0 px-4 lg:inline-flex">
+                    {t("createActions.saveDraft")}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  size="md"
+                  onClick={onPublish}
+                  disabled={publishDisabled}
+                  data-compose-publish=""
+                  className={cn("shrink-0 px-4", publishDimmed && "opacity-60")}
+                >
+                  {publishLabel}
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="flex min-h-0 flex-1">
+            <div data-compose-scroll="" className="min-w-0 flex-1 lg:overflow-y-auto">
+              <div className="mx-auto w-full max-w-[712px] px-3.5 pb-32 pt-4 lg:px-9 lg:pb-10 lg:pt-6">{children}</div>
+            </div>
+            {aside && (
+              <aside data-compose-aside="" className="hidden w-[408px] shrink-0 flex-col gap-3 overflow-y-auto border-l border-border-soft bg-surface-soft px-[22px] py-5 lg:flex">
+                {aside}
+              </aside>
+            )}
+          </div>
+          {bottom}
+        </div>
+      </ComposeStudioProvider>
+    );
+  }
 
   return (
     <div data-compose="" className="min-h-dvh">

@@ -699,6 +699,15 @@
     padding-bottom: 0 !important;
   }
 
+  /* Prompt formunun canlı kartı (docs/history/286-*): kapak kutusu mockup'taki gibi sabit 210px; görsel kutuyu doldurur, fazlası kırpılır. */
+  [data-live-card] [data-card-media] {
+    height: 13.125rem;
+  }
+  [data-live-card] [data-card-media] > :first-child {
+    aspect-ratio: auto !important;
+    height: 100%;
+  }
+
   /* Sohbet seçim modu (Mesajlar): telefonda üst ve alt uygulama menüleri yerini seçim başlığına ve sabit alt işlem çubuğuna bırakır. */
   html[data-chat-select] [data-app-nav] {
     display: none !important;
