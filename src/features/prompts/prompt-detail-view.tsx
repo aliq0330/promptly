@@ -12,7 +12,7 @@ import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { RequestResponseContext } from "@/features/prompts/post-context";
-import { RelationMapLink } from "@/features/relations/relation-map-link";
+import { RelationMapMenu, RelationMapRow } from "@/features/relations/relation-map-link";
 import { PromptActions } from "@/features/prompts/prompt-actions";
 import { PromptDnaDisplay } from "@/features/prompts/prompt-dna-display";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
@@ -32,6 +32,7 @@ import { hasPendingCardTransition, useCardMediaTransition } from "@/lib/card-tra
 import { effectiveVariableValues } from "@/lib/prompt-variable-types";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
+import type { PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, promptHref, relationMapHref } from "@/lib/utils";
 import { splitSourceNotes } from "@/lib/source-notes";
@@ -100,6 +101,12 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   // "Önerilen araç: ChatGPT · 112 karakter" under the text — the tool is the same one "Çalıştır" preselects.
   const toolNames = useMemo(() => [...new Set(prompt.tools.map((ref) => findTool(parseToolRef(ref).toolId)?.name).filter((name): name is string => Boolean(name)))], [prompt.tools]);
   const promptInfoLine = [toolNames.length > 0 ? t("prompt.recommendedTool", { tool: toolNames.join(", ") }) : null, t("prompt.charCount", { count: displayText.length.toLocaleString(language) })].filter(Boolean).join(" · ");
+
+  // Rarely-used actions live in the band's ⋮ menu (docs/history/279-*); RelationMapMenu adds the relation-map row after these.
+  const menuExtras = useMemo<PostMenuExtra[]>(
+    () => (user && !isOwn ? [{ key: "suggest-edit", label: t("prompt.suggestEdit"), icon: <PenLine size={14} />, onSelect: () => setIsSuggestModalOpen(true) }] : []),
+    [user, isOwn, t],
+  );
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
@@ -185,7 +192,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               follow={!isOwn && <FollowButton user={prompt.author} />}
             />
           }
-          menu={<PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />}
+          menu={
+            <RelationMapMenu kind="prompt" id={prompt.id} extras={menuExtras}>
+              <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
+            </RelationMapMenu>
+          }
         />
       }
       actions={
@@ -202,7 +213,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           <EngageLike id={prompt.id} likeCount={prompt.likeCount} size={20} />
           <EngageCommentCount promptId={prompt.id} baseCount={prompt.commentCount} size={20} />
           <EngageSave promptId={prompt.id} saveCount={prompt.saveCount} size={20} />
-          <RelationMapLink kind="prompt" id={prompt.id} />
         </DetailActionBar>
       }
       aside={
@@ -214,6 +224,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               legacyTool={prompt.tool}
               hasChips={Boolean(prompt.category) || prompt.tags.length > 0}
               quoteCount={prompt.quoteCount}
+              footer={<RelationMapRow kind="prompt" id={prompt.id} />}
             >
               <TaxonomyLinks className="contents" contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
               <DetailTags className="contents" tags={prompt.tags} />
@@ -285,18 +296,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                     displayText
                   )}
                 </ScrollablePrompt>
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border-soft px-5 py-2.5 text-caption text-text-muted">
+                <div className="border-t border-border-soft px-5 py-2.5 text-caption text-text-muted">
                   <span>{promptInfoLine}</span>
-                  {user && !isOwn && (
-                    <button
-                      type="button"
-                      onClick={() => setIsSuggestModalOpen(true)}
-                      className="inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap font-medium text-text-secondary transition-colors hover:text-primary"
-                    >
-                      <PenLine size={14} aria-hidden />
-                      {t("prompt.suggestEdit")}
-                    </button>
-                  )}
                 </div>
                 <AssembleSweep seq={assemble.sweepSeq} />
               </div>

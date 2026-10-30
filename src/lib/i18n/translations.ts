@@ -2615,6 +2615,7 @@ export const translations = {
   "relations.title": { tr: "İlişki Haritası", en: "Relationship Map" },
   "relations.subtitle": { tr: "Bu içeriğin başka içeriklerle bağlarını tek yerde gör.", en: "See how this content connects to other content, in one place." },
   "relations.link": { tr: "İlişki Haritası", en: "Relationship Map" },
+  "relations.open": { tr: "İlişki haritasını aç", en: "Open relationship map" },
   "relations.backToContent": { tr: "İçeriğe dön", en: "Back to content" },
   "relations.centerLabel": { tr: "Merkez", en: "Center" },
   "relations.add": { tr: "İlişki ekle", en: "Add relation" },

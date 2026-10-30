@@ -92,7 +92,7 @@ const openSheet = async (page, name = "Hazır ayarla dene") => {
   return dialog;
 };
 
-await scenario("1. prompt sayfası: hazır ayar sayfada gömülü değil; birleşik Kopyala | Çalıştır, Studio'da aç, sayaçlı 'Hazır ayarla dene'; araç ve Düzenleme öner kutunun altında", async ({ page }) => {
+await scenario("1. prompt sayfası: hazır ayar sayfada gömülü değil; birleşik Kopyala | Çalıştır, Studio'da aç, sayaçlı 'Hazır ayarla dene'; araç bilgisi kutunun altında, Düzenleme öner ⋮ menüsünde", async ({ page }) => {
   await page.goto(promptUrl);
   const block = page.locator("[data-prompt-block]");
   await block.waitFor();
@@ -106,7 +106,10 @@ await scenario("1. prompt sayfası: hazır ayar sayfada gömülü değil; birle�
   await page.getByRole("link", { name: "Studio'da aç" }).waitFor();
   assert.match(await block.textContent(), /Önerilen araç: GPT Image/);
   assert.match(await block.textContent(), /\d+ karakter/);
-  await block.getByRole("button", { name: "Düzenleme öner" }).waitFor();
+  assert.equal(await block.getByRole("button", { name: "Düzenleme öner" }).count(), 0, "Düzenleme öner bloğun içinde değil");
+  await page.getByRole("button", { name: /Gönderi seçenekleri|Post options/ }).first().click();
+  await page.getByRole("menuitem", { name: "Düzenleme öner" }).waitFor();
+  await page.keyboard.press("Escape");
   assert.equal(await overflowFree(page), true);
   await shot(page, "1-prompt-desktop");
 });

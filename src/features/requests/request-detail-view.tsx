@@ -14,7 +14,7 @@ import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PromptCard } from "@/features/prompts/prompt-card";
-import { RelationMapLink } from "@/features/relations/relation-map-link";
+import { RelationMapMenu, RelationMapRow } from "@/features/relations/relation-map-link";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { RequestHistoryPanel } from "@/features/versions/content-history-panels";
 import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
@@ -237,11 +237,15 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           }
           title={<DetailTitle>{live.title}</DetailTitle>}
           byline={<DetailByline person={live.author} createdAt={live.createdAt} language={language} follow={!isOwnRequest && <FollowButton user={live.author} />} />}
-          menu={<PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />}
+          menu={
+            <RelationMapMenu kind="request" id={live.id}>
+              <PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />
+            </RelationMapMenu>
+          }
         />
       }
       actions={
-        // Beğeni · Yorum · Yanıt (scrolls to the replies) · İlişki haritası … İstatistik · Paylaş — no Kopyala for a request.
+        // Beğeni · Yorum · Yanıt (scrolls to the replies) … İstatistik · Paylaş — no Kopyala for a request.
         <DetailActionBar
           below={<EngageReactionSummary id={live.id} likeCount={live.likeCount} contentType="request" />}
           primary={primary}
@@ -264,7 +268,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <Reply size={20} strokeWidth={1.75} />
             <span aria-hidden>{formatCount(live.responseCount)}</span>
           </a>
-          <RelationMapLink kind="request" id={live.id} />
         </DetailActionBar>
       }
       aside={
@@ -276,6 +279,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               legacyTool={live.preferredTool}
               hasChips={Boolean(live.contentType && live.category) || live.tags.length > 0}
               quoteCount={live.quoteCount}
+              footer={<RelationMapRow kind="request" id={live.id} />}
             >
               {live.contentType && <TaxonomyLinks className="contents" contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
               <DetailTags className="contents" tags={live.tags} />

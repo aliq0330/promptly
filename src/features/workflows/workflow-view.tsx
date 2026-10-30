@@ -10,16 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
-import { ToolChips } from "@/features/content/tool-chips";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { FollowButton } from "@/features/profile/follow-button";
 import { RelatedWorkflows } from "./related-workflows";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
-import { RelationMapLink } from "@/features/relations/relation-map-link";
+import { RelationMapMenu, RelationMapRow } from "@/features/relations/relation-map-link";
 import { useRealWorkflows } from "./real-workflows-provider";
-import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { StorageImage, StorageImg } from "@/components/ui/storage-media";
+import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
@@ -122,7 +122,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
   const aside = (
     <DetailAside>
       <AsideSection id="detail-about-title" title={t("profile.tabAbout")} bare>
-        <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={workflow.tools} hasChips={workflow.tags.length > 0} quoteCount={workflow.quoteCount}>
+        <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={workflow.tools} hasChips={workflow.tags.length > 0} quoteCount={workflow.quoteCount} footer={<RelationMapRow kind="workflow" id={workflow.id} />}>
           <DetailTags className="contents" tags={workflow.tags} />
         </DetailMetaCard>
       </AsideSection>
@@ -141,35 +141,29 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
         </dl>
       </AsideSection>
 
-      {workflow.tools.length > 0 && (
-        <AsideSection id="workflow-tools-title" title={t("workflow.sidebarTools")} bare>
-          <ToolChips refs={workflow.tools} />
-        </AsideSection>
-      )}
-
       <RelatedWorkflows workflow={workflow} />
     </DetailAside>
   );
 
-  // The album art: the cover (+ more pictures), else the workflow icon.
-  const art = workflow.coverUrl ? (
+  // The album art: the cover (+ more pictures) at its own ratio like a prompt's output, else the workflow icon.
+  const cover = workflow.media[0];
+  const coverRatio = cover?.width && cover.height ? clampedAspectRatio(cover.width, cover.height) : 16 / 9;
+  const art = cover ? (
     <DetailArt
-      ratio={16 / 9}
+      ratio={coverRatio}
       caption={workflow.title}
       onOpen={() => setLightboxIndex(0)}
       thumbnails={
         workflow.media.length > 1
           ? workflow.media.slice(1).map((item, index) => (
               <DetailArtThumb key={item.id} onOpen={() => setLightboxIndex(index + 1)}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- thumbnail strip, same source list as the cover */}
-                <img src={item.url} alt="" className="h-full w-full object-cover" />
+                <StorageImg src={item.url} alt="" className="h-full w-full object-cover" />
               </DetailArtThumb>
             ))
           : undefined
       }
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
-      <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" />
+      <StorageImage src={cover.url} alt={cover.alt} fill sizes="(min-width: 768px) 520px, 100vw" className="object-cover" />
     </DetailArt>
   ) : (
     <DetailArtPlaceholder icon={WorkflowIcon} />
@@ -180,8 +174,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
       band={
         <DetailBand
           art={art}
-          // eslint-disable-next-line @next/next/no-img-element -- decorative tint of the same cover
-          backdrop={workflow.coverUrl ? <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" /> : undefined}
+          backdrop={cover ? <StorageImage src={cover.url} alt="" fill sizes="50vw" className="object-cover" /> : undefined}
           kicker={
             <div className="flex flex-wrap items-center gap-2">
               <ContentTypeLabel icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
@@ -191,15 +184,17 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           title={<DetailTitle>{workflow.title}</DetailTitle>}
           byline={<DetailByline person={workflow.creator} createdAt={workflow.createdAt} language={language} follow={!isOwn && <FollowButton user={workflow.creator} />} />}
           menu={
-            <PostMenu
-              workflowId={workflow.id}
-              communityId={workflow.communityId}
-              authorId={workflow.creator.id}
-              onDeleted={() => {
-                removeFromCache(workflow.id);
-                router.push("/workflows");
-              }}
-            />
+            <RelationMapMenu kind="workflow" id={workflow.id}>
+              <PostMenu
+                workflowId={workflow.id}
+                communityId={workflow.communityId}
+                authorId={workflow.creator.id}
+                onDeleted={() => {
+                  removeFromCache(workflow.id);
+                  router.push("/workflows");
+                }}
+              />
+            </RelationMapMenu>
           }
         />
       }
@@ -232,7 +227,6 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           <EngageLike id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={20} />
           <EngageCommentCount workflowId={workflow.id} baseCount={workflow.commentCount} size={20} />
           <EngageSave workflowId={workflow.id} saveCount={workflow.saveCount} size={20} />
-          <RelationMapLink kind="workflow" id={workflow.id} />
         </DetailActionBar>
       }
     >
@@ -251,22 +245,6 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
             onClose={() => setLightboxIndex(null)}
           />
         )}
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          {workflow.contentTypes.map((type) => {
-            const Icon = CONTENT_TYPE_META[type].icon;
-            return (
-              <span
-                key={type}
-                className="inline-flex h-6 items-center gap-1 rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-secondary"
-              >
-                <Icon size={11} />
-                {t(CONTENT_TYPE_META[type].labelKey)}
-              </span>
-            );
-          })}
-          <span className="text-caption text-text-muted">{t("workflow.stepCount", { count: String(steps.length) })}</span>
-        </div>
 
         <DetailSection
           ref={stepsRef}
