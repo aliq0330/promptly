@@ -41,7 +41,7 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
 /**
  * RequestCard — a community prompt request on the visual card (`ContentCardPost`, docs/history/266-*): the Açık/Kapandı status
  * stays on the picture, art = the reference picture or, without one, the brief itself (and the creative direction), title and
- * kicker on hover, the same real like button and `PostMenu`. "Yanıtla" lives on the detail page. The row: Beğeni · Yorum · Yanıt
+ * kicker on the picture (always visible, docs/history/277-*), the same real like button and `PostMenu`. "Yanıtla" lives on the detail page. The row: Beğeni · Yorum · Yanıt
  * (real response count, the existing link) — a request has no Kaydet (not savable anywhere) and no "Kopyala".
  */
 export function RequestCard({ request, onDeleted }: { request: PromptRequest; onDeleted?: () => void }) {

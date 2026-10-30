@@ -22,7 +22,7 @@ type CollectionRemoval = { onRemove: () => Promise<void> };
  * `prompts` row), on the visual card (`ContentCardPost`, docs/history/266-*):
  *
  *   picture: the output image; the poster of a video/audio prompt (+ the type glyph in the corner); the prompt itself
- *            when there is no picture. Title, kicker, tool and time show on hover.
+ *            when there is no picture. Kicker (type · tool) and title are drawn on the picture at all times (docs/history/277-*).
  *   row:     (·) Name                 ♥ · 💬 · 🔖 · ⋮
  *
  * The prompt text is what people come for: a prompt without a picture shows it as the art (`PromptPreviewBox` "art").

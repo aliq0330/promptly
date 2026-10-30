@@ -53,7 +53,7 @@ export function WorkflowCard({
               {/* eslint-disable-next-line @next/next/no-img-element -- real, potentially locally-produced data URL cover */}
               <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" />
               {workflow.media.length > 1 && (
-                <span className="absolute bottom-2.5 left-2.5 rounded-full bg-black/55 px-2 py-0.5 text-caption font-semibold text-white group-focus-within:opacity-0 group-hover:opacity-0">
+                <span className="absolute left-2.5 top-2.5 rounded-full bg-black/55 px-2 py-0.5 text-caption font-semibold text-white">
                   {t("media.moreImagesBadge", { count: workflow.media.length - 1 })}
                 </span>
               )}
