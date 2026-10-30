@@ -26,3 +26,18 @@ export function RelationMapLink({ kind, id, size = 18 }: { kind: RelatableKind; 
     </Link>
   );
 }
+
+/** The same entry point as a text row for a detail page's "Hakkında" card (docs/history/278-*); the action bar keeps only the everyday icons. */
+export function RelationMapRow({ kind, id }: { kind: RelatableKind; id: string }) {
+  const { t } = useTranslation();
+  return (
+    <Link
+      href={relationMapHref({ kind, id })}
+      data-relation-map-link
+      className="flex min-h-11 basis-full items-center gap-2.5 border-t border-border-soft pt-2 text-label font-semibold text-text transition-colors hover:text-primary"
+    >
+      <Network size={18} strokeWidth={1.75} aria-hidden />
+      {t("relations.open")}
+    </Link>
+  );
+}

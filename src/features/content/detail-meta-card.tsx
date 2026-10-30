@@ -19,6 +19,7 @@ export function DetailMetaCard({
   fallbackTool,
   hasChips,
   quoteCount = 0,
+  footer,
   children,
 }: {
   toolLabel: string;
@@ -30,12 +31,14 @@ export function DetailMetaCard({
   hasChips: boolean;
   /** "N kez alıntılandı" (docs/history/217-*); 0 ise satır çizilmez. */
   quoteCount?: number;
+  /** A last row under a hairline (the prompt page's "İlişki haritasını aç"); it keeps the card on screen even with no tool or chips. */
+  footer?: ReactNode;
   children?: ReactNode;
 }) {
   const { t } = useTranslation();
   const items = resolveToolRefs(toolRefs);
   const hasTool = items.length > 0 || Boolean(legacyTool) || Boolean(fallbackTool);
-  if (!hasTool && !hasChips && quoteCount <= 0) return null;
+  if (!hasTool && !hasChips && quoteCount <= 0 && !footer) return null;
 
   const linkClass = "transition-colors hover:text-primary";
   return (
@@ -71,6 +74,7 @@ export function DetailMetaCard({
           <Quote size={13} aria-hidden /> {t("quotes.count", { count: quoteCount })}
         </p>
       )}
+      {footer}
     </section>
   );
 }
