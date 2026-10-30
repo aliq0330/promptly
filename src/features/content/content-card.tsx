@@ -227,17 +227,17 @@ export function ContentCardPost({
           {meta && <p className="sr-only">{meta}</p>}
         </div>
       </div>
-      {children && <div className="space-y-2 px-0.5 pt-2.5 empty:hidden">{children}</div>}
-      <div className="relative z-10 flex items-center gap-2 pb-0.5 pl-0.5 pt-2">
+      {children && <div className="space-y-2 px-0.5 pt-2 empty:hidden">{children}</div>}
+      <div className="relative z-10 flex items-center gap-2 pb-0.5 pl-0.5 pt-0.5">
         {author ? (
           <Link href={profileHref(author)} className="flex min-w-0 flex-1 items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary">
-            <Avatar src={author.avatarUrl} alt="" size={28} className="shrink-0" />
-            <span className="min-w-0 truncate text-body font-medium text-text hover:text-primary">{name}</span>
+            <Avatar src={author.avatarUrl} alt="" size={24} className="shrink-0" />
+            <span className="min-w-0 truncate text-small font-medium text-text hover:text-primary">{name}</span>
           </Link>
         ) : (
           <span className="flex min-w-0 flex-1 items-center gap-2">
-            <Avatar src={null} alt="" size={28} className="shrink-0" />
-            <span className="min-w-0 truncate text-body font-medium text-text">{name}</span>
+            <Avatar src={null} alt="" size={24} className="shrink-0" />
+            <span className="min-w-0 truncate text-small font-medium text-text">{name}</span>
           </span>
         )}
         {(footer || menu) && (

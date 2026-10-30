@@ -9,8 +9,8 @@ export function PromptCardSkeleton() {
   return (
     <div aria-hidden>
       <Skeleton className="aspect-[4/5] w-full rounded-xl" />
-      <div className="flex items-center gap-2 pl-0.5 pt-2.5">
-        <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+      <div className="flex min-h-[2.375rem] items-center gap-2 pl-0.5">
+        <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
         <Skeleton className="h-4 w-28" />
         <Skeleton className="ml-auto h-4 w-10" />
         <Skeleton className="h-4 w-10" />
