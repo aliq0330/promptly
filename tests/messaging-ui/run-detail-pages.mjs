@@ -98,6 +98,15 @@ await scenario("2b. prompt: Kopyala | Çalıştır · Studio'da aç prompt bloğ
   assert.match(meta, /GPT Image 1/);
   assert.ok(!/GPT Image GPT Image/.test(meta), "model name is not prefixed with the tool name twice");
 });
+for (const kind of ["workflow", "request"]) {
+  await scenario(`2d. ${kind}: prompt ile aynı düzen — İlişki haritası eylem satırında değil, Hakkında kartında ve ⋮ menüsünde (docs/history/279-*)`, kind, async ({ page }) => {
+    await page.getByTestId("detail-meta").getByRole("link", { name: "İlişki haritasını aç" }).waitFor();
+    assert.equal(await page.locator("[data-detail-actions] [data-relation-map-link], [data-detail-dock] [data-relation-map-link]").count(), 0, "action bar keeps only the everyday icons");
+    assert.equal(await page.locator("[data-relation-map-link]").count(), 1, "one entry point on the page, in the Hakkında card");
+    await page.getByRole("button", { name: /Gönderi seçenekleri|Post options/ }).first().click();
+    await page.getByRole("menuitem", { name: "İlişki haritasını aç" }).waitFor();
+  });
+}
 await scenario("2c. prompt: çıktı görseli bantta kendi oranında, kırpılmadan; telefonda en çok 240px yükseklik, sayfaya sığar", "prompt", async ({ page }) => {
   const art = page.locator("[data-detail-band] figure button").first();
   await art.waitFor();

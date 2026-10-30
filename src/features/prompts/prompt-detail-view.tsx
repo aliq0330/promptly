@@ -4,15 +4,15 @@ import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, 
 import { usePageTitle } from "@/components/layout/page-title";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Network, PenLine } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { PenLine } from "lucide-react";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { RequestResponseContext } from "@/features/prompts/post-context";
-import { RelationMapRow } from "@/features/relations/relation-map-link";
+import { RelationMapMenu, RelationMapRow } from "@/features/relations/relation-map-link";
 import { PromptActions } from "@/features/prompts/prompt-actions";
 import { PromptDnaDisplay } from "@/features/prompts/prompt-dna-display";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
@@ -32,7 +32,7 @@ import { hasPendingCardTransition, useCardMediaTransition } from "@/lib/card-tra
 import { effectiveVariableValues } from "@/lib/prompt-variable-types";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
-import { PostMenuExtras, usePostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
+import type { PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, promptHref, relationMapHref } from "@/lib/utils";
 import { splitSourceNotes } from "@/lib/source-notes";
@@ -71,7 +71,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const heroRef = useCardMediaTransition<HTMLButtonElement>(selfHref);
 
   const { user } = useAuth();
-  const router = useRouter();
   const isOwn = user?.id === prompt.author.id;
   const [variables, setVariables] = useState<PromptVariable[]>([]);
   // Viewer-typed overrides per variable name; anything not typed falls back to the default.
@@ -103,15 +102,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const toolNames = useMemo(() => [...new Set(prompt.tools.map((ref) => findTool(parseToolRef(ref).toolId)?.name).filter((name): name is string => Boolean(name)))], [prompt.tools]);
   const promptInfoLine = [toolNames.length > 0 ? t("prompt.recommendedTool", { tool: toolNames.join(", ") }) : null, t("prompt.charCount", { count: displayText.length.toLocaleString(language) })].filter(Boolean).join(" · ");
 
-  // Rarely-used actions live in the band's ⋮ menu (docs/history/278-*); a post/quote page above may have added its own rows already.
-  const inheritedExtras = usePostMenuExtras();
+  // Rarely-used actions live in the band's ⋮ menu (docs/history/278-*); RelationMapMenu adds the relation-map row after these.
   const menuExtras = useMemo<PostMenuExtra[]>(
-    () => [
-      ...inheritedExtras,
-      ...(user && !isOwn ? [{ key: "suggest-edit", label: t("prompt.suggestEdit"), icon: <PenLine size={14} />, onSelect: () => setIsSuggestModalOpen(true) }] : []),
-      { key: "relation-map", label: t("relations.open"), icon: <Network size={14} />, onSelect: () => router.push(relationMapHref({ kind: "prompt", id: prompt.id })) },
-    ],
-    [inheritedExtras, user, isOwn, t, router, prompt.id],
+    () => (user && !isOwn ? [{ key: "suggest-edit", label: t("prompt.suggestEdit"), icon: <PenLine size={14} />, onSelect: () => setIsSuggestModalOpen(true) }] : []),
+    [user, isOwn, t],
   );
 
   const searchParams = useSearchParams();
@@ -199,9 +193,9 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             />
           }
           menu={
-            <PostMenuExtras items={menuExtras}>
+            <RelationMapMenu kind="prompt" id={prompt.id} extras={menuExtras}>
               <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
-            </PostMenuExtras>
+            </RelationMapMenu>
           }
         />
       }
