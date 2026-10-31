@@ -15,8 +15,8 @@ import { StorageAppearanceImage } from "@/components/ui/storage-media";
  */
 
 // The visual card's art (`ContentCardPost`): the picture fills the rounded media box; the box sets no frame of its own.
-const FRAME_CLASS = "relative w-full overflow-hidden bg-surface-soft";
-const SIZES = "(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw";
+export const FRAME_CLASS = "relative w-full overflow-hidden bg-surface-soft";
+export const SIZES = "(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw";
 
 /**
  * The cover of a prompt with one or more output images. Only the first is shown (browsing every image is a detail-page job,

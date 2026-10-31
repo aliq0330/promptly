@@ -6,6 +6,7 @@ import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/conte
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
+import { PlayableCardArt } from "@/features/prompts/playable-card-art";
 import { PostCommentLink, PostLike, PostSave, type EngageMode } from "./post-engagement";
 import { summarizeContent } from "./content-summary";
 import { SummaryTextArt } from "@/features/content/text-art";
@@ -70,7 +71,7 @@ export function ApplicationCard({
             summary.type === "space" ? (
               <SpaceCoverArt urls={summary.spaceArt ?? []} className="aspect-[4/3] w-full overflow-hidden" iconSize={40} />
             ) : summary.playable && poster ? (
-              <OutputPosterPreview media={poster} />
+              post.content?.type === "prompt" ? <PlayableCardArt prompt={post.content.data} poster={poster} /> : <OutputPosterPreview media={poster} />
             ) : summary.media.length > 0 ? (
               <OutputThumbnailStrip media={summary.media} />
             ) : (

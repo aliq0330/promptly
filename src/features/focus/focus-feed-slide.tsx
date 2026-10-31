@@ -2,11 +2,12 @@
 
 import { createContext, memo, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight, ChevronUp, ImageOff, Music, Pause, Play, Shapes, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUpRight, ChevronUp, ImageOff, Music, Shapes, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MediaPlayButton } from "@/components/ui/media-play-button";
 import { StorageAudio, StorageImg, StorageVideo } from "@/components/ui/storage-media";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { PromptPreviewBox } from "@/features/prompts/prompt-preview-box";
@@ -187,54 +188,62 @@ function SlideImage({ cover, active, near }: { cover: FocusFeedCover; active: bo
 
 /**
  * Odak's one sound switch (top bar): videos start muted (browsers only autoplay silently); turning sound on, or tapping
- * an audio post's play button, applies to every following post until it is turned off again.
+ * an audio post's play button — or an audio post starting by itself with its sound — applies to every following post until it is
+ * turned off again.
  */
 export const FocusPlaybackContext = createContext<{ muted: boolean; setMuted: (muted: boolean) => void }>({ muted: true, setMuted: () => undefined });
 
 /** Opens the info sheet of a post (docs/history/239-*) — provided by `FocusScreen`, like the comments sheet. */
 export const FocusInfoContext = createContext<(item: PostFeedItem) => void>(() => undefined);
 
-/** Thin progress line along the bottom of a playing video / audio. */
-function MediaProgress({ value }: { value: number }) {
-  return (
-    <div aria-hidden className="absolute inset-x-0 bottom-0 z-20 h-0.5 bg-white/20">
-      <div className="h-full bg-white/85" style={{ width: `${Math.min(100, Math.max(0, value * 100))}%` }} />
-    </div>
-  );
-}
-
 /**
  * A video / audio prompt's output — the AUTHOR's uploaded result (`usePromptOutput`, the detail page's rule), looked up only
- * near view. The active post plays (video: muted unless sound is on; audio: when sound is on, else on its play button), the
- * others pause; tapping toggles. Without an output it is the poster (or nothing — the slide then shows the prompt's words).
+ * near view. The active post plays by itself (video: muted unless sound is on; audio: with its sound, if the browser allows it —
+ * else it waits on its button), the others pause; tapping toggles. The round play / pause button is the one the post cards have;
+ * there is no progress bar. Without an output it is the poster (or nothing — the slide then shows the prompt's words).
  */
 function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt; cover: FocusFeedCover | null; active: boolean; near: boolean }) {
-  const { t } = useTranslation();
   const { muted, setMuted } = useContext(FocusPlaybackContext);
   const { data: output, loading } = usePromptOutput(prompt, near);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+  // A signed (private) file mounts its element a moment after the output is known: the player is ready once its metadata is in.
+  const [ready, setReady] = useState(false);
   const kind = output?.mediaUrl ? output.mediaType : null;
   const element = () => (kind === "video" ? videoRef.current : kind === "audio" ? audioRef.current : null);
+  // The effects below read the sound switch without re-running when it flips (an audio post must not fight a switch turned off by hand).
+  const mutedRef = useRef(muted);
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
 
-  // Active → play (audio only once sound is on: a silent audio post would look broken); inactive → pause.
+  // The active post plays by itself, the others pause. A video starts silent unless the sound switch is on; an audio post
+  // starts with its sound — and, once it has, the switch turns on (the browser may refuse sound before a tap: it then waits on its button).
   useEffect(() => {
     const media = kind === "video" ? videoRef.current : kind === "audio" ? audioRef.current : null;
     if (!media) return;
-    media.muted = muted;
-    if (active && (kind === "video" || !muted)) {
+    if (!active) {
+      media.pause();
+      return;
+    }
+    if (kind === "video") {
+      media.muted = mutedRef.current;
       media.play().catch(() => {
-        // Sound needs a gesture on this browser: fall back to a silent video (an audio post waits for its button).
-        if (kind === "video" && !media.muted) {
-          setMuted(true);
-        }
+        // Sound needs a gesture on this browser: fall back to a silent video.
+        if (!media.muted) setMuted(true);
       });
     } else {
-      media.pause();
+      media.muted = false;
+      media.play().then(() => setMuted(false), () => undefined);
     }
-  }, [active, muted, kind, output, setMuted]);
+  }, [active, ready, kind, setMuted]);
+
+  // The sound switch: a video follows it through its `muted` prop; turning sound off silences an audio post (its button brings it back).
+  useEffect(() => {
+    const media = audioRef.current;
+    if (muted && media && !media.paused) media.pause();
+  }, [muted, ready]);
 
   function toggle() {
     const media = element();
@@ -246,14 +255,7 @@ function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt; cover:
     } else media.pause();
   }
 
-  const events = {
-    onPlay: () => setPlaying(true),
-    onPause: () => setPlaying(false),
-    onTimeUpdate: (event: React.SyntheticEvent<HTMLMediaElement>) => {
-      const media = event.currentTarget;
-      if (media.duration) setProgress(media.currentTime / media.duration);
-    },
-  };
+  const events = { onPlay: () => setPlaying(true), onPause: () => setPlaying(false), onLoadedMetadata: () => setReady(true) };
 
   return (
     <>
@@ -283,21 +285,9 @@ function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt; cover:
       )}
       {kind && (
         <>
-          {/* The whole picture is the play / pause target; the round button is its visible, labelled twin. */}
+          {/* The whole picture is the play / pause target; the round button (the same one the post cards have) is its visible, labelled twin. No progress bar. */}
           <button type="button" tabIndex={-1} aria-hidden onClick={toggle} className="absolute inset-0 z-[2] cursor-pointer" />
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={playing ? t("focusFeed.pause") : t("focusFeed.play")}
-            aria-pressed={playing}
-            className={cn(
-              "absolute left-1/2 top-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition-opacity duration-200 ease-soft",
-              playing ? "opacity-0 focus-visible:opacity-100" : "opacity-100",
-            )}
-          >
-            {playing ? <Pause size={26} fill="currentColor" aria-hidden /> : <Play size={26} fill="currentColor" aria-hidden />}
-          </button>
-          <MediaProgress value={progress} />
+          <MediaPlayButton playing={playing} onToggle={toggle} />
         </>
       )}
       {loading && !cover && <div aria-hidden className="skeleton-shimmer absolute inset-0 opacity-40" />}

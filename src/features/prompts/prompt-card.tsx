@@ -11,7 +11,8 @@ import { PostTargetMenu, postMeta } from "./post-header";
 import { RequestResponseContext } from "./post-context";
 import { PromptCardFooter } from "./prompt-card-footer";
 import { PromptPreviewBox } from "./prompt-preview-box";
-import { OutputPosterPreview, OutputThumbnailStrip } from "./multi-image-output-options";
+import { OutputThumbnailStrip } from "./multi-image-output-options";
+import { PlayableCardArt } from "./playable-card-art";
 import type { Prompt } from "@/types";
 
 type CollectionRemoval = { onRemove: () => Promise<void> };
@@ -20,7 +21,8 @@ type CollectionRemoval = { onRemove: () => Promise<void> };
  * PromptCard — one card for every prompt content type (image / text / video / audio) and for a request response (same
  * `prompts` row), on the visual card (`ContentCardPost`, docs/history/266-*):
  *
- *   picture: the output image; the poster of a video/audio prompt (+ the type glyph in the corner); the prompt itself
+ *   picture: the output image; a video/audio prompt's poster that PLAYS by itself while the card is in view (`PlayableCardArt`:
+ *            silent looping video / audio, round play-pause button in the middle, no progress) (+ the type glyph in the corner); the prompt itself
  *            when there is no picture. Kicker (type · tool) and title are drawn on the picture at all times (docs/history/277-*).
  *   row:     (·) Name                 ♥ · 💬 · 🔖 · ⋮
  *
@@ -64,7 +66,7 @@ export function PromptCard({
           media.length > 0 ? (
             <OutputThumbnailStrip media={media} />
           ) : poster ? (
-            <OutputPosterPreview media={poster} />
+            <PlayableCardArt prompt={prompt} poster={poster} />
           ) : hasPromptText ? (
             <PromptPreviewBox prompt={prompt} lines={4} variant="art" />
           ) : undefined
