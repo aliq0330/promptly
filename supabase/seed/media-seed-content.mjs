@@ -218,12 +218,13 @@ export const VIDEO_THEME = {
 export const AUDIO_GENRES = [
   ["film", "film_score", "Film müziği", /cinematic|soundtrack|movies or games|documentary|orchestra/i],
   ["metal", "metal", "Sert rock", /metal|hard rock/i],
-  ["rock", "rock", "Rock", /\brock\b|riff|grunge/i],
-  ["jazz", "jazz", "Caz", /jazz|bossa|sax|trumpet/i],
-  ["classical", "classical", "Piyano / klasik", /piano|cello|violin|oboe|lullaby/i],
+  ["jazz", "jazz", "Caz", /jazz|bossa/i],
+  ["pop", "pop", "Pop / dünya müziği", /pop|reggae|cumbia|salsa|ska\b|funk|spanish|french|love song/i],
+  ["jazz", "jazz", "Caz", /sax|trumpet|clarinet/i],
   ["folk", "folk", "Akustik / folk", /folk|country|blue-?grass|acoustic|banjo|nylon|slide/i],
+  ["rock", "rock", "Rock", /\brock\b|riff|grunge/i],
+  ["classical", "classical", "Piyano / klasik", /piano|cello|violin|oboe|lullaby/i],
   ["ambient", "ambient", "Ambient", /ambient|relax|drone|meditat|spiritual|dreamy|chill/i],
   ["electronic", "electronic", "Elektronik", /electro|synth|techno|house|edm|dance|trance|club|futurist/i],
-  ["pop", "pop", "Pop / dünya müziği", /pop|reggae|cumbia|salsa|ska|funk|spanish|french|love song/i],
 ];
 export const AUDIO_DEFAULT_GENRE = ["song", "song", "Şarkı"];

@@ -151,11 +151,13 @@ function genreOf(prompt) {
   return AUDIO_DEFAULT_GENRE;
 }
 const audGenre = CASES.audio.map((c) => genreOf(c.prompt));
+const AUDIO_LABEL_FIX = { 23: ["electronic", "electronic", "Elektronik"], 59: ["electronic", "electronic", "Elektronik"] };
 const audBy = assign(CASES.audio, (n) => audGenre[n][0], AUD_PREF);
 for (const [user, list] of Object.entries(audBy)) {
   for (const n of list) {
     const c = CASES.audio[n];
-    const [gkey, sub, genreTr] = audGenre[n];
+    // Tür tahmini regex'e dayanır; yanlış çıkanlar elle düzeltilir (atama tahmine göre kalır, yalnız etiket değişir).
+    const [gkey, sub, genreTr] = AUDIO_LABEL_FIX[n] ?? audGenre[n];
     const trackTitle = c.title.replace(new RegExp(`^${c.artist.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*-\\s*`), "").trim();
     const title = `${trackTitle} — ${genreTr}`;
     const id = promptId(AUD_BASE, n);
@@ -220,10 +222,16 @@ function promptSql(p) {
   const r = results.find((x) => x.id === p.id);
   if (r) out.push(`insert into public.prompt_results (prompt_id, creator_id, media_type, media_url, thumbnail_url, width, height, tool, has_modification, created_at) values (${q(p.id)}, ${q(userId(p.author))}, ${q(r.kind)}, ${q(r.media)}, ${q(r.thumb)}, ${r.w}, ${r.h}, ${q(r.tool)}, false, ${ts(p.created + 60000)});`);
   const likers = likesOf.get(p.id);
+  const rec = !p.likes;
+  if (rec) { p.likes = []; p.saves = []; }
   for (const liker of likers) {
-    out.push(`insert into public.prompt_likes (prompt_id, user_id, reaction, created_at) values (${q(p.id)}, ${q(userId(liker))}, ${q(REACTIONS[Math.floor(rand() * REACTIONS.length)])}, ${ts(Math.min(NOW - 600000, p.created + (0.05 + rand() * 6) * DAY))});`);
+    const reaction = REACTIONS[Math.floor(rand() * REACTIONS.length)];
+    const at = Math.min(NOW - 600000, p.created + (0.05 + rand() * 6) * DAY);
+    if (rec) p.likes.push([liker, reaction, Math.floor(at / 1000)]);
+    out.push(`insert into public.prompt_likes (prompt_id, user_id, reaction, created_at) values (${q(p.id)}, ${q(userId(liker))}, ${q(reaction)}, ${ts(at)});`);
   }
   for (const saver of sample(likers, randInt(0, Math.min(3, likers.length)))) {
+    if (rec) p.saves.push(saver);
     out.push(`insert into public.collection_items (collection_id, prompt_id) values ((select id from public.collections where owner_id = ${q(userId(saver))} and is_default), ${q(p.id)});`);
   }
   return out.join("\n");
@@ -255,6 +263,81 @@ if (process.env.CHUNK_DIR) {
     writeFileSync(join(process.env.CHUNK_DIR, `part-${String(part).padStart(2, "0")}.sql`), parts.join("\n"));
   }
   console.log(`${part} parça yazıldı → ${process.env.CHUNK_DIR}`);
+}
+
+if (process.env.COMPACT_DIR) {
+  // Sıkıştırılmış biçim: aynı veri, ama açıklama şablonları ve beğeniler SQL tarafında açılır (MCP / küçük SQL penceresi için).
+  // Placeholder (24 px önizleme) yazılmaz: yalnız ortalama renk; önizleme moderatörün "Görsel renklerini doldur" aracıyla tamamlanabilir.
+  const TOK = [
+    [" — Stable Diffusion ile üretilmiş gerçek bir görsel ve onu ortaya çıkaran orijinal prompt, hiçbir değişiklik yapılmadan paylaşıldı.\n\nÜretim ayarları: ", "§a"],
+    [" adım · CFG ", "§b"], [" · örnekleyici k_lms · tohum ", "§c"],
+    ["\n\nKaynak: DiffusionDB (CC0 1.0, kamu malı) · https://huggingface.co/datasets/poloclub/diffusiondb · dosya ", "§d"],
+    [" — gerçek bir stok video klibi (", "§e"],
+    [") ve klibi betimleyen gerçek metin. Aşağıdaki prompt'u bir metinden-videoya modeline vererek benzer bir sahne kurabilirsin. Örnek çıktı yapay zekâ üretimi DEĞİL, gerçek bir çekimdir.\n\nPrompt metni: OpenVid-1M veri setindeki klip altyazısıdır (İngilizce, otomatik üretilmiş).\n\nKaynak: OpenVid-1M (CC BY 4.0) · https://huggingface.co/datasets/nkp37/OpenVid-1M · klip ", "§f"],
+    [" · görüntü kaynağı ", "§g"], [" Lisansı: ücretsiz kullanım, atıf zorunlu değil).", "§h"],
+    [" — gerçek bir müzik parçasının (", "§i"],
+    [") 30 saniyelik kesiti ve onu dinleyen bir insanın yazdığı açıklama. Açıklamayı Suno / Udio gibi bir müzik modeline prompt olarak vererek benzer bir ruh hâli arayabilirsin. Örnek çıktı yapay zekâ üretimi DEĞİL, gerçek bir kayıttır.\n\nPrompt metni: Song Describer Dataset açıklaması (İngilizce, CC BY-SA 4.0) · https://zenodo.org/records/10072001\n\nParça: ", "§j"],
+    [" (Jamendo) · ", "§k"], [" · Lisans: CC BY-SA http://creativecommons.org/licenses/by-sa/3.0/ · kesit", "§l"],
+    [" · kesit parçanın 0:25–0:55 aralığıdır, başı ve sonu yumuşatılmıştır (değişiklik yapıldı).", "§m"],
+  ];
+  const expand = (t) => { let r = t; for (const [full, tok] of TOK.slice().reverse()) r = r.split(tok).join(full); return r; };
+  const squeeze = (d, title) => { let r = d.split(title).join("§T"); for (const [full, tok] of TOK) r = r.split(full).join(tok); return r; };
+  const k1 = { image: "i", video: "v", audio: "a" };
+  const pdRow = (p) => {
+    const cv = covers.find((c) => c.id === p.id);
+    const n = Number(p.id.slice(-4).length ? parseInt(p.id.slice(-12), 16) & 0xfff : 0);
+    const dsc = squeeze(p.description, p.title);
+    if (expand(dsc.split("§T").join(p.title)) !== p.description) throw new Error("açıklama sıkıştırma tutarsız: " + p.id);
+    const r = results.find((x) => x.id === p.id);
+    return `(${q(k1[p.type])},${n},${IDS[p.author]},${q(p.title)},${q(p.text)},${q(p.category)},${q(p.sub)},${q(p.tools[0] ?? "")},${q(p.tags.join(","))},${Math.floor(p.created / 1000)},${cv.w},${cv.h},${q(cv.color)},${q(dsc)})`;
+  };
+  const likeRows = (p) => p.likes.map(([u, rx, at]) => `(${q(k1[p.type])},${parseInt(p.id.slice(-12), 16) & 0xfff},${IDS[u]},${q(rx)},${at})`);
+  const saveRows = (p) => p.saves.map((u) => `(${q(k1[p.type])},${parseInt(p.id.slice(-12), 16) & 0xfff},${IDS[u]})`);
+  const tokSql = TOK.slice().reverse().reduce((acc, [full, tok]) => `replace(${acc}, ${q(tok)}, ${q(full)})`, "d.dsc");
+  const PID = (a) => `('5eed0003-0000-4000-8000-' || lpad(to_hex(case ${a}.k when 'i' then 16384 when 'v' then 20480 else 24576 end + ${a}.n), 12, '0'))::uuid`;
+  const UID = (c) => `('5eed0000-0000-4000-8000-' || lpad(to_hex(${c}), 12, '0'))::uuid`;
+  const U = "'https://aliq0330.github.io/promptly/seed-media/' || pd.k || '-' || lpad(pd.n::text, 3, '0')";
+  mkdirSync(process.env.COMPACT_DIR, { recursive: true });
+  const size = Number(process.env.CHUNK_SIZE ?? 64);
+  let part = 0;
+  // COMPACT_PICK="v:0,a:0,i:0" → yalnız bu promptlar; COMPACT_ROLLBACK=1 → commit yerine rollback (doğrulama).
+  const pick = process.env.COMPACT_PICK ? new Set(process.env.COMPACT_PICK.split(",")) : null;
+  const list = pick ? prompts.filter((p) => pick.has(`${k1[p.type]}:${parseInt(p.id.slice(-12), 16) & 0xfff}`)) : prompts;
+  for (let i = 0; i < list.length; i += size, part++) {
+    const slice = list.slice(i, i + size);
+    const sql = [
+      `begin;`,
+      tagSql(),
+      `create temp table pd (k text, n int, au int, title text, txt text, cat text, sub text, tool text, tags text, ts bigint, w int, h int, col text, dsc text) on commit drop;`,
+      `insert into pd values\n${slice.map(pdRow).join(",\n")};`,
+      `create temp table pl (k text, n int, u int, rx text, ts bigint) on commit drop;`,
+      `insert into pl values\n${slice.flatMap(likeRows).join(",\n")};`,
+      `create temp table ps (k text, n int, u int) on commit drop;`,
+      slice.some((p) => p.saves.length) ? `insert into ps values\n${slice.flatMap(saveRows).join(",\n")};` : "",
+      `insert into public.prompts (id, author_id, title, description, prompt_text, tools, content_type, category, subcategory, status, visibility, origin_type, created_at, updated_at)
+select ${PID("pd")}, ${UID("pd.au")}, pd.title, replace(${tokSql.split("d.dsc").join("pd.dsc")}, '§T', pd.title), pd.txt, coalesce(string_to_array(nullif(pd.tool, ''), ','), array[]::text[]), case pd.k when 'i' then 'image' when 'v' then 'video' else 'audio' end, pd.cat, pd.sub, 'published', 'public', 'original', to_timestamp(pd.ts), to_timestamp(pd.ts) from pd;`,
+      `insert into public.prompt_tags (prompt_id, tag_slug, source) select ${PID("pd")}, t, 'manual' from pd, unnest(string_to_array(pd.tags, ',')) t;`,
+      `insert into public.prompt_media (prompt_id, url, width, height, alt, position, dominant_color) select ${PID("pd")}, ${U} || '.jpg', pd.w, pd.h, pd.title, 0, pd.col from pd;`,
+      `insert into public.prompt_results (prompt_id, creator_id, media_type, media_url, thumbnail_url, width, height, tool, has_modification, created_at) select ${PID("pd")}, ${UID("pd.au")}, case pd.k when 'v' then 'video' else 'audio' end, ${U} || case pd.k when 'v' then '.mp4' else '.mp3' end, ${U} || '.jpg', pd.w, pd.h, pd.tool, false, to_timestamp(pd.ts + 60) from pd where pd.k in ('v', 'a');`,
+      `insert into public.prompt_likes (prompt_id, user_id, reaction, created_at) select ${PID("pl")}, ${UID("pl.u")}, pl.rx, to_timestamp(pl.ts) from pl;`,
+      `insert into public.collection_items (collection_id, prompt_id) select (select c.id from public.collections c where c.owner_id = ${UID("ps.u")} and c.is_default), ${PID("ps")} from ps;`,
+      notifSql,
+      `select count(*) as prompt, (select count(*) from public.prompt_media m where m.prompt_id::text like '5eed0003-%') as kapak_toplam from public.prompts where id::text like '5eed0003-%';`,
+      process.env.COMPACT_ROLLBACK ? `rollback;\n` : `commit;\n`,
+    ].filter(Boolean);
+    writeFileSync(join(process.env.COMPACT_DIR, `part-${String(part).padStart(2, "0")}.sql`), sql.join("\n"));
+  }
+  console.log(`${part} sıkıştırılmış parça → ${process.env.COMPACT_DIR}`);
+}
+
+if (process.env.VERIFY_HASH) {
+  // Canlıdaki satırlarla karşılaştırmak için: id sırasına göre 17'şerli gruplar, grup başına md5 (SQL tarafı aynı ifadeyi hesaplar).
+  const { createHash } = await import("node:crypto");
+  const md5 = (t) => createHash("md5").update(t, "utf8").digest("hex");
+  const rowHash = (p) => md5([p.title, p.text, p.description, p.category, p.sub, p.type, userId(p.author), p.tools.join(","), Math.floor(p.created / 1000)].join("|"));
+  const lines = [];
+  for (let i = 0; i < prompts.length; i += 17) lines.push(`${prompts[i].id.slice(-4)} ${md5(prompts.slice(i, i + 17).map(rowHash).join(","))}`);
+  console.log(lines.join("\n"));
 }
 
 if (process.env.SAMPLE_OUT) {

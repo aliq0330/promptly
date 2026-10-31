@@ -1,8 +1,10 @@
 # 291 — Gerçek medyalı seed: her demo kullanıcıya 5 görsel + 5 video + 5 ses promptu
 
-**Durum:** hazırlandı, **canlıya UYGULANMADI** (medya dosyalarının önce siteyle yayınlanması gerekir; bkz. "Uygulama sırası").
-Şema/tetikleyici uyumu canlı veritabanında **geri alınan (rollback) bir işlemle** denendi: sayaçlar (beğeni/kaydet), kapak, çıktı (`prompt_results`), etiket
-ve bildirim tarihi güncellemesi hatasız çalıştı, geri alma sonrası kalıntı yok. 255 promptluk tam dosya canlıda ÇALIŞTIRILMADI.
+**Durum:** uygulandı (2026-10-31). Medya #385 ile `main`'e girip Pages'te yayınlandıktan sonra (425 adresin hepsi 200 döndü) 255 prompt canlı
+veritabanına Supabase MCP ile **4 parça hâlinde, her biri kendi işleminde** yazıldı (tek 1,2 MB'lık dosya yerine `COMPACT_DIR` ile üretilen sıkıştırılmış biçim:
+açıklama şablonları ve beğeniler SQL tarafında açılır). Doğrulama: 255 satırın başlık/prompt metni/açıklama/kategori/yazar/araç/tarih alanlarının 17'şerli
+grup md5'leri üretici çıktısıyla (`VERIFY_HASH=1`) 15/15 eşleşti; kullanıcı başına 5+5+5 = 15; beğeni toplamı (1518) ve kaydetme toplamı (374) sayaçlarla tutarlı;
+255 kapak, 170 çıktı. Tarayıcıda oynatma BU OTURUMDA denenmedi (ortam `*.supabase.co`'ya erişemez, site medya verisini oradan okur).
 
 ## Ne
 17 canlı demo kullanıcının (ali, ayse, mehmet, zeynep, can, elif, burak, selin, emre, deniz, ceren, kaan, melis, onur, ipek, baran, ece) her birine
@@ -32,10 +34,16 @@ Suno/Udio/Kling gibi bir modele verilince benzer bir sonuç aranır. Görseller 
   (YouTube kaynaklı) klipler hiç alınmadı, yalnız Pixabay/Pexels; videolarda yakın plan insan olan klipler değiştirildi; ses parçalarında yalnız CC BY / CC BY-SA (NC/ND yok),
   rap/açık sözlü açıklamalar çıkarıldı. Şarkı sözleri dinlenip denetlenmedi — **sözlü parçalarda uygunsuz söz olmadığı doğrulanmadı** (yalnız açıklamalara bakıldı).
 
-## Uygulama sırası
-1. Bu dal `main`'e birleşip Pages dağıtımı bitince (dosyalar 200 dönmeli: `curl -I https://aliq0330.github.io/promptly/seed-media/v-000.mp4`).
-2. `supabase/seed/media-seed.sql` Supabase SQL Editor'de tek seferde çalıştırılır (ya da MCP ile parça parça: `CHUNK_DIR=… node supabase/seed/build-media-seed.mjs`).
-3. Kontrol: son SELECT image/video/audio için 85'er prompt, video+ses için 85'er sonuç göstermeli.
+## Uygulama (yapıldı) ve yeniden uygulama
+`supabase/seed/media-seed.sql` tek dosyadır (tam açıklama + 24 px önizleme dahil) ama ≈ 1,2 MB'dır; canlıya MCP ile yazılan sürüm sıkıştırılmış biçimdir
+(`COMPACT_DIR=… CHUNK_SIZE=64 node supabase/seed/build-media-seed.mjs` → 4 parça; **önizleme (`placeholder`) yazılmaz**, yalnız ortalama renk — önizleme
+moderatörün "Görsel renklerini doldur" aracıyla tamamlanabilir). Tekrar çalıştırmak ilk satırda birincil anahtar hatasıyla durur, hiçbir şey değişmez.
+`COMPACT_PICK="v:0,a:0" COMPACT_ROLLBACK=1` ile birkaç promptluk geri alınan deneme üretilebilir.
+
+## Uygulama sırasında düzeltilenler
+- Ses türü tahmini (açıklamadaki anahtar sözcük) ilk sürümde bazı parçaları yanlış etiketledi (reggae → "Piyano / klasik" gibi): regex sırası düzeltildi (ses henüz
+  yazılmadan). Kalan iki yanlış (`Without You`, `Behind the line` → "Elektronik") canlıda `UPDATE` ile, üreticide `AUDIO_LABEL_FIX` ile düzeltildi.
+- Kullanıcı eşleştirmesi tür tahminine bağlı olduğundan tahmin kuralını değiştirmek ses promptlarının sahiplerini de değiştirir; değiştirirsen seed'i yeniden üret.
 
 ## Sınırlar
 - Videolar kısa (2,7 sn; OpenVid'in Pixabay/Pexels klipleri bu uzunlukta) ve 512×512 kare; ses 30 sn kesit. Tam uzunlukta değil.
