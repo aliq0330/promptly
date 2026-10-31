@@ -186,6 +186,35 @@ await scenario("9. Mobil (390x800): yatay taşma yok; sabit satır metin kaydır
   assert.ok(before.x + before.width <= presets.x, "convert and presets do not overlap");
   assert.ok(presets.x + presets.width <= 390, "presets button stays on screen");
   assert.equal(before.y < 140, true, "the row is at the top of the screen");
+  assert.equal(await page.evaluate(() => !!document.elementFromPoint(20, window.innerHeight - 10)?.closest("[data-prompt-fullscreen]")), true, "layer covers the whole screen");
+}, { viewport: { width: 390, height: 800 } });
+
+await scenario("10. Klavye açılınca (görünür alan küçülür/kayar, ölçüm bayat da olsa) katman tüm ekranı kaplar: arkadaki form görünmez, içerik görünür alana oturur", async ({ page }) => {
+  await openFullscreen(page);
+  const insideLayer = (y) => page.evaluate((yy) => !!document.elementFromPoint(20, yy)?.closest("[data-prompt-fullscreen]"), y);
+  assert.equal(await insideLayer(780), true, "bottom of the screen is covered before the keyboard");
+  // iOS klavyesi: görünür alan 340 px'e iner ve 50 px aşağı kayar (ara ölçüm gibi).
+  await page.evaluate(() => {
+    const vv = window.visualViewport;
+    Object.defineProperty(vv, "height", { configurable: true, get: () => 340 });
+    Object.defineProperty(vv, "offsetTop", { configurable: true, get: () => 50 });
+    vv.dispatchEvent(new Event("resize"));
+  });
+  await page.waitForFunction(() => document.querySelector("[data-testid=fullscreen-visible]")?.getBoundingClientRect().height === 340);
+  const rect = await page.getByTestId("fullscreen-visible").boundingBox();
+  assert.equal(Math.round(rect.y), 50);
+  assert.equal(await insideLayer(780), true, "the layer still covers the bottom (keyboard area) and the top");
+  assert.equal(await insideLayer(10), true);
+  const header = await page.getByTestId("fullscreen-close").boundingBox();
+  assert.ok(header.y >= 50 && header.y < 120, "header sits at the top of the visible area");
+  // Ölçüm düzelince (klavye kapanır) iç alan tüm ekrana döner.
+  await page.evaluate(() => {
+    const vv = window.visualViewport;
+    Object.defineProperty(vv, "height", { configurable: true, get: () => window.innerHeight });
+    Object.defineProperty(vv, "offsetTop", { configurable: true, get: () => 0 });
+    vv.dispatchEvent(new Event("resize"));
+  });
+  await page.waitForFunction(() => Math.round(document.querySelector("[data-testid=fullscreen-visible]").getBoundingClientRect().height) === window.innerHeight);
 }, { viewport: { width: 390, height: 800 } });
 
 await browser.close(); server.close();

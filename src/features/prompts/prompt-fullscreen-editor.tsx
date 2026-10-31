@@ -10,7 +10,6 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { extractVariableTokenNames, isValidVariableName } from "@/lib/prompt-variables";
 import { findConvertTarget, suggestVariableName } from "@/lib/prompt-word-target";
 import { emptySpec } from "@/lib/prompt-variable-types";
-import { useKeyboardViewport } from "@/lib/use-keyboard-viewport";
 import { cn } from "@/lib/utils";
 import { makeTempId, type DraftVariable } from "./draft-variable";
 
@@ -27,6 +26,52 @@ interface ConvertRecord {
 }
 
 const UNDO_VISIBLE_MS = 4500;
+
+interface VisibleBox {
+  top: number;
+  height: number;
+}
+
+/**
+ * Ekranda GÖRÜNEN alan (`visualViewport`): iOS'ta klavye açılınca düzen görünümü küçülmez, görünür alan küçülür ve kayar. Klavye
+ * animasyonu sırasında değerler değişir ve son olay kaçabilir (katman ara bir ölçümde takılıp kısa kalır, arkadaki form görünür);
+ * bu yüzden olaylara ek olarak odak/yeniden boyutlanma sonrası kısa süre kare kare ölçülür. Her zaman bir ölçü döner (klavye
+ * kapalıyken tüm ekran), `null` yalnız ilk ölçümden önce / `visualViewport` olmayan tarayıcıda.
+ */
+function useVisibleBox(): VisibleBox | null {
+  const [box, setBox] = useState<VisibleBox | null>(null);
+  useEffect(() => {
+    const visual = window.visualViewport;
+    if (!visual) return;
+    let frame = 0;
+    let until = 0;
+    function tick() {
+      frame = 0;
+      const next = { top: Math.round(visual!.offsetTop), height: Math.round(visual!.height) };
+      setBox((prev) => (prev && prev.top === next.top && prev.height === next.height ? prev : next));
+      if (performance.now() < until) frame = requestAnimationFrame(tick);
+    }
+    function settle() {
+      until = performance.now() + 900;
+      if (!frame) frame = requestAnimationFrame(tick);
+    }
+    settle();
+    visual.addEventListener("resize", settle);
+    visual.addEventListener("scroll", settle);
+    window.addEventListener("resize", settle);
+    document.addEventListener("focusin", settle);
+    document.addEventListener("focusout", settle);
+    return () => {
+      visual.removeEventListener("resize", settle);
+      visual.removeEventListener("scroll", settle);
+      window.removeEventListener("resize", settle);
+      document.removeEventListener("focusin", settle);
+      document.removeEventListener("focusout", settle);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+  return box;
+}
 
 /**
  * Prompt metni için TAM EKRAN yazma katmanı (docs/history/288-*). Formdaki düzenleyicinin yerine geçmez; aynı `value`/`variables`
@@ -72,7 +117,7 @@ export function PromptFullscreenEditor({
 }) {
   const { t } = useTranslation();
   const editorRef = useRef<PromptDocEditorHandle>(null);
-  const keyboard = useKeyboardViewport();
+  const box = useVisibleBox();
   const [selection, setSelection] = useState<EditorSelection>({ start: value.length, end: value.length });
   const [done, setDone] = useState<ConvertRecord | null>(null);
   const closeRef = useRef(onClose);
@@ -187,115 +232,122 @@ export function PromptFullscreenEditor({
 
   return (
     <Portal>
+      {/* Dış katman HER ZAMAN tüm ekranı kaplar (düz zemin): ölçüm geç/yanlış gelse bile arkadaki form görünmez. */}
       <div
         data-prompt-fullscreen
         data-testid="prompt-fullscreen"
         role="dialog"
         aria-label={t("prompt.promptTextHeading")}
-        style={keyboard ? { top: keyboard.top, height: keyboard.height, bottom: "auto" } : undefined}
-        className={cn("fixed inset-x-0 z-[49] flex flex-col bg-background animate-fade-in", !keyboard && "inset-y-0")}
+        className="fixed inset-0 z-[49] overflow-hidden overscroll-none bg-background animate-fade-in"
       >
-        <header className="flex shrink-0 items-center gap-1 border-b border-border-soft bg-surface px-2 pb-1.5 pt-[max(0.375rem,env(safe-area-inset-top))]">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("fullscreen.close")}
-            data-testid="fullscreen-close"
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
-          >
-            <X size={20} aria-hidden />
-          </button>
-          <div className="min-w-0 flex-1 text-center">
-            <h2 className="truncate text-body font-semibold leading-tight text-text">{t("prompt.promptTextHeading")}</h2>
-            <p className="truncate text-caption text-text-muted" data-testid="fullscreen-meta">
-              {t("fullscreen.meta", { count: variableCount, chars: value.length })}
-            </p>
-          </div>
-          <button
-            type="button"
-            onMouseDown={keep}
-            onClick={() => history("undo")}
-            aria-label={t("fullscreen.undo")}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
-          >
-            <Undo2 size={18} aria-hidden />
-          </button>
-          <button
-            type="button"
-            onMouseDown={keep}
-            onClick={() => history("redo")}
-            aria-label={t("fullscreen.redo")}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
-          >
-            <Redo2 size={18} aria-hidden />
-          </button>
-          <Button type="button" size="sm" onClick={onClose} data-testid="fullscreen-done">
-            {t("fullscreen.done")}
-          </Button>
-        </header>
-
-        {/* SABİT satır: sol üstte dönüştürme, sağda Hazır ayarlar. Yüksekliği sabit: içerik değişse de ekran zıplamaz. */}
-        <div className="flex min-h-[62px] shrink-0 items-center gap-2 border-b border-border-soft bg-surface px-3 py-2">
-          <button
-            type="button"
-            onMouseDown={keep}
-            onClick={onConvertClick}
-            aria-disabled={disabled}
-            data-testid="fullscreen-convert"
-            data-mode={tone === "idle" ? target.kind : tone}
-            className={cn(
-              "inline-flex h-11 min-w-0 max-w-[62%] items-center gap-2.5 rounded-full border px-3.5 text-left transition-colors",
-              tone === "active" && "border-primary bg-primary text-primary-foreground hover:bg-primary-hover",
-              tone === "token" && "border-primary bg-surface text-primary hover:bg-primary-soft",
-              tone === "done" && "border-success bg-success/10 text-success",
-              tone === "idle" && "cursor-default border-border bg-surface-soft text-text-muted",
-            )}
-          >
-            <Icon size={18} className="shrink-0" aria-hidden />
-            <span className="flex min-w-0 flex-col leading-tight">
-              <span className="whitespace-nowrap text-[11px] font-semibold opacity-90">{kindLine}</span>
-              <span className={cn("truncate text-label font-semibold", tone !== "idle" && "font-mono")} data-testid="fullscreen-convert-text">
-                {valueLine}
-              </span>
-            </span>
-          </button>
-
-          <div className="ml-auto flex shrink-0 items-center">
-            {doneActive ? (
-              <Button type="button" size="sm" variant="outline" onMouseDown={keep} onClick={undoConvert} data-testid="fullscreen-undo-convert">
-                <Undo2 size={14} aria-hidden /> {t("fullscreen.undo")}
-              </Button>
-            ) : (
-              onOpenPresets && (
-                <Button type="button" size="sm" variant="outline" onClick={onOpenPresets} aria-haspopup="dialog" data-testid="fullscreen-presets">
-                  <SlidersHorizontal size={14} aria-hidden /> {t("fullscreen.presets")}
-                  {presetCount > 0 && (
-                    <span className="rounded-full bg-primary px-1.5 text-caption font-semibold tabular-nums text-primary-foreground">{presetCount}</span>
-                  )}
-                </Button>
-              )
-            )}
-          </div>
-        </div>
-
+        {/* İç alan görünür alana (klavyenin üstüne) oturur: başlık, sabit satır ve metin hep görünür. */}
         <div
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom)]"
-          onClick={(event) => {
-            // Metnin altındaki boş alana dokunmak da yazmaya devam ettirir.
-            if (event.target === event.currentTarget) editorRef.current?.focus();
-          }}
+          data-testid="fullscreen-visible"
+          style={box ? { top: box.top, height: box.height } : { top: 0, bottom: 0 }}
+          className="absolute inset-x-0 flex flex-col"
         >
-          <PromptDocEditor
-            ref={editorRef}
-            fill
-            value={value}
-            onChange={onChange}
-            tokenTone={tokenTone}
-            placeholder={placeholder}
-            minRows={14}
-            ariaLabel={t("prompt.promptTextHeading")}
-            onSelectionChange={setSelection}
-          />
+          <header className="flex shrink-0 items-center gap-1 border-b border-border-soft bg-surface px-2 pb-1.5 pt-[max(0.375rem,env(safe-area-inset-top))]">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t("fullscreen.close")}
+              data-testid="fullscreen-close"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+            >
+              <X size={20} aria-hidden />
+            </button>
+            <div className="min-w-0 flex-1 text-center">
+              <h2 className="truncate text-body font-semibold leading-tight text-text">{t("prompt.promptTextHeading")}</h2>
+              <p className="truncate text-caption text-text-muted" data-testid="fullscreen-meta">
+                {t("fullscreen.meta", { count: variableCount, chars: value.length })}
+              </p>
+            </div>
+            <button
+              type="button"
+              onMouseDown={keep}
+              onClick={() => history("undo")}
+              aria-label={t("fullscreen.undo")}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+            >
+              <Undo2 size={18} aria-hidden />
+            </button>
+            <button
+              type="button"
+              onMouseDown={keep}
+              onClick={() => history("redo")}
+              aria-label={t("fullscreen.redo")}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+            >
+              <Redo2 size={18} aria-hidden />
+            </button>
+            <Button type="button" size="sm" onClick={onClose} data-testid="fullscreen-done">
+              {t("fullscreen.done")}
+            </Button>
+          </header>
+
+          {/* SABİT satır: sol üstte dönüştürme, sağda Hazır ayarlar. Yüksekliği sabit: içerik değişse de ekran zıplamaz. */}
+          <div className="flex min-h-[62px] shrink-0 items-center gap-2 border-b border-border-soft bg-surface px-3 py-2">
+            <button
+              type="button"
+              onMouseDown={keep}
+              onClick={onConvertClick}
+              aria-disabled={disabled}
+              data-testid="fullscreen-convert"
+              data-mode={tone === "idle" ? target.kind : tone}
+              className={cn(
+                "inline-flex h-11 min-w-0 max-w-[62%] items-center gap-2.5 rounded-full border px-3.5 text-left transition-colors",
+                tone === "active" && "border-primary bg-primary text-primary-foreground hover:bg-primary-hover",
+                tone === "token" && "border-primary bg-surface text-primary hover:bg-primary-soft",
+                tone === "done" && "border-success bg-success/10 text-success",
+                tone === "idle" && "cursor-default border-border bg-surface-soft text-text-muted",
+              )}
+            >
+              <Icon size={18} className="shrink-0" aria-hidden />
+              <span className="flex min-w-0 flex-col leading-tight">
+                <span className="whitespace-nowrap text-[11px] font-semibold opacity-90">{kindLine}</span>
+                <span className={cn("truncate text-label font-semibold", tone !== "idle" && "font-mono")} data-testid="fullscreen-convert-text">
+                  {valueLine}
+                </span>
+              </span>
+            </button>
+
+            <div className="ml-auto flex shrink-0 items-center">
+              {doneActive ? (
+                <Button type="button" size="sm" variant="outline" onMouseDown={keep} onClick={undoConvert} data-testid="fullscreen-undo-convert">
+                  <Undo2 size={14} aria-hidden /> {t("fullscreen.undo")}
+                </Button>
+              ) : (
+                onOpenPresets && (
+                  <Button type="button" size="sm" variant="outline" onClick={onOpenPresets} aria-haspopup="dialog" data-testid="fullscreen-presets">
+                    <SlidersHorizontal size={14} aria-hidden /> {t("fullscreen.presets")}
+                    {presetCount > 0 && (
+                      <span className="rounded-full bg-primary px-1.5 text-caption font-semibold tabular-nums text-primary-foreground">{presetCount}</span>
+                    )}
+                  </Button>
+                )
+              )}
+            </div>
+          </div>
+
+          <div
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-16"
+            onClick={(event) => {
+              // Metnin altındaki boş alana dokunmak da yazmaya devam ettirir.
+              if (event.target === event.currentTarget) editorRef.current?.focus();
+            }}
+          >
+            <PromptDocEditor
+              ref={editorRef}
+              fill
+              value={value}
+              onChange={onChange}
+              tokenTone={tokenTone}
+              placeholder={placeholder}
+              minRows={14}
+              ariaLabel={t("prompt.promptTextHeading")}
+              onSelectionChange={setSelection}
+            />
+          </div>
         </div>
       </div>
     </Portal>

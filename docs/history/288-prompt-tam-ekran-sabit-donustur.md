@@ -51,3 +51,15 @@ pencereler olduğu gibi kalır; tam ekran bunların üstüne açılan ikinci bir
 - Sol üst köşe büyük telefonlarda sağ başparmaktan uzaktır; düğme 46 px yüksekliğinde. Sağa alma ayarı yok.
 - Geri al/Yinele simgeleri tarayıcının yerel yığınına dayanır (`execCommand`): etkin/pasif durumu bilinmez.
 - "Görselden yardım" tam ekranda yok (formdaki Şablon sekmesinde kalır).
+
+## Düzeltme: iOS klavyesi açılınca katman kısalıyordu (ekran görüntüsüyle bildirildi)
+Katman ilk sürümde `useKeyboardViewport` değerleriyle (`top`/`height`) konumlanıyordu. iOS'ta klavye animasyonu sırasında `visualViewport` değerleri
+değişir ve son olay kaçabilir: katman ara bir ölçümde (yukarıdan ~51pt, kısa yükseklik) takılıp kaldı, altında kalan boşlukta arkadaki form
+("Hazır ayarlar…", "Görseller") görünüyordu. Şimdi:
+- **Dış katman HER ZAMAN `fixed inset-0` + düz zemin**: ölçüm geç/yanlış gelse bile arkadaki form görünmez.
+- **İç alan** görünür alana oturur (`useVisibleBox`: `visualViewport` + `window.resize` + `focusin/out` olaylarında, sonrasında 900 ms kare kare yeniden ölçüm; klavye kapalıyken
+  tüm ekran). Modal'ların paylaştığı `useKeyboardViewport`'a dokunulmadı.
+- Metin kaydırıcısına `pb-16`: iOS'un form üstü çubuğu (▲ ▼ ✓) görünür alanın altını kaplar, son satırlar altında kalmasın.
+- Kural: tam ekran bir katman görünür alana göre boyutlanacaksa zemini ekranı her zaman kaplamalı, `visualViewport` ölçümüne tek başına güvenme.
+- Sınır: Safari'nin kendi ▲ ▼ ✓ çubuğu ve küçük adres hapı sistemdir, kaldırılamaz. Düzeltme gerçek iOS'ta denenmedi (test `visualViewport`'u taklit eder: senaryo 10).
+
