@@ -5,8 +5,7 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { InsightTrend } from "@/features/insights/insight-stat-tile";
 import { findTool } from "@/lib/ai-tool-catalog";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { formatInsightNumber, trendOf, type InsightTopItem } from "@/lib/insights";
-import { promptHref } from "@/lib/utils";
+import { formatInsightNumber, insightPromptHref, trendOf, type InsightTopItem } from "@/lib/insights";
 import type { PromptContentType } from "@/types";
 
 function typeMeta(contentType: string) {
@@ -27,7 +26,7 @@ export function InsightTopList({ items }: { items: InsightTopItem[] }) {
         return (
           <li key={item.id}>
             <Link
-              href={promptHref({ id: item.id })}
+              href={insightPromptHref(item.id)}
               aria-label={t("insights.top.rowAria", { title: item.title, copies: item.copies, reactions: item.reactions })}
               className="grid grid-cols-[1.5rem_2.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md py-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:grid-cols-[1.5rem_2.75rem_minmax(0,1fr)_5.5rem_4.5rem_5.5rem] sm:gap-4"
             >

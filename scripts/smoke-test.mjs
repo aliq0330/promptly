@@ -74,6 +74,10 @@ const CHECKS = [
   { name: "rpc creator_insights_daily (docs/history/294-*)", rpc: "creator_insights_daily", body: { p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc creator_insights_top (docs/history/294-*)", rpc: "creator_insights_top", body: { p_days: 30, p_limit: 5 }, deniedOk: true, soft: true },
   { name: "rpc creator_insights_reaction_mix (docs/history/294-*)", rpc: "creator_insights_reaction_mix", body: { p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_results (Yaratıcı paneli sonuç sayacı, docs/history/295-*)", rpc: "creator_insights_results", body: { p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_prompt (prompt başına ayrıntı, docs/history/295-*)", rpc: "creator_insights_prompt", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_prompt_daily (docs/history/295-*)", rpc: "creator_insights_prompt_daily", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_prompt_reaction_mix (docs/history/295-*)", rpc: "creator_insights_prompt_reaction_mix", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 

@@ -56,8 +56,8 @@ export const insightsTranslations = {
 
   "insights.note.title": { tr: "Bu sayılar nasıl hesaplanır?", en: "How are these numbers counted?" },
   "insights.note.body": {
-    tr: "Kopyalama, bir promptu o gün kopyalayan oturum açmış kullanıcı başına bir sayılır; misafirler ve kendi kopyaların sayılmaz. Tepki, yorum, kaydetme ve takip ilk gerçekleştikleri güne yazılır, geri alınanlar geçmişten de düşer. Günler UTC'dir. Yalnızca herkese açık, yayında promptların sayılır; topluluğa özgü promptlar dahil değildir.",
-    en: "A copy counts once per signed-in user per prompt per day; guests and your own copies are not counted. Reactions, comments, saves and follows are dated by when they first happened, and ones that were undone drop out of the past too. Days are UTC. Only your published public prompts are counted; community-only prompts are not included.",
+    tr: "Kopyalama, bir promptu o gün kopyalayan oturum açmış kullanıcı başına bir sayılır; misafirler ve kendi kopyaların sayılmaz. Tepki, yorum, kaydetme ve takip ilk gerçekleştikleri güne yazılır, geri alınanlar geçmişten de düşer. Günler UTC'dir. Sonuç, başkalarının promptlarının altına paylaştığı sonuçlardır. Yalnızca herkese açık, yayında promptların sayılır; topluluğa özgü promptlar dahil değildir.",
+    en: "A copy counts once per signed-in user per prompt per day; guests and your own copies are not counted. Reactions, comments, saves and follows are dated by when they first happened, and ones that were undone drop out of the past too. Days are UTC. Results are the results others shared under your prompts. Only your published public prompts are counted; community-only prompts are not included.",
   },
 
   "insights.empty.title": { tr: "Henüz gösterilecek veri yok", en: "Nothing to show yet" },
@@ -66,5 +66,21 @@ export const insightsTranslations = {
     en: "Once you share a public prompt, its copies, reactions and comments will show up here.",
   },
   "insights.empty.action": { tr: "Prompt oluştur", en: "Create a prompt" },
+  "insights.tile.results": { tr: "Sonuç", en: "Results" },
+
+  "insights.detail.back": { tr: "Yaratıcı paneli", en: "Creator insights" },
+  "insights.detail.openPrompt": { tr: "Promptu aç", en: "Open prompt" },
+  "insights.detail.notFoundTitle": { tr: "Bu prompt panelde gösterilemiyor", en: "This prompt can't be shown here" },
+  "insights.detail.notFoundDescription": {
+    tr: "Yalnızca senin yayınladığın, herkese açık promptların ayrıntısı görülebilir. Prompt silinmiş ya da gizlenmiş olabilir.",
+    en: "Only the details of your own published, public prompts can be shown. The prompt may have been deleted or hidden.",
+  },
+  "insights.detail.noActivity": { tr: "Bu dönemde bu prompta hiç etkileşim olmadı.", en: "This prompt had no activity in this period." },
+  "insights.detail.openRow": { tr: "Ayrıntıyı aç", en: "Open details" },
+
+  // SQL'in Türkçe kilometre taşı cümleleri (`notification-message.ts` İngilizceye çevirir; prompt başlığı çevrilmez).
+  "notifMsg.milestoneCopies": { tr: "Promptun “{{name}}” {{count}} kopyalamaya ulaştı.", en: "Your prompt “{{name}}” reached {{count}} copies." },
+  "notifMsg.milestoneReactions": { tr: "Promptun “{{name}}” {{count}} tepkiye ulaştı.", en: "Your prompt “{{name}}” reached {{count}} reactions." },
+
   "insights.loadError": { tr: "Panel yüklenemedi. Bağlantını kontrol edip tekrar dene.", en: "Couldn't load the dashboard. Check your connection and try again." },
 } as const;

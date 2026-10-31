@@ -1,6 +1,6 @@
 // Yaratıcı paneli (docs/history/294-*): /insights. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ — sayıların DOĞRULUĞU (kim neyi sayar, dönem sınırı,
 // yazar/misafir/silinmiş dışlama) sunucu kuralıdır ve supabase/tests/creator-insights.sql'dedir. Burada yalnız istemci davranışı sınanır:
-// dört RPC'nin dönemle çağrılması, sayı/yüzde biçimi, grafik/liste/tepki dağılımı, dönem değişimi + önbellek, boş/hata durumu, iki dil, giriş kapısı, taşma.
+// beş RPC'nin dönemle çağrılması (docs/history/295-*: sonuç sayacı, prompt başına ayrıntı sayfası, kilometre taşı bildirimi), , sayı/yüzde biçimi, grafik/liste/tepki dağılımı, dönem değişimi + önbellek, boş/hata durumu, iki dil, giriş kapısı, taşma.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
@@ -26,13 +26,16 @@ const TOP = [
   { id: pid(3), title: "Lo-fi çalışma müziği tarifi", content_type: "audio", tools: [], copies: 95, reactions: 52, prev_copies: 0 },
   { id: pid(4), title: "Minimal logo seti (v2)", content_type: "image", tools: ["gpt-image"], copies: 90, reactions: 77, prev_copies: 98 },
 ];
+const PID = "b1000000-0000-4000-8000-000000000001";
+const RESULTS = { results: 96, prev_results: 80 };
+const PROMPT = { title: "Neon yağmurlu Tokyo sokağı", content_type: "image", tools: ["midjourney"], copies: 412, prev_copies: 221, reactions: 189, prev_reactions: 150, comments: 31, prev_comments: 40, saves: 77, prev_saves: 0, results: 28, prev_results: 28 };
 const MIX = [{ reaction: "love", n: 214 }, { reaction: "fire", n: 167 }, { reaction: "wow", n: 105 }, { reaction: "idea", n: 20 }];
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", guest = false, setup } = {}) {
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", guest = false, setup, notifications = [] } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
   // calls: her RPC'nin aldığı gövdeler; fail: ad → true ise 500 döner; empty: hepsi sıfır/boş.
-  const state = { calls: { summary: [], daily: [], top: [], mix: [] }, fail: {}, empty: false };
+  const state = { calls: { summary: [], daily: [], top: [], mix: [], results: [], prompt: [], promptDaily: [], promptMix: [] }, fail: {}, empty: false, notFound: false, promptEmpty: false };
   db.rpc.creator_insights_summary = (body) => {
     state.calls.summary.push(body);
     if (state.fail.summary) return { status: 500, body: { message: "boom" } };
@@ -45,9 +48,32 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   };
   db.rpc.creator_insights_top = (body) => { state.calls.top.push(body); return { body: state.empty ? [] : TOP }; };
   db.rpc.creator_insights_reaction_mix = (body) => { state.calls.mix.push(body); return { body: state.empty ? [] : MIX }; };
+  db.rpc.creator_insights_results = (body) => { state.calls.results.push(body); return { body: [state.empty ? { results: 0, prev_results: 0 } : RESULTS] }; };
+  const notFound = () => ({ status: 400, body: { message: "not_found" } });
+  db.rpc.creator_insights_prompt = (body) => {
+    state.calls.prompt.push(body);
+    if (state.notFound) return notFound();
+    return { body: [state.promptEmpty ? Object.fromEntries(Object.keys(PROMPT).map((k) => [k, k === "title" ? PROMPT.title : k === "content_type" ? "image" : k === "tools" ? ["midjourney"] : 0])) : PROMPT] };
+  };
+  db.rpc.creator_insights_prompt_daily = (body) => {
+    state.calls.promptDaily.push(body);
+    if (state.notFound) return notFound();
+    const rows = dailyRows(body.p_days).map((r) => ({ ...r, results: 1 }));
+    return { body: state.promptEmpty ? rows.map((r) => ({ ...r, copies: 0, reactions: 0, comments: 0, results: 0 })) : rows };
+  };
+  db.rpc.creator_insights_prompt_reaction_mix = (body) => { state.calls.promptMix.push(body); if (state.notFound) return notFound(); return { body: state.promptEmpty ? [] : MIX }; };
   setup?.({ db, state });
   const context = await browser.newContext({ viewport });
   await installMock(context, db, { guest });
+  // Bildirimler sayfa sayfa gelir (docs/history/254-*): GET = satırlar, HEAD = okunmamış sayısı.
+  await context.route(/\/rest\/v1\/notifications(\?|$)/, (route) => {
+    const url = new URL(route.request().url());
+    if (route.request().method() === "HEAD") return route.fulfill({ status: 200, headers: { "access-control-allow-origin": "*", "access-control-expose-headers": "content-range", "content-range": `*/${notifications.length}` }, body: "" });
+    if (route.request().method() !== "GET") return route.fulfill({ status: 204, body: "" });
+    const offset = Number(url.searchParams.get("offset") ?? 0);
+    const limit = Number(url.searchParams.get("limit") ?? notifications.length);
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(notifications.slice(offset, offset + limit)) });
+  });
   await context.addInitScript((l) => {
     try {
       localStorage.setItem("promptly-language", l);
@@ -75,7 +101,7 @@ const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `$
 const ready = (page) => page.getByRole("heading", { name: "Günlük trend" }).or(page.getByRole("heading", { name: "Daily trend" })).first().waitFor();
 const tile = (page, label) => page.locator("div.shadow-card", { has: page.getByText(label, { exact: true }) }).first();
 
-await scenario("1. Dört RPC 30 günle çağrılır; kartlar tr biçimiyle (1.284, ▲ %24, ● Yeni, ▼ %4) ve önceki döneme göre metniyle çizilir", async ({ page, state }) => {
+await scenario("1. Beş RPC 30 günle çağrılır; kartlar tr biçimiyle (1.284, ▲ %24, ● Yeni, ▼ %4) ve önceki döneme göre metniyle çizilir", async ({ page, state }) => {
   await page.goto(`${BASE}/insights/`);
   await page.getByRole("heading", { level: 1, name: "Yaratıcı paneli" }).waitFor();
   await ready(page);
@@ -83,6 +109,10 @@ await scenario("1. Dört RPC 30 günle çağrılır; kartlar tr biçimiyle (1.28
   assert.deepEqual(state.calls.daily, [{ p_days: 30 }]);
   assert.deepEqual(state.calls.top, [{ p_days: 30, p_limit: 5 }]);
   assert.deepEqual(state.calls.mix, [{ p_days: 30 }]);
+  assert.deepEqual(state.calls.results, [{ p_days: 30 }]);
+  const resultsTile = tile(page, "Sonuç");
+  assert.match(await resultsTile.innerText(), /96/);
+  assert.match(await resultsTile.innerText(), /▲ %20/);
   const copies = tile(page, "Kopyalama");
   assert.match(await copies.innerText(), /1\.284/);
   assert.match(await copies.innerText(), /▲ %24/);
@@ -104,7 +134,7 @@ await scenario("2. Grafik: zirve günü balonla ve erişilebilir adla söylenir;
   assert.ok((await svg.locator("polygon").getAttribute("points"))?.length > 20);
 });
 
-await scenario("3. En çok kopyalananlar: sıra, başlık, tür · araç, sayılar, önceki döneme göre; satır promptun sayfasına gider", async ({ page }) => {
+await scenario("3. En çok kopyalananlar: sıra, başlık, tür · araç, sayılar, önceki döneme göre; satır prompt başına ayrıntı sayfasına gider", async ({ page }) => {
   await page.goto(`${BASE}/insights/`);
   await ready(page);
   const rows = page.locator("ol > li");
@@ -116,7 +146,7 @@ await scenario("3. En çok kopyalananlar: sıra, başlık, tür · araç, sayıl
   assert.match(await first.innerText(), /▲ %86/);
   assert.match(await rows.nth(2).innerText(), /Yeni/, "önceki dönemde 0 kopyalama = Yeni");
   assert.match(await rows.nth(3).innerText(), /▼ %8/);
-  assert.match((await first.getByRole("link").getAttribute("href")) ?? "", /\/prompts\/local\/?\?id=b1000000-0000-4000-8000-000000000001$/);
+  assert.match((await first.getByRole("link").getAttribute("href")) ?? "", /\/insights\/local\/?\?id=b1000000-0000-4000-8000-000000000001$/);
 });
 
 await scenario("4. Tepki dağılımı: toplam, çok→az sıra, her satırda tepki adı + sayı; bilinmeyen tepki atılır", async ({ page }) => {
@@ -131,7 +161,7 @@ await scenario("4. Tepki dağılımı: toplam, çok→az sıra, her satırda tep
   assert.match(await items.nth(3).innerText(), /Faydalı[\s\S]*20/);
 });
 
-await scenario("5. Dönem menüsü: 7 güne geçince dört RPC p_days=7 ile yenilenir; 30'a dönünce (3 dk önbellek) yeniden çağrı YOK", async ({ page, state }) => {
+await scenario("5. Dönem menüsü: 7 güne geçince beş RPC p_days=7 ile yenilenir; 30'a dönünce (3 dk önbellek) yeniden çağrı YOK", async ({ page, state }) => {
   await page.goto(`${BASE}/insights/`);
   await ready(page);
   const trigger = page.locator("button[aria-haspopup]", { hasText: "Son 30 gün" });
@@ -217,10 +247,116 @@ await scenario("11. Kenar çubuğunda 'Yaratıcı paneli' bağlantısı var ve b
   assert.match((await link.innerText()) ?? "", /Yaratıcı paneli/);
 });
 
+const DETAIL = `${BASE}/insights/local/?id=${PID}`;
+
+await scenario("13. Prompt ayrıntısı: üç RPC prompt kimliği + 30 günle; başlık, tür · araç, beş kart (sonuç dahil), grafik, tepki dağılımı, 'Promptu aç', geri bağlantısı", async ({ page, state }) => {
+  await page.goto(DETAIL);
+  await page.getByRole("heading", { level: 1, name: "Neon yağmurlu Tokyo sokağı" }).waitFor();
+  await ready(page);
+  assert.deepEqual(state.calls.prompt, [{ p_prompt_id: PID, p_days: 30 }]);
+  assert.deepEqual(state.calls.promptDaily, [{ p_prompt_id: PID, p_days: 30 }]);
+  assert.deepEqual(state.calls.promptMix, [{ p_prompt_id: PID, p_days: 30 }]);
+  assert.equal(state.calls.summary.length, 0, "genel panel RPC'leri çağrılmaz");
+  await page.getByText("Görsel · Midjourney").waitFor();
+  assert.match(await tile(page, "Kopyalama").innerText(), /412[\s\S]*▲ %86/);
+  assert.match(await tile(page, "Sonuç").innerText(), /28[\s\S]*— Değişmedi/);
+  assert.match(await tile(page, "Kaydedilme").innerText(), /77[\s\S]*● Yeni/);
+  assert.match(await tile(page, "Yorum").innerText(), /31[\s\S]*▼ %23/);
+  assert.equal(await page.locator("svg[role='img']").count(), 1);
+  await page.getByRole("heading", { name: "Tepki dağılımı" }).waitFor();
+  assert.match((await page.getByRole("link", { name: "Promptu aç" }).getAttribute("href")) ?? "", /\/prompts\/local\/?\?id=b1000000-0000-4000-8000-000000000001$/);
+  assert.match((await page.getByRole("link", { name: "Yaratıcı paneli" }).first().getAttribute("href")) ?? "", /\/insights\/?$/);
+  await shot(page, "insights-prompt-desktop");
+});
+
+await scenario("14. Genel panelden satıra basınca ayrıntı sayfası açılır; dönem 7 güne geçince üç RPC p_days=7 ile yenilenir", async ({ page, state }) => {
+  await page.goto(`${BASE}/insights/`);
+  await ready(page);
+  await page.locator("ol > li").first().getByRole("link").click();
+  await page.getByRole("heading", { level: 1, name: "Neon yağmurlu Tokyo sokağı" }).waitFor();
+  await page.waitForURL(/\/insights\/local\/?\?id=b1000000/);
+  await ready(page);
+  await page.locator("button[aria-haspopup]", { hasText: "Son 30 gün" }).click();
+  await page.getByText("Son 7 gün", { exact: true }).first().click();
+  await page.waitForFunction(() => document.querySelector("svg[role='img']")?.getAttribute("aria-label")?.includes("Son 7 günün"));
+  assert.deepEqual(state.calls.prompt.map((c) => c.p_days), [30, 7]);
+  assert.match(await tile(page, "Kopyalama").innerText(), /önceki 7 güne göre/);
+});
+
+await scenario("15. Başkasının/olmayan prompt: sunucu not_found → 'bu prompt panelde gösterilemiyor' (kart/grafik yok, hata uyarısı değil)", async ({ page, state }) => {
+  state.notFound = true;
+  await page.goto(DETAIL);
+  await page.getByText("Bu prompt panelde gösterilemiyor").waitFor();
+  assert.equal(await tile(page, "Kopyalama").count(), 0);
+  assert.equal(await page.locator("[role=alert]", { hasText: "yüklenemedi" }).count(), 0);
+  assert.match((await page.getByRole("link", { name: "Yaratıcı paneli" }).last().getAttribute("href")) ?? "", /\/insights\/?$/);
+});
+
+await scenario("16. Geçersiz kimlik (?id= yok ya da uuid değil): RPC çağrılmadan 'gösterilemiyor'", async ({ page, state }) => {
+  await page.goto(`${BASE}/insights/local/?id=not-a-uuid`);
+  await page.getByText("Bu prompt panelde gösterilemiyor").waitFor();
+  await page.goto(`${BASE}/insights/local/`);
+  await page.getByText("Bu prompt panelde gösterilemiyor").waitFor();
+  assert.equal(state.calls.prompt.length + state.calls.promptDaily.length + state.calls.promptMix.length, 0);
+});
+
+await scenario("17. Dönemde hiç etkileşim yoksa: kartlar sıfır, grafik yerine tek 'etkileşim olmadı' notu", async ({ page, state }) => {
+  state.promptEmpty = true;
+  await page.goto(DETAIL);
+  await page.getByText("Bu dönemde bu prompta hiç etkileşim olmadı.").waitFor();
+  assert.equal(await page.locator("svg[role='img']").count(), 0);
+  assert.equal(await tile(page, "Kopyalama").count(), 1);
+});
+
+await scenario("18. Ayrıntı sayfasında hata: RPC 500 → uyarı + 'Tekrar dene'; yeniden deneyince veri gelir", async ({ page, state }) => {
+  state.fail.prompt = true;
+  // 500 yalnız özet RPC'sinde verilir (genel taklit `state.fail.prompt`'u okumaz).
+  await page.route(/\/rest\/v1\/rpc\/creator_insights_prompt$/, (route) => state.fail.prompt ? route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "boom" }) }) : route.fallback());
+  await page.goto(DETAIL);
+  const alert = page.locator("[role=alert]", { hasText: "Panel yüklenemedi" });
+  await alert.waitFor();
+  state.fail.prompt = false;
+  await alert.getByRole("button", { name: "Tekrar dene" }).click();
+  await ready(page);
+  assert.match(await tile(page, "Kopyalama").innerText(), /412/);
+});
+
+await scenario("19. Ayrıntı sayfası İngilizce + telefonda: başlık, kartlar, 'Open prompt'; yatay taşma yok", async ({ page }) => {
+  await page.goto(DETAIL);
+  await page.getByRole("heading", { level: 1, name: "Neon yağmurlu Tokyo sokağı" }).waitFor();
+  await ready(page);
+  await page.getByRole("link", { name: "Open prompt" }).waitFor();
+  await page.getByText("Results", { exact: true }).waitFor();
+  assert.match(await tile(page, "Copies").innerText(), /412[\s\S]*▲ 86%/);
+  assert.equal(await overflowFree(page), true);
+  await shot(page, "insights-prompt-mobile");
+}, { lang: "en", viewport: { width: 390, height: 844 } });
+
+const milestone = (id, message) => ({ id, type: "system", message, target_href: `/insights/local?id=${PID}`, is_read: false, created_at: new Date(Date.now() - 60000).toISOString(), actor: null });
+
+await scenario("20. Kilometre taşı bildirimi (Türkçe SQL cümlesi): satır cümleyi olduğu gibi gösterir ve ayrıntı sayfasına gider", async ({ page, state }) => {
+  await page.goto(`${BASE}/notifications/`);
+  await page.getByText('Promptun "Neon yağmurlu Tokyo sokağı" 100 kopyalamaya ulaştı.').waitFor();
+  await page.getByText('Promptun "Neon yağmurlu Tokyo sokağı" 50 tepkiye ulaştı.').waitFor();
+  await page.getByText('Promptun "Neon yağmurlu Tokyo sokağı" 100 kopyalamaya ulaştı.').click();
+  await page.waitForURL(/\/insights\/local\/?\?id=b1000000/);
+  await page.getByRole("heading", { level: 1, name: "Neon yağmurlu Tokyo sokağı" }).waitFor();
+  assert.equal(state.calls.prompt.length, 1);
+}, { notifications: [milestone("m1", 'Promptun "Neon yağmurlu Tokyo sokağı" 100 kopyalamaya ulaştı.'), milestone("m2", 'Promptun "Neon yağmurlu Tokyo sokağı" 50 tepkiye ulaştı.')] });
+
+await scenario("21. Kilometre taşı bildirimi İngilizce: cümle çevrilir, prompt başlığı çevrilmez", async ({ page }) => {
+  await page.goto(`${BASE}/notifications/`);
+  await page.getByText("Your prompt “Neon yağmurlu Tokyo sokağı” reached 100 copies.").waitFor();
+  await page.getByText("Your prompt “Neon yağmurlu Tokyo sokağı” reached 50 reactions.").waitFor();
+}, { lang: "en", notifications: [milestone("m1", 'Promptun "Neon yağmurlu Tokyo sokağı" 100 kopyalamaya ulaştı.'), milestone("m2", 'Promptun "Neon yağmurlu Tokyo sokağı" 50 tepkiye ulaştı.')] });
+
 await scenario("12. Ziyaretçi: giriş sayfasına yönlenir, hiçbir RPC çağrılmaz", async ({ page, state }) => {
   await page.goto(`${BASE}/insights/`);
   await page.waitForURL(/\/login/);
   assert.equal(state.calls.summary.length + state.calls.daily.length + state.calls.top.length + state.calls.mix.length, 0);
+  await page.goto(DETAIL);
+  await page.waitForURL(/\/login/);
+  assert.equal(state.calls.prompt.length + state.calls.promptDaily.length + state.calls.promptMix.length, 0);
 }, { guest: true });
 
 await browser.close();
