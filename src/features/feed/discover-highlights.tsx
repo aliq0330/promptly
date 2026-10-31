@@ -222,7 +222,8 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
       <ScrollRow as="ul" className={STRIP_CLASS}>
         {popular.prompts.map((prompt) => {
           const Icon = CONTENT_TYPE_META[prompt.contentType].icon;
-          const cover = prompt.contentType === "image" ? prompt.media[0] : undefined;
+          // Same rule as `PromptCard`: an image prompt's first output, a video / audio prompt's poster (`media[0]`); only a cover-less prompt shows its text.
+          const cover = prompt.media[0];
           return (
             <li key={prompt.id} className="w-32 shrink-0">
               <Link href={promptHref(prompt)} className="group relative block aspect-square overflow-hidden rounded-[14px] border border-border-soft bg-surface-soft">
