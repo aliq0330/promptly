@@ -78,6 +78,9 @@ const CHECKS = [
   { name: "rpc creator_insights_prompt (prompt başına ayrıntı, docs/history/295-*)", rpc: "creator_insights_prompt", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc creator_insights_prompt_daily (docs/history/295-*)", rpc: "creator_insights_prompt_daily", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc creator_insights_prompt_reaction_mix (docs/history/295-*)", rpc: "creator_insights_prompt_reaction_mix", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc prompt_works_state (Çalıştı mı? oyu sayıları; ziyaretçiye de açık, docs/history/296-*)", rpc: "prompt_works_state", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000" } },
+  { name: "rpc set_prompt_works (Çalıştı mı? oyu; yalnız oturumlu)", rpc: "set_prompt_works", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_works: null }, deniedOk: true, soft: true },
+  { name: "prompt_works_stats (prompt başına evet/hayır sayıları, docs/history/296-*)", get: () => `prompt_works_stats?select=${encodeURIComponent("prompt_id,yes_count,no_count")}&limit=1` },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 

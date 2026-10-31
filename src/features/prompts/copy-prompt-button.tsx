@@ -7,6 +7,9 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { recordPromptCopy } from "@/lib/supabase/prompt-usage";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
+/** Başarılı bir kopyalama kaydından sonra `window`'a atılır (`detail.promptId`); "Çalıştı mı?" bloğu dinler. */
+export const PROMPT_COPIED_EVENT = "promptly:prompt-copied";
+
 /**
  * The one shared "Kopyala" button used directly above a real prompt text
  * block on every content surface (CLAUDE.md §10) — a prompt gönderisi and a
@@ -61,7 +64,10 @@ export function CopyPromptButton({
 
     const ok = await copyTextToClipboard(text);
     setState(ok ? "copied" : "failed");
-    if (ok && promptId && user) void recordPromptCopy(promptId);
+    if (ok && promptId && user) {
+      // Kopyalama kaydı yazıldıktan sonra "Çalıştı mı?" bloğu oy verebilir hâle gelir (docs/history/296-*): açık blok yeniden yüklenir.
+      void recordPromptCopy(promptId).finally(() => window.dispatchEvent(new CustomEvent(PROMPT_COPIED_EVENT, { detail: { promptId } })));
+    }
     resetTimer.current = setTimeout(
       () => {
         setState("idle");

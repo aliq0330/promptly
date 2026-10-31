@@ -23,6 +23,8 @@ import { workflowSpaceTranslations } from "./translations-workflow-space";
 import { spaceConnectionTranslations } from "./translations-space-connections";
 import { reactionTranslations } from "./translations-reactions";
 import { insightsTranslations } from "./translations-insights";
+import { worksTranslations } from "./translations-works";
+import { workflowAutoTranslations } from "./translations-workflow-auto";
 import { chatRedesignTranslations } from "./translations-chat-redesign";
 import { quoteTranslations } from "./translations-quotes";
 import { filterTranslations } from "./translations-filters";
@@ -1937,7 +1939,10 @@ export const translations = {
   "workflow.run.viewAria": { tr: "Workflow görünümü", en: "Workflow view" },
   "workflow.run.viewFlow": { tr: "Akış", en: "Flow" },
   "workflow.run.viewRun": { tr: "Adım adım", en: "Step by step" },
-  "workflow.run.intro": { tr: "Promptly modeli çalıştırmaz: her adımın prompt'unu kendi aracında çalıştır, sonucu aşağıya yapıştır — sonraki adımlarda girdi olarak karşına çıkar. Yazdıkların yalnızca bu tarayıcı oturumunda tutulur, hiçbir yere gönderilmez.", en: "Promptly doesn't run any model: run each step's prompt in your own tool and paste the result below — it comes back as an input in the later steps. What you type stays in this browser session only and is never sent anywhere." },
+  "workflow.run.intro": {
+    tr: "Promptly sunucularında model çalıştırmaz: her adımın prompt'unu kendi aracında çalıştır, sonucu aşağıya yapıştır — sonraki adımlarda girdi olarak karşına çıkar. İstersen metin adımlarını aşağıdan kendi API anahtarınla otomatik de çalıştırabilirsin. Yazdıkların yalnızca bu tarayıcı oturumunda tutulur, Promptly'ye gönderilmez.",
+    en: "Promptly doesn't run any model on its servers: run each step's prompt in your own tool and paste the result below — it comes back as an input in the later steps. You can also run the text steps automatically with your own API key below. What you type stays in this browser session only and is never sent to Promptly.",
+  },
   "workflow.run.stepsNavAria": { tr: "Adımlar", en: "Steps" },
   "workflow.run.stepOf": { tr: "Adım {{n}} / {{total}}", en: "Step {{n}} of {{total}}" },
   "workflow.run.progress": { tr: "{{done}} / {{total}} adım tamamlandı", en: "{{done}} of {{total}} steps done" },
@@ -3198,6 +3203,8 @@ export const translations = {
   ...spaceConnectionTranslations,
   ...reactionTranslations,
   ...insightsTranslations,
+  ...worksTranslations,
+  ...workflowAutoTranslations,
   ...chatRedesignTranslations,
   ...storyTranslations,
   ...quoteTranslations,

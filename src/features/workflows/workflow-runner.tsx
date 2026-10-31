@@ -32,6 +32,7 @@ import { ScrollRow } from "@/components/ui/scroll-row";
 import { CardBandBackdrop } from "@/features/content/content-card";
 import type { Prompt, PromptVariable, WorkflowStep } from "@/types";
 import { STEP_TYPE_META } from "./step-meta";
+import { WorkflowAutoRun } from "./workflow-auto-run";
 
 const FIELD_CLASS =
   "w-full resize-y rounded-md border border-border-soft bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
@@ -47,10 +48,12 @@ function loadSavedRun(workflowId: string, steps: WorkflowStep[]): WorkflowRunSta
 }
 
 /**
- * The public workflow worked through one step at a time. Promptly runs no model:
+ * The public workflow worked through one step at a time. Promptly's SERVERS run no model:
  * the person copies each step's prompt into their own tool, pastes the result back
  * here, and that result is offered again as the input of the later steps wired to it
- * (`lib/workflow-run.ts`). Everything typed lives in this browser session only.
+ * (`lib/workflow-run.ts`). Optionally the text steps can be run automatically with the
+ * person's OWN API key straight from this browser (`WorkflowAutoRun`, docs/history/296-*) —
+ * it writes into the same state. Everything typed lives in this browser session only.
  */
 export function WorkflowRunner({ workflowId, steps }: { workflowId: string; steps: WorkflowStep[] }) {
   const { t } = useTranslation();
@@ -93,6 +96,8 @@ export function WorkflowRunner({ workflowId, steps }: { workflowId: string; step
   return (
     <div className="space-y-4">
       <p className="text-small text-text-muted">{t("workflow.run.intro")}</p>
+
+      <WorkflowAutoRun steps={steps} state={state} onState={setState} onShowSummary={() => setShowSummary(true)} />
 
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3 text-caption font-medium text-text-secondary">

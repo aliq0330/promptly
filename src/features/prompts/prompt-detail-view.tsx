@@ -39,6 +39,7 @@ import { splitSourceNotes } from "@/lib/source-notes";
 import { SourceNotes } from "@/features/content/source-notes";
 import { FollowButton } from "@/features/profile/follow-button";
 import { PromptSpacesAside } from "@/features/spaces/public-spaces";
+import { PromptWorksVote } from "@/features/prompts/prompt-works-vote";
 import { AsideSection, DetailActionBar, DetailArt, DetailArtPlaceholder, DetailArtThumb, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
 import { findTool, parseToolRef } from "@/lib/ai-tool-catalog";
@@ -302,6 +303,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 <AssembleSweep seq={assemble.sweepSeq} />
               </div>
               <PromptActions prompt={prompt} text={displayText} />
+              <PromptWorksVote promptId={prompt.id} isOwn={isOwn} />
             </DetailSection>
           )}
 
