@@ -78,6 +78,11 @@ const CHECKS = [
   { name: "rpc creator_insights_prompt (prompt başına ayrıntı, docs/history/295-*)", rpc: "creator_insights_prompt", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc creator_insights_prompt_daily (docs/history/295-*)", rpc: "creator_insights_prompt_daily", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc creator_insights_prompt_reaction_mix (docs/history/295-*)", rpc: "creator_insights_prompt_reaction_mix", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc prompt_outcome_stats (Çalıştı mı? özeti, docs/history/296-*; ziyaretçiye açık)", rpc: "prompt_outcome_stats", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000" }, soft: true },
+  { name: "rpc set_prompt_outcome (Çalıştı mı?, docs/history/296-*; yalnız oturumlu)", rpc: "set_prompt_outcome", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_outcome: null, p_tool: "", p_tool_version: "" }, deniedOk: true, soft: true },
+  { name: "rpc has_copied_prompt (docs/history/296-*; yalnız oturumlu)", rpc: "has_copied_prompt", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_prompt_outcomes (docs/history/296-*; yalnız oturumlu)", rpc: "creator_insights_prompt_outcomes", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
+  { name: "prompts.license (kullanım hakkı, docs/history/296-*; isteğe bağlı sütun)", get: () => `prompts?select=${encodeURIComponent("id,license")}&limit=1`, soft: true },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 

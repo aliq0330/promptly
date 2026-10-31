@@ -5,6 +5,7 @@ import { fetchVariablesForPrompt, fetchVariablesForPrompts } from "./prompt-vari
 import { ADMIN_IMPORT_LIMITS, runBatches, toExchangePrompt, withSourceNote, type BulkBatchReport, type BulkOutcome, type BulkProgress, type ExchangePrompt } from "@/lib/exchange";
 import { shareLinkForHref } from "@/lib/share-link";
 import { absoluteUrl, promptHref } from "@/lib/utils";
+import { licenseCreditSuffix } from "@/lib/prompt-license";
 
 /** What goes over the wire: the credit is folded into the description (`withSourceNote`); the separate `source` field is not sent. */
 function forServer(item: ExchangePrompt): ExchangePrompt {
@@ -44,7 +45,9 @@ export async function fetchOwnPromptsForExport(userId: string): Promise<Exchange
 export async function fetchPromptForExport(promptId: string, viewerId?: string | null): Promise<ExchangePrompt | null> {
   const prompt = await fetchPromptById(promptId);
   if (!prompt || prompt.deletedAt || prompt.communityId) return null;
-  const credit = viewerId && prompt.author.id === viewerId ? null : { credit: `@${prompt.author.username} · Promptly`, url: absoluteUrl(shareLinkForHref(promptHref(prompt))) };
+  // The author's chosen license travels with the credit line ("@aliq · Promptly (CC BY)"), so an import keeps it as a "Kaynak:" note (docs/history/296-*).
+  const licenseNote = licenseCreditSuffix(prompt.license);
+  const credit = viewerId && prompt.author.id === viewerId ? null : { credit: `@${prompt.author.username} · Promptly${licenseNote ? ` (${licenseNote})` : ""}`, url: absoluteUrl(shareLinkForHref(promptHref(prompt))) };
   return toExchangePrompt(prompt, await fetchVariablesForPrompt(promptId), credit);
 }
 

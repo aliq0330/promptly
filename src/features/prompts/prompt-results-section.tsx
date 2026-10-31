@@ -87,6 +87,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
   return (
     // A numbered section of the editorial detail page (docs/history/201-*).
     <DetailSection
+      id="prompt-results"
       title={
         <>
           {t("result.sectionTitle")}

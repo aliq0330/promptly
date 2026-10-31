@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Download, Eye, EyeOff, KeyRound, Loader2, Pencil, Play, Plus, Send, Sparkles, Square, Upload, X } from "lucide-react";
+import { Check, Download, Eye, EyeOff, KeyRound, Loader2, Pencil, Play, Plus, Scale, Send, Sparkles, Square, Upload, X } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
@@ -37,7 +37,10 @@ import { assemblePromptParts, joinPromptParts } from "@/lib/prompt-parts";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { cn, copyTextToClipboard } from "@/lib/utils";
+import { cn, copyTextToClipboard, promptHref } from "@/lib/utils";
+import Link from "next/link";
+import { AddResultModal, type AddResultInitial } from "@/features/prompts/add-result-modal";
+import { dataUrlToFile, formatSeconds, groupByLabel } from "@/lib/studio-compare";
 import type { Preset, Prompt, PromptContentType, PromptVariable } from "@/types";
 
 const MAX_COUNT = 4;
@@ -51,7 +54,7 @@ interface SlotMeta {
 
 type Slot =
   | { id: number; status: "loading"; label: string }
-  | { id: number; status: "done"; output: AiOutput; meta: SlotMeta }
+  | { id: number; status: "done"; output: AiOutput; meta: SlotMeta; /** How long the request took (undefined for a result restored from history). */ ms?: number }
   | { id: number; status: "error"; error: AiError; label: string };
 
 /** One provider/model a run is sent to. The first is the main form; up to MAX_EXTRA more can be compared side by side. */
@@ -142,6 +145,10 @@ export function StudioView() {
   const [runMode, setRunMode] = useState<"run" | "api">("api");
   const [promptPublishError, setPromptPublishError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  // Comparison extras (docs/history/296-*): the result the user marked "better" (local only) and the "Sonuç olarak paylaş" modal.
+  const [betterId, setBetterId] = useState<number | null>(null);
+  const [shareDraft, setShareDraft] = useState<{ initial: AddResultInitial; promptId: string; promptText: string } | null>(null);
+  const [shareNotice, setShareNotice] = useState<"added" | "failed" | null>(null);
   const resultsRef = useRef<HTMLDivElement | null>(null);
   /** The results column follows the page while it fits on screen; once it is taller than the viewport it scrolls normally. */
   const [stick, setStick] = useState(true);
@@ -305,9 +312,11 @@ export function StudioView() {
 
   async function runSlot(id: number, target: Target, key: string, prompt: string, signal: AbortSignal) {
     const meta: SlotMeta = { provider: target.provider, model: target.model, prompt };
+    const startedAt = performance.now();
     try {
       const output = await generateOne(target.provider, kind, target.model, prompt, key, signal);
-      setSlots((current) => current.map((slot) => (slot.id === id ? { id, status: "done", output, meta } : slot)));
+      const ms = Math.round(performance.now() - startedAt);
+      setSlots((current) => current.map((slot) => (slot.id === id ? { id, status: "done", output, meta, ms } : slot)));
       const entry: HistoryEntry = { id: `${id}-${Math.random().toString(36).slice(2, 8)}`, createdAt: Date.now(), kind, presetTitle: sourceTitle, output, ...meta };
       await addHistory(entry);
       setHistory(await listHistory());
@@ -357,6 +366,8 @@ export function StudioView() {
   async function onGenerate() {
     setFormError(null);
     setPublishError(false);
+    setBetterId(null);
+    setShareNotice(null);
     const key = apiKey.trim();
     if (!key) return setFormError(t("generate.needKey"));
     if (!finalPrompt) return setFormError(t("generate.needPrompt"));
@@ -404,8 +415,26 @@ export function StudioView() {
     router.push("/create?mode=prompt&fromGenerate=1");
   }
 
+  /** "Sonuç olarak paylaş": the generated picture/text goes into the ordinary result form under the Prompt this session started from. */
+  function onShareResult(output: AiOutput, meta: SlotMeta) {
+    if (!user) return requireAuth("create");
+    if (!promptSource) return;
+    setShareNotice(null);
+    const tool = targetLabel(meta);
+    let initial: AddResultInitial | null = null;
+    if (output.kind === "image" && output.imageUrl) {
+      const file = dataUrlToFile(output.imageUrl, "studio-result");
+      if (file) initial = { file, tool };
+    } else if (output.text) {
+      initial = { text: output.text, tool };
+    }
+    if (!initial) return setShareNotice("failed");
+    setShareDraft({ initial, promptId: promptSource.id, promptText: promptSource.promptText });
+  }
+
   function openHistory(entry: HistoryEntry) {
     setPublishError(false);
+    setBetterId(null);
     setSlots([{ id: Date.now(), status: "done", output: entry.output, meta: { provider: entry.provider, model: entry.model, prompt: entry.prompt } }]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -482,6 +511,7 @@ export function StudioView() {
 
   // Layout follows what the results ARE (a restored history item may differ from the current form).
   const showLabels = new Set(slots.map((slot) => (slot.status === "done" ? targetLabel(slot.meta) : slot.label))).size > 1;
+  const resultGroups = groupByLabel(slots, (slot) => (slot.status === "done" ? targetLabel(slot.meta) : slot.label));
   const slotsAreImages = slots.every((slot) => (slot.status === "done" ? slot.output.kind === "image" : kind === "image"));
 
   const presetTypeNote =
@@ -824,44 +854,87 @@ export function StudioView() {
             {slots.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border bg-surface-soft p-5 text-small text-text-muted">{t("generate.resultsEmpty")}</p>
             ) : (
-              <ul className="space-y-3">
-                {slots.map((slot, index) => (
-                  <li key={slot.id} className="min-w-0 overflow-hidden rounded-lg border border-border-soft">
-                    {showLabels && (
-                      <p className="truncate border-b border-border-soft bg-surface-soft px-3 py-1.5 text-caption font-medium text-text-secondary">
-                        {slot.status === "done" ? targetLabel(slot.meta) : slot.label}
-                      </p>
-                    )}
-                    {slot.status === "loading" && (
-                      <div className={`${slotsAreImages ? "aspect-square" : "h-32"} skeleton-shimmer`} aria-busy="true">
-                        <span className="sr-only">{t("generate.running")}</span>
-                      </div>
-                    )}
-                    {slot.status === "error" && (
-                      <div className="space-y-2 p-4">
-                        <p role="alert" className="text-small text-danger">
-                          {t(ERROR_KEY[slot.error.kind])}
-                        </p>
-                        {slot.error.message && <p className="break-words text-caption text-text-muted">{slot.error.message}</p>}
-                      </div>
-                    )}
-                    {slot.status === "done" && (
-                      <ResultBody
-                        output={slot.output}
-                        index={index}
-                        meta={showLabels ? null : targetLabel(slot.meta)}
-                        onPublish={() => onPublish(slot.output, slot.meta)}
-                        onEdit={() => editFromResult(slot.meta)}
-                      />
-                    )}
-                  </li>
+              <>
+              <div className={cn("grid gap-3", resultGroups.length === 2 && "sm:grid-cols-2", resultGroups.length >= 3 && "sm:grid-cols-2 2xl:grid-cols-3")} data-testid="studio-results">
+                {resultGroups.map((group) => (
+                  <ul key={group.label} className="min-w-0 space-y-3" data-testid="studio-result-column">
+                    {group.items.map(({ item: slot, index }) => (
+                      <li key={slot.id} className={cn("min-w-0 overflow-hidden rounded-lg border", betterId === slot.id ? "border-primary ring-1 ring-primary" : "border-border-soft")}>
+                        {showLabels && (
+                          <div className="space-y-1 border-b border-border-soft bg-surface-soft px-3 py-1.5 text-caption font-medium text-text-secondary">
+                            <p className="truncate" title={slot.status === "done" ? targetLabel(slot.meta) : slot.label}>
+                              {slot.status === "done" ? targetLabel(slot.meta) : slot.label}
+                            </p>
+                            {betterId === slot.id && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary">
+                                <Check size={12} aria-hidden /> {t("studio.betterBadge")}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {slot.status === "loading" && (
+                          <div className={`${slotsAreImages ? "aspect-square" : "h-32"} skeleton-shimmer`} aria-busy="true">
+                            <span className="sr-only">{t("generate.running")}</span>
+                          </div>
+                        )}
+                        {slot.status === "error" && (
+                          <div className="space-y-2 p-4">
+                            <p role="alert" className="text-small text-danger">
+                              {t(ERROR_KEY[slot.error.kind])}
+                            </p>
+                            {slot.error.message && <p className="break-words text-caption text-text-muted">{slot.error.message}</p>}
+                          </div>
+                        )}
+                        {slot.status === "done" && (
+                          <ResultBody
+                            output={slot.output}
+                            index={index}
+                            meta={showLabels ? null : targetLabel(slot.meta)}
+                            seconds={formatSeconds(slot.ms, language)}
+                            onPublish={() => onPublish(slot.output, slot.meta)}
+                            onEdit={() => editFromResult(slot.meta)}
+                            onShare={promptSource ? () => onShareResult(slot.output, slot.meta) : undefined}
+                            better={showLabels ? { active: betterId === slot.id, onToggle: () => setBetterId((current) => (current === slot.id ? null : slot.id)) } : undefined}
+                          />
+                        )}
+                      </li>
+                    ))}
+                  </ul>
                 ))}
-              </ul>
+              </div>
+              {showLabels && betterId !== null && <p className="text-caption text-text-muted">{t("studio.compareLocalNote")}</p>}
+              {shareNotice === "added" && (
+                <p role="status" className="text-small text-success">
+                  {t("studio.shareResultAdded")}{" "}
+                  {promptSource && (
+                    <Link href={promptHref({ id: promptSource.id })} className="font-semibold underline">
+                      {promptSource.title}
+                    </Link>
+                  )}
+                </p>
+              )}
+              {shareNotice === "failed" && (
+                <p role="alert" className="text-small text-danger">
+                  {t("studio.shareResultFailed")}
+                </p>
+              )}
+              </>
             )}
           </section>
           <StudioHistory entries={history} onOpen={openHistory} onUsePrompt={usePromptFromHistory} onDelete={removeHistory} onClear={wipeHistory} />
         </div>
       </div>
+      {shareDraft && (
+        <AddResultModal
+          target={{ type: "prompt", promptId: shareDraft.promptId, promptText: shareDraft.promptText }}
+          initial={shareDraft.initial}
+          onClose={() => setShareDraft(null)}
+          onAdded={() => {
+            setShareDraft(null);
+            setShareNotice("added");
+          }}
+        />
+      )}
       {sourcePicker === "preset" && <StudioPresetPicker contentType={kind} onPick={pickPreset} onClose={() => setSourcePicker(null)} />}
       {sourcePicker === "prompt" && (
         <StudioSourcePicker kind="prompt" onPick={(key) => pickSource("prompt", key)} onClose={() => setSourcePicker(null)} />
@@ -930,7 +1003,33 @@ function SourceLoading({ onRemove }: { onRemove: () => void }) {
   );
 }
 
-function ResultBody({ output, index, meta, onPublish, onEdit }: { output: AiOutput; index: number; meta: string | null; onPublish: () => void; onEdit: () => void }) {
+/** Result actions wrap their text: with two models side by side each column is narrow (docs/history/296-*). */
+/** Side by side (comparison) the columns are ~170px wide: smaller text and padding keep the stacked actions short. */
+const COMPACT = "px-2 text-caption";
+const RESULT_BUTTON = "h-auto min-h-11 w-full whitespace-normal py-2 text-center leading-tight";
+
+function ResultBody({
+  output,
+  index,
+  meta,
+  seconds,
+  onPublish,
+  onEdit,
+  onShare,
+  better,
+}: {
+  output: AiOutput;
+  index: number;
+  meta: string | null;
+  /** How long the request took, already formatted ("4,2"); null when unknown. */
+  seconds: string | null;
+  onPublish: () => void;
+  onEdit: () => void;
+  /** Only when the session started from a Prompt: puts this result under that prompt (docs/history/296-*). */
+  onShare?: () => void;
+  /** Only while comparing: the local "this one is better" mark. */
+  better?: { active: boolean; onToggle: () => void };
+}) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
@@ -950,12 +1049,27 @@ function ResultBody({ output, index, meta, onPublish, onEdit }: { output: AiOutp
       )}
       {output.text && <ClampedText text={output.text} lines={8} />}
       <div className="space-y-2 border-t border-border-soft p-3">
-        {meta && <p className="truncate text-caption text-text-muted">{meta}</p>}
-        <Button type="button" onClick={onPublish} className="h-11 w-full">
+        {(meta || seconds) && (
+          <p className="flex items-center justify-between gap-2 text-caption text-text-muted">
+            <span className="min-w-0 truncate">{meta}</span>
+            {seconds && <span className="shrink-0 tabular-nums" data-testid="result-seconds">{t("studio.duration", { seconds })}</span>}
+          </p>
+        )}
+        <Button type="button" onClick={onPublish} className={cn(RESULT_BUTTON, better && COMPACT)}>
           <Upload size={14} aria-hidden /> {t("generate.publish")}
         </Button>
+        {onShare && (
+          <Button type="button" variant="outline" onClick={onShare} className={cn(RESULT_BUTTON, better && COMPACT)} data-testid="share-as-result">
+            <Send size={14} aria-hidden /> {t("studio.shareAsResult")}
+          </Button>
+        )}
+        {better && (
+          <Button type="button" variant={better.active ? "secondary" : "outline"} aria-pressed={better.active} onClick={better.onToggle} className={cn(RESULT_BUTTON, COMPACT)} data-testid="mark-better">
+            <Scale size={14} aria-hidden /> {better.active ? t("studio.unmarkBetter") : t("studio.markBetter")}
+          </Button>
+        )}
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={onEdit} className="h-11 min-w-0 flex-1">
+          <Button type="button" variant="outline" onClick={onEdit} className={cn("h-auto min-h-11 min-w-0 flex-1 whitespace-normal py-2 text-center leading-tight", better && COMPACT)}>
             <Pencil size={14} aria-hidden /> {t("studio.editRetry")}
           </Button>
           {output.text && (

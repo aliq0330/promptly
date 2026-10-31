@@ -3,6 +3,7 @@ import { translateForRuntime } from "@/lib/i18n/translations";
 import { isReactionKey } from "@/lib/reactions";
 import type { InsightDay, InsightPromptSummary, InsightReactionRow, InsightSummary, InsightTopItem } from "@/lib/insights";
 import { reactionRows } from "@/lib/insights";
+import { fetchOwnPromptOutcomeTotals } from "./prompt-outcomes";
 
 /**
  * Yaratıcı paneli veri katmanı (docs/history/294-*, 295-*): `creator_insights_*` RPC'leri. Hepsi yalnız çağıranın KENDİ yayınlanmış promptlarını
@@ -21,6 +22,8 @@ export interface PromptInsights {
   summary: InsightPromptSummary;
   days: InsightDay[];
   reactions: InsightReactionRow[];
+  /** "Çalıştı mı?" cevaplarının toplamı (docs/history/296-*); RPC henüz yoksa/başarısızsa null — panel yine açılır. */
+  outcomes: { worked: number; partial: number; failed: number } | null;
 }
 
 /** Prompt çağıranın değil / yayında değil / bulunamadı: sunucu `not_found` fırlatır (varlığı sızmasın diye hepsi aynı). */
@@ -85,10 +88,11 @@ export async function fetchCreatorInsights(days: number, topLimit = 5): Promise<
 
 /** Tek promptun ayrıntısı. Prompt çağıranın değilse `InsightNotFoundError`; başka hata "yüklenemedi" cümlesiyle fırlar. */
 export async function fetchPromptInsights(promptId: string, days: number): Promise<PromptInsights> {
-  const [summary, daily, mix] = await Promise.all([
+  const [summary, daily, mix, outcomes] = await Promise.all([
     supabase.rpc("creator_insights_prompt", { p_prompt_id: promptId, p_days: days }),
     supabase.rpc("creator_insights_prompt_daily", { p_prompt_id: promptId, p_days: days }),
     supabase.rpc("creator_insights_prompt_reaction_mix", { p_prompt_id: promptId, p_days: days }),
+    fetchOwnPromptOutcomeTotals(promptId),
   ]);
   const failed = summary.error ?? daily.error ?? mix.error;
   if (failed) {
@@ -113,5 +117,6 @@ export async function fetchPromptInsights(promptId: string, days: number): Promi
       day: String(row.day), copies: n(row.copies), reactions: n(row.reactions), comments: n(row.comments), results: n(row.results),
     })),
     reactions: mixRows(mix.data),
+    outcomes,
   };
 }

@@ -9,7 +9,7 @@ export const DESC = "2×2 dizilmiş dört mekanik klavye tuşunda marka sloganı
 export const ID = { prompt: "a0000000-0000-4000-8000-000000000001", request: "a0000000-0000-4000-8000-000000000002", workflow: "a0000000-0000-4000-8000-000000000003", preset: "a0000000-0000-4000-8000-000000000004" };
 export const PAGES = { prompt: `/prompts/local?id=${ID.prompt}`, request: `/requests/local?id=${ID.request}`, workflow: `/workflows/local?id=${ID.workflow}`, preset: `/presets/local?id=${ID.preset}` };
 
-export function installDetailData(context) {
+export function installDetailData(context, overrides = {}) {
   const base = { like_count: 13, save_count: 1, comment_count: 4, created_at: "2026-09-20T10:00:00Z" };
   const rows = {
     prompts: { id: ID.prompt, title: "Markalı mekanik klavye tuşları", description: DESC, prompt_text: LONG, tool: null, tools: ["gpt-image:gpt-image-1"], content_type: "image", category: "image-3d", subcategory: null, status: "published", origin_type: "original", request_id: null, ...base, copy_count: 7, show_on_profile: true, requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: "public", deleted_at: null, community_id: null, profiles: author(U.carol), prompt_media: [{ id: "m1", url: svg("#6d5bd0", "#d9d2c3"), width: 1200, height: 900, alt: "Klavye tuşları", position: 0 }], prompt_tags: TAGS },
@@ -17,6 +17,7 @@ export function installDetailData(context) {
     workflows: { id: ID.workflow, creator_id: U.carol.id, title: "Ürün fotoğrafından kampanya görseli", description: "Ham ürün fotoğrafını önce temizleyip sonra sahneye yerleştiren üç adımlı akış.", cover_url: svg("#2a6f6a", "#e9d8a6", 1200, 675), content_types: ["image", "text"], category: null, subcategory: null, tools: ["midjourney"], status: "published", visibility: "public", community_id: null, like_count: 9, save_count: 2, comment_count: 4, created_at: "2026-09-20T10:00:00Z", updated_at: "2026-09-20T10:00:00Z", profiles: author(U.carol), workflow_steps: [{ count: 3 }], workflow_tags: TAGS, workflow_media: [] },
     presets: { id: ID.preset, creator_id: U.carol.id, title: "Sinematik portre ayarı", description: "Yumuşak ışık, sığ alan derinliği ve sıcak tonlama için hazır parametre seti.", cover_url: svg("#7a3e2e", "#f2d6b3", 1200, 675), content_type: "image", category: "image-portrait", subcategory: null, tools: [], selection: {}, status: "published", visibility: "public", community_id: null, like_count: 6, comment_count: 4, save_count: 1, created_at: "2026-09-20T10:00:00Z", updated_at: "2026-09-20T10:00:00Z", profiles: author(U.carol), preset_tags: TAGS },
   };
+  Object.assign(rows.prompts, overrides.prompts ?? {});
   const wanted = { prompts: ID.prompt, prompt_requests: ID.request, workflows: ID.workflow, presets: ID.preset };
   return context.route("https://example.supabase.co/rest/v1/**", async (route) => {
     const url = new URL(route.request().url());

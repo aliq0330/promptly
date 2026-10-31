@@ -127,7 +127,7 @@ Takip + sayaç (korumalı) + bildirim + profil sekmeleri. Takip edilen koleksiyo
 Prompt'ta `prompt_versions` + panel + fark zaten vardı; eksik olan: İstek/Workflow/Hazır Ayar sürümleri, kopyalama, geri dönme, ortak liste, iki sürüm seçici, `prompt_versions` erişim açığı (private prompt sürümleri). Ayrıntı: `docs/history/170-*`. Canlıya alma sırası: önce 3 migration (`20260919940000`–`960000`), sonra istemci kodu.
 
 ### 10. Yan yana model karşılaştırma (Studio)
-Ayrıntılar madde sırası geldiğinde bu dosyaya eklenir.
+Yapıldı (`docs/history/296-*`): model başına yan yana sütun, süre, yerel "Bu daha iyi", "Sonuç olarak paylaş". Kalan: karşılaştırma sonucundan "Çalıştı mı?" cevabını önceden doldurma, üçüncü model için geniş masaüstü düzeni.
 
 ### 11. Haftalık özet (engelli)
 E-posta sağlayıcısı veya web push (VAPID) anahtarı gerekir; anahtar repoya girmez. Karar bekliyor.

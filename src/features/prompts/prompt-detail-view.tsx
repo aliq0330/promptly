@@ -23,6 +23,9 @@ import { PromptHistoryPanel } from "@/features/prompts/prompt-history-panel";
 import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
 import { ContributorsPanel } from "@/features/prompts/contributors-panel";
 import { PromptResultsSection } from "@/features/prompts/prompt-results-section";
+import { PromptOutcomeSection } from "@/features/prompts/prompt-outcome-section";
+import { PromptLicenseRow } from "@/features/prompts/prompt-license-row";
+import { effectiveLicense, requiresAttribution, withAttribution } from "@/lib/prompt-license";
 import { PromptPlayableOutput } from "@/features/prompts/prompt-playable-output";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
@@ -64,6 +67,9 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   // Credit lines ("Kaynak: …") are shown as a muted note, not as description.
   const { body: descriptionBody, notes: sourceNotes } = useMemo(() => splitSourceNotes(prompt.description), [prompt.description]);
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
+  // The author's chosen license, else CC0/CC BY named in the credit lines (docs/history/296-*).
+  const license = useMemo(() => effectiveLicense(prompt.license, sourceNotes), [prompt.license, sourceNotes]);
+  const [copyWithCredit, setCopyWithCredit] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   // Arrived from a card with a cover → that cover morphs into this hero (src/lib/card-transition.ts).
   const selfHref = promptHref(prompt);
@@ -224,7 +230,12 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               legacyTool={prompt.tool}
               hasChips={Boolean(prompt.category) || prompt.tags.length > 0}
               quoteCount={prompt.quoteCount}
-              footer={<RelationMapRow kind="prompt" id={prompt.id} />}
+              footer={
+                <>
+                  {license && <PromptLicenseRow license={license} />}
+                  <RelationMapRow kind="prompt" id={prompt.id} />
+                </>
+              }
             >
               <TaxonomyLinks className="contents" contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
               <DetailTags className="contents" tags={prompt.tags} />
@@ -301,7 +312,16 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 </div>
                 <AssembleSweep seq={assemble.sweepSeq} />
               </div>
-              <PromptActions prompt={prompt} text={displayText} />
+              <PromptActions prompt={prompt} text={displayText} copyText={copyWithCredit ? withAttribution(displayText, prompt.author.username) : undefined} />
+              {!isOwn && requiresAttribution(license) && (
+                <label className="flex cursor-pointer items-start gap-2.5 text-small text-text-secondary">
+                  <input type="checkbox" checked={copyWithCredit} onChange={(event) => setCopyWithCredit(event.target.checked)} className="mt-1 accent-primary" data-testid="copy-with-credit" />
+                  <span>
+                    {t("license.copyWithCredit")}
+                    <span className="block text-caption text-text-muted">{t("license.copyWithCreditHint")}</span>
+                  </span>
+                </label>
+              )}
             </DetailSection>
           )}
 
@@ -313,6 +333,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           )}
 
           {activeTab === "dna" && <PromptDnaDisplay sections={dnaSections} promptTitle={prompt.title} mapHref={relationMapHref({ kind: "prompt", id: prompt.id })} />}
+
+          <PromptOutcomeSection prompt={prompt} />
 
           <PromptResultsSection target={{ type: "prompt", promptId: prompt.id, promptText: livePromptText }} />
 

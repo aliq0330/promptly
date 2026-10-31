@@ -13,13 +13,14 @@ const SOFT = "h-11 flex-1 bg-surface-soft px-4 text-label text-text hover:bg-bor
 /**
  * The actions under a prompt's text (docs/history/229-*): ONE joined primary pill — Kopyala | Çalıştır (both hand the text out of Promptly) —
  * and two quiet buttons for trying it inside Promptly: Studio'da aç and Hazır ayarla dene (a sheet; nothing preset-related is drawn on the page).
+ * `copyText` (default `text`) is what Kopyala puts on the clipboard — the page adds an optional credit line for "atıfla serbest" prompts (docs/history/296-*); Çalıştır always sends `text` untouched.
  * Düzenleme öner lives in the ⋮ menu (docs/history/279-*), not here.
  */
-export function PromptActions({ prompt, text }: { prompt: Prompt; text: string }) {
+export function PromptActions({ prompt, text, copyText }: { prompt: Prompt; text: string; copyText?: string }) {
   return (
     <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
       <div className="flex w-full divide-x divide-primary-foreground/30 overflow-hidden rounded-full bg-primary shadow-xs sm:w-auto">
-        <CopyPromptButton text={text} promptId={prompt.id} variant="segment" size="md" />
+        <CopyPromptButton text={copyText ?? text} promptId={prompt.id} variant="segment" size="md" />
         <RunButton text={text} recommendedRefs={prompt.tools} promptId={prompt.id} variant="segment" />
       </div>
       <div className="flex gap-2.5">

@@ -31,6 +31,13 @@ export type AddResultModalTarget = {
   promptText: string;
 };
 
+/** What a caller (Studio's "Sonuç olarak paylaş", docs/history/296-*) already has in hand: the modal opens with it filled in and the author can still change everything. */
+export interface AddResultInitial {
+  file?: File | null;
+  text?: string;
+  tool?: string;
+}
+
 /** Free-text suggestions for the result's own "Araç / Model" field — the same "free text + datalist" pattern `CreatePromptForm`'s own `tool` field already uses (CLAUDE.md §3: "mevcut bir araç/model sistemi varsa onu kullan... yeni paralel taxonomy oluşturma" — there is no separate tool/model table anywhere in this project to reuse, so this *is* the existing system). */
 const TOOL_SUGGESTIONS = [
   "Midjourney v6",
@@ -62,24 +69,26 @@ const TOOL_SUGGESTIONS = [
  */
 export function AddResultModal({
   target,
+  initial,
   onClose,
   onAdded,
 }: {
   target: AddResultModalTarget;
+  initial?: AddResultInitial;
   onClose: () => void;
   onAdded: () => void;
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [mode, setMode] = useState<Mode>("file");
-  const [file, setFile] = useState<File | null>(null);
+  const [mode, setMode] = useState<Mode>(initial?.text && !initial.file ? "text" : "file");
+  const [file, setFile] = useState<File | null>(initial?.file ?? null);
   const [detectedType, setDetectedType] = useState<Extract<
     PromptResultMediaType,
     "image" | "video" | "audio"
-  > | null>(null);
+  > | null>(initial?.file ? detectMediaTypeFromFile(initial.file) : null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [textContent, setTextContent] = useState("");
-  const [tool, setTool] = useState("");
+  const [textContent, setTextContent] = useState(initial?.text ?? "");
+  const [tool, setTool] = useState(initial?.tool ?? "");
   const [hasModification, setHasModification] = useState(false);
   const [modificationSummary, setModificationSummary] = useState("");
   const [modifiedPromptText, setModifiedPromptText] = useState("");
@@ -210,6 +219,11 @@ export function AddResultModal({
                 onChange={handleFileChange}
                 className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-text hover:file:bg-accent-surface/80"
               />
+              {file && initial?.file === file && (
+                <p className="mt-1.5 text-xs text-text-muted" data-testid="result-prefilled">
+                  {t("result.fromStudio", { name: file.name })}
+                </p>
+              )}
               {detectedType && (
                 <p className="mt-1.5 text-xs text-text-muted">
                   {t("result.detectedType")}{" "}

@@ -17,5 +17,15 @@ export async function recordPromptCopy(promptId: string): Promise<boolean> {
     return data === true;
   } catch {
     return false;
+  } finally {
+    announcePromptCopied(promptId);
   }
+}
+
+/** Window event fired once a copy has been recorded (or found already recorded), so "Denedin mi?" can appear without a reload (docs/history/296-*). */
+export const PROMPT_COPIED_EVENT = "promptly:prompt-copied";
+
+function announcePromptCopied(promptId: string): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent<string>(PROMPT_COPIED_EVENT, { detail: promptId }));
 }

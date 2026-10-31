@@ -17,9 +17,33 @@ import { InsightStatTile } from "@/features/insights/insight-stat-tile";
 import { usePromptInsights } from "@/features/insights/use-creator-insights";
 import { findTool } from "@/lib/ai-tool-catalog";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { percentages } from "@/lib/prompt-outcomes";
 import { DEFAULT_INSIGHT_PERIOD, INSIGHT_PERIODS, promptHasNoActivity, type InsightPeriod } from "@/lib/insights";
 import { cn, isUuid, promptHref } from "@/lib/utils";
 import type { PromptContentType } from "@/types";
+
+/** "Çalıştı mı?" cevaplarının toplamı (docs/history/296-*): tüm zamanlar, dönem seçiminden bağımsız; kimin cevapladığı gösterilmez. */
+function OutcomeTotals({ outcomes }: { outcomes: { worked: number; partial: number; failed: number } }) {
+  const { t } = useTranslation();
+  const total = outcomes.worked + outcomes.partial + outcomes.failed;
+  const [workedPct, partialPct, failedPct] = percentages(outcomes.worked, outcomes.partial, outcomes.failed);
+  return (
+    <section className={INSIGHT_CARD} aria-labelledby="insights-outcome-title" data-testid="insights-outcomes">
+      <h2 id="insights-outcome-title" className="text-h2 font-semibold text-text">{t("insights.outcomes.title")}</h2>
+      <p className="mt-1 text-small text-text-secondary">{t("insights.outcomes.total", { count: total })}</p>
+      <div role="img" aria-label={t("outcome.barAria", { w: workedPct, p: partialPct, f: failedPct })} className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-surface-soft">
+        <i className="block bg-success" style={{ width: `${workedPct}%` }} />
+        <i className="block bg-warning" style={{ width: `${partialPct}%` }} />
+        <i className="block bg-danger" style={{ width: `${failedPct}%` }} />
+      </div>
+      <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-caption">
+        <span className="font-semibold text-success">{t("outcome.workedPct", { pct: workedPct })}</span>
+        <span className="text-text-secondary">{t("outcome.partialPct", { pct: partialPct })}</span>
+        <span className="text-text-secondary">{t("outcome.failedPct", { pct: failedPct })}</span>
+      </p>
+    </section>
+  );
+}
 
 /** Yükleme iskeleti gerçek yerleşimin yüksekliğindedir: veri gelince sayfa kaymaz. */
 function PromptInsightsSkeleton() {
@@ -122,6 +146,10 @@ export function PromptInsightsView() {
                 <InsightStatTile icon={MessageCircle} label={t("insights.tile.comments")} current={state.data.summary.comments} previous={state.data.summary.prevComments} days={period} />
                 <InsightStatTile icon={Bookmark} label={t("insights.tile.saves")} current={state.data.summary.saves} previous={state.data.summary.prevSaves} days={period} />
               </div>
+
+              {state.data.outcomes && state.data.outcomes.worked + state.data.outcomes.partial + state.data.outcomes.failed > 0 && (
+                <OutcomeTotals outcomes={state.data.outcomes} />
+              )}
 
               {promptHasNoActivity(state.data.summary, state.data.days) ? (
                 <p className={cn(INSIGHT_CARD, "text-small text-text-secondary")}>{t("insights.detail.noActivity")}</p>

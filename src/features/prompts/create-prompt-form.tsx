@@ -22,6 +22,8 @@ import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-e
 import { composePrompt, countSelected, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
 import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
 import { PromptDnaEditor } from "@/features/prompts/prompt-dna-editor";
+import { LicensePicker } from "@/features/prompts/license-picker";
+import { LICENSE_LABEL_KEY, type PromptLicense } from "@/lib/prompt-license";
 import { fetchDnaSections, replaceDnaSections } from "@/lib/supabase/prompt-dna";
 import type { DnaSection } from "@/lib/prompt-dna/types";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
@@ -234,6 +236,7 @@ export function CreatePromptForm() {
   const [dnaLoaded, setDnaLoaded] = useState(!isEditMode);
   const [showOnProfile, setShowOnProfile] = useState(true);
   const [references, setReferences] = useState<ReferenceRequirements>(NO_REFERENCES);
+  const [license, setLicense] = useState<PromptLicense | null>(null);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
 
   // "Prompt olarak yayınla" from the Üret page: the result was parked in
@@ -279,6 +282,7 @@ export function CreatePromptForm() {
       setTool(editingPrompt.tool ?? "");
       setTools(editingPrompt.tools ?? []);
       setImages(multiImageItemFromMedia(editingPrompt.media));
+      setLicense(editingPrompt.license ?? null);
       setReferences({
         image: editingPrompt.requiresReferenceImage,
         video: editingPrompt.requiresReferenceVideo,
@@ -410,6 +414,8 @@ export function CreatePromptForm() {
 
   // Referans görsel seçeneği yalnızca görsel/video/ses promptlarında anlamlı.
   const effectiveReferences = clampReferences(contentType, references);
+  // Editing sends the license only when it changed, so a database without the column keeps working for everything else.
+  const licenseUpdate = license === (editingPrompt?.license ?? null) ? undefined : license;
   const outputKind: OutputKind | null = contentType === "video" || contentType === "audio" ? contentType : null;
   const outputFile = outputKind && pickedOutput?.kind === outputKind ? pickedOutput.file : null;
 
@@ -479,6 +485,7 @@ export function CreatePromptForm() {
           requiresReferenceImage: effectiveReferences.image,
           requiresReferenceVideo: effectiveReferences.video,
           requiresReferenceAudio: effectiveReferences.audio,
+          license: licenseUpdate,
           visibility: showsVisibilityChoice ? undefined : visibility,
         });
         try {
@@ -506,6 +513,7 @@ export function CreatePromptForm() {
           requiresReferenceImage: effectiveReferences.image,
           requiresReferenceVideo: effectiveReferences.video,
           requiresReferenceAudio: effectiveReferences.audio,
+          license,
           visibility: showsVisibilityChoice ? undefined : visibility,
           isDraft: true,
         },
@@ -557,6 +565,7 @@ export function CreatePromptForm() {
           requiresReferenceImage: effectiveReferences.image,
           requiresReferenceVideo: effectiveReferences.video,
           requiresReferenceAudio: effectiveReferences.audio,
+          license: licenseUpdate,
           // An answer to a request stays public — the request's owner has to be able to see it.
           visibility: showsVisibilityChoice ? undefined : visibility,
           publish: isEditingDraft,
@@ -596,6 +605,7 @@ export function CreatePromptForm() {
           requiresReferenceImage: effectiveReferences.image,
           requiresReferenceVideo: effectiveReferences.video,
           requiresReferenceAudio: effectiveReferences.audio,
+          license,
           visibility: showsVisibilityChoice ? undefined : visibility,
           communityId,
         },
@@ -654,6 +664,7 @@ export function CreatePromptForm() {
     requiresReferenceImage: effectiveReferences.image,
           requiresReferenceVideo: effectiveReferences.video,
           requiresReferenceAudio: effectiveReferences.audio,
+          license,
     visibility: showsVisibilityChoice ? "public" : visibility,
     deletedAt: null,
     createdAt: new Date().toISOString(),
@@ -958,6 +969,9 @@ export function CreatePromptForm() {
               <ReferenceRequirementsField contentType={contentType} value={references} onChange={setReferences} />
             </FormDisclosure>
           )}
+          <FormDisclosure id="license" label={t("license.title")} value={license ? t(LICENSE_LABEL_KEY[license]) : undefined}>
+            <LicensePicker value={license} onChange={setLicense} disabled={isSubmitting} />
+          </FormDisclosure>
         </ComposeSection>
 
         <ComposeSection title={t("publish.whoSees")} id="compose-publish">

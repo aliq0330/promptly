@@ -1,4 +1,5 @@
 import type { ContentTypeId } from "@/lib/content-taxonomy";
+import type { PromptLicense } from "@/lib/prompt-license";
 import type { PresetField, PresetSelection } from "@/lib/preset-fields";
 /**
  * Shared domain types for Promptly — mirror the real Supabase schema (see
@@ -89,6 +90,8 @@ export interface Prompt {
   commentCount: number;
   /** Real `prompts.copy_count`: how many signed-in people copied / ran it (one per person per day, never the author). */
   copyCount: number;
+  /** Kullanım hakkı (`prompts.license`, docs/history/296-*); null/yok = belirtilmedi. */
+  license?: PromptLicense | null;
   isLiked: boolean;
   isSaved: boolean;
   status: "draft" | "published";

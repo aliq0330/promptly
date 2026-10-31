@@ -11,6 +11,8 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   interaction_blocked: "error.interactionBlocked",
   self_like_not_allowed: "error.selfLike",
   report_duplicate: "error.reportDuplicate",
+  self_outcome_not_allowed: "error.selfOutcome",
+  outcome_requires_copy: "error.outcomeRequiresCopy",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
@@ -49,7 +51,7 @@ export function friendlyServerErrors(baseFetch: typeof fetch): typeof fetch {
  * yeniden denenir; sütun o oturumda bir daha seçilmez. Yalnız burada listelenen, yokluğu işlevi bozmayan (rozet gibi) sütunlar için —
  * zorunlu bir sütunu listeye ekleme, sessizce `undefined` döner. Yeni bir isteğe bağlı sütun eklenince buraya da ekle.
  */
-const OPTIONAL_COLUMNS = ["is_demo", "flow_show_io", "flow_show_links", "flow_show_relations", "source_workflow_id", "source_step_id", "source_role", "source_step_no", "reaction"] as const;
+const OPTIONAL_COLUMNS = ["is_demo", "flow_show_io", "flow_show_links", "flow_show_relations", "source_workflow_id", "source_step_id", "source_role", "source_step_no", "reaction", "license"] as const;
 const missingOptional = new Set<string>();
 
 function stripColumn(select: string, column: string): string {

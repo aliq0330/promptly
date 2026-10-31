@@ -13,6 +13,7 @@ import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxo
 import { sanitizeSearchText, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import { imageAppearanceFromBlob } from "@/lib/image-appearance";
+import { isPromptLicense, type PromptLicense } from "@/lib/prompt-license";
 import type { ContentVisibility, Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
 
 /**
@@ -41,6 +42,8 @@ export interface PromptRow {
   quote_count?: number | null;
   /** Absent on rows read before migration 20260919850000 reached the database. */
   copy_count?: number | null;
+  /** Absent on rows read before migration 20261102110000 reached the database (docs/history/296-*). */
+  license?: string | null;
   created_at: string;
   show_on_profile: boolean;
   requires_reference_image: boolean;
@@ -66,7 +69,7 @@ export interface PromptRow {
 export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, tools, content_type, category, subcategory, status,
   origin_type, request_id,
-  like_count, save_count, comment_count, copy_count, quote_count, created_at, show_on_profile, requires_reference_image, requires_reference_video, requires_reference_audio, visibility,
+  like_count, save_count, comment_count, copy_count, quote_count, license, created_at, show_on_profile, requires_reference_image, requires_reference_video, requires_reference_audio, visibility,
   deleted_at, community_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt, position, dominant_color, placeholder ),
@@ -145,6 +148,7 @@ export function mapPromptRow(row: PromptRow): Prompt {
     saveCount: row.save_count,
     commentCount: row.comment_count,
     copyCount: row.copy_count ?? 0,
+    license: isPromptLicense(row.license) ? row.license : null,
     showOnProfile: row.show_on_profile,
     requiresReferenceImage: row.requires_reference_image ?? false,
     requiresReferenceVideo: row.requires_reference_video ?? false,
@@ -490,6 +494,8 @@ export interface CreateRealPromptInput {
   requiresReferenceImage?: boolean;
   requiresReferenceVideo?: boolean;
   requiresReferenceAudio?: boolean;
+  /** Kullanım hakkı (`prompts.license`, docs/history/296-*); boş/null = belirtilmedi. Sütun canlıda yoksa yalnız doluysa yazılır. */
+  license?: PromptLicense | null;
   /** "Herkese açık" (default) or "Sadece ben" (`prompts.visibility`); a request answer is always public so the request's owner can see it. */
   visibility?: ContentVisibility;
   /** Saves as a private draft (`status = 'draft'`) instead of publishing — only the author can see it until `publish` is set on an edit. */
@@ -528,6 +534,7 @@ export async function createRealPrompt(
       requires_reference_audio: input.requiresReferenceAudio ?? false,
       visibility: input.visibility ?? "public",
       community_id: input.communityId ?? null,
+      ...(input.license ? { license: input.license } : {}),
     })
     .select("id, created_at")
     .single();
@@ -645,6 +652,8 @@ export interface UpdateRealPromptInput {
   promptText: string;
   tool: string | null;
   tools?: string[];
+  /** `undefined` leaves the license untouched; `null` clears it (docs/history/296-*). */
+  license?: PromptLicense | null;
   tags: Tag[];
   tagSources?: Record<string, "manual" | "automatic">;
   /**
@@ -698,6 +707,7 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
       ...(input.requiresReferenceVideo === undefined ? {} : { requires_reference_video: input.requiresReferenceVideo }),
       ...(input.requiresReferenceAudio === undefined ? {} : { requires_reference_audio: input.requiresReferenceAudio }),
       ...(input.visibility === undefined ? {} : { visibility: input.visibility }),
+      ...(input.license === undefined ? {} : { license: input.license }),
     })
     .eq("id", promptId)
     .select("id")
