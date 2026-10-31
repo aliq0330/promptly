@@ -1,20 +1,20 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { ImageIcon, LayoutGrid } from "lucide-react";
+import { Eye, FileText } from "lucide-react";
 import {
   countRawOccurrences,
-  countVariableUsages,
   extractVariableTokenNames,
   replaceAllOccurrencesWithToken,
+  resolvePromptText,
 } from "@/lib/prompt-variables";
 import { removeToken, renameToken, tokenUsageMap } from "@/lib/prompt-doc";
-import { studioChipClassName } from "@/features/content/compose-form";
 import { cn } from "@/lib/utils";
 import {
   clearConditionsOn,
   describeOptions,
+  effectiveVariableValues,
   isChoiceType,
   renameConditionTarget,
 } from "@/lib/prompt-variable-types";
@@ -29,6 +29,7 @@ import type { EditorSelection } from "@/features/content/prompt-composer/prompt-
 import { VariableCreateModal } from "./variable-create-modal";
 import { VariableEditorModal } from "./variable-editor-modal";
 import { VariableList } from "./variable-list";
+import { VariableField } from "./variable-field";
 import type { VariableFormValues } from "./variable-spec-editor";
 import { ImageHelpPanel } from "./image-help-panel";
 
@@ -47,20 +48,8 @@ function makeTempId(): string {
   return `var-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Formun (ve sağ sütunun) düzenleyicinin değişken akışlarını dışarıdan açabilmesi için: "Yeni", kalem, çöp kutusu, çipe dokunma. */
-export interface PromptTextEditorHandle {
-  /** "Değişkeni düzenle" penceresini açar. */
-  editVariable(variable: DraftVariable): void;
-  /** Değişkeni siler ve metindeki tüm `{ad}` jetonlarını kaldırır. */
-  deleteVariable(variable: DraftVariable): void;
-  /** İmleç konumuna yeni değişken oluşturma penceresini açar. */
-  createVariable(): void;
-  /** Var olan değişkeni imlece `{ad}` jetonu olarak ekler. */
-  insertVariable(name: string): void;
-}
-
 /**
- * Normal prompt değişken düzenleyicisi (Bölüm 9.136; tam ekran stüdyo düzeni docs/history/286-*).
+ * Normal prompt değişken düzenleyicisi (Bölüm 9.136).
  *
  * Kullanıcı prompt metnini doğrudan yazar; `{ad}` jetonları düzenleyicide
  * pastel etiketlere dönüşür. İki yol:
@@ -73,43 +62,37 @@ export interface PromptTextEditorHandle {
  * ile aynı biçim) ve değişken satırları `prompt_variables`'a yazılır — yani
  * kaydet/yeniden aç sonrası yapı birebir korunur. Generator şablonlarıyla
  * hiçbir veri modeli paylaşılmaz; yalnızca `PromptComposer` altyapısı ortaktır.
- *
- * Önizleme ve değer alanları artık formun sağ sütunundadır (`PromptLivePreview`): değerler (`previewValues`) formda tutulur, bu
- * bileşen yalnız metni ve değişken tanımlarını düzenler; sağ sütunun kalem/"Yeni" düğmeleri `ref` ile akışları açar.
  */
-export const PromptTextEditor = forwardRef<
-  PromptTextEditorHandle,
-  {
-    id?: string;
-    value: string;
-    onChange: (value: string) => void;
-    variables: DraftVariable[];
-    onVariablesChange: (variables: DraftVariable[]) => void;
-    /** Sağ sütundaki değerler (ad → değer): ad değişince/değişken düzenlenince eski değer temizlenir. */
-    previewValues: Record<string, string>;
-    onPreviewValuesChange: (values: Record<string, string>) => void;
-    rows?: number;
-    placeholder?: string;
-    className?: string;
-    /** The image the author already picked in the form (feeds "Görselden yardım" without a second upload). */
-    visionFile?: File | null;
-    /** Düzenleyiciye odaklanma durumu (telefonda klavye üstü dock'u açar). */
-    onFocusChange?: (focused: boolean) => void;
-  }
->(function PromptTextEditor(
-  { id = "prompt-text", value, onChange, variables, onVariablesChange, previewValues, onPreviewValuesChange, rows = 6, placeholder, className, visionFile, onFocusChange },
-  ref,
-) {
+export function PromptTextEditor({
+  id = "prompt-text",
+  value,
+  onChange,
+  variables,
+  onVariablesChange,
+  rows = 5,
+  placeholder,
+  className,
+  visionFile,
+}: {
+  id?: string;
+  value: string;
+  onChange: (value: string) => void;
+  variables: DraftVariable[];
+  onVariablesChange: (variables: DraftVariable[]) => void;
+  rows?: number;
+  placeholder?: string;
+  className?: string;
+  /** The image the author already picked in the form (feeds "Görselden yardım" without a second upload). */
+  visionFile?: File | null;
+}) {
   const { t } = useTranslation();
   const composerRef = useRef<ComposerHandle>(null);
+  const [tab, setTab] = useState<"template" | "preview">("template");
+  const activeTab = variables.length === 0 ? "template" : tab;
   const [creating, setCreating] = useState<{ range: EditorSelection; selectedText: string } | null>(null);
   const [editingVariable, setEditingVariable] = useState<DraftVariable | null>(null);
+  const [previewValues, setPreviewValues] = useState<Record<string, string>>({});
   const [catalogRange, setCatalogRange] = useState<EditorSelection | null>(null);
-  const [helpOpen, setHelpOpen] = useState(false);
-
-  function updatePreview(update: (prev: Record<string, string>) => Record<string, string>) {
-    onPreviewValuesChange(update(previewValues));
-  }
 
   const usage = useMemo(() => tokenUsageMap(value), [value]);
   const items: PickerItem[] = variables.map((variable) => ({
@@ -188,7 +171,7 @@ export const PromptTextEditor = forwardRef<
     const byName = new Map(values.map((row) => [row.name, row.value]));
     const updated = variables.map((variable) => (byName.has(variable.name) ? { ...variable, defaultValue: byName.get(variable.name)! } : variable));
     // Önizlemede eski elle girilmiş değer yeni varsayılanı gölgelemesin.
-    updatePreview((prev) => {
+    setPreviewValues((prev) => {
       const next = { ...prev };
       for (const name of byName.keys()) delete next[name];
       return next;
@@ -213,7 +196,7 @@ export const PromptTextEditor = forwardRef<
     // Variables that were watching the old name keep watching it under the new one.
     onVariablesChange(values.name !== editingVariable.name ? renameConditionTarget(edited, editingVariable.name, values.name) : edited);
     // A preview value typed for the old kind/name may no longer be valid.
-    updatePreview((prev) => {
+    setPreviewValues((prev) => {
       const next = { ...prev };
       delete next[editingVariable.name];
       delete next[values.name];
@@ -232,20 +215,37 @@ export const PromptTextEditor = forwardRef<
     .filter((variable) => variable.tempId !== editingVariable?.tempId)
     .map((variable) => variable.name.toLowerCase());
 
-  const orphanTokens = extractVariableTokenNames(value).filter((name) => !definedNames.has(name));
-  const unusedCount = variables.filter((variable) => countVariableUsages(value, variable.name) === 0).length;
+  // Preview values go through the same condition logic as the live prompt: hidden variables add nothing.
+  const { values: previewEffective, visible: previewVisible } = effectiveVariableValues(variables, previewValues);
+  const previewText = resolvePromptText(value, previewEffective);
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      editVariable: (variable) => setEditingVariable(variable),
-      deleteVariable: handleDeleteVariable,
-      createVariable: () => setCreating({ range: cursorRange(), selectedText: "" }),
-      insertVariable: (name) => composerRef.current?.insertToken(name, cursorRange()),
-    }),
-    // Handlers close over the current text/variables; the handle is rebuilt whenever they change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [value, variables, previewValues],
+  const orphanTokens = extractVariableTokenNames(value).filter((name) => !definedNames.has(name));
+
+  const tabSwitcher = (
+    <div className="flex rounded-md border border-border p-0.5 text-xs">
+      <button
+        type="button"
+        onClick={() => setTab("template")}
+        className={cn(
+          "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors",
+          activeTab === "template" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
+        )}
+      >
+        <FileText size={12} /> {t("variable.templateTab")}
+      </button>
+      <button
+        type="button"
+        onClick={() => setTab("preview")}
+        disabled={variables.length === 0}
+        title={variables.length === 0 ? t("variable.previewDisabledHint") : undefined}
+        className={cn(
+          "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors disabled:opacity-40",
+          activeTab === "preview" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
+        )}
+      >
+        <Eye size={12} /> {t("variable.previewTab")}
+      </button>
+    </div>
   );
 
   const list = (
@@ -258,11 +258,10 @@ export const PromptTextEditor = forwardRef<
   );
 
   return (
-    <div className={cn("space-y-2.5", className)}>
+    <div className={cn("space-y-3", className)}>
       <PromptComposer
         ref={composerRef}
         mode="variable"
-        studio
         id={id}
         value={value}
         onChange={onChange}
@@ -273,56 +272,54 @@ export const PromptTextEditor = forwardRef<
         minRows={rows}
         ariaLabel={t("prompt.promptTextHeading")}
         required
-        onFocusChange={onFocusChange}
+        leading={tabSwitcher}
+        hideEditor={activeTab === "preview"}
         onCreateNew={({ range, selectedText }) => setCreating({ range, selectedText })}
         onConvertSelection={({ range, selectedText }) => setCreating({ range, selectedText })}
         onOpenCatalog={() => setCatalogRange(composerRef.current?.getPendingRange() ?? cursorRange())}
         panelExtra={variables.length > 0 ? list : undefined}
-        toolbarExtra={
-          <>
-            <button
-              type="button"
-              data-testid="composer-catalog"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => setCatalogRange(cursorRange())}
-              className={studioChipClassName()}
-            >
-              <LayoutGrid size={14} aria-hidden /> {t("studio.catalog")}
-            </button>
-            <button type="button" aria-expanded={helpOpen} data-testid="composer-image-help" onClick={() => setHelpOpen((open) => !open)} className={studioChipClassName()}>
-              <ImageIcon size={14} aria-hidden /> {t("studio.imageHelp")}
-            </button>
-          </>
-        }
       />
 
-      {helpOpen && (
-        <ImageHelpPanel
-          bare
-          promptText={value}
-          variables={variables}
-          sourceFile={visionFile}
-          onApplyPrompt={(text, mode) => onChange(mode === "replace" || !value.trim() ? text : `${value}\n\n${text}`)}
-          onApplyVariables={handleVisionApply}
-        />
+      {activeTab === "template" && (
+        <div className="space-y-2">
+          <ImageHelpPanel
+            promptText={value}
+            variables={variables}
+            sourceFile={visionFile}
+            onApplyPrompt={(text, mode) => onChange(mode === "replace" || !value.trim() ? text : `${value}\n\n${text}`)}
+            onApplyVariables={handleVisionApply}
+          />
+        </div>
       )}
 
-      <div data-editor-stats="" className="flex flex-wrap gap-x-3.5 gap-y-1 text-[0.75rem] text-text-muted">
-        <span>{t("studio.chars", { count: value.length })}</span>
-        <span>{t("studio.variableCount", { count: variables.length })}</span>
-        {variables.length > 0 &&
-          (unusedCount === 0 ? (
-            <span className="font-semibold text-primary">{t("studio.allUsed")}</span>
-          ) : (
-            <span className="font-semibold text-warning">{t("studio.someUnused", { count: unusedCount })}</span>
-          ))}
-      </div>
+      {activeTab === "preview" && (
+        <div className="space-y-3 rounded-md border border-border bg-background p-3">
+          <div className="whitespace-pre-wrap break-words font-mono text-sm text-text">{previewText}</div>
+          <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
+            {variables.filter((variable) => previewVisible[variable.name] !== false).map((variable) => (
+              <VariableField
+                key={variable.tempId}
+                variable={{ ...variable, id: variable.tempId }}
+                value={previewValues[variable.name] ?? variable.defaultValue}
+                onChange={(next) => setPreviewValues((prev) => ({ ...prev, [variable.name]: next }))}
+              />
+            ))}
+          </div>
+          {Object.keys(previewValues).length > 0 && (
+            <button type="button" onClick={() => setPreviewValues({})} className="text-xs font-medium text-primary hover:underline">
+              {t("variable.resetToDefaults")}
+            </button>
+          )}
+        </div>
+      )}
 
       {orphanTokens.length > 0 && (
         <p className="text-xs text-warning">
           {t("variable.orphanTokensWarning", { tokens: orphanTokens.map((name) => `{${name}}`).join(", ") })}
         </p>
       )}
+
+      {list}
 
       {catalogRange && (
         <FieldCatalogPicker
@@ -352,4 +349,4 @@ export const PromptTextEditor = forwardRef<
       )}
     </div>
   );
-});
+}

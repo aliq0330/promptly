@@ -7,8 +7,6 @@ import { ImageProcessingError } from "@/lib/image-processing";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { MultiImageItem } from "@/lib/supabase/media-input";
 import { StorageImg } from "@/components/ui/storage-media";
-import { useComposeStudio } from "@/features/content/compose-form";
-import { cn } from "@/lib/utils";
 
 export type { MultiImageItem };
 
@@ -39,7 +37,6 @@ export function MultiImagePicker({
   hint?: string;
 }) {
   const { t } = useTranslation();
-  const studio = useComposeStudio();
   const inputId = useId();
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -84,9 +81,9 @@ export function MultiImagePicker({
           {label} <span className="text-text-muted">({t("common.optional")})</span>
         </label>
       )}
-      <div className={studio ? "flex flex-wrap gap-2.5" : "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5"}>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         {items.map((item, index) => (
-          <figure key={item.key} className={cn("relative overflow-hidden border border-border bg-surface-soft", studio ? "h-[84px] w-[84px] rounded-[14px]" : "aspect-square rounded-md")}>
+          <figure key={item.key} className="relative aspect-square overflow-hidden rounded-md border border-border bg-surface-soft">
             <StorageImg src={item.url} alt="" className="h-full w-full object-cover" draggable={false} />
             <button
               type="button"
@@ -119,8 +116,8 @@ export function MultiImagePicker({
                 </button>
               </div>
             )}
-            {index === 0 && (studio || items.length > 1) && (
-              <span className={cn("absolute rounded px-1.5 py-0.5 text-[0.65rem] font-medium text-white", studio ? "bottom-1.5 left-1.5 rounded-full bg-black/55 font-bold" : "left-1 top-1 bg-black/60")}>
+            {index === 0 && items.length > 1 && (
+              <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[0.65rem] font-medium text-white">
                 {t("media.coverBadge")}
               </span>
             )}
@@ -129,10 +126,7 @@ export function MultiImagePicker({
         {canAddMore && (
           <label
             htmlFor={inputId}
-            className={cn(
-              "flex cursor-pointer flex-col items-center justify-center gap-1 border border-dashed border-border-strong text-text-secondary hover:border-primary",
-              studio ? "h-[84px] w-[84px] rounded-[14px] border-[1.5px] bg-transparent text-text-muted" : "aspect-square rounded-md bg-surface-soft",
-            )}
+            className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border-strong bg-surface-soft text-text-secondary hover:border-primary"
           >
             <ImagePlus size={18} strokeWidth={1.75} />
             <span className="text-[0.7rem] font-medium">{t("media.addImages")}</span>
@@ -151,7 +145,7 @@ export function MultiImagePicker({
           </label>
         )}
       </div>
-      {hint !== "" && <p className="mt-1.5 text-caption text-text-muted">{hint ?? t("media.multiImageHint", { max })}</p>}
+      <p className="mt-1.5 text-caption text-text-muted">{hint ?? t("media.multiImageHint", { max })}</p>
       {problem && (
         <p role="alert" className="mt-1 text-caption text-danger">
           {problem}
