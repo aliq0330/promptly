@@ -1,4 +1,4 @@
-// Sohbet mesaj düğmeleri ve menülerinin konumu (docs/history/212-*, 288-*): uzun mesajda düğmeler görünen kısımda; emoji seçici
+// Sohbet mesaj düğmeleri ve menülerinin konumu (docs/history/212-*, 290-*): uzun mesajda düğmeler görünen kısımda; emoji seçici
 // mesaj listesinin görünen alanında; ⋮ ve UZUN BASMA aynı sayfayı açar (bulanık zemin + mesajın kopyası + tepki çubuğu + menü):
 // ekrana sığar, alan daralınca (klavye/adres çubuğu taklidi: görünüm yüksekliği küçültülür) yeniden yerleşir, kısa dokunuş/kaydırma
 // açmaz, parmak kalkınca kapanmaz, Esc/boş alan kapatır, 6 hızlı emoji ile tepki verilir/geri alınır.

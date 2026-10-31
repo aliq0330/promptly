@@ -31,7 +31,7 @@ function samePlacement(a: Placed | null, b: Placed): boolean {
 }
 
 /**
- * Uzun basma / ⋮ ile açılan mesaj sayfası (docs/history/288-*): bulanık bir zemin, mesajın yerinde duran net kopyası, üstünde tepki
+ * Uzun basma / ⋮ ile açılan mesaj sayfası (docs/history/290-*): bulanık bir zemin, mesajın yerinde duran net kopyası, üstünde tepki
  * çubuğu (sohbetin altı hızlı emojisi + "+"), altında işlem menüsü. Gerçek baloncuk açıkken gizlenir (kopya aynı yerde durur);
  * kopya, baloncuğun o anki DOM'unun `cloneNode`'u olduğu için metin, kart, fotoğraf ve tepki çipi dahil her mesaj türü aynı görünür
  * (kopya `inert` ve `aria-hidden`, kimlik öznitelikleri silinir). Yerleşim `message-sheet-layout.ts`'tedir: grup görünür alana sığacak

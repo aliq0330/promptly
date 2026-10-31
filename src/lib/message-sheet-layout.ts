@@ -1,5 +1,5 @@
 /**
- * Mesaj uzun basma / ⋮ sayfasının yerleşimi (docs/history/288-*): bulanık zeminde mesajın kopyası, üstünde tepki çubuğu, altında
+ * Mesaj uzun basma / ⋮ sayfasının yerleşimi (docs/history/290-*): bulanık zeminde mesajın kopyası, üstünde tepki çubuğu, altında
  * işlem menüsü tek bir dikey grup olarak durur. Grup mesajın gerçek yerinde açılır; görünür alana sığmıyorsa yukarı/aşağı kayar,
  * ekrandan uzun mesaj kırpılarak kopyalanır. Saf fonksiyonlar — tarayıcısız birim testli (`message-sheet-layout.test.ts`).
  *

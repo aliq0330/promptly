@@ -1,4 +1,4 @@
-# 288 — Mesaj uzun basma menüsü (tepki çubuğu + işlem menüsü, bulanık zeminde)
+# 290 — Mesaj uzun basma menüsü (tepki çubuğu + işlem menüsü, bulanık zeminde)
 
 **Durum:** uygulandı (yalnız istemci; migration yok). Birim testi (`message-sheet-layout.test.ts`, 8 kontrol) yerel Node'da geçti.
 **`tsc` / `lint` / `npm run build` / Playwright paketi BU OTURUMDA ÇALIŞTIRILAMADI:** ortamın ağ politikası `registry.npmjs.org`'u engelliyor (proxy 403),

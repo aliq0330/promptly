@@ -66,7 +66,7 @@ function MenuItem({
 }
 
 /**
- * The action list of the long-press / "⋮" sheet for one message bubble (`MessageActionSheet`, docs/history/288-*) — Aşama 3/4's two option sets,
+ * The action list of the long-press / "⋮" sheet for one message bubble (`MessageActionSheet`, docs/history/290-*) — Aşama 3/4's two option sets,
  * decided purely from `message.senderId === currentUserId` (never from
  * which side of the screen the bubble renders on, per Aşama 4's explicit
  * warning). `canEditOrDelete` is computed by the caller from a live-ticking

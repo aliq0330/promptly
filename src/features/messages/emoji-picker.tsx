@@ -34,7 +34,7 @@ export function EmojiPicker({
   /** Measured by `useAnchoredPopover`, which places the picker (fixed, in a portal) inside the visible chat area. */
   panelRef?: RefObject<HTMLDivElement | null>;
   style?: CSSProperties;
-  /** `bar`: the large, full-width pill above the message in the long-press / ⋮ sheet (docs/history/288-*) — same emoji, same toggle rule. */
+  /** `bar`: the large, full-width pill above the message in the long-press / ⋮ sheet (docs/history/290-*) — same emoji, same toggle rule. */
   variant?: "popover" | "bar";
 }) {
   const isBar = variant === "bar";

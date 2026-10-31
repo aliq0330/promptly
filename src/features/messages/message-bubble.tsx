@@ -63,7 +63,7 @@ export type { DeleteMode, MessageBubbleActions, MessageReactionEntry } from "./m
  * keeps its place in the thread (Bölüm 9.5/9.7's safe-delete philosophy,
  * applied to messages: the row survives, only its content is gone).
  *
- * Long press / right click on the bubble and the "⋮" button open the same sheet (`MessageActionSheet`, docs/history/288-*).
+ * Long press / right click on the bubble and the "⋮" button open the same sheet (`MessageActionSheet`, docs/history/290-*).
  *
  * Aşama 1/2/3/4/5 (mesaj menüsü/emoji tepkileri/süre kontrolü): the "⋮" and
  * emoji icons are hidden by default and only reveal on hover (desktop,
@@ -134,7 +134,7 @@ export function MessageBubble({
   const repliedItem = useRepliedItem(replyPreview);
   const replyPreviewText = replyPreview ? describeReplied(replyPreview, t, repliedItem.title) : null;
 
-  // The long-press / ⋮ sheet (reaction bar + message copy + action menu, `MessageActionSheet`, docs/history/288-*); the quick
+  // The long-press / ⋮ sheet (reaction bar + message copy + action menu, `MessageActionSheet`, docs/history/290-*); the quick
   // emoji button next to it keeps its small anchored picker.
   const [sheetOpen, setSheetOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);

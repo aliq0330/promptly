@@ -121,7 +121,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 
 ## Topluluklar Albüm düzeni + sohbet menüsü konumu (`docs/history/212-*`)
 
-`run-community-shelf.mjs` (7): başlıksız üst satır (arama + "+"), "Topluluklarım" rafı (kare kapak, "N yeni"/"99+ yeni", yeni olan önce, üye olunmayan yok, sayaç hatasında rozetsiz), balonda davet sayacı, tek satırlık davet kartı → Davetler, arama → `/communities/all?q=`, ziyaretçi, İngilizce + masaüstü. `run-chat-popovers.mjs` (10): uzun mesajda düğmeler görünen kısımda, emoji seçici büyüyünce yeniden yerleşir; ⋮ ve **uzun basma** (`docs/history/288-*`, CDP dokunma olaylarıyla) aynı mesaj sayfasını açar — en alttaki/en üstteki/ekrandan uzun mesajda sayfa ekrana sığar, görünüm daralınca yeniden yerleşir, kısa dokunuş ve kayan parmak açmaz, parmak kalkınca kapanmaz, Esc/boş alan kapatır, 6 hızlı emoji ile tepki verilir/geri alınır, masaüstünde ⋮ ve sağ tık. Gerçek iOS Safari (uzun basma, klavye, adres çubuğu) DENENMEDİ (görünüm yüksekliği küçültülerek ve CDP dokunmasıyla taklit edilir).
+`run-community-shelf.mjs` (7): başlıksız üst satır (arama + "+"), "Topluluklarım" rafı (kare kapak, "N yeni"/"99+ yeni", yeni olan önce, üye olunmayan yok, sayaç hatasında rozetsiz), balonda davet sayacı, tek satırlık davet kartı → Davetler, arama → `/communities/all?q=`, ziyaretçi, İngilizce + masaüstü. `run-chat-popovers.mjs` (10): uzun mesajda düğmeler görünen kısımda, emoji seçici büyüyünce yeniden yerleşir; ⋮ ve **uzun basma** (`docs/history/290-*`, CDP dokunma olaylarıyla) aynı mesaj sayfasını açar — en alttaki/en üstteki/ekrandan uzun mesajda sayfa ekrana sığar, görünüm daralınca yeniden yerleşir, kısa dokunuş ve kayan parmak açmaz, parmak kalkınca kapanmaz, Esc/boş alan kapatır, 6 hızlı emoji ile tepki verilir/geri alınır, masaüstünde ⋮ ve sağ tık. Gerçek iOS Safari (uzun basma, klavye, adres çubuğu) DENENMEDİ (görünüm yüksekliği küçültülerek ve CDP dokunmasıyla taklit edilir).
 
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-community-shelf.mjs   # 7/7 beklenir
@@ -256,4 +256,14 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-card-title.m
 
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-creator-suggestions.mjs   # 15/15 beklenir
+```
+
+
+## Prompt metni tam ekran yazma (`docs/history/288-*`)
+
+`run-prompt-fullscreen.mjs` (10 senaryo): formdaki "Tam ekran" düğmesi + katman (başlık, sayaç, sabit satır), imleç kelimedeyken düğmenin kelimenin tamamını göstermesi ve dönüştürmesi + Geri al, seçili ifade, boşlukta pasif / seçimde `{ }` engeli, jetonda "Değişkeni düzenle" (pencere katmanın üstünde), aynı adlı değişkene bağlanma, Hazır ayarlar panelinin katmanın üstüne açılması + Escape sırası, İngilizce, mobil (taşma yok, sabit satır kaymıyor). Ağ taklitli. **Bu oturumda ÇALIŞTIRILAMADI** (npm registry'ye erişim yok); ilk koşuda selector/zamanlama ayarı gerekebilir. Gerçek telefon klavyesine KARŞI DENENMEDİ.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-prompt-fullscreen.mjs   # 10/10 beklenir
 ```

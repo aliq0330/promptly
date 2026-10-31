@@ -13,7 +13,7 @@ const CLICK_SUPPRESS_FALLBACK_MS = 2500;
 const NATIVE_CONTEXT_MENU_WINDOW_MS = 1000;
 
 /**
- * Mesaj baloncuğunda uzun basma (docs/history/288-*). iOS Safari uzun basmada güvenilir bir `contextmenu` olayı vermez, bu yüzden
+ * Mesaj baloncuğunda uzun basma (docs/history/290-*). iOS Safari uzun basmada güvenilir bir `contextmenu` olayı vermez, bu yüzden
  * dokunmatik/kalem için `pointerdown` + zamanlayıcı kullanılır; fare yalnızca sağ tıkla (`contextmenu`) açar (basılı tutup metin
  * seçmeyi bozmasın). Parmak oynarsa ya da liste kaymaya başlarsa (`pointercancel`) iptal olur. Android Chrome uzun basmada ayrıca
  * `contextmenu` gönderir: zaten açıldıysa yalnız varsayılanı engellenir (çifte açılış yok).
