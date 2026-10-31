@@ -121,11 +121,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 
 ## Topluluklar Albüm düzeni + sohbet menüsü konumu (`docs/history/212-*`)
 
-`run-community-shelf.mjs` (7): başlıksız üst satır (arama + "+"), "Topluluklarım" rafı (kare kapak, "N yeni"/"99+ yeni", yeni olan önce, üye olunmayan yok, sayaç hatasında rozetsiz), balonda davet sayacı, tek satırlık davet kartı → Davetler, arama → `/communities/all?q=`, ziyaretçi, İngilizce + masaüstü. `run-chat-popovers.mjs` (8): uzun mesajda düğmeler görünen kısımda, en alttaki mesajın menüsü yukarı / en üsttekinin aşağı, emoji seçici büyüyünce yeniden yerleşir, görünüm daralınca menü yerleşir, mesaj kayınca menü kapanır, masaüstü. Gerçek iOS Safari klavyesi/adres çubuğu DENENMEDİ (görünüm yüksekliği küçültülerek taklit edilir).
+`run-community-shelf.mjs` (7): başlıksız üst satır (arama + "+"), "Topluluklarım" rafı (kare kapak, "N yeni"/"99+ yeni", yeni olan önce, üye olunmayan yok, sayaç hatasında rozetsiz), balonda davet sayacı, tek satırlık davet kartı → Davetler, arama → `/communities/all?q=`, ziyaretçi, İngilizce + masaüstü. `run-chat-popovers.mjs` (10): uzun mesajda düğmeler görünen kısımda, emoji seçici büyüyünce yeniden yerleşir; ⋮ ve **uzun basma** (`docs/history/290-*`, CDP dokunma olaylarıyla) aynı mesaj sayfasını açar — en alttaki/en üstteki/ekrandan uzun mesajda sayfa ekrana sığar, görünüm daralınca yeniden yerleşir, kısa dokunuş ve kayan parmak açmaz, parmak kalkınca kapanmaz, Esc/boş alan kapatır, 6 hızlı emoji ile tepki verilir/geri alınır, masaüstünde ⋮ ve sağ tık. Gerçek iOS Safari (uzun basma, klavye, adres çubuğu) DENENMEDİ (görünüm yüksekliği küçültülerek ve CDP dokunmasıyla taklit edilir).
 
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-community-shelf.mjs   # 7/7 beklenir
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-chat-popovers.mjs     # 8/8 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-chat-popovers.mjs     # 10/10 beklenir
 ```
 
 ## Promptly Spaces (`docs/history/213-*`)

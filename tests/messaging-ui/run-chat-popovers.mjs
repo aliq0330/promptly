@@ -1,6 +1,7 @@
-// Sohbet mesaj düğmeleri ve menülerinin konumu (docs/history/212-*): uzun mesajda düğmeler görünen kısımda, ⋮ menüsü ve emoji
-// seçici mesaj listesinin görünen alanında (sabit başlık ve yazma alanıyla çakışmadan), altta yer yoksa yukarı açılır, alan
-// daralınca (klavye/adres çubuğu taklidi: görünüm yüksekliği küçültülür) yeniden yerleşir, mesaj tamamen kayınca kapanır.
+// Sohbet mesaj düğmeleri ve menülerinin konumu (docs/history/212-*, 290-*): uzun mesajda düğmeler görünen kısımda; emoji seçici
+// mesaj listesinin görünen alanında; ⋮ ve UZUN BASMA aynı sayfayı açar (bulanık zemin + mesajın kopyası + tepki çubuğu + menü):
+// ekrana sığar, alan daralınca (klavye/adres çubuğu taklidi: görünüm yüksekliği küçültülür) yeniden yerleşir, kısa dokunuş/kaydırma
+// açmaz, parmak kalkınca kapanmaz, Esc/boş alan kapatır, 6 hızlı emoji ile tepki verilir/geri alınır.
 // Ağ + Realtime taklitli; gerçek iOS Safari klavyesi/adres çubuğu bu ortamda açılamaz — DENENMEDİ.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
@@ -73,8 +74,24 @@ async function tapMessage(page, text, y = 24) {
 }
 const optionsButton = (page, text) => msg(page, text).getByRole("button", { name: "Mesaj seçenekleri" });
 const emojiButton = (page, text) => msg(page, text).getByRole("button", { name: "Emoji tepkisi ekle" });
-const menu = (page) => page.getByRole("menu", { name: "Mesaj seçenekleri" });
+const sheet = (page) => page.locator("[data-message-sheet]");
+const menu = (page) => sheet(page).getByRole("menu", { name: "Mesaj seçenekleri" });
+const bar = (page) => sheet(page).getByRole("menu", { name: /emoji/i });
 const picker = (page) => page.getByRole("menu", { name: /emoji/i });
+const viewport = (page) => ({ x: 0, y: 0, ...page.viewportSize() });
+/** Gerçek dokunmatik uzun basma (CDP): basılı tut; `moveFirst` ile önce parmağı kaydır (kaydırma = iptal). */
+async function longPress(page, locator, { holdMs = 650, moveBy = 0, moveFirst = false } = {}) {
+  const box = await locator.boundingBox();
+  const area = await listBox(page);
+  const x = box.x + Math.min(box.width / 2, 40);
+  const y = Math.min(Math.max(box.y + 12, area.y + 8), area.y + area.height - 8);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+  if (moveFirst && moveBy) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x, y: y + moveBy }] });
+  await page.waitForTimeout(holdMs);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await page.waitForTimeout(150);
+}
 
 await scenario("1. uzun mesaj, ÜSTÜ görünürken: düğmeler mesajın ortasında (ekran dışı) değil, görünen kısımda", async ({ page }) => {
   await placeMessage(page, "uzun mesajın 1.", 40);
@@ -90,40 +107,50 @@ await scenario("1. uzun mesaj, ÜSTÜ görünürken: düğmeler mesajın ortası
   await shot(page, "1-long-top");
 });
 
-await scenario("2. uzun mesaj, ALTI görünürken: düğmeler yine görünen kısımda; menü listenin içinde açılır", async ({ page }) => {
+await scenario("2. uzun mesaj, ALTI görünürken: ⋮ sayfası açılır; menü ve tepki çubuğu ekrandan taşmaz, uzun mesajın kopyası kırpılır", async ({ page }) => {
   await placeMessage(page, "uzun mesajın 1.", -900);
-  const area = await listBox(page);
   await tapMessage(page, "uzun mesajın 1.", 30);
-  const button = await optionsButton(page, "uzun mesajın 1.").boundingBox();
-  assert.ok(inside(button, area), `düğme görünür alanda: ${describe(button)}`);
   await optionsButton(page, "uzun mesajın 1.").click();
-  const box = await menu(page).boundingBox();
-  assert.ok(inside(box, area), `menü görünür alanda: ${describe(box)} / alan ${describe(area)}`);
+  await sheet(page).waitFor();
+  await page.waitForTimeout(500);
+  const view = viewport(page);
+  for (const [name, locator] of [["menü", menu(page)], ["tepki çubuğu", bar(page)]]) {
+    const box = await locator.boundingBox();
+    assert.ok(inside(box, view), `${name} ekranda: ${describe(box)} / ekran ${describe(view)}`);
+  }
+  const clone = await page.locator("[data-sheet-clone]").boundingBox();
+  assert.ok(clone.height < 900, `kopya kırpıldı (${Math.round(clone.height)} px)`);
+  assert.equal(await msg(page, "uzun mesajın 1.").locator("[data-message-content]").evaluate((el) => getComputedStyle(el).visibility), "hidden", "gerçek baloncuk sayfa açıkken gizli");
+  await shot(page, "2-long-sheet");
 });
 
-await scenario("3. en alttaki mesaj (yazma alanının üstü): menü YUKARI açılır, yazma alanıyla çakışmaz", async ({ page }) => {
-  const area = await listBox(page);
+await scenario("3. en alttaki mesaj: sayfa yukarı oturur — çubuk, mesaj kopyası, menü alt alta ve ekran içinde", async ({ page }) => {
   await tapMessage(page, "son benim", 10);
   await optionsButton(page, "son benim").click();
-  await menu(page).waitFor();
-  assert.equal(await menu(page).getAttribute("data-menu-side"), "above");
-  const box = await menu(page).boundingBox();
-  const composer = await page.getByRole("textbox").last().boundingBox();
-  assert.ok(inside(box, area), `menü görünür alanda: ${describe(box)}`);
-  assert.ok(box.y + box.height <= composer.y, "yazma alanının üstünde biter");
-  await shot(page, "3-bottom-menu-above");
+  await sheet(page).waitFor();
+  await page.waitForTimeout(500);
+  const view = viewport(page);
+  const barBox = await bar(page).boundingBox();
+  const cloneBox = await page.locator("[data-sheet-clone]").boundingBox();
+  const menuBox = await menu(page).boundingBox();
+  for (const [name, box] of [["çubuk", barBox], ["kopya", cloneBox], ["menü", menuBox]]) assert.ok(inside(box, view), `${name} ekranda: ${describe(box)}`);
+  assert.ok(barBox.y + barBox.height <= cloneBox.y + 1 && cloneBox.y + cloneBox.height <= menuBox.y + 1, "üstten alta: çubuk, mesaj, menü");
+  // Kendi mesajım sağda: menünün sağ kenarı mesajın sağ kenarıyla hizalı.
+  assert.ok(Math.abs(menuBox.x + menuBox.width - (cloneBox.x + cloneBox.width)) <= 2, "menü sağ kenarı mesajla hizalı");
+  await shot(page, "3-bottom-sheet");
 });
 
-await scenario("4. en üstteki mesaj (sabit başlığın altı): menü aşağı açılır, başlıkla çakışmaz", async ({ page }) => {
-  await placeMessage(page, "ilk benim", 4);
-  const area = await listBox(page);
-  await tapMessage(page, "ilk benim", 8);
-  await optionsButton(page, "ilk benim").click();
-  await menu(page).waitFor();
-  assert.equal(await menu(page).getAttribute("data-menu-side"), "below");
-  const box = await menu(page).boundingBox();
-  assert.ok(inside(box, area), `menü görünür alanda: ${describe(box)}`);
-  assert.ok(box.y >= area.y, "başlığın altında başlar");
+await scenario("4. en üstteki mesaj: tepki çubuğu ekranın üstünden taşmaz; karşı tarafın mesajında sol kenarlar hizalı", async ({ page }) => {
+  await placeMessage(page, "ilk bob", 4);
+  await tapMessage(page, "ilk bob", 8);
+  await optionsButton(page, "ilk bob").click();
+  await sheet(page).waitFor();
+  await page.waitForTimeout(500);
+  const barBox = await bar(page).boundingBox();
+  const cloneBox = await page.locator("[data-sheet-clone]").boundingBox();
+  const menuBox = await menu(page).boundingBox();
+  assert.ok(barBox.y >= 0, `çubuk ekranın üstünde değil: ${describe(barBox)}`);
+  assert.ok(Math.abs(menuBox.x - cloneBox.x) <= 2, "menü sol kenarı mesajla hizalı");
 });
 
 await scenario("5. emoji seçici: yatayda ekrana sığar; '+' ile büyüyünce yeniden yerleşir ve yine alanda kalır", async ({ page }) => {
@@ -141,46 +168,88 @@ await scenario("5. emoji seçici: yatayda ekrana sığar; '+' ile büyüyünce y
   await picker(page).waitFor({ state: "detached" });
 });
 
-await scenario("6. görünür alan daralınca (klavye / adres çubuğu taklidi) açık menü yeniden yerleşir", async ({ page }) => {
-  // A message far from the bottom (no auto-scroll to the end) near the top of the list stays visible when the area shrinks from below.
+await scenario("6. görünür alan daralınca (klavye / adres çubuğu taklidi) açık sayfa yeniden yerleşir ve ekranda kalır", async ({ page }) => {
   await placeMessage(page, "ikinci benim", 140);
   await tapMessage(page, "ikinci benim", 10);
   await optionsButton(page, "ikinci benim").click();
-  await menu(page).waitFor();
-  const before = await menu(page).boundingBox();
-  await page.setViewportSize({ width: 390, height: 520 });
-  await page.waitForTimeout(300);
-  const area = await listBox(page);
-  const message = await msg(page, "ikinci benim").boundingBox();
-  assert.ok(message.y + message.height > area.y && message.y < area.y + area.height, "mesaj daralan alanda hâlâ görünür");
-  assert.equal(await menu(page).count(), 1, "mesaj görünürken menü açık kalır");
-  const box = await menu(page).boundingBox();
-  assert.ok(inside(box, area), `daralan alanda menü: ${describe(box)} / alan ${describe(area)} (önce ${describe(before)})`);
+  await sheet(page).waitFor();
+  await page.waitForTimeout(400);
+  await page.setViewportSize({ width: 390, height: 600 });
+  await page.waitForTimeout(500);
+  assert.equal(await sheet(page).count(), 1, "sayfa açık kalır");
+  const view = viewport(page);
+  const menuBox = await menu(page).boundingBox();
+  const barBox = await bar(page).boundingBox();
+  assert.ok(inside(menuBox, view), `daralan alanda menü: ${describe(menuBox)} / ${describe(view)}`);
+  assert.ok(inside(barBox, view), `daralan alanda çubuk: ${describe(barBox)}`);
   await shot(page, "6-shrunk");
 });
 
-await scenario("7. mesaj tamamen kayıp gidince açık menü kapanır; dışarı dokununca kapanır; menü işlevleri çalışır", async ({ page }) => {
-  await tapMessage(page, "son benim", 10);
-  await optionsButton(page, "son benim").click();
-  await menu(page).waitFor();
-  await placeMessage(page, "ilk bob", 4);
-  await menu(page).waitFor({ state: "detached" });
-  await placeMessage(page, "son bob", 200);
+await scenario("7. UZUN BASMA: 400 ms basılı tutunca açılır; kısa dokunuş ve kaydırma açmaz; sayfa kapanınca baloncuk geri gelir", async ({ page }) => {
+  // Kısa dokunuş: yalnız ikonları gösterir.
   await tapMessage(page, "son bob", 10);
-  await optionsButton(page, "son bob").click();
+  assert.equal(await sheet(page).count(), 0, "kısa dokunuş sayfa açmaz");
+  // Basılı tutarken parmak kayarsa (kaydırma) açılmaz.
+  await longPress(page, msg(page, "ilk bob").locator("p.break-words").first(), { holdMs: 700, moveBy: 40, moveFirst: true });
+  assert.equal(await sheet(page).count(), 0, "kayan parmak sayfa açmaz");
+  // Gerçek uzun basma.
+  await longPress(page, msg(page, "ilk bob").locator("p.break-words").first(), { holdMs: 650 });
+  await sheet(page).waitFor();
+  assert.equal(await sheet(page).count(), 1);
+  // Parmak kalktıktan sonra gelen click sayfayı kapatmamalı.
+  await page.waitForTimeout(700);
+  assert.equal(await sheet(page).count(), 1, "parmak kalkınca sayfa kapanmaz");
+  // Karşı tarafın mesajında "Şikâyet et" + tepki çubuğu var; Esc kapatır ve baloncuk geri gelir.
+  await menu(page).getByRole("menuitem", { name: /Şikayet|Şikâyet/ }).waitFor();
+  await page.keyboard.press("Escape");
+  await sheet(page).waitFor({ state: "detached" });
+  assert.equal(await msg(page, "ilk bob").locator("[data-message-content]").evaluate((el) => getComputedStyle(el).visibility), "visible", "baloncuk geri göründü");
+  await shot(page, "7-long-press");
+});
+
+await scenario("8. tepki çubuğu: mevcut 6 hızlı emoji; seçince tepki mesaja eklenir ve sayfa kapanır; aynısına tekrar basmak geri alır", async ({ page }) => {
+  await longPress(page, msg(page, "son bob").locator("p.break-words").first(), { holdMs: 650 });
+  await sheet(page).waitFor();
+  const emojis = await bar(page).getByRole("menuitemradio").allTextContents();
+  assert.deepEqual(emojis, ["❤️", "😂", "😮", "😢", "😡", "👍"], "altı hızlı emoji, mevcut seçiciyle aynı sıra");
+  await bar(page).getByRole("menuitemradio", { name: /😂/ }).click();
+  await sheet(page).waitFor({ state: "detached" });
+  await msg(page, "son bob").locator('[data-reaction-emoji="😂"]').waitFor();
+  // Aynı emojiye tekrar: seçili görünür ve geri alır.
+  await longPress(page, msg(page, "son bob").locator("p.break-words").first(), { holdMs: 650 });
+  await sheet(page).waitFor();
+  assert.equal(await bar(page).getByRole("menuitemradio", { name: /😂/ }).getAttribute("aria-checked"), "true");
+  await bar(page).getByRole("menuitemradio", { name: /😂/ }).click();
+  await sheet(page).waitFor({ state: "detached" });
+  await msg(page, "son bob").locator('[data-reaction-emoji="😂"]').waitFor({ state: "detached" });
+});
+
+await scenario("9. menü işlevleri sayfada çalışır (Yanıtla kapatır); boş alana dokunmak kapatır", async ({ page }) => {
+  await longPress(page, msg(page, "son bob").locator("p.break-words").first(), { holdMs: 650 });
+  await sheet(page).waitFor();
+  await page.waitForTimeout(450);
+  await page.touchscreen.tap(195, 30); // bulanık zemin
+  await sheet(page).waitFor({ state: "detached" });
+  await longPress(page, msg(page, "son bob").locator("p.break-words").first(), { holdMs: 650 });
+  await sheet(page).waitFor();
   await menu(page).getByRole("menuitem", { name: "Yanıtla" }).click();
-  await menu(page).waitFor({ state: "detached" });
+  await sheet(page).waitFor({ state: "detached" });
   await page.getByText(/son bob/).last().waitFor();
 });
 
-await scenario("8. masaüstü: üzerine gelince düğmeler, menü listenin içinde ve sağa/sola taşmadan", async ({ page }) => {
-  const area = await listBox(page);
+await scenario("10. masaüstü: ⋮ ve sağ tık aynı sayfayı açar; Esc kapatır", async ({ page }) => {
   await msg(page, "ilk bob").hover();
   await optionsButton(page, "ilk bob").click();
-  const box = await menu(page).boundingBox();
-  assert.ok(inside(box, area), `menü görünür alanda: ${describe(box)}`);
+  await sheet(page).waitFor();
+  const view = viewport(page);
+  const menuBox = await menu(page).boundingBox();
+  assert.ok(inside(menuBox, view), `menü ekranda: ${describe(menuBox)}`);
   await page.keyboard.press("Escape");
-  await menu(page).waitFor({ state: "detached" });
+  await sheet(page).waitFor({ state: "detached" });
+  await msg(page, "ilk bob").locator("p.break-words").first().click({ button: "right" });
+  await sheet(page).waitFor();
+  await page.keyboard.press("Escape");
+  await sheet(page).waitFor({ state: "detached" });
 }, { viewport: { width: 1280, height: 800 } });
 
 await browser.close();
