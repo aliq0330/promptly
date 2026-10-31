@@ -39,6 +39,11 @@ export function layoutChatMessages(messages: Message[]): ChatMessageLayout[] {
   });
 }
 
+/** Mesaj menüsünün başlığı ("PAZ 19:26" / "SUN 19:26"): kısa gün adı + 24 saat, yerel saat. CSS büyük harfe çevirir. */
+export function formatMessageStamp(iso: string, language: "tr" | "en"): string {
+  return new Intl.DateTimeFormat(language === "tr" ? "tr-TR" : "en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
+}
+
 /** Mesaj saati (gün ayracının altında gösterilir): 24 saat, yerel saat. */
 export function formatClockTime(iso: string, language: "tr" | "en"): string {
   return new Intl.DateTimeFormat(language === "tr" ? "tr-TR" : "en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));

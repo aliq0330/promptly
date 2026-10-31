@@ -8,8 +8,9 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "./emoji-picker";
 import { MessageImageGrid, useMessageImageUrls } from "./message-image-grid";
-import { MessageActionMenu } from "./message-action-menu";
+import { MessageActionSheet } from "./message-action-sheet";
 import { useAnchoredPopover } from "./use-anchored-popover";
+import { useLongPress } from "./use-long-press";
 import { canEditOrDeleteMessage } from "./message-time-limit";
 import { SharedCommunityPostCard, SharedPromptCard, SharedPresetCard, SharedRequestCard, SharedSpaceCard, SharedWorkflowCard } from "./shared-content-card";
 import { parseSpaceShareBody } from "./space-share-format";
@@ -62,6 +63,8 @@ export type { DeleteMode, MessageBubbleActions, MessageReactionEntry } from "./m
  * keeps its place in the thread (Bölüm 9.5/9.7's safe-delete philosophy,
  * applied to messages: the row survives, only its content is gone).
  *
+ * Long press / right click on the bubble and the "⋮" button open the same sheet (`MessageActionSheet`, docs/history/288-*).
+ *
  * Aşama 1/2/3/4/5 (mesaj menüsü/emoji tepkileri/süre kontrolü): the "⋮" and
  * emoji icons are hidden by default and only reveal on hover (desktop,
  * plain CSS `group-hover`) or a single tap (mobile — `isActive`, owned by
@@ -71,8 +74,8 @@ export type { DeleteMode, MessageBubbleActions, MessageReactionEntry } from "./m
  *
  * Staying in view (docs/history/212-*): the icon pair is `sticky` inside a column as tall as the bubble, so on a message taller
  * than the screen it rides along the part that is visible instead of sitting at the bubble's (off-screen) middle. The menu
- * and the emoji picker are portalled and fixed-positioned by `useAnchoredPopover` inside the visible chat area (below the
- * header, above the composer and the iOS keyboard), flipping above when there is no room below.
+ * and the emoji picker: the sheet is a full-screen layer, the emoji picker is portalled and fixed-positioned by `useAnchoredPopover`
+ * inside the visible chat area (below the header, above the composer and the iOS keyboard), flipping above when there is no room below.
  */
 export function MessageBubble({
   message,
@@ -131,8 +134,11 @@ export function MessageBubble({
   const repliedItem = useRepliedItem(replyPreview);
   const replyPreviewText = replyPreview ? describeReplied(replyPreview, t, repliedItem.title) : null;
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  // The long-press / ⋮ sheet (reaction bar + message copy + action menu, `MessageActionSheet`, docs/history/288-*); the quick
+  // emoji button next to it keeps its small anchored picker.
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
   // Re-checked whenever the menu opens, and every few seconds while it
   // stays open — Aşama 5/6's "menü açıkken süre dolarsa seçenekler
   // kaldırılsın, kullanıcı sayfayı yenilemek zorunda kalmasın." The real,
@@ -141,13 +147,7 @@ export function MessageBubble({
   const [nowTick, setNowTick] = useState(() => Date.now());
   const canEditOrDelete = canEditOrDeleteMessage(message.createdAt, nowTick);
 
-  // A "kendi" message's popover lines up with the right edge of its trigger, the other side's with the left; both are clamped into view.
-  const {
-    anchorRef: menuAnchorRef,
-    panelRef: menuPanelRef,
-    style: menuStyle,
-    side: menuSide,
-  } = useAnchoredPopover({ open: menuOpen, align: isMe ? "end" : "start", onAway: () => setMenuOpen(false) });
+  // A "kendi" message's emoji picker lines up with the right edge of its trigger, the other side's with the left; clamped into view.
   const {
     anchorRef: emojiAnchorRef,
     panelRef: emojiPanelRef,
@@ -161,36 +161,32 @@ export function MessageBubble({
   useEffect(() => {
     if (!isActive) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- reacting to the PARENT deactivating this message (a different message activated, or a blank-area tap), not a render-time derivation of this component's own state
-      setMenuOpen(false);
+      setSheetOpen(false);
       setEmojiOpen(false);
     }
   }, [isActive]);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!sheetOpen) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time refresh at the moment the menu opens, followed by a genuine external-clock subscription (the interval below) — not a render-time derivation
     setNowTick(Date.now());
     const interval = setInterval(() => setNowTick(Date.now()), 5000);
     return () => clearInterval(interval);
-  }, [menuOpen]);
+  }, [sheetOpen]);
 
-  // Tapping/clicking outside either open popover closes it — the exact
+  // Tapping/clicking outside the open emoji picker closes it — the exact
   // pattern already established by PostMenu/ProfileMoreMenu in this app.
+  // (The sheet closes itself: its own scrim, Escape and focus handling.)
   useEffect(() => {
-    if (!menuOpen && !emojiOpen) return;
+    if (!emojiOpen) return;
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-      if (menuPanelRef.current?.contains(target)) return;
       if (emojiPanelRef.current?.contains(target)) return;
       if (iconsRef.current?.contains(target)) return;
-      setMenuOpen(false);
       setEmojiOpen(false);
     }
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        setEmojiOpen(false);
-      }
+      if (event.key === "Escape") setEmojiOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
@@ -199,7 +195,7 @@ export function MessageBubble({
       document.removeEventListener("keydown", handleEscape);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [menuOpen, emojiOpen]);
+  }, [emojiOpen]);
 
   const iconsRef = useRef<HTMLDivElement>(null);
 
@@ -209,12 +205,24 @@ export function MessageBubble({
   // false — so hover is tracked with pointer events instead, ignoring real
   // touch pointers (those keep the tap-to-reveal behaviour via `isActive`).
   const [isHovered, setIsHovered] = useState(false);
-  const isRevealed = isActive || menuOpen || emojiOpen || isHovered;
+  const isRevealed = isActive || sheetOpen || emojiOpen || isHovered;
 
   function handleReactSelect(emoji: string) {
     onReact(message.id, emoji);
     setEmojiOpen(false);
   }
+
+  function openSheet() {
+    onActivate(message.id);
+    setSheetOpen(true);
+    setEmojiOpen(false);
+  }
+  function closeSheet() {
+    setSheetOpen(false);
+    onActivate(null);
+  }
+  // Long press on the bubble (touch) or right click (mouse) opens the same sheet as the ⋮ button.
+  const { handlers: pressHandlers, pressing } = useLongPress({ onLongPress: openSheet, enabled: !isDeleted && !isEditingHere });
 
   const iconButtons = (
     <div
@@ -244,7 +252,7 @@ export function MessageBubble({
             event.stopPropagation();
             onActivate(message.id);
             setEmojiOpen((prev) => !prev);
-            setMenuOpen(false);
+            setSheetOpen(false);
           }}
           className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
         >
@@ -256,40 +264,35 @@ export function MessageBubble({
             document.body,
           )}
         <button
-          ref={menuAnchorRef}
           type="button"
           aria-label={t("messages.messageOptionsAriaLabel")}
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
+          aria-haspopup="dialog"
+          aria-expanded={sheetOpen}
           onClick={(event) => {
             event.stopPropagation();
-            onActivate(message.id);
-            setMenuOpen((prev) => !prev);
-            setEmojiOpen(false);
+            openSheet();
           }}
           className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
         >
           <MoreHorizontal size={16} />
         </button>
-        {/* Portalled (so the scrolling list never clips it) but still a React child of this row: its clicks stop above. */}
-        {menuOpen &&
-          createPortal(
-            <MessageActionMenu
-              message={message}
-              isMe={isMe}
-              panelRef={menuPanelRef}
-              style={menuStyle}
-              side={menuSide}
-              canEditOrDelete={canEditOrDelete}
-              actions={actions}
-              onReply={() => actions.onStartReply(message)}
-              onClose={() => {
-                setMenuOpen(false);
-                onActivate(null);
-              }}
-            />,
-            document.body,
-          )}
+        {/* Portalled by the sheet itself (so the scrolling list never clips it) but still a React child of this row: its clicks stop above. */}
+        {sheetOpen && !isDeleted && !isEditingHere && (
+          <MessageActionSheet
+            message={message}
+            isMe={isMe}
+            sourceRef={contentRef}
+            myReaction={myReaction}
+            onReact={(emoji) => {
+              onReact(message.id, emoji);
+              closeSheet();
+            }}
+            canEditOrDelete={canEditOrDelete}
+            actions={actions}
+            onReply={() => actions.onStartReply(message)}
+            onClose={closeSheet}
+          />
+        )}
       </div>
     </div>
   );
@@ -389,7 +392,18 @@ export function MessageBubble({
             {actions.editError && <p className="text-xs text-danger">{actions.editError}</p>}
           </div>
         ) : (
-          <div className={cn("relative flex max-w-[75%] flex-col gap-1.5", reactions.length > 0 && "mb-3")}>
+          <div
+            ref={contentRef}
+            data-message-content
+            {...pressHandlers}
+            className={cn(
+              "relative flex max-w-[75%] flex-col gap-1.5 transition-transform duration-150",
+              // iOS Safari's own long-press (text selection, link preview) must not compete with ours; selecting text by touch is replaced by "Kopyala" in the menu.
+              "[-webkit-touch-callout:none] pointer-coarse:select-none",
+              reactions.length > 0 && "mb-3",
+              pressing && "scale-[0.97]",
+            )}
+          >
             {!inlineMeta && senderLabel && (
               <span data-message-sender className="flex items-center gap-1.5 text-caption font-semibold">
                 <span className={cn("max-w-[10rem] truncate", senderTone(message.senderId))}>{sender?.displayName}</span>

@@ -27,13 +27,17 @@ export function EmojiPicker({
   onSelect,
   panelRef,
   style,
+  variant = "popover",
 }: {
   myReaction: string | null;
   onSelect: (emoji: string) => void;
   /** Measured by `useAnchoredPopover`, which places the picker (fixed, in a portal) inside the visible chat area. */
   panelRef?: RefObject<HTMLDivElement | null>;
   style?: CSSProperties;
+  /** `bar`: the large, full-width pill above the message in the long-press / ⋮ sheet (docs/history/288-*) — same emoji, same toggle rule. */
+  variant?: "popover" | "bar";
 }) {
+  const isBar = variant === "bar";
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const emojis = expanded ? [...QUICK_EMOJIS, ...MORE_EMOJIS] : QUICK_EMOJIS;
@@ -45,11 +49,16 @@ export function EmojiPicker({
       aria-label={t("messages.chooseEmojiReaction")}
       style={style}
       className={cn(
-        "z-50 flex items-center gap-1 rounded-2xl border border-border bg-surface p-1.5 shadow-md",
-        // Collapsed (6 emoji + "➕"): `w-max` sizes to content — a fixed-position box with `width: auto` would otherwise
-        // stretch or wrap each emoji onto its own line (a real bug once reported from a live screenshot). Expanded
-        // (18 emoji): a fixed width so it wraps into a small grid instead of one very long horizontal strip.
-        expanded ? "w-[13.5rem] flex-wrap" : "w-max flex-nowrap",
+        isBar
+          ? // Sheet bar: fills the width it is given; expanding wraps the extra row inside the same pill.
+            cn("flex items-center bg-surface-elevated/90 shadow-pop backdrop-blur-xl animate-pop-in origin-bottom", expanded ? "flex-wrap justify-center gap-1 rounded-3xl p-2" : "justify-between gap-0.5 rounded-full px-2 py-1.5")
+          : cn(
+              "z-50 flex items-center gap-1 rounded-2xl border border-border bg-surface p-1.5 shadow-md",
+              // Collapsed (6 emoji + "➕"): `w-max` sizes to content — a fixed-position box with `width: auto` would otherwise
+              // stretch or wrap each emoji onto its own line (a real bug once reported from a live screenshot). Expanded
+              // (18 emoji): a fixed width so it wraps into a small grid instead of one very long horizontal strip.
+              expanded ? "w-[13.5rem] flex-wrap" : "w-max flex-nowrap",
+            ),
       )}
     >
       {emojis.map((emoji) => (
@@ -61,7 +70,8 @@ export function EmojiPicker({
           aria-label={t("messages.giveEmojiReaction", { emoji })}
           aria-checked={myReaction === emoji}
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base leading-none transition-transform hover:scale-110 hover:bg-accent-surface",
+            "flex shrink-0 items-center justify-center rounded-full leading-none transition-transform hover:scale-110 hover:bg-accent-surface",
+            isBar ? "h-11 w-11 text-[1.65rem]" : "h-8 w-8 text-base",
             myReaction === emoji && "bg-accent-surface ring-1 ring-primary",
           )}
         >
@@ -73,9 +83,12 @@ export function EmojiPicker({
           type="button"
           onClick={() => setExpanded(true)}
           aria-label={t("messages.showMoreEmoji")}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text",
+            isBar ? "h-11 w-11" : "h-8 w-8",
+          )}
         >
-          <Plus size={16} />
+          <Plus size={isBar ? 22 : 16} />
         </button>
       )}
     </div>
