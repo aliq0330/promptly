@@ -293,17 +293,23 @@ await scenario("5. Video: yazarın çıktısı oynar (sessiz), ses açılır, ge
   assert.ok(db.calls.some((c) => c.table === "prompt_results" && c.body.byPrompt === feed.video.id));
 });
 
-await scenario("6. Ses: sessizken kendiliğinden çalmaz; oynat düğmesi çalar ve sesi açar", async ({ page }) => {
+await scenario("6. Ses: etkin olunca kendiliğinden (sesle) çalar ve sesi açar; ortadaki düğme durdurur/başlatır; ilerleme çubuğu yok", async ({ page }) => {
   await openFocus(page);
   await step(page, "ArrowRight", 6);
   assert.equal(await activeIndex(page), 7);
   const slide = slides(page).nth(6);
   await slide.locator("audio").waitFor({ state: "attached" });
-  assert.equal((await media(page)).filter((m) => m.op === "play" && m.tag === "AUDIO").length, 0, "no silent audio autoplay");
-  await slide.getByRole("button", { name: "Oynat" }).click();
   await page.waitForTimeout(300);
-  assert.ok((await media(page)).some((m) => m.op === "play" && m.tag === "AUDIO"));
-  assert.ok(await (await menuItem(page, "Sesi kapat")).isVisible(), "sound switched on by the tap");
+  const plays = (await media(page)).filter((m) => m.op === "play" && m.tag === "AUDIO");
+  assert.ok(plays.length >= 1 && plays.at(-1).muted === false, `audio autoplays with its sound: ${JSON.stringify(plays)}`);
+  assert.ok(await (await menuItem(page, "Sesi kapat")).isVisible(), "sound switched on by the audio post starting");
+  assert.equal(await slide.locator("[class*='bottom-0'][class*='h-0.5']").count(), 0, "no progress line on the slide");
+  await slide.getByRole("button", { name: "Duraklat" }).click({ force: true });
+  await page.waitForTimeout(200);
+  assert.equal((await media(page)).at(-1).op, "pause");
+  await slide.getByRole("button", { name: "Oynat" }).click();
+  await page.waitForTimeout(200);
+  assert.equal((await media(page)).at(-1).op, "play");
   await shot(page, "06-audio");
 });
 

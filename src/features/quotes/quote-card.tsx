@@ -7,6 +7,7 @@ import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/conte
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
+import { PlayableCardArt } from "@/features/prompts/playable-card-art";
 import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { SummaryTextArt } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -45,7 +46,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
             summary.type === "space" ? (
               <SpaceCoverArt urls={summary.spaceArt ?? []} className="aspect-[4/3] w-full overflow-hidden" iconSize={40} />
             ) : summary.playable && poster ? (
-              <OutputPosterPreview media={poster} />
+              quote.content?.type === "prompt" ? <PlayableCardArt prompt={quote.content.data} poster={poster} /> : <OutputPosterPreview media={poster} />
             ) : summary.media.length > 0 ? (
               <OutputThumbnailStrip media={summary.media} />
             ) : (

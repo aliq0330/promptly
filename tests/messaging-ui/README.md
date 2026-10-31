@@ -267,3 +267,13 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-creator-sugg
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-prompt-fullscreen.mjs   # 10/10 beklenir
 ```
+
+## Kartlarda kendiliğinden oynatma (`docs/history/292-*`)
+
+`run-card-autoplay.mjs`: Ana Sayfa kartlarında video (sessiz) / ses (sesle) ekranın ortasındaki kartta kendiliğinden oynar, aynı anda tek kart, ortadaki durdur/başlat düğmesi yazıyı açmaz,
+ilerleme çubuğu yok, görsel/uzak kart medya kurmaz, tarayıcı sesi reddederse düğme bekler, hareketi azalt. `HTMLMediaElement.play/pause` taslaklanır; gerçek video/ses çözülmez.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-card-autoplay.mjs   # 7/7 beklenir
+```
