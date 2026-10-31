@@ -11,10 +11,13 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   interaction_blocked: "error.interactionBlocked",
   self_like_not_allowed: "error.selfLike",
   report_duplicate: "error.reportDuplicate",
+  // "Çalıştı mı?" oyu (docs/history/296-*)
+  self_vote_not_allowed: "error.selfVote",
+  copy_required: "error.copyRequired",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
-const INLINE_ONLY = new Set(["report_duplicate"]);
+const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required"]);
 
 export function friendlyServerMessage(code: unknown): string | null {
   if (typeof code !== "string") return null;

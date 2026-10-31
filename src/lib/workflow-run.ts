@@ -1,8 +1,9 @@
 /**
- * Pure state of the "step by step" run mode of a public workflow. A workflow never
- * runs a model (CLAUDE.md Bölüm 1): the person works through the steps in their
- * own tool, pastes what each step produced, and the pasted output is offered
- * again as the input of the later steps wired to it. Nothing here touches the
+ * Pure state of the "step by step" run mode of a public workflow. Promptly's servers
+ * never run a model (CLAUDE.md Bölüm 1): the person works through the steps in their
+ * own tool — or lets the browser run the text steps with their own API key
+ * (`lib/workflow-auto-run.ts`, docs/history/296-*) — and the output of each step is
+ * offered again as the input of the later steps wired to it. Nothing here touches the
  * network or React; the state lives in the browser only (see `workflow-runner.tsx`).
  */
 import type { WorkflowInput, WorkflowStep } from "@/types";
