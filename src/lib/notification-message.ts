@@ -131,6 +131,9 @@ export function localizeNotificationMessage(message: string, language: "tr" | "e
   if (spaceInvited) return t("notifMsg.spaceInvited", { name: spaceInvited[1] });
   const spaceJoined = /^"([\s\S]*)" Space'ine katıldı\.$/.exec(message);
   if (spaceJoined) return t("notifMsg.spaceJoined", { name: spaceJoined[1] });
+  // Yaratıcı paneli kilometre taşları (docs/history/295-*): prompt başlığı çevrilmez.
+  const milestone = /^Promptun "([\s\S]*)" (\d+) (kopyalamaya|tepkiye) ulaştı\.$/.exec(message);
+  if (milestone) return t(milestone[3] === "kopyalamaya" ? "notifMsg.milestoneCopies" : "notifMsg.milestoneReactions", { name: milestone[1], count: milestone[2] });
   const storyRemoved = /^"([\s\S]*)" topluluğundaki hikâyen kaldırıldı\.$/.exec(message);
   if (storyRemoved) return t("notifMsg.storyRemovedCommunity", { name: storyRemoved[1] });
   if (message === "Seni takip etmeye başladı.") return t("notifMsg.followed");

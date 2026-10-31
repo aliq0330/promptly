@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BarChart3, Bookmark, Copy, Heart, Info, MessageCircle, UserPlus } from "lucide-react";
+import { BarChart3, Bookmark, Copy, Heart, ImagePlus, Info, MessageCircle, UserPlus } from "lucide-react";
 import { PageContainer } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,23 +11,24 @@ import { SectionMenu, type SectionMenuItem } from "@/features/content/section-me
 import { InsightReactionMix } from "@/features/insights/insight-reaction-mix";
 import { InsightStatTile } from "@/features/insights/insight-stat-tile";
 import { InsightTopList } from "@/features/insights/insight-top-list";
-import { InsightTrendChart } from "@/features/insights/insight-trend-chart";
+import { INSIGHT_CARD, InsightTrendCard } from "@/features/insights/insight-trend-card";
 import { useCreatorInsights } from "@/features/insights/use-creator-insights";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CreatorInsights } from "@/lib/supabase/insights";
-import { DEFAULT_INSIGHT_PERIOD, INSIGHT_PERIODS, formatInsightDay, hasNoActivity, type InsightPeriod } from "@/lib/insights";
+import { DEFAULT_INSIGHT_PERIOD, INSIGHT_PERIODS, hasNoActivity, type InsightPeriod } from "@/lib/insights";
 
-const CARD = "rounded-xl border border-border-soft bg-surface p-5 shadow-card sm:p-6";
+const CARD = INSIGHT_CARD;
 
 /** Yükleme iskeleti gerçek yerleşimin yüksekliğindedir: veri gelince sayfa kaymaz. */
 function InsightsSkeleton() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         <Skeleton className="col-span-2 h-[7.5rem] rounded-lg lg:col-span-1" />
         {[0, 1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-[7.5rem] rounded-lg" />
         ))}
+        <Skeleton className="col-span-2 h-[7.5rem] rounded-lg lg:col-span-1" />
       </div>
       <Skeleton className="h-[22rem] rounded-xl" />
       <div className="flex flex-col gap-5 lg:flex-row">
@@ -39,7 +40,7 @@ function InsightsSkeleton() {
 }
 
 export function InsightsView() {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const [period, setPeriod] = useState<InsightPeriod>(DEFAULT_INSIGHT_PERIOD);
   const { state, retry } = useCreatorInsights(period);
 
@@ -86,40 +87,27 @@ export function InsightsView() {
       )}
 
       {state.status === "ready" && !hasNoActivity(state.data.summary, state.data.days, state.data.top) && (
-        <ReadyBody data={state.data} period={period} language={language} />
+        <ReadyBody data={state.data} period={period} />
       )}
     </PageContainer>
   );
 }
 
-function ReadyBody({ data, period, language }: { data: CreatorInsights; period: InsightPeriod; language: "tr" | "en" }) {
+function ReadyBody({ data, period }: { data: CreatorInsights; period: InsightPeriod }) {
   const { t } = useTranslation();
   const { summary, days, top, reactions } = data;
-  const from = days[0] ? formatInsightDay(days[0].day, language) : "";
-  const to = days.length ? formatInsightDay(days[days.length - 1].day, language) : "";
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         <InsightStatTile className="col-span-2 lg:col-span-1" icon={Copy} label={t("insights.tile.copies")} current={summary.copies} previous={summary.prevCopies} days={period} />
+        <InsightStatTile icon={ImagePlus} label={t("insights.tile.results")} current={summary.results} previous={summary.prevResults} days={period} />
         <InsightStatTile icon={Heart} label={t("insights.tile.reactions")} current={summary.reactions} previous={summary.prevReactions} days={period} />
         <InsightStatTile icon={MessageCircle} label={t("insights.tile.comments")} current={summary.comments} previous={summary.prevComments} days={period} />
         <InsightStatTile icon={Bookmark} label={t("insights.tile.saves")} current={summary.saves} previous={summary.prevSaves} days={period} />
-        <InsightStatTile icon={UserPlus} label={t("insights.tile.followers")} current={summary.followers} previous={summary.prevFollowers} days={period} />
+        <InsightStatTile className="col-span-2 lg:col-span-1" icon={UserPlus} label={t("insights.tile.followers")} current={summary.followers} previous={summary.prevFollowers} days={period} />
       </div>
 
-      <section className={CARD} aria-labelledby="insights-trend-title">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 id="insights-trend-title" className="text-h2 font-semibold text-text">{t("insights.chart.title")}</h2>
-            <p className="mt-1 text-small text-text-secondary">{t("insights.chart.range", { from, to })}</p>
-          </div>
-          <div className="flex items-center gap-4 text-small text-text-secondary">
-            <span className="inline-flex items-center gap-2"><span className="h-1 w-3.5 rounded-full bg-primary" aria-hidden />{t("insights.tile.copies")}</span>
-            <span className="inline-flex items-center gap-2"><span className="h-1 w-3.5 rounded-full bg-secondary" aria-hidden />{t("insights.tile.reactions")}</span>
-          </div>
-        </div>
-        <InsightTrendChart days={days} periodDays={period} />
-      </section>
+      <InsightTrendCard days={days} periodDays={period} />
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch">
         <section className={`${CARD} min-w-0 flex-1`} aria-labelledby="insights-top-title">

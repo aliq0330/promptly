@@ -7,10 +7,12 @@ import {
   formatInsightDay,
   formatInsightNumber,
   hasNoActivity,
+  insightPromptHref,
   labelIndexes,
   linePoints,
   niceMax,
   peakIndex,
+  promptHasNoActivity,
   reactionRows,
   reactionTotal,
   trendOf,
@@ -97,4 +99,23 @@ test("date and number formatting follow the language and ignore the machine's ti
   assert.equal(formatInsightDay("not-a-date", "tr"), "not-a-date");
   assert.equal(formatInsightNumber(1284, "en"), "1,284");
   assert.match(formatInsightNumber(1284, "tr"), /^1\.284$/);
+});
+
+test("hasNoActivity also counts shared results (this and the previous period)", () => {
+  const empty = [{ day: "2026-10-31", copies: 0, reactions: 0, comments: 0 }];
+  assert.equal(hasNoActivity({ ...EMPTY_SUMMARY, results: 1 }, empty, []), false);
+  assert.equal(hasNoActivity({ ...EMPTY_SUMMARY, prevResults: 2 }, empty, []), false);
+});
+
+test("promptHasNoActivity: all numbers, previous period and daily series (incl. results) must be empty", () => {
+  const zero = { title: "t", contentType: "text", tools: [], copies: 0, prevCopies: 0, reactions: 0, prevReactions: 0, comments: 0, prevComments: 0, saves: 0, prevSaves: 0, results: 0, prevResults: 0 };
+  const quiet = [{ day: "2026-10-31", copies: 0, reactions: 0, comments: 0, results: 0 }];
+  assert.equal(promptHasNoActivity(zero, quiet), true);
+  assert.equal(promptHasNoActivity({ ...zero, prevSaves: 1 }, quiet), false);
+  assert.equal(promptHasNoActivity(zero, [{ day: "2026-10-31", copies: 0, reactions: 0, comments: 0, results: 1 }]), false);
+  assert.equal(promptHasNoActivity(zero, [{ day: "2026-10-31", copies: 0, reactions: 0, comments: 0 }]), true, "results is optional on the series");
+});
+
+test("insightPromptHref uses the static-export /x/local?id= shape", () => {
+  assert.equal(insightPromptHref("abc"), "/insights/local?id=abc");
 });

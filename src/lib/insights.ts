@@ -19,6 +19,9 @@ export interface InsightSummary {
   prevSaves: number;
   followers: number;
   prevFollowers: number;
+  /** Başkalarının promptlarının altına paylaştığı sonuç sayısı (docs/history/295-*). */
+  results: number;
+  prevResults: number;
 }
 
 export interface InsightDay {
@@ -27,6 +30,30 @@ export interface InsightDay {
   copies: number;
   reactions: number;
   comments: number;
+  /** Yalnız prompt başına seride gelir (genel seride yok). */
+  results?: number;
+}
+
+/** Tek bir promptun özeti (prompt başına ayrıntı sayfası): başlık/tür/araç + beş sayı ve önceki dönemleri. */
+export interface InsightPromptSummary {
+  title: string;
+  contentType: string;
+  tools: string[];
+  copies: number;
+  prevCopies: number;
+  reactions: number;
+  prevReactions: number;
+  comments: number;
+  prevComments: number;
+  saves: number;
+  prevSaves: number;
+  results: number;
+  prevResults: number;
+}
+
+/** Prompt başına ayrıntı sayfasının adresi (statik export: `/x/local?id=`). */
+export function insightPromptHref(id: string): string {
+  return `/insights/local?id=${id}`;
 }
 
 export interface InsightTopItem {
@@ -47,7 +74,7 @@ export interface InsightReactionRow {
 }
 
 export const EMPTY_SUMMARY: InsightSummary = {
-  copies: 0, prevCopies: 0, reactions: 0, prevReactions: 0, comments: 0, prevComments: 0, saves: 0, prevSaves: 0, followers: 0, prevFollowers: 0,
+  copies: 0, prevCopies: 0, reactions: 0, prevReactions: 0, comments: 0, prevComments: 0, saves: 0, prevSaves: 0, followers: 0, prevFollowers: 0, results: 0, prevResults: 0,
 };
 
 export type TrendKind = "up" | "down" | "flat" | "new";
@@ -72,8 +99,15 @@ export function trendOf(current: number, previous: number): Trend {
 /** Hiç etkileşim yok mu (hem bu dönem hem önceki dönem hem de liste boş) — boş durum ekranı için. */
 export function hasNoActivity(summary: InsightSummary, days: InsightDay[], top: InsightTopItem[]): boolean {
   const totals = summary.copies + summary.prevCopies + summary.reactions + summary.prevReactions + summary.comments + summary.prevComments +
-    summary.saves + summary.prevSaves + summary.followers + summary.prevFollowers;
+    summary.saves + summary.prevSaves + summary.followers + summary.prevFollowers + summary.results + summary.prevResults;
   return totals === 0 && top.length === 0 && days.every((d) => d.copies + d.reactions + d.comments === 0);
+}
+
+/** Tek promptta hem bu dönem hem önceki dönem hiç etkileşim yok mu (ayrıntı sayfasında "etkileşim olmadı" notu için). */
+export function promptHasNoActivity(summary: InsightPromptSummary, days: InsightDay[]): boolean {
+  const totals = summary.copies + summary.prevCopies + summary.reactions + summary.prevReactions + summary.comments + summary.prevComments +
+    summary.saves + summary.prevSaves + summary.results + summary.prevResults;
+  return totals === 0 && days.every((d) => d.copies + d.reactions + d.comments + (d.results ?? 0) === 0);
 }
 
 /**
