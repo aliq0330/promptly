@@ -40,34 +40,30 @@ export function VariableField({
   variable,
   value,
   onChange,
-  hideLabel = false,
 }: {
   variable: VariableFieldModel;
   value: string;
   onChange: (value: string) => void;
-  /** Kartın kendi başlığı varsa (stüdyo düzeninin "Değerler" kartı) etiket yalnız ekran okuyucuya kalır. */
-  hideLabel?: boolean;
 }) {
   const { t } = useTranslation();
   const labelId = `pv-label-${variable.id}`;
   const controlId = `pv-${variable.id}`;
-  const wide = isWideVariable(variable);
+  const visual = isChoice(variable) && (allOptionsHaveImage(variable.options) || allOptionsHaveColor(variable.options));
+  const wide =
+    visual ||
+    variable.type === "multi_select" ||
+    variable.type === "slider" ||
+    (variable.type === "select" && variable.options.length <= CHIP_LIMIT);
 
   return (
     <div className={cn("min-w-0", wide && "sm:col-span-2")}>
-      <label id={labelId} htmlFor={controlId} className={cn("mb-1 block text-caption font-medium text-text-secondary", hideLabel && "sr-only")}>
+      <label id={labelId} htmlFor={controlId} className="mb-1 block text-caption font-medium text-text-secondary">
         <span className="break-words">{variable.name}</span>
         {variable.description && <span className="ml-1.5 font-normal text-text-muted">— {variable.description}</span>}
       </label>
       <Control id={controlId} labelId={labelId} variable={variable} value={value} onChange={onChange} placeholder={variable.defaultValue || t("prompt.enterValue")} />
     </div>
   );
-}
-
-/** Geniş girdiler (çip/renk/görsel seçenekler, çoklu seçim, kaydırıcı) iki sütunlu yerleşimde tam satır alır. */
-export function isWideVariable(variable: PromptVariableSpec): boolean {
-  const visual = isChoice(variable) && (allOptionsHaveImage(variable.options) || allOptionsHaveColor(variable.options));
-  return visual || variable.type === "multi_select" || variable.type === "slider" || (variable.type === "select" && variable.options.length <= CHIP_LIMIT);
 }
 
 function isChoice(variable: PromptVariableSpec): boolean {

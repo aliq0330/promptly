@@ -3,7 +3,6 @@
 import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
 import { AlertCircle, Check, ChevronRight, Globe, Loader2, Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useComposeStudio } from "@/features/content/compose-form";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { useAuth } from "@/features/auth/auth-provider";
 import { pickCreateDestination, useCommunityContext } from "@/features/communities/community-return";
@@ -62,7 +61,6 @@ export const PublishPanel = forwardRef<
   ref,
 ) {
   const { t } = useTranslation();
-  const studio = useComposeStudio();
   const { user } = useAuth();
   const community = useCommunityContext();
   const inCommunity = community.communityId !== null;
@@ -71,8 +69,6 @@ export const PublishPanel = forwardRef<
   const audience: Audience = inCommunity ? "community" : visibility === "private" ? "private" : "public";
   const allowCommunity = !hideDestination;
   const [pickerOpen, setPickerOpen] = useState(false);
-  // Stüdyo düzeninde "Topluluklarda da alıntıla" bir onay kutusudur: işaretlenince topluluk seçici açılır, kaldırılınca seçim silinir.
-  const [announceOpen, setAnnounceOpen] = useState(false);
 
   const canAnnounce = Boolean(user) && !hideDestination && audience === "public";
   const [selection, setSelection] = useAnnounceSelection();
@@ -103,12 +99,11 @@ export const PublishPanel = forwardRef<
     setSelection({ ...selection, communityIds: has ? selection.communityIds.filter((x) => x !== id) : [...selection.communityIds, id] }, names);
   }
 
-  const options: { key: Audience; icon: typeof Globe; label: string; hint: string }[] = [
-    { key: "public", icon: Globe, label: t("publish.public"), hint: t("publish.publicHint") },
-    ...(canChooseVisibility ? [{ key: "private" as const, icon: Lock, label: t("publish.private"), hint: t("publish.privateHint") }] : []),
-    ...(allowCommunity ? [{ key: "community" as const, icon: Users, label: t("compose.aCommunity"), hint: t("publish.communityHint") }] : []),
+  const options: { key: Audience; icon: typeof Globe; label: string }[] = [
+    { key: "public", icon: Globe, label: t("publish.public") },
+    ...(canChooseVisibility ? [{ key: "private" as const, icon: Lock, label: t("publish.private") }] : []),
+    ...(allowCommunity ? [{ key: "community" as const, icon: Users, label: t("compose.aCommunity") }] : []),
   ];
-  const announceChecked = announceOpen || selection.communityIds.length > 0;
 
   function publish() {
     if (busy) return;
@@ -124,8 +119,8 @@ export const PublishPanel = forwardRef<
 
 
   return (
-    <div data-publish-panel="" className={studio ? "flex flex-col gap-3.5" : "space-y-4"}>
-      {preview && !studio && <div className="lg:hidden">{preview}</div>}
+    <div data-publish-panel="" className="space-y-4">
+      {preview && <div className="lg:hidden">{preview}</div>}
 
       {options.length > 1 && (
         <section className="space-y-2" data-audience-field={audience}>
@@ -142,26 +137,13 @@ export const PublishPanel = forwardRef<
                   onClick={() => choose(option.key)}
                   data-audience-option={option.key}
                   className={cn(
-                    "flex items-center gap-3 text-left transition-colors disabled:opacity-60",
-                    studio ? "min-h-[3.75rem] rounded-[14px] border px-3.5 py-[11px]" : "min-h-14 rounded-xl border px-3.5",
-                    selected ? "border-primary bg-primary-soft text-text" : cn("bg-surface text-text-secondary hover:border-primary/50", studio ? "border-border" : "border-border-strong"),
+                    "flex min-h-14 items-center gap-3 rounded-xl border px-3.5 text-left transition-colors disabled:opacity-60",
+                    selected ? "border-primary bg-primary-soft text-text" : "border-border-strong bg-surface text-text-secondary hover:border-primary/50",
                   )}
                 >
                   <span aria-hidden className={cn("h-5 w-5 shrink-0 rounded-full border-2", selected ? "border-[6px] border-primary" : "border-border-strong")} />
-                  {studio ? (
-                    <>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[0.875rem] font-bold text-text">{option.label}</span>
-                        <span className="block text-[0.75rem] font-normal text-text-muted">{option.hint}</span>
-                      </span>
-                      <option.icon size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />
-                    </>
-                  ) : (
-                    <>
-                      <option.icon size={18} strokeWidth={1.9} aria-hidden className="shrink-0" />
-                      <span className="min-w-0 flex-1 text-body font-semibold">{option.label}</span>
-                    </>
-                  )}
+                  <option.icon size={18} strokeWidth={1.9} aria-hidden className="shrink-0" />
+                  <span className="min-w-0 flex-1 text-body font-semibold">{option.label}</span>
                 </button>
               );
             })}
@@ -194,35 +176,11 @@ export const PublishPanel = forwardRef<
 
       {canAnnounce && (
         <section className="space-y-2" data-announce-picker="">
-          {studio ? (
-            <button
-              type="button"
-              role="checkbox"
-              aria-checked={announceChecked}
-              disabled={busy}
-              onClick={() => {
-                if (announceChecked) {
-                  setAnnounceOpen(false);
-                  setSelection({ communityIds: [], note: "" }, names);
-                } else {
-                  setAnnounceOpen(true);
-                }
-              }}
-              data-announce-toggle=""
-              className="flex items-start gap-2.5 text-left text-[0.84375rem] text-text disabled:opacity-60"
-            >
-              <span aria-hidden className={cn("mt-px grid h-[18px] w-[18px] shrink-0 place-items-center rounded-md border-[1.5px]", announceChecked ? "border-primary bg-primary text-primary-foreground" : "border-border-strong")}>
-                {announceChecked && <Check size={12} strokeWidth={3} />}
-              </span>
-              {t("publish.announceTitle")}
-            </button>
-          ) : (
-            <p className="flex items-baseline justify-between gap-2 text-label font-semibold text-text">
-              {t("publish.announceTitle")}
-              <span className="text-caption font-normal text-text-muted">{t("common.optional")}</span>
-            </p>
-          )}
-          {studio && !announceChecked ? null : communities.status === "error" ? (
+          <p className="flex items-baseline justify-between gap-2 text-label font-semibold text-text">
+            {t("publish.announceTitle")}
+            <span className="text-caption font-normal text-text-muted">{t("common.optional")}</span>
+          </p>
+          {communities.status === "error" ? (
             <p className="text-small text-danger">{t("communities.feed.pickLoadError")}</p>
           ) : communities.status !== "ready" ? (
             <p className="flex items-center gap-2 text-small text-text-muted">
@@ -274,29 +232,12 @@ export const PublishPanel = forwardRef<
         </section>
       )}
 
-      <p data-publish-summary={audience} className={studio ? "rounded-xl bg-surface-soft px-3.5 py-2.5 text-[0.8125rem] text-text-secondary" : "text-small text-text-secondary"}>
+      <p data-publish-summary={audience} className="text-small text-text-secondary">
         {summary}
       </p>
       {children}
 
-      {showProblems && problems.length > 0 && studio && (
-        <section aria-label={t("compose.problemsTitle")} role="alert" className="flex flex-col gap-1.5 rounded-[14px] border border-danger/45 bg-danger/10 px-3.5 py-2.5 text-[0.8125rem] text-text">
-          {problems.map((problem) => (
-            <div key={problem.key} className="flex items-center justify-between gap-2">
-              <span className="flex min-w-0 items-center gap-2">
-                <AlertCircle size={15} aria-hidden className="shrink-0 text-danger" />
-                <span className="min-w-0">{problem.label}</span>
-              </span>
-              {problem.onFix && (
-                <button type="button" data-publish-problem={problem.key} onClick={() => problem.onFix?.()} className="shrink-0 font-semibold text-primary underline">
-                  {t("studio.fix")}
-                </button>
-              )}
-            </div>
-          ))}
-        </section>
-      )}
-      {showProblems && problems.length > 0 && !studio && (
+      {showProblems && problems.length > 0 && (
         <section aria-label={t("compose.problemsTitle")} role="alert" className="space-y-2">
           <p className="text-label font-semibold text-text">{t("compose.problemsTitle")}</p>
           {problems.map((problem) => (
@@ -315,19 +256,19 @@ export const PublishPanel = forwardRef<
         </section>
       )}
 
-      <div className={cn("pt-1", studio ? "hidden justify-end gap-2 lg:flex" : "flex flex-col-reverse gap-2 sm:flex-row")}>
+      <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row">
         {onSaveDraft && !inCommunity && (
-          <Button type="button" variant="outline" size={studio ? "md" : "lg"} disabled={busy} onClick={onSaveDraft} data-action="save-draft" className={studio ? "shrink-0 px-5" : "shrink-0 px-6"}>
-            {studio ? t("studio.saveAsDraft") : t("createActions.saveDraft")}
+          <Button type="button" variant="outline" size="lg" disabled={busy} onClick={onSaveDraft} data-action="save-draft" className="shrink-0 px-6">
+            {t("createActions.saveDraft")}
           </Button>
         )}
         <Button
           type="button"
-          size={studio ? "md" : "lg"}
+          size="lg"
           disabled={busy}
           onClick={publish}
           data-action="publish"
-          className={cn("min-w-0", studio ? "px-6" : "sm:flex-1", (problems.length > 0 || blockedReason !== null) && "opacity-60")}
+          className={cn("min-w-0 sm:flex-1", (problems.length > 0 || blockedReason !== null) && "opacity-60")}
         >
           {busy && <Loader2 size={16} className="animate-spin" aria-hidden />}
           {confirmLabel}

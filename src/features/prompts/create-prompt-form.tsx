@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Copy, Eye, EyeOff, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { PromptCard } from "@/features/prompts/prompt-card";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -19,11 +20,7 @@ import { TagPicker } from "@/features/prompts/tag-picker";
 import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
 import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
 import { composePrompt, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
-import { PromptTextEditor, type DraftVariable, type PromptTextEditorHandle } from "@/features/prompts/prompt-text-editor";
-import { PromptLivePreview } from "@/features/prompts/prompt-live-preview";
-import { PromptMobileDock, PromptPreviewSheet } from "@/features/prompts/prompt-mobile-dock";
-import { resolvePromptText } from "@/lib/prompt-variables";
-import { effectiveVariableValues } from "@/lib/prompt-variable-types";
+import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
 import { PromptDnaEditor } from "@/features/prompts/prompt-dna-editor";
 import { fetchDnaSections, replaceDnaSections } from "@/lib/supabase/prompt-dna";
 import type { DnaSection } from "@/lib/prompt-dna/types";
@@ -43,10 +40,11 @@ import {
 } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { ComposeShell, useComposeLeave, useDirty } from "@/features/content/compose";
-import { ComposeAudienceLine, ComposeSection, FormDisclosure, FormDisclosureGroup, FormField, studioInputClassName, studioTextareaClassName } from "@/features/content/compose-form";
+import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
+import { ComposeAudienceLine, ComposeSection, FormDisclosure, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
 import { ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
 import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/features/content/publish-panel";
+import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { SwitchRow } from "@/features/content/visibility-switch";
@@ -231,11 +229,6 @@ export function CreatePromptForm() {
   const [showOnProfile, setShowOnProfile] = useState(true);
   const [references, setReferences] = useState<ReferenceRequirements>(NO_REFERENCES);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
-  // Tam ekran stüdyo düzeni (docs/history/286-*): sağ sütunun/önizleme sayfasının değerleri, düzenleyicinin odak durumu (telefonda dock) ve önizleme sayfası.
-  const [previewValues, setPreviewValues] = useState<Record<string, string>>({});
-  const [editorFocused, setEditorFocused] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const editorRef = useRef<PromptTextEditorHandle>(null);
 
   // "Prompt olarak yayınla" from the Üret page: the result was parked in
   // sessionStorage for this one navigation (an image can't travel in a URL).
@@ -619,10 +612,6 @@ export function CreatePromptForm() {
     }
   }
 
-  // Önizleme değerleri canlı prompttakiyle aynı koşul mantığından geçer; kart ve kopyalanacak metin çözülmüş metni gösterir.
-  const { values: previewEffective } = effectiveVariableValues(variables, previewValues);
-  const resolvedPromptText = resolvePromptText(finalPromptText, previewEffective);
-
   const previewPrompt: Prompt = {
     id: "preview",
     author: ownProfile ?? {
@@ -639,7 +628,7 @@ export function CreatePromptForm() {
     },
     title: title || t("prompt.untitledPrompt"),
     description: description || t("prompt.noDescriptionAdded"),
-    promptText: promptText ? resolvedPromptText : t("prompt.promptTextPlaceholderPreview"),
+    promptText: promptText ? finalPromptText : t("prompt.promptTextPlaceholderPreview"),
     tool: tool || null,
           tools,
     contentType,
@@ -745,6 +734,7 @@ export function CreatePromptForm() {
   }
 
   const isSaveMode = isEditMode && !isEditingDraft;
+  const typeMeta = CONTENT_TYPE_META[contentType];
   const focusField = (id: string) => () => document.getElementById(id)?.focus();
   const problems: PublishProblem[] = [
     ...(title.trim() ? [] : [{ key: "title", label: t("compose.problemTitle"), onFix: focusField("prompt-title") }]),
@@ -766,24 +756,8 @@ export function CreatePromptForm() {
   const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
   const publishLabel = isSubmitting ? (isSaveMode ? t("common.saving") : t("prompt.publishing")) : isSaveMode ? t("common.save") : t("common.share");
 
-  const livePreview = (options: { columns?: 1 | 2; showCreate?: boolean } = {}) => (
-    <PromptLivePreview
-      prompt={previewPrompt}
-      finalText={finalPromptText}
-      promptText={promptText}
-      variables={variables}
-      values={previewValues}
-      onValuesChange={setPreviewValues}
-      onEdit={(variable) => editorRef.current?.editVariable(variable)}
-      onDelete={(variable) => editorRef.current?.deleteVariable(variable)}
-      onCreate={() => editorRef.current?.createVariable()}
-      {...options}
-    />
-  );
-
   return (
     <ComposeShell
-      studio
       title={
         isEditMode
           ? t("prompt.editPromptTitle")
@@ -794,28 +768,19 @@ export function CreatePromptForm() {
               : t("compose.newPrompt")
       }
       titleExtra={<KindDraftsButton kind="prompt" compact />}
-      status={draftNotice ? t("draft.saved") : undefined}
       onClose={leave.requestClose}
       onPublish={() => panelRef.current?.publish()}
       publishLabel={isSaveMode ? t("common.save") : t("common.share")}
       publishDisabled={isSubmitting}
       publishDimmed={problems.length > 0}
       onSaveDraft={canSaveDraft && !communityId ? () => void handleSaveDraft() : undefined}
-      aside={livePreview()}
-      bottom={
-        <PromptMobileDock
-          editing={editorFocused}
-          line={resolvedPromptText.replace(/\s+/g, " ").trim()}
-          variables={variables}
-          onOpenPreview={() => setPreviewOpen(true)}
-          onInsert={(name) => editorRef.current?.insertVariable(name)}
-          onCreate={() => editorRef.current?.createVariable()}
-          onSaveDraft={canSaveDraft && !communityId ? () => void handleSaveDraft() : undefined}
-          onPublish={() => panelRef.current?.publish()}
-          publishLabel={publishLabel}
-          publishDimmed={problems.length > 0}
-          busy={isSubmitting}
-        />
+      aside={
+        <>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
+          <div className="pointer-events-none select-none">
+            <PromptCard prompt={previewPrompt} />
+          </div>
+        </>
       }
     >
       <form
@@ -824,7 +789,7 @@ export function CreatePromptForm() {
           panelRef.current?.publish();
         }}
         data-compose-body=""
-        className="flex flex-col gap-[30px]"
+        className="space-y-6"
       >
         {isAnswerMode && answeredRequest && (
           <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
@@ -880,7 +845,7 @@ export function CreatePromptForm() {
               locked={isEditMode}
             />
           </FormField>
-          <FormField label={t("forms.title")} htmlFor="prompt-title" required hint={t("compose.titleHint")} counter={`${title.length}/80`} error={attempted && !title.trim() ? t("compose.problemTitle") : null}>
+          <FormField label={t("forms.title")} htmlFor="prompt-title" required hint={t("compose.titleHint")} error={attempted && !title.trim() ? t("compose.problemTitle") : null}>
             <input
               id="prompt-title"
               value={title}
@@ -888,7 +853,7 @@ export function CreatePromptForm() {
               maxLength={80}
               placeholder={t("prompt.titlePlaceholder")}
               aria-invalid={attempted && !title.trim() ? true : undefined}
-              className={studioInputClassName}
+              className={formTextInputClassName}
             />
           </FormField>
         </ComposeSection>
@@ -899,13 +864,9 @@ export function CreatePromptForm() {
               id="prompt-text"
               value={promptText}
               onChange={setPromptText}
-              ref={editorRef}
               variables={variables}
               onVariablesChange={setVariables}
-              previewValues={previewValues}
-              onPreviewValuesChange={setPreviewValues}
-              onFocusChange={setEditorFocused}
-              rows={6}
+              rows={5}
               placeholder={t("prompt.promptTextPlaceholder")}
               // "Görselden yardım" works on the image already picked below — no second upload.
               visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
@@ -930,8 +891,8 @@ export function CreatePromptForm() {
           />
 
           {contentType === "image" && (
-            <FormField label={t("formSection.images")} optional hint={isEditMode ? t("prompt.imageEditHint") : t("studio.coverHint")}>
-              <MultiImagePicker items={images} onChange={setImages} hint="" />
+            <FormField label={t("formSection.images")} optional>
+              <MultiImagePicker items={images} onChange={setImages} hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")} />
             </FormField>
           )}
 
@@ -941,7 +902,7 @@ export function CreatePromptForm() {
             </FormField>
           )}
 
-          <FormField label={t("compose.descriptionLabel")} htmlFor="prompt-description" required counter={`${description.length}/200`} error={attempted && !description.trim() ? t("compose.problemDescription") : null}>
+          <FormField label={t("compose.descriptionLabel")} htmlFor="prompt-description" required error={attempted && !description.trim() ? t("compose.problemDescription") : null}>
             <textarea
               id="prompt-description"
               value={description}
@@ -950,13 +911,12 @@ export function CreatePromptForm() {
               rows={3}
               placeholder={t("prompt.descriptionPlaceholder")}
               aria-invalid={attempted && !description.trim() ? true : undefined}
-              className={studioTextareaClassName}
+              className={formTextareaClassName}
             />
           </FormField>
         </ComposeSection>
 
         <ComposeSection title={t("compose.sectionDetails")}>
-          <FormDisclosureGroup>
           <FormDisclosure id="tool" label={t("formSection.tool")} value={toolLabel}>
             <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
           </FormDisclosure>
@@ -971,6 +931,7 @@ export function CreatePromptForm() {
           >
             <TagPicker picker={tagPicker} />
           </FormDisclosure>
+          <SuggestedTagsRow picker={tagPicker} />
           <FormDisclosure id="dna" label={t("dna.title")} hint={t("compose.dnaHint")} value={dnaSections.length > 0 ? String(dnaSections.length) : undefined}>
             <section className="space-y-2">
               <p className="text-caption text-text-muted">{t("dna.description")}</p>
@@ -987,8 +948,6 @@ export function CreatePromptForm() {
               <ReferenceRequirementsField contentType={contentType} value={references} onChange={setReferences} />
             </FormDisclosure>
           )}
-          </FormDisclosureGroup>
-          <SuggestedTagsRow picker={tagPicker} />
         </ComposeSection>
 
         <ComposeSection title={t("publish.whoSees")} id="compose-publish">
@@ -1007,6 +966,15 @@ export function CreatePromptForm() {
             onVisibilityChange={showsVisibilityChoice ? undefined : setVisibility}
             problems={problems}
             showProblems={attempted}
+            preview={
+              <PublishPreview
+                thumbnail={contentType === "image" ? (images[0]?.url ?? null) : null}
+                icon={typeMeta.icon}
+                typeLabel={[`${t(typeMeta.labelKey)} Prompt`, toolLabel].filter(Boolean).join(" · ")}
+                title={title.trim() || t("prompt.untitledPrompt")}
+                meta={[ownProfile ? `@${ownProfile.username}` : "", ...tagPicker.accepted.slice(0, 3).map((entry) => `#${entry.tag.label}`)].filter(Boolean).join(" · ")}
+              />
+            }
             extra={
               showsVisibilityChoice ? (
                 <div>
@@ -1024,7 +992,7 @@ export function CreatePromptForm() {
               ) : undefined
             }
           >
-            {draftNotice && <p className="animate-pop-in text-sm text-success lg:hidden">{t("draft.saved")}</p>}
+            {draftNotice && <p className="animate-pop-in text-sm text-success">{t("draft.saved")}</p>}
             {publishError && (
               <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
                 {publishError}
@@ -1033,17 +1001,6 @@ export function CreatePromptForm() {
           </PublishPanel>
         </ComposeSection>
       </form>
-      {previewOpen && (
-        <PromptPreviewSheet
-          onClose={() => setPreviewOpen(false)}
-          onCreate={() => {
-            setPreviewOpen(false);
-            editorRef.current?.createVariable();
-          }}
-        >
-          {livePreview({ columns: 1, showCreate: false })}
-        </PromptPreviewSheet>
-      )}
       {leave.dialog}
     </ComposeShell>
   );

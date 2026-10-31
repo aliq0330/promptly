@@ -1,7 +1,6 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useComposeStudio } from "@/features/content/compose-form";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import type { UseTagPickerResult } from "@/features/prompts/use-tag-picker";
 import { CONTENT_TYPE_IDS } from "@/lib/content-taxonomy";
@@ -18,9 +17,8 @@ const chipClassName =
  */
 export function ContentTypePicker({ value, onChange, locked = false }: { value: PromptContentType; onChange: (next: PromptContentType) => void; locked?: boolean }) {
   const { t } = useTranslation();
-  const studio = useComposeStudio();
   return (
-    <div role="radiogroup" aria-label={t("compose.whatMaking")} data-compose-type={value} className={cn("flex gap-1.5", studio ? "flex-nowrap overflow-x-auto scrollbar-none lg:flex-wrap" : "flex-wrap gap-2")}>
+    <div role="radiogroup" aria-label={t("compose.whatMaking")} data-compose-type={value} className="flex flex-wrap gap-2">
       {CONTENT_TYPE_IDS.map((type) => {
         const option = CONTENT_TYPE_META[type];
         const selected = type === value;
@@ -35,14 +33,11 @@ export function ContentTypePicker({ value, onChange, locked = false }: { value: 
             onClick={() => onChange(type)}
             className={cn(
               chipClassName,
-              studio ? "min-h-9 shrink-0 px-3.5 text-[0.8125rem] font-semibold disabled:opacity-50" : "min-h-11 px-3 text-body font-medium disabled:opacity-50 sm:px-4",
-              selected
-                ? cn("border-primary bg-primary-soft text-primary", !studio && "font-bold")
-                : "border-border-strong bg-surface text-text-secondary hover:border-primary/50 hover:text-text",
-              studio && !selected && "border-border",
+              "min-h-11 px-3 text-body font-medium disabled:opacity-50 sm:px-4",
+              selected ? "border-primary bg-primary-soft font-bold text-primary" : "border-border-strong bg-surface text-text-secondary hover:border-primary/50 hover:text-text",
             )}
           >
-            {(!studio || selected) && <option.icon size={16} strokeWidth={1.9} aria-hidden />}
+            <option.icon size={16} strokeWidth={1.9} aria-hidden />
             {t(option.labelKey)}
           </button>
         );
@@ -54,12 +49,11 @@ export function ContentTypePicker({ value, onChange, locked = false }: { value: 
 /** Başlık ve metinden gelen etiket önerileri, yazma ekranında görünür kalır; dokununca eklenir (hiçbiri kendiliğinden değil). */
 export function SuggestedTagsRow({ picker, max = 4 }: { picker: UseTagPickerResult; max?: number }) {
   const { t } = useTranslation();
-  const studio = useComposeStudio();
   const list = picker.suggested.slice(0, max);
   if (list.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-2" data-compose-suggested="">
-      <span className={cn("text-text-muted", studio ? "text-[0.75rem]" : "text-caption")}>{t("compose.suggested")}</span>
+      <span className="text-caption text-text-muted">{t("compose.suggested")}</span>
       {list.map((tag) => (
         <button
           key={tag.slug}
@@ -67,9 +61,9 @@ export function SuggestedTagsRow({ picker, max = 4 }: { picker: UseTagPickerResu
           disabled={picker.acceptingSlug === tag.slug}
           onClick={() => void picker.acceptSuggested(tag)}
           data-compose-suggestion={tag.slug}
-          className={cn(chipClassName, "border-dashed border-border-strong text-text-secondary hover:border-primary/50 hover:text-primary disabled:opacity-60", studio && "min-h-7 px-2.5 text-[0.75rem] font-semibold")}
+          className={cn(chipClassName, "border-dashed border-border-strong text-text-secondary hover:border-primary/50 hover:text-primary disabled:opacity-60")}
         >
-          {!studio && <Plus size={13} aria-hidden />}#{tag.label}
+          <Plus size={13} aria-hidden />#{tag.label}
         </button>
       ))}
     </div>
