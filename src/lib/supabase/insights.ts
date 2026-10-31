@@ -5,7 +5,7 @@ import type { InsightDay, InsightReactionRow, InsightSummary, InsightTopItem } f
 import { reactionRows } from "@/lib/insights";
 
 /**
- * Yaratıcı paneli veri katmanı (docs/history/293-*): dört `creator_insights_*` RPC'si. Hepsi yalnız çağıranın KENDİ yayınlanmış promptlarını
+ * Yaratıcı paneli veri katmanı (docs/history/294-*): dört `creator_insights_*` RPC'si. Hepsi yalnız çağıranın KENDİ yayınlanmış promptlarını
  * toplu sayılarla döndürür (kimlik sunucuda `auth.uid()`; başkasının kimliği verilemez). Hata sessizce boş sayıya çevrilmez — panel
  * "yüklenemedi" gösterip yeniden denetir, çünkü 0 yazan bir sayı yalan olur.
  */

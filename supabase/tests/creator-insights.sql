@@ -1,4 +1,4 @@
--- Yaratıcı paneli (creator_insights_* RPC'leri; docs/history/293-*): DB testi.
+-- Yaratıcı paneli (creator_insights_* RPC'leri; docs/history/294-*): DB testi.
 -- Çalıştırma: supabase/tests/run-local.sh supabase/tests/creator-insights.sql  ("FAILED=0" beklenir).
 -- me = yaratıcı; u1/u2/u3 = diğer kullanıcılar. Dönem 30 gün, önceki dönem hemen öncesi 30 gün.
 -- Beklenen (dönem / önceki): kopyalama 4/1, tepki 3/1, yorum 2/1, kaydetme 2/1, takipçi 1/1.

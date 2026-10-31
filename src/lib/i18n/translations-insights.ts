@@ -1,5 +1,5 @@
 /**
- * Yaratıcı paneli (docs/history/293-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar (`...insightsTranslations`).
+ * Yaratıcı paneli (docs/history/294-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar (`...insightsTranslations`).
  * Prompt başlıkları, araç adları ve kullanıcı adları çevrilmez; tepki adları `reaction.*` anahtarlarından gelir.
  */
 export const insightsTranslations = {

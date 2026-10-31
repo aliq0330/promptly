@@ -52,7 +52,7 @@ saat, **O** = 1–2 gün, **B** = birkaç gün.
 
 - ~~Toplu yönetim aracı~~ **yapıldı** (`docs/history/251-*`): etiketle listele, seçerek yayınla / gizle ("Sadece ben") / sil. Yayından GERİ ÇEKME bilerek yok (etiket kullanım sayacı geri azalmıyor → sayaç şişer); yerine "gizle". Silme yalnız kimsenin dokunmadığı promptları siler.
 - Yalnız **Prompt** dışa/içe aktarılır; Workflow / Hazır Ayar / İstek yok. Markdown ve CSV **değişken tanımı** taşımaz.
-- prompts.chat içeriği hep `text` türünde, kategorisiz; `${var:varsayılan}` ve `{Var}` şablonları (~682 kayıt) Promptly değişkenine ÇEVRİLMEZ, metin olduğu gibi kalır. Görsel/ses/video promptları ayrılmaz.
+- ~~prompts.chat içeriği hep `text`, kategorisiz, şablonlar çevrilmez~~ **giderildi** (`docs/history/253-*` şablon değişkenleri, `260-*` toplu tür/kategori; canlıda 3388 prompt kategorili, 718'inde değişken var — `293-*`). 7 kayıt 50 000 karakter sınırını aşıyor → atlanır (kesilmez); 7 kayıt birebir yinelenen. ~700 kaydın katkıcı alanı **e-posta adresi**, 621'i anonim → bunlar bilerek yalnız genel "prompts.chat (CC0)" atfı alır (kişisel veri kopyalanmaz).
 - prompts.chat'te 7 kayıt 50 000 karakter sınırını aşıyor → atlanır (kesilmez); 7 kayıt birebir yinelenen. ~700 kaydın katkıcı alanı **e-posta adresi**, 621'i anonim → bunlar bilerek yalnız genel "prompts.chat (CC0)" atfı alır (kişisel veri kopyalanmaz).
 - Düzenlenmiş dosyayı yeniden içe aktarmak mevcut promptu **güncellemez** (yinelenme = aynı başlık + metin); güncelleme/senkronizasyon GitHub aşamasının işi.
 - Kullanıcı içe aktarması tek seferde en çok 30 prompt (saatlik hız sınırıyla uyumlu); moderatörde sınır yok (50'şerli parça).

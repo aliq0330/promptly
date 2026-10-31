@@ -1,5 +1,5 @@
 /**
- * Yaratıcı paneli (docs/history/293-*) — saf kurallar: dönem seçenekleri, artış/azalış, grafik ölçeği ve çizgi noktaları, tepki dağılımı.
+ * Yaratıcı paneli (docs/history/294-*) — saf kurallar: dönem seçenekleri, artış/azalış, grafik ölçeği ve çizgi noktaları, tepki dağılımı.
  * Bileşenlerden ayrı tutulur ki sayı/ölçek kuralları birim testle sınansın; ağa ve DOM'a dokunmaz.
  */
 import { isReactionKey, REACTION_KEYS, type ReactionKey } from "./reactions.ts";

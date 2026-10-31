@@ -1,4 +1,4 @@
-// Yaratıcı paneli (docs/history/293-*): /insights. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ — sayıların DOĞRULUĞU (kim neyi sayar, dönem sınırı,
+// Yaratıcı paneli (docs/history/294-*): /insights. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ — sayıların DOĞRULUĞU (kim neyi sayar, dönem sınırı,
 // yazar/misafir/silinmiş dışlama) sunucu kuralıdır ve supabase/tests/creator-insights.sql'dedir. Burada yalnız istemci davranışı sınanır:
 // dört RPC'nin dönemle çağrılması, sayı/yüzde biçimi, grafik/liste/tepki dağılımı, dönem değişimi + önbellek, boş/hata durumu, iki dil, giriş kapısı, taşma.
 import { chromium } from "playwright";

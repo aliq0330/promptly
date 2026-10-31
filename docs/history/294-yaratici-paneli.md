@@ -1,4 +1,4 @@
-# 293 — Yaratıcı paneli (`/insights`): kendi promptlarının son N gündeki performansı
+# 294 — Yaratıcı paneli (`/insights`): kendi promptlarının son N gündeki performansı
 
 **Durum:** uygulandı (repoda). `npx tsc --noEmit`, `eslint` (yeni dosyalarda 0 hata; depoda önceden var olan uyarılar duruyor), `npm test` (599/599, yeni `insights.test.ts` 11),
 `npm run build` (sahte Supabase değişkenleriyle) temiz. Yerel PostgreSQL 16'da `supabase/tests/creator-insights.sql` **20/20** (`FAILED=0`), migration denetimi temiz.

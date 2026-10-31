@@ -1,4 +1,4 @@
--- Yaratıcı paneli (docs/history/293-*): kişinin KENDİ yayınlanmış promptlarının son N gündeki performansı.
+-- Yaratıcı paneli (docs/history/294-*): kişinin KENDİ yayınlanmış promptlarının son N gündeki performansı.
 --
 -- Yalnızca ekleyicidir (expand): tablo/sütun yok, dört okuma RPC'si. Hepsi SECURITY DEFINER çünkü
 -- `prompt_copy_events` istemciye kapalı (politika yok) ve başkalarının özel koleksiyonlarındaki kaydetmeler
