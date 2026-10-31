@@ -1,0 +1,125 @@
+"use client";
+
+import { useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { countVariableUsages } from "@/lib/prompt-variables";
+import { conditionStatus, describeOptions, isChoiceType } from "@/lib/prompt-variable-types";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import type { PromptVariableType } from "@/types";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { DraftVariable } from "./prompt-text-editor";
+
+const TYPE_LABEL_KEYS: Record<PromptVariableType, TranslationKey> = {
+  text: "variable.type.text",
+  select: "variable.type.select",
+  multi_select: "variable.type.multiSelect",
+  number: "variable.type.number",
+  slider: "variable.type.slider",
+  toggle: "variable.type.toggle",
+};
+
+/**
+ * "Değişkenler" management panel (CLAUDE.md §4) — lists every draft
+ * variable with its live usage count (recomputed from the CURRENT prompt
+ * text on every render, never a stale stored number) and lets the user
+ * rename (delegated to the caller via `onEdit` → `VariableEditorModal`) or
+ * delete (with a two-click confirm showing exactly how many `{token}`
+ * occurrences will be removed from the text, per the spec's "Bu değişken
+ * prompt metninde N yerde kullanılıyor" warning).
+ */
+export function VariableList({
+  variables,
+  promptText,
+  onEdit,
+  onDelete,
+}: {
+  variables: DraftVariable[];
+  promptText: string;
+  onEdit: (variable: DraftVariable) => void;
+  onDelete: (variable: DraftVariable) => void;
+}) {
+  const { t } = useTranslation();
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  if (variables.length === 0) return null;
+
+  return (
+    <div className="space-y-2 rounded-md border border-border bg-surface p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+        {t("variable.sectionHeading", { count: variables.length })}
+      </p>
+      <ul className="space-y-1.5">
+        {variables.map((variable) => {
+          const usageCount = countVariableUsages(promptText, variable.name);
+          const isConfirming = confirmingId === variable.tempId;
+          return (
+            <li
+              key={variable.tempId}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm"
+            >
+              <div className="min-w-0 flex-1 basis-40 break-words">
+                <span className="font-mono text-primary">{`{${variable.name}}`}</span>
+                {variable.type !== "text" && (
+                  <Badge variant="neutral" className="ml-2 align-middle">
+                    {t(TYPE_LABEL_KEYS[variable.type])}
+                  </Badge>
+                )}
+                {isChoiceType(variable.type) ? (
+                  <span className="ml-2 break-words text-xs text-text-muted">→ {describeOptions(variable.options)}</span>
+                ) : (
+                  variable.defaultValue && (
+                    <span className="ml-2 break-words text-xs text-text-muted">→ {variable.defaultValue}</span>
+                  )
+                )}
+                <span className="ml-2 text-xs text-text-muted">
+                  {usageCount === 0 ? t("variable.unusedInText") : t("variable.usedInCount", { count: usageCount })}
+                </span>
+                {variable.config.condition && (
+                  <p className={conditionStatus(variable, variables) === "ok" ? "mt-0.5 text-xs text-text-muted" : "mt-0.5 text-xs text-warning"}>
+                    {conditionStatus(variable, variables) === "ok"
+                      ? t("variable.conditionBadge", { variable: variable.config.condition.variable, value: variable.config.condition.equals || "—" })
+                      : t("variable.conditionIgnored")}
+                  </p>
+                )}
+              </div>
+              <div className="flex max-w-full shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmingId(null);
+                    onEdit(variable);
+                  }}
+                  aria-label={t("variable.editAriaLabel", { name: variable.name })}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+                >
+                  <Pencil size={13} />
+                </button>
+                {isConfirming ? (
+                  <button
+                    type="button"
+                    onClick={() => onDelete(variable)}
+                    className="max-w-full whitespace-normal rounded-md bg-danger/10 px-2 py-1 text-left text-xs font-medium text-danger hover:bg-danger/20"
+                  >
+                    {usageCount > 0
+                      ? t("variable.deleteWithUsagesConfirm", { count: usageCount })
+                      : t("variable.deleteConfirm")}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingId(variable.tempId)}
+                    aria-label={t("variable.deleteAriaLabel", { name: variable.name })}
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}

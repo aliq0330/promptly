@@ -321,21 +321,8 @@ await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken
   assert.deepEqual(types, ["image", "text", "audio", "video"], "the four types are radios on the page");
   await page.locator("#prompt-title").waitFor();
   await page.locator("#prompt-description").waitFor();
-  // Prompt metni formda tek karttır; dokununca tam ekran yazma katmanı açılır (docs/history/288-*), kısayollar üstte.
-  assert.equal(await page.getByRole("button", { name: /Hazır Ayarlar ve Ek Alan|Presets & Extra/ }).count(), 0, "the dashed preset row left the form");
-  await page.locator("[data-prompt-card]").click();
-  await page.locator("[data-prompt-fullscreen]").waitFor();
-  for (const tid of ["prompt-open-presets", "prompt-open-fields", "prompt-open-vision", "prompt-add-variable"]) await page.getByTestId(tid).waitFor();
+  await page.locator("[data-insert-trigger]:visible").first().waitFor();
   await page.locator("#prompt-text").fill("cinematic portrait of a fox");
-  // Hazır ayarlar düğmesi eski paneli açar; Escape yalnız paneli kapatır, yazma katmanı kalır.
-  await page.getByTestId("prompt-open-presets").click();
-  await page.locator("[data-extra-panel]").waitFor();
-  await page.keyboard.press("Escape");
-  await page.locator("[data-extra-panel]").waitFor({ state: "detached" });
-  await page.locator("[data-prompt-fullscreen]").waitFor();
-  await page.getByTestId("prompt-fullscreen-done").click();
-  await page.locator("[data-prompt-fullscreen]").waitFor({ state: "detached" });
-  assert.match(await page.locator("[data-prompt-card]").innerText(), /cinematic portrait of a fox/);
   const images = page.getByText("Görseller", { exact: true });
   await images.first().waitFor();
   // Metin türünde görsele özgü alanlar kalkar; geri dönülünce gelir.
@@ -343,6 +330,10 @@ await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken
   await images.first().waitFor({ state: "detached" });
   await page.locator("[data-compose-type] [data-taxonomy-type=image]").click();
   await images.first().waitFor();
+  // Hazır ayar satırı eski pencereyi açar; Görselden yardım Şablon sekmesinde.
+  await page.getByRole("button", { name: /Hazır Ayarlar ve Ek Alan|Presets & Extra/ }).first().click();
+  await page.locator("[data-extra-panel]").waitFor();
+  await page.keyboard.press("Escape");
   assert.equal(await overflowFree(page), true);
   // İsteğe bağlı ayrıntılar: satır → altında kendi seçicisi (alt sayfa yok).
   const rows = await page.locator("[data-form-row]").evaluateAll((els) => els.map((el) => el.getAttribute("data-form-row")));
