@@ -20,3 +20,7 @@ supabase functions deploy delete-account --project-ref "$SUPABASE_PROJECT_REF"
 
 # Giriş yapmamış kullanıcı çağırdığı için JWT doğrulaması yalnızca burada kapalı.
 supabase functions deploy username-login --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
+
+# Açık API: oturumsuz okuma, JWT doğrulaması kapalı. Önce çekirdeğin kopyası güncel mi bak (`_shared/promptly`).
+node scripts/sync-function-shared.mjs --check
+supabase functions deploy api --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"

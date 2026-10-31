@@ -1,0 +1,43 @@
+{
+  "name": "promptly-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Promptly — search, read and fill public AI prompts from Claude, Cursor and other MCP clients.",
+  "type": "module",
+  "bin": {
+    "promptly-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/*.test.ts\"",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "prompts",
+    "promptly",
+    "claude"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aliq0330/promptly.git",
+    "directory": "mcp"
+  },
+  "homepage": "https://aliq0330.github.io/promptly",
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@types/node": "^20.19.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.0",
+    "zod": "^4.6.7"
+  }
+}
