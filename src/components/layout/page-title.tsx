@@ -30,6 +30,7 @@ const ROUTE_TITLES: Record<string, TranslationKey> = {
   "/generate": "nav.studio",
   "/moderation": "moderation.title",
   "/my-content": "myContent.title",
+  "/insights": "insights.title",
   "/relations": "relations.title",
   "/profile/edit": "profile.editProfileHeading",
   "/messages": "header.messagesAriaLabel",

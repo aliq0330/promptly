@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Bookmark, Compass, GalleryVerticalEnd, Home, LogIn, Plus, Settings, Shapes, User, Users, UsersRound, WandSparkles } from "lucide-react";
+import { BarChart3, Bookmark, Compass, GalleryVerticalEnd, Home, LogIn, Plus, Settings, Shapes, User, Users, UsersRound, WandSparkles } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 /** Who may see a nav entry: everyone, or only a signed-in member. */
@@ -51,6 +51,8 @@ export const navGroups: NavGroup[] = [
     items: [
       { href: "/saved", labelKey: "nav.saved", icon: Bookmark, match: "/saved", visibility: "authenticated" },
       { href: "/following", labelKey: "nav.followingPeople", icon: Users, visibility: "authenticated" },
+      // Yaratıcı paneli (docs/history/294-*): kişinin kendi promptlarının performansı.
+      { href: "/insights", labelKey: "nav.insights", icon: BarChart3, visibility: "authenticated" },
       { href: PROFILE_NAV_PLACEHOLDER, labelKey: "nav.profile", icon: User, match: "/profile", visibility: "authenticated" },
     ],
   },
