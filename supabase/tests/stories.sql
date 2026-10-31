@@ -30,6 +30,8 @@ begin
 end $$;
 create or replace function public._try(q text) returns text language plpgsql as $$
 begin execute q; return 'ok'; exception when others then return sqlerrm; end $$;
+-- 287: `reports` INSERT politikası yalnız `submit_report` işaretiyle yazdırır; bu dosya şikâyet TETİKLEYİCİLERİNİ (yinelenme/hız sınırı/engel) doğrudan insert ile sınar, giriş yolunu değil (o `report-reasons.sql`'de).
+select set_config('promptly.submit_report', '1', false) \gset
 create or replace function public._cnt(q text) returns integer language plpgsql as $$
 declare r integer;
 begin execute q into r; return r; exception when others then return -1; end $$;
