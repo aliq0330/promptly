@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Sparkles, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";
 import { Modal } from "@/components/ui/modal";
@@ -29,9 +29,8 @@ import { resolvePresetFields } from "@/lib/preset-utils";
 import type { Preset } from "@/types";
 
 /**
- * The prompt form's "Hazır Ayarlar ve Ek Alan Önerileri" panel + applied chips. The panel is opened from the full-screen prompt writer's
- * top buttons (docs/history/288-*: "Hazır ayarlar" → Topluluk tab, "Ek alanlar" → Alanlar tab) — the form owns `panel`; there is no
- * trigger row any more. The panel only mounts while open and has three tabs, in this order:
+ * The prompt form's "Hazır Ayarlar ve Ek Alan Önerileri" row + applied chips.
+ * The panel only mounts while open and has three tabs, in this order:
  * Topluluk (one list of everyone's presets with a "Ben" toggle; the default),
  * Kaydettiklerim (presets saved with the ordinary save) and Alanlar (the
  * platform's fields, those recommended for the form's type → category →
@@ -54,12 +53,7 @@ export function ExtraSettingsSection({
   category = null,
   subcategory = null,
   tools = [],
-  panel,
-  onPanelChange,
 }: {
-  /** Açık panel (hangi sekmede) ya da null — form tutar; tam ekran yazma katmanındaki düğmeler açar. */
-  panel: { tab: PanelTab } | null;
-  onPanelChange: (panel: { tab: PanelTab } | null) => void;
   contentType: ContentTypeId;
   value: PresetSelection;
   onChange: (next: PresetSelection) => void;
@@ -78,6 +72,7 @@ export function ExtraSettingsSection({
   tools?: string[];
 }) {
   const { t, language } = useTranslation();
+  const [open, setOpen] = useState(false);
   const recommended = useMemo(() => catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), [contentType, category, subcategory, tools]);
   const catalog = useMemo(() => mergeFields(recommended, catalogFieldsForType(contentType)), [recommended, contentType]);
   const allFields = useMemo(() => withCustomOptions(mergeFields(catalog, extraFields), customOptions), [catalog, extraFields, customOptions]);
@@ -88,6 +83,21 @@ export function ExtraSettingsSection({
 
   return (
     <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        className="flex w-full items-center gap-3 rounded-md border border-dashed border-border-strong bg-surface-soft px-3 py-2.5 text-left transition-colors hover:border-primary hover:bg-primary-soft"
+      >
+        <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
+          <span className="block text-caption text-text-secondary">{t("extra.hint")}</span>
+        </span>
+        {count > 0 && <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{t("extra.count", { count })}</span>}
+        <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />
+      </button>
+
       {count > 0 && (
         <div className="space-y-2">
           <SelectionSummary fields={allFields} selection={applied} onChange={onChange} />
@@ -101,9 +111,8 @@ export function ExtraSettingsSection({
         </div>
       )}
 
-      {panel && (
+      {open && (
         <ExtraSettingsPanel
-          initialTab={panel.tab}
           contentType={contentType}
           category={category}
           recommended={recommended}
@@ -115,12 +124,12 @@ export function ExtraSettingsSection({
           hasTool={hasTool}
           englishFragments={englishFragments}
           onEnglishFragmentsChange={onEnglishFragmentsChange}
-          onClose={() => onPanelChange(null)}
+          onClose={() => setOpen(false)}
           onApply={(nextSelection, nextExtra, nextCustom) => {
             onExtraFieldsChange(nextExtra);
             onCustomOptionsChange(nextCustom);
             onChange(nextSelection);
-            onPanelChange(null);
+            setOpen(false);
           }}
         />
       )}
@@ -128,10 +137,9 @@ export function ExtraSettingsSection({
   );
 }
 
-export type PanelTab = "fields" | "saved" | "community";
+type PanelTab = "fields" | "saved" | "community";
 
 function ExtraSettingsPanel({
-  initialTab,
   contentType,
   category,
   recommended,
@@ -146,7 +154,6 @@ function ExtraSettingsPanel({
   onClose,
   onApply,
 }: {
-  initialTab: PanelTab;
   contentType: ContentTypeId;
   category: string | null;
   recommended: PresetField[];
@@ -165,7 +172,7 @@ function ExtraSettingsPanel({
   const [draft, setDraft] = useState<PresetSelection>(initial);
   const [extra, setExtra] = useState<PresetField[]>(initialExtra);
   const [custom, setCustom] = useState<CustomOptions>(initialCustom);
-  const [tab, setTab] = useState<PanelTab>(initialTab);
+  const [tab, setTab] = useState<PanelTab>("community");
   const [previewing, setPreviewing] = useState<Preset | null>(null);
   const [savedVersion, setSavedVersion] = useState(0);
   const [showOthers, setShowOthers] = useState(false);

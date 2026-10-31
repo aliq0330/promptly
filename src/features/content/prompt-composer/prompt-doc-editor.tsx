@@ -88,8 +88,6 @@ export const PromptDocEditor = forwardRef<
     ariaDescribedBy?: string;
     required?: boolean;
     hidden?: boolean;
-    /** Tam ekran yazma (docs/history/288-*): çerçevesiz, mobilde yükseklik sınırı yok — kaydırmayı üst kap yapar, 16 px yazı. */
-    fill?: boolean;
     className?: string;
     onSelectionChange?: (selection: EditorSelection) => void;
     onFocusChange?: (focused: boolean) => void;
@@ -108,7 +106,6 @@ export const PromptDocEditor = forwardRef<
     ariaDescribedBy,
     required,
     hidden,
-    fill = false,
     className,
     onSelectionChange,
     onFocusChange,
@@ -296,25 +293,22 @@ export const PromptDocEditor = forwardRef<
     [hidden, pointFor],
   );
 
-  const typeClass = fill ? "text-[16px] leading-7" : "text-sm leading-6 max-lg:text-[16px]";
-  const padClass = fill ? "px-4 py-4" : "px-3 py-2";
-
   return (
     <div
       className={cn(
         "relative",
-        !fill && "rounded-lg border border-border bg-background shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60",
+        "rounded-lg border border-border bg-background shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60",
         hidden && "hidden",
         className,
       )}
     >
       {/* Mobilde uzun metin sayfayı uzatmasın: ayna + textarea birlikte kayan tek kutuda (yazma ekranında sayfa kayar). */}
-      <div className={cn("rounded-lg", !fill && "max-lg:max-h-[min(46dvh,22rem)] max-lg:overflow-y-auto max-lg:overscroll-contain")} data-testid="editor-scroll">
+      <div className={cn("rounded-lg", "max-lg:max-h-[min(46dvh,22rem)] max-lg:overflow-y-auto max-lg:overscroll-contain")} data-testid="editor-scroll">
       <div className="relative">
       <div
         ref={mirrorRef}
         aria-hidden
-        className={cn("pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words font-mono text-text", typeClass, padClass)}
+        className={cn("pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words font-mono text-sm leading-6 text-text max-lg:text-[16px]", "px-3 py-2")}
       >
         {segments.map((segment) =>
           segment.type === "token" ? (
@@ -375,9 +369,8 @@ export const PromptDocEditor = forwardRef<
           syncSelection();
         }}
         className={cn(
-          "relative block w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent font-mono text-transparent caret-text outline-none placeholder:text-text-muted selection:bg-primary/25 selection:text-transparent",
-          typeClass,
-          padClass,
+          "relative block w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent font-mono text-sm leading-6 text-transparent caret-text outline-none placeholder:text-text-muted selection:bg-primary/25 selection:text-transparent",
+          "px-3 py-2",
         )}
       />
       </div>

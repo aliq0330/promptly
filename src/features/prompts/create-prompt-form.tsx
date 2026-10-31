@@ -17,9 +17,9 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { usePrefillTag } from "@/features/challenges/use-prefill-tag";
 import { TagPicker } from "@/features/prompts/tag-picker";
-import { ExtraSettingsSection, type PanelTab } from "@/features/prompts/extra-settings-panel";
+import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
 import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
-import { composePrompt, countSelected, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
+import { composePrompt, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
 import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
 import { PromptDnaEditor } from "@/features/prompts/prompt-dna-editor";
 import { fetchDnaSections, replaceDnaSections } from "@/lib/supabase/prompt-dna";
@@ -201,9 +201,6 @@ export function CreatePromptForm() {
       ),
     [contentType, category, subcategory, tools, extraFields, customOptions],
   );
-  const extraCount = useMemo(() => countSelected(sanitizeSelection(extraSettings, extraAllFields), extraAllFields), [extraSettings, extraAllFields]);
-  // Hazır ayar paneli: tam ekran yazma katmanındaki "Hazır ayarlar" / "Ek alanlar" düğmeleri açar (docs/history/288-*).
-  const [extraPanel, setExtraPanel] = useState<{ tab: PanelTab } | null>(null);
   const finalPromptText = useMemo(
     () => composePrompt(promptText, sanitizeSelection(extraSettings, extraAllFields), extraAllFields, fragmentLanguage),
     [promptText, extraSettings, extraAllFields, fragmentLanguage],
@@ -869,8 +866,7 @@ export function CreatePromptForm() {
               onChange={setPromptText}
               variables={variables}
               onVariablesChange={setVariables}
-              extraCount={extraCount}
-              onOpenExtra={(tab) => setExtraPanel({ tab })}
+              rows={5}
               placeholder={t("prompt.promptTextPlaceholder")}
               // "Görselden yardım" works on the image already picked below — no second upload.
               visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
@@ -883,8 +879,6 @@ export function CreatePromptForm() {
             onChange={setExtraSettings}
             extraFields={extraFields}
             onExtraFieldsChange={setExtraFields}
-            panel={extraPanel}
-            onPanelChange={setExtraPanel}
             customOptions={customOptions}
             onCustomOptionsChange={setCustomOptions}
             englishFragments={englishFragments}
