@@ -257,3 +257,13 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-card-title.m
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-creator-suggestions.mjs   # 15/15 beklenir
 ```
+
+
+## Prompt metni tam ekran yazma (`docs/history/288-*`)
+
+`run-prompt-fullscreen.mjs` (9 senaryo): formdaki "Tam ekran" düğmesi + katman (başlık, sayaç, sabit satır), imleç kelimedeyken düğmenin kelimenin tamamını göstermesi ve dönüştürmesi + Geri al, seçili ifade, boşlukta pasif / seçimde `{ }` engeli, jetonda "Değişkeni düzenle" (pencere katmanın üstünde), aynı adlı değişkene bağlanma, Hazır ayarlar panelinin katmanın üstüne açılması + Escape sırası, İngilizce, mobil (taşma yok, sabit satır kaymıyor). Ağ taklitli. **Bu oturumda ÇALIŞTIRILAMADI** (npm registry'ye erişim yok); ilk koşuda selector/zamanlama ayarı gerekebilir. Gerçek telefon klavyesine KARŞI DENENMEDİ.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-prompt-fullscreen.mjs   # 9/9 beklenir
+```

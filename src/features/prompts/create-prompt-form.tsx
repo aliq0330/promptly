@@ -19,7 +19,7 @@ import { usePrefillTag } from "@/features/challenges/use-prefill-tag";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
 import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
-import { composePrompt, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
+import { composePrompt, countSelected, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
 import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
 import { PromptDnaEditor } from "@/features/prompts/prompt-dna-editor";
 import { fetchDnaSections, replaceDnaSections } from "@/lib/supabase/prompt-dna";
@@ -190,6 +190,8 @@ export function CreatePromptForm() {
   const [customOptions, setCustomOptions] = useState<CustomOptions>({});
   // Lets Turkish-mode users still write the appended fragments in English.
   const [englishFragments, setEnglishFragments] = useState(false);
+  // "Hazır Ayarlar" paneli: formdaki satırdan ve tam ekran yazma ekranının üstündeki düğmeden açılır.
+  const [extraPanelOpen, setExtraPanelOpen] = useState(false);
   const fragmentLanguage = englishFragments ? "en" : language;
   // Every catalog field of the type (not only the recommended ones: the panel's
   // "Diğer alanlar" can be chosen too) plus the added fields and typed options.
@@ -200,6 +202,10 @@ export function CreatePromptForm() {
         customOptions,
       ),
     [contentType, category, subcategory, tools, extraFields, customOptions],
+  );
+  const appliedPresetCount = useMemo(
+    () => countSelected(sanitizeSelection(extraSettings, extraAllFields), extraAllFields),
+    [extraSettings, extraAllFields],
   );
   const finalPromptText = useMemo(
     () => composePrompt(promptText, sanitizeSelection(extraSettings, extraAllFields), extraAllFields, fragmentLanguage),
@@ -870,6 +876,8 @@ export function CreatePromptForm() {
               placeholder={t("prompt.promptTextPlaceholder")}
               // "Görselden yardım" works on the image already picked below — no second upload.
               visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
+              onOpenPresets={() => setExtraPanelOpen(true)}
+              presetCount={appliedPresetCount}
             />
           </FormField>
 
@@ -888,6 +896,8 @@ export function CreatePromptForm() {
             category={category}
             subcategory={subcategory}
             tools={tools}
+            open={extraPanelOpen}
+            onOpenChange={setExtraPanelOpen}
           />
 
           {contentType === "image" && (

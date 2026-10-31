@@ -53,6 +53,8 @@ export function ExtraSettingsSection({
   category = null,
   subcategory = null,
   tools = [],
+  open: openProp,
+  onOpenChange,
 }: {
   contentType: ContentTypeId;
   value: PresetSelection;
@@ -70,9 +72,17 @@ export function ExtraSettingsSection({
   category?: string | null;
   subcategory?: string | null;
   tools?: string[];
+  /** Paneli dışarıdan yönet (ör. tam ekran yazma ekranının üstündeki "Hazır ayarlar"); verilmezse panel kendi durumunu tutar. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const { t, language } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const [innerOpen, setInnerOpen] = useState(false);
+  const open = openProp ?? innerOpen;
+  const setOpen = (next: boolean) => {
+    if (onOpenChange) onOpenChange(next);
+    else setInnerOpen(next);
+  };
   const recommended = useMemo(() => catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), [contentType, category, subcategory, tools]);
   const catalog = useMemo(() => mergeFields(recommended, catalogFieldsForType(contentType)), [recommended, contentType]);
   const allFields = useMemo(() => withCustomOptions(mergeFields(catalog, extraFields), customOptions), [catalog, extraFields, customOptions]);
