@@ -70,6 +70,10 @@ const CHECKS = [
   { name: "creator_suggestion_dismissals (kişinin kendi kapatmaları; ziyaretçiye kapalı, docs/history/285-*)", get: () => `creator_suggestion_dismissals?select=${encodeURIComponent("creator_id")}&limit=1`, deniedOk: true, soft: true },
   { name: "rpc submit_report (merkezi şikâyet, docs/history/284-*; yalnız oturumlu)", rpc: "submit_report", body: { p_target_type: "prompt", p_target_id: "00000000-0000-4000-8000-000000000000", p_reason_code: "spam", p_details: null }, deniedOk: true, soft: true },
   { name: "rpc moderation_report_queue 2 argümanlı (neden kodu + ayrıntı, docs/history/284-*; yalnız moderatör)", rpc: "moderation_report_queue", body: { p_status: "open", p_reason: "all" }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_summary (Yaratıcı paneli, docs/history/293-*; yalnız oturumlu)", rpc: "creator_insights_summary", body: { p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_daily (docs/history/293-*)", rpc: "creator_insights_daily", body: { p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_top (docs/history/293-*)", rpc: "creator_insights_top", body: { p_days: 30, p_limit: 5 }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_reaction_mix (docs/history/293-*)", rpc: "creator_insights_reaction_mix", body: { p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 
