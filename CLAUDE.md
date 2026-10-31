@@ -66,7 +66,7 @@ Uygulama tamamen statik export'tur (GitHub Pages, `basePath /promptly`): sunucu
 (bekleyen migration'lar, tek işlem + kayıt; yıkıcı SQL `-- ci:allow-destructive` ister) → `scripts/smoke-test.mjs` (istemcinin sorguları
 canlı şemaya karşı) → derleme → GitHub Pages. Biri kırmızıysa site yayınlanmaz. `supabase/migrations-baseline.txt` = canlıda olduğu
 bilinen son sürüm (CI yalnız ondan yenisini uygular; ilerletmeye gerek yok). PR'lerde `ci.yml` (lint, tsc, test, migration denetimi,
-temiz PostgreSQL'e baştan oynatma + `supabase/tests/*.sql`, bilgilendirici UI kesiti) koşar. **Edge Function'lar
+temiz PostgreSQL'e baştan oynatma + `supabase/tests/*.sql` [~9 dk; yalnız PR `supabase/` ya da `ci.yml` değiştiriyorsa koşar, `docs/history/289-*`], bilgilendirici UI kesiti) koşar. **Edge Function'lar
 (`supabase/functions/*`) CI ile deploy EDİLMEZ** — elle (`supabase functions deploy …`, "Deploy Edge Functions" workflow'u).
 
 ---

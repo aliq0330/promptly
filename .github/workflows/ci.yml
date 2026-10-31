@@ -49,8 +49,27 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
     steps:
+      # fetch-depth 2: pull_request'te çıkış, taban + PR başının birleşim commit'idir; HEAD^1 = taban ucu, yani fark = bu PR'ın değişiklikleri.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      # Yalnızca arayüz/belge değişen PR'larda SQL testleri (~9 dk) koşmaz. İş yine çalışıp başarı bildirir (atlanmış sayılmaz), yalnız aşağıdaki
+      # adım koşullu. Fark okunamazsa güvenli yol: testler KOŞAR. `supabase/` (migration, test, seed, fonksiyon) ya da bu dosya değişince koşar.
+      - name: Decide whether SQL tests are needed
+        id: changes
+        run: |
+          run=true
+          files=""
+          if files=$(git diff --name-only HEAD^1 HEAD 2>/dev/null); then
+            if printf '%s\n' "$files" | grep -qE '^(supabase/|\.github/workflows/ci\.yml$)'; then run=true; else run=false; fi
+          else
+            echo "::warning::Could not read the PR diff; running SQL tests to be safe."
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+          echo "Changed files:"; printf '%s\n' "$files"
+          if [ "$run" = false ]; then echo "::notice::No supabase/ or ci.yml change in this PR, SQL tests skipped."; fi
       - name: Replay migrations and run SQL tests
+        if: steps.changes.outputs.run == 'true'
         run: |
           set -u
           status=0
