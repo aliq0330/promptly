@@ -197,9 +197,16 @@ select public._check(15, 'RLS: bobby kendi şikâyetlerini görür, carol 0 gör
 set role authenticated;
 select public._as_user(:carol);
 select public._try($q$insert into public.reports (reporter_id, target_type, target_id, reason) values ('33333333-3333-4333-8333-333333333333', 'prompt', 'a0000000-0000-4000-8000-0000000000a3', 'eski serbest metin')$q$) as v \gset l16_
+-- İşaret (promptly.submit_report) yalnız submit_report içinde konur; burada elle koyarak tablo CHECK'inin hâlâ çalıştığını sınarız.
+select set_config('promptly.submit_report', '1', false);
 select public._try($q$insert into public.reports (reporter_id, target_type, target_id, reason, reason_code) values ('33333333-3333-4333-8333-333333333333', 'prompt', 'a0000000-0000-4000-8000-0000000000a1', 'x', 'uydurma')$q$) as v \gset l17_
+select set_config('promptly.submit_report', '', false);
 reset role;
-select public._check(16, 'eski istemci uyumu: serbest metinli doğrudan insert hâlâ çalışır (reason_code boş)', :'l16_v' = 'ok' and (select count(*) from public.reports where reporter_id = :carol and reason_code is null) = 1, :'l16_v');
+select count(*) as n from public.reports where reporter_id = :carol and reason_code is null \gset l16c_
+-- Eski (reason_code boş) satırlar canlıda hâlâ var: istemci artık üretemediği için burada yetkili rolle tohumlanır; kuyruk/süzgeç sınamaları onu kullanır.
+insert into public.reports (reporter_id, target_type, target_id, reason) values (:carol, 'prompt', 'a0000000-0000-4000-8000-0000000000a3', 'eski serbest metin');
+select public._check(16, 'contract: serbest metinli doğrudan insert artık reddedilir (politika yalnız submit_report işaretiyle yazdırır)',
+  :'l16_v' like '%row-level security%' and :l16c_n = 0, :'l16_v' || ' / ' || :l16c_n);
 select public._check(17, 'geçersiz neden kodu CHECK ile reddedilir', :'l17_v' like '%reports_reason_code_check%', :'l17_v');
 
 -- ============================================================================
@@ -258,6 +265,31 @@ reset role;
 select public._check(23, 'hız sınırı: carol''ın ilk 20 şikâyeti (öncesindeki 1 + ...) geçer, sonrası rate_limit',
   (select count(*) from _rl where r = 'ok') between 15 and 19 and (select count(*) from _rl where r like '%rate_limit%') >= 6,
   (select count(*) from _rl where r = 'ok') || ' ok / ' || (select count(*) from _rl where r like '%rate_limit%') || ' limit');
+
+-- ============================================================================
+-- 7) Contract sonrası: işaret submit_report sonrası temizlenir; is_blocked ziyaretçiye kapalı (287)
+-- ============================================================================
+set role authenticated;
+select public._as_user(:dave);
+select public._try($q$select public.submit_report('prompt', 'a0000000-0000-4000-8000-0000000000a2', 'spam', null)$q$) as v \gset l24a_
+select coalesce(current_setting('promptly.submit_report', true), '') as m \gset l24m_
+select public._try($q$insert into public.reports (reporter_id, target_type, target_id, reason) values ('44444444-4444-4444-8444-444444444444', 'prompt', 'a0000000-0000-4000-8000-0000000000a1', 'sonradan doğrudan')$q$) as v \gset l24b_
+reset role;
+select public._check(24, 'submit_report başarılı; işaret işlem içinde temizlenir ve sonraki doğrudan insert yine reddedilir',
+  :'l24a_v' = 'ok' and :'l24m_m' = '' and :'l24b_v' like '%row-level security%', :'l24a_v' || ' | ' || :'l24m_m' || ' | ' || :'l24b_v');
+
+insert into public.blocks (blocker_id, blocked_id) values (:bobby, :dave) on conflict do nothing;
+select public._as_user('');
+set role anon;
+select public.is_blocked(:bobby, :dave) as v \gset l25a_
+reset role;
+select public._as_user(:bobby);
+set role authenticated;
+select public.is_blocked(:bobby, :dave) as v \gset l25b_
+select public.is_blocked(:dave, :bobby) as v \gset l25c_
+reset role;
+select public._check(25, 'is_blocked: ziyaretçiye her zaman false (sızıntı kapalı); oturumlu çağıran için iki yönde de true (davranış aynı)',
+  :'l25a_v' = 'f' and :'l25b_v' = 't' and :'l25c_v' = 't', :'l25a_v' || '/' || :'l25b_v' || '/' || :'l25c_v');
 
 select n, case when ok then 'PASS' else 'FAIL' end as result, name, detail from public._results order by n, name;
 select 'FAILED=' || count(*) filter (where not ok) from public._results;
