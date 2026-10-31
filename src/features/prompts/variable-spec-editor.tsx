@@ -64,7 +64,10 @@ export function VariableSpecEditor({
   seedText = "",
   error,
   idPrefix,
+  hideTypePicker = false,
 }: {
+  /** Tür seçimi başka yerde yapılıyorsa (docs/history/288-*: düzenleme sayfasının hap seçicisi) yalnız türe özgü kısmı çizer. */
+  hideTypePicker?: boolean;
   value: SpecEditorValue;
   onChange: (next: SpecEditorValue) => void;
   /** Text the user selected in the prompt — becomes the first option when switching to a choice kind. */
@@ -210,6 +213,7 @@ export function VariableSpecEditor({
 
   return (
     <div className="space-y-4">
+      {!hideTypePicker && (
       <div>
         <span id={`${idPrefix}-type-label`} className={fieldLabelClassName}>
           {t("variable.typeLabel")}
@@ -222,6 +226,7 @@ export function VariableSpecEditor({
           ))}
         </div>
       </div>
+      )}
 
       {spec.type === "text" && (
         <div>
