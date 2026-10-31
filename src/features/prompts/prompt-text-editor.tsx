@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Eye, FileText } from "lucide-react";
+import { Eye, FileText, Maximize2 } from "lucide-react";
 import {
   countRawOccurrences,
   extractVariableTokenNames,
@@ -10,11 +10,13 @@ import {
   resolvePromptText,
 } from "@/lib/prompt-variables";
 import { removeToken, renameToken, tokenUsageMap } from "@/lib/prompt-doc";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   clearConditionsOn,
   describeOptions,
   effectiveVariableValues,
+  emptySpec,
   isChoiceType,
   renameConditionTarget,
 } from "@/lib/prompt-variable-types";
@@ -22,7 +24,6 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { catalogFieldToVariable, type CatalogFieldLike } from "@/lib/prompt-variable-catalog";
 import { suggestionToVariable, type MatchedVariableValue } from "@/lib/prompt-variable-vision";
 import type { CleanSuggestedField } from "@/lib/generator-vision-mapping";
-import type { PromptVariableSpec } from "@/types";
 import { PromptComposer, type ComposerHandle } from "@/features/content/prompt-composer/prompt-composer";
 import type { PickerFilter, PickerItem } from "@/features/content/prompt-composer/insert-picker";
 import type { EditorSelection } from "@/features/content/prompt-composer/prompt-doc-editor";
@@ -32,21 +33,13 @@ import { VariableList } from "./variable-list";
 import { VariableField } from "./variable-field";
 import type { VariableFormValues } from "./variable-spec-editor";
 import { ImageHelpPanel } from "./image-help-panel";
+import { PromptFullscreenEditor } from "./prompt-fullscreen-editor";
+import { makeTempId, type DraftVariable } from "./draft-variable";
 
 // 196 alanlık katalog yalnızca seçici açılınca yüklenir (ana pakete girmez).
 const FieldCatalogPicker = dynamic(() => import("@/features/prompts/field-catalog-picker").then((m) => m.FieldCatalogPicker), { ssr: false });
 
-/** A not-yet-persisted variable living only in this form's own state — gets a real DB row (with a real `id`) only once the prompt itself is created/updated (see `replaceVariablesForPrompt`, `src/lib/supabase/prompt-variables.ts`). */
-export interface DraftVariable extends PromptVariableSpec {
-  tempId: string;
-  name: string;
-  defaultValue: string;
-  description: string;
-}
-
-function makeTempId(): string {
-  return `var-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
+export type { DraftVariable };
 
 /**
  * Normal prompt değişken düzenleyicisi (Bölüm 9.136).
@@ -73,6 +66,8 @@ export function PromptTextEditor({
   placeholder,
   className,
   visionFile,
+  onOpenPresets,
+  presetCount,
 }: {
   id?: string;
   value: string;
@@ -84,6 +79,10 @@ export function PromptTextEditor({
   className?: string;
   /** The image the author already picked in the form (feeds "Görselden yardım" without a second upload). */
   visionFile?: File | null;
+  /** Tam ekran yazma ekranının üstündeki "Hazır ayarlar" düğmesi (form Hazır ayarlar panelini açar); verilmezse düğme çizilmez. */
+  onOpenPresets?: () => void;
+  /** Uygulanan hazır ayar/alan sayısı (tam ekrandaki rozet). */
+  presetCount?: number;
 }) {
   const { t } = useTranslation();
   const composerRef = useRef<ComposerHandle>(null);
@@ -93,6 +92,9 @@ export function PromptTextEditor({
   const [editingVariable, setEditingVariable] = useState<DraftVariable | null>(null);
   const [previewValues, setPreviewValues] = useState<Record<string, string>>({});
   const [catalogRange, setCatalogRange] = useState<EditorSelection | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+  // Tam ekranda tanımsız bir jetona "Düzenle" denince geçici açılan taslak: pencere kaydedilmeden kapanırsa geri alınır.
+  const pendingDraftRef = useRef<string | null>(null);
 
   const usage = useMemo(() => tokenUsageMap(value), [value]);
   const items: PickerItem[] = variables.map((variable) => ({
@@ -188,8 +190,29 @@ export function PromptTextEditor({
     if (drafts.length > 0) composerRef.current?.insertTokens(drafts.map((draft) => draft.name), range);
   }
 
+  /** Tam ekran: jetonun değişkenini düzenleme penceresini açar; tanımsız (yetim) jeton önce geçici bir taslakla tanımlanır. */
+  function handleEditToken(name: string) {
+    const existing = variables.find((variable) => variable.name === name);
+    if (existing) {
+      setEditingVariable(existing);
+      return;
+    }
+    const draft: DraftVariable = { ...emptySpec("text"), tempId: makeTempId(), name, defaultValue: "", description: "" };
+    pendingDraftRef.current = draft.tempId;
+    onVariablesChange([...variables, draft]);
+    setEditingVariable(draft);
+  }
+
+  function closeVariableEditor() {
+    const pending = pendingDraftRef.current;
+    pendingDraftRef.current = null;
+    if (pending && editingVariable?.tempId === pending) onVariablesChange(variables.filter((variable) => variable.tempId !== pending));
+    setEditingVariable(null);
+  }
+
   function handleEditVariable(values: VariableFormValues) {
     if (!editingVariable) return;
+    pendingDraftRef.current = null;
     const nextText = values.name !== editingVariable.name ? renameToken(value, editingVariable.name, values.name) : value;
     if (nextText !== value) onChange(nextText);
     const edited = variables.map((variable) => (variable.tempId === editingVariable.tempId ? { ...variable, ...values } : variable));
@@ -220,6 +243,21 @@ export function PromptTextEditor({
   const previewText = resolvePromptText(value, previewEffective);
 
   const orphanTokens = extractVariableTokenNames(value).filter((name) => !definedNames.has(name));
+
+  const fullscreenButton = (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      onClick={() => setFullscreen(true)}
+      disabled={activeTab === "preview"}
+      aria-label={t("fullscreen.open")}
+      title={t("fullscreen.open")}
+      data-testid="open-fullscreen"
+    >
+      <Maximize2 size={14} aria-hidden /> <span className="max-sm:sr-only">{t("fullscreen.open")}</span>
+    </Button>
+  );
 
   const tabSwitcher = (
     <div className="flex rounded-md border border-border p-0.5 text-xs">
@@ -272,7 +310,12 @@ export function PromptTextEditor({
         minRows={rows}
         ariaLabel={t("prompt.promptTextHeading")}
         required
-        leading={tabSwitcher}
+        leading={
+          <div className="flex items-center gap-2">
+            {tabSwitcher}
+            {fullscreenButton}
+          </div>
+        }
         hideEditor={activeTab === "preview"}
         onCreateNew={({ range, selectedText }) => setCreating({ range, selectedText })}
         onConvertSelection={({ range, selectedText }) => setCreating({ range, selectedText })}
@@ -338,12 +381,26 @@ export function PromptTextEditor({
           onSubmit={handleSubmitCreate}
         />
       )}
+      {fullscreen && (
+        <PromptFullscreenEditor
+          value={value}
+          onChange={onChange}
+          variables={variables}
+          onVariablesChange={onVariablesChange}
+          tokenTone={(name) => (definedNames.has(name) ? "variable" : "unknown")}
+          placeholder={placeholder}
+          onEditVariable={handleEditToken}
+          onOpenPresets={onOpenPresets}
+          presetCount={presetCount}
+          onClose={() => setFullscreen(false)}
+        />
+      )}
       {editingVariable && (
         <VariableEditorModal
           editing={editingVariable}
           controllers={variables.slice(0, Math.max(0, variables.findIndex((item) => item.tempId === editingVariable.tempId)))}
           existingNames={existingNames}
-          onClose={() => setEditingVariable(null)}
+          onClose={closeVariableEditor}
           onSubmit={handleEditVariable}
         />
       )}
