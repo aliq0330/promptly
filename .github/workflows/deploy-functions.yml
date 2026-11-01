@@ -4,6 +4,12 @@ name: Deploy Edge Functions
 # bunu beklemez ve bunun başarısızlığı siteyi etkilemez.
 on:
   workflow_dispatch:
+    inputs:
+      function:
+        description: "Deploy only this function (default: all). Single-function deploys leave the others untouched."
+        type: choice
+        default: all
+        options: [all, api, analyze-image, cleanup-orphan-storage, delete-account, username-login]
 
 permissions:
   contents: read
@@ -35,4 +41,4 @@ jobs:
           version: latest
 
       - name: Deploy functions
-        run: ./scripts/deploy-functions.sh
+        run: ./scripts/deploy-functions.sh "${{ inputs.function || 'all' }}"
