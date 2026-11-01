@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftRight, BarChart3, Bookmark, Code2, FileText, LayoutGrid, Lock, LogIn, LogOut, Moon, Settings, Shapes, ShieldCheck, Undo2, User, UserPlus, Users } from "lucide-react";
+import { ArrowLeftRight, BarChart3, Bookmark, LayoutGrid, LogIn, LogOut, Moon, Settings, Shapes, ShieldCheck, Undo2, User, UserPlus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -71,9 +71,23 @@ function MenuLink({ href, icon: Icon, label, onNavigate }: { href: string; icon:
   );
 }
 
+function FooterLink({ href, label, onNavigate }: { href: string; label: string; onNavigate: () => void }) {
+  return (
+    <Link
+      href={href}
+      role="menuitem"
+      onClick={onNavigate}
+      className="min-h-7 content-center text-caption text-text-muted underline-offset-2 transition-colors duration-200 hover:text-text hover:underline focus-visible:text-text focus-visible:underline"
+    >
+      {label}
+    </Link>
+  );
+}
+
 /**
  * The signed-in avatar dropdown: identity header, "Hesabım" and "Tercihler"
- * groups, sign out. Notifications and Messages deliberately stay in the top
+ * groups, role-bound rows (moderation / account switching), sign out and a
+ * quiet footer row of developer + legal links. Notifications and Messages deliberately stay in the top
  * bar (see `Header`). Rendered only for an authenticated member.
  */
 export function AccountMenu() {
@@ -138,7 +152,11 @@ export function AccountMenu() {
       </button>
 
       {open && (
-        <div role="menu" aria-label={t("account.menuAriaLabel")} className={PANEL_CLASS}>
+        <div
+          role="menu"
+          aria-label={t("account.menuAriaLabel")}
+          className={cn(PANEL_CLASS, "max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain")}
+        >
           <Link
             href={ownProfileHref}
             onClick={close}
@@ -157,7 +175,6 @@ export function AccountMenu() {
             <MenuLink href="/saved" icon={Bookmark} label={t("nav.saved")} onNavigate={close} />
             <MenuLink href="/spaces" icon={Shapes} label={t("nav.spaces")} onNavigate={close} />
             <MenuLink href="/insights" icon={BarChart3} label={t("nav.insights")} onNavigate={close} />
-            <MenuLink href="/following" icon={Users} label={t("nav.followingPeople")} onNavigate={close} />
           </MenuGroup>
 
           <div className="border-t border-border-soft" />
@@ -189,20 +206,12 @@ export function AccountMenu() {
               </span>
             </button>
             <MenuLink href="/settings" icon={Settings} label={t("nav.settings")} onNavigate={close} />
-            <MenuLink href="/developers" icon={Code2} label={t("dev.title")} onNavigate={close} />
-            {isModerator && <MenuLink href="/moderation" icon={ShieldCheck} label={t("nav.moderation")} onNavigate={close} />}
           </MenuGroup>
 
-          <div className="border-t border-border-soft" />
-
-          {/* Yasal bağlantılar (docs/history/300-*): telefonda kenar çubuğu olmadığı için burada. */}
-          <MenuGroup label={t("legal.groupTitle")}>
-            <MenuLink href="/terms" icon={FileText} label={t("legal.termsTitle")} onNavigate={close} />
-            <MenuLink href="/privacy" icon={Lock} label={t("legal.privacyTitle")} onNavigate={close} />
-          </MenuGroup>
-
-          {(canSwitch || canReturn) && (
+          {/* Role-bound rows (moderator / account switching): a normal member never sees this group or its divider. */}
+          {(isModerator || canSwitch || canReturn) && (
             <div className="border-t border-border-soft p-1 md:p-1.5">
+              {isModerator && <MenuLink href="/moderation" icon={ShieldCheck} label={t("nav.moderation")} onNavigate={close} />}
               {canSwitch && (
                 <button type="button" role="menuitem" onClick={() => { close(); setSwitchOpen(true); }} className={ITEM_CLASS}>
                   <ArrowLeftRight size={17} className="shrink-0 text-text-secondary" />
@@ -229,6 +238,15 @@ export function AccountMenu() {
               <LogOut size={17} className="shrink-0" />
               <span>{signingOut ? t("settings.signingOut") : t("settings.signOut")}</span>
             </button>
+          </div>
+
+          {/* Rarely used links as one quiet text row (developers + legal, docs/history/300-*, 301-*): phones have no sidebar, so they live here. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-soft px-3.5 py-2.5 md:px-4">
+            <FooterLink href="/developers" label={t("dev.title")} onNavigate={close} />
+            <div role="group" aria-label={t("legal.groupTitle")} className="contents">
+              <FooterLink href="/terms" label={t("legal.termsTitle")} onNavigate={close} />
+              <FooterLink href="/privacy" label={t("legal.privacyTitle")} onNavigate={close} />
+            </div>
           </div>
         </div>
       )}
