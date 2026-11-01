@@ -62,7 +62,7 @@ export const commentExtrasTranslations = {
   },
   // Kaynak ibaresi `gif.poweredBy` rozetidir (GIPHY şartı); bu satır yalnız kullanım ipucudur.
   "gif.attribution": { tr: "Birine dokununca eklenir.", en: "Tap one to add it." },
-  "gif.poweredBy": { tr: "Powered by GIPHY", en: "Powered by GIPHY" },
+  "gif.poweredBy": { tr: "Powered by GIPHY", en: "Powered by GIPHY" }, // resmî işaretin erişilebilir adı (marka, çevrilmez)
   "gif.pickAria": { tr: "GIF seç: {{title}}", en: "Pick GIF: {{title}}" },
   "gif.untitled": { tr: "GIF", en: "GIF" },
   "gif.badge": { tr: "GIF", en: "GIF" },

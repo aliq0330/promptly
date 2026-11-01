@@ -11,7 +11,7 @@ import { LoadMore } from "@/features/feed/load-more";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { dedupeGifs, fetchGifs, GIF_TOPICS, GiphyError, isGiphyConfigured, splitColumns, type GifItem } from "@/lib/giphy";
-import { cn } from "@/lib/utils";
+import { cn, publicAssetUrl } from "@/lib/utils";
 
 type Failure = "not_configured" | "rate_limited" | "failed" | null;
 
@@ -188,7 +188,9 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
 
         <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-soft px-5 py-3">
           <p className="text-caption leading-snug text-text-muted">{t("gif.attribution")}</p>
-          <span className="shrink-0 rounded-md bg-text px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-background">{t("gif.poweredBy")}</span>
+          {/* GIPHY'nin RESMÎ "Powered by GIPHY" işareti (public/giphy/, docs/history/309-*): kendi siyah zemini olduğundan açık/koyu her temada okunur. Değiştirilmez, kırpılmaz, kaldırılmaz. */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- küçük statik PNG; next/image bir şey katmaz */}
+          <img src={publicAssetUrl("/giphy/powered-by-giphy.png")} alt={t("gif.poweredBy")} width={200} height={42} draggable={false} data-giphy-attribution className="h-6 w-auto shrink-0" />
         </div>
       </div>
     </Modal>

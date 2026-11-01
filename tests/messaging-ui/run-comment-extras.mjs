@@ -128,7 +128,10 @@ await scenario("2. GIF: seçici açılır (trend, GIPHY ibaresi, sayfa=24); seç
   await extra(page, "gif").click();
   const picker = page.locator("[data-gif-picker]");
   await picker.waitFor();
-  await picker.getByText("Powered by GIPHY").waitFor();
+  const mark = picker.getByRole("img", { name: "Powered by GIPHY" });
+  await mark.waitFor();
+  await page.waitForFunction(() => { const img = document.querySelector("[data-giphy-attribution]"); return img && img.complete && img.naturalWidth === 200 && img.naturalHeight === 42; });
+  assert.match(await mark.getAttribute("src"), /\/giphy\/powered-by-giphy\.png$/, "the official GIPHY mark, served from public/");
   await picker.getByText("Birine dokununca eklenir.").waitFor();
   await picker.locator("[data-gif-id]").first().waitFor();
   await shot(page, "gif-picker-desktop");
@@ -387,7 +390,7 @@ await scenario("20. GIPHY önbelleği: seçiciyi kapatıp yeniden açmak ve ayn�
   await picker.locator("[data-gif-topic='clap']").click();
   await picker.locator("[data-gif-id^='sAlk']").first().waitFor();
   assert.equal(state.gifQueries.length, 2, "going back to a search already made costs no request");
-  assert.equal(await picker.getByText("Powered by GIPHY").count(), 1, "the required attribution mark stays");
+  assert.equal(await picker.locator("[data-giphy-attribution]").count(), 1, "the required attribution mark stays");
 });
 
 // ---- Düzenleme ----
