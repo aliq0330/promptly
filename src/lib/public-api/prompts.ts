@@ -440,7 +440,10 @@ export function fillPrompt(prompt: Pick<ExchangePrompt, "promptText" | "variable
   return { text: resolvePromptText(prompt.promptText, values), values, missing, unknown: Object.keys(given).filter((key) => !tokens.includes(key)) };
 }
 
-/** MCP prompt adı: başlıktan ASCII slug + kimliğin ilk 8 karakteri (benzersiz, istemci komut satırında güvenli). */
+/**
+ * MCP prompt adı: başlıktan ASCII slug + kimliğin SON 8 onaltılık karakteri (istemci komut satırında güvenli). Son kısım: seed
+ * kimlikleri ortak önekle başlar (`5eed0001-…`), ilk 8 karakter aynı başlıklı iki promptta çakışırdı.
+ */
 export function promptSlug(title: string, id: string): string {
   const slug = title
     .toLocaleLowerCase("tr")
@@ -451,5 +454,5 @@ export function promptSlug(title: string, id: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 40)
     .replace(/-+$/g, "");
-  return `${slug || "prompt"}-${id.slice(0, 8)}`;
+  return `${slug || "prompt"}-${id.replace(/-/g, "").slice(-8)}`;
 }

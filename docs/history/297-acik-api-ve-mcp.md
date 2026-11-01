@@ -1,8 +1,8 @@
 # 297 — Açık API (`/v1`) ve MCP sunucusu (Faz 1: salt-okunur)
 
-**Durum:** uygulandı (repoda). Edge Function `api` canlıya **deploy EDİLMEDİ**; `promptly-mcp` npm'e **yayınlanmadı**. Gerçek
-Supabase'e karşı uçtan uca denenmedi (sandbox `*.supabase.co`'ya erişemez); sorguların dayandığı kolon/RPC/izinler canlı şemada
-`anon` rolüyle salt-okunur SQL ile doğrulandı (aşağıda).
+**Durum:** uygulandı. Edge Function `api` **canlıda** (2026-11-01, sürüm 1, `verify_jwt` kapalı) ve canlı istekle doğrulandı
+(aşağıda). `promptly-mcp` npm'e **yayınlanmadı** (kullanıcının `NPM_TOKEN` secret'ı gerekir); derlenmiş paket canlı veritabanına karşı
+çalıştırıldı.
 
 ## Neden
 
@@ -101,9 +101,24 @@ site arayüzü değil; Promptly arayüzüne yeni metin eklenmedi (i18n §4.5'e y
   Auth → URL Configuration'a eklenmeli.
 - Kullanım Koşulları'nda yeniden kullanım/atıf maddesi (Ö4) hâlâ yok; içerik artık site dışına çıktığı için önce yazılmalı.
 
-## Canlıya alma (kullanıcı adımları)
+## Canlıya alma
 
-1. Edge Function: `supabase functions deploy api --no-verify-jwt` ya da "Deploy Edge Functions" workflow'u (önce kopya denetimi yapar).
-   Migration YOK.
-2. npm: hesap + 2FA → granular/automation token → repo secret `NPM_TOKEN` → "Publish MCP package" workflow'u.
-3. Kendi bilgisayarında Claude Desktop/Code ile dene; sonucu buraya yaz.
+**Edge Function (yapıldı, 2026-11-01):** "Deploy Edge Functions" workflow'una tek fonksiyon seçeneği eklendi (`function: api` → yalnız
+`api`; diğer canlı fonksiyonlara dokunulmaz — kaynakları canlı sürümle karşılaştırılmadığı için hepsini yeniden deploy etmek risktir).
+Ancak bu oturumun GitHub entegrasyonu workflow başlatamadı (`403 Resource not accessible by integration`), bu yüzden deploy Supabase
+MCP `deploy_edge_function` ile yapıldı: yüklenen tek dosya `supabase/functions/api/index.ts`'nin **esbuild paketidir** (commit `b2602d6`;
+`esbuild supabase/functions/api/index.ts --bundle --format=esm --platform=neutral --target=es2022 --legal-comments=none`, başında köken
+yorumu), `deno check` temiz. Paket mantığı repo kaynağıyla aynıdır (yorumlar dışında); sonraki CLI deploy'u (`./scripts/deploy-functions.sh api`)
+onu kaynak dosya düzeniyle değiştirir. `promptSlug` düzeltmesi (aşağıda) pakete girmez (Edge yolu kullanmaz) — paket bayt bayt aynı kaldı.
+
+**Canlı doğrulama (sandbox'tan gerçek istek, 2026-11-01):** dizin + OpenAPI (`servers` dış adres), arama (`q=portrait`) ve imleçle
+ikinci sayfa, popüler (`by=likes`), değişkenli promptun ayrıntısı (seçenekli `select` değişkenleri, atıf), boş değerle doldurma
+(varsayılanlar), `?format=markdown`, hatalı `sort` → 400, olmayan id → 404, **topluluğa özgü prompt → 404**, başlıklar (`ACAO: *`,
+`cache-control: public, max-age=60`). MCP: `dist/index.js` stdio süreci olarak canlı URL + YENİ publishable anahtar (`sb_publishable_…`,
+JWT olmayan yol) ile: arama, doldurma, 5 popüler prompt'un MCP prompt'u olarak yüklenmesi.
+
+**Bu doğrulamada bulunan ve düzeltilen:** MCP prompt adı kimliğin İLK 8 karakterini kullanıyordu; seed kimlikleri ortak önekle başladığı
+için (`5eed0001-…`) aynı başlıklı iki prompt çakışırdı (ikincisi sessizce atlanırdı) → SON 8 onaltılık karakter (`promptSlug`, test eklendi).
+
+**Kalan (kullanıcı):** npm hesabı + 2FA → token → repo secret `NPM_TOKEN` → "Publish MCP package" workflow'u (bu oturum workflow
+başlatamıyor). Kendi bilgisayarında `claude mcp add promptly -- npx -y promptly-mcp`; sonucu buraya yaz.

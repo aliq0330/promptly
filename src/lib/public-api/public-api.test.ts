@@ -228,6 +228,9 @@ test("fillPrompt: given values, defaults, missing and unknown keys; unmatched to
 
 test("promptSlug: ASCII, Turkish-aware, unique by id", () => {
   assert.equal(promptSlug("Işıklı Şehir Portresi!", ID_A), "isikli-sehir-portresi-11111111");
+  // Ortak önekli seed kimlikleri ayrışır.
+  assert.notEqual(promptSlug("Aynı", "5eed0001-0000-4000-8000-00000000002b"), promptSlug("Aynı", "5eed0001-0000-4000-8000-000000000039"));
+  assert.equal(promptSlug("Aynı", "5eed0001-0000-4000-8000-00000000002b"), "ayni-0000002b");
   assert.equal(promptSlug("日本語", ID_B), "prompt-22222222");
 });
 
