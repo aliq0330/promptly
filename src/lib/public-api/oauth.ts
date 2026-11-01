@@ -62,11 +62,11 @@ function escapeHtml(text: string): string {
 }
 
 /** Kuyruk adı: `…/oauth/token`, `/token`, `…/.well-known/oauth-authorization-server` hepsi aynı uca düşer. */
-export function oauthRouteOf(pathname: string): "metadata" | "authorize" | "token" | "register" | "revoke" | null {
+export function oauthRouteOf(pathname: string): "metadata" | "authorize" | "token" | "register" | "revoke" | "jwks" | null {
   const path = pathname.replace(/\/+$/, "");
   if (/(?:^|\/)\.well-known\/(?:oauth-authorization-server|openid-configuration)(?:\/|$)/.test(path) || /\/openid-configuration$/.test(path)) return "metadata";
-  const tail = /(?:^|\/)(authorize|token|register|revoke)$/.exec(path);
-  return tail ? (tail[1] as "authorize" | "token" | "register" | "revoke") : null;
+  const tail = /(?:^|\/)(authorize|token|register|revoke|jwks)$/.exec(path);
+  return tail ? (tail[1] as "authorize" | "token" | "register" | "revoke" | "jwks") : null;
 }
 
 export function oauthMetadata(issuer: string, siteUrl: string): Record<string, unknown> {
@@ -83,6 +83,11 @@ export function oauthMetadata(issuer: string, siteUrl: string): Record<string, u
     token_endpoint_auth_methods_supported: ["none"],
     revocation_endpoint_auth_methods_supported: ["none"],
     scopes_supported: [...OAUTH_SCOPES],
+    // Kimlik belirteci (OpenID) VERMEYİZ. Ama MCP istemcileri (resmî SDK) keşfin son yedeğinde `…/.well-known/openid-configuration` yanıtını OpenID sağlayıcı
+    // belgesi diye doğrular ve bu üç alanı zorunlu tutar; boş anahtar kümesi (`/jwks`) ile şemayı karşılarız (canlıda SDK ile yakalandı, docs/history/317-*).
+    jwks_uri: `${base}/jwks`,
+    subject_types_supported: ["public"],
+    id_token_signing_alg_values_supported: ["RS256"],
     service_documentation: `${siteUrl.replace(/\/+$/, "")}/developers/`,
   };
 }
@@ -261,6 +266,12 @@ export function createOauthHandler(options: OauthHandlerOptions): (request: Requ
       if (route === "metadata") {
         if (request.method !== "GET") return oauthError("invalid_request", "Use GET.", 405);
         const response = json(oauthMetadata(issuer, siteUrl));
+        response.headers.set("Cache-Control", "public, max-age=300");
+        return withRateLimitHeaders(response, limited);
+      }
+      if (route === "jwks") {
+        if (request.method !== "GET") return oauthError("invalid_request", "Use GET.", 405);
+        const response = json({ keys: [] });
         response.headers.set("Cache-Control", "public, max-age=300");
         return withRateLimitHeaders(response, limited);
       }

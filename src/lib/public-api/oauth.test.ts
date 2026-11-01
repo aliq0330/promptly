@@ -40,6 +40,7 @@ test("routing: the tail picks the endpoint, with or without the function prefix"
   assert.equal(oauthRouteOf("/functions/v1/oauth/.well-known/oauth-authorization-server"), "metadata");
   assert.equal(oauthRouteOf("/functions/v1/oauth/.well-known/openid-configuration"), "metadata");
   assert.equal(oauthRouteOf("/functions/v1/oauth/.well-known/oauth-authorization-server/functions/v1/oauth"), "metadata");
+  assert.equal(oauthRouteOf("/functions/v1/oauth/jwks"), "jwks");
   assert.equal(oauthRouteOf("/functions/v1/oauth/other"), null);
 });
 
@@ -200,4 +201,16 @@ test("unknown paths are 404 and CORS preflight is answered", async () => {
   const preflight = await run(new Request(`${ISSUER}/token`, { method: "OPTIONS" }));
   assert.equal(preflight.status, 204);
   assert.match(preflight.headers.get("access-control-allow-headers") ?? "", /content-type/);
+});
+
+test("metadata also satisfies the OpenID-provider shape the official MCP SDK validates on its last discovery fallback (jwks_uri, subject types, id token algs); /jwks is an empty key set", async () => {
+  const { run } = setup();
+  const meta = await (await run(new Request(`${ISSUER}/.well-known/openid-configuration`))).json();
+  assert.equal(meta.jwks_uri, `${ISSUER}/jwks`);
+  assert.deepEqual(meta.subject_types_supported, ["public"]);
+  assert.ok(Array.isArray(meta.id_token_signing_alg_values_supported) && meta.id_token_signing_alg_values_supported.length > 0);
+  const jwks = await run(new Request(`${ISSUER}/jwks`));
+  assert.equal(jwks.status, 200);
+  assert.deepEqual(await jwks.json(), { keys: [] });
+  assert.equal((await run(new Request(`${ISSUER}/jwks`, { method: "POST" }))).status, 405);
 });
