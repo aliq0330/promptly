@@ -90,11 +90,33 @@ export function DevelopersPage() {
             <Step title={t("dev.stepCodeTitle")}>
               <CodeBlock text={snippets.claudeCode} label={t("dev.stepCodeTitle")} />
             </Step>
-            <Step title={t("dev.stepOtherTitle")} body={t("dev.stepOtherBody")}>
-              <CodeBlock text={snippets.cursorJson} label={t("dev.stepOtherTitle")} />
-            </Step>
+            <Step title={t("dev.stepChatgptTitle")} body={t("dev.stepChatgptBody")} />
+            <div className="space-y-6 rounded-lg border border-border-soft p-4" data-dev-clients="">
+              <div className="space-y-1">
+                <h3 className="text-h3 text-text">{t("dev.clientsTitle")}</h3>
+                <p className="text-body leading-relaxed text-text-secondary">{t("dev.clientsNote")}</p>
+              </div>
+              <Step title="Cursor" body={t("dev.stepCursorBody")}>
+                <CodeBlock text={snippets.cursorJson} label="Cursor" />
+              </Step>
+              <Step title="VS Code" body={t("dev.stepVscodeBody")}>
+                <CodeBlock text={snippets.vscodeJson} label="VS Code" />
+              </Step>
+              <Step title="Windsurf" body={t("dev.stepWindsurfBody")}>
+                <CodeBlock text={snippets.windsurfJson} label="Windsurf" />
+              </Step>
+              <Step title="Gemini CLI" body={t("dev.stepGeminiBody")}>
+                <CodeBlock text={snippets.geminiCli} label="Gemini CLI" />
+              </Step>
+              <Step title="Codex CLI" body={t("dev.stepCodexBody")}>
+                <CodeBlock text={snippets.codexToml} label="Codex CLI" />
+              </Step>
+            </div>
             <Step title={t("dev.stepLocalTitle")} body={t("dev.stepLocalBody")}>
               <CodeBlock text={snippets.localNpx} label={t("dev.stepLocalTitle")} />
+            </Step>
+            <Step title={t("dev.stepDesktopTitle")} body={t("dev.stepDesktopBody")}>
+              <CodeBlock text={snippets.claudeDesktopJson} label={t("dev.stepDesktopTitle")} />
             </Step>
           </div>
         ) : (
@@ -138,6 +160,10 @@ export function DevelopersPage() {
             <Step title={t("dev.apiJs")}>
               <CodeBlock text={snippets.fetchJs} label={t("dev.apiJs")} />
             </Step>
+            <Step title="Python">
+              <CodeBlock text={snippets.pythonRequests} label="Python" />
+            </Step>
+            <Step title={t("dev.apiNoCodeTitle")} body={t("dev.apiNoCodeBody")} />
             <p className="text-body text-text-secondary">
               {t("dev.openApi")}{" "}
               <a

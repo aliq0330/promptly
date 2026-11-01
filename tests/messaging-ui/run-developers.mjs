@@ -115,6 +115,43 @@ await scenario("9 phone: the account menu links to it", async ({ page }) => {
   assert.equal(await page.getByRole("menu").count(), 0, "menu closes on navigation");
 }, { viewport: { width: 390, height: 844 } });
 
+await scenario("10 other clients: ChatGPT steps and one block per client with ITS OWN address key", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  await page.getByRole("heading", { name: "ChatGPT", level: 3 }).waitFor();
+  await page.getByText(/geliştirici modunu aç/).waitFor();
+  const clients = page.locator("[data-dev-clients]");
+  for (const name of ["Cursor", "VS Code", "Windsurf", "Gemini CLI", "Codex CLI"]) await clients.getByRole("heading", { name, level: 3 }).waitFor();
+  await clients.locator("pre", { hasText: `"url": "${MCP}"` }).first().waitFor(); // Cursor
+  await clients.locator("pre", { hasText: '"type": "http"' }).waitFor(); // VS Code
+  await clients.locator("pre", { hasText: `"serverUrl": "${MCP}"` }).waitFor(); // Windsurf
+  await clients.locator("pre", { hasText: `gemini mcp add --transport http --scope user promptly ${MCP}` }).waitFor();
+  await clients.locator("pre", { hasText: `[mcp_servers.promptly]` }).waitFor();
+  await page.getByRole("heading", { name: "Claude Desktop (yerel paket)" }).waitFor();
+  await page.locator("pre", { hasText: '"command": "npx"' }).waitFor();
+  await shot(page, "developers-clients");
+});
+
+await scenario("11 the API section also shows Python and the no-code note", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  await page.locator("pre", { hasText: `requests.get("${API}/prompts"` }).waitFor();
+  await page.getByRole("heading", { name: "Zapier, Make, n8n" }).waitFor();
+});
+
+await scenario("12 English client labels and copy button for a client block", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  await page.getByRole("heading", { name: "Code editors and command-line tools" }).waitFor();
+  await page.getByRole("heading", { name: "Claude Desktop (local package)" }).waitFor();
+  await page.getByRole("button", { name: /Copy: Windsurf/ }).click();
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), JSON.stringify({ mcpServers: { promptly: { serverUrl: MCP } } }, null, 2));
+}, { lang: "en" });
+
+await scenario("13 phone: the client blocks do not overflow sideways", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  await page.locator("[data-dev-clients]").scrollIntoViewIfNeeded();
+  assert.ok(await overflowFree(page));
+  await shot(page, "developers-clients-phone");
+}, { viewport: { width: 390, height: 844 } });
+
 await server.close();
 await browser.close();
 const failed = results.filter(([s]) => s === "FAIL");
