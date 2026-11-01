@@ -1,7 +1,8 @@
 name: Publish MCP package
 
-# Yalnız elle çalışır: `promptly-mcp` paketini npm'e yayınlar (docs/history/297-*).
-# Gerekli secret'lar: NPM_TOKEN (npm "Automation"/granular yayın token'ı — kullanıcı ekler) +
+# Yalnız elle çalışır: `promptly-mcp` paketini npm'e yayınlar (docs/history/297-*, 311-*).
+# Kimlik doğrulama = npm Trusted Publisher (OIDC): npm, bu reponun `publish-mcp.yml` iş akışını tanır; saklanan token YOKTUR
+# (`NPM_TOKEN` kaldırıldı — eski token'lı yol Ocak 2027'de kapanıyor). Gerekli secret'lar yalnız
 # NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY (deploy.yml'deki AYNI herkese açık değerler; pakete gömülür).
 # Service role ASLA gömülmez (build.mjs reddeder). Sürüm mcp/package.json'dan okunur; aynı sürüm ikinci kez yayınlanamaz.
 on:
@@ -9,7 +10,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # npm provenance
+  id-token: write # npm Trusted Publisher (OIDC) + provenance
 
 jobs:
   publish:
@@ -20,26 +21,30 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - name: Require secrets
         run: |
           missing=0
-          for name in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY NODE_AUTH_TOKEN; do
+          for name in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY; do
             if [ -z "${!name}" ]; then echo "::error::Secret for $name is not set"; missing=1; fi
           done
           exit $missing
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
           cache: npm
           cache-dependency-path: mcp/package-lock.json
+      # Trusted Publisher için npm CLI >= 11.5.1 gerekir (Node 22'nin getirdiği npm daha eskidir).
+      - name: Update npm (OIDC needs >= 11.5.1)
+        run: |
+          npm install -g npm@^11.5.1
+          npm --version
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
       - name: Embedded address present
         run: grep -q "supabase.co" dist/index.js
+      # Token verilmez: NODE_AUTH_TOKEN tanımlıysa npm OIDC yerine onu kullanır.
       - run: npm publish --provenance --access public
