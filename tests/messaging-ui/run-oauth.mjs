@@ -143,14 +143,14 @@ await scenario("11 Settings lists connected apps and revoking is two steps (DELE
   await row.getByRole("button", { name: "Evet, geri al" }).click();
   await apps.getByText("Bağlı uygulama yok.").waitFor();
   assert.deepEqual(srv.calls.find((c) => c.method === "DELETE").query, { client_id: "c-1" });
-}, { path: "/settings/", oauth: { grants: [GRANT("c-1", "Claude")] } });
+}, { path: "/settings/developer/", oauth: { grants: [GRANT("c-1", "Claude")] } });
 
 await scenario("12 when Supabase's OAuth server is off, the section still exists (our own grants) and just lists nothing", async ({ page }) => {
-  await page.getByRole("heading", { name: "Geliştirici anahtarları" }).waitFor();
+  await page.getByRole("heading", { name: "Anahtarlarım" }).waitFor();
   const apps = page.locator("[data-connected-apps]");
   await apps.getByText("Bağlı uygulama yok.").waitFor();
   assert.equal(await apps.locator("[data-connected-app]").count(), 0);
-}, { path: "/settings/", oauth: { grantsStatus: 404 } });
+}, { path: "/settings/developer/", oauth: { grantsStatus: 404 } });
 
 await server.close();
 await browser.close();

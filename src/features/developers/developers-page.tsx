@@ -1,46 +1,14 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { Check, Copy } from "lucide-react";
+import { CodeBlock } from "@/components/ui/code-block";
 import { PageContainer } from "@/components/ui/page-header";
 import { usePageTitle } from "@/components/layout/page-title";
 import { LEGAL_CONTACT_EMAIL } from "@/features/legal/legal-content";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { developerEndpoints, developerSnippets } from "@/lib/developers";
 import { PUBLIC_API_RATE_LIMIT } from "@/lib/public-api/rate-limit";
-import { copyTextToClipboard } from "@/lib/utils";
-
-/** A copyable mono block. The copy button is the only control; the text stays selectable. */
-function CodeBlock({ text, label }: { text: string; label: string }) {
-  const { t } = useTranslation();
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    if (await copyTextToClipboard(text)) {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    }
-  }
-
-  return (
-    <div className="relative rounded-lg border border-border-soft bg-surface-soft">
-      <pre className="prompt-text overflow-x-auto whitespace-pre-wrap break-all px-3 py-3 pr-12 text-small text-text">{text}</pre>
-      <button
-        type="button"
-        onClick={copy}
-        aria-label={`${t("dev.copy")}: ${label}`}
-        data-dev-copy=""
-        className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface hover:text-text"
-      >
-        {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
-        <span className="sr-only" aria-live="polite">
-          {copied ? t("dev.copied") : ""}
-        </span>
-      </button>
-    </div>
-  );
-}
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -183,7 +151,7 @@ export function DevelopersPage() {
         <Section title={t("dev.meTitle")}>
           <p className="text-body leading-relaxed text-text-secondary">{t("dev.meLead")}</p>
           <p>
-            <Link href="/settings#settings-developer" className="font-medium text-primary underline underline-offset-2 hover:no-underline">
+            <Link href="/settings/developer" className="font-medium text-primary underline underline-offset-2 hover:no-underline">
               {t("dev.meKeyLink")}
             </Link>
           </p>

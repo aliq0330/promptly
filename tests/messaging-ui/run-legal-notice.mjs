@@ -168,15 +168,14 @@ await scenario("10b visitor on desktop also finds them in the sidebar (a public 
   await side.getByRole("link", { name: "Gizlilik Politikası" }).waitFor();
 }, { guest: true });
 
-await scenario("11 settings: a 'Yasal' group with both rows, listed in the section menu", async ({ page }) => {
-  await page.goto(BASE + "/settings/");
-  await page.getByRole("heading", { name: "Yasal", level: 2 }).waitFor();
+await scenario("11 settings: the 'Yasal' sub-page has both rows", async ({ page }) => {
+  await page.goto(BASE + "/settings/legal/");
+  await page.getByRole("heading", { name: "Yasal", level: 1 }).waitFor();
   const group = page.locator("section[aria-labelledby=settings-legal]");
   const terms = group.getByRole("link", { name: /Kullanım Koşulları/ });
   assert.match(await terms.getAttribute("href"), TERMS_HREF);
   assert.match(await terms.innerText(), /yeniden kullanım ve atıf kuralları/);
   assert.match(await group.getByRole("link", { name: /Gizlilik Politikası/ }).getAttribute("href"), PRIVACY_HREF);
-  await page.getByRole("navigation", { name: "Ayar bölümleri" }).first().getByRole("link", { name: "Yasal" }).waitFor();
   await group.getByRole("link", { name: /Kullanım Koşulları/ }).click();
   await page.waitForURL(/\/terms\/?$/);
 });
@@ -196,8 +195,8 @@ await scenario("12 phone: the account menu has a 'Yasal' group with both links",
 }, { viewport: { width: 390, height: 844 } });
 
 await scenario("13 the English menus and settings use English labels", async ({ page }) => {
-  await page.goto(BASE + "/settings/");
-  await page.getByRole("heading", { name: "Legal", level: 2 }).waitFor();
+  await page.goto(BASE + "/settings/legal/");
+  await page.getByRole("heading", { name: "Legal", level: 1 }).waitFor();
   await page.locator("section[aria-labelledby=settings-legal]").getByRole("link", { name: /Terms of Use/ }).waitFor();
   await page.locator("aside[data-app-chrome]").getByRole("link", { name: "Privacy Policy" }).waitFor();
 }, { lang: "en" });

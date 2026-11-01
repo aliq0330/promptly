@@ -1,226 +1,41 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ChevronRight, Code2, FileText, Lock, LogOut, ShieldCheck } from "lucide-react";
+import { Code2, FileText, LogOut, Palette, ShieldCheck, TriangleAlert, UserRound, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, fieldInputClassName } from "@/components/ui/field";
+import { usePageTitle } from "@/components/layout/page-title";
 import { useAuth } from "@/features/auth/auth-provider";
-import { supabase } from "@/lib/supabase/client";
-import { translateAuthError } from "@/features/auth/auth-errors";
-import {
-  fetchOwnMessagePrivacy,
-  updateMessagePrivacy,
-  updateOwnUsername,
-  USERNAME_PATTERN,
-  type MessagePrivacy,
-} from "@/lib/supabase/profiles";
-import { useOwnProfile } from "@/features/auth/own-profile-provider";
-import { deleteOwnAccount } from "@/lib/supabase/account";
-import { absoluteUrl, cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Language, TranslationKey } from "@/lib/i18n/translations";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
-import { openWelcomeTour } from "@/features/onboarding/welcome-tour";
-import { AppearancePicker } from "@/components/theme/appearance-picker";
-import { ApiKeysSection } from "@/features/settings/api-keys-section";
-import { ConnectedAppsSection } from "@/features/settings/connected-apps-section";
+import { SettingsLinkRow } from "@/features/settings/settings-ui";
+import { supabase } from "@/lib/supabase/client";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
-const PASSWORD_MIN_LENGTH = 6;
 
 /**
- * Real account settings — shows the actual Supabase-authenticated user's
- * email, a genuinely working password change, and sign out. Profile fields
- * (display name/bio/avatar/interests) live separately at `/profile/edit`,
- * which edits the real `profiles` row.
+ * Ayarlar ana listesi (docs/history/318-*): her kategori kendi alt sayfasına gider (`/settings/account` · `privacy` · `preferences` · `developer` · `legal` · `danger`).
+ * Telefonda da masaüstünde de aynı kısa liste; ayrıntı alt sayfalardadır. Profil alanları (ad, biyografi, avatar) `/profile/edit`'te kalır.
  */
 export default function SettingsPage() {
   const { user, loading } = useAuth();
-  const { t, language, setLanguage } = useTranslation();
+  const { t } = useTranslation();
+  usePageTitle(t("nav.settings"));
   const isModerator = useIsModerator();
-  const { profile, refresh: refreshProfile } = useOwnProfile();
-  const activeSection = useActiveSection(["settings-account", "settings-privacy", "settings-preferences", "settings-developer", "settings-legal", "settings-danger"]);
-  const [newEmail, setNewEmail] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [emailSent, setEmailSent] = useState(false);
-  const [isSavingEmail, setIsSavingEmail] = useState(false);
-  const [newUsername, setNewUsername] = useState<string | null>(null);
-  const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [usernameSaved, setUsernameSaved] = useState(false);
-  const [isSavingUsername, setIsSavingUsername] = useState(false);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const router = useRouter();
-  const [deleteConfirm, setDeleteConfirm] = useState("");
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [messagePrivacy, setMessagePrivacy] = useState<MessagePrivacy | null>(null);
-  const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    fetchOwnMessagePrivacy(user.id).then((value) => {
-      setMessagePrivacy(value);
-    });
-  }, [user]);
-
-  async function handlePrivacyChange(value: MessagePrivacy) {
-    if (!user || isSavingPrivacy) return;
-    const previous = messagePrivacy;
-    setMessagePrivacy(value);
-    setIsSavingPrivacy(true);
-    try {
-      await updateMessagePrivacy(user.id, value);
-    } catch (err) {
-      console.error("updateMessagePrivacy", err);
-      setMessagePrivacy(previous);
-    } finally {
-      setIsSavingPrivacy(false);
-    }
-  }
-
-  async function handleChangeEmail(event: FormEvent) {
-    event.preventDefault();
-    if (isSavingEmail) return;
-    setEmailError(null);
-    setEmailSent(false);
-    const next = newEmail.trim();
-    if (!next || next.toLowerCase() === (user?.email ?? "").toLowerCase()) {
-      setEmailError(t("settings.emailSame"));
-      return;
-    }
-    setIsSavingEmail(true);
-    const { error: updateError } = await supabase.auth.updateUser(
-      { email: next },
-      { emailRedirectTo: absoluteUrl("/settings") },
-    );
-    setIsSavingEmail(false);
-    if (updateError) {
-      setEmailError(translateAuthError(updateError.message));
-      return;
-    }
-    setNewEmail("");
-    setEmailSent(true);
-  }
-
-  async function handleChangeUsername(event: FormEvent) {
-    event.preventDefault();
-    if (isSavingUsername || !user) return;
-    setUsernameError(null);
-    setUsernameSaved(false);
-    const next = (newUsername ?? "").trim().toLowerCase();
-    if (next === profile?.username) {
-      setUsernameError(t("settings.usernameSame"));
-      return;
-    }
-    if (!USERNAME_PATTERN.test(next)) {
-      setUsernameError(t("settings.usernameInvalid"));
-      return;
-    }
-    setIsSavingUsername(true);
-    try {
-      await updateOwnUsername(user.id, next);
-      await refreshProfile();
-      setUsernameSaved(true);
-    } catch (err) {
-      setUsernameError(err instanceof Error ? err.message : t("settings.usernameInvalid"));
-    } finally {
-      setIsSavingUsername(false);
-    }
-  }
-
-  async function handleChangePassword(event: FormEvent) {
-    event.preventDefault();
-    if (isSubmitting) return;
-    setError(null);
-    setSuccess(false);
-
-    if (password.length < PASSWORD_MIN_LENGTH) {
-      setError(`${t("settings.passwordTooShortPrefix")} ${PASSWORD_MIN_LENGTH} ${t("settings.passwordTooShortSuffix")}`);
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError(t("settings.passwordMismatch"));
-      return;
-    }
-
-    setIsSubmitting(true);
-    const { error: updateError } = await supabase.auth.updateUser({ password });
-    setIsSubmitting(false);
-
-    if (updateError) {
-      setError(translateAuthError(updateError.message));
-      return;
-    }
-    setPassword("");
-    setConfirmPassword("");
-    setSuccess(true);
-  }
 
   async function handleSignOut() {
     setIsSigningOut(true);
     await supabase.auth.signOut();
   }
 
-  async function handleDeleteAccount(event: FormEvent) {
-    event.preventDefault();
-    if (isDeleting || !profile || deleteConfirm.trim().toLowerCase() !== profile.username) return;
-    setDeleteError(null);
-    setIsDeleting(true);
-    try {
-      await deleteOwnAccount(deleteConfirm.trim().toLowerCase());
-    } catch (err) {
-      // Not (fully) deleted: stay signed in with the account untouched and say why.
-      setDeleteError(err instanceof Error ? err.message : t("settings.deleteAccountFailed"));
-      setIsDeleting(false);
-      return;
-    }
-    // The account is gone; its session is dead, so only the local one is cleared.
-    await supabase.auth.signOut({ scope: "local" });
-    router.replace("/");
-  }
-
-  // The route is wrapped in <RequireAuth>, so a guest never gets here.
+  // Rota `RequireAuth` içinde; misafir buraya gelmez.
   if (loading || !user) return null;
 
-  // Meydan (docs/history/190-*): a section menu (sticky on the left from `lg`, a pill row on phones) beside one reading column.
-  const sections: { id: string; label: string }[] = [
-    { id: "settings-account", label: t("settings.groupAccount") },
-    { id: "settings-privacy", label: t("settings.privacyTitle") },
-    { id: "settings-preferences", label: t("settings.groupPreferences") },
-    { id: "settings-developer", label: t("settings.groupDeveloper") },
-    { id: "settings-legal", label: t("legal.groupTitle") },
-    { id: "settings-danger", label: t("settings.groupDanger") },
-  ];
-
+  const iconClass = "text-text-secondary";
   return (
-    <div className="mx-auto flex w-full max-w-5xl animate-rise-in gap-10 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
-      <nav aria-label={t("settings.sectionsNav")} className="sticky top-24 hidden h-fit w-52 shrink-0 lg:block">
-        <ul className="space-y-1">
-          {sections.map((section) => (
-            <li key={section.id}>
-              <a
-                href={`#${section.id}`}
-                aria-current={activeSection === section.id ? "true" : undefined}
-                className={cn(
-                  "flex h-10 items-center rounded-xl px-3 text-[0.9375rem] transition-colors",
-                  activeSection === section.id ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
-                )}
-              >
-                {section.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div className="mx-auto w-full min-w-0 max-w-2xl lg:mx-0">
-      <header className="mb-6 space-y-2">
-        <h1 className="text-h1 text-text">{t("settings.pageTitle")}</h1>
+    <div className="mx-auto w-full max-w-2xl animate-rise-in space-y-6 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
+      <header className="space-y-2">
+        <h1 className="text-h1 text-text">{t("nav.settings")}</h1>
         <p className="text-small text-text-secondary">
           {t("settings.profileHintBefore")}{" "}
           <Link href="/profile/edit" className="font-medium text-primary hover:underline">
@@ -230,345 +45,22 @@ export default function SettingsPage() {
         </p>
       </header>
 
-      <nav aria-label={t("settings.sectionsNav")} className="scrollbar-none -mx-3 mb-6 flex gap-2 overflow-x-auto px-3 lg:hidden">
-        {sections.map((section) => (
-          <a key={section.id} href={`#${section.id}`} className="inline-flex h-9 shrink-0 items-center rounded-full bg-surface-soft px-4 text-label font-semibold text-text-secondary">
-            {section.label}
-          </a>
-        ))}
+      <nav aria-label={t("settings.sectionsNav")} className="space-y-3" data-settings-hub="">
+        {isModerator && <SettingsLinkRow href="/moderation" icon={<ShieldCheck size={18} className="text-primary" />} title={t("nav.moderation")} hint={t("settings.hub.moderationDesc")} />}
+        <SettingsLinkRow href="/settings/account" icon={<UserRound size={18} className={iconClass} />} title={t("settings.groupAccount")} hint={t("settings.hub.accountDesc")} />
+        <SettingsLinkRow href="/settings/privacy" icon={<Lock size={18} className={iconClass} />} title={t("settings.privacyTitle")} hint={t("settings.hub.privacyDesc")} />
+        <SettingsLinkRow href="/settings/preferences" icon={<Palette size={18} className={iconClass} />} title={t("settings.groupPreferences")} hint={t("settings.hub.preferencesDesc")} />
+        <SettingsLinkRow href="/settings/developer" icon={<Code2 size={18} className={iconClass} />} title={t("settings.groupDeveloper")} hint={t("settings.hub.developerDesc")} />
+        <SettingsLinkRow href="/settings/legal" icon={<FileText size={18} className={iconClass} />} title={t("legal.groupTitle")} hint={t("settings.hub.legalDesc")} />
+        <SettingsLinkRow href="/settings/danger" icon={<TriangleAlert size={18} className="text-danger" />} title={t("settings.groupDanger")} hint={t("settings.hub.dangerDesc")} />
       </nav>
 
-      <div className="space-y-9">
-        {isModerator && (
-          <SettingsLinkRow
-            href="/moderation"
-            icon={<ShieldCheck size={18} className="text-primary" />}
-            title={t("nav.moderation")}
-          />
-        )}
-
-        <SettingsGroup id="settings-account" title={t("settings.groupAccount")}>
-          <SettingsCard as="form" onSubmit={handleChangeUsername} title={t("settings.usernameTitle")} hint={t("settings.usernameHint")}>
-            <div>
-              <label htmlFor="settings-username" className={settingsLabelClassName}>
-                {t("settings.usernameLabel")}
-              </label>
-              <input
-                id="settings-username"
-                type="text"
-                required
-                minLength={3}
-                maxLength={30}
-                autoComplete="username"
-                autoCapitalize="none"
-                autoCorrect="off"
-                value={newUsername ?? profile?.username ?? ""}
-                onChange={(event) => setNewUsername(event.target.value)}
-                className={fieldInputClassName}
-              />
-            </div>
-            {usernameError && <p className="text-sm text-danger">{usernameError}</p>}
-            {usernameSaved && <p className="text-sm text-success">{t("settings.usernameUpdated")}</p>}
-            <Button type="submit" size="sm" disabled={isSavingUsername || !profile}>
-              {isSavingUsername ? t("settings.updating") : t("settings.updateUsername")}
-            </Button>
-          </SettingsCard>
-
-          <SettingsCard as="form" onSubmit={handleChangeEmail} title={t("settings.changeEmail")}>
-            <div className="rounded-lg bg-surface-soft px-3.5 py-2.5">
-              <p className="mb-0.5 text-caption font-medium text-text-muted">{t("settings.email")}</p>
-              <p className="break-all text-sm text-text">{user.email}</p>
-            </div>
-            <div>
-              <label htmlFor="settings-new-email" className={settingsLabelClassName}>
-                {t("settings.newEmail")}
-              </label>
-              <input
-                id="settings-new-email"
-                type="email"
-                required
-                autoComplete="email"
-                value={newEmail}
-                onChange={(event) => setNewEmail(event.target.value)}
-                className={fieldInputClassName}
-              />
-            </div>
-            {emailError && <p className="text-sm text-danger">{emailError}</p>}
-            {emailSent && <p className="text-sm text-success">{t("settings.emailConfirmationSent")}</p>}
-            <Button type="submit" size="sm" disabled={isSavingEmail}>
-              {isSavingEmail ? t("settings.updating") : t("settings.updateEmail")}
-            </Button>
-          </SettingsCard>
-
-          <SettingsCard as="form" onSubmit={handleChangePassword} title={t("settings.changePassword")}>
-            <div>
-              <label htmlFor="settings-password" className={settingsLabelClassName}>
-                {t("settings.newPassword")}
-              </label>
-              <input
-                id="settings-password"
-                type="password"
-                required
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className={fieldInputClassName}
-              />
-            </div>
-            <div>
-              <label htmlFor="settings-confirm-password" className={settingsLabelClassName}>
-                {t("settings.newPasswordConfirm")}
-              </label>
-              <input
-                id="settings-confirm-password"
-                type="password"
-                required
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                className={fieldInputClassName}
-              />
-            </div>
-            {error && <p className="text-sm text-danger">{error}</p>}
-            {success && <p className="text-sm text-success">{t("settings.passwordUpdated")}</p>}
-            <Button type="submit" size="sm" disabled={isSubmitting}>
-              {isSubmitting ? t("settings.updating") : t("settings.updatePassword")}
-            </Button>
-          </SettingsCard>
-        </SettingsGroup>
-
-        <SettingsGroup id="settings-privacy" title={t("settings.privacyTitle")}>
-          <SettingsCard title={t("settings.messagePrivacyTitle")} hint={t("settings.messagePrivacyQuestion")}>
-            {messagePrivacy === null ? (
-              <p className="text-xs text-text-muted">{t("settings.loadingEllipsis")}</p>
-            ) : (
-              <div className="space-y-2">
-                <ChoiceCard>
-                  <input
-                    type="radio"
-                    name="message-privacy"
-                    checked={messagePrivacy === "everyone"}
-                    onChange={() => handlePrivacyChange("everyone")}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    <span className="font-medium">{t("settings.everyone")}</span>
-                    <span className="block text-xs text-text-muted">{t("settings.everyoneHint")}</span>
-                  </span>
-                </ChoiceCard>
-                <ChoiceCard>
-                  <input
-                    type="radio"
-                    name="message-privacy"
-                    checked={messagePrivacy === "followers_only"}
-                    onChange={() => handlePrivacyChange("followers_only")}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    <span className="font-medium">{t("settings.followersOnly")}</span>
-                    <span className="block text-xs text-text-muted">{t("settings.followersOnlyHint")}</span>
-                  </span>
-                </ChoiceCard>
-              </div>
-            )}
-          </SettingsCard>
-
-          <SettingsLinkRow href="/settings/blocked" title={t("settings.blockedUsers")} hint={t("settings.blockedUsersHint")} />
-        </SettingsGroup>
-
-        <SettingsGroup id="settings-preferences" title={t("settings.groupPreferences")}>
-          <SettingsCard title={t("settings.appearanceTitle")} hint={t("settings.appearanceHint")}>
-            <AppearancePicker />
-          </SettingsCard>
-          <LanguageSection t={t} language={language} setLanguage={setLanguage} />
-          <SettingsCard title={t("tour.replayTitle")} hint={t("tour.replayHint")}>
-            <Button type="button" variant="outline" onClick={openWelcomeTour}>
-              {t("tour.replay")}
-            </Button>
-          </SettingsCard>
-          <SettingsLinkRow href="/developers" icon={<Code2 size={18} className="text-text-secondary" />} title={t("dev.title")} hint={t("dev.navHint")} />
-        </SettingsGroup>
-
-        <SettingsGroup id="settings-developer" title={t("settings.groupDeveloper")}>
-          <SettingsCard title={t("apiKeys.title")} hint={t("apiKeys.hint")}>
-            <ApiKeysSection />
-          </SettingsCard>
-          <ConnectedAppsSection />
-        </SettingsGroup>
-
-        <SettingsGroup id="settings-legal" title={t("legal.groupTitle")}>
-          <SettingsLinkRow href="/terms" icon={<FileText size={18} className="text-text-secondary" />} title={t("legal.termsTitle")} hint={t("legal.termsHint")} />
-          <SettingsLinkRow href="/privacy" icon={<Lock size={18} className="text-text-secondary" />} title={t("legal.privacyTitle")} hint={t("legal.privacyHint")} />
-        </SettingsGroup>
-
-        <SettingsGroup id="settings-danger" title={t("settings.groupDanger")}>
-          <SettingsCard
-            as={isModerator ? "div" : "form"}
-            onSubmit={handleDeleteAccount}
-            title={t("settings.deleteAccountTitle")}
-            hint={isModerator ? t("settings.deleteAccountModerator") : t("settings.deleteAccountHint")}
-          >
-            {!isModerator && profile && (
-              <>
-                <div>
-                  <label htmlFor="settings-delete-confirm" className={settingsLabelClassName}>
-                    {t("settings.deleteAccountConfirmLabel", { username: profile.username })}
-                  </label>
-                  <input
-                    id="settings-delete-confirm"
-                    type="text"
-                    value={deleteConfirm}
-                    onChange={(event) => setDeleteConfirm(event.target.value)}
-                    autoComplete="off"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    disabled={isDeleting}
-                    className={fieldInputClassName}
-                  />
-                </div>
-                {deleteError && (
-                  <p role="alert" className="text-sm text-danger">
-                    {deleteError}
-                  </p>
-                )}
-                <Button type="submit" variant="danger" disabled={isDeleting || deleteConfirm.trim().toLowerCase() !== profile.username}>
-                  {isDeleting ? t("settings.deleteAccountDeleting") : t("settings.deleteAccountButton")}
-                </Button>
-              </>
-            )}
-          </SettingsCard>
-        </SettingsGroup>
-
-        <div className="border-t border-border-soft pt-6">
-          <Button type="button" variant="outline" onClick={handleSignOut} disabled={isSigningOut}>
-            <LogOut size={14} />
-            {isSigningOut ? t("settings.signingOut") : t("settings.signOut")}
-          </Button>
-        </div>
-      </div>
+      <div className="border-t border-border-soft pt-6">
+        <Button type="button" variant="outline" onClick={handleSignOut} disabled={isSigningOut}>
+          <LogOut size={14} />
+          {isSigningOut ? t("settings.signingOut") : t("settings.signOut")}
+        </Button>
       </div>
     </div>
   );
-}
-
-const settingsLabelClassName = "mb-1.5 block text-small text-text-secondary";
-
-/** A titled group of setting cards — the editorial eyebrow over a stack. */
-function SettingsGroup({ id, title, children }: { id: string; title: string; children: ReactNode }) {
-  return (
-    <section aria-labelledby={id} className="scroll-mt-24 space-y-3">
-      <h2 id={id} className="px-1 font-display text-h3 font-bold tracking-[-0.02em] text-text">
-        {title}
-      </h2>
-      <div className="space-y-3">{children}</div>
-    </section>
-  );
-}
-
-/** One raised settings card; renders as a `<form>` when it submits. */
-function SettingsCard({
-  as = "div",
-  onSubmit,
-  title,
-  hint,
-  children,
-}: {
-  as?: "div" | "form";
-  onSubmit?: (event: FormEvent) => void;
-  title: string;
-  hint?: string;
-  children: ReactNode;
-}) {
-  const Tag = as;
-  return (
-    <Tag
-      onSubmit={onSubmit}
-      className="space-y-4 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5"
-    >
-      <div className="space-y-1">
-        <h3 className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">{title}</h3>
-        {hint && <p className="text-xs leading-relaxed text-text-muted">{hint}</p>}
-      </div>
-      {children}
-    </Tag>
-  );
-}
-
-/** A full-width navigational settings row (moderation, blocked users). */
-function SettingsLinkRow({
-  href,
-  icon,
-  title,
-  hint,
-}: {
-  href: string;
-  icon?: ReactNode;
-  title: string;
-  hint?: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:px-5"
-    >
-      {icon}
-      <span className="min-w-0 flex-1">
-        <span className="block text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">{title}</span>
-        {hint && <span className="block text-xs text-text-muted">{hint}</span>}
-      </span>
-      <ChevronRight size={16} className="shrink-0 text-text-muted transition-transform duration-200 ease-soft group-hover:translate-x-0.5" />
-    </Link>
-  );
-}
-
-/**
- * Client-only language preference (no `profiles` column, no migration —
- * same localStorage-backed pattern as `ThemeProvider`/`ThemeToggle`).
- */
-function LanguageSection({
-  t,
-  language,
-  setLanguage,
-}: {
-  t: (key: TranslationKey) => string;
-  language: Language;
-  setLanguage: (language: Language) => void;
-}) {
-  return (
-    <SettingsCard title={t("settings.languageTitle")} hint={t("settings.languageHint")}>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {/* Language names are shown in their own native form (not translated via t()) —
-            switching to English shouldn't relabel "Türkçe" as "Turkish", or a user in
-            English mode would have no way to tell which option gets them back. */}
-        <ChoiceCard className="items-center">
-          <input type="radio" name="language" checked={language === "tr"} onChange={() => setLanguage("tr")} />
-          <span className="font-medium">Türkçe</span>
-        </ChoiceCard>
-        <ChoiceCard className="items-center">
-          <input type="radio" name="language" checked={language === "en"} onChange={() => setLanguage("en")} />
-          <span className="font-medium">English</span>
-        </ChoiceCard>
-      </div>
-    </SettingsCard>
-  );
-}
-
-/** The section heading nearest the top of the viewport (for the side menu's current mark); the first one until headings mount. */
-function useActiveSection(ids: string[]): string {
-  const [active, setActive] = useState(ids[0]);
-  const key = ids.join("|");
-  // No dependency list on purpose: the headings mount only after the account has loaded, so this re-binds until they exist.
-  useEffect(() => {
-    const headings = key.split("|").map((id) => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el));
-    if (headings.length === 0) return;
-    const update = () => {
-      let current = headings[0].id;
-      for (const heading of headings) if (heading.getBoundingClientRect().top <= 140) current = heading.id;
-      setActive(current);
-    };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
-  });
-  return active;
 }

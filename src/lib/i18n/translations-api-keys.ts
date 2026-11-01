@@ -9,10 +9,6 @@ export const apiKeysTranslations = {
     tr: "Anahtar, bir betiğin ya da yapay zekâ aracının senin adına Promptly'ye erişmesini sağlar. Kimseyle paylaşma; şifre gibi davran.",
     en: "A key lets a script or an AI tool reach Promptly on your behalf. Don't share it — treat it like a password.",
   },
-  "apiKeys.preview": {
-    tr: "Önizleme: anahtarla çağrılabilecek uçlar henüz yayında değil. Şimdilik anahtar oluşturabilir, listeleyebilir ve iptal edebilirsin; uçlar açılınca aynı anahtarlar çalışır.",
-    en: "Preview: the endpoints that accept a key aren't live yet. For now you can create, list and revoke keys; the same keys will work once the endpoints open.",
-  },
   "apiKeys.loading": { tr: "Anahtarlar yükleniyor…", en: "Loading keys…" },
   "apiKeys.loadFailed": { tr: "Anahtarlar yüklenemedi.", en: "Couldn't load your keys." },
   "apiKeys.retry": { tr: "Tekrar dene", en: "Try again" },
@@ -71,8 +67,8 @@ export const apiKeysTranslations = {
   // --- /developers: kişisel anahtarla kullanım (docs/history/315-*) ---
   "dev.meTitle": { tr: "Hesabınla kullan (kişisel anahtar)", en: "Use your own account (personal key)" },
   "dev.meLead": {
-    tr: "Yukarıdakiler herkese açık içeriği okur. Kendi promptlarına (özel taslaklar dahil) erişmek ya da hesabına özel taslak eklemek için bir kişisel anahtar oluştur: Ayarlar → Geliştirici anahtarları. Anahtar yalnızca senin hesabında çalışır.",
-    en: "The sections above read public content. To reach your own prompts (private drafts included) or to add private drafts to your account, create a personal key: Settings → Developer keys. A key only works on your own account.",
+    tr: "Yukarıdakiler herkese açık içeriği okur. Kendi promptlarına (özel taslaklar dahil) erişmek ya da hesabına özel taslak eklemek için bir kişisel anahtar oluştur: Ayarlar → Geliştirici. Anahtar yalnızca senin hesabında çalışır.",
+    en: "The sections above read public content. To reach your own prompts (private drafts included) or to add private drafts to your account, create a personal key: Settings → Developer. A key only works on your own account.",
   },
   "dev.meKeyLink": { tr: "Anahtar oluştur", en: "Create a key" },
   "dev.meWho": { tr: "Kim olduğunu doğrula", en: "Check who you are" },
@@ -90,16 +86,16 @@ export const apiKeysTranslations = {
   "dev.meMcpAddress": { tr: "Kişisel MCP adresi", en: "Personal MCP address" },
   "dev.meMcpCursor": { tr: "Cursor ve diğer istemciler", en: "Cursor and other clients" },
   "dev.meMcpNoHeader": {
-    tr: "Anahtarı claude.ai ya da ChatGPT'ye YAPIŞTIRMA. Onlar için anahtar gerekmez: aşağıdaki “claude.ai ve ChatGPT'de bağlan” adımlarını izle.",
-    en: "Do NOT paste a key into claude.ai or ChatGPT. They don't need one: follow “Connect in claude.ai and ChatGPT” below.",
+    tr: "claude.ai gibi bağlayıcı formlarında kimlik doğrulamayı «Oturum açma yok» yapıp bir istek başlığı ekleyebilirsin: ad Authorization, değer «Bearer pmt_…» («Bearer» kelimesini ve ardındaki boşluğu unutma). Adım adım rehber: Ayarlar → Geliştirici. Anahtarı sohbete yazma; yalnızca forma yapıştır.",
+    en: "In connector forms like claude.ai you can set authentication to “No sign-in” and add a request header: name Authorization, value “Bearer pmt_…” (don't forget the word “Bearer” and the space after it). Step-by-step guide: Settings → Developer. Never type the key into a chat; paste it only into the form.",
   },
-  "dev.meOauthTitle": { tr: "claude.ai ve ChatGPT'de bağlan (anahtarsız)", en: "Connect in claude.ai and ChatGPT (no key)" },
+  "dev.meOauthTitle": { tr: "Hesabınla giriş (OAuth) — deneysel", en: "Sign in with your account (OAuth) — experimental" },
   "dev.meOauthBody": {
-    tr: "Bağlayıcı olarak kişisel MCP adresini ekle; anahtar, client ID ya da secret girmene gerek yok. Bağlan'a basınca Promptly'nin izin sayfası açılır, oradan hesabınla izin verirsin.",
-    en: "Add the personal MCP address as a connector; you don't need a key, client ID or secret. When you press Connect, Promptly's permission page opens and you allow it with your account.",
+    tr: "Anahtar girmeden bağlanmayı deneyebilirsin: bağlayıcı olarak kişisel MCP adresini ekleyip Bağlan'a basınca Promptly'nin izin sayfası açılır. Bazı araçlarda (claude.ai dahil) henüz güvenilir çalışmıyor; takılırsan yukarıdaki anahtar yolunu kullan.",
+    en: "You can try connecting without a key: add the personal MCP address as a connector and press Connect; Promptly's permission page opens. It isn't reliable in some tools yet (claude.ai included); if it gets stuck, use the key route above.",
   },
-  "dev.meOauthStep1": { tr: "Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle (ChatGPT'de: Uygulamalar → Bağlayıcı ekle).", en: "Settings → Connectors → Add custom connector (in ChatGPT: Apps → Add connector)." },
-  "dev.meOauthStep2": { tr: "Adres olarak yukarıdaki kişisel MCP adresini yapıştır; gelişmiş alanlara bir şey yazma.", en: "Paste the personal MCP address above as the URL; leave the advanced fields empty." },
+  "dev.meOauthStep1": { tr: "Bağlayıcı ekleme ekranını aç (claude.ai: Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle).", en: "Open the add-connector screen (claude.ai: Settings → Connectors → Add custom connector)." },
+  "dev.meOauthStep2": { tr: "Adres olarak yukarıdaki kişisel MCP adresini yapıştır; kimlik doğrulamada «Şimdi oturum aç» + «Otomatik olarak kaydet» seçili kalsın.", en: "Paste the personal MCP address above; keep “Sign in now” + “Register automatically” selected." },
   "dev.meOauthStep3": { tr: "Bağlan'a bas. Promptly'de oturum açıksa izin sayfası gelir: neye izin verdiğini oku, istersen taslak ekleme iznini de işaretle, İzin ver.", en: "Press Connect. If you're signed in to Promptly the permission page opens: read what you allow, optionally tick the draft permission, then Allow." },
   "dev.meOauthStep4": { tr: "İzni istediğin an Ayarlar → Geliştirici → Bağlı uygulamalar'dan geri alabilirsin.", en: "You can take the permission back any time in Settings → Developer → Connected apps." },
   "dev.meOauthLimits": {

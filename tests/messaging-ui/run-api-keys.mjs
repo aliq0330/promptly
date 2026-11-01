@@ -65,7 +65,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   try {
-    await page.goto(BASE + "/settings/");
+    await page.goto(BASE + "/settings/developer/");
     await page.locator("[data-api-keys]").waitFor();
     await fn({ page, s: ks.s });
     assert.deepEqual(errors, [], "no uncaught page errors");
@@ -81,8 +81,7 @@ const overflowFree = (page) => page.evaluate(() => document.documentElement.scro
 const shot = async (page, name) => { if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${name}.png`, fullPage: true }); };
 
 await scenario("1 empty state: preview note, empty message, 0 / 10 counter", async ({ page }) => {
-  await page.getByRole("heading", { name: "Geliştirici anahtarları" }).waitFor();
-  await section(page).getByText(/uçlar henüz yayında değil/).waitFor();
+  await page.getByRole("heading", { name: "Anahtarlarım" }).waitFor();
   await section(page).getByText("Henüz anahtarın yok.").waitFor();
   await section(page).getByText("0 / 10 etkin anahtar").waitFor();
   assert.equal(await section(page).getByRole("button", { name: "Anahtar oluştur" }).isDisabled(), true, "disabled until a name is typed");
@@ -169,7 +168,7 @@ await scenario("8 a failed list shows an error and 'Tekrar dene' loads it", asyn
 }, { setup: (s) => { s.failList = true; } });
 
 await scenario("9 English labels and revoke", async ({ page, s }) => {
-  await page.getByRole("heading", { name: "Developer keys" }).waitFor();
+  await page.getByRole("heading", { name: "My keys" }).waitFor();
   await section(page).getByText("Never used").waitFor();
   await section(page).getByLabel("Name").fill("Laptop");
   await section(page).getByRole("button", { name: "Create key" }).click();
@@ -188,9 +187,17 @@ await scenario("10 phone: nothing overflows sideways (form, reveal and a long na
   await shot(page, "api-keys-phone");
 }, { viewport: { width: 390, height: 844 }, initial: [row({ name: "y".repeat(60) })] });
 
-await scenario("11 the Developer group is in the settings side menu", async ({ page }) => {
-  const nav = page.getByRole("navigation", { name: "Ayar bölümleri" }).first();
-  await nav.getByText("Geliştirici", { exact: true }).waitFor();
+await scenario("11 the settings hub has a Developer row that leads to the Developer page", async ({ page }) => {
+  await page.goto(BASE + "/settings/");
+  const hub = page.getByRole("navigation", { name: "Ayar bölümleri" });
+  await hub.getByRole("link", { name: /Geliştirici/ }).click();
+  await page.waitForURL(/\/settings\/developer\/?$/);
+  await page.locator("[data-api-keys]").waitFor();
+});
+
+await scenario("12 the stale 'endpoints are not live yet' preview note is gone", async ({ page }) => {
+  await page.locator("[data-api-keys]").waitFor();
+  assert.equal(await page.getByText(/henüz yayında değil/).count(), 0);
 });
 
 await server.close();
