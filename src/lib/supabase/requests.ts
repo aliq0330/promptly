@@ -213,7 +213,7 @@ export async function fetchRequestsByAuthorPage(authorId: string, filter: OwnedL
     .is("deleted_at", null)
     .eq("is_draft", false);
   if (filter.visibility && filter.visibility !== "all") request = request.eq("visibility", filter.visibility);
-  if (text) request = request.or(`title.ilike.%${text}%,description.ilike.%${text}%`);
+  if (text) request = request.or(`title.ilike.%${text}%,description.ilike.%${text}%,creative_direction.ilike.%${text}%`);
   const sort = filter.sort ?? "newest";
   request = sort === "most-liked" ? request.order("like_count", { ascending: false }).order("created_at", { ascending: false }) : request.order("created_at", { ascending: sort === "oldest" });
   const { data, count, error } = await request.order("id", { ascending: sort === "oldest" }).range(offset, offset + limit - 1);

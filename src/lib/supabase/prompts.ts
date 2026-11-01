@@ -233,7 +233,7 @@ export interface AuthorPromptsQuery {
   sort?: AuthorPromptSort;
   /** One content type, or every type. */
   contentType?: PromptContentType | null;
-  /** Title / description text (tags are not searched here). */
+  /** Title / description / prompt text (tags are not searched here; docs/history/305-*). */
   search?: string;
   /** Only the owner has both kinds (RLS hides "Sadece ben" from everyone else). */
   visibility?: "all" | "public" | "private";
@@ -250,7 +250,7 @@ export async function fetchAuthorPromptsPage(query: AuthorPromptsQuery, offset =
   const text = sanitizeSearchText(query.search ?? "");
   // ONE `or` group: the visibility rule alone, or ANDed with the text match (two stacked `.or()` calls have no verified combination).
   const profileVisible = "or(origin_type.eq.original,show_on_profile.is.true)";
-  const textMatch = text ? `or(title.ilike.%${text}%,description.ilike.%${text}%)` : "";
+  const textMatch = text ? `or(title.ilike.%${text}%,description.ilike.%${text}%,prompt_text.ilike.%${text}%)` : "";
   let request = supabase
     .from("prompts")
     .select(PROMPT_SELECT, offset === 0 ? { count: "exact" } : undefined)

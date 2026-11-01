@@ -576,6 +576,8 @@ export function setupCommunities(db) {
     // Merkezi şikâyet (docs/history/284-*): topluluk gönderisi / sohbet mesajı `community_reports`'a yönlenir.
     if (table === "rpc/submit_report") {
       log("submit_report", body);
+      // Topluluğun kendisi (docs/history/305-*): sunucuda `reports`'a yazılır; moderatör kuyruğu bu taklitte yok, yalnız kabul edilir.
+      if (body.p_target_type === "community") return g(body.p_target_id) ? json(200, crypto.randomUUID()) : err("report_target_not_found");
       const kind = body.p_target_type === "community_post" ? "post" : body.p_target_type === "chat_message" ? "message" : null;
       if (!kind) return err("report_target_not_found");
       const cid = kind === "post" ? db.posts.find((p) => p.id === body.p_target_id)?.community_id : db.messages.find((m) => m.id === body.p_target_id)?.conversation_id;

@@ -13,7 +13,7 @@ import { holdDarkMode, useTheme } from "@/components/theme/theme-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { feedItemKey } from "@/features/feed/types";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
-import { EMPTY_TAXONOMY_FILTER } from "@/lib/content-taxonomy";
+import { type ContentTypeId } from "@/lib/content-taxonomy";
 import { FOCUS_CHANNELS, focusFeedCover, focusFeedIsNear, focusFeedShouldLoadMore, focusFeedShown, focusFeedStartIndex, type FocusChannel } from "@/lib/focus-feed";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { usePrefersReducedMotion } from "@/lib/motion";
@@ -372,6 +372,9 @@ function FocusScreen() {
   // "Medya" is on from the start (docs/history/239-*): prompts and workflows with nothing to look at stay out until it is turned off.
   const [mediaOnly, setMediaOnly] = useState(true);
   const [channel, setChannel] = useState<FocusChannel>("all");
+  // Görsel · Metin · Ses · Video süzgeci (docs/history/305-*): sunucuda `p_content_type`; null = hepsi.
+  const [contentType, setContentType] = useState<ContentTypeId | null>(null);
+  const taxonomy = useMemo(() => ({ contentType, category: null, subcategory: null }), [contentType]);
   // Which way the last type change went (1 = further down the menu's list) — only for the entrance animation; 0 = none yet.
   const [channelShift, setChannelShift] = useState<0 | 1 | -1>(0);
   const [muted, setMuted] = useState(true);
@@ -390,14 +393,14 @@ function FocusScreen() {
   const waitingForAuth = tab === "following" && authLoading;
   const needsLogin = tab === "following" && !authLoading && !user;
   // "Medya" is decided by the database (docs/history/254-*): a page is full of posts with something to look at, not empty because thousands of text prompts come first.
-  const feed = useFeedPages({ scope: tab === "following" ? "following" : "all", order: "newest", kind: channel, taxonomy: EMPTY_TAXONOMY_FILTER, hasMedia: mediaOnly }, !needsLogin && !waitingForAuth);
+  const feed = useFeedPages({ scope: tab === "following" ? "following" : "all", order: "newest", kind: channel, taxonomy, hasMedia: mediaOnly }, !needsLogin && !waitingForAuth);
   // Odak plays posts; a Space shared to the feed has its own page (docs/history/215-*).
   const items = useMemo(() => {
     const posts = feed.items.filter(isPostItem);
     return posts.filter((post) => focusFeedShown(post, mediaOnly));
   }, [feed.items, mediaOnly]);
   const loading = !needsLogin && (feed.loading || waitingForAuth);
-  const memoryKey = `${tab}:${channel}:${mediaOnly ? "media" : "all"}`;
+  const memoryKey = `${tab}:${channel}:${contentType ?? "any"}:${mediaOnly ? "media" : "all"}`;
 
   const close = useCallback(() => {
     // Back to where Odak was opened from; a directly opened /focus goes home.
@@ -609,6 +612,12 @@ function FocusScreen() {
               channel={channel}
               tab={tab}
               onChannel={pickChannel}
+              contentType={contentType}
+              onContentType={(next) => {
+                if (next === contentType) return;
+                closePanel();
+                setContentType(next);
+              }}
               onTab={(next) => {
                 if (next === tab) return;
                 closePanel();

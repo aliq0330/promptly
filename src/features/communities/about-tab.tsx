@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChatMuteToggle, LeaveCommunitySection } from "@/features/groups/personal-prefs";
 import { RoleBadge } from "@/features/groups/role-badge";
+import { ReportButton } from "@/features/moderation/report-button";
 import { VisibilityLabel } from "./visibility-label";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
@@ -209,6 +210,13 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
           />
         </>
       ) : null}
+
+      {/* Topluluğun kendisini şikâyet etme (docs/history/305-*): merkezi pencere → `submit_report('community')`; sahibi kendi topluluğunu şikâyet edemez. */}
+      {viewerId && role !== "owner" && (
+        <div className="border-t border-border-soft pt-4">
+          <ReportButton targetType="community" targetId={group.id} title={group.name} menuItem={false} label={t("communities.about.reportCommunity")} />
+        </div>
+      )}
     </div>
   );
 }

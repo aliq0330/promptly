@@ -73,6 +73,9 @@ const COMMUNITY_TEMPLATES: [re: RegExp, key: string][] = [
   [/^"([\s\S]*)" topluluğunun kuralları güncellendi\.$/, "notifMsg.communityRulesUpdated"],
   [/^"([\s\S]*)" topluluğu kapatıldı\.$/, "notifMsg.communityClosed"],
   [/^"([\s\S]*)" topluluğu yeniden açıldı\.$/, "notifMsg.communityReopened"],
+  [/^"([\s\S]*)" topluluğunda rolün yönetici oldu\.$/, "notifMsg.communityRoleAdmin"],
+  [/^"([\s\S]*)" topluluğunda rolün moderatör oldu\.$/, "notifMsg.communityRoleModerator"],
+  [/^"([\s\S]*)" topluluğunda rolün üye olarak değiştirildi\.$/, "notifMsg.communityRoleMember"],
 ];
 
 const escapeRe = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
