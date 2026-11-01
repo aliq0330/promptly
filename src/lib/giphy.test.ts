@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { dedupeGifs, fetchGifs, gifIdFromPath, gifPath, giphyUrl, GiphyError, isGiphyHost, isGiphyId, parseGif, splitColumns, type GifItem } from "./giphy.ts";
+import { clearGifCache, dedupeGifs, fetchGifs, GIF_CACHE_MAX, GIF_CACHE_TTL_MS, gifIdFromPath, gifPath, giphyUrl, GiphyError, isGiphyHost, isGiphyId, parseGif, splitColumns, type GifItem } from "./giphy.ts";
 
 const gif = (id: string, width = 100, height = 100): GifItem => ({ id, title: "", previewUrl: `https://media.giphy.com/media/${id}/200w.gif`, stillUrl: `https://media.giphy.com/media/${id}/200w_s.gif`, width, height });
 
@@ -58,6 +58,7 @@ test("splitColumns balances columns and never moves a GIF when more are appended
 });
 
 function withFetch(handler: (url: string) => Response | Promise<Response>, body: () => Promise<void>) {
+  clearGifCache();
   const original = globalThis.fetch;
   globalThis.fetch = (async (input: RequestInfo | URL) => handler(String(input))) as typeof fetch;
   return body().finally(() => {
@@ -119,6 +120,109 @@ test("fetchGifs: last page ends the list; 429 and other failures map to GiphyErr
     },
     async () => {
       await assert.rejects(fetchGifs("x"), (err: unknown) => err instanceof GiphyError && err.code === "failed");
+    },
+  );
+  delete process.env.NEXT_PUBLIC_GIPHY_API_KEY;
+});
+
+const okPage = (n = 1) => new Response(JSON.stringify({ data: Array.from({ length: n }, (_, i) => ({ id: `cache${i + 1}`, title: "t", images: { fixed_width_small: { url: `https://media.giphy.com/media/cache${i + 1}/100w.gif`, width: "100", height: "100" } } })), pagination: { total_count: 100, count: n, offset: 0 } }));
+
+test("cache: the same search is asked once; letter case and surrounding spaces do not make a new search; another offset or query does", async () => {
+  process.env.NEXT_PUBLIC_GIPHY_API_KEY = "test-key";
+  let calls = 0;
+  await withFetch(
+    () => {
+      calls += 1;
+      return okPage();
+    },
+    async () => {
+      await fetchGifs("Alkış", 0);
+      await fetchGifs("  alkış ", 0);
+      assert.equal(calls, 1);
+      await fetchGifs("alkış", 24);
+      await fetchGifs("vay", 0);
+      await fetchGifs("", 0);
+      await fetchGifs("", 0);
+      assert.equal(calls, 4, "offset, query and trending are separate entries");
+    },
+  );
+  delete process.env.NEXT_PUBLIC_GIPHY_API_KEY;
+});
+
+test("cache: concurrent identical requests share ONE network call; one caller aborting does not cancel the others", async () => {
+  process.env.NEXT_PUBLIC_GIPHY_API_KEY = "test-key";
+  let calls = 0;
+  await withFetch(
+    async () => {
+      calls += 1;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return okPage();
+    },
+    async () => {
+      const controller = new AbortController();
+      const first = fetchGifs("kedi", 0, controller.signal);
+      const second = fetchGifs("kedi", 0);
+      const third = fetchGifs("kedi", 0);
+      controller.abort();
+      await assert.rejects(first, (err: unknown) => err instanceof DOMException && err.name === "AbortError");
+      assert.equal((await second).items.length, 1);
+      assert.equal((await third).items.length, 1);
+      assert.equal(calls, 1);
+      await assert.rejects(fetchGifs("kedi", 0, AbortSignal.abort()), (err: unknown) => err instanceof DOMException && err.name === "AbortError", "an already aborted signal rejects at once");
+    },
+  );
+  delete process.env.NEXT_PUBLIC_GIPHY_API_KEY;
+});
+
+test("cache: errors are never stored (a retry really asks again); entries expire after the TTL", async () => {
+  process.env.NEXT_PUBLIC_GIPHY_API_KEY = "test-key";
+  let calls = 0;
+  let fail = true;
+  const realNow = Date.now;
+  let clock = realNow();
+  Date.now = () => clock;
+  try {
+    await withFetch(
+      () => {
+        calls += 1;
+        return fail ? new Response("oops", { status: 500 }) : okPage();
+      },
+      async () => {
+        await assert.rejects(fetchGifs("hata"), (err: unknown) => err instanceof GiphyError);
+        fail = false;
+        await fetchGifs("hata");
+        assert.equal(calls, 2, "the failed answer was not cached");
+        await fetchGifs("hata");
+        assert.equal(calls, 2, "the good answer is");
+        clock += GIF_CACHE_TTL_MS - 1;
+        await fetchGifs("hata");
+        assert.equal(calls, 2, "still fresh just before the TTL");
+        clock += 2;
+        await fetchGifs("hata");
+        assert.equal(calls, 3, "expired → asked again");
+      },
+    );
+  } finally {
+    Date.now = realNow;
+  }
+  delete process.env.NEXT_PUBLIC_GIPHY_API_KEY;
+});
+
+test("cache: holds at most GIF_CACHE_MAX pages, dropping the oldest", async () => {
+  process.env.NEXT_PUBLIC_GIPHY_API_KEY = "test-key";
+  let calls = 0;
+  await withFetch(
+    () => {
+      calls += 1;
+      return okPage();
+    },
+    async () => {
+      for (let i = 0; i < GIF_CACHE_MAX + 1; i += 1) await fetchGifs(`q${i}`, 0);
+      assert.equal(calls, GIF_CACHE_MAX + 1);
+      await fetchGifs(`q${GIF_CACHE_MAX}`, 0); // en yeni hâlâ bellekte
+      assert.equal(calls, GIF_CACHE_MAX + 1);
+      await fetchGifs("q0", 0); // en eski atıldı
+      assert.equal(calls, GIF_CACHE_MAX + 2);
     },
   );
   delete process.env.NEXT_PUBLIC_GIPHY_API_KEY;
