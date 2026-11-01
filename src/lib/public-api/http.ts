@@ -14,8 +14,9 @@ import { serializeMarkdown } from "../exchange/markdown.ts";
 import type { ExchangePrompt } from "../exchange/prompt-format.ts";
 import { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";
 import { fillPrompt, getPrompt, popularPrompts, searchPrompts, type PublicPrompt } from "./prompts.ts";
-import { checkRequest, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type RateLimiter } from "./rate-limit.ts";
+import { checkRequest, clientKeyOf, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type RateLimiter } from "./rate-limit.ts";
 import { createRestClient, PublicApiError, type PublicApiConfig, type RestClient } from "./rest.ts";
+import type { PromptUseRecorder } from "./usage.ts";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -119,7 +120,10 @@ async function readValues(request: Request): Promise<Record<string, unknown>> {
   return values as Record<string, unknown>;
 }
 
-async function route(request: Request, client: RestClient, publicBaseUrl?: string): Promise<Response> {
+/** Tek prompt okundu/dolduruldu (docs/history/304-*). Sayaç verilmemişse yapacak bir şey yok; hata API'yi düşürmez. */
+type RecordUse = (promptId: string) => Promise<void>;
+
+async function route(request: Request, client: RestClient, publicBaseUrl: string | undefined, recordUse: RecordUse): Promise<Response> {
   const url = new URL(request.url);
   const path = routeOf(url.pathname);
   if (path === null) return errorResponse("not_found", "Use /v1 — see /v1/openapi.json.", 404);
@@ -171,12 +175,19 @@ async function route(request: Request, client: RestClient, publicBaseUrl?: strin
     if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
     const prompt = await getPrompt(client, decodeURIComponent(segments[1]));
     const format = url.searchParams.get("format");
-    return format ? download(prompt, format) : json(prompt);
+    if (!format) {
+      await recordUse(prompt.id);
+      return json(prompt);
+    }
+    const file = download(prompt, format);
+    if (file.ok) await recordUse(prompt.id); // geçersiz `format` bir kullanım değildir
+    return file;
   }
   if (segments[2] === "fill") {
     if (method !== "POST") return errorResponse("method_not_allowed", "Use POST with {\"values\": {...}}.", 405);
     const values = await readValues(request);
     const prompt = await getPrompt(client, decodeURIComponent(segments[1]));
+    await recordUse(prompt.id);
     return json({ ...fillPrompt(prompt, values), source: prompt.source ?? null }, 200, false);
   }
   return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
@@ -190,6 +201,8 @@ export interface ApiHandlerOptions {
   onError?: (error: unknown) => void;
   /** IP başına hız sınırı (docs/history/302-*). Verilmezse sınır yok. `OPTIONS` (CORS ön kontrolü) sayılmaz. */
   rateLimiter?: RateLimiter;
+  /** Tek prompt okunduğunda/doldurulduğunda sayar (docs/history/304-*; Yaratıcı panelinde "API / MCP"). Verilmezse sayılmaz. */
+  usage?: PromptUseRecorder;
 }
 
 export function createApiHandler(options: ApiHandlerOptions): (request: Request) => Promise<Response> {
@@ -202,7 +215,15 @@ export function createApiHandler(options: ApiHandlerOptions): (request: Request)
     }
     try {
       client ??= createRestClient(options.config);
-      return withRateLimitHeaders(await route(request, client, options.publicBaseUrl), limit);
+      const recordUse: RecordUse = async (promptId) => {
+        if (!options.usage) return;
+        try {
+          await options.usage.record(promptId, clientKeyOf(request.headers));
+        } catch (error) {
+          options.onError?.(error);
+        }
+      };
+      return withRateLimitHeaders(await route(request, client, options.publicBaseUrl, recordUse), limit);
     } catch (error) {
       if (error instanceof PublicApiError) {
         if (error.code === "upstream" || error.code === "not_configured") options.onError?.(error);

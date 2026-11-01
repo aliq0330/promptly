@@ -209,3 +209,32 @@ test("rate limit: POSTs past the limit get 429 + Retry-After as a JSON-RPC error
     assert.ok([200, 204].includes((await handler(request)).status), `${request.method} is not refused`);
   }
 });
+
+test("usage: get_prompt / fill_prompt over HTTP are counted with the caller's IP; searches are not; the counter failing is harmless", async () => {
+  const records: { promptId: string; clientKey: string | null }[] = [];
+  let fail = false;
+  const handler = createRemoteHandler({
+    version: "0.0.0-test",
+    getClient: () => createRestClient({ url: "https://demo.supabase.co", anonKey: "eyJ.k", fetch: fakeSupabase() }),
+    usage: {
+      async record(promptId, clientKey) {
+        records.push({ promptId, clientKey });
+        if (fail) throw new Error("counter down");
+      },
+    },
+  });
+  const call = async (name: string, args: Record<string, unknown>) => {
+    const response = await handler(post({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } }, { "cf-connecting-ip": "203.0.113.9", accept: "application/json, text/event-stream" }));
+    return response.json() as Promise<{ result?: { isError?: boolean } }>;
+  };
+  await call("search_prompts", { query: "portre" });
+  assert.deepEqual(records, []);
+  await call("get_prompt", { id: ID_A });
+  await call("fill_prompt", { id: ID_A });
+  assert.deepEqual(records, [
+    { promptId: ID_A, clientKey: "203.0.113.9" },
+    { promptId: ID_A, clientKey: "203.0.113.9" },
+  ]);
+  fail = true;
+  assert.notEqual((await call("get_prompt", { id: ID_A })).result?.isError, true);
+});

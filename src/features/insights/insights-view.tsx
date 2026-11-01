@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BarChart3, Bookmark, Copy, Heart, ImagePlus, Info, MessageCircle, UserPlus } from "lucide-react";
+import { BarChart3, Bookmark, Copy, Heart, ImagePlus, Info, MessageCircle, Plug, UserPlus } from "lucide-react";
 import { PageContainer } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +15,7 @@ import { INSIGHT_CARD, InsightTrendCard } from "@/features/insights/insight-tren
 import { useCreatorInsights } from "@/features/insights/use-creator-insights";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CreatorInsights } from "@/lib/supabase/insights";
-import { DEFAULT_INSIGHT_PERIOD, INSIGHT_PERIODS, hasNoActivity, type InsightPeriod } from "@/lib/insights";
+import { DEFAULT_INSIGHT_PERIOD, INSIGHT_PERIODS, hasNoActivity, totalApiUses, type InsightPeriod } from "@/lib/insights";
 
 const CARD = INSIGHT_CARD;
 
@@ -23,12 +23,12 @@ const CARD = INSIGHT_CARD;
 function InsightsSkeleton() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Skeleton className="col-span-2 h-[7.5rem] rounded-lg lg:col-span-1" />
-        {[0, 1, 2, 3].map((i) => (
+        {[0, 1, 2, 3, 4].map((i) => (
           <Skeleton key={i} className="h-[7.5rem] rounded-lg" />
         ))}
-        <Skeleton className="col-span-2 h-[7.5rem] rounded-lg lg:col-span-1" />
+        <Skeleton className="h-[7.5rem] rounded-lg lg:col-span-2" />
       </div>
       <Skeleton className="h-[22rem] rounded-xl" />
       <div className="flex flex-col gap-5 lg:flex-row">
@@ -96,15 +96,17 @@ export function InsightsView() {
 function ReadyBody({ data, period }: { data: CreatorInsights; period: InsightPeriod }) {
   const { t } = useTranslation();
   const { summary, days, top, reactions } = data;
+  const api = totalApiUses(summary);
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <InsightStatTile className="col-span-2 lg:col-span-1" icon={Copy} label={t("insights.tile.copies")} current={summary.copies} previous={summary.prevCopies} days={period} />
+        <InsightStatTile icon={Plug} label={t("insights.tile.api")} current={api.current} previous={api.previous} days={period} detail={t("insights.tile.apiDetail", { api: summary.apiUses, mcp: summary.mcpUses })} />
         <InsightStatTile icon={ImagePlus} label={t("insights.tile.results")} current={summary.results} previous={summary.prevResults} days={period} />
         <InsightStatTile icon={Heart} label={t("insights.tile.reactions")} current={summary.reactions} previous={summary.prevReactions} days={period} />
         <InsightStatTile icon={MessageCircle} label={t("insights.tile.comments")} current={summary.comments} previous={summary.prevComments} days={period} />
         <InsightStatTile icon={Bookmark} label={t("insights.tile.saves")} current={summary.saves} previous={summary.prevSaves} days={period} />
-        <InsightStatTile className="col-span-2 lg:col-span-1" icon={UserPlus} label={t("insights.tile.followers")} current={summary.followers} previous={summary.prevFollowers} days={period} />
+        <InsightStatTile className="lg:col-span-2" icon={UserPlus} label={t("insights.tile.followers")} current={summary.followers} previous={summary.prevFollowers} days={period} />
       </div>
 
       <InsightTrendCard days={days} periodDays={period} />

@@ -11,6 +11,7 @@
 import { createApiHandler } from "../_shared/promptly/lib/public-api/http.ts";
 import { createRemoteRateLimiter, PUBLIC_API_RATE_LIMIT } from "../_shared/promptly/lib/public-api/rate-limit.ts";
 import { createRestClient } from "../_shared/promptly/lib/public-api/rest.ts";
+import { createRemotePromptUseRecorder } from "../_shared/promptly/lib/public-api/usage.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -19,6 +20,9 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 // bir uyarı yazılır — hız sınırı API'yi düşürmemeli. Bellek içi sayaç Edge'de çalışmıyor (docs/history/302-*).
 const RATE_LIMIT_SECRET = Deno.env.get("RATE_LIMIT_SECRET") ?? "";
 if (!RATE_LIMIT_SECRET) console.warn("api: RATE_LIMIT_SECRET is not set — rate limiting is OFF");
+
+// Tek prompt okunduğunda/doldurulduğunda sayılır (Yaratıcı panelinde "API / MCP", docs/history/304-*); AYNI sırla yazılır, sır yoksa sayılmaz.
+const usageClient = RATE_LIMIT_SECRET && SUPABASE_URL ? createRestClient({ url: SUPABASE_URL, anonKey: ANON_KEY, timeoutMs: 1500 }) : null;
 
 const handler = createApiHandler({
   config: { url: SUPABASE_URL, anonKey: ANON_KEY },
@@ -34,6 +38,9 @@ const handler = createApiHandler({
           onError: (error) => console.error("api rate limit", error),
         })
       : undefined,
+  usage: usageClient
+    ? createRemotePromptUseRecorder({ client: usageClient, secret: RATE_LIMIT_SECRET, source: "api", onError: (error) => console.error("api usage", error) })
+    : undefined,
 });
 
 Deno.serve(handler);

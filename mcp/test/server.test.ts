@@ -137,3 +137,31 @@ test("a failing prompt list does not stop the server", async () => {
   assert.match(logs[0], /Could not load popular prompts/);
   assert.equal((await client.listTools()).tools.length, 4);
 });
+
+test("onPromptUse fires for get_prompt and fill_prompt only — not for search or popular — and its failure never breaks a tool", async () => {
+  const fake = fakeFetch();
+  const used: string[] = [];
+  const promptly = createPromptlyServer({
+    client: createRestClient({ url: "https://demo.supabase.co", anonKey: "eyJ.k", fetch: fake.fetch }),
+    version: "0.0.0-test",
+    log: () => {},
+    onPromptUse: (id) => {
+      used.push(id);
+      if (used.length === 2) throw new Error("counter down");
+    },
+  });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await promptly.server.connect(serverTransport);
+  const client = new Client({ name: "test", version: "1.0.0" });
+  await client.connect(clientTransport);
+
+  await client.callTool({ name: "search_prompts", arguments: { query: "portre" } });
+  await client.callTool({ name: "popular_prompts", arguments: {} });
+  assert.deepEqual(used, []);
+  await client.callTool({ name: "get_prompt", arguments: { id: ID_A } });
+  const filled = await client.callTool({ name: "fill_prompt", arguments: { id: ID_A, values: { subject: "dog" } } });
+  assert.deepEqual(used, [ID_A, ID_A]);
+  assert.notEqual(filled.isError, true, "the counter threw on the second call but the tool still answered");
+  await client.callTool({ name: "get_prompt", arguments: { id: "33333333-3333-4333-8333-333333333333" } });
+  assert.equal(used.length, 2, "an unknown prompt is not counted");
+});

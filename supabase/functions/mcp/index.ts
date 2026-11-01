@@ -8,7 +8,7 @@
 // Deploy: `supabase functions deploy mcp --no-verify-jwt` (supabase/config.toml + scripts/deploy-functions.sh). Adres:
 //   https://<ref>.supabase.co/functions/v1/mcp
 
-import { createRemoteRateLimiter, createRestClient, PUBLIC_MCP_RATE_LIMIT } from "../_shared/promptly/lib/public-api/index.ts";
+import { createRemotePromptUseRecorder, createRemoteRateLimiter, createRestClient, PUBLIC_MCP_RATE_LIMIT } from "../_shared/promptly/lib/public-api/index.ts";
 import { createRemoteHandler } from "./remote.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -17,6 +17,9 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 // Hız sınırı sayacı veritabanındadır ve bir SIR ister (`RATE_LIMIT_SECRET`); sır yoksa sınır YOK ve uyarı yazılır (docs/history/302-*).
 const RATE_LIMIT_SECRET = Deno.env.get("RATE_LIMIT_SECRET") ?? "";
 if (!RATE_LIMIT_SECRET) console.warn("mcp: RATE_LIMIT_SECRET is not set — rate limiting is OFF");
+
+// `get_prompt` / `fill_prompt` ile okunan promptlar sayılır (Yaratıcı panelinde "API / MCP", docs/history/304-*); AYNI sırla yazılır, sır yoksa sayılmaz.
+const usageClient = RATE_LIMIT_SECRET && SUPABASE_URL ? createRestClient({ url: SUPABASE_URL, anonKey: ANON_KEY, timeoutMs: 1500 }) : null;
 
 Deno.serve(
   createRemoteHandler({
@@ -34,5 +37,8 @@ Deno.serve(
             onError: (error) => console.error("mcp rate limit", error),
           })
         : undefined,
+    usage: usageClient
+      ? createRemotePromptUseRecorder({ client: usageClient, secret: RATE_LIMIT_SECRET, source: "mcp", onError: (error) => console.error("mcp usage", error) })
+      : undefined,
   }),
 );

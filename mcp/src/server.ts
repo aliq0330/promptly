@@ -87,6 +87,11 @@ export interface PromptlyServerOptions {
   client: RestClient;
   version: string;
   log?: (message: string) => void;
+  /**
+   * `get_prompt` / `fill_prompt` bir promptu başarıyla döndürünce çağrılır (docs/history/304-*; internet üzerinden MCP'de "API / MCP" kullanım sayacı).
+   * Hata araç yanıtını bozmaz. Yerel `npx promptly-mcp` vermez (sunucusuz, anon anahtarla doğrudan Supabase'e gider → sayılmaz).
+   */
+  onPromptUse?: (promptId: string) => void | Promise<void>;
 }
 
 export interface PromptlyServer {
@@ -95,7 +100,15 @@ export interface PromptlyServer {
   loadPopularPrompts(count: number): Promise<number>;
 }
 
-export function createPromptlyServer({ client, version, log = () => {} }: PromptlyServerOptions): PromptlyServer {
+export function createPromptlyServer({ client, version, log = () => {}, onPromptUse }: PromptlyServerOptions): PromptlyServer {
+  async function noteUse(promptId: string): Promise<void> {
+    try {
+      await onPromptUse?.(promptId);
+    } catch (error) {
+      log(`Could not record prompt use: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
   const server = new McpServer({ name: "promptly", title: "Promptly", version }, { instructions: SERVER_INSTRUCTIONS });
 
   server.registerTool(
@@ -156,7 +169,12 @@ export function createPromptlyServer({ client, version, log = () => {} }: Prompt
       inputSchema: { id: z.string().describe("Prompt id (UUID) from search results.") },
       annotations: readOnly,
     },
-    (args: IdArgs) => run(() => getPrompt(client, args.id)),
+    (args: IdArgs) =>
+      run(async () => {
+        const prompt = await getPrompt(client, args.id);
+        await noteUse(prompt.id);
+        return prompt;
+      }),
   );
 
   server.registerTool(
@@ -175,6 +193,7 @@ export function createPromptlyServer({ client, version, log = () => {} }: Prompt
     (args: FillArgs) =>
       run(async () => {
         const prompt = await getPrompt(client, args.id);
+        await noteUse(prompt.id);
         return { ...fillPrompt(prompt, args.values ?? {}), title: prompt.title, url: prompt.url, source: prompt.source ?? null };
       }),
   );

@@ -16,6 +16,8 @@ export const insightsTranslations = {
   "insights.period.90": { tr: "Son 90 gün", en: "Last 90 days" },
 
   "insights.tile.copies": { tr: "Kopyalama", en: "Copies" },
+  "insights.tile.api": { tr: "API / MCP", en: "API / MCP" },
+  "insights.tile.apiDetail": { tr: "API {{api}} · MCP {{mcp}}", en: "API {{api}} · MCP {{mcp}}" },
   "insights.tile.reactions": { tr: "Tepki", en: "Reactions" },
   "insights.tile.comments": { tr: "Yorum", en: "Comments" },
   "insights.tile.saves": { tr: "Kaydedilme", en: "Saves" },
@@ -56,8 +58,8 @@ export const insightsTranslations = {
 
   "insights.note.title": { tr: "Bu sayılar nasıl hesaplanır?", en: "How are these numbers counted?" },
   "insights.note.body": {
-    tr: "Kopyalama, bir promptu o gün kopyalayan oturum açmış kullanıcı başına bir sayılır; misafirler ve kendi kopyaların sayılmaz. Tepki, yorum, kaydetme ve takip ilk gerçekleştikleri güne yazılır, geri alınanlar geçmişten de düşer. Günler UTC'dir. Sonuç, başkalarının promptlarının altına paylaştığı sonuçlardır. Yalnızca herkese açık, yayında promptların sayılır; topluluğa özgü promptlar dahil değildir.",
-    en: "A copy counts once per signed-in user per prompt per day; guests and your own copies are not counted. Reactions, comments, saves and follows are dated by when they first happened, and ones that were undone drop out of the past too. Days are UTC. Results are the results others shared under your prompts. Only your published public prompts are counted; community-only prompts are not included.",
+    tr: "Kopyalama, bir promptu o gün kopyalayan oturum açmış kullanıcı başına bir sayılır; misafirler ve kendi kopyaların sayılmaz. Tepki, yorum, kaydetme ve takip ilk gerçekleştikleri güne yazılır, geri alınanlar geçmişten de düşer. Günler UTC'dir. Sonuç, başkalarının promptlarının altına paylaştığı sonuçlardır. API / MCP, açık API'de ya da internet üzerinden MCP'de bir promptun okunup doldurulmasıdır (arama ve listeler sayılmaz); hesap olmadığı için kopyalamadan ayrı tutulur: aynı bağlantı (IP) bir promptu günde bir kez sayar, kendi kullanımın ayrıştırılamaz ve bilgisayarına kurduğun npx promptly-mcp sayılmaz. Yalnızca herkese açık, yayında promptların sayılır; topluluğa özgü promptlar dahil değildir.",
+    en: "A copy counts once per signed-in user per prompt per day; guests and your own copies are not counted. Reactions, comments, saves and follows are dated by when they first happened, and ones that were undone drop out of the past too. Days are UTC. Results are the results others shared under your prompts. API / MCP is a prompt being read or filled through the public API or the online MCP (searches and lists don't count); with no accounts involved it is kept apart from copies: the same connection (IP) counts a prompt once a day, your own use can't be told apart, and the npx promptly-mcp you run on your computer isn't counted. Only your published public prompts are counted; community-only prompts are not included.",
   },
 
   "insights.empty.title": { tr: "Henüz gösterilecek veri yok", en: "Nothing to show yet" },

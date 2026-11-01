@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BarChart3, Bookmark, ChevronLeft, Copy, Heart, ImagePlus, MessageCircle } from "lucide-react";
+import { BarChart3, Bookmark, ChevronLeft, Copy, Heart, ImagePlus, MessageCircle, Plug } from "lucide-react";
 import { PageContainer } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +17,7 @@ import { InsightStatTile } from "@/features/insights/insight-stat-tile";
 import { usePromptInsights } from "@/features/insights/use-creator-insights";
 import { findTool } from "@/lib/ai-tool-catalog";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { DEFAULT_INSIGHT_PERIOD, INSIGHT_PERIODS, promptHasNoActivity, type InsightPeriod } from "@/lib/insights";
+import { DEFAULT_INSIGHT_PERIOD, INSIGHT_PERIODS, promptHasNoActivity, totalApiUses, type InsightPeriod } from "@/lib/insights";
 import { cn, isUuid, promptHref } from "@/lib/utils";
 import type { PromptContentType } from "@/types";
 
@@ -25,11 +25,12 @@ import type { PromptContentType } from "@/types";
 function PromptInsightsSkeleton() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         <Skeleton className="col-span-2 h-[7.5rem] rounded-lg lg:col-span-1" />
         {[0, 1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-[7.5rem] rounded-lg" />
         ))}
+        <Skeleton className="col-span-2 h-[7.5rem] rounded-lg lg:col-span-1" />
       </div>
       <Skeleton className="h-[22rem] rounded-xl" />
       <Skeleton className="h-[16rem] rounded-xl" />
@@ -115,12 +116,21 @@ export function PromptInsightsView() {
 
           {state.status === "ready" && (
             <div className="flex flex-col gap-5">
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
                 <InsightStatTile className="col-span-2 lg:col-span-1" icon={Copy} label={t("insights.tile.copies")} current={state.data.summary.copies} previous={state.data.summary.prevCopies} days={period} />
                 <InsightStatTile icon={ImagePlus} label={t("insights.tile.results")} current={state.data.summary.results} previous={state.data.summary.prevResults} days={period} />
                 <InsightStatTile icon={Heart} label={t("insights.tile.reactions")} current={state.data.summary.reactions} previous={state.data.summary.prevReactions} days={period} />
                 <InsightStatTile icon={MessageCircle} label={t("insights.tile.comments")} current={state.data.summary.comments} previous={state.data.summary.prevComments} days={period} />
                 <InsightStatTile icon={Bookmark} label={t("insights.tile.saves")} current={state.data.summary.saves} previous={state.data.summary.prevSaves} days={period} />
+                <InsightStatTile
+                  className="col-span-2 lg:col-span-1"
+                  icon={Plug}
+                  label={t("insights.tile.api")}
+                  current={totalApiUses(state.data.summary).current}
+                  previous={totalApiUses(state.data.summary).previous}
+                  days={period}
+                  detail={t("insights.tile.apiDetail", { api: state.data.summary.apiUses, mcp: state.data.summary.mcpUses })}
+                />
               </div>
 
               {promptHasNoActivity(state.data.summary, state.data.days) ? (

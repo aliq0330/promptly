@@ -9,7 +9,7 @@
  * - GET/DELETE akış/oturum içindir; sunmuyoruz (405). Tarayıcıdan açan kişi ise kısa bir bilgi JSON'u görür.
  */
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { checkRequest, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type RateLimiter, type RestClient } from "../../src/lib/public-api/index.ts";
+import { checkRequest, clientKeyOf, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type PromptUseRecorder, type RateLimiter, type RestClient } from "../../src/lib/public-api/index.ts";
 import { createPromptlyServer } from "./server.ts";
 
 const CORS_HEADERS: Record<string, string> = {
@@ -31,6 +31,8 @@ export interface RemoteHandlerOptions {
   log?: (message: string, error?: unknown) => void;
   /** IP başına hız sınırı (docs/history/302-*); yalnız POST sayılır. Verilmezse sınır yok. */
   rateLimiter?: RateLimiter;
+  /** `get_prompt` / `fill_prompt` ile okunan promptları sayar (docs/history/304-*; Yaratıcı panelinde "API / MCP"). Verilmezse sayılmaz. */
+  usage?: PromptUseRecorder;
 }
 
 function withCors(response: Response): Response {
@@ -98,7 +100,13 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
     }
 
     // Her istek: yeni sunucu + yeni taşıma (oturumsuz taşıma istekler arasında yeniden kullanılamaz).
-    const { server } = createPromptlyServer({ client, version: options.version, log: (message) => log(message) });
+    const clientKey = clientKeyOf(request.headers);
+    const { server } = createPromptlyServer({
+      client,
+      version: options.version,
+      log: (message) => log(message),
+      onPromptUse: options.usage ? (promptId) => options.usage!.record(promptId, clientKey) : undefined,
+    });
     const transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,

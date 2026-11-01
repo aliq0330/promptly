@@ -78,11 +78,14 @@ const CHECKS = [
   { name: "rpc creator_insights_prompt (prompt başına ayrıntı, docs/history/295-*)", rpc: "creator_insights_prompt", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc creator_insights_prompt_daily (docs/history/295-*)", rpc: "creator_insights_prompt_daily", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc creator_insights_prompt_reaction_mix (docs/history/295-*)", rpc: "creator_insights_prompt_reaction_mix", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_api (Yaratıcı paneli API / MCP kullanımı, docs/history/304-*; yalnız oturumlu)", rpc: "creator_insights_api", body: { p_days: 30 }, deniedOk: true, soft: true },
+  { name: "rpc creator_insights_prompt_api (docs/history/304-*)", rpc: "creator_insights_prompt_api", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_days: 30 }, deniedOk: true, soft: true },
   { name: "rpc prompt_works_state (Çalıştı mı? oyu sayıları; ziyaretçiye de açık, docs/history/296-*)", rpc: "prompt_works_state", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000" } },
   { name: "rpc set_prompt_works (Çalıştı mı? oyu; yalnız oturumlu)", rpc: "set_prompt_works", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_works: null }, deniedOk: true, soft: true },
   { name: "prompt_works_stats (prompt başına evet/hayır sayıları, docs/history/296-*)", get: () => `prompt_works_stats?select=${encodeURIComponent("prompt_id,yes_count,no_count")}&limit=1` },
   { name: "profiles.suspended_reason ziyaretçiye KAPALI olmalı (moderasyon gerekçesi, docs/history/302-*)", get: () => `profiles?select=suspended_reason&limit=1`, mustBeDenied: true },
   { name: "rpc public_api_rate_hit sırsız REDDEDİLMELİ (hız sınırı sayacı, docs/history/302-*)", rpc: "public_api_rate_hit", body: { p_secret: "smoke-test-wrong-secret", p_bucket: "smoke-test-00000000", p_limit: 1, p_window_seconds: 60 }, mustBeDenied: true },
+  { name: "rpc record_public_api_prompt_use sırsız REDDEDİLMELİ (API/MCP kullanım sayacı, docs/history/304-*)", rpc: "record_public_api_prompt_use", body: { p_secret: "smoke-test-wrong-secret", p_prompt_id: "00000000-0000-4000-8000-000000000000", p_source: "api", p_client: "smoke-test-00000000" }, mustBeDenied: true },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 
