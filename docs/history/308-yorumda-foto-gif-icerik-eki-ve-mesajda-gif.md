@@ -28,7 +28,7 @@
 ## Dağıtım için YAPILACAKLAR (bu turda yapılmadı)
 1. **GIPHY anahtarı**: developers.giphy.com'dan "API" anahtarı al → GitHub Secrets'a `NEXT_PUBLIC_GIPHY_API_KEY` ekle (`deploy.yml` derlemeye aktarır; tanımsızsa seçici "yapılandırılmadı" der). İstersen GIPHY panelinde alan adına bağla.
 2. **Migration**: `20261102100000_comment_media_attachments.sql` `deploy.yml` boru hattıyla uygulanır (yıkıcı SQL yok). `scripts/smoke-test.mjs` yeni sütunları denetler; migration gecikirse istemci `OPTIONAL_COLUMNS` sayesinde açılır (yorumlar görünür, ek görünmez, yazma ek sütunlarıyla 400 verir).
-3. **Gizlilik Politikası + Kullanım Koşulları** metnine GIPHY maddesi (IP'nin GIPHY'ye gitmesi) — `TERMS_VERSION` artırımı gerekip gerekmediği sahibinin kararı.
+3. **Gizlilik Politikası** GIPHY maddesi ve çerez/tarayıcı depolaması bölümü YAZILDI (`310-*`); Kullanım Koşulları'na GIPHY maddesi eklenmedi, `TERMS_VERSION` artırımı sahibinin kararı.
 4. Moderatör arayüzü yorum gövdesini gösterir; yalnız ekten oluşan yorumda gövde boştur (moderatör görseli yorum sayfasında görür; ayrı bir "ek var" rozeti eklenmedi).
 
 ## Bilinen sınırlar
