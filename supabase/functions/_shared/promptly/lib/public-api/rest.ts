@@ -19,7 +19,7 @@ export interface PublicApiConfig {
   siteUrl?: string;
 }
 
-export type PublicApiErrorCode = "bad_request" | "not_found" | "upstream" | "timeout" | "not_configured";
+export type PublicApiErrorCode = "bad_request" | "not_found" | "upstream" | "timeout" | "not_configured" | "unauthorized" | "insufficient_scope" | "rate_limited";
 
 export class PublicApiError extends Error {
   code: PublicApiErrorCode;

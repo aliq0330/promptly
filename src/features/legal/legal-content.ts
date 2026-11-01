@@ -56,6 +56,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Yüklediğin dosyalar: görsel, ses ve video dosyaları.",
             "Tercihlerin: tema, palet ve dil seçimin. Bunlar hesabında ve tarayıcında saklanır.",
             "API anahtarların: kişisel API anahtarı oluşturursan anahtarın adını, ilk karakterlerini (listede tanıman için), erişim kapsamını ve oluşturulma, bitiş, iptal ve son kullanım zamanlarını saklarız. Anahtarın kendisini değil, yalnızca geri döndürülemeyen bir özetini tutarız; bu yüzden anahtarı sonradan gösteremeyiz. Hesabını sildiğinde anahtarların da silinir.",
+            "Bağlı uygulamalar: bir uygulamaya \"Promptly hesabınla giriş\" (OAuth) izni verirsen, hangi uygulamaya, hangi kapsamla ve ne zaman izin verdiğini kimlik doğrulama hizmetimiz (Supabase) saklar; izni Ayarlar'dan istediğin zaman geri alabilirsin.",
           ],
           [
             "Your account details: your email address, your password (stored only in encrypted form), your username and your display name. If you sign in with Google, we receive your name and email address from Google; we do not import your profile picture automatically.",
@@ -64,6 +65,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Files you upload: image, audio and video files.",
             "Your preferences: theme, palette and language. These are stored in your account and in your browser.",
             "Your API keys: if you create a personal API key, we store its name, its first characters (so you can recognise it in the list), its access scope, and when it was created, expires, was revoked and was last used. We do not keep the key itself, only a one-way digest of it, so we cannot show it to you again. Your keys are deleted when you delete your account.",
+            "Connected apps: if you allow an app to sign in with your Promptly account (OAuth), our authentication service (Supabase) stores which app you allowed, with which scopes and when; you can take the permission back in Settings at any time.",
           ],
         ),
         p(

@@ -117,6 +117,11 @@ export async function installMock(context, db, opts = {}) {
     const json = (status, body) => route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*", "access-control-expose-headers": "*" }, body: JSON.stringify(body) });
     const rows = (list) => (wantsObject ? (list.length === 1 ? json(200, list[0]) : json(406, { code: "PGRST116", message: "no rows", details: "", hint: "" })) : json(200, list));
     if (method === "OPTIONS") return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "*" } });
+    // OAuth sunucusu (docs/history/316-*): `db.oauth(method, path, body, query)` varsa onay/izin uçlarını o yanıtlar.
+    if ((p.startsWith("/auth/v1/oauth/authorizations/") || p.startsWith("/auth/v1/user/oauth/grants")) && db.oauth) {
+      const result = db.oauth(method, p, req.postData() ? JSON.parse(req.postData()) : null, Object.fromEntries(q.entries()));
+      return json(result.status ?? 200, result.body ?? null);
+    }
     if (p.startsWith("/auth/v1/user") && guest) return json(401, { message: "not authenticated" });
     if (p.startsWith("/auth/v1/user")) return json(200, { id: signedIn, aud: "authenticated", role: "authenticated", email: "alice@test.dev", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" });
     // Storage: özel bucket'lar için signed URL (docs/history/177-*). Ortak /object/public/… adresi İSTEKLE çekilirse kaydedilir (sızıntı testi).
