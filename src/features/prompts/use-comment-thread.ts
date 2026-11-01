@@ -23,10 +23,14 @@ import {
   postCommentOnQuote,
 } from "@/lib/supabase/comments";
 import { fetchLikedCommentIds, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
+import { removeCommentPhotos } from "@/lib/supabase/comment-media";
+import type { CommentExtras } from "@/lib/supabase/comments";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptComment } from "@/types";
 import { bumpCommentCount } from "./comment-count-store";
 import type { CommentTree } from "./comment-node";
+import { useCommentExtras } from "./comment-extras";
+import { useAttachmentCards } from "./use-attachment-cards";
 
 export type CommentTarget =
   | { promptId: string }
@@ -63,6 +67,11 @@ export function useCommentThread(
   const [draft, setDraft] = useState("");
   // Space'in genel yorumlarında 1–5 puan yorumla birlikte verilir (0 = puansız).
   const [draftRating, setDraftRating] = useState(0);
+  // Yorumda fotoğraf · GIF · içerik eki (docs/history/308-*): ana yazma kutusunun ve yanıt kutusunun ayrı ek durumu.
+  const composerExtras = useCommentExtras();
+  const replyExtras = useCommentExtras();
+  // Düzenlerken görsel/ek de değiştirilebilir: düzenlenen yorumun mevcut eki ile açılır (`startEdit`).
+  const editExtras = useCommentExtras();
   // The thread opens short (first few comments) so a long discussion never pushes related content out of reach; a jumped-to comment or the viewer's own new comment opens it all.
   const [showAll, setShowAll] = useState(Boolean(highlightCommentId));
   const [postError, setPostError] = useState<string | null>(null);
@@ -145,16 +154,32 @@ export function useCommentThread(
     scopeRef.current = scope;
   });
 
-  function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null, rating: number | null = null) {
-    if (kind === "prompt") return postCommentOnPrompt(id, userId, body, parentId);
-    if (kind === "request") return postCommentOnRequest(id, userId, body, parentId);
-    if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId);
-    if (kind === "preset") return postCommentOnPreset(id, userId, body, parentId);
-    if (kind === "community_post") return postCommentOnCommunityPost(id, userId, body, parentId);
-    if (kind === "space") return postCommentOnSpace(id, userId, body, parentId, { rating });
-    if (kind === "space_activity" && "spaceId" in target) return postCommentOnSpace(target.spaceId, userId, body, parentId, { activityId: id });
-    if (kind === "quote") return postCommentOnQuote(id, userId, body, parentId);
-    return postCommentOnResult(id, userId, body, parentId);
+  function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null, rating: number | null = null, extras?: CommentExtras) {
+    if (kind === "prompt") return postCommentOnPrompt(id, userId, body, parentId, extras);
+    if (kind === "request") return postCommentOnRequest(id, userId, body, parentId, extras);
+    if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId, extras);
+    if (kind === "preset") return postCommentOnPreset(id, userId, body, parentId, extras);
+    if (kind === "community_post") return postCommentOnCommunityPost(id, userId, body, parentId, extras);
+    if (kind === "space") return postCommentOnSpace(id, userId, body, parentId, { rating, ...extras });
+    if (kind === "space_activity" && "spaceId" in target) return postCommentOnSpace(target.spaceId, userId, body, parentId, { activityId: id, ...extras });
+    if (kind === "quote") return postCommentOnQuote(id, userId, body, parentId, extras);
+    return postCommentOnResult(id, userId, body, parentId, extras);
+  }
+
+  /**
+   * Ekleri hazırlayıp (fotoğraf yüklenir) yorumu yazar. Yorum yazılamazsa yüklenen dosya geri silinir; yazılırsa ek durumu boşaltılır.
+   * Hata çağırana fırlar (her yazma kutusu kendi hata satırını gösterir).
+   */
+  async function postWithExtras(extrasState: ReturnType<typeof useCommentExtras>, userId: string, body: string, parentId: string | null, rating: number | null) {
+    const { extras, uploadedPath } = await extrasState.prepare(userId);
+    try {
+      const posted = await postCommentForTarget(targetKind, targetId, userId, body, parentId, rating, extras);
+      extrasState.clear();
+      return posted;
+    } catch (err) {
+      await extrasState.discardUpload(uploadedPath);
+      throw err;
+    }
   }
 
   useEffect(() => {
@@ -268,6 +293,7 @@ export function useCommentThread(
   }, []);
 
   const commentsById = useMemo(() => new Map(comments.map((c) => [c.id, c])), [comments]);
+  const { stateFor: attachmentStateFor } = useAttachmentCards(comments);
   // Oldest first, like the server order — pages and the viewer's own new comments merge into one chronological thread.
   const sorted = useMemo(() => [...comments].sort(byCreated), [comments]);
   const childrenByParent = useMemo(() => {
@@ -353,21 +379,23 @@ export function useCommentThread(
     setReplyingTo(id);
     setReplyDraft("");
     setReplyError(null);
+    replyExtras.clear();
   }
 
   function cancelReply() {
     setReplyingTo(null);
     setReplyDraft("");
     setReplyError(null);
+    replyExtras.clear();
   }
 
   async function submitReply(parentId: string) {
     const trimmed = replyDraft.trim();
-    if (!trimmed || !user || isPostingReply) return;
+    if ((!trimmed && !replyExtras.hasExtras) || replyExtras.isPreparing || !user || isPostingReply) return;
     setIsPostingReply(true);
     setReplyError(null);
     try {
-      const posted = await postCommentForTarget(targetKind, targetId, user.id, trimmed, parentId);
+      const posted = await postWithExtras(replyExtras, user.id, trimmed, parentId, null);
       bumpCommentCount(targetId, 1);
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
@@ -385,14 +413,14 @@ export function useCommentThread(
   /** Posts the composer's draft as a new top-level comment. */
   async function submitComment() {
     const trimmed = draft.trim();
-    if (!trimmed || !user) return;
+    if ((!trimmed && !composerExtras.hasExtras) || composerExtras.isPreparing || !user) return;
     // Yalnız puan verip yazı yazmayan kişi: yorum yazısı zorunlu (puan yorumla birlikte görünür).
 
     setIsPosting(true);
     setPostError(null);
     try {
       const rating = ratingEnabled && !myRatedComment && !isSpaceOwner && draftRating > 0 ? draftRating : null;
-      const posted = await postCommentForTarget(targetKind, targetId, user.id, trimmed, null, rating);
+      const posted = await postWithExtras(composerExtras, user.id, trimmed, null, rating);
       bumpCommentCount(targetId, 1);
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
@@ -411,6 +439,7 @@ export function useCommentThread(
     setEditingId(comment.id);
     setEditDraft(comment.body);
     setEditError(null);
+    editExtras.load(comment.media ?? null, comment.attachment ?? null);
     // Editing and replying to the same node at once would be confusing UI-wise.
     if (replyingTo === comment.id) cancelReply();
   }
@@ -419,20 +448,29 @@ export function useCommentThread(
     setEditingId(null);
     setEditDraft("");
     setEditError(null);
+    editExtras.clear();
   }
 
   async function submitEdit(id: string) {
     const trimmed = editDraft.trim();
-    if (!trimmed || isSavingEdit) return;
+    // Metin boşaltılabilir yalnız görsel/ek kalıyorsa; ekisiz yorum boş kalamaz.
+    if ((!trimmed && !editExtras.hasExtras) || editExtras.isPreparing || !user || isSavingEdit) return;
+    const original = commentsById.get(id);
     setIsSavingEdit(true);
     setEditError(null);
+    let uploadedPath: string | null = null;
     try {
-      const { editedAt } = await updateComment(id, trimmed);
-      setComments((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, body: trimmed, editedAt } : c)),
-      );
+      const prepared = await editExtras.prepare(user.id);
+      uploadedPath = prepared.uploadedPath;
+      const { editedAt } = await updateComment(id, trimmed, prepared.extras);
+      const media = prepared.extras.media ?? null;
+      const attachment = prepared.extras.attachment ?? null;
+      setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: trimmed, editedAt, media, attachment } : c)));
+      // Yorumdan çıkan (kaldırılan ya da başka görselle değişen) fotoğrafın dosyası depoda kalmasın (en iyi çaba).
+      if (original?.media?.kind === "photo" && !(media?.kind === "photo" && media.path === original.media.path)) void removeCommentPhotos([original.media.path]);
       cancelEdit();
     } catch (err) {
+      await editExtras.discardUpload(uploadedPath);
       setEditError(err instanceof Error ? err.message : t("comments.editFailed"));
     } finally {
       setIsSavingEdit(false);
@@ -451,8 +489,11 @@ export function useCommentThread(
     setDeleteConfirmId(null);
     setIsDeletingId(id);
     setDeleteError(null);
+    // Silinen yorumun fotoğrafı depoda kalmasın (en iyi çaba; kalırsa yetim süpürücü toplar).
+    const doomedPhoto = commentsById.get(id)?.media;
     try {
       await deleteComment(id);
+      if (doomedPhoto?.kind === "photo") void removeCommentPhotos([doomedPhoto.path]);
       // A comment with replies is soft-deleted (still counted); only a real
       // delete lowers the stored comment_count.
       if (!childrenByParent.has(id)) bumpCommentCount(targetId, -1);
@@ -520,6 +561,9 @@ export function useCommentThread(
     registerNodeRef,
     highlightedId,
     onRate: ratingEnabled ? rateComment : undefined,
+    replyExtras,
+    editExtras,
+    attachmentStateFor,
   };
 
 
@@ -539,6 +583,7 @@ export function useCommentThread(
     myRatedComment,
     isSpaceOwner,
     submitComment,
+    composerExtras,
     isPosting,
     postError,
     deleteError,

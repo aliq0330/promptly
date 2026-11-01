@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { localizeNotificationMessage } from "./notification-message.ts";
+import { localizeNotificationMessage, withoutEmptyPreview } from "./notification-message.ts";
 
 // `t` taklidi: anahtar + parametreler (JSON), kalıbın doğru anahtara ve doğru parçalara ayrıldığını görmek için.
 const fakeT = ((key: string, params?: Record<string, string | number>) => JSON.stringify({ key, params: params ?? {} })) as never;
@@ -27,6 +27,16 @@ test("rol değişikliği cümleleri (docs/history/305-*) topluluk adı çevrilme
   assert.deepEqual(JSON.parse(run('"Neon Kulübü" topluluğunda rolün yönetici oldu.')), { key: "notifMsg.communityRoleAdmin", params: { name: "Neon Kulübü", preview: "" } });
   assert.deepEqual(JSON.parse(run('"Neon Kulübü" topluluğunda rolün moderatör oldu.')), { key: "notifMsg.communityRoleModerator", params: { name: "Neon Kulübü", preview: "" } });
   assert.deepEqual(JSON.parse(run('"Neon Kulübü" topluluğunda rolün üye olarak değiştirildi.')), { key: "notifMsg.communityRoleMember", params: { name: "Neon Kulübü", preview: "" } });
+});
+
+test("an attachment-only comment (empty quoted preview, docs/history/308-*) reads naturally in both languages", () => {
+  assert.equal(withoutEmptyPreview('Yorumuna yanıt verdi: ""'), "Yorumuna yanıt verdi.");
+  assert.equal(withoutEmptyPreview('Yorumuna yanıt verdi: "selam"'), 'Yorumuna yanıt verdi: "selam"');
+  assert.equal(run('Yorumuna yanıt verdi: ""', "tr"), "Yorumuna yanıt verdi.");
+  assert.equal(JSON.parse(run('Yorumuna yanıt verdi: ""')).key, "notifMsg.repliedCommentNone");
+  assert.equal(JSON.parse(run('Workflow\'una yorum yaptı: ""')).key, "notifMsg.commentedWorkflowNone");
+  assert.equal(JSON.parse(run('Seni bir yorumda andı: ""')).key, "notifMsg.mentionedCommentNone");
+  assert.equal(JSON.parse(JSON.parse(run("Sana bir mesaj gönderdi: bir GIF gönderdi")).params.preview).key, "notifMsg.previewGif");
 });
 
 test("haftalık özet (docs/history/307-*): sayılar korunur, etiketler çevrilir; bilinmeyen parça olduğu gibi kalır; Türkçe aynen döner", () => {

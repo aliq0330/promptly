@@ -25,6 +25,7 @@ const BOUNDED_BY_DESIGN: Record<string, string> = {
   "content-interest.ts:fetchContentInterests": "own answers for the posts of one list page (ids in parts of 100)",
   "collections.ts:fetchCollectionIdsContaining": "the collections holding ONE work",
   "comment-likes.ts:fetchLikedCommentIds": "ids of one thread's comments",
+  "comment-attachments.ts:fetchAttachmentCards": "ids come from one page of comments (read in parts of 100 per type)",
   "communities.ts:fetchCommunityPostsByIds": "ids come from one page",
   "content-versions.ts:fetchVersionsForRequest": "versions of ONE request (one row per edit)",
   "content-versions.ts:fetchVersionsForWorkflow": "versions of ONE workflow (one row per edit)",

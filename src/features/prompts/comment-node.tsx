@@ -12,6 +12,9 @@ import type { PromptComment } from "@/types";
 import { MentionText } from "@/features/mentions/mention-text";
 import { MentionTextarea } from "@/features/mentions/mention-field";
 import { StarRatingDisplay, StarRatingInput } from "@/components/ui/star-rating";
+import { CompactContentCard, type AttachmentState } from "@/features/content/compact-content-card";
+import { CommentExtrasPreview, CommentExtrasToolbar, CommentMediaView, type CommentExtrasController } from "./comment-extras";
+import type { CommentAttachment } from "@/types";
 
 /** Beyond this nesting level, indentation stops growing (mobile/readability) — the "@kime yanıt verdiği" hint below takes over showing the relationship instead. */
 const MAX_INDENT_DEPTH = 6;
@@ -57,6 +60,12 @@ export interface CommentTree {
   layout?: "thread" | "sheet";
   /** Space yorumlarında kendi puanını yıldızlardan değiştirmek (docs/history/242-*); yoksa yıldızlar yalnız gösterilir. */
   onRate?: (id: string, rating: number) => void;
+  /** Yanıt kutusunun ekleri (fotoğraf · GIF · içerik, docs/history/308-*). */
+  replyExtras: CommentExtrasController;
+  /** Düzenlenen yorumun ekleri: mevcut görsel/ek ile açılır; değiştirilebilir ya da kaldırılabilir. */
+  editExtras: CommentExtrasController;
+  /** Yorumdaki içerik ekinin önizleme kartı durumu (toplu okunur, yorum başına istek yok). */
+  attachmentStateFor: (attachment: CommentAttachment) => AttachmentState;
 }
 
 /**
@@ -91,6 +100,17 @@ function CommentRating({ comment, tree, isOwn }: { comment: PromptComment; tree:
         <StarRatingDisplay value={rating} size={14} />
       )}
       <span className="text-xs font-semibold tabular-nums text-text-secondary">{rating}/5</span>
+    </div>
+  );
+}
+
+/** Yorumun kayıtlı görseli (fotoğraf/GIF) ve küçük içerik kartı; silinmiş yorumda ya da ek yoksa hiçbir şey çizmez. */
+function CommentAttachments({ comment, tree }: { comment: PromptComment; tree: CommentTree }) {
+  if (comment.deletedAt || (!comment.media && !comment.attachment)) return null;
+  return (
+    <div className="mt-1.5 space-y-2" data-comment-attachments>
+      {comment.media && <CommentMediaView media={comment.media} />}
+      {comment.attachment && <CompactContentCard attachment={comment.attachment} state={tree.attachmentStateFor(comment.attachment)} />}
     </div>
   );
 }
@@ -150,7 +170,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 <Button
                   type="button"
                   size="sm"
-                  disabled={!tree.editDraft.trim() || tree.isSavingEdit}
+                  disabled={!(tree.editDraft.trim() || tree.editExtras.hasExtras) || tree.editExtras.isPreparing || tree.isSavingEdit}
                   onClick={() => tree.onSubmitEdit(comment.id)}
                 >
                   {tree.isSavingEdit ? t("common.saving") : t("common.save")}
@@ -159,6 +179,8 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                   {t("common.cancel")}
                 </Button>
               </div>
+              <CommentExtrasPreview extras={tree.editExtras} attachmentState={tree.attachmentStateFor} />
+              {tree.currentUserId && <CommentExtrasToolbar extras={tree.editExtras} userId={tree.currentUserId} disabled={tree.isSavingEdit} className="-ml-1.5" />}
               {tree.editError && <p className="text-xs text-danger">{tree.editError}</p>}
             </div>
           ) : (
@@ -177,6 +199,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                   <MentionText text={comment.body} />
                 </span>
               </p>
+              <CommentAttachments comment={comment} tree={tree} />
             </>
           )}
 
@@ -251,13 +274,15 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 placeholder={t("comments.writeAReply")}
                 className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
+              <CommentExtrasPreview extras={tree.replyExtras} />
               <div className="flex items-center gap-2">
-                <Button type="submit" size="sm" disabled={!tree.replyDraft.trim() || tree.isPosting}>
+                <Button type="submit" size="sm" disabled={!(tree.replyDraft.trim() || tree.replyExtras.hasExtras) || tree.replyExtras.isPreparing || tree.isPosting}>
                   {tree.isPosting ? t("common.sending") : t("common.send")}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelReply}>
                   {t("common.cancel")}
                 </Button>
+                {tree.currentUserId && <CommentExtrasToolbar extras={tree.replyExtras} userId={tree.currentUserId} disabled={tree.isPosting} className="ml-auto" />}
               </div>
               {tree.postError && <p className="text-xs text-danger">{tree.postError}</p>}
             </form>
@@ -356,20 +381,27 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
                 className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
               <div className="flex items-center gap-2">
-                <Button type="button" size="sm" disabled={!tree.editDraft.trim() || tree.isSavingEdit} onClick={() => tree.onSubmitEdit(comment.id)}>
+                <Button type="button" size="sm" disabled={!(tree.editDraft.trim() || tree.editExtras.hasExtras) || tree.editExtras.isPreparing || tree.isSavingEdit} onClick={() => tree.onSubmitEdit(comment.id)}>
                   {tree.isSavingEdit ? t("common.saving") : t("common.save")}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelEdit}>
                   {t("common.cancel")}
                 </Button>
               </div>
+              <CommentExtrasPreview extras={tree.editExtras} attachmentState={tree.attachmentStateFor} showHint={false} />
+              {tree.currentUserId && <CommentExtrasToolbar extras={tree.editExtras} userId={tree.currentUserId} disabled={tree.isSavingEdit} className="-ml-1.5" />}
               {tree.editError && <p className="text-caption text-danger">{tree.editError}</p>}
             </div>
           ) : (
-            <p className="whitespace-pre-line break-words text-body leading-snug text-text">
-              {showParentHint && <span className="mr-1 font-semibold text-primary">@{parent.author.username}</span>}
-              <MentionText text={comment.body} />
-            </p>
+            <>
+              {(comment.body || showParentHint) && (
+                <p className="whitespace-pre-line break-words text-body leading-snug text-text">
+                  {showParentHint && <span className="mr-1 font-semibold text-primary">@{parent.author.username}</span>}
+                  <MentionText text={comment.body} />
+                </p>
+              )}
+              <CommentAttachments comment={comment} tree={tree} />
+            </>
           )}
 
           {!isDeleted && !isEditingHere && (

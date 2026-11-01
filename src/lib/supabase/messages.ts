@@ -2,7 +2,7 @@ import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
-import { removeMessageImages } from "./message-images";
+import { isGifOnly, removeMessageImages } from "./message-images";
 import { mapChatGroupRow, CHAT_GROUP_SELECT, type ChatGroupRow } from "./chat-groups";
 import { fetchAllRows } from "./paged";
 import type { GroupRole } from "@/types";
@@ -113,7 +113,8 @@ function previewTextFor(row: PreviewRow | undefined): string {
   if (row.body) return row.body;
   if (row.shared_prompt_id) return translateForRuntime("messages.sharedAPromptPreview");
   if (row.shared_request_id) return translateForRuntime("messages.sharedARequestPreview");
-  if (parseAttachments(row.attachments).length > 0) return translateForRuntime("messages.sentAPhotoPreview");
+  const attachments = parseAttachments(row.attachments);
+  if (attachments.length > 0) return translateForRuntime(isGifOnly(attachments) ? "messages.sentAGifPreview" : "messages.sentAPhotoPreview");
   return translateForRuntime("messages.noMessagesYetShort");
 }
 

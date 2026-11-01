@@ -166,6 +166,22 @@ export interface PromptComment {
    * with no replies is hard-deleted instead (never appears with this set).
    */
   deletedAt: string | null;
+  /** Yorumun en çok BİR görseli (docs/history/308-*): özel `comment-media` bucket'ındaki fotoğraf ya da GIPHY GIF'i. */
+  media?: CommentMedia | null;
+  /** Yorumun en çok BİR içerik eki: kopya değil başvuru; okuyucu yetkisine göre küçük önizleme kartı olarak çizilir. */
+  attachment?: CommentAttachment | null;
+}
+
+/** Fotoğraf `path` ile (imzalı adresle gösterilir), GIF yalnız GIPHY `gifId` ile (adres `lib/giphy.ts`'te üretilir) taşınır. */
+export type CommentMedia =
+  | { kind: "photo"; path: string; width: number | null; height: number | null }
+  | { kind: "gif"; gifId: string; width: number | null; height: number | null };
+
+export type CommentAttachmentType = "prompt" | "request" | "workflow" | "preset" | "space";
+
+export interface CommentAttachment {
+  type: CommentAttachmentType;
+  id: string;
 }
 
 // === Kullanıcı Sonuçları / Prompt Çıktıları ================================

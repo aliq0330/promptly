@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, ImageOff, Loader2, RotateCw } from "lucide-react";
 import { getCachedSignedUrl, resolveSignedUrls } from "@/lib/supabase/message-images";
+import { gifIdFromPath, giphyUrl } from "@/lib/giphy";
+import { usePrefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { MessageAttachment } from "@/types";
@@ -15,9 +17,20 @@ export interface GridImage {
   height: number | null;
 }
 
-/** Signed URLs for a message's stored photos — resolved in one batched request, served from a module cache afterwards (no flash on re-render). */
+/**
+ * Signed URLs for a message's stored photos — resolved in one batched request, served from a module cache afterwards (no flash on re-render).
+ * GIF ekleri (`giphy:<kimlik>`, docs/history/308-*) imzaya girmez: adresleri doğrudan GIPHY'dendir ("hareketi azalt"ta ilk kare).
+ */
 export function useMessageImageUrls(attachments: MessageAttachment[]): Map<string, string> {
-  const paths = attachments.map((a) => a.path);
+  const reduced = usePrefersReducedMotion();
+  const allPaths = attachments.map((a) => a.path);
+  const paths = allPaths.filter((path) => gifIdFromPath(path) === null);
+  const gifUrls = new Map<string, string>();
+  for (const path of allPaths) {
+    const id = gifIdFromPath(path);
+    const url = id ? giphyUrl(id, reduced ? "still" : "fixed") : null;
+    if (url) gifUrls.set(path, url);
+  }
   const pathKey = paths.join("|");
   const [urls, setUrls] = useState<Map<string, string>>(() => {
     const initial = new Map<string, string>();
@@ -40,7 +53,7 @@ export function useMessageImageUrls(attachments: MessageAttachment[]): Map<strin
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `pathKey` stands in for the array contents
   }, [pathKey]);
 
-  return urls;
+  return gifUrls.size === 0 ? urls : new Map([...urls, ...gifUrls]);
 }
 
 function Cell({
@@ -62,6 +75,7 @@ function Cell({
   const { t } = useTranslation();
   const [failed, setFailed] = useState(false);
   const label = t("messages.photoOfTotal", { index: index + 1, total });
+  const isGif = gifIdFromPath(image.key) !== null;
 
   return (
     <button
@@ -92,6 +106,11 @@ function Cell({
       ) : (
         <span className="flex h-full w-full items-center justify-center text-text-muted">
           {failed ? <ImageOff size={20} aria-hidden /> : <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden />}
+        </span>
+      )}
+      {isGif && (
+        <span aria-hidden data-message-gif-badge className="absolute left-1.5 top-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-[0.06em] text-white">
+          {t("gif.badge")}
         </span>
       )}
     </button>

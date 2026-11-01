@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ALLOWED_IMAGE_MIME } from "@/lib/supabase/message-images";
 import { ChatAttachSheet } from "./chat-attach";
+import { GifPicker } from "@/features/gif/gif-picker";
+import type { GifItem } from "@/lib/giphy";
 import { ComposerEmojiPicker } from "./composer-emoji-picker";
 import type { CommunityPostType } from "@/lib/supabase/communities";
 import type { ComposerImage } from "./use-composer-images";
@@ -82,6 +84,7 @@ export function MessageComposer({
   dragActive,
   onPickLibrary,
   onImport,
+  onPickGif,
 }: {
   draft: string;
   onDraftChange: (value: string) => void;
@@ -104,6 +107,8 @@ export function MessageComposer({
   onPickLibrary?: (type: CommunityPostType) => void;
   /** "+" → Prompt içe aktar. */
   onImport?: () => void;
+  /** "+" → GIF (docs/history/308-*): GIPHY seçicisini açar; seçilen GIF'i çağıran GÖNDERİR (taslak metne dokunulmaz). Yoksa GIF satırı çizilmez. */
+  onPickGif?: (gif: GifItem) => void;
 }) {
   const { t } = useTranslation();
   const formRef = useRef<HTMLFormElement>(null);
@@ -113,6 +118,8 @@ export function MessageComposer({
   const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
+  const [gifOpen, setGifOpen] = useState(false);
+  const hasSheet = Boolean(onPickLibrary || onImport || onPickGif);
   const closeEmoji = useCallback(() => setEmojiOpen(false), []);
 
   // Grow with the content up to ~5 lines, then scroll inside.
@@ -220,11 +227,11 @@ export function MessageComposer({
       <div className="flex items-end gap-2">
         <button
           type="button"
-          onClick={() => (onPickLibrary || onImport ? setAttachOpen(true) : fileInputRef.current?.click())}
+          onClick={() => (hasSheet ? setAttachOpen(true) : fileInputRef.current?.click())}
           disabled={disabled}
           aria-label={t("messages.attach.title")}
           title={t("messages.attach.title")}
-          aria-haspopup={onPickLibrary || onImport ? "dialog" : undefined}
+          aria-haspopup={hasSheet ? "dialog" : undefined}
           data-composer-plus
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface text-text transition-colors hover:bg-surface-soft focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
         >
@@ -302,20 +309,45 @@ export function MessageComposer({
           {error}
         </p>
       )}
-      {attachOpen && (onPickLibrary || onImport) && (
+      {attachOpen && hasSheet && (
         <ChatAttachSheet
           onClose={() => setAttachOpen(false)}
           onPhoto={() => {
             setAttachOpen(false);
             fileInputRef.current?.click();
           }}
-          onImport={() => {
-            setAttachOpen(false);
-            onImport?.();
-          }}
-          onPickType={(type) => {
-            setAttachOpen(false);
-            onPickLibrary?.(type);
+          onGif={
+            onPickGif
+              ? () => {
+                  setAttachOpen(false);
+                  setGifOpen(true);
+                }
+              : undefined
+          }
+          onImport={
+            onImport
+              ? () => {
+                  setAttachOpen(false);
+                  onImport();
+                }
+              : undefined
+          }
+          onPickType={
+            onPickLibrary
+              ? (type) => {
+                  setAttachOpen(false);
+                  onPickLibrary(type);
+                }
+              : undefined
+          }
+        />
+      )}
+      {gifOpen && onPickGif && (
+        <GifPicker
+          onClose={() => setGifOpen(false)}
+          onPick={(gif) => {
+            setGifOpen(false);
+            onPickGif(gif);
           }}
         />
       )}

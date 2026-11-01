@@ -3,6 +3,7 @@ import { chunk, fetchAllRows } from "./paged";
 import { withoutBlocked } from "./blocked-users";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
+import { extrasColumns, extrasUpdateColumns, mapCommentAttachment, mapCommentMedia, type CommentExtrasInput } from "@/lib/comment-extras-model";
 import type { PromptComment } from "@/types";
 
 interface CommentRow {
@@ -15,13 +16,23 @@ interface CommentRow {
   deleted_at: string | null;
   rating?: number | null;
   space_activity_id?: string | null;
+  /** Yorum medyası/eki (docs/history/308-*): sütunlar yoksa (migration gecikti) gelmez. */
+  media_kind?: string | null;
+  media_ref?: string | null;
+  media_width?: number | null;
+  media_height?: number | null;
+  attach_type?: string | null;
+  attach_id?: string | null;
   profiles: ProfileRow;
 }
 
 const COMMENT_SELECT = `
-  id, body, parent_id, like_count, created_at, edited_at, deleted_at, rating, space_activity_id,
+  id, body, parent_id, like_count, created_at, edited_at, deleted_at, rating, space_activity_id, media_kind, media_ref, media_width, media_height, attach_type, attach_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
+
+export type CommentExtras = CommentExtrasInput;
+export { mapCommentAttachment, mapCommentMedia };
 
 function mapCommentRow(
   row: CommentRow,
@@ -39,6 +50,8 @@ function mapCommentRow(
     deletedAt: row.deleted_at,
     rating: row.rating ?? null,
     ...(row.space_activity_id ? { spaceActivityId: row.space_activity_id } : {}),
+    media: mapCommentMedia(row),
+    attachment: mapCommentAttachment(row),
   };
 }
 
@@ -48,10 +61,11 @@ export async function postCommentOnRequest(
   authorId: string,
   body: string,
   parentId: string | null,
+  extras?: CommentExtras,
 ): Promise<PromptComment> {
   const { data, error } = await supabase
     .from("prompt_comments")
-    .insert({ request_id: requestId, author_id: authorId, body, parent_id: parentId })
+    .insert({ request_id: requestId, author_id: authorId, body, parent_id: parentId, ...extrasColumns(extras) })
     .select(COMMENT_SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? "Yorum eklenemedi.");
@@ -64,10 +78,11 @@ export async function postCommentOnPrompt(
   authorId: string,
   body: string,
   parentId: string | null,
+  extras?: CommentExtras,
 ): Promise<PromptComment> {
   const { data, error } = await supabase
     .from("prompt_comments")
-    .insert({ prompt_id: promptId, author_id: authorId, body, parent_id: parentId })
+    .insert({ prompt_id: promptId, author_id: authorId, body, parent_id: parentId, ...extrasColumns(extras) })
     .select(COMMENT_SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? "Yorum eklenemedi.");
@@ -80,10 +95,11 @@ export async function postCommentOnResult(
   authorId: string,
   body: string,
   parentId: string | null,
+  extras?: CommentExtras,
 ): Promise<PromptComment> {
   const { data, error } = await supabase
     .from("prompt_comments")
-    .insert({ result_id: resultId, author_id: authorId, body, parent_id: parentId })
+    .insert({ result_id: resultId, author_id: authorId, body, parent_id: parentId, ...extrasColumns(extras) })
     .select(COMMENT_SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? "Yorum eklenemedi.");
@@ -96,10 +112,11 @@ export async function postCommentOnPreset(
   authorId: string,
   body: string,
   parentId: string | null,
+  extras?: CommentExtras,
 ): Promise<PromptComment> {
   const { data, error } = await supabase
     .from("prompt_comments")
-    .insert({ preset_id: presetId, author_id: authorId, body, parent_id: parentId })
+    .insert({ preset_id: presetId, author_id: authorId, body, parent_id: parentId, ...extrasColumns(extras) })
     .select(COMMENT_SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
@@ -112,10 +129,11 @@ export async function postCommentOnWorkflow(
   authorId: string,
   body: string,
   parentId: string | null,
+  extras?: CommentExtras,
 ): Promise<PromptComment> {
   const { data, error } = await supabase
     .from("prompt_comments")
-    .insert({ workflow_id: workflowId, author_id: authorId, body, parent_id: parentId })
+    .insert({ workflow_id: workflowId, author_id: authorId, body, parent_id: parentId, ...extrasColumns(extras) })
     .select(COMMENT_SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
@@ -128,10 +146,11 @@ export async function postCommentOnCommunityPost(
   authorId: string,
   body: string,
   parentId: string | null,
+  extras?: CommentExtras,
 ): Promise<PromptComment> {
   const { data, error } = await supabase
     .from("prompt_comments")
-    .insert({ community_post_id: communityPostId, author_id: authorId, body, parent_id: parentId })
+    .insert({ community_post_id: communityPostId, author_id: authorId, body, parent_id: parentId, ...extrasColumns(extras) })
     .select(COMMENT_SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
@@ -156,7 +175,7 @@ export async function postCommentOnSpace(
   authorId: string,
   body: string,
   parentId: string | null,
-  options: { rating?: number | null; activityId?: string | null } = {},
+  options: { rating?: number | null; activityId?: string | null } & CommentExtras = {},
 ): Promise<PromptComment> {
   const { data, error } = await supabase
     .from("prompt_comments")
@@ -167,6 +186,7 @@ export async function postCommentOnSpace(
       parent_id: parentId,
       ...(options.activityId ? { space_activity_id: options.activityId } : {}),
       ...(options.rating ? { rating: options.rating } : {}),
+      ...extrasColumns(options),
     })
     .select(COMMENT_SELECT)
     .single();
@@ -182,10 +202,10 @@ export async function updateCommentRating(commentId: string, authorId: string, r
 }
 
 /** Alıntıya yorum: sunucu tetikleyicisi hedefin halka açıklığını ve engeli doğrular; `content_quotes.comment_count` tetikleyiciyle tutulur. */
-export async function postCommentOnQuote(quoteId: string, authorId: string, body: string, parentId: string | null): Promise<PromptComment> {
+export async function postCommentOnQuote(quoteId: string, authorId: string, body: string, parentId: string | null, extras?: CommentExtras): Promise<PromptComment> {
   const { data, error } = await supabase
     .from("prompt_comments")
-    .insert({ quote_id: quoteId, author_id: authorId, body, parent_id: parentId })
+    .insert({ quote_id: quoteId, author_id: authorId, body, parent_id: parentId, ...extrasColumns(extras) })
     .select(COMMENT_SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
@@ -198,10 +218,11 @@ export async function postCommentOnQuote(quoteId: string, authorId: string, body
  * ownership check is needed here. `handle_comment_body_edit` (Bölüm 9.5)
  * stamps `edited_at` automatically.
  */
-export async function updateComment(commentId: string, body: string): Promise<{ editedAt: string }> {
+export async function updateComment(commentId: string, body: string, extras?: CommentExtras): Promise<{ editedAt: string }> {
+  // `extras` verilirse görsel/ek de düzenlenir (docs/history/308-*): boş verilen alan veritabanında da boşalır; verilmezse yalnız metin.
   const { data, error } = await supabase
     .from("prompt_comments")
-    .update({ body })
+    .update({ body, ...(extras ? extrasUpdateColumns(extras) : {}) })
     .eq("id", commentId)
     .select("edited_at")
     .single();

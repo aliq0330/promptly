@@ -21,17 +21,22 @@ export const LIBRARY_TYPES: { type: CommunityPostType; icon: LucideIcon }[] = [
   { type: "space", icon: Shapes },
 ];
 
-/** Composer'ın "+" düğmesinin açtığı alt sayfa: fotoğraf yükle · prompt içe aktar · kütüphaneden paylaş (tür seç → seçici). */
+/**
+ * Composer'ın "+" düğmesinin açtığı alt sayfa: fotoğraf yükle · GIF · prompt içe aktar · kütüphaneden paylaş (tür seç → seçici).
+ * `onGif` / `onImport` / `onPickType` yoksa ilgili satır çizilmez (ilk mesaj ekranı yalnız fotoğraf + GIF sunar).
+ */
 export function ChatAttachSheet({
   onClose,
   onPhoto,
+  onGif,
   onImport,
   onPickType,
 }: {
   onClose: () => void;
   onPhoto: () => void;
-  onImport: () => void;
-  onPickType: (type: CommunityPostType) => void;
+  onGif?: () => void;
+  onImport?: () => void;
+  onPickType?: (type: CommunityPostType) => void;
 }) {
   const { t } = useTranslation();
   const rowClass =
@@ -51,34 +56,53 @@ export function ChatAttachSheet({
             <span className="text-small text-text-muted">{t("messages.attach.photoHint")}</span>
           </span>
         </button>
-        <button type="button" onClick={onImport} className={rowClass} data-attach-import>
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-            <FileDown size={22} strokeWidth={1.75} aria-hidden />
-          </span>
-          <span className="flex flex-col">
-            <span className="text-body font-semibold text-text">{t("messages.attach.import")}</span>
-            <span className="text-small text-text-muted">{t("messages.attach.importHint")}</span>
-          </span>
-        </button>
-        <div className="mx-2 my-2 border-t border-border-soft" />
-        <p className="px-2 pb-3 pt-1 text-small font-semibold text-text-muted">{t("messages.library.title")}</p>
-        <ul className="grid grid-cols-5 gap-1 px-0.5">
-          {LIBRARY_TYPES.map(({ type, icon: Icon }) => (
-            <li key={type}>
-              <button
-                type="button"
-                onClick={() => onPickType(type)}
-                data-attach-library={type}
-                className="flex w-full flex-col items-center gap-2 rounded-xl px-1 py-1.5 text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-                  <Icon size={24} strokeWidth={1.75} aria-hidden />
-                </span>
-                <span className="text-caption font-medium">{t(`communities.feed.type.${type}`)}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        {onGif && (
+          <button type="button" onClick={onGif} className={rowClass} data-attach-gif>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+              <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-[10px] font-extrabold leading-none tracking-[0.04em]">
+                {t("gif.badge")}
+              </span>
+            </span>
+            <span className="flex flex-col">
+              <span className="text-body font-semibold text-text">{t("messages.attach.gif")}</span>
+              <span className="text-small text-text-muted">{t("messages.attach.gifHint")}</span>
+            </span>
+          </button>
+        )}
+        {onImport && (
+          <button type="button" onClick={onImport} className={rowClass} data-attach-import>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+              <FileDown size={22} strokeWidth={1.75} aria-hidden />
+            </span>
+            <span className="flex flex-col">
+              <span className="text-body font-semibold text-text">{t("messages.attach.import")}</span>
+              <span className="text-small text-text-muted">{t("messages.attach.importHint")}</span>
+            </span>
+          </button>
+        )}
+        {onPickType && (
+          <>
+            <div className="mx-2 my-2 border-t border-border-soft" />
+            <p className="px-2 pb-3 pt-1 text-small font-semibold text-text-muted">{t("messages.library.title")}</p>
+            <ul className="grid grid-cols-5 gap-1 px-0.5">
+              {LIBRARY_TYPES.map(({ type, icon: Icon }) => (
+                <li key={type}>
+                  <button
+                    type="button"
+                    onClick={() => onPickType(type)}
+                    data-attach-library={type}
+                    className="flex w-full flex-col items-center gap-2 rounded-xl px-1 py-1.5 text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+                      <Icon size={24} strokeWidth={1.75} aria-hidden />
+                    </span>
+                    <span className="text-caption font-medium">{t(`communities.feed.type.${type}`)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </Modal>
   );

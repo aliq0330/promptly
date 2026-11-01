@@ -40,7 +40,8 @@ import { PendingMessageBubble, type PendingSend } from "./pending-message-bubble
 import { DaySeparator } from "./day-separator";
 import { layoutChatMessages } from "@/lib/chat-grouping";
 import { useComposerImages } from "./use-composer-images";
-import { removeMessageImages, uploadMessageImage } from "@/lib/supabase/message-images";
+import { gifAttachment, removeMessageImages, uploadMessageImage } from "@/lib/supabase/message-images";
+import type { GifItem } from "@/lib/giphy";
 import {
   deleteMessageForEveryone,
   editMessage,
@@ -948,6 +949,26 @@ export function LocalConversationView() {
     }
   }
 
+  /**
+   * "+" → GIF (docs/history/308-*): seçilen GIF kendi başına bir mesaj olarak hemen gönderilir (dosya yüklenmez, yalnız GIPHY kimliği yazılır).
+   * Yazılmakta olan metin/paylaşım taslağı olduğu gibi kalır; yanıt verilen mesaj varsa GIF ona yanıt olur.
+   */
+  async function sendGif(gif: GifItem) {
+    if (!id || !user || isSending) return;
+    setIsSending(true);
+    setSendError(null);
+    try {
+      const sent = await sendMessage(id, user.id, { id: crypto.randomUUID(), attachments: [gifAttachment(gif)], replyToMessageId: replyingTo?.id });
+      setMessages((prev) => mergeIncomingMessage(prev, sent));
+      setReplyingTo(null);
+      afterSuccessfulSend();
+    } catch (err) {
+      setSendError(err instanceof Error ? translateSendError(err.message, isGroup) : t("messages.gifSendFailed"));
+    } finally {
+      setIsSending(false);
+    }
+  }
+
   function handleBack() {
     // Tarayıcının kendi geri davranışıyla çakışmaması ve `/messages`'ın
     // scroll konumunu mümkün olduğunca korumak için (Aşama 7) `router.
@@ -1662,6 +1683,7 @@ export function LocalConversationView() {
         dragActive={imageDrop.isDragging}
         onPickLibrary={user ? setLibraryType : undefined}
         onImport={user ? () => setImportOpen(true) : undefined}
+        onPickGif={user ? (gif) => void sendGif(gif) : undefined}
         banners={
           <>
     {isGroup && !canPost && (

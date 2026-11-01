@@ -11,6 +11,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import { MentionInput } from "@/features/mentions/mention-field";
 import { useCommentThread, type CommentTarget } from "./use-comment-thread";
 import { StarRatingInput } from "@/components/ui/star-rating";
+import { CommentExtrasPreview, CommentExtrasToolbar } from "./comment-extras";
 
 export type { CommentTarget };
 
@@ -68,6 +69,7 @@ export function CommentSection({
     myRatedComment,
     isSpaceOwner,
     submitComment,
+    composerExtras,
     isPosting,
     postError,
     deleteError,
@@ -162,10 +164,12 @@ export function CommentSection({
               maxLength={2000}
               className="h-9 w-full min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
-            <Button type="submit" size="sm" disabled={!draft.trim() || isPosting}>
+            <Button type="submit" size="sm" disabled={!(draft.trim() || composerExtras.hasExtras) || composerExtras.isPreparing || isPosting}>
               {isPosting ? t("common.sending") : t("common.send")}
             </Button>
           </div>
+          <CommentExtrasPreview extras={composerExtras} />
+          <CommentExtrasToolbar extras={composerExtras} userId={user.id} disabled={isPosting} className="-ml-1.5" />
           {ratingEnabled && !isSpaceOwner && !myRatedComment && <p className="text-caption text-text-muted">{t("spaces.rating.rules")}</p>}
           </div>
         </form>

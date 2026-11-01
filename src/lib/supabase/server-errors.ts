@@ -14,10 +14,12 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   // "Çalıştı mı?" oyu (docs/history/296-*)
   self_vote_not_allowed: "error.selfVote",
   copy_required: "error.copyRequired",
+  // Yorum eki (docs/history/308-*): içerik artık herkese açık/yayında değil
+  attachment_not_public: "error.attachmentNotPublic",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
-const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required"]);
+const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public"]);
 
 export function friendlyServerMessage(code: unknown): string | null {
   if (typeof code !== "string") return null;
@@ -52,7 +54,11 @@ export function friendlyServerErrors(baseFetch: typeof fetch): typeof fetch {
  * yeniden denenir; sütun o oturumda bir daha seçilmez. Yalnız burada listelenen, yokluğu işlevi bozmayan (rozet gibi) sütunlar için —
  * zorunlu bir sütunu listeye ekleme, sessizce `undefined` döner. Yeni bir isteğe bağlı sütun eklenince buraya da ekle.
  */
-const OPTIONAL_COLUMNS = ["is_demo", "flow_show_io", "flow_show_links", "flow_show_relations", "source_workflow_id", "source_step_id", "source_role", "source_step_no", "locked", "reaction"] as const;
+const OPTIONAL_COLUMNS = [
+  "is_demo", "flow_show_io", "flow_show_links", "flow_show_relations", "source_workflow_id", "source_step_id", "source_role", "source_step_no", "locked", "reaction",
+  // Yorum medyası/eki (docs/history/308-*): sütunlar yoksa yorumlar yine açılır, yalnız ek görünmez.
+  "media_kind", "media_ref", "media_width", "media_height", "attach_type", "attach_id",
+] as const;
 const missingOptional = new Set<string>();
 
 function stripColumn(select: string, column: string): string {
