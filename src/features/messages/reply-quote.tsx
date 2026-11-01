@@ -6,6 +6,7 @@ import { StorageImage } from "@/components/ui/storage-media";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useMessageImageUrls } from "./message-image-grid";
+import { isGifOnly } from "@/lib/supabase/message-images";
 import { parseWorkflowShareBody } from "./workflow-share-format";
 import { parsePresetShareBody } from "./preset-share-format";
 import { parseCommunityPostShareBody } from "./community-post-share-format";
@@ -32,7 +33,7 @@ export function describeReplied(message: Message, t: T, itemTitle?: string | nul
   if (message.body) return message.body;
   if (message.sharedPromptId) return itemTitle ?? t("messages.aPrompt");
   if (message.sharedRequestId) return itemTitle ?? t("request.aRequest");
-  if (message.attachments.length > 0) return t("messages.aPhoto");
+  if (message.attachments.length > 0) return t(isGifOnly(message.attachments) ? "messages.aGif" : "messages.aPhoto");
   return "";
 }
 

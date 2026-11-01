@@ -99,11 +99,13 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy
+          # GIF seçici testleri (run-comment-extras) için sahte anahtar; GIPHY taklit edilir.
+          NEXT_PUBLIC_GIPHY_API_KEY: test-key
       - name: Run UI suites
         run: |
           set -o pipefail
           status=0
-          for s in run-safety run-shared-cards run-detail-pages run-home-motion run-feed-filters run-search-notifications; do
+          for s in run-safety run-shared-cards run-detail-pages run-home-motion run-feed-filters run-search-notifications run-comment-extras; do
             echo "== $s"; node tests/messaging-ui/$s.mjs | tail -3 || status=1
           done
           exit $status

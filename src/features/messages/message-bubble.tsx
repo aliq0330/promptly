@@ -28,6 +28,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { communityHref } from "@/lib/communities";
 import { StoryReplyCard } from "@/features/stories/story-reply-card";
+import { gifIdFromPath, giphyUrl } from "@/lib/giphy";
 
 /** A message's stored photos (signed URLs resolved lazily) + the fullscreen viewer they open. */
 function BubbleImages({ attachments, isMe }: { attachments: MessageAttachment[]; isMe: boolean }) {
@@ -49,7 +50,15 @@ function BubbleImages({ attachments, isMe }: { attachments: MessageAttachment[];
         }}
       />
       {open !== null && (
-        <ImageLightbox images={viewable.map((image) => ({ url: image.url }))} initialIndex={open} onClose={() => setOpen(null)} />
+        <ImageLightbox
+          // GIF'in tam ekranda büyük (özgün) sürümü açılır; fotoğraflar kendi imzalı adresiyle.
+          images={viewable.map((image) => {
+            const gifId = gifIdFromPath(image.key);
+            return { url: (gifId && giphyUrl(gifId, "original")) || image.url };
+          })}
+          initialIndex={open}
+          onClose={() => setOpen(null)}
+        />
       )}
     </>
   );

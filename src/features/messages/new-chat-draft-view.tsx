@@ -11,7 +11,8 @@ import { MessageComposer, useImageDrop } from "./message-composer";
 import { useComposerImages } from "./use-composer-images";
 import { fetchOwnProfile } from "@/lib/supabase/profiles";
 import { getBlockedIds } from "@/lib/supabase/blocked-users";
-import { removeMessageImages, uploadMessageImage } from "@/lib/supabase/message-images";
+import { gifAttachment, removeMessageImages, uploadMessageImage } from "@/lib/supabase/message-images";
+import type { GifItem } from "@/lib/giphy";
 import { conversationIdByUser, filterMessageableUsers, sendMessage } from "@/lib/supabase/messages";
 import { computeKeyboardInset } from "./viewport-helpers";
 import { messageHref, profileHref } from "@/lib/utils";
@@ -140,6 +141,23 @@ export function NewChatDraftView({ userId }: { userId: string }) {
     }
   }
 
+  /** İlk mesaj olarak GIF: sohbeti açar, GIF'i gönderir (dosya yüklenmez, yalnız GIPHY kimliği). */
+  async function handleGif(gif: GifItem) {
+    if (!user || !target || isSending) return;
+    setIsSending(true);
+    setError(null);
+    try {
+      if (!createdRef.current) createdRef.current = await startConversationWith(target);
+      const conversation = createdRef.current;
+      await sendMessage(conversation.id, user.id, { attachments: [gifAttachment(gif)] });
+      router.replace(messageHref(conversation));
+    } catch (err) {
+      console.error("first message (gif)", err);
+      setError(t("messages.gifSendFailed"));
+      setIsSending(false);
+    }
+  }
+
   if (!user || state === "loading") {
     return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>;
   }
@@ -199,6 +217,7 @@ export function NewChatDraftView({ userId }: { userId: string }) {
         onSubmit={handleSubmit}
         images={composerImages.images}
         imageNotice={composerImages.notice}
+        onPickGif={(gif) => void handleGif(gif)}
         onAddFiles={composerImages.addFiles}
         onRemoveImage={composerImages.remove}
         onDismissNotice={composerImages.dismissNotice}

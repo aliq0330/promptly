@@ -292,3 +292,13 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 ```
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-developers.mjs   # 9/9 beklenir
 ```
+
+## Yorumda fotoğraf · GIF · içerik eki ve mesajda GIF (`docs/history/307-*`)
+
+`run-comment-extras.mjs` (16 senaryo): yazma çubuğunda Fotoğraf · GIF · İçerik düğmeleri; GIF seçici (trend/arama/konu çipi/kendiliğinden sayfalama/yinelenen yok/GIPHY ibaresi), seçince önizleme ve METİNSİZ gönderim (`media_kind=gif`, `media_ref`), fotoğraf (önizlenir, gönderimde `comment-media/<ben>/<uuid>.png` yüklenir, imzalı adresle görünür, ortak/`public` adres hiç istenmez), yanlış dosya türü, fotoğraf↔GIF tek görsel kuralı, içerik seçici (Benimkiler/Kaydettiklerim, İstek/Space'te kaydedilenler yok), küçük önizleme kartı (taslak bağlantı değil; kayıtlı olan bağlantı), kartların SAYFA BAŞINA TEK sorguyla okunması + okunamayan/sonradan özel yapılan içeriğin "gizli" kartı (başlık sızmaz), yanıt kutusunda aynı düğmeler (`parent_id`), ek kaldırma, sunucu `attachment_not_public` hatası (yazı + ek korunur), 390 px taşma yok + düğmeler ≥36 px, İngilizce; mesajda "+ → GIF" (`attachments[{path:"giphy:<kimlik>"}]`, dosya yüklenmez/imzalanmaz, balonda GIF rozeti ve GERÇEKTEN çizilmiş görsel, taslak metin korunur, İngilizce). GIPHY ve Supabase TAKLİTTİR (gerçek GIPHY'ye KARŞI DENENMEDİ); veritabanı kuralları `supabase/tests/comment-media.sql`'dedir. **Derleme GIPHY anahtarıyla alınmalıdır** (seçici anahtarsız "yapılandırılmadı" der):
+
+```bash
+NEXT_PUBLIC_GIPHY_API_KEY=test-key NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-comment-extras.mjs   # 16/16 beklenir
+SHOTS=/tmp/shots node tests/messaging-ui/run-comment-extras.mjs   # ekran görüntüleri
+```

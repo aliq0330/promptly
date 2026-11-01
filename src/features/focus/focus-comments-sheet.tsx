@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useCommentCountDelta } from "@/features/prompts/comment-count-store";
 import { CommentNode, type CommentTree } from "@/features/prompts/comment-node";
+import { CommentExtrasPreview, CommentExtrasToolbar } from "@/features/prompts/comment-extras";
 import { useCommentThread, type CommentTarget } from "@/features/prompts/use-comment-thread";
 import { MentionInput } from "@/features/mentions/mention-field";
 import type { PostFeedItem } from "@/features/feed/types";
@@ -96,10 +97,13 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
   const setValue = replyingTo ? baseTree.onReplyDraftChange : thread.setDraft;
   const posting = replyingTo ? baseTree.isPosting : thread.isPosting;
   const error = (replyingTo ? baseTree.postError : thread.postError) ?? thread.deleteError;
+  // Tek yazma kutusu hem yorum hem yanıt yazar; ekler (fotoğraf · GIF · içerik) de yazılanın durumuna göre seçilir (docs/history/307-*).
+  const extras = replyingTo ? baseTree.replyExtras : thread.composerExtras;
+  const canSubmit = Boolean(value.trim() || extras.hasExtras) && !extras.isPreparing && !posting;
 
   async function submit(event?: React.FormEvent) {
     event?.preventDefault();
-    if (!value.trim() || posting) return;
+    if (!canSubmit) return;
     if (replyingTo) {
       baseTree.onSubmitReply(replyingTo);
       return;
@@ -196,6 +200,12 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
             </div>
           )}
           {error && <p className="mx-3 mb-2 text-caption text-danger">{error}</p>}
+          {user && (
+            <div className="mx-3 mb-2 space-y-2">
+              <CommentExtrasPreview extras={extras} showHint={false} />
+              <CommentExtrasToolbar extras={extras} userId={user.id} disabled={posting} className="-ml-1.5" />
+            </div>
+          )}
 
           {user ? (
             <form onSubmit={submit} className="flex items-center gap-2.5 px-3">
@@ -214,7 +224,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
                 />
                 <button
                   type="submit"
-                  disabled={!value.trim() || posting}
+                  disabled={!canSubmit}
                   aria-label={t("common.send")}
                   title={t("common.send")}
                   className={cn(

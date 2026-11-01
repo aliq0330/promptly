@@ -15,17 +15,17 @@ const PREVIEW_TEMPLATES: [prefix: string, key: string, hasNoPreviewForm: boolean
   ["Yorumunu beğendi", "notifMsg.likedComment", true],
   ["Paylaşımına yorum yaptı", "notifMsg.commentedPost", true],
   ["Workflow'unu beğendi", "notifMsg.likedWorkflow", false],
-  ["Workflow'una yorum yaptı", "notifMsg.commentedWorkflow", false],
+  ["Workflow'una yorum yaptı", "notifMsg.commentedWorkflow", true],
   ["Hazır ayarını beğendi", "notifMsg.likedPreset", false],
-  ["Hazır ayarına yorum yaptı", "notifMsg.commentedPreset", false],
-  ["Sonucuna yorum yaptı", "notifMsg.commentedResult", false],
+  ["Hazır ayarına yorum yaptı", "notifMsg.commentedPreset", true],
+  ["Sonucuna yorum yaptı", "notifMsg.commentedResult", true],
   ["İsteğine yorum yaptı", "notifMsg.commentedRequest", true],
   ["Koleksiyonunu takip etmeye başladı", "notifMsg.followedCollection", false],
   // Alıntılar (docs/history/217-*)
   ["İçeriğini alıntıladı", "notifMsg.quotedContent", false],
   ["Alıntını beğendi", "notifMsg.likedQuote", false],
-  ["Alıntına yorum yaptı", "notifMsg.commentedQuote", false],
-  ["Seni bir yorumda andı", "notifMsg.mentionedComment", false],
+  ["Alıntına yorum yaptı", "notifMsg.commentedQuote", true],
+  ["Seni bir yorumda andı", "notifMsg.mentionedComment", true],
   ["Seni bir istekte andı", "notifMsg.mentionedRequest", false],
   ["Yorumuna yanıt verdi", "notifMsg.repliedComment", true],
   ["İsteğine yanıt verdi", "notifMsg.answeredRequest", false],
@@ -90,12 +90,22 @@ function localizePreviewText(preview: string, t: TFunction): string {
   if (preview === "bir prompt paylaştı") return t("notifMsg.previewPrompt");
   if (preview === "bir prompt isteği paylaştı") return t("notifMsg.previewRequest");
   if (preview === "bir fotoğraf gönderdi") return t("notifMsg.previewPhoto");
+  if (preview === "bir GIF gönderdi") return t("notifMsg.previewGif");
   if (preview === "bir mesaj gönderdi") return t("notifMsg.previewGeneric");
   return preview;
 }
 
+/**
+ * Yalnız fotoğraf/GIF/içerik eki olan bir yorumun önizlemesi boştur (docs/history/307-*): sunucu cümlesi `Yorumuna yanıt verdi: ""` olur.
+ * Boş tırnak "önizlemesiz" biçime (`… verdi.`) indirilir; böylece iki dilde de çirkin boş alıntı görünmez.
+ */
+export function withoutEmptyPreview(message: string): string {
+  return message.endsWith(': ""') ? `${message.slice(0, -4)}.` : message;
+}
+
 /** Returns the notification sentence in the active language (Turkish messages are returned as stored). */
-export function localizeNotificationMessage(message: string, language: "tr" | "en", t: TFunction): string {
+export function localizeNotificationMessage(rawMessage: string, language: "tr" | "en", t: TFunction): string {
+  const message = withoutEmptyPreview(rawMessage);
   if (language === "tr") return message;
 
   for (const { key, hasNone, re } of PREVIEW_MATCHERS) {

@@ -1,6 +1,7 @@
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { IMAGE_BYTE_BUDGETS, IMAGE_SOURCE_MAX_BYTES, shrinkImage } from "@/lib/image-processing";
+import { gifIdFromPath, gifPath, type GifItem } from "@/lib/giphy";
 import type { MessageAttachment } from "@/types";
 
 /** Private bucket created by `20260919650000_message_attachments.sql` — members of the conversation read it through signed URLs only. */
@@ -124,8 +125,22 @@ export async function uploadMessageImage(
   return { path, width: image.width, height: image.height, mime: image.mime };
 }
 
-/** Best-effort cleanup (message deleted for everyone) — never throws. */
-export async function removeMessageImages(paths: string[]): Promise<void> {
+/**
+ * Mesajdaki GIF eki (docs/history/307-*): dosya SAKLANMAZ; `path` = `giphy:<kimlik>` — fotoğraf eklerinin geçtiği her yer (balon, yanıt önizlemesi,
+ * paylaşılan medya, sabit mesaj) aynı `attachments` biçimini okur. Adres `lib/giphy.ts`'te üretilir.
+ */
+export function gifAttachment(gif: Pick<GifItem, "id" | "width" | "height">): MessageAttachment {
+  return { path: gifPath(gif.id), width: gif.width, height: gif.height, mime: "image/gif" };
+}
+
+export const isGifAttachment = (attachment: Pick<MessageAttachment, "path">): boolean => gifIdFromPath(attachment.path) !== null;
+
+/** Mesajın bütün ekleri GIF mi (liste önizlemesi/yanıt alıntısı "Bir GIF" der, "Bir fotoğraf" demez). */
+export const isGifOnly = (attachments: Pick<MessageAttachment, "path">[]): boolean => attachments.length > 0 && attachments.every(isGifAttachment);
+
+/** Best-effort cleanup (message deleted for everyone) — never throws. GIF ekleri depoda dosya olmadığı için atlanır. */
+export async function removeMessageImages(allPaths: string[]): Promise<void> {
+  const paths = allPaths.filter((path) => gifIdFromPath(path) === null);
   if (paths.length === 0) return;
   try {
     await supabase.storage.from(MESSAGE_IMAGES_BUCKET).remove(paths);

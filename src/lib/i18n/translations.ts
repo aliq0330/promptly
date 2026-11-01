@@ -23,6 +23,7 @@ import { workflowSpaceTranslations } from "./translations-workflow-space";
 import { spaceConnectionTranslations } from "./translations-space-connections";
 import { reactionTranslations } from "./translations-reactions";
 import { insightsTranslations } from "./translations-insights";
+import { commentExtrasTranslations } from "./translations-comment-extras";
 import { worksTranslations } from "./translations-works";
 import { workflowAutoTranslations } from "./translations-workflow-auto";
 import { chatRedesignTranslations } from "./translations-chat-redesign";
@@ -3251,6 +3252,7 @@ export const translations = {
   ...spaceConnectionTranslations,
   ...reactionTranslations,
   ...insightsTranslations,
+  ...commentExtrasTranslations,
   ...worksTranslations,
   ...workflowAutoTranslations,
   ...chatRedesignTranslations,
