@@ -56,6 +56,7 @@ const SPACE_ERROR_KEYS: Record<SpaceErrorCode, TranslationKey> = {
   space_not_public: "spaces.error.notPublic",
   space_too_empty: "spaces.error.tooEmpty",
   space_rating_owner: "spaces.error.ratingOwner",
+  space_item_locked: "spaces.error.itemLocked",
 };
 
 export class SpaceError extends Error {
@@ -178,6 +179,8 @@ export interface SpaceItem {
   sourceStepId: string | null;
   sourceRole: "step" | "prompt" | "image" | null;
   sourceStepNo: number | null;
+  /** Kilitli nesne taşınamaz, boyutlanamaz, düzenlenemez, silinemez (docs/history/307-*; sunucu tetikleyicisi de uygular). */
+  locked?: boolean;
   createdBy: string | null;
   updatedBy: string | null;
   createdAt: string;
@@ -374,6 +377,7 @@ export interface SpaceItemRow {
   source_step_id?: string | null;
   source_role?: "step" | "prompt" | "image" | null;
   source_step_no?: number | null;
+  locked?: boolean;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -382,7 +386,7 @@ export interface SpaceItemRow {
 
 // `flow_show_*` (docs/history/261-*) yoksa istek sütunsuz yeniden denenir (server-errors.ts OPTIONAL_COLUMNS) — Space'ler migration'dan önce de açılır.
 const ITEM_COLS =
-  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, created_by, updated_by, created_at, updated_at";
+  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, created_by, updated_by, created_at, updated_at";
 
 export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
   return {
@@ -417,6 +421,7 @@ export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
     sourceStepId: row.source_step_id ?? null,
     sourceRole: row.source_role ?? null,
     sourceStepNo: row.source_step_no ?? null,
+    locked: Boolean(row.locked),
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     createdAt: row.created_at,
@@ -800,7 +805,7 @@ export async function restoreSpaceItems(items: SpaceItem[], userId: string): Pro
   return addSpaceItems(items, userId);
 }
 
-export type SpaceItemPatch = Partial<Pick<SpaceItem, "title" | "body" | "note" | "color" | "isPrivate" | "attachedItemId" | "groupId" | "flowShowIo" | "flowShowLinks" | "flowShowRelations">>;
+export type SpaceItemPatch = Partial<Pick<SpaceItem, "title" | "body" | "note" | "color" | "isPrivate" | "attachedItemId" | "groupId" | "flowShowIo" | "flowShowLinks" | "flowShowRelations" | "locked">>;
 
 export async function updateSpaceItem(id: string, patch: SpaceItemPatch): Promise<SpaceItem> {
   const body: Record<string, unknown> = {};
@@ -814,6 +819,7 @@ export async function updateSpaceItem(id: string, patch: SpaceItemPatch): Promis
   if (patch.flowShowIo !== undefined) body.flow_show_io = patch.flowShowIo;
   if (patch.flowShowLinks !== undefined) body.flow_show_links = patch.flowShowLinks;
   if (patch.flowShowRelations !== undefined) body.flow_show_relations = patch.flowShowRelations;
+  if (patch.locked !== undefined) body.locked = patch.locked;
   const { data, error } = await supabase.from("space_items").update(body).eq("id", id).select(ITEM_COLS).maybeSingle();
   if (error) throw toSpaceError(error);
   if (!data) throw new SpaceError("space_forbidden", translateForRuntime("spaces.error.forbidden"));

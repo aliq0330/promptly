@@ -1,5 +1,5 @@
 /**
- * GIPHY katmanı (docs/history/307-*): yorumlarda ve mesajlarda GIF. Promptly GIF DOSYASI SAKLAMAZ — yalnız GIPHY kimliğini (`id`) yazar,
+ * GIPHY katmanı (docs/history/308-*): yorumlarda ve mesajlarda GIF. Promptly GIF DOSYASI SAKLAMAZ — yalnız GIPHY kimliğini (`id`) yazar,
  * adres her zaman burada üretilir (`giphyUrl`). Böylece veritabanına rastgele adres giremez, GIF'i kaldıran GIPHY'dir.
  *
  * API anahtarı `NEXT_PUBLIC_GIPHY_API_KEY` (statik export: tarayıcıya gömülür; GIPHY anahtarları zaten tarayıcı kullanımı için verilir,

@@ -2,7 +2,7 @@ import { isGiphyId } from "./giphy.ts";
 import type { CommentAttachment, CommentAttachmentType, CommentMedia } from "@/types";
 
 /**
- * Yorum ekinin saf modeli (docs/history/307-*): `prompt_comments` satırındaki sütunlar ↔ uygulama tipleri. Ağ/Supabase içermez, birim testlidir;
+ * Yorum ekinin saf modeli (docs/history/308-*): `prompt_comments` satırındaki sütunlar ↔ uygulama tipleri. Ağ/Supabase içermez, birim testlidir;
  * `lib/supabase/comments.ts` bunu kullanır. Biçimi bozuk satır sessizce eksiz sayılır — asla bir adrese/yola dönüşmez.
  */
 
@@ -58,7 +58,7 @@ export function extrasColumns(extras: CommentExtrasInput | undefined): Record<st
 }
 
 /**
- * Düzenlemede yazılacak sütunlar (docs/history/307-*): altısı da HER ZAMAN yazılır — ek yoksa `null`, yani kullanıcının kaldırdığı görsel/ek
+ * Düzenlemede yazılacak sütunlar (docs/history/308-*): altısı da HER ZAMAN yazılır — ek yoksa `null`, yani kullanıcının kaldırdığı görsel/ek
  * veritabanında da boşalır. (INSERT için `extrasColumns`, yalnızca dolu olanı yazar.)
  */
 export function extrasUpdateColumns(extras: CommentExtrasInput): Record<string, unknown> {

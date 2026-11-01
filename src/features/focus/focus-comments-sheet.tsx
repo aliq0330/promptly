@@ -97,7 +97,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
   const setValue = replyingTo ? baseTree.onReplyDraftChange : thread.setDraft;
   const posting = replyingTo ? baseTree.isPosting : thread.isPosting;
   const error = (replyingTo ? baseTree.postError : thread.postError) ?? thread.deleteError;
-  // Tek yazma kutusu hem yorum hem yanıt yazar; ekler (fotoğraf · GIF · içerik) de yazılanın durumuna göre seçilir (docs/history/307-*).
+  // Tek yazma kutusu hem yorum hem yanıt yazar; ekler (fotoğraf · GIF · içerik) de yazılanın durumuna göre seçilir (docs/history/308-*).
   const extras = replyingTo ? baseTree.replyExtras : thread.composerExtras;
   const canSubmit = Boolean(value.trim() || extras.hasExtras) && !extras.isPreparing && !posting;
 

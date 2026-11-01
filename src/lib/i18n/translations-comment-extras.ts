@@ -1,5 +1,5 @@
 /**
- * Yorumda fotoğraf · GIF · içerik eki ve mesajda GIF (docs/history/307-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar
+ * Yorumda fotoğraf · GIF · içerik eki ve mesajda GIF (docs/history/308-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar
  * (`...commentExtrasTranslations`). Kullanıcı içeriği, GIF başlıkları ve marka adı (GIPHY) çevrilmez.
  */
 export const commentExtrasTranslations = {

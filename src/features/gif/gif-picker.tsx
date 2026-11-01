@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 type Failure = "not_configured" | "rate_limited" | "failed" | null;
 
 /**
- * GIF seçici (docs/history/307-*) — yorumda ve mesajda AYNI pencere. Boş arama GIPHY'nin trendleridir; konu çipleri bir aramayı tek dokunuşla
+ * GIF seçici (docs/history/308-*) — yorumda ve mesajda AYNI pencere. Boş arama GIPHY'nin trendleridir; konu çipleri bir aramayı tek dokunuşla
  * doldurur; sonuçlar iki sütunlu "duvar" (yeni sayfa gelince mevcut GIF'ler yer değiştirmez) ve kendiliğinden devam eder. Bir GIF'e dokunmak onu
  * SEÇER ve pencereyi kapatır (`onPick`); GIF dosyası Promptly'ye indirilmez/yüklenmez, yalnız GIPHY kimliği saklanır. "Hareketi azalt" açıkken
  * önizlemeler hareketsiz ilk karedir. Kullanım koşulu gereği "Powered by GIPHY" ibaresi görünür.

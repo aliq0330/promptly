@@ -112,3 +112,70 @@ test("dosya adı yalnız ASCII ve türe göre", () => {
   assert.equal(contentFileName("request", date), "promptly-requests-2026-11-01.json");
   assert.equal(contentFileName("preset", date), "promptly-presets-2026-11-01.json");
 });
+
+// --- Workflow (docs/history/307-*) ---------------------------------------------------------------------------------------------------------
+import { toExchangeWorkflow, type ExchangeWorkflow } from "./content-format.ts";
+
+const PUB = "a0000000-0000-4000-8000-0000000000a1";
+const workflow: ExchangeWorkflow = {
+  title: "Kampanya",
+  description: "Üç adım",
+  contentType: "text",
+  category: null,
+  subcategory: null,
+  tools: [],
+  tags: ["kampanya"],
+  steps: [
+    { key: "s1", title: "Fikir", description: "", instructions: "", prompt: { id: PUB, title: "Açık prompt" }, inputs: [], outputs: [{ id: "fikir", label: "Fikir" }] },
+    { key: "s2", title: "Metin", description: "", instructions: "", prompt: null, inputs: [{ id: "g", label: "Girdi", source: { step: "s1", output: "fikir" } }], outputs: [] },
+  ],
+};
+
+test("workflow JSON zarfından aynen geri okunur; adım anahtarları ve bağlantılar korunur", () => {
+  const r = parseContent("workflow", serializeContent("workflow", [workflow]));
+  assert.equal(r.fatal, null);
+  assert.deepEqual(r.items, [workflow]);
+  assert.equal(parseContent("workflow", serializeContent("request", [request])).fatal, "unknown_format");
+});
+
+test("workflow kuralları: adım gerekli, anahtar benzersiz, bağlantı yalnız ÖNCEKİ adımın var olan çıktısından", () => {
+  const bad = (steps: unknown) => parseContent("workflow", JSON.stringify([{ title: "x", contentType: "text", steps }])).issues.map((i) => i.code);
+  assert.deepEqual(bad([]), ["invalid_steps"]);
+  assert.deepEqual(bad(Array.from({ length: 31 }, (_, i) => ({ key: `s${i}` }))), ["too_many_steps"]);
+  assert.deepEqual(bad([{ key: "a" }, { key: "a" }]), ["invalid_steps"]);
+  assert.deepEqual(bad([{ key: "a", inputs: [{ id: "i", label: "I", source: { step: "b", output: "o" } }] }, { key: "b", outputs: [{ id: "o", label: "O" }] }]), ["invalid_connection"]);
+  assert.deepEqual(bad([{ key: "a", outputs: [{ id: "o", label: "O" }] }, { key: "b", inputs: [{ id: "i", label: "I", source: { step: "a", output: "yok" } }] }]), ["invalid_connection"]);
+  assert.deepEqual(bad([{ key: "a b" }]), ["invalid_steps"]);
+  assert.deepEqual(bad([{ key: "a", outputs: [{ id: "o", label: "" }] }]), ["invalid_steps"]);
+  assert.deepEqual(bad([{ key: "a", title: "t".repeat(201) }]), ["too_long"]);
+  assert.deepEqual(bad([{ key: "a" }]), []);
+});
+
+test("prompt başvurusu yalnız geçerli bir UUID ise taşınır; prompt metni dosyada hiç yer almaz", () => {
+  const r = parseContent("workflow", JSON.stringify([{ title: "x", contentType: "text", steps: [
+    { key: "a", prompt: { id: "not-a-uuid", title: "x" } },
+    { key: "b", prompt: { id: PUB.toUpperCase(), title: "Başlık", promptText: "GİZLİ METİN" } },
+  ] }]));
+  assert.equal(r.items[0].steps[0].prompt, null);
+  assert.deepEqual(r.items[0].steps[1].prompt, { id: PUB, title: "Başlık" });
+  assert.ok(!JSON.stringify(r.items).includes("GİZLİ METİN"));
+});
+
+test("uygulamadan dışa aktarma: yalnız herkese açık prompt başvurusu yazılır, adım kimlikleri anahtara çevrilir", () => {
+  const out = toExchangeWorkflow(
+    {
+      title: "W", description: "", contentTypes: ["image", "text"], tags: [{ label: "t" }],
+      steps: [
+        { id: "uuid-1", title: "A", description: "", instructions: "", content: { id: PUB, title: "Açık" }, inputs: [], outputs: [{ id: "o", label: "O" }] },
+        { id: "uuid-2", title: "B", description: "", instructions: "", content: { id: "b0000000-0000-4000-8000-0000000000b1", title: "ÖZEL BAŞLIK" },
+          inputs: [{ id: "i", label: "I", source: { stepId: "uuid-1", outputId: "o" } }, { id: "j", label: "J", source: { stepId: "silinmis-adim", outputId: "x" } }], outputs: [] },
+      ],
+    },
+    new Set([PUB]),
+  );
+  assert.equal(out.contentType, "image");
+  assert.deepEqual(out.steps[0].prompt, { id: PUB, title: "Açık" });
+  assert.equal(out.steps[1].prompt, null);
+  assert.ok(!JSON.stringify(out).includes("ÖZEL BAŞLIK"), "özel promptun başlığı dosyaya sızmaz");
+  assert.deepEqual(out.steps[1].inputs, [{ id: "i", label: "I", source: { step: "s1", output: "o" } }, { id: "j", label: "J", source: null }]);
+});

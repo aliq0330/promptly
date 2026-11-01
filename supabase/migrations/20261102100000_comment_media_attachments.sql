@@ -1,4 +1,4 @@
--- Yorumlarda fotoğraf · GIF · içerik eki (docs/history/307-*) + mesajlarda GIF bildirim önizlemesi.
+-- Yorumlarda fotoğraf · GIF · içerik eki (docs/history/308-*) + mesajlarda GIF bildirim önizlemesi.
 --
 -- Yalnızca EKLER (expand): yeni sütunlar, yeni bucket, yeni tetikleyici; hiçbir şey silinmez/yeniden adlandırılmaz. Var olan yorumlar hiçbir
 -- sütunu doldurmaz, davranışları değişmez. İstemci yeni sütunları `OPTIONAL_COLUMNS` ile seçer (migration gecikirse site açılır, yalnız ek görünmez).

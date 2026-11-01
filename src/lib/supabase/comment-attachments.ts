@@ -4,7 +4,7 @@ import { sanitizeSearchText } from "./taxonomy-query";
 import type { CommentAttachment, CommentAttachmentType } from "@/types";
 
 /**
- * Yorumdaki içerik ekinin küçük önizleme verisi (docs/history/307-*). Bir yorum sayfasındaki TÜM ekler tür başına TEK sorguyla okunur
+ * Yorumdaki içerik ekinin küçük önizleme verisi (docs/history/308-*). Bir yorum sayfasındaki TÜM ekler tür başına TEK sorguyla okunur
  * (yorum başına ayrı istek yok); sorgu okuyucunun RLS'inden geçer, yani okuyamadığı içerik hiç dönmez. Dönen satır ayrıca "hâlâ halka açık mı"
  * diye süzülür: sahibi içeriği sonradan özel/taslak yapınca, sahibi dahil HERKES için kart "gizli veya kaldırılmış" olur.
  */

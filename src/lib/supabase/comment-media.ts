@@ -4,7 +4,7 @@ import { MessageImageError, type PreparedMessageImage } from "./message-images";
 import type { CommentMedia } from "@/types";
 
 /**
- * Yorum fotoğrafları (docs/history/307-*): özel `comment-media` bucket'ı, yol `{yazar}/{uuid}.{uzantı}`. Okuma = yorumu okuyabilen herkes (Storage
+ * Yorum fotoğrafları (docs/history/308-*): özel `comment-media` bucket'ı, yol `{yazar}/{uuid}.{uzantı}`. Okuma = yorumu okuyabilen herkes (Storage
  * politikası `prompt_comments` RLS'ine yaslanır), yükleme yalnız kendi klasörü. Dosya adı ASLA kullanıcı girdisinden türetilmez; yazma ve hazırlama
  * (gerçek tür, boyut, küçültme) mesaj fotoğraflarıyla AYNI kuraldan geçer (`prepareMessageImage`). Veritabanında yol bir kimliktir, adres değil.
  */

@@ -1,4 +1,4 @@
-// Yorumda fotoğraf · GIF · içerik eki ve mesajda GIF (docs/history/307-*) — ağ taklitli arayüz testi.
+// Yorumda fotoğraf · GIF · içerik eki ve mesajda GIF (docs/history/308-*) — ağ taklitli arayüz testi.
 // GIPHY ve Supabase taklit edilir; gerçek GIPHY'ye / Supabase'e / gerçek cihaza KARŞI DENENMEDİ. Derleme `NEXT_PUBLIC_GIPHY_API_KEY` ile alınmalıdır:
 //   NEXT_PUBLIC_GIPHY_API_KEY=test-key NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 //   CHROMIUM_PATH=… node tests/messaging-ui/run-comment-extras.mjs
@@ -66,7 +66,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
       return json(route, state.attachableRows.filter((r) => ids.includes(r.id)));
     }
     if (req.method() === "GET" && table === "collection_items") return json(route, state.savedRows);
-    // Yorum düzenleme (docs/history/307-*): PATCH gövdesi kaydedilir; tek satır (`.single()`) nesne olarak döner.
+    // Yorum düzenleme (docs/history/308-*): PATCH gövdesi kaydedilir; tek satır (`.single()`) nesne olarak döner.
     if (req.method() === "PATCH" && table === "prompt_comments") {
       const patch = JSON.parse(req.postData() || "{}");
       state.patches.push({ id: new URL(req.url()).searchParams.get("id"), body: patch });

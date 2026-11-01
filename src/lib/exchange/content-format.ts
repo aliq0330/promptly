@@ -23,18 +23,20 @@ import {
   type ExchangeIssueCode,
 } from "./prompt-format.ts";
 
-export type ExchangeContentKind = "request" | "preset";
+export type ExchangeContentKind = "request" | "preset" | "workflow";
 
 /** JSON zarfındaki `format` değeri (prompt için `EXCHANGE_JSON_FORMAT` = "promptly.prompts"). */
 export const CONTENT_JSON_FORMAT: Record<ExchangeContentKind, string> = {
   request: "promptly.requests",
   preset: "promptly.presets",
+  workflow: "promptly.workflows",
 };
 
 /** Sınırlar `import_content` RPC'si ve tablo CHECK'leriyle aynıdır. */
 export const CONTENT_LIMITS = {
   request: { title: 200, description: 5000, direction: 5000 },
   preset: { title: 120, description: 1000, selectionChars: 20000 },
+  workflow: { title: 120, description: 1000, steps: 30, stepTitle: 200, stepDescription: 1000, instructions: 5000, ioPerStep: 10, ioLabel: 80 },
 } as const;
 
 export type ExchangeSelectionValue = string | number | boolean | (string | number | boolean)[];
@@ -62,7 +64,37 @@ export interface ExchangePreset {
   selection: Record<string, ExchangeSelectionValue>;
 }
 
-export type ExchangeContentItem<K extends ExchangeContentKind> = K extends "request" ? ExchangeRequest : ExchangePreset;
+/** Bir adımın girdisi/çıktısı; girdi, ÖNCEKİ bir adımın çıktısından beslenebilir (`source`). */
+export interface ExchangeWorkflowIO {
+  id: string;
+  label: string;
+}
+export interface ExchangeWorkflowInput extends ExchangeWorkflowIO {
+  source: { step: string; output: string } | null;
+}
+export interface ExchangeWorkflowStep {
+  /** Dosya içi benzersiz adım anahtarı (`s1`, `s2`…); bağlantılar buna başvurur, veritabanı kimliği DEĞİL. */
+  key: string;
+  title: string;
+  description: string;
+  instructions: string;
+  /** Başvurulan prompt: yalnız herkese açık olanlar dosyaya yazılır; içe aktarmada okunamıyorsa adım boş gelir. Prompt metni ASLA taşınmaz. */
+  prompt: { id: string; title: string } | null;
+  inputs: ExchangeWorkflowInput[];
+  outputs: ExchangeWorkflowIO[];
+}
+export interface ExchangeWorkflow {
+  title: string;
+  description: string;
+  contentType: ExchangeContentType;
+  category: string | null;
+  subcategory: string | null;
+  tools: string[];
+  tags: string[];
+  steps: ExchangeWorkflowStep[];
+}
+
+export type ExchangeContentItem<K extends ExchangeContentKind> = K extends "request" ? ExchangeRequest : K extends "preset" ? ExchangePreset : ExchangeWorkflow;
 
 export interface ContentParseResult<K extends ExchangeContentKind> {
   items: ExchangeContentItem<K>[];
@@ -157,6 +189,101 @@ export function normalizePreset(raw: unknown, row: number): { item: ExchangePres
   return { item: { title, description, selection, ...common }, issues };
 }
 
+const KEY_PATTERN = /^[A-Za-z0-9_-]{1,40}$/;
+const IO_ID_PATTERN = /^[A-Za-z0-9_-]{1,60}$/;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function normalizeIO(raw: unknown, seen: Set<string>): ExchangeWorkflowIO | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  const id = str(r.id).trim();
+  const label = str(r.label).trim();
+  if (!IO_ID_PATTERN.test(id) || seen.has(id) || label.length < 1 || label.length > CONTENT_LIMITS.workflow.ioLabel) return null;
+  seen.add(id);
+  return { id, label };
+}
+
+/** `import_workflows` ile AYNI kurallar: anahtarlar benzersiz, bağlantı yalnız önceki adımın var olan çıktısından, sınırlar. */
+export function normalizeWorkflow(raw: unknown, row: number): { item: ExchangeWorkflow | null; issues: ExchangeIssue[] } {
+  const issues: ExchangeIssue[] = [];
+  const report = (field: string, code: ExchangeIssueCode) => issues.push({ row, field, code });
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    report("", "invalid_row");
+    return { item: null, issues };
+  }
+  const r = raw as Record<string, unknown>;
+  const limits = CONTENT_LIMITS.workflow;
+
+  const title = str(r.title).trim();
+  if (!title) report("title", "required");
+  else if (title.length > limits.title) report("title", "too_long");
+  const description = str(r.description).trim();
+  if (description.length > limits.description) report("description", "too_long");
+
+  const common = normalizeCommon(r, report);
+
+  const steps: ExchangeWorkflowStep[] = [];
+  if (!Array.isArray(r.steps) || r.steps.length === 0) report("steps", "invalid_steps");
+  else if (r.steps.length > limits.steps) report("steps", "too_many_steps");
+  else {
+    const keys = new Set<string>();
+    const outputsByKey = new Map<string, Set<string>>();
+    let broken: ExchangeIssueCode | null = null;
+    for (const rawStep of r.steps) {
+      if (!rawStep || typeof rawStep !== "object" || Array.isArray(rawStep)) { broken = "invalid_steps"; break; }
+      const s = rawStep as Record<string, unknown>;
+      const key = str(s.key).trim();
+      if (!KEY_PATTERN.test(key) || keys.has(key)) { broken = "invalid_steps"; break; }
+      const stepTitle = str(s.title).trim();
+      const stepDescription = str(s.description).trim();
+      const instructions = str(s.instructions).trim();
+      if (stepTitle.length > limits.stepTitle || stepDescription.length > limits.stepDescription || instructions.length > limits.instructions) { broken = "too_long"; break; }
+
+      const outputIds = new Set<string>();
+      const outputs: ExchangeWorkflowIO[] = [];
+      if (s.outputs !== undefined && s.outputs !== null) {
+        if (!Array.isArray(s.outputs) || s.outputs.length > limits.ioPerStep) { broken = "invalid_steps"; break; }
+        for (const out of s.outputs) {
+          const io = normalizeIO(out, outputIds);
+          if (!io) { broken = "invalid_steps"; break; }
+          outputs.push(io);
+        }
+        if (broken) break;
+      }
+      const inputIds = new Set<string>();
+      const inputs: ExchangeWorkflowInput[] = [];
+      if (s.inputs !== undefined && s.inputs !== null) {
+        if (!Array.isArray(s.inputs) || s.inputs.length > limits.ioPerStep) { broken = "invalid_steps"; break; }
+        for (const inp of s.inputs) {
+          const io = normalizeIO(inp, inputIds);
+          if (!io) { broken = "invalid_steps"; break; }
+          const src = (inp as Record<string, unknown>).source;
+          if (src && typeof src === "object" && !Array.isArray(src)) {
+            const from = str((src as Record<string, unknown>).step).trim();
+            const output = str((src as Record<string, unknown>).output).trim();
+            if (!keys.has(from) || !outputsByKey.get(from)?.has(output)) { broken = "invalid_connection"; break; }
+            inputs.push({ ...io, source: { step: from, output } });
+          } else inputs.push({ ...io, source: null });
+        }
+        if (broken) break;
+      }
+      let prompt: ExchangeWorkflowStep["prompt"] = null;
+      const rawPrompt = s.prompt;
+      if (rawPrompt && typeof rawPrompt === "object" && !Array.isArray(rawPrompt)) {
+        const id = str((rawPrompt as Record<string, unknown>).id).trim();
+        if (UUID_PATTERN.test(id)) prompt = { id: id.toLowerCase(), title: str((rawPrompt as Record<string, unknown>).title).trim().slice(0, limits.title) };
+      }
+      keys.add(key);
+      outputsByKey.set(key, outputIds);
+      steps.push({ key, title: stepTitle, description: stepDescription, instructions, prompt, inputs, outputs });
+    }
+    if (broken) report("steps", broken);
+  }
+
+  if (issues.length > 0) return { item: null, issues };
+  return { item: { title, description, steps, ...common }, issues };
+}
+
 /** Sürüm numaralı zarf: `{ format, schemaVersion, exportedAt, items }`. */
 export function serializeContent<K extends ExchangeContentKind>(kind: K, items: ExchangeContentItem<K>[], exportedAt: string = new Date().toISOString()): string {
   return `${JSON.stringify({ format: CONTENT_JSON_FORMAT[kind], schemaVersion: EXCHANGE_SCHEMA_VERSION, exportedAt, items }, null, 2)}\n`;
@@ -191,7 +318,7 @@ export function parseContent<K extends ExchangeContentKind>(kind: K, text: strin
   const items: ExchangeContentItem<K>[] = [];
   const issues: ExchangeIssue[] = [];
   rows.forEach((raw, index) => {
-    const result = kind === "request" ? normalizeRequest(raw, index + 1) : normalizePreset(raw, index + 1);
+    const result = kind === "request" ? normalizeRequest(raw, index + 1) : kind === "preset" ? normalizePreset(raw, index + 1) : normalizeWorkflow(raw, index + 1);
     if (result.item) items.push(result.item as ExchangeContentItem<K>);
     issues.push(...result.issues);
   });
@@ -200,7 +327,7 @@ export function parseContent<K extends ExchangeContentKind>(kind: K, text: strin
 
 /** `promptly-requests-2026-11-01.json` / `promptly-presets-…`. */
 export function contentFileName(kind: ExchangeContentKind, date: Date = new Date()): string {
-  return `promptly-${kind === "request" ? "requests" : "presets"}-${date.toISOString().slice(0, 10)}.json`;
+  return `promptly-${kind === "request" ? "requests" : kind === "preset" ? "presets" : "workflows"}-${date.toISOString().slice(0, 10)}.json`;
 }
 
 /** Uygulama tiplerinden dışa aktarma (yapısal tipler: bu dosya uygulama tiplerini import etmez). */
@@ -257,6 +384,55 @@ export function toExchangePreset(source: ExchangeAppPreset): ExchangePreset {
     tools: [...(source.tools ?? [])],
     tags: source.tags.map((tag) => tag.label),
     selection,
+  };
+}
+
+export interface ExchangeAppWorkflow {
+  title: string;
+  description: string;
+  contentTypes: string[];
+  category?: string | null;
+  subcategory?: string | null;
+  tools?: string[] | null;
+  tags: { label: string }[];
+  steps: {
+    id: string;
+    title: string;
+    description: string;
+    instructions: string;
+    content: { id: string; title: string } | null;
+    inputs: { id: string; label: string; source: { stepId: string; outputId: string } | null }[];
+    outputs: { id: string; label: string }[];
+  }[];
+}
+
+/**
+ * Uygulama workflow'undan dosya kaydı. `publicPromptIds` = başvurulan promptlardan herkese açık + yayında + topluluksuz olanlar: yalnız
+ * onların kimliği/başlığı yazılır (özel bir promptun başlığı dosyaya sızmaz). Adım kimlikleri dosya içi anahtarlara (`s1`…) çevrilir.
+ */
+export function toExchangeWorkflow(source: ExchangeAppWorkflow, publicPromptIds: ReadonlySet<string>): ExchangeWorkflow {
+  const keyById = new Map(source.steps.map((step, index) => [step.id, `s${index + 1}`] as const));
+  const main = source.contentTypes[0] ?? "text";
+  return {
+    title: source.title,
+    description: source.description,
+    contentType: (EXCHANGE_CONTENT_TYPES as readonly string[]).includes(main) ? (main as ExchangeContentType) : "text",
+    category: source.category ?? null,
+    subcategory: source.subcategory ?? null,
+    tools: [...(source.tools ?? [])],
+    tags: source.tags.map((tag) => tag.label),
+    steps: source.steps.map((step, index) => ({
+      key: `s${index + 1}`,
+      title: step.title,
+      description: step.description,
+      instructions: step.instructions,
+      prompt: step.content && publicPromptIds.has(step.content.id) ? { id: step.content.id, title: step.content.title } : null,
+      inputs: step.inputs.map((input) => {
+        const from = input.source ? keyById.get(input.source.stepId) : undefined;
+        return { id: input.id, label: input.label, source: input.source && from ? { step: from, output: input.source.outputId } : null };
+      }),
+      outputs: step.outputs.map((output) => ({ id: output.id, label: output.label })),
+    })),
   };
 }
 

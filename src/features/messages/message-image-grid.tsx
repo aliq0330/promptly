@@ -19,7 +19,7 @@ export interface GridImage {
 
 /**
  * Signed URLs for a message's stored photos — resolved in one batched request, served from a module cache afterwards (no flash on re-render).
- * GIF ekleri (`giphy:<kimlik>`, docs/history/307-*) imzaya girmez: adresleri doğrudan GIPHY'dendir ("hareketi azalt"ta ilk kare).
+ * GIF ekleri (`giphy:<kimlik>`, docs/history/308-*) imzaya girmez: adresleri doğrudan GIPHY'dendir ("hareketi azalt"ta ilk kare).
  */
 export function useMessageImageUrls(attachments: MessageAttachment[]): Map<string, string> {
   const reduced = usePrefersReducedMotion();

@@ -45,7 +45,7 @@ export type MediaDraft =
 export const draftMediaKind = (draft: MediaDraft | null): "photo" | "gif" | null => (draft === null ? null : draft.kind === "existing" ? draft.media.kind : draft.kind);
 
 /**
- * Bir yorum yazma alanının (ana kutu ya da yanıt kutusu) ekleri (docs/history/307-*): en çok BİR görsel (fotoğraf ya da GIF — biri diğerinin
+ * Bir yorum yazma alanının (ana kutu ya da yanıt kutusu) ekleri (docs/history/308-*): en çok BİR görsel (fotoğraf ya da GIF — biri diğerinin
  * yerine geçer) ve BİR içerik eki. Seçmek hiçbir şey göndermez: fotoğraf "Gönder"e basılınca yüklenir (kaldırılan taslak depoda dosya bırakmaz),
  * gönderim başarısız olursa yüklenen dosya geri silinir. Fotoğraf mesajlardakiyle AYNI kuraldan geçer (gerçek tür, boyut, küçültme).
  */

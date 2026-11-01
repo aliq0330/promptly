@@ -107,7 +107,7 @@ export function MessageComposer({
   onPickLibrary?: (type: CommunityPostType) => void;
   /** "+" → Prompt içe aktar. */
   onImport?: () => void;
-  /** "+" → GIF (docs/history/307-*): GIPHY seçicisini açar; seçilen GIF'i çağıran GÖNDERİR (taslak metne dokunulmaz). Yoksa GIF satırı çizilmez. */
+  /** "+" → GIF (docs/history/308-*): GIPHY seçicisini açar; seçilen GIF'i çağıran GÖNDERİR (taslak metne dokunulmaz). Yoksa GIF satırı çizilmez. */
   onPickGif?: (gif: GifItem) => void;
 }) {
   const { t } = useTranslation();

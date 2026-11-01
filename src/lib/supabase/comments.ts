@@ -16,7 +16,7 @@ interface CommentRow {
   deleted_at: string | null;
   rating?: number | null;
   space_activity_id?: string | null;
-  /** Yorum medyası/eki (docs/history/307-*): sütunlar yoksa (migration gecikti) gelmez. */
+  /** Yorum medyası/eki (docs/history/308-*): sütunlar yoksa (migration gecikti) gelmez. */
   media_kind?: string | null;
   media_ref?: string | null;
   media_width?: number | null;
@@ -219,7 +219,7 @@ export async function postCommentOnQuote(quoteId: string, authorId: string, body
  * stamps `edited_at` automatically.
  */
 export async function updateComment(commentId: string, body: string, extras?: CommentExtras): Promise<{ editedAt: string }> {
-  // `extras` verilirse görsel/ek de düzenlenir (docs/history/307-*): boş verilen alan veritabanında da boşalır; verilmezse yalnız metin.
+  // `extras` verilirse görsel/ek de düzenlenir (docs/history/308-*): boş verilen alan veritabanında da boşalır; verilmezse yalnız metin.
   const { data, error } = await supabase
     .from("prompt_comments")
     .update({ body, ...(extras ? extrasUpdateColumns(extras) : {}) })

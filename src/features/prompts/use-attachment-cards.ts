@@ -6,7 +6,7 @@ import { attachmentKey, fetchAttachmentCards, type AttachmentCard } from "@/lib/
 import type { CommentAttachment, PromptComment } from "@/types";
 
 /**
- * Yorum listesindeki içerik eklerinin küçük önizleme verisi (docs/history/307-*). Listeye (ilk sayfa, sonraki sayfa, yeni yorum) HER yeni ek
+ * Yorum listesindeki içerik eklerinin küçük önizleme verisi (docs/history/308-*). Listeye (ilk sayfa, sonraki sayfa, yeni yorum) HER yeni ek
  * girdiğinde, daha önce istenmemiş olanlar tür başına TEK sorguyla toplu okunur — yorum başına ayrı istek yok. Silinmiş yorumun eki istenmez.
  */
 export function useAttachmentCards(comments: PromptComment[]) {

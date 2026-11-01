@@ -85,4 +85,11 @@ export const insightsTranslations = {
   "notifMsg.milestoneReactions": { tr: "Promptun “{{name}}” {{count}} tepkiye ulaştı.", en: "Your prompt “{{name}}” reached {{count}} reactions." },
 
   "insights.loadError": { tr: "Panel yüklenemedi. Bağlantını kontrol edip tekrar dene.", en: "Couldn't load the dashboard. Check your connection and try again." },
+  // Haftalık özet bildirimi (docs/history/307-*)
+  "notifMsg.weeklyDigest": { tr: "Haftalık özet: {{parts}}.", en: "Weekly recap: {{parts}}." },
+  "notifMsg.weeklyCopies": { tr: "{{count}} kopyalama", en: "{{count}} copies" },
+  "notifMsg.weeklyReactions": { tr: "{{count}} tepki", en: "{{count}} reactions" },
+  "notifMsg.weeklyComments": { tr: "{{count}} yorum", en: "{{count}} comments" },
+  "notifMsg.weeklySaves": { tr: "{{count}} kaydetme", en: "{{count}} saves" },
+  "notifMsg.weeklyFollowers": { tr: "{{count}} yeni takipçi", en: "{{count}} new followers" },
 } as const;

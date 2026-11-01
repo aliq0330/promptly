@@ -67,7 +67,7 @@ export function useCommentThread(
   const [draft, setDraft] = useState("");
   // Space'in genel yorumlarında 1–5 puan yorumla birlikte verilir (0 = puansız).
   const [draftRating, setDraftRating] = useState(0);
-  // Yorumda fotoğraf · GIF · içerik eki (docs/history/307-*): ana yazma kutusunun ve yanıt kutusunun ayrı ek durumu.
+  // Yorumda fotoğraf · GIF · içerik eki (docs/history/308-*): ana yazma kutusunun ve yanıt kutusunun ayrı ek durumu.
   const composerExtras = useCommentExtras();
   const replyExtras = useCommentExtras();
   // Düzenlerken görsel/ek de değiştirilebilir: düzenlenen yorumun mevcut eki ile açılır (`startEdit`).

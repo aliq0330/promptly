@@ -30,7 +30,7 @@ import { ProfileDraftsPanel } from "@/features/profile/profile-drafts-panel";
 import { ExportPromptsModal } from "@/features/exchange/export-prompts-modal";
 import { ImportPromptsModal } from "@/features/exchange/import-prompts-modal";
 import { ExportContentModal, ImportContentModal } from "@/features/exchange/content-exchange-modals";
-import { fetchOwnPromptsForExport, fetchOwnRequestsForExport, fetchOwnPresetsForExport } from "@/lib/supabase/prompt-exchange";
+import { fetchOwnPromptsForExport, fetchOwnRequestsForExport, fetchOwnPresetsForExport, fetchOwnWorkflowsForExport } from "@/lib/supabase/prompt-exchange";
 import { fetchAuthorPromptsPage, fetchProfileContentStats, type AuthorPromptSort, type ProfileContentStats } from "@/lib/supabase/prompts";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { LoadMore } from "@/features/feed/load-more";
@@ -84,7 +84,7 @@ export function MyContentView() {
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   // İstek / Hazır ayar dışa-içe aktarma (docs/history/306-*): hangi tür ve hangi yön açık.
-  const [contentExchange, setContentExchange] = useState<{ mode: "export" | "import"; kind: "request" | "preset" } | null>(null);
+  const [contentExchange, setContentExchange] = useState<{ mode: "export" | "import"; kind: "request" | "preset" | "workflow" } | null>(null);
 
   const userId = user?.id;
   const [stats, setStats] = useState<ProfileContentStats | null>(null);
@@ -275,13 +275,13 @@ export function MyContentView() {
           </Button>
         </div>
       )}
-      {(kind === "requests" || kind === "presets") && (
+      {(kind === "requests" || kind === "presets" || kind === "workflows") && (
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => setContentExchange({ mode: "import", kind: kind === "requests" ? "request" : "preset" })} data-testid="my-content-import">
+          <Button type="button" variant="outline" size="sm" onClick={() => setContentExchange({ mode: "import", kind: kind === "requests" ? "request" : kind === "presets" ? "preset" : "workflow" })} data-testid="my-content-import">
             <Upload size={14} />
             {t("exchange.import.menu")}
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => setContentExchange({ mode: "export", kind: kind === "requests" ? "request" : "preset" })} data-testid="my-content-export">
+          <Button type="button" variant="outline" size="sm" onClick={() => setContentExchange({ mode: "export", kind: kind === "requests" ? "request" : kind === "presets" ? "preset" : "workflow" })} data-testid="my-content-export">
             <Download size={14} />
             {t("exchange.export.menu")}
           </Button>
@@ -358,6 +358,7 @@ export function MyContentView() {
       {importOpen && <ImportPromptsModal onClose={() => setImportOpen(false)} onImported={() => setKind("drafts")} />}
       {contentExchange?.mode === "export" && userId && contentExchange.kind === "request" && <ExportContentModal kind="request" load={() => fetchOwnRequestsForExport(userId)} onClose={() => setContentExchange(null)} />}
       {contentExchange?.mode === "export" && userId && contentExchange.kind === "preset" && <ExportContentModal kind="preset" load={() => fetchOwnPresetsForExport(userId)} onClose={() => setContentExchange(null)} />}
+      {contentExchange?.mode === "export" && userId && contentExchange.kind === "workflow" && <ExportContentModal kind="workflow" load={() => fetchOwnWorkflowsForExport(userId)} onClose={() => setContentExchange(null)} />}
       {contentExchange?.mode === "import" && <ImportContentModal kind={contentExchange.kind} onClose={() => setContentExchange(null)} onImported={() => setKind("drafts")} />}
     </PageContainer>
   );

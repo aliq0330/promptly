@@ -1,4 +1,4 @@
--- Yorumda fotoğraf · GIF · içerik eki (20261102100000_comment_media_attachments.sql; docs/history/307-*): DB testi.
+-- Yorumda fotoğraf · GIF · içerik eki (20261102100000_comment_media_attachments.sql; docs/history/308-*): DB testi.
 -- Çalıştırma: supabase/tests/run-local.sh supabase/tests/comment-media.sql  ("FAILED=0" beklenir).
 -- me = yorum yazarı; ow = içerik sahibi. P1 yayında+herkese açık, P2 özel, P3 taslak, P4 topluluğa özgü. S1 herkese açık Space, S2 özel Space.
 \pset pager off

@@ -447,7 +447,7 @@ export function setupCommunities(db) {
     }
     if (table === "prompt_comments") {
       const COMMENT_COLS = (c) => ({ id: c.id, body: c.body, parent_id: c.parent_id ?? null, like_count: 0, created_at: c.created_at, edited_at: null, deleted_at: null, profiles: pub(userById(c.author_id)),
-        // Yorum medyası/eki (docs/history/307-*): satırda varsa olduğu gibi döner.
+        // Yorum medyası/eki (docs/history/308-*): satırda varsa olduğu gibi döner.
         media_kind: c.media_kind ?? null, media_ref: c.media_ref ?? null, media_width: c.media_width ?? null, media_height: c.media_height ?? null, attach_type: c.attach_type ?? null, attach_id: c.attach_id ?? null });
       if (method === "GET") {
         const cp = eq(q, "community_post_id"); const pr = eq(q, "prompt_id");

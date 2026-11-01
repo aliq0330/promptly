@@ -126,7 +126,7 @@ export async function uploadMessageImage(
 }
 
 /**
- * Mesajdaki GIF eki (docs/history/307-*): dosya SAKLANMAZ; `path` = `giphy:<kimlik>` — fotoğraf eklerinin geçtiği her yer (balon, yanıt önizlemesi,
+ * Mesajdaki GIF eki (docs/history/308-*): dosya SAKLANMAZ; `path` = `giphy:<kimlik>` — fotoğraf eklerinin geçtiği her yer (balon, yanıt önizlemesi,
  * paylaşılan medya, sabit mesaj) aynı `attachments` biçimini okur. Adres `lib/giphy.ts`'te üretilir.
  */
 export function gifAttachment(gif: Pick<GifItem, "id" | "width" | "height">): MessageAttachment {

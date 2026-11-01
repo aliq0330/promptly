@@ -166,7 +166,7 @@ export interface PromptComment {
    * with no replies is hard-deleted instead (never appears with this set).
    */
   deletedAt: string | null;
-  /** Yorumun en çok BİR görseli (docs/history/307-*): özel `comment-media` bucket'ındaki fotoğraf ya da GIPHY GIF'i. */
+  /** Yorumun en çok BİR görseli (docs/history/308-*): özel `comment-media` bucket'ındaki fotoğraf ya da GIPHY GIF'i. */
   media?: CommentMedia | null;
   /** Yorumun en çok BİR içerik eki: kopya değil başvuru; okuyucu yetkisine göre küçük önizleme kartı olarak çizilir. */
   attachment?: CommentAttachment | null;

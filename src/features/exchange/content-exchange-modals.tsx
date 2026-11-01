@@ -39,6 +39,16 @@ const KIND_KEYS: Record<ExchangeContentKind, { exportTitle: TranslationKey; expo
     importLimits: "exchange.content.import.limits.preset",
     importDone: "exchange.content.import.done.preset",
   },
+  workflow: {
+    exportTitle: "exchange.content.export.title.workflow",
+    exportCount: "exchange.content.export.count.workflow",
+    exportEmpty: "exchange.content.export.empty.workflow",
+    exportNote: "exchange.content.export.note.workflow",
+    importTitle: "exchange.content.import.title.workflow",
+    importIntro: "exchange.content.import.intro.workflow",
+    importLimits: "exchange.content.import.limits.workflow",
+    importDone: "exchange.content.import.done.workflow",
+  },
 };
 
 export function ExportContentModal<K extends ExchangeContentKind>({ kind, load, onClose }: { kind: K; load: () => Promise<ExchangeContentItem<K>[]>; onClose: () => void }) {

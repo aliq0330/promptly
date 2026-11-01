@@ -36,7 +36,7 @@ export type AttachmentState = { status: "loading" } | { status: "hidden" } | { s
 const SHELL = "relative flex w-full max-w-xs items-center gap-2.5 rounded-2xl bg-surface-soft p-2 text-left";
 
 /**
- * Yorum ekinin KÜÇÜK önizleme kartı (docs/history/307-*): mesajdaki büyük paylaşım kartının (`SharedCard`) tek satırlık hâli — kapak, tür etiketi,
+ * Yorum ekinin KÜÇÜK önizleme kartı (docs/history/308-*): mesajdaki büyük paylaşım kartının (`SharedCard`) tek satırlık hâli — kapak, tür etiketi,
  * başlık, sahip. Tamamı içeriğin sayfasına bağlantıdır. Okuyucunun göremediği içerik başlık/kapak SIZDIRMADAN "gizli veya kaldırılmış" der.
  * `onRemove` verilirse (yazma çubuğundaki taslak) kart bağlantı değil, sağ üstte ✕ olan bir önizlemedir.
  */

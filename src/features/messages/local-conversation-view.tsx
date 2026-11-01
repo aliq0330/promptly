@@ -950,7 +950,7 @@ export function LocalConversationView() {
   }
 
   /**
-   * "+" → GIF (docs/history/307-*): seçilen GIF kendi başına bir mesaj olarak hemen gönderilir (dosya yüklenmez, yalnız GIPHY kimliği yazılır).
+   * "+" → GIF (docs/history/308-*): seçilen GIF kendi başına bir mesaj olarak hemen gönderilir (dosya yüklenmez, yalnız GIPHY kimliği yazılır).
    * Yazılmakta olan metin/paylaşım taslağı olduğu gibi kalır; yanıt verilen mesaj varsa GIF ona yanıt olur.
    */
   async function sendGif(gif: GifItem) {

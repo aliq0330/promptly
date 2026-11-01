@@ -60,7 +60,7 @@ export interface CommentTree {
   layout?: "thread" | "sheet";
   /** Space yorumlarında kendi puanını yıldızlardan değiştirmek (docs/history/242-*); yoksa yıldızlar yalnız gösterilir. */
   onRate?: (id: string, rating: number) => void;
-  /** Yanıt kutusunun ekleri (fotoğraf · GIF · içerik, docs/history/307-*). */
+  /** Yanıt kutusunun ekleri (fotoğraf · GIF · içerik, docs/history/308-*). */
   replyExtras: CommentExtrasController;
   /** Düzenlenen yorumun ekleri: mevcut görsel/ek ile açılır; değiştirilebilir ya da kaldırılabilir. */
   editExtras: CommentExtrasController;
