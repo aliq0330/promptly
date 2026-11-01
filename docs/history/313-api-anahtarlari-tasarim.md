@@ -39,13 +39,16 @@ Edge Function service role ile yazarsa `auth.uid()` boş kalır; hız sınırı,
 **Canlı doğrulama (2026-11-01, Supabase MCP, yalnız okuma / geri alınan işlem):**
 - **B'nin veritabanı yarısı ÇALIŞIYOR:** `begin; set local role authenticated; set_config('request.jwt.claims', {sub, role}, true)` sonrası
   `auth.uid()` kullanıcıyı verdi ve RLS uygulandı (kullanıcı 3454/3455 promptu gördü — başkasının özel promptu gizli); işlem `rollback` ile
-  geri alındı, veri değişmedi. **Doğrulanmadı:** Edge Function'ın `SUPABASE_DB_URL` ile (havuzlu) doğrudan bağlanıp aynısını yapması
-  (sürücü, bağlantı süresi, havuz modu) — bunun için fonksiyon deploy etmek gerekir.
-- **A mümkün görünüyor:** legacy anon anahtarı `HS256` imzalı → projede eski JWT sırrı var. Edge Function onu **elle girilen** bir secret
-  olarak (ör. `PROMPTLY_JWT_SECRET`; Edge'in otomatik secret'ları arasında JWT sırrı yok) okumalı; sır depoda/konuşmada olmaz.
-  **Doğrulanmadı:** o sırla imzalanan kısa ömürlü JWT'nin PostgREST'te kabul edildiği.
-- Seçim, bir sonraki adımda yazılacak küçük deneme fonksiyonuyla (A ve B'yi aynı istekte deneyen, veri yazmayan) yapılır; önce kullanıcıdan
-  deploy onayı alınır.
+  geri alındı, veri değişmedi.
+- **B EDGE FUNCTION'DAN DA ÇALIŞIYOR (deneme fonksiyonu `zz-probe-auth`, 2026-11-01, canlıda iki çağrı):** `SUPABASE_DB_URL` Edge'de mevcut;
+  `npm:postgres@3.4.5` (`prepare:false`) ile bağlanıp aynı işlem kuruldu: `current_user = authenticated`, `auth.uid()` hedef kullanıcıyla
+  eşleşti, 3454 prompt göründü, işlem geri alındı. Süre **~1,3–2 sn** (bağlantı + işlem; ilk çağrı ile ikinci arasında belirgin fark yok,
+  yani her istekte bağlantı açma maliyeti ödeniyor → hız sınırı/önbellek ve toplu uçlar buna göre tasarlanmalı). Fonksiyon veri yazmadı,
+  ardından 410 döndüren boş sürümle değiştirildi (MCP aracında silme yok: **panelden silinmeli**, Edge Functions → `zz-probe-auth`).
+- **A (kısa ömürlü JWT) denenmedi:** Edge'de `PROMPTLY_JWT_SECRET` yok (`a_has_secret:false`); eski JWT sırrı elle girilmeden denenemez ve
+  B çalıştığı için gerekmiyor. Yalnız B başarısız olursa (ör. bağlantı süresi yetmezse) A için sır girilir.
+- **Karar: B seçildi.** Sır yönetimi yok, RLS/askı/hız sınırı tetikleyicileri aynı kalır. Bağlantı maliyeti için: anahtar doğrulama + işlem TEK
+  bağlantıda, istek başına tek işlem; sürücü bağlantısı `finally`'de kapatılır.
 
 ## 4. Uçlar (ilk dilim)
 
@@ -101,7 +104,7 @@ tasarlanır (anahtar → A/B ile JWT, OAuth → hazır JWT; ikisi de aynı RLS'l
 
 ## 9. Sıradaki adımlar (sırayla; her biri ayrı PR, kod yazmadan önce kullanıcıyla onay)
 
-1. Edge'de A ve B'yi deneyen, veri yazmayan **küçük deneme fonksiyonu** → hangisi çalışıyor (deploy onayı gerekir; sonra silinir).
+1. ~~Edge'de A ve B'yi deneyen deneme fonksiyonu~~ **YAPILDI** (B çalışıyor, bkz. §3). Kalan: panelden `zz-probe-auth` silinmeli.
 2. Migration: `api_tokens` + `create_api_token` / `list_my_api_tokens` / `revoke_api_token` RPC'leri + SQL testi (token özeti, sınır, askı).
 3. Ayarlar → "Geliştirici anahtarları" arayüzü (TR+EN) + Gizlilik/Koşullar maddeleri.
 4. `GET /v1/me*` ve `POST /v1/me/prompts` (mevcut `import_prompts` üstünde) + kimlikli MCP araçları + `/developers` sayfası.
