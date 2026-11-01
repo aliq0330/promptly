@@ -55,6 +55,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Mesajların: gönderdiğin ve aldığın doğrudan mesajlar, fotoğraflar ve GIF'ler. Yalnızca konuşmanın tarafları görebilir. GIF'lerin kendisini saklamayız; yalnızca hangi GIF olduğunu belirten GIPHY kimliğini saklarız (aşağıda \"Hizmet sağlayıcılar\" bölümündeki GIPHY maddesine bak).",
             "Yüklediğin dosyalar: görsel, ses ve video dosyaları.",
             "Tercihlerin: tema, palet ve dil seçimin. Bunlar hesabında ve tarayıcında saklanır.",
+            "API anahtarların: kişisel API anahtarı oluşturursan anahtarın adını, ilk karakterlerini (listede tanıman için), erişim kapsamını ve oluşturulma, bitiş, iptal ve son kullanım zamanlarını saklarız. Anahtarın kendisini değil, yalnızca geri döndürülemeyen bir özetini tutarız; bu yüzden anahtarı sonradan gösteremeyiz. Hesabını sildiğinde anahtarların da silinir.",
           ],
           [
             "Your account details: your email address, your password (stored only in encrypted form), your username and your display name. If you sign in with Google, we receive your name and email address from Google; we do not import your profile picture automatically.",
@@ -62,6 +63,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Your messages: the direct messages, photos and GIFs you send and receive. Only the people in the conversation can see them. We do not store the GIFs themselves; we only store the GIPHY ID that says which GIF it is (see the GIPHY item under \"Service providers\" below).",
             "Files you upload: image, audio and video files.",
             "Your preferences: theme, palette and language. These are stored in your account and in your browser.",
+            "Your API keys: if you create a personal API key, we store its name, its first characters (so you can recognise it in the list), its access scope, and when it was created, expires, was revoked and was last used. We do not keep the key itself, only a one-way digest of it, so we cannot show it to you again. Your keys are deleted when you delete your account.",
           ],
         ),
         p(
@@ -257,6 +259,10 @@ export const TERMS_OF_USE: LegalDocument = {
         p(
           "Promptly'nin herkese açık API'sini ve MCP paketini (promptly-mcp) kullanabilirsin; bunlar yalnızca herkese açık içeriği okur ve hesap gerektirmez. Siteyi aşırı yüklememeli ve uyguladığımız sınırları aşmaya çalışmamalısın; sınırları aşan ya da siteye zarar veren kullanımı engelleyebiliriz. Bu araçların döndürdüğü metinler kullanıcı içeriğidir: bir yapay zekâ aracına ya da otomasyona vermeden önce kontrol etmek ve sonuçlarından sorumlu olmak sana aittir.",
           "You may use Promptly's public API and MCP package (promptly-mcp); they only read public content and need no account. You must not overload the site or try to get around the limits we apply; we may block use that exceeds them or harms the site. The text these tools return is user content: checking it before you give it to an AI tool or automation, and being responsible for the results, is up to you.",
+        ),
+        p(
+          "Kişisel bir API anahtarı oluşturursan, o anahtarla yapılan her işlem senin adına yapılmış sayılır. Anahtarını kimseyle paylaşma ve herkese açık yerlere (depo, ekran görüntüsü, paylaşılan not) koyma; sızdığını düşünürsen hemen iptal et. Anahtarla da içerik kuralları, hız sınırları ve hesap kısıtlamaları aynen geçerlidir; kötüye kullanılan ya da siteye zarar veren anahtarları iptal edebiliriz.",
+          "If you create a personal API key, everything done with that key counts as done by you. Do not share your key or put it anywhere public (a repository, a screenshot, a shared note); if you think it has leaked, revoke it right away. The content rules, rate limits and account restrictions apply to actions made with a key too; we may revoke keys that are abused or that harm the site.",
         ),
       ],
     },

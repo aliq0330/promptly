@@ -1,0 +1,76 @@
+/**
+ * Kişisel API anahtarları (Ayarlar → Geliştirici anahtarları; docs/history/313-*, 314-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar.
+ * Anahtar/prompt adı gibi kullanıcı içeriği ve "API", "MCP" gibi teknik adlar çevrilmez.
+ */
+export const apiKeysTranslations = {
+  "settings.groupDeveloper": { tr: "Geliştirici", en: "Developer" },
+  "apiKeys.title": { tr: "Geliştirici anahtarları", en: "Developer keys" },
+  "apiKeys.hint": {
+    tr: "Anahtar, bir betiğin ya da yapay zekâ aracının senin adına Promptly'ye erişmesini sağlar. Kimseyle paylaşma; şifre gibi davran.",
+    en: "A key lets a script or an AI tool reach Promptly on your behalf. Don't share it — treat it like a password.",
+  },
+  "apiKeys.preview": {
+    tr: "Önizleme: anahtarla çağrılabilecek uçlar henüz yayında değil. Şimdilik anahtar oluşturabilir, listeleyebilir ve iptal edebilirsin; uçlar açılınca aynı anahtarlar çalışır.",
+    en: "Preview: the endpoints that accept a key aren't live yet. For now you can create, list and revoke keys; the same keys will work once the endpoints open.",
+  },
+  "apiKeys.loading": { tr: "Anahtarlar yükleniyor…", en: "Loading keys…" },
+  "apiKeys.loadFailed": { tr: "Anahtarlar yüklenemedi.", en: "Couldn't load your keys." },
+  "apiKeys.retry": { tr: "Tekrar dene", en: "Try again" },
+  "apiKeys.empty": { tr: "Henüz anahtarın yok.", en: "You don't have any keys yet." },
+  "apiKeys.activeCount": { tr: "{{count}} / {{max}} etkin anahtar", en: "{{count}} of {{max}} active keys" },
+  // --- Oluşturma formu ---
+  "apiKeys.newTitle": { tr: "Yeni anahtar", en: "New key" },
+  "apiKeys.nameLabel": { tr: "Ad", en: "Name" },
+  "apiKeys.namePlaceholder": { tr: "Örn. Dizüstü Claude Code", en: "E.g. Laptop Claude Code" },
+  "apiKeys.nameHint": { tr: "Anahtarı listede tanımak için; en çok 60 karakter.", en: "To recognise the key in the list; up to 60 characters." },
+  "apiKeys.accessLabel": { tr: "Erişim", en: "Access" },
+  "apiKeys.accessRead": { tr: "Yalnızca okuma", en: "Read only" },
+  "apiKeys.accessReadHint": { tr: "Kendi özel promptlarını, taslaklarını ve kaydettiklerini okur.", en: "Reads your own private prompts, drafts and saved items." },
+  "apiKeys.accessWrite": { tr: "Okuma + özel taslak yazma", en: "Read + write private drafts" },
+  "apiKeys.accessWriteHint": { tr: "Ayrıca hesabına yalnızca özel taslak ekleyebilir. Herkese açma ve silme yok.", en: "Can also add private drafts to your account. It can't publish or delete." },
+  "apiKeys.expiryLabel": { tr: "Geçerlilik", en: "Expires" },
+  "apiKeys.expiryDays": { tr: "{{count}} gün", en: "{{count}} days" },
+  "apiKeys.expiryNever": { tr: "Süresiz", en: "Never" },
+  "apiKeys.expiryNeverHint": { tr: "Süresiz anahtar sızarsa yalnızca iptal ederek kapatabilirsin.", en: "A key that never expires can only be shut off by revoking it." },
+  "apiKeys.create": { tr: "Anahtar oluştur", en: "Create key" },
+  "apiKeys.creating": { tr: "Oluşturuluyor…", en: "Creating…" },
+  "apiKeys.limitReached": { tr: "Etkin anahtar sınırına ulaştın. Yenisi için birini iptal et.", en: "You've reached the active-key limit. Revoke one to create another." },
+  // --- Tek seferlik gösterim ---
+  "apiKeys.revealTitle": { tr: "Anahtarını şimdi kopyala", en: "Copy your key now" },
+  "apiKeys.revealBody": {
+    tr: "Bu anahtar bir daha gösterilmeyecek; kaybedersen iptal edip yenisini oluşturman gerekir. Sayfadan ayrılırsan da kaybolur.",
+    en: "This key won't be shown again; if you lose it you'll have to revoke it and create a new one. Leaving the page also loses it.",
+  },
+  "apiKeys.revealLabel": { tr: "Anahtar", en: "Key" },
+  "apiKeys.copy": { tr: "Kopyala", en: "Copy" },
+  "apiKeys.copied": { tr: "Kopyalandı", en: "Copied" },
+  "apiKeys.revealDone": { tr: "Anahtarı kaydettim", en: "I've saved the key" },
+  // --- Liste ---
+  "apiKeys.listTitle": { tr: "Anahtarların", en: "Your keys" },
+  "apiKeys.scopeRead": { tr: "Okuma", en: "Read" },
+  "apiKeys.scopeWrite": { tr: "Yazma", en: "Write" },
+  "apiKeys.statusActive": { tr: "Etkin", en: "Active" },
+  "apiKeys.statusExpired": { tr: "Süresi doldu", en: "Expired" },
+  "apiKeys.statusRevoked": { tr: "İptal edildi", en: "Revoked" },
+  "apiKeys.createdAt": { tr: "Oluşturuldu {{when}}", en: "Created {{when}}" },
+  "apiKeys.expiresAt": { tr: "Bitiş: {{date}}", en: "Expires: {{date}}" },
+  "apiKeys.neverExpires": { tr: "Süresiz", en: "Never expires" },
+  "apiKeys.lastUsed": { tr: "Son kullanım {{when}}", en: "Last used {{when}}" },
+  "apiKeys.neverUsed": { tr: "Hiç kullanılmadı", en: "Never used" },
+  "apiKeys.revoke": { tr: "İptal et", en: "Revoke" },
+  "apiKeys.revokeConfirm": { tr: "Emin misin? Bu anahtarı kullanan her şey hemen çalışmayı bırakır.", en: "Are you sure? Anything using this key stops working immediately." },
+  "apiKeys.revokeYes": { tr: "Evet, iptal et", en: "Yes, revoke" },
+  "apiKeys.revokeNo": { tr: "Vazgeç", en: "Cancel" },
+  "apiKeys.revoking": { tr: "İptal ediliyor…", en: "Revoking…" },
+  "apiKeys.revokeFailed": { tr: "Anahtar iptal edilemedi.", en: "Couldn't revoke the key." },
+  // --- Sunucu hataları ---
+  "error.apiTokenLimit": { tr: "Etkin anahtar sınırına (10) ulaştın. Yenisi için birini iptal et.", en: "You've reached the limit of 10 active keys. Revoke one to create another." },
+  "error.apiTokenName": { tr: "Anahtar adı 1–60 karakter olmalı.", en: "The key name must be 1–60 characters." },
+  "error.apiTokenScope": { tr: "Geçersiz erişim seçimi.", en: "Invalid access choice." },
+  "error.apiTokenExpiry": { tr: "Geçersiz geçerlilik süresi.", en: "Invalid expiry." },
+  // --- Bildirim (SQL cümlesi Türkçe kalır, istemci çevirir) ---
+  "notifMsg.apiTokenCreated": {
+    tr: "Yeni bir API anahtarı oluşturuldu: “{{name}}” ({{prefix}}…). Sen oluşturmadıysan hemen iptal et.",
+    en: "A new API key was created: “{{name}}” ({{prefix}}…). If it wasn't you, revoke it right away.",
+  },
+} as const;

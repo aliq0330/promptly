@@ -46,3 +46,10 @@ test("haftalık özet (docs/history/307-*): sayılar korunur, etiketler çevrili
   assert.match(out("Haftalık özet: 3 başka şey.").params.parts, /^3 başka şey$/);
   assert.equal(run("Haftalık özet: 12 kopyalama.", "tr"), "Haftalık özet: 12 kopyalama.");
 });
+
+test("the API-key-created sentence (docs/history/314-*) is recognised and the key name is passed through untouched", () => {
+  assert.deepEqual(
+    JSON.parse(run('Yeni bir API anahtarı oluşturuldu: "Dizüstü" (pmt_Ab3d…). Sen oluşturmadıysan hemen iptal et.')),
+    { key: "notifMsg.apiTokenCreated", params: { name: "Dizüstü", prefix: "pmt_Ab3d" } },
+  );
+});

@@ -35,3 +35,14 @@ test("privacy policy does not claim what the code does not do: no 'we never use 
     assert.doesNotMatch(all, /üçüncü taraf çerezleri ya da analitik araçları kullanmıyoruz/);
   }
 });
+
+test("API keys (docs/history/314-*): the privacy policy says only a digest is kept, and the terms make the owner responsible, in both languages", () => {
+  for (const lang of ["tr", "en"] as const) {
+    const privacy = texts(PRIVACY_POLICY, lang).join("\n");
+    assert.match(privacy, lang === "tr" ? /API anahtarların/ : /Your API keys/);
+    assert.match(privacy, lang === "tr" ? /geri döndürülemeyen bir özet/ : /one-way digest/);
+    const terms = texts(TERMS_OF_USE, lang).join("\n");
+    assert.match(terms, lang === "tr" ? /Kişisel bir API anahtarı oluşturursan/ : /If you create a personal API key/);
+    assert.match(terms, lang === "tr" ? /hemen iptal et/ : /revoke it right away/);
+  }
+});

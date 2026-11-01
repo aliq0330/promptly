@@ -16,10 +16,15 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   copy_required: "error.copyRequired",
   // Yorum eki (docs/history/308-*): içerik artık herkese açık/yayında değil
   attachment_not_public: "error.attachmentNotPublic",
+  // Kişisel API anahtarları (docs/history/314-*)
+  token_limit: "error.apiTokenLimit",
+  invalid_name: "error.apiTokenName",
+  invalid_scope: "error.apiTokenScope",
+  invalid_expiry: "error.apiTokenExpiry",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
-const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public"]);
+const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public", "token_limit", "invalid_name", "invalid_scope", "invalid_expiry"]);
 
 export function friendlyServerMessage(code: unknown): string | null {
   if (typeof code !== "string") return null;

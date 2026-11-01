@@ -24,6 +24,7 @@ import type { Language, TranslationKey } from "@/lib/i18n/translations";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { openWelcomeTour } from "@/features/onboarding/welcome-tour";
 import { AppearancePicker } from "@/components/theme/appearance-picker";
+import { ApiKeysSection } from "@/features/settings/api-keys-section";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -38,7 +39,7 @@ export default function SettingsPage() {
   const { t, language, setLanguage } = useTranslation();
   const isModerator = useIsModerator();
   const { profile, refresh: refreshProfile } = useOwnProfile();
-  const activeSection = useActiveSection(["settings-account", "settings-privacy", "settings-preferences", "settings-legal", "settings-danger"]);
+  const activeSection = useActiveSection(["settings-account", "settings-privacy", "settings-preferences", "settings-developer", "settings-legal", "settings-danger"]);
   const [newEmail, setNewEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
@@ -191,6 +192,7 @@ export default function SettingsPage() {
     { id: "settings-account", label: t("settings.groupAccount") },
     { id: "settings-privacy", label: t("settings.privacyTitle") },
     { id: "settings-preferences", label: t("settings.groupPreferences") },
+    { id: "settings-developer", label: t("settings.groupDeveloper") },
     { id: "settings-legal", label: t("legal.groupTitle") },
     { id: "settings-danger", label: t("settings.groupDanger") },
   ];
@@ -384,6 +386,12 @@ export default function SettingsPage() {
             </Button>
           </SettingsCard>
           <SettingsLinkRow href="/developers" icon={<Code2 size={18} className="text-text-secondary" />} title={t("dev.title")} hint={t("dev.navHint")} />
+        </SettingsGroup>
+
+        <SettingsGroup id="settings-developer" title={t("settings.groupDeveloper")}>
+          <SettingsCard title={t("apiKeys.title")} hint={t("apiKeys.hint")}>
+            <ApiKeysSection />
+          </SettingsCard>
         </SettingsGroup>
 
         <SettingsGroup id="settings-legal" title={t("legal.groupTitle")}>
