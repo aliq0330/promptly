@@ -1,6 +1,6 @@
 {
   "name": "promptly-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for Promptly — search, read and fill public AI prompts from Claude, Cursor and other MCP clients.",
   "type": "module",
   "bin": {
