@@ -8,7 +8,7 @@
 // Deploy: `supabase functions deploy mcp --no-verify-jwt` (supabase/config.toml + scripts/deploy-functions.sh). Adres:
 //   https://<ref>.supabase.co/functions/v1/mcp
 
-import { createRestClient } from "../_shared/promptly/lib/public-api/index.ts";
+import { createRateLimiter, createRestClient, PUBLIC_MCP_RATE_LIMIT } from "../_shared/promptly/lib/public-api/index.ts";
 import { createRemoteHandler } from "./remote.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -19,5 +19,7 @@ Deno.serve(
     version: "0.1.0",
     getClient: () => createRestClient({ url: SUPABASE_URL, anonKey: ANON_KEY }),
     log: (message, error) => console.error("mcp", message, error ?? ""),
+    // IP başına adil kullanım freni; bağlayıcılar şirket sunucularından geldiği için API'den geniştir (docs/history/302-*).
+    rateLimiter: createRateLimiter(PUBLIC_MCP_RATE_LIMIT),
   }),
 );

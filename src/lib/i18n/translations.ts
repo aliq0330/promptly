@@ -1727,7 +1727,7 @@ export const translations = {
   "dev.rulePublicOnly": { tr: "Yalnızca yayında ve herkese açık promptlar gelir; özel, taslak ve topluluğa özgü içerik dışarıda kalır.", en: "Only published, public prompts are returned; private, draft and community-only content is left out." },
   "dev.ruleCredit": { tr: "Her prompt yazar atfıyla (source) gelir. Paylaşırken ya da yeniden kullanırken atfı koru.", en: "Every prompt comes with author credit (source). Keep it when you share or reuse a prompt." },
   "dev.ruleUntrusted": { tr: "Prompt metinleri kullanıcı içeriğidir. Bir yapay zekâ aracına ya da otomasyona vermeden önce kontrol et.", en: "Prompt texts are user content. Check them before you give them to an AI tool or automation." },
-  "dev.ruleFairUse": { tr: "Siteyi yormadan kullan. Yoğun ya da toplu çekme planlıyorsan önce bize yaz.", en: "Use it without straining the site. If you plan heavy or bulk reads, write to us first." },
+  "dev.ruleFairUse": { tr: "Adil kullanım: API için IP başına dakikada yaklaşık {{limit}} istek (bağlayıcı/MCP sınırı daha geniştir). Aşarsan 429 ve Retry-After başlığı gelir; sınır yaklaşıktır ve değişebilir. Yoğun ya da toplu çekme planlıyorsan önce bize yaz.", en: "Fair use: about {{limit}} requests per minute per IP for the API (the connector/MCP limit is wider). Beyond that you get 429 and a Retry-After header; the limit is approximate and may change. If you plan heavy or bulk reads, write to us first." },
   "dev.rulesTerms": { tr: "Ayrıntılar:", en: "Details:" },
   "dev.contact": { tr: "Sorun ve talepler için:", en: "For questions and requests:" },
   "auth.noAccountYet": { tr: "Hesabın yok mu?", en: "Don't have an account?" },

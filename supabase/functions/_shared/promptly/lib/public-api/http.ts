@@ -14,12 +14,14 @@ import { serializeMarkdown } from "../exchange/markdown.ts";
 import type { ExchangePrompt } from "../exchange/prompt-format.ts";
 import { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";
 import { fillPrompt, getPrompt, popularPrompts, searchPrompts, type PublicPrompt } from "./prompts.ts";
+import { checkRequest, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type RateLimiter } from "./rate-limit.ts";
 import { createRestClient, PublicApiError, type PublicApiConfig, type RestClient } from "./rest.ts";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "content-type, authorization, apikey, x-client-info",
+  "Access-Control-Expose-Headers": RATE_LIMIT_EXPOSE_HEADERS,
   "Access-Control-Max-Age": "86400",
 };
 
@@ -186,22 +188,28 @@ export interface ApiHandlerOptions {
   publicBaseUrl?: string;
   /** Beklenmeyen hatalar için (Edge Function'da `console.error`). */
   onError?: (error: unknown) => void;
+  /** IP başına hız sınırı (docs/history/302-*). Verilmezse sınır yok. `OPTIONS` (CORS ön kontrolü) sayılmaz. */
+  rateLimiter?: RateLimiter;
 }
 
 export function createApiHandler(options: ApiHandlerOptions): (request: Request) => Promise<Response> {
   let client: RestClient | null = null;
   return async (request) => {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS_HEADERS });
+    const limit = checkRequest(options.rateLimiter, request);
+    if (limit && !limit.allowed) {
+      return withRateLimitHeaders(errorResponse("rate_limited", `Too many requests. Try again in ${limit.retryAfterSeconds} seconds.`, 429), limit);
+    }
     try {
       client ??= createRestClient(options.config);
-      return await route(request, client, options.publicBaseUrl);
+      return withRateLimitHeaders(await route(request, client, options.publicBaseUrl), limit);
     } catch (error) {
       if (error instanceof PublicApiError) {
         if (error.code === "upstream" || error.code === "not_configured") options.onError?.(error);
-        return errorResponse(error.code, error.message, STATUS[error.code]);
+        return withRateLimitHeaders(errorResponse(error.code, error.message, STATUS[error.code]), limit);
       }
       options.onError?.(error);
-      return errorResponse("internal", "Unexpected error.", 500);
+      return withRateLimitHeaders(errorResponse("internal", "Unexpected error.", 500), limit);
     }
   };
 }

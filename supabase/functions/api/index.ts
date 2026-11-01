@@ -9,6 +9,7 @@
 // Adres: https://<ref>.supabase.co/functions/v1/api/v1  — belge: …/v1/openapi.json
 
 import { createApiHandler } from "../_shared/promptly/lib/public-api/http.ts";
+import { createRateLimiter, PUBLIC_API_RATE_LIMIT } from "../_shared/promptly/lib/public-api/rate-limit.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -17,6 +18,8 @@ const handler = createApiHandler({
   config: { url: SUPABASE_URL, anonKey: ANON_KEY },
   publicBaseUrl: SUPABASE_URL ? `${SUPABASE_URL.replace(/\/+$/, "")}/functions/v1/api/v1` : undefined,
   onError: (error) => console.error("api", error),
+  // IP başına adil kullanım freni (isolate belleğinde; ayrıntı ve sınırlar docs/history/302-*).
+  rateLimiter: createRateLimiter(PUBLIC_API_RATE_LIMIT),
 });
 
 Deno.serve(handler);

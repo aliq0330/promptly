@@ -8,6 +8,7 @@ import { usePageTitle } from "@/components/layout/page-title";
 import { LEGAL_CONTACT_EMAIL } from "@/features/legal/legal-content";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { developerEndpoints, developerSnippets } from "@/lib/developers";
+import { PUBLIC_API_RATE_LIMIT } from "@/lib/public-api/rate-limit";
 import { copyTextToClipboard } from "@/lib/utils";
 
 /** A copyable mono block. The copy button is the only control; the text stays selectable. */
@@ -158,7 +159,7 @@ export function DevelopersPage() {
           <li>{t("dev.rulePublicOnly")}</li>
           <li>{t("dev.ruleCredit")}</li>
           <li>{t("dev.ruleUntrusted")}</li>
-          <li>{t("dev.ruleFairUse")}</li>
+          <li>{t("dev.ruleFairUse", { limit: PUBLIC_API_RATE_LIMIT.limit })}</li>
         </ul>
         <p className="text-body text-text-secondary">
           {t("dev.rulesTerms")}{" "}

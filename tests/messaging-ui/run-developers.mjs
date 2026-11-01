@@ -46,6 +46,7 @@ await scenario("1 the page shows the MCP address, the tool list and the rules", 
   await page.locator("pre", { hasText: MCP }).first().waitFor();
   for (const tool of ["search_prompts", "popular_prompts", "get_prompt", "fill_prompt"]) await page.locator("code", { hasText: tool }).waitFor();
   await page.getByRole("heading", { name: "Bilmen gerekenler" }).waitFor();
+  await page.getByText(/dakikada yaklaşık 60 istek.*429.*Retry-After/).waitFor(); // adil kullanım sınırı sayısı koddan gelir (docs/history/302-*)
   await page.locator("pre", { hasText: `claude mcp add --transport http promptly ${MCP}` }).waitFor();
   await shot(page, "developers-desktop");
 });
@@ -77,6 +78,7 @@ await scenario("5 English labels", async ({ page }) => {
   await page.getByRole("heading", { name: "Developers", level: 1 }).waitFor();
   await page.getByRole("heading", { name: "Connect to Claude (MCP)" }).waitFor();
   await page.getByRole("heading", { name: "Good to know" }).waitFor();
+  await page.getByText(/about 60 requests per minute per IP.*429.*Retry-After/).waitFor();
   await page.getByRole("button", { name: /Copy: Connector address/ }).waitFor();
 }, { lang: "en" });
 
