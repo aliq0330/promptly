@@ -111,7 +111,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Google: yalnızca \"Google ile devam et\" seçeneğini kullanırsan kimlik doğrulama için.",
             "GitHub Pages: sitenin kendisini yayınlar. GitHub, siteyi ziyaret edenlerin IP adresi gibi standart bağlantı kayıtlarını tutabilir.",
             "Google Gemini: bir görselden prompt çıkarma özelliğini kullandığında, seçtiğin görsel sunucu fonksiyonumuz aracılığıyla analiz için Google'ın Gemini servisine gönderilir. Görseli bu amaçla bizde saklamayız.",
-            "Açık API ve MCP (promptly-mcp): yalnızca herkese açık içeriği Supabase üzerinden okur. Bu isteklerde hesap bilgisi istemeyiz ve istekleri bir hesapla ilişkilendirmeyiz; ancak Supabase, standart bağlantı kayıtlarını (ör. IP adresi) tutabilir.",
+            "Açık API ve MCP (promptly-mcp): yalnızca herkese açık içeriği Supabase üzerinden okur. Bu isteklerde hesap bilgisi istemeyiz ve istekleri bir hesapla ilişkilendirmeyiz; ancak Supabase, standart bağlantı kayıtlarını (ör. IP adresi) tutabilir. Aşırı kullanımı sınırlamak için API ve MCP isteklerinde IP adresinden türetilmiş, geri döndürülemeyen bir özet en çok bir saat saklanır; IP adresinin kendisi bu amaçla kaydedilmez.",
             "Studio: kendi yapay zekâ servisinin API anahtarını sen girersin. Anahtar sunucularımıza veya veritabanımıza kaydedilmez; yalnızca tarayıcının belleğinde (açıkça izin verirsen tarayıcında) tutulur. İstekler tarayıcından doğrudan seçtiğin servise gider ve o servisin kendi gizlilik koşulları geçerlidir.",
           ],
           [
@@ -119,7 +119,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Google: only for authentication if you choose \"Continue with Google\".",
             "GitHub Pages: serves the site itself. GitHub may keep standard connection logs, such as visitors' IP addresses.",
             "Google Gemini: when you use the feature that extracts a prompt from an image, the image you pick is sent to Google's Gemini service through our server function for analysis. We do not keep the image for this purpose.",
-            "Public API and MCP (promptly-mcp): they only read public content through Supabase. These requests ask for no account information and we do not link them to an account; however, Supabase may keep standard connection logs, such as IP addresses.",
+            "Public API and MCP (promptly-mcp): they only read public content through Supabase. These requests ask for no account information and we do not link them to an account; however, Supabase may keep standard connection logs, such as IP addresses. To limit excessive use, API and MCP requests keep a one-way digest derived from the IP address for at most one hour; the IP address itself is not stored for this purpose.",
             "Studio: you enter the API key of your own AI service. The key is not saved on our servers or in our database; it is kept only in your browser's memory (or in your browser, if you explicitly allow it). Requests go from your browser directly to the service you choose, and that service's own privacy terms apply.",
           ],
         ),

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { createRestClient } from "../../src/lib/public-api/index.ts";
+import { createMemoryRateLimiter, createRestClient } from "../../src/lib/public-api/index.ts";
 import { UNTRUSTED_NOTICE } from "../src/server.ts";
 import { createRemoteHandler, REMOTE_MAX_BODY_BYTES } from "../src/remote.ts";
 
@@ -180,4 +180,32 @@ test("not configured: 500 with a generic message — no internal detail leaks, t
   assert.doesNotMatch(text, /SUPABASE_URL|secret/);
   assert.match(text, /not configured/i);
   assert.ok(logs.some((line) => /not configured/.test(line)));
+});
+
+test("rate limit: POSTs past the limit get 429 + Retry-After as a JSON-RPC error, per IP; the info page and preflight are not counted", async () => {
+  const handler = createRemoteHandler({
+    version: "0.0.0-test",
+    getClient: () => createRestClient({ url: "https://demo.supabase.co", anonKey: "eyJ.k", fetch: fakeSupabase() }),
+    rateLimiter: createMemoryRateLimiter({ limit: 2, windowMs: 60_000 }),
+  });
+  const from = (ip: string) => ({ "cf-connecting-ip": ip });
+  assert.equal((await handler(post(INIT, from("203.0.113.7")))).status, 200);
+  const second = await handler(post(INIT, from("203.0.113.7")));
+  assert.equal(second.status, 200);
+  assert.equal(second.headers.get("RateLimit-Remaining"), "0");
+  const refused = await handler(post(INIT, from("203.0.113.7")));
+  assert.equal(refused.status, 429);
+  assert.equal(refused.headers.get("Retry-After"), "60");
+  assert.equal(refused.headers.get("Access-Control-Allow-Origin"), "*", "a browser client can read the refusal");
+  const body = await refused.json();
+  assert.equal(body.jsonrpc, "2.0");
+  assert.equal(body.error.code, -32000);
+  assert.match(body.error.message, /Too many requests/);
+  assert.equal((await handler(post(INIT, from("203.0.113.8")))).status, 200, "another IP is unaffected");
+  for (const request of [
+    new Request(URL_, { method: "GET", headers: from("203.0.113.7") }),
+    new Request(URL_, { method: "OPTIONS", headers: from("203.0.113.7") }),
+  ]) {
+    assert.ok([200, 204].includes((await handler(request)).status), `${request.method} is not refused`);
+  }
 });

@@ -10,14 +10,14 @@
  * - GET/DELETE akış/oturum içindir; sunmuyoruz (405). Tarayıcıdan açan kişi ise kısa bir bilgi JSON'u görür.
  */
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import type { RestClient } from "../_shared/promptly/lib/public-api/index.ts";
+import { checkRequest, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type RateLimiter, type RestClient } from "../_shared/promptly/lib/public-api/index.ts";
 import { createPromptlyServer } from "./server.ts";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, GET, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "content-type, accept, authorization, apikey, x-client-info, mcp-session-id, mcp-protocol-version, last-event-id",
-  "Access-Control-Expose-Headers": "mcp-session-id, mcp-protocol-version",
+  "Access-Control-Expose-Headers": `mcp-session-id, mcp-protocol-version, ${RATE_LIMIT_EXPOSE_HEADERS}`,
   "Access-Control-Max-Age": "86400",
 };
 
@@ -30,6 +30,8 @@ export interface RemoteHandlerOptions {
   version: string;
   /** Kullanıcıya gösterilmeyen iç günlük (Edge Function'da `console.error`). */
   log?: (message: string, error?: unknown) => void;
+  /** IP başına hız sınırı (docs/history/302-*); yalnız POST sayılır. Verilmezse sınır yok. */
+  rateLimiter?: RateLimiter;
 }
 
 function withCors(response: Response): Response {
@@ -83,6 +85,11 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
     }
     if (method !== "POST") return jsonRpcError(405, -32000, "Method not allowed.", { Allow: "POST, OPTIONS" });
 
+    const limit = await checkRequest(options.rateLimiter, request);
+    if (limit && !limit.allowed) {
+      return withRateLimitHeaders(jsonRpcError(429, -32000, `Too many requests. Try again in ${limit.retryAfterSeconds} seconds.`), limit);
+    }
+
     let client: RestClient;
     try {
       client = options.getClient();
@@ -103,7 +110,7 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
       const response = await transport.handleRequest(withAcceptHeader(request));
       const headers = new Headers(response.headers);
       headers.set("Cache-Control", "no-store");
-      return withCors(new Response(response.body, { status: response.status, statusText: response.statusText, headers }));
+      return withRateLimitHeaders(withCors(new Response(response.body, { status: response.status, statusText: response.statusText, headers })), limit);
     } catch (error) {
       log("remote MCP request failed", error);
       return jsonRpcError(500, -32603, "Internal error.");
