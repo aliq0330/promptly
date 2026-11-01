@@ -28,6 +28,20 @@ interface ShareSource {
   descriptionColumn: string;
   /** PostgREST filters, `column=op.value`. */
   filters: string[];
+  /** Whole `select=` value when the title comes from an embedded row (quotes: the quoted content's title). */
+  select?: string;
+  /** Picks title + description from a raw row; `null` drops the row (e.g. an embed RLS hid). Default: the three columns above. */
+  pick?: (record: Record<string, unknown>) => { title: unknown; description: unknown } | null;
+}
+
+/** First non-empty `title` among the embedded target rows of a quote (a hidden target embeds as null — then there is no page). */
+function quotedTitle(record: Record<string, unknown>): string | null {
+  for (const key of ["prompts", "prompt_requests", "workflows", "presets", "spaces"]) {
+    const embed = record[key];
+    const row = Array.isArray(embed) ? embed[0] : embed;
+    if (row && typeof row === "object" && typeof (row as Record<string, unknown>).title === "string") return (row as Record<string, string>).title;
+  }
+  return null;
 }
 
 export const SHARE_SOURCES: readonly ShareSource[] = [
@@ -64,6 +78,29 @@ export const SHARE_SOURCES: readonly ShareSource[] = [
     filters: ["status=eq.published", "visibility=eq.public", "community_id=is.null"],
   },
   {
+    kind: "space",
+    table: "spaces",
+    keyColumn: "id",
+    titleColumn: "title",
+    descriptionColumn: "description",
+    // Yalnız herkese açık + arşivsiz (docs/history/214-*); bağlantıyla paylaşılan / özel Space'in sayfası olmaz.
+    filters: ["visibility=eq.public", "archived_at=is.null"],
+  },
+  {
+    kind: "quote",
+    table: "content_quotes",
+    keyColumn: "id",
+    titleColumn: "note",
+    descriptionColumn: "note",
+    filters: [],
+    // Alıntının kendi başlığı yoktur: sayfa, alıntılanan içeriğin başlığını ve alıntı notunu taşır. Hedef RLS ile okunamıyorsa embed null gelir ve satır düşer.
+    select: "id,note,prompts(title),prompt_requests(title),workflows(title),presets(title),spaces(title)",
+    pick: (record) => {
+      const title = quotedTitle(record);
+      return title ? { title, description: record.note } : null;
+    },
+  },
+  {
     kind: "profile",
     table: "profiles",
     keyColumn: "username",
@@ -77,7 +114,7 @@ const PAGE_SIZE = 1000;
 
 /** PostgREST URL for one page of one source (pure — tested). */
 export function buildCatalogUrl(baseUrl: string, source: ShareSource, offset: number, limit = PAGE_SIZE): string {
-  const select = [source.keyColumn, source.titleColumn, source.descriptionColumn].join(",");
+  const select = source.select ?? [source.keyColumn, source.titleColumn, source.descriptionColumn].join(",");
   const parts = [`select=${select}`, ...source.filters, `order=${source.keyColumn}.asc`, `limit=${limit}`, `offset=${offset}`];
   return `${baseUrl.replace(/\/+$/, "")}/rest/v1/${source.table}?${parts.join("&")}`;
 }
@@ -90,8 +127,9 @@ export function mapCatalogRows(source: ShareSource, rows: unknown): ShareEntry[]
     if (!row || typeof row !== "object") continue;
     const record = row as Record<string, unknown>;
     const key = record[source.keyColumn];
-    const title = record[source.titleColumn];
-    const description = record[source.descriptionColumn];
+    const picked = source.pick ? source.pick(record) : { title: record[source.titleColumn], description: record[source.descriptionColumn] };
+    if (!picked) continue;
+    const { title, description } = picked;
     if (typeof key !== "string" || !key || typeof title !== "string" || !title.trim()) continue;
     entries.push({
       kind: source.kind,

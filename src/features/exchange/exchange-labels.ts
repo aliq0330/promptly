@@ -13,6 +13,7 @@ export const ISSUE_KEYS: Record<ExchangeIssueCode, TranslationKey> = {
   invalid_variable: "exchange.issue.invalid_variable",
   too_many_variables: "exchange.issue.too_many_variables",
   invalid_row: "exchange.issue.invalid_row",
+  invalid_selection: "exchange.issue.invalid_selection",
   missing_frontmatter: "exchange.issue.missing_frontmatter",
 };
 
@@ -38,6 +39,8 @@ export const FIELD_KEYS: Record<string, TranslationKey> = {
   tools: "exchange.field.tools",
   tags: "exchange.field.tags",
   variables: "exchange.field.variables",
+  creativeDirection: "exchange.field.creativeDirection",
+  selection: "exchange.field.selection",
   schemaVersion: "exchange.field.schemaVersion",
 };
 

@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { mapProfileRow, type ProfileRow } from "./mappers";
+import { isReactionKey } from "@/lib/reactions";
 import type { AppNotification, NotificationType } from "@/types";
 
 interface NotificationRow {
@@ -9,11 +10,12 @@ interface NotificationRow {
   target_href: string;
   is_read: boolean;
   created_at: string;
+  reaction?: string | null;
   actor: ProfileRow | null;
 }
 
 const NOTIFICATION_SELECT = `
-  id, type, message, target_href, is_read, created_at,
+  id, type, message, target_href, is_read, created_at, reaction,
   actor:actor_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
@@ -29,6 +31,7 @@ function mapNotificationRow(row: NotificationRow): AppNotification {
     targetHref: row.target_href,
     isRead: row.is_read,
     createdAt: row.created_at,
+    reaction: row.reaction && isReactionKey(row.reaction) ? row.reaction : null,
   };
 }
 

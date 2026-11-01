@@ -4,12 +4,20 @@ import { clipDescription, detailHrefFor, isShareKind, parseSharePath, shareLinkF
 
 const ID = "3f0c9a52-7d0e-4c3a-9a55-0f2f1a2b3c4d";
 
-test("detail hrefs of the five shareable kinds become share paths", () => {
+test("detail hrefs of the seven shareable kinds become share paths", () => {
   assert.equal(shareLinkForHref(`/prompts/local?id=${ID}`), `/share/prompt/${ID}/`);
   assert.equal(shareLinkForHref(`/requests/local?id=${ID}`), `/share/request/${ID}/`);
   assert.equal(shareLinkForHref(`/workflows/local?id=${ID}`), `/share/workflow/${ID}/`);
   assert.equal(shareLinkForHref(`/presets/local?id=${ID}`), `/share/preset/${ID}/`);
   assert.equal(shareLinkForHref("/profile/real?username=ayse.k"), "/share/profile/ayse.k/");
+  // docs/history/306-*: Space ve alıntı da kendi önizleme sayfasına sahip; ek parametreli (sekme, odak) bağlantılar olduğu gibi kalır.
+  assert.equal(shareLinkForHref(`/spaces/local?id=${ID}`), `/share/space/${ID}/`);
+  assert.equal(shareLinkForHref(`/quotes/local?id=${ID}`), `/share/quote/${ID}/`);
+  assert.equal(shareLinkForHref(`/spaces/local?id=${ID}&tab=comments`), `/spaces/local?id=${ID}&tab=comments`);
+  assert.deepEqual(parseSharePath(`/promptly/share/space/${ID}/`), { kind: "space", key: ID });
+  assert.deepEqual(parseSharePath(`/share/quote/${ID}`), { kind: "quote", key: ID });
+  assert.equal(detailHrefFor("space", ID), `/spaces/local?id=${ID}`);
+  assert.equal(detailHrefFor("quote", ID), `/quotes/local?id=${ID}`);
 });
 
 test("anything else is returned unchanged (results, collections, tags, messages, odd params)", () => {

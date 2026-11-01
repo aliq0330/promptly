@@ -1,3 +1,4 @@
+import type { ReactionKey } from "@/lib/reactions";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import type { PresetField, PresetSelection } from "@/lib/preset-fields";
 /**
@@ -307,6 +308,8 @@ export interface AppNotification {
   targetHref: string;
   isRead: boolean;
   createdAt: string;
+  /** Beğeni bildirimlerinde verilen tepki (docs/history/306-*); eski satırlarda ve diğer türlerde yok. */
+  reaction?: ReactionKey | null;
 }
 
 /** Grup üyelik rolleri (docs/history/172-*): owner > admin > moderator > member. */

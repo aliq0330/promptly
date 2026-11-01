@@ -23,6 +23,18 @@ const pubOf = (u) => Object.fromEntries(PUBLIC_COLS.map((c) => [c, u[c]]));
 const P1 = "b0000000-0000-4000-8000-000000000010";
 const P2 = "b0000000-0000-4000-8000-000000000020";
 const P3 = "b0000000-0000-4000-8000-000000000030";
+const REQUEST_ROWS = [
+  { id: "f0000000-0000-4000-8000-000000000001", title: "Neon poster", description: "Mor-turuncu bir sokak posteri", creative_direction: "Blade Runner", preferred_tool: null, tools: ["midjourney"], content_type: "image", category: null, subcategory: null,
+    reference_image_url: null, reference_image_width: null, reference_image_height: null, status: "open", selected_response_prompt_id: null, response_count: 3, like_count: 9, comment_count: 2, quote_count: 0,
+    created_at: "2026-09-02T00:00:00Z", deleted_at: null, is_draft: false, visibility: "public", community_id: null, profiles: pubOf(U.alice), prompt_request_tags: [{ tags: { slug: "neon", label: "Neon" } }], prompt_request_media: [] },
+  { id: "f0000000-0000-4000-8000-000000000002", title: "Özel taslak istek", description: "Sadece ben", creative_direction: null, preferred_tool: null, tools: [], content_type: "text", category: null, subcategory: null,
+    reference_image_url: null, reference_image_width: null, reference_image_height: null, status: "open", selected_response_prompt_id: null, response_count: 0, like_count: 0, comment_count: 0, quote_count: 0,
+    created_at: "2026-09-01T00:00:00Z", deleted_at: null, is_draft: true, visibility: "private", community_id: null, profiles: pubOf(U.alice), prompt_request_tags: [], prompt_request_media: [] },
+];
+const PRESET_ROWS = [
+  { id: "f1000000-0000-4000-8000-000000000001", creator_id: ME_ID, title: "Sinematik portre", description: "Yumuşak ışık", cover_url: null, content_type: "image", category: null, subcategory: null, tools: [], selection: { lens: "35mm", hdr: true, tags: ["a", "b"] },
+    status: "published", visibility: "public", community_id: null, like_count: 4, comment_count: 0, save_count: 1, quote_count: 0, created_at: "2026-09-03T00:00:00Z", updated_at: "2026-09-03T00:00:00Z", profiles: pubOf(U.alice), preset_tags: [{ tags: { slug: "portre", label: "Portre" } }] },
+];
 const row = (id, title, extra = {}) => ({
   id, title, description: "Açıklama, virgüllü", prompt_text: `${title} metni {Stil}\nikinci satır`, tool: null, tools: ["midjourney:v7"], content_type: "image", category: null, subcategory: null,
   status: "published", origin_type: "original", request_id: null, like_count: 7, save_count: 2, comment_count: 1, copy_count: 3, created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z", show_on_profile: true,
@@ -37,7 +49,7 @@ const VARIABLES = [{ id: "v1", prompt_id: P1, name: "Stil", default_value: "noir
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", detail = false, moderator = false, manageCount = 250, templateCount = 3, taxRows = [] } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { prompts: [], imports: [], importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0, impactCalls: [], impactFail: false, tagPuts: [], tagCreates: [], tagCatalog: TAG_CATALOG, tmplScans: [], tmplCalls: [], tmplFailAt: 0, taxQueries: [], taxCalls: [], taxFailAt: 0, taxRows: taxRows.map((r) => ({ ...r })) };
+  const state = { prompts: [], imports: [], contentImports: [], contentResult: null, importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0, impactCalls: [], impactFail: false, tagPuts: [], tagCreates: [], tagCatalog: TAG_CATALOG, tmplScans: [], tmplCalls: [], tmplFailAt: 0, taxQueries: [], taxCalls: [], taxFailAt: 0, taxRows: taxRows.map((r) => ({ ...r })) };
   // Toplu yönetim taklidi: 250 kayıt = 200 taslak (2'si etkileşimli) + 30 yayında (2'si etkileşimli) + 20 gizli (1'i etkileşimli); >250 ise hepsi taslak.
   state.manageRows = Array.from({ length: manageCount }, (_, i) => ({
     id: `e0000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Toplu ${i + 1}`,
@@ -125,6 +137,17 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     const created = body.p_dry_run ? 0 : items.filter((x) => x.status === "ok").length;
     return { body: { dryRun: body.p_dry_run, ok: true, created, published: body.p_publish && !body.p_dry_run ? created : 0, items } };
   };
+  // İstek / Hazır ayar içe aktarma (docs/history/306-*): RPC yanıtı taklit; doğrulayan SQL `supabase/tests/import-content.sql`.
+  db.rpc.import_content = (body) => {
+    state.contentImports.push(body);
+    if (state.contentResult) return state.contentResult(body);
+    const items = body.p_items.map((item, i) => ({
+      index: i + 1,
+      status: item.title === "Zaten var" ? "duplicate" : "ok",
+      ...(!body.p_dry_run && item.title !== "Zaten var" ? { id: `e0000000-0000-4000-8000-00000000000${i}` } : {}),
+    }));
+    return { body: { dryRun: body.p_dry_run, ok: true, created: body.p_dry_run ? 0 : items.filter((x) => x.status === "ok").length, items } };
+  };
   db.rpc.import_prompts = (body) => {
     state.imports.push(body);
     if (state.importResult) return state.importResult(body);
@@ -137,6 +160,9 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     return { body: { dryRun: body.p_dry_run, ok: true, created: body.p_dry_run ? 0 : items.filter((x) => x.status === "ok").length, items } };
   };
   db.extraRoutes = async (ctx) => {
+    if (ctx.table === "prompt_requests" && ctx.method === "GET" && ctx.q.get("author_id") && ctx.sel.includes("creative_direction")) return ctx.rows(REQUEST_ROWS);
+    if (ctx.table === "presets" && ctx.method === "GET" && ctx.q.get("creator_id") && ctx.sel.includes("selection")) return ctx.rows(PRESET_ROWS);
+    if (ctx.table === "preset_fields" && ctx.method === "GET") return ctx.rows([]);
     if (ctx.table === "prompts" && ctx.method === "GET" && ctx.sel.includes("save_count") && !ctx.sel.includes("prompt_media")) {
       state.manageQueries.push(Object.fromEntries(ctx.q.entries()));
       const tagFilter = ctx.q.get("prompt_tags.tag_slug");
@@ -987,6 +1013,96 @@ await scenario("38. Yarıda kalma: 2. parça hata verirse 1. parça yazılmış 
   assert.equal(state.taxRows.filter((r) => r.category === "music").length, 100);
   assert.equal(await overflowFree(page), true);
 }, { moderator: true, lang: "en", viewport: { width: 375, height: 800 }, taxRows: Array.from({ length: 150 }, (_, i) => taxRow(i + 1)) });
+
+await scenario("39. İstekler bölümü (docs/history/306-*): İçe/Dışa aktar görünür; JSON gerçekten iner, geri okununca birebir aynı; yazar/durum/sayaç/görünürlük dosyada yok", async ({ page }) => {
+  await openLibrary(page);
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /İstek/ }).first().click();
+  await page.getByTestId("my-content-export").click();
+  await page.getByTestId("exchange-download").waitFor();
+  assert.match(await dialog(page).innerText(), /2 istek JSON dosyası olarak indirilecek\./);
+  const [file] = await Promise.all([page.waitForEvent("download"), page.getByTestId("exchange-download").click()]);
+  assert.match(file.suggestedFilename(), /^promptly-requests-\d{4}-\d{2}-\d{2}\.json$/);
+  const text = readFileSync(await file.path(), "utf8");
+  const envelope = JSON.parse(text);
+  assert.equal(envelope.format, "promptly.requests");
+  assert.equal(envelope.schemaVersion, 1);
+  assert.deepEqual(Object.keys(envelope.items[0]).sort(), ["category", "contentType", "creativeDirection", "description", "subcategory", "tags", "title", "tools"]);
+  assert.equal(envelope.items[0].creativeDirection, "Blade Runner");
+  assert.deepEqual(envelope.items[0].tags, ["Neon"]);
+  assert.ok(!/like_count|response_count|author|status|visibility|is_draft/.test(text), "sayaç/yazar/durum dosyada yok");
+  assert.equal(envelope.items.length, 2, "taslak ve özel istek de dahil");
+});
+
+await scenario("40. İstek içe aktarma: kuru çalıştırma → özet → onay; yalnız içerik alanları ve p_kind gider; yinelenen/geçersiz ayrılır", async ({ page, state }) => {
+  await openLibrary(page);
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /İstek/ }).first().click();
+  await page.getByTestId("my-content-import").click();
+  const file = JSON.stringify({ format: "promptly.requests", schemaVersion: 1, items: [
+    { title: "Yeni istek", description: "Açıklama", creativeDirection: "yön", contentType: "image", tags: ["Etiket"], status: "answered", visibility: "public", author_id: "x", response_count: 50 },
+    { title: "Zaten var", description: "d", contentType: "text" },
+    { title: "Açıklamasız", description: "", contentType: "text" },
+  ] });
+  await upload(page, "istekler.json", file);
+  await page.getByTestId("exchange-summary").waitFor();
+  assert.match(await page.getByTestId("exchange-summary").innerText(), /3 kayıt okundu: 1 yeni, 1 zaten var, 1 geçersiz\./);
+  assert.equal(state.contentImports.length, 1, "yalnız kuru çalıştırma");
+  assert.equal(state.contentImports[0].p_kind, "request");
+  assert.equal(state.contentImports[0].p_dry_run, true);
+  assert.equal(state.contentImports[0].p_items.length, 2, "istemcide geçersiz olan gönderilmedi");
+  assert.deepEqual(Object.keys(state.contentImports[0].p_items[0]).sort(), ["category", "contentType", "creativeDirection", "description", "subcategory", "tags", "title", "tools"]);
+  assert.match(await dialog(page).innerText(), /Açıklama: boş olamaz|Açıklama/);
+  await page.getByTestId("exchange-run").click();
+  await page.getByTestId("exchange-done").waitFor();
+  assert.match(await page.getByTestId("exchange-done").innerText(), /1 istek taslak olarak eklendi\./);
+  assert.equal(state.contentImports.length, 2);
+  assert.equal(state.contentImports[1].p_dry_run, false);
+  assert.equal(state.imports.length, 0, "prompt RPC'sine dokunulmadı");
+});
+
+await scenario("41. Hazır ayar dışa/içe aktarma + yanlış dosya: seçim aynen taşınır; prompt dosyası bu türe alınmaz ve hiçbir çağrı yapılmaz", async ({ page, state }) => {
+  await openLibrary(page);
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /Hazır Ayar/i }).first().click();
+  await page.getByTestId("my-content-export").click();
+  const [file] = await Promise.all([page.waitForEvent("download"), page.getByTestId("exchange-download").click()]);
+  assert.match(file.suggestedFilename(), /^promptly-presets-/);
+  const envelope = JSON.parse(readFileSync(await file.path(), "utf8"));
+  assert.equal(envelope.format, "promptly.presets");
+  assert.deepEqual(envelope.items[0].selection, { lens: "35mm", hdr: true, tags: ["a", "b"] });
+  assert.deepEqual(envelope.items[0].tags, ["Portre"]);
+
+  await page.getByTestId("my-content-import").click();
+  await upload(page, "prompts.json", JSON.stringify({ format: "promptly.prompts", schemaVersion: 1, items: [{ title: "x", promptText: "y", contentType: "text" }] }));
+  await page.getByTestId("exchange-fatal").waitFor();
+  assert.match(await page.getByTestId("exchange-fatal").innerText(), /bu türe ait değil/);
+  assert.equal(state.contentImports.length, 0);
+  await upload(page, "ayar.json", JSON.stringify([{ title: "Kötü", contentType: "image", selection: { x: { a: 1 } } }]));
+  await page.getByTestId("exchange-summary").waitFor();
+  assert.match(await dialog(page).innerText(), /geçersiz ayar seçimi/);
+  assert.equal(state.contentImports.length, 0, "istemci doğrulaması geçersiz kaydı hiç göndermez");
+  await upload(page, "ayar2.json", JSON.stringify([{ title: "Yeni ayar", contentType: "image", selection: { lens: "50mm" } }]));
+  await page.getByTestId("exchange-run").waitFor();
+  assert.equal(state.contentImports[0].p_kind, "preset");
+});
+
+await scenario("42. İstek / Hazır ayar pencereleri İngilizce ve telefonda taşmadan açılır", async ({ page }) => {
+  await page.goto(`${BASE}/my-content`);
+  await page.getByTestId("my-content-export").waitFor();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /Request/i }).first().click();
+  await page.getByTestId("my-content-import").click();
+  assert.match(await dialog(page).innerText(), /Import requests/);
+  assert.match(await dialog(page).innerText(), /Choose a JSON file exported from Promptly/);
+  assert.equal(await overflowFree(page), true);
+  await page.keyboard.press("Escape");
+  await page.getByTestId("my-content-export").click();
+  await page.getByTestId("exchange-download").waitFor();
+  assert.match(await dialog(page).innerText(), /Export requests/);
+  assert.match(await dialog(page).innerText(), /2 request\(s\) will be downloaded as a JSON file\./);
+  assert.equal(await overflowFree(page), true);
+}, { lang: "en", viewport: { width: 390, height: 800 } });
 
 await browser.close();
 server.close();

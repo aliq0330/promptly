@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { ReactionIcon } from "@/features/reactions/reaction-icon";
+import { REACTION_LABEL } from "@/lib/reactions";
 import { NOTIFICATION_ICONS, getNotificationIconKey } from "@/lib/notification-utils";
 import { localizeNotificationMessage } from "@/lib/notification-message";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -48,10 +50,18 @@ export function NotificationRow({ notification, onRead, onDelete }: Notification
             <Icon size={18} />
           </span>
         )}
-        {notification.actor && (
-          <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-surface bg-primary text-primary-foreground">
-            <Icon size={11} />
+        {notification.actor && notification.reaction ? (
+          // Verilen tepki (docs/history/306-*): rozet bu bildirimin kendi tepkisidir; statik poster, hiçbir şey yüklenmez.
+          <span data-notification-reaction={notification.reaction} title={t(REACTION_LABEL[notification.reaction])} className="absolute -bottom-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface bg-surface-elevated">
+            <ReactionIcon reaction={notification.reaction} size={15} />
+            <span className="sr-only">{t(REACTION_LABEL[notification.reaction])}</span>
           </span>
+        ) : (
+          notification.actor && (
+            <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-surface bg-primary text-primary-foreground">
+              <Icon size={11} />
+            </span>
+          )
         )}
       </div>
       <div className="min-w-0 flex-1">

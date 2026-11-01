@@ -53,6 +53,7 @@ const CHECKS = [
   { name: "rpc group_unread_counts (grup okunmamış sayısı okuma anında, docs/history/258-*; yalnız oturumlu)", rpc: "group_unread_counts", body: { p_ids: [] }, deniedOk: true, soft: true },
   { name: "rpc discover_tool_counts", rpc: "discover_tool_counts", body: {} },
   // Yalnız oturumlu kullanıcıya açık RPC (docs/history/250-*): ziyaretçiye 401/403 dönmesi "var ama kapalı" demektir; 404 "yok" demektir ve boru hattını durdurur.
+  { name: "rpc import_content (istek / hazır ayar içe aktarma; yalnız oturumlu, ziyaretçiye kapalı)", rpc: "import_content", body: { p_kind: "request", p_items: [], p_dry_run: true }, deniedOk: true, soft: true },
   { name: "rpc import_prompts (yalnız oturumlu; ziyaretçiye kapalı)", rpc: "import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true, soft: true },
   { name: "rpc admin_import_prompts (yalnız oturumlu moderatör; ziyaretçiye kapalı)", rpc: "admin_import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true, soft: true },
   { name: "rpc admin_bulk_delete_prompts (yalnız oturumlu moderatör; ziyaretçiye kapalı)", rpc: "admin_bulk_delete_prompts", body: { p_ids: [] }, deniedOk: true, soft: true },

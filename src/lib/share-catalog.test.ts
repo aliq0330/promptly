@@ -57,3 +57,20 @@ test("rows without a key or title are dropped; text is clipped and flattened", (
   assert.equal(entries[1].description, "");
   assert.deepEqual(mapCatalogRows(source("prompt"), { not: "an array" }), []);
 });
+
+test("Space pages: only public, non-archived Spaces (link/private Spaces never get a share page)", () => {
+  const url = buildCatalogUrl("https://x.supabase.co", source("space"), 0);
+  assert.ok(url.startsWith("https://x.supabase.co/rest/v1/spaces?"));
+  for (const needle of ["visibility=eq.public", "archived_at=is.null"]) assert.ok(url.includes(needle), needle);
+});
+
+test("Quote pages take the quoted content's title + the note; a target RLS hid (null embeds) drops the row", () => {
+  const url = buildCatalogUrl("https://x.supabase.co", source("quote"), 0);
+  assert.ok(url.includes("select=id,note,prompts(title),prompt_requests(title),workflows(title),presets(title),spaces(title)"));
+  const entries = mapCatalogRows(source("quote"), [
+    { id: "q1", note: "  Harika\n bir yön ", prompts: { title: "Neon Tokyo" }, prompt_requests: null, workflows: null, presets: null, spaces: null },
+    { id: "q2", note: "gizli hedef", prompts: null, prompt_requests: null, workflows: null, presets: null, spaces: null },
+    { id: "q3", note: null, prompts: null, prompt_requests: null, workflows: null, presets: null, spaces: { title: "Moodboard" } },
+  ]);
+  assert.deepEqual(entries.map((e) => [e.key, e.title, e.description]), [["q1", "Neon Tokyo", "Harika bir yön"], ["q3", "Moodboard", ""]]);
+});

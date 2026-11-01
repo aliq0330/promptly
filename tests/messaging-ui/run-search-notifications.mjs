@@ -285,6 +285,25 @@ await scenario("9. Bildirimler sayfa sayfa: ilk 60 gelir; okunmamışı VERİTAB
   assert.ok((db.notifWrites ?? []).some((w) => w.method === "PATCH" && /is_read=eq\.false/.test(w.url)), "tek toplu PATCH");
 }, { notifications: Array.from({ length: 130 }, (_, i) => ({ ...n(`m${i}`, "like", `Bildirim ${i + 1}`, "/settings", i + 1), is_read: i < 60 })) });
 
+await scenario("10. Beğeni bildirimi verilen tepkiyi rozet olarak gösterir (docs/history/306-*); tepkisiz (eski) satır eski simgeyi korur", async ({ page }) => {
+  await page.goto(`${BASE}/notifications`);
+  const badge = page.locator("[data-notification-reaction='fire']");
+  await badge.waitFor();
+  assert.equal(await badge.count(), 1);
+  assert.match(await badge.innerText(), /Ateş|Fire/i, "tepki adı ekran okuyucuya okunur");
+  assert.equal(await page.locator("[data-notification-reaction]").count(), 1, "yalnız tepkisi olan satırda");
+  assert.equal(await page.locator("[data-notification-icon]").count(), 2, "iki satır var");
+  assert.equal(await page.locator("[data-notification-icon]:not(:has([data-notification-reaction]))").locator("svg").count() >= 1, true, "tepkisiz (eski) satır kendi simgesini korur");
+}, {
+  notifications: (() => {
+    const actor = { id: "u-bob", username: "bob", display_name: "Bob", avatar_url: null, cover_url: null, bio: null, website: null, follower_count: 0, following_count: 0, created_at: "2026-01-01T00:00:00Z", interests: [] };
+    return [
+      { ...n("r1", "like", "Paylaşımını beğendi: \"Neon\"", "/prompts/local?id=p1", 1), actor, reaction: "fire" },
+      { ...n("r2", "like", "Paylaşımını beğendi: \"Eski\"", "/prompts/local?id=p2", 2), actor },
+    ];
+  })(),
+});
+
 await browser.close(); server.close();
 let failed = 0;
 for (const [status, name] of results) { console.log(`${status === "PASS" ? "✓" : "✗"} ${name}`); if (status === "FAIL") failed += 1; }
