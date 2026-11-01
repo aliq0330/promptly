@@ -91,7 +91,7 @@ site arayüzü değil; Promptly arayüzüne yeni metin eklenmedi (i18n §4.5'e y
 
 ## Bilinen sınırlar / Faz 2
 
-- Kopyalama sayacı MCP/API kullanımını SAYMAZ (`record_prompt_copy` oturum ister). Yaratıcı panelinde (294/295) görünmez.
+- Site kopyalama sayacı (`copy_count`) MCP/API kullanımını SAYMAZ (`record_prompt_copy` oturum ister). API/MCP okumaları artık AYRI bir sayıyla Yaratıcı panelinde görünür (`304-*`); yerel `npx promptly-mcp` hâlâ sayılmaz.
 - Hız sınırı yok: API, anon anahtarla PostgREST'e zaten açık olanın ötesinde yetki vermez ama her çağrı bir Edge Function çağrısıdır
   (Supabase kotası). Gerekirse `_rate_limit` benzeri IP özeti tablosu (username-login kalıbı) eklenir.
 - Yalnız Prompt; İstek/Workflow/Hazır ayar uçları yok (değişim biçimi de henüz yalnız Prompt, 250-*).

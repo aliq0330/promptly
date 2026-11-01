@@ -8,6 +8,7 @@ import {
   formatInsightNumber,
   hasNoActivity,
   insightPromptHref,
+  totalApiUses,
   labelIndexes,
   linePoints,
   niceMax,
@@ -108,12 +109,27 @@ test("hasNoActivity also counts shared results (this and the previous period)", 
 });
 
 test("promptHasNoActivity: all numbers, previous period and daily series (incl. results) must be empty", () => {
-  const zero = { title: "t", contentType: "text", tools: [], copies: 0, prevCopies: 0, reactions: 0, prevReactions: 0, comments: 0, prevComments: 0, saves: 0, prevSaves: 0, results: 0, prevResults: 0 };
+  const zero = { title: "t", contentType: "text", tools: [], copies: 0, prevCopies: 0, reactions: 0, prevReactions: 0, comments: 0, prevComments: 0, saves: 0, prevSaves: 0, results: 0, prevResults: 0, apiUses: 0, prevApiUses: 0, mcpUses: 0, prevMcpUses: 0 };
   const quiet = [{ day: "2026-10-31", copies: 0, reactions: 0, comments: 0, results: 0 }];
   assert.equal(promptHasNoActivity(zero, quiet), true);
   assert.equal(promptHasNoActivity({ ...zero, prevSaves: 1 }, quiet), false);
   assert.equal(promptHasNoActivity(zero, [{ day: "2026-10-31", copies: 0, reactions: 0, comments: 0, results: 1 }]), false);
   assert.equal(promptHasNoActivity(zero, [{ day: "2026-10-31", copies: 0, reactions: 0, comments: 0 }]), true, "results is optional on the series");
+});
+
+test("API / MCP uses count as activity in either period (so a creator with only API use does not see the empty state)", () => {
+  const empty = [{ day: "2026-10-31", copies: 0, reactions: 0, comments: 0 }];
+  for (const key of ["apiUses", "prevApiUses", "mcpUses", "prevMcpUses"] as const) {
+    assert.equal(hasNoActivity({ ...EMPTY_SUMMARY, [key]: 1 }, empty, []), false, key);
+  }
+  const zero = { title: "t", contentType: "text", tools: [], copies: 0, prevCopies: 0, reactions: 0, prevReactions: 0, comments: 0, prevComments: 0, saves: 0, prevSaves: 0, results: 0, prevResults: 0, apiUses: 0, prevApiUses: 0, mcpUses: 0, prevMcpUses: 0 };
+  assert.equal(promptHasNoActivity({ ...zero, mcpUses: 3 }, empty), false);
+  assert.equal(promptHasNoActivity({ ...zero, prevApiUses: 3 }, empty), false);
+});
+
+test("totalApiUses adds API and MCP, this period and the previous one separately", () => {
+  assert.deepEqual(totalApiUses({ apiUses: 4, prevApiUses: 1, mcpUses: 6, prevMcpUses: 2 }), { current: 10, previous: 3 });
+  assert.deepEqual(totalApiUses(EMPTY_SUMMARY), { current: 0, previous: 0 });
 });
 
 test("insightPromptHref uses the static-export /x/local?id= shape", () => {

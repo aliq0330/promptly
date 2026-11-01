@@ -40,6 +40,7 @@ export function InsightStatTile({
   current,
   previous,
   days,
+  detail,
   className,
 }: {
   icon: LucideIcon;
@@ -47,6 +48,8 @@ export function InsightStatTile({
   current: number;
   previous: number;
   days: number;
+  /** Sayının altında küçük ek satır (ör. "API 12 · MCP 30"). */
+  detail?: string;
   className?: string;
 }) {
   const { t, language } = useTranslation();
@@ -61,6 +64,7 @@ export function InsightStatTile({
         <InsightTrend current={current} previous={previous} />
         <span className="text-text-muted">{t("insights.trend.vsPrev", { days })}</span>
       </p>
+      {detail && <p className="text-caption text-text-muted tabular-nums">{detail}</p>}
     </div>
   );
 }

@@ -22,6 +22,19 @@ export interface InsightSummary {
   /** Başkalarının promptlarının altına paylaştığı sonuç sayısı (docs/history/295-*). */
   results: number;
   prevResults: number;
+  /** Açık API / internet üzerinden MCP ile okunan-doldurulan prompt sayısı, yüzeye göre (docs/history/304-*; `copies`'e KARIŞMAZ). */
+  apiUses: number;
+  prevApiUses: number;
+  mcpUses: number;
+  prevMcpUses: number;
+}
+
+/** API ve MCP kullanımının dört sayısı (genel panel ve prompt ayrıntısı aynı şekli kullanır). */
+export interface InsightApiUses {
+  apiUses: number;
+  prevApiUses: number;
+  mcpUses: number;
+  prevMcpUses: number;
 }
 
 export interface InsightDay {
@@ -49,6 +62,15 @@ export interface InsightPromptSummary {
   prevSaves: number;
   results: number;
   prevResults: number;
+  apiUses: number;
+  prevApiUses: number;
+  mcpUses: number;
+  prevMcpUses: number;
+}
+
+/** API + MCP toplamı ve önceki dönemi (tek "API / MCP" kutusu için). */
+export function totalApiUses(value: InsightApiUses): { current: number; previous: number } {
+  return { current: value.apiUses + value.mcpUses, previous: value.prevApiUses + value.prevMcpUses };
 }
 
 /** Prompt başına ayrıntı sayfasının adresi (statik export: `/x/local?id=`). */
@@ -75,6 +97,7 @@ export interface InsightReactionRow {
 
 export const EMPTY_SUMMARY: InsightSummary = {
   copies: 0, prevCopies: 0, reactions: 0, prevReactions: 0, comments: 0, prevComments: 0, saves: 0, prevSaves: 0, followers: 0, prevFollowers: 0, results: 0, prevResults: 0,
+  apiUses: 0, prevApiUses: 0, mcpUses: 0, prevMcpUses: 0,
 };
 
 export type TrendKind = "up" | "down" | "flat" | "new";
@@ -99,14 +122,16 @@ export function trendOf(current: number, previous: number): Trend {
 /** Hiç etkileşim yok mu (hem bu dönem hem önceki dönem hem de liste boş) — boş durum ekranı için. */
 export function hasNoActivity(summary: InsightSummary, days: InsightDay[], top: InsightTopItem[]): boolean {
   const totals = summary.copies + summary.prevCopies + summary.reactions + summary.prevReactions + summary.comments + summary.prevComments +
-    summary.saves + summary.prevSaves + summary.followers + summary.prevFollowers + summary.results + summary.prevResults;
+    summary.saves + summary.prevSaves + summary.followers + summary.prevFollowers + summary.results + summary.prevResults +
+    summary.apiUses + summary.prevApiUses + summary.mcpUses + summary.prevMcpUses;
   return totals === 0 && top.length === 0 && days.every((d) => d.copies + d.reactions + d.comments === 0);
 }
 
 /** Tek promptta hem bu dönem hem önceki dönem hiç etkileşim yok mu (ayrıntı sayfasında "etkileşim olmadı" notu için). */
 export function promptHasNoActivity(summary: InsightPromptSummary, days: InsightDay[]): boolean {
   const totals = summary.copies + summary.prevCopies + summary.reactions + summary.prevReactions + summary.comments + summary.prevComments +
-    summary.saves + summary.prevSaves + summary.results + summary.prevResults;
+    summary.saves + summary.prevSaves + summary.results + summary.prevResults +
+    summary.apiUses + summary.prevApiUses + summary.mcpUses + summary.prevMcpUses;
   return totals === 0 && days.every((d) => d.copies + d.reactions + d.comments + (d.results ?? 0) === 0);
 }
 

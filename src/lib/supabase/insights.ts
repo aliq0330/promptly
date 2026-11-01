@@ -1,7 +1,7 @@
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { isReactionKey } from "@/lib/reactions";
-import type { InsightDay, InsightPromptSummary, InsightReactionRow, InsightSummary, InsightTopItem } from "@/lib/insights";
+import type { InsightApiUses, InsightDay, InsightPromptSummary, InsightReactionRow, InsightSummary, InsightTopItem } from "@/lib/insights";
 import { reactionRows } from "@/lib/insights";
 
 /**
@@ -36,6 +36,10 @@ const rows = (data: unknown): Record<string, unknown>[] => (Array.isArray(data) 
 const text = (value: unknown, fallback = ""): string => (typeof value === "string" ? value : fallback);
 const tools = (value: unknown): string[] => (Array.isArray(value) ? (value as unknown[]).filter((t): t is string => typeof t === "string") : []);
 
+function apiUses(row: Record<string, unknown>): InsightApiUses {
+  return { apiUses: n(row.api_uses), prevApiUses: n(row.prev_api_uses), mcpUses: n(row.mcp_uses), prevMcpUses: n(row.prev_mcp_uses) };
+}
+
 function mixRows(data: unknown): InsightReactionRow[] {
   return reactionRows(
     rows(data)
@@ -45,14 +49,15 @@ function mixRows(data: unknown): InsightReactionRow[] {
 }
 
 export async function fetchCreatorInsights(days: number, topLimit = 5): Promise<CreatorInsights> {
-  const [summary, daily, top, mix, results] = await Promise.all([
+  const [summary, daily, top, mix, results, api] = await Promise.all([
     supabase.rpc("creator_insights_summary", { p_days: days }),
     supabase.rpc("creator_insights_daily", { p_days: days }),
     supabase.rpc("creator_insights_top", { p_days: days, p_limit: topLimit }),
     supabase.rpc("creator_insights_reaction_mix", { p_days: days }),
     supabase.rpc("creator_insights_results", { p_days: days }),
+    supabase.rpc("creator_insights_api", { p_days: days }),
   ]);
-  const failed = summary.error ?? daily.error ?? top.error ?? mix.error ?? results.error;
+  const failed = summary.error ?? daily.error ?? top.error ?? mix.error ?? results.error ?? api.error;
   if (failed) {
     console.error("fetchCreatorInsights", failed);
     throw new Error(translateForRuntime("insights.loadError"));
@@ -60,6 +65,7 @@ export async function fetchCreatorInsights(days: number, topLimit = 5): Promise<
 
   const s = rows(summary.data)[0] ?? {};
   const r = rows(results.data)[0] ?? {};
+  const a = rows(api.data)[0] ?? {};
   return {
     summary: {
       copies: n(s.copies), prevCopies: n(s.prev_copies),
@@ -68,6 +74,7 @@ export async function fetchCreatorInsights(days: number, topLimit = 5): Promise<
       saves: n(s.saves), prevSaves: n(s.prev_saves),
       followers: n(s.followers), prevFollowers: n(s.prev_followers),
       results: n(r.results), prevResults: n(r.prev_results),
+      ...apiUses(a),
     },
     days: rows(daily.data).map((row) => ({ day: String(row.day), copies: n(row.copies), reactions: n(row.reactions), comments: n(row.comments) })),
     top: rows(top.data).map((row) => ({
@@ -85,12 +92,13 @@ export async function fetchCreatorInsights(days: number, topLimit = 5): Promise<
 
 /** Tek promptun ayrıntısı. Prompt çağıranın değilse `InsightNotFoundError`; başka hata "yüklenemedi" cümlesiyle fırlar. */
 export async function fetchPromptInsights(promptId: string, days: number): Promise<PromptInsights> {
-  const [summary, daily, mix] = await Promise.all([
+  const [summary, daily, mix, api] = await Promise.all([
     supabase.rpc("creator_insights_prompt", { p_prompt_id: promptId, p_days: days }),
     supabase.rpc("creator_insights_prompt_daily", { p_prompt_id: promptId, p_days: days }),
     supabase.rpc("creator_insights_prompt_reaction_mix", { p_prompt_id: promptId, p_days: days }),
+    supabase.rpc("creator_insights_prompt_api", { p_prompt_id: promptId, p_days: days }),
   ]);
-  const failed = summary.error ?? daily.error ?? mix.error;
+  const failed = summary.error ?? daily.error ?? mix.error ?? api.error;
   if (failed) {
     if (/not_found/i.test(failed.message ?? "")) throw new InsightNotFoundError();
     console.error("fetchPromptInsights", failed);
@@ -108,6 +116,7 @@ export async function fetchPromptInsights(promptId: string, days: number): Promi
       comments: n(s.comments), prevComments: n(s.prev_comments),
       saves: n(s.saves), prevSaves: n(s.prev_saves),
       results: n(s.results), prevResults: n(s.prev_results),
+      ...apiUses(rows(api.data)[0] ?? {}),
     },
     days: rows(daily.data).map((row) => ({
       day: String(row.day), copies: n(row.copies), reactions: n(row.reactions), comments: n(row.comments), results: n(row.results),

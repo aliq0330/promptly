@@ -136,7 +136,7 @@ export interface RemoteRateLimiterConfig {
   onError?: (error: unknown) => void;
 }
 
-async function sha256Hex(text: string): Promise<string> {
+export async function sha256Hex(text: string): Promise<string> {
   const subtle = globalThis.crypto?.subtle;
   if (!subtle) throw new Error("WebCrypto is not available");
   const digest = await subtle.digest("SHA-256", new TextEncoder().encode(text));

@@ -28,6 +28,10 @@ const TOP = [
 ];
 const PID = "b1000000-0000-4000-8000-000000000001";
 const RESULTS = { results: 96, prev_results: 80 };
+// API / MCP kullanımı (docs/history/304-*): genel 40 (önceki 25) = API 12 + MCP 28; prompt ayrıntısında API 5 + MCP 9 (önceki 0).
+const API_USES = { api_uses: 12, prev_api_uses: 10, mcp_uses: 28, prev_mcp_uses: 15 };
+const PROMPT_API_USES = { api_uses: 5, prev_api_uses: 0, mcp_uses: 9, prev_mcp_uses: 0 };
+const ZERO_API = { api_uses: 0, prev_api_uses: 0, mcp_uses: 0, prev_mcp_uses: 0 };
 const PROMPT = { title: "Neon yağmurlu Tokyo sokağı", content_type: "image", tools: ["midjourney"], copies: 412, prev_copies: 221, reactions: 189, prev_reactions: 150, comments: 31, prev_comments: 40, saves: 77, prev_saves: 0, results: 28, prev_results: 28 };
 const MIX = [{ reaction: "love", n: 214 }, { reaction: "fire", n: 167 }, { reaction: "wow", n: 105 }, { reaction: "idea", n: 20 }];
 
@@ -35,7 +39,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
   // calls: her RPC'nin aldığı gövdeler; fail: ad → true ise 500 döner; empty: hepsi sıfır/boş.
-  const state = { calls: { summary: [], daily: [], top: [], mix: [], results: [], prompt: [], promptDaily: [], promptMix: [] }, fail: {}, empty: false, notFound: false, promptEmpty: false };
+  const state = { calls: { summary: [], daily: [], top: [], mix: [], results: [], api: [], prompt: [], promptDaily: [], promptMix: [], promptApi: [] }, fail: {}, empty: false, notFound: false, promptEmpty: false };
   db.rpc.creator_insights_summary = (body) => {
     state.calls.summary.push(body);
     if (state.fail.summary) return { status: 500, body: { message: "boom" } };
@@ -49,6 +53,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   db.rpc.creator_insights_top = (body) => { state.calls.top.push(body); return { body: state.empty ? [] : TOP }; };
   db.rpc.creator_insights_reaction_mix = (body) => { state.calls.mix.push(body); return { body: state.empty ? [] : MIX }; };
   db.rpc.creator_insights_results = (body) => { state.calls.results.push(body); return { body: [state.empty ? { results: 0, prev_results: 0 } : RESULTS] }; };
+  db.rpc.creator_insights_api = (body) => { state.calls.api.push(body); return { body: [state.empty ? ZERO_API : API_USES] }; };
   const notFound = () => ({ status: 400, body: { message: "not_found" } });
   db.rpc.creator_insights_prompt = (body) => {
     state.calls.prompt.push(body);
@@ -61,6 +66,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     const rows = dailyRows(body.p_days).map((r) => ({ ...r, results: 1 }));
     return { body: state.promptEmpty ? rows.map((r) => ({ ...r, copies: 0, reactions: 0, comments: 0, results: 0 })) : rows };
   };
+  db.rpc.creator_insights_prompt_api = (body) => { state.calls.promptApi.push(body); if (state.notFound) return notFound(); return { body: [state.promptEmpty ? ZERO_API : PROMPT_API_USES] }; };
   db.rpc.creator_insights_prompt_reaction_mix = (body) => { state.calls.promptMix.push(body); if (state.notFound) return notFound(); return { body: state.promptEmpty ? [] : MIX }; };
   setup?.({ db, state });
   const context = await browser.newContext({ viewport });
@@ -110,6 +116,12 @@ await scenario("1. Beş RPC 30 günle çağrılır; kartlar tr biçimiyle (1.284
   assert.deepEqual(state.calls.top, [{ p_days: 30, p_limit: 5 }]);
   assert.deepEqual(state.calls.mix, [{ p_days: 30 }]);
   assert.deepEqual(state.calls.results, [{ p_days: 30 }]);
+  assert.deepEqual(state.calls.api, [{ p_days: 30 }]);
+  const apiTile = tile(page, "API / MCP");
+  assert.match(await apiTile.innerText(), /40/, "API + MCP toplamı tek sayı");
+  assert.match(await apiTile.innerText(), /API 12 · MCP 28/, "yüzeye göre dağılım");
+  assert.match(await apiTile.innerText(), /▲ %60/, "önceki dönem 25 → 40");
+  assert.match(await tile(page, "Kopyalama").innerText(), /1\.284/, "API/MCP kullanımı kopyalama sayısına karışmaz");
   const resultsTile = tile(page, "Sonuç");
   assert.match(await resultsTile.innerText(), /96/);
   assert.match(await resultsTile.innerText(), /▲ %20/);
@@ -170,6 +182,7 @@ await scenario("5. Dönem menüsü: 7 güne geçince beş RPC p_days=7 ile yenil
   await page.locator("button[aria-haspopup]", { hasText: "Son 7 gün" }).waitFor();
   await page.waitForFunction(() => document.querySelector("svg[role='img']")?.getAttribute("aria-label")?.includes("Son 7 günün"));
   assert.deepEqual(state.calls.summary.map((c) => c.p_days), [30, 7]);
+  assert.deepEqual(state.calls.api.map((c) => c.p_days), [30, 7], "API / MCP RPC'si de dönemle yenilenir");
   assert.match(await tile(page, "Kopyalama").innerText(), /önceki 7 güne göre/);
   await page.locator("button[aria-haspopup]", { hasText: "Son 7 gün" }).click();
   await page.getByText("Son 30 gün", { exact: true }).first().click();
@@ -209,7 +222,9 @@ await scenario("8. İngilizce: başlık, kartlar, yüzde biçimi (▲ 24%), balo
   assert.match(await copies.innerText(), /1,284/);
   assert.match(await copies.innerText(), /▲ 24%/);
   assert.match(await copies.innerText(), /vs the previous 30 days/);
+  assert.match(await tile(page, "API / MCP").innerText(), /40[\s\S]*▲ 60%[\s\S]*API 12 · MCP 28/);
   await page.getByRole("heading", { name: "Most copied" }).waitFor();
+  await page.getByText(/API \/ MCP is a prompt being read or filled/).waitFor();
   await page.getByRole("heading", { name: "Reaction mix" }).waitFor();
   await page.getByText("How are these numbers counted?").waitFor();
   assert.match((await page.locator("svg[role='img']").first().getAttribute("aria-label")) ?? "", /Daily copies and reactions over the last 30 days/);
@@ -256,9 +271,14 @@ await scenario("13. Prompt ayrıntısı: üç RPC prompt kimliği + 30 günle; b
   assert.deepEqual(state.calls.prompt, [{ p_prompt_id: PID, p_days: 30 }]);
   assert.deepEqual(state.calls.promptDaily, [{ p_prompt_id: PID, p_days: 30 }]);
   assert.deepEqual(state.calls.promptMix, [{ p_prompt_id: PID, p_days: 30 }]);
+  assert.deepEqual(state.calls.promptApi, [{ p_prompt_id: PID, p_days: 30 }]);
   assert.equal(state.calls.summary.length, 0, "genel panel RPC'leri çağrılmaz");
+  assert.equal(state.calls.api.length, 0, "genel API/MCP RPC'si çağrılmaz");
   await page.getByText("Görsel · Midjourney").waitFor();
   assert.match(await tile(page, "Kopyalama").innerText(), /412[\s\S]*▲ %86/);
+  const promptApi = await tile(page, "API / MCP").innerText();
+  assert.match(promptApi, /14[\s\S]*● Yeni/, "API 5 + MCP 9, önceki dönem 0");
+  assert.match(promptApi, /API 5 · MCP 9/);
   assert.match(await tile(page, "Sonuç").innerText(), /28[\s\S]*— Değişmedi/);
   assert.match(await tile(page, "Kaydedilme").innerText(), /77[\s\S]*● Yeni/);
   assert.match(await tile(page, "Yorum").innerText(), /31[\s\S]*▼ %23/);
@@ -349,6 +369,22 @@ await scenario("21. Kilometre taşı bildirimi İngilizce: cümle çevrilir, pro
   await page.getByText("Your prompt “Neon yağmurlu Tokyo sokağı” reached 100 copies.").waitFor();
   await page.getByText("Your prompt “Neon yağmurlu Tokyo sokağı” reached 50 reactions.").waitFor();
 }, { lang: "en", notifications: [milestone("m1", 'Promptun "Neon yağmurlu Tokyo sokağı" 100 kopyalamaya ulaştı.'), milestone("m2", 'Promptun "Neon yağmurlu Tokyo sokağı" 50 tepkiye ulaştı.')] });
+
+await scenario("22. Yalnız API/MCP etkinliği olan yaratıcı boş durum görmez: kopyalama 0 iken API / MCP kutusu sayıyı gösterir", async ({ page }) => {
+  await page.goto(`${BASE}/insights/`);
+  await ready(page);
+  assert.equal(await page.getByText("Henüz gösterilecek veri yok").count(), 0);
+  assert.match(await tile(page, "API / MCP").innerText(), /40[\s\S]*API 12 · MCP 28/);
+  assert.match(await tile(page, "Kopyalama").innerText(), /^[\s\S]*\b0\b/);
+}, {
+  setup: ({ db }) => {
+    db.rpc.creator_insights_summary = () => ({ body: [{ copies: 0, prev_copies: 0, reactions: 0, prev_reactions: 0, comments: 0, prev_comments: 0, saves: 0, prev_saves: 0, followers: 0, prev_followers: 0 }] });
+    db.rpc.creator_insights_daily = (body) => ({ body: dayList(body.p_days).map((day) => ({ day, copies: 0, reactions: 0, comments: 0 })) });
+    db.rpc.creator_insights_top = () => ({ body: [] });
+    db.rpc.creator_insights_reaction_mix = () => ({ body: [] });
+    db.rpc.creator_insights_results = () => ({ body: [{ results: 0, prev_results: 0 }] });
+  },
+});
 
 await scenario("12. Ziyaretçi: giriş sayfasına yönlenir, hiçbir RPC çağrılmaz", async ({ page, state }) => {
   await page.goto(`${BASE}/insights/`);
