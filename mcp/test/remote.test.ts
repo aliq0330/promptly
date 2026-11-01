@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { createMemoryRateLimiter, createRestClient } from "../../src/lib/public-api/index.ts";
+import { createMeBackend, createMemoryRateLimiter, createRestClient, type MeDb, type MeTx } from "../../src/lib/public-api/index.ts";
 import { UNTRUSTED_NOTICE } from "../src/server.ts";
 import { createRemoteHandler, REMOTE_MAX_BODY_BYTES } from "../src/remote.ts";
 
@@ -237,4 +237,124 @@ test("usage: get_prompt / fill_prompt over HTTP are counted with the caller's IP
   ]);
   fail = true;
   assert.notEqual((await call("get_prompt", { id: ID_A })).result?.isError, true);
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Kişisel adres `/mcp/me` (docs/history/315-*)
+// ---------------------------------------------------------------------------------------------------------------------
+const KEY = "pmt_" + "A".repeat(43);
+const ME_URL = "https://example.test/functions/v1/mcp/me";
+const META_URL = "https://example.test/functions/v1/mcp/oauth-protected-resource";
+const USER = "99999999-9999-4999-8999-999999999999";
+const MY_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+
+function fakeMeDb(scopes: string[], sqls: string[] = []): MeDb {
+  return {
+    async transaction<T>(fn: (tx: MeTx) => Promise<T>): Promise<T> {
+      const tx: MeTx = async (sql, params = []) => {
+        sqls.push(sql);
+        if (sql.includes("_api_token_authenticate")) return params[0] === KEY ? [{ token_id: "t", user_id: USER, scopes }] : [];
+        if (sql.includes("api_me_prompts")) return [{ id: MY_ID, title: "Gizli taslak", description: "d", content_type: "text", status: "draft", visibility: "private", created_at: new Date("2026-10-01"), updated_at: new Date("2026-10-01"), created_cursor: "2026-10-01T00:00:00.000000Z" }];
+        if (sql.includes("api_me_prompt($1")) return [{ id: MY_ID, title: "Gizli taslak", description: "d", prompt_text: "Logo for {brand}", content_type: "text", status: "draft", visibility: "private", tags: [], created_at: new Date(), updated_at: new Date() }];
+        if (sql.includes("import_prompts")) return [{ report: { dryRun: false, ok: true, created: 1, items: [{ index: 1, status: "ok", id: MY_ID }] } }];
+        return [];
+      };
+      return fn(tx);
+    },
+  };
+}
+
+function meHandler(scopes: string[], sqls: string[] = []) {
+  return createRemoteHandler({
+    version: "0.0.0-test",
+    getClient: () => createRestClient({ url: "https://demo.supabase.co", anonKey: "eyJ.k", fetch: fakeSupabase() }),
+    me: {
+      backend: createMeBackend({ db: fakeMeDb(scopes, sqls), siteUrl: "https://aliq0330.github.io/promptly" }),
+      resourceUrl: ME_URL,
+      resourceMetadataUrl: META_URL,
+      authorizationServers: ["https://demo.supabase.co/auth/v1"],
+    },
+  });
+}
+
+async function connectMe(handler: (request: Request) => Promise<Response>, bearer = KEY) {
+  const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => handler(new Request(input as string, init))) as typeof fetch;
+  const client = new Client({ name: "remote-me-test", version: "1.0.0" });
+  await client.connect(new StreamableHTTPClientTransport(new URL(ME_URL), { fetch: fetchImpl, requestInit: { headers: { authorization: `Bearer ${bearer}` } } }));
+  return client;
+}
+
+test("/mcp/me does not exist unless the personal backend is configured", async () => {
+  const { handler } = makeHandler();
+  assert.equal((await handler(new Request(ME_URL, { method: "POST", body: "{}" }))).status, 404);
+  assert.equal((await handler(new Request(META_URL))).status, 404);
+});
+
+test("/mcp/me without a credential answers 401 with the protected-resource metadata hint (how OAuth clients start the sign-in)", async () => {
+  const handler = meHandler(["read"]);
+  const none = await handler(new Request(ME_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(INIT) }));
+  assert.equal(none.status, 401);
+  assert.equal(none.headers.get("www-authenticate"), `Bearer resource_metadata="${META_URL}"`);
+  assert.match(none.headers.get("access-control-expose-headers") ?? "", /www-authenticate/i);
+  const junk = await handler(new Request(ME_URL, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer hello" }, body: JSON.stringify(INIT) }));
+  assert.equal(junk.status, 401);
+});
+
+test("the protected-resource metadata names the resource and the authorization server (RFC 9728)", async () => {
+  const meta = await (await meHandler(["read"])(new Request(META_URL))).json();
+  assert.equal(meta.resource, ME_URL);
+  assert.deepEqual(meta.authorization_servers, ["https://demo.supabase.co/auth/v1"]);
+  assert.deepEqual(meta.bearer_methods_supported, ["header"]);
+});
+
+test("the public /mcp address never offers the personal tools, even if the caller sends a key", async () => {
+  const handler = meHandler(["read", "write"]);
+  const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => handler(new Request(input as string, init))) as typeof fetch;
+  const client = new Client({ name: "t", version: "1" });
+  await client.connect(new StreamableHTTPClientTransport(new URL(URL_), { fetch: fetchImpl, requestInit: { headers: { authorization: `Bearer ${KEY}` } } }));
+  assert.deepEqual((await client.listTools()).tools.map((tool) => tool.name).sort(), ["fill_prompt", "get_prompt", "popular_prompts", "search_prompts"]);
+});
+
+test("/mcp/me lists the personal tools next to the public ones; the draft tool is the only non-read-only one", async () => {
+  const client = await connectMe(meHandler(["read", "write"]));
+  const { tools } = await client.listTools();
+  assert.deepEqual(tools.map((tool) => tool.name).sort(), ["fill_prompt", "get_my_prompt", "get_prompt", "list_my_prompts", "list_my_saved", "popular_prompts", "save_prompt_draft", "search_prompts"]);
+  for (const tool of tools) assert.equal(tool.annotations?.readOnlyHint, tool.name !== "save_prompt_draft", tool.name);
+  assert.equal(tools.find((tool) => tool.name === "save_prompt_draft")?.annotations?.destructiveHint, false);
+});
+
+test("personal tools run AS the user: the credential is re-checked on every call, then role + claims, then the operation", async () => {
+  const sqls: string[] = [];
+  const client = await connectMe(meHandler(["read"], sqls));
+  const list = textOf(await client.callTool({ name: "list_my_prompts", arguments: { status: "draft" } }));
+  assert.ok(list.includes("Gizli taslak") && list.includes(MY_ID));
+  assert.ok(sqls[0].includes("_api_token_authenticate") && sqls[1] === "set local role authenticated" && sqls[2].includes("request.jwt.claims"));
+  const one = textOf(await client.callTool({ name: "get_my_prompt", arguments: { id: MY_ID } }));
+  assert.ok(one.includes("Logo for {brand}") && one.includes('"brand"'));
+});
+
+test("a read-only key cannot save a draft: the tool answers an error and import_prompts is never reached", async () => {
+  const sqls: string[] = [];
+  const client = await connectMe(meHandler(["read"], sqls));
+  const result = (await client.callTool({ name: "save_prompt_draft", arguments: { title: "Logo", prompt_text: "A logo for {brand}" } })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(result.isError, true);
+  assert.match(result.content[0].text, /insufficient_scope/);
+  assert.ok(!sqls.some((sql) => sql.includes("import_prompts")));
+});
+
+test("a write key saves ONE private draft through import_prompts", async () => {
+  const sqls: string[] = [];
+  const client = await connectMe(meHandler(["read", "write"], sqls));
+  const result = textOf(await client.callTool({ name: "save_prompt_draft", arguments: { title: "Logo", prompt_text: "A logo for {brand}", tags: ["neon"] } }));
+  assert.ok(result.includes('"created": 1'));
+  assert.ok(sqls.some((sql) => sql.includes("import_prompts")));
+});
+
+test("a revoked / unknown key: the call fails inside the tool (isError) and nothing is read", async () => {
+  const sqls: string[] = [];
+  const client = await connectMe(meHandler(["read"], sqls), "pmt_" + "B".repeat(43));
+  const result = (await client.callTool({ name: "list_my_prompts", arguments: {} })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(result.isError, true);
+  assert.match(result.content[0].text, /unauthorized/);
+  assert.ok(!sqls.some((sql) => sql.startsWith("set local role")));
 });

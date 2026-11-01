@@ -179,6 +179,42 @@ export function DevelopersPage() {
         )}
       </Section>
 
+      {endpoints && snippets && (
+        <Section title={t("dev.meTitle")}>
+          <p className="text-body leading-relaxed text-text-secondary">{t("dev.meLead")}</p>
+          <p>
+            <Link href="/settings#settings-developer" className="font-medium text-primary underline underline-offset-2 hover:no-underline">
+              {t("dev.meKeyLink")}
+            </Link>
+          </p>
+          <div className="space-y-6" data-dev-me="">
+            <Step title={t("dev.meWho")}>
+              <CodeBlock text={snippets.curlMe} label={t("dev.meWho")} />
+            </Step>
+            <Step title={t("dev.meList")}>
+              <CodeBlock text={snippets.curlMeList} label={t("dev.meList")} />
+            </Step>
+            <Step title={t("dev.meSave")} body={t("dev.meSaveBody")}>
+              <CodeBlock text={snippets.curlMeSave} label={t("dev.meSave")} />
+            </Step>
+            <Step title={t("dev.meMcp")} body={t("dev.meMcpBody")}>
+              <CodeBlock text={endpoints.mcpMeUrl} label={t("dev.meMcpAddress")} />
+              <CodeBlock text={snippets.claudeCodeMe} label="Claude Code (key)" />
+              <p className="text-small text-text-muted">{t("dev.meMcpCursor")}</p>
+              <CodeBlock text={snippets.cursorMeJson} label={t("dev.meMcpCursor")} />
+              <p className="text-body leading-relaxed text-text-secondary">{t("dev.meMcpNoHeader")}</p>
+            </Step>
+          </div>
+          <h3 className="text-h3 text-text">{t("dev.meRules")}</h3>
+          <ul className="list-disc space-y-2 pl-5 text-body leading-relaxed text-text-secondary marker:text-text-muted">
+            <li>{t("dev.meRuleSecret")}</li>
+            <li>{t("dev.meRuleScope")}</li>
+            <li>{t("dev.meRuleLimits")}</li>
+            <li>{t("dev.meRulePrivate")}</li>
+          </ul>
+        </Section>
+      )}
+
       <Section title={t("dev.rulesTitle")}>
         <ul className="list-disc space-y-2 pl-5 text-body leading-relaxed text-text-secondary marker:text-text-muted">
           <li>{t("dev.ruleReadOnly")}</li>

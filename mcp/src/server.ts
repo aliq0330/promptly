@@ -1,6 +1,7 @@
 /**
  * Promptly MCP sunucusu — araçlar ve hazır prompt listesi. Bütün veri işi açık API çekirdeğindedir (`src/lib/public-api`); burası
- * yalnız MCP'ye bağlar. Salt-okunur: hiçbir araç Promptly'ye yazmaz (Faz 2, `docs/history/297-*`).
+ * yalnız MCP'ye bağlar. Açık araçlar salt-okunurdur; kişisel araçlar (`me`, `/mcp/me`) yalnız kullanıcının KENDİ hesabında çalışır ve tek yazma
+ * `save_prompt_draft`'tır (özel taslak, `write` kapsamı).
  *
  * Güvenlik: araç yanıtındaki başlık/açıklama/prompt metni KULLANICI İÇERİĞİDİR ve modelin bağlamına girer. Her yanıt bunu açıkça
  * söyleyen bir notla başlar; içerik talimat olarak değil veri olarak sunulur (prompt injection).
@@ -15,14 +16,20 @@ import {
   PUBLIC_SORTS,
   PublicApiError,
   fillPrompt,
+  getMyPrompt,
   getPrompt,
   getPrompts,
+  importMyPrompts,
+  listMyPrompts,
+  listMySaved,
   popularPrompts,
   promptSlug,
   searchPrompts,
+  type MeBackend,
   type PublicPrompt,
   type RestClient,
 } from "../../src/lib/public-api/index.ts";
+import { serializeJson } from "../../src/lib/exchange/json.ts";
 import { extractVariableTokenNames } from "../../src/lib/prompt-variables.ts";
 
 export const UNTRUSTED_NOTICE =
@@ -83,8 +90,16 @@ interface FillArgs {
   values?: Record<string, string>;
 }
 
+/** Kimlikli (kişisel) araçlar: yalnız internet üzerindeki `/mcp/me` adresinde ve geçerli bir anahtar/OAuth belirteciyle (docs/history/315-*). */
+export interface MeToolsOptions {
+  backend: MeBackend;
+  /** İstekteki `Authorization: Bearer …` değeri; her araç çağrısında yeniden doğrulanır (anahtar iptal edilirse sonraki çağrı çalışmaz). */
+  bearer: string;
+}
+
 export interface PromptlyServerOptions {
   client: RestClient;
+  me?: MeToolsOptions;
   version: string;
   log?: (message: string) => void;
   /**
@@ -100,7 +115,7 @@ export interface PromptlyServer {
   loadPopularPrompts(count: number): Promise<number>;
 }
 
-export function createPromptlyServer({ client, version, log = () => {}, onPromptUse }: PromptlyServerOptions): PromptlyServer {
+export function createPromptlyServer({ client, version, log = () => {}, onPromptUse, me }: PromptlyServerOptions): PromptlyServer {
   async function noteUse(promptId: string): Promise<void> {
     try {
       await onPromptUse?.(promptId);
@@ -197,6 +212,86 @@ export function createPromptlyServer({ client, version, log = () => {}, onPrompt
         return { ...fillPrompt(prompt, args.values ?? {}), title: prompt.title, url: prompt.url, source: prompt.source ?? null };
       }),
   );
+
+
+  // --- Kişisel araçlar (docs/history/315-*): yalnız `me` verilmişse. Her çağrı bearer'ı yeniden doğrular ve KULLANICI olarak çalışır (RLS). ---
+  if (me) {
+    const own = { readOnlyHint: true, idempotentHint: true, openWorldHint: false } as const;
+    server.registerTool(
+      "list_my_prompts",
+      {
+        title: "List my Promptly prompts",
+        description: "YOUR OWN prompts (drafts and private ones included), newest first. Short summaries; use get_my_prompt for the full text.",
+        inputSchema: {
+          status: z.enum(["draft", "published"]).optional(),
+          limit: z.number().int().min(1).max(PUBLIC_LIMITS.maxLimit).optional(),
+          cursor: z.string().optional().describe("nextCursor from the previous call."),
+        },
+        annotations: own,
+      },
+      (args: { status?: string; limit?: number; cursor?: string }) =>
+        run(() => me.backend.withUser(me.bearer, "read", (tx) => listMyPrompts(tx, me.backend.siteUrl, { status: args.status, limit: args.limit, cursor: args.cursor }))),
+    );
+    server.registerTool(
+      "get_my_prompt",
+      {
+        title: "Get one of my prompts",
+        description: "The full text, tags and {variables} of one of YOUR OWN prompts (private ones included).",
+        inputSchema: { id: z.string().describe("Prompt id (UUID) from list_my_prompts.") },
+        annotations: own,
+      },
+      (args: IdArgs) => run(() => me.backend.withUser(me.bearer, "read", (tx) => getMyPrompt(tx, me.backend.siteUrl, args.id))),
+    );
+    server.registerTool(
+      "list_my_saved",
+      {
+        title: "List the prompts I saved",
+        description: "Prompts from all of YOUR collections, most recently saved first.",
+        inputSchema: { limit: z.number().int().min(1).max(PUBLIC_LIMITS.maxLimit).optional(), cursor: z.string().optional() },
+        annotations: own,
+      },
+      (args: { limit?: number; cursor?: string }) => run(() => me.backend.withUser(me.bearer, "read", (tx) => listMySaved(tx, me.backend.siteUrl, { limit: args.limit, cursor: args.cursor }))),
+    );
+    server.registerTool(
+      "save_prompt_draft",
+      {
+        title: "Save a prompt as a private draft",
+        description:
+          "Adds ONE prompt to the user's Promptly account as a PRIVATE DRAFT (nothing is published; the user publishes it on the site). " +
+          "Needs a key with the write scope. Use {name} tokens for variables. Duplicates (same title + text) are refused.",
+        inputSchema: {
+          title: z.string().min(1).max(120),
+          prompt_text: z.string().min(1).max(20000).describe("The prompt, with {variables} if any."),
+          description: z.string().max(2000).optional(),
+          content_type: z.enum(CONTENT_TYPES as [string, ...string[]]).optional().describe("What the prompt generates. Default: text."),
+          tags: z.array(z.string().max(40)).max(10).optional(),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      },
+      (args: { title: string; prompt_text: string; description?: string; content_type?: string; tags?: string[] }) =>
+        run(() =>
+          me.backend.withUser(me.bearer, "write", (tx) =>
+            importMyPrompts(
+              tx,
+              serializeJson([
+                {
+                  title: args.title,
+                  description: args.description ?? "",
+                  promptText: args.prompt_text,
+                  contentType: (args.content_type ?? "text") as "text",
+                  category: null,
+                  subcategory: null,
+                  tools: [],
+                  tags: args.tags ?? [],
+                  variables: [],
+                },
+              ]),
+              false,
+            ),
+          ),
+        ),
+    );
+  }
 
   // Sabit giriş prompt'u. Bağlanmadan ÖNCE kaydedilir: SDK "prompts" yeteneğini ilk kayıtta açar ve bağlantıdan sonra yetenek eklenemez —
   // popüler prompt listesi bağlantıdan sonra geldiği için bu kayıt aynı zamanda onların yolunu açar (`prompts/list_changed`).

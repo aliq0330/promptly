@@ -152,6 +152,31 @@ await scenario("13 phone: the client blocks do not overflow sideways", async ({ 
   await shot(page, "developers-clients-phone");
 }, { viewport: { width: 390, height: 844 } });
 
+await scenario("14 the personal-key section: curl examples, the personal MCP address with its key header, the rules and a link to Settings", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  const me = page.locator("[data-dev-me]");
+  await page.getByRole("heading", { name: "Hesabınla kullan (kişisel anahtar)" }).waitFor();
+  await me.locator("pre", { hasText: `curl "${API}/me"` }).waitFor();
+  await me.locator("pre", { hasText: `${API}/me/prompts?status=draft` }).waitFor();
+  await me.locator("pre", { hasText: "@promptly-prompts.json" }).waitFor();
+  await me.locator("pre", { hasText: new RegExp(`^${MCP.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}/me$`) }).waitFor();
+  await me.locator("pre", { hasText: "--header \"Authorization: Bearer pmt_YOUR_KEY\"" }).waitFor();
+  await me.getByText(/claude.ai ve ChatGPT bağlayıcıları sabit bir başlık gönderemez/).waitFor();
+  assert.ok(!(await page.locator("body").innerText()).match(/pmt_[A-Za-z0-9_-]{43}/), "no real-looking key on the page");
+  const link = page.getByRole("link", { name: "Anahtar oluştur" });
+  assert.match(await link.getAttribute("href"), /\/settings\/?#settings-developer$/);
+  await page.getByText(/okumada dakikada 120, yazmada dakikada 30/).waitFor();
+  await shot(page, "developers-me");
+});
+
+await scenario("15 English personal-key section and a working copy button", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  await page.getByRole("heading", { name: "Use your own account (personal key)" }).waitFor();
+  await page.getByText(/A key is like a password/).waitFor();
+  await page.getByRole("button", { name: /Copy: Check who you are/ }).click();
+  assert.ok((await page.evaluate(() => navigator.clipboard.readText())).includes(`${API}/me`));
+}, { lang: "en" });
+
 await server.close();
 await browser.close();
 const failed = results.filter(([s]) => s === "FAIL");

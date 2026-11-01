@@ -12,6 +12,7 @@ import { serializeCsv } from "../exchange/csv.ts";
 import { serializeJson } from "../exchange/json.ts";
 import { serializeMarkdown } from "../exchange/markdown.ts";
 import type { ExchangePrompt } from "../exchange/prompt-format.ts";
+import { bearerOf, getMe, getMyPrompt, importMyPrompts, listMyPrompts, listMySaved, type MeBackend } from "./me.ts";
 import { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";
 import { fillPrompt, getPrompt, popularPrompts, searchPrompts, type PublicPrompt } from "./prompts.ts";
 import { checkRequest, clientKeyOf, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type RateLimiter } from "./rate-limit.ts";
@@ -26,7 +27,7 @@ const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Max-Age": "86400",
 };
 
-const STATUS: Record<PublicApiError["code"], number> = { bad_request: 400, not_found: 404, upstream: 502, timeout: 504, not_configured: 500 };
+const STATUS: Record<PublicApiError["code"], number> = { bad_request: 400, not_found: 404, upstream: 502, timeout: 504, not_configured: 500, unauthorized: 401, insufficient_scope: 403, rate_limited: 429 };
 const MAX_BODY_BYTES = 64 * 1024;
 
 function json(body: unknown, status = 200, cache = status === 200): Response {
@@ -123,7 +124,7 @@ async function readValues(request: Request): Promise<Record<string, unknown>> {
 /** Tek prompt okundu/dolduruldu (docs/history/304-*). Sayaç verilmemişse yapacak bir şey yok; hata API'yi düşürmez. */
 type RecordUse = (promptId: string) => Promise<void>;
 
-async function route(request: Request, client: RestClient, publicBaseUrl: string | undefined, recordUse: RecordUse): Promise<Response> {
+async function route(request: Request, client: RestClient, publicBaseUrl: string | undefined, recordUse: RecordUse, me?: MeBackend): Promise<Response> {
   const url = new URL(request.url);
   const path = routeOf(url.pathname);
   if (path === null) return errorResponse("not_found", "Use /v1 — see /v1/openapi.json.", 404);
@@ -137,13 +138,14 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
       version: PUBLIC_API_VERSION,
       docs: `${serverUrlOf(url, publicBaseUrl)}/openapi.json`,
       site: client.siteUrl,
-      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill"],
+      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "GET /me/saved"],
     });
   }
   if (segments.length === 1 && segments[0] === "openapi.json") {
     if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
     return json(openApiDocument(serverUrlOf(url, publicBaseUrl)));
   }
+  if (segments[0] === "me") return meRoute(request, url, segments, method, me);
   if (segments[0] !== "prompts" || segments.length > 3) return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
 
   if (segments.length === 1) {
@@ -193,6 +195,49 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
   return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
 }
 
+
+/**
+ * `/v1/me*` — kişisel API anahtarı ya da OAuth belirteciyle (docs/history/315-*). Yanıtlar KİŞİSELDİR: `no-store`, herkese açık önbellek yok.
+ * Yazma yalnız `POST /me/prompts` (kendi hesabına özel taslak, `write` kapsamı).
+ */
+async function meRoute(request: Request, url: URL, segments: string[], method: string, me?: MeBackend): Promise<Response> {
+  if (!me) return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
+  const bearer = bearerOf(request.headers);
+  if (!bearer) {
+    return new Response(JSON.stringify({ error: { code: "unauthorized", message: "Send an API key as `Authorization: Bearer pmt_…` (Promptly → Settings → Developer keys)." } }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "WWW-Authenticate": 'Bearer realm="promptly"' },
+    });
+  }
+  const sub = segments.slice(1);
+  const reply = (body: unknown, status = 200) => json(body, status, false);
+  if (sub.length === 0) {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    return reply(await me.withUser(bearer, "read", (tx, identity) => getMe(tx, identity)));
+  }
+  if (sub[0] === "saved" && sub.length === 1) {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    return reply(await me.withUser(bearer, "read", (tx) => listMySaved(tx, me.siteUrl, { limit: intParam(url, "limit"), cursor: url.searchParams.get("cursor") })));
+  }
+  if (sub[0] === "prompts" && sub.length === 1) {
+    if (method === "GET") {
+      return reply(await me.withUser(bearer, "read", (tx) => listMyPrompts(tx, me.siteUrl, { limit: intParam(url, "limit"), cursor: url.searchParams.get("cursor"), status: url.searchParams.get("status") })));
+    }
+    if (method === "POST") {
+      const text = await request.text();
+      const dryRun = url.searchParams.get("dry_run") === "true";
+      const report = await me.withUser(bearer, "write", (tx) => importMyPrompts(tx, text, dryRun));
+      return reply(report, report.ok || report.dryRun ? 200 : 422);
+    }
+    return errorResponse("method_not_allowed", "Use GET or POST.", 405);
+  }
+  if (sub[0] === "prompts" && sub.length === 2) {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    return reply(await me.withUser(bearer, "read", (tx) => getMyPrompt(tx, me.siteUrl, decodeURIComponent(sub[1]))));
+  }
+  return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
+}
+
 export interface ApiHandlerOptions {
   config: PublicApiConfig;
   /** Dışarıdan görünen API kökü, ör. `https://<ref>.supabase.co/functions/v1/api/v1`. */
@@ -203,6 +248,8 @@ export interface ApiHandlerOptions {
   rateLimiter?: RateLimiter;
   /** Tek prompt okunduğunda/doldurulduğunda sayar (docs/history/304-*; Yaratıcı panelinde "API / MCP"). Verilmezse sayılmaz. */
   usage?: PromptUseRecorder;
+  /** `/v1/me*` (anahtar / OAuth ile kişisel yüzey, docs/history/315-*). Verilmezse bu uçlar 404 döner. */
+  me?: MeBackend;
 }
 
 export function createApiHandler(options: ApiHandlerOptions): (request: Request) => Promise<Response> {
@@ -223,7 +270,7 @@ export function createApiHandler(options: ApiHandlerOptions): (request: Request)
           options.onError?.(error);
         }
       };
-      return withRateLimitHeaders(await route(request, client, options.publicBaseUrl, recordUse), limit);
+      return withRateLimitHeaders(await route(request, client, options.publicBaseUrl, recordUse, options.me), limit);
     } catch (error) {
       if (error instanceof PublicApiError) {
         if (error.code === "upstream" || error.code === "not_configured") options.onError?.(error);

@@ -94,6 +94,8 @@ const CHECKS = [
   { name: "rpc list_my_api_tokens (Ayarlar → Geliştirici anahtarları, docs/history/314-*; yalnız oturumlu)", rpc: "list_my_api_tokens", body: {}, deniedOk: true, soft: true },
   { name: "api_tokens ziyaretçiye KAPALI olmalı (anahtar özetleri, docs/history/314-*)", get: () => `api_tokens?select=id&limit=1`, mustBeDenied: true },
   { name: "rpc _api_token_authenticate ziyaretçiye KAPALI olmalı (yalnız Edge Function'ın sahip-rol bağlantısı, docs/history/314-*)", rpc: "_api_token_authenticate", body: { p_token: "pmt_" + "A".repeat(43) }, mustBeDenied: true },
+  { name: "rpc api_me_prompts ziyaretçiye KAPALI olmalı (kişisel API okuması, docs/history/315-*)", rpc: "api_me_prompts", body: { p_limit: 1 }, mustBeDenied: true },
+  { name: "rpc api_me_throttle ziyaretçiye KAPALI olmalı (docs/history/315-*)", rpc: "api_me_throttle", body: { p_write: false }, mustBeDenied: true },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 

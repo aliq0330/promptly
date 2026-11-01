@@ -68,6 +68,36 @@ export const apiKeysTranslations = {
   "error.apiTokenName": { tr: "Anahtar adı 1–60 karakter olmalı.", en: "The key name must be 1–60 characters." },
   "error.apiTokenScope": { tr: "Geçersiz erişim seçimi.", en: "Invalid access choice." },
   "error.apiTokenExpiry": { tr: "Geçersiz geçerlilik süresi.", en: "Invalid expiry." },
+  // --- /developers: kişisel anahtarla kullanım (docs/history/315-*) ---
+  "dev.meTitle": { tr: "Hesabınla kullan (kişisel anahtar)", en: "Use your own account (personal key)" },
+  "dev.meLead": {
+    tr: "Yukarıdakiler herkese açık içeriği okur. Kendi promptlarına (özel taslaklar dahil) erişmek ya da hesabına özel taslak eklemek için bir kişisel anahtar oluştur: Ayarlar → Geliştirici anahtarları. Anahtar yalnızca senin hesabında çalışır.",
+    en: "The sections above read public content. To reach your own prompts (private drafts included) or to add private drafts to your account, create a personal key: Settings → Developer keys. A key only works on your own account.",
+  },
+  "dev.meKeyLink": { tr: "Anahtar oluştur", en: "Create a key" },
+  "dev.meWho": { tr: "Kim olduğunu doğrula", en: "Check who you are" },
+  "dev.meList": { tr: "Kendi promptlarını listele (özel taslaklar dahil)", en: "List your own prompts (private drafts included)" },
+  "dev.meSave": { tr: "Hesabına özel taslak ekle", en: "Add private drafts to your account" },
+  "dev.meSaveBody": {
+    tr: "Gövde, sitedeki “Dışa aktar”ın JSON dosyasıdır (en çok 30 prompt, 64 KB). Yazma anahtarı ister; sonuç HER ZAMAN özel taslaktır, hiçbir şey yayınlanmaz. ?dry_run=true yalnızca doğrular.",
+    en: "The body is the JSON file that the site's “Export” produces (up to 30 prompts, 64 KB). It needs a write key; the result is ALWAYS a private draft and nothing is published. ?dry_run=true only validates.",
+  },
+  "dev.meMcp": { tr: "Kişisel MCP (Claude Code, Cursor…)", en: "Personal MCP (Claude Code, Cursor…)" },
+  "dev.meMcpBody": {
+    tr: "Aynı anahtarla kendi promptlarını yapay zekâ aracından kullan: list_my_prompts, get_my_prompt, list_my_saved ve (yazma anahtarıyla) save_prompt_draft. Adres yukarıdakinden farklıdır:",
+    en: "Use your own prompts from an AI tool with the same key: list_my_prompts, get_my_prompt, list_my_saved and (with a write key) save_prompt_draft. The address differs from the one above:",
+  },
+  "dev.meMcpAddress": { tr: "Kişisel MCP adresi", en: "Personal MCP address" },
+  "dev.meMcpCursor": { tr: "Cursor ve diğer istemciler", en: "Cursor and other clients" },
+  "dev.meMcpNoHeader": {
+    tr: "claude.ai ve ChatGPT bağlayıcıları sabit bir başlık gönderemez; onlar için hesabınla giriş (OAuth) ayrıca hazırlanıyor. Anahtarı bu araçlara yapıştırma.",
+    en: "claude.ai and ChatGPT connectors can't send a fixed header; sign-in with your account (OAuth) is being prepared for them separately. Don't paste a key into those tools.",
+  },
+  "dev.meRules": { tr: "Anahtar kuralları", en: "Key rules" },
+  "dev.meRuleSecret": { tr: "Anahtar şifre gibidir: kimseyle paylaşma, depoya ya da ekran görüntüsüne koyma. Sızdığını düşünürsen Ayarlar'dan hemen iptal et.", en: "A key is like a password: don't share it or put it in a repository or screenshot. If you think it leaked, revoke it in Settings right away." },
+  "dev.meRuleScope": { tr: "Okuma anahtarı yalnızca okur. Yazma anahtarı hesabına yalnızca özel taslak ekleyebilir; yayınlayamaz, silemez.", en: "A read key only reads. A write key can only add private drafts to your account; it can't publish or delete." },
+  "dev.meRuleLimits": { tr: "Hesap başına sınır: okumada dakikada 120, yazmada dakikada 30 istek (aşarsan 429). Hesabın askıdaysa anahtar çalışmaz.", en: "Per-account limits: 120 read and 30 write requests per minute (429 beyond that). A suspended account's keys stop working." },
+  "dev.meRulePrivate": { tr: "Yanıtlar kişiseldir ve önbelleğe alınmaz.", en: "Responses are personal and are never cached." },
   // --- Bildirim (SQL cümlesi Türkçe kalır, istemci çevirir) ---
   "notifMsg.apiTokenCreated": {
     tr: "Yeni bir API anahtarı oluşturuldu: “{{name}}” ({{prefix}}…). Sen oluşturmadıysan hemen iptal et.",

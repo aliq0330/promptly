@@ -6,6 +6,7 @@ test("endpoints are derived from the Supabase URL (trailing slashes ignored)", (
   const endpoints = developerEndpoints("https://abc.supabase.co//");
   assert.deepEqual(endpoints, {
     mcpUrl: "https://abc.supabase.co/functions/v1/mcp",
+    mcpMeUrl: "https://abc.supabase.co/functions/v1/mcp/me",
     apiBase: "https://abc.supabase.co/functions/v1/api/v1",
     openApiUrl: "https://abc.supabase.co/functions/v1/api/v1/openapi.json",
   });
@@ -37,4 +38,15 @@ test("each client gets its own address key (they are NOT interchangeable)", () =
   assert.equal(snippets.codexToml, `[mcp_servers.promptly]\nurl = "${endpoints.mcpUrl}"`);
   assert.deepEqual(JSON.parse(snippets.claudeDesktopJson), { mcpServers: { promptly: { command: "npx", args: ["-y", "promptly-mcp"] } } });
   assert.ok(snippets.pythonRequests.includes(`${endpoints.apiBase}/prompts`));
+});
+
+test("personal (key) snippets use the key placeholder, the personal MCP address and never a real secret", () => {
+  const endpoints = developerEndpoints("https://abc.supabase.co")!;
+  const snippets = developerSnippets(endpoints);
+  assert.ok(snippets.curlMe.includes(`${endpoints.apiBase}/me"`) && snippets.curlMe.includes("pmt_YOUR_KEY"));
+  assert.ok(snippets.curlMeList.includes(`${endpoints.apiBase}/me/prompts?status=draft`));
+  assert.ok(snippets.curlMeSave.includes("-X POST") && snippets.curlMeSave.includes("@promptly-prompts.json"));
+  assert.ok(snippets.claudeCodeMe.includes(`${endpoints.mcpUrl}/me`) && snippets.claudeCodeMe.includes('--header "Authorization: Bearer pmt_YOUR_KEY"'));
+  assert.deepEqual(JSON.parse(snippets.cursorMeJson), { mcpServers: { "promptly-me": { url: `${endpoints.mcpUrl}/me`, headers: { Authorization: "Bearer pmt_YOUR_KEY" } } } });
+  for (const text of [snippets.curlMe, snippets.curlMeList, snippets.curlMeSave, snippets.claudeCodeMe, snippets.cursorMeJson]) assert.ok(!/pmt_[A-Za-z0-9_-]{43}/.test(text), "no real-looking key in any example");
 });
