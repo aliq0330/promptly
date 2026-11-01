@@ -130,7 +130,5 @@ için (`5eed0001-…`) aynı başlıklı iki prompt çakışırdı (ikincisi ses
 - **Doğrulama (sandbox'tan):** `npx -y --prefer-online promptly-mcp@0.1.0` gerçek stdio süreci olarak, ortam değişkeni VERİLMEDEN (adres
   pakete gömülü): `promptly 0.1.0`, 4 araç, `search_prompts` canlı veri döndürdü, 3 popüler prompt MCP prompt'u olarak yüklendi.
   **Denenmedi:** Claude Desktop/Code/Cursor gibi gerçek bir istemcide (kullanıcının kendi bilgisayarında) kurulum.
-- **Süreli iş:** npm uyarısı — 2FA'yı atlayan token'lar kısıtlanıyor (hesap değişiklikleri Ağustos 2026, doğrudan yayın **Ocak 2027**).
-  Ocak 2027'den ÖNCE paketin npm ayarlarından bu GitHub reposu **Trusted Publisher** olarak tanımlanmalı ve `publish-mcp.yml` token'sız
-  (OIDC) çalışacak şekilde güncellenmeli. Paket artık var olduğu için kurulabilir olmalı; npm'in bu akışı tam olarak nasıl
-  desteklediği (örn. gerekli npm sürümü) kurulurken doğrulanacak, burada denenmedi.
+- **Süreli iş → yapıldı (2026-11-01, `311-*`):** Trusted Publisher (OIDC) tanımlandı ve doğrulandı, `publish-mcp.yml` token'sız çalışır;
+  eski token'lı yayın kapatıldı (kullanıcı bildirdi).
