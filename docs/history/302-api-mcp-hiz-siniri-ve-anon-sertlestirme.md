@@ -1,6 +1,6 @@
 # 302 — API/MCP hız sınırı + anon sertleştirmesi
 
-**Durum:** kodda ve testte uygulandı. Canlıya üç adımda iner: migration'lar `deploy.yml` ile (merge'de); sonra elle: `RATE_LIMIT_SECRET` + özetin veritabanına girilmesi, Edge Function'ların yeniden yüklenmesi (CI deploy ETMEZ). Ne zaman/nasıl indiği "Canlı durum" bölümünde.
+**Durum:** uygulandı VE canlıda (2026-11-01); ayrıntı "Canlı durum" bölümünde.
 
 ## Neden
 "API/MCP güvenli mi, hız sınırı var mı" sorusu canlıda ölçüldü (salt okunur, anon rolüyle):
@@ -34,5 +34,13 @@
 ## Doğrulama
 `tsc` ✅ · `lint` · `npm test` · MCP paketi testleri (16, hız sınırı dahil) · `deno check` (api + mcp) ✅ · yerel PostgreSQL'de `anon-hardening.sql` 15/15 ✅ + mevcut tüm SQL testleri (52/52 temiz, CI ile aynı döngü). Arayüz: `/developers` sayfasındaki adil kullanım maddesi (İngilizce karşılık eklendi).
 
-## Canlı durum
-(Merge/deploy sonrası doldurulur.)
+## Canlı durum (2026-11-01, canlıda doğrulandı)
+- **Migration'lar** (`20261101130000_anon_hardening`, `20261101140000_public_api_rate_limit`) `deploy.yml` ile uygulandı (`schema_migrations`'ta); duman testi (tersine kontroller dahil) geçti, site yayınlandı.
+- **Anon / profil:** anon'un yazma yetkisi 0; `suspended_reason`/`posting_block_reason` anon ve authenticated için okunamıyor; ziyaretçi anahtarıyla profil, prompt + yazar, `feed_page` okumaları çalışıyor, anon `tags`'e yazamıyor (hepsi `401`/`200` beklendiği gibi), sırsız `public_api_rate_hit` `forbidden`.
+- **Hız sınırı:** `RATE_LIMIT_SECRET` kullanıcı tarafından Supabase panelinden girildi (sır aracı değeri yapay zekâ istemcisine uğratmaz; araç bu oturumda "secret-store write" olarak reddedildi, kullanıcı elle girdi), özeti `public_api_rate_limit_config`'e yazıldı. `api` v4 ve `mcp` v3 yüklendi (esbuild paketi MCP aracıyla; **yüklenen metin esbuild çıktısından elle aktarıldı, kaçışlar aynı anlamda ama baytı baytına eşitlik doğrulanmadı**; sonraki `./scripts/deploy-functions.sh` kaynak düzeniyle değiştirir). `api`: tek bağlantıdan 90 istekte ~60'ı geçti, kalanı `429` (`rate_limited`, "59 saniye sonra dene"); `RateLimit-*` başlıkları var. `mcp`: gerçek MCP istemcisiyle araçlar çalışıyor, `RateLimit-Limit: 300` başlığı geliyor; **300'ü aşıp 429 görme DENENMEDİ** (kod yolu `api` ile aynı + birim testli).
+- **Deneme yöntemi uyarısı:** bu sandbox'ın çıkış IP'si istek başına değişiyor (24 farklı kova gördük, toplam isabet 153 = her istek sayıldı, hata yolu devreye girmedi); tek IP'yi taklit için tek bağlantı üzerinden çoklayarak (`curl -Z`) gönderildi. Normal ardışık curl'ler saniyede ~1 istek olduğundan sınıra bile varmıyor.
+
+## Açık kalanlar
+- **Sır döndürülmeli (isteğe bağlı):** değer bu oturumun konuşmasında göründü. Yeni değer üret → panelde güncelle → `public_api_rate_limit_config.secret_hash`'i `encode(extensions.digest('<yeni>','sha256'),'hex')` ile güncelle (ikisi eşleşmezse sınır sessizce kapanır — `forbidden` günlüğe düşer, istek geçer; sonra canlı doğrula).
+- **Kararsız UI testi → düzeltildi:** `run-search-notifications.mjs` senaryo 9, `NotificationsProvider.loadMore`'daki gerçek bir yarıştan düşüyordu: koruma yalnız `loadingMore` STATE'ine bakıyordu, otomatik yükleme ile "Daha fazla" tıklaması aynı tick'te gelince state henüz çizilmeden ikisi de geçiyor, `offset 60` iki kez isteniyordu (liste id ile tekilleştirildiği için ekranda görünmüyor, boşa istek). `main`'in kendi koduyla yerelde 6'da 1, önceki dalda 4'te 2 düştü; CI'da belge-yalnız PR #399'da bile kırmızı oldu. Düzeltme: anlık `loadingMoreRef` kilidi (`usePagedList`'teki `inFlight` ref kalıbı). Sonuç: yerelde 10/10 geçti. Başka bir yükleyici aynı hatayı yaparsa state'e değil ref'e güven.
+- `/rest/v1` üzerindeki RPC'ler (ör. `search_content`) için IP başına sınır yok; hız sınırı yalnız API/MCP kapısını korur.

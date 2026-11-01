@@ -93,8 +93,12 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     await reload(user.id);
   }, [user, reload]);
 
+  // "Daha fazla" tıklaması ile otomatik yükleme AYNI anda gelebilir: `loadingMore` state'i henüz çizilmeden ikisi de geçer ve aynı sayfa iki kez
+  // istenirdi (`usePagedList` aynı yarışı bir ref ile çözer). Ref "bu sayfa yolda"yı anında bildirir.
+  const loadingMoreRef = useRef(false);
   const loadMore = useCallback(async () => {
-    if (!user || loadingMore || !hasMore) return;
+    if (!user || loadingMoreRef.current || !hasMore) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
       const older = await fetchNotificationsPage(user.id, loadedRef.current, NOTIFICATIONS_PAGE);
@@ -106,9 +110,10 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     } catch (err) {
       console.error("notifications loadMore", err);
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [user, loadingMore, hasMore]);
+  }, [user, hasMore]);
 
   // Gerçek zamanlı senkronizasyon (Bölüm 9.78'in belgelediği, mesajlaşmanın
   // Bölüm 21 Faz C'de kurduğu AYNI desen) — `notifications` tablosu
