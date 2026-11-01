@@ -11,16 +11,20 @@ export {
   contentFileName,
   normalizePreset,
   normalizeRequest,
+  normalizeWorkflow,
   parseContent,
   serializeContent,
   toExchangePreset,
   toExchangeRequest,
+  toExchangeWorkflow,
   type ContentParseResult,
   type ExchangeContentItem,
   type ExchangeContentKind,
   type ExchangePreset,
   type ExchangeRequest,
   type ExchangeSelectionValue,
+  type ExchangeWorkflow,
+  type ExchangeWorkflowStep,
 } from "./content-format.ts";
 export { detectPromptsChat, parsePromptsChat } from "./prompts-chat.ts";
 export {

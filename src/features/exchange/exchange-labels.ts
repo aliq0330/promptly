@@ -14,6 +14,9 @@ export const ISSUE_KEYS: Record<ExchangeIssueCode, TranslationKey> = {
   too_many_variables: "exchange.issue.too_many_variables",
   invalid_row: "exchange.issue.invalid_row",
   invalid_selection: "exchange.issue.invalid_selection",
+  invalid_steps: "exchange.issue.invalid_steps",
+  invalid_connection: "exchange.issue.invalid_connection",
+  too_many_steps: "exchange.issue.too_many_steps",
   missing_frontmatter: "exchange.issue.missing_frontmatter",
 };
 
@@ -41,12 +44,14 @@ export const FIELD_KEYS: Record<string, TranslationKey> = {
   variables: "exchange.field.variables",
   creativeDirection: "exchange.field.creativeDirection",
   selection: "exchange.field.selection",
+  steps: "exchange.field.steps",
   schemaVersion: "exchange.field.schemaVersion",
 };
 
 export const WARNING_KEYS: Record<string, TranslationKey> = {
   category_dropped: "exchange.import.warning.category_dropped",
   subcategory_dropped: "exchange.import.warning.subcategory_dropped",
+  prompt_unavailable: "exchange.import.warning.prompt_unavailable",
 };
 
 /** `import_prompts`'in bilinçli fırlattığı kısa kodlar (`raise exception 'too_many_items'`). */

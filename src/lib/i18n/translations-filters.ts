@@ -28,6 +28,7 @@ export const filterTranslations = {
   // ---- Keşfet: sıralama + bölümler ----
   "discover.sortRecommended": { tr: "Önerilen", en: "Recommended" },
   "discover.sortPopular": { tr: "Popüler", en: "Popular" },
+  "discover.sortProven": { tr: "Kanıtlanmış", en: "Proven" },
   "discover.sectionTools": { tr: "AI Araçları", en: "AI tools" },
   "discover.sectionTags": { tr: "Etiketler", en: "Tags" },
   "discover.sectionCommunities": { tr: "Topluluklar", en: "Communities" },

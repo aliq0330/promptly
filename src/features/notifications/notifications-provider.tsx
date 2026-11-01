@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useAuth } from "@/features/auth/auth-provider";
 import {
   deleteNotification,
+  dispatchMyWeeklyDigest,
   fetchNotificationsForUser,
   fetchNotificationsPage,
   fetchUnreadNotificationCount,
@@ -81,6 +82,10 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     // ve 24 saat içinde başlayan etkinlikler için sunucu bir kez bildirim üretir. Yeni bildirim oluştuysa liste yenilenir.
     // Hata (ör. migration henüz uygulanmadı) bildirimleri etkilemez, sessizce yok sayılır.
     dispatchMyEventReminders()
+      .then((created) => (created > 0 && !cancelled ? reload(user.id, () => cancelled) : undefined))
+      .catch(() => undefined);
+    // Haftalık özet (docs/history/307-*): aynı kalıp — haftada bir kez sunucu tek bildirim üretir, oluştuysa liste yenilenir.
+    dispatchMyWeeklyDigest()
       .then((created) => (created > 0 && !cancelled ? reload(user.id, () => cancelled) : undefined))
       .catch(() => undefined);
     return () => {

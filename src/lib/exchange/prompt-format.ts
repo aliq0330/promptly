@@ -101,6 +101,9 @@ export type ExchangeIssueCode =
   | "too_many_variables"
   | "invalid_row"
   | "invalid_selection"
+  | "invalid_steps"
+  | "invalid_connection"
+  | "too_many_steps"
   | "missing_frontmatter";
 
 /** Tek bir satır/prompt sorunu. `row` 1'den başlar (kullanıcının dosyada gördüğü sıra). */

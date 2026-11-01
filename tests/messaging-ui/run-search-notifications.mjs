@@ -304,6 +304,18 @@ await scenario("10. Beğeni bildirimi verilen tepkiyi rozet olarak gösterir (do
   })(),
 });
 
+await scenario("11. Haftalık özet bildirimi (docs/history/307-*) İngilizce'de sayılar korunarak çevrilir; Türkçe aynen", async ({ page }) => {
+  await page.goto(`${BASE}/notifications`);
+  await page.getByText("Weekly recap: 12 copies, 3 reactions, 2 new followers.").waitFor();
+  assert.equal(await page.getByText("Haftalık özet").count(), 0);
+}, { lang: "en", notifications: [n("w1", "system", "Haftalık özet: 12 kopyalama, 3 tepki, 2 yeni takipçi.", "/insights")] });
+
+await scenario("12. Haftalık özet Türkçe saklandığı gibi görünür ve /insights'a gider", async ({ page }) => {
+  await page.goto(`${BASE}/notifications`);
+  await page.getByText("Haftalık özet: 5 kopyalama.").waitFor();
+  assert.match((await page.getByText("Haftalık özet: 5 kopyalama.").locator("xpath=ancestor::a").getAttribute("href")) ?? "", /\/insights/);
+}, { notifications: [n("w2", "system", "Haftalık özet: 5 kopyalama.", "/insights")] });
+
 await browser.close(); server.close();
 let failed = 0;
 for (const [status, name] of results) { console.log(`${status === "PASS" ? "✓" : "✗"} ${name}`); if (status === "FAIL") failed += 1; }

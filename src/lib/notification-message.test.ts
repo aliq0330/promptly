@@ -28,3 +28,11 @@ test("rol değişikliği cümleleri (docs/history/305-*) topluluk adı çevrilme
   assert.deepEqual(JSON.parse(run('"Neon Kulübü" topluluğunda rolün moderatör oldu.')), { key: "notifMsg.communityRoleModerator", params: { name: "Neon Kulübü", preview: "" } });
   assert.deepEqual(JSON.parse(run('"Neon Kulübü" topluluğunda rolün üye olarak değiştirildi.')), { key: "notifMsg.communityRoleMember", params: { name: "Neon Kulübü", preview: "" } });
 });
+
+test("haftalık özet (docs/history/307-*): sayılar korunur, etiketler çevrilir; bilinmeyen parça olduğu gibi kalır; Türkçe aynen döner", () => {
+  const out = (m: string) => JSON.parse(run(m));
+  assert.deepEqual(out("Haftalık özet: 12 kopyalama, 1 tepki."), { key: "notifMsg.weeklyDigest", params: { parts: '{"key":"notifMsg.weeklyCopies","params":{"count":"12"}}, {"key":"notifMsg.weeklyReactions","params":{"count":"1"}}' } });
+  assert.deepEqual(out("Haftalık özet: 2 yeni takipçi.").params.parts, '{"key":"notifMsg.weeklyFollowers","params":{"count":"2"}}');
+  assert.match(out("Haftalık özet: 3 başka şey.").params.parts, /^3 başka şey$/);
+  assert.equal(run("Haftalık özet: 12 kopyalama.", "tr"), "Haftalık özet: 12 kopyalama.");
+});

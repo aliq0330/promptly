@@ -51,8 +51,11 @@ const CHECKS = [
   { name: "rpc feed_page p_has_media (Odak Medya süzgeci sunucuda, docs/history/254-*)", rpc: "feed_page", body: { ...feedArgs, p_open_only: false, p_tag: null, p_tool: null, p_authors: null, p_tags: null, p_tools: null, p_has_media: true } },
   { name: "rpc profile_content_stats (profil sayıları, docs/history/254-*)", rpc: "profile_content_stats", body: { p_user: "00000000-0000-4000-8000-000000000000" } },
   { name: "rpc group_unread_counts (grup okunmamış sayısı okuma anında, docs/history/258-*; yalnız oturumlu)", rpc: "group_unread_counts", body: { p_ids: [] }, deniedOk: true, soft: true },
+  { name: "rpc feed_page_proven (Keşfet → Kanıtlanmış sıralaması, docs/history/307-*)", rpc: "feed_page_proven", body: { p_limit: 1 } },
   { name: "rpc discover_tool_counts", rpc: "discover_tool_counts", body: {} },
   // Yalnız oturumlu kullanıcıya açık RPC (docs/history/250-*): ziyaretçiye 401/403 dönmesi "var ama kapalı" demektir; 404 "yok" demektir ve boru hattını durdurur.
+  { name: "rpc dispatch_my_weekly_digest (haftalık özet bildirimi, docs/history/307-*; yalnız oturumlu, ziyaretçiye kapalı)", rpc: "dispatch_my_weekly_digest", body: {}, deniedOk: true, soft: true },
+  { name: "rpc import_workflows (workflow içe aktarma, docs/history/307-*; yalnız oturumlu, ziyaretçiye kapalı)", rpc: "import_workflows", body: { p_items: [], p_dry_run: true }, deniedOk: true, soft: true },
   { name: "rpc import_content (istek / hazır ayar içe aktarma; yalnız oturumlu, ziyaretçiye kapalı)", rpc: "import_content", body: { p_kind: "request", p_items: [], p_dry_run: true }, deniedOk: true, soft: true },
   { name: "rpc import_prompts (yalnız oturumlu; ziyaretçiye kapalı)", rpc: "import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true, soft: true },
   { name: "rpc admin_import_prompts (yalnız oturumlu moderatör; ziyaretçiye kapalı)", rpc: "admin_import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true, soft: true },

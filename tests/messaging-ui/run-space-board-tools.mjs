@@ -235,6 +235,71 @@ await scenario("6 telefon: mini harita gizli, arama çubuğu ve pano taşmaz", a
   assert.ok(await overflowFree(page), "yatay taşma yok");
 }, { viewport: { width: 390, height: 800 }, touch: true, setup: (db) => board3(db) });
 
+// ---------------------------------------------------------------- nesne kilidi (docs/history/307-*)
+const layoutCalls = (db) => db.calls.filter((c) => c.method === "POST" && c.table === "rpc/space_save_layout");
+const deletes = (db) => calls(db, "DELETE", "space_items");
+
+await scenario("7 kilit: Kilitle düğmesi locked=true yazar, nesne kilit rozeti alır; sürüklenmez, boyut tutamacı çıkmaz, Delete silmez ve açıklar", async ({ page, db }) => {
+  await openBoard(page);
+  await item(page, 1).click();
+  await page.getByRole("button", { name: "Kilitle" }).click();
+  assert.ok(await waitFor(async () => (await item(page, 1).getAttribute("data-locked")) !== null), "kilit rozeti / özniteliği geldi");
+  assert.equal(db.spaceItems.find((i) => i.id === NOTE(1)).locked, true, "sunucuya locked=true yazıldı");
+  assert.equal(await page.locator(`[data-resize-handle="${NOTE(1)}"]`).count(), 0, "kilitlide boyut tutamacı yok");
+  const before = await settled(item(page, 1));
+  const layoutBefore = layoutCalls(db).length;
+  await page.mouse.move(before.x + 60, before.y + 40);
+  await page.mouse.down();
+  for (let i = 1; i <= 6; i += 1) await page.mouse.move(before.x + 60 + i * 20, before.y + 40 + i * 10);
+  await page.mouse.up();
+  await page.waitForTimeout(500);
+  const after = await item(page, 1).boundingBox();
+  assert.ok(Math.abs(after.x - before.x) < 1 && Math.abs(after.y - before.y) < 1, "kilitli nesne taşınmadı");
+  assert.equal(layoutCalls(db).length, layoutBefore, "yerleşim yazılmadı");
+  await item(page, 1).click();
+  await page.locator("[data-board-canvas]").focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Delete");
+  await page.waitForTimeout(400);
+  assert.equal(deletes(db).length, 0, "kilitli nesne silinmedi");
+  assert.equal(await items(page).count(), 3);
+  await page.getByText(/1 kilitli nesne atlandı/).first().waitFor();
+  assert.equal(layoutCalls(db).length, layoutBefore, "ok tuşu da kilitliyi oynatmadı");
+}, { setup: (db) => board3(db) });
+
+await scenario("7b kilit: Kilidi aç düğmesi locked=false yazar; açılınca nesne yine taşınır", async ({ page, db }) => {
+  await openBoard(page);
+  await item(page, 1).click();
+  await page.getByRole("button", { name: "Kilidi aç" }).click();
+  assert.ok(await waitFor(async () => (await item(page, 1).getAttribute("data-locked")) === null));
+  assert.equal(db.spaceItems.find((i) => i.id === NOTE(1)).locked, false);
+  const before = await settled(item(page, 1));
+  await page.mouse.move(before.x + 60, before.y + 40);
+  await page.mouse.down();
+  for (let i = 1; i <= 6; i += 1) await page.mouse.move(before.x + 60 + i * 20, before.y + 40);
+  await page.mouse.up();
+  assert.ok(await waitFor(async () => (await item(page, 1).boundingBox()).x > before.x + 50), "kilit açılınca taşındı");
+}, { setup: (db) => { board3(db); db.spaceItems.find((i) => i.id === NOTE(1)).locked = true; } });
+
+await scenario("7c kilit: karışık seçimde yalnız kilitsiz nesne silinir; kilitli kalır ve seçili durur; izleyici kilit düğmesi görmez", async ({ page, db }) => {
+  await openBoard(page);
+  await item(page, 1).click();
+  await item(page, 2).click({ modifiers: ["Shift"] });
+  await page.locator("[data-board-canvas]").focus();
+  await page.keyboard.press("Delete");
+  assert.ok(await waitFor(async () => deletes(db).length === 1), "bir silme isteği");
+  assert.match(String(deletes(db)[0].query?.id ?? deletes(db)[0].url ?? ""), new RegExp(NOTE(2)));
+  assert.ok(!String(deletes(db)[0].query?.id ?? deletes(db)[0].url ?? "").includes(NOTE(1)), "kilitli nesne silme isteğine girmedi");
+  assert.ok(await waitFor(async () => (await items(page).count()) === 2));
+  assert.equal(await item(page, 1).count(), 1, "kilitli nesne durur");
+}, { setup: (db) => { board3(db); db.spaceItems.find((i) => i.id === NOTE(1)).locked = true; } });
+
+await scenario("7d kilit İngilizce: düğme etiketleri çevrilir", async ({ page }) => {
+  await openBoard(page);
+  await item(page, 1).click();
+  await page.getByRole("button", { name: "Lock", exact: true }).waitFor();
+}, { lang: "en", setup: (db) => board3(db) });
+
 await browser.close();
 server.close();
 for (const [status, name] of results) console.log(status === "PASS" ? "✓" : "✗", name);

@@ -48,7 +48,7 @@ test("oldest: the cursor predicate is ascending (>), not the descending <", () =
 
 test("a row equal to the cursor is never 'after' it (no repeat across pages)", () => {
   const cursor = row(3, "2026-09-19T10:00:00.000000+00:00", "x");
-  for (const order of ["newest", "popular", "oldest", "used", "recommended"] as const) assert.equal(isAfterCursor(order, { ...cursor }, cursor), false);
+  for (const order of ["newest", "popular", "oldest", "used", "recommended", "proven"] as const) assert.equal(isAfterCursor(order, { ...cursor }, cursor), false);
 });
 
 test("oldest: equal timestamps are separated by id ascending", () => {
@@ -67,7 +67,7 @@ test("popular: like_count descending first, then created_at and id descending", 
   assert.equal(isAfterCursor("popular", row(5, at, "z"), cursor), false);
 });
 
-for (const order of ["newest", "popular", "oldest", "used", "recommended"] as const) {
+for (const order of ["newest", "popular", "oldest", "used", "recommended", "proven"] as const) {
   for (const limit of [1, 7, 10, 50]) {
     test(`${order}: walking pages of ${limit} returns every row once, in order`, () => {
       const seen = walk(dataset, order, limit);
@@ -137,4 +137,14 @@ test("recommended ranks by the engagement score (same numbers as supabase/tests/
   assert.equal(feedSortRank("recommended", { likeCount: 2, commentCount: 1, responseCount: 3 }), 14);
   assert.equal(feedSortRank("recommended", { likeCount: 0 }), 0);
   assert.equal(isAfterCursor("recommended", { rank: 14, createdAt: "2026-09-19T11:00:00.000000+00:00", id: "z" }, { rank: 15, createdAt: "2026-09-19T09:00:00.000000+00:00", id: "a" }), true, "a lower score is after, even if newer");
+});
+
+test("proven (docs/history/307-*): Keşfet's 'most-proven' sort maps to it, keyset is the same descending triple, the client ranks it 0 (the database decides)", () => {
+  assert.equal(feedOrderForSort("most-proven"), "proven");
+  const cursor = { rank: 500000, createdAt: "2026-09-19T10:00:00.000000+00:00", id: "m" };
+  const row = (rank: number, createdAt: string, id: string) => ({ rank, createdAt, id });
+  assert.equal(isAfterCursor("proven", row(400000, "2026-09-19T11:00:00.000000+00:00", "z"), cursor), true, "a lower Wilson score is after, even if newer");
+  assert.equal(isAfterCursor("proven", row(600000, "2026-09-19T09:00:00.000000+00:00", "a"), cursor), false);
+  assert.equal(isAfterCursor("proven", row(500000, "2026-09-19T09:00:00.000000+00:00", "a"), cursor), true, "same score: older is after");
+  assert.equal(feedSortRank("proven", { likeCount: 99, copyCount: 99 }), 0);
 });
