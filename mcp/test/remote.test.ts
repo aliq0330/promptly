@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { createRateLimiter, createRestClient } from "../../src/lib/public-api/index.ts";
+import { createMemoryRateLimiter, createRestClient } from "../../src/lib/public-api/index.ts";
 import { UNTRUSTED_NOTICE } from "../src/server.ts";
 import { createRemoteHandler, REMOTE_MAX_BODY_BYTES } from "../src/remote.ts";
 
@@ -186,7 +186,7 @@ test("rate limit: POSTs past the limit get 429 + Retry-After as a JSON-RPC error
   const handler = createRemoteHandler({
     version: "0.0.0-test",
     getClient: () => createRestClient({ url: "https://demo.supabase.co", anonKey: "eyJ.k", fetch: fakeSupabase() }),
-    rateLimiter: createRateLimiter({ limit: 2, windowMs: 60_000 }),
+    rateLimiter: createMemoryRateLimiter({ limit: 2, windowMs: 60_000 }),
   });
   const from = (ip: string) => ({ "cf-connecting-ip": ip });
   assert.equal((await handler(post(INIT, from("203.0.113.7")))).status, 200);

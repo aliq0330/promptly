@@ -85,7 +85,7 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
     }
     if (method !== "POST") return jsonRpcError(405, -32000, "Method not allowed.", { Allow: "POST, OPTIONS" });
 
-    const limit = checkRequest(options.rateLimiter, request);
+    const limit = await checkRequest(options.rateLimiter, request);
     if (limit && !limit.allowed) {
       return withRateLimitHeaders(jsonRpcError(429, -32000, `Too many requests. Try again in ${limit.retryAfterSeconds} seconds.`), limit);
     }

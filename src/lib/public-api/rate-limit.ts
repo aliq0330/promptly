@@ -1,13 +1,17 @@
 /**
- * Açık API ve MCP için IP başına hız sınırı (docs/history/302-*). Bağımlılıksız ve saf: zamanı çağıran verebilir, bu yüzden birim testlidir.
+ * Açık API ve MCP için IP başına hız sınırı (docs/history/302-*). Bağımlılıksız: zamanı/ağı çağıran verebilir, bu yüzden birim testlidir.
  *
- * NE DEĞİLDİR: bir güvenlik duvarı değil, ADİL KULLANIM FRENİDİR. İki sebepten:
- *  - Sayaç Edge Function örneğinin (isolate) BELLEĞİNDEDİR; çok örnek ayağa kalkarsa toplam izin verilen sayı artar ve örnek yeniden başlayınca sayaç sıfırlanır.
- *    Veritabanında sayaç tutmak her istek için ek yazma demekti ve anon'un çağırabileceği bir sayaç ucu açardı; bilerek yapılmadı.
- *  - Anon anahtar sitenin JS paketinde açıktır: herkes bu işlevi atlayıp Supabase'in `/rest/v1` ucuna doğrudan gidebilir. Bu sınır yalnız API/MCP kapısını korur.
+ * NE DEĞİLDİR: bir güvenlik duvarı değil, ADİL KULLANIM FRENİDİR. Anon anahtar sitenin JS paketinde açıktır: herkes bu işlevleri atlayıp Supabase'in
+ * `/rest/v1` ucuna doğrudan gidebilir; bu sınır yalnız API/MCP kapısını korur.
+ *
+ * İKİ SAYAÇ:
+ *  - `createRemoteRateLimiter` (ÜRETİM): sayaç VERİTABANINDADIR (`public_api_rate_hit`, sırla korunur). Bellek içi sayaç Edge Function'larda ÇALIŞMADI: canlıda
+ *    120 ardışık istek hiç sınırlanmadı, çünkü Supabase her isteği çoğunlukla farklı bir örneğe düşürüyor. Sayaç hata verirse (ağ, sır yok, yavaş) istek İZİN
+ *    VERİLİR: hız sınırı API'yi asla düşürmemeli.
+ *  - `createMemoryRateLimiter`: tek süreçte (testler, kendi sunucunda `createApiHandler` çalıştıran biri) etkilidir; Edge Function'da ETKİSİZDİR.
  *
  * Kimlik: `cf-connecting-ip` (Cloudflare ekler, istemci değiştiremez); yoksa `x-forwarded-for`'un İLK adresi; hiçbiri yoksa sınır UYGULANMAZ (herkesi tek
- * kovaya koyup hepsini kilitlemek, bir sızdırmadan daha kötüdür). IPv6 /64 önekine indirilir (bir ev/sunucu o blokta binlerce adres alır).
+ * kovaya koyup hepsini kilitlemek, bir sızdırmadan daha kötüdür). IPv6 /64 önekine indirilir. Veritabanına ham IP gitmez: kova = sha256(sır|işlev|IP).
  */
 
 export interface RateLimitConfig {
@@ -29,8 +33,8 @@ export interface RateLimitResult {
 }
 
 export interface RateLimiter {
-  check(key: string): RateLimitResult;
-  readonly size: number;
+  /** `null` = sayılamadı/sınır uygulanmıyor (izin ver). */
+  check(key: string): Promise<RateLimitResult | null>;
 }
 
 /**
@@ -40,7 +44,8 @@ export interface RateLimiter {
 export const PUBLIC_API_RATE_LIMIT = { limit: 60, windowMs: 60_000 } as const;
 export const PUBLIC_MCP_RATE_LIMIT = { limit: 300, windowMs: 60_000 } as const;
 
-export function createRateLimiter(config: RateLimitConfig): RateLimiter {
+/** Tek süreçte etkili, bellek içi sayaç (Edge Function'da etkisiz — başlık yorumuna bak). */
+export function createMemoryRateLimiter(config: RateLimitConfig): RateLimiter & { readonly size: number } {
   const { limit, windowMs, maxKeys = 5000, now = Date.now } = config;
   const buckets = new Map<string, { count: number; resetAt: number }>();
 
@@ -57,7 +62,7 @@ export function createRateLimiter(config: RateLimitConfig): RateLimiter {
     get size() {
       return buckets.size;
     },
-    check(key) {
+    async check(key) {
       const at = now();
       let bucket = buckets.get(key);
       if (!bucket || bucket.resetAt <= at) {
@@ -101,11 +106,72 @@ export function clientKeyOf(headers: Headers): string | null {
   return null;
 }
 
-/** İsteği sayar. Kimlik belirlenemezse (ya da sınırlayıcı yoksa) null: sınır yok. */
-export function checkRequest(limiter: RateLimiter | undefined, request: Request): RateLimitResult | null {
+/** İsteği sayar. Kimlik belirlenemezse, sınırlayıcı yoksa ya da sayaç hata verirse null: sınır yok. */
+export async function checkRequest(limiter: RateLimiter | undefined, request: Request): Promise<RateLimitResult | null> {
   if (!limiter) return null;
   const key = clientKeyOf(request.headers);
-  return key ? limiter.check(key) : null;
+  if (!key) return null;
+  try {
+    return await limiter.check(key);
+  } catch {
+    return null;
+  }
+}
+
+/** Veritabanındaki sayacı çağıran en küçük istemci arayüzü (`RestClient`'ın `rpc`'si). */
+export interface RateLimitRpc {
+  rpc<T>(fn: string, args: Record<string, unknown>): Promise<T>;
+}
+
+export interface RemoteRateLimiterConfig {
+  /** Kısa zaman aşımlı bir istemci verin (`createRestClient({ timeoutMs: 1500 })`): sayaç yavaşsa istek beklememeli. */
+  client: RateLimitRpc;
+  /** Edge Function ortamındaki `RATE_LIMIT_SECRET`; veritabanında yalnız özeti vardır. */
+  secret: string;
+  /** Kovaları ayırır (`api` / `mcp`): aynı IP iki yüzeyde ayrı sayılır. */
+  scope: string;
+  limit: number;
+  windowMs: number;
+  /** Sayaç hata verince (izin verilir) günlüğe yazmak için. */
+  onError?: (error: unknown) => void;
+}
+
+async function sha256Hex(text: string): Promise<string> {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) throw new Error("WebCrypto is not available");
+  const digest = await subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/** Üretim sayacı: IP başına sayaç veritabanındadır (`public_api_rate_hit`). Hata = izin ver (null). */
+export function createRemoteRateLimiter(config: RemoteRateLimiterConfig): RateLimiter {
+  const windowSeconds = Math.max(1, Math.round(config.windowMs / 1000));
+  return {
+    async check(key) {
+      try {
+        const bucket = (await sha256Hex(`${config.secret}|${config.scope}|${key}`)).slice(0, 32);
+        const rows = await config.client.rpc<{ allowed: boolean; hits: number; retry_after: number }[]>("public_api_rate_hit", {
+          p_secret: config.secret,
+          p_bucket: bucket,
+          p_limit: config.limit,
+          p_window_seconds: windowSeconds,
+        });
+        const row = rows?.[0];
+        if (!row || typeof row.allowed !== "boolean") return null;
+        const retryAfterSeconds = Math.max(1, Math.round(Number(row.retry_after) || windowSeconds));
+        return {
+          allowed: row.allowed,
+          limit: config.limit,
+          remaining: Math.max(0, config.limit - (Number(row.hits) || 0)),
+          resetAt: Date.now() + retryAfterSeconds * 1000,
+          retryAfterSeconds,
+        };
+      } catch (error) {
+        config.onError?.(error);
+        return null;
+      }
+    },
+  };
 }
 
 /** Yanıta `RateLimit-*` (IETF taslağı) ve — reddedildiyse — `Retry-After` başlıklarını ekler. */

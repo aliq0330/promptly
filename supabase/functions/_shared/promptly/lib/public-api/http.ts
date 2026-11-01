@@ -196,7 +196,7 @@ export function createApiHandler(options: ApiHandlerOptions): (request: Request)
   let client: RestClient | null = null;
   return async (request) => {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS_HEADERS });
-    const limit = checkRequest(options.rateLimiter, request);
+    const limit = await checkRequest(options.rateLimiter, request);
     if (limit && !limit.allowed) {
       return withRateLimitHeaders(errorResponse("rate_limited", `Too many requests. Try again in ${limit.retryAfterSeconds} seconds.`, 429), limit);
     }
