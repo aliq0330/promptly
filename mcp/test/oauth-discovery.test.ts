@@ -60,9 +60,11 @@ test("the official MCP SDK discovers the authorization server, registers a publi
   assert.equal(saved.client?.client_id, CLIENT_ID, "the client registered itself (DCR)");
   assert.ok(seen.some((line) => line === "POST /functions/v1/oauth/register"), seen.join("\n"));
   // Yetki adresi bizim uç noktamız; PKCE S256 ve kaynak göstergesi var.
-  assert.equal(saved.redirect?.origin + saved.redirect?.pathname, `${ISSUER}/authorize`);
-  assert.equal(saved.redirect?.searchParams.get("code_challenge_method"), "S256");
-  assert.equal(saved.redirect?.searchParams.get("client_id"), CLIENT_ID);
-  assert.equal(saved.redirect?.searchParams.get("redirect_uri"), CALLBACK);
-  assert.equal(saved.redirect?.searchParams.get("resource"), RESOURCE);
+  const redirect = saved.redirect;
+  assert.ok(redirect, "the SDK asked to redirect the user to the authorization endpoint");
+  assert.equal(redirect.origin + redirect.pathname, `${ISSUER}/authorize`);
+  assert.equal(redirect.searchParams.get("code_challenge_method"), "S256");
+  assert.equal(redirect.searchParams.get("client_id"), CLIENT_ID);
+  assert.equal(redirect.searchParams.get("redirect_uri"), CALLBACK);
+  assert.equal(redirect.searchParams.get("resource"), RESOURCE);
 });
