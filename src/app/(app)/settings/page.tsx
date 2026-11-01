@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, FileText, Lock, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronRight, Code2, FileText, Lock, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldInputClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -383,6 +383,7 @@ export default function SettingsPage() {
               {t("tour.replay")}
             </Button>
           </SettingsCard>
+          <SettingsLinkRow href="/developers" icon={<Code2 size={18} className="text-text-secondary" />} title={t("dev.title")} hint={t("dev.navHint")} />
         </SettingsGroup>
 
         <SettingsGroup id="settings-legal" title={t("legal.groupTitle")}>

@@ -112,6 +112,9 @@ export function Sidebar() {
 
       {/* Yasal bağlantılar (docs/history/300-*): yalnız geniş kenar çubuğunda (72px ray'da yer yok; orada Ayarlar'daki "Yasal" grubu). */}
       <div className="hidden flex-wrap gap-x-3 gap-y-1 px-5 pb-4 text-caption text-text-muted lg:flex">
+        <Link href="/developers" className="rounded-sm hover:text-text hover:underline">
+          {t("dev.title")}
+        </Link>
         <Link href="/terms" className="rounded-sm hover:text-text hover:underline">
           {t("legal.termsTitle")}
         </Link>
