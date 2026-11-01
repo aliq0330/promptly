@@ -456,5 +456,5 @@ ayrıntılı liste kelimesi kelimesine `docs/history/286-*` içinde.
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — en son 312. bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — en son 313. bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).
