@@ -36,6 +36,17 @@ Edge Function service role ile yazarsa `auth.uid()` boş kalır; hız sınırı,
 
 **Öneri:** A veya B — ikisinden hangisinin bu projede çalıştığını gösteren **küçük bir deneme** ile seçilir (canlı Supabase'e erişim gerekir; sandbox'tan yapılamaz).
 
+**Canlı doğrulama (2026-11-01, Supabase MCP, yalnız okuma / geri alınan işlem):**
+- **B'nin veritabanı yarısı ÇALIŞIYOR:** `begin; set local role authenticated; set_config('request.jwt.claims', {sub, role}, true)` sonrası
+  `auth.uid()` kullanıcıyı verdi ve RLS uygulandı (kullanıcı 3454/3455 promptu gördü — başkasının özel promptu gizli); işlem `rollback` ile
+  geri alındı, veri değişmedi. **Doğrulanmadı:** Edge Function'ın `SUPABASE_DB_URL` ile (havuzlu) doğrudan bağlanıp aynısını yapması
+  (sürücü, bağlantı süresi, havuz modu) — bunun için fonksiyon deploy etmek gerekir.
+- **A mümkün görünüyor:** legacy anon anahtarı `HS256` imzalı → projede eski JWT sırrı var. Edge Function onu **elle girilen** bir secret
+  olarak (ör. `PROMPTLY_JWT_SECRET`; Edge'in otomatik secret'ları arasında JWT sırrı yok) okumalı; sır depoda/konuşmada olmaz.
+  **Doğrulanmadı:** o sırla imzalanan kısa ömürlü JWT'nin PostgREST'te kabul edildiği.
+- Seçim, bir sonraki adımda yazılacak küçük deneme fonksiyonuyla (A ve B'yi aynı istekte deneyen, veri yazmayan) yapılır; önce kullanıcıdan
+  deploy onayı alınır.
+
 ## 4. Uçlar (ilk dilim)
 
 | Uç | Kapsam | Not |
@@ -56,15 +67,42 @@ Her yazma çağrısı mevcut tetikleyicilerden geçer (askı, `enforce_can_post`
 - Arayüz: Ayarlar → "Geliştirici anahtarları" (oluştur: ad + kapsam + süre; listele: önek, son kullanım; iptal). Anahtar bir kez gösterilir ve "kopyaladım" demeden pencere kapanmaz.
 - Hukuk: Gizlilik'e anahtar/kullanım kaydı maddesi, Koşullar'a "anahtarını paylaşma, sorumluluk sende" maddesi (danışman gözüyle).
 
-## 6. Bilerek dışarıda
+## 6. OAuth (ChatGPT / claude.ai kişisel bağlayıcıları) — kapsama ALINDI
 
-- ChatGPT / claude.ai **özel bağlayıcıları** sabit anahtar başlığı gönderemez (yalnız OAuth ya da kimliksiz; üçüncü taraf kılavuzlara göre) → o yüzey için OAuth ayrı, büyük bir iş.
+ChatGPT / claude.ai özel bağlayıcıları sabit anahtar başlığı gönderemez (yalnız OAuth ya da kimliksiz; üçüncü taraf kılavuzlara göre,
+doğrulanmadı). Çözüm anahtar değil **Supabase Auth'un OAuth 2.1 sunucusudur**
+([belge](https://supabase.com/docs/guides/auth/oauth-server), [MCP kimlik doğrulaması](https://supabase.com/docs/guides/auth/oauth-server/mcp-authentication);
+halka açık beta, 2025-11 duyurusu):
+
+| Konu | Not |
+|---|---|
+| Akış | OAuth 2.1 kod akışı + PKCE; istemci keşfi otomatik; dinamik istemci kaydı panelden açılır (Authentication → OAuth Server) |
+| Token | **Standart Supabase JWT'si** (`user_id`, `role`, `client_id`) → Edge Function onu doğrudan PostgREST'e geçirir, **RLS kendiliğinden uygulanır**; §3'teki A/B sorunu bu yüzeyde YOK |
+| Bizim işimiz | Onay (consent) ekranı: statik sitede yeni bir sayfa (`/oauth/consent`) — kim, hangi kapsam, "İzin ver/Reddet"; izin verilen istemciler Ayarlar'da listelenir ve iptal edilir |
+| Risk | Dinamik kayıt herhangi bir istemcinin kayıt olmasına izin verir → redirect adresleri doğrulanmalı, onay ekranı istemci adını ve adresini açıkça göstermeli (kimlik avı) |
+| Doğrulanmadı | Özelliğin bu projede açılabildiği; claude.ai/ChatGPT'nin tam gereksinimleri (yönlendirme adresleri); beta sınırları |
+
+Öneri: **önce anahtarlar (§2–5), OAuth ayrı bir dilim** olarak; ama kimlikli MCP ucu en baştan iki kimliği de kabul edecek biçimde
+tasarlanır (anahtar → A/B ile JWT, OAuth → hazır JWT; ikisi de aynı RLS'li yoldan geçer).
+
+## 7. Bilerek dışarıda
+
 - Herkese açma (`publish`), silme, yorum/beğeni gibi sosyal yazmalar, topluluk içeriği.
 - Anahtarlı herkese açık "bot profili" (Ö11 ikinci seçenek: ayrı `auth.users` satırı).
 
-## 7. Kullanıcı kararları (kod yazmadan önce)
+## 8. Kullanıcı kararları (2026-11-01, soruldu ve cevaplandı)
 
-1. **Kapsam:** yalnız okuma mı (en güvenli ilk adım), okuma + özel taslak yazma mı?
-2. **Kim:** herkes mi, önce yalnız moderatör/sahip (beta) mı?
-3. **Teknik yol (§3):** A/B denemesi için canlı projede küçük bir doğrulama yapmama izin var mı?
-4. **OAuth** (ChatGPT/claude.ai kişisel bağlayıcı) şimdi kapsam dışı kalsın mı?
+| Konu | Karar |
+|---|---|
+| Kapsam | **Okuma + kendi hesabına özel taslak yazma** (herkese açma yok) |
+| Kim | **Tüm kayıtlı kullanıcılar** (beta/moderatör sınırı YOK) → kötüye kullanım ve destek yükü baştan başlar: anahtar sayısı sınırı, anahtar başına hız sınırı, askı denetimi, kullanıcıya bildirim ZORUNLU; Gizlilik/Koşullar metni yayından ÖNCE |
+| Canlı doğrulama | **İzin verildi** (yapıldı: §3 "Canlı doğrulama"; deploy gerektiren kısım için ayrıca onay istenir) |
+| OAuth | **Tasarıma dahil** (§6) |
+
+## 9. Sıradaki adımlar (sırayla; her biri ayrı PR, kod yazmadan önce kullanıcıyla onay)
+
+1. Edge'de A ve B'yi deneyen, veri yazmayan **küçük deneme fonksiyonu** → hangisi çalışıyor (deploy onayı gerekir; sonra silinir).
+2. Migration: `api_tokens` + `create_api_token` / `list_my_api_tokens` / `revoke_api_token` RPC'leri + SQL testi (token özeti, sınır, askı).
+3. Ayarlar → "Geliştirici anahtarları" arayüzü (TR+EN) + Gizlilik/Koşullar maddeleri.
+4. `GET /v1/me*` ve `POST /v1/me/prompts` (mevcut `import_prompts` üstünde) + kimlikli MCP araçları + `/developers` sayfası.
+5. OAuth dilimi (`/oauth/consent`, Ayarlar'da izinler).
