@@ -6,6 +6,7 @@
 // Service role anahtarı kullanılmaz. Bağlantı dizesi hiçbir yanıta/loga yazılmaz.
 import postgres from "npm:postgres@3.4.5";
 import type { MeDb, MeTx } from "./promptly/lib/public-api/me.ts";
+import type { OauthQuery } from "./promptly/lib/public-api/oauth.ts";
 
 /** Tek bağlantılı (max 1), hazırlıksız (`prepare:false`: havuz/pgbouncer uyumlu) Postgres; işlem fırlatırsa geri alınır. */
 export function createPostgresMeDb(url: string): MeDb {
@@ -34,4 +35,15 @@ export function createJwtVerifier(supabaseUrl: string, anonKey: string): (jwt: s
       return null;
     }
   };
+}
+
+/**
+ * OAuth sunucusu (docs/history/317-*) için: her çağrı KENDİ BAŞINA atomik tek bir `_oauth_*` fonksiyonudur (işlem açılmaz, kullanıcı rolüne GEÇİLMEZ — bu fonksiyonlar
+ * yalnız sahip role açıktır ve kendi kurallarını uygular). Jsonb/dizi parametreleri çekirdekte `text` olarak gönderilip SQL'de çevrilir (postgres.js ::jsonb'yi kendisi stringify eder).
+ */
+export function createPostgresOauthQuery(url: string): OauthQuery {
+  let sql: ReturnType<typeof postgres> | null = null;
+  const get = () =>
+    (sql ??= postgres(url, { max: 3, prepare: false, connect_timeout: 10, idle_timeout: 20, connection: { statement_timeout: 8000 } }));
+  return async (text, params = []) => (await get().unsafe(text, params as never[])) as unknown as Record<string, unknown>[];
 }

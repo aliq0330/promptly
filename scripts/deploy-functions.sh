@@ -17,7 +17,7 @@ cd "$(dirname "$0")/.."
 # Tek fonksiyon deploy'u canlıdaki diğer fonksiyonlara dokunmaz (kaynakları canlı sürümle karşılaştırılmadı — CLAUDE.md §9).
 TARGET="${1:-all}"
 case "$TARGET" in
-  all|analyze-image|cleanup-orphan-storage|delete-account|username-login|api|mcp) ;;
+  all|analyze-image|cleanup-orphan-storage|delete-account|username-login|api|mcp|oauth) ;;
   *) echo "Unknown function: $TARGET" >&2; exit 1 ;;
 esac
 want() { [ "$TARGET" = all ] || [ "$TARGET" = "$1" ]; }
@@ -41,4 +41,10 @@ fi
 if want mcp; then
   node scripts/sync-function-shared.mjs --check
   supabase functions deploy mcp --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
+fi
+
+# Kendi OAuth sunucumuz (docs/history/317-*): istemciler JWT taşımaz, kapalı. Çekirdek kopyası güncel olmalı.
+if want oauth; then
+  node scripts/sync-function-shared.mjs --check
+  supabase functions deploy oauth --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
 fi

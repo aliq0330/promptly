@@ -7,5 +7,6 @@ export * from "./prompts.ts";
 export * from "./rate-limit.ts";
 export * from "./usage.ts";
 export * from "./me.ts";
+export * from "./oauth.ts";
 export { createApiHandler, routeOf, type ApiHandlerOptions } from "./http.ts";
 export { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";

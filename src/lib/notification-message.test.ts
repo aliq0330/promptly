@@ -53,3 +53,10 @@ test("the API-key-created sentence (docs/history/314-*) is recognised and the ke
     { key: "notifMsg.apiTokenCreated", params: { name: "Dizüstü", prefix: "pmt_Ab3d" } },
   );
 });
+
+test("the app-connected sentence (docs/history/317-*) is recognised and the app name is passed through untouched", () => {
+  assert.deepEqual(
+    JSON.parse(run('Yeni bir uygulama hesabına bağlandı: "Claude <b>x</b>". Sen yapmadıysan Ayarlar\'dan hemen kaldır.')),
+    { key: "notifMsg.oauthConnected", params: { name: "Claude <b>x</b>" } },
+  );
+});
