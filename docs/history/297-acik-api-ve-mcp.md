@@ -1,8 +1,8 @@
 # 297 — Açık API (`/v1`) ve MCP sunucusu (Faz 1: salt-okunur)
 
 **Durum:** uygulandı. Edge Function `api` **canlıda** (2026-11-01, sürüm 1, `verify_jwt` kapalı) ve canlı istekle doğrulandı
-(aşağıda). `promptly-mcp` npm'e **yayınlanmadı** (kullanıcının `NPM_TOKEN` secret'ı gerekir); derlenmiş paket canlı veritabanına karşı
-çalıştırıldı.
+(aşağıda). `promptly-mcp` 0.1.0 **npm'de yayında** (2026-11-01, aşağıda "npm yayını"); yayınlanan paket npm'den indirilip canlı
+veritabanına karşı çalıştırıldı.
 
 ## Neden
 
@@ -99,7 +99,7 @@ site arayüzü değil; Promptly arayüzüne yeni metin eklenmedi (i18n §4.5'e y
 - Faz 2: kullanıcı girişi (Supabase Auth, kullanıcının kendi JWT'si → RLS/askı/hız sınırı kendiliğinden) ile kaydet, kendi
   promptlarını çek, taslak olarak içe aktar (`import_prompts`). Service role hiçbir fazda kullanılmaz. Giriş dönüş adresi Supabase
   Auth → URL Configuration'a eklenmeli.
-- Kullanım Koşulları'nda yeniden kullanım/atıf maddesi (Ö4) hâlâ yok; içerik artık site dışına çıktığı için önce yazılmalı.
+- Kullanım Koşulları'ndaki yeniden kullanım/atıf maddesi (Ö4) `298-*` ile yazıldı (hukuki danışmandan geçmedi).
 
 ## Canlıya alma
 
@@ -120,5 +120,17 @@ JWT olmayan yol) ile: arama, doldurma, 5 popüler prompt'un MCP prompt'u olarak 
 **Bu doğrulamada bulunan ve düzeltilen:** MCP prompt adı kimliğin İLK 8 karakterini kullanıyordu; seed kimlikleri ortak önekle başladığı
 için (`5eed0001-…`) aynı başlıklı iki prompt çakışırdı (ikincisi sessizce atlanırdı) → SON 8 onaltılık karakter (`promptSlug`, test eklendi).
 
-**Kalan (kullanıcı):** npm hesabı + 2FA → token → repo secret `NPM_TOKEN` → "Publish MCP package" workflow'u (bu oturum workflow
-başlatamıyor). Kendi bilgisayarında `claude mcp add promptly -- npx -y promptly-mcp`; sonucu buraya yaz.
+## npm yayını (2026-11-01)
+
+- Workflow "Publish MCP package" (elle, `main`, `NPM_TOKEN` = granular token: 2FA'yı atlayan, All packages, publish and stage, 90 gün
+  → **27 Ocak 2027'de biter**) başarılı; paket `https://www.npmjs.com/package/promptly-mcp`, `latest` = `0.1.0`, provenance imzalı.
+- **npm 2FA yalnız güvenlik anahtarı (WebAuthn) sunuyor** (authenticator/TOTP seçeneği yok): iPhone Face ID/geçiş anahtarı kullanıldı.
+- İlk yayınla birlikte kayıt defterinde 334 baytlık `0.0.0-stage` yer tutucu sürüm de oluşur; zararsızdır. Yayından sonraki ilk dakikalarda
+  npm önbelleği yeni sürümü göremeyebilir (`No matching version found`) — `--prefer-online` ile aşılır.
+- **Doğrulama (sandbox'tan):** `npx -y --prefer-online promptly-mcp@0.1.0` gerçek stdio süreci olarak, ortam değişkeni VERİLMEDEN (adres
+  pakete gömülü): `promptly 0.1.0`, 4 araç, `search_prompts` canlı veri döndürdü, 3 popüler prompt MCP prompt'u olarak yüklendi.
+  **Denenmedi:** Claude Desktop/Code/Cursor gibi gerçek bir istemcide (kullanıcının kendi bilgisayarında) kurulum.
+- **Süreli iş:** npm uyarısı — 2FA'yı atlayan token'lar kısıtlanıyor (hesap değişiklikleri Ağustos 2026, doğrudan yayın **Ocak 2027**).
+  Ocak 2027'den ÖNCE paketin npm ayarlarından bu GitHub reposu **Trusted Publisher** olarak tanımlanmalı ve `publish-mcp.yml` token'sız
+  (OIDC) çalışacak şekilde güncellenmeli. Paket artık var olduğu için kurulabilir olmalı; npm'in bu akışı tam olarak nasıl
+  desteklediği (örn. gerekli npm sürümü) kurulurken doğrulanacak, burada denenmedi.
