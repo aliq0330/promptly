@@ -31,7 +31,7 @@ const BOUNDED_BY_DESIGN: Record<string, string> = {
   "content-versions.ts:fetchVersionsForPreset": "versions of ONE preset (one row per edit)",
   "reactions.ts:fetchMyReaction": "the viewer's reaction on ONE target (batched across one page of cards)",
   "presets.ts:fetchPresetsByIds": "ids come from one page",
-  "presets.ts:mapFieldRow": "mapper, not a query",
+  "presets.ts:withFields": "ids come from one page (the preset ids of the page being shown / exported, loaded with fetchAllRows)",
   "profiles.ts:fetchFollowedProfiles": "pickers pass a cap (`limit`); the /following page pages with fetchFollowedProfilesPage",
   "profiles.ts:fetchFollowerProfiles": "pickers pass a cap (`limit`); the /followers page pages with fetchFollowerProfilesPage",
   "prompt-dna.ts:fetchDnaSections": "the DNA sections of ONE prompt (a handful)",

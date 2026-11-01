@@ -128,7 +128,7 @@ export function mapFieldRow(row: FieldRow): PresetField {
  * presets still load — they just show the parameters the platform catalog
  * knows, exactly as before custom fields existed.
  */
-async function withFields(presets: Preset[]): Promise<Preset[]> {
+export async function withFields(presets: Preset[]): Promise<Preset[]> {
   if (presets.length === 0) return presets;
   try {
     const { data, error } = await supabase

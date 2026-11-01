@@ -100,6 +100,7 @@ export type ExchangeIssueCode =
   | "invalid_variable"
   | "too_many_variables"
   | "invalid_row"
+  | "invalid_selection"
   | "missing_frontmatter";
 
 /** Tek bir satır/prompt sorunu. `row` 1'den başlar (kullanıcının dosyada gördüğü sıra). */
@@ -143,22 +144,22 @@ export function fatalResult(fatal: ExchangeFatalCode): ParseResult {
   return { items: [], issues: [], fatal, total: 0 };
 }
 
-const TOOL_REF_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,59}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,59})?$/;
+export const TOOL_REF_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,59}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,59})?$/;
 const VARIABLE_NAME_PATTERN = /^[^{}\s]{1,40}$/u;
 // Etiket adı veritabanında da `[<>]` ve kontrol karakterlerini reddeder (get_or_create_tag).
-const BAD_TAG_PATTERN = /[<>\u0000-\u001f\u007f]/u;
+export const BAD_TAG_PATTERN = /[<>\u0000-\u001f\u007f]/u;
 
-function str(value: unknown): string {
+export function str(value: unknown): string {
   return typeof value === "string" ? value : typeof value === "number" ? String(value) : "";
 }
 
-function strList(value: unknown): string[] {
+export function strList(value: unknown): string[] {
   if (Array.isArray(value)) return value.map((entry) => str(entry).trim()).filter(Boolean);
   if (typeof value === "string") return value.split(/[\r\n]+/).map((entry) => entry.trim()).filter(Boolean);
   return [];
 }
 
-function dedupe(values: string[], caseInsensitive: boolean): string[] {
+export function dedupe(values: string[], caseInsensitive: boolean): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const value of values) {
@@ -170,7 +171,7 @@ function dedupe(values: string[], caseInsensitive: boolean): string[] {
   return out;
 }
 
-function nullableSlug(value: unknown): string | null {
+export function nullableSlug(value: unknown): string | null {
   const text = str(value).trim();
   return text === "" ? null : text;
 }

@@ -1,8 +1,25 @@
 import { supabase } from "./client";
-import { fetchAllRows } from "./paged";
+import { chunk, fetchAllRows } from "./paged";
 import { fetchPromptById, mapPromptRow, PROMPT_SELECT, type PromptRow } from "./prompts";
 import { fetchVariablesForPrompt, fetchVariablesForPrompts } from "./prompt-variables";
-import { ADMIN_IMPORT_LIMITS, runBatches, toExchangePrompt, withSourceNote, type BulkBatchReport, type BulkOutcome, type BulkProgress, type ExchangePrompt } from "@/lib/exchange";
+import { mapPresetRow, PRESET_SELECT, withFields, type PresetRow } from "./presets";
+import { mapRequestRow, REQUEST_SELECT, type RequestRow } from "./requests";
+import {
+  ADMIN_IMPORT_LIMITS,
+  runBatches,
+  toExchangePreset,
+  toExchangePrompt,
+  toExchangeRequest,
+  withSourceNote,
+  type BulkBatchReport,
+  type BulkOutcome,
+  type BulkProgress,
+  type ExchangeContentItem,
+  type ExchangeContentKind,
+  type ExchangePreset,
+  type ExchangePrompt,
+  type ExchangeRequest,
+} from "@/lib/exchange";
 import { shareLinkForHref } from "@/lib/share-link";
 import { absoluteUrl, promptHref } from "@/lib/utils";
 
@@ -101,4 +118,51 @@ export function runAdminImport(
     },
     { onProgress: options.onProgress, shouldStop: options.shouldStop },
   );
+}
+
+/**
+ * Every request the member owns — drafts and "Sadece ben" included — newest first (docs/history/306-*). Community-only requests stay in
+ * their community; soft-deleted ones are skipped. Paged like the prompt export; throws when a page fails (half a file is never the whole list).
+ */
+export async function fetchOwnRequestsForExport(userId: string): Promise<ExchangeRequest[]> {
+  const { rows } = await fetchAllRows((from, to) =>
+    supabase
+      .from("prompt_requests")
+      .select(REQUEST_SELECT)
+      .eq("author_id", userId)
+      .is("community_id", null)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+  );
+  return rows.map((row) => toExchangeRequest(mapRequestRow(row as unknown as RequestRow)));
+}
+
+/** Every preset the member owns (drafts and private included), without the fields they added themselves (their ids mean nothing elsewhere). */
+export async function fetchOwnPresetsForExport(userId: string): Promise<ExchangePreset[]> {
+  const { rows } = await fetchAllRows((from, to) =>
+    supabase
+      .from("presets")
+      .select(PRESET_SELECT)
+      .eq("creator_id", userId)
+      .is("community_id", null)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+  );
+  // Kimlik listeleri adrese 100'erli parçalarla yazılır (CLAUDE.md §6 "Bir olay bütün üyelere…"); 3000 hazır ayar tek `in (…)` olmaz.
+  const mapped = rows.map((row) => mapPresetRow(row as unknown as PresetRow));
+  const presets = (await Promise.all(chunk(mapped, 100).map((part) => withFields(part)))).flat();
+  return presets.map(toExchangePreset);
+}
+
+/**
+ * `import_content` (migration 20261101190000): the request / preset twin of `importPrompts` — validates everything first, then writes private drafts in one
+ * transaction; with `dryRun` nothing is written. The database re-validates, so this call is the only authority.
+ */
+export async function importContent<K extends ExchangeContentKind>(kind: K, items: ExchangeContentItem<K>[], dryRun: boolean): Promise<ImportReport> {
+  const { data, error } = await supabase.rpc("import_content", { p_kind: kind, p_items: items, p_dry_run: dryRun });
+  if (error) throw new Error(error.message);
+  return data as ImportReport;
 }

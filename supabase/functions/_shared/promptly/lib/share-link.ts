@@ -7,9 +7,9 @@
  * that content's own title/description, which then sends the visitor on to the
  * real detail page. Everything here is framework-free so it can be unit-tested.
  */
-export type ShareKind = "prompt" | "request" | "workflow" | "preset" | "profile";
+export type ShareKind = "prompt" | "request" | "workflow" | "preset" | "profile" | "space" | "quote";
 
-export const SHARE_KINDS: readonly ShareKind[] = ["prompt", "request", "workflow", "preset", "profile"];
+export const SHARE_KINDS: readonly ShareKind[] = ["prompt", "request", "workflow", "preset", "profile", "space", "quote"];
 
 /** Must match `basePath` in next.config.ts. */
 export const SHARE_BASE_PATH = "/promptly";
@@ -21,6 +21,8 @@ const DETAIL_ROUTES: Record<ShareKind, { path: string; param: "id" | "username" 
   workflow: { path: "/workflows/local", param: "id" },
   preset: { path: "/presets/local", param: "id" },
   profile: { path: "/profile/real", param: "username" },
+  space: { path: "/spaces/local", param: "id" },
+  quote: { path: "/quotes/local", param: "id" },
 };
 
 export function isShareKind(value: string): value is ShareKind {
@@ -38,18 +40,20 @@ export function sharePathFor(kind: ShareKind, key: string): string {
   return `/share/${kind}/${encodeURIComponent(key)}/`;
 }
 
-const DETAIL_HREF_PATTERN = /^(\/prompts\/local|\/requests\/local|\/workflows\/local|\/presets\/local|\/profile\/real)\?(id|username)=([^&#]+)$/;
+const DETAIL_HREF_PATTERN = /^(\/prompts\/local|\/requests\/local|\/workflows\/local|\/presets\/local|\/profile\/real|\/spaces\/local|\/quotes\/local)\?(id|username)=([^&#]+)$/;
 const KIND_BY_PATH: Record<string, ShareKind> = {
   "/prompts/local": "prompt",
   "/requests/local": "request",
   "/workflows/local": "workflow",
   "/presets/local": "preset",
   "/profile/real": "profile",
+  "/spaces/local": "space",
+  "/quotes/local": "quote",
 };
 
 /**
  * Turns an in-app detail href into its share path so a copied/shared link
- * unfurls with a real preview. Anything that is not one of the five shareable
+ * unfurls with a real preview. Anything that is not one of the seven shareable
  * detail routes (results, collections, …) is returned unchanged — such links
  * keep working exactly as before.
  */
