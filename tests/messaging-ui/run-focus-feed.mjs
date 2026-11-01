@@ -206,7 +206,7 @@ const menuItem = async (page, name) => {
 const filterChip = (page) => stage(page).getByRole("button", { name: /Odak süzgeci|Focus filter/ });
 const pickFilter = async (page, name) => {
   await filterChip(page).click();
-  await stage(page).getByRole("menuitemradio", { name }).click();
+  await stage(page).getByRole("menuitemradio", { name }).first().click();
   await page.waitForTimeout(900);
 };
 
@@ -469,7 +469,7 @@ await scenario("15. İngilizce", async ({ page }) => {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
   await filterChip(page).click();
-  assert.deepEqual(await stage(page).getByRole("menuitemradio").allInnerTexts(), ["All", "Prompts", "Requests", "Workflows", "Presets", "Newest", "Following"]);
+  assert.deepEqual(await stage(page).getByRole("menuitemradio").allInnerTexts(), ["All", "Prompts", "Requests", "Workflows", "Presets", "All", "Image", "Text", "Audio", "Video", "Newest", "Following"]);
 }, { lang: "en" });
 
 await scenario("16. Açık temada da koyu sahne; hareket azaltmada geçiş yok", async ({ page }) => {
@@ -711,8 +711,8 @@ await scenario("28. Süzgeç menüsü (docs/history/245-*): üstte tek 'Tümü �
   assert.equal(db.feedCalls.at(-1).p_kinds, null, "Tümü = every kind");
   assert.equal(db.feedCalls.at(-1).p_scope, "all");
   await filterChip(page).click();
-  assert.equal(await stage(page).getByRole("menuitemradio").count(), 7, "5 types + 2 sources");
-  assert.equal(await stage(page).getByRole("menuitemradio", { name: "Tümü" }).getAttribute("aria-checked"), "true");
+  assert.equal(await stage(page).getByRole("menuitemradio").count(), 12, "5 post types + 5 content types + 2 sources");
+  assert.equal(await stage(page).getByRole("menuitemradio", { name: "Tümü" }).first().getAttribute("aria-checked"), "true");
   assert.equal(await stage(page).getByRole("menuitemradio", { name: "En yeni" }).getAttribute("aria-checked"), "true");
   await shot(page, "28-filter-menu");
   await page.keyboard.press("Escape");
