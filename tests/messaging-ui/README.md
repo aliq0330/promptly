@@ -286,3 +286,9 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-legal-notice.mjs   # 14/14 beklenir
 ```
+
+`run-developers.mjs`: `/developers` sayfası (MCP adresi + araçlar + kurallar, API örnekleri + OpenAPI bağlantısı, kopyalama panoya yazar, ziyaretçi, İngilizce, telefonda taşma yok) ve bağlantıları (kenar çubuğu, Ayarlar, telefonda hesap menüsü). Derleme adresi `https://example.supabase.co` olmalı (CI ile aynı). Ağ taklitli; gerçek cihaza KARŞI DENENMEDİ. CI'ın hızlı kesitine eklenmedi.
+
+```
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-developers.mjs   # 9/9 beklenir
+```

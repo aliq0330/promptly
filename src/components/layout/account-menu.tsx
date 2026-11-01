@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftRight, BarChart3, Bookmark, FileText, LayoutGrid, Lock, LogIn, LogOut, Moon, Settings, Shapes, ShieldCheck, Undo2, User, UserPlus, Users } from "lucide-react";
+import { ArrowLeftRight, BarChart3, Bookmark, Code2, FileText, LayoutGrid, Lock, LogIn, LogOut, Moon, Settings, Shapes, ShieldCheck, Undo2, User, UserPlus, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -189,6 +189,7 @@ export function AccountMenu() {
               </span>
             </button>
             <MenuLink href="/settings" icon={Settings} label={t("nav.settings")} onNavigate={close} />
+            <MenuLink href="/developers" icon={Code2} label={t("dev.title")} onNavigate={close} />
             {isModerator && <MenuLink href="/moderation" icon={ShieldCheck} label={t("nav.moderation")} onNavigate={close} />}
           </MenuGroup>
 
