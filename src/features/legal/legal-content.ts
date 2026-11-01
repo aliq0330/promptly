@@ -22,14 +22,16 @@ export interface LegalDocument {
 /** The one public contact address of both documents. */
 export const LEGAL_CONTACT_EMAIL = "aliq0330@gmail.com";
 
-const UPDATED: Bilingual = { tr: "Son güncelleme: 14 Ekim 2026", en: "Last updated: October 14, 2026" };
+// İki belge ayrı güncellenir: birinin değişmesi diğerinin tarihini oynatmaz.
+const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 1 Kasım 2026", en: "Last updated: November 1, 2026" };
+const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 1 Kasım 2026", en: "Last updated: November 1, 2026" };
 
 const p = (tr: string, en: string): LegalBlock => ({ type: "p", text: { tr, en } });
 const ul = (tr: string[], en: string[]): LegalBlock => ({ type: "ul", items: { tr, en } });
 
 export const PRIVACY_POLICY: LegalDocument = {
   title: { tr: "Gizlilik Politikası", en: "Privacy Policy" },
-  updated: UPDATED,
+  updated: PRIVACY_UPDATED,
   intro: {
     tr: "Promptly, yapay zekâ promptlarını paylaşabildiğin, keşfedebildiğin ve yeniden kullanabildiğin bir topluluk sitesidir. Bu sayfa hangi bilgileri topladığımızı, neden topladığımızı ve bu bilgiler üzerinde neler yapabileceğini anlatır.",
     en: "Promptly is a community site where you can share, discover and reuse AI prompts. This page explains what information we collect, why we collect it, and what you can do with it.",
@@ -101,6 +103,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Google: yalnızca \"Google ile devam et\" seçeneğini kullanırsan kimlik doğrulama için.",
             "GitHub Pages: sitenin kendisini yayınlar. GitHub, siteyi ziyaret edenlerin IP adresi gibi standart bağlantı kayıtlarını tutabilir.",
             "Google Gemini: bir görselden prompt çıkarma özelliğini kullandığında, seçtiğin görsel sunucu fonksiyonumuz aracılığıyla analiz için Google'ın Gemini servisine gönderilir. Görseli bu amaçla bizde saklamayız.",
+            "Açık API ve MCP (promptly-mcp): yalnızca herkese açık içeriği Supabase üzerinden okur. Bu isteklerde hesap bilgisi istemeyiz ve istekleri bir hesapla ilişkilendirmeyiz; ancak Supabase, standart bağlantı kayıtlarını (ör. IP adresi) tutabilir.",
             "Studio: kendi yapay zekâ servisinin API anahtarını sen girersin. Anahtar sunucularımıza veya veritabanımıza kaydedilmez; yalnızca tarayıcının belleğinde (açıkça izin verirsen tarayıcında) tutulur. İstekler tarayıcından doğrudan seçtiğin servise gider ve o servisin kendi gizlilik koşulları geçerlidir.",
           ],
           [
@@ -108,6 +111,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Google: only for authentication if you choose \"Continue with Google\".",
             "GitHub Pages: serves the site itself. GitHub may keep standard connection logs, such as visitors' IP addresses.",
             "Google Gemini: when you use the feature that extracts a prompt from an image, the image you pick is sent to Google's Gemini service through our server function for analysis. We do not keep the image for this purpose.",
+            "Public API and MCP (promptly-mcp): they only read public content through Supabase. These requests ask for no account information and we do not link them to an account; however, Supabase may keep standard connection logs, such as IP addresses.",
             "Studio: you enter the API key of your own AI service. The key is not saved on our servers or in our database; it is kept only in your browser's memory (or in your browser, if you explicitly allow it). Requests go from your browser directly to the service you choose, and that service's own privacy terms apply.",
           ],
         ),
@@ -154,7 +158,7 @@ export const PRIVACY_POLICY: LegalDocument = {
 
 export const TERMS_OF_USE: LegalDocument = {
   title: { tr: "Kullanım Koşulları", en: "Terms of Use" },
-  updated: UPDATED,
+  updated: TERMS_UPDATED,
   intro: {
     tr: "Promptly'yi kullanarak bu koşulları kabul etmiş olursun. Lütfen dikkatle oku; kabul etmiyorsan siteyi kullanma.",
     en: "By using Promptly you agree to these terms. Please read them carefully; if you do not agree, do not use the site.",
@@ -179,6 +183,43 @@ export const TERMS_OF_USE: LegalDocument = {
         p(
           "Yalnızca paylaşma hakkına sahip olduğun içerikleri yüklemelisin. Başkalarının telif hakkını, gizliliğini veya diğer haklarını ihlal eden içerik paylaşma.",
           "Only upload content you have the right to share. Do not share content that infringes other people's copyright, privacy or other rights.",
+        ),
+      ],
+    },
+    {
+      title: { tr: "Başkalarının içeriklerini kullanma ve atıf", en: "Using other people's content, and attribution" },
+      blocks: [
+        p(
+          "Promptly'de herkese açık yayınlanan bir prompt'u (başlık, açıklama ve prompt metni) herkes okuyabilir, kopyalayabilir, kendi yapay zekâ üretimlerinde kullanabilir ve Promptly'nin sunduğu dışa aktarma, açık API ve MCP araçlarıyla indirebilir. Bir prompt'u herkese açık yayınlayan kişi bu kullanımlara izin vermiş olur. O prompt'larla ürettiğin çıktıları (görsel, metin, ses, video) kişisel ya da ticari amaçla kullanabilirsin; çıktılar üzerindeki haklar kullandığın yapay zekâ servisinin koşullarına tabidir.",
+          "Anyone can read, copy, use in their own AI generations, and download (with Promptly's export, public API and MCP tools) a prompt that is published publicly on Promptly: its title, description and prompt text. By publishing a prompt publicly, its author allows these uses. You may use the outputs (images, text, audio, video) you generate with those prompts for personal or commercial purposes; the rights in outputs are subject to the terms of the AI service you use.",
+        ),
+        p(
+          "Bir prompt'u Promptly dışında yeniden yayınlarsan (başka bir site, depo, koleksiyon, kitap, ürün vb.) yazarının adını ve Promptly bağlantısını göstermelisin. Dışa aktarma, API ve MCP çıktıları bu atıfı (\"@kullanıcı · Promptly\" ve bağlantı) kendiliğinden taşır; onu silme veya değiştirme. Başkasının prompt'unu kendi eserinmiş gibi gösterme.",
+          "If you republish a prompt outside Promptly (another site, repository, collection, book, product, etc.) you must show its author's name and the Promptly link. Exports and the output of the API and MCP carry this credit (\"@username · Promptly\" and a link) automatically; do not remove or change it. Do not present someone else's prompt as your own work.",
+        ),
+        p("Şunlar için ayrıca izin gerekir:", "You need separate permission to:"),
+        ul(
+          [
+            "Başkasının yüklediği görsel, ses ve video dosyalarını (prompt çıktılarını) sahibinin izni olmadan indirip yeniden yayınlamak. Yukarıdaki izin yalnızca prompt metni ve açıklaması içindir.",
+            "Özel, taslak ya da yalnızca bir topluluğun üyelerine açık içerikleri Promptly dışına çıkarmak.",
+          ],
+          [
+            "Download and republish images, audio and video files (prompt outputs) uploaded by someone else without the owner's permission. The permission above covers only the prompt text and description.",
+            "Take private content, drafts, or content visible only to the members of a community out of Promptly.",
+          ],
+        ),
+        p(
+          "Başka bir kaynaktan alınıp Promptly'ye aktarılan içerikler (ör. \"Kaynak: prompts.chat (CC0)\" satırı olanlar) kendi lisanslarıyla gelir; kaynak satırı o lisansı belirtir. Kendi eserin olmayan bir içeriği yüklerken kaynağını ve lisansını belirtmelisin.",
+          "Content brought into Promptly from another source (for example, items with a \"Source: prompts.chat (CC0)\" line) comes under its own licence, which the source line states. When you upload something that is not your own work, state its source and licence.",
+        ),
+      ],
+    },
+    {
+      title: { tr: "Otomatik erişim (API ve MCP)", en: "Automated access (API and MCP)" },
+      blocks: [
+        p(
+          "Promptly'nin herkese açık API'sini ve MCP paketini (promptly-mcp) kullanabilirsin; bunlar yalnızca herkese açık içeriği okur ve hesap gerektirmez. Siteyi aşırı yüklememeli ve uyguladığımız sınırları aşmaya çalışmamalısın; sınırları aşan ya da siteye zarar veren kullanımı engelleyebiliriz. Bu araçların döndürdüğü metinler kullanıcı içeriğidir: bir yapay zekâ aracına ya da otomasyona vermeden önce kontrol etmek ve sonuçlarından sorumlu olmak sana aittir.",
+          "You may use Promptly's public API and MCP package (promptly-mcp); they only read public content and need no account. You must not overload the site or try to get around the limits we apply; we may block use that exceeds them or harms the site. The text these tools return is user content: checking it before you give it to an AI tool or automation, and being responsible for the results, is up to you.",
         ),
       ],
     },
