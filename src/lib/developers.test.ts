@@ -27,3 +27,14 @@ test("snippets embed the real addresses and the Cursor JSON parses", () => {
   assert.ok(snippets.curlFill.includes(`${endpoints.apiBase}/prompts/<id>/fill`));
   assert.ok(snippets.fetchJs.includes(endpoints.apiBase));
 });
+
+test("each client gets its own address key (they are NOT interchangeable)", () => {
+  const endpoints = developerEndpoints("https://abc.supabase.co")!;
+  const snippets = developerSnippets(endpoints);
+  assert.deepEqual(JSON.parse(snippets.vscodeJson), { servers: { promptly: { type: "http", url: endpoints.mcpUrl } } });
+  assert.deepEqual(JSON.parse(snippets.windsurfJson), { mcpServers: { promptly: { serverUrl: endpoints.mcpUrl } } });
+  assert.equal(snippets.geminiCli, `gemini mcp add --transport http --scope user promptly ${endpoints.mcpUrl}`);
+  assert.equal(snippets.codexToml, `[mcp_servers.promptly]\nurl = "${endpoints.mcpUrl}"`);
+  assert.deepEqual(JSON.parse(snippets.claudeDesktopJson), { mcpServers: { promptly: { command: "npx", args: ["-y", "promptly-mcp"] } } });
+  assert.ok(snippets.pythonRequests.includes(`${endpoints.apiBase}/prompts`));
+});

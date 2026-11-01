@@ -22,12 +22,19 @@ export function developerEndpoints(supabaseUrl: string | undefined | null): Deve
 
 export interface DeveloperSnippets {
   claudeCode: string;
+  /** İstemciler adres anahtarını farklı adlandırır: Cursor `url`, VS Code `servers`+`type`, Windsurf `serverUrl`, Gemini CLI `httpUrl`, Codex TOML. */
   cursorJson: string;
+  vscodeJson: string;
+  windsurfJson: string;
+  geminiCli: string;
+  codexToml: string;
   localNpx: string;
+  claudeDesktopJson: string;
   curlSearch: string;
   curlGet: string;
   curlFill: string;
   fetchJs: string;
+  pythonRequests: string;
 }
 
 export function developerSnippets(endpoints: DeveloperEndpoints): DeveloperSnippets {
@@ -35,10 +42,16 @@ export function developerSnippets(endpoints: DeveloperEndpoints): DeveloperSnipp
   return {
     claudeCode: `claude mcp add --transport http promptly ${mcpUrl}`,
     cursorJson: JSON.stringify({ mcpServers: { promptly: { url: mcpUrl } } }, null, 2),
+    vscodeJson: JSON.stringify({ servers: { promptly: { type: "http", url: mcpUrl } } }, null, 2),
+    windsurfJson: JSON.stringify({ mcpServers: { promptly: { serverUrl: mcpUrl } } }, null, 2),
+    geminiCli: `gemini mcp add --transport http --scope user promptly ${mcpUrl}`,
+    codexToml: `[mcp_servers.promptly]\nurl = "${mcpUrl}"`,
     localNpx: "claude mcp add promptly -- npx -y promptly-mcp",
+    claudeDesktopJson: JSON.stringify({ mcpServers: { promptly: { command: "npx", args: ["-y", "promptly-mcp"] } } }, null, 2),
     curlSearch: `curl "${apiBase}/prompts?q=cyberpunk&content_type=image&limit=5"`,
     curlGet: `curl "${apiBase}/prompts/<id>"`,
     curlFill: `curl -X POST "${apiBase}/prompts/<id>/fill" \\\n  -H "Content-Type: application/json" \\\n  -d '{"values":{"subject":"a lighthouse"}}'`,
     fetchJs: `const res = await fetch("${apiBase}/prompts?q=logo&limit=3");\nconst { items } = await res.json();\nconsole.log(items[0].title, items[0].url);`,
+    pythonRequests: `import requests\n\nres = requests.get("${apiBase}/prompts", params={"q": "logo", "limit": 3})\nfor item in res.json()["items"]:\n    print(item["title"], item["url"])`,
   };
 }
