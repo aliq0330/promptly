@@ -25,6 +25,7 @@ import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { openWelcomeTour } from "@/features/onboarding/welcome-tour";
 import { AppearancePicker } from "@/components/theme/appearance-picker";
 import { ApiKeysSection } from "@/features/settings/api-keys-section";
+import { ConnectedAppsSection } from "@/features/settings/connected-apps-section";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -392,6 +393,7 @@ export default function SettingsPage() {
           <SettingsCard title={t("apiKeys.title")} hint={t("apiKeys.hint")}>
             <ApiKeysSection />
           </SettingsCard>
+          <ConnectedAppsSection />
         </SettingsGroup>
 
         <SettingsGroup id="settings-legal" title={t("legal.groupTitle")}>
