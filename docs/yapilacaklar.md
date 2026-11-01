@@ -41,10 +41,10 @@ saat, **O** = 1–2 gün, **B** = birkaç gün.
 
 | # | Madde | Karar/Not |
 |---|---|---|
-| Ö6 | **API token'ları + salt-okunur `/v1`** (Edge Function `api`, OpenAPI belgesi) | `api_tokens` (SHA-256 özet, kapsam, son kullanım, `kind` = user/agent/bot). EN BÜYÜK RİSK: service role ile yazan API `auth.uid()` boş olduğu için hız sınırı/askı/RLS'i atlar → token'ı doğrulayıp işlem içinde kullanıcı kimliğini kuran RPC'ler, SQL testiyle. Edge Function'lar CI ile deploy EDİLMİYOR (CLAUDE.md §2). |
+| Ö6 | **[salt-okunur kısmı YAPILDI — `docs/history/297-*`: `/v1` Edge Function, token'sız, yalnız anon; CANLIDA 2026-11-01] API token'ları + salt-okunur `/v1`** (Edge Function `api`, OpenAPI belgesi) | `api_tokens` (SHA-256 özet, kapsam, son kullanım, `kind` = user/agent/bot). EN BÜYÜK RİSK: service role ile yazan API `auth.uid()` boş olduğu için hız sınırı/askı/RLS'i atlar → token'ı doğrulayıp işlem içinde kullanıcı kimliğini kuran RPC'ler, SQL testiyle. Edge Function'lar CI ile deploy EDİLMİYOR (CLAUDE.md §2). |
 | Ö7 | **CLI** (`cli/`, kök `package.json`'a dokunmadan) | Yalnız public API'yi kullanır; `login/pull/push/export/import`. Dışa/içe aktarma çekirdeği `src/lib/exchange` — yeniden yazılmaz. |
 | Ö8 | **Skill paketleri** (çok dosyalı, sürümlü) | KARAR: sosyal içerik türü mü (beğeni/yorum/alıntı zinciri ister) yoksa sosyalsiz kütüphane kaynağı mı (önerilen). `workflow_versions`/`save_workflow_content` kalıbı. NOT: prompts.chat'te **163 SKILL.md kaydı** var; şimdi metin prompt olarak yükleniyor, paket gelince taşınmalı. |
-| Ö9 | **MCP sunucusu** | Aynı API işleyicilerinin üstünde; varsayılan salt-okunur; herkese açık prompt metni ajan bağlamına girdiği için yanıtlar "güvenilmeyen içerik" işaretli. |
+| Ö9 | **[Faz 1 YAPILDI — `docs/history/297-*`: `promptly-mcp`, 4 salt-okunur araç + MCP prompt'ları; canlı veriyle denendi, npm'e yayınlanmadı] MCP sunucusu** | Aynı API işleyicilerinin üstünde; varsayılan salt-okunur; herkese açık prompt metni ajan bağlamına girdiği için yanıtlar "güvenilmeyen içerik" işaretli. |
 | Ö10 | **GitHub senkronizasyonu** | KARAR: GitHub App (önerilen) mi OAuth mu. Markdown biçimi hazır (`schemaVersion`'lu). Webhook HMAC, döngü önleme, `last_synced_sha` çakışma çözümü, kullanıcının reposuna yazmak açık onay ister. |
 | Ö11 | **Bot/Agent kimliği** | KARAR: ilk fazda "sahibi adına yazan kapsamlı token" (önerilen) mi, ayrı herkese açık bot profili mi (auth.users satırı ister). |
 

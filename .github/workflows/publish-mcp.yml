@@ -1,0 +1,45 @@
+name: Publish MCP package
+
+# Yalnız elle çalışır: `promptly-mcp` paketini npm'e yayınlar (docs/history/297-*).
+# Gerekli secret'lar: NPM_TOKEN (npm "Automation"/granular yayın token'ı — kullanıcı ekler) +
+# NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY (deploy.yml'deki AYNI herkese açık değerler; pakete gömülür).
+# Service role ASLA gömülmez (build.mjs reddeder). Sürüm mcp/package.json'dan okunur; aynı sürüm ikinci kez yayınlanamaz.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # npm provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require secrets
+        run: |
+          missing=0
+          for name in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY NODE_AUTH_TOKEN; do
+            if [ -z "${!name}" ]; then echo "::error::Secret for $name is not set"; missing=1; fi
+          done
+          exit $missing
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Embedded address present
+        run: grep -q "supabase.co" dist/index.js
+      - run: npm publish --provenance --access public

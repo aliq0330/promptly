@@ -1,6 +1,6 @@
 # Supabase CLI ayarları — yalnızca `supabase functions deploy` için.
 # Bu dosya veritabanı/Auth/Storage ayarı TAŞIMAZ (şema supabase/migrations/,
-# canlı ayarlar Dashboard'dadır). Dört Edge Function'ın JWT doğrulaması burada
+# canlı ayarlar Dashboard'dadır). Edge Function'ların JWT doğrulaması burada
 # sabitlenir; fonksiyon kodu supabase/functions/ altındadır.
 
 [functions.analyze-image]
@@ -14,4 +14,8 @@ verify_jwt = true
 
 # Giriş yapmamış kullanıcı çağırdığı için JWT doğrulaması KAPALI olmalı.
 [functions.username-login]
+verify_jwt = false
+
+# Açık API (salt-okunur, yalnız anon anahtar) — oturumsuz istemciler çağırdığı için JWT doğrulaması KAPALI (`docs/history/297-*`).
+[functions.api]
 verify_jwt = false

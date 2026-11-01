@@ -1,0 +1,41 @@
+name: MCP package
+
+# Açık API çekirdeği ya da MCP paketi değişince: paketin kendi tip denetimi + uçtan uca testleri + derlemesi + Edge Function kopyası.
+# ci.yml'ye dokunmaz (o dosyayı değiştirmek ~9 dk'lık veritabanı işini tetikler, docs/history/289-*).
+on:
+  pull_request:
+    paths:
+      - "mcp/**"
+      - "src/lib/public-api/**"
+      - "src/lib/exchange/**"
+      - "src/lib/prompt-variables.ts"
+      - "src/lib/share-link.ts"
+      - "src/lib/tag-normalize.ts"
+      - "supabase/functions/api/**"
+      - "supabase/functions/_shared/**"
+      - "scripts/sync-function-shared.mjs"
+      - ".github/workflows/mcp.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  mcp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Edge Function copy of the core is current
+        working-directory: .
+        run: node scripts/sync-function-shared.mjs --check
