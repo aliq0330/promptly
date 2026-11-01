@@ -126,11 +126,10 @@ export class GiphyError extends Error {
   }
 }
 
-/** Boş arama = trend; doluysa arama. Hata → `GiphyError` (seçici "Tekrar dene" gösterir). */
-export async function fetchGifs(query: string, offset = 0, signal?: AbortSignal): Promise<GifPage> {
+/** GIPHY'ye tek gerçek istek (önbelleksiz, iptalsiz — paylaşılan istek bir çağıranın vazgeçmesiyle düşmesin diye `fetchGifs` sarar). */
+async function requestGifs(q: string, offset: number): Promise<GifPage> {
   const key = giphyApiKey();
   if (!key) throw new GiphyError("not_configured");
-  const q = query.trim();
   const params = new URLSearchParams({ api_key: key, limit: String(GIF_PAGE_SIZE), offset: String(offset), rating: RATING });
   if (q) {
     params.set("q", q.slice(0, 100));
@@ -138,9 +137,8 @@ export async function fetchGifs(query: string, offset = 0, signal?: AbortSignal)
   }
   let response: Response;
   try {
-    response = await fetch(`${API}/${q ? "search" : "trending"}?${params.toString()}`, { signal });
-  } catch (err) {
-    if (err instanceof DOMException && err.name === "AbortError") throw err;
+    response = await fetch(`${API}/${q ? "search" : "trending"}?${params.toString()}`);
+  } catch {
     throw new GiphyError("failed");
   }
   if (response.status === 429) throw new GiphyError("rate_limited");
@@ -152,6 +150,73 @@ export async function fetchGifs(query: string, offset = 0, signal?: AbortSignal)
   const next = offset + received;
   // GIPHY arama sayfalamasında 4999 sınırı vardır; sayfa boşsa ya da toplam aşıldıysa biter.
   return { items, nextOffset: received > 0 && next < total && next < 4999 ? next : null };
+}
+
+// --- önbellek (docs/history/309-*) ------------------------------------------------------------------------------------------------
+// Anahtar başına istek sınırı vardır (beta anahtar: saatte 100, TÜM ziyaretçiler için ortak): aynı aramayı/sayfayı yeniden sormak sınırı boşuna yer.
+// Başarılı sayfalar kısa süre bellekte tutulur, aynı anda gelen aynı istekler TEK isteğe iner; hata ASLA saklanmaz ("Tekrar dene" gerçekten dener).
+// Süre kısadır: GIPHY'nin trend listesi gün içinde değişir ve içerik kaldırılmış GIF uzun süre görünmesin.
+
+/** Bir sayfanın bellekte kalma süresi. */
+export const GIF_CACHE_TTL_MS = 10 * 60 * 1000;
+/** En çok bu kadar sayfa tutulur (en eski atılır). */
+export const GIF_CACHE_MAX = 60;
+
+const pageCache = new Map<string, { at: number; page: GifPage }>();
+const inflight = new Map<string, Promise<GifPage>>();
+
+/** Arama kutusundaki büyük/küçük harf ve baş/son boşluk farkı aynı aramadır. */
+export const gifCacheKey = (query: string, offset: number): string => `${query.trim().slice(0, 100).toLowerCase()}|${offset}`;
+
+export function clearGifCache(): void {
+  pageCache.clear();
+  inflight.clear();
+}
+
+function abortable<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  const aborted = () => new DOMException("Aborted", "AbortError");
+  if (signal.aborted) return Promise.reject(aborted());
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(aborted());
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (err) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(err);
+      },
+    );
+  });
+}
+
+/**
+ * Boş arama = trend; doluysa arama. Hata → `GiphyError` (seçici "Tekrar dene" gösterir). Sonuç önbelleğe alınır (yukarıdaki not);
+ * `signal` yalnız BU çağıranı bırakır, paylaşılan istek tamamlanır ve sonraki çağıran önbellekten alır.
+ */
+export async function fetchGifs(query: string, offset = 0, signal?: AbortSignal): Promise<GifPage> {
+  if (!giphyApiKey()) throw new GiphyError("not_configured");
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  const q = query.trim();
+  const key = gifCacheKey(q, offset);
+  const hit = pageCache.get(key);
+  if (hit && Date.now() - hit.at < GIF_CACHE_TTL_MS) return hit.page;
+  if (hit) pageCache.delete(key);
+  let pending = inflight.get(key);
+  if (!pending) {
+    pending = requestGifs(q, offset)
+      .then((page) => {
+        pageCache.set(key, { at: Date.now(), page });
+        while (pageCache.size > GIF_CACHE_MAX) pageCache.delete(pageCache.keys().next().value as string);
+        return page;
+      })
+      .finally(() => inflight.delete(key));
+    inflight.set(key, pending);
+  }
+  return abortable(pending, signal);
 }
 
 /** Seçicinin hızlı konu çipleri: görünen ad (çeviri anahtarı `gif.topic.<anahtar>`) aynı zamanda arama terimidir; `trend` boş arama = GIPHY trendleri. */

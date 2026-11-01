@@ -128,8 +128,13 @@ await scenario("2. GIF: seçici açılır (trend, GIPHY ibaresi, sayfa=24); seç
   await extra(page, "gif").click();
   const picker = page.locator("[data-gif-picker]");
   await picker.waitFor();
-  await picker.getByText("Powered by GIPHY").waitFor();
-  await picker.getByText("GIF'ler GIPHY'den gelir").waitFor();
+  const mark = picker.getByRole("img", { name: "Powered by GIPHY" });
+  await mark.waitFor();
+  await page.waitForFunction(() => { const img = [...document.querySelectorAll("[data-giphy-attribution] img")].find((i) => i.offsetParent !== null); return img && img.complete && img.naturalWidth === 641; });
+  assert.match(await mark.getAttribute("src"), /\/giphy\/powered-by-giphy-light\.png$/, "the official, transparent GIPHY mark (light theme variant), served from public/");
+  // Arkası şeffaf: işaretin etrafında siyah kutu yok (görsel zemin sayfa zeminidir)
+  assert.equal(await mark.evaluate((img) => getComputedStyle(img).backgroundColor), "rgba(0, 0, 0, 0)");
+  await picker.getByText("Birine dokununca eklenir.").waitFor();
   await picker.locator("[data-gif-id]").first().waitFor();
   await shot(page, "gif-picker-desktop");
   assert.equal(await picker.locator("[data-gif-id]").count(), 24);
@@ -361,13 +366,34 @@ await scenario("13. İngilizce: düğme adları, GIF seçici ve içerik seçici 
   await section(page).getByRole("button", { name: "Add a GIF" }).click();
   const picker = page.locator("[data-gif-picker]");
   await picker.getByRole("heading", { name: "Add a GIF" }).waitFor();
-  await picker.getByText("GIFs come from GIPHY. Tap one to add it.").waitFor();
+  await picker.getByText("Tap one to add it.").waitFor();
   await picker.getByRole("button", { name: "Applause" }).waitFor();
   await page.keyboard.press("Escape");
   await section(page).getByRole("button", { name: "Attach content" }).click();
   await page.locator("[data-comment-content-picker]").getByText("Only public content can be attached").waitFor();
 }, { lang: "en" });
 
+
+await scenario("20. GIPHY önbelleği: seçiciyi kapatıp yeniden açmak ve aynı aramayı tekrarlamak yeni istek atmaz (anahtar başına saatlik sınır boşa gitmez)", async ({ page, state }) => {
+  await composerInput(page).waitFor();
+  await extra(page, "gif").click();
+  await page.locator("[data-gif-picker] [data-gif-id='gif01']").waitFor();
+  assert.equal(state.gifQueries.length, 1, "trending asked once");
+  await page.keyboard.press("Escape");
+  await extra(page, "gif").click();
+  await page.locator("[data-gif-picker] [data-gif-id='gif01']").waitFor();
+  assert.equal(state.gifQueries.length, 1, "reopening is served from the cache");
+  const picker = page.locator("[data-gif-picker]");
+  await picker.locator("[data-gif-topic='clap']").click();
+  await picker.locator("[data-gif-id^='sAlk']").first().waitFor();
+  assert.equal(state.gifQueries.length, 2);
+  await picker.locator("[data-gif-topic='trend']").click();
+  await picker.locator("[data-gif-id='gif01']").waitFor();
+  await picker.locator("[data-gif-topic='clap']").click();
+  await picker.locator("[data-gif-id^='sAlk']").first().waitFor();
+  assert.equal(state.gifQueries.length, 2, "going back to a search already made costs no request");
+  assert.equal(await picker.locator("[data-giphy-attribution]").count(), 1, "the required attribution mark stays");
+});
 
 // ---- Düzenleme ----
 const MINE_PHOTO = `${ME}/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png`;
