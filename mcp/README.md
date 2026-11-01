@@ -5,7 +5,23 @@ Use [Promptly](https://aliq0330.github.io/promptly)'s public prompt library from
 
 *Türkçesi aşağıda.*
 
-## Install
+## No install: use the hosted URL
+
+Promptly also runs this MCP server on the internet, so nothing has to be installed on your computer. Add this address as a **remote MCP
+server / custom connector** in a client that supports them (no account, no key; read-only):
+
+```
+https://xqxybhjcyrvaroknucdq.supabase.co/functions/v1/mcp
+```
+
+- **Claude Code:** `claude mcp add --transport http promptly https://xqxybhjcyrvaroknucdq.supabase.co/functions/v1/mcp`
+- **Claude (claude.ai and the apps):** Settings → Connectors → *Add custom connector* → paste the address. Availability depends on your plan.
+- **Cursor and other clients:** `{ "mcpServers": { "promptly": { "url": "https://xqxybhjcyrvaroknucdq.supabase.co/functions/v1/mcp" } } }`
+
+The hosted version offers the four tools and the `find-prompt` prompt (it does not list the popular prompts as MCP prompts — it keeps no
+session). Opening the address in a browser shows a short status JSON. It is untested in claude.ai specifically.
+
+## Install (runs on your computer)
 
 No account and no API key needed. Requires Node.js 18.17+.
 
@@ -61,6 +77,11 @@ There is also an HTTP API with the same data: `https://<project>.supabase.co/fun
 ---
 
 ## Türkçe
+
+**Kurulumsuz kullanım:** Promptly bu MCP sunucusunu internette de çalıştırıyor. Uzak MCP sunucusu / özel bağlayıcı destekleyen bir istemciye şu adresi
+ekle (hesap ve anahtar gerekmez, yalnız okur): `https://xqxybhjcyrvaroknucdq.supabase.co/functions/v1/mcp` — Claude Code: `claude mcp add --transport http promptly https://xqxybhjcyrvaroknucdq.supabase.co/functions/v1/mcp`; claude.ai ve
+uygulamalar: Ayarlar → Bağlayıcılar → *Özel bağlayıcı ekle* (kullanılabilirlik planına bağlı). Bu sürüm dört aracı ve `find-prompt`'u sunar; oturum
+tutmadığı için popüler prompt'ları MCP prompt'u olarak listelemez. claude.ai'da özellikle denenmedi.
 
 Promptly'nin herkese açık prompt kütüphanesini Claude, Cursor, VS Code ve diğer MCP istemcilerinin içinden kullan: prompt ara,
 `{değişkenleriyle}` birlikte oku, doldurulmuş son metni al. Hesap ya da API anahtarı gerekmez (Node.js 18.17+).
