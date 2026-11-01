@@ -22,6 +22,14 @@ export interface LegalDocument {
 /** The one public contact address of both documents. */
 export const LEGAL_CONTACT_EMAIL = "aliq0330@gmail.com";
 
+/**
+ * Kullanım Koşulları'nın SÜRÜMÜ ve yürürlüğe girdiği an. Koşullar önemli ölçüde değişince ikisi birlikte güncellenir: oturum açmış herkese
+ * "Kullanım Koşulları güncellendi" bandı yeniden çıkar (`features/legal/terms-update-notice.tsx`, karar `lib/legal-notice.ts`).
+ * Yürürlükten sonra hesap açan kişi bandı görmez (kayıt ekranında yeni metni zaten görmüştür). Yalnız yazım düzeltmesi için artırma.
+ */
+export const TERMS_VERSION = "2026-11-01";
+export const TERMS_EFFECTIVE_AT = "2026-11-01T07:00:00Z";
+
 // İki belge ayrı güncellenir: birinin değişmesi diğerinin tarihini oynatmaz.
 const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 1 Kasım 2026", en: "Last updated: November 1, 2026" };
 const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 1 Kasım 2026", en: "Last updated: November 1, 2026" };
