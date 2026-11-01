@@ -23,3 +23,7 @@ verify_jwt = false
 # İnternet üzerinden çalışan MCP (salt-okunur, yalnız anon anahtar, kimlik doğrulamasız bağlayıcı) — JWT doğrulaması KAPALI (`docs/history/299-*`).
 [functions.mcp]
 verify_jwt = false
+
+# Promptly'nin kendi OAuth sunucusu (docs/history/317-*) — istemciler Supabase JWT'si taşımaz; JWT doğrulaması KAPALI, kimlik kontrolü veritabanı fonksiyonlarındadır.
+[functions.oauth]
+verify_jwt = false

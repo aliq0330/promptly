@@ -9,7 +9,7 @@ on:
         description: "Deploy only this function (default: all). Single-function deploys leave the others untouched."
         type: choice
         default: all
-        options: [all, api, mcp, analyze-image, cleanup-orphan-storage, delete-account, username-login]
+        options: [all, api, mcp, oauth, analyze-image, cleanup-orphan-storage, delete-account, username-login]
 
 permissions:
   contents: read

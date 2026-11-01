@@ -33,7 +33,8 @@ const me =
         backend: createMeBackend({ db: createPostgresMeDb(DB_URL), verifyJwt: createJwtVerifier(SUPABASE_URL, ANON_KEY), siteUrl: "https://aliq0330.github.io/promptly" }),
         resourceUrl: `${FUNCTION_BASE}/me`,
         resourceMetadataUrl: `${FUNCTION_BASE}/oauth-protected-resource`,
-        authorizationServers: [`${SUPABASE_URL.replace(/\/+$/, "")}/auth/v1`],
+        // Kendi OAuth sunucumuz (docs/history/317-*): sınırlı pmt_ belirteci verir. Supabase'in /auth/v1 OAuth'u hesabın TAMAMINI açardı.
+        authorizationServers: [`${SUPABASE_URL.replace(/\/+$/, "")}/functions/v1/oauth`],
       }
     : undefined;
 

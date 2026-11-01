@@ -168,6 +168,9 @@ export function localizeNotificationMessage(rawMessage: string, language: "tr" |
   // Kişisel API anahtarı oluşturuldu (docs/history/314-*): anahtar adı çevrilmez.
   const apiToken = /^Yeni bir API anahtarı oluşturuldu: "([\s\S]*)" \((pmt_[A-Za-z0-9_-]{4})…\)\. Sen oluşturmadıysan hemen iptal et\.$/.exec(message);
   if (apiToken) return t("notifMsg.apiTokenCreated", { name: apiToken[1], prefix: apiToken[2] });
+  // Yeni uygulama bağlandı (docs/history/317-*): uygulama adı çevrilmez.
+  const oauthConnected = /^Yeni bir uygulama hesabına bağlandı: "([\s\S]*)"\. Sen yapmadıysan Ayarlar'dan hemen kaldır\.$/.exec(message);
+  if (oauthConnected) return t("notifMsg.oauthConnected", { name: oauthConnected[1] });
   const storyRemoved = /^"([\s\S]*)" topluluğundaki hikâyen kaldırıldı\.$/.exec(message);
   if (storyRemoved) return t("notifMsg.storyRemovedCommunity", { name: storyRemoved[1] });
   if (message === "Seni takip etmeye başladı.") return t("notifMsg.followed");

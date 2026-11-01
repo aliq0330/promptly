@@ -204,6 +204,15 @@ export function DevelopersPage() {
               <CodeBlock text={snippets.cursorMeJson} label={t("dev.meMcpCursor")} />
               <p className="text-body leading-relaxed text-text-secondary">{t("dev.meMcpNoHeader")}</p>
             </Step>
+            <Step title={t("dev.meOauthTitle")} body={t("dev.meOauthBody")}>
+              <ol data-developers-oauth="" className="list-decimal space-y-1.5 pl-5 text-body leading-relaxed text-text-secondary marker:text-text-muted">
+                <li>{t("dev.meOauthStep1")}</li>
+                <li>{t("dev.meOauthStep2")}</li>
+                <li>{t("dev.meOauthStep3")}</li>
+                <li>{t("dev.meOauthStep4")}</li>
+              </ol>
+              <p className="text-body leading-relaxed text-text-secondary">{t("dev.meOauthLimits")}</p>
+            </Step>
           </div>
           <h3 className="text-h3 text-text">{t("dev.meRules")}</h3>
           <ul className="list-disc space-y-2 pl-5 text-body leading-relaxed text-text-secondary marker:text-text-muted">

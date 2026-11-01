@@ -133,7 +133,7 @@ const GRANT = (id, name) => ({ client: { id, name, uri: "https://claude.ai", log
 await scenario("11 Settings lists connected apps and revoking is two steps (DELETE with the client id, then the list refreshes)", async ({ page, srv }) => {
   const apps = page.locator("[data-connected-apps]");
   await apps.getByRole("heading", { name: "Bağlı uygulamalar" }).waitFor();
-  const row = apps.locator("[data-connected-app='c-1']");
+  const row = apps.locator("[data-connected-app='legacy:c-1']");
   await row.getByText("Claude", { exact: true }).waitFor();
   await row.getByRole("button", { name: "İzni geri al" }).click();
   await row.getByText(/oturumları hemen kapanır/).waitFor();
@@ -145,10 +145,11 @@ await scenario("11 Settings lists connected apps and revoking is two steps (DELE
   assert.deepEqual(srv.calls.find((c) => c.method === "DELETE").query, { client_id: "c-1" });
 }, { path: "/settings/", oauth: { grants: [GRANT("c-1", "Claude")] } });
 
-await scenario("12 when the OAuth server is off, the connected-apps section does not exist at all", async ({ page }) => {
+await scenario("12 when Supabase's OAuth server is off, the section still exists (our own grants) and just lists nothing", async ({ page }) => {
   await page.getByRole("heading", { name: "Geliştirici anahtarları" }).waitFor();
-  await page.waitForTimeout(400);
-  assert.equal(await page.locator("[data-connected-apps]").count(), 0);
+  const apps = page.locator("[data-connected-apps]");
+  await apps.getByText("Bağlı uygulama yok.").waitFor();
+  assert.equal(await apps.locator("[data-connected-app]").count(), 0);
 }, { path: "/settings/", oauth: { grantsStatus: 404 } });
 
 await server.close();

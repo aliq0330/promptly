@@ -117,7 +117,7 @@ await scenario("9 phone: the account menu links to it", async ({ page }) => {
 
 await scenario("10 other clients: ChatGPT steps and one block per client with ITS OWN address key", async ({ page }) => {
   await page.goto(BASE + "/developers/");
-  await page.getByRole("heading", { name: "ChatGPT", level: 3 }).waitFor();
+  await page.getByRole("heading", { name: "ChatGPT", level: 3, exact: true }).waitFor();
   await page.getByText(/geliştirici modunu aç/).waitFor();
   const clients = page.locator("[data-dev-clients]");
   for (const name of ["Cursor", "VS Code", "Windsurf", "Gemini CLI", "Codex CLI"]) await clients.getByRole("heading", { name, level: 3 }).waitFor();
@@ -161,7 +161,8 @@ await scenario("14 the personal-key section: curl examples, the personal MCP add
   await me.locator("pre", { hasText: "@promptly-prompts.json" }).waitFor();
   await me.locator("pre", { hasText: new RegExp(`^${MCP.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}/me$`) }).waitFor();
   await me.locator("pre", { hasText: "--header \"Authorization: Bearer pmt_YOUR_KEY\"" }).waitFor();
-  await me.getByText(/claude.ai ve ChatGPT bağlayıcıları sabit bir başlık gönderemez/).waitFor();
+  await me.getByText(/Anahtarı claude\.ai ya da ChatGPT'ye YAPIŞTIRMA/).waitFor();
+  await me.getByText("claude.ai ve ChatGPT'de bağlan (anahtarsız)").waitFor();
   assert.ok(!(await page.locator("body").innerText()).match(/pmt_[A-Za-z0-9_-]{43}/), "no real-looking key on the page");
   const link = page.getByRole("link", { name: "Anahtar oluştur" });
   assert.match(await link.getAttribute("href"), /\/settings\/?#settings-developer$/);
