@@ -46,3 +46,8 @@ test("API keys (docs/history/314-*): the privacy policy says only a digest is ke
     assert.match(terms, lang === "tr" ? /hemen iptal et/ : /revoke it right away/);
   }
 });
+
+test("connected apps (docs/history/316-*): the privacy policy says what is stored about an OAuth permission, in both languages", () => {
+  assert.match(texts(PRIVACY_POLICY, "tr").join("\n"), /Bağlı uygulamalar:.*OAuth/);
+  assert.match(texts(PRIVACY_POLICY, "en").join("\n"), /Connected apps:.*OAuth/);
+});
