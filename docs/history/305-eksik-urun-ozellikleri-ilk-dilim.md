@@ -1,6 +1,6 @@
 # 305 — Eksik ürün özellikleri: ilk dilim (Odak türü süzgeci, topluluk şikâyeti, rol bildirimi, profil araması)
 
-**Durum:** uygulandı (kod + 1 migration repoda; **canlıya UYGULANMADI**). Ağ taklitli Playwright (`run-focus-feed` #35, `run-communities` #11b/#11c), yerel PostgreSQL (`supabase/tests/community-role-notification.sql`) ve birim testleriyle sınandı. **Gerçek Supabase'e / gerçek cihaza karşı denenmedi.**
+**Durum:** uygulandı (kod + 1 migration; **canlıda**: PR #403 birleşince `deploy.yml` migration'ı uyguladı ve duman testi geçti, 2026-11-01). Ağ taklitli Playwright (`run-focus-feed` #35, `run-communities` #11b/#11c), yerel PostgreSQL (`supabase/tests/community-role-notification.sql`) ve birim testleriyle sınandı. **Gerçek Supabase'e / gerçek cihaza karşı denenmedi.**
 
 ## Neden
 CLAUDE.md "Bilinen sınırlar" ve `docs/yapilacaklar.md` listesindeki küçük, bağımsız eksikler tek turda kapatıldı. Her madde önce kodla doğrulandı; listede eskimiş çıkanlar aşağıda.

@@ -1,6 +1,6 @@
 # 306 — Eksik ürün özellikleri: ikinci dilim (tepki bildirimi, paylaşım sayfaları, İstek/Hazır ayar dışa-içe aktarma)
 
-**Durum:** uygulandı (kod + 2 migration repoda; **canlıya UYGULANMADI**). `tsc` temiz, lint 0 hata, `npm test` 678/678, yerel PostgreSQL 16'da yeni SQL testleri, ağ taklitli Playwright (`run-exchange` 42/42, `run-search-notifications` 15/15, `run-focus-feed` 35/35).
+**Durum:** uygulandı (kod + 2 migration; **canlıda**: PR #404 birleşince `deploy.yml` migration'ları uyguladı ve canlı şemaya karşı duman testi geçti, 2026-11-01). `tsc` temiz, lint 0 hata, `npm test` 678/678, yerel PostgreSQL 16'da yeni SQL testleri, ağ taklitli Playwright (`run-exchange` 42/42, `run-search-notifications` 15/15, `run-focus-feed` 35/35).
 **Gerçek Supabase'e / gerçek cihaza karşı denenmedi.** İngilizce karşılıklar eklendi (`translations-exchange.ts`; bildirim rozeti mevcut `reaction.*` anahtarlarını kullanır).
 
 ## Yapılan
