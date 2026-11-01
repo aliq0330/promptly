@@ -277,3 +277,12 @@ ilerleme çubuğu yok, görsel/uzak kart medya kurmaz, tarayıcı sesi reddeders
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-card-autoplay.mjs   # 7/7 beklenir
 ```
+
+## Yasal bağlantılar + "Koşullar güncellendi" bandı (`docs/history/300-*`)
+
+`run-legal-notice.mjs`: bant (gecikmeyle çıkış, "Tamam"/"Koşulları oku"/`/terms`'i açma = görüldü, yeniden yüklemede dönmez, yürürlükten sonra açılan hesap ve ziyaretçi görmez, İngilizce, telefonda alt menüyle çakışmaz, yazma ekranı/hikâye açıkken gizli) ve bağlantılar (geniş kenar çubuğu, Ayarlar → Yasal, telefonda hesap menüsü). Ağ taklitli; gerçek cihaza KARŞI DENENMEDİ. CI'ın hızlı kesitine eklenmedi.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-legal-notice.mjs   # 14/14 beklenir
+```

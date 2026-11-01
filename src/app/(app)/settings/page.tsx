@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronRight, FileText, Lock, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldInputClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -38,7 +38,7 @@ export default function SettingsPage() {
   const { t, language, setLanguage } = useTranslation();
   const isModerator = useIsModerator();
   const { profile, refresh: refreshProfile } = useOwnProfile();
-  const activeSection = useActiveSection(["settings-account", "settings-privacy", "settings-preferences", "settings-danger"]);
+  const activeSection = useActiveSection(["settings-account", "settings-privacy", "settings-preferences", "settings-legal", "settings-danger"]);
   const [newEmail, setNewEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
@@ -191,6 +191,7 @@ export default function SettingsPage() {
     { id: "settings-account", label: t("settings.groupAccount") },
     { id: "settings-privacy", label: t("settings.privacyTitle") },
     { id: "settings-preferences", label: t("settings.groupPreferences") },
+    { id: "settings-legal", label: t("legal.groupTitle") },
     { id: "settings-danger", label: t("settings.groupDanger") },
   ];
 
@@ -382,6 +383,11 @@ export default function SettingsPage() {
               {t("tour.replay")}
             </Button>
           </SettingsCard>
+        </SettingsGroup>
+
+        <SettingsGroup id="settings-legal" title={t("legal.groupTitle")}>
+          <SettingsLinkRow href="/terms" icon={<FileText size={18} className="text-text-secondary" />} title={t("legal.termsTitle")} hint={t("legal.termsHint")} />
+          <SettingsLinkRow href="/privacy" icon={<Lock size={18} className="text-text-secondary" />} title={t("legal.privacyTitle")} hint={t("legal.privacyHint")} />
         </SettingsGroup>
 
         <SettingsGroup id="settings-danger" title={t("settings.groupDanger")}>

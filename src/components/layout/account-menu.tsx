@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftRight, BarChart3, Bookmark, LayoutGrid, LogIn, LogOut, Moon, Settings, Shapes, ShieldCheck, Undo2, User, UserPlus, Users } from "lucide-react";
+import { ArrowLeftRight, BarChart3, Bookmark, FileText, LayoutGrid, Lock, LogIn, LogOut, Moon, Settings, Shapes, ShieldCheck, Undo2, User, UserPlus, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -190,6 +190,14 @@ export function AccountMenu() {
             </button>
             <MenuLink href="/settings" icon={Settings} label={t("nav.settings")} onNavigate={close} />
             {isModerator && <MenuLink href="/moderation" icon={ShieldCheck} label={t("nav.moderation")} onNavigate={close} />}
+          </MenuGroup>
+
+          <div className="border-t border-border-soft" />
+
+          {/* Yasal bağlantılar (docs/history/300-*): telefonda kenar çubuğu olmadığı için burada. */}
+          <MenuGroup label={t("legal.groupTitle")}>
+            <MenuLink href="/terms" icon={FileText} label={t("legal.termsTitle")} onNavigate={close} />
+            <MenuLink href="/privacy" icon={Lock} label={t("legal.privacyTitle")} onNavigate={close} />
           </MenuGroup>
 
           {(canSwitch || canReturn) && (
