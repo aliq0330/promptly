@@ -10,7 +10,6 @@ Ocak 2027'de kaldırıyor). Kalıcı yol Trusted Publisher: npm, GitHub Actions'
   kullanır), npm CLI `^11.5.1`'e yükseltilir (Node 22'nin npm'i OIDC bilmez), `id-token: write` ve `--provenance` kaldı.
 - `mcp/package.json` + lock: `0.1.0` → `0.1.1` (aynı sürüm ikinci kez yayınlanamaz; 0.1.1 yalnız yayın yolunu doğrulamak içindir, kod aynı).
 
-**Denenmedi:** gerçek npm'e karşı OIDC yayını — workflow'u kullanıcı elle çalıştırır; sonucu buraya yazılır.
+**Sonuç (kullanıcı bildirdi, 2026-11-01):** "Publish MCP package" elle çalıştırıldı, npm'deki Trusted Publisher durumu "Pending validation"dan çıktı. Bu oturumda ne çalışmanın logu ne npm sayfası görüldü; sandbox'tan gerçek npm yayını denenemez.
 
-**Sonraki adım (yayın başarılı olunca):** npm → Publishing access → "Require two-factor authentication and disallow tokens"; eski
-`NPM_TOKEN` GitHub Secret'ı ve npm token'ı silinir.
+**Sonraki adım (kullanıcı yaptığını bildirdi):** npm → Publishing access → "Require two-factor authentication and disallow tokens"; eski npm token'ı ve GitHub `NPM_TOKEN` secret'ı silindi. Yeni sürüm: `mcp/package.json` sürümünü artır + iş akışını elle çalıştır.
