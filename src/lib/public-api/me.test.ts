@@ -191,6 +191,17 @@ test("POST /me/prompts: a write key sends the file's items to import_prompts; th
   const throttled = db; void throttled;
 });
 
+test("POST /me/prompts: the file goes to the server as TEXT (::text::jsonb) — postgres.js would double-encode a ::jsonb parameter", async () => {
+  const seen: string[] = [];
+  const { db } = fakeDb({
+    authenticate: [{ token_id: "t", user_id: USER, scopes: ["read", "write"] }],
+    query: (sql) => { if (sql.includes("import_prompts")) { seen.push(sql); return [{ report: { dryRun: false, ok: true, created: 1, items: [] } }]; } return []; },
+  });
+  await handlerWith(db)(get("/me/prompts", KEY, "POST", serializeJson([filePrompt])));
+  assert.equal(seen.length, 1);
+  assert.match(seen[0], /\$1::text::jsonb/);
+});
+
 test("POST /me/prompts: the write bucket is used for the throttle; a report that is not ok is 422", async () => {
   const { db, calls } = fakeDb({
     authenticate: [{ token_id: "t", user_id: USER, scopes: ["write", "read"] }],

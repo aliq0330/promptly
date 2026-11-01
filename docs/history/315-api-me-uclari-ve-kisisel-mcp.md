@@ -35,3 +35,12 @@ claude.ai/ChatGPT bağlayıcılarının sabit başlık gönderemediği (OAuth ge
 ## Test
 `me.test.ts` 17 (işlem sırası, 401/403/429/502 eşlemesi, imleç, import, OAuth), `remote.test.ts` +9 (gerçek MCP istemcisiyle `/mcp/me`), `developers.test.ts` +1, `run-developers.mjs` 15/15,
 SQL `api-me.sql` 17/17. **Denenmedi:** gerçek Supabase/Edge'de uçtan uca (deploy sonrası canlı doğrulama ayrıca yazılır), gerçek Claude/Cursor istemcisi.
+
+## Canlı doğrulama (2026-11-01) ve bulunan hata
+Canlıya (`api` v6, `mcp` v5) geçici bir anahtarla (demo hesap, 1 saatlik, deneme sonunda silindi) uçtan uca denendi: `GET /v1/me`, `/me/prompts`, `/me/saved`,
+`POST /me/prompts` (kuru çalıştırma + gerçek yazma → ÖZEL TASLAK), MCP `/mcp/me` 8 araç, `save_prompt_draft`, salt-okunur anahtarla yazma → 403, iptal edilen anahtar → 401,
+anahtarsız `/mcp/me` → 401 + `WWW-Authenticate`, açık `/mcp` hâlâ yalnız 4 araç. Oluşan 2 deneme taslağı ve anahtar silindi.
+
+**Hata (yalnız canlıda çıktı, birim testleri yakalamadı):** Edge'deki `postgres.js` sürücüsü `$1::jsonb` parametresini KENDİSİ `JSON.stringify` eder; çekirdek de önceden
+stringify ettiği için çift kodlanıyordu ve yazma yolu 502 `upstream` veriyordu (okuma yolları jsonb parametresi taşımadığı için etkilenmedi). Düzeltme: `$1::text::jsonb`
+(sürücü metni olduğu gibi gönderir, sunucu çevirir). **Kural:** Edge'den (postgres.js) giden jsonb parametresi `::text::jsonb` ile yazılır; sahte `MeTx` testleri bunu göremez.

@@ -248,7 +248,8 @@ export async function importMyPrompts(tx: MeTx, bodyText: string, dryRun: boolea
     return payload;
   });
   if (items.length === 0) throw new PublicApiError("bad_request", "The file has no prompts.");
-  const [row] = await tx("select public.import_prompts($1::jsonb, $2) as report", [JSON.stringify(items), dryRun]);
+  // `$1::text::jsonb`: Edge sürücüsü (postgres.js) jsonb parametresini kendisi JSON.stringify eder → çift kodlama; text olarak gönderilip sunucuda çevrilir.
+  const [row] = await tx("select public.import_prompts($1::text::jsonb, $2) as report", [JSON.stringify(items), dryRun]);
   const report = (row?.report ?? { dryRun, ok: false, created: 0, items: [] }) as MeImportReport;
   return parsed.issues.length ? { ...report, skipped: parsed.issues } : report;
 }
