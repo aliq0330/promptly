@@ -1,6 +1,6 @@
 # 317 — Promptly'nin KENDİ OAuth sunucusu (316'nın yerini alır)
 
-> **Durum:** repoda + testli. **Canlıya alınması (migration CI ile, Edge Function `oauth` + `mcp` elle) ve claude.ai'da gerçek denemesi bu belgenin "Canlı" bölümünde yazılır.**
+> **Durum:** canlıda (2026-11-01): migration CI ile uygulandı, Edge Function `oauth` v1 + `mcp` v6 yüklendi, sunucu tarafı canlıda uçtan uca denendi. **claude.ai/ChatGPT ile gerçek bağlantı denenmedi.**
 
 ## Neden
 316'da Supabase'in OAuth 2.1 sunucusunu bağladık ve çalıştı (onay sayfası açıldı, kod üretildi). Ama iki sorun çıktı:
@@ -33,5 +33,11 @@ SQL `oauth-server.sql` 41/41 (yetkiler, kayıt doğrulamaları, PKCE, kod yenide
 Birim `oauth.test.ts` 16 (yönlendirme, metadata, kayıt, authorize hataları, token, hız sınırı), `oauth-connect.test.ts` 5, bildirim +1. UI `run-oauth-connect.mjs` 15/15, `run-oauth.mjs` 12/12, `run-developers.mjs` 15/15 (ağ taklitli).
 **İngilizce karşılıkları eklendi.** Gizlilik metni (TR+EN) güncellendi; `TERMS_VERSION` artırılmadı; hukuki danışman onayı YOK.
 
-## Denenmedi / canlı
-(Aşağıya canlı doğrulama sonucu yazılır.)
+## Canlı (2026-11-01)
+- Migration `20261102130000` dağıtım hattıyla uygulandı (4 tablo, 13 fonksiyon). `oauth` v1 ve `mcp` v6 Supabase MCP aracıyla esbuild paketi olarak yüklendi (`./scripts/deploy-functions.sh oauth` yolu ÇALIŞTIRILMADI).
+- Canlıda uçtan uca (curl + demo hesap; onay adımı `oauth_decide`'ı kullanıcı gibi SQL'den çağırarak): keşif (`/.well-known/oauth-authorization-server` + `openid-configuration`), kayıt (http dönüş adresi 400; `client_secret_post` isteyen istemciye de `none` döner), yetki (kayıtsız dönüş adresinde 400 sayfa + yönlendirme YOK; PKCE yoksa hata yönlendirmesi; geçerliyse site onay sayfasına 302),
+  yanlış doğrulayıcı kodu yakar, doğru değişim `read write` belirteci verir, belirteçle `GET /v1/me`, `POST /v1/me/prompts` (özel taslak), `/mcp/me` 8 araç, yenileme (eski erişim belirteci 401, yenisi 200), `/revoke` sonrası erişim 401 ve yenileme `invalid_grant`. Açık `/mcp` hâlâ 4 araç; `/mcp/me` anahtarsız 401 + `WWW-Authenticate`; `/mcp/oauth-protected-resource` artık `authorization_servers: [<proje>/functions/v1/oauth]`.
+- Deneme kalıntısı silindi (istemci → izin/belirteç/kod/istek cascade, taslak, bildirim): `oauth_*` tabloları 0 satır.
+- **Denenmedi:** gerçek claude.ai/ChatGPT akışı (istemcinin DCR + keşif sırası, `resource` parametresi, belirteç yenilemesi); site onay sayfasının canlı Supabase'e karşı tarayıcıda açılması (yalnız ağ taklitli testle sınandı); 30 sn'lik yenileme toleransının canlı zamanlaması (SQL testinde var); `RATE_LIMIT_SECRET` ile gerçek 429 (kayıt sınırı canlıda aşılıp denenmedi).
+- Not: RFC 8414 yol eklemeli keşif adresi (`/.well-known/oauth-authorization-server/functions/v1/oauth`) Supabase'in işlev yönlendirmesinde sunulamaz; istemci düşme sırasında `…/oauth/.well-known/oauth-authorization-server` ya da `openid-configuration` adresini bulmalı. Bulamazsa claude.ai'da bağlantı keşifte kalır — belirti: kayıt isteği hiç gelmez (oauth işlevinin günlüğünde görülür).
+- CI notu: PR #418'de `ui` işi 16/17 (`run-search-notifications`, hangi senaryo günlükten çıkmadı) ile düştü, yerelde 3/3 17/17; `database`/`checks`/`mcp` yeşil. PR merge'ünde `ui` bitmemişti (kullanıcı açık talimatla merge ettirdi).
