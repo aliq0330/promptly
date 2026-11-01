@@ -130,8 +130,10 @@ await scenario("2. GIF: seçici açılır (trend, GIPHY ibaresi, sayfa=24); seç
   await picker.waitFor();
   const mark = picker.getByRole("img", { name: "Powered by GIPHY" });
   await mark.waitFor();
-  await page.waitForFunction(() => { const img = document.querySelector("[data-giphy-attribution]"); return img && img.complete && img.naturalWidth === 200 && img.naturalHeight === 42; });
-  assert.match(await mark.getAttribute("src"), /\/giphy\/powered-by-giphy\.png$/, "the official GIPHY mark, served from public/");
+  await page.waitForFunction(() => { const img = [...document.querySelectorAll("[data-giphy-attribution] img")].find((i) => i.offsetParent !== null); return img && img.complete && img.naturalWidth === 641; });
+  assert.match(await mark.getAttribute("src"), /\/giphy\/powered-by-giphy-light\.png$/, "the official, transparent GIPHY mark (light theme variant), served from public/");
+  // Arkası şeffaf: işaretin etrafında siyah kutu yok (görsel zemin sayfa zeminidir)
+  assert.equal(await mark.evaluate((img) => getComputedStyle(img).backgroundColor), "rgba(0, 0, 0, 0)");
   await picker.getByText("Birine dokununca eklenir.").waitFor();
   await picker.locator("[data-gif-id]").first().waitFor();
   await shot(page, "gif-picker-desktop");

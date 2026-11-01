@@ -188,9 +188,13 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
 
         <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-soft px-5 py-3">
           <p className="text-caption leading-snug text-text-muted">{t("gif.attribution")}</p>
-          {/* GIPHY'nin RESMÎ "Powered by GIPHY" işareti (public/giphy/, docs/history/309-*): kendi siyah zemini olduğundan açık/koyu her temada okunur. Değiştirilmez, kırpılmaz, kaldırılmaz. */}
-          {/* eslint-disable-next-line @next/next/no-img-element -- küçük statik PNG; next/image bir şey katmaz */}
-          <img src={publicAssetUrl("/giphy/powered-by-giphy.png")} alt={t("gif.poweredBy")} width={200} height={42} draggable={false} data-giphy-attribution className="h-6 w-auto shrink-0" />
+          {/* GIPHY'nin RESMÎ "Powered by GIPHY" işareti (public/giphy/, docs/history/309-*). ARKASI ŞEFFAFTIR: açık temada gri yazı, koyu temada beyaz yazı + logo (GIPHY açık zemin için simgeli şeffaf sürüm vermez). Renkleri/oranı değiştirilmez, kırpılmaz, kaldırılmaz. */}
+          {/* eslint-disable @next/next/no-img-element -- küçük statik PNG; next/image bir şey katmaz */}
+          <span data-giphy-attribution className="shrink-0">
+            <img src={publicAssetUrl("/giphy/powered-by-giphy-light.png")} alt={t("gif.poweredBy")} width={641} height={71} draggable={false} className="h-[17px] w-auto [.dark_&]:hidden" />
+            <img src={publicAssetUrl("/giphy/powered-by-giphy-dark.png")} alt={t("gif.poweredBy")} width={641} height={85} draggable={false} className="hidden h-5 w-auto [.dark_&]:block" />
+          </span>
+          {/* eslint-enable @next/next/no-img-element */}
         </div>
       </div>
     </Modal>
