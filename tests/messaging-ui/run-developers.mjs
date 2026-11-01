@@ -98,9 +98,9 @@ await scenario("7 the wide sidebar links to it (also for visitors)", async ({ pa
 }, { guest: true });
 
 await scenario("8 Settings has a row for it", async ({ page }) => {
-  await page.goto(BASE + "/settings/");
-  await page.getByRole("heading", { name: "Ayarlar" }).first().waitFor();
-  const row = page.getByRole("link", { name: /Geliştiriciler/ }).filter({ hasText: "API" }).first();
+  await page.goto(BASE + "/settings/developer/");
+  await page.getByRole("heading", { name: "Geliştirici", level: 1 }).waitFor();
+  const row = page.getByRole("link", { name: /Geliştirici belgeleri/ }).first();
   await row.click();
   await page.waitForURL(/\/developers\/?$/);
 });
@@ -161,11 +161,11 @@ await scenario("14 the personal-key section: curl examples, the personal MCP add
   await me.locator("pre", { hasText: "@promptly-prompts.json" }).waitFor();
   await me.locator("pre", { hasText: new RegExp(`^${MCP.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}/me$`) }).waitFor();
   await me.locator("pre", { hasText: "--header \"Authorization: Bearer pmt_YOUR_KEY\"" }).waitFor();
-  await me.getByText(/Anahtarı claude\.ai ya da ChatGPT'ye YAPIŞTIRMA/).waitFor();
-  await me.getByText("claude.ai ve ChatGPT'de bağlan (anahtarsız)").waitFor();
+  await me.getByText(/«Oturum açma yok» yapıp bir istek başlığı ekleyebilirsin/).waitFor();
+  await me.getByText("Hesabınla giriş (OAuth) — deneysel").waitFor();
   assert.ok(!(await page.locator("body").innerText()).match(/pmt_[A-Za-z0-9_-]{43}/), "no real-looking key on the page");
   const link = page.getByRole("link", { name: "Anahtar oluştur" });
-  assert.match(await link.getAttribute("href"), /\/settings\/?#settings-developer$/);
+  assert.match(await link.getAttribute("href"), /\/settings\/developer\/?$/);
   await page.getByText(/okumada dakikada 120, yazmada dakikada 30/).waitFor();
   await shot(page, "developers-me");
 });

@@ -155,17 +155,17 @@ await scenario("13 Settings lists connected apps with scopes and last use; revok
   await first.waitFor({ state: "detached" });
   assert.deepEqual(srv.calls.revoke, [{ p_id: "g1" }]);
   await second.waitFor();
-}, { path: "/settings/", oauth: { grants: [GRANT("g1", "Claude"), GRANT("g2", "Cursor", { scopes: ["read", "write"], last_used_at: new Date().toISOString() })] } });
+}, { path: "/settings/developer/", oauth: { grants: [GRANT("g1", "Claude"), GRANT("g2", "Cursor", { scopes: ["read", "write"], last_used_at: new Date().toISOString() })] } });
 
 await scenario("14 with no connected apps the section says so", async ({ page }) => {
   const apps = page.locator("[data-connected-apps]");
   await apps.getByText("Bağlı uygulama yok.").waitFor();
-}, { path: "/settings/" });
+}, { path: "/settings/developer/" });
 
 await scenario("15 the /developers page explains the key-less connection (English too)", async ({ page }) => {
   await page.locator("[data-developers-oauth]").waitFor();
-  await page.getByText("Connect in claude.ai and ChatGPT (no key)").waitFor();
-  await page.getByText(/Do NOT paste a key into claude\.ai or ChatGPT/).waitFor();
+  await page.getByText("Sign in with your account (OAuth) — experimental").waitFor();
+  await page.getByText(/Never type the key into a chat/).waitFor();
 }, { path: "/developers/", lang: "en" });
 
 await server.close();

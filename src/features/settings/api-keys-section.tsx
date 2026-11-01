@@ -110,7 +110,6 @@ export function ApiKeysSection() {
 
   return (
     <div className="space-y-4" data-api-keys="">
-      <p className="rounded-lg bg-surface-soft px-3.5 py-2.5 text-xs leading-relaxed text-text-secondary">{t("apiKeys.preview")}</p>
 
       {created && (
         <div role="status" className="space-y-3 rounded-lg border border-primary/40 bg-primary-soft p-4" data-api-key-reveal="">
