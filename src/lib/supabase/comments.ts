@@ -3,7 +3,7 @@ import { chunk, fetchAllRows } from "./paged";
 import { withoutBlocked } from "./blocked-users";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
-import { extrasColumns, mapCommentAttachment, mapCommentMedia, type CommentExtrasInput } from "@/lib/comment-extras-model";
+import { extrasColumns, extrasUpdateColumns, mapCommentAttachment, mapCommentMedia, type CommentExtrasInput } from "@/lib/comment-extras-model";
 import type { PromptComment } from "@/types";
 
 interface CommentRow {
@@ -218,10 +218,11 @@ export async function postCommentOnQuote(quoteId: string, authorId: string, body
  * ownership check is needed here. `handle_comment_body_edit` (Bölüm 9.5)
  * stamps `edited_at` automatically.
  */
-export async function updateComment(commentId: string, body: string): Promise<{ editedAt: string }> {
+export async function updateComment(commentId: string, body: string, extras?: CommentExtras): Promise<{ editedAt: string }> {
+  // `extras` verilirse görsel/ek de düzenlenir (docs/history/307-*): boş verilen alan veritabanında da boşalır; verilmezse yalnız metin.
   const { data, error } = await supabase
     .from("prompt_comments")
-    .update({ body })
+    .update({ body, ...(extras ? extrasUpdateColumns(extras) : {}) })
     .eq("id", commentId)
     .select("edited_at")
     .single();

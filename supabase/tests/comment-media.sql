@@ -88,16 +88,31 @@ select public._check(10, 'geçersiz ek türü ve yarım ek reddedilir',
   and public._c(', attach_type|, ''prompt''') ~* '(attachment_not_public|prompt_comments_attach_check)'
   and public._c(format(', attach_id|, %L', :p1)) ilike '%prompt_comments_attach_check%');
 
--- 11–12. Ek/medya sonradan değişmez; metin düzenlenir
+-- 11–12. Düzenlemede ek/medya değişebilir ve kaldırılabilir; yeni ek aynı kuralla denetlenir; metin düzenlemesi medyaya dokunmaz
+-- (NOT: aynı SELECT içindeki alt sorgular fonksiyon çağrısından ÖNCE değerlendirilir; bu yüzden her güncelleme ayrı bir deyimde yapılıp sonucu \gset ile alınır.)
 create temp table _k as
-  select id from public.prompt_comments where media_kind = 'gif' limit 1;
+  select id from public.prompt_comments where media_kind = 'gif' and media_ref = '3o7TKSjRrfIPjeiVyM' limit 1;
 grant all on _k to public;
-select public._check(11, 'yorumun GIF ve eki sonradan değiştirilemez',
-  public._try('update public.prompt_comments set media_ref = ''AAAAAAAAAA'' where id = (select id from _k)') ilike '%comment_extras_immutable%'
-  and public._try(format('update public.prompt_comments set attach_type = ''prompt'', attach_id = %L where id = (select id from _k)', :p1)) ilike '%comment_extras_immutable%');
+select public._try('update public.prompt_comments set media_ref = ''AAAAAAAAAA'', edited_at = null where id = (select id from _k)') as r11 \gset
+select public._check(11, 'düzenlemede GIF başka GIF ile değişir, edited_at damgalanır',
+  :'r11' = 'ok' and (select media_ref = 'AAAAAAAAAA' and edited_at is not null from public.prompt_comments where id = (select id from _k)), :'r11');
+select public._try('update public.prompt_comments set body = ''düzenlendi'' where id = (select id from _k)') as r12 \gset
 select public._check(12, 'metin düzenlemesi medyaya dokunmadan çalışır',
-  public._try('update public.prompt_comments set body = ''düzenlendi'' where id = (select id from _k)') = 'ok'
-  and (select media_ref from public.prompt_comments where id = (select id from _k)) = '3o7TKSjRrfIPjeiVyM');
+  :'r12' = 'ok' and (select media_ref from public.prompt_comments where id = (select id from _k)) = 'AAAAAAAAAA', :'r12');
+select public._try(format('update public.prompt_comments set attach_type = ''prompt'', attach_id = %L where id = (select id from _k)', :p2)) as r31a \gset
+select public._try(format('update public.prompt_comments set attach_type = ''prompt'', attach_id = %L where id = (select id from _k)', :p1)) as r31b \gset
+select public._check(31, 'düzenlemede yeni ek herkese açık olmalı (özel reddedilir), açık olan eklenir',
+  :'r31a' ilike '%attachment_not_public%' and :'r31b' = 'ok' and (select attach_id = :p1::uuid from public.prompt_comments where id = (select id from _k)), :'r31a' || ' / ' || :'r31b');
+select public._try('update public.prompt_comments set media_kind = null, media_ref = null, media_width = null, media_height = null, attach_type = null, attach_id = null where id = (select id from _k)') as r32b \gset
+select public._try('update public.prompt_comments set media_kind = ''gif'' where id = (select id from _k)') as r32a \gset
+select public._check(32, 'düzenlemede ek ve medya kaldırılabilir (hepsi boşalır); yarım biçim hâlâ reddedilir',
+  :'r32a' ilike '%prompt_comments_media_check%' and :'r32b' = 'ok' and (select media_kind is null and attach_type is null from public.prompt_comments where id = (select id from _k)), :'r32a' || ' / ' || :'r32b');
+-- Değişmeyen ek, içerik sonradan özel yapılsa da yeniden denetlenmez (yorum düzenlenebilir).
+update public.prompt_comments set attach_type = 'prompt', attach_id = :p1 where id = (select id from _k);
+update public.prompts set visibility = 'private' where id = :p1;
+select public._try('update public.prompt_comments set body = ''hâlâ düzenlenir'' where id = (select id from _k)') as r33 \gset
+select public._check(33, 'içerik sonradan özel yapılsa da yorumun metni düzenlenebilir (değişmeyen ek yeniden denetlenmez)', :'r33' = 'ok', :'r33');
+update public.prompts set visibility = 'public' where id = :p1;
 
 -- 13. Yanıtlı yorum yumuşak silinince medya + ek temizlenir; yanıtsız yorum gerçekten silinir
 insert into public.prompt_comments (id, prompt_id, author_id, body, media_kind, media_ref, attach_type, attach_id)

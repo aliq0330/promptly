@@ -70,6 +70,8 @@ export function useCommentThread(
   // Yorumda fotoğraf · GIF · içerik eki (docs/history/307-*): ana yazma kutusunun ve yanıt kutusunun ayrı ek durumu.
   const composerExtras = useCommentExtras();
   const replyExtras = useCommentExtras();
+  // Düzenlerken görsel/ek de değiştirilebilir: düzenlenen yorumun mevcut eki ile açılır (`startEdit`).
+  const editExtras = useCommentExtras();
   // The thread opens short (first few comments) so a long discussion never pushes related content out of reach; a jumped-to comment or the viewer's own new comment opens it all.
   const [showAll, setShowAll] = useState(Boolean(highlightCommentId));
   const [postError, setPostError] = useState<string | null>(null);
@@ -437,6 +439,7 @@ export function useCommentThread(
     setEditingId(comment.id);
     setEditDraft(comment.body);
     setEditError(null);
+    editExtras.load(comment.media ?? null, comment.attachment ?? null);
     // Editing and replying to the same node at once would be confusing UI-wise.
     if (replyingTo === comment.id) cancelReply();
   }
@@ -445,22 +448,29 @@ export function useCommentThread(
     setEditingId(null);
     setEditDraft("");
     setEditError(null);
+    editExtras.clear();
   }
 
   async function submitEdit(id: string) {
     const trimmed = editDraft.trim();
-    // Yalnız ek içeren yorumun metni boşaltılabilir; ekisiz yorum boş kalamaz.
-    const target = commentsById.get(id);
-    if ((!trimmed && !target?.media && !target?.attachment) || isSavingEdit) return;
+    // Metin boşaltılabilir yalnız görsel/ek kalıyorsa; ekisiz yorum boş kalamaz.
+    if ((!trimmed && !editExtras.hasExtras) || editExtras.isPreparing || !user || isSavingEdit) return;
+    const original = commentsById.get(id);
     setIsSavingEdit(true);
     setEditError(null);
+    let uploadedPath: string | null = null;
     try {
-      const { editedAt } = await updateComment(id, trimmed);
-      setComments((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, body: trimmed, editedAt } : c)),
-      );
+      const prepared = await editExtras.prepare(user.id);
+      uploadedPath = prepared.uploadedPath;
+      const { editedAt } = await updateComment(id, trimmed, prepared.extras);
+      const media = prepared.extras.media ?? null;
+      const attachment = prepared.extras.attachment ?? null;
+      setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: trimmed, editedAt, media, attachment } : c)));
+      // Yorumdan çıkan (kaldırılan ya da başka görselle değişen) fotoğrafın dosyası depoda kalmasın (en iyi çaba).
+      if (original?.media?.kind === "photo" && !(media?.kind === "photo" && media.path === original.media.path)) void removeCommentPhotos([original.media.path]);
       cancelEdit();
     } catch (err) {
+      await editExtras.discardUpload(uploadedPath);
       setEditError(err instanceof Error ? err.message : t("comments.editFailed"));
     } finally {
       setIsSavingEdit(false);
@@ -552,6 +562,7 @@ export function useCommentThread(
     highlightedId,
     onRate: ratingEnabled ? rateComment : undefined,
     replyExtras,
+    editExtras,
     attachmentStateFor,
   };
 

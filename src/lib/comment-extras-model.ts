@@ -56,3 +56,11 @@ export function extrasColumns(extras: CommentExtrasInput | undefined): Record<st
   }
   return columns;
 }
+
+/**
+ * Düzenlemede yazılacak sütunlar (docs/history/307-*): altısı da HER ZAMAN yazılır — ek yoksa `null`, yani kullanıcının kaldırdığı görsel/ek
+ * veritabanında da boşalır. (INSERT için `extrasColumns`, yalnızca dolu olanı yazar.)
+ */
+export function extrasUpdateColumns(extras: CommentExtrasInput): Record<string, unknown> {
+  return { media_kind: null, media_ref: null, media_width: null, media_height: null, attach_type: null, attach_id: null, ...extrasColumns(extras) };
+}

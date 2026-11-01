@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { extrasColumns, mapCommentAttachment, mapCommentMedia } from "./comment-extras-model.ts";
+import { extrasColumns, extrasUpdateColumns, mapCommentAttachment, mapCommentMedia } from "./comment-extras-model.ts";
 
 const U = "11111111-1111-4111-8111-111111111111";
 const F = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -40,4 +40,12 @@ test("extrasColumns: nothing → {} (old behaviour byte for byte); GIF and photo
     attach_type: "space",
     attach_id: "s1",
   });
+});
+
+test("extrasUpdateColumns (editing): all six columns are always written — removed extras become null, kept ones are written again", () => {
+  const empty = { media_kind: null, media_ref: null, media_width: null, media_height: null, attach_type: null, attach_id: null };
+  assert.deepEqual(extrasUpdateColumns({}), empty);
+  assert.deepEqual(extrasUpdateColumns({ media: null, attachment: null }), empty);
+  assert.deepEqual(extrasUpdateColumns({ attachment: { type: "prompt", id: "p1" } }), { ...empty, attach_type: "prompt", attach_id: "p1" });
+  assert.deepEqual(extrasUpdateColumns({ media: { kind: "gif", gifId: "3o7TKSjRrfIPjeiVyM", width: 1, height: 2 } }), { ...empty, media_kind: "gif", media_ref: "3o7TKSjRrfIPjeiVyM", media_width: 1, media_height: 2 });
 });

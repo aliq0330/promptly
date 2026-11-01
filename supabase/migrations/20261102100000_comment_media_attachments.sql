@@ -10,7 +10,8 @@
 --        attach_type / attach_id               — yorumun en çok BİR içerik eki (prompt · request · workflow · preset · space); kopya değil başvuru
 --      CHECK'ler biçimi sabitler (GIF kimliği yalnız `[A-Za-z0-9_-]`; fotoğraf yolu yalnız YAZARIN kendi klasörü).
 --   2) `prompt_comments_extras_guard` (BEFORE INSERT/UPDATE): içerik eki yalnız `quote_target_ok` ile "alıntılanabilir" (yayında + herkese açık +
---      topluluğa ait değil; Space: herkese açık + arşivsiz + okunabilir) içeriğe yapılır; sonradan ek DEĞİŞTİRİLEMEZ (düzenleme yalnız metni değiştirir).
+--      topluluğa ait değil; Space: herkese açık + arşivsiz + okunabilir) içeriğe yapılır. Düzenlemede yazar görseli/eki değiştirebilir ya da kaldırabilir:
+--      YENİ ek aynı kuralla denetlenir, değişmeyen ek yeniden denetlenmez; ek değişince `edited_at` damgalanır.
 --   3) `handle_comment_delete`: yanıtlı yorum yumuşak silinirken medya/ek de temizlenir (silinmiş yorumun fotoğrafı/eki görünmesin).
 --   4) `comment-media` PRIVATE bucket: yükleme yalnız kendi klasörüne; okuma = yorumu OKUYABİLEN herkes (politika `prompt_comments` RLS'ine yaslanır,
 --      yani yorum ne kadar görünürse fotoğraf da o kadar; ziyaretçi dahil). 5 MB, jpeg/png/webp/gif.
@@ -69,7 +70,9 @@ begin
     end if;
     return new;
   end if;
-  -- UPDATE: ek ve medya sonradan değişmez; tek istisna yorumun silinmesi (yumuşak silme hepsini boşaltır).
+  -- UPDATE: yazar yorumunu düzenlerken görseli/eki değiştirebilir ya da kaldırabilir (RLS yalnız yazarın kendi satırını geçirir). Yeni ek INSERT'teki
+  -- kuralla AYNI denetlenir; DEĞİŞMEYEN ek yeniden denetlenmez (içerik sonradan özel yapılmışsa yorum yine düzenlenebilir, kart zaten gizli görünür).
+  -- Yorumun silinmesi (yumuşak silme) hepsini boşaltır ve "düzenlendi" damgası vurmaz.
   if new.deleted_at is null and (
        new.media_kind is distinct from old.media_kind
     or new.media_ref is distinct from old.media_ref
@@ -78,7 +81,12 @@ begin
     or new.attach_type is distinct from old.attach_type
     or new.attach_id is distinct from old.attach_id
   ) then
-    raise exception 'comment_extras_immutable';
+    if new.attach_type is not null
+       and (new.attach_type is distinct from old.attach_type or new.attach_id is distinct from old.attach_id)
+       and not public.quote_target_ok(new.attach_type, new.attach_id) then
+      raise exception 'attachment_not_public';
+    end if;
+    new.edited_at := now();
   end if;
   return new;
 end;

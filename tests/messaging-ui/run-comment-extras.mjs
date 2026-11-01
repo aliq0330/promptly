@@ -36,7 +36,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   setupCommunities(db);
   db.ownContent.prompt = [{ id: PUBLIC_PROMPT.id, title: PUBLIC_PROMPT.title, visibility: "public" }];
   db.ownContent.workflow = [{ id: "b0000000-0000-4000-8000-0000000000a1", title: "Ürün akışı", visibility: "public" }];
-  const state = { gifQueries: [], gifImages: [], cardQueries: [], attachableRows: [PUBLIC_PROMPT, PRIVATE_PROMPT], failNextPost: null, savedRows: [] };
+  const state = { gifQueries: [], gifImages: [], cardQueries: [], attachableRows: [PUBLIC_PROMPT, PRIVATE_PROMPT], failNextPost: null, savedRows: [], patches: [], removed: [] };
   setup?.(db, state);
   const context = await browser.newContext({ viewport });
   await installMock(context, db, {});
@@ -66,12 +66,27 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
       return json(route, state.attachableRows.filter((r) => ids.includes(r.id)));
     }
     if (req.method() === "GET" && table === "collection_items") return json(route, state.savedRows);
+    // Yorum düzenleme (docs/history/307-*): PATCH gövdesi kaydedilir; tek satır (`.single()`) nesne olarak döner.
+    if (req.method() === "PATCH" && table === "prompt_comments") {
+      const patch = JSON.parse(req.postData() || "{}");
+      state.patches.push({ id: new URL(req.url()).searchParams.get("id"), body: patch });
+      const id = (new URL(req.url()).searchParams.get("id") ?? "").replace(/^eq\./, "");
+      const row = db.comments.find((c) => c.id === id);
+      if (row) Object.assign(row, patch);
+      return json(route, { edited_at: "2026-10-30T12:00:00Z" });
+    }
     if (req.method() === "POST" && table === "prompt_comments" && state.failNextPost) {
       const message = state.failNextPost;
       state.failNextPost = null;
       return json(route, { code: "P0001", message, details: "", hint: "" }, 400);
     }
     return route.fallback();
+  });
+  // Yorumdan çıkan fotoğrafın dosyası silinir (Storage `remove` = DELETE + {prefixes}).
+  await context.route("https://example.supabase.co/storage/v1/object/comment-media**", async (route) => {
+    if (route.request().method() !== "DELETE") return route.fallback();
+    state.removed.push(...(JSON.parse(route.request().postData() || "{}").prefixes ?? []));
+    return json(route, []);
   });
   await context.addInitScript((l) => { try { localStorage.setItem("promptly-language", l); } catch {} }, lang);
   const page = await context.newPage(); page.setDefaultTimeout(8000);
@@ -352,6 +367,81 @@ await scenario("13. İngilizce: düğme adları, GIF seçici ve içerik seçici 
   await section(page).getByRole("button", { name: "Attach content" }).click();
   await page.locator("[data-comment-content-picker]").getByText("Only public content can be attached").waitFor();
 }, { lang: "en" });
+
+
+// ---- Düzenleme ----
+const MINE_PHOTO = `${ME}/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png`;
+const editOf = async (page, text) => {
+  await section(page).getByText(text).waitFor();
+  await section(page).getByRole("button", { name: "Düzenle" }).first().click();
+};
+
+await scenario("17. Düzenleme: mevcut GIF + içerik eki ile açılır; GIF başka GIF ile değiştirilir, ek kaldırılır → PATCH altı sütunu da yazar (ek sütunları null), 'düzenlendi' görünür", async ({ page, state }) => {
+  await section(page).getByRole("button", { name: /Tümünü gör/ }).click().catch(() => {});
+  await editOf(page, "Benim GIF'li yorumum");
+  await section(page).locator("[data-comment-extra-preview='gif']").waitFor();
+  await section(page).locator("[data-comment-extras] [data-comment-attachment='prompt']").waitFor();
+  await section(page).getByText("Neon sokak portresi").first().waitFor();
+  const editGif = section(page).locator("[data-comment-extras-toolbar] [data-comment-extra='gif']").last();
+  assert.equal(await editGif.getAttribute("aria-pressed"), "true", "existing GIF counts as the GIF slot");
+  await section(page).getByRole("button", { name: "GIF'i kaldır" }).click();
+  await editGif.click();
+  await page.locator("[data-gif-id='gif09']").click();
+  await section(page).getByRole("button", { name: "İçeriği kaldır" }).click();
+  await section(page).getByRole("button", { name: "Kaydet" }).click();
+  await section(page).locator("[data-comment-media='gif'] img[src*='/gif09/']").waitFor();
+  assert.equal(await section(page).locator("a[data-comment-attachment]").count(), 0, "attachment removed");
+  assert.equal(state.patches.length, 1);
+  assert.deepEqual(state.patches[0].body, { body: "Benim GIF'li yorumum", media_kind: "gif", media_ref: "gif09", media_width: 100, media_height: 75, attach_type: null, attach_id: null });
+  await section(page).getByText("düzenlendi").waitFor();
+}, {
+  setup: (db) => {
+    db.comments.push({ id: "e0000000-0000-4000-8000-000000000001", prompt_id: ID.prompt, parent_id: null, author_id: ME, body: "Benim GIF'li yorumum", media_kind: "gif", media_ref: "gif01", media_width: 100, media_height: 75, attach_type: "prompt", attach_id: PUBLIC_PROMPT.id, created_at: "2026-09-21T10:00:00Z" });
+  },
+});
+
+await scenario("18. Düzenleme: fotoğraf kaldırılınca PATCH medya sütunlarını boşaltır ve eski dosya depodan silinir; yalnız ekten oluşan yorumun metni boşaltılabilir (Kaydet açık)", async ({ page, state }) => {
+  await editOf(page, "Fotoğraflı yorum");
+  await section(page).locator("[data-comment-extra-preview='photo']").waitFor();
+  await section(page).getByRole("button", { name: "Fotoğrafı kaldır" }).click();
+  await section(page).getByRole("button", { name: "Kaydet" }).click();
+  await section(page).locator("[data-comment-media='photo']").waitFor({ state: "detached" });
+  assert.equal(state.patches.length, 1);
+  assert.equal(state.patches[0].body.media_kind, null);
+  assert.equal(state.patches[0].body.media_ref, null);
+  await page.waitForFunction(() => true);
+  assert.deepEqual(state.removed, [MINE_PHOTO], "the old file is removed from storage");
+  // Metin boşaltılsa da (artık hiç eki yok) Kaydet kapalı olmalı
+  await editOf(page, "Fotoğraflı yorum");
+  await section(page).locator("textarea").fill("");
+  assert.equal(await section(page).getByRole("button", { name: "Kaydet" }).isDisabled(), true, "no text and no extras");
+}, {
+  setup: (db) => {
+    db.comments.push({ id: "e0000000-0000-4000-8000-000000000002", prompt_id: ID.prompt, parent_id: null, author_id: ME, body: "Fotoğraflı yorum", media_kind: "photo", media_ref: MINE_PHOTO, media_width: 1, media_height: 1, created_at: "2026-09-21T10:00:00Z" });
+  },
+});
+
+await scenario("19. Düzenleme: metinli yoruma içerik eki eklenir (PATCH attach_*); yalnız ekten oluşan yorumun metni boşaltılıp kaydedilir", async ({ page, state }) => {
+  await editOf(page, "Sadece metin");
+  await section(page).locator("[data-comment-extras-toolbar] [data-comment-extra='content']").last().click();
+  await page.locator(`[data-comment-content-item='${PUBLIC_PROMPT.id}']`).click();
+  await page.locator("[data-comment-content-add]").click();
+  await section(page).locator("[data-comment-extras] [data-comment-attachment='prompt']").waitFor();
+  await section(page).getByRole("button", { name: "Kaydet" }).click();
+  await section(page).locator("a[data-comment-attachment='prompt']").waitFor();
+  assert.deepEqual(state.patches[0].body, { body: "Sadece metin", media_kind: null, media_ref: null, media_width: null, media_height: null, attach_type: "prompt", attach_id: PUBLIC_PROMPT.id });
+  // Şimdi metni boşalt: ek var → Kaydet açık, gövde ''
+  await section(page).getByRole("button", { name: "Düzenle" }).first().click();
+  await section(page).locator("textarea").fill("");
+  assert.equal(await section(page).getByRole("button", { name: "Kaydet" }).isDisabled(), false, "an attachment alone is enough");
+  await section(page).getByRole("button", { name: "Kaydet" }).click();
+  await section(page).locator("textarea").waitFor({ state: "detached" });
+  assert.equal(state.patches[1].body.body, "");
+}, {
+  setup: (db) => {
+    db.comments.push({ id: "e0000000-0000-4000-8000-000000000003", prompt_id: ID.prompt, parent_id: null, author_id: ME, body: "Sadece metin", created_at: "2026-09-21T10:00:00Z" });
+  },
+});
 
 // ---- Mesajlaşma ----
 const openThread = async (page) => { await page.goto(`${BASE}/messages/local?id=${CONV}`); await page.locator("[data-composer-plus]").waitFor(); await page.waitForTimeout(300); };

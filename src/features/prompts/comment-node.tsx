@@ -62,6 +62,8 @@ export interface CommentTree {
   onRate?: (id: string, rating: number) => void;
   /** Yanıt kutusunun ekleri (fotoğraf · GIF · içerik, docs/history/307-*). */
   replyExtras: CommentExtrasController;
+  /** Düzenlenen yorumun ekleri: mevcut görsel/ek ile açılır; değiştirilebilir ya da kaldırılabilir. */
+  editExtras: CommentExtrasController;
   /** Yorumdaki içerik ekinin önizleme kartı durumu (toplu okunur, yorum başına istek yok). */
   attachmentStateFor: (attachment: CommentAttachment) => AttachmentState;
 }
@@ -168,7 +170,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 <Button
                   type="button"
                   size="sm"
-                  disabled={(!tree.editDraft.trim() && !comment.media && !comment.attachment) || tree.isSavingEdit}
+                  disabled={!(tree.editDraft.trim() || tree.editExtras.hasExtras) || tree.editExtras.isPreparing || tree.isSavingEdit}
                   onClick={() => tree.onSubmitEdit(comment.id)}
                 >
                   {tree.isSavingEdit ? t("common.saving") : t("common.save")}
@@ -177,6 +179,8 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                   {t("common.cancel")}
                 </Button>
               </div>
+              <CommentExtrasPreview extras={tree.editExtras} attachmentState={tree.attachmentStateFor} />
+              {tree.currentUserId && <CommentExtrasToolbar extras={tree.editExtras} userId={tree.currentUserId} disabled={tree.isSavingEdit} className="-ml-1.5" />}
               {tree.editError && <p className="text-xs text-danger">{tree.editError}</p>}
             </div>
           ) : (
@@ -377,13 +381,15 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
                 className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
               <div className="flex items-center gap-2">
-                <Button type="button" size="sm" disabled={(!tree.editDraft.trim() && !comment.media && !comment.attachment) || tree.isSavingEdit} onClick={() => tree.onSubmitEdit(comment.id)}>
+                <Button type="button" size="sm" disabled={!(tree.editDraft.trim() || tree.editExtras.hasExtras) || tree.editExtras.isPreparing || tree.isSavingEdit} onClick={() => tree.onSubmitEdit(comment.id)}>
                   {tree.isSavingEdit ? t("common.saving") : t("common.save")}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelEdit}>
                   {t("common.cancel")}
                 </Button>
               </div>
+              <CommentExtrasPreview extras={tree.editExtras} attachmentState={tree.attachmentStateFor} showHint={false} />
+              {tree.currentUserId && <CommentExtrasToolbar extras={tree.editExtras} userId={tree.currentUserId} disabled={tree.isSavingEdit} className="-ml-1.5" />}
               {tree.editError && <p className="text-caption text-danger">{tree.editError}</p>}
             </div>
           ) : (

@@ -7,7 +7,7 @@ import { fieldControlClassName } from "@/components/ui/field";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
-import { CompactContentCard, ATTACHMENT_ICONS } from "@/features/content/compact-content-card";
+import { CompactContentCard, ATTACHMENT_ICONS, type AttachmentState } from "@/features/content/compact-content-card";
 import { LIBRARY_TYPES } from "@/features/messages/chat-attach";
 import { GifPicker } from "@/features/gif/gif-picker";
 import { LoadMore } from "@/features/feed/load-more";
@@ -22,7 +22,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import type { CommentAttachmentType, CommentMedia } from "@/types";
+import type { CommentAttachment, CommentAttachmentType, CommentMedia } from "@/types";
 import type { CommentExtras } from "@/lib/supabase/comments";
 
 /** Yazma çubuğundaki seçili ek içerik (henüz gönderilmedi): başlığı yalnız önizleme içindir, veritabanına yazılmaz. */
@@ -30,12 +30,19 @@ export interface AttachmentDraft {
   type: CommentAttachmentType;
   id: string;
   title: string;
+  /** Düzenlemede yorumda ZATEN olan ek: başlığı yoktur (kart durumu yorum listesinden gelir), değiştirilmeden bırakılırsa aynen korunur. */
+  existing?: boolean;
 }
 
 /** Yazma çubuğundaki seçili görsel: fotoğraf gönderilene kadar yalnız tarayıcıdadır (yükleme gönderimde), GIF yalnız GIPHY kimliğidir. */
 export type MediaDraft =
   | { kind: "gif"; gif: GifItem }
-  | { kind: "photo"; key: string; previewUrl: string; prepared: PreparedMessageImage | null };
+  | { kind: "photo"; key: string; previewUrl: string; prepared: PreparedMessageImage | null }
+  /** Düzenlemede yorumda ZATEN olan görsel (fotoğraf yolu ya da GIF kimliği): yeniden yüklenmez, kaldırılabilir ya da başkasıyla değiştirilebilir. */
+  | { kind: "existing"; media: CommentMedia };
+
+/** Seçili görselin türü (düzenlemedeki mevcut görsel de kendi türüyle sayılır). */
+export const draftMediaKind = (draft: MediaDraft | null): "photo" | "gif" | null => (draft === null ? null : draft.kind === "existing" ? draft.media.kind : draft.kind);
 
 /**
  * Bir yorum yazma alanının (ana kutu ya da yanıt kutusu) ekleri (docs/history/307-*): en çok BİR görsel (fotoğraf ya da GIF — biri diğerinin
@@ -118,6 +125,19 @@ export function useCommentExtras() {
   }, []);
   const removeAttachment = useCallback(() => setAttachment(null), []);
 
+  /** Yorum düzenlemeye başlarken yorumun mevcut görseli/eki ile açılır (hiçbiri yoksa boş). */
+  const load = useCallback(
+    (existingMedia: CommentMedia | null, existingAttachment: CommentAttachment | null) => {
+      discardMedia();
+      const draft: MediaDraft | null = existingMedia ? { kind: "existing", media: existingMedia } : null;
+      mediaRef.current = draft;
+      setMedia(draft);
+      setAttachment(existingAttachment ? { type: existingAttachment.type, id: existingAttachment.id, title: "", existing: true } : null);
+      setNotice(null);
+    },
+    [discardMedia],
+  );
+
   const clear = useCallback(() => {
     discardMedia();
     setMedia(null);
@@ -139,6 +159,8 @@ export function useCommentExtras() {
       uploadedPath = uploaded.path;
     } else if (media?.kind === "gif") {
       extras.media = { kind: "gif", gifId: media.gif.id, width: media.gif.width, height: media.gif.height };
+    } else if (media?.kind === "existing") {
+      extras.media = media.media;
     }
     if (attachment) extras.attachment = { type: attachment.type, id: attachment.id };
     return { extras, uploadedPath };
@@ -156,6 +178,7 @@ export function useCommentExtras() {
     pickContent,
     removeMedia,
     removeAttachment,
+    load,
     clear,
     prepare,
     discardUpload: (path: string | null) => (path ? removeCommentPhotos([path]) : Promise.resolve()),
@@ -194,10 +217,10 @@ export function CommentExtrasToolbar({ extras, userId, disabled = false, classNa
         disabled={disabled}
         onClick={() => fileRef.current?.click()}
         aria-label={t("commentExtras.addPhoto")}
-        aria-pressed={extras.media?.kind === "photo"}
+        aria-pressed={draftMediaKind(extras.media) === "photo"}
         title={t("commentExtras.addPhoto")}
         data-comment-extra="photo"
-        className={cn(TOOL_BUTTON, extras.media?.kind === "photo" && TOOL_ON)}
+        className={cn(TOOL_BUTTON, draftMediaKind(extras.media) === "photo" && TOOL_ON)}
       >
         <ImagePlus size={20} strokeWidth={1.75} aria-hidden />
       </button>
@@ -206,11 +229,11 @@ export function CommentExtrasToolbar({ extras, userId, disabled = false, classNa
         disabled={disabled}
         onClick={() => setGifOpen(true)}
         aria-label={t("commentExtras.addGif")}
-        aria-pressed={extras.media?.kind === "gif"}
+        aria-pressed={draftMediaKind(extras.media) === "gif"}
         title={t("commentExtras.addGif")}
         aria-haspopup="dialog"
         data-comment-extra="gif"
-        className={cn(TOOL_BUTTON, extras.media?.kind === "gif" && TOOL_ON)}
+        className={cn(TOOL_BUTTON, draftMediaKind(extras.media) === "gif" && TOOL_ON)}
       >
         <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-[9px] font-extrabold leading-none tracking-[0.04em]">
           {t("gif.badge")}
@@ -256,7 +279,16 @@ const REMOVE_BUTTON =
   "absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 /** Seçili ekler: görsel önizlemesi + küçük içerik kartı (her birinde ✕), ipucu ve varsa hata. Hiç ek yoksa hiçbir şey çizmez. */
-export function CommentExtrasPreview({ extras, showHint = true }: { extras: CommentExtrasController; showHint?: boolean }) {
+export function CommentExtrasPreview({
+  extras,
+  showHint = true,
+  attachmentState,
+}: {
+  extras: CommentExtrasController;
+  showHint?: boolean;
+  /** Düzenlemedeki MEVCUT ekin kartı için durum (başlığı yorum listesinden gelir); yoksa seçilen taslağın başlığı kullanılır. */
+  attachmentState?: (attachment: CommentAttachment) => AttachmentState;
+}) {
   const { t } = useTranslation();
   const { media, attachment, notice } = extras;
   if (!media && !attachment && !notice) return null;
@@ -265,8 +297,10 @@ export function CommentExtrasPreview({ extras, showHint = true }: { extras: Comm
       {(media || attachment) && (
         <div className="flex flex-wrap items-start gap-3">
           {media && (
-            <div className="relative shrink-0" data-comment-extra-preview={media.kind}>
-              {media.kind === "photo" ? (
+            <div className="relative shrink-0" data-comment-extra-preview={draftMediaKind(media)}>
+              {media.kind === "existing" ? (
+                <CommentMediaView media={media.media} className="w-40" />
+              ) : media.kind === "photo" ? (
                 // eslint-disable-next-line @next/next/no-img-element -- yerel blob önizlemesi
                 <img src={media.previewUrl} alt={t("commentExtras.photoAlt")} className="h-20 w-20 rounded-xl object-cover" />
               ) : (
@@ -278,7 +312,7 @@ export function CommentExtrasPreview({ extras, showHint = true }: { extras: Comm
                   <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden />
                 </span>
               )}
-              <button type="button" onClick={extras.removeMedia} aria-label={t(media.kind === "photo" ? "commentExtras.removePhoto" : "commentExtras.removeGif")} data-comment-extra-remove="media" className={REMOVE_BUTTON}>
+              <button type="button" onClick={extras.removeMedia} aria-label={t(draftMediaKind(media) === "photo" ? "commentExtras.removePhoto" : "commentExtras.removeGif")} data-comment-extra-remove="media" className={REMOVE_BUTTON}>
                 <X size={14} strokeWidth={2.5} aria-hidden />
               </button>
             </div>
@@ -287,7 +321,11 @@ export function CommentExtrasPreview({ extras, showHint = true }: { extras: Comm
             <div className="min-w-0 flex-1 basis-56">
               <CompactContentCard
                 attachment={{ type: attachment.type, id: attachment.id }}
-                state={{ status: "ready", card: { type: attachment.type, id: attachment.id, title: attachment.title, ownerName: null, thumbnailUrl: null } }}
+                state={
+                  attachment.existing && attachmentState
+                    ? attachmentState({ type: attachment.type, id: attachment.id })
+                    : { status: "ready", card: { type: attachment.type, id: attachment.id, title: attachment.title, ownerName: null, thumbnailUrl: null } }
+                }
                 onRemove={extras.removeAttachment}
               />
             </div>

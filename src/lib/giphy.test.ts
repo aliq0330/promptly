@@ -91,7 +91,7 @@ test("fetchGifs: empty query = trending, text query = search, paging offset and 
       assert.ok(urls[0].includes("/v1/gifs/trending?"));
       assert.deepEqual(trending.items.map((g) => g.id), ["aaaa1", "bbbb2"]); // the malformed id row is dropped
       assert.equal(trending.nextOffset, 3); // 3 rows received (incl. the dropped one) → next page starts there
-      const search = await fetchGifs("  alkış ", 24);
+      await fetchGifs("  alkış ", 24);
       assert.ok(urls[1].includes("/v1/gifs/search?"));
       assert.ok(urls[1].includes("q=alk%C4%B1%C5%9F"));
       assert.ok(urls[1].includes("offset=24"));

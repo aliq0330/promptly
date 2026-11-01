@@ -1,6 +1,6 @@
 # 307 — Yorumda fotoğraf · GIF · içerik eki ve mesajda GIF (GIPHY)
 
-**Durum:** uygulandı (kod + 1 migration repoda; **canlıya UYGULANMADI**, **GIPHY anahtarı girilmedi**). `tsc` temiz, `eslint` 0 hata, `npm test` 693/693 (yeni: `giphy.test.ts`, `comment-extras-model.test.ts`, `notification-message.test.ts` genişledi), yerel PostgreSQL 16'da `supabase/tests/comment-media.sql` 22/22, ağ taklitli Playwright `run-comment-extras` 16/16.
+**Durum:** uygulandı (kod + 1 migration repoda; **canlıya UYGULANMADI**, **GIPHY anahtarı girilmedi**). `tsc` temiz, `eslint` 0 hata, `npm test` 693/693 (yeni: `giphy.test.ts`, `comment-extras-model.test.ts`, `notification-message.test.ts` genişledi), yerel PostgreSQL 16'da `supabase/tests/comment-media.sql` 25/25, ağ taklitli Playwright `run-comment-extras` 19/19.
 **Gerçek GIPHY'ye / Supabase'e / gerçek cihaza karşı DENENMEDİ** (sandbox dış ağa çıkamaz; GIPHY ve Supabase taklit edildi). İngilizce karşılıklar eklendi (`translations-comment-extras.ts`).
 
 ## Ne yapıldı
@@ -11,7 +11,7 @@
 
 ## Veri modeli (migration `20261102100000_comment_media_attachments.sql`, yalnız ekler)
 - `prompt_comments`: `media_kind` (`photo`|`gif`), `media_ref`, `media_width/height`, `attach_type` (5 tür), `attach_id`. **GIF dosyası saklanmaz**: `media_ref` yalnız GIPHY kimliğidir (`^[A-Za-z0-9_-]{4,64}$`), adres her zaman `lib/giphy.ts`'te üretilir → veritabanına rastgele adres giremez. Fotoğraf yolu `{yazar}/{uuid}.{jpg|png|webp|gif}` ve yazarın KENDİ klasörü (CHECK `author_id`'ye bakar). **CHECK'ler NULL'u geçirir** — her dal `is not null` ile kesinleştirildi (SQL testi bu açığı yakaladı: `media_kind='gif'` tek başına, `attach_id` tek başına geçiyordu).
-- `prompt_comments_extras_guard` (BEFORE INSERT/UPDATE, SECURITY DEFINER): içerik eki yalnız `quote_target_ok` (yayında + herkese açık + topluluğa özgü değil; Space: herkese açık + arşivsiz + okunabilir) içeriğe yapılır; başkasının özel içeriği için de aynı `attachment_not_public` (varlığı sızmaz). Ek/medya sonradan DEĞİŞTİRİLEMEZ (düzenleme yalnız metni değiştirir; yalnız ekten oluşan yorumun metni boşaltılabilir). Boş metin yorum kuralı YOK (eski davranış korundu: istemci metinsiz+eksiz göndermez).
+- `prompt_comments_extras_guard` (BEFORE INSERT/UPDATE, SECURITY DEFINER): içerik eki yalnız `quote_target_ok` (yayında + herkese açık + topluluğa özgü değil; Space: herkese açık + arşivsiz + okunabilir) içeriğe yapılır; başkasının özel içeriği için de aynı `attachment_not_public` (varlığı sızmaz). **Düzenlemede görsel/ek değiştirilebilir ve kaldırılabilir** (yazar, RLS): YENİ ek INSERT'teki kuralla denetlenir, DEĞİŞMEYEN ek yeniden denetlenmez (içerik sonradan özel olduysa yorum yine düzenlenir), ek değişince `edited_at` damgalanır; yalnız ekten oluşan yorumun metni boşaltılabilir. Boş metin yorum kuralı YOK (eski davranış korundu: istemci metinsiz+eksiz göndermez).
 - `handle_comment_delete`: yanıtlı yorum yumuşak silinirken medya/ek de boşalır.
 - `comment-media` PRIVATE bucket (5 MB, jpeg/png/webp/gif): yükleme yalnız kendi klasörüne ve biçimli ada; okuma = **yorumu OKUYABİLEN herkes** (Storage politikası `prompt_comments` RLS'ine yaslanır; ziyaretçi dahil), yükleyen kendi dosyasını yorumdan önce de görür.
 - `orphan_storage_objects`: yorum fotoğrafları "kullanımda" sayılır, bucket listeye girdi (silinen yorumun dosyası süpürülür; hesap silme `delete-account` bunu kullandığından değişmedi).
@@ -32,7 +32,7 @@
 4. Moderatör arayüzü yorum gövdesini gösterir; yalnız ekten oluşan yorumda gövde boştur (moderatör görseli yorum sayfasında görür; ayrı bir "ek var" rozeti eklenmedi).
 
 ## Bilinen sınırlar
-- Yorum düzenlenirken görsel/ek değiştirilemez ya da kaldırılamaz (yalnız metin); kaldırmak için yorumu silip yeniden yazmak gerekir.
+- Yorum düzenlenirken görsel/ek değiştirilebilir ve kaldırılabilir (düzenleme kutusu mevcut görsel/ek ile açılır, aynı düğmeler); yorumdan çıkan fotoğrafın dosyası depodan best-effort silinir.
 - Mesajda GIF için ayrı yazı alanı/başlık yok (kendi başına mesaj); GIF + metin birlikte tek mesaj olmaz.
 - GIF'ler 200 px'lik GIPHY sürümüyle gösterilir; mesajda tıklayınca özgün sürüm açılır, yorumda büyütme yok (fotoğraf büyür).
 - Odak'ın yorum sayfası aynı kancayı kullanır ama bu turda ayrıca Playwright'la denenmedi (`run-focus-feed` mevcut senaryoları geçer; yeni düğmeler orada elle sınanmadı).

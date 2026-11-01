@@ -149,7 +149,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-hscroll.mjs 
 `run-feed-filters.mjs` (16 senaryo): Ana Sayfa sekmeleri (yalnız Sana özel + Takip Ettiklerim), tür çipleri, kronolojik Takip, takip edilenler süzgeci (kişi/etiket/araç → `feed_page` `p_authors/p_tags/p_tools`, hap kaldırma/temizleme, takip yazımı yok), süzgeç değişince imleç sıfırlanması, boş durum, misafir; Keşfet bölümleri, sıralama (`p_order`), bölüme göre süzgeç ve arama, AI Araçları/Etiketler/Topluluklar bölümleri, İngilizce + telefon. `feed_page` taklidi sunucu kuralını kabaca yineler (asıl doğrulama `supabase/tests/feed-filters.sql`). Statik HTML'e hidrasyondan önce dokunmak kaybolur: Ana Sayfa senaryoları `gotoHome` ile ilk akış isteğini bekler.
 
 ```bash
-CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-feed-filters.mjs   # 16/16 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-feed-filters.mjs   # 19/19 beklenir
 ```
 
 ## Sana özel (`docs/history/222-*`)
@@ -295,10 +295,10 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 
 ## Yorumda fotoğraf · GIF · içerik eki ve mesajda GIF (`docs/history/307-*`)
 
-`run-comment-extras.mjs` (16 senaryo): yazma çubuğunda Fotoğraf · GIF · İçerik düğmeleri; GIF seçici (trend/arama/konu çipi/kendiliğinden sayfalama/yinelenen yok/GIPHY ibaresi), seçince önizleme ve METİNSİZ gönderim (`media_kind=gif`, `media_ref`), fotoğraf (önizlenir, gönderimde `comment-media/<ben>/<uuid>.png` yüklenir, imzalı adresle görünür, ortak/`public` adres hiç istenmez), yanlış dosya türü, fotoğraf↔GIF tek görsel kuralı, içerik seçici (Benimkiler/Kaydettiklerim, İstek/Space'te kaydedilenler yok), küçük önizleme kartı (taslak bağlantı değil; kayıtlı olan bağlantı), kartların SAYFA BAŞINA TEK sorguyla okunması + okunamayan/sonradan özel yapılan içeriğin "gizli" kartı (başlık sızmaz), yanıt kutusunda aynı düğmeler (`parent_id`), ek kaldırma, sunucu `attachment_not_public` hatası (yazı + ek korunur), 390 px taşma yok + düğmeler ≥36 px, İngilizce; mesajda "+ → GIF" (`attachments[{path:"giphy:<kimlik>"}]`, dosya yüklenmez/imzalanmaz, balonda GIF rozeti ve GERÇEKTEN çizilmiş görsel, taslak metin korunur, İngilizce). GIPHY ve Supabase TAKLİTTİR (gerçek GIPHY'ye KARŞI DENENMEDİ); veritabanı kuralları `supabase/tests/comment-media.sql`'dedir. **Derleme GIPHY anahtarıyla alınmalıdır** (seçici anahtarsız "yapılandırılmadı" der):
+`run-comment-extras.mjs` (19 senaryo; 17–19 düzenleme: mevcut GIF/fotoğraf/ek ile açılır, değiştirilir/kaldırılır, PATCH altı sütunu yazar, eski fotoğraf dosyası silinir, yalnız ekli yorumun metni boşaltılır): yazma çubuğunda Fotoğraf · GIF · İçerik düğmeleri; GIF seçici (trend/arama/konu çipi/kendiliğinden sayfalama/yinelenen yok/GIPHY ibaresi), seçince önizleme ve METİNSİZ gönderim (`media_kind=gif`, `media_ref`), fotoğraf (önizlenir, gönderimde `comment-media/<ben>/<uuid>.png` yüklenir, imzalı adresle görünür, ortak/`public` adres hiç istenmez), yanlış dosya türü, fotoğraf↔GIF tek görsel kuralı, içerik seçici (Benimkiler/Kaydettiklerim, İstek/Space'te kaydedilenler yok), küçük önizleme kartı (taslak bağlantı değil; kayıtlı olan bağlantı), kartların SAYFA BAŞINA TEK sorguyla okunması + okunamayan/sonradan özel yapılan içeriğin "gizli" kartı (başlık sızmaz), yanıt kutusunda aynı düğmeler (`parent_id`), ek kaldırma, sunucu `attachment_not_public` hatası (yazı + ek korunur), 390 px taşma yok + düğmeler ≥36 px, İngilizce; mesajda "+ → GIF" (`attachments[{path:"giphy:<kimlik>"}]`, dosya yüklenmez/imzalanmaz, balonda GIF rozeti ve GERÇEKTEN çizilmiş görsel, taslak metin korunur, İngilizce). GIPHY ve Supabase TAKLİTTİR (gerçek GIPHY'ye KARŞI DENENMEDİ); veritabanı kuralları `supabase/tests/comment-media.sql`'dedir. **Derleme GIPHY anahtarıyla alınmalıdır** (seçici anahtarsız "yapılandırılmadı" der):
 
 ```bash
 NEXT_PUBLIC_GIPHY_API_KEY=test-key NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-comment-extras.mjs   # 16/16 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-comment-extras.mjs   # 19/19 beklenir
 SHOTS=/tmp/shots node tests/messaging-ui/run-comment-extras.mjs   # ekran görüntüleri
 ```
