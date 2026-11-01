@@ -258,6 +258,27 @@ await scenario("10b. Moderatör: Yönet yalnız yetkisi olan bölüm (moderasyon
   assert.deepEqual(sub.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()), ["Üyeler", "Katılım istekleri"]);
 }, { setup: (db) => seed(db, { myRole: "moderator" }) });
 
+// 11b — topluluğun kendisini şikâyet etme (docs/history/305-*)
+await scenario("11b. Hakkında ve kurallar: üye 'Topluluğu şikâyet et' ile merkezi pencereyi açar → submit_report('community'); sahibinde düğme yok", async ({ page, db }) => {
+  await open(page, C1);
+  await pickTab(page, /Hakkında ve kurallar/);
+  await page.getByRole("button", { name: "Topluluğu şikâyet et" }).click();
+  await page.locator("[data-report-reason='spam']").click();
+  await page.locator("[data-report-submit]").click();
+  await page.locator("[data-report-success]").waitFor();
+  const report = calls(db, "submit_report", "RPC")[0].body;
+  assert.equal(report.p_target_type, "community");
+  assert.equal(report.p_target_id, C1);
+  assert.equal(report.p_reason_code, "spam");
+}, { setup: (db) => seed(db, { myRole: "member" }) });
+
+await scenario("11c. Topluluk sahibi kendi topluluğunu şikâyet edemez: düğme çizilmez", async ({ page }) => {
+  await open(page, C1);
+  await pickTab(page, /Hakkında ve kurallar/);
+  await page.getByText(/Topluluktan ayrıl|Hakkında/).first().waitFor();
+  assert.equal(await page.getByRole("button", { name: "Topluluğu şikâyet et" }).count(), 0);
+}, { setup: (db) => seed(db, { myRole: "owner" }) });
+
 // 11
 await scenario("11. Üye olmayan, açık topluluk: salt-okunur sekmeler (Üyeler yok) + başlıkta Katıl düğmesi", async ({ page, db }) => {
   await open(page, C1);

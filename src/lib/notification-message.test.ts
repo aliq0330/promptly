@@ -22,3 +22,9 @@ test("Turkish is returned exactly as stored; older 'Promptun için …' sentence
   assert.equal(run(stored, "tr"), stored);
   assert.equal(JSON.parse(run('Promptun için bir düzenleme önerdi: "x"')).key, "notifMsg.suggestedEdit");
 });
+
+test("rol değişikliği cümleleri (docs/history/305-*) topluluk adı çevrilmeden doğru anahtara düşer", () => {
+  assert.deepEqual(JSON.parse(run('"Neon Kulübü" topluluğunda rolün yönetici oldu.')), { key: "notifMsg.communityRoleAdmin", params: { name: "Neon Kulübü", preview: "" } });
+  assert.deepEqual(JSON.parse(run('"Neon Kulübü" topluluğunda rolün moderatör oldu.')), { key: "notifMsg.communityRoleModerator", params: { name: "Neon Kulübü", preview: "" } });
+  assert.deepEqual(JSON.parse(run('"Neon Kulübü" topluluğunda rolün üye olarak değiştirildi.')), { key: "notifMsg.communityRoleMember", params: { name: "Neon Kulübü", preview: "" } });
+});

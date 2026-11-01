@@ -80,7 +80,7 @@ async function installFeed(context, db, feed) {
       // `p_has_media` (docs/history/254-*): the database applies Odak's "Medya" rule — a prompt with a picture or a video / audio type, a workflow with a
       // picture, every request and preset (the SQL itself is tested in supabase/tests/feed-page-media.sql).
       const hasMedia = ([kind, row]) => (kind === "prompt" ? row.prompt_media.length > 0 || row.content_type === "video" || row.content_type === "audio" : kind === "workflow" ? row.workflow_media.length > 0 : true);
-      const rows = feed.order.filter(([kind]) => !body.p_kinds || body.p_kinds.includes(kind)).filter((entry) => !body.p_has_media || hasMedia(entry)).map(([kind, row]) => ({ kind, id: row.id, created_at: row.created_at, sort_rank: 0 }));
+      const rows = feed.order.filter(([kind]) => !body.p_kinds || body.p_kinds.includes(kind)).filter((entry) => !body.p_has_media || hasMedia(entry)).filter(([kind, row]) => !body.p_content_type || (kind === "workflow" ? row.content_types.includes(body.p_content_type) : row.content_type === body.p_content_type)).map(([kind, row]) => ({ kind, id: row.id, created_at: row.created_at, sort_rank: 0 }));
       const start = body.p_after_id ? rows.findIndex((r) => r.id === body.p_after_id) + 1 : 0;
       return ok(rows.slice(start, start + body.p_limit));
     }
@@ -874,6 +874,23 @@ await scenario("34. Migration henüz yoksa (17 argümanlı feed_page bilinmiyor)
   assert.equal(db.feedCalls[1].p_has_media, undefined);
   assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 16", "eski davranış: görselsiz metin promptu ve workflow istemcide düşer");
 }, { noMediaRpc: true });
+
+await scenario("35. İçerik türü süzgeci (docs/history/305-*): Video seçilince sunucuya p_content_type gider, çip etiketi güncellenir; Tümü süzgeci kaldırır", async ({ page, db }) => {
+  await openFocus(page);
+  const before = db.feedCalls.length;
+  assert.equal(db.feedCalls.at(-1).p_content_type ?? null, null, "başlangıçta süzgeç yok");
+  await pickFilter(page, "Video");
+  assert.ok(db.feedCalls.length > before, "yeni sunucu isteği");
+  assert.equal(db.feedCalls.at(-1).p_content_type, "video");
+  assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Tümü · Video · En yeni");
+  const texts = await slides(page).allTextContents();
+  assert.ok(texts.some((t) => /Neon şehirde drone/.test(t)) && !texts.some((t) => /Lo-fi yağmur/.test(t)), "yalnız video gönderileri");
+  await filterChip(page).click();
+  await stage(page).getByRole("menuitemradio", { name: "Tümü" }).nth(1).click();
+  await page.waitForTimeout(900);
+  assert.equal(db.feedCalls.at(-1).p_content_type ?? null, null, "Tümü süzgeci kaldırır");
+  assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Tümü · En yeni");
+});
 
 await browser.close();
 server.close();

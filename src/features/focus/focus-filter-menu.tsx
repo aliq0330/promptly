@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Clock, LayoutGrid, SlidersHorizontal, Sparkles, SquareTerminal, UserCheck, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
+import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { FOCUS_CHANNELS, type FocusChannel } from "@/lib/focus-feed";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -29,16 +30,29 @@ const TAB_META: Record<FocusTab, { icon: LucideIcon; label: TranslationKey }> = 
 };
 const TABS: FocusTab[] = ["newest", "following"];
 
+/** İçerik türü süzgeci (docs/history/305-*): Ana Sayfa Filtre'sindeki dört tür; `null` = Tümü. */
+const CONTENT_TYPES: ContentTypeId[] = ["image", "text", "audio", "video"];
+const CONTENT_TYPE_LABEL: Record<ContentTypeId, TranslationKey> = {
+  image: "contentType.image",
+  text: "contentType.text",
+  audio: "contentType.audio",
+  video: "contentType.video",
+};
+
 export function FocusFilterMenu({
   channel,
   tab,
+  contentType,
   onChannel,
   onTab,
+  onContentType,
 }: {
   channel: FocusChannel;
   tab: FocusTab;
+  contentType: ContentTypeId | null;
   onChannel: (channel: FocusChannel) => void;
   onTab: (tab: FocusTab) => void;
+  onContentType: (contentType: ContentTypeId | null) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -80,6 +94,7 @@ export function FocusFilterMenu({
         className="inline-flex h-11 max-w-full items-center gap-1.5 rounded-full border border-white/15 bg-white/10 pl-4 pr-3 text-label font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <span className="truncate">{t(CHANNEL_META[channel].label)}</span>
+        {contentType && <span className="truncate font-medium text-white/65">· {t(CONTENT_TYPE_LABEL[contentType])}</span>}
         <span className="truncate font-medium text-white/65">· {t(TAB_META[tab].label)}</span>
         <ChevronDown size={16} aria-hidden className={cn("shrink-0 transition-transform duration-200 ease-soft", open && "rotate-180")} />
       </button>
@@ -87,7 +102,7 @@ export function FocusFilterMenu({
         <div
           role="menu"
           aria-label={t("focusFeed.filter")}
-          className="absolute left-1/2 top-full z-40 mt-2 w-[min(18rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-xl border border-border-soft bg-surface-elevated p-1.5 shadow-pop animate-pop-in"
+          className="absolute left-1/2 top-full z-40 mt-2 max-h-[calc(100dvh-6rem)] w-[min(18rem,calc(100vw-1.5rem))] -translate-x-1/2 overflow-y-auto rounded-xl border border-border-soft bg-surface-elevated p-1.5 shadow-pop animate-pop-in"
         >
           <p className={heading}>{t("toolbar.postKind")}</p>
           {FOCUS_CHANNELS.map((key) => {
@@ -107,6 +122,27 @@ export function FocusFilterMenu({
               >
                 <Icon size={18} aria-hidden className="text-text-secondary" />
                 {t(CHANNEL_META[key].label)}
+                {selected && <Check size={16} aria-hidden className="ml-auto text-primary" />}
+              </button>
+            );
+          })}
+          <div role="separator" className="my-1.5 border-t border-border-soft" />
+          <p className={heading}>{t("toolbar.contentType")}</p>
+          {[null, ...CONTENT_TYPES].map((key) => {
+            const selected = key === contentType;
+            return (
+              <button
+                key={key ?? "all"}
+                type="button"
+                role="menuitemradio"
+                aria-checked={selected}
+                onClick={() => {
+                  setOpen(false);
+                  onContentType(key);
+                }}
+                className={cn(row, selected && "bg-surface-soft font-semibold")}
+              >
+                {key ? t(CONTENT_TYPE_LABEL[key]) : t("focusFeed.all")}
                 {selected && <Check size={16} aria-hidden className="ml-auto text-primary" />}
               </button>
             );

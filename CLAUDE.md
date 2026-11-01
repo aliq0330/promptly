@@ -425,12 +425,12 @@ ayrıntılı liste kelimesi kelimesine `docs/history/286-*` içinde.
 
 **Bilinen sınırlar (özellik başına ayrıntı `docs/history/NNN-*`'te; sonucu `docs/history/`de yazılı olmayan gerçek cihaz/oturum denemesi yapılmamış sayılır):**
 - *Akış/öneri:* ağırlıklar elle seçildi (Sana özel `222-*`/`223-*`, ilgi geri bildirimi `275-*`, benzer promptlar `274-*`, kişi önerisi `285-*`); İlişki Haritası adayı `dna_similar_candidates` aynı zayıflıkta; "Takip edilecek kişiler" şeridiyle masaüstü sağ sütundaki eski kart birlikte duruyor (hangisi kalacak karar); Keşfet yedek pencere/etiket kararları istemcide (`220-*`); `/tags` 1545 etiketi istemciye alır (`259-*`).
-- *Sohbet/topluluk:* çevrimiçi durumu, "X katıldı" sistem satırları, okundu tikleri (✓✓) ve 📷 önizleme yok (`267-*`,`270-*`); rol değişikliği bildirimi yok, eski SQL bildirim cümleleri "grup" (`183-*`,`175-*`); "grubu kapat" yok, yalnız silme; "Delivered" ve okundu gizliliği yok, "yazıyor" `userId` beyana dayalı (`174-*`); bir olay en çok 20 000 üyeye bildirim yazar, gruplar 2 dk'da yenilenir (`258-*`); topluluk sayfasında «Topluluğu şikâyet et» girişi yok (RPC hazır, `284-*`).
-- *Tepkiler/şikâyet:* bildirim cümlesi "beğendi" kalır, tepki değiştirmek bildirim üretmez, İstatistik "Beğenenler" tepkiyi göstermez; Telegram hareketli emoji dosyalarının lisansı netleştirilmeli (`265-*`).
+- *Sohbet/topluluk:* çevrimiçi durumu, "X katıldı" sistem satırları, okundu tikleri (✓✓) ve 📷 önizleme yok (`267-*`,`270-*`); rol değişikliği bildirimi VAR (`305-*`, migration canlıya alınmadı), eski SQL bildirim cümleleri "grup" (`183-*`,`175-*`); "Delivered" ve okundu gizliliği yok, "yazıyor" `userId` beyana dayalı (`174-*`); bir olay en çok 20 000 üyeye bildirim yazar, gruplar 2 dk'da yenilenir (`258-*`); «Topluluğu şikâyet et» Hakkında sekmesindedir (`284-*`, `305-*`).
+- *Tepkiler/şikâyet:* bildirim cümlesi "beğendi" kalır, tepki değiştirmek bildirim üretmez (İstatistik "Beğenenler" tepkiyi gösterir, `281-*`); Telegram hareketli emoji dosyalarının lisansı netleştirilmeli (`265-*`).
 - *Space/Pano:* gerçek zamanlı ortak düzenleme yok (son kayıt kazanır); nesne kilitleme, serbest çizim/şekil, otomatik ok yolu, nesne yorumu yok; yalnız kendi workflow'un aktarılır, adım başına ≤4 görsel, Space başına ≤1000 ok/500 öğe (`213-*`,`262-*`,`263-*`); `/share/space/` ve `/share/quote/` statik sayfaları yok (`215-*`,`217-*`); Odak/Sana özel alıntı almaz (`217-*`).
 - *Liste/sayfalama:* yorum ağaçları ve sürüm geçmişleri tam okunur, Hazır ayar «Kaydettiklerim» tam okunur (`255-*`,`256-*`); offset sayfalama derinde yavaşlar (`257-*`); profilde arama yalnız başlık+açıklama, Beğeniler/Kaydedilenler süzgeçleri yüklenen sayfaları süzer (`254-*`); arama canlı sonuç sayısı vermez (`269-*`).
 - *Dışa/içe aktarma ve toplu araçlar:* yalnız Prompt; Markdown/CSV değişken tanımı taşımaz; kullanıcı içe aktarması ≤30; düzenlenmiş dosya mevcut promptu güncellemez; "Tüm promptlar" kapsamında değişken dönüştürme başkasının metnini değiştirir (bildirimsiz); "Önerilen" otomatik etiket herkese görünür yeni etiket açar, geri alma aracı yok (`250-*`…`253-*`).
-- *Diğer:* Odak'ta içerik türü süzgeci yok (`245-*`); Hazır ayarla dene — ayar değerleri prompt sayfasında düzenlenmez, aday listesi istemcide (`228-*`); yetim sonucun beğeni/yorumu okunamaz (`283-*`); Signed URL 10 dk geçerli kalır, CDN'in eski genel medya yanıtlarını ne kadar servis ettiği bilinmiyor (`150-*`).
+- *Diğer:* Odak'ta içerik türü süzgeci VAR (`305-*`); Hazır ayarla dene — ayar değerleri prompt sayfasında düzenlenmez, aday listesi istemcide (`228-*`); yetim sonucun beğeni/yorumu okunamaz (`283-*`); Signed URL 10 dk geçerli kalır, CDN'in eski genel medya yanıtlarını ne kadar servis ettiği bilinmiyor (`150-*`).
 
 **Tamamlananlar (bu turda kapatıldı):**
 - Gönderi medyası private bucket + signed URL (`docs/history/150-*`): migration
@@ -453,5 +453,5 @@ ayrıntılı liste kelimesi kelimesine `docs/history/286-*` içinde.
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — en son 304. bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — en son 305. bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

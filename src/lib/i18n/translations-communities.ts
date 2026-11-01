@@ -236,6 +236,7 @@ export const communityTranslations = {
   "communities.detail.openChat": { tr: "Sohbeti aç", en: "Open chat" },
   "communities.detail.closedNotice": { tr: "Bu topluluk kapatılmış: salt-okunur. Yeni üye, gönderi, etkinlik ve sohbet mesajı olmaz; mevcut içerik korunur.", en: "This community is closed: read-only. No new members, posts, events or chat messages; existing content is kept." },
   "communities.about.leftToast": { tr: "Topluluktan ayrıldın.", en: "You left the community." },
+  "communities.about.reportCommunity": { tr: "Topluluğu şikâyet et", en: "Report this community" },
   "communities.overview.allEvents": { tr: "Tümü", en: "See all" },
 
   // ---- Duyurular ----
@@ -607,6 +608,9 @@ export const communityTranslations = {
   "notifMsg.communityRulesUpdated": { tr: "“{{name}}” topluluğunun kuralları güncellendi.", en: "The rules of “{{name}}” were updated." },
   "notifMsg.communityClosed": { tr: "“{{name}}” topluluğu kapatıldı.", en: "“{{name}}” was closed." },
   "notifMsg.communityReopened": { tr: "“{{name}}” topluluğu yeniden açıldı.", en: "“{{name}}” was reopened." },
+  "notifMsg.communityRoleAdmin": { tr: "“{{name}}” topluluğunda rolün yönetici oldu.", en: "You are now an admin of “{{name}}”." },
+  "notifMsg.communityRoleModerator": { tr: "“{{name}}” topluluğunda rolün moderatör oldu.", en: "You are now a moderator of “{{name}}”." },
+  "notifMsg.communityRoleMember": { tr: "“{{name}}” topluluğunda rolün üye olarak değiştirildi.", en: "Your role in “{{name}}” was changed to member." },
   // ---- Topluluk / sohbet yeniden düzeni (docs/community-system.md) ----
   "communities.about.chatMuteTitle": { tr: "Sohbet", en: "Chat" },
   "communities.detail.pendingRequests": { tr: "{{count}} bekleyen istek", en: "{{count}} pending requests" },
