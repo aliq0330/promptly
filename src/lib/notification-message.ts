@@ -165,6 +165,9 @@ export function localizeNotificationMessage(rawMessage: string, language: "tr" |
   // Yaratıcı paneli kilometre taşları (docs/history/295-*): prompt başlığı çevrilmez.
   const milestone = /^Promptun "([\s\S]*)" (\d+) (kopyalamaya|tepkiye) ulaştı\.$/.exec(message);
   if (milestone) return t(milestone[3] === "kopyalamaya" ? "notifMsg.milestoneCopies" : "notifMsg.milestoneReactions", { name: milestone[1], count: milestone[2] });
+  // Kişisel API anahtarı oluşturuldu (docs/history/314-*): anahtar adı çevrilmez.
+  const apiToken = /^Yeni bir API anahtarı oluşturuldu: "([\s\S]*)" \((pmt_[A-Za-z0-9_-]{4})…\)\. Sen oluşturmadıysan hemen iptal et\.$/.exec(message);
+  if (apiToken) return t("notifMsg.apiTokenCreated", { name: apiToken[1], prefix: apiToken[2] });
   const storyRemoved = /^"([\s\S]*)" topluluğundaki hikâyen kaldırıldı\.$/.exec(message);
   if (storyRemoved) return t("notifMsg.storyRemovedCommunity", { name: storyRemoved[1] });
   if (message === "Seni takip etmeye başladı.") return t("notifMsg.followed");

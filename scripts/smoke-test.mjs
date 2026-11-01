@@ -91,6 +91,9 @@ const CHECKS = [
   { name: "profiles.suspended_reason ziyaretçiye KAPALI olmalı (moderasyon gerekçesi, docs/history/302-*)", get: () => `profiles?select=suspended_reason&limit=1`, mustBeDenied: true },
   { name: "rpc public_api_rate_hit sırsız REDDEDİLMELİ (hız sınırı sayacı, docs/history/302-*)", rpc: "public_api_rate_hit", body: { p_secret: "smoke-test-wrong-secret", p_bucket: "smoke-test-00000000", p_limit: 1, p_window_seconds: 60 }, mustBeDenied: true },
   { name: "rpc record_public_api_prompt_use sırsız REDDEDİLMELİ (API/MCP kullanım sayacı, docs/history/304-*)", rpc: "record_public_api_prompt_use", body: { p_secret: "smoke-test-wrong-secret", p_prompt_id: "00000000-0000-4000-8000-000000000000", p_source: "api", p_client: "smoke-test-00000000" }, mustBeDenied: true },
+  { name: "rpc list_my_api_tokens (Ayarlar → Geliştirici anahtarları, docs/history/314-*; yalnız oturumlu)", rpc: "list_my_api_tokens", body: {}, deniedOk: true, soft: true },
+  { name: "api_tokens ziyaretçiye KAPALI olmalı (anahtar özetleri, docs/history/314-*)", get: () => `api_tokens?select=id&limit=1`, mustBeDenied: true },
+  { name: "rpc _api_token_authenticate ziyaretçiye KAPALI olmalı (yalnız Edge Function'ın sahip-rol bağlantısı, docs/history/314-*)", rpc: "_api_token_authenticate", body: { p_token: "pmt_" + "A".repeat(43) }, mustBeDenied: true },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 

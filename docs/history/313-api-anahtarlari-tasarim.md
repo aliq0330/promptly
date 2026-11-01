@@ -105,7 +105,7 @@ tasarlanır (anahtar → A/B ile JWT, OAuth → hazır JWT; ikisi de aynı RLS'l
 ## 9. Sıradaki adımlar (sırayla; her biri ayrı PR, kod yazmadan önce kullanıcıyla onay)
 
 1. ~~Edge'de A ve B'yi deneyen deneme fonksiyonu~~ **YAPILDI** (B çalışıyor, bkz. §3). Kalan: panelden `zz-probe-auth` silinmeli.
-2. Migration: `api_tokens` + `create_api_token` / `list_my_api_tokens` / `revoke_api_token` RPC'leri + SQL testi (token özeti, sınır, askı).
-3. Ayarlar → "Geliştirici anahtarları" arayüzü (TR+EN) + Gizlilik/Koşullar maddeleri.
+2. ~~Migration: `api_tokens` + `create_api_token` / `list_my_api_tokens` / `revoke_api_token` RPC'leri + SQL testi (token özeti, sınır, askı).~~ **YAPILDI** (`314-*`).
+3. ~~Ayarlar → "Geliştirici anahtarları" arayüzü (TR+EN) + Gizlilik/Koşullar maddeleri.~~ **YAPILDI** (`314-*`).
 4. `GET /v1/me*` ve `POST /v1/me/prompts` (mevcut `import_prompts` üstünde) + kimlikli MCP araçları + `/developers` sayfası.
 5. OAuth dilimi (`/oauth/consent`, Ayarlar'da izinler).
