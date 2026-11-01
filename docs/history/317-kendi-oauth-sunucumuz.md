@@ -35,3 +35,12 @@ Birim `oauth.test.ts` 16 (yönlendirme, metadata, kayıt, authorize hataları, t
 
 ## Denenmedi / canlı
 (Aşağıya canlı doğrulama sonucu yazılır.)
+
+## İlk gerçek deneme: claude.ai "Oturum açma başlatılamadı" (2026-11-02, 01:29)
+Kullanıcı kişisel adresi claude.ai'a ekleyince bağlayıcı "Oturum açma başlatılamadı" dedi; veritabanında hiç istemci kaydı yoktu (claude.ai kayıt isteğine hiç ulaşmamıştı). Günlüklere ulaşılamadığından resmî MCP SDK'sının
+`auth()` akışı canlı adrese karşı çalıştırıldı ve gerçek bir uyumsuzluk bulundu: SDK keşfi sırayla `/.well-known/oauth-authorization-server/functions/v1/oauth` (Supabase ağ geçidi 401), `/.well-known/openid-configuration/functions/v1/oauth` (401) ve en son
+`…/oauth/.well-known/openid-configuration` (bizim, 200) adreslerinde dener; sonuncuyu OpenID sağlayıcı belgesi diye doğrular ve `jwks_uri`, `subject_types_supported`, `id_token_signing_alg_values_supported` alanlarını zorunlu tutar — bizde yoktu (ZodError).
+Çözüm: bu üç alan eklendi, boş anahtar kümesi veren `/jwks` uç noktası (kimlik belirteci VERMEYİZ; yalnız şemayı karşılar). `oauth` v2 canlıda; SDK probu canlıda keşif + kayıt (201) + yetki adresine kadar geçiyor.
+Kalıcı test: `mcp/test/oauth-discovery.test.ts` (resmî SDK'nın `auth()`'ı işleyicimize karşı; düzeltme olmadan KIRILIR, düzeltmeyle geçer).
+**Bu, claude.ai'ın bu adımda takıldığının KANITI DEĞİL** (claude.ai'ın kendi keşif kodunu göremiyoruz); resmî SDK'nın düştüğü bir uyumsuzluktu ve giderildi. claude.ai hâlâ takılırsa sıradaki şüpheli: claude.ai'ın yalnız RFC 8414 yol-eklemeli adrese bakması
+(`/.well-known/oauth-authorization-server/functions/v1/oauth`, Supabase ağ geçidi bunu 401'ler ve işlev dışı `/.well-known/*` adreslerini bizim yönlendiremeyeceğimiz için çözümü ayrı bir ön katman — ör. özel alan adı/CF Worker — gerektirir).
