@@ -408,7 +408,7 @@ atıflı toplu yükleme — tür/kategori `260-*` ile, `${…}` şablonları `25
 185 kayıt, son sürüm `20261031100200`; tablo `public`te değil `supabase_migrations` şemasındadır). Repo
 sürümüyle kaydı OLMAYAN eski migration'lar (`20260919910000`…`20260920130000` arası 19 tane) ve MCP'nin ayrı zaman damgasıyla yazdığı kopyalar
 (`20260930…`–`20261015…`) elle uygulanmış; nesneleri canlıda var. Sınır: nesne VARLIĞI doğrulandı,
-fonksiyon gövdelerinin repo dosyasıyla birebir eşitliği karşılaştırılmadı. `api_tokens` (`314-*`) repoda, canlıya henüz UYGULANMADI (merge'de deploy hattı uygular) — 297'deki salt-okunur API onu gerektirmedi. Edge Function'lar (7)
+fonksiyon gövdelerinin repo dosyasıyla birebir eşitliği karşılaştırılmadı. `api_tokens` (`314-*`, `20261102110000`) CANLIDA (2026-11-01 doğrulandı: `schema_migrations` kaydı var, RLS açık, anon/authenticated tabloyu OKUYAMAZ, `_api_token_authenticate` hiçbir istemci rolüne açık değil); anahtarı kabul eden uçlar henüz yok. Edge Function'lar (7)
 canlıda: `analyze-image` v5, `username-login` v2 (`verify_jwt` kapalı, doğru), `cleanup-orphan-storage`, `delete-account`, `switch-account` v1, `api` v4 (2026-11-01, `verify_jwt` kapalı, `297-*`, hız sınırı `302-*`), `mcp` v3 (2026-11-01, `verify_jwt` kapalı, internet üzerinden MCP, `299-*`, hız sınırı `302-*`).
 **Kural:** "canlıya UYGULANMADI / uygulanır" cümleleri çabuk eskir (174–285 arası notlar tam böyle eskidi). Bir şeyin canlıda olup
 olmadığına notlara değil canlı şemaya bak (`schema_migrations` + nesne sorgusu); bir iş canlıya inince notu o gün sil/güncelle. Eski
