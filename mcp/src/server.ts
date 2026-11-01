@@ -57,6 +57,32 @@ async function run(task: () => Promise<unknown>): Promise<ToolResult> {
   }
 }
 
+// Araç girdi şemalarının (zod) düz TypeScript karşılığı. Callback parametrelerine AÇIK yazılır: Deno'nun npm paketi tip çözümlemesinde
+// (`deno check`, Edge Function) şemadan bağlamsal çıkarım çalışmıyor ve `args` örtük `any` kalıyordu. Node'da zararsızdır.
+interface SearchArgs {
+  query?: string;
+  content_type?: string;
+  category?: string;
+  tags?: string[];
+  tools?: string[];
+  sort?: string;
+  limit?: number;
+  cursor?: string;
+}
+interface PopularArgs {
+  period?: string;
+  by?: string;
+  content_type?: string;
+  limit?: number;
+}
+interface IdArgs {
+  id: string;
+}
+interface FillArgs {
+  id: string;
+  values?: Record<string, string>;
+}
+
 export interface PromptlyServerOptions {
   client: RestClient;
   version: string;
@@ -91,7 +117,7 @@ export function createPromptlyServer({ client, version, log = () => {} }: Prompt
       },
       annotations: readOnly,
     },
-    (args) =>
+    (args: SearchArgs) =>
       run(() =>
         searchPrompts(client, {
           query: args.query,
@@ -119,7 +145,7 @@ export function createPromptlyServer({ client, version, log = () => {} }: Prompt
       },
       annotations: readOnly,
     },
-    (args) => run(async () => ({ items: await popularPrompts(client, { period: args.period, by: args.by, contentType: args.content_type, limit: args.limit }) })),
+    (args: PopularArgs) => run(async () => ({ items: await popularPrompts(client, { period: args.period, by: args.by, contentType: args.content_type, limit: args.limit }) })),
   );
 
   server.registerTool(
@@ -130,7 +156,7 @@ export function createPromptlyServer({ client, version, log = () => {} }: Prompt
       inputSchema: { id: z.string().describe("Prompt id (UUID) from search results.") },
       annotations: readOnly,
     },
-    (args) => run(() => getPrompt(client, args.id)),
+    (args: IdArgs) => run(() => getPrompt(client, args.id)),
   );
 
   server.registerTool(
@@ -146,7 +172,7 @@ export function createPromptlyServer({ client, version, log = () => {} }: Prompt
       },
       annotations: readOnly,
     },
-    (args) =>
+    (args: FillArgs) =>
       run(async () => {
         const prompt = await getPrompt(client, args.id);
         return { ...fillPrompt(prompt, args.values ?? {}), title: prompt.title, url: prompt.url, source: prompt.source ?? null };
@@ -162,7 +188,7 @@ export function createPromptlyServer({ client, version, log = () => {} }: Prompt
       description: "Describe what you want to create; Claude searches Promptly and helps you fill the best prompt.",
       argsSchema: { need: z.string().describe("What do you want to create? e.g. 'a cozy coffee shop logo'") },
     },
-    ({ need }) => ({
+    ({ need }: { need: string }) => ({
       messages: [
         {
           role: "user" as const,

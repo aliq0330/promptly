@@ -12,6 +12,7 @@ on:
       - "src/lib/share-link.ts"
       - "src/lib/tag-normalize.ts"
       - "supabase/functions/api/**"
+      - "supabase/functions/mcp/**"
       - "supabase/functions/_shared/**"
       - "scripts/sync-function-shared.mjs"
       - ".github/workflows/mcp.yml"

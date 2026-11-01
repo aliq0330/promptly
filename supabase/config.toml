@@ -19,3 +19,7 @@ verify_jwt = false
 # Açık API (salt-okunur, yalnız anon anahtar) — oturumsuz istemciler çağırdığı için JWT doğrulaması KAPALI (`docs/history/297-*`).
 [functions.api]
 verify_jwt = false
+
+# İnternet üzerinden çalışan MCP (salt-okunur, yalnız anon anahtar, kimlik doğrulamasız bağlayıcı) — JWT doğrulaması KAPALI (`docs/history/299-*`).
+[functions.mcp]
+verify_jwt = false
