@@ -453,9 +453,14 @@ create temp table _rem1 as select public.dispatch_my_event_reminders() as n;
 create temp table _rem2 as select public.dispatch_my_event_reminders() as n;
 select public._as_user(:dave);
 create temp table _rem3 as select public.dispatch_my_event_reminders() as n;
-select public._check(61, 'hatırlatma: 24 saat içindeki etkinlik için bir kez üretilir, tekrar çağrı yineleme üretmez; "sessiz" tercihli üye almaz',
+-- Kullanıcı hatırlatma bildirimini SİLERSE uygulama bir sonraki açılışta onu yeniden üretmemeli (silinen bildirim "gönderildi" izi değildir).
+select public._as_user(:erin);
+delete from public.notifications where recipient_id = :erin::uuid and message like '%24 saat içinde başlıyor%';
+create temp table _rem4 as select public.dispatch_my_event_reminders() as n;
+select public._check(61, 'hatırlatma: 24 saat içindeki etkinlik için bir kez üretilir, tekrar çağrı yineleme üretmez (bildirim silinse de); "sessiz" tercihli üye almaz',
   (select n from _rem1) = 1 and (select n from _rem2) = 0 and (select n from _rem3) = 0
-  and public._notif(:erin, '%24 saat içinde başlıyor%') = 1 and public._notif(:dave, '%24 saat içinde başlıyor%') = 0);
+  and (select n from _rem4) = 0 and public._notif(:erin, '%24 saat içinde başlıyor%') = 0
+  and public._notif(:dave, '%24 saat içinde başlıyor%') = 0);
 select public._as_user(:alice);
 select public.cancel_community_event((select id from _e1));
 select public._as_user(:dave);
