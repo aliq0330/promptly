@@ -67,12 +67,18 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
   const rows = makeRows(many);
-  const state = { rows, feedCalls: [], forYouCalls: [], followedIds: follows ? [U.bob.id, U.carol.id] : [], toolFollows: ["midjourney"], tagFollows: ["resim", "kedi"], writes: [], requests: [] };
+  const state = { rows, provenCalls: [], feedCalls: [], forYouCalls: [], followedIds: follows ? [U.bob.id, U.carol.id] : [], toolFollows: ["midjourney"], tagFollows: ["resim", "kedi"], writes: [], requests: [] };
   if (follows) {
     db.follow({ id: ME }, U.bob);
     db.follow({ id: ME }, U.carol);
   }
   db.rpc.feed_page = (body) => feedPage(body, state);
+  // "Kanıtlanmış" (docs/history/307-*): ayrı RPC; taklit ilk iki prompt'u azalan skorla döndürür (SQL kuralı supabase/tests/feed-page-proven.sql'de).
+  db.rpc.feed_page_proven = (body) => {
+    state.provenCalls.push(body);
+    const list = state.rows.filter((r) => r.status === "published" && (!body.p_content_type || r.content_type === body.p_content_type)).slice(0, 2);
+    return { body: list.map((r, i) => ({ kind: "prompt", id: r.id, created_at: r.created_at, sort_rank: 800000 - i * 1000 })) };
+  };
   db.rpc.for_you_page = (body) => {
     state.forYouCalls.push(body);
     return { body: state.rows.slice(0, 3).map((r, i) => ({ kind: "prompt", id: r.id, created_at: r.created_at, sort_rank: 100 - i, reason_kind: "creator", reason_ref: null })) };
@@ -460,15 +466,27 @@ await scenario("11. Keşfet sıralama: Önerilen (varsayılan, recommended) · E
   // Promptlar: ek olarak En çok kullanılan (kopyalama sayacı gerçek).
   await openSection(page, "Promptlar");
   await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "prompt");
-  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler", "En çok kullanılan"]);
+  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler", "En çok kullanılan", "Kanıtlanmış"]);
   await pickSort(page, "En çok kullanılan");
   await waitFor(() => lastDiscoverCall(state).p_order === "used");
   assert.equal(lastDiscoverCall(state).p_order, "used");
+  // Kanıtlanmış (docs/history/307-*): `feed_page` DEĞİL, ayrı RPC çağrılır; tür süzgeci oraya taşınır, `feed_page`'e p_order=proven gitmez.
+  const feedCallsBefore = state.feedCalls.length;
+  await pickSort(page, "Kanıtlanmış");
+  await waitFor(() => state.provenCalls.length > 0);
+  assert.equal(state.provenCalls.at(-1).p_after_id, null, "ilk sayfa imleçsiz");
+  assert.equal(state.provenCalls.at(-1).p_limit, 18);
+  assert.equal(state.feedCalls.length, feedCallsBefore, "feed_page çağrılmadı");
+  assert.ok(!state.feedCalls.some((c) => c.p_order === "proven"));
+  await waitTitles(page, ["Prompt 1", "Prompt 2"]);
   // İstekler'de kullanım sayacı yok: seçenek yok ve sıra Önerilen'e düşer (anlamsız sıra gönderilmez).
   await openSection(page, "İstekler");
   await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "request");
   assert.equal(lastDiscoverCall(state).p_order, "recommended");
   assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler"]);
+  const provenBefore = state.provenCalls.length;
+  await page.waitForTimeout(400);
+  assert.equal(state.provenCalls.length, provenBefore, "Kanıtlanmış İstekler'de sorgulanmaz");
 });
 
 await scenario("12. Gelişmiş süzgeç seçili bölüme uyar: AI aracı (p_tool) içerik bölümlerinde; Alıntılar'da tür/kategori/araç sunucuya gitmez; Temizle hepsini sıfırlar", async ({ page, state }) => {

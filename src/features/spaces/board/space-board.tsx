@@ -40,8 +40,7 @@ import {
   Ungroup,
   Workflow as WorkflowIcon,
   X,
-  type LucideIcon,
-} from "lucide-react";
+  type LucideIcon, Lock, LockOpen } from "lucide-react";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { WorkflowImportModal } from "../workflow-import-modal";
 import { BoardConnectors, type ConnectorDraft } from "./board-connectors";
@@ -260,6 +259,8 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     return next.length === rawSelection.length ? rawSelection : next;
   }, [rawSelection, items]);
   const selectedSet = useMemo(() => new Set(selection), [selection]);
+  // Kilitli nesneler (docs/history/307-*): taşınmaz, boyutlanmaz, silinmez. Sunucu tetikleyicisi de aynısını uygular; burası yalnız beklenen davranışı sessiz tutar.
+  const lockedSet = useMemo(() => new Set(items.filter((item) => item.locked).map((item) => item.id)), [items]);
   const selectedConn = useMemo(() => connections.find((c) => c.id === selectedConnId) ?? null, [connections, selectedConnId]);
   // Başlangıç nesnesi silinirse ok çizme bekleyişi kendiliğinden düşer.
   const activeFrom = useMemo(() => (connectFrom && items.some((item) => item.id === connectFrom) ? connectFrom : null), [connectFrom, items]);
@@ -339,7 +340,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       const changed: Record<string, Geom> = {};
       for (const [id, geom] of Object.entries(after)) {
         const item = items.find((entry) => entry.id === id);
-        if (!item) continue;
+        if (!item || item.locked) continue;
         const prev = geomOf(item);
         if (prev.x === geom.x && prev.y === geom.y && prev.w === geom.w && prev.h === geom.h && prev.z === geom.z && prev.groupId === geom.groupId) continue;
         before[id] = prev;
@@ -367,17 +368,36 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   const deleteSelection = useCallback(async () => {
     if (!editable || selection.length === 0) return;
     setError(null);
+    // Kilitli nesneler silinmez (sunucu da reddeder); geri kalanı silinir ve kilitliler seçili kalır.
+    const lockedIds = selection.filter((id) => lockedSet.has(id));
+    const ids = selection.filter((id) => !lockedSet.has(id));
+    if (ids.length === 0) {
+      setError(t("spaces.board.lockedSkipped", { count: lockedIds.length }));
+      return;
+    }
     try {
       // Uçlarından biri silinen oklar sunucuda kendiliğinden gider; geri almada öğelerle birlikte geri gelsin diye saklanır.
-      const touching = connections.filter((c) => selection.includes(c.fromItemId) || selection.includes(c.toItemId));
-      const removed = await removeItems(selection);
+      const touching = connections.filter((c) => ids.includes(c.fromItemId) || ids.includes(c.toItemId));
+      const removed = await removeItems(ids);
       setHistory((h) => pushHistory(h, { type: "delete", items: removed, connections: touching }));
-      setSelection([]);
-      setUndoNotice(t("spaces.board.removed", { count: removed.length }));
+      setSelection(lockedIds);
+      setUndoNotice(lockedIds.length ? t("spaces.board.lockedSkipped", { count: lockedIds.length }) : t("spaces.board.removed", { count: removed.length }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("spaces.error.generic"));
     }
-  }, [editable, selection, connections, removeItems, t]);
+  }, [editable, selection, lockedSet, connections, removeItems, t]);
+
+  // Seçili nesneleri kilitle / kilidi aç (hepsi kilitliyse aç, değilse hepsini kilitle). Sunucu yazar; hata sessiz yutulmaz.
+  const toggleLock = useCallback(async () => {
+    if (!editable || selection.length === 0) return;
+    setError(null);
+    const target = !selection.every((id) => lockedSet.has(id));
+    try {
+      await Promise.all(selection.filter((id) => lockedSet.has(id) !== target).map((id) => patchItem(id, { locked: target })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+    }
+  }, [editable, selection, lockedSet, patchItem, t]);
 
   // ---- çoğalt / kopyala-yapıştır (docs/history/263-*) ----
   const duplicate = useCallback(
@@ -701,14 +721,15 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     }
     setSelectedConnId(null);
 
-    if (handle && editable && !wantsPan) {
+    if (handle && editable && !wantsPan && !lockedSet.has(handle)) {
       interaction.current = { ...base, kind: "resize", targetId: handle, origin: { [handle]: geoms[handle] } };
       return;
     }
     if (frame && !wantsPan) {
       const members = items.filter((item) => item.groupId === frame).map((item) => item.id);
       setSelection(members);
-      interaction.current = editable ? { ...base, kind: "move", origin: Object.fromEntries(members.map((id) => [id, geoms[id]])) } : { ...base, kind: "pan" };
+      const movableMembers = members.filter((id) => !lockedSet.has(id));
+      interaction.current = editable && movableMembers.length > 0 ? { ...base, kind: "move", origin: Object.fromEntries(movableMembers.map((id) => [id, geoms[id]])) } : { ...base, kind: "pan" };
       return;
     }
     if (itemId && !wantsPan) {
@@ -716,9 +737,12 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       if (additive) next = selectedSet.has(itemId) ? selection : [...selection, itemId];
       else if (!selectedSet.has(itemId)) next = [itemId];
       setSelection(next);
-      interaction.current = editable
-        ? { ...base, kind: "move", origin: Object.fromEntries(next.map((id) => [id, geoms[id]]).filter(([, geom]) => geom)) }
-        : { ...base, kind: event.pointerType === "mouse" ? "marquee" : "pan" };
+      // Kilitli nesneler sürüklemeye katılmaz; seçimdeki hepsi kilitliyse sürükleme boş alanda olduğu gibi seçim kutusu / kaydırma olur.
+      const movable = next.filter((id) => !lockedSet.has(id));
+      interaction.current =
+        editable && movable.length > 0
+          ? { ...base, kind: "move", origin: Object.fromEntries(movable.map((id) => [id, geoms[id]]).filter(([, geom]) => geom)) }
+          : { ...base, kind: event.pointerType === "mouse" ? "marquee" : "pan" };
       return;
     }
     // Boş alan: dokunmada (Seç modu dışında) kaydırma, farede seçim kutusu.
@@ -1158,7 +1182,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
                 h={geom.h}
                 z={geom.z}
                 selected={selected}
-                showHandle={editable && selectedSet.has(item.id) && selection.length === 1}
+                showHandle={editable && !item.locked && selectedSet.has(item.id) && selection.length === 1}
                 resolved={resolvedMap.get(item.id)!}
                 palette={item.paletteId ? (palettes.find((palette) => palette.id === item.paletteId) ?? null) : null}
                 attachedTitle={attached ? itemTitle(attached) : null}
@@ -1247,6 +1271,12 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
             {editable && (
               <>
                 {selectedItems.some(isDuplicable) && <ToolButton icon={Copy} label={t("spaces.board.duplicate")} onClick={() => void duplicate(selection, 1)} />}
+                <ToolButton
+                  icon={selectedItems.every((item) => item.locked) ? LockOpen : Lock}
+                  label={selectedItems.every((item) => item.locked) ? t("spaces.board.unlock") : t("spaces.board.lock")}
+                  active={selectedItems.every((item) => item.locked)}
+                  onClick={() => void toggleLock()}
+                />
                 <ToolButton icon={BringToFront} label={t("spaces.board.bringFront")} onClick={() => stack("front")} />
                 <ToolButton icon={SendToBack} label={t("spaces.board.sendBack")} onClick={() => stack("back")} />
                 {selectedItems.length >= 2 && <ToolButton icon={Group} label={t("spaces.board.group")} onClick={() => void groupSelection()} />}

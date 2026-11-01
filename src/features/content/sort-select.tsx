@@ -3,7 +3,7 @@
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-export type ContentSortKey = "recommended" | "newest" | "oldest" | "popular" | "most-liked" | "most-used";
+export type ContentSortKey = "recommended" | "newest" | "oldest" | "popular" | "most-liked" | "most-used" | "most-proven";
 
 export const SORT_LABELS: Record<ContentSortKey, TranslationKey> = {
   recommended: "discover.sortRecommended",
@@ -12,6 +12,7 @@ export const SORT_LABELS: Record<ContentSortKey, TranslationKey> = {
   popular: "discover.sortPopular",
   "most-liked": "profile.sortMostLiked",
   "most-used": "profile.sortMostUsed",
+  "most-proven": "discover.sortProven",
 };
 
 /**

@@ -112,10 +112,10 @@ export function DiscoverFeed() {
   const entity = isEntity(section);
   const feedSection: FeedSection = isEntity(section) ? "all" : section;
   const postFilters = !entity && hasPostFilters(feedSection);
-  // "Most used" ranks prompts by their use counter, so it only exists while Promptlar is shown;
+  // "Most used" / "Kanıtlanmış" rank prompts (by their use counter / their "Çalıştı mı?" votes), so they only exist while Promptlar is shown;
   // switching to another section falls back to the recommended order instead of an order that means nothing there.
-  const effectiveSort: ContentSortKey = sort === "most-used" && section !== "prompts" ? "recommended" : sort;
-  const sortKeys: ContentSortKey[] = section === "prompts" ? [...DISCOVER_SORT_KEYS, "most-used"] : DISCOVER_SORT_KEYS;
+  const effectiveSort: ContentSortKey = (sort === "most-used" || sort === "most-proven") && section !== "prompts" ? "recommended" : sort;
+  const sortKeys: ContentSortKey[] = section === "prompts" ? [...DISCOVER_SORT_KEYS, "most-used", "most-proven"] : DISCOVER_SORT_KEYS;
 
   // Only filters that mean something in the open section reach the query (a quote has no category: carrying one over would empty the list).
   const effectiveTaxonomy = postFilters ? taxonomy : EMPTY_TAXONOMY_FILTER;

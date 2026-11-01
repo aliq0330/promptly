@@ -35,6 +35,18 @@ const PRESET_ROWS = [
   { id: "f1000000-0000-4000-8000-000000000001", creator_id: ME_ID, title: "Sinematik portre", description: "Yumuşak ışık", cover_url: null, content_type: "image", category: null, subcategory: null, tools: [], selection: { lens: "35mm", hdr: true, tags: ["a", "b"] },
     status: "published", visibility: "public", community_id: null, like_count: 4, comment_count: 0, save_count: 1, quote_count: 0, created_at: "2026-09-03T00:00:00Z", updated_at: "2026-09-03T00:00:00Z", profiles: pubOf(U.alice), preset_tags: [{ tags: { slug: "portre", label: "Portre" } }] },
 ];
+const WF_PUBLIC_PROMPT = "b0000000-0000-4000-8000-0000000000aa";
+const WF_PRIVATE_PROMPT = "b0000000-0000-4000-8000-0000000000bb";
+const WORKFLOW_ROWS = [
+  { id: "f2000000-0000-4000-8000-000000000001", creator_id: ME_ID, title: "Kampanya akışı", description: "İki adım", cover_url: null, content_types: ["text", "image"], category: null, subcategory: null, tools: [],
+    status: "published", visibility: "public", community_id: null, like_count: 3, save_count: 1, comment_count: 0, quote_count: 0, created_at: "2026-09-04T00:00:00Z", updated_at: "2026-09-04T00:00:00Z",
+    profiles: pubOf(U.alice), workflow_steps: [{ count: 2 }], workflow_tags: [{ tags: { slug: "kampanya", label: "Kampanya" } }], workflow_media: [] },
+];
+const WORKFLOW_STEP_ROWS = [
+  { id: "f3000000-0000-4000-8000-000000000001", workflow_id: WORKFLOW_ROWS[0].id, position: 0, title: "Fikir", description: "", instructions: "Kısa yaz", prompt_id: WF_PUBLIC_PROMPT, inputs: [], outputs: [{ id: "fikir", label: "Fikir" }] },
+  { id: "f3000000-0000-4000-8000-000000000002", workflow_id: WORKFLOW_ROWS[0].id, position: 1, title: "Metin", description: "", instructions: "", prompt_id: WF_PRIVATE_PROMPT,
+    inputs: [{ id: "girdi", label: "Girdi", source: { stepId: "f3000000-0000-4000-8000-000000000001", outputId: "fikir" } }], outputs: [] },
+];
 const row = (id, title, extra = {}) => ({
   id, title, description: "Açıklama, virgüllü", prompt_text: `${title} metni {Stil}\nikinci satır`, tool: null, tools: ["midjourney:v7"], content_type: "image", category: null, subcategory: null,
   status: "published", origin_type: "original", request_id: null, like_count: 7, save_count: 2, comment_count: 1, copy_count: 3, created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z", show_on_profile: true,
@@ -49,7 +61,7 @@ const VARIABLES = [{ id: "v1", prompt_id: P1, name: "Stil", default_value: "noir
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", detail = false, moderator = false, manageCount = 250, templateCount = 3, taxRows = [] } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { prompts: [], imports: [], contentImports: [], contentResult: null, importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0, impactCalls: [], impactFail: false, tagPuts: [], tagCreates: [], tagCatalog: TAG_CATALOG, tmplScans: [], tmplCalls: [], tmplFailAt: 0, taxQueries: [], taxCalls: [], taxFailAt: 0, taxRows: taxRows.map((r) => ({ ...r })) };
+  const state = { prompts: [], imports: [], contentImports: [], workflowImports: [], promptTitleQueries: [], contentResult: null, importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0, impactCalls: [], impactFail: false, tagPuts: [], tagCreates: [], tagCatalog: TAG_CATALOG, tmplScans: [], tmplCalls: [], tmplFailAt: 0, taxQueries: [], taxCalls: [], taxFailAt: 0, taxRows: taxRows.map((r) => ({ ...r })) };
   // Toplu yönetim taklidi: 250 kayıt = 200 taslak (2'si etkileşimli) + 30 yayında (2'si etkileşimli) + 20 gizli (1'i etkileşimli); >250 ise hepsi taslak.
   state.manageRows = Array.from({ length: manageCount }, (_, i) => ({
     id: `e0000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Toplu ${i + 1}`,
@@ -148,6 +160,16 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     }));
     return { body: { dryRun: body.p_dry_run, ok: true, created: body.p_dry_run ? 0 : items.filter((x) => x.status === "ok").length, items } };
   };
+  db.rpc.import_workflows = (body) => {
+    state.workflowImports.push(body);
+    const items = body.p_items.map((item, i) => ({
+      index: i + 1,
+      status: item.title === "Zaten var" ? "duplicate" : "ok",
+      ...(item.steps.some((st) => st.prompt) ? { warnings: ["prompt_unavailable"] } : {}),
+      ...(!body.p_dry_run && item.title !== "Zaten var" ? { id: `e1000000-0000-4000-8000-00000000000${i}` } : {}),
+    }));
+    return { body: { dryRun: body.p_dry_run, ok: true, created: body.p_dry_run ? 0 : items.filter((x) => x.status === "ok").length, items } };
+  };
   db.rpc.import_prompts = (body) => {
     state.imports.push(body);
     if (state.importResult) return state.importResult(body);
@@ -163,6 +185,13 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     if (ctx.table === "prompt_requests" && ctx.method === "GET" && ctx.q.get("author_id") && ctx.sel.includes("creative_direction")) return ctx.rows(REQUEST_ROWS);
     if (ctx.table === "presets" && ctx.method === "GET" && ctx.q.get("creator_id") && ctx.sel.includes("selection")) return ctx.rows(PRESET_ROWS);
     if (ctx.table === "preset_fields" && ctx.method === "GET") return ctx.rows([]);
+    if (ctx.table === "workflows" && ctx.method === "GET" && ctx.q.get("creator_id") && ctx.sel.includes("content_types")) return ctx.rows(WORKFLOW_ROWS);
+    if (ctx.table === "workflow_steps" && ctx.method === "GET" && ctx.sel.includes("instructions")) return ctx.rows(WORKFLOW_STEP_ROWS);
+    // Dışa aktarma yalnız HERKESE AÇIK promptların başlığını okur (özel olan sorguda süzülür, taklitte de dönmez).
+    if (ctx.table === "prompts" && ctx.method === "GET" && ctx.sel.replace(/\s/g, "") === "id,title" && ctx.q.get("visibility") === "eq.public") {
+      state.promptTitleQueries.push(Object.fromEntries(ctx.q.entries()));
+      return ctx.rows([{ id: WF_PUBLIC_PROMPT, title: "Açık prompt" }]);
+    }
     if (ctx.table === "prompts" && ctx.method === "GET" && ctx.sel.includes("save_count") && !ctx.sel.includes("prompt_media")) {
       state.manageQueries.push(Object.fromEntries(ctx.q.entries()));
       const tagFilter = ctx.q.get("prompt_tags.tag_slug");
@@ -236,12 +265,16 @@ async function download(page, format) {
 }
 const upload = (page, name, content) => page.getByTestId("exchange-file-input").setInputFiles({ name, mimeType: "text/plain", buffer: Buffer.from(content, "utf8") });
 
-await scenario("1. Kütüphanem: Promptlar bölümünde İçe/Dışa aktar; diğer bölümlerde yok", async ({ page }) => {
+await scenario("1. Kütüphanem: Promptlar / İstekler / Workflow'lar / Hazır ayarlar bölümlerinde İçe/Dışa aktar; Taslaklar bölümünde yok", async ({ page }) => {
   await openLibrary(page);
   await page.getByTestId("my-content-import").waitFor();
   await page.locator("[data-section-menu]").click();
   await page.getByRole("radio", { name: /Workflow/ }).click();
-  assert.equal(await page.getByTestId("my-content-export").count(), 0, "Workflow bölümünde yok");
+  await page.getByTestId("my-content-export").waitFor();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /Taslak/ }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.getByTestId("my-content-export").count(), 0, "Taslaklar bölümünde yok");
   assert.equal(await overflowFree(page), true);
 });
 
@@ -1101,6 +1134,72 @@ await scenario("42. İstek / Hazır ayar pencereleri İngilizce ve telefonda ta�
   await page.getByTestId("exchange-download").waitFor();
   assert.match(await dialog(page).innerText(), /Export requests/);
   assert.match(await dialog(page).innerText(), /2 request\(s\) will be downloaded as a JSON file\./);
+  assert.equal(await overflowFree(page), true);
+}, { lang: "en", viewport: { width: 390, height: 800 } });
+
+await scenario("43. Workflow dışa aktarma (docs/history/307-*): adımlar anahtara çevrilir, bağlantı korunur; yalnız HERKESE AÇIK promptun başlığı yazılır, özel promptun kimliği/başlığı dosyada yok", async ({ page, state }) => {
+  await openLibrary(page);
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /Workflow/ }).first().click();
+  await page.getByTestId("my-content-export").click();
+  await dialog(page).getByText(/1 workflow JSON dosyası olarak indirilecek\./).waitFor();
+  const [file] = await Promise.all([page.waitForEvent("download"), page.getByTestId("exchange-download").click()]);
+  assert.match(file.suggestedFilename(), /^promptly-workflows-/);
+  const text = readFileSync(await file.path(), "utf8");
+  const envelope = JSON.parse(text);
+  assert.equal(envelope.format, "promptly.workflows");
+  const wf = envelope.items[0];
+  assert.equal(wf.contentType, "text");
+  assert.deepEqual(wf.steps.map((st) => st.key), ["s1", "s2"]);
+  assert.deepEqual(wf.steps[0].prompt, { id: WF_PUBLIC_PROMPT, title: "Açık prompt" });
+  assert.equal(wf.steps[1].prompt, null, "özel prompt başvurusu yazılmadı");
+  assert.ok(!text.includes(WF_PRIVATE_PROMPT), "özel promptun kimliği dosyada yok");
+  assert.deepEqual(wf.steps[1].inputs[0].source, { step: "s1", output: "fikir" });
+  assert.ok(!/f3000000|f2000000|like_count|creator|status|visibility/.test(text), "veritabanı kimliği/sayaç/durum yok");
+  assert.equal(state.promptTitleQueries.length, 1, "başvurulan promptlar tek sorguda, herkese açık süzgeciyle okundu");
+  assert.equal(state.promptTitleQueries[0].status, "eq.published");
+  assert.equal(state.promptTitleQueries[0].community_id, "is.null");
+});
+
+await scenario("44. Workflow içe aktarma: kuru çalıştırma + uyarı; onaylayınca p_items yalnız içerik alanlarıyla gider; hatalı bağlantılı dosya hiç çağrı yapmaz; İngilizce", async ({ page, state }) => {
+  await openLibrary(page);
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /Workflow/ }).first().click();
+  await page.getByTestId("my-content-import").click();
+  const good = { title: "Yeni akış", description: "d", contentType: "text", status: "published", creator_id: "x", steps: [
+    { key: "s1", title: "A", prompt: { id: WF_PUBLIC_PROMPT, title: "Açık prompt", promptText: "GİZLİ" }, outputs: [{ id: "o", label: "O" }] },
+    { key: "s2", title: "B", inputs: [{ id: "i", label: "I", source: { step: "s1", output: "o" } }] },
+  ] };
+  await upload(page, "akis.json", JSON.stringify({ format: "promptly.workflows", schemaVersion: 1, items: [good, { title: "Zaten var", contentType: "text", steps: [{ key: "a", title: "x" }] }, { title: "Kötü", contentType: "text", steps: [] }] }));
+  await page.getByTestId("exchange-summary").waitFor();
+  assert.match(await page.getByTestId("exchange-summary").innerText(), /3 kayıt okundu: 1 yeni, 1 zaten var, 1 geçersiz\./);
+  assert.match(await dialog(page).innerText(), /prompt başvurusu bağlanamadı/);
+  assert.equal(state.workflowImports.length, 1);
+  assert.equal(state.workflowImports[0].p_dry_run, true);
+  assert.equal(state.workflowImports[0].p_items.length, 2, "geçersiz olan istemcide elendi");
+  const sent = JSON.stringify(state.workflowImports[0].p_items);
+  assert.ok(!sent.includes("GİZLİ") && !sent.includes("creator_id") && !sent.includes("published"), "prompt metni / yazar / durum gönderilmez");
+  await page.getByTestId("exchange-run").click();
+  await page.getByTestId("exchange-done").waitFor();
+  assert.match(await page.getByTestId("exchange-done").innerText(), /1 workflow taslak olarak eklendi\./);
+  assert.equal(state.workflowImports[1].p_dry_run, false);
+  assert.equal(state.contentImports.length, 0, "İstek/Hazır ayar RPC'sine dokunulmadı");
+});
+
+await scenario("45. Workflow dosyasında geçersiz bağlantı (ileriye bağ) istemcide yakalanır ve çağrı yapılmaz; pencere İngilizce", async ({ page, state }) => {
+  await page.goto(`${BASE}/my-content`);
+  await page.getByTestId("my-content-export").waitFor();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /Workflow/ }).first().click();
+  await page.getByTestId("my-content-import").click();
+  assert.match(await dialog(page).innerText(), /Import workflows/);
+  await upload(page, "bad.json", JSON.stringify([{ title: "İleri", contentType: "text", steps: [
+    { key: "a", title: "a", inputs: [{ id: "i", label: "I", source: { step: "b", output: "o" } }] },
+    { key: "b", title: "b", outputs: [{ id: "o", label: "O" }] },
+  ] }]));
+  await page.getByTestId("exchange-summary").waitFor();
+  assert.match(await dialog(page).innerText(), /invalid connection/);
+  assert.equal(state.workflowImports.length, 0);
   assert.equal(await overflowFree(page), true);
 }, { lang: "en", viewport: { width: 390, height: 800 } });
 

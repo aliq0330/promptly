@@ -125,3 +125,13 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
     .eq("is_read", false);
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Haftalık özet bildirimi (docs/history/307-*): uygulama açılışında bir kez çağrılır; sunucu haftada en çok bir bildirim üretir (hareket yoksa hiç).
+ * Dönüş: yeni bildirim oluştu mu. Hata (ör. migration henüz uygulanmadı) bildirimleri etkilemez.
+ */
+export async function dispatchMyWeeklyDigest(): Promise<number> {
+  const { data, error } = await supabase.rpc("dispatch_my_weekly_digest");
+  if (error) throw new Error(error.message);
+  return typeof data === "number" ? data : 0;
+}

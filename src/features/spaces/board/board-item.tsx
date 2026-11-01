@@ -49,6 +49,7 @@ export const BoardItem = memo(function BoardItem({
       data-board-item={item.id}
       data-kind={item.kind}
       data-selected={selected ? "" : undefined}
+      data-locked={item.locked ? "" : undefined}
       role="button"
       tabIndex={-1}
       aria-pressed={selected}
@@ -62,6 +63,11 @@ export const BoardItem = memo(function BoardItem({
       <ItemBoundary>
         <ItemBody item={item} resolved={resolved} palette={palette} attachedTitle={attachedTitle} lowDetail={lowDetail} />
       </ItemBoundary>
+      {item.locked && !lowDetail && (
+        <span aria-hidden className="pointer-events-none absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface/90 text-text-secondary shadow-sm">
+          <Lock size={11} strokeWidth={2} />
+        </span>
+      )}
       {showHandle && (
         <span
           data-resize-handle={item.id}

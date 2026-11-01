@@ -75,7 +75,7 @@ dış servis/karar gerektirenler en sona.
 | 8 | Herkese açık koleksiyonları takip etme | O | **yapıldı** (`docs/history/166-*`) |
 | 9 | Sürüm geçmişi + fark görünümü + geri dönme: Prompt, Prompt İsteği, Workflow, Hazır Ayar | O | **yapıldı** (kod + migration repoda; **canlıya uygulanmadı**, `docs/history/170-*`) |
 | 10 | Yan yana model karşılaştırma (Studio) | B | **yapıldı** (`docs/history/123-*` 9.123b: ana modele ek en çok 2 model; liste eskimişti, `306-*`) |
-| 11 | Haftalık özet bildirimi (e-posta / web push) | B | **engelli**: dış servis + gizli anahtar kararı gerekir |
+| 11 | Haftalık özet bildirimi | B | **site içi YAPILDI** (`307-*`, `dispatch_my_weekly_digest`); **e-posta / web push engelli**: dış servis + gizli anahtar kararı gerekir |
 | 12 | Sayaç sütunlarını istemciden koruma (`like_count`, `save_count`, `comment_count`, `response_count`) | K–O | **bulgu**, bekliyor (aşağıda) |
 | 13 | Grup sohbeti ve topluluk (roller, davet/başvuru, keşif, görünürlük + toplu kabul, bildirimler) | B | **yapıldı** (kod + 2 migration repoda; **canlıya uygulanmadı**, `docs/history/172-*`) |
 | 15 | Topluluklar: grup sohbetinin tam kapsamlı topluluk sistemine genişletilmesi (akış, duyuru, etkinlik, kurallar, bildirim tercihi, moderasyon kuyruğu, istatistik, kapatma, eski grupların korunması) | B | **yapıldı** (kod + 3 migration repoda; **canlıya uygulanmadı**, `docs/history/175-*`) |

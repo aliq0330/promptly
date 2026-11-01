@@ -4,12 +4,14 @@ import { fetchPromptById, mapPromptRow, PROMPT_SELECT, type PromptRow } from "./
 import { fetchVariablesForPrompt, fetchVariablesForPrompts } from "./prompt-variables";
 import { mapPresetRow, PRESET_SELECT, withFields, type PresetRow } from "./presets";
 import { mapRequestRow, REQUEST_SELECT, type RequestRow } from "./requests";
+import { mapWorkflowRow, WORKFLOW_SELECT, type WorkflowRow } from "./workflows";
 import {
   ADMIN_IMPORT_LIMITS,
   runBatches,
   toExchangePreset,
   toExchangePrompt,
   toExchangeRequest,
+  toExchangeWorkflow,
   withSourceNote,
   type BulkBatchReport,
   type BulkOutcome,
@@ -19,6 +21,7 @@ import {
   type ExchangePreset,
   type ExchangePrompt,
   type ExchangeRequest,
+  type ExchangeWorkflow,
 } from "@/lib/exchange";
 import { shareLinkForHref } from "@/lib/share-link";
 import { absoluteUrl, promptHref } from "@/lib/utils";
@@ -162,7 +165,91 @@ export async function fetchOwnPresetsForExport(userId: string): Promise<Exchange
  * transaction; with `dryRun` nothing is written. The database re-validates, so this call is the only authority.
  */
 export async function importContent<K extends ExchangeContentKind>(kind: K, items: ExchangeContentItem<K>[], dryRun: boolean): Promise<ImportReport> {
-  const { data, error } = await supabase.rpc("import_content", { p_kind: kind, p_items: items, p_dry_run: dryRun });
+  // Workflow'un adım grafiği ayrı bir RPC'dir (`import_workflows`); İstek / Hazır ayar `import_content`.
+  const { data, error } = kind === "workflow"
+    ? await supabase.rpc("import_workflows", { p_items: items, p_dry_run: dryRun })
+    : await supabase.rpc("import_content", { p_kind: kind, p_items: items, p_dry_run: dryRun });
   if (error) throw new Error(error.message);
   return data as ImportReport;
+}
+
+interface WorkflowStepExportRow {
+  id: string;
+  workflow_id: string;
+  position: number;
+  title: string;
+  description: string;
+  instructions: string;
+  prompt_id: string | null;
+  inputs: { id: string; label: string; source?: { stepId: string; outputId: string } | null }[] | null;
+  outputs: { id: string; label: string }[] | null;
+}
+
+/**
+ * Every workflow the member owns (drafts and private included) with its steps, newest first (docs/history/307-*). A step's prompt reference is
+ * written ONLY for prompts that are public + published + not community-only: a private prompt's id/title never reaches the file, and the
+ * prompt text is never copied. Steps are read in chunks of 25 workflows (ids go into the URL in small pieces; PostgREST stops at 1000 rows).
+ */
+export async function fetchOwnWorkflowsForExport(userId: string): Promise<ExchangeWorkflow[]> {
+  const { rows } = await fetchAllRows((from, to) =>
+    supabase
+      .from("workflows")
+      .select(WORKFLOW_SELECT)
+      .eq("creator_id", userId)
+      .is("community_id", null)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+  );
+  const workflows = rows.map((row) => mapWorkflowRow(row as unknown as WorkflowRow));
+  const stepsByWorkflow = new Map<string, WorkflowStepExportRow[]>();
+  for (const part of chunk(workflows, 25)) {
+    const { rows: stepRows } = await fetchAllRows((from, to) =>
+      supabase
+        .from("workflow_steps")
+        .select("id, workflow_id, position, title, description, instructions, prompt_id, inputs, outputs")
+        .in("workflow_id", part.map((workflow) => workflow.id))
+        .order("workflow_id", { ascending: true })
+        .order("position", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
+    for (const row of stepRows as unknown as WorkflowStepExportRow[]) {
+      const list = stepsByWorkflow.get(row.workflow_id) ?? [];
+      list.push(row);
+      stepsByWorkflow.set(row.workflow_id, list);
+    }
+  }
+  const promptIds = [...new Set([...stepsByWorkflow.values()].flat().map((step) => step.prompt_id).filter((id): id is string => Boolean(id)))];
+  const publicPrompts = new Map<string, string>();
+  for (const part of chunk(promptIds, 100)) {
+    const { data, error } = await supabase
+      .from("prompts")
+      .select("id, title")
+      .in("id", part)
+      .eq("status", "published")
+      .eq("visibility", "public")
+      .is("community_id", null)
+      .is("deleted_at", null);
+    if (error) throw new Error(error.message);
+    for (const row of (data ?? []) as { id: string; title: string }[]) publicPrompts.set(row.id, row.title);
+  }
+  const publicIds = new Set(publicPrompts.keys());
+  return workflows.map((workflow) =>
+    toExchangeWorkflow(
+      {
+        ...workflow,
+        steps: (stepsByWorkflow.get(workflow.id) ?? []).map((step) => ({
+          id: step.id,
+          title: step.title,
+          description: step.description,
+          instructions: step.instructions,
+          content: step.prompt_id && publicPrompts.has(step.prompt_id) ? { id: step.prompt_id, title: publicPrompts.get(step.prompt_id) as string } : null,
+          inputs: (step.inputs ?? []).map((input) => ({ id: input.id, label: input.label, source: input.source ?? null })),
+          outputs: (step.outputs ?? []).map((output) => ({ id: output.id, label: output.label })),
+        })),
+      },
+      publicIds,
+    ),
+  );
 }

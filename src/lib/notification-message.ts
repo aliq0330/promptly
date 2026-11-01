@@ -78,6 +78,14 @@ const COMMUNITY_TEMPLATES: [re: RegExp, key: string][] = [
   [/^"([\s\S]*)" topluluğunda rolün üye olarak değiştirildi\.$/, "notifMsg.communityRoleMember"],
 ];
 
+const WEEKLY_PART_KEYS: Record<string, TranslationKey> = {
+  kopyalama: "notifMsg.weeklyCopies",
+  tepki: "notifMsg.weeklyReactions",
+  yorum: "notifMsg.weeklyComments",
+  kaydetme: "notifMsg.weeklySaves",
+  "yeni takipçi": "notifMsg.weeklyFollowers",
+};
+
 const escapeRe = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const PREVIEW_MATCHERS = PREVIEW_TEMPLATES.map(([prefix, key, hasNone]) => ({
@@ -97,6 +105,16 @@ function localizePreviewText(preview: string, t: TFunction): string {
 /** Returns the notification sentence in the active language (Turkish messages are returned as stored). */
 export function localizeNotificationMessage(message: string, language: "tr" | "en", t: TFunction): string {
   if (language === "tr") return message;
+
+  // Haftalık özet (docs/history/307-*): "Haftalık özet: 12 kopyalama, 8 tepki, 3 yorum, 5 kaydetme, 2 yeni takipçi." — sayılar çevrilmez, etiketler çevrilir.
+  const weekly = /^Haftalık özet: ([\s\S]+)\.$/.exec(message);
+  if (weekly) {
+    const parts = weekly[1].split(", ").map((part) => {
+      const m = /^(\d+) (kopyalama|tepki|yorum|kaydetme|yeni takipçi)$/.exec(part);
+      return m ? t(WEEKLY_PART_KEYS[m[2]], { count: m[1] }) : part;
+    });
+    return t("notifMsg.weeklyDigest", { parts: parts.join(", ") });
+  }
 
   for (const { key, hasNone, re } of PREVIEW_MATCHERS) {
     const match = re.exec(message);

@@ -198,6 +198,7 @@ export const SPACE_ERROR_CODES = [
   "space_not_public",
   "space_too_empty",
   "space_rating_owner",
+  "space_item_locked",
 ] as const;
 export type SpaceErrorCode = (typeof SPACE_ERROR_CODES)[number];
 
