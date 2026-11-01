@@ -1,6 +1,6 @@
 # 314 — Kişisel API anahtarları: veri modeli + Ayarlar arayüzü (313'ün 2. ve 3. adımı)
 
-> **Durum:** repoda; migration `20261102110000_api_tokens.sql` canlıya UYGULANMADI (deploy hattı merge'de uygular). Anahtarla çağrılabilen uçlar
+> **Durum:** merge edildi (PR #414) ve migration `20261102110000_api_tokens.sql` CANLIDA (2026-11-01; deploy hattı başarılı, Supabase MCP ile doğrulandı: `schema_migrations` kaydı, tablo + 4 fonksiyon var, RLS açık, anon/authenticated tabloyu okuyamaz, `_api_token_authenticate` istemci rollerine kapalı, `create_api_token` yalnız oturumluya açık). Arayüzün gerçek tarayıcıda/oturumla denenmesi YAPILMADI. Anahtarla çağrılabilen uçlar
 > (`/v1/me*`, kimlikli MCP) **henüz YOK** (313 §9 adım 4); bu yüzden ekranda "Önizleme" notu var — anahtar oluşturulur/iptal edilir ama şimdilik hiçbir uç onu kabul etmez.
 
 ## Veritabanı (`supabase/migrations/20261102110000_api_tokens.sql`)
