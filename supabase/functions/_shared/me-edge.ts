@@ -47,3 +47,6 @@ export function createPostgresOauthQuery(url: string): OauthQuery {
     (sql ??= postgres(url, { max: 3, prepare: false, connect_timeout: 10, idle_timeout: 20, connection: { statement_timeout: 8000 } }));
   return async (text, params = []) => (await get().unsafe(text, params as never[])) as unknown as Record<string, unknown>[];
 }
+
+/** Telegram botu (docs/history/323-*): `_telegram_*` yardımcıları da yalnız sahip role açıktır; OAuth sunucusuyla aynı tek-çağrılık bağdaştırıcı. */
+export const createPostgresOwnerQuery = createPostgresOauthQuery;
