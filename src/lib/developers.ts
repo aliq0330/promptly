@@ -41,6 +41,8 @@ export interface DeveloperSnippets {
   curlMe: string;
   curlMeList: string;
   curlMeSave: string;
+  curlMeListOther: string;
+  curlMeUpdate: string;
   claudeCodeMe: string;
   cursorMeJson: string;
 }
@@ -62,6 +64,8 @@ export function developerSnippets(endpoints: DeveloperEndpoints): DeveloperSnipp
     fetchJs: `const res = await fetch("${apiBase}/prompts?q=logo&limit=3");\nconst { items } = await res.json();\nconsole.log(items[0].title, items[0].url);`,
     curlMe: `curl "${apiBase}/me" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY"`,
     curlMeList: `curl "${apiBase}/me/prompts?status=draft&limit=10" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY"`,
+    curlMeListOther: `curl "${apiBase}/me/requests?status=draft&limit=10" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY"`,
+    curlMeUpdate: `curl -X PATCH "${apiBase}/me/requests/DRAFT_ID" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"expectedUpdatedAt":"2026-11-02T10:00:00.123Z","changes":{"title":"New title"}}'`,
     curlMeSave: `curl -X POST "${apiBase}/me/prompts" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d @promptly-prompts.json`,
     claudeCodeMe: `claude mcp add --transport http promptly-me ${mcpMeUrl} \\\n  --header "Authorization: Bearer pmt_YOUR_KEY"`,
     cursorMeJson: JSON.stringify({ mcpServers: { "promptly-me": { url: mcpMeUrl, headers: { Authorization: "Bearer pmt_YOUR_KEY" } } } }, null, 2),

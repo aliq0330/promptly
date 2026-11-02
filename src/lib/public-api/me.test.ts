@@ -52,7 +52,7 @@ const get = (path: string, key: string | null = KEY, method = "GET", body?: stri
 const filePrompt: ExchangePrompt = { title: "Logo", description: "d", promptText: "A logo for {brand}", contentType: "text", category: null, subcategory: null, tools: [], tags: [], variables: [] };
 
 test("the user is established in ONE transaction, in order: authenticate → role → claims → throttle → operation", async () => {
-  const { db, calls, state } = fakeDb({ query: () => [{ user_id: USER, username: "ayse" }] });
+  const { db, calls, state } = fakeDb({ query: () => [{ user_id: USER, username: "ayse", display_name: "Ayşe K.", avatar_url: null }] });
   const response = await handlerWith(db)(get("/me"));
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "no-store", "personal responses are never cached");
@@ -62,8 +62,12 @@ test("the user is established in ONE transaction, in order: authenticate → rol
   assert.ok(calls[2].sql.includes("request.jwt.claims"));
   assert.deepEqual(JSON.parse(String(calls[2].params[0])), { sub: USER, role: "authenticated" });
   assert.ok(calls[3].sql.includes("api_me_throttle") && calls[3].params[0] === false);
-  assert.ok(calls[4].sql.includes("api_me_profile"));
-  assert.deepEqual(await response.json(), { user: { id: USER, username: "ayse" }, scopes: ["read"], via: "key" });
+  assert.ok(calls[4].sql.includes("api_me_whoami"));
+  assert.deepEqual(await response.json(), {
+    user: { id: USER, username: "ayse", displayName: "Ayşe K.", avatarUrl: null, profileUrl: `${SITE}/profile/real?username=ayse` },
+    scopes: ["read"],
+    via: "key",
+  });
 });
 
 test("no credential → 401 with a WWW-Authenticate header, and the database is never touched", async () => {
@@ -96,7 +100,7 @@ test("a read-only key cannot POST: 403 insufficient_scope and no role is set", a
 });
 
 test("OAuth: the JWT is verified outside the database, grants READ only, and never touches the key authenticator", async () => {
-  const { db, calls } = fakeDb({ query: () => [{ user_id: USER, username: "ayse" }] });
+  const { db, calls } = fakeDb({ query: () => [{ user_id: USER, username: "ayse", display_name: null, avatar_url: null }] });
   let verified = "";
   const handler = handlerWith(db, async (jwt) => { verified = jwt; return USER; });
   const jwt = "aaa.bbb.ccc";

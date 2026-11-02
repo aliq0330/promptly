@@ -1,7 +1,7 @@
 /**
  * Promptly MCP sunucusu — araçlar ve hazır prompt listesi. Bütün veri işi açık API çekirdeğindedir (`src/lib/public-api`); burası
- * yalnız MCP'ye bağlar. Açık araçlar salt-okunurdur; kişisel araçlar (`me`, `/mcp/me`) yalnız kullanıcının KENDİ hesabında çalışır ve tek yazma
- * `save_prompt_draft`'tır (özel taslak, `write` kapsamı).
+ * yalnız MCP'ye bağlar. Açık araçlar salt-okunurdur; kişisel araçlar (`me`, `/mcp/me`) yalnız kullanıcının KENDİ hesabında çalışır ve yazmaları
+ * yalnız ÖZEL TASLAK ekleme (`save_*_draft`) ile taslağı güncellemedir (`update_my_draft`, `write` kapsamı); yayınlama ve silme YOKTUR (docs/history/321-*).
  *
  * Güvenlik: araç yanıtındaki başlık/açıklama/prompt metni KULLANICI İÇERİĞİDİR ve modelin bağlamına girer. Her yanıt bunu açıkça
  * söyleyen bir notla başlar; içerik talimat olarak değil veri olarak sunulur (prompt injection).
@@ -16,12 +16,17 @@ import {
   PUBLIC_SORTS,
   PublicApiError,
   fillPrompt,
+  getMyContent,
   getMyPrompt,
   getPrompt,
   getPrompts,
+  getWhoami,
+  importMyContent,
   importMyPrompts,
+  listMyContent,
   listMyPrompts,
   listMySaved,
+  updateMyDraft,
   popularPrompts,
   promptSlug,
   searchPrompts,
@@ -29,6 +34,7 @@ import {
   type PublicPrompt,
   type RestClient,
 } from "../../src/lib/public-api/index.ts";
+import { serializeContent } from "../../src/lib/exchange/content-format.ts";
 import { serializeJson } from "../../src/lib/exchange/json.ts";
 import { extractVariableTokenNames } from "../../src/lib/prompt-variables.ts";
 
@@ -290,6 +296,208 @@ export function createPromptlyServer({ client, version, log = () => {}, onPrompt
             ),
           ),
         ),
+    );
+
+    // --- Kimlik + istek / hazır ayar / workflow (docs/history/321-*) ---
+    server.registerTool(
+      "whoami",
+      {
+        title: "Who am I on Promptly",
+        description: "The Promptly account this connection works as: username, display name, profile link and the scopes (read / write) this connection has.",
+        inputSchema: {},
+        annotations: own,
+      },
+      () => run(() => me.backend.withUser(me.bearer, "read", (tx, identity) => getWhoami(tx, identity, me.backend.siteUrl))),
+    );
+    const KIND = z.enum(["request", "preset", "workflow"]);
+    server.registerTool(
+      "list_my_content",
+      {
+        title: "List my requests, presets or workflows",
+        description: "YOUR OWN requests, presets or workflows (drafts and private ones included), newest first. Short summaries with `updatedAt`; use get_my_content for the full record. Prompts have their own tools (list_my_prompts).",
+        inputSchema: {
+          kind: KIND,
+          status: z.enum(["draft", "published"]).optional(),
+          limit: z.number().int().min(1).max(PUBLIC_LIMITS.maxLimit).optional(),
+          cursor: z.string().optional().describe("nextCursor from the previous call."),
+        },
+        annotations: own,
+      },
+      (args: { kind: "request" | "preset" | "workflow"; status?: string; limit?: number; cursor?: string }) =>
+        run(() => me.backend.withUser(me.bearer, "read", (tx) => listMyContent(tx, me.backend.siteUrl, args.kind, { status: args.status, limit: args.limit, cursor: args.cursor }))),
+    );
+    server.registerTool(
+      "get_my_content",
+      {
+        title: "Get one of my requests, presets or workflows",
+        description:
+          "The full record of one of YOUR OWN requests, presets or workflows (workflows include their steps by 1-based `position`). " +
+          "ALWAYS read a draft right before changing it: pass the returned `updatedAt` to update_my_draft as `expected_updated_at`.",
+        inputSchema: { kind: KIND, id: z.string().describe("Id (UUID) from list_my_content.") },
+        annotations: own,
+      },
+      (args: { kind: "request" | "preset" | "workflow"; id: string }) => run(() => me.backend.withUser(me.bearer, "read", (tx) => getMyContent(tx, me.backend.siteUrl, args.kind, args.id))),
+    );
+
+    const writeTool = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } as const;
+    const common = {
+      content_type: z.enum(CONTENT_TYPES as [string, ...string[]]).optional().describe("What it is for: image, text, audio or video. Default: text."),
+      category: z.string().max(80).optional(),
+      subcategory: z.string().max(80).optional(),
+      tools: z.array(z.string().max(60)).max(10).optional().describe("AI tool ids, e.g. gpt-image-1."),
+      tags: z.array(z.string().max(40)).max(10).optional(),
+    };
+    interface Common {
+      content_type?: string;
+      category?: string;
+      subcategory?: string;
+      tools?: string[];
+      tags?: string[];
+    }
+    const commonOf = (args: Common) => ({
+      contentType: (args.content_type ?? "text") as "text",
+      category: args.category ?? null,
+      subcategory: args.subcategory ?? null,
+      tools: args.tools ?? [],
+      tags: args.tags ?? [],
+    });
+    server.registerTool(
+      "save_request_draft",
+      {
+        title: "Save a request as a private draft",
+        description:
+          "Adds ONE prompt request (a creative ask the community can answer) to the user's account as a PRIVATE DRAFT. Nothing is published; the user publishes it on the site. Needs the write scope.",
+        inputSchema: { title: z.string().min(1).max(200), description: z.string().min(1).max(5000), creative_direction: z.string().max(5000).optional(), ...common },
+        annotations: writeTool,
+      },
+      (args: Common & { title: string; description: string; creative_direction?: string }) =>
+        run(() =>
+          me.backend.withUser(me.bearer, "write", (tx) =>
+            importMyContent(tx, me.backend.siteUrl, "request", serializeContent("request", [{ title: args.title, description: args.description, creativeDirection: args.creative_direction ?? "", ...commonOf(args) }]), false),
+          ),
+        ),
+    );
+    server.registerTool(
+      "save_preset_draft",
+      {
+        title: "Save a preset as a private draft",
+        description:
+          "Adds ONE preset (a portable set of single-value generation parameters, e.g. {\"aspect_ratio\":\"16:9\",\"style\":\"cinematic\"}) as a PRIVATE DRAFT. Nothing is published. Needs the write scope.",
+        inputSchema: {
+          title: z.string().min(1).max(120),
+          description: z.string().max(1000).optional(),
+          selection: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.array(z.union([z.string(), z.number(), z.boolean()]))])).describe("field id → one value (or a list)."),
+          ...common,
+        },
+        annotations: writeTool,
+      },
+      (args: Common & { title: string; description?: string; selection: Record<string, string | number | boolean | (string | number | boolean)[]> }) =>
+        run(() =>
+          me.backend.withUser(me.bearer, "write", (tx) =>
+            importMyContent(tx, me.backend.siteUrl, "preset", serializeContent("preset", [{ title: args.title, description: args.description ?? "", selection: args.selection, ...commonOf(args) }]), false),
+          ),
+        ),
+    );
+    server.registerTool(
+      "save_workflow_draft",
+      {
+        title: "Save a workflow as a private draft",
+        description:
+          "Adds ONE workflow (ordered steps that chain prompts) as a PRIVATE DRAFT. Nothing is published and Promptly never runs the steps. " +
+          "A step may link an existing PUBLIC prompt by `prompt_id`; private prompts are not linked. An input can take its value from an EARLIER step's output (`source`). Needs the write scope.",
+        inputSchema: {
+          title: z.string().min(1).max(120),
+          description: z.string().max(1000).optional(),
+          steps: z
+            .array(
+              z.object({
+                key: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/).describe("Unique step key, e.g. s1."),
+                title: z.string().max(200),
+                description: z.string().max(1000).optional(),
+                instructions: z.string().max(5000).optional(),
+                prompt_id: z.string().optional().describe("A public prompt's id (UUID)."),
+                inputs: z.array(z.object({ id: z.string(), label: z.string().max(80), source: z.object({ step: z.string(), output: z.string() }).optional() })).max(10).optional(),
+                outputs: z.array(z.object({ id: z.string(), label: z.string().max(80) })).max(10).optional(),
+              }),
+            )
+            .min(1)
+            .max(30),
+          ...common,
+        },
+        annotations: writeTool,
+      },
+      (
+        args: Common & {
+          title: string;
+          description?: string;
+          steps: { key: string; title: string; description?: string; instructions?: string; prompt_id?: string; inputs?: { id: string; label: string; source?: { step: string; output: string } }[]; outputs?: { id: string; label: string }[] }[];
+        },
+      ) =>
+        run(() =>
+          me.backend.withUser(me.bearer, "write", (tx) =>
+            importMyContent(
+              tx,
+              me.backend.siteUrl,
+              "workflow",
+              serializeContent("workflow", [
+                {
+                  title: args.title,
+                  description: args.description ?? "",
+                  ...commonOf(args),
+                  steps: args.steps.map((step) => ({
+                    key: step.key,
+                    title: step.title,
+                    description: step.description ?? "",
+                    instructions: step.instructions ?? "",
+                    prompt: step.prompt_id ? { id: step.prompt_id, title: "" } : null,
+                    inputs: (step.inputs ?? []).map((input) => ({ id: input.id, label: input.label, source: input.source ?? null })),
+                    outputs: step.outputs ?? [],
+                  })),
+                },
+              ]),
+              false,
+            ),
+          ),
+        ),
+    );
+    server.registerTool(
+      "update_my_draft",
+      {
+        title: "Update one of my private drafts",
+        description:
+          "Changes fields of one of YOUR OWN unpublished drafts (prompt, request, preset or workflow). Only the fields you send change. " +
+          "It CANNOT publish, change visibility or delete, and refuses anything already published. " +
+          "FIRST read the draft (get_my_prompt / get_my_content) and pass its `updatedAt` as expected_updated_at: if the draft changed since, " +
+          "the update is refused (conflict) — read it again, merge your change, retry. Drafts keep no version history, so a change replaces the old text. " +
+          "Fields per kind — prompt: title, description, promptText, contentType, category, subcategory, tools, tags. " +
+          "request: title, description, creativeDirection, contentType, category, subcategory, tools, tags. " +
+          "preset: title, description, contentType, category, subcategory, tools, tags, selection (replaces the whole selection). " +
+          "workflow: title, description, category, subcategory, tools, tags, stepEdits (text of existing steps by 1-based position: title / description / instructions; steps cannot be added, removed or re-linked here). " +
+          "`tags` replaces the whole tag list. Needs the write scope.",
+        inputSchema: {
+          kind: z.enum(["prompt", "request", "preset", "workflow"]),
+          id: z.string().describe("Draft id (UUID)."),
+          expected_updated_at: z.string().describe("The `updatedAt` you read last (ISO time)."),
+          changes: z
+            .object({
+              title: z.string().optional(),
+              description: z.string().optional(),
+              promptText: z.string().optional(),
+              creativeDirection: z.string().optional(),
+              contentType: z.enum(CONTENT_TYPES as [string, ...string[]]).optional(),
+              category: z.string().nullable().optional(),
+              subcategory: z.string().nullable().optional(),
+              tools: z.array(z.string()).optional(),
+              tags: z.array(z.string()).optional(),
+              selection: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.array(z.union([z.string(), z.number(), z.boolean()]))])).optional(),
+              stepEdits: z.array(z.object({ position: z.number().int().min(1), title: z.string().optional(), description: z.string().optional(), instructions: z.string().optional() })).optional(),
+            })
+            .describe("Only the fields to change."),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      },
+      (args: { kind: "prompt" | "request" | "preset" | "workflow"; id: string; expected_updated_at: string; changes: Record<string, unknown> }) =>
+        run(() => me.backend.withUser(me.bearer, "write", (tx) => updateMyDraft(tx, me.backend.siteUrl, args.kind, args.id, args.changes, args.expected_updated_at))),
     );
   }
 

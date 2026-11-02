@@ -332,7 +332,7 @@ test("http: index and OpenAPI document point at the same server and cover every 
     const [method, path] = endpoint.split(" ");
     assert.ok(doc.paths[path]?.[method.toLowerCase()], `${endpoint} documented`);
   }
-  assert.deepEqual(Object.keys(openApiDocument("x").paths as object).sort(), ["/me", "/me/prompts", "/me/prompts/{id}", "/me/saved", "/prompts", "/prompts/popular", "/prompts/{id}", "/prompts/{id}/fill"]);
+  assert.deepEqual(Object.keys(openApiDocument("x").paths as object).sort(), ["/me", "/me/presets", "/me/presets/{id}", "/me/prompts", "/me/prompts/{id}", "/me/requests", "/me/requests/{id}", "/me/saved", "/me/workflows", "/me/workflows/{id}", "/prompts", "/prompts/popular", "/prompts/{id}", "/prompts/{id}/fill"]);
 });
 
 test("http: hosted path shape (/api/v1/...) with publicBaseUrl advertises the external address", async () => {

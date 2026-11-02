@@ -12,7 +12,8 @@ import { serializeCsv } from "../exchange/csv.ts";
 import { serializeJson } from "../exchange/json.ts";
 import { serializeMarkdown } from "../exchange/markdown.ts";
 import type { ExchangePrompt } from "../exchange/prompt-format.ts";
-import { bearerOf, getMe, getMyPrompt, importMyPrompts, listMyPrompts, listMySaved, type MeBackend } from "./me.ts";
+import { bearerOf, getMyPrompt, importMyPrompts, listMyPrompts, listMySaved, type MeBackend } from "./me.ts";
+import { getMyContent, getWhoami, importMyContent, listMyContent, ME_KIND_SEGMENTS, updateMyDraft, type MeDraftKind } from "./me-content.ts";
 import { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";
 import { fillPrompt, getPrompt, popularPrompts, searchPrompts, type PublicPrompt } from "./prompts.ts";
 import { checkRequest, clientKeyOf, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type RateLimiter } from "./rate-limit.ts";
@@ -21,13 +22,13 @@ import type { PromptUseRecorder } from "./usage.ts";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
   "Access-Control-Allow-Headers": "content-type, authorization, apikey, x-client-info",
   "Access-Control-Expose-Headers": RATE_LIMIT_EXPOSE_HEADERS,
   "Access-Control-Max-Age": "86400",
 };
 
-const STATUS: Record<PublicApiError["code"], number> = { bad_request: 400, not_found: 404, upstream: 502, timeout: 504, not_configured: 500, unauthorized: 401, insufficient_scope: 403, rate_limited: 429 };
+const STATUS: Record<PublicApiError["code"], number> = { bad_request: 400, not_found: 404, upstream: 502, timeout: 504, not_configured: 500, unauthorized: 401, insufficient_scope: 403, rate_limited: 429, conflict: 409, unprocessable: 422 };
 const MAX_BODY_BYTES = 64 * 1024;
 
 function json(body: unknown, status = 200, cache = status === 200): Response {
@@ -138,7 +139,7 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
       version: PUBLIC_API_VERSION,
       docs: `${serverUrlOf(url, publicBaseUrl)}/openapi.json`,
       site: client.siteUrl,
-      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "GET /me/saved"],
+      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "PATCH /me/prompts/{id}", "GET /me/requests", "POST /me/requests", "GET /me/requests/{id}", "PATCH /me/requests/{id}", "GET /me/presets", "POST /me/presets", "GET /me/presets/{id}", "PATCH /me/presets/{id}", "GET /me/workflows", "POST /me/workflows", "GET /me/workflows/{id}", "PATCH /me/workflows/{id}", "GET /me/saved"],
     });
   }
   if (segments.length === 1 && segments[0] === "openapi.json") {
@@ -198,7 +199,8 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
 
 /**
  * `/v1/me*` — kişisel API anahtarı ya da OAuth belirteciyle (docs/history/315-*). Yanıtlar KİŞİSELDİR: `no-store`, herkese açık önbellek yok.
- * Yazma yalnız `POST /me/prompts` (kendi hesabına özel taslak, `write` kapsamı).
+ * Yazma (`write` kapsamı) YALNIZ özel taslaktır: `POST /me/{prompts|requests|presets|workflows}` ekler, `PATCH /me/{…}/{id}` taslağı günceller
+ * (`expectedUpdatedAt` ister; yayınlama ve silme YOK).
  */
 async function meRoute(request: Request, url: URL, segments: string[], method: string, me?: MeBackend): Promise<Response> {
   if (!me) return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
@@ -213,7 +215,7 @@ async function meRoute(request: Request, url: URL, segments: string[], method: s
   const reply = (body: unknown, status = 200) => json(body, status, false);
   if (sub.length === 0) {
     if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
-    return reply(await me.withUser(bearer, "read", (tx, identity) => getMe(tx, identity)));
+    return reply(await me.withUser(bearer, "read", (tx, identity) => getWhoami(tx, identity, me.siteUrl)));
   }
   if (sub[0] === "saved" && sub.length === 1) {
     if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
@@ -231,9 +233,43 @@ async function meRoute(request: Request, url: URL, segments: string[], method: s
     }
     return errorResponse("method_not_allowed", "Use GET or POST.", 405);
   }
+  // Taslak güncelleme gövdesi: `{ "expectedUpdatedAt": "<en son okunan updatedAt>", "changes": { … } }` (docs/history/321-*).
+  const patchDraft = async (kind: MeDraftKind, id: string): Promise<Response> => {
+    let body: { expectedUpdatedAt?: unknown; changes?: unknown };
+    try {
+      const text = await request.text();
+      if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) return errorResponse("bad_request", "Request body is too large.", 400);
+      body = JSON.parse(text);
+    } catch {
+      return errorResponse("bad_request", "Body must be JSON: { expectedUpdatedAt, changes }.", 400);
+    }
+    if (!body || typeof body !== "object") return errorResponse("bad_request", "Body must be JSON: { expectedUpdatedAt, changes }.", 400);
+    return reply(await me.withUser(bearer, "write", (tx) => updateMyDraft(tx, me.siteUrl, kind, id, body.changes, body.expectedUpdatedAt)));
+  };
   if (sub[0] === "prompts" && sub.length === 2) {
-    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
-    return reply(await me.withUser(bearer, "read", (tx) => getMyPrompt(tx, me.siteUrl, decodeURIComponent(sub[1]))));
+    const id = decodeURIComponent(sub[1]);
+    if (method === "GET") return reply(await me.withUser(bearer, "read", (tx) => getMyPrompt(tx, me.siteUrl, id)));
+    if (method === "PATCH") return patchDraft("prompt", id);
+    return errorResponse("method_not_allowed", "Use GET or PATCH.", 405);
+  }
+  const contentKind = ME_KIND_SEGMENTS[sub[0] ?? ""];
+  if (contentKind && sub.length === 1) {
+    if (method === "GET") {
+      return reply(await me.withUser(bearer, "read", (tx) => listMyContent(tx, me.siteUrl, contentKind, { limit: intParam(url, "limit"), cursor: url.searchParams.get("cursor"), status: url.searchParams.get("status") })));
+    }
+    if (method === "POST") {
+      const text = await request.text();
+      const dryRun = url.searchParams.get("dry_run") === "true";
+      const report = await me.withUser(bearer, "write", (tx) => importMyContent(tx, me.siteUrl, contentKind, text, dryRun));
+      return reply(report, report.ok || report.dryRun ? 200 : 422);
+    }
+    return errorResponse("method_not_allowed", "Use GET or POST.", 405);
+  }
+  if (contentKind && sub.length === 2) {
+    const id = decodeURIComponent(sub[1]);
+    if (method === "GET") return reply(await me.withUser(bearer, "read", (tx) => getMyContent(tx, me.siteUrl, contentKind, id)));
+    if (method === "PATCH") return patchDraft(contentKind, id);
+    return errorResponse("method_not_allowed", "Use GET or PATCH.", 405);
   }
   return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
 }

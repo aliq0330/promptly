@@ -11,6 +11,77 @@ const limitParam = { name: "limit", in: "query", schema: { type: "integer", mini
 const contentTypeParam = { name: "content_type", in: "query", schema: { type: "string", enum: CONTENT_TYPES } };
 const idParam = { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } };
 
+const bearer = [{ bearerAuth: [] }];
+const cursorParam = { name: "cursor", in: "query", schema: { type: "string" } };
+const PATCH_FIELDS = {
+  prompt: "title, description, promptText, contentType, category, subcategory, tools, tags",
+  request: "title, description, creativeDirection, contentType, category, subcategory, tools, tags",
+  preset: "title, description, contentType, category, subcategory, tools, tags, selection",
+  workflow: "title, description, category, subcategory, tools, tags, stepEdits (text of existing steps by 1-based position)",
+} as const;
+
+/** `PATCH /me/{…}/{id}`: yalnız özel taslak; `expectedUpdatedAt` çakışma belirteci (docs/history/321-*). */
+function patchDraftOperation(kind: keyof typeof PATCH_FIELDS) {
+  return {
+    summary: `Update one of my ${kind} drafts (needs a key with the write scope)`,
+    description:
+      `Changes fields of YOUR OWN unpublished ${kind} draft; only the fields you send change. It cannot publish, change visibility or delete, and published content is refused (422). ` +
+      `Allowed fields: ${PATCH_FIELDS[kind]}. \`tags\` replaces the whole list. Read the draft first and send its \`updatedAt\` as \`expectedUpdatedAt\`: ` +
+      "if the draft changed since, nothing is written and the answer is 409 (read it again, merge, retry). Drafts keep no version history.",
+    security: bearer,
+    parameters: [idParam],
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: { type: "object", required: ["expectedUpdatedAt", "changes"], properties: { expectedUpdatedAt: { type: "string", format: "date-time" }, changes: { type: "object" } } },
+        },
+      },
+    },
+    responses: {
+      "200": { description: "Updated", content: { "application/json": { schema: { $ref: "#/components/schemas/MeUpdateResult" } } } },
+      "400": errorResponse, "401": errorResponse, "403": errorResponse, "404": errorResponse, "409": errorResponse, "422": errorResponse, "429": errorResponse,
+    },
+  };
+}
+
+/** İstek / hazır ayar / workflow yolları (listele, taslak ekle, oku, güncelle). */
+function meContentPaths(): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [segment, kind] of [["requests", "request"], ["presets", "preset"], ["workflows", "workflow"]] as const) {
+    out[`/me/${segment}`] = {
+      get: {
+        summary: `List my ${segment} (needs a key)`,
+        description: `Your OWN ${segment}, drafts and private ones included, newest first. Community-only ones are not listed. Responses are personal and never cached.`,
+        security: bearer,
+        parameters: [{ name: "status", in: "query", schema: { type: "string", enum: ["draft", "published"] } }, limitParam, cursorParam],
+        responses: { "200": { description: "One page", content: { "application/json": { schema: { $ref: "#/components/schemas/MePage" } } } }, "400": errorResponse, "401": errorResponse, "429": errorResponse },
+      },
+      post: {
+        summary: `Add ${segment} to my account as private drafts (needs a key with the write scope)`,
+        description:
+          `Body: a Promptly ${segment} file (the JSON the site's Export produces, \`format: promptly.${segment}\`; a file of another kind is refused), at most 30 items and 64 KB. ` +
+          "Validated first, then written in one transaction; the result is ALWAYS a private draft (nothing is published). `?dry_run=true` validates and writes nothing. 422 means nothing was written.",
+        security: bearer,
+        parameters: [{ name: "dry_run", in: "query", schema: { type: "boolean", default: false } }],
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object" } } } },
+        responses: { "200": { description: "Import report", content: { "application/json": { schema: { $ref: "#/components/schemas/MeImportReport" } } } }, "400": errorResponse, "401": errorResponse, "403": errorResponse, "422": { description: "Nothing written", content: { "application/json": { schema: { $ref: "#/components/schemas/MeImportReport" } } } }, "429": errorResponse },
+      },
+    };
+    out[`/me/${segment}/{id}`] = {
+      get: {
+        summary: `One of my ${segment}, in full (needs a key)`,
+        description: `Includes \`updatedAt\` (the value to send back as \`expectedUpdatedAt\` when updating)${kind === "workflow" ? " and the steps by 1-based `position`" : ""}.`,
+        security: bearer,
+        parameters: [idParam],
+        responses: { "200": { description: "The record", content: { "application/json": { schema: { type: "object" } } } }, "400": errorResponse, "401": errorResponse, "404": errorResponse },
+      },
+      patch: patchDraftOperation(kind),
+    };
+  }
+  return out;
+}
+
 export function openApiDocument(serverUrl: string): Record<string, unknown> {
   return {
     openapi: "3.1.0",
@@ -95,9 +166,9 @@ export function openApiDocument(serverUrl: string): Record<string, unknown> {
       "/me": {
         get: {
           summary: "Who am I (needs a key)",
-          description: "Checks your credential: returns your username and the scopes it has.",
+          description: "Checks your credential: returns the account it works as (username, display name, avatar, profile link) and the scopes it has.",
           security: [{ bearerAuth: [] }],
-          responses: { "200": { description: "The caller", content: { "application/json": { schema: { type: "object", properties: { user: { type: "object", properties: { id: { type: "string", format: "uuid" }, username: { type: "string" } } }, scopes: { type: "array", items: { type: "string", enum: ["read", "write"] } }, via: { type: "string", enum: ["key", "oauth"] } } } } } }, "401": errorResponse },
+          responses: { "200": { description: "The caller", content: { "application/json": { schema: { type: "object", properties: { user: { type: "object", properties: { id: { type: "string", format: "uuid" }, username: { type: ["string", "null"] }, displayName: { type: ["string", "null"] }, avatarUrl: { type: ["string", "null"] }, profileUrl: { type: ["string", "null"] } } }, scopes: { type: "array", items: { type: "string", enum: ["read", "write"] } }, via: { type: "string", enum: ["key", "oauth"] } } } } } }, "401": errorResponse },
         },
       },
       "/me/prompts": {
@@ -128,7 +199,9 @@ export function openApiDocument(serverUrl: string): Record<string, unknown> {
           parameters: [idParam],
           responses: { "200": { description: "The prompt", content: { "application/json": { schema: { $ref: "#/components/schemas/MePrompt" } } } }, "400": errorResponse, "401": errorResponse, "404": errorResponse },
         },
+        patch: patchDraftOperation("prompt"),
       },
+      ...meContentPaths(),
       "/me/saved": {
         get: {
           summary: "Prompts I saved (needs a key)",
@@ -141,7 +214,7 @@ export function openApiDocument(serverUrl: string): Record<string, unknown> {
     },
     components: {
       securitySchemes: {
-        bearerAuth: { type: "http", scheme: "bearer", description: "A personal API key (`pmt_…`, create one in Promptly → Settings → Developer keys) or an OAuth access token. Keys have the `read` scope, or `read` + `write`; OAuth tokens are read-only." },
+        bearerAuth: { type: "http", scheme: "bearer", description: "A personal API key (`pmt_…`, create one in Promptly → Settings → Developer keys) or an OAuth access token. Keys have the `read` scope, or `read` + `write` (write = add and edit PRIVATE drafts only; no publishing, no deleting)." },
       },
       schemas: {
         MePrompt: {
@@ -151,6 +224,10 @@ export function openApiDocument(serverUrl: string): Record<string, unknown> {
             contentType: { type: "string", enum: CONTENT_TYPES }, status: { type: "string", enum: ["draft", "published"] }, visibility: { type: "string" },
             tags: { type: "array", items: { type: "string" } }, variables: { type: "array", items: { type: "string" } }, createdAt: { type: "string", format: "date-time" }, updatedAt: { type: "string", format: "date-time" },
           },
+        },
+        MeUpdateResult: {
+          type: "object",
+          properties: { id: { type: "string", format: "uuid" }, changed: { type: "array", items: { type: "string" } }, warnings: { type: "array", items: { type: "object" } }, updatedAt: { type: "string", format: "date-time", description: "The new value to send as expectedUpdatedAt next time." }, url: { type: "string" }, editUrl: { type: "string" } },
         },
         MePage: { type: "object", properties: { items: { type: "array", items: { type: "object" } }, nextCursor: { type: ["string", "null"] } } },
         MeImportReport: { type: "object", properties: { dryRun: { type: "boolean" }, ok: { type: "boolean" }, created: { type: "integer" }, items: { type: "array", items: { type: "object" } }, skipped: { type: "array", items: { type: "object" } } } },

@@ -54,8 +54,8 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 
 const connect = (page) => page.locator("[data-oauth-connect]");
 /** Anahtar görünmez bir onay kutusudur; kullanıcı etikete (yazıya) dokunur — test de öyle yapar. */
-const writeSwitch = (page) => page.getByRole("switch", { name: /Hesabıma özel taslak eklemesine de izin ver/ });
-const tapWrite = (page) => page.getByText("Hesabıma özel taslak eklemesine de izin ver", { exact: true }).click();
+const writeSwitch = (page) => page.getByRole("switch", { name: /Özel taslak eklemesine ve düzenlemesine de izin ver/ });
+const tapWrite = (page) => page.getByText("Özel taslak eklemesine ve düzenlemesine de izin ver", { exact: true }).click();
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 
 await scenario("1 the screen shows the app, where it returns to, the trust warning, exactly what it can and cannot do; write is OFF; nothing is decided yet", async ({ page, srv }) => {
@@ -64,8 +64,8 @@ await scenario("1 the screen shows the app, where it returns to, the trust warni
   await page.getByText("Yalnızca güvendiğin uygulamalara izin ver").waitFor();
   await page.getByText(/Promptly bunları doğrulamaz/).waitFor();
   await page.getByText(/Kendi promptlarını \(özel taslaklar dahil\) ve kaydettiklerini okuyabilir/).waitFor();
-  await page.getByText(/Yayınlayamaz, düzenleyemez, silemez/).waitFor();
-  const write = page.getByLabel("Hesabıma özel taslak eklemesine de izin ver");
+  await page.getByText(/Yayınlayamaz, silemez, yayındaki içeriğini düzenleyemez/).waitFor();
+  const write = page.getByLabel("Özel taslak eklemesine ve düzenlemesine de izin ver");
   assert.equal(await write.isChecked(), false, "write permission is off by default");
   assert.deepEqual(srv.calls.info, [{ p_request: REQ }]);
   assert.equal(srv.calls.decide.length, 0, "nothing is decided before the user clicks");
@@ -138,7 +138,7 @@ await scenario("9 a signed-out visitor is sent to login and the request survives
 await scenario("10 English labels", async ({ page }) => {
   await page.getByRole("heading", { name: "Claude wants to connect to your Promptly account" }).waitFor();
   await page.getByText("Only allow apps you trust").waitFor();
-  await page.getByText("Also let it add private drafts to my account").waitFor();
+  await page.getByText("Also let it add and edit private drafts").waitFor();
   await page.getByRole("button", { name: "Allow" }).waitFor();
   await page.getByRole("button", { name: "Deny" }).waitFor();
 }, { lang: "en" });
@@ -164,7 +164,7 @@ await scenario("13 Settings lists connected apps with scopes and last use; revok
   await first.getByText("Okuma", { exact: true }).waitFor();
   await first.getByText("Henüz kullanılmadı").waitFor();
   const second = apps.locator("[data-connected-app='own:g2']");
-  await second.getByText("Taslak ekleme", { exact: true }).waitFor();
+  await second.getByText("Taslak ekleme ve düzenleme", { exact: true }).waitFor();
   await second.getByText(/Son kullanım/).waitFor();
   await first.getByRole("button", { name: "İzni geri al" }).click();
   await first.getByRole("button", { name: "Vazgeç" }).click();

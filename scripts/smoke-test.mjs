@@ -103,6 +103,9 @@ const CHECKS = [
   { name: "rpc _oauth_register_client ziyaretçiye KAPALI olmalı (docs/history/317-*)", rpc: "_oauth_register_client", body: { p_name: "x", p_redirect_uris: ["https://a.test/cb"] }, mustBeDenied: true },
   { name: "rpc api_me_prompts ziyaretçiye KAPALI olmalı (kişisel API okuması, docs/history/315-*)", rpc: "api_me_prompts", body: { p_limit: 1 }, mustBeDenied: true },
   { name: "rpc api_me_throttle ziyaretçiye KAPALI olmalı (docs/history/315-*)", rpc: "api_me_throttle", body: { p_write: false }, mustBeDenied: true },
+  { name: "rpc api_me_whoami ziyaretçiye KAPALI olmalı (docs/history/321-*)", rpc: "api_me_whoami", body: {}, mustBeDenied: true },
+  { name: "rpc api_me_requests ziyaretçiye KAPALI olmalı (docs/history/321-*)", rpc: "api_me_requests", body: { p_limit: 1 }, mustBeDenied: true },
+  { name: "rpc api_me_update_draft ziyaretçiye KAPALI olmalı (docs/history/321-*)", rpc: "api_me_update_draft", body: { p_kind: "prompt", p_id: "00000000-0000-0000-0000-000000000000", p_patch: {}, p_expected_updated_at: "2026-01-01T00:00:00Z" }, mustBeDenied: true },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
 ];
 
