@@ -63,6 +63,10 @@ export const apiKeysTranslations = {
   "error.apiTokenLimit": { tr: "Etkin anahtar sınırına (10) ulaştın. Yenisi için birini iptal et.", en: "You've reached the limit of 10 active keys. Revoke one to create another." },
   "error.apiTokenName": { tr: "Anahtar adı 1–60 karakter olmalı.", en: "The key name must be 1–60 characters." },
   "error.apiTokenScope": { tr: "Geçersiz erişim seçimi.", en: "Invalid access choice." },
+  "error.authStorage": {
+    tr: "Tarayıcı oturumunu kaydedemiyor (depolama dolu olabilir); sayfayı yenileyince çıkış yapılabilir. Safari'de Ayarlar → Safari → Gelişmiş → Web Sitesi Verileri'nden bu siteyi silip yeniden gir. Ayrıntı: {{detail}}",
+    en: "Your browser can't save your session (storage may be full); refreshing the page may sign you out. In Safari open Settings → Safari → Advanced → Website Data, remove this site and sign in again. Detail: {{detail}}",
+  },
   "error.apiTokenExpiry": { tr: "Geçersiz geçerlilik süresi.", en: "Invalid expiry." },
   // --- /developers: kişisel anahtarla kullanım (docs/history/315-*) ---
   "dev.meLead": {

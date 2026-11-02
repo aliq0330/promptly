@@ -293,6 +293,14 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-developers.mjs   # 23/23 beklenir
 ```
 
+## Oturum dayanıklılığı (`docs/history/320-*`)
+
+`run-auth-storage.mjs` (5 senaryo): Safari'deki "kendiliğinden çıkış" hatasının taklidi — `localStorage` yazması `QuotaExceededError` verirken yenileme fırtınası yok + girişli kalır + tek uyarı + yenilemeden sonra oturum korunur; yenilemede 429 oturumu silmez ve ağa art arda gitmez; gerçek geçersiz belirteç (400) hâlâ çıkış yaptırır; İngilizce uyarı. Yenileme ucu `context.route` ile taklit edilir. **Eski istemciyle (düzeltme çıkarılınca) 2 ve 3 numaralı senaryolar KIRILIR** (doğrulandı). Gerçek Safari'ye KARŞI DENENMEDİ (taklit Chromium).
+
+```
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-auth-storage.mjs   # 5/5 beklenir
+```
+
 ## Yorumda fotoğraf · GIF · içerik eki ve mesajda GIF (`docs/history/308-*`)
 
 `run-comment-extras.mjs` (19 senaryo; 17–19 düzenleme: mevcut GIF/fotoğraf/ek ile açılır, değiştirilir/kaldırılır, PATCH altı sütunu yazar, eski fotoğraf dosyası silinir, yalnız ekli yorumun metni boşaltılır): yazma çubuğunda Fotoğraf · GIF · İçerik düğmeleri; GIF seçici (trend/arama/konu çipi/kendiliğinden sayfalama/yinelenen yok/GIPHY ibaresi), seçince önizleme ve METİNSİZ gönderim (`media_kind=gif`, `media_ref`), fotoğraf (önizlenir, gönderimde `comment-media/<ben>/<uuid>.png` yüklenir, imzalı adresle görünür, ortak/`public` adres hiç istenmez), yanlış dosya türü, fotoğraf↔GIF tek görsel kuralı, içerik seçici (Benimkiler/Kaydettiklerim, İstek/Space'te kaydedilenler yok), küçük önizleme kartı (taslak bağlantı değil; kayıtlı olan bağlantı), kartların SAYFA BAŞINA TEK sorguyla okunması + okunamayan/sonradan özel yapılan içeriğin "gizli" kartı (başlık sızmaz), yanıt kutusunda aynı düğmeler (`parent_id`), ek kaldırma, sunucu `attachment_not_public` hatası (yazı + ek korunur), 390 px taşma yok + düğmeler ≥36 px, İngilizce; mesajda "+ → GIF" (`attachments[{path:"giphy:<kimlik>"}]`, dosya yüklenmez/imzalanmaz, balonda GIF rozeti ve GERÇEKTEN çizilmiş görsel, taslak metin korunur, İngilizce). GIPHY ve Supabase TAKLİTTİR (gerçek GIPHY'ye KARŞI DENENMEDİ); veritabanı kuralları `supabase/tests/comment-media.sql`'dedir. **Derleme GIPHY anahtarıyla alınmalıdır** (seçici anahtarsız "yapılandırılmadı" der):

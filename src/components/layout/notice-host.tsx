@@ -9,8 +9,9 @@ export function NoticeHost() {
   const { node, show } = useToast();
   useEffect(() => {
     const onNotice = (event: Event) => {
-      const message = (event as CustomEvent<string>).detail;
-      if (typeof message === "string" && message) show(message);
+      const detail = (event as CustomEvent<string | { message?: unknown; durationMs?: unknown }>).detail;
+      if (typeof detail === "string" && detail) show(detail);
+      else if (detail && typeof detail === "object" && typeof detail.message === "string" && detail.message) show(detail.message, typeof detail.durationMs === "number" ? detail.durationMs : undefined);
     };
     window.addEventListener(NOTICE_EVENT, onNotice);
     return () => window.removeEventListener(NOTICE_EVENT, onNotice);
