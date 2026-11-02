@@ -3,7 +3,7 @@
  * `Deno.serve`'e verir; Node testleri de aynı işleyiciyi doğrudan çağırır (Node 18+ `Request`/`Response` taşır).
  *
  * Yollar (`/functions/v1/api` önekinden sonra): `GET /v1`, `GET /v1/openapi.json`, `GET /v1/prompts`, `GET /v1/prompts/popular`,
- * `GET /v1/prompts/{id}` (`?format=json|markdown|csv`), `POST /v1/prompts/{id}/fill`. Salt-okunur; yazma YOK (Faz 2: kullanıcı
+ * `GET /v1/prompts/{id}` (`?format=json|markdown|csv`), `POST /v1/prompts/{id}/fill`, `GET /v1/{requests,presets,workflows}[/{id}]` (322). Salt-okunur; yazma YOK (Faz 2: kullanıcı
  * kendi oturumuyla — `docs/history/297-*`).
  *
  * CORS `*`: yanıtlar yalnız herkese açık veridir, çerez/kimlik taşınmaz.
@@ -15,6 +15,7 @@ import type { ExchangePrompt } from "../exchange/prompt-format.ts";
 import { bearerOf, getMyPrompt, importMyPrompts, listMyPrompts, listMySaved, type MeBackend } from "./me.ts";
 import { getMyContent, getWhoami, importMyContent, listMyContent, ME_KIND_SEGMENTS, updateMyDraft, type MeDraftKind } from "./me-content.ts";
 import { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";
+import { getPublicContent, PUBLIC_KIND_SEGMENTS, searchPublicContent } from "./public-content.ts";
 import { fillPrompt, getPrompt, popularPrompts, searchPrompts, type PublicPrompt } from "./prompts.ts";
 import { checkRequest, clientKeyOf, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type RateLimiter } from "./rate-limit.ts";
 import { createRestClient, PublicApiError, type PublicApiConfig, type RestClient } from "./rest.ts";
@@ -139,7 +140,7 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
       version: PUBLIC_API_VERSION,
       docs: `${serverUrlOf(url, publicBaseUrl)}/openapi.json`,
       site: client.siteUrl,
-      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "PATCH /me/prompts/{id}", "GET /me/requests", "POST /me/requests", "GET /me/requests/{id}", "PATCH /me/requests/{id}", "GET /me/presets", "POST /me/presets", "GET /me/presets/{id}", "PATCH /me/presets/{id}", "GET /me/workflows", "POST /me/workflows", "GET /me/workflows/{id}", "PATCH /me/workflows/{id}", "GET /me/saved"],
+      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /requests", "GET /requests/{id}", "GET /presets", "GET /presets/{id}", "GET /workflows", "GET /workflows/{id}", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "PATCH /me/prompts/{id}", "GET /me/requests", "POST /me/requests", "GET /me/requests/{id}", "PATCH /me/requests/{id}", "GET /me/presets", "POST /me/presets", "GET /me/presets/{id}", "PATCH /me/presets/{id}", "GET /me/workflows", "POST /me/workflows", "GET /me/workflows/{id}", "PATCH /me/workflows/{id}", "GET /me/saved"],
     });
   }
   if (segments.length === 1 && segments[0] === "openapi.json") {
@@ -147,6 +148,25 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
     return json(openApiDocument(serverUrlOf(url, publicBaseUrl)));
   }
   if (segments[0] === "me") return meRoute(request, url, segments, method, me);
+  // Herkese açık istek / hazır ayar / workflow (docs/history/322-*): arama + tek kayıt, salt okunur.
+  const contentKind = PUBLIC_KIND_SEGMENTS[segments[0]];
+  if (contentKind && segments.length <= 2) {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    if (segments.length === 2) return json(await getPublicContent(client, contentKind, decodeURIComponent(segments[1])));
+    return json(
+      await searchPublicContent(client, contentKind, {
+        query: url.searchParams.get("q"),
+        contentType: url.searchParams.get("content_type"),
+        category: url.searchParams.get("category"),
+        subcategory: url.searchParams.get("subcategory"),
+        tags: listParam(url, "tag"),
+        tools: listParam(url, "tool"),
+        sort: url.searchParams.get("sort"),
+        limit: intParam(url, "limit"),
+        cursor: url.searchParams.get("cursor"),
+      }),
+    );
+  }
   if (segments[0] !== "prompts" || segments.length > 3) return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
 
   if (segments.length === 1) {
