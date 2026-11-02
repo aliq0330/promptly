@@ -163,5 +163,63 @@ select public._check(31, 'both tables cascade on profile deletion (FK on delete 
   (select count(*) = 2 from pg_constraint where contype = 'f' and confdeltype = 'c' and confrelid = 'public.profiles'::regclass
      and conrelid in ('public.telegram_links'::regclass, 'public.telegram_link_codes'::regclass)));
 
+-- 10. Anlık bildirim (20261102160000_telegram_push.sql; docs/history/324-*): kilit, kişiye özel liste, tetikleyici
+select public._check(32, 'claim is exclusive until released (a second pass for the same link is refused), and re-claimable after release',
+  (select public._telegram_claim(id) and not public._telegram_claim(id) from public.telegram_links where telegram_user_id = 1001)
+  and (select public._telegram_release(id) is null from public.telegram_links where telegram_user_id = 1001)
+  and (select public._telegram_claim(id) from public.telegram_links where telegram_user_id = 1001));
+select public._telegram_release(id) from public.telegram_links where telegram_user_id = 1001;
+update public.telegram_links set notify_claimed_at = now() - interval '2 minutes' where telegram_user_id = 1001;
+select public._check(33, 'a stale claim (crashed pass, >60 s) can be taken again', (select public._telegram_claim(id) from public.telegram_links where telegram_user_id = 1001));
+select public._telegram_release(id) from public.telegram_links where telegram_user_id = 1001;
+select public._check(34, 'notify_links_for returns only that person''s links with activity alerts on',
+  (select count(*) = 1 from public._telegram_notify_links_for(:me))
+  and (select count(*) = 0 from public._telegram_notify_links_for(:ot)));
+select public._check(35, 'the new helpers are closed to anon/authenticated',
+  not has_function_privilege('authenticated', 'public._telegram_claim(uuid)', 'execute')
+  and not has_function_privilege('anon', 'public._telegram_notify_links_for(uuid)', 'execute')
+  and not has_function_privilege('authenticated', 'public._telegram_push_on_notification()', 'execute')
+  and not has_function_privilege('authenticated', 'public._telegram_release(uuid)', 'execute'));
+
+-- pg_net / Vault KURULU DEĞİL (temiz ortam): bildirim yine yazılır, tetikleyici sessizce geçer.
+insert into public._t values ('try36', public._try($q$ insert into public.notifications (recipient_id, actor_id, type, message, target_href) values ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', 'comment', 'Paylaşımına yorum yaptı: "x"', '/prompts/local?id=z') $q$));
+select public._check(36, 'without pg_net/vault the notification is still written (the trigger never blocks)',
+  (select v = 'ok' from public._t where k = 'try36') and exists (select 1 from public.notifications where message = 'Paylaşımına yorum yaptı: "x"'));
+
+-- Sahte `vault` + `net` (yalnız bu testte): tetikleyicinin çağrısını kaydeder.
+create schema vault;
+create table vault.decrypted_secrets (name text primary key, decrypted_secret text);
+insert into vault.decrypted_secrets values ('telegram_push_url', 'https://example.supabase.co/functions/v1/telegram'), ('telegram_cron_secret', 'S3CRET');
+create table public._net (url text, headers jsonb, body jsonb);
+create schema net;
+create function net.http_post(url text, body jsonb default '{}', params jsonb default '{}', headers jsonb default '{}', timeout_milliseconds integer default 5000) returns bigint language plpgsql as $$
+begin
+  if url like '%boom%' then raise exception 'network down'; end if;
+  insert into public._net values (url, headers, body);
+  return 1;
+end $$;
+
+insert into public.notifications (recipient_id, actor_id, type, message, target_href) values (:me, :ot, 'comment', 'Paylaşımına yorum yaptı: "anlik"', '/prompts/local?id=a');
+select public._check(37, 'an activity notification for a linked + opted-in user calls the Edge URL once, scoped to that user, with the cron secret header',
+  (select count(*) = 1 and bool_and(url = 'https://example.supabase.co/functions/v1/telegram/notify?user=11111111-1111-4111-8111-111111111111'
+      and headers->>'X-Cron-Secret' = 'S3CRET') from public._net));
+insert into public.notifications (recipient_id, actor_id, type, message, target_href) values (:me, :ot, 'like', 'Paylaşımını beğendi', '/prompts/local?id=a');
+insert into public.notifications (recipient_id, actor_id, type, message, target_href) values (:ot, :me, 'comment', 'Paylaşımına yorum yaptı: "baska"', '/prompts/local?id=a');
+select public._check(38, 'non-activity types and users without a link trigger nothing', (select count(*) = 1 from public._net));
+update public.telegram_links set notify_activity = false where telegram_user_id = 1001;
+insert into public.notifications (recipient_id, actor_id, type, message, target_href) values (:me, :ot, 'comment_reply', 'Yorumuna yanıt verdi: "kapali"', '/prompts/local?id=a');
+select public._check(39, 'alerts switched off → no call', (select count(*) = 1 from public._net));
+update public.telegram_links set notify_activity = true where telegram_user_id = 1001;
+update vault.decrypted_secrets set decrypted_secret = 'http://insecure.example/x' where name = 'telegram_push_url';
+insert into public.notifications (recipient_id, actor_id, type, message, target_href) values (:me, :ot, 'comment', 'Paylaşımına yorum yaptı: "http"', '/prompts/local?id=a');
+select public._check(40, 'a non-https URL is never called', (select count(*) = 1 from public._net));
+update vault.decrypted_secrets set decrypted_secret = 'https://boom.example/fn' where name = 'telegram_push_url';
+insert into public._t values ('try41', public._try($q$ insert into public.notifications (recipient_id, actor_id, type, message, target_href) values ('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', 'comment', 'Paylaşımına yorum yaptı: "boom"', '/prompts/local?id=a') $q$));
+select public._check(41, 'a failing network call never blocks the notification insert',
+  (select v = 'ok' from public._t where k = 'try41') and exists (select 1 from public.notifications where message = 'Paylaşımına yorum yaptı: "boom"'));
+delete from vault.decrypted_secrets where name = 'telegram_cron_secret';
+insert into public.notifications (recipient_id, actor_id, type, message, target_href) values (:me, :ot, 'comment', 'Paylaşımına yorum yaptı: "sirsiz"', '/prompts/local?id=a');
+select public._check(42, 'a missing secret means no call (fail-open, scheduled run catches it)', (select count(*) = 1 from public._net));
+
 select 'FAIL: ' || n || ' ' || name || ' ' || detail from public._results where not ok order by n;
 select 'FAILED=' || count(*) from public._results where not ok;

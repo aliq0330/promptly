@@ -1,5 +1,6 @@
 /**
- * Telegram bildirimleri (docs/history/323-*): zamanlayıcı (GitHub Actions, ~15 dk) Edge Function'ın `/notify` ucunu çağırır; bu işlev
+ * Telegram bildirimleri (docs/history/323-*, 324-*): iki giriş var — (a) ANLIK: `notifications` tetikleyicisi `pg_net` ile `/notify?user=<kişi>` çağırır (yalnız o kişinin
+ * etkinlik bildirimleri; haftalık özet bu yolda gitmez); (b) YEDEK + haftalık: zamanlayıcı (GitHub Actions, ~15 dk) parametresiz `/notify` çağırır. Bu işlev
  *  (1) etkinlik bildirimlerini (yorum, yanıt, istek yanıtı, alıntı, düzenleme önerisi, sonuç) bağlı sohbetlere yollar,
  *  (2) haftada bir (yeni ISO haftasının ilk çalışmasında, 06:00 UTC'den sonra) haftalık özeti yollar.
  * Beğeni/takip/mesaj bilerek DIŞARIDA (gürültü). İkisi de KAPALI başlar: kişi bağlandıktan sonra Ayarlar'dan ya da /bildirim ile açar.
@@ -22,6 +23,8 @@ export interface NotifyOptions {
   onError?: (error: unknown) => void;
   /** Bir çalışmada işlenecek en çok bağlantı. */
   batch?: number;
+  /** Verilirse yalnız bu kişinin bağlantıları (anlık yol); haftalık özet atlanır. */
+  userId?: string;
 }
 
 /** Sunucunun Türkçe cümle önekleri → İngilizce karşılık (sitedeki `notification-message.ts` ile aynı kalıplar; kullanıcı içeriği/önizleme çevrilmez). */
@@ -85,7 +88,9 @@ export async function runTelegramNotifications(options: NotifyOptions): Promise<
   const weeklyHour = now.getUTCHours() >= 6;
   const report: NotifyReport = { links: 0, activitySent: 0, weeklySent: 0, unlinked: 0, failed: 0 };
 
-  const links = (await owner("select * from public._telegram_notify_links($1)", [options.batch ?? 100])) as unknown as LinkRow[];
+  const links = (options.userId
+    ? await owner("select * from public._telegram_notify_links_for($1::uuid)", [options.userId])
+    : await owner("select * from public._telegram_notify_links($1)", [options.batch ?? 100])) as unknown as LinkRow[];
   report.links = links.length;
 
   /** 403 = kişi botu engelledi/sohbeti sildi → bağlantı kaldırılır. Dönen: gönderildi mi. */
@@ -108,8 +113,15 @@ export async function runTelegramNotifications(options: NotifyOptions): Promise<
     return false;
   }
 
+  /** Aynı bağlantıyı eşzamanlı iki geçiş işlemesin (art arda gelen bildirimler aynı mesajı iki kez göndermesin). Başka geçiş işliyorsa atlanır; yedek zamanlayıcı yakalar. */
+  async function claim(row: LinkRow): Promise<boolean> {
+    const rows = await owner("select public._telegram_claim($1::uuid) as ok", [row.link_id]);
+    return rows[0]?.ok === true;
+  }
+
   for (const row of links) {
     const lang: Lang = row.language === "en" ? "en" : "tr";
+    if (!(await claim(row))) continue;
     try {
       if (row.notify_activity) {
         const pending = (await owner("select * from public._telegram_pending($1::uuid, 5)", [row.link_id])) as unknown as PendingRow[];
@@ -125,7 +137,7 @@ export async function runTelegramNotifications(options: NotifyOptions): Promise<
           }
         }
       }
-      if (row.notify_weekly && weeklyHour && row.last_weekly_week !== week) {
+      if (!options.userId && row.notify_weekly && weeklyHour && row.last_weekly_week !== week) {
         const summary = await me.withTelegram({ telegramUserId: String(row.telegram_user_id), language: lang }, "read", async (tx) => (await tx("select * from public.creator_insights_summary(7)"))[0]);
         const parts: string[] = [];
         const add = (value: unknown, key: "copies" | "reactions" | "comments" | "saves" | "followers") => {
@@ -146,6 +158,8 @@ export async function runTelegramNotifications(options: NotifyOptions): Promise<
     } catch (error) {
       report.failed += 1;
       options.onError?.(error);
+    } finally {
+      await owner("select public._telegram_release($1::uuid)", [row.link_id]).catch(() => undefined);
     }
   }
   return report;
