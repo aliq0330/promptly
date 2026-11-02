@@ -1,6 +1,6 @@
 # 321 — Kişisel API/MCP genişletme: istek · hazır ayar · workflow, taslak güncelleme, "ben kimim"
 
-> **Durum:** repoda, testli (birim + MCP + yerel PostgreSQL SQL testi). **Canlıya UYGULANMADI:** migration `20261102140000_api_me_content.sql` boru hattıyla uygulanır; Edge Function `api` ve `mcp` ELLE yeniden deploy edilmelidir (CI deploy etmez) ve **migration'dan SONRA** (yeni kod `api_me_whoami` ister; `GET /me` önce deploy edilirse hata verir). Gerçek Supabase'e / claude.ai'ye / bir MCP istemcisine KARŞI DENENMEDİ.
+> **Durum:** CANLIDA (2026-11-02). Migration `20261102140000` boru hattıyla uygulandı (`schema_migrations` kaydı + 9 `api_me_*` fonksiyonu doğrulandı); Edge Function `api` v7 ve `mcp` v7 "Deploy Edge Functions" iş akışıyla repo kaynağından deploy edildi (`verify_jwt` kapalı kaldı). Canlıda doğrulanan: yeni sürümlerin ayağa kalkması, herkese açık okuma (`popular_prompts`) ve kişisel okuma (`list_my_prompts`, doğrudan Postgres bağlantısı) çalışıyor. **Canlıda DENENMEDİ:** `whoami`, `list/get_my_content`, `save_*_draft`, `update_my_draft` ve REST `PATCH` (bağlayıcı yeni araç listesini yüklemeden denenemedi), claude.ai/Cursor bağlayıcısı, gerçek OAuth belirteciyle yazma.
 
 ## İstek (kullanıcı)
 Kişisel yüzeyde (anahtar ya da OAuth ile bağlanan araç) istek, hazır ayar ve workflow okunabilsin ve özel taslak olarak eklenebilsin; taslaklar (prompt dahil) güncellenebilsin; oturumun kullanıcı adı/görünen adı görülebilsin.
@@ -31,5 +31,5 @@ Kişisel yüzeyde (anahtar ya da OAuth ile bağlanan araç) istek, hazır ayar v
 - Eski yazma izinleri (321 öncesi verilmiş OAuth izinleri ve `write` anahtarları) bu yeni "düzenleme" yeteneğini de kazanır; kapsam adı değişmedi (`write`). Anahtar/izin metni güncellendi ama mevcut sahiplere ayrıca bildirim gitmez.
 - Gerçek ortamda denenmedi: canlı migration, Edge deploy, claude.ai/Cursor bağlayıcısı, gerçek OAuth belirteciyle PATCH.
 
-## Yayına alma sırası
-1. PR birleşir → boru hattı migration'ı uygular. 2. `api` ve `mcp` Edge Function'ları yeniden deploy (`./scripts/deploy-functions.sh api|mcp` ya da "Deploy Edge Functions"). 3. Canlıda `GET /me` ve `tools/list` ile doğrula. Sıra tersine çevrilirse `GET /me` yeni RPC yokluğundan 502 verir.
+## Yayına alma (yapıldı)
+1. PR #424 birleşti → boru hattı migration'ı uyguladı. 2. `api` ve `mcp` iş akışıyla deploy edildi (sandbox'tan tetiklenemedi: GitHub 403; kullanıcı elle çalıştırdı). Eski canlı sürümler esbuild paketiydi; yeni sürümler CLI ile kaynak düzeninde.
