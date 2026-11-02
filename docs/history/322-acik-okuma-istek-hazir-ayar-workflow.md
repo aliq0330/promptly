@@ -1,6 +1,6 @@
 # 322 — Açık API/MCP: herkese açık istek · hazır ayar · workflow okuma
 
-> **Durum:** repoda, testli (birim + MCP). **Canlıya UYGULANMADI.** Yeni SQL/migration YOK; yalnız Edge Function `api` ve `mcp` yeniden deploy edilir. **Deploy'dan önce bekleyen karar: Kullanım Koşulları metni (aşağıda).** Gerçek Supabase'e/MCP istemcisine KARŞI DENENMEDİ.
+> **Durum:** repoda, testli (birim + MCP). **Canlıya UYGULANMADI.** Yeni SQL/migration YOK; yalnız Edge Function `api` ve `mcp` yeniden deploy edilir. Kullanım Koşulları metni güncellendi (aşağıda). Gerçek Supabase'e/MCP istemcisine KARŞI DENENMEDİ.
 
 ## Belirti (kullanıcı)
 `…/functions/v1/mcp/me` ile bağlanınca prompt'ta hem kendi hem herkese açık içerik görünüyor, ama istek / hazır ayar / workflow'da yalnız kendi kayıtları görünüyor.
@@ -18,8 +18,8 @@ Hata değil, eksik özellik: açık araçlar (`search_prompts`, `popular_prompts
 ## Testler
 `public-content.test.ts` (7): her tür kendi `p_kind`/tablosuyla ve herkese açık süzgeçleriyle; türe özgü özetler; okunamayan isabetin ayıklanması + imleç; kötü girdi veritabanına gitmeden 400; istek/ayar ayrıntısı + 404; workflow adım sırası ve özel promptun hiç görünmemesi; HTTP rotaları. MCP `remote.test.ts`: açık araç listesi 6, `search_content`/`get_content` anahtarsız çalışır. `npm test` ve MCP paketi geçti.
 
-## BEKLEYEN KARAR (deploy'dan önce) — Kullanım Koşulları
-`legal-content.ts` "Başkalarının içeriklerini kullanma ve atıf" bölümü izni yalnız **prompt'un başlığı, açıklaması ve metni** için verir (görsel/ses/video hariç). İstek, hazır ayar ve workflow'lar bu cümlede geçmiyor; CLAUDE.md §6 (Açık API + MCP, madde 5) kapsam değişirse metnin ÖNCE güncellenmesini ister. **Bu PR metne dokunmadı** (kapsamı genişletmek ürün/hukuk kararı, sahibi onaylamalı; `TERMS_VERSION` artırımı tüm kullanıcılara "Koşullar güncellendi" bandı gösterir). Önerilen ek (TR): «Aynı izin, herkese açık yayınlanan istek, hazır ayar ve workflow'ların başlığı, açıklaması ve metin/parametre alanları için de geçerlidir.» (EN): "The same permission applies to the title, description and text/parameter fields of requests, presets and workflows published publicly." Uygulanırsa `TERMS_VERSION`/`TERMS_EFFECTIVE_AT` birlikte artırılıp artırılmayacağı da sahibinin kararıdır. Hukuki danışmandan geçmedi.
+## Kullanım Koşulları (yapıldı — sahibi "sen düzenle" dedi, 2026-11-02)
+`legal-content.ts` "Başkalarının içeriklerini kullanma ve atıf" bölümüne yeni paragraf: aynı izin, herkese açık istek / hazır ayar / workflow'un başlığı, açıklaması ve metin-parametre alanları için de geçerli (aynı araçlar, aynı atıf kuralı); medya hariç tutan madde "yalnızca metin ve açıklama alanları" diye genelleştirildi. `TERMS_VERSION` → `2026-11-02`, `TERMS_EFFECTIVE_AT` → `2026-11-02T12:00:00Z`, "Son güncelleme: 2 Kasım 2026": oturumlu eski hesaplara bir kez "Koşullar güncellendi" bandı çıkar (görüldü bilgisi yalnız cihazda). **Hukuki danışmandan geçmedi.** Bu, kapsamı mevcut içeriğe geriye dönük genişletir (daha önce yayınlanmış istek/hazır ayar/workflow'lar da kapsama girer) — sahibi bilerek onayladı; geri almak istenirse bu bölüm + sürüm artışı geri alınır.
 
 ## Bilinen sınırlar
 - Yeni araçlar/rotalar canlıda denenmedi; PostgREST gömme sözdizimi (`workflow_steps(count)`, `*_tags(tags(...))`) sitenin kendi sorgularıyla ve canlı FK listesiyle (`workflow_steps_workflow_id_fkey`…) doğrulandı ama gerçek PostgREST'e karşı çalıştırılmadı.

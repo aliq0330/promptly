@@ -15,7 +15,7 @@ const results = [];
 const ONLY = process.env.ONLY ?? "";
 const ORIGINAL_CREATED_AT = U.alice.created_at;
 const KEY = "promptly-terms-notice";
-const VERSION = "2026-11-01";
+const VERSION = "2026-11-02";
 const DELAY = 3600; // bant 2,5 sn gecikmeyle çıkar
 // Bağlantılar basePath ve sondaki eğik çizgiyle çözülür (/promptly/terms/).
 const TERMS_HREF = /\/terms\/?$/;
@@ -107,7 +107,7 @@ await scenario("5 an account created after the terms took effect never sees the 
   await page.goto(BASE + "/settings/");
   await page.getByRole("heading", { name: "Ayarlar" }).first().waitFor();
   await expectNoNotice(page);
-}, { createdAt: "2026-11-02T10:00:00Z" });
+}, { createdAt: "2026-11-02T13:00:00Z" });
 
 await scenario("6 a visitor (no account) never sees the notice", async ({ page }) => {
   await page.goto(BASE + "/login/");
