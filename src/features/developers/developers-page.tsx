@@ -133,6 +133,9 @@ export function DevelopersPage() {
           <li>
             <code className="prompt-text text-small">fill_prompt</code> — {t("dev.toolFill")}
           </li>
+          <li>
+            <code className="prompt-text text-small">search_content</code> / <code className="prompt-text text-small">get_content</code> — {t("dev.toolContent")}
+          </li>
         </ul>
       </Section>
 
@@ -197,6 +200,9 @@ export function DevelopersPage() {
             </Step>
             <Step title={t("dev.apiGet")}>
               <CodeBlock text={snippets.curlGet} label={t("dev.apiGet")} />
+            </Step>
+            <Step title={t("dev.apiContent")} body={t("dev.apiContentBody")}>
+              <CodeBlock text={snippets.curlSearchContent} label={t("dev.apiContent")} />
             </Step>
             <Step title={t("dev.apiFill")}>
               <CodeBlock text={snippets.curlFill} label={t("dev.apiFill")} />

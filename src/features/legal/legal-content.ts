@@ -27,12 +27,12 @@ export const LEGAL_CONTACT_EMAIL = "aliq0330@gmail.com";
  * "Kullanım Koşulları güncellendi" bandı yeniden çıkar (`features/legal/terms-update-notice.tsx`, karar `lib/legal-notice.ts`).
  * Yürürlükten sonra hesap açan kişi bandı görmez (kayıt ekranında yeni metni zaten görmüştür). Yalnız yazım düzeltmesi için artırma.
  */
-export const TERMS_VERSION = "2026-11-01";
-export const TERMS_EFFECTIVE_AT = "2026-11-01T07:00:00Z";
+export const TERMS_VERSION = "2026-11-02";
+export const TERMS_EFFECTIVE_AT = "2026-11-02T12:00:00Z";
 
 // İki belge ayrı güncellenir: birinin değişmesi diğerinin tarihini oynatmaz.
 const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 1 Kasım 2026", en: "Last updated: November 1, 2026" };
-const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 1 Kasım 2026", en: "Last updated: November 1, 2026" };
+const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 2 Kasım 2026", en: "Last updated: November 2, 2026" };
 
 const p = (tr: string, en: string): LegalBlock => ({ type: "p", text: { tr, en } });
 const ul = (tr: string[], en: string[]): LegalBlock => ({ type: "ul", items: { tr, en } });
@@ -235,17 +235,21 @@ export const TERMS_OF_USE: LegalDocument = {
           "Anyone can read, copy, use in their own AI generations, and download (with Promptly's export, public API and MCP tools) a prompt that is published publicly on Promptly: its title, description and prompt text. By publishing a prompt publicly, its author allows these uses. You may use the outputs (images, text, audio, video) you generate with those prompts for personal or commercial purposes; the rights in outputs are subject to the terms of the AI service you use.",
         ),
         p(
+          "Aynı izin, herkese açık yayınlanan istek, hazır ayar ve workflow'ların başlığı, açıklaması ve metin ya da parametre alanları (istekte yaratıcı yön, hazır ayarda seçili değerler, workflow'da adımların başlığı, açıklaması ve yönergesi) için de geçerlidir; bunlar da aynı araçlarla okunabilir ve indirilebilir. Bunları herkese açık yayınlayan kişi bu kullanımlara izin vermiş olur ve aynı atıf kuralı geçerlidir.",
+          "The same permission applies to the title, description and text or parameter fields of requests, presets and workflows that are published publicly (a request's creative direction, a preset's selected values, a workflow's step titles, descriptions and instructions); they can be read and downloaded with the same tools. By publishing them publicly, their author allows these uses, and the same attribution rule applies.",
+        ),
+        p(
           "Bir prompt'u Promptly dışında yeniden yayınlarsan (başka bir site, depo, koleksiyon, kitap, ürün vb.) yazarının adını ve Promptly bağlantısını göstermelisin. Dışa aktarma, API ve MCP çıktıları bu atıfı (\"@kullanıcı · Promptly\" ve bağlantı) kendiliğinden taşır; onu silme veya değiştirme. Başkasının prompt'unu kendi eserinmiş gibi gösterme.",
           "If you republish a prompt outside Promptly (another site, repository, collection, book, product, etc.) you must show its author's name and the Promptly link. Exports and the output of the API and MCP carry this credit (\"@username · Promptly\" and a link) automatically; do not remove or change it. Do not present someone else's prompt as your own work.",
         ),
         p("Şunlar için ayrıca izin gerekir:", "You need separate permission to:"),
         ul(
           [
-            "Başkasının yüklediği görsel, ses ve video dosyalarını (prompt çıktılarını) sahibinin izni olmadan indirip yeniden yayınlamak. Yukarıdaki izin yalnızca prompt metni ve açıklaması içindir.",
+            "Başkasının yüklediği görsel, ses ve video dosyalarını (prompt çıktılarını) sahibinin izni olmadan indirip yeniden yayınlamak. Yukarıdaki izin yalnızca metin ve açıklama alanları içindir.",
             "Özel, taslak ya da yalnızca bir topluluğun üyelerine açık içerikleri Promptly dışına çıkarmak.",
           ],
           [
-            "Download and republish images, audio and video files (prompt outputs) uploaded by someone else without the owner's permission. The permission above covers only the prompt text and description.",
+            "Download and republish images, audio and video files (prompt outputs) uploaded by someone else without the owner's permission. The permission above covers only text and description fields.",
             "Take private content, drafts, or content visible only to the members of a community out of Promptly.",
           ],
         ),

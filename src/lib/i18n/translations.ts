@@ -1726,6 +1726,12 @@ export const translations = {
   "dev.toolSearch": { tr: "metin, tür, kategori, etiket ya da AI aracıyla arar", en: "searches by text, type, category, tag or AI tool" },
   "dev.toolPopular": { tr: "en çok kopyalanan ya da beğenilen promptlar", en: "most copied or liked prompts" },
   "dev.toolGet": { tr: "tam metin, değişkenler ve yazar bilgisi", en: "full text, variables and author credit" },
+  "dev.toolContent": { tr: "herkese açık istekleri, hazır ayarları ve workflow'ları arar ve okur (kind: request | preset | workflow)", en: "searches and reads public requests, presets and workflows (kind: request | preset | workflow)" },
+  "dev.apiContent": { tr: "İstek, hazır ayar ve workflow ara", en: "Search requests, presets and workflows" },
+  "dev.apiContentBody": {
+    tr: "Aynı yapı /requests, /presets ve /workflows için geçerli; tek kayıt için sonuna /<id> ekle. Workflow'da adımlar da gelir; adımın bağlı promptu yalnızca herkese açıksa görünür.",
+    en: "The same shape works for /requests, /presets and /workflows; add /<id> for one record. A workflow includes its steps; a step's linked prompt shows only if it is public.",
+  },
   "dev.toolFill": { tr: "değişkenleri doldurup son metni verir", en: "fills the variables and returns the final text" },
   "dev.apiTitle": { tr: "HTTP API", en: "HTTP API" },
   "dev.apiLead": { tr: "Aynı veriyi kendi uygulamandan, betiğinden ya da otomasyonundan JSON olarak okuyabilirsin. Anahtar gerekmez; yalnızca GET ve doldurma isteği vardır, hiçbir şey yazılmaz.", en: "Read the same data as JSON from your own app, script or automation. No key is needed; there are only GET requests and a fill request, and nothing is written." },

@@ -104,8 +104,12 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
               ? "Personal Promptly MCP: works on YOUR account. Send a personal API key (Promptly → Settings → Developer keys) as `Authorization: Bearer pmt_…`, or sign in via OAuth."
               : "Add this URL as a remote MCP server / custom connector in your MCP client. No account or key needed; read-only.",
             tools: isMe
-              ? ["search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "list_my_prompts", "get_my_prompt", "list_my_saved", "save_prompt_draft"]
-              : ["search_prompts", "popular_prompts", "get_prompt", "fill_prompt"],
+              ? [
+                  "search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content",
+                  "whoami", "list_my_prompts", "get_my_prompt", "list_my_content", "get_my_content", "list_my_saved",
+                  "save_prompt_draft", "save_request_draft", "save_preset_draft", "save_workflow_draft", "update_my_draft",
+                ]
+              : ["search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content"],
             site: "https://aliq0330.github.io/promptly",
           }),
           { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } },

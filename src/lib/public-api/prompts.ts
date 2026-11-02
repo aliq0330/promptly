@@ -140,8 +140,8 @@ const PROMPT_COLUMNS =
 const VARIABLE_COLUMNS = "prompt_id,name,default_value,description,type,options,config,sort_order";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const SLUG_PATTERN = /^[a-z0-9][a-z0-9_-]{0,79}$/;
-const TOOL_REF_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,59}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,59})?$/;
+export const SLUG_PATTERN = /^[a-z0-9][a-z0-9_-]{0,79}$/;
+export const TOOL_REF_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,59}(:[A-Za-z0-9][A-Za-z0-9_.-]{0,59})?$/;
 
 export function isUuid(value: string): boolean {
   return UUID_PATTERN.test(value);
@@ -244,7 +244,7 @@ function toPublicPrompt(row: PromptRow, siteUrl: string, variables: VariableRow[
 // Doğrulama
 // ---------------------------------------------------------------------------------------------------------------------
 
-function bad(message: string): never {
+export function bad(message: string): never {
   throw new PublicApiError("bad_request", message);
 }
 
@@ -254,18 +254,18 @@ export function clampLimit(limit: number | null | undefined): number {
   return Math.min(limit, PUBLIC_LIMITS.maxLimit);
 }
 
-function oneOf<T extends string>(value: string | null | undefined, allowed: readonly T[], name: string, fallback: T): T {
+export function oneOf<T extends string>(value: string | null | undefined, allowed: readonly T[], name: string, fallback: T): T {
   if (value === null || value === undefined || value === "") return fallback;
   if (!(allowed as readonly string[]).includes(value)) bad(`${name} must be one of: ${allowed.join(", ")}.`);
   return value as T;
 }
 
-function optionalContentType(value: string | null | undefined): ExchangeContentType | null {
+export function optionalContentType(value: string | null | undefined): ExchangeContentType | null {
   if (value === null || value === undefined || value === "") return null;
   return oneOf(value, CONTENT_TYPES, "content_type", "text");
 }
 
-function slugList(values: string[] | null | undefined, name: string, pattern: RegExp): string[] | null {
+export function slugList(values: string[] | null | undefined, name: string, pattern: RegExp): string[] | null {
   const list = (values ?? []).map((value) => value.trim()).filter(Boolean);
   if (list.length === 0) return null;
   if (list.length > PUBLIC_LIMITS.filterItems) bad(`At most ${PUBLIC_LIMITS.filterItems} ${name} values.`);
@@ -273,7 +273,7 @@ function slugList(values: string[] | null | undefined, name: string, pattern: Re
   return [...new Set(list)];
 }
 
-function optionalSlug(value: string | null | undefined, name: string): string | null {
+export function optionalSlug(value: string | null | undefined, name: string): string | null {
   const text = value?.trim();
   if (!text) return null;
   if (!SLUG_PATTERN.test(text)) bad(`Invalid ${name}.`);
@@ -286,7 +286,7 @@ interface SearchCursor {
   i: string;
 }
 
-function encodeCursor(cursor: SearchCursor): string {
+export function encodeCursor(cursor: SearchCursor): string {
   return btoa(JSON.stringify(cursor)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 

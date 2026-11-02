@@ -4,6 +4,7 @@
  */
 export * from "./rest.ts";
 export * from "./prompts.ts";
+export * from "./public-content.ts";
 export * from "./rate-limit.ts";
 export * from "./usage.ts";
 export * from "./me.ts";

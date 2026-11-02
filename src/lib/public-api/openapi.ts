@@ -82,6 +82,45 @@ function meContentPaths(): Record<string, unknown> {
   return out;
 }
 
+/** Herkese açık istek / hazır ayar / workflow yolları (docs/history/322-*). */
+function publicContentPaths(): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [segment, kind] of [["requests", "request"], ["presets", "preset"], ["workflows", "workflow"]] as const) {
+    out[`/${segment}`] = {
+      get: {
+        summary: `Search public ${segment}`,
+        description: `Published, public ${segment} (not community-only). Matches title and description${kind === "request" ? " and the creative direction" : ""}. Without \`q\`, lists the newest. No key needed.`,
+        parameters: [
+          { name: "q", in: "query", schema: { type: "string", maxLength: PUBLIC_LIMITS.query } },
+          contentTypeParam,
+          { name: "category", in: "query", schema: { type: "string" } },
+          { name: "subcategory", in: "query", schema: { type: "string" } },
+          { name: "tag", in: "query", description: "Tag slug or label; repeat for several (all must match).", schema: { type: "array", items: { type: "string" } }, explode: true },
+          { name: "tool", in: "query", description: "AI tool ref; repeat for several (any matches).", schema: { type: "array", items: { type: "string" } }, explode: true },
+          { name: "sort", in: "query", schema: { type: "string", enum: PUBLIC_SORTS } },
+          limitParam,
+          { name: "cursor", in: "query", description: "`nextCursor` of the previous page.", schema: { type: "string" } },
+        ],
+        responses: { "200": { description: "One page", content: { "application/json": { schema: { $ref: "#/components/schemas/ContentPage" } } } }, "400": errorResponse },
+      },
+    };
+    out[`/${segment}/{id}`] = {
+      get: {
+        summary: `One public ${kind}`,
+        description:
+          kind === "workflow"
+            ? "With its steps (1-based `position`). A step links a prompt only if that prompt is public; prompt texts are never included here — read them with `/prompts/{id}`."
+            : kind === "preset"
+              ? "With its `selection` (`{field: value}`)."
+              : "With its `creativeDirection`.",
+        parameters: [idParam],
+        responses: { "200": { description: `The ${kind}`, content: { "application/json": { schema: { $ref: "#/components/schemas/PublicContent" } } } }, "400": errorResponse, "404": errorResponse },
+      },
+    };
+  }
+  return out;
+}
+
 export function openApiDocument(serverUrl: string): Record<string, unknown> {
   return {
     openapi: "3.1.0",
@@ -163,6 +202,7 @@ export function openApiDocument(serverUrl: string): Record<string, unknown> {
           },
         },
       },
+      ...publicContentPaths(),
       "/me": {
         get: {
           summary: "Who am I (needs a key)",
@@ -229,6 +269,17 @@ export function openApiDocument(serverUrl: string): Record<string, unknown> {
           type: "object",
           properties: { id: { type: "string", format: "uuid" }, changed: { type: "array", items: { type: "string" } }, warnings: { type: "array", items: { type: "object" } }, updatedAt: { type: "string", format: "date-time", description: "The new value to send as expectedUpdatedAt next time." }, url: { type: "string" }, editUrl: { type: "string" } },
         },
+        PublicContent: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" }, kind: { type: "string", enum: ["request", "preset", "workflow"] }, url: { type: "string" }, title: { type: "string" }, description: { type: "string" },
+            contentTypes: { type: "array", items: { type: "string", enum: CONTENT_TYPES } }, category: { type: ["string", "null"] }, subcategory: { type: ["string", "null"] },
+            tools: { type: "array", items: { type: "string" } }, tags: { type: "array", items: { type: "string" } }, author: { $ref: "#/components/schemas/Author" }, stats: { $ref: "#/components/schemas/Stats" },
+            createdAt: { type: "string", format: "date-time" }, requestStatus: { type: "string" }, responseCount: { type: "integer" }, stepCount: { type: "integer" },
+            creativeDirection: { type: "string" }, selection: { type: "object" }, steps: { type: "array", items: { type: "object" } },
+          },
+        },
+        ContentPage: { type: "object", properties: { items: { type: "array", items: { $ref: "#/components/schemas/PublicContent" } }, nextCursor: { type: ["string", "null"] } } },
         MePage: { type: "object", properties: { items: { type: "array", items: { type: "object" } }, nextCursor: { type: ["string", "null"] } } },
         MeImportReport: { type: "object", properties: { dryRun: { type: "boolean" }, ok: { type: "boolean" }, created: { type: "integer" }, items: { type: "array", items: { type: "object" } }, skipped: { type: "array", items: { type: "object" } } } },
         Error: { type: "object", properties: { error: { type: "object", properties: { code: { type: "string" }, message: { type: "string" } } } } },
