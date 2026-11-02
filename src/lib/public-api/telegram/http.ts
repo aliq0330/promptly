@@ -3,7 +3,7 @@
  *
  *   POST …/telegram          Telegram webhook'u. `X-Telegram-Bot-Api-Secret-Token` başlığı `TELEGRAM_WEBHOOK_SECRET` ile eşleşmezse 401 (webhook'u kaydederken
  *                            `secret_token` olarak verilir; yalnız Telegram bilir). Doğrulanan her istek 200 döner — işlem hatası Telegram'ı yeniden yağdırmasın.
- *   POST …/telegram/notify   Zamanlayıcı (GitHub Actions). `X-Cron-Secret` = `TELEGRAM_CRON_SECRET`.
+ *   POST …/telegram/notify   Zamanlayıcı (GitHub Actions, yedek + haftalık özet) ya da ANLIK tetikleyici (`?user=<uuid>`: yalnız o kişi). `X-Cron-Secret` = `TELEGRAM_CRON_SECRET`.
  *   POST …/telegram/setup    Tek seferlik kurulum (setWebhook + komut listesi). Aynı sır.
  *
  * Sırlar YOKSA uç kapalıdır (503, açık kapı değil). Sırlar sabit zamanlı karşılaştırılır; hiçbir yanıt/log belirteç ya da sır içermez.
@@ -13,6 +13,7 @@ import type { TelegramBot } from "./bot.ts";
 import type { NotifyReport, TelegramApi, TelegramUpdate } from "./types.ts";
 
 const MAX_BODY_BYTES = 256 * 1024;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Sabit zamanlı eşitlik (uzunluk sızmasın diye önce özetlenir). */
 export async function safeEqual(a: string, b: string): Promise<boolean> {
@@ -28,7 +29,7 @@ export interface TelegramHttpOptions {
   bot: TelegramBot;
   webhookSecret: string;
   cronSecret: string;
-  notify: () => Promise<NotifyReport>;
+  notify: (scope?: { userId?: string }) => Promise<NotifyReport>;
   setup: () => Promise<Record<string, unknown>>;
   onError?: (error: unknown) => void;
 }
@@ -45,8 +46,10 @@ export function createTelegramHttpHandler(options: TelegramHttpOptions): (reques
     if (path.endsWith("/notify") || path.endsWith("/setup")) {
       if (!options.cronSecret) return json({ error: "not_configured" }, 503);
       if (!(await safeEqual(request.headers.get("x-cron-secret") ?? "", options.cronSecret))) return json({ error: "unauthorized" }, 401);
+      const user = url.searchParams.get("user");
+      if (user !== null && !(path.endsWith("/notify") && UUID.test(user))) return json({ error: "bad_request" }, 400);
       try {
-        return json({ ok: true, ...(path.endsWith("/notify") ? { report: await options.notify() } : { setup: await options.setup() }) });
+        return json({ ok: true, ...(path.endsWith("/notify") ? { report: await options.notify(user ? { userId: user.toLowerCase() } : undefined) } : { setup: await options.setup() }) });
       } catch (error) {
         options.onError?.(error);
         return json({ ok: false, error: "failed" }, 500);

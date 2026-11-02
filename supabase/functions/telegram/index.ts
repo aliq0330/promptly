@@ -70,7 +70,7 @@ if (!TOKEN || !DB_URL || !SUPABASE_URL) {
       bot,
       webhookSecret: WEBHOOK_SECRET,
       cronSecret: CRON_SECRET,
-      notify: () => runTelegramNotifications({ api, owner, me, siteUrl: SITE_URL, onError }),
+      notify: (scope) => runTelegramNotifications({ api, owner, me, siteUrl: SITE_URL, onError, userId: scope?.userId }),
       setup: () => runTelegramSetup({ api, webhookUrl: `${SUPABASE_URL}/functions/v1/telegram`, webhookSecret: WEBHOOK_SECRET }),
       onError,
     }),

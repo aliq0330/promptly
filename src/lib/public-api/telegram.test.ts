@@ -108,6 +108,7 @@ function fakeOwner(handlers: Record<string, (params: unknown[]) => Record<string
         return out;
       }
     }
+    if (sql.includes("_telegram_claim")) return [{ ok: true }];
     return [];
   };
   return { calls, owner };
@@ -614,6 +615,39 @@ test("notify: a failed send does NOT move the cursor (retried next run); a block
   assert.ok(!JSON.stringify(errors.map(String)).includes("boom"), "Telegram's error text is not copied into our logs");
 });
 
+test("notify push: ?user scopes the pass to that person's links, skips the weekly summary, and claims/releases each link", async () => {
+  const tg = fakeApi();
+  const U = "11111111-1111-4111-8111-111111111111";
+  const owner = fakeOwner({
+    _telegram_notify_links_for: () => [linkRow({ notify_weekly: true })],
+    _telegram_pending: () => [pendingRows[0]],
+  });
+  const me = fakeMe();
+  const report = await runTelegramNotifications({ api: tg.api, owner: owner.owner, me: me.backend, siteUrl: SITE, userId: U, now: () => new Date("2026-11-02T12:00:00Z") });
+  const forCall = owner.calls.find((call) => call.sql.includes("_telegram_notify_links_for"));
+  assert.deepEqual(forCall?.params, [U]);
+  assert.ok(!owner.calls.some((call) => call.sql.includes("_telegram_notify_links(")), "the global query is not used");
+  assert.equal(report.activitySent, 1);
+  assert.equal(report.weeklySent, 0, "weekly summary stays with the scheduled run");
+  assert.equal(me.txs.length, 0, "no insights call on the push path");
+  const order = owner.calls.map((call) => (call.sql.match(/_telegram_\w+/) ?? [""])[0]);
+  assert.ok(order.indexOf("_telegram_claim") < order.indexOf("_telegram_pending") && order.lastIndexOf("_telegram_release") === order.length - 1, "claim first, release last");
+});
+
+test("notify push: a link another pass is already processing is skipped (no double send); the claim is released after a failed send", async () => {
+  const tg = fakeApi();
+  const busy = fakeOwner({ _telegram_notify_links: () => [linkRow()], _telegram_claim: () => [{ ok: false }], _telegram_pending: () => [pendingRows[0]] });
+  const report = await runTelegramNotifications({ api: tg.api, owner: busy.owner, me: fakeMe().backend, siteUrl: SITE });
+  assert.equal(tg.sent().length, 0);
+  assert.equal(report.activitySent, 0);
+  assert.ok(!busy.calls.some((call) => call.sql.includes("_telegram_pending")));
+  assert.ok(!busy.calls.some((call) => call.sql.includes("_telegram_release")), "a link we did not claim is not released");
+  const failing = fakeOwner({ _telegram_notify_links: () => [linkRow()], _telegram_pending: () => [pendingRows[0]] });
+  const bad = fakeApi({ sendMessage: () => ({ ok: false, errorCode: 500, description: "boom" }) });
+  await runTelegramNotifications({ api: bad.api, owner: failing.owner, me: fakeMe().backend, siteUrl: SITE });
+  assert.ok(failing.calls.some((call) => call.sql.includes("_telegram_release")), "released even when the send failed");
+});
+
 test("notify: nothing pending → nothing sent", async () => {
   const tg = fakeApi();
   const owner = fakeOwner({ _telegram_notify_links: () => [linkRow()], _telegram_pending: () => [] });
@@ -664,14 +698,15 @@ function httpHandler(opts: { webhook?: string; cron?: string } = {}) {
   const bot = { handleUpdate: async (update: TelegramUpdate) => void handled.push(update) };
   let notified = 0;
   let setups = 0;
+  const scopes: (string | null)[] = [];
   const handler = createTelegramHttpHandler({
     bot,
     webhookSecret: opts.webhook ?? "hook-secret",
     cronSecret: opts.cron ?? "cron-secret",
-    notify: async () => { notified += 1; return { links: 0, activitySent: 0, weeklySent: 0, unlinked: 0, failed: 0 }; },
+    notify: async (scope) => { notified += 1; scopes.push(scope?.userId ?? null); return { links: 0, activitySent: 0, weeklySent: 0, unlinked: 0, failed: 0 }; },
     setup: async () => { setups += 1; return { webhook: "ok" }; },
   });
-  return { handler, handled, counts: () => ({ notified, setups }) };
+  return { handler, handled, scopes, counts: () => ({ notified, setups }) };
 }
 const post = (path: string, headers: Record<string, string>, body = "{}") => new Request(`https://x.supabase.co/functions/v1/telegram${path}`, { method: "POST", headers, body });
 
@@ -688,6 +723,20 @@ test("http webhook: only Telegram's secret opens it; garbage after auth is a qui
   assert.equal(h.handled.length, 1, "malformed updates are ignored");
   const closed = httpHandler({ webhook: "" });
   assert.equal((await closed.handler(post("", good, JSON.stringify({ update_id: 1 })))).status, 503);
+});
+
+test("http: /notify?user=<uuid> scopes the pass (push path); a malformed user, or user on /setup, is a 400 before any work", async () => {
+  const h = httpHandler();
+  const cron = { "x-cron-secret": "cron-secret" };
+  const U = "AAAAAAAA-1111-4111-8111-111111111111";
+  assert.equal((await h.handler(post(`/notify?user=${U}`, cron))).status, 200);
+  assert.deepEqual(h.scopes, [U.toLowerCase()]);
+  assert.equal((await h.handler(post("/notify", cron))).status, 200);
+  assert.deepEqual(h.scopes, [U.toLowerCase(), null]);
+  assert.equal((await h.handler(post("/notify?user=not-a-uuid", cron))).status, 400);
+  assert.equal((await h.handler(post(`/setup?user=${U}`, cron))).status, 400);
+  assert.equal((await h.handler(post(`/notify?user=${U}`, { "x-cron-secret": "nope" }))).status, 401, "the secret is checked first");
+  assert.equal(h.counts().notified, 2);
 });
 
 test("http: /notify and /setup need the cron secret (not the webhook secret); GET gives a harmless banner; other methods 405", async () => {

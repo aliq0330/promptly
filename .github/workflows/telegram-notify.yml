@@ -1,7 +1,7 @@
 name: Telegram notifications
 
 # Telegram botunun bildirim zamanlayıcısı (docs/history/323-*). Her ~15 dakikada Edge Function'ın /notify ucunu çağırır: etkinlik bildirimleri ve (haftada bir) haftalık özet.
-# GitHub zamanlayıcısı "en iyi çaba"dır (gecikebilir) — anlık bildirim değil, birkaç dakika gecikmeli özet olarak düşünülmelidir.
+# Bu zamanlayıcı YEDEK + haftalık özet içindir (en iyi çaba, gecikebilir). Etkinlik bildirimleri ANLIK gider: `notifications` tetikleyicisi `pg_net` ile `/notify?user=` çağırır (docs/history/324-*).
 # `action: setup` elle bir kez çalıştırılır: webhook'u ve komut listesini Telegram'a kaydeder (belirteç Edge Function'ın ortamındadır, burada DEĞİL).
 # Sırlar tanımlı değilse iş sessizce atlanır (kurulumdan önce kırmızı olmasın).
 on:
