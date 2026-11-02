@@ -257,6 +257,13 @@ function fakeMeDb(scopes: string[], sqls: string[] = []): MeDb {
         if (sql.includes("api_me_prompts")) return [{ id: MY_ID, title: "Gizli taslak", description: "d", content_type: "text", status: "draft", visibility: "private", created_at: new Date("2026-10-01"), updated_at: new Date("2026-10-01"), created_cursor: "2026-10-01T00:00:00.000000Z" }];
         if (sql.includes("api_me_prompt($1")) return [{ id: MY_ID, title: "Gizli taslak", description: "d", prompt_text: "Logo for {brand}", content_type: "text", status: "draft", visibility: "private", tags: [], created_at: new Date(), updated_at: new Date() }];
         if (sql.includes("import_prompts")) return [{ report: { dryRun: false, ok: true, created: 1, items: [{ index: 1, status: "ok", id: MY_ID }] } }];
+        if (sql.includes("api_me_whoami")) return [{ user_id: USER, username: "ayse", display_name: "Ayşe K.", avatar_url: null }];
+        if (sql.includes("api_me_requests(")) return [{ id: MY_ID, title: "Neon istek", description: "d", content_type: "image", status: "draft", visibility: "private", created_at: new Date("2026-10-01"), updated_at: new Date("2026-10-01T10:00:00.123Z"), created_cursor: "2026-10-01T00:00:00.000000Z" }];
+        if (sql.includes("api_me_workflow($1")) return [{ detail: { id: MY_ID, title: "Zincir", steps: [{ position: 1, title: "Bir" }], updatedAt: "2026-10-01T10:00:00.123Z" } }];
+        if (sql.includes("import_content") || sql.includes("import_workflows")) return [{ report: { dryRun: false, ok: true, created: 1, items: [{ index: 1, status: "ok", id: MY_ID }], kind: params[0] } }];
+        if (sql.includes("api_me_update_draft")) {
+          return [{ result: String(params[3]).startsWith("2026-10-01T10:00:00.123") ? { ok: true, id: MY_ID, changed: ["title"], warnings: [], updatedAt: "2026-10-01T10:05:00.000Z" } : { ok: false, code: "conflict", currentUpdatedAt: "2026-10-01T10:00:00.123Z" } }];
+        }
         return [];
       };
       return fn(tx);
@@ -318,9 +325,14 @@ test("the public /mcp address never offers the personal tools, even if the calle
 test("/mcp/me lists the personal tools next to the public ones; the draft tool is the only non-read-only one", async () => {
   const client = await connectMe(meHandler(["read", "write"]));
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map((tool) => tool.name).sort(), ["fill_prompt", "get_my_prompt", "get_prompt", "list_my_prompts", "list_my_saved", "popular_prompts", "save_prompt_draft", "search_prompts"]);
-  for (const tool of tools) assert.equal(tool.annotations?.readOnlyHint, tool.name !== "save_prompt_draft", tool.name);
-  assert.equal(tools.find((tool) => tool.name === "save_prompt_draft")?.annotations?.destructiveHint, false);
+  assert.deepEqual(tools.map((tool) => tool.name).sort(), [
+    "fill_prompt", "get_my_content", "get_my_prompt", "get_prompt", "list_my_content", "list_my_prompts", "list_my_saved", "popular_prompts",
+    "save_preset_draft", "save_prompt_draft", "save_request_draft", "save_workflow_draft", "search_prompts", "update_my_draft", "whoami",
+  ]);
+  const writers = ["save_prompt_draft", "save_request_draft", "save_preset_draft", "save_workflow_draft", "update_my_draft"];
+  for (const tool of tools) assert.equal(tool.annotations?.readOnlyHint, !writers.includes(tool.name), tool.name);
+  for (const name of writers) assert.equal(tools.find((tool) => tool.name === name)?.annotations?.destructiveHint, false, name);
+  assert.ok(!tools.some((tool) => /publish|delete|remove/i.test(tool.name)), "no publish / delete tool exists");
 });
 
 test("personal tools run AS the user: the credential is re-checked on every call, then role + claims, then the operation", async () => {
@@ -357,4 +369,55 @@ test("a revoked / unknown key: the call fails inside the tool (isError) and noth
   assert.equal(result.isError, true);
   assert.match(result.content[0].text, /unauthorized/);
   assert.ok(!sqls.some((sql) => sql.startsWith("set local role")));
+});
+
+test("whoami returns the account's username, display name and the connection's scopes", async () => {
+  const client = await connectMe(meHandler(["read"]));
+  const me = JSON.parse(textOf(await client.callTool({ name: "whoami", arguments: {} })).replace(/^[^{]*(?=\{)/s, ""));
+  assert.equal(me.user.username, "ayse");
+  assert.equal(me.user.displayName, "Ayşe K.");
+  assert.deepEqual(me.scopes, ["read"]);
+});
+
+test("requests, presets and workflows are listed and read through the generic tools", async () => {
+  const client = await connectMe(meHandler(["read"]));
+  const list = textOf(await client.callTool({ name: "list_my_content", arguments: { kind: "request" } }));
+  assert.ok(list.includes("Neon istek") && list.includes("2026-10-01T10:00:00.123Z"));
+  const one = textOf(await client.callTool({ name: "get_my_content", arguments: { kind: "workflow", id: MY_ID } }));
+  assert.ok(one.includes("Zincir") && one.includes('"position": 1'));
+});
+
+test("save_request_draft / save_preset_draft / save_workflow_draft write private drafts through the import RPCs; a read-only key is refused", async () => {
+  const sqls: string[] = [];
+  const client = await connectMe(meHandler(["read", "write"], sqls));
+  const request = textOf(await client.callTool({ name: "save_request_draft", arguments: { title: "Neon city", description: "Need a neon city", content_type: "image" } }));
+  assert.ok(request.includes('"created": 1') && request.includes("requests/new?edit="));
+  const preset = textOf(await client.callTool({ name: "save_preset_draft", arguments: { title: "Cinematic", selection: { aspect_ratio: "16:9" }, content_type: "image" } }));
+  assert.ok(preset.includes('"created": 1') && preset.includes("presets/create?edit="));
+  const workflow = textOf(await client.callTool({ name: "save_workflow_draft", arguments: { title: "Chain", steps: [{ key: "s1", title: "One", instructions: "Do", outputs: [{ id: "o1", label: "Out" }] }, { key: "s2", title: "Two", inputs: [{ id: "i1", label: "In", source: { step: "s1", output: "o1" } }] }] } }));
+  assert.ok(workflow.includes('"created": 1') && workflow.includes("workflows/create?edit="));
+  assert.ok(sqls.some((sql) => sql.includes("import_content")) && sqls.some((sql) => sql.includes("import_workflows")));
+
+  const readOnly: string[] = [];
+  const ro = await connectMe(meHandler(["read"], readOnly));
+  const denied = (await ro.callTool({ name: "save_request_draft", arguments: { title: "x", description: "y" } })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(denied.isError, true);
+  assert.match(denied.content[0].text, /insufficient_scope/);
+  assert.ok(!readOnly.some((sql) => sql.includes("import_content")));
+});
+
+test("update_my_draft: the expected time goes through; a stale time comes back as a conflict tool error; a read-only key is refused", async () => {
+  const sqls: string[] = [];
+  const client = await connectMe(meHandler(["read", "write"], sqls));
+  const done = textOf(await client.callTool({ name: "update_my_draft", arguments: { kind: "request", id: MY_ID, expected_updated_at: "2026-10-01T10:00:00.123Z", changes: { title: "Yeni" } } }));
+  assert.ok(done.includes('"updatedAt": "2026-10-01T10:05:00.000Z"'));
+  const stale = (await client.callTool({ name: "update_my_draft", arguments: { kind: "request", id: MY_ID, expected_updated_at: "2026-09-01T00:00:00.000Z", changes: { title: "Yeni" } } })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(stale.isError, true);
+  assert.match(stale.content[0].text, /^conflict:/);
+  assert.match(stale.content[0].text, /2026-10-01T10:00:00\.123Z/);
+
+  const ro = await connectMe(meHandler(["read"]));
+  const denied = (await ro.callTool({ name: "update_my_draft", arguments: { kind: "prompt", id: MY_ID, expected_updated_at: "2026-10-01T10:00:00.123Z", changes: { title: "x" } } })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(denied.isError, true);
+  assert.match(denied.content[0].text, /insufficient_scope/);
 });

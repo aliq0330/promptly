@@ -177,11 +177,6 @@ function summaryOf(row: Record<string, unknown>, siteUrl: string): MePromptSumma
   };
 }
 
-export async function getMe(tx: MeTx, identity: MeIdentity): Promise<Record<string, unknown>> {
-  const [row] = await tx("select user_id, username from public.api_me_profile()");
-  return { user: { id: identity.userId, username: row ? String(row.username) : null }, scopes: identity.scopes, via: identity.via };
-}
-
 export async function listMyPrompts(tx: MeTx, siteUrl: string, input: { limit?: number | null; cursor?: string | null; status?: string | null }): Promise<MePage<MePromptSummary>> {
   const limit = clampLimit(input.limit);
   const status = input.status ?? null;

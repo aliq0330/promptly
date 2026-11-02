@@ -17,8 +17,8 @@ export const settingsTranslations = {
   // --- Geliştirici ayarları ---
   "devSettings.connectTitle": { tr: "Yapay zekâ aracına bağla", en: "Connect an AI tool" },
   "devSettings.connectLead": {
-    tr: "Claude gibi bir araca kendi Promptly hesabını bağla: araç promptlarını (özel taslaklar dahil) ve kaydettiklerini okuyabilir, istersen hesabına özel taslak ekleyebilir. Yayınlayamaz, silemez.",
-    en: "Connect your own Promptly account to a tool like Claude: it can read your prompts (private drafts included) and what you saved, and — if you allow — add private drafts. It can't publish or delete.",
+    tr: "Claude gibi bir araca kendi Promptly hesabını bağla: araç promptlarını (özel taslaklar dahil) ve kaydettiklerini okuyabilir, istersen özel taslak ekleyip düzenleyebilir. Yayınlayamaz, silemez.",
+    en: "Connect your own Promptly account to a tool like Claude: it can read your prompts (private drafts included) and what you saved, and — if you allow — add and edit private drafts. It can't publish or delete.",
   },
   "devSettings.step5Value": { tr: "Değer: «Bearer», bir boşluk, sonra anahtarın:", en: "Value: “Bearer”, a space, then your key:" },
   "devSettings.step5Warn": { tr: "«Bearer» kelimesini ve ardındaki boşluğu unutma; yoksa bağlantı kurulmaz.", en: "Don't forget the word “Bearer” and the space after it, or the connection won't work." },

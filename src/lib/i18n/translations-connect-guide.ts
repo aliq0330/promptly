@@ -59,8 +59,8 @@ export const connectGuideTranslations = {
   },
   "guide.oauth.allow.title": { tr: "İzin ver'e bas", en: "Press Allow" },
   "guide.oauth.allow.body": {
-    tr: "Açılan izin ekranında neye izin verdiğini oku. İstersen taslak ekleme iznini de aç, sonra «İzin ver»e bas.",
-    en: "Read what you're allowing on the permission screen. Optionally turn on the draft permission, then press “Allow”.",
+    tr: "Açılan izin ekranında neye izin verdiğini oku. İstersen taslak ekleme/düzenleme iznini de aç, sonra «İzin ver»e bas.",
+    en: "Read what you're allowing on the permission screen. Optionally turn on the add/edit drafts permission, then press “Allow”.",
   },
   // --- Rehber: anahtarla ---
   "guide.key.create.title": { tr: "Anahtar oluştur", en: "Create a key" },
@@ -98,8 +98,8 @@ export const connectGuideTranslations = {
   "devStart.code.desc": { tr: "HTTP API ile ara, getir, doldur.", en: "Search, fetch and fill with the HTTP API." },
   "devAccount.title": { tr: "Hesabınla bağla", en: "Connect your account" },
   "devAccount.lead": {
-    tr: "Kendi promptlarını (özel taslaklar dahil) bir yapay zekâ aracında kullanmak ya da hesabına özel taslak eklemek için hesabını bağla. Önce yolu seç; sonra adım adım gideriz.",
-    en: "Connect your account to use your own prompts (private drafts included) in an AI tool, or to add private drafts to your account. Pick a route first; then we go step by step.",
+    tr: "Kendi promptlarını (özel taslaklar dahil) bir yapay zekâ aracında kullanmak ya da hesabında özel taslak eklemek/düzenlemek için hesabını bağla. Önce yolu seç; sonra adım adım gideriz.",
+    en: "Connect your account to use your own prompts (private drafts included) in an AI tool, or to add and edit private drafts in your account. Pick a route first; then we go step by step.",
   },
   "devAccount.codeTitle": { tr: "Kodla kullan (kişisel anahtar)", en: "Use from code (personal key)" },
   // --- /developers: sabit bölüm şeridi ---
