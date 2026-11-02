@@ -27,3 +27,6 @@ verify_jwt = false
 # Promptly'nin kendi OAuth sunucusu (docs/history/317-*) — istemciler Supabase JWT'si taşımaz; JWT doğrulaması KAPALI, kimlik kontrolü veritabanı fonksiyonlarındadır.
 [functions.oauth]
 verify_jwt = false
+
+[functions.telegram]
+verify_jwt = false

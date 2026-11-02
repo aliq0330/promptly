@@ -25,6 +25,7 @@ import { reactionTranslations } from "./translations-reactions";
 import { insightsTranslations } from "./translations-insights";
 import { commentExtrasTranslations } from "./translations-comment-extras";
 import { apiKeysTranslations } from "./translations-api-keys";
+import { telegramTranslations } from "./translations-telegram";
 import { settingsTranslations } from "./translations-settings";
 import { connectGuideTranslations } from "./translations-connect-guide";
 import { worksTranslations } from "./translations-works";
@@ -3274,6 +3275,7 @@ export const translations = {
   ...insightsTranslations,
   ...commentExtrasTranslations,
   ...apiKeysTranslations,
+  ...telegramTranslations,
   ...settingsTranslations,
   ...connectGuideTranslations,
   ...worksTranslations,

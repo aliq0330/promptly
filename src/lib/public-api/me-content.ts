@@ -81,7 +81,7 @@ function decodeCursor(cursor: string | null | undefined): { time: string; id: st
 export interface MeWhoami {
   user: { id: string; username: string | null; displayName: string | null; avatarUrl: string | null; profileUrl: string | null };
   scopes: string[];
-  via: "key" | "oauth";
+  via: "key" | "oauth" | "telegram";
 }
 
 /** Oturumun sahibi: kullanıcı adı, görünen ad, avatar ve profil bağlantısı + kapsamlar. Yazma kapsamı yoksa taslak eklenemez/güncellenemez. */

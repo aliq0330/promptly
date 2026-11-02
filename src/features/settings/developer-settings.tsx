@@ -5,6 +5,7 @@ import { Code2 } from "lucide-react";
 import { ConnectWizard } from "@/features/developers/connect-wizard";
 import { ApiKeysSection } from "@/features/settings/api-keys-section";
 import { ConnectedAppsSection } from "@/features/settings/connected-apps-section";
+import { TelegramSection } from "@/features/settings/telegram-section";
 import { SettingsCard, SettingsLinkRow, SettingsSubpage } from "@/features/settings/settings-ui";
 import { developerEndpoints } from "@/lib/developers";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -39,6 +40,8 @@ export function DeveloperSettings() {
       </div>
 
       <ConnectedAppsSection />
+
+      <TelegramSection />
 
       <SettingsLinkRow href="/developers" icon={<Code2 size={18} className="text-text-secondary" />} title={t("devSettings.docsTitle")} hint={t("devSettings.docsHint")} />
     </SettingsSubpage>

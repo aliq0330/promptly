@@ -21,10 +21,12 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   invalid_name: "error.apiTokenName",
   invalid_scope: "error.apiTokenScope",
   invalid_expiry: "error.apiTokenExpiry",
+  // Telegram botu (docs/history/323-*)
+  link_limit: "error.telegramLinkLimit",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
-const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public", "token_limit", "invalid_name", "invalid_scope", "invalid_expiry"]);
+const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public", "token_limit", "link_limit", "invalid_name", "invalid_scope", "invalid_expiry"]);
 
 export function friendlyServerMessage(code: unknown): string | null {
   if (typeof code !== "string") return null;

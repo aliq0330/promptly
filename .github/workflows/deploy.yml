@@ -69,6 +69,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           # GIF seçici (docs/history/308-*): tanımlı değilse seçici "servis yapılandırılmadı" der, site yine yayınlanır.
           NEXT_PUBLIC_GIPHY_API_KEY: ${{ secrets.NEXT_PUBLIC_GIPHY_API_KEY }}
+          # Telegram botu (docs/history/323-*): ayar kartı ve derin bağlantı. Tanımlı değilse (ve bağlantı yoksa) bölüm hiç görünmez, site yine yayınlanır. Gizli değil, herkese açık kullanıcı adı.
+          NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${{ vars.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME }}
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

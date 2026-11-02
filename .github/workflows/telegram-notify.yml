@@ -1,0 +1,42 @@
+name: Telegram notifications
+
+# Telegram botunun bildirim zamanlayıcısı (docs/history/323-*). Her ~15 dakikada Edge Function'ın /notify ucunu çağırır: etkinlik bildirimleri ve (haftada bir) haftalık özet.
+# GitHub zamanlayıcısı "en iyi çaba"dır (gecikebilir) — anlık bildirim değil, birkaç dakika gecikmeli özet olarak düşünülmelidir.
+# `action: setup` elle bir kez çalıştırılır: webhook'u ve komut listesini Telegram'a kaydeder (belirteç Edge Function'ın ortamındadır, burada DEĞİL).
+# Sırlar tanımlı değilse iş sessizce atlanır (kurulumdan önce kırmızı olmasın).
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "notify = bildirimleri şimdi gönder · setup = webhook + komut listesini kaydet (bir kez)"
+        type: choice
+        default: notify
+        options: [notify, setup]
+
+permissions:
+  contents: read
+
+jobs:
+  call:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      TELEGRAM_CRON_SECRET: ${{ secrets.TELEGRAM_CRON_SECRET }}
+    steps:
+      - name: Call the Edge Function
+        run: |
+          if [ -z "$SUPABASE_PROJECT_REF" ] || [ -z "$TELEGRAM_CRON_SECRET" ]; then
+            echo "::notice::SUPABASE_PROJECT_REF / TELEGRAM_CRON_SECRET not set — skipping"
+            exit 0
+          fi
+          action="${{ inputs.action || 'notify' }}"
+          code=$(curl -sS -o /tmp/response.json -w '%{http_code}' -X POST \
+            -H "X-Cron-Secret: $TELEGRAM_CRON_SECRET" \
+            "https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/telegram/${action}")
+          cat /tmp/response.json; echo
+          if [ "$code" != "200" ]; then
+            echo "::error::telegram/${action} answered HTTP ${code}"
+            exit 1
+          fi

@@ -21,7 +21,7 @@ export interface MeIdentity {
   scopes: MeScope[];
   /** Anahtar kimliği; OAuth'ta null. */
   tokenId: string | null;
-  via: "key" | "oauth";
+  via: "key" | "oauth" | "telegram";
 }
 
 /** Bir işlem içinde tek sorgu: satır dizisi (`$1…` parametreli). */
@@ -43,6 +43,11 @@ export interface MeBackend {
   readonly siteUrl: string;
   /** Bearer'ı doğrular, kullanıcı olur, `fn`'i o işlemde çalıştırır. Hata → `PublicApiError` (unauthorized / insufficient_scope / rate_limited). */
   withUser<T>(bearer: string, need: MeScope, fn: (tx: MeTx, identity: MeIdentity) => Promise<T>): Promise<T>;
+  /**
+   * Telegram botu (docs/history/323-*): kimlik anahtar/belirteç değil, önceden BAĞLANMIŞ Telegram kullanıcısıdır (`telegram_links`; bağlama kodunu site üretir).
+   * Kullanıcı olunduktan sonrası `withUser` ile AYNIDIR (tek işlemde rol + iddialar + hız sınırı); bağlı değilse `unauthorized`.
+   */
+  withTelegram<T>(who: { telegramUserId: string; language?: "tr" | "en" }, need: MeScope, fn: (tx: MeTx, identity: MeIdentity) => Promise<T>): Promise<T>;
 }
 
 export const KEY_PATTERN = /^pmt_[A-Za-z0-9_-]{43}$/;
@@ -65,6 +70,27 @@ function unauthorized(): PublicApiError {
 
 const scopesOf = (value: unknown): MeScope[] => (Array.isArray(value) ? value.filter((s): s is MeScope => s === "read" || s === "write") : []);
 
+/** Kimlik kurulduktan sonra: kapsam denetimi → kullanıcı rolü + iddialar → hesap başına hız sınırı → işlem. `withUser` ve `withTelegram` ortak kullanır. */
+async function runAsUser<T>(tx: MeTx, identity: MeIdentity, need: MeScope, fn: (tx: MeTx, identity: MeIdentity) => Promise<T>): Promise<T> {
+  if (!identity.scopes.includes(need)) {
+    throw new PublicApiError("insufficient_scope", `This credential does not have the "${need}" scope.`);
+  }
+  await tx("set local role authenticated");
+  await tx("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: identity.userId, role: "authenticated" })]);
+  await tx("select public.api_me_throttle($1)", [need === "write"]);
+  return await fn(tx, identity);
+}
+
+/** Veritabanının bilerek fırlattığı kısa kodlar (CLAUDE.md §6) HTTP karşılığına çevrilir; gerisi dışarı sızmaz. */
+function translateDbError(error: unknown): PublicApiError {
+  if (error instanceof PublicApiError) return error;
+  const message = error instanceof Error ? error.message : String(error);
+  if (/\brate_limit\b/.test(message)) return new PublicApiError("rate_limited", "Too many requests for this account. Slow down and retry shortly.");
+  if (/askıya alındı|suspended/i.test(message)) return new PublicApiError("insufficient_scope", "This account is currently restricted.");
+  if (/paylaşım yapma yetkisi|posting/i.test(message)) return new PublicApiError("insufficient_scope", "This account cannot create content right now.");
+  return new PublicApiError("upstream", "Could not complete the request.");
+}
+
 export function createMeBackend(options: MeBackendOptions): MeBackend {
   return {
     siteUrl: options.siteUrl,
@@ -86,22 +112,23 @@ export function createMeBackend(options: MeBackendOptions): MeBackend {
             if (!row) throw unauthorized();
             identity = { userId: String(row.user_id), scopes: scopesOf(row.scopes), tokenId: String(row.token_id), via: "key" };
           }
-          if (!identity.scopes.includes(need)) {
-            throw new PublicApiError("insufficient_scope", `This credential does not have the "${need}" scope.`);
-          }
-          await tx("set local role authenticated");
-          await tx("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: identity.userId, role: "authenticated" })]);
-          await tx("select public.api_me_throttle($1)", [need === "write"]);
-          return await fn(tx, identity);
+          return await runAsUser(tx, identity, need, fn);
         });
       } catch (error) {
-        if (error instanceof PublicApiError) throw error;
-        const message = error instanceof Error ? error.message : String(error);
-        // Veritabanının bilerek fırlattığı kısa kodlar (CLAUDE.md §6) HTTP karşılığına çevrilir; gerisi dışarı sızmaz.
-        if (/\brate_limit\b/.test(message)) throw new PublicApiError("rate_limited", "Too many requests for this account. Slow down and retry shortly.");
-        if (/askıya alındı|suspended/i.test(message)) throw new PublicApiError("insufficient_scope", "This account is currently restricted.");
-        if (/paylaşım yapma yetkisi|posting/i.test(message)) throw new PublicApiError("insufficient_scope", "This account cannot create content right now.");
-        throw new PublicApiError("upstream", "Could not complete the request.");
+        throw translateDbError(error);
+      }
+    },
+    async withTelegram(who, need, fn) {
+      if (!/^[0-9]{1,18}$/.test(who.telegramUserId)) throw unauthorized();
+      try {
+        return await options.db.transaction(async (tx) => {
+          const [row] = await tx("select link_id, user_id, scopes from public._telegram_link_authenticate($1::bigint, $2)", [who.telegramUserId, who.language ?? null]);
+          if (!row) throw new PublicApiError("unauthorized", "This Telegram account is not linked to a Promptly account.");
+          const identity: MeIdentity = { userId: String(row.user_id), scopes: scopesOf(row.scopes), tokenId: String(row.link_id), via: "telegram" };
+          return await runAsUser(tx, identity, need, fn);
+        });
+      } catch (error) {
+        throw translateDbError(error);
       }
     },
   };

@@ -101,11 +101,13 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy
           # GIF seçici testleri (run-comment-extras) için sahte anahtar; GIPHY taklit edilir.
           NEXT_PUBLIC_GIPHY_API_KEY: test-key
+          # Telegram ayar kartı (run-telegram-settings): kullanıcı adı tanımlı değilse bölüm hiç görünmez.
+          NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: PromptlyTestBot
       - name: Run UI suites
         run: |
           set -o pipefail
           status=0
-          for s in run-safety run-shared-cards run-detail-pages run-home-motion run-feed-filters run-search-notifications run-comment-extras; do
+          for s in run-safety run-shared-cards run-detail-pages run-home-motion run-feed-filters run-search-notifications run-comment-extras run-telegram-settings; do
             echo "== $s"; node tests/messaging-ui/$s.mjs | tail -3 || status=1
           done
           exit $status

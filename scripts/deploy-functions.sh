@@ -17,7 +17,7 @@ cd "$(dirname "$0")/.."
 # Tek fonksiyon deploy'u canlıdaki diğer fonksiyonlara dokunmaz (kaynakları canlı sürümle karşılaştırılmadı — CLAUDE.md §9).
 TARGET="${1:-all}"
 case "$TARGET" in
-  all|analyze-image|cleanup-orphan-storage|delete-account|username-login|api|mcp|oauth) ;;
+  all|analyze-image|cleanup-orphan-storage|delete-account|username-login|api|mcp|oauth|telegram) ;;
   *) echo "Unknown function: $TARGET" >&2; exit 1 ;;
 esac
 want() { [ "$TARGET" = all ] || [ "$TARGET" = "$1" ]; }
@@ -47,4 +47,10 @@ fi
 if want oauth; then
   node scripts/sync-function-shared.mjs --check
   supabase functions deploy oauth --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
+fi
+
+# Telegram botu (docs/history/323-*): Telegram JWT taşımaz, kapalı. Webhook/zamanlayıcı sırları fonksiyonun kendisinde doğrulanır; çekirdek kopyası güncel olmalı.
+if want telegram; then
+  node scripts/sync-function-shared.mjs --check
+  supabase functions deploy telegram --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
 fi

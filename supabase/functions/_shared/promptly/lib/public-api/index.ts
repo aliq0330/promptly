@@ -10,5 +10,6 @@ export * from "./usage.ts";
 export * from "./me.ts";
 export * from "./me-content.ts";
 export * from "./oauth.ts";
+export * from "./telegram/index.ts";
 export { createApiHandler, routeOf, type ApiHandlerOptions } from "./http.ts";
 export { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";
