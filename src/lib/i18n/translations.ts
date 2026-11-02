@@ -26,6 +26,7 @@ import { insightsTranslations } from "./translations-insights";
 import { commentExtrasTranslations } from "./translations-comment-extras";
 import { apiKeysTranslations } from "./translations-api-keys";
 import { settingsTranslations } from "./translations-settings";
+import { connectGuideTranslations } from "./translations-connect-guide";
 import { worksTranslations } from "./translations-works";
 import { workflowAutoTranslations } from "./translations-workflow-auto";
 import { chatRedesignTranslations } from "./translations-chat-redesign";
@@ -1697,7 +1698,7 @@ export const translations = {
   "legal.contactBody": { tr: "Sorun, talep ya da şikâyetin için bize yaz:", en: "For questions, requests or complaints, write to us:" },
   "dev.title": { tr: "Geliştiriciler", en: "Developers" },
   "dev.navHint": { tr: "Claude'a bağla, API'yi kullan", en: "Connect Claude, use the API" },
-  "dev.intro": { tr: "Promptly'nin herkese açık prompt kütüphanesini Claude gibi yapay zekâ araçlarına bağlayabilir ya da kendi uygulamandan okuyabilirsin. Bunlar hesap ve anahtar istemez, yalnızca herkese açık içeriği okur; kendi hesabın için kişisel anahtar bölümü aşağıda.", en: "You can connect Promptly's public prompt library to AI tools like Claude, or read it from your own app. These need no account or key and only read public content; the personal-key section below is for your own account." },
+  "dev.intro": { tr: "Promptly'nin herkese açık prompt kütüphanesini Claude gibi yapay zekâ araçlarına bağlayabilir ya da kendi uygulamandan okuyabilirsin. Bunlar hesap ve anahtar istemez, yalnızca herkese açık içeriği okur; kendi hesabını bağlamak için «Hesabınla bağla» bölümüne bak.", en: "You can connect Promptly's public prompt library to AI tools like Claude, or read it from your own app. These need no account or key and only read public content; to connect your own account see the “Connect your account” section." },
   "dev.copy": { tr: "Kopyala", en: "Copy" },
   "dev.copied": { tr: "Kopyalandı", en: "Copied" },
   "dev.unavailable": { tr: "Bu derlemede adresler tanımlı değil.", en: "The addresses are not configured in this build." },
@@ -3268,6 +3269,7 @@ export const translations = {
   ...commentExtrasTranslations,
   ...apiKeysTranslations,
   ...settingsTranslations,
+  ...connectGuideTranslations,
   ...worksTranslations,
   ...workflowAutoTranslations,
   ...chatRedesignTranslations,

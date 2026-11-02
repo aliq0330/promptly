@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ShieldAlert } from "lucide-react";
+import { Check, Plus, ShieldAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/ui/page-header";
 import { usePageTitle } from "@/components/layout/page-title";
@@ -73,57 +73,86 @@ function ConnectInner() {
 
   const { info } = state;
   const busy = state.kind === "working";
+  const initial = Array.from(info.clientName)[0]?.toUpperCase() ?? "?";
   return (
-    <PageContainer className="mx-auto max-w-lg space-y-6 py-10">
-      <header data-oauth-connect="" className="space-y-2">
+    <PageContainer className="mx-auto max-w-md space-y-5 py-8">
+      <header data-oauth-connect="" className="space-y-4 text-center">
+        <div aria-hidden className="flex items-center justify-center gap-3">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border-soft bg-secondary/10 font-display text-2xl font-bold text-secondary">{initial}</span>
+          <span className="flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-border-strong" />
+            <span className="h-1.5 w-1.5 rounded-full bg-border-strong" />
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          </span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary font-display text-2xl font-bold text-primary-foreground">P</span>
+        </div>
         <h1 className="break-words font-display text-h1 text-text [overflow-wrap:anywhere]">{t("oauth.heading", { name: info.clientName })}</h1>
         <dl className="space-y-1 text-small text-text-secondary">
           {info.clientUri && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap justify-center gap-x-2">
               <dt className="text-text-muted">{t("oauth.site")}</dt>
               <dd className="break-all">{info.clientUri}</dd>
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-center gap-x-2">
             <dt className="text-text-muted">{t("oauth.returnTo")}</dt>
             <dd className="break-all font-medium text-text">{info.redirectHost ?? t("oauth.unknownHost")}</dd>
           </div>
         </dl>
       </header>
 
-      <div className="space-y-2 rounded-lg border border-warning/40 bg-warning/10 p-4">
+      <div className="divide-y divide-border-soft rounded-xl border border-border-soft bg-surface shadow-card">
+        <div className="flex items-start gap-3 p-4">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
+            <Check size={16} strokeWidth={2.5} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-small font-semibold text-text">{t("connect.rowRead")}</p>
+            <p className="text-caption leading-relaxed text-text-muted">{t("connect.canRead")}</p>
+          </div>
+        </div>
+        <label className="flex cursor-pointer items-center gap-3 p-4">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+            <Plus size={16} strokeWidth={2.5} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-small font-semibold text-text">{t("connect.writeLabel")}</span>
+            <span className="block text-caption leading-relaxed text-text-muted">{t("connect.writeHint")}</span>
+          </span>
+          <input type="checkbox" role="switch" className="peer sr-only" checked={write} disabled={busy} onChange={(event) => setWrite(event.target.checked)} />
+          <span
+            aria-hidden
+            className="relative h-7 w-12 shrink-0 rounded-full bg-border-strong transition-colors duration-200 ease-soft after:absolute after:left-0.5 after:top-0.5 after:h-6 after:w-6 after:rounded-full after:bg-surface-elevated after:shadow-sm after:transition-transform after:duration-200 peer-checked:bg-primary peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-60"
+          />
+        </label>
+        <div className="flex items-start gap-3 p-4">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-danger/10 text-danger">
+            <X size={16} strokeWidth={2.5} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-small font-semibold text-text">{t("connect.rowNever")}</p>
+            <p className="text-caption leading-relaxed text-text-muted">{t("connect.cannotBody")}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-1.5 rounded-lg border border-warning/40 bg-warning/10 p-4">
         <p className="flex items-center gap-2 text-small font-semibold text-text">
-          <ShieldAlert size={16} className="text-warning" />
+          <ShieldAlert size={16} className="shrink-0 text-warning" />
           {t("connect.warnTitle")}
         </p>
         <p className="text-small leading-relaxed text-text-secondary">{t("connect.warnBody")}</p>
       </div>
 
-      <section className="space-y-3">
-        <h2 className="text-small font-semibold text-text">{t("connect.canTitle")}</h2>
-        <ul className="list-disc space-y-1 pl-5 text-small leading-relaxed text-text-secondary marker:text-text-muted">
-          <li>{t("connect.canRead")}</li>
-        </ul>
-        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border-soft bg-surface p-3">
-          <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-primary" checked={write} disabled={busy} onChange={(event) => setWrite(event.target.checked)} />
-          <span className="space-y-0.5">
-            <span className="block text-small font-medium text-text">{t("connect.writeLabel")}</span>
-            <span className="block text-caption leading-relaxed text-text-muted">{t("connect.writeHint")}</span>
-          </span>
-        </label>
-        <h2 className="pt-1 text-small font-semibold text-text">{t("connect.cannotTitle")}</h2>
-        <p className="text-small leading-relaxed text-text-secondary">{t("connect.cannotBody")}</p>
-      </section>
-
-      <div className="flex flex-wrap gap-3">
-        <Button type="button" disabled={busy} onClick={() => void decide(true)}>
+      <div className="space-y-2">
+        <Button type="button" size="lg" className="w-full" disabled={busy} onClick={() => void decide(true)}>
           {busy ? t("oauth.working") : t("oauth.allow")}
         </Button>
-        <Button type="button" variant="outline" disabled={busy} onClick={() => void decide(false)}>
+        <Button type="button" variant="ghost" size="lg" className="w-full" disabled={busy} onClick={() => void decide(false)}>
           {t("oauth.deny")}
         </Button>
       </div>
-      <p className="text-caption text-text-muted">{t("connect.revokeHint")}</p>
+      <p className="text-center text-caption text-text-muted">{t("connect.revokeHint")}</p>
     </PageContainer>
   );
 }

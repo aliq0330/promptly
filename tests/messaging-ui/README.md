@@ -287,10 +287,10 @@ NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_K
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-legal-notice.mjs   # 14/14 beklenir
 ```
 
-`run-developers.mjs`: `/developers` sayfası (MCP adresi + araçlar + kurallar, API örnekleri + OpenAPI bağlantısı, kopyalama panoya yazar, ziyaretçi, İngilizce, telefonda taşma yok) ve bağlantıları (kenar çubuğu, Ayarlar, telefonda hesap menüsü). Derleme adresi `https://example.supabase.co` olmalı (CI ile aynı). Ağ taklitli; gerçek cihaza KARŞI DENENMEDİ. CI'ın hızlı kesitine eklenmedi.
+`run-developers.mjs`: `/developers` sayfası (MCP adresi + araçlar + kurallar, API örnekleri + OpenAPI bağlantısı, kopyalama panoya yazar, ziyaretçi, İngilizce, telefonda taşma yok) ve bağlantıları (kenar çubuğu, Ayarlar, telefonda hesap menüsü); `docs/history/319-*` ile altı bölüm (sıra, üstte içindekiler yok), sabit önceki/sonraki şeridi (▲▼, liste, Esc, başlangıç kartları, sayfa sonu, telefonda alt menü üstünde, İngilizce) ve ortak bağlama sihirbazı. Sihirbaz/izin ekranı/bağlı uygulamalar ayrıca `run-settings.mjs` (8/8b/9/10) ve `run-oauth-connect.mjs` (3/3b/13/15) içindedir. Derleme adresi `https://example.supabase.co` olmalı (CI ile aynı). Ağ taklitli; gerçek cihaza KARŞI DENENMEDİ. CI'ın hızlı kesitine eklenmedi.
 
 ```
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-developers.mjs   # 9/9 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-developers.mjs   # 23/23 beklenir
 ```
 
 ## Yorumda fotoğraf · GIF · içerik eki ve mesajda GIF (`docs/history/308-*`)

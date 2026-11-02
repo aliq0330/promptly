@@ -152,17 +152,19 @@ await scenario("13 phone: the client blocks do not overflow sideways", async ({ 
   await shot(page, "developers-clients-phone");
 }, { viewport: { width: 390, height: 844 } });
 
-await scenario("14 the personal-key section: curl examples, the personal MCP address with its key header, the rules and a link to Settings", async ({ page }) => {
+await scenario("14 the account section: the wizard first, then curl examples, the personal MCP address with its key header, the rules and a link to Settings", async ({ page }) => {
   await page.goto(BASE + "/developers/");
+  const account = page.locator("#dev-account");
+  await account.getByRole("heading", { name: "Hesabınla bağla", level: 2 }).waitFor();
+  await account.locator("[data-dev-connect]").getByText("Deneysel", { exact: true }).waitFor();
   const me = page.locator("[data-dev-me]");
-  await page.getByRole("heading", { name: "Hesabınla kullan (kişisel anahtar)" }).waitFor();
+  await page.getByRole("heading", { name: "Kodla kullan (kişisel anahtar)", level: 3 }).waitFor();
   await me.locator("pre", { hasText: `curl "${API}/me"` }).waitFor();
   await me.locator("pre", { hasText: `${API}/me/prompts?status=draft` }).waitFor();
   await me.locator("pre", { hasText: "@promptly-prompts.json" }).waitFor();
   await me.locator("pre", { hasText: new RegExp(`^${MCP.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}/me$`) }).waitFor();
   await me.locator("pre", { hasText: "--header \"Authorization: Bearer pmt_YOUR_KEY\"" }).waitFor();
   await me.getByText(/«Oturum açma yok» yapıp bir istek başlığı ekleyebilirsin/).waitFor();
-  await me.getByText("Hesabınla giriş (OAuth) — deneysel").waitFor();
   assert.ok(!(await page.locator("body").innerText()).match(/pmt_[A-Za-z0-9_-]{43}/), "no real-looking key on the page");
   const link = page.getByRole("link", { name: "Anahtar oluştur" });
   assert.match(await link.getAttribute("href"), /\/settings\/developer\/?$/);
@@ -172,11 +174,113 @@ await scenario("14 the personal-key section: curl examples, the personal MCP add
 
 await scenario("15 English personal-key section and a working copy button", async ({ page }) => {
   await page.goto(BASE + "/developers/");
-  await page.getByRole("heading", { name: "Use your own account (personal key)" }).waitFor();
+  await page.getByRole("heading", { name: "Use from code (personal key)" }).waitFor();
   await page.getByText(/A key is like a password/).waitFor();
   await page.getByRole("button", { name: /Copy: Check who you are/ }).click();
   assert.ok((await page.evaluate(() => navigator.clipboard.readText())).includes(`${API}/me`));
 }, { lang: "en" });
+
+const SECTION_IDS = ["dev-start", "dev-mcp", "dev-account", "dev-api", "dev-editors", "dev-rules"];
+const pager = (page) => page.locator("[data-dev-pager]");
+const inView = (page, id) => page.evaluate((i) => { const top = document.getElementById(i).getBoundingClientRect().top; return top > -40 && top < 260; }, id);
+
+await scenario("16 the page is six sections in a fixed order, each labelled 'Bölüm n / 6', and there is NO table of contents at the top", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  await page.getByRole("heading", { name: "Geliştiriciler", level: 1 }).waitFor();
+  const ids = await page.locator("[data-dev-section]").evaluateAll((els) => els.map((el) => el.id));
+  assert.deepEqual(ids, SECTION_IDS);
+  for (let n = 1; n <= 6; n++) await page.getByText(`Bölüm ${n} / 6`, { exact: true }).waitFor();
+  assert.equal(await page.locator("main nav").count(), 1, "the only in-page navigation is the floating pager");
+  await page.getByRole("heading", { name: "Hangi yolu seçmeliyim?", level: 2 }).waitFor();
+  await page.getByRole("heading", { name: "Hesabınla bağla", level: 2 }).waitFor();
+  await page.getByRole("heading", { name: "Kod editörleri ve komut satırı araçları", level: 2 }).waitFor();
+});
+
+await scenario("17 the floating pager starts on section 1, ▲ is disabled; ▼ goes to the next section and the label + progress follow", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  const bar = pager(page);
+  await bar.getByText("Başlangıç", { exact: true }).waitFor();
+  await bar.getByText("1 / 6", { exact: true }).waitFor();
+  assert.equal(await bar.getByRole("button", { name: "Önceki bölüm" }).isDisabled(), true);
+  await bar.getByRole("button", { name: "Sonraki bölüm" }).click();
+  await bar.getByText("Claude'a bağla", { exact: true }).waitFor();
+  await bar.getByText("2 / 6", { exact: true }).waitFor();
+  await page.waitForFunction(() => { const top = document.getElementById("dev-mcp").getBoundingClientRect().top; return top > -40 && top < 260; });
+  assert.equal(await bar.getByRole("button", { name: "Önceki bölüm" }).isDisabled(), false);
+  await bar.getByRole("button", { name: "Önceki bölüm" }).click();
+  await bar.getByText("1 / 6", { exact: true }).waitFor();
+});
+
+await scenario("18 tapping the name opens the section list; choosing a section scrolls there and closes the list; Escape closes it too", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  const bar = pager(page);
+  await bar.getByRole("button", { name: /Bölüm listesi/ }).click();
+  const list = bar.locator("[data-dev-pager-list]");
+  assert.equal(await list.getByRole("button").count(), 6);
+  assert.equal(await list.getByRole("button", { name: /Başlangıç/ }).getAttribute("aria-current"), "true");
+  await list.getByRole("button", { name: /HTTP API/ }).click();
+  await list.waitFor({ state: "detached" });
+  await page.waitForFunction(() => { const top = document.getElementById("dev-api").getBoundingClientRect().top; return top > -40 && top < 260; });
+  await bar.getByText("4 / 6", { exact: true }).waitFor();
+  await bar.getByRole("button", { name: /Bölüm listesi/ }).click();
+  await list.waitFor();
+  await page.keyboard.press("Escape");
+  await list.waitFor({ state: "detached" });
+});
+
+await scenario("19 the start cards jump to their sections (account card → 'Hesabınla bağla')", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  await page.locator("[data-dev-start='dev-account']").click();
+  await page.waitForFunction(() => { const top = document.getElementById("dev-account").getBoundingClientRect().top; return top > -40 && top < 260; });
+  await pager(page).getByText("Hesabınla bağla", { exact: true }).waitFor();
+  assert.ok(await inView(page, "dev-account"));
+});
+
+await scenario("20 at the very bottom the last section is current and ▼ is disabled", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const bar = pager(page);
+  await bar.getByText("Bilmen gerekenler", { exact: true }).waitFor();
+  await bar.getByText("6 / 6", { exact: true }).waitFor();
+  assert.equal(await bar.getByRole("button", { name: "Sonraki bölüm" }).isDisabled(), true);
+});
+
+await scenario("21 phone: the pager floats ABOVE the bottom nav, inside the screen, and nothing overflows sideways", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  const bar = pager(page);
+  await bar.waitFor();
+  const nav = await page.locator("nav[data-app-nav]").boundingBox();
+  const box = await bar.boundingBox();
+  assert.ok(box.y + box.height <= nav.y + 0.5, `pager (${box.y + box.height}) sits above the nav (${nav.y})`);
+  assert.ok(box.x >= 0 && box.x + box.width <= 390, "pager is inside the screen");
+  await bar.getByRole("button", { name: /Bölüm listesi/ }).click();
+  const list = await bar.locator("[data-dev-pager-list]").boundingBox();
+  assert.ok(list.x >= 0 && list.x + list.width <= 390 && list.y >= 0, "the list fits the screen");
+  assert.ok(await overflowFree(page));
+  await shot(page, "developers-pager-phone");
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("22 English pager labels", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  const bar = pager(page);
+  await bar.getByRole("button", { name: "Next section" }).waitFor(); // dil yüklenene kadar Türkçe çizilir
+  assert.equal(await bar.getAttribute("aria-label"), "Page sections");
+  await bar.getByRole("button", { name: "Next section" }).click();
+  await bar.getByText("Connect to Claude", { exact: true }).waitFor();
+  await bar.getByRole("button", { name: /Section list/ }).click();
+  await bar.getByRole("button", { name: /Good to know/ }).waitFor();
+}, { lang: "en" });
+
+await scenario("23 the account wizard works on /developers too (same component): route tiles, step 1/5, the key route has 8 steps", async ({ page }) => {
+  await page.goto(BASE + "/developers/");
+  const guide = page.locator("#dev-account [data-dev-connect]");
+  await guide.getByText("Adım 1 / 5").waitFor();
+  await guide.getByRole("heading", { name: "Uygulamanı aç", level: 3 }).waitFor();
+  await guide.getByRole("radio", { name: /Anahtarla bağlan/ }).click();
+  await guide.getByText("Adım 1 / 8").waitFor();
+  const link = guide.getByRole("link", { name: "Anahtarlarım'a git" });
+  assert.match(await link.getAttribute("href"), /\/settings\/developer\/?$/);
+});
 
 await server.close();
 await browser.close();
