@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Portal } from "@/components/ui/portal";
 
 /** Kısa süreli bildirim (sohbet ekranındakiyle aynı görünüm). `node`'u ağaca bir kez koy, `show(mesaj)` ile göster. */
-export function useToast(): { node: ReactNode; show: (message: string) => void } {
+export function useToast(): { node: ReactNode; show: (message: string, durationMs?: number) => void } {
   const [message, setMessage] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -15,10 +15,10 @@ export function useToast(): { node: ReactNode; show: (message: string) => void }
     [],
   );
 
-  const show = useCallback((next: string) => {
+  const show = useCallback((next: string, durationMs = 3200) => {
     setMessage(next);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setMessage(null), 3200);
+    timer.current = setTimeout(() => setMessage(null), durationMs);
   }, []);
 
   const node = message ? (

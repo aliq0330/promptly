@@ -1,4 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
+import { announceNotice } from "@/lib/app-notice";
+import { translateForRuntime } from "@/lib/i18n/translations";
+import { guardAuthRefresh } from "./auth-refresh-guard";
+import { createResilientStorage, describeStorageUsage } from "./resilient-storage";
 import { friendlyServerErrors, tolerateMissingOptionalColumns } from "./server-errors";
 
 /**
@@ -20,7 +24,33 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+/** `localStorage`/`sessionStorage` erişimi bazı tarayıcılarda (gizlilik kipi, engelli depolama) özellik okunurken bile hata verir; her zaman korunarak alınır. */
+function browserStorage(kind: "localStorage" | "sessionStorage"): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window[kind];
+  } catch {
+    return null;
+  }
+}
+
+const localStore = browserStorage("localStorage");
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  // Oturum depolaması dayanıklıdır (docs/history/320-*): `localStorage` yazması başarısız olursa (Safari'de kota dolu…) yenilenen oturum bellekte/`sessionStorage`'da
+  // korunur — yoksa kütüphane aynı eski yenileme belirtecini tekrar tekrar gönderir, hız sınırına takılır ve kullanıcıyı çıkarır. Hata bir kez bildirilir.
+  auth: {
+    storage: createResilientStorage({
+      local: localStore,
+      session: browserStorage("sessionStorage"),
+      onPersistFailure: (failure) => {
+        const detail = `${failure.error} · ${localStore ? describeStorageUsage(localStore) : "?"}`;
+        console.warn("[promptly] oturum kaydedilemedi", failure.error, failure.savedTo, detail);
+        // Yenileme açılışta, dil ve bildirim kutusu yerleşmeden olabilir: metin gösterileceği ANDA (kullanıcının dilinde) kurulur.
+        if (typeof window !== "undefined") window.setTimeout(() => announceNotice(translateForRuntime("error.authStorage", { detail }), 12000), 1500);
+      },
+    }),
+  },
   // Veritabanı hata kodlarını (hız sınırı, engel…) kullanıcı dilinde cümleye çevirir; henüz canlıda olmayan isteğe bağlı sütunları çıkarıp yeniden dener.
-  global: { fetch: friendlyServerErrors(tolerateMissingOptionalColumns((input, init) => fetch(input, init))) },
+  // Oturum yenileme istekleri `guardAuthRefresh` ile korunur: aynı belirteç tekrar tekrar gönderilmez, hız sınırı (429) oturumu silmez.
+  global: { fetch: guardAuthRefresh(friendlyServerErrors(tolerateMissingOptionalColumns((input, init) => fetch(input, init)))) },
 });

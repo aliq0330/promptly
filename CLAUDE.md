@@ -396,6 +396,8 @@ Kalıplar (yeni migration yazarken uy):
     (sütun yoksa istek sütunsuz yeniden denenir); zorunlu yeni sütun/RPC `scripts/smoke-test.mjs` `CHECKS`'ine eklenir. Migration'ı elle
     (MCP/SQL Editor) uygulamak istisnadır; uygulanırsa `schema_migrations`'a dosya sürümüyle kayıt düşülür.
 
+12. **Oturum (auth) katmanı** (`docs/history/320-*`): Supabase istemcisi TEK yerde kurulur (`lib/supabase/client.ts`); oturum depolaması dayanıklıdır (`resilient-storage.ts`: `localStorage` yazması başarısız olursa — Safari'de kota dolu — yenilenen oturum bellekte/`sessionStorage`'da korunur, yoksa kütüphane eski yenileme belirtecini tekrar tekrar gönderip hız sınırına [429] takılır ve kullanıcıyı çıkarır) ve `global.fetch` zincirinin en dışında `guardAuthRefresh` durur (aynı belirteçle tekrar yenileme ağa gitmez; yenilemede 429 → 503 ki oturum silinmesin; gerçek geçersiz belirteç hâlâ çıkış yaptırır). İkinci bir `createClient`, kendi `storage`'ı ya da elle `refreshSession` yazma; oturum sorunu şüphesinde önce Supabase `auth_logs` + `auth.refresh_tokens` satır sayısına bak (kısa sürede çok `/token` ama az satır = kayıt başarısız). Test: `run-auth-storage.mjs`.
+
 ---
 
 ## 9. Güncel Durum ve Açık İşler
@@ -459,5 +461,5 @@ ayrıntılı liste kelimesi kelimesine `docs/history/286-*` içinde.
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — en son 319. bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — en son 320. bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).
