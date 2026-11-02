@@ -53,6 +53,9 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 }
 
 const connect = (page) => page.locator("[data-oauth-connect]");
+/** Anahtar görünmez bir onay kutusudur; kullanıcı etikete (yazıya) dokunur — test de öyle yapar. */
+const writeSwitch = (page) => page.getByRole("switch", { name: /Hesabıma özel taslak eklemesine de izin ver/ });
+const tapWrite = (page) => page.getByText("Hesabıma özel taslak eklemesine de izin ver", { exact: true }).click();
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 
 await scenario("1 the screen shows the app, where it returns to, the trust warning, exactly what it can and cannot do; write is OFF; nothing is decided yet", async ({ page, srv }) => {
@@ -76,14 +79,29 @@ await scenario("2 Allow (default) sends approve with write=false and leaves for 
 });
 
 await scenario("3 ticking the draft permission sends write=true", async ({ page, srv }) => {
-  await page.getByLabel("Hesabıma özel taslak eklemesine de izin ver").check();
+  await tapWrite(page);
+  assert.equal(await writeSwitch(page).isChecked(), true);
   await page.getByRole("button", { name: "İzin ver" }).click();
   await page.waitForURL(/auth_callback\?code=/);
   assert.deepEqual(srv.calls.decide, [{ p_request: REQ, p_approve: true, p_write: true }]);
 });
 
+await scenario("3b the draft permission is a real switch: off by default, flips on and off, and the rows read 'can read' / 'can never'", async ({ page }) => {
+  const write = writeSwitch(page);
+  assert.equal(await write.isChecked(), false);
+  await tapWrite(page);
+  assert.equal(await write.isChecked(), true);
+  await tapWrite(page);
+  assert.equal(await write.isChecked(), false);
+  await write.focus();
+  await page.keyboard.press("Space");
+  assert.equal(await write.isChecked(), true, "keyboard users can flip it too");
+  await page.getByText("Okuyabilir", { exact: true }).waitFor();
+  await page.getByText("Asla yapamaz", { exact: true }).waitFor();
+});
+
 await scenario("4 Deny sends approve=false (even with the box ticked) and returns the error to the app", async ({ page, srv }) => {
-  await page.getByLabel("Hesabıma özel taslak eklemesine de izin ver").check();
+  await tapWrite(page);
   srv.decided = { redirect_uri: BACK, params: { error: "access_denied", state: "ST" } };
   await page.getByRole("button", { name: "Reddet" }).click();
   await page.waitForURL(/error=access_denied&state=ST/);
@@ -142,6 +160,7 @@ await scenario("13 Settings lists connected apps with scopes and last use; revok
   await apps.getByRole("heading", { name: "Bağlı uygulamalar" }).waitFor();
   const first = apps.locator("[data-connected-app='own:g1']");
   await first.getByText("Claude", { exact: true }).waitFor();
+  await first.getByText("Bağlı", { exact: true }).waitFor();
   await first.getByText("Okuma", { exact: true }).waitFor();
   await first.getByText("Henüz kullanılmadı").waitFor();
   const second = apps.locator("[data-connected-app='own:g2']");
@@ -162,10 +181,13 @@ await scenario("14 with no connected apps the section says so", async ({ page })
   await apps.getByText("Bağlı uygulama yok.").waitFor();
 }, { path: "/settings/developer/" });
 
-await scenario("15 the /developers page explains the key-less connection (English too)", async ({ page }) => {
-  await page.locator("[data-developers-oauth]").waitFor();
-  await page.getByText("Sign in with your account (OAuth) — experimental").waitFor();
-  await page.getByText(/Never type the key into a chat/).waitFor();
+await scenario("15 the /developers page has the account wizard with the 'experimental' route first (English too)", async ({ page }) => {
+  const guide = page.locator("[data-dev-connect]");
+  await guide.waitFor();
+  await guide.getByText("Experimental", { exact: true }).waitFor();
+  await guide.getByText(/This permission is LIMITED/).waitFor();
+  await guide.getByRole("radio", { name: /Connect with a key/ }).click();
+  await guide.getByText(/Never type the key into a chat/).waitFor();
 }, { path: "/developers/", lang: "en" });
 
 await server.close();

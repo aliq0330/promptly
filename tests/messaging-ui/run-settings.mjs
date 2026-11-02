@@ -111,16 +111,20 @@ await scenario("7 danger: deleting the account stays locked until the username i
   assert.equal(await button.isDisabled(), true);
 }, { path: "/settings/danger/" });
 
-await scenario("8 developer: the guide is current — address to copy, 'Oturum açma yok', header name, Bearer warning; keys + connected apps + docs link below", async ({ page, db }) => {
+await scenario("8 developer: the guide is a wizard — pick a route, one step at a time; OAuth route shows the address + the form sketch; keys + connected apps + docs link below", async ({ page, db }) => {
   const guide = page.locator("[data-dev-connect]");
   await guide.waitFor();
-  await guide.getByText("Anahtarla (önerilen)").waitFor();
+  const oauthTile = guide.getByRole("radio", { name: /İzin vererek bağlan/ });
+  assert.equal(await oauthTile.getAttribute("aria-checked"), "true", "the grant-access route is selected first");
+  await guide.getByText("Deneysel", { exact: true }).waitFor();
+  await guide.getByText("Adım 1 / 5").waitFor();
+  assert.equal(await guide.getByRole("button", { name: "Geri" }).isDisabled(), true, "no Back on the first step");
+  await guide.getByRole("button", { name: /Sonraki adım/ }).click();
+  await guide.getByRole("button", { name: /Sonraki adım/ }).click();
+  await guide.getByText("Adım 3 / 5").waitFor();
   await guide.locator("pre", { hasText: new RegExp(`^${MCP_ME.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}$`) }).waitFor();
-  await guide.getByText(/«Oturum açma yok»/).waitFor();
-  await guide.locator("pre", { hasText: /^Authorization$/ }).waitFor();
-  await guide.locator("pre", { hasText: /^Bearer pmt_/ }).waitFor();
-  await guide.getByText(/«Bearer» kelimesini ve ardındaki boşluğu unutma/).waitFor();
-  await guide.getByText("Hesabınla giriş (OAuth) — deneysel").waitFor();
+  await guide.locator("[data-guide-sketch]").waitFor();
+  await guide.getByText(/Client ID.*Secret.*boş/).first().waitFor();
   await page.getByRole("heading", { name: "Anahtarlarım", level: 3 }).waitFor();
   await page.locator("[data-api-keys]").waitFor();
   await page.getByRole("heading", { name: "Bağlı uygulamalar" }).waitFor();
@@ -131,8 +135,37 @@ await scenario("8 developer: the guide is current — address to copy, 'Oturum a
   await shot(page, "settings-developer");
 }, { path: "/settings/developer/" });
 
+await scenario("8b developer: the key route walks to 'Oturum açma yok', the header name, the Bearer value + warning, and ends with a done note", async ({ page }) => {
+  const guide = page.locator("[data-dev-connect]");
+  await guide.getByRole("radio", { name: /Anahtarla bağlan/ }).click();
+  await guide.getByText("Adım 1 / 8").waitFor();
+  await guide.getByRole("link", { name: "Anahtarlarım'a git" }).waitFor();
+  const overview = guide.locator("[data-guide-overview]");
+  assert.equal(await overview.count(), 8);
+  await overview.nth(4).click();
+  await guide.getByRole("heading", { name: /«Oturum açma yok» seç/ }).waitFor();
+  await overview.nth(5).click();
+  await guide.locator("pre", { hasText: /^Authorization$/ }).waitFor();
+  await overview.nth(6).click();
+  await guide.locator("pre", { hasText: /^Bearer pmt_/ }).waitFor();
+  await guide.getByText(/«Bearer» kelimesini ve ardındaki boşluğu unutma/).waitFor();
+  assert.equal(await overview.nth(0).getAttribute("data-guide-overview"), "done");
+  assert.equal(await overview.nth(6).getAttribute("data-guide-overview"), "current");
+  assert.equal(await overview.nth(7).getAttribute("data-guide-overview"), "todo");
+  await guide.getByRole("button", { name: /Sonraki adım/ }).click();
+  await guide.getByText("Adım 8 / 8").waitFor();
+  await guide.getByRole("status").getByText(/Bitti\. Anahtarı kimseyle paylaşma/).waitFor();
+  await guide.getByRole("button", { name: "Baştan göster" }).click();
+  await guide.getByText("Adım 1 / 8").waitFor();
+  await guide.getByRole("radio", { name: /İzin vererek bağlan/ }).click();
+  await guide.getByText("Adım 1 / 5").waitFor();
+}, { path: "/settings/developer/" });
+
 await scenario("9 developer: the address copy button copies the personal MCP address", async ({ page }) => {
-  await page.getByRole("button", { name: /Kopyala: .*(adres|address)/i }).first().click().catch(async () => { await page.locator("[data-dev-copy]").first().click(); });
+  const guide = page.locator("[data-dev-connect]");
+  await guide.getByRole("button", { name: /Sonraki adım/ }).click();
+  await guide.getByRole("button", { name: /Sonraki adım/ }).click();
+  await guide.getByRole("button", { name: /Kopyala: Kişisel bağlayıcı adresi/ }).click();
   assert.equal(await page.evaluate(() => navigator.clipboard.readText()), MCP_ME);
 }, { path: "/settings/developer/" });
 
@@ -140,9 +173,13 @@ await scenario("10 English: hub and developer guide use English labels", async (
   await page.getByRole("heading", { name: "Settings", level: 1 }).waitFor();
   await page.getByRole("navigation", { name: "Settings sections" }).getByRole("link", { name: /^Developer/ }).click();
   await page.getByRole("heading", { name: "Developer", level: 1 }).waitFor();
-  await page.getByText("With a key (recommended)").waitFor();
-  await page.getByText(/Don't forget the word “Bearer”/).waitFor();
-  await page.getByText("Sign in with your account (OAuth) — experimental").waitFor();
+  const guide = page.locator("[data-dev-connect]");
+  await guide.getByText("Connect by granting access").waitFor();
+  await guide.getByText("Experimental", { exact: true }).waitFor();
+  await guide.getByText("Step 1 / 5").waitFor();
+  await guide.getByRole("radio", { name: /Connect with a key/ }).click();
+  await guide.locator("[data-guide-overview]").nth(6).click();
+  await guide.getByText(/Don't forget the word “Bearer”/).waitFor();
 }, { lang: "en" });
 
 await scenario("11 phone: the hub and the developer page do not overflow sideways", async ({ page }) => {

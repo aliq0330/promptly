@@ -65,10 +65,9 @@ export const apiKeysTranslations = {
   "error.apiTokenScope": { tr: "Geçersiz erişim seçimi.", en: "Invalid access choice." },
   "error.apiTokenExpiry": { tr: "Geçersiz geçerlilik süresi.", en: "Invalid expiry." },
   // --- /developers: kişisel anahtarla kullanım (docs/history/315-*) ---
-  "dev.meTitle": { tr: "Hesabınla kullan (kişisel anahtar)", en: "Use your own account (personal key)" },
   "dev.meLead": {
-    tr: "Yukarıdakiler herkese açık içeriği okur. Kendi promptlarına (özel taslaklar dahil) erişmek ya da hesabına özel taslak eklemek için bir kişisel anahtar oluştur: Ayarlar → Geliştirici. Anahtar yalnızca senin hesabında çalışır.",
-    en: "The sections above read public content. To reach your own prompts (private drafts included) or to add private drafts to your account, create a personal key: Settings → Developer. A key only works on your own account.",
+    tr: "Herkese açık uçlar yalnızca herkese açık içeriği okur. Kendi promptlarına (özel taslaklar dahil) kodla erişmek ya da hesabına özel taslak eklemek için bir kişisel anahtar oluştur: Ayarlar → Geliştirici. Anahtar yalnızca senin hesabında çalışır.",
+    en: "The public endpoints only read public content. To reach your own prompts (private drafts included) from code, or to add private drafts to your account, create a personal key: Settings → Developer. A key only works on your own account.",
   },
   "dev.meKeyLink": { tr: "Anahtar oluştur", en: "Create a key" },
   "dev.meWho": { tr: "Kim olduğunu doğrula", en: "Check who you are" },
@@ -89,15 +88,6 @@ export const apiKeysTranslations = {
     tr: "claude.ai gibi bağlayıcı formlarında kimlik doğrulamayı «Oturum açma yok» yapıp bir istek başlığı ekleyebilirsin: ad Authorization, değer «Bearer pmt_…» («Bearer» kelimesini ve ardındaki boşluğu unutma). Adım adım rehber: Ayarlar → Geliştirici. Anahtarı sohbete yazma; yalnızca forma yapıştır.",
     en: "In connector forms like claude.ai you can set authentication to “No sign-in” and add a request header: name Authorization, value “Bearer pmt_…” (don't forget the word “Bearer” and the space after it). Step-by-step guide: Settings → Developer. Never type the key into a chat; paste it only into the form.",
   },
-  "dev.meOauthTitle": { tr: "Hesabınla giriş (OAuth) — deneysel", en: "Sign in with your account (OAuth) — experimental" },
-  "dev.meOauthBody": {
-    tr: "Anahtar girmeden bağlanmayı deneyebilirsin: bağlayıcı olarak kişisel MCP adresini ekleyip Bağlan'a basınca Promptly'nin izin sayfası açılır. Bazı araçlarda (claude.ai dahil) henüz güvenilir çalışmıyor; takılırsan yukarıdaki anahtar yolunu kullan.",
-    en: "You can try connecting without a key: add the personal MCP address as a connector and press Connect; Promptly's permission page opens. It isn't reliable in some tools yet (claude.ai included); if it gets stuck, use the key route above.",
-  },
-  "dev.meOauthStep1": { tr: "Bağlayıcı ekleme ekranını aç (claude.ai: Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle).", en: "Open the add-connector screen (claude.ai: Settings → Connectors → Add custom connector)." },
-  "dev.meOauthStep2": { tr: "Adres olarak yukarıdaki kişisel MCP adresini yapıştır; kimlik doğrulamada «Şimdi oturum aç» + «Otomatik olarak kaydet» seçili kalsın.", en: "Paste the personal MCP address above; keep “Sign in now” + “Register automatically” selected." },
-  "dev.meOauthStep3": { tr: "Bağlan'a bas. Promptly'de oturum açıksa izin sayfası gelir: neye izin verdiğini oku, istersen taslak ekleme iznini de işaretle, İzin ver.", en: "Press Connect. If you're signed in to Promptly the permission page opens: read what you allow, optionally tick the draft permission, then Allow." },
-  "dev.meOauthStep4": { tr: "İzni istediğin an Ayarlar → Geliştirici → Bağlı uygulamalar'dan geri alabilirsin.", en: "You can take the permission back any time in Settings → Developer → Connected apps." },
   "dev.meOauthLimits": {
     tr: "Bu izin hesabının tamamı değil, SINIRLIDIR: okuma (ve istersen özel taslak ekleme). Belirteç 1 saatlik ömürlüdür ve kendiliğinden yenilenir. Uygulama bir hata yaparsa tek tıkla kapatırsın.",
     en: "This permission is LIMITED, not your whole account: reading (and, if you choose, adding private drafts). The token lasts 1 hour and refreshes by itself. If an app misbehaves, you shut it off in one click.",
@@ -138,11 +128,9 @@ export const apiKeysTranslations = {
     tr: "Uygulamanın adı ve sitesini onu kaydeden yazdı; Promptly bunları doğrulamaz. Aşağıdaki “gideceği adres” (alan adı) tanıdığın uygulamanınki değilse Reddet'e bas.",
     en: "The app's name and site were written by whoever registered it; Promptly doesn't verify them. If the address it will go to (the domain) isn't your app's, choose Deny.",
   },
-  "connect.canTitle": { tr: "İzin verirsen bu uygulama:", en: "If you allow it, this app can:" },
   "connect.canRead": { tr: "Kendi promptlarını (özel taslaklar dahil) ve kaydettiklerini okuyabilir.", en: "Read your own prompts (private drafts included) and what you saved." },
   "connect.writeLabel": { tr: "Hesabıma özel taslak eklemesine de izin ver", en: "Also let it add private drafts to my account" },
   "connect.writeHint": { tr: "Eklenenler yalnızca sana görünen taslaklardır; hiçbir şey yayınlanmaz. Kapalıyken yalnızca okur.", en: "Added items are drafts only you can see; nothing is published. When off, it only reads." },
-  "connect.cannotTitle": { tr: "Yapamaz:", en: "It cannot:" },
   "connect.cannotBody": {
     tr: "Yayınlayamaz, düzenleyemez, silemez; mesajlarını, yorumlarını ya da hesap ayarlarını göremez ve değiştiremez; seni başkalarına karşı temsil edemez.",
     en: "Publish, edit or delete; see or change your messages, comments or account settings; or act as you toward other people.",
