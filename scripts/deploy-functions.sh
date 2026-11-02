@@ -23,34 +23,34 @@ esac
 want() { [ "$TARGET" = all ] || [ "$TARGET" = "$1" ]; }
 
 # JWT doğrulaması AÇIK kalanlar (supabase/config.toml ile aynı).
-want analyze-image && supabase functions deploy analyze-image --project-ref "$SUPABASE_PROJECT_REF"
-want cleanup-orphan-storage && supabase functions deploy cleanup-orphan-storage --project-ref "$SUPABASE_PROJECT_REF"
-want delete-account && supabase functions deploy delete-account --project-ref "$SUPABASE_PROJECT_REF"
+want analyze-image && supabase functions deploy analyze-image --yes --project-ref "$SUPABASE_PROJECT_REF"
+want cleanup-orphan-storage && supabase functions deploy cleanup-orphan-storage --yes --project-ref "$SUPABASE_PROJECT_REF"
+want delete-account && supabase functions deploy delete-account --yes --project-ref "$SUPABASE_PROJECT_REF"
 
 # Giriş yapmamış kullanıcı çağırdığı için JWT doğrulaması yalnızca burada kapalı.
-want username-login && supabase functions deploy username-login --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
+want username-login && supabase functions deploy username-login --yes --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
 
 # Açık API: oturumsuz okuma, JWT doğrulaması kapalı. Önce çekirdeğin kopyası güncel mi bak (`_shared/promptly`).
 if want api; then
   node scripts/sync-function-shared.mjs --check
-  supabase functions deploy api --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
+  supabase functions deploy api --yes --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
 fi
 
 # İnternet üzerinden çalışan MCP: oturumsuz okuma, JWT doğrulaması kapalı. Kopyaların (_shared/promptly + mcp/{server,remote}.ts) güncelliği yukarıdaki
 # `--check` ile aynı betikten denetlenir; npm bağımlılıkları `supabase/functions/mcp/deno.json` import map'inden gelir.
 if want mcp; then
   node scripts/sync-function-shared.mjs --check
-  supabase functions deploy mcp --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
+  supabase functions deploy mcp --yes --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
 fi
 
 # Kendi OAuth sunucumuz (docs/history/317-*): istemciler JWT taşımaz, kapalı. Çekirdek kopyası güncel olmalı.
 if want oauth; then
   node scripts/sync-function-shared.mjs --check
-  supabase functions deploy oauth --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
+  supabase functions deploy oauth --yes --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
 fi
 
 # Telegram botu (docs/history/323-*): Telegram JWT taşımaz, kapalı. Webhook/zamanlayıcı sırları fonksiyonun kendisinde doğrulanır; çekirdek kopyası güncel olmalı.
 if want telegram; then
   node scripts/sync-function-shared.mjs --check
-  supabase functions deploy telegram --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
+  supabase functions deploy telegram --yes --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
 fi
