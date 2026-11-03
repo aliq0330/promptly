@@ -90,7 +90,7 @@ as $$
     join public.tags t on t.slug = s.tag_slug
    where s.recent_count > 0
    order by (s.recent_count - s.previous_count) desc, s.recent_count desc, t.label asc
-   limit least(greatest(coalesce(p_limit, 12), 1), 50);
+   limit p_limit;
 $$;
 
 -- 4) related_prompts: “bu belirteç kaç bölümde geçiyor?” sayımı HER belirteç için ayrı ilişkili alt sorguydu (yüzlerce GIN taraması).

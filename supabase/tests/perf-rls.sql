@@ -111,8 +111,8 @@ select public._check(8, 'trending_tags: ziyaretçi herkese açık etiketi 3 prom
   :t_anon_ortak = 1 and :t_anon_gizli = 0 and :t_anon_sayi = 3, :t_anon_ortak || '/' || :t_anon_gizli || '/' || :t_anon_sayi);
 select public._check(9, 'trending_tags: sahibi bile kendi özel promptunun etiketini trend saymaz (herkese açık sayım)',
   :t_carol_ortak = 1 and :t_carol_gizli = 0 and :t_carol_sayi = 3, :t_carol_ortak || '/' || :t_carol_gizli || '/' || :t_carol_sayi);
-select public._check(10, 'trending_tags: p_limit aralığa sıkıştırılır (0 → 1, 1000 → ≤50)',
-  (select count(*) from public.trending_tags(0, 7)) <= 1 and (select count(*) from public.trending_tags(1000, 7)) <= 50);
+select public._check(10, 'trending_tags: p_limit uygulanır (eski davranış; sıkıştırma yok)',
+  (select count(*) from public.trending_tags(1, 7)) = 1 and (select count(*) from public.trending_tags(400, 7)) >= 1);
 
 -- 6) related_prompts: ortak etiketli promptlar birbirini önerir; engelleyen bob'un promptunu önermez; özel prompt hiç önerilmez.
 select public._as_user(:carol);
