@@ -1,6 +1,6 @@
 # 325 — Kapsamlı performans denetimi, darboğaz tespiti ve ilk optimizasyonlar
 
-Tarih: 2026-11-03 · Durum: **kodda uygulandı; migration canlıya UYGULANMADI** (`20261103100000_performance_indexes_and_rls.sql`, deploy hattı uygular).
+Tarih: 2026-11-03 · Durum: **CANLIDA (2026-11-03)** — PR #430 birleşti; `20261103100000_performance_indexes_and_rls.sql` deploy hattıyla uygulandı ve canlı şemada doğrulandı.
 
 ## 0. Kanıt düzeyleri (her sayının yanında hangisi olduğu yazılıdır)
 
@@ -251,7 +251,7 @@ Biçim: **Sorun · Kaynak · Etki · Öncelik · Kanıt · Çözüm · Risk · K
 
 ## 13. Kalan sorunlar
 
-Koddan çözülemeyen / erişim gerektiren: gerçek şelale ve Web Vitals (§6), canlı HTTP başlıkları, Edge soğuk başlangıç, gerçek trafikte Realtime ölçeği, mobil gerçek cihaz. Bilinçli ertelenen: madde 9–15 (§7). **Migration henüz canlıda DEĞİL:** deploy hattı (`deploy.yml`) uygular; sonra §10-1'deki sorgu ve `scripts/smoke-test.mjs` ile doğrulanmalı. Canlıda doğrulanmamış varsayım: `pg_stat_statements` mutlak süreleri (yük/soğuk önbellek).
+Koddan çözülemeyen / erişim gerektiren: gerçek şelale ve Web Vitals (§6), canlı HTTP başlıkları, Edge soğuk başlangıç, gerçek trafikte Realtime ölçeği, mobil gerçek cihaz. Bilinçli ertelenen: madde 9–15 (§7). **Migration canlıda (2026-11-03):** deploy hattı uyguladı, smoke test yeşil; uygulama sonrası canlı medyanlar: `trending_tags` 14,4 · `related_prompts` 102,2 · `feed_page` 35,6 · `for_you_page` 108,6 · `suggest_creators` 28,3 ms. §10'daki `pg_stat_statements` karşılaştırması gerçek trafikle hâlâ yapılmalı. Canlıda doğrulanmamış varsayım: `pg_stat_statements` mutlak süreleri (yük/soğuk önbellek).
 
 ## 14. Son kontrol
 
