@@ -54,6 +54,12 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   db.rpc.creator_insights_reaction_mix = (body) => { state.calls.mix.push(body); return { body: state.empty ? [] : MIX }; };
   db.rpc.creator_insights_results = (body) => { state.calls.results.push(body); return { body: [state.empty ? { results: 0, prev_results: 0 } : RESULTS] }; };
   db.rpc.creator_insights_api = (body) => { state.calls.api.push(body); return { body: [state.empty ? ZERO_API : API_USES] }; };
+  // Bildirim merkezi (docs/history/326-*): kartlar `notifications_grouped_page` RPC'sinden gelir; her sistem bildirimi kendi kartıdır.
+  const cards = notifications.map((x) => ({ group_key: `n|${x.id}`, type: x.type, target_href: x.target_href, sort_at: x.created_at, row_count: 1, unread_count: 1, latest_id: x.id, latest_message: x.message, latest_actor_id: null, actor_ids: [], reaction_counts: {} }));
+  db.rpc.notifications_grouped_page = () => ({ body: cards });
+  db.rpc.notifications_unread_group_count = () => ({ body: cards.length });
+  db.rpc.notifications_unread_by_category = () => ({ body: [] });
+  db.rpc.notifications_snooze_summary = () => ({ body: [{ snoozed_groups: 0, next_wake: null }] });
   const notFound = () => ({ status: 400, body: { message: "not_found" } });
   db.rpc.creator_insights_prompt = (body) => {
     state.calls.prompt.push(body);
@@ -354,11 +360,13 @@ await scenario("19. Ayrıntı sayfası İngilizce + telefonda: başlık, kartlar
 
 const milestone = (id, message) => ({ id, type: "system", message, target_href: `/insights/local?id=${PID}`, is_read: false, created_at: new Date(Date.now() - 60000).toISOString(), actor: null });
 
-await scenario("20. Kilometre taşı bildirimi (Türkçe SQL cümlesi): satır cümleyi olduğu gibi gösterir ve ayrıntı sayfasına gider", async ({ page, state }) => {
+await scenario("20. Kilometre taşı bildirimi: kart sayıyı büyük yazar, İstatistiği gör bağlantısı ilgili promptun yaratıcı paneline gider", async ({ page, state }) => {
   await page.goto(`${BASE}/notifications/`);
-  await page.getByText('Promptun "Neon yağmurlu Tokyo sokağı" 100 kopyalamaya ulaştı.').waitFor();
-  await page.getByText('Promptun "Neon yağmurlu Tokyo sokağı" 50 tepkiye ulaştı.').waitFor();
-  await page.getByText('Promptun "Neon yağmurlu Tokyo sokağı" 100 kopyalamaya ulaştı.').click();
+  await page.getByText("Promptun 100 kez kopyalandı").first().waitFor();
+  await page.getByText("Promptun 50 tepkiye ulaştı").first().waitFor();
+  assert.match(await page.locator("[data-notification-detail] [data-milestone]").textContent(), /100/);
+  assert.match(await page.locator("[data-notification-detail]").textContent(), /"Neon yağmurlu Tokyo sokağı" promptunu 100 farklı kişi kopyaladı/);
+  await page.locator("[data-notification-detail]").getByRole("link", { name: "İstatistiği gör" }).click();
   await page.waitForURL(/\/insights\/local\/?\?id=b1000000/);
   await page.getByRole("heading", { level: 1, name: "Neon yağmurlu Tokyo sokağı" }).waitFor();
   assert.equal(state.calls.prompt.length, 1);
@@ -366,8 +374,9 @@ await scenario("20. Kilometre taşı bildirimi (Türkçe SQL cümlesi): satır c
 
 await scenario("21. Kilometre taşı bildirimi İngilizce: cümle çevrilir, prompt başlığı çevrilmez", async ({ page }) => {
   await page.goto(`${BASE}/notifications/`);
-  await page.getByText("Your prompt “Neon yağmurlu Tokyo sokağı” reached 100 copies.").waitFor();
-  await page.getByText("Your prompt “Neon yağmurlu Tokyo sokağı” reached 50 reactions.").waitFor();
+  await page.getByText("Your prompt was copied 100 times").first().waitFor();
+  await page.getByText("Your prompt reached 50 reactions").first().waitFor();
+  assert.match(await page.locator("[data-notification-detail]").textContent(), /"Neon yağmurlu Tokyo sokağı"/, "prompt başlığı çevrilmez");
 }, { lang: "en", notifications: [milestone("m1", 'Promptun "Neon yağmurlu Tokyo sokağı" 100 kopyalamaya ulaştı.'), milestone("m2", 'Promptun "Neon yağmurlu Tokyo sokağı" 50 tepkiye ulaştı.')] });
 
 await scenario("22. Yalnız API/MCP etkinliği olan yaratıcı boş durum görmez: kopyalama 0 iken API / MCP kutusu sayıyı gösterir", async ({ page }) => {

@@ -3,230 +3,405 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
-  deleteNotification,
-  dispatchMyWeeklyDigest,
-  fetchNotificationsForUser,
-  fetchNotificationsPage,
-  fetchUnreadNotificationCount,
-  NOTIFICATIONS_PAGE,
-  markAllNotificationsRead,
   deleteAllNotifications,
-  markNotificationRead,
+  deleteCard,
+  dispatchMyWeeklyDigest,
+  fetchSnoozeSummary,
+  fetchUnreadCardCount,
+  fetchUnreadCountsByCategory,
+  markCardRead,
+  markCardUnread,
+  setNotificationMute,
+  snoozeCard,
+  unsnoozeCard,
 } from "@/lib/supabase/notifications";
 import { supabase } from "@/lib/supabase/client";
 import { dispatchMyEventReminders } from "@/lib/supabase/communities";
 import { clearThrottle, shouldRunNow } from "@/lib/run-throttle";
-import type { AppNotification } from "@/types";
+import { announceNotice } from "@/lib/app-notice";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { NotificationCategoryName } from "@/lib/notification-mirror";
+import type { NotificationCard } from "@/types";
 
 /** Etkinlik hatırlatması penceresi 24 saat; 30 dakikalık gecikme zararsızdır. */
 const EVENT_REMINDER_INTERVAL_MS = 30 * 60 * 1000;
 /** Haftalık özet sunucuda haftada bir; 6 saatte bir sormak yeter. */
 const WEEKLY_DIGEST_INTERVAL_MS = 6 * 60 * 60 * 1000;
+/** Silme, "Geri al" şeridi süresince bekletilir; süre dolunca sunucuda gerçekten silinir. */
+export const UNDO_WINDOW_MS = 5000;
+
+/** Kart listelerinin (zil paneli, /notifications) dinlediği iyimser olaylar: her açık liste aynı değişikliği kendi durumuna uygular. */
+export type CardEvent =
+  | { type: "read"; key: string; read: boolean }
+  | { type: "remove"; key: string }
+  | { type: "restore"; card: NotificationCard }
+  | { type: "readAll" }
+  | { type: "clear" };
+
+/** Alttaki tek "Geri al" şeridi (aynı anda tek eylem geri alınabilir). */
+export interface UndoNotice {
+  id: number;
+  text: string;
+  undo: () => Promise<void> | void;
+}
 
 interface NotificationsContextValue {
-  notifications: AppNotification[];
-  /** Counted by the database (the list below holds only the newest page(s)). */
+  /** Zil rozeti: okunmamış satırı olan KART sayısı (veritabanı sayar). */
   unreadCount: number;
-  /** Older notifications exist beyond what is loaded. */
-  hasMore: boolean;
-  loadingMore: boolean;
-  loadMore: () => Promise<void>;
-  refresh: () => Promise<void>;
-  markRead: (id: string) => Promise<void>;
+  /** Ertelenen kart sayısı ("Ertelenenler" menü öğesi). */
+  snoozedCount: number;
+  /** Gerçek zamanlı gelen yeni bildirim sayısı (listeler "N yeni" hapını bundan çıkarır; yalnız artar). */
+  incoming: number;
+  loadCategoryCounts: () => Promise<Partial<Record<NotificationCategoryName, number>>>;
+  refreshCounters: () => Promise<void>;
+  subscribe: (listener: (event: CardEvent) => void) => () => void;
+  markRead: (card: NotificationCard) => Promise<void>;
+  markUnread: (card: NotificationCard) => Promise<void>;
   markAllRead: () => Promise<void>;
-  /** Hepsini veritabanından siler; başarısızsa fırlatır (liste dokunulmaz). */
+  /** Hepsini veritabanından siler; başarısızsa fırlatır. */
   clearAll: () => Promise<void>;
-  remove: (id: string) => Promise<void>;
+  /** Kartı listeden çıkarır; "Geri al" süresi dolunca sunucuda siler. */
+  remove: (card: NotificationCard) => void;
+  snooze: (card: NotificationCard, until: Date, label: string) => Promise<void>;
+  unsnooze: (card: NotificationCard) => Promise<void>;
+  mute: (kind: "actor" | "content", target: string, label: string, text: string) => Promise<void>;
+  undoNotice: UndoNotice | null;
+  pushUndo: (text: string, undo: () => Promise<void> | void) => void;
+  runUndo: () => Promise<void>;
+  dismissUndo: () => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
 
 /**
- * Real, cross-device notifications — same shape as RealMessagesProvider,
- * backed by the actual Supabase `notifications` table (RLS already limits
- * every read/update/delete to the caller's own rows; see Bölüm 19 and
- * 20260919180000). A single shared fetch here avoids the header bell and
- * the `/notifications` page each triggering their own query.
+ * Bildirim merkezinin ortak durumu (docs/history/326-*): zil rozeti, ertelenenler, gerçek zamanlı "yeni var" sayacı, kart eylemleri (iyimser + geri al) ve
+ * tek "Geri al" şeridi. Kartların KENDİ listesi burada değil, `useNotificationCards`'tadır (zil paneli ve sayfa ayrı süzgeçlerle okuyabilsin diye);
+ * bu sağlayıcı yalnız sayaçları tutar ve listelere olay yayar. Açılışta yalnız iki ucuz sayım RPC'si çalışır (docs/history/325-*: açılışta liste çekilmez).
  */
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const { t } = useTranslation();
   const [unread, setUnread] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  // How many rows are loaded: a refresh re-reads at least that many, so "Daha fazla" is not undone by every realtime event.
-  const loadedRef = useRef(0);
-  useEffect(() => {
-    loadedRef.current = notifications.length;
-  }, [notifications.length]);
+  const [snoozed, setSnoozed] = useState(0);
+  const [incoming, setIncoming] = useState(0);
+  const [undoNotice, setUndoNotice] = useState<UndoNotice | null>(null);
+  const listeners = useRef(new Set<(event: CardEvent) => void>());
+  const wakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const undoSeq = useRef(0);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDeletes = useRef(new Map<string, { timer: ReturnType<typeof setTimeout>; card: NotificationCard }>());
+  const lastVisibleRefresh = useRef(0);
+  // Uyanma zamanlayıcısı kendi fonksiyonunu çağırır; kendine başvuru yerine güncel sürüme ref üzerinden ulaşır.
+  const refreshRef = useRef<() => Promise<void>>(async () => {});
 
-  /** Re-reads the loaded range (at least one page) and the unread count. */
-  const reload = useCallback(
-    async (userId: string, isCancelled: () => boolean = () => false) => {
-      const size = Math.max(NOTIFICATIONS_PAGE, loadedRef.current);
-      const [result, count] = await Promise.all([fetchNotificationsForUser(userId, size), fetchUnreadNotificationCount(userId)]);
-      if (isCancelled()) return;
-      setNotifications(result);
-      setHasMore(result.length === size);
-      if (count !== null) setUnread(count);
-      else setUnread(result.filter((n) => !n.isRead).length);
-    },
-    [],
-  );
+  const emit = useCallback((event: CardEvent) => {
+    listeners.current.forEach((listener) => listener(event));
+  }, []);
+
+  const subscribe = useCallback((listener: (event: CardEvent) => void) => {
+    listeners.current.add(listener);
+    return () => {
+      listeners.current.delete(listener);
+    };
+  }, []);
+
+  const refreshCounters = useCallback(async () => {
+    if (!user) return;
+    const [count, summary] = await Promise.all([fetchUnreadCardCount(), fetchSnoozeSummary()]);
+    if (count !== null) setUnread(count);
+    setSnoozed(summary.groups);
+    // En yakın erteleme dolunca kartın geri geldiğini haber ver: tek zamanlayıcı (≈ 24 gün üst sınırı setTimeout'un 32 bit sınırı içinde kalır).
+    if (wakeTimer.current) clearTimeout(wakeTimer.current);
+    wakeTimer.current = null;
+    if (summary.nextWake) {
+      const delay = Math.min(Math.max(new Date(summary.nextWake).getTime() - Date.now() + 500, 1000), 2_000_000_000);
+      wakeTimer.current = setTimeout(() => {
+        setIncoming((n) => n + 1);
+        void refreshRef.current();
+      }, delay);
+    }
+  }, [user]);
 
   useEffect(() => {
-    let cancelled = false;
+    refreshRef.current = refreshCounters;
+  }, [refreshCounters]);
+
+  useEffect(() => {
     if (!user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- signed out, no real notifications to fetch
-      setNotifications([]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- signed out, nothing to count
       setUnread(0);
-      setHasMore(false);
+      setSnoozed(0);
       return;
     }
-    void reload(user.id, () => cancelled);
-    // Topluluk etkinlik hatırlatmaları (docs/history/175-*): zamanlayıcı yok; uygulama açılışında, kullanıcının "geliyorum/belki" dediği
-    // ve 24 saat içinde başlayan etkinlikler için sunucu bir kez bildirim üretir. Yeni bildirim oluştuysa liste yenilenir.
-    // Hata (ör. migration henüz uygulanmadı) bildirimleri etkilemez, sessizce yok sayılır.
-    // İkisi de sunucuda zaten yinelenmez; istemci yalnız "yapacak bir şey yok" cevabını öğrenmek için her sayfa yüklemesinde bir RPC
-    // yolculuğu ödemesin diye cihaz başına aralıkla sınırlanır (docs/history/325-*, ölçüm: pg_stat_statements'ta 3 914 + 1 019 çağrı).
-    // Hata olursa kayıt silinir, bir sonraki yüklemede yeniden denenir.
+    let cancelled = false;
+    void refreshCounters();
+    // Topluluk etkinlik hatırlatmaları (docs/history/175-*) ve haftalık özet (docs/history/307-*): zamanlayıcı yok, uygulama açılışında sunucu
+    // en çok bir kez bildirim üretir; yeni bildirim oluştuysa sayaç yenilenir. Hata bildirimleri etkilemez; aralık cihaz başınadır (docs/history/325-*).
     const reminderKey = `promptly-throttle:event-reminders:${user.id}`;
     if (shouldRunNow(reminderKey, EVENT_REMINDER_INTERVAL_MS)) {
       dispatchMyEventReminders()
-        .then((created) => (created > 0 && !cancelled ? reload(user.id, () => cancelled) : undefined))
+        .then((created) => {
+          if (created > 0 && !cancelled) {
+            setIncoming((n) => n + 1);
+            return refreshCounters();
+          }
+        })
         .catch(() => clearThrottle(reminderKey));
     }
-    // Haftalık özet (docs/history/307-*): aynı kalıp — haftada bir kez sunucu tek bildirim üretir, oluştuysa liste yenilenir.
     const digestKey = `promptly-throttle:weekly-digest:${user.id}`;
     if (shouldRunNow(digestKey, WEEKLY_DIGEST_INTERVAL_MS)) {
       dispatchMyWeeklyDigest()
-        .then((created) => (created > 0 && !cancelled ? reload(user.id, () => cancelled) : undefined))
+        .then((created) => {
+          if (created > 0 && !cancelled) {
+            setIncoming((n) => n + 1);
+            return refreshCounters();
+          }
+        })
         .catch(() => clearThrottle(digestKey));
     }
     return () => {
       cancelled = true;
+      if (wakeTimer.current) clearTimeout(wakeTimer.current);
     };
-  }, [user, reload]);
+  }, [user, refreshCounters]);
 
-  const refresh = useCallback(async () => {
-    if (!user) return;
-    await reload(user.id);
-  }, [user, reload]);
-
-  // "Daha fazla" tıklaması ile otomatik yükleme AYNI anda gelebilir: `loadingMore` state'i henüz çizilmeden ikisi de geçer ve aynı sayfa iki kez
-  // istenirdi (`usePagedList` aynı yarışı bir ref ile çözer). Ref "bu sayfa yolda"yı anında bildirir.
-  const loadingMoreRef = useRef(false);
-  const loadMore = useCallback(async () => {
-    if (!user || loadingMoreRef.current || !hasMore) return;
-    loadingMoreRef.current = true;
-    setLoadingMore(true);
-    try {
-      const older = await fetchNotificationsPage(user.id, loadedRef.current, NOTIFICATIONS_PAGE);
-      setNotifications((prev) => {
-        const seen = new Set(prev.map((n) => n.id));
-        return [...prev, ...older.filter((n) => !seen.has(n.id))];
-      });
-      setHasMore(older.length === NOTIFICATIONS_PAGE);
-    } catch (err) {
-      console.error("notifications loadMore", err);
-    } finally {
-      loadingMoreRef.current = false;
-      setLoadingMore(false);
-    }
-  }, [user, hasMore]);
-
-  // Gerçek zamanlı senkronizasyon (Bölüm 9.78'in belgelediği, mesajlaşmanın
-  // Bölüm 21 Faz C'de kurduğu AYNI desen) — `notifications` tablosu
-  // `supabase_realtime` yayınına eklendi (20260919530000). Bu kullanıcının
-  // KENDİ satırlarındaki HER olayda (INSERT — yeni bir bildirim; UPDATE —
-  // başka bir cihazdan okundu işaretlendi; DELETE — başka bir cihazdan
-  // silindi) tüm listeyi yeniden çekiyor — mesajlaşmanın `conversation_
-  // members` aboneliğiyle birebir aynı "basit tut" kararı, gerçek bildirim
-  // hacmi (birkaç/birkaç onlarca satır) bunu haklı çıkarıyor.
+  // Gerçek zamanlı: `notifications` tablosu `supabase_realtime` yayınında. INSERT = yeni bildirim (listeler yeniden dizmez, "N yeni" der);
+  // UPDATE/DELETE (başka cihaz ya da kendi yazımızın yankısı) yalnız sayaçları tazeler — listeyi değil, böylece iyimser değişiklik titremez.
   useEffect(() => {
     if (!user) return;
-
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const channel = supabase
       .channel(`notifications:${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${user.id}` },
-        () => {
-          void reload(user.id);
-        },
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${user.id}` }, (payload) => {
+        if (payload.eventType === "INSERT") setIncoming((n) => n + 1);
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => void refreshCounters(), 400);
+      })
       .subscribe();
-
     return () => {
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
     };
-  }, [user, reload]);
+  }, [user, refreshCounters]);
 
-  const markRead = useCallback(
-    async (id: string) => {
-      if (!user) return;
-      const target = notifications.find((n) => n.id === id);
-      if (!target || target.isRead) return;
-      // Optimistic — reverted below if the write fails.
-      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-      setUnread((count) => Math.max(0, count - 1));
+  // Sekme yeniden görününce (ertelemeler dolmuş, başka cihazda okunmuş olabilir) sayaçları tazele.
+  useEffect(() => {
+    if (!user) return;
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - lastVisibleRefresh.current < 10_000) return;
+      lastVisibleRefresh.current = Date.now();
+      void refreshCounters();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [user, refreshCounters]);
+
+  const loadCategoryCounts = useCallback(() => fetchUnreadCountsByCategory(), []);
+
+  const dismissUndo = useCallback(() => {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    undoTimer.current = null;
+    setUndoNotice(null);
+  }, []);
+
+  const pushUndo = useCallback((text: string, undo: () => Promise<void> | void) => {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    undoSeq.current += 1;
+    const id = undoSeq.current;
+    setUndoNotice({ id, text, undo });
+    undoTimer.current = setTimeout(() => setUndoNotice((current) => (current?.id === id ? null : current)), UNDO_WINDOW_MS);
+  }, []);
+
+  const runUndo = useCallback(async () => {
+    const current = undoNotice;
+    dismissUndo();
+    if (!current) return;
+    try {
+      await current.undo();
+    } catch (err) {
+      console.error("undo", err);
+      announceNotice(t("nc.undoFailed"));
+    }
+  }, [undoNotice, dismissUndo, t]);
+
+  // Silme "Geri al" süresi dolunca gerçekten yapılır; sayfa gizlenirken/kapanırken bekleyenler hemen gönderilir.
+  const flushDelete = useCallback(
+    async (key: string) => {
+      const entry = pendingDeletes.current.get(key);
+      if (!entry) return;
+      clearTimeout(entry.timer);
+      pendingDeletes.current.delete(key);
       try {
-        await markNotificationRead(id, user.id);
+        await deleteCard(key);
+        void refreshCounters();
       } catch (err) {
-        console.error("markRead", err);
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)));
-        setUnread((count) => count + 1);
+        console.error("delete notification", err);
+        announceNotice(t("nc.deleteFailed"));
+        emit({ type: "restore", card: entry.card });
+        void refreshCounters();
       }
     },
-    [user, notifications],
+    [emit, refreshCounters, t],
   );
 
-  const remove = useCallback(
-    async (id: string) => {
-      if (!user) return;
-      const previous = notifications;
-      const wasUnread = previous.some((n) => n.id === id && !n.isRead);
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-      if (wasUnread) setUnread((count) => Math.max(0, count - 1));
+  useEffect(() => {
+    const flushAll = () => {
+      for (const key of [...pendingDeletes.current.keys()]) void flushDelete(key);
+    };
+    const onHide = () => {
+      if (document.visibilityState === "hidden") flushAll();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", flushAll);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", flushAll);
+      flushAll();
+    };
+  }, [flushDelete]);
+
+  const markRead = useCallback(
+    async (card: NotificationCard) => {
+      if (card.unreadCount === 0) return;
+      emit({ type: "read", key: card.key, read: true });
+      setUnread((n) => Math.max(0, n - 1));
       try {
-        await deleteNotification(id, user.id);
+        await markCardRead(card.key);
       } catch (err) {
-        console.error("remove notification", err);
-        setNotifications(previous);
-        if (wasUnread) setUnread((count) => count + 1);
+        console.error("markRead", err);
+        emit({ type: "read", key: card.key, read: false });
+        setUnread((n) => n + 1);
+        announceNotice(t("nc.actionFailed"));
       }
     },
-    [user, notifications],
+    [emit, t],
+  );
+
+  const markUnread = useCallback(
+    async (card: NotificationCard) => {
+      emit({ type: "read", key: card.key, read: false });
+      setUnread((n) => n + 1);
+      try {
+        await markCardUnread(card.key);
+      } catch (err) {
+        console.error("markUnread", err);
+        emit({ type: "read", key: card.key, read: true });
+        setUnread((n) => Math.max(0, n - 1));
+        announceNotice(t("nc.actionFailed"));
+      }
+    },
+    [emit, t],
   );
 
   const markAllRead = useCallback(async () => {
     if (!user) return;
-    const previous = notifications;
-    const previousUnread = unread;
-    // Older unread rows may not be loaded: the database's count decides, not the loaded list.
-    if (previousUnread === 0 && previous.every((n) => n.isRead)) return;
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    const previous = unread;
+    emit({ type: "readAll" });
     setUnread(0);
     try {
-      await markAllNotificationsRead(user.id);
+      const { error } = await supabase.from("notifications").update({ is_read: true }).eq("recipient_id", user.id).eq("is_read", false);
+      if (error) throw new Error(error.message);
     } catch (err) {
       console.error("markAllRead", err);
-      setNotifications(previous);
-      setUnread(previousUnread);
+      setUnread(previous);
+      announceNotice(t("nc.actionFailed"));
+      void refreshCounters();
     }
-  }, [user, notifications, unread]);
+  }, [user, unread, emit, refreshCounters, t]);
 
   const clearAll = useCallback(async () => {
     if (!user) return;
     await deleteAllNotifications(user.id);
-    setNotifications([]);
+    emit({ type: "clear" });
     setUnread(0);
-    setHasMore(false);
-  }, [user]);
+    setSnoozed(0);
+  }, [user, emit]);
 
-  const value = useMemo(
-    () => ({ notifications, unreadCount: unread, hasMore, loadingMore, loadMore, refresh, markRead, markAllRead, clearAll, remove }),
-    [notifications, unread, hasMore, loadingMore, loadMore, refresh, markRead, markAllRead, clearAll, remove],
+  const remove = useCallback(
+    (card: NotificationCard) => {
+      emit({ type: "remove", key: card.key });
+      if (card.unreadCount > 0) setUnread((n) => Math.max(0, n - 1));
+      const timer = setTimeout(() => void flushDelete(card.key), UNDO_WINDOW_MS);
+      pendingDeletes.current.set(card.key, { timer, card });
+      pushUndo(t("nc.deleted"), () => {
+        const entry = pendingDeletes.current.get(card.key);
+        if (!entry) return;
+        clearTimeout(entry.timer);
+        pendingDeletes.current.delete(card.key);
+        emit({ type: "restore", card });
+        if (card.unreadCount > 0) setUnread((n) => n + 1);
+      });
+    },
+    [emit, flushDelete, pushUndo, t],
+  );
+
+  const unsnooze = useCallback(
+    async (card: NotificationCard) => {
+      await unsnoozeCard(card.key);
+      emit({ type: "remove", key: card.key });
+      await refreshCounters();
+    },
+    [emit, refreshCounters],
+  );
+
+  const snooze = useCallback(
+    async (card: NotificationCard, until: Date, label: string) => {
+      try {
+        await snoozeCard(card.key, until);
+      } catch (err) {
+        console.error("snooze", err);
+        announceNotice(t("nc.actionFailed"));
+        return;
+      }
+      emit({ type: "remove", key: card.key });
+      if (card.unreadCount > 0) setUnread((n) => Math.max(0, n - 1));
+      void refreshCounters();
+      pushUndo(label, async () => {
+        await unsnoozeCard(card.key);
+        emit({ type: "restore", card });
+        await refreshCounters();
+      });
+    },
+    [emit, pushUndo, refreshCounters, t],
+  );
+
+  const mute = useCallback(
+    async (kind: "actor" | "content", target: string, label: string, text: string) => {
+      try {
+        await setNotificationMute(kind, target, label, true);
+      } catch (err) {
+        console.error("mute", err);
+        announceNotice(t("nc.actionFailed"));
+        return;
+      }
+      pushUndo(text, () => setNotificationMute(kind, target, label, false));
+    },
+    [pushUndo, t],
+  );
+
+  const value = useMemo<NotificationsContextValue>(
+    () => ({
+      unreadCount: unread,
+      snoozedCount: snoozed,
+      incoming,
+      loadCategoryCounts,
+      refreshCounters,
+      subscribe,
+      markRead,
+      markUnread,
+      markAllRead,
+      clearAll,
+      remove,
+      snooze,
+      unsnooze,
+      mute,
+      undoNotice,
+      pushUndo,
+      runUndo,
+      dismissUndo,
+    }),
+    [unread, snoozed, incoming, loadCategoryCounts, refreshCounters, subscribe, markRead, markUnread, markAllRead, clearAll, remove, snooze, unsnooze, mute, undoNotice, pushUndo, runUndo, dismissUndo],
   );
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;

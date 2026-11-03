@@ -310,3 +310,12 @@ NEXT_PUBLIC_GIPHY_API_KEY=test-key NEXT_PUBLIC_SUPABASE_URL=https://example.supa
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-comment-extras.mjs   # 19/19 beklenir
 SHOTS=/tmp/shots node tests/messaging-ui/run-comment-extras.mjs   # ekran görüntüleri
 ```
+
+## Bildirim merkezi (`docs/history/326-*`)
+
+`run-notifications.mjs`: zil rozeti (kart sayısı), zilin altında hızlı eylemli panel (konum/ok/Esc/dışarı tıklama), sunucu gruplaması ("Amy, Carol ve 1 kişi daha"), hızlı beğen + tepki değiştirme/geri alma, satır içi yanıt, takip-geri, öneri farkı + kabul/reddet, mesaj isteği, kilometre taşı, gerçek zamanlı "N yeni" hapı (liste yeniden dizilmez), bölünmüş gelen kutusu + `?n=`, sessize al / ertele / tür kapat, silme + geri al (5 sn), süzgeç menüsü (sunucuda), sayfa sayfa yükleme, mobil genişleyen kart + tam sayfa detay, İngilizce, koyu tema + J/K/E kısayolları, Ayarlar → Bildirimler (30/30 beklenir). RPC'ler dosyada JS ile taklit edilir (`makeNotifications`); asıl SQL doğrulaması `supabase/tests/notification-center.sql`'dedir. Gerçek Supabase'e/Realtime'a KARŞI DENENMEDİ.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-notifications.mjs   # 30/30 beklenir
+```

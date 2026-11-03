@@ -34,6 +34,7 @@ import { chatRedesignTranslations } from "./translations-chat-redesign";
 import { quoteTranslations } from "./translations-quotes";
 import { filterTranslations } from "./translations-filters";
 import { exchangeTranslations } from "./translations-exchange";
+import { notificationCenterTranslations } from "./translations-notification-center";
 
 export const translations = {
   // ---- Primary navigation (desktop sidebar) ----
@@ -3285,6 +3286,7 @@ export const translations = {
   ...quoteTranslations,
   ...filterTranslations,
   ...exchangeTranslations,
+  ...notificationCenterTranslations,
   "report.modal.title": { tr: "İçeriği şikâyet et", en: "Report content" },
   "report.modal.subtitle": { tr: "Bu içeriği neden şikâyet ettiğini seç.", en: "Choose why you're reporting this." },
   "report.modal.reasonsLabel": { tr: "Şikâyet nedeni", en: "Reason for the report" },

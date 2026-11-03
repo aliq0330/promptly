@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import type { AppNotification, NotificationType } from "@/types";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { isCommunityNotification } from "@/lib/notification-scope";
+import { notificationCategoryOf } from "@/lib/notification-mirror";
 
 /**
  * The bildirim merkezi's category filter (Aşama 1.2) groups the existing
@@ -68,7 +68,8 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
  * notices, the likes/comments of its posts — `isCommunityNotification`, docs/history/205-*) goes under "Topluluklar".
  */
 export function notificationCategory(notification: Pick<AppNotification, "type" | "targetHref">): NotificationCategory {
-  return isCommunityNotification(notification.type, notification.targetHref) ? "community" : NOTIFICATION_CATEGORY[notification.type];
+  // Kural `notification-mirror.ts`'te (SQL `_notification_category` aynası); `NOTIFICATION_CATEGORY` yalnız eski bakışı belgeler.
+  return notificationCategoryOf(notification.type, notification.targetHref);
 }
 
 export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; labelKey: TranslationKey }[] = [

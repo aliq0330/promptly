@@ -328,6 +328,62 @@ export interface AppNotification {
   reaction?: ReactionKey | null;
 }
 
+/**
+ * Bildirim merkezinin kartı (docs/history/326-*): `notifications_grouped_page` RPC'sinin bir satırı. Sayı bildirimleri (beğeni/tepki, takip, hikâye
+ * tepkisi) aynı hedef için TEK kartta birleşir ("Ali, Veli ve 10 kişi daha"); diğer türler (yorum, yanıt, mesaj, öneri…) tek satırlık karttır.
+ */
+export interface NotificationCard {
+  /** Sunucunun grup anahtarı: `tür|adres` (gruplananlar) ya da `n|<bildirim kimliği>`. */
+  key: string;
+  type: NotificationType;
+  /** En yeni satırın adresi (`hl=` dahil). */
+  targetHref: string;
+  /** Kartın zamanı: en yeni satırın zamanı (ertelenmişse erteleme anı). */
+  sortAt: string;
+  rowCount: number;
+  unreadCount: number;
+  latestId: string;
+  latestMessage: string;
+  latestActor: UserProfile | null;
+  /** En yeni aktörler (en çok 3, en yeni önce). */
+  actors: UserProfile[];
+  /** Tepki başına satır sayısı (yalnız beğeni kartları). */
+  reactionCounts: Partial<Record<ReactionKey, number>>;
+}
+
+/** "Bu tür bildirimleri kapat" anahtarları (veritabanındaki `notification_type_prefs` CHECK'iyle aynı). */
+export type NotificationPrefKey =
+  | "reactions"
+  | "comment_likes"
+  | "comments"
+  | "follows"
+  | "suggestions"
+  | "requests"
+  | "stories"
+  | "quotes"
+  | "results"
+  | "milestones"
+  | "weekly_digest";
+
+export interface NotificationMute {
+  kind: "actor" | "content";
+  /** `actor`: profil kimliği · `content`: `hl=` parametresiz içerik adresi. */
+  target: string;
+  /** Sessize alındığı andaki ad/başlık (ayrıca sorgu gerekmesin). */
+  label: string;
+  createdAt: string;
+}
+
+/** Bir kartın üyesi (Ayrıntı: kim, hangi tepkiyle, ne zaman). */
+export interface NotificationGroupMember {
+  id: string;
+  actor: UserProfile | null;
+  reaction: ReactionKey | null;
+  isRead: boolean;
+  createdAt: string;
+  message: string;
+}
+
 /** Grup üyelik rolleri (docs/history/172-*): owner > admin > moderator > member. */
 export type GroupRole = "owner" | "admin" | "moderator" | "member";
 /**

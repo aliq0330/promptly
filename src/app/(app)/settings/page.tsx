@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Code2, FileText, LogOut, Palette, ShieldCheck, TriangleAlert, UserRound, Lock } from "lucide-react";
+import { Bell, Code2, FileText, LogOut, Palette, ShieldCheck, TriangleAlert, UserRound, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -49,6 +49,7 @@ export default function SettingsPage() {
         {isModerator && <SettingsLinkRow href="/moderation" icon={<ShieldCheck size={18} className="text-primary" />} title={t("nav.moderation")} hint={t("settings.hub.moderationDesc")} />}
         <SettingsLinkRow href="/settings/account" icon={<UserRound size={18} className={iconClass} />} title={t("settings.groupAccount")} hint={t("settings.hub.accountDesc")} />
         <SettingsLinkRow href="/settings/privacy" icon={<Lock size={18} className={iconClass} />} title={t("settings.privacyTitle")} hint={t("settings.hub.privacyDesc")} />
+        <SettingsLinkRow href="/settings/notifications" icon={<Bell size={18} className={iconClass} />} title={t("nc.settings.title")} hint={t("nc.settings.hubDesc")} />
         <SettingsLinkRow href="/settings/preferences" icon={<Palette size={18} className={iconClass} />} title={t("settings.groupPreferences")} hint={t("settings.hub.preferencesDesc")} />
         <SettingsLinkRow href="/settings/developer" icon={<Code2 size={18} className={iconClass} />} title={t("settings.groupDeveloper")} hint={t("settings.hub.developerDesc")} />
         <SettingsLinkRow href="/settings/legal" icon={<FileText size={18} className={iconClass} />} title={t("legal.groupTitle")} hint={t("settings.hub.legalDesc")} />

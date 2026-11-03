@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FullLoadLink } from "@/components/ui/full-load-link";
-import { Bell, GalleryVerticalEnd, Languages, MessageCircle, Search } from "lucide-react";
+import { GalleryVerticalEnd, Languages, MessageCircle, Search } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { hasUnreadInInbox } from "@/lib/conversation-lists";
-import { useNotifications } from "@/features/notifications/notifications-provider";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/icon-button";
@@ -25,7 +25,6 @@ import { AccountMenu, GuestAuthMenu } from "@/components/layout/account-menu";
 export function Header() {
   const status = useAuthStatus();
   const { conversations: realConversations } = useRealMessages();
-  const { unreadCount } = useNotifications();
   const { t, language, setLanguage } = useTranslation();
   const hasUnreadMessages = hasUnreadInInbox(realConversations);
   // Discover and Search carry their own (richer) search box — a second one in the header would just be a link back to the same page.
@@ -75,17 +74,7 @@ export function Header() {
         </FullLoadLink>
         {status === "authenticated" && (
           <>
-            <Link
-              href="/notifications"
-              aria-label={t("header.notificationsAriaLabel")}
-              title={t("header.notificationsAriaLabel")}
-              className={iconButtonClassName(false, "shrink-0 relative")}
-            >
-              <Bell size={20} />
-              {unreadCount > 0 && (
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
-              )}
-            </Link>
+            <NotificationBell />
             <Link
               href="/messages"
               aria-label={t("header.messagesAriaLabel")}
