@@ -22,7 +22,8 @@ import {
   postCommentOnSpace,
   postCommentOnQuote,
 } from "@/lib/supabase/comments";
-import { fetchLikedCommentIds, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
+import { fetchMyCommentReactions, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
+import { DEFAULT_REACTION, type ReactionKey } from "@/lib/reactions";
 import { removeCommentPhotos } from "@/lib/supabase/comment-media";
 import type { CommentExtras } from "@/lib/supabase/comments";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -92,7 +93,9 @@ export function useCommentThread(
   const [replyError, setReplyError] = useState<string | null>(null);
   const [isPostingReply, setIsPostingReply] = useState(false);
 
-  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  // The viewer's own reaction per liked comment (docs/history/326-*); `likedIds` is its key set. A tap on the heart is the default `love`; other reactions come from the notification card.
+  const [myReactions, setMyReactions] = useState<Map<string, ReactionKey>>(new Map());
+  const likedIds = useMemo(() => new Set(myReactions.keys()), [myReactions]);
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(new Set());
 
@@ -209,11 +212,11 @@ export function useCommentThread(
         setLikeCounts(Object.fromEntries(result.map((c) => [c.id, c.likeCount])));
         setLoaded(true);
         if (user) {
-          const liked = await fetchLikedCommentIds(
+          const reactions = await fetchMyCommentReactions(
             result.map((c) => c.id),
             user.id,
           );
-          if (!cancelled) setLikedIds(liked);
+          if (!cancelled) setMyReactions(reactions);
         }
 
         // Land on a specific comment/reply from a notification (Aşama 4.2-4.4)
@@ -271,11 +274,11 @@ export function useCommentThread(
       setLikeCounts((prev) => ({ ...Object.fromEntries(page.comments.map((c) => [c.id, c.likeCount])), ...prev }));
       setNextOffset(page.nextOffset);
       if (user && page.comments.length > 0) {
-        const liked = await fetchLikedCommentIds(
+        const reactions = await fetchMyCommentReactions(
           page.comments.map((c) => c.id),
           user.id,
         );
-        setLikedIds((prev) => new Set([...prev, ...liked]));
+        setMyReactions((prev) => new Map([...prev, ...reactions]));
       }
     } catch (err) {
       console.error("comment thread (more)", err);
@@ -344,11 +347,12 @@ export function useCommentThread(
     }
     if (pendingLikeIds.has(id)) return "ignored";
     const wasLiked = likedIds.has(id);
+    const previousReaction = myReactions.get(id) ?? null;
     setPendingLikeIds((prev) => new Set(prev).add(id));
-    setLikedIds((prev) => {
-      const next = new Set(prev);
+    setMyReactions((prev) => {
+      const next = new Map(prev);
       if (wasLiked) next.delete(id);
-      else next.add(id);
+      else next.set(id, DEFAULT_REACTION);
       return next;
     });
     setLikeCounts((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + (wasLiked ? -1 : 1)) }));
@@ -358,9 +362,9 @@ export function useCommentThread(
       return wasLiked ? "unliked" : "liked";
     } catch (err) {
       console.error("toggleCommentLike", err);
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        if (wasLiked) next.add(id);
+      setMyReactions((prev) => {
+        const next = new Map(prev);
+        if (wasLiked && previousReaction) next.set(id, previousReaction);
         else next.delete(id);
         return next;
       });
@@ -543,6 +547,7 @@ export function useCommentThread(
     canInteract: Boolean(user),
     currentUserId: user?.id ?? null,
     likedIds,
+    reactionById: myReactions,
     likeCounts,
     pendingLikeIds,
     onToggleLike: toggleLike,

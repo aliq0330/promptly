@@ -55,6 +55,15 @@ const CHECKS = [
   { name: "rpc feed_page_proven (Keşfet → Kanıtlanmış sıralaması, docs/history/307-*)", rpc: "feed_page_proven", body: { p_limit: 1 } },
   { name: "rpc discover_tool_counts", rpc: "discover_tool_counts", body: {} },
   // Yalnız oturumlu kullanıcıya açık RPC (docs/history/250-*): ziyaretçiye 401/403 dönmesi "var ama kapalı" demektir; 404 "yok" demektir ve boru hattını durdurur.
+  // Bildirim merkezi (docs/history/326-*): yalnız oturumlu RPC'ler (ziyaretçiye 401/403 = "var ama kapalı"; 404 = "yok" ve boru hattını durdurur).
+  { name: "rpc notifications_grouped_page (gruplu bildirim kartları, docs/history/326-*; yalnız oturumlu)", rpc: "notifications_grouped_page", body: { p_limit: 1, p_before_at: null, p_before_key: null, p_category: null, p_unread_only: false, p_snoozed_only: false }, deniedOk: true, soft: true },
+  { name: "rpc notifications_unread_group_count (zil rozeti)", rpc: "notifications_unread_group_count", body: {}, deniedOk: true, soft: true },
+  { name: "rpc notifications_unread_by_category (kategori menüsü sayıları)", rpc: "notifications_unread_by_category", body: {}, deniedOk: true, soft: true },
+  { name: "rpc notifications_snooze_summary", rpc: "notifications_snooze_summary", body: {}, deniedOk: true, soft: true },
+  { name: "rpc set_notification_mute (sessize al; yalnız oturumlu)", rpc: "set_notification_mute", body: { p_kind: "content", p_target: "/x", p_label: "", p_on: false }, deniedOk: true, soft: true },
+  { name: "rpc set_notification_type_pref (tür kapat; yalnız oturumlu)", rpc: "set_notification_type_pref", body: { p_key: "comments", p_enabled: true }, deniedOk: true, soft: true },
+  { name: "notification_mutes + notification_type_prefs tabloları (RLS: ziyaretçiye boş/kapalı)", get: () => `notification_mutes?select=${encodeURIComponent("kind,target,label,created_at")}&limit=1`, deniedOk: true, soft: true },
+  { name: "comment_likes tepki sütunu (docs/history/326-*)", get: () => `comment_likes?select=${encodeURIComponent("comment_id,reaction")}&limit=1` },
   { name: "rpc dispatch_my_weekly_digest (haftalık özet bildirimi, docs/history/307-*; yalnız oturumlu, ziyaretçiye kapalı)", rpc: "dispatch_my_weekly_digest", body: {}, deniedOk: true, soft: true },
   { name: "rpc import_workflows (workflow içe aktarma, docs/history/307-*; yalnız oturumlu, ziyaretçiye kapalı)", rpc: "import_workflows", body: { p_items: [], p_dry_run: true }, deniedOk: true, soft: true },
   { name: "rpc import_content (istek / hazır ayar içe aktarma; yalnız oturumlu, ziyaretçiye kapalı)", rpc: "import_content", body: { p_kind: "request", p_items: [], p_dry_run: true }, deniedOk: true, soft: true },

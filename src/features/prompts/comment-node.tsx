@@ -1,6 +1,8 @@
 "use client";
 
 import { LikeToggle, type LikeToggleResult } from "@/components/ui/like-toggle";
+import { ReactionIcon } from "@/features/reactions/reaction-icon";
+import type { ReactionKey } from "@/lib/reactions";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, CornerDownRight } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -35,6 +37,8 @@ export interface CommentTree {
   canInteract: boolean;
   currentUserId: string | null;
   likedIds: Set<string>;
+  /** The viewer's own reaction per liked comment (docs/history/326-*): a non-default one is shown as its emoji beside the heart. */
+  reactionById: Map<string, ReactionKey>;
   likeCounts: Record<string, number>;
   pendingLikeIds: Set<string>;
   onToggleLike: (id: string) => Promise<LikeToggleResult>;
@@ -223,6 +227,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                   isLiked && "text-danger hover:text-danger",
                 )}
               />
+              <MyReactionMark reaction={tree.reactionById.get(comment.id)} />
               {tree.canInteract && (
                 <button
                   type="button"
@@ -457,6 +462,7 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
         </div>
 
         {!isDeleted && (
+          <div className="flex w-9 shrink-0 flex-col items-center self-start">
           <LikeToggle
             liked={isLiked}
             count={likeCount}
@@ -467,10 +473,12 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
             title={tree.canInteract ? undefined : t("prompt.loginToLike")}
             label={t(isLiked ? "prompt.unlikeAria" : "prompt.likeAria", { count: likeCount })}
             className={cn(
-              "flex w-9 shrink-0 flex-col items-center gap-0.5 self-start rounded-md pt-2 text-caption text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60",
+              "flex w-9 shrink-0 flex-col items-center gap-0.5 rounded-md pt-2 text-caption text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60",
               isLiked && "text-danger hover:text-danger",
             )}
           />
+          <MyReactionMark reaction={tree.reactionById.get(comment.id)} />
+          </div>
         )}
       </div>
 
@@ -482,5 +490,15 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
         </div>
       )}
     </div>
+  );
+}
+
+/** The viewer's own non-default reaction on a comment (docs/history/326-*), shown beside the heart: the heart alone means the default "love". */
+function MyReactionMark({ reaction }: { reaction: ReactionKey | undefined }) {
+  if (!reaction || reaction === "love") return null;
+  return (
+    <span data-my-comment-reaction={reaction} className="-ml-1 inline-flex items-center">
+      <ReactionIcon reaction={reaction} size={14} />
+    </span>
   );
 }
