@@ -15,7 +15,13 @@ import {
 } from "@/lib/supabase/notifications";
 import { supabase } from "@/lib/supabase/client";
 import { dispatchMyEventReminders } from "@/lib/supabase/communities";
+import { clearThrottle, shouldRunNow } from "@/lib/run-throttle";
 import type { AppNotification } from "@/types";
+
+/** Etkinlik hatırlatması penceresi 24 saat; 30 dakikalık gecikme zararsızdır. */
+const EVENT_REMINDER_INTERVAL_MS = 30 * 60 * 1000;
+/** Haftalık özet sunucuda haftada bir; 6 saatte bir sormak yeter. */
+const WEEKLY_DIGEST_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 interface NotificationsContextValue {
   notifications: AppNotification[];
@@ -81,13 +87,22 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     // Topluluk etkinlik hatırlatmaları (docs/history/175-*): zamanlayıcı yok; uygulama açılışında, kullanıcının "geliyorum/belki" dediği
     // ve 24 saat içinde başlayan etkinlikler için sunucu bir kez bildirim üretir. Yeni bildirim oluştuysa liste yenilenir.
     // Hata (ör. migration henüz uygulanmadı) bildirimleri etkilemez, sessizce yok sayılır.
-    dispatchMyEventReminders()
-      .then((created) => (created > 0 && !cancelled ? reload(user.id, () => cancelled) : undefined))
-      .catch(() => undefined);
+    // İkisi de sunucuda zaten yinelenmez; istemci yalnız "yapacak bir şey yok" cevabını öğrenmek için her sayfa yüklemesinde bir RPC
+    // yolculuğu ödemesin diye cihaz başına aralıkla sınırlanır (docs/history/325-*, ölçüm: pg_stat_statements'ta 3 914 + 1 019 çağrı).
+    // Hata olursa kayıt silinir, bir sonraki yüklemede yeniden denenir.
+    const reminderKey = `promptly-throttle:event-reminders:${user.id}`;
+    if (shouldRunNow(reminderKey, EVENT_REMINDER_INTERVAL_MS)) {
+      dispatchMyEventReminders()
+        .then((created) => (created > 0 && !cancelled ? reload(user.id, () => cancelled) : undefined))
+        .catch(() => clearThrottle(reminderKey));
+    }
     // Haftalık özet (docs/history/307-*): aynı kalıp — haftada bir kez sunucu tek bildirim üretir, oluştuysa liste yenilenir.
-    dispatchMyWeeklyDigest()
-      .then((created) => (created > 0 && !cancelled ? reload(user.id, () => cancelled) : undefined))
-      .catch(() => undefined);
+    const digestKey = `promptly-throttle:weekly-digest:${user.id}`;
+    if (shouldRunNow(digestKey, WEEKLY_DIGEST_INTERVAL_MS)) {
+      dispatchMyWeeklyDigest()
+        .then((created) => (created > 0 && !cancelled ? reload(user.id, () => cancelled) : undefined))
+        .catch(() => clearThrottle(digestKey));
+    }
     return () => {
       cancelled = true;
     };

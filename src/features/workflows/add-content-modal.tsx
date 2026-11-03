@@ -8,7 +8,7 @@ import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { ToolPicker } from "@/features/content/tool-picker";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
-import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
+import { useRealPromptsList } from "@/features/prompts/real-prompts-provider";
 import { createRealPrompt, searchPrompts } from "@/lib/supabase/prompts";
 import { promptRef } from "@/lib/supabase/workflows";
 import { taxonomyPathLabel, type TaxonomySelection } from "@/lib/content-taxonomy";
@@ -78,7 +78,7 @@ export function AddContentModal({
 
 function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => void }) {
   const { t, language } = useTranslation();
-  const { realPrompts } = useRealPrompts();
+  const { realPrompts } = useRealPromptsList();
   const [query, setQuery] = useState("");
   const [found, setFound] = useState<WorkflowContentRef[] | null>(null);
   const [added, setAdded] = useState<string | null>(null);

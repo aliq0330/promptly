@@ -6,7 +6,7 @@ import { Chip } from "@/components/ui/chip";
 import { ContentListPage } from "@/features/content/content-list-page";
 import { SheetChips } from "@/features/content/list-toolbar";
 import { RequestList } from "@/features/requests/request-list";
-import { useRealRequests } from "@/features/requests/real-requests-provider";
+import { useRealRequestsList } from "@/features/requests/real-requests-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { searchRequestsPage } from "@/lib/supabase/requests";
 import type { PromptRequest } from "@/types";
@@ -15,7 +15,7 @@ type StatusFilter = "all" | "open" | "closed";
 
 export default function RequestsPage() {
   const { t } = useTranslation();
-  const { realRequests, hasMore, loadingMore, loadMore } = useRealRequests();
+  const { realRequests, loading, hasMore, loadingMore, loadMore } = useRealRequestsList();
   const [status, setStatus] = useState<StatusFilter>("all");
   const postFilter = useMemo(
     () => (items: PromptRequest[]) =>
@@ -52,6 +52,7 @@ export default function RequestsPage() {
         { icon: Sparkles, titleKey: "request.step3Title", bodyKey: "request.step3Body" },
       ]}
       baseItems={realRequests}
+      loading={loading}
       search={searchRequestsPage}
       postFilter={postFilter}
       extra={<SheetChips>{statusChips}</SheetChips>}

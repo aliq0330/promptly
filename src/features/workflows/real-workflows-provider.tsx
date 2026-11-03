@@ -10,6 +10,7 @@ const PAGE_SIZE = 60;
 interface RealWorkflowsContextValue {
   realWorkflows: Workflow[];
   loading: boolean;
+  ensureLoaded: () => void;
   hasMore: boolean;
   loadingMore: boolean;
   loadMore: () => Promise<void>;
@@ -35,18 +36,22 @@ export function RealWorkflowsProvider({ children }: { children: React.ReactNode 
   const cursorRef = useRef<KeysetCursor | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchRecentWorkflows(PAGE_SIZE).then((page) => {
-      if (cancelled) return;
-      setRealWorkflows(page.items);
-      cursorRef.current = page.nextCursor;
-      setHasMore(page.nextCursor !== null);
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
+  // Lazy first page (docs/history/325-*): only the screens that LIST workflows ask for it (`useRealWorkflowsList`); every other (app)
+  // route used to pay for this request on load.
+  const startedRef = useRef(false);
+  const ensureLoaded = useCallback(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    fetchRecentWorkflows(PAGE_SIZE)
+      .then((page) => {
+        setRealWorkflows(page.items);
+        cursorRef.current = page.nextCursor;
+        setHasMore(page.nextCursor !== null);
+      })
+      .catch(() => {
+        startedRef.current = false;
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const loadMore = useCallback(async () => {
@@ -75,8 +80,8 @@ export function RealWorkflowsProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const value = useMemo(
-    () => ({ realWorkflows, loading, hasMore, loadingMore, loadMore, getCached, removeFromCache }),
-    [realWorkflows, loading, hasMore, loadingMore, loadMore, getCached, removeFromCache],
+    () => ({ realWorkflows, loading, ensureLoaded, hasMore, loadingMore, loadMore, getCached, removeFromCache }),
+    [realWorkflows, loading, ensureLoaded, hasMore, loadingMore, loadMore, getCached, removeFromCache],
   );
   return <RealWorkflowsContext.Provider value={value}>{children}</RealWorkflowsContext.Provider>;
 }
@@ -84,5 +89,15 @@ export function RealWorkflowsProvider({ children }: { children: React.ReactNode 
 export function useRealWorkflows() {
   const ctx = useContext(RealWorkflowsContext);
   if (!ctx) throw new Error("useRealWorkflows must be used within a RealWorkflowsProvider");
+  return ctx;
+}
+
+/** Same as `useRealWorkflows`, for a screen that shows the workflow LIST: it also starts the (lazy) first-page fetch. */
+export function useRealWorkflowsList() {
+  const ctx = useRealWorkflows();
+  const { ensureLoaded } = ctx;
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
   return ctx;
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchIsModerator } from "@/lib/supabase/moderation";
+import { fetchIsModeratorShared } from "@/lib/supabase/moderation";
 
 const cache = new Map<string, boolean>();
 
@@ -15,7 +15,8 @@ export function useIsModerator(): boolean {
   useEffect(() => {
     if (!userId || cache.has(userId)) return;
     let cancelled = false;
-    void fetchIsModerator().then((result) => {
+    // One request per user no matter how many components ask at once (docs/history/325-*).
+    void fetchIsModeratorShared(userId).then((result) => {
       cache.set(userId, result);
       if (!cancelled) setTick((n) => n + 1);
     });

@@ -40,6 +40,32 @@ export async function fetchIsModerator(): Promise<boolean> {
   }
 }
 
+// `is_moderator` was asked once per component that wanted the answer (ReportModal, menus, the story viewer…): measured as 3 093
+// calls in pg_stat_statements. One shared promise per user answers all of them (docs/history/325-*). A user switch reloads the page
+// (auth-provider), so this module-level memory is dropped with it; a failed lookup is not remembered.
+const moderatorLookups = new Map<string, Promise<boolean>>();
+
+/** `fetchIsModerator` shared per user id: concurrent and repeated callers get the same single request. */
+export function fetchIsModeratorShared(userId: string): Promise<boolean> {
+  const existing = moderatorLookups.get(userId);
+  if (existing) return existing;
+  const lookup = (async () => {
+    try {
+      const { data, error } = await supabase.rpc("is_moderator");
+      if (error) {
+        moderatorLookups.delete(userId);
+        return false;
+      }
+      return data === true;
+    } catch {
+      moderatorLookups.delete(userId);
+      return false;
+    }
+  })();
+  moderatorLookups.set(userId, lookup);
+  return lookup;
+}
+
 interface QueueRow {
   id: string;
   status: ReportStatus;

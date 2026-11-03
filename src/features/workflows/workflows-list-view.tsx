@@ -2,7 +2,7 @@
 
 import { GitBranch, Link2, ListPlus, Workflow as WorkflowIcon } from "lucide-react";
 import { ContentListPage } from "@/features/content/content-list-page";
-import { useRealWorkflows } from "./real-workflows-provider";
+import { useRealWorkflowsList } from "./real-workflows-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { searchWorkflowsPage } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "./workflow-card";
@@ -10,7 +10,7 @@ import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content
 
 export function WorkflowsListView() {
   const { t } = useTranslation();
-  const { realWorkflows: workflows, loading, hasMore, loadingMore, loadMore } = useRealWorkflows();
+  const { realWorkflows: workflows, loading, hasMore, loadingMore, loadMore } = useRealWorkflowsList();
   return (
     <ContentListPage
       icon={WorkflowIcon}

@@ -2,7 +2,7 @@
 
 import { ListPlus, SlidersHorizontal, Wand2, Share2 } from "lucide-react";
 import { ContentListPage } from "@/features/content/content-list-page";
-import { useRealPresets } from "./real-presets-provider";
+import { useRealPresetsList } from "./real-presets-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { searchPresetsPage } from "@/lib/supabase/presets";
 import { PresetCard } from "./preset-card";
@@ -10,7 +10,7 @@ import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content
 
 export function PresetsListView() {
   const { t } = useTranslation();
-  const { realPresets: presets, loading, hasMore, loadingMore, loadMore } = useRealPresets();
+  const { realPresets: presets, loading, hasMore, loadingMore, loadMore } = useRealPresetsList();
   return (
     <ContentListPage
       icon={SlidersHorizontal}

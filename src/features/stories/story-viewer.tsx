@@ -31,7 +31,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
-import { fetchIsModerator } from "@/lib/supabase/moderation";
+import { fetchIsModeratorShared } from "@/lib/supabase/moderation";
 import { resolveMediaUrl } from "@/lib/supabase/media-url";
 import {
   deleteStory,
@@ -369,7 +369,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
   useEffect(() => {
     if (!user) return;
     let alive = true;
-    fetchIsModerator().then((value) => alive && setIsModerator(value));
+    fetchIsModeratorShared(user.id).then((value) => alive && setIsModerator(value));
     return () => {
       alive = false;
     };

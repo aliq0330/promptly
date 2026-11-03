@@ -10,6 +10,7 @@ const PAGE_SIZE = 60;
 interface RealPresetsContextValue {
   realPresets: Preset[];
   loading: boolean;
+  ensureLoaded: () => void;
   hasMore: boolean;
   loadingMore: boolean;
   loadMore: () => Promise<void>;
@@ -37,22 +38,28 @@ export function RealPresetsProvider({ children }: { children: React.ReactNode })
   const cursorRef = useRef<KeysetCursor | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  const [reloadTick, setReloadTick] = useState(0);
-  const reload = useCallback(() => setReloadTick((n) => n + 1), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchRecentPresets(PAGE_SIZE).then((page) => {
-      if (cancelled) return;
-      setRealPresets(page.items);
-      cursorRef.current = page.nextCursor;
-      setHasMore(page.nextCursor !== null);
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [reloadTick]);
+  // Lazy first page (docs/history/325-*): only the screens that LIST presets ask for it (`useRealPresetsList`); every other (app)
+  // route used to pay for this request on load. `reload` re-reads it only if the list was ever requested.
+  const startedRef = useRef(false);
+  const fetchFirstPage = useCallback(() => {
+    startedRef.current = true;
+    fetchRecentPresets(PAGE_SIZE)
+      .then((page) => {
+        setRealPresets(page.items);
+        cursorRef.current = page.nextCursor;
+        setHasMore(page.nextCursor !== null);
+      })
+      .catch(() => {
+        startedRef.current = false;
+      })
+      .finally(() => setLoading(false));
+  }, []);
+  const ensureLoaded = useCallback(() => {
+    if (!startedRef.current) fetchFirstPage();
+  }, [fetchFirstPage]);
+  const reload = useCallback(() => {
+    if (startedRef.current) fetchFirstPage();
+  }, [fetchFirstPage]);
 
   const loadMore = useCallback(async () => {
     // See the matching note in `real-prompts-provider.tsx` — `loadingRef`
@@ -80,8 +87,8 @@ export function RealPresetsProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const value = useMemo(
-    () => ({ realPresets, loading, hasMore, loadingMore, loadMore, getCached, removeFromCache, reload }),
-    [realPresets, loading, hasMore, loadingMore, loadMore, getCached, removeFromCache, reload],
+    () => ({ realPresets, loading, ensureLoaded, hasMore, loadingMore, loadMore, getCached, removeFromCache, reload }),
+    [realPresets, loading, ensureLoaded, hasMore, loadingMore, loadMore, getCached, removeFromCache, reload],
   );
   return <RealPresetsContext.Provider value={value}>{children}</RealPresetsContext.Provider>;
 }
@@ -89,5 +96,15 @@ export function RealPresetsProvider({ children }: { children: React.ReactNode })
 export function useRealPresets() {
   const ctx = useContext(RealPresetsContext);
   if (!ctx) throw new Error("useRealPresets must be used within a RealPresetsProvider");
+  return ctx;
+}
+
+/** Same as `useRealPresets`, for a screen that shows the preset LIST: it also starts the (lazy) first-page fetch. */
+export function useRealPresetsList() {
+  const ctx = useRealPresets();
+  const { ensureLoaded } = ctx;
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
   return ctx;
 }
