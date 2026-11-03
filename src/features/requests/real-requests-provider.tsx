@@ -21,6 +21,9 @@ const PAGE_SIZE = 60;
 
 interface RealRequestsContextValue {
   realRequests: PromptRequest[];
+  /** True until the (lazy) first page has arrived — or failed. */
+  loading: boolean;
+  ensureLoaded: () => void;
   hasMore: boolean;
   loadingMore: boolean;
   loadMore: () => Promise<void>;
@@ -49,22 +52,31 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
   const { t } = useTranslation();
   const { user } = useAuth();
   const [realRequests, setRealRequests] = useState<PromptRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingRef = useRef(false);
   const cursorRef = useRef<KeysetCursor | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchRecentRequests(PAGE_SIZE).then((page) => {
-      if (cancelled) return;
-      setRealRequests(page.items);
-      cursorRef.current = page.nextCursor;
-      setHasMore(page.nextCursor !== null);
-    });
-    return () => {
-      cancelled = true;
-    };
+  // Lazy first page (docs/history/325-*): only the screens that LIST requests ask for it (`useRealRequestsList`); every other (app)
+  // route used to pay for this request on load. `getCached` / `fetchById` do not depend on the list.
+  const startedRef = useRef(false);
+  const ensureLoaded = useCallback(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    fetchRecentRequests(PAGE_SIZE)
+      .then((page) => {
+        setRealRequests((prev) => {
+          const seen = new Set(prev.map((r) => r.id));
+          return [...prev, ...page.items.filter((r) => !seen.has(r.id))];
+        });
+        cursorRef.current = page.nextCursor;
+        setHasMore(page.nextCursor !== null);
+      })
+      .catch(() => {
+        startedRef.current = false;
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const loadMore = useCallback(async () => {
@@ -152,6 +164,8 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
   const value = useMemo(
     () => ({
       realRequests,
+      loading,
+      ensureLoaded,
       hasMore,
       loadingMore,
       loadMore,
@@ -166,6 +180,8 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
     }),
     [
       realRequests,
+      loading,
+      ensureLoaded,
       hasMore,
       loadingMore,
       loadMore,
@@ -186,5 +202,15 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
 export function useRealRequests() {
   const ctx = useContext(RealRequestsContext);
   if (!ctx) throw new Error("useRealRequests must be used within a RealRequestsProvider");
+  return ctx;
+}
+
+/** Same as `useRealRequests`, for a screen that shows the request LIST: it also starts the (lazy) first-page fetch. */
+export function useRealRequestsList() {
+  const ctx = useRealRequests();
+  const { ensureLoaded } = ctx;
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
   return ctx;
 }

@@ -3,13 +3,13 @@
 import { Copy, PenLine, SquareTerminal, Send } from "lucide-react";
 import { ContentListPage } from "@/features/content/content-list-page";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
-import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
+import { useRealPromptsList } from "@/features/prompts/real-prompts-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { searchPromptsPage } from "@/lib/supabase/prompts";
 
 export default function PromptsPage() {
   const { t } = useTranslation();
-  const { realPrompts, loading, hasMore, loadingMore, loadMore } = useRealPrompts();
+  const { realPrompts, loading, hasMore, loadingMore, loadMore } = useRealPromptsList();
   return (
     <ContentListPage
       icon={SquareTerminal}

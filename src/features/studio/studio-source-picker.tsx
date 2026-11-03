@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { fieldInputClassName } from "@/components/ui/field";
-import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
+import { useRealPromptsList } from "@/features/prompts/real-prompts-provider";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -48,7 +48,7 @@ export function StudioSourcePicker({
   fitFor?: Preset;
 }) {
   const { t, language } = useTranslation();
-  const { realPrompts } = useRealPrompts();
+  const { realPrompts } = useRealPromptsList();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Row[] | null>(null);
   const [searching, setSearching] = useState(false);

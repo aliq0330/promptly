@@ -19,6 +19,8 @@ const PAGE_SIZE = 60;
 interface RealPromptsContextValue {
   realPrompts: Prompt[];
   loading: boolean;
+  /** Starts the first-page fetch (once). Screens that list prompts call it through `useRealPromptsList`. */
+  ensureLoaded: () => void;
   /** Whether a real "load more" page exists beyond what's in `realPrompts` right now. */
   hasMore: boolean;
   loadingMore: boolean;
@@ -51,18 +53,27 @@ export function RealPromptsProvider({ children }: { children: React.ReactNode })
   const cursorRef = useRef<KeysetCursor | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchRecentPublishedPrompts(PAGE_SIZE).then((page) => {
-      if (cancelled) return;
-      setRealPrompts(page.items);
-      cursorRef.current = page.nextCursor;
-      setHasMore(page.nextCursor !== null);
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
+  // The first page is fetched only when a screen that LISTS prompts asks for it (`useRealPromptsList`): this provider wraps
+  // every (app) route, and fetching 60 prompts (+ media, tags, profiles) on every page load was pure waste for the pages that
+  // only look a single prompt up (docs/history/325-*). `getCached` / `fetchById` do not depend on the list.
+  const startedRef = useRef(false);
+  const ensureLoaded = useCallback(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    fetchRecentPublishedPrompts(PAGE_SIZE)
+      .then((page) => {
+        setRealPrompts((prev) => {
+          // A prompt added/updated while this request was in flight stays; the page fills in the rest.
+          const seen = new Set(prev.map((p) => p.id));
+          return [...prev, ...page.items.filter((p) => !seen.has(p.id))];
+        });
+        cursorRef.current = page.nextCursor;
+        setHasMore(page.nextCursor !== null);
+      })
+      .catch(() => {
+        startedRef.current = false;
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const loadMore = useCallback(async () => {
@@ -126,8 +137,8 @@ export function RealPromptsProvider({ children }: { children: React.ReactNode })
   );
 
   const value = useMemo(
-    () => ({ realPrompts, loading, hasMore, loadingMore, loadMore, getCached, fetchById, addPrompt, updatePrompt }),
-    [realPrompts, loading, hasMore, loadingMore, loadMore, getCached, fetchById, addPrompt, updatePrompt],
+    () => ({ realPrompts, loading, ensureLoaded, hasMore, loadingMore, loadMore, getCached, fetchById, addPrompt, updatePrompt }),
+    [realPrompts, loading, ensureLoaded, hasMore, loadingMore, loadMore, getCached, fetchById, addPrompt, updatePrompt],
   );
 
   return <RealPromptsContext.Provider value={value}>{children}</RealPromptsContext.Provider>;
@@ -136,5 +147,15 @@ export function RealPromptsProvider({ children }: { children: React.ReactNode })
 export function useRealPrompts() {
   const ctx = useContext(RealPromptsContext);
   if (!ctx) throw new Error("useRealPrompts must be used within a RealPromptsProvider");
+  return ctx;
+}
+
+/** Same as `useRealPrompts`, for a screen that shows the prompt LIST: it also starts the (lazy) first-page fetch. */
+export function useRealPromptsList() {
+  const ctx = useRealPrompts();
+  const { ensureLoaded } = ctx;
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
   return ctx;
 }
