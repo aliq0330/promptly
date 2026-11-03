@@ -1,6 +1,6 @@
 # 324 — Telegram botu: anlık bildirim
 
-**Durum:** repoda (migration + Edge değişikliği + testler); canlıya UYGULANMADI. Canlıda yalnız `pg_net` eklentisi AÇILDI (kullanıcı izniyle, 2026-11-02; `net.http_post` var).
+**Durum:** CANLIDA (2026-11-03): migration `20261102160000` uygulandı (`schema_migrations`'ta görüldü), `pg_net` açık (kullanıcı izniyle, 2026-11-02), KURULUM adımları (Vault `telegram_push_url` + `telegram_cron_secret`, Edge `telegram` yeniden deploy) kullanıcı tarafından yapıldı ve anlık bildirimin geldiği bildirildi. Gerçek Telegram'a karşı bu kayıt oturumunda doğrulanmadı.
 
 ## Sorun
 323'te bildirimler GitHub Actions zamanlayıcısıyla (~15 dk, en iyi çaba) gidiyordu; kullanıcı anlık istedi.
