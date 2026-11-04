@@ -121,6 +121,11 @@ const CHECKS = [
   { name: "rpc list_my_telegram_links ziyaretçiye KAPALI olmalı (docs/history/323-*)", rpc: "list_my_telegram_links", body: {}, mustBeDenied: true },
   { name: "rpc _telegram_link_authenticate istemciye KAPALI olmalı (yalnız sahip rol; docs/history/323-*)", rpc: "_telegram_link_authenticate", body: { p_telegram_user_id: 1 }, mustBeDenied: true },
   { name: "rpc common_communities (ortak topluluklar, docs/history/271-*)", rpc: "common_communities", body: { p_user: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
+  // Çevrimiçi durum (docs/history/329-*): hepsi yalnız oturumlu — ziyaretçi anahtarıyla REDDEDİLMELİ (anon durum bilgisi göremez).
+  { name: "presence_state ziyaretçiye KAPALI olmalı (son görülme / görünmez mod, docs/history/329-*)", get: () => `presence_state?select=user_id&limit=1`, mustBeDenied: true },
+  { name: "rpc presence_lookup ziyaretçiye KAPALI olmalı (docs/history/329-*)", rpc: "presence_lookup", body: { p_ids: [] }, mustBeDenied: true },
+  { name: "rpc my_presence ziyaretçiye KAPALI olmalı (docs/history/329-*)", rpc: "my_presence", body: {}, mustBeDenied: true },
+  { name: "rpc community_presence_counts ziyaretçiye KAPALI olmalı (docs/history/329-*)", rpc: "community_presence_counts", body: { p_ids: [] }, mustBeDenied: true },
 ];
 
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };

@@ -10,6 +10,8 @@ import { CommunityCover } from "./community-cover";
 import { CardBandBackdrop } from "@/features/content/content-card";
 import { Eyebrow } from "@/features/content/detail-parts";
 import { VisibilityLabel } from "./visibility-label";
+import { useCommunityPresenceCount } from "@/features/presence/community-presence";
+import { OnlineCountText } from "@/features/presence/presence-ui";
 import { CATEGORY_LABEL_KEYS, communityHref, REASON_LABEL_KEYS } from "@/lib/communities";
 import { memberCountText } from "@/lib/group-labels";
 import { formatUnread } from "@/lib/utils";
@@ -41,6 +43,8 @@ export function CommunityCard({
   const full = community.memberCount >= community.memberLimit;
   const isMember = community.myStatus === "member";
   const showContentStats = community.visibility === "public" || isMember;
+  // Aktif üye sayısı (docs/history/329-*): kartlar tek çağrıda toplanır; okuyamadığın (kapalı, üye değilsin) toplulukta sunucu sayı vermez.
+  const activeCount = useCommunityPresenceCount(community.id);
 
   return (
     // Albüm kartı (docs/history/203-*): the band takes the community picture's colours (`CommunityCover`'s automatic mode),
@@ -93,6 +97,7 @@ export function CommunityCard({
         </div>
         <p className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-caption text-text-muted">
           <span>{memberCountText(t, community.memberCount)}{full && ` · ${t("groups.page.full")}`}</span>
+          <OnlineCountText count={activeCount} variant="active" className="text-success" />
           {showContentStats && (
             <span className="flex items-center gap-1" title={t("communities.card.postsTitle")}>
               <SquareStack size={12} aria-hidden /> {community.postCount}

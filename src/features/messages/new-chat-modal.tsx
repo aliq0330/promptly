@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2, Search, UsersRound, X } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
+import { useOnlineIds } from "@/features/presence/use-presence";
+import { sortOnlineFirst } from "@/lib/presence";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "./real-messages-provider";
@@ -305,12 +307,15 @@ function PeopleSection({
   pickingId: string | null;
   onPick: (person: UserProfile) => void;
 }) {
+  // Çevrimiçiler önce (docs/history/329-*): yalnız görmeye yetkili olduğun kişiler öne geçer; sıralama kendi grubunda korunur.
+  const online = useOnlineIds(people.map((person) => person.id));
+  const ordered = sortOnlineFirst(people, (person) => person.id, online);
   if (people.length === 0) return null;
   return (
     <section className="mb-2" aria-label={heading}>
       <h3 className="px-3 pb-1 pt-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{heading}</h3>
       <ul>
-        {people.map((person) => (
+        {ordered.map((person) => (
           <li key={person.id}>
             <button
               type="button"
@@ -318,10 +323,10 @@ function PeopleSection({
               disabled={pickingId !== null}
               className="flex min-h-12 w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-surface-soft disabled:opacity-60"
             >
-              <Avatar src={person.avatarUrl} alt={person.displayName} size={40} />
+              <PresenceAvatar userId={person.id} src={person.avatarUrl} alt={person.displayName} size={40} />
               <span className="min-w-0 flex-1 leading-tight">
                 <span className="block truncate text-sm font-semibold text-text">{person.displayName}</span>
-                <span className="block truncate text-caption text-text-muted">@{person.username}</span>
+                <PresenceStatusText userId={person.id} fallback={`@${person.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
               </span>
               {pickingId === person.id && <Loader2 size={16} className="shrink-0 animate-spin text-text-muted" />}
             </button>

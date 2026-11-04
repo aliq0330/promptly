@@ -12,6 +12,7 @@ import type { GroupInvitation } from "@/lib/supabase/chat-groups";
 import { communityHref } from "@/lib/communities";
 import { homeHref } from "@/lib/community-home";
 import { memberCountText } from "@/lib/group-labels";
+import { useCommunityPresenceCount } from "@/features/presence/community-presence";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
@@ -75,6 +76,7 @@ function ShelfCover({ community, unseen }: { community: CommunitySummary; unseen
   // Community pictures live in the private `community-avatars` bucket: the stored URL is an id, shown through a signed URL.
   const { src } = useStorageSrc(community.avatarUrl);
   const initial = community.name.trim().charAt(0).toLocaleUpperCase(language === "tr" ? "tr" : "en");
+  const active = useCommunityPresenceCount(community.id);
   return (
     <Link href={communityHref(community.id)} className="group block space-y-1.5" data-shelf-community={community.id}>
       <span className="relative block aspect-[4/3] overflow-hidden rounded-[18px] bg-primary-soft transition-transform duration-200 ease-soft group-hover:-translate-y-0.5">
@@ -95,7 +97,11 @@ function ShelfCover({ community, unseen }: { community: CommunitySummary; unseen
         )}
       </span>
       <span className="block truncate text-small font-semibold leading-tight text-text group-hover:text-primary">{community.name}</span>
-      <span className="block truncate text-caption text-text-muted">{memberCountText(t, community.memberCount)}</span>
+      <span className="block truncate text-caption text-text-muted">
+        {memberCountText(t, community.memberCount)}
+        {/* Şu an aktif üye sayısı (docs/history/329-*). */}
+        {active ? <span className="text-success"> · {t("presence.activeShort", { count: active })}</span> : null}
+      </span>
     </Link>
   );
 }

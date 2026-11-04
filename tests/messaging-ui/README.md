@@ -338,3 +338,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-comment-reac
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-message-dock.mjs   # 17/17 beklenir (port 4198)
 ```
+
+## Çevrimiçi durum, son görülme ve gizlilik (`docs/history/329-*`)
+
+`run-presence.mjs` (**25 senaryo**, çok oturum): Ayarlar → Gizlilik (Otomatik/Görünmez + kitle), hesap menüsünden hızlı Görünmez, sohbet listesi/başlık/Kişi bilgisi/dock'ta nokta ve "Çevrimiçi"/"Son görülme", görünmez olunca ANINDA sönme, karşılıklılık (gizleyen hiç istek atmaz), iki yönlü engel, "Karşılıklı takip" kitlesi + yetkisiz doğrudan kanal katılımının reddi, çok sekme, bağlantı kopması → son görülmeye düşüş + geri çekilmeyle yeniden katılım, yeni sohbette çevrimiçi önce, topluluk sohbeti "N çevrimiçi" + bilgi sayfası, Üyeler "Çevrimiçi" süzgeci, Hakkında'da yönetim ekibi, etkinlik katılımcıları, davet sayfası (yalnız herkese açık), kartlarda toplu sayı çağrısı, profil noktası (hikâye halkasının dışında), Telegram odağı, ziyaretçi (sıfır istek), İngilizce, telefon (iPhone 13) ve tablet koyu tema. `realtime-hub.mjs` presence protokolünü (track/untrack, `presence_state`/`presence_diff`, `authorizeWrite`, `kick`) taklit eder; `mock-presence.mjs` SQL kurallarının aynasıdır. Gerçek Supabase/Realtime/Telegram/cihaza KARŞI DENENMEDİ — DB/RLS/RPC doğrulaması `supabase/tests/presence.sql`'dedir.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-presence.mjs   # 25/25 beklenir
+```

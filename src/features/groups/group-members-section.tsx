@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { Ban, Loader2, MoreVertical, Search, ShieldCheck, UserMinus, UserRound } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
+import { useMyPresence } from "@/features/presence/presence-provider";
+import { fetchCommunityOnlineMembers } from "@/lib/supabase/presence";
+import { isSelfHidden } from "@/lib/presence";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Users } from "lucide-react";
@@ -46,6 +49,7 @@ export function GroupMembersSection({
   showTransferHint = false,
   roleFilter = null,
   manage = true,
+  onlineOnly = false,
 }: {
   group: ChatGroup;
   viewerId: string;
@@ -57,6 +61,11 @@ export function GroupMembersSection({
   roleFilter?: GroupRole | null;
   /** false = yalnız okuma (sohbet bilgi penceresi): rol/çıkarma/devir menüsü çizilmez; kişi yönetimi topluluk sayfasındaki "Üyeler"dedir. */
   manage?: boolean;
+  /**
+   * Yalnız şu an çevrimiçi üyeler (docs/history/329-*): liste `community_online_members`'tan gelir — sunucu her kişi için izleyicinin görme
+   * iznini uygular (kitle, görünmez, engel). En çok 100 kişi; arama istemcide süzer.
+   */
+  onlineOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -68,16 +77,29 @@ export function GroupMembersSection({
   const [pending, setPending] = useState<Pending | null>(null);
   const [ban, setBan] = useState(false);
   const action = useAsyncAction();
+  const { me } = useMyPresence();
+  const viewerHidden = onlineOnly && me ? isSelfHidden(me.mode, me.audience) : false;
 
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(query.trim()), 300);
     return () => clearTimeout(timer);
   }, [query]);
 
-  const key = `${group.id}|${debounced}|${roleFilter ?? ""}|${reloadKey}`;
+  const key = `${group.id}|${debounced}|${roleFilter ?? ""}|${onlineOnly ? "online" : ""}|${reloadKey}`;
   useEffect(() => {
     let cancelled = false;
-    fetchCommunityMembers(group.id, { search: debounced, role: roleFilter, offset: 0 })
+    const load = onlineOnly
+      ? fetchCommunityOnlineMembers(group.id, { limit: 100 }).then((rows) => {
+          const q = debounced.toLocaleLowerCase();
+          const members = rows.filter(
+            (row) =>
+              (!roleFilter || row.role === roleFilter) &&
+              (!q || row.username.toLocaleLowerCase().includes(q) || row.displayName.toLocaleLowerCase().includes(q)),
+          );
+          return { members, hasMore: false };
+        })
+      : fetchCommunityMembers(group.id, { search: debounced, role: roleFilter, offset: 0 });
+    load
       .then((page) => {
         if (!cancelled) setLoaded({ key, members: page.members, hasMore: page.hasMore, error: false });
       })
@@ -88,7 +110,7 @@ export function GroupMembersSection({
     return () => {
       cancelled = true;
     };
-  }, [group.id, debounced, roleFilter, key]);
+  }, [group.id, debounced, roleFilter, onlineOnly, key]);
 
   // Menü dışına tıklanınca kapanır.
   useEffect(() => {
@@ -181,8 +203,12 @@ export function GroupMembersSection({
             {t("common.retry")}
           </Button>
         </div>
+      ) : viewerHidden ? (
+        <p className="rounded-md bg-surface-soft px-3 py-3 text-small text-text-secondary" data-presence-hidden-note>
+          {t("presence.hiddenSelfNote")}
+        </p>
       ) : current.members.length === 0 ? (
-        <EmptyState icon={Users} title={t("groups.members.empty")} compact />
+        <EmptyState icon={Users} title={onlineOnly ? t("presence.onlineMembersEmpty") : t("groups.members.empty")} compact />
       ) : (
         <>
           <ul className="divide-y divide-border-soft rounded-lg border border-border-soft" aria-label={t("groups.members.listLabel")}>
@@ -195,14 +221,18 @@ export function GroupMembersSection({
               return (
                 <li key={member.userId} className="flex items-center gap-3 px-3 py-2.5">
                   <Link href={profileHref({ username: member.username })} className="flex min-w-0 flex-1 items-center gap-3 rounded-md">
-                    <Avatar src={member.avatarUrl} alt={member.displayName} size={40} />
+                    <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={40} />
                     <span className="min-w-0 leading-tight">
                       <span className="flex flex-wrap items-center gap-1.5">
                         <span className="truncate text-sm font-semibold text-text">{member.displayName}</span>
                         <RoleBadge role={member.role} />
                         {isMe && <span className="text-caption text-text-muted">({t("groups.members.you")})</span>}
                       </span>
-                      <span className="block truncate text-caption text-text-muted">@{member.username}</span>
+                      {onlineOnly ? (
+                        <PresenceStatusText userId={member.userId} fallback={`@${member.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
+                      ) : (
+                        <span className="block truncate text-caption text-text-muted">@{member.username}</span>
+                      )}
                     </span>
                   </Link>
                   {hasMenu && (

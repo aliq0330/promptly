@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ArchiveRestore, BellOff, Check } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
 import { GroupAvatar } from "@/features/groups/group-avatar";
+import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { cn, formatRelativeTime, formatUnread, messageHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation } from "@/types";
@@ -58,7 +58,7 @@ export function ConversationRow({
         {group ? (
           <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={AVATAR_SIZE} badge />
         ) : (
-          <Avatar src={participant?.avatarUrl} alt={participant?.displayName ?? t("common.genericUser")} size={AVATAR_SIZE} />
+          <PresenceAvatar userId={participant?.id} src={participant?.avatarUrl} alt={participant?.displayName ?? t("common.genericUser")} size={AVATAR_SIZE} />
         )}
       </span>
       {/* Ayırıcı çizgi yalnız metin sütunundan başlar (avatarın altı boş kalır). */}

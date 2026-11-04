@@ -6,6 +6,11 @@ import { ConversationRow } from "./conversation-row";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation } from "@/types";
+import { useOnlineIds } from "@/features/presence/use-presence";
+import { sortOnlineFirst } from "@/lib/presence";
+
+/** Paylaşım seçicisinde çevrimiçi sıralaması yalnız ilk bu kadar sohbete uygulanır (tek `presence_lookup` sınırı). */
+const SHARE_ONLINE_SORT_LIMIT = 200;
 
 /** Çok sohbetli bir kişide (yüzlerce birebir / topluluk) satırların hepsi bir anda çizilmez: 50'şer, aşağı inince devamı (docs/history/258-*). */
 const CONVERSATIONS_SHOWN_STEP = 50;
@@ -40,6 +45,15 @@ export function ConversationList({
 }) {
   const { t } = useTranslation();
   const [shown, setShown] = useState(CONVERSATIONS_SHOWN_STEP);
+  // Paylaşım seçicisi (`?sharePromptId=` …): çevrimiçi kişilerle sohbetler önce (docs/history/329-*). Gelen kutusu kronolojik kalır.
+  const shareHead = shareQuery ? conversations.slice(0, SHARE_ONLINE_SORT_LIMIT) : [];
+  const online = useOnlineIds(shareHead.map((conversation) => (conversation.kind === "direct" ? conversation.participants[0]?.id : null)));
+  if (shareQuery && online.size > 0) {
+    conversations = [
+      ...sortOnlineFirst(shareHead, (conversation) => (conversation.kind === "direct" ? conversation.participants[0]?.id : null), online),
+      ...conversations.slice(SHARE_ONLINE_SORT_LIMIT),
+    ];
+  }
   // Açık sohbet pencerenin dışında kalmasın (derin bağlantıyla açılan eski bir sohbet).
   const activeIndex = activeId ? conversations.findIndex((conversation) => conversation.id === activeId) : -1;
   const visibleCount = Math.max(shown, activeIndex + 1);
