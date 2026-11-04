@@ -7,7 +7,8 @@ import { alignInBounds, computeSheetLayout } from "@/lib/message-sheet-layout";
 import type { Box } from "@/lib/popover-position";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Message } from "@/types";
-import { EmojiPicker } from "./emoji-picker";
+import { MessageReactionPicker } from "./message-reaction-picker";
+import type { ReactionKey } from "@/lib/reactions";
 import { MessageActionMenu } from "./message-action-menu";
 import type { MessageBubbleActions } from "./message-bubble-types";
 
@@ -32,7 +33,7 @@ function samePlacement(a: Placed | null, b: Placed): boolean {
 
 /**
  * Uzun basma / ⋮ ile açılan mesaj sayfası (docs/history/290-*): bulanık bir zemin, mesajın yerinde duran net kopyası, üstünde tepki
- * çubuğu (sohbetin altı hızlı emojisi + "+"), altında işlem menüsü. Gerçek baloncuk açıkken gizlenir (kopya aynı yerde durur);
+ * çubuğu (gönderilerdeki altı tepki, docs/history/330-*), altında işlem menüsü. Gerçek baloncuk açıkken gizlenir (kopya aynı yerde durur);
  * kopya, baloncuğun o anki DOM'unun `cloneNode`'u olduğu için metin, kart, fotoğraf ve tepki çipi dahil her mesaj türü aynı görünür
  * (kopya `inert` ve `aria-hidden`, kimlik öznitelikleri silinir). Yerleşim `message-sheet-layout.ts`'tedir: grup görünür alana sığacak
  * kadar kayar, ekrandan uzun mesaj kırpılır; klavye/adres çubuğu (görsel görünüm alanı) değişince yeniden yerleşir.
@@ -52,8 +53,8 @@ export function MessageActionSheet({
   isMe: boolean;
   /** The bubble's own content element: cloned, positioned against, and hidden while the sheet is open. */
   sourceRef: RefObject<HTMLElement | null>;
-  myReaction: string | null;
-  onReact: (emoji: string) => void;
+  myReaction: ReactionKey | null;
+  onReact: (reaction: ReactionKey) => void;
   canEditOrDelete: boolean;
   actions: MessageBubbleActions;
   onReply: () => void;
@@ -206,6 +207,16 @@ export function MessageActionSheet({
     };
   }, []);
 
+  // The long-press finger went down BEFORE the sheet existed: its release `click` lands on whatever the placement moved under it (on the
+  // bottom message the group shifts up and a menu row or a reaction sits there), so it must not choose anything. Only a pointer pressed
+  // INSIDE the sheet makes a click; keyboard activation (`detail === 0`) always works.
+  const pressedInside = useRef(false);
+  function onRootClickCapture(event: ReactMouseEvent<HTMLDivElement>) {
+    if (pressedInside.current || event.detail === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   function onRootClick(event: ReactMouseEvent<HTMLDivElement>) {
     if (Date.now() - openedAt.current < IGNORE_CLICK_MS) return;
     if ((event.target as Element).closest("[data-sheet-panel]")) return;
@@ -229,6 +240,10 @@ export function MessageActionSheet({
       aria-label={t("messages.messageOptionsAriaLabel")}
       tabIndex={-1}
       data-message-sheet
+      onPointerDownCapture={() => {
+        pressedInside.current = true;
+      }}
+      onClickCapture={onRootClickCapture}
       onClick={onRootClick}
       // `fixed inset-0` scroller: when even the clipped group is taller than a very short visible area, the sheet itself scrolls.
       className="fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-background/55 outline-none backdrop-blur-xl animate-fade-in"
@@ -244,7 +259,7 @@ export function MessageActionSheet({
           className="pointer-events-auto w-[min(22rem,calc(100%_-_1.5rem))]"
           style={{ marginLeft: placed?.barLeft ?? 0 }}
         >
-          <EmojiPicker variant="bar" myReaction={myReaction} onSelect={onReact} />
+          <MessageReactionPicker variant="bar" myReaction={myReaction} onSelect={onReact} />
         </div>
         {/* The message copy: not interactive (taps fall through to the scrim and close the sheet). */}
         <div

@@ -6,7 +6,9 @@ import Link from "next/link";
 import { Check, CheckCheck, ChevronRight, Megaphone, MoreHorizontal, Pin, SmilePlus, Star } from "lucide-react";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Button } from "@/components/ui/button";
-import { EmojiPicker } from "./emoji-picker";
+import { MessageReactionPicker } from "./message-reaction-picker";
+import { MessageReactionBadge } from "./message-reaction-badge";
+import type { ReactionKey } from "@/lib/reactions";
 import { MessageImageGrid, useMessageImageUrls } from "./message-image-grid";
 import { MessageActionSheet } from "./message-action-sheet";
 import { useAnchoredPopover } from "./use-anchored-popover";
@@ -123,7 +125,7 @@ export function MessageBubble({
   /** Every real-time-synced reaction currently on this message (Aşama 2) — 0, 1, or (both participants having reacted) 2 entries in this 1:1 messaging system. Never rendered with a count. */
   reactions: MessageReactionEntry[];
   currentUserId: string | null;
-  onReact: (messageId: string, emoji: string) => void;
+  onReact: (messageId: string, reaction: ReactionKey) => void;
   actions: MessageBubbleActions;
 }) {
   const { t, language } = useTranslation();
@@ -208,7 +210,9 @@ export function MessageBubble({
 
   const iconsRef = useRef<HTMLDivElement>(null);
 
-  const myReaction = currentUserId ? (reactions.find((r) => r.userId === currentUserId)?.emoji ?? null) : null;
+  const myReaction = currentUserId ? (reactions.find((r) => r.userId === currentUserId)?.reaction ?? null) : null;
+  // The reaction the caller just GAVE (not took back): its animation + big effect play on the badge once it shows it (docs/history/330-*).
+  const [burst, setBurst] = useState<{ reaction: ReactionKey; n: number } | null>(null);
   // Tailwind's `group-hover:` only fires under `@media (hover: hover)`, which
   // touch-primary devices with a trackpad/mouse attached (iPad) report as
   // false — so hover is tracked with pointer events instead, ignoring real
@@ -216,8 +220,12 @@ export function MessageBubble({
   const [isHovered, setIsHovered] = useState(false);
   const isRevealed = isActive || sheetOpen || emojiOpen || isHovered;
 
-  function handleReactSelect(emoji: string) {
-    onReact(message.id, emoji);
+  function react(reaction: ReactionKey) {
+    if (reaction !== myReaction) setBurst((prev) => ({ reaction, n: (prev?.n ?? 0) + 1 }));
+    onReact(message.id, reaction);
+  }
+  function handleReactSelect(reaction: ReactionKey) {
+    react(reaction);
     setEmojiOpen(false);
   }
 
@@ -254,7 +262,7 @@ export function MessageBubble({
         <button
           ref={emojiAnchorRef}
           type="button"
-          aria-label={t("messages.addEmojiReaction")}
+          aria-label={t("reaction.add")}
           aria-haspopup="menu"
           aria-expanded={emojiOpen}
           onClick={(event) => {
@@ -269,7 +277,7 @@ export function MessageBubble({
         </button>
         {emojiOpen &&
           createPortal(
-            <EmojiPicker myReaction={myReaction} onSelect={handleReactSelect} panelRef={emojiPanelRef} style={emojiStyle} />,
+            <MessageReactionPicker myReaction={myReaction} onSelect={handleReactSelect} panelRef={emojiPanelRef} style={emojiStyle} />,
             document.body,
           )}
         <button
@@ -292,8 +300,8 @@ export function MessageBubble({
             isMe={isMe}
             sourceRef={contentRef}
             myReaction={myReaction}
-            onReact={(emoji) => {
-              onReact(message.id, emoji);
+            onReact={(reaction) => {
+              react(reaction);
               closeSheet();
             }}
             canEditOrDelete={canEditOrDelete}
@@ -463,20 +471,7 @@ export function MessageBubble({
                 </span>
               </div>
             )}
-            {reactions.length > 0 && (
-              <div
-                className={cn(
-                  "absolute -bottom-3 flex items-center gap-0.5 rounded-full bg-surface-elevated px-2 py-0.5 text-xs leading-none text-text ring-2 ring-background",
-                  isMe ? "right-2.5" : "left-2.5",
-                )}
-              >
-                {reactions.map((reaction) => (
-                  <span key={reaction.userId} data-reaction-emoji={reaction.emoji}>
-                    {reaction.emoji}
-                  </span>
-                ))}
-              </div>
-            )}
+            <MessageReactionBadge reactions={reactions} burst={burst} className={cn("absolute -bottom-3", isMe ? "right-2.5" : "left-2.5")} />
           </div>
         )}
 

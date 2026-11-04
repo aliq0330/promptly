@@ -1,11 +1,13 @@
 import type { Message } from "@/types";
+import type { ReactionKey } from "@/lib/reactions";
 
 /** "moderator": grup yöneticisinin (düşük rütbeli üyenin) mesajını herkes için silmesi. */
 export type DeleteMode = "everyone" | "me" | "moderator";
 
+/** One person's reaction on a message — one of the six post reactions (docs/history/330-*). */
 export interface MessageReactionEntry {
   userId: string;
-  emoji: string;
+  reaction: ReactionKey;
 }
 
 export interface MessageBubbleActions {

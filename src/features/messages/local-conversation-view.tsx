@@ -54,7 +54,8 @@ import {
   sendMessage,
   type MessageRow,
 } from "@/lib/supabase/messages";
-import { fetchReactionsForConversation, removeMessageReaction, setMessageReaction } from "@/lib/supabase/message-reactions";
+import { fetchReactionsForConversation, reactionRowFromDb, removeMessageReaction, setMessageReaction, type MessageReactionRow, type RawReactionRow } from "@/lib/supabase/message-reactions";
+import type { ReactionKey } from "@/lib/reactions";
 import { mergeIncomingMessage, applyMessageUpdate, removeReactionRow, upsertReaction } from "./realtime-helpers";
 import { computeKeyboardInset } from "./viewport-helpers";
 import { ComposerReplyBar } from "./reply-quote";
@@ -214,7 +215,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   // loaded once with the thread and kept live via the Realtime subscription
   // below — one flat list, not per-message state, so a single query/
   // subscription covers the whole open conversation.
-  const [reactionRows, setReactionRows] = useState<{ messageId: string; userId: string; emoji: string }[]>([]);
+  const [reactionRows, setReactionRows] = useState<MessageReactionRow[]>([]);
   // docs/history/174-*: birebirde karşı tarafın okundu imleci, yıldızlı mesaj kimlikleri, sohbet içi arama, mesaj bilgisi penceresi ve
   // "mesaja atla" durumu (hedef pencere yüklendiyse `hasNewer`: ötesinde daha yeni mesaj var, canlı mesajlar listeye eklenmez).
   const [partnerReadAt, setPartnerReadAt] = useState<string | null>(null);
@@ -452,16 +453,16 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "message_reactions", filter: `conversation_id=eq.${id}` },
         (payload) => {
-          const row = payload.new as { message_id: string; user_id: string; emoji: string };
-          setReactionRows((prev) => upsertReaction(prev, { messageId: row.message_id, userId: row.user_id, emoji: row.emoji }));
+          const row = reactionRowFromDb(payload.new as RawReactionRow);
+          if (row) setReactionRows((prev) => upsertReaction(prev, row));
         },
       )
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "message_reactions", filter: `conversation_id=eq.${id}` },
         (payload) => {
-          const row = payload.new as { message_id: string; user_id: string; emoji: string };
-          setReactionRows((prev) => upsertReaction(prev, { messageId: row.message_id, userId: row.user_id, emoji: row.emoji }));
+          const row = reactionRowFromDb(payload.new as RawReactionRow);
+          if (row) setReactionRows((prev) => upsertReaction(prev, row));
         },
       )
       .on(
@@ -754,20 +755,20 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     const map = new Map<string, MessageReactionEntry[]>();
     for (const row of reactionRows) {
       const entries = map.get(row.messageId) ?? [];
-      entries.push({ userId: row.userId, emoji: row.emoji });
+      entries.push({ userId: row.userId, reaction: row.reaction });
       map.set(row.messageId, entries);
     }
     return map;
   }, [reactionRows]);
 
-  // Aşama 2's "tek emoji" kuralı: aynı emojiye tekrar basmak tepkiyi
-  // kaldırır, farklı bir emoji seçmek eskisinin yerini alır — ikisi de
+  // Aşama 2's "tek tepki" kuralı (tepkiler gönderidekiyle aynı altı tepki, docs/history/330-*): aynı tepkiye tekrar basmak tepkiyi
+  // kaldırır, farklı bir tepki seçmek eskisinin yerini alır — ikisi de
   // optimistik olarak uygulanıp başarısızlıkta geri alınıyor (Follow/
   // Like/Save provider'larından beri bu projenin standart deseni).
-  async function handleReact(messageId: string, emoji: string) {
+  async function handleReact(messageId: string, reaction: ReactionKey) {
     if (!user || !id) return;
     const mine = reactionRows.find((r) => r.messageId === messageId && r.userId === user.id);
-    if (mine && mine.emoji === emoji) {
+    if (mine && mine.reaction === reaction) {
       setReactionRows((prev) => removeReactionRow(prev, messageId, user.id));
       try {
         await removeMessageReaction(messageId, user.id);
@@ -778,9 +779,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       return;
     }
     const previous = mine;
-    setReactionRows((prev) => upsertReaction(prev, { messageId, userId: user.id, emoji }));
+    setReactionRows((prev) => upsertReaction(prev, { messageId, userId: user.id, reaction }));
     try {
-      await setMessageReaction(messageId, id, user.id, emoji);
+      await setMessageReaction(messageId, id, user.id, reaction);
     } catch (err) {
       console.error("setMessageReaction", err);
       setReactionRows((prev) => (previous ? upsertReaction(prev, previous) : removeReactionRow(prev, messageId, user.id)));

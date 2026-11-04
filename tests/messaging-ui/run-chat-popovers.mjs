@@ -1,7 +1,8 @@
 // Sohbet mesaj düğmeleri ve menülerinin konumu (docs/history/212-*, 290-*): uzun mesajda düğmeler görünen kısımda; emoji seçici
 // mesaj listesinin görünen alanında; ⋮ ve UZUN BASMA aynı sayfayı açar (bulanık zemin + mesajın kopyası + tepki çubuğu + menü):
 // ekrana sığar, alan daralınca (klavye/adres çubuğu taklidi: görünüm yüksekliği küçültülür) yeniden yerleşir, kısa dokunuş/kaydırma
-// açmaz, parmak kalkınca kapanmaz, Esc/boş alan kapatır, 6 hızlı emoji ile tepki verilir/geri alınır.
+// açmaz, parmak kalkınca kapanmaz, Esc/boş alan kapatır; tepki = gönderilerdeki altı tepki (docs/history/330-*): verilir, anahtarıyla
+// yazılır, rozette poster görünür, aynısına tekrar basmak geri alır.
 // Ağ + Realtime taklitli; gerçek iOS Safari klavyesi/adres çubuğu bu ortamda açılamaz — DENENMEDİ.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
@@ -28,7 +29,8 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
   const context = await browser.newContext({ viewport, hasTouch: viewport.width < 768 });
   await installMock(context, db, { signedIn: ME });
   await hub.install(context, ME);
-  await context.addInitScript((l) => { try { localStorage.setItem("promptly-language", l); } catch {} }, lang);
+  // "Koşullar güncellendi" bandı en alttaki mesajları örter (docs/history/300-*): görülmüş say.
+  await context.addInitScript((l) => { try { localStorage.setItem("promptly-language", l); localStorage.setItem("promptly-terms-notice", "2026-11-02"); } catch {} }, lang);
   const page = await context.newPage();
   page.setDefaultTimeout(8000);
   const errors = [];
@@ -73,11 +75,11 @@ async function tapMessage(page, text, y = 24) {
   await page.waitForTimeout(250);
 }
 const optionsButton = (page, text) => msg(page, text).getByRole("button", { name: "Mesaj seçenekleri" });
-const emojiButton = (page, text) => msg(page, text).getByRole("button", { name: "Emoji tepkisi ekle" });
+const emojiButton = (page, text) => msg(page, text).getByRole("button", { name: "Tepki ver" });
 const sheet = (page) => page.locator("[data-message-sheet]");
 const menu = (page) => sheet(page).getByRole("menu", { name: "Mesaj seçenekleri" });
-const bar = (page) => sheet(page).getByRole("menu", { name: /emoji/i });
-const picker = (page) => page.getByRole("menu", { name: /emoji/i });
+const bar = (page) => sheet(page).getByRole("menu", { name: "Tepki seç" });
+const picker = (page) => page.getByRole("menu", { name: "Tepki seç" });
 const viewport = (page) => ({ x: 0, y: 0, ...page.viewportSize() });
 /** Gerçek dokunmatik uzun basma (CDP): basılı tut; `moveFirst` ile önce parmağı kaydır (kaydırma = iptal). */
 async function longPress(page, locator, { holdMs = 650, moveBy = 0, moveFirst = false } = {}) {
@@ -153,19 +155,20 @@ await scenario("4. en üstteki mesaj: tepki çubuğu ekranın üstünden taşmaz
   assert.ok(Math.abs(menuBox.x - cloneBox.x) <= 2, "menü sol kenarı mesajla hizalı");
 });
 
-await scenario("5. emoji seçici: yatayda ekrana sığar; '+' ile büyüyünce yeniden yerleşir ve yine alanda kalır", async ({ page }) => {
+await scenario("5. tepki seçici: gönderideki altı tepki, yatayda ekrana sığar ve görünür alanda kalır; '+' yok", async ({ page }) => {
   const area = await listBox(page);
   await tapMessage(page, "son bob", 10);
   await emojiButton(page, "son bob").click();
   await picker(page).waitFor();
-  let box = await picker(page).boundingBox();
+  const box = await picker(page).boundingBox();
   assert.ok(inside(box, area), `seçici görünür alanda: ${describe(box)}`);
-  await page.getByRole("button", { name: /Daha fazla emoji|More emoji/i }).click();
-  await page.waitForTimeout(150);
-  box = await picker(page).boundingBox();
-  assert.ok(inside(box, area), `genişleyen seçici görünür alanda: ${describe(box)}`);
-  await page.getByRole("menuitemradio").first().click();
+  const keys = await picker(page).locator("[data-reaction]").evaluateAll((els) => els.map((el) => el.getAttribute("data-reaction")));
+  assert.deepEqual(keys, ["love", "fire", "wow", "clap", "haha", "idea"], "gönderi tepkileriyle aynı sıra");
+  assert.equal(await picker(page).locator("img").count(), 6, "her tepki posteriyle");
+  assert.equal(await page.getByRole("button", { name: /Daha fazla emoji|More emoji/i }).count(), 0, "eski '+' satırı yok");
+  await picker(page).getByRole("menuitem", { name: "Ateş" }).click();
   await picker(page).waitFor({ state: "detached" });
+  await msg(page, "son bob").locator('[data-reaction-emoji="fire"] img').waitFor();
 });
 
 await scenario("6. görünür alan daralınca (klavye / adres çubuğu taklidi) açık sayfa yeniden yerleşir ve ekranda kalır", async ({ page }) => {
@@ -207,21 +210,23 @@ await scenario("7. UZUN BASMA: 400 ms basılı tutunca açılır; kısa dokunuş
   await shot(page, "7-long-press");
 });
 
-await scenario("8. tepki çubuğu: mevcut 6 hızlı emoji; seçince tepki mesaja eklenir ve sayfa kapanır; aynısına tekrar basmak geri alır", async ({ page }) => {
+await scenario("8. tepki çubuğu: altı gönderi tepkisi; seçince anahtarıyla yazılır, rozete düşer ve sayfa kapanır; aynısına tekrar basmak geri alır", async ({ page, db }) => {
   await longPress(page, msg(page, "son bob").locator("p.break-words").first(), { holdMs: 650 });
   await sheet(page).waitFor();
-  const emojis = await bar(page).getByRole("menuitemradio").allTextContents();
-  assert.deepEqual(emojis, ["❤️", "😂", "😮", "😢", "😡", "👍"], "altı hızlı emoji, mevcut seçiciyle aynı sıra");
-  await bar(page).getByRole("menuitemradio", { name: /😂/ }).click();
+  const labels = await bar(page).getByRole("menuitem").evaluateAll((els) => els.map((el) => el.getAttribute("aria-label")));
+  assert.deepEqual(labels, ["Sevdim", "Ateş", "Vay be", "Alkış", "Komik", "Faydalı"], "gönderi tepkileri, seçicideki sırayla");
+  await bar(page).getByRole("menuitem", { name: "Komik" }).click();
   await sheet(page).waitFor({ state: "detached" });
-  await msg(page, "son bob").locator('[data-reaction-emoji="😂"]').waitFor();
-  // Aynı emojiye tekrar: seçili görünür ve geri alır.
+  await msg(page, "son bob").locator('[data-reaction-emoji="haha"]').waitFor();
+  const write = db.calls.find((c) => c.table === "message_reactions" && c.method === "POST");
+  assert.equal(write?.body?.emoji, "haha", "veritabanına tepki anahtarı yazılır, emoji değil");
+  // Aynı tepkiye tekrar: seçili görünür ve geri alır.
   await longPress(page, msg(page, "son bob").locator("p.break-words").first(), { holdMs: 650 });
   await sheet(page).waitFor();
-  assert.equal(await bar(page).getByRole("menuitemradio", { name: /😂/ }).getAttribute("aria-checked"), "true");
-  await bar(page).getByRole("menuitemradio", { name: /😂/ }).click();
+  assert.equal(await bar(page).getByRole("menuitem", { name: "Komik" }).getAttribute("aria-current"), "true");
+  await bar(page).getByRole("menuitem", { name: "Komik" }).click();
   await sheet(page).waitFor({ state: "detached" });
-  await msg(page, "son bob").locator('[data-reaction-emoji="😂"]').waitFor({ state: "detached" });
+  await msg(page, "son bob").locator('[data-reaction-emoji="haha"]').waitFor({ state: "detached" });
 });
 
 await scenario("9. menü işlevleri sayfada çalışır (Yanıtla kapatır); boş alana dokunmak kapatır", async ({ page }) => {

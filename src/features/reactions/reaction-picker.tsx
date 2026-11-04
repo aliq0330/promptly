@@ -50,11 +50,17 @@ export function ReactionGrid({
   current,
   onChoose,
   playOnChoose = false,
+  compact,
   className,
 }: {
   current: ReactionKey | null;
   onChoose: (reaction: ReactionKey | null, element?: HTMLElement | null) => void;
   playOnChoose?: boolean;
+  /**
+   * The chat's one-row form (docs/history/330-*: a message reaction is a post reaction): the same six animated emojis at `compact` px, the
+   * name only as the accessible label, no "Tepkini kaldır" row (picking the selected one again takes it back, as everywhere).
+   */
+  compact?: number;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -75,7 +81,7 @@ export function ReactionGrid({
         else if (event.key === "ArrowLeft") moveFocus(event, -1);
       }}
     >
-      <div className="grid grid-cols-6 gap-0.5">
+      <div className={compact ? "flex items-center justify-between gap-0.5" : "grid grid-cols-6 gap-0.5"}>
         {REACTION_KEYS.map((key) => (
           <button
             key={key}
@@ -83,6 +89,8 @@ export function ReactionGrid({
             role="menuitem"
             data-reaction={key}
             aria-current={current === key ? "true" : undefined}
+            aria-label={compact ? t(REACTION_LABEL[key]) : undefined}
+            title={compact ? t(REACTION_LABEL[key]) : undefined}
             onClick={() => {
               const handle = icons.current[key];
               if (playOnChoose && current !== key) handle?.play();
@@ -90,7 +98,8 @@ export function ReactionGrid({
             }}
             onPointerEnter={() => icons.current[key]?.play()}
             className={cn(
-              "group flex min-w-0 flex-col items-center gap-0.5 rounded-[20px] pb-1.5 pt-2 text-caption transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "group flex min-w-0 items-center transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              compact ? "shrink-0 justify-center rounded-full p-1" : "flex-col gap-0.5 rounded-[20px] pb-1.5 pt-2 text-caption",
               current === key ? "bg-primary-soft text-primary" : "text-text-muted hover:bg-surface-soft hover:text-text",
             )}
           >
@@ -99,14 +108,14 @@ export function ReactionGrid({
                 icons.current[key] = handle;
               }}
               reaction={key}
-              size={40}
+              size={compact ?? 40}
               className="transition-transform duration-200 ease-soft group-hover:-translate-y-0.5 group-hover:scale-[1.18] group-active:scale-[1.18]"
             />
-            <span className="max-w-full truncate leading-tight">{t(REACTION_LABEL[key])}</span>
+            {!compact && <span className="max-w-full truncate leading-tight">{t(REACTION_LABEL[key])}</span>}
           </button>
         ))}
       </div>
-      {current && (
+      {current && !compact && (
         <button
           type="button"
           role="menuitem"
