@@ -257,7 +257,7 @@ declare
     format($$insert into public.conversation_members (conversation_id, user_id, role, status) values (%L, %L, 'member', 'accepted')$$, p_gid, v_me),
     format($$insert into public.conversation_members (conversation_id, user_id, role, status) values (%L, %L, 'owner', 'accepted')$$, p_gid, v_me),
     format($$update public.conversation_members set role = 'owner' where conversation_id = %L and user_id = %L$$, p_gid, v_me),
-    format($$insert into public.message_reactions (message_id, conversation_id, user_id, emoji) values (%L, %L, %L, '👍')$$, v_msg, p_gid, v_me),
+    format($$insert into public.message_reactions (message_id, conversation_id, user_id, emoji) values (%L, %L, %L, 'love')$$, v_msg, p_gid, v_me),
     format($$insert into public.message_stars (message_id, user_id) values (%L, %L)$$, v_msg, v_me),
     format($$insert into public.pinned_messages (conversation_id, message_id, pinned_by) values (%L, %L, %L)$$, p_gid, v_msg, v_me),
     format($$insert into public.community_posts (community_id, author_id, content_type, prompt_id) values (%L, %L, 'prompt', 'a0000000-0000-4000-8000-000000000001')$$, p_gid, v_me),
