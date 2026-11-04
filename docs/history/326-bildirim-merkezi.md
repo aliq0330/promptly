@@ -1,6 +1,6 @@
 # 326 — Bildirim merkezi: zilin altında hızlı eylemli panel, gruplu kartlar, bölünmüş gelen kutusu, sessize al / ertele
 
-Tarih: 2026-11-03 · Durum: **kodda uygulandı; iki migration canlıya UYGULANMADI** (`20261103110000_notification_center.sql`, `20261103120000_comment_reactions.sql` — deploy hattı uygular). Mockup: https://claude.ai/artifact/DEhUsKXH383fnREotaqCcF (4 ekran: masaüstü açılır panel · masaüstü detay sayfası · mobil liste · mobil detay).
+Tarih: 2026-11-03 · Durum: **uygulandı; iki migration canlıda (PR #432 deploy hattıyla, 2026-11-03)** (`20261103110000_notification_center.sql`, `20261103120000_comment_reactions.sql` — deploy hattı uygular). Mockup: https://claude.ai/artifact/DEhUsKXH383fnREotaqCcF (4 ekran: masaüstü açılır panel · masaüstü detay sayfası · mobil liste · mobil detay).
 
 ## 1. Amaç ve kararlar
 

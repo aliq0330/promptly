@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { likeContent, unlikeContent, type LikeableContentType } from "@/lib/supabase/likes";
+import { likeContent, unlikeContent, type ReactionTargetType } from "@/lib/supabase/likes";
 import { changeReaction, fetchMyReaction } from "@/lib/supabase/reactions";
 import { DEFAULT_REACTION, type ReactionKey } from "@/lib/reactions";
 import { refreshBreakdown, shiftBreakdown } from "@/features/reactions/reaction-breakdown";
@@ -34,7 +34,7 @@ const inFlight = new Set<string>();
  * `engagement-realtime-provider.tsx` keeps it converging to the real
  * `like_count` column across tabs/other users too.
  */
-export function useLikeState(id: string, likeCount: number, contentType: LikeableContentType = "prompt") {
+export function useLikeState(id: string, likeCount: number, contentType: ReactionTargetType = "prompt") {
   const { user } = useAuth();
   const key = engagementStore.keyOf("like", contentType, id);
   const entry = useEngagementEntry("like", contentType, id, likeCount);

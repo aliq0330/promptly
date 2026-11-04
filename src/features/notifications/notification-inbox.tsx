@@ -68,7 +68,7 @@ function Inbox() {
     return (
       <div className="fixed inset-0 z-[55] flex flex-col bg-background" data-notification-page="detail">
         <NotificationDetail card={selected} list={list} variant="page" onBack={() => select(null)} />
-        <UndoBar placement="fixed" />
+        <UndoBar placement="fixed" aboveNav={false} />
       </div>
     );
   }

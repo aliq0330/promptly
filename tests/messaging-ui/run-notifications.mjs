@@ -71,6 +71,16 @@ function makeNotifications(db, rows) {
     if (!b.p_enabled) state.prefs.push(b.p_key);
     return { body: null };
   };
+  // Yorum tepki sayıları (docs/history/327-*): başkalarının tepkileri `state.others` + benim tepkilerim `state.commentLikes`.
+  state.others = [];
+  db.rpc.comment_reaction_counts = (b) => {
+    const rows = [...state.others, ...state.commentLikes.map((l) => ({ comment_id: l.comment_id, reaction: l.reaction ?? "love", n: 1 }))].filter((r) => (b.p_ids ?? []).includes(r.comment_id));
+    const by = new Map();
+    for (const r of rows) by.set(`${r.comment_id}|${r.reaction}`, { target_id: r.comment_id, reaction: r.reaction, n: (by.get(`${r.comment_id}|${r.reaction}`)?.n ?? 0) + r.n });
+    state.calls.push(["comment_reaction_counts", (b.p_ids ?? []).length]);
+    return { body: [...by.values()] };
+  };
+  db.rpc.comment_reaction_friends = () => ({ body: [] });
   db.rpc.accept_prompt_edit_suggestion = (b) => { state.calls.push(["accept_suggestion", b.p_suggestion_id, b.p_final_prompt_text]); return { body: null }; };
   db.rpc.reject_prompt_edit_suggestion = (b) => { state.calls.push(["reject_suggestion", b.p_suggestion_id]); return { body: null }; };
   db.extraRoutes = async ({ table, method, q, body, json, rows: rowsOf, route }) => {
@@ -79,7 +89,7 @@ function makeNotifications(db, rows) {
     const inl = (v) => (v?.startsWith("in.(") ? v.slice(4, -1).split(",").map((s) => s.replace(/"/g, "")) : null);
     if (table === "notifications" && method === "PATCH") { state.calls.push(["patch_notifications", body]); state.rows.forEach((r) => (r.is_read = true)); return noContent().then(() => true); }
     if (table === "notifications" && method === "DELETE") { state.calls.push(["delete_all"]); state.rows = []; return noContent().then(() => true); }
-    if (table === "prompt_comments" && method === "GET") { const ids = inl(q.get("id")) ?? []; return rowsOf(state.comments.filter((c) => ids.includes(c.id)).map((c) => ({ id: c.id, body: c.body, deleted_at: null }))); }
+    if (table === "prompt_comments" && method === "GET") { const ids = inl(q.get("id")) ?? []; return rowsOf(state.comments.filter((c) => ids.includes(c.id)).map((c) => ({ id: c.id, body: c.body, deleted_at: null, like_count: c.like_count ?? 0, media_kind: c.media_kind ?? null, media_ref: c.media_ref ?? null, media_width: c.media_width ?? null, media_height: c.media_height ?? null, attach_type: c.attach_type ?? null, attach_id: c.attach_id ?? null }))); }
     if (table === "prompt_comments" && method === "POST") {
       const row = { id: `c9000000-0000-4000-8000-${String(++state.seq).padStart(12, "0")}`, body: body.body, parent_id: body.parent_id, like_count: 0, created_at: new Date().toISOString(), edited_at: null, deleted_at: null, rating: null, profiles: { ...U.alice, email: undefined, phone: undefined } };
       state.replies.push({ ...body, id: row.id });
@@ -198,32 +208,41 @@ await scenario("3. Esc, dışarı tıklama ve rota değişimi paneli kapatır; T
   await popover(page).waitFor({ state: "detached" });
 });
 
-await scenario("4. Hızlı beğen: seçici altı tepki, tepki seçilince düğme 'Ateş · Değiştir', Geri al beğeniyi kaldırır", async ({ page, state }) => {
+const picker = (page) => page.locator("[data-reaction-picker]");
+await scenario("4. Hızlı beğen: gönderideki emoji seçici açılır (6 hareketli emoji), seçilince düğme tepkinin adı olur, Geri al kaldırır; panel seçiciyle kapanmaz", async ({ page, state }) => {
   await openPopover(page);
   const c = card(page, popover(page), "comment");
-  await c.locator("[data-action=like]").click();
-  assert.equal(await c.locator("[data-reaction-row] [data-reaction]").count(), 6);
-  await c.locator('[data-reaction="fire"]').click();
-  await c.locator("[data-action=like]").filter({ hasText: "Ateş · Değiştir" }).waitFor();
+  const like = c.locator("[data-action=like] button");
+  await like.click();
+  await picker(page).waitFor();
+  assert.equal(await picker(page).locator("[data-reaction]").count(), 6);
+  await picker(page).locator('[data-reaction="fire"]').click();
+  await like.filter({ hasText: "Ateş" }).waitFor();
+  await popover(page).waitFor();
   assert.deepEqual(state.calls.find((x) => x[0] === "like_comment"), ["like_comment", C1, "fire"]);
   await popover(page).locator("[data-undo-bar=inline]").waitFor();
   assert.match(await popover(page).locator("[data-undo-bar]").textContent(), /Ateş tepkisi verdin/);
   assert.equal(await c.getAttribute("data-unread"), "false", "eylem sonrası kart okundu");
   await popover(page).locator("[data-action=undo]").click();
-  await c.locator("[data-action=like]").filter({ hasText: "Hızlı beğen" }).waitFor();
+  await like.filter({ hasText: "Hızlı beğen" }).waitFor();
   assert.ok(state.calls.some((x) => x[0] === "unlike_comment"));
   // Tepki değiştirme: PATCH
-  await c.locator("[data-action=like]").click();
-  await c.locator('[data-reaction="love"]').click();
-  await c.locator("[data-action=like]").filter({ hasText: "Sevdim · Değiştir" }).waitFor();
-  await c.locator("[data-action=like]").click();
-  await c.locator('[data-reaction="wow"]').click();
-  await c.locator("[data-action=like]").filter({ hasText: "Vay be · Değiştir" }).waitFor();
+  await like.click();
+  await picker(page).locator('[data-reaction="love"]').click();
+  await like.filter({ hasText: "Sevdim" }).waitFor();
+  await like.click();
+  await picker(page).locator('[data-reaction="wow"]').click();
+  await like.filter({ hasText: "Vay be" }).waitFor();
   assert.deepEqual(state.calls.find((x) => x[0] === "change_reaction"), ["change_reaction", C1, "wow"]);
-  // Seçili olana tekrar basmak geri alır.
-  await c.locator("[data-action=like]").click();
-  await c.locator('[data-reaction="wow"]').click();
-  await c.locator("[data-action=like]").filter({ hasText: "Hızlı beğen" }).waitFor();
+  // Seçili olana tekrar basmak geri alır; Esc yalnız seçiciyi kapatır, panel kalır.
+  await like.click();
+  await picker(page).waitFor();
+  await page.keyboard.press("Escape");
+  await picker(page).waitFor({ state: "detached" });
+  await popover(page).waitFor();
+  await like.click();
+  await picker(page).locator('[data-reaction="wow"]').click();
+  await like.filter({ hasText: "Hızlı beğen" }).waitFor();
 });
 
 await scenario("5. Yanıtla: satır içi kutu, gönderince yanıt balonu kartta kalır, parent_id yorum, Geri al yanıtı siler", async ({ page, state }) => {
@@ -314,7 +333,8 @@ await scenario("11. Ayrıntı: /notifications?n= bölünmüş gelen kutusu (sold
   assert.equal(await page.locator("[data-notification-row]").count(), 6);
   assert.equal(await page.locator("[data-notification-row][aria-current=true]").count(), 1);
   assert.ok(state.calls.some((x) => x[0] === "mark_read"), "açılışta okundu");
-  assert.equal(await detail.locator("[data-reaction-row] [data-reaction]").count(), 6, "hızlı tepki satırı");
+  await detail.locator("[data-inline-reaction-picker]").waitFor();
+  assert.equal(await detail.locator("[data-inline-reaction-picker] [data-reaction]").count(), 6, "açık emoji seçici");
   assert.ok((await detail.locator("[data-linked-content=card]").textContent()).includes("Gece Şehri · Sinematik"), "bağlı içerik kartı");
   // Listeden başka bir bildirim seçmek ayrıntıyı değiştirir.
   await page.locator("[data-notification-row]").filter({ hasText: "beğendi" }).click();
@@ -329,10 +349,16 @@ await scenario("12. Ayrıntıda yorum: hızlı tepki satırı, yanıt kutusu, fo
   await page.goto(`${BASE}/notifications?n=${encodeURIComponent("n|n1")}`);
   const detail = page.locator("[data-notification-detail]");
   await detail.waitFor();
-  await detail.locator('[data-reaction="clap"]').click();
-  await detail.locator('[data-reaction="clap"][aria-pressed=true]').waitFor();
+  // Seçici AÇIK gelir (gönderideki emoji menüsünün aynısı, 6 hareketli emoji) ve ayrıca açılıp kapanan bir şey yoktur.
+  await detail.locator("[data-inline-reaction-picker]").waitFor();
+  assert.equal(await detail.locator("[data-inline-reaction-picker] [data-reaction]").count(), 6);
+  await detail.locator('[data-inline-reaction-picker] [data-reaction="clap"]').click();
+  await detail.locator('[data-inline-reaction-picker] [data-reaction="clap"][aria-current=true]').waitFor();
   await until(() => state.calls.some((x) => x[0] === "like_comment"), "tepki isteği");
   assert.deepEqual(state.calls.find((x) => x[0] === "like_comment"), ["like_comment", C1, "clap"]);
+  // Tepki özeti: tepki sayılıyor ve gönderideki gibi "Tepkiler" listesine açılıyor.
+  await detail.locator(`[data-reaction-summary="${C1}"]`).waitFor();
+  assert.match(await detail.locator(`[data-reaction-summary="${C1}"]`).textContent(), /Tepki verdin/);
   assert.ok((await detail.locator("textarea").count()) >= 1);
   assert.ok((await detail.getByRole("button", { name: /Fotoğraf|GIF|İçerik|photo|content/i }).count()) >= 2, "ek araçları");
   await detail.locator("textarea").fill("Sağ ol!");
@@ -356,6 +382,18 @@ await scenario("13. Ayrıntı alt satırı: Sessize al (kişi/içerik), Yarın h
   await detail.locator("[data-action=mute-content]").click();
   await until(() => state.calls.filter((x) => x[0] === "mute" && x[3] === true).length === 2, "içerik sessize alma RPC'si");
   assert.deepEqual(state.calls.filter((x) => x[0] === "mute" && x[3] === true).pop().slice(0, 3), ["mute", "content", `/prompts/local?id=${P1}`], "içerik anahtarı hl= olmadan");
+  // Durum biliniyor: içerik sessizde → seçenek "sesini aç"; kişi de sessize alınınca ana düğme "Sesi aç" olur.
+  await detail.locator("[data-action=mute]").click();
+  await detail.locator("[data-action=unmute-content]").waitFor();
+  await detail.locator("[data-action=mute-person]").click();
+  await until(() => state.calls.filter((x) => x[0] === "mute" && x[3] === true).length === 3, "kişi yeniden sessize alındı");
+  await page.locator("[data-undo-bar]").waitFor();
+  await detail.locator("[data-action=unmute]").waitFor();
+  assert.match(await detail.locator("[data-action=unmute]").textContent(), /Sesi aç/);
+  await detail.locator("[data-action=unmute]").click();
+  await detail.locator("[data-action=unmute-person]").click();
+  await until(() => state.calls.some((x) => x[0] === "mute" && x[1] === "actor" && x[3] === false && state.calls.filter((y) => y[0] === "mute" && y[1] === "actor").length >= 4), "kişinin sesi açıldı");
+  await detail.locator("[data-action=mute]").waitFor();
   // Ertele
   await detail.locator("[data-action=snooze]").click();
   await page.locator('[data-notification-row="n|n1"]').waitFor({ state: "detached" });
@@ -445,23 +483,124 @@ await scenario("17. Mobil (390): zil panel açmaz, doğrudan sayfaya gider; kart
   assert.ok(state.calls.some((x) => x[0] === "mark_read"));
 }, { viewport: { width: 390, height: 844 } });
 
-await scenario("18. Mobil detay: tepki düğmeleri + ipucu metni, yanıt gönder, taşma yok", async ({ page, state }) => {
+await scenario("18. Mobil detay: açık emoji seçici + ipucu, yanıt kutusu içeriğin akışında (sabit değil) ve alt satırı örtmez, 'Bu tür bildirimleri kapat' onayı sayfanın ÜSTÜNDE açılır, taşma yok", async ({ page, state }) => {
   await page.goto(`${BASE}/notifications?n=${encodeURIComponent("n|n1")}`);
   const detail = page.locator("[data-notification-page=detail]");
   await detail.waitFor();
-  await detail.locator('[data-reaction="love"]').click();
-  await detail.locator('[data-reaction="love"][aria-pressed=true]').waitFor();
+  await detail.locator('[data-inline-reaction-picker] [data-reaction="love"]').click();
+  await detail.locator('[data-inline-reaction-picker] [data-reaction="love"][aria-current=true]').waitFor();
   assert.match(await detail.locator("[data-reaction-hint]").textContent(), /Sevdim tepkisi verdin/);
   await shot(page, "4-mobile-detail");
+  // Yanıt kutusu ekrana sabit değil, kaydırılan içeriğin içinde.
+  const position = await detail.locator("[data-reply-composer]").evaluate((el) => { let n = el; while (n && n !== document.body) { const p = getComputedStyle(n).position; if (p === "fixed" || p === "sticky") return p + ":" + (n.dataset.notificationPage ?? n.tagName); n = n.parentElement; } return "flow"; });
+  assert.match(position, /^(flow|fixed:detail)$/, `yanıt kutusu sabit olmamalı (${position})`);
   await detail.locator("textarea").fill("Mobilden yanıt");
   await detail.locator("[data-action=reply-send]").click();
   await detail.locator("[data-reply-bubble]").waitFor();
   assert.equal(state.replies.length, 1);
+  // Alt satır kaydırılınca erişilir ve hiçbir şey onu örtmez.
+  const typeOff = detail.locator("[data-action=type-off]");
+  await typeOff.evaluate((el) => el.scrollIntoView({ block: "center" })); // kaydırılabilen sayfanın dibinde "Geri al" şeridinin üstünde kalabilmeli
+  await page.waitForTimeout(150);
+  const covered = await typeOff.evaluate((el) => { const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !(t === el || el.contains(t)); });
+  assert.equal(covered, false, "Bu tür bildirimleri kapat düğmesi örtülmemeli");
+  await typeOff.click();
+  const dialog = page.getByRole("dialog");
+  await dialog.waitFor();
+  await page.waitForTimeout(600); // alt kart yukarı kayarak açılır: animasyon bitmeden vuruş denemesi anlamsız
+  assert.match(await dialog.textContent(), /Yorumlar ve yanıtlar/);
+  const confirm = dialog.getByRole("button", { name: "Kapat", exact: true });
+  const hit = await confirm.evaluate((el) => { const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return t === el || el.contains(t); });
+  assert.ok(hit, "onay penceresi tam sayfa ayrıntının arkasında kalmamalı (z-index)");
+  await confirm.click();
+  await until(() => state.calls.some((x) => x[0] === "pref"), "tür tercihi RPC'si");
+  assert.deepEqual(state.calls.find((x) => x[0] === "pref"), ["pref", "comments", false]);
+  await page.locator("[data-undo-bar]").waitFor();
+  assert.match(await page.locator("[data-undo-bar]").textContent(), /Yorumlar ve yanıtlar/);
   assert.ok(await overflowFree(page));
 }, { viewport: { width: 390, height: 844 } });
 
+await scenario("28. Yorum tepkileri sayılır: başkalarının tepkisi toplamda, özet ve 'Tepkiler' penceresi tam sayfa ayrıntının ÜSTÜNDE açılır", async ({ page, state }) => {
+  await page.goto(`${BASE}/notifications?n=${encodeURIComponent("n|n1")}`);
+  const detail = page.locator("[data-notification-page=detail]");
+  await detail.waitFor();
+  await detail.locator(`[data-reaction-summary="${C1}"]`).waitFor();
+  assert.match(await detail.locator(`[data-reaction-summary="${C1}"]`).textContent(), /3 kişi tepki verdi/);
+  await detail.locator(`[data-reaction-summary="${C1}"]`).click();
+  const sheet = page.getByRole("dialog");
+  await sheet.waitFor();
+  await page.waitForTimeout(600);
+  assert.match(await sheet.textContent(), /Tepkiler/);
+  const hit = await sheet.evaluate((el) => { const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.x + r.width / 2, r.y + 40); return el.contains(t); });
+  assert.ok(hit, "Tepkiler penceresi ayrıntının arkasında kalmamalı");
+  assert.ok(state.calls.some((x) => x[0] === "comment_reaction_counts"), "sayılar toplu RPC'den");
+}, {
+  viewport: { width: 390, height: 844 },
+  setup: (_db, state) => { state.comments[0].like_count = 3; state.others = [{ comment_id: C1, reaction: "fire", n: 2 }, { comment_id: C1, reaction: "love", n: 1 }]; },
+});
+
+await scenario("29. Ek önizlemesi: kartta kısa yazı + GIF + içerik eki (2 ek → iki önizleme); ayrıntıda yorumun tamamı; 1 ek → '1 ek var'", async ({ page }) => {
+  await openPopover(page);
+  const c = card(page, popover(page), "comment");
+  assert.equal(await c.locator("[data-comment-extras-strip]").getAttribute("data-comment-extras-strip"), "2");
+  assert.equal(await c.locator("[data-extras-label]").count(), 0, "2 ekte yalnız önizlemeler");
+  await c.locator('[data-comment-media="gif"]').waitFor();
+  await c.locator('[data-comment-attachment="prompt"]').waitFor();
+  assert.match(await c.locator("[data-card-quote]").textContent(), /Işık kontrolü harika/);
+  await c.locator("[data-action=detail]").click();
+  await page.waitForURL(/\/notifications/);
+  const detail = page.locator("[data-notification-detail]");
+  await detail.waitFor();
+  await detail.locator("[data-detail-body]").getByText(/İstanbul'da denedim, sonuç çok güzel çıktı/).waitFor();
+  await detail.locator('[data-detail-body] [data-comment-media="gif"]').waitFor();
+  await detail.locator('[data-detail-body] [data-comment-attachment="prompt"]').waitFor();
+}, {
+  setup: (_db, state) => { Object.assign(state.comments[0], { media_kind: "gif", media_ref: "abc12345", attach_type: "prompt", attach_id: P1 }); },
+});
+
+await scenario("29b. Tek ek: '1 ek var' etiketi + önizleme; yalnız ekli (yazısız) yorumda kart boş kalmaz", async ({ page }) => {
+  await openPopover(page);
+  const c = card(page, popover(page), "comment");
+  assert.match(await c.locator("[data-extras-label]").textContent(), /1 ek var/);
+  assert.equal(await c.locator("[data-card-quote]").count(), 0, "yazısı yok → boş alıntı kutusu çizilmez");
+  await c.locator('[data-comment-attachment="prompt"]').waitFor();
+}, {
+  setup: (_db, state) => { Object.assign(state.comments[0], { body: "", attach_type: "prompt", attach_id: P1 }); },
+});
+
+await scenario("30. Kişi ⋮ menüsü (sohbet başlığı = profil menüsüyle aynı bileşen): 'Bu kişiyi sessize al' → 'Sesini aç'; durum bildirim merkeziyle ortak", async ({ page, state }) => {
+  const open = async () => {
+    await page.goto(`${BASE}/messages/local?id=${CONV}`);
+    const menu = page.getByRole("button", { name: "Profil seçenekleri" });
+    await menu.waitFor();
+    await page.waitForTimeout(800); // menü düğmesi yüklenince yeniden çizilebilir; oturana kadar bekle
+    await menu.click();
+  };
+  await open();
+  const item = page.locator("[data-action=profile-mute]");
+  await item.waitFor();
+  assert.match(await item.textContent(), /Bu kişiyi sessize al/);
+  await item.click();
+  await until(() => state.calls.some((x) => x[0] === "mute" && x[1] === "actor" && x[3] === true), "sessize alma RPC'si");
+  assert.deepEqual(state.calls.find((x) => x[0] === "mute"), ["mute", "actor", U.bob.id, true]);
+  // Menü bu kez "Sesini aç" der (durum sunucudan ve yerel mağazadan biliniyor).
+  await page.getByRole("button", { name: "Profil seçenekleri" }).click();
+  const unmute = page.locator("[data-action=profile-unmute]");
+  await unmute.waitFor();
+  assert.match(await unmute.textContent(), /Sesini aç/);
+  await unmute.click();
+  await until(() => state.calls.some((x) => x[0] === "mute" && x[1] === "actor" && x[3] === false), "sesi açma RPC'si");
+  // Sayfa yeniden yüklenince (mağaza sıfırlanır) sunucudaki durum yeniden okunur: sessize al → yenile → menü "Sesini aç" der.
+  await page.getByRole("button", { name: "Profil seçenekleri" }).click();
+  await page.locator("[data-action=profile-mute]").click();
+  await until(() => state.mutes.length === 1, "sessize alındı");
+  await open();
+  await page.locator("[data-action=profile-unmute]").waitFor();
+});
+
 await scenario("19. İngilizce: panel cümleleri, gruplu başlık ve eylem etiketleri çevrilmiş", async ({ page }) => {
   await openPopover(page);
+  await popover(page).locator("[data-action=like] button").waitFor(); // yorum bilgisi gelince tepki düğmesi çizilir
   const text = await popover(page).textContent();
   assert.match(text, /Amy, Carol and 1 more liked your prompt/);
   assert.match(text, /Quick like/);

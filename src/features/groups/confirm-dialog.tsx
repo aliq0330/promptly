@@ -18,6 +18,7 @@ export function ConfirmDialog({
   busy,
   error,
   confirmDisabled = false,
+  overLayers = false,
   onConfirm,
   onCancel,
   children,
@@ -30,13 +31,15 @@ export function ConfirmDialog({
   busy: boolean;
   error: string | null;
   confirmDisabled?: boolean;
+  /** Tam ekran bir katmanın (z-55 bildirim ayrıntısı, hikâye z-60) ÜSTÜNDE açılır; yoksa katmanın arkasında kalıp hiç görünmez. */
+  overLayers?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   children?: ReactNode;
 }) {
   const { t } = useTranslation();
   return (
-    <Modal onClose={busy ? () => undefined : onCancel} labelledBy={id}>
+    <Modal onClose={busy ? () => undefined : onCancel} labelledBy={id} overLayers={overLayers}>
       <div className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
         <h2 id={id} className="text-base font-semibold text-text">
           {title}

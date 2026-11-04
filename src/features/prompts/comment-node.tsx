@@ -1,8 +1,6 @@
 "use client";
 
-import { LikeToggle, type LikeToggleResult } from "@/components/ui/like-toggle";
-import { ReactionIcon } from "@/features/reactions/reaction-icon";
-import type { ReactionKey } from "@/lib/reactions";
+import { CommentReactions } from "@/features/reactions/comment-reactions";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, CornerDownRight } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -36,12 +34,6 @@ export interface CommentTree {
   postError: string | null;
   canInteract: boolean;
   currentUserId: string | null;
-  likedIds: Set<string>;
-  /** The viewer's own reaction per liked comment (docs/history/326-*): a non-default one is shown as its emoji beside the heart. */
-  reactionById: Map<string, ReactionKey>;
-  likeCounts: Record<string, number>;
-  pendingLikeIds: Set<string>;
-  onToggleLike: (id: string) => Promise<LikeToggleResult>;
   editingId: string | null;
   onStartEdit: (comment: PromptComment) => void;
   onCancelEdit: () => void;
@@ -125,9 +117,6 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
   const hasChildren = children.length > 0;
   const isExpanded = tree.expandedIds.has(comment.id);
   const isReplyingHere = tree.replyingTo === comment.id;
-  const isLiked = tree.likedIds.has(comment.id);
-  const likeCount = tree.likeCounts[comment.id] ?? comment.likeCount;
-  const isLikePending = tree.pendingLikeIds.has(comment.id);
   const isDeleted = Boolean(comment.deletedAt);
   const isOwn = Boolean(tree.currentUserId) && tree.currentUserId === comment.author.id;
   const isEditingHere = tree.editingId === comment.id;
@@ -213,21 +202,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 {formatRelativeTime(comment.createdAt, language)}
                 {comment.editedAt && ` · ${t("comments.edited")}`}
               </span>
-              <LikeToggle
-                liked={isLiked}
-                count={likeCount}
-                size={13}
-                hideZero
-                onToggle={() => tree.onToggleLike(comment.id)}
-                disabled={isLikePending}
-                title={tree.canInteract ? undefined : t("prompt.loginToLike")}
-                label={t(isLiked ? "prompt.unlikeAria" : "prompt.likeAria", { count: likeCount })}
-                className={cn(
-                  "flex items-center gap-1 rounded-sm py-0.5 transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-60",
-                  isLiked && "text-danger hover:text-danger",
-                )}
-              />
-              <MyReactionMark reaction={tree.reactionById.get(comment.id)} />
+              <CommentReactions id={comment.id} likeCount={comment.likeCount} size={13} className="-my-0.5" />
               {tree.canInteract && (
                 <button
                   type="button"
@@ -340,8 +315,6 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
   const hasChildren = children.length > 0;
   const isExpanded = tree.expandedIds.has(comment.id);
   const isReplyTarget = tree.replyingTo === comment.id;
-  const isLiked = tree.likedIds.has(comment.id);
-  const likeCount = tree.likeCounts[comment.id] ?? comment.likeCount;
   const isDeleted = Boolean(comment.deletedAt);
   const isOwn = Boolean(tree.currentUserId) && tree.currentUserId === comment.author.id;
   const isEditingHere = tree.editingId === comment.id;
@@ -462,22 +435,8 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
         </div>
 
         {!isDeleted && (
-          <div className="flex w-9 shrink-0 flex-col items-center self-start">
-          <LikeToggle
-            liked={isLiked}
-            count={likeCount}
-            size={16}
-            hideZero
-            onToggle={() => tree.onToggleLike(comment.id)}
-            disabled={tree.pendingLikeIds.has(comment.id)}
-            title={tree.canInteract ? undefined : t("prompt.loginToLike")}
-            label={t(isLiked ? "prompt.unlikeAria" : "prompt.likeAria", { count: likeCount })}
-            className={cn(
-              "flex w-9 shrink-0 flex-col items-center gap-0.5 rounded-md pt-2 text-caption text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60",
-              isLiked && "text-danger hover:text-danger",
-            )}
-          />
-          <MyReactionMark reaction={tree.reactionById.get(comment.id)} />
+          <div className="flex w-10 shrink-0 flex-col items-center self-start pt-1">
+            <CommentReactions id={comment.id} likeCount={comment.likeCount} size={16} layout="column" buttonClassName="flex-col gap-0.5 !h-auto py-1" />
           </div>
         )}
       </div>
@@ -490,15 +449,5 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
         </div>
       )}
     </div>
-  );
-}
-
-/** The viewer's own non-default reaction on a comment (docs/history/326-*), shown beside the heart: the heart alone means the default "love". */
-function MyReactionMark({ reaction }: { reaction: ReactionKey | undefined }) {
-  if (!reaction || reaction === "love") return null;
-  return (
-    <span data-my-comment-reaction={reaction} className="-ml-1 inline-flex items-center">
-      <ReactionIcon reaction={reaction} size={14} />
-    </span>
   );
 }

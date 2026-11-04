@@ -1,14 +1,20 @@
 "use client";
 
+import { Paperclip } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { CompactContentCard } from "@/features/content/compact-content-card";
+import { CommentMediaView } from "@/features/prompts/comment-extras";
+import { attachmentStateIn, type CommentContext } from "@/lib/supabase/notification-context";
+import { extrasPlan } from "@/lib/notification-extras";
 import { ReactionIcon } from "@/features/reactions/reaction-icon";
 import { NOTIFICATION_ICONS, getNotificationIconKey } from "@/lib/notification-utils";
 import { QUOTED_PREVIEW_TYPES, groupedHeadline, milestoneInfo, withoutQuotedPreview } from "@/lib/notification-card";
 import { localizeNotificationMessage } from "@/lib/notification-message";
-import { REACTION_KEYS, REACTION_LABEL, type ReactionKey } from "@/lib/reactions";
+import { REACTION_LABEL, type ReactionKey } from "@/lib/reactions";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { AppNotification, NotificationCard } from "@/types";
+import type { NotificationContext } from "@/lib/supabase/notification-context";
 
 /** Kartın rozet simgesinin anahtarı: mevcut satır rozetiyle AYNI eşleme (tür + `hl`). */
 export function cardIconKey(card: NotificationCard) {
@@ -87,48 +93,38 @@ export function CardHeadline({ card, className, as: Tag = "p", plain = false }: 
   );
 }
 
-/** "Hızlı beğen" satırı: altı tepki; seçili olan işaretli, ona tekrar basmak geri alır. */
-export function ReactionPickRow({
-  current,
-  onPick,
-  disabled,
-  size = 24,
-  showLabels = false,
-  className,
-}: {
-  current: ReactionKey | null;
-  onPick: (reaction: ReactionKey) => void;
-  disabled?: boolean;
-  size?: number;
-  showLabels?: boolean;
-  className?: string;
-}) {
+type ExtraItem = { kind: "media" } | { kind: "attachment" };
+
+/** Yorum/yanıtın ekleri (fotoğraf · GIF · içerik, docs/history/327-*). Kart: 1 ek → "1 ek var" + önizleme, 2 ek → iki önizleme, 3+ → "N ek var" + ilk ikisi; `all` (Ayrıntı): hepsi, tam boy. */
+export function CommentExtrasStrip({ comment, context, all = false, className }: { comment: CommentContext | undefined; context: NotificationContext; all?: boolean; className?: string }) {
   const { t } = useTranslation();
+  if (!comment || comment.deleted) return null;
+  const items: ExtraItem[] = [...(comment.media ? [{ kind: "media" as const }] : []), ...(comment.attachment ? [{ kind: "attachment" as const }] : [])];
+  const plan = extrasPlan(items, all);
+  if (plan.previews.length === 0) return null;
   return (
-    <div role="group" aria-label={t("nc.pickReaction")} className={cn("flex flex-wrap gap-1.5", className)} data-reaction-row="">
-      {REACTION_KEYS.map((key) => {
-        const on = current === key;
-        return (
-          <button
-            key={key}
-            type="button"
-            disabled={disabled}
-            aria-pressed={on}
-            aria-label={t(REACTION_LABEL[key])}
-            title={t(REACTION_LABEL[key])}
-            data-reaction={key}
-            onClick={() => onPick(key)}
-            className={cn(
-              "inline-flex h-11 items-center justify-center gap-2 rounded-full border text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50",
-              showLabels ? "px-3.5" : "w-11",
-              on ? "border-primary bg-primary-soft text-primary" : "border-border-soft bg-surface hover:bg-surface-soft",
-            )}
-          >
-            <ReactionIcon reaction={key} size={size} />
-            {showLabels && <span>{t(REACTION_LABEL[key])}</span>}
-          </button>
-        );
-      })}
+    <div className={cn("space-y-2", className)} data-comment-extras-strip={items.length}>
+      {plan.labelCount != null && (
+        <p className="flex items-center gap-1.5 text-caption font-semibold text-text-muted" data-extras-label="">
+          <Paperclip size={13} aria-hidden />
+          {t(plan.labelCount === 1 ? "nc.extras.one" : "nc.extras.many", { count: plan.labelCount })}
+        </p>
+      )}
+      <div className="flex flex-wrap items-start gap-2">
+        {plan.previews.map((item) =>
+          item.kind === "media" && comment.media ? (
+            <CommentMediaView key="media" media={comment.media} className={all ? undefined : "w-32"} />
+          ) : item.kind === "attachment" && comment.attachment ? (
+            <CompactContentCard key="attachment" attachment={comment.attachment} state={attachmentStateIn(context, comment.attachment)} />
+          ) : null,
+        )}
+      </div>
     </div>
   );
+}
+
+/** Yorumun ek sayısı (kısa görünümde metin yoksa satırda gösterilir). */
+export function commentExtrasCount(comment: CommentContext | undefined): number {
+  if (!comment || comment.deleted) return 0;
+  return (comment.media ? 1 : 0) + (comment.attachment ? 1 : 0);
 }

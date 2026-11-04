@@ -46,6 +46,8 @@ const CHECKS = [
   { name: "prompt_likes tepki sütunu + hedef (docs/history/265-*)", get: () => `prompt_likes?select=${encodeURIComponent("id,reaction,target_id")}&limit=1` },
   { name: "reaction_stats (hedef başına tepki sayıları, docs/history/265-*)", get: () => `reaction_stats?select=${encodeURIComponent("target_id,reaction,n")}&limit=1` },
   { name: "rpc reaction_friends (takip ettiklerimden kim tepki verdi, docs/history/265-*)", rpc: "reaction_friends", body: { p_ids: [], p_per: 2 } },
+  { name: "rpc comment_reaction_counts + comment_reaction_friends (yorum tepki sayıları, docs/history/327-*)", rpc: "comment_reaction_counts", body: { p_ids: [] } },
+  { name: "rpc comment_reaction_friends (yorumda takip ettiklerimden kim tepki verdi, docs/history/327-*)", rpc: "comment_reaction_friends", body: { p_ids: [], p_per: 2 } },
   { name: "rpc profile_results + profile_result_count (profildeki Sonuçlar, yetim sonuçlar, docs/history/282-*, 283-*)", rpc: "profile_results", body: { p_creator: "00000000-0000-4000-8000-000000000000", p_limit: 1, p_offset: 0 } },
   { name: "rpc profile_result_count", rpc: "profile_result_count", body: { p_creator: "00000000-0000-4000-8000-000000000000" } },
   { name: "rpc feed_page", rpc: "feed_page", body: feedArgs },

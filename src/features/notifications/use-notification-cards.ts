@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useNotifications, type CardEvent } from "./notifications-provider";
 import { fetchNotificationCardsPage, NOTIFICATION_CARDS_PAGE, type NotificationCardsQuery } from "@/lib/supabase/notifications";
-import { EMPTY_NOTIFICATION_CONTEXT, fetchNotificationContext, type CommentContext, type NotificationContext } from "@/lib/supabase/notification-context";
+import { EMPTY_NOTIFICATION_CONTEXT, fetchNotificationContext, type NotificationContext } from "@/lib/supabase/notification-context";
 import type { NotificationCard } from "@/types";
 
 export type CardsStatus = "loading" | "ready" | "error";
@@ -156,17 +156,11 @@ export function useNotificationCards(query: NotificationCardsQuery, enabled = tr
         following: new Set([...prev.following, ...extra.following]),
         suggestions: new Map([...prev.suggestions, ...extra.suggestions]),
         linked: new Map([...prev.linked, ...extra.linked]),
+        attachmentSettled: new Set([...prev.attachmentSettled, ...extra.attachmentSettled]),
+        attachmentFailed: new Set([...prev.attachmentFailed, ...extra.attachmentFailed]),
       }));
     });
   }, [cards, user]);
-
-  const patchComment = useCallback((commentId: string, patch: Partial<CommentContext>) => {
-    setContext((prev) => {
-      const current = prev.comments.get(commentId);
-      if (!current) return prev;
-      return { ...prev, comments: new Map(prev.comments).set(commentId, { ...current, ...patch }) };
-    });
-  }, []);
 
   const setFollowing = useCallback((userId: string, following: boolean) => {
     setContext((prev) => {
@@ -193,7 +187,7 @@ export function useNotificationCards(query: NotificationCardsQuery, enabled = tr
   const reload = useCallback(() => load(true), [load]);
 
   return useMemo(
-    () => ({ cards, status, hasMore, loadingMore, moreFailed, loadMore, reload, newCount, context, local, setLocal, patchComment, setFollowing, patchSuggestion }),
-    [cards, status, hasMore, loadingMore, moreFailed, loadMore, reload, newCount, context, local, setLocal, patchComment, setFollowing, patchSuggestion],
+    () => ({ cards, status, hasMore, loadingMore, moreFailed, loadMore, reload, newCount, context, local, setLocal, setFollowing, patchSuggestion }),
+    [cards, status, hasMore, loadingMore, moreFailed, loadMore, reload, newCount, context, local, setLocal, setFollowing, patchSuggestion],
   );
 }

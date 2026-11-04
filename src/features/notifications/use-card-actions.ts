@@ -5,22 +5,21 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useNotifications } from "./notifications-provider";
 import type { useNotificationCards } from "./use-notification-cards";
 import type { CommentExtrasController } from "@/features/prompts/comment-extras";
-import { changeCommentReaction, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
 import { deleteComment } from "@/lib/supabase/comments";
 import { followUser, unfollowUser } from "@/lib/supabase/follows";
 import { acceptEditSuggestion, rejectEditSuggestion } from "@/lib/supabase/prompt-edit-suggestions";
 import { acceptMessageRequest, declineMessageRequest } from "@/lib/supabase/messages";
 import { postNotificationReply } from "@/lib/supabase/notification-reply";
-import { commentReplyTarget, messageRequestConversationId, notificationCommentId, suggestionId } from "@/lib/notification-actions";
+import { commentReplyTarget, messageRequestConversationId, suggestionId } from "@/lib/notification-actions";
 import { announceNotice } from "@/lib/app-notice";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { REACTION_LABEL, type ReactionKey } from "@/lib/reactions";
 import type { NotificationCard } from "@/types";
 
 type List = ReturnType<typeof useNotificationCards>;
 
 /**
- * Kart eylemlerinin TEK yeri (docs/history/326-*): zil paneli, mobil genişleyen kart ve Ayrıntı görünümü aynı fonksiyonları kullanır.
+ * Kart eylemlerinin TEK yeri (docs/history/326-*): zil paneli, mobil genişleyen kart ve Ayrıntı görünümü aynı fonksiyonları kullanır. Yoruma TEPKİ burada
+ * değil (docs/history/327-*): gönderideki tepki sistemidir (`ReactionButton`/`InlineReactionPicker` + `useLikeState`, `comment-reaction-controls.tsx`).
  * Her eylem iyimser çalışır (durum anında değişir), sunucu reddederse geri alınır ve bir uyarı çıkar; "Geri al" şeridi mümkün olan her yerde
  * eylemi gerçekten tersine çevirir. Eylem sonrası kart okundu sayılır. Düzenleme önerisi KABULÜ geri alınamaz (prompt metni değişir, sürüm kaydı oluşur);
  * reddetme için de sunucuda "yeniden aç" yoktur — ikisinde şerit yerine tek satırlık onay gösterilir.
@@ -30,7 +29,7 @@ export function useCardActions(card: NotificationCard, list: List) {
   const { t } = useTranslation();
   const { pushUndo, markRead } = useNotifications();
   const [busy, setBusy] = useState<string | null>(null);
-  const { context, patchComment, setFollowing, patchSuggestion, setLocal } = list;
+  const { context, setFollowing, patchSuggestion, setLocal } = list;
 
   const fail = useCallback(
     (err: unknown) => {
@@ -38,63 +37,6 @@ export function useCardActions(card: NotificationCard, list: List) {
       announceNotice(t("nc.actionFailed"));
     },
     [t],
-  );
-
-  const commentId = notificationCommentId(card);
-  const myReaction = commentId ? (context.comments.get(commentId)?.myReaction ?? null) : null;
-
-  /** `reaction`: seçilen tepki; seçili olana tekrar basmak geri alır. */
-  const react = useCallback(
-    async (reaction: ReactionKey) => {
-      if (!user || !commentId || busy) return;
-      const previous = context.comments.get(commentId)?.myReaction ?? null;
-      setBusy("react");
-      try {
-        if (previous === reaction) {
-          patchComment(commentId, { myReaction: null });
-          try {
-            await unlikeComment(commentId, user.id);
-          } catch (err) {
-            patchComment(commentId, { myReaction: previous });
-            throw err;
-          }
-          pushUndo(t("nc.reactionRemoved"), async () => {
-            await likeComment(commentId, user.id, previous);
-            patchComment(commentId, { myReaction: previous });
-          });
-        } else if (previous) {
-          patchComment(commentId, { myReaction: reaction });
-          try {
-            await changeCommentReaction(commentId, user.id, reaction);
-          } catch (err) {
-            patchComment(commentId, { myReaction: previous });
-            throw err;
-          }
-          pushUndo(t("nc.reactionChanged", { label: t(REACTION_LABEL[reaction]) }), async () => {
-            await changeCommentReaction(commentId, user.id, previous);
-            patchComment(commentId, { myReaction: previous });
-          });
-        } else {
-          patchComment(commentId, { myReaction: reaction });
-          try {
-            await likeComment(commentId, user.id, reaction);
-          } catch (err) {
-            patchComment(commentId, { myReaction: null });
-            throw err;
-          }
-          pushUndo(t("nc.reacted", { label: t(REACTION_LABEL[reaction]) }), async () => {
-            await unlikeComment(commentId, user.id);
-            patchComment(commentId, { myReaction: null });
-          });
-        }
-        void markRead(card);
-      } catch (err) {
-        fail(err);
-      } finally {
-        setBusy(null);
-      }
-    },
-    [user, commentId, busy, context.comments, patchComment, pushUndo, markRead, card, t, fail],
   );
 
   const replyTarget = commentReplyTarget(card);
@@ -200,9 +142,6 @@ export function useCardActions(card: NotificationCard, list: List) {
 
   return {
     busy,
-    commentId,
-    myReaction,
-    react,
     replyTarget,
     reply,
     following,
