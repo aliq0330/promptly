@@ -57,7 +57,7 @@ import {
 import { fetchReactionsForConversation, reactionRowFromDb, removeMessageReaction, setMessageReaction, type MessageReactionRow, type RawReactionRow } from "@/lib/supabase/message-reactions";
 import type { ReactionKey } from "@/lib/reactions";
 import { mergeIncomingMessage, applyMessageUpdate, removeReactionRow, upsertReaction } from "./realtime-helpers";
-import { computeKeyboardInset } from "./viewport-helpers";
+import { useFitPanelToKeyboard } from "./viewport-helpers";
 import { ComposerReplyBar } from "./reply-quote";
 import { DockHeader, DOCK_ICON_BUTTON } from "./dock-header";
 import type { DockHandlers } from "./message-dock-provider";
@@ -277,6 +277,11 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null);
+  const panelCallbackRef = useCallback((el: HTMLDivElement | null) => {
+    panelRef.current = el;
+    setPanelEl(el);
+  }, []);
   const listRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
   const messagesById = new Map(messages.map((m) => [m.id, m]));
@@ -703,53 +708,10 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately only reacts to the message/pending counts changing, reads the rest fresh via refs/closures
   }, [messages.length, pendingSends.length]);
 
-  // Mobil klavye desteği (iPhone) — `panelRef`'in taban (bottom) boşluğu
-  // varsayılan olarak Tailwind sınıflarından geliyor (sohbet açıkken alt
-  // menü gizli, taban 0; composer safe-area boşluğunu kendi taşır). VisualViewport API klavye
-  // açıldığında küçülüyor; aradaki fark klavyenin kapladığı alan
-  // (`computeKeyboardInset`, ayrı bir saf fonksiyona çıkarıldı ki gerçek
-  // bir klavye olmadan da doğrulanabilsin — bu sandbox'ta gerçek bir iOS
-  // klavyesi hiç açılamıyor). Klavye kapladığı alan, CSS'in zaten ayırdığı
-  // taban boşluğundan büyükse, composer'ı klavyenin hemen üstüne çekmek
-  // için `bottom`'u JS ile klavye yüksekliğine eşitliyoruz; klavye
-  // kapanınca inline stili temizleyip CSS'e geri dönüyoruz.
-  useEffect(() => {
-    const panel = panelRef.current;
-    const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    // Dock yalnız büyük ekranda var: ekran klavyesi yok, panelin `bottom`'u dock'a ait.
-    if (!panel || !vv || isDock) return;
-
-    let baselineBottom: number | null = null;
-
-    function update() {
-      if (!panel || !vv) return;
-      if (baselineBottom === null) {
-        baselineBottom = parseFloat(getComputedStyle(panel).bottom) || 0;
-      }
-      const keyboardInset = computeKeyboardInset({
-        windowInnerHeight: window.innerHeight,
-        visualViewportHeight: vv.height,
-        visualViewportOffsetTop: vv.offsetTop,
-      });
-      if (keyboardInset > baselineBottom + 1) {
-        panel.style.bottom = `${keyboardInset}px`;
-      } else {
-        panel.style.bottom = "";
-      }
-      if (isNearBottomRef.current) {
-        requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: "end" }));
-      }
-    }
-
-    update();
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-      panel.style.bottom = "";
-    };
-  }, [isDock]);
+  // Mobil klavye (iPhone): panel klavye açıkken görünür alana oturur (docs/history/332-*); liste sondaysa sonda kalır.
+  useFitPanelToKeyboard(panelEl, !isDock, () => {
+    if (isNearBottomRef.current) requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: "end" }));
+  });
 
   const reactionsByMessage = useMemo(() => {
     const map = new Map<string, MessageReactionEntry[]>();
@@ -1340,7 +1302,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
 
   return (
     <div
-      ref={panelRef}
+      ref={panelCallbackRef}
       {...imageDrop.handlers}
       className={
         dock

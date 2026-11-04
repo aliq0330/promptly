@@ -14,7 +14,7 @@ import { getBlockedIds } from "@/lib/supabase/blocked-users";
 import { gifAttachment, removeMessageImages, uploadMessageImage } from "@/lib/supabase/message-images";
 import type { GifItem } from "@/lib/giphy";
 import { conversationIdByUser, filterMessageableUsers, sendMessage } from "@/lib/supabase/messages";
-import { computeKeyboardInset } from "./viewport-helpers";
+import { useFitPanelToKeyboard } from "./viewport-helpers";
 import { DockHeader } from "./dock-header";
 import type { DockHandlers } from "./message-dock-provider";
 import { messageHref, profileHref } from "@/lib/utils";
@@ -38,7 +38,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
   const { conversations, startConversationWith } = useRealMessages();
   const composerImages = useComposerImages();
   const imageDrop = useImageDrop(composerImages.addFiles, true);
-  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null);
   // Kept across retries: a failed first send must not create a second conversation.
   const createdRef = useRef<Conversation | null>(null);
 
@@ -85,31 +85,8 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
 
   const isDock = Boolean(dock);
 
-  // Mobile keyboard: lift the composer above it (same helper the open thread uses).
-  useEffect(() => {
-    const panel = panelRef.current;
-    const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    if (!panel || !vv || isDock) return;
-    let baselineBottom: number | null = null;
-    function update() {
-      if (!panel || !vv) return;
-      if (baselineBottom === null) baselineBottom = parseFloat(getComputedStyle(panel).bottom) || 0;
-      const inset = computeKeyboardInset({
-        windowInnerHeight: window.innerHeight,
-        visualViewportHeight: vv.height,
-        visualViewportOffsetTop: vv.offsetTop,
-      });
-      panel.style.bottom = inset > baselineBottom + 1 ? `${inset}px` : "";
-    }
-    update();
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-      panel.style.bottom = "";
-    };
-  }, [isDock]);
+  // Mobile keyboard: fit the panel to the visible area (same hook the open thread uses, docs/history/332-*).
+  useFitPanelToKeyboard(panelEl, !isDock);
 
   function handleBack() {
     if (dock) {
@@ -195,7 +172,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
 
   return (
     <div
-      ref={panelRef}
+      ref={setPanelEl}
       {...imageDrop.handlers}
       className={
         dock

@@ -1,25 +1,56 @@
+import { useEffect, useRef } from "react";
+import { keyboardFrame } from "@/lib/keyboard-frame";
+
 /**
- * Pure calculation for how much of the layout viewport's bottom edge is
- * currently covered by the on-screen keyboard, kept separate from the
- * VisualViewport wiring itself so it's unit-testable without a real
- * browser/keyboard — this sandbox's environment cannot open an iOS
- * software keyboard, so this is the part of that behavior that can
- * actually be verified directly (see the conversation view's own comment
- * for what remains unverified).
- *
- * `windowInnerHeight` is the full layout viewport height (stable, doesn't
- * shrink for the keyboard on iOS Safari); `visualViewportHeight`/
- * `visualViewportOffsetTop` come from `window.visualViewport`, which DOES
- * shrink (and offset) when the keyboard opens. The difference between them
- * is the keyboard's height. Never negative — clamps to 0 when nothing
- * covers the viewport (keyboard closed, or on browsers where these two
- * numbers already match).
+ * Telefonda tam ekran sohbet paneli (`fixed`) ekran klavyesi açıkken GÖRÜNÜR ALANA oturur (docs/history/332-*): üst kenarı
+ * `visualViewport.offsetTop`, yüksekliği `visualViewport.height` — başlık ekranın üstünde kaybolmaz, yazma alanı klavyenin hemen
+ * üstündedir. Eski yol (`bottom = innerHeight - height - offsetTop`) iOS 26 Safari'de yazma alanıyla klavye arasında boşluk
+ * bırakıyordu. Hesap saf `keyboardFrame`'de (birim testli; bu ortamda gerçek iOS klavyesi açılamaz). Panel `fixed` değilse (tablet+,
+ * dock) dokunulmaz. Klavye kapanınca satır içi stil temizlenir, panel CSS'ine döner. `onChange` her güncellemede çağrılır (ör. liste
+ * sondaysa sonda tut). `panel` bir state'ten gelir (callback ref): sohbet önce yükleniyor ekranı çizer, panel SONRA kurulur — bir
+ * `useRef` ile ilk etkide panel henüz yoktu ve kanca hiç bağlanmıyordu.
  */
-export function computeKeyboardInset(params: {
-  windowInnerHeight: number;
-  visualViewportHeight: number;
-  visualViewportOffsetTop: number;
-}): number {
-  const inset = params.windowInnerHeight - params.visualViewportHeight - params.visualViewportOffsetTop;
-  return Math.max(0, inset);
+export function useFitPanelToKeyboard(panel: HTMLElement | null, enabled: boolean, onChange?: () => void) {
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+
+  useEffect(() => {
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!enabled || !panel || !vv) return;
+
+    const style = panel.style;
+    const isFixed = () => getComputedStyle(panel).position === "fixed";
+    let fitted = false;
+    const clear = () => {
+      for (const prop of ["top", "height", "bottom"]) style.removeProperty(prop);
+      fitted = false;
+    };
+
+    function update() {
+      if (!vv) return;
+      const frame = fitted || isFixed()
+        ? keyboardFrame({ innerHeight: window.innerHeight, viewportHeight: vv.height, viewportOffsetTop: vv.offsetTop })
+        : null;
+      if (frame) {
+        style.setProperty("top", `${frame.top}px`);
+        style.setProperty("height", `${frame.height}px`);
+        style.setProperty("bottom", "auto");
+        fitted = true;
+      } else if (fitted) {
+        clear();
+      }
+      onChangeRef.current?.();
+    }
+
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      clear();
+    };
+  }, [panel, enabled]);
 }
