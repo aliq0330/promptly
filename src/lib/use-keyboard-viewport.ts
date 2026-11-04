@@ -1,15 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { keyboardFrame, type KeyboardFrame } from "./keyboard-frame";
 
-/** Ekran klavyesi bu kadar pikselden fazla yer kaplıyorsa "açık" sayılır (adres çubuğu/araç çubuğu oynamaları klavye değildir). */
-const KEYBOARD_MIN = 120;
-
-export interface KeyboardViewport {
-  /** Görünür alanın üst kenarı (iOS klavye açılınca sayfayı kaydırır) ve yüksekliği — `window.visualViewport`. */
-  top: number;
-  height: number;
-}
+/** Görünür alanın üst kenarı (iOS klavye açılınca sayfayı kaydırır) ve yüksekliği — `window.visualViewport`. */
+export type KeyboardViewport = KeyboardFrame;
 
 /**
  * Ekran klavyesi açıkken görünür alan (`visualViewport`), yoksa `null`. iOS Safari'de klavye açılınca düzen görünümü küçülmez: `fixed`
@@ -22,9 +17,8 @@ export function useKeyboardViewport(): KeyboardViewport | null {
     const visual = window.visualViewport;
     if (!visual) return;
     const update = () => {
-      const covered = window.innerHeight - visual.height - visual.offsetTop;
-      const shrunk = window.innerHeight - visual.height;
-      setViewport(shrunk > KEYBOARD_MIN || covered > KEYBOARD_MIN ? { top: Math.round(visual.offsetTop), height: Math.round(visual.height) } : null);
+      const frame = keyboardFrame({ innerHeight: window.innerHeight, viewportHeight: visual.height, viewportOffsetTop: visual.offsetTop });
+      setViewport((prev) => (prev && frame && prev.top === frame.top && prev.height === frame.height ? prev : frame));
     };
     update();
     visual.addEventListener("resize", update);
