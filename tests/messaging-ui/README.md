@@ -126,6 +126,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-community-shelf.mjs   # 7/7 beklenir
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-chat-popovers.mjs     # 10/10 beklenir
+node tests/messaging-ui/run-composer-emoji.mjs     # 6/6 beklenir (yazma alanı emoji paneli, docs/history/331-*)
 ```
 
 ## Promptly Spaces (`docs/history/213-*`)
