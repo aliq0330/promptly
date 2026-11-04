@@ -9,6 +9,7 @@ import { iconButtonClassName } from "@/components/ui/icon-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
+import { useMessageDock, useMessageDockEnabled } from "@/features/messages/message-dock-provider";
 import { hasUnreadInInbox } from "@/lib/conversation-lists";
 import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -27,6 +28,9 @@ export function Header() {
   const { conversations: realConversations } = useRealMessages();
   const { t, language, setLanguage } = useTranslation();
   const hasUnreadMessages = hasUnreadInInbox(realConversations);
+  // Büyük ekranda mesaj simgesi sayfaya gitmez, sağ alttaki Mesajlar panelini açar/kapatır (docs/history/328-*); dar ekranda ve /messages'ta eskisi gibi bağlantıdır.
+  const dock = useMessageDock();
+  const dockEnabled = useMessageDockEnabled();
   // Discover and Search carry their own (richer) search box — a second one in the header would just be a link back to the same page.
   const pathname = usePathname() ?? "";
   const hasOwnSearch = /^\/(discover|search)(\/|$)/.test(pathname);
@@ -75,17 +79,33 @@ export function Header() {
         {status === "authenticated" && (
           <>
             <NotificationBell />
-            <Link
-              href="/messages"
-              aria-label={t("header.messagesAriaLabel")}
-              title={t("header.messagesAriaLabel")}
-              className={iconButtonClassName(false, "shrink-0 relative")}
-            >
-              <MessageCircle size={20} />
-              {hasUnreadMessages && (
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
-              )}
-            </Link>
+            {dockEnabled ? (
+              <button
+                type="button"
+                onClick={dock.toggle}
+                aria-label={t("header.messagesAriaLabel")}
+                aria-expanded={dock.open}
+                title={t("header.messagesAriaLabel")}
+                data-header-messages=""
+                className={iconButtonClassName(dock.open, "shrink-0 relative")}
+              >
+                <MessageCircle size={20} />
+                {hasUnreadMessages && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />}
+              </button>
+            ) : (
+              <Link
+                href="/messages"
+                aria-label={t("header.messagesAriaLabel")}
+                title={t("header.messagesAriaLabel")}
+                data-header-messages=""
+                className={iconButtonClassName(false, "shrink-0 relative")}
+              >
+                <MessageCircle size={20} />
+                {hasUnreadMessages && (
+                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
+                )}
+              </Link>
+            )}
           </>
         )}
         {/* Members change the theme from the account menu; guests (no menu) keep the quick toggle here. */}

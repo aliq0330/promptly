@@ -19,6 +19,7 @@ export function ConversationList({
   onUnarchive,
   busyId,
   selection,
+  onOpen,
 }: {
   conversations: Conversation[];
   shareQuery?: string;
@@ -34,6 +35,8 @@ export function ConversationList({
   busyId?: string | null;
   /** Seçim modu (varsa satırlar seçilebilir olur): hangi kimlikler seçili + seç/bırak. */
   selection?: { selectedIds: ReadonlySet<string>; onToggle: (conversationId: string) => void };
+  /** Mesajlar dock'u: satıra basınca sayfaya gitmek yerine bu geri çağrı çalışır. */
+  onOpen?: (conversation: Conversation) => void;
 }) {
   const { t } = useTranslation();
   const [shown, setShown] = useState(CONVERSATIONS_SHOWN_STEP);
@@ -57,6 +60,7 @@ export function ConversationList({
           isActive={activeId === conversation.id}
           onUnarchive={onUnarchive ? () => onUnarchive(conversation.id) : undefined}
           unarchiveBusy={busyId === conversation.id}
+          onOpen={onOpen}
           selection={selection ? { selected: selection.selectedIds.has(conversation.id), onToggle: () => selection.onToggle(conversation.id) } : undefined}
         />
       ))}

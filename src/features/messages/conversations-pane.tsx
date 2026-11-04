@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { Portal } from "@/components/ui/portal";
 import { useToast } from "@/features/groups/use-toast";
-import { bucketConversations } from "@/lib/conversation-lists";
+import { bucketConversations, filterConversationsByQuery } from "@/lib/conversation-lists";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, messageHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
@@ -72,15 +72,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
 
   // Archive / "deleted from my list" are per-viewer state: every list below derives from the viewer's own rows.
   const buckets = useMemo(() => bucketConversations(conversations), [conversations]);
-  const q = query.trim().toLowerCase();
-  const matches = (list: Conversation[]) =>
-    !q
-      ? list
-      : list.filter((c) => {
-          if (c.group) return c.group.name.toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q);
-          const p = c.participants[0];
-          return p?.displayName.toLowerCase().includes(q) || p?.username.toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q);
-        });
+  const matches = (list: Conversation[]) => filterConversationsByQuery(list, query);
 
   const accepted = matches(buckets.inbox);
   const pending = matches(buckets.requests);

@@ -49,6 +49,25 @@ export function hasUnreadInInbox(conversations: readonly ConversationListFields[
   return [...requests, ...inbox].some((conversation) => conversation.unreadCount > 0 && !conversation.mutedAt);
 }
 
+/** Mesajlar dock'unun rozeti (docs/history/328-*): okunmamış mesajı olan SOHBET sayısı (mesaj sayısı değil); başlıktaki noktayla aynı kapsam — gelen kutusu + istekler, sessize alınan/arşivlenen/silinen sayılmaz. */
+export function unreadConversationCount(conversations: readonly ConversationListFields[]): number {
+  const { requests, inbox } = bucketConversations(conversations);
+  return [...requests, ...inbox].filter((conversation) => conversation.unreadCount > 0 && !conversation.mutedAt).length;
+}
+
+/** Sohbet listesi araması (Mesajlar sayfası + dock): grup adı / kişinin adı ve kullanıcı adı / son mesaj; büyük-küçük harf duyarsız, boş sorgu listeyi olduğu gibi verir. */
+export function filterConversationsByQuery<
+  T extends { group?: { name: string } | null; participants: readonly { displayName: string; username: string }[]; lastMessage: string },
+>(conversations: T[], query: string): T[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return conversations;
+  return conversations.filter((conversation) => {
+    if (conversation.group) return conversation.group.name.toLowerCase().includes(q) || conversation.lastMessage.toLowerCase().includes(q);
+    const person = conversation.participants[0];
+    return person?.displayName.toLowerCase().includes(q) || person?.username.toLowerCase().includes(q) || conversation.lastMessage.toLowerCase().includes(q);
+  });
+}
+
 /** Oldest message time the viewer may still see in a thread, or null when nothing was cleared. */
 export function visibleAfter(clearedAt: string | null | undefined): number | null {
   if (!clearedAt) return null;
