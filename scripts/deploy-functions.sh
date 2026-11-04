@@ -55,7 +55,7 @@ if want telegram; then
   supabase functions deploy telegram --yes --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
 fi
 
-# Taslağa görsel ekleme (docs/history/333-*): oturum açmış kullanıcı kişisel anahtarıyla çağırır, JWT taşımaz → kapalı. Bu işlev service role kullanır (yalnız Storage yazımı için).
+# Taslağa görsel ekleme (docs/history/334-*): oturum açmış kullanıcı kişisel anahtarıyla çağırır, JWT taşımaz → kapalı. Bu işlev service role kullanır (yalnız Storage yazımı için).
 if want media-upload; then
   node scripts/sync-function-shared.mjs --check
   supabase functions deploy media-upload --yes --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"

@@ -13,7 +13,7 @@ export interface ReactionIconHandle {
 }
 
 /**
- * One reaction emoji: the static poster (a plain `<img>`, nothing to load), and — only when `play()` is called — Telegram's animated
+ * One reaction emoji: the static poster (a plain `<img>`, nothing to load), and — only when `play()` is called — its animated
  * version drawn over it for one run. Used by the button, the picker, the summary and the "who reacted" list.
  */
 export const ReactionIcon = forwardRef<ReactionIconHandle, { reaction: ReactionKey; size: number; className?: string }>(function ReactionIcon(

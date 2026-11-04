@@ -1,5 +1,5 @@
 /**
- * Kişisel API / MCP ile taslağa görsel ekleme çekirdeği (docs/history/333-*). Bağımlılıksızdır: ağ, DNS ve Storage yazımı dışarıdan verilir
+ * Kişisel API / MCP ile taslağa görsel ekleme çekirdeği (docs/history/334-*). Bağımlılıksızdır: ağ, DNS ve Storage yazımı dışarıdan verilir
  * (`ImageSourceDeps`, `MediaStorage`), bu yüzden Node'da sahte bağımlılıklarla test edilir; Edge Function `media-upload` gerçeklerini bağlar.
  *
  * Akış (`attachImageToDraft`): (1) `api_me_media_begin` — kimlik, sahiplik, taslak, tür, ≤4 görsel, hız sınırı; (2) görsel indirilir (SSRF korumalı),

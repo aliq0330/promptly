@@ -11,7 +11,7 @@ import { playReactionEffect } from "./reaction-player";
 /**
  * The reaction picker laid OPEN in the page (docs/history/327-*): the notification detail shows the same six animated emojis as the popover of a post's
  * heart, without the press that opens it. Same state and rules as `ReactionButton` (`useLikeState`): nothing is selected until an emoji is picked, the viewer's
- * current reaction is highlighted, picking it again takes it back; the chosen emoji plays its animation and Telegram's big effect.
+ * current reaction is highlighted, picking it again takes it back; the chosen emoji plays its animation and the reaction effect.
  */
 export function InlineReactionPicker({
   id,
