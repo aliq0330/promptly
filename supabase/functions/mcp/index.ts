@@ -10,6 +10,7 @@
 
 import { createRemotePromptUseRecorder, createRemoteRateLimiter, createRestClient, PUBLIC_MCP_RATE_LIMIT } from "../_shared/promptly/lib/public-api/index.ts";
 import { createMeBackend } from "../_shared/promptly/lib/public-api/me.ts";
+import { createMediaUploadClient } from "../_shared/promptly/lib/public-api/media.ts";
 import { createJwtVerifier, createPostgresMeDb } from "../_shared/me-edge.ts";
 import { createRemoteHandler } from "./remote.ts";
 
@@ -31,6 +32,8 @@ const me =
   DB_URL && SUPABASE_URL
     ? {
         backend: createMeBackend({ db: createPostgresMeDb(DB_URL), verifyJwt: createJwtVerifier(SUPABASE_URL, ANON_KEY), siteUrl: "https://aliq0330.github.io/promptly" }),
+        // `attach_image` (docs/history/333-*): görseli indirip Storage'a yazan işlev AYRIDIR (`media-upload`, service role yalnız orada); bu işlev ona yalnız istemci olarak bağlanır.
+        attachImage: createMediaUploadClient({ url: `${SUPABASE_URL.replace(/\/+$/, "")}/functions/v1/media-upload` }),
         resourceUrl: `${FUNCTION_BASE}/me`,
         resourceMetadataUrl: `${FUNCTION_BASE}/oauth-protected-resource`,
         // Kendi OAuth sunucumuz (docs/history/317-*): sınırlı pmt_ belirteci verir. Supabase'in /auth/v1 OAuth'u hesabın TAMAMINI açardı.

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { createMeBackend, createMemoryRateLimiter, createRestClient, type MeDb, type MeTx } from "../../src/lib/public-api/index.ts";
+import { createMeBackend, createMemoryRateLimiter, createRestClient, PublicApiError, type MeDb, type MeTx } from "../../src/lib/public-api/index.ts";
 import { UNTRUSTED_NOTICE } from "../src/server.ts";
 import { createRemoteHandler, REMOTE_MAX_BODY_BYTES } from "../src/remote.ts";
 
@@ -435,4 +435,60 @@ test("search_content / get_content read PUBLIC presets (no key needed) and say s
   const bad = (await client.callTool({ name: "get_content", arguments: { kind: "preset", id: "nope" } })) as { isError?: boolean; content: { text: string }[] };
   assert.equal(bad.isError, true);
   assert.match(bad.content[0].text, /bad_request/);
+});
+
+// --- attach_image (docs/history/333-*) -------------------------------------------------------------------------------------------------------------------
+function meHandlerWithImages(calls: { bearer: string; promptId: string; imageUrl: string; alt: string | null }[], failWith?: Error) {
+  return createRemoteHandler({
+    version: "0.0.0-test",
+    getClient: () => createRestClient({ url: "https://demo.supabase.co", anonKey: "eyJ.k", fetch: fakeSupabase() }),
+    me: {
+      backend: createMeBackend({ db: fakeMeDb(["read", "write"], []), siteUrl: "https://aliq0330.github.io/promptly" }),
+      attachImage: async (bearer, input) => {
+        calls.push({ bearer, promptId: input.promptId, imageUrl: input.imageUrl, alt: input.alt ?? null });
+        if (failWith) throw failWith;
+        return { promptId: input.promptId, mediaId: "m-1", position: 0, imageCount: 1, width: 800, height: 600, bytes: 1234, contentType: "image/png" };
+      },
+      resourceUrl: ME_URL,
+      resourceMetadataUrl: META_URL,
+      authorizationServers: ["https://demo.supabase.co/auth/v1"],
+    },
+  });
+}
+
+test("attach_image exists only when the image service is wired; it is a write tool that never publishes or deletes", async () => {
+  const without = (await (await connectMe(meHandler(["read", "write"]))).listTools()).tools.map((tool) => tool.name);
+  assert.ok(!without.includes("attach_image"));
+  const client = await connectMe(meHandlerWithImages([]));
+  const tool = (await client.listTools()).tools.find((t) => t.name === "attach_image");
+  assert.ok(tool, "attach_image is offered");
+  assert.equal(tool.annotations?.readOnlyHint, false);
+  assert.equal(tool.annotations?.destructiveHint, false);
+  assert.deepEqual((tool as { _meta?: unknown })._meta, { "openai/fileParams": ["image_file"] });
+});
+
+test("attach_image forwards the caller's key and the URL (or the client's file reference) to the image service", async () => {
+  const calls: { bearer: string; promptId: string; imageUrl: string; alt: string | null }[] = [];
+  const client = await connectMe(meHandlerWithImages(calls));
+  const ok = textOf(await client.callTool({ name: "attach_image", arguments: { prompt_id: MY_ID, image_url: "https://cdn.example.com/fox.png", alt: "Fox" } }));
+  assert.ok(ok.includes('"imageCount": 1'));
+  await client.callTool({ name: "attach_image", arguments: { prompt_id: MY_ID, image_file: { download_url: "https://files.example.com/f/abc", file_id: "file_1" } } });
+  assert.deepEqual(calls, [
+    { bearer: KEY, promptId: MY_ID, imageUrl: "https://cdn.example.com/fox.png", alt: "Fox" },
+    { bearer: KEY, promptId: MY_ID, imageUrl: "https://files.example.com/f/abc", alt: null },
+  ]);
+});
+
+test("attach_image: no image given, or the service refuses → a tool error with the reason, never a crash", async () => {
+  const calls: { bearer: string; promptId: string; imageUrl: string; alt: string | null }[] = [];
+  const client = await connectMe(meHandlerWithImages(calls));
+  const none = (await client.callTool({ name: "attach_image", arguments: { prompt_id: MY_ID } })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(none.isError, true);
+  assert.match(none.content[0].text, /image_url|image_file/);
+  assert.equal(calls.length, 0);
+
+  const refused = await connectMe(meHandlerWithImages([], new PublicApiError("conflict", "Images can only be added to an unpublished draft.")));
+  const result = (await refused.callTool({ name: "attach_image", arguments: { prompt_id: MY_ID, image_url: "https://cdn.example.com/fox.png" } })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(result.isError, true);
+  assert.match(result.content[0].text, /conflict: Images can only be added/);
 });
