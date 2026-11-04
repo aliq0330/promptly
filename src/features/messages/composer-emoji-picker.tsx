@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Clock } from "lucide-react";
-import { Modal } from "@/components/ui/modal";
+import { Clock, Delete } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { EMOJI_CATEGORIES, readRecentEmojis, rememberEmoji } from "./emoji-data";
 
 const RECENT_ID = "recent";
 
-/** `true` from the tablet breakpoint up (matches the app shell's `md`), where the picker is a popover above the input; below it, a bottom sheet. */
-function useIsWide(): boolean {
+/** `true` from the tablet breakpoint up (matches the app shell's `md`), where the picker is a popover above the input; below it, an in-flow panel under the input. */
+export function useIsWideComposer(): boolean {
   const [wide, setWide] = useState(false);
   useEffect(() => {
     const query = window.matchMedia("(min-width: 768px)");
@@ -22,7 +21,16 @@ function useIsWide(): boolean {
   return wide;
 }
 
-function PickerBody({ onPick, compact }: { onPick: (emoji: string) => void; compact: boolean }) {
+function PickerBody({
+  onPick,
+  onBackspace,
+  compact,
+}: {
+  onPick: (emoji: string) => void;
+  /** Panel (phone) only: the keyboard is hidden while the panel is open, so the panel carries its own delete key. */
+  onBackspace?: () => void;
+  compact: boolean;
+}) {
   const { t } = useTranslation();
   const [recents, setRecents] = useState<string[]>([]);
   const [active, setActive] = useState<string>(EMOJI_CATEGORIES[0].id);
@@ -48,27 +56,40 @@ function PickerBody({ onPick, compact }: { onPick: (emoji: string) => void; comp
 
   return (
     <div className="flex min-h-0 flex-col">
-      <div role="tablist" aria-label={t("emoji.categories")} className="flex shrink-0 gap-0.5 overflow-x-auto border-b border-border-soft px-1.5 py-1.5 scrollbar-fine">
-        {tabs.map((tab) => (
+      <div className="flex shrink-0 items-center border-b border-border-soft">
+        <div role="tablist" aria-label={t("emoji.categories")} className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto px-1.5 py-1.5 scrollbar-fine">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={tab.id === current.id}
+              aria-label={tab.label}
+              title={tab.label}
+              onClick={() => {
+                setActive(tab.id);
+                gridRef.current?.scrollTo({ top: 0 });
+              }}
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg leading-none transition-colors focus-visible:outline-2 focus-visible:outline-primary",
+                tab.id === current.id ? "bg-primary-soft" : "hover:bg-surface-soft",
+              )}
+            >
+              {tab.icon ?? <Clock size={16} aria-hidden />}
+            </button>
+          ))}
+        </div>
+        {onBackspace && (
           <button
-            key={tab.id}
             type="button"
-            role="tab"
-            aria-selected={tab.id === current.id}
-            aria-label={tab.label}
-            title={tab.label}
-            onClick={() => {
-              setActive(tab.id);
-              gridRef.current?.scrollTo({ top: 0 });
-            }}
-            className={cn(
-              "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg leading-none transition-colors focus-visible:outline-2 focus-visible:outline-primary",
-              tab.id === current.id ? "bg-primary-soft" : "hover:bg-surface-soft",
-            )}
+            onClick={onBackspace}
+            aria-label={t("emoji.backspace")}
+            title={t("emoji.backspace")}
+            className="mx-1.5 flex h-9 w-10 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-2 focus-visible:outline-primary"
           >
-            {tab.icon ?? <Clock size={16} aria-hidden />}
+            <Delete size={20} aria-hidden />
           </button>
-        ))}
+        )}
       </div>
       <div
         ref={gridRef}
@@ -93,47 +114,52 @@ function PickerBody({ onPick, compact }: { onPick: (emoji: string) => void; comp
 }
 
 /**
- * The composer's emoji picker: a compact popover anchored above the input on
- * tablet/desktop, a bottom sheet on phones (the shared `Modal`, which also
- * locks page scroll and closes on Escape). Categories + recents; emoji are
- * inserted at the caret by the parent via `onPick`.
+ * The composer's emoji picker. Tablet/desktop: a compact popover anchored
+ * above the input (closes on outside click / Escape). Phones: an in-flow
+ * panel rendered by the composer UNDER the input row — it takes the
+ * keyboard's place, so the input (and the emoji just tapped) stays visible
+ * (docs/history/331-*). The composer swaps the emoji button for a keyboard
+ * button while the panel is open. Emoji are inserted at the caret by the
+ * parent via `onPick`.
  */
 export function ComposerEmojiPicker({
+  variant,
   onPick,
+  onBackspace,
   onClose,
-  anchorRef,
+  containerRef,
 }: {
+  variant: "popover" | "panel";
   onPick: (emoji: string) => void;
+  onBackspace?: () => void;
   onClose: () => void;
-  /** The emoji button — clicks on it are ignored by the outside-click handler (its own onClick toggles). */
-  anchorRef: React.RefObject<HTMLElement | null>;
+  /** Clicks inside this element (the composer) don't count as "outside" — its own buttons toggle the picker. */
+  containerRef: React.RefObject<HTMLElement | null>;
 }) {
   const { t } = useTranslation();
-  const wide = useIsWide();
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!wide) return;
-    function onDown(event: MouseEvent) {
+    function onDown(event: PointerEvent) {
       const target = event.target as Node;
-      if (popoverRef.current?.contains(target) || anchorRef.current?.contains(target)) return;
+      if (pickerRef.current?.contains(target) || containerRef.current?.contains(target)) return;
       onClose();
     }
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
     }
-    document.addEventListener("mousedown", onDown);
+    document.addEventListener("pointerdown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("pointerdown", onDown);
       document.removeEventListener("keydown", onKey);
     };
-  }, [wide, onClose, anchorRef]);
+  }, [onClose, containerRef]);
 
-  if (wide) {
+  if (variant === "popover") {
     return (
       <div
-        ref={popoverRef}
+        ref={pickerRef}
         role="dialog"
         aria-label={t("emoji.pickerTitle")}
         className="absolute bottom-full right-0 z-30 mb-2 w-[20rem] animate-pop-in overflow-hidden rounded-2xl border border-border bg-surface-elevated shadow-pop"
@@ -144,25 +170,14 @@ export function ComposerEmojiPicker({
   }
 
   return (
-    <Modal onClose={onClose} labelledBy="emoji-sheet-title">
-      <div
-        className="w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-surface-elevated"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-4 pt-3">
-          <h2 id="emoji-sheet-title" className="text-sm font-semibold text-text">
-            {t("emoji.pickerTitle")}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full px-2 py-1 text-xs font-medium text-primary hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-primary"
-          >
-            {t("common.done")}
-          </button>
-        </div>
-        <PickerBody onPick={onPick} compact />
-      </div>
-    </Modal>
+    <div
+      ref={pickerRef}
+      role="region"
+      aria-label={t("emoji.pickerTitle")}
+      data-emoji-panel
+      className="mt-2 overflow-hidden rounded-2xl bg-surface"
+    >
+      <PickerBody onPick={onPick} onBackspace={onBackspace} compact />
+    </div>
   );
 }

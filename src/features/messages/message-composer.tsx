@@ -1,18 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { ArrowUp, Loader2, Plus, Smile, X } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
+import { ArrowUp, Keyboard, Loader2, Plus, Smile, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ALLOWED_IMAGE_MIME } from "@/lib/supabase/message-images";
 import { ChatAttachSheet } from "./chat-attach";
 import { GifPicker } from "@/features/gif/gif-picker";
 import type { GifItem } from "@/lib/giphy";
-import { ComposerEmojiPicker } from "./composer-emoji-picker";
+import { ComposerEmojiPicker, useIsWideComposer } from "./composer-emoji-picker";
 import type { CommunityPostType } from "@/lib/supabase/communities";
 import type { ComposerImage } from "./use-composer-images";
 
 const ACCEPT = ALLOWED_IMAGE_MIME.join(",");
+
+/** Removes the selection, or the last user-visible character (a whole emoji, flags/ZWJ sequences included) before the caret. */
+function deleteBackward(text: string, start: number, end: number): { text: string; caret: number } {
+  if (start !== end) return { text: text.slice(0, start) + text.slice(end), caret: start };
+  if (start === 0) return { text, caret: 0 };
+  const before = text.slice(0, start);
+  let cut = start - 1;
+  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
+    let last = 0;
+    for (const { index } of new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(before)) last = index;
+    cut = last;
+  } else {
+    cut = start - (Array.from(before).at(-1)?.length ?? 1);
+  }
+  return { text: text.slice(0, cut) + text.slice(start), caret: cut };
+}
 
 function imageFilesFrom(list: FileList | File[] | null | undefined): File[] {
   return Array.from(list ?? []).filter((file) => file.type.startsWith("image/") || /\.(jpe?g|png|webp|gif)$/i.test(file.name));
@@ -114,13 +130,30 @@ export function MessageComposer({
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
   const [gifOpen, setGifOpen] = useState(false);
   const hasSheet = Boolean(onPickLibrary || onImport || onPickGif);
-  const closeEmoji = useCallback(() => setEmojiOpen(false), []);
+  const wide = useIsWideComposer();
+  /** Phone panel: the message list's distance from its bottom, kept across the panel opening/closing (the list shrinks/grows). */
+  const listAnchorRef = useRef<{ el: HTMLElement; fromBottom: number } | null>(null);
+  const emojiPanel = emojiOpen && !wide;
+
+  const toggleEmoji = useCallback((open: boolean) => {
+    const list = formRef.current?.parentElement?.querySelector<HTMLElement>("[data-chat-scroll]");
+    listAnchorRef.current = list ? { el: list, fromBottom: list.scrollHeight - list.scrollTop - list.clientHeight } : null;
+    setEmojiOpen(open);
+  }, []);
+  const closeEmoji = useCallback(() => toggleEmoji(false), [toggleEmoji]);
+
+  // Keep the visible end of the thread in place while the phone panel takes/returns space under the input.
+  useLayoutEffect(() => {
+    const anchor = listAnchorRef.current;
+    listAnchorRef.current = null;
+    if (!anchor) return;
+    anchor.el.scrollTop = anchor.el.scrollHeight - anchor.el.clientHeight - anchor.fromBottom;
+  }, [emojiPanel]);
 
   // Grow with the content up to ~5 lines, then scroll inside.
   useEffect(() => {
@@ -141,16 +174,52 @@ export function MessageComposer({
     const to = Math.min(end, draft.length);
     onDraftChange(draft.slice(0, from) + emoji + draft.slice(to));
     const caret = from + emoji.length;
+    placeCaret(caret, from + emoji.length >= draft.length);
+  }
+
+  function handleBackspace() {
+    const { start, end } = selectionRef.current;
+    const next = deleteBackward(draft, Math.min(start, draft.length), Math.min(end, draft.length));
+    if (next.text === draft) return;
+    onDraftChange(next.text);
+    placeCaret(next.caret, next.caret >= next.text.length);
+  }
+
+  /** After an emoji insert/delete. Desktop keeps the typing flow (focus); on phones the panel replaces the keyboard, so the input is NOT focused (that would pop the keyboard) — its end is just scrolled into view. */
+  function placeCaret(caret: number, atEnd: boolean) {
     selectionRef.current = { start: caret, end: caret };
-    // Desktop: keep typing flow. On phones the sheet stays open, and focusing here would pop the keyboard over it.
-    if (window.matchMedia("(min-width: 768px)").matches) {
-      requestAnimationFrame(() => {
-        const el = textareaRef.current;
-        if (!el) return;
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      if (wide) {
         el.focus({ preventScroll: true });
         el.setSelectionRange(caret, caret);
-      });
+      } else if (atEnd) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+  }
+
+  function handleEmojiButton() {
+    if (wide) {
+      rememberSelection();
+      toggleEmoji(!emojiOpen);
+      return;
     }
+    if (emojiOpen) {
+      // Keyboard button: back to typing at the same caret.
+      toggleEmoji(false);
+      const el = textareaRef.current;
+      if (el) {
+        el.focus({ preventScroll: true });
+        const { start, end } = selectionRef.current;
+        el.setSelectionRange(start, end);
+      }
+      return;
+    }
+    rememberSelection();
+    textareaRef.current?.blur(); // the panel takes the keyboard's place
+    toggleEmoji(true);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -267,6 +336,10 @@ export function MessageComposer({
             onKeyUp={rememberSelection}
             onClick={rememberSelection}
             onBlur={rememberSelection}
+            // Phones: tapping the input while the emoji panel is open brings the keyboard back in its place.
+            onFocus={() => {
+              if (emojiPanel) closeEmoji();
+            }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder={placeholder}
@@ -277,22 +350,21 @@ export function MessageComposer({
             className="max-h-32 min-h-9 min-w-0 flex-1 resize-none bg-transparent py-[9px] text-body leading-[1.4] text-text placeholder:text-text-muted focus:outline-none disabled:cursor-not-allowed"
           />
           <button
-            ref={emojiButtonRef}
             type="button"
-            onClick={() => {
-              rememberSelection();
-              setEmojiOpen((open) => !open);
-            }}
+            // Keep focus where it is: on a phone a focused input would bring the keyboard over the panel.
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={handleEmojiButton}
             disabled={disabled}
-            aria-label={t("messages.addEmoji")}
-            title={t("messages.addEmoji")}
-            aria-haspopup="dialog"
+            aria-label={emojiPanel ? t("messages.showKeyboard") : t("messages.addEmoji")}
+            title={emojiPanel ? t("messages.showKeyboard") : t("messages.addEmoji")}
+            aria-haspopup={wide ? "dialog" : undefined}
             aria-expanded={emojiOpen}
+            data-composer-emoji
             className={iconButton}
           >
-            <Smile size={20} aria-hidden />
+            {emojiPanel ? <Keyboard size={20} aria-hidden /> : <Smile size={20} aria-hidden />}
           </button>
-          {emojiOpen && <ComposerEmojiPicker onPick={insertEmoji} onClose={closeEmoji} anchorRef={emojiButtonRef} />}
+          {emojiOpen && wide && <ComposerEmojiPicker variant="popover" onPick={insertEmoji} onClose={closeEmoji} containerRef={formRef} />}
         </div>
         <button
           type="submit"
@@ -304,6 +376,9 @@ export function MessageComposer({
           {isSending ? <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <ArrowUp size={22} strokeWidth={2.2} aria-hidden />}
         </button>
       </div>
+      {emojiPanel && (
+        <ComposerEmojiPicker variant="panel" onPick={insertEmoji} onBackspace={handleBackspace} onClose={closeEmoji} containerRef={formRef} />
+      )}
       {error && (
         <p role="alert" className="mt-2 text-xs text-danger">
           {error}
