@@ -1,8 +1,10 @@
-Telegram hareketli emoji varlıkları (docs/history/265-*) — kaynak: github.com/saeedtahmtan/telemoji (Telegram'ın Animated Emoji paketi; Telegram'ın koşullarına tabidir).
+Promptly'nin kendi tepki emojileri (docs/history/334-*; 265'teki Telegram TGS dosyalarının yerini aldı — dış kaynak ya da lisans koşulu yok).
 
-- `<tepki>.svg`   emojinin dinlenme karesi (Lottie 0. kare, statik poster; kartlarda ve listelerde `<img>`)
-- `<tepki>.tgs`   hareketli emoji (gzip'li Lottie; seçicide ve düğmede oynar)
-- `<tepki>-fx.tgs` emoji efekti (emojinin etrafında patlayan büyük animasyon; `tgs/reactions/U+0031_U+20E3_N`)
+- `<tepki>.svg`  emojinin dinlenme karesi (statik poster; kartlarda, listelerde, özetlerde `<img>`).
 
-Tepki → efekt dosyası: love→4, fire→14, wow→21, clap→22, haha→11, idea→16 (Telegram'da ampul efekti yok: 💡 yıldız efektini kullanır).
-Hepsi `src/lib/reactions.ts` içinde adlandırılır; yenisi eklenirse oradan eklenir.
+Elle düzenlenmez: çizim ve animasyon `src/lib/reaction-art.ts`'tedir, posterler ondan üretilir:
+
+    node scripts/build-reaction-posters.mjs
+
+Hareketli emoji (`playReactionIn`) ve emojinin çevresinde patlayan efekt (`playReactionEffect`, `src/features/reactions/reaction-fx.ts`)
+tarayıcıda kodla çizilir; ayrı animasyon dosyası yoktur.

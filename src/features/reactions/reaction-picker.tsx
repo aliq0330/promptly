@@ -8,7 +8,7 @@ import { ReactionIcon, type ReactionIconHandle } from "./reaction-icon";
 
 /**
  * The six-reaction picker (docs/history/265-*): a rounded panel above (or below) the reaction button — placement comes from
- * `useAnchoredPopover` (portalled, `position: fixed`, kept inside the visible area), this is only its content. Each emoji plays Telegram's
+ * `useAnchoredPopover` (portalled, `position: fixed`, kept inside the visible area), this is only its content. Each emoji plays its own
  * animation under the finger / pointer; the viewer's current reaction is highlighted, and picking it again takes it back.
  */
 export function ReactionPicker({
@@ -44,7 +44,7 @@ export function ReactionPicker({
 /**
  * The picker's content on its own (docs/history/327-*): the six animated emojis + "Tepkini kaldır". The popover above wraps it in the floating panel; the
  * notification detail shows it OPEN, in the page (`InlineReactionPicker`). `playOnChoose` plays the chosen emoji's animation too (the popover closes at once,
- * so it does not need to); `onChoose` also gets the emoji element so the caller can centre Telegram's big effect on it.
+ * so it does not need to); `onChoose` also gets the emoji element so the caller can centre the reaction effect on it.
  */
 export function ReactionGrid({
   current,

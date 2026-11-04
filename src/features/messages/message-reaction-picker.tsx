@@ -8,7 +8,7 @@ import { ReactionGrid } from "@/features/reactions/reaction-picker";
 
 /**
  * The message reaction picker (docs/history/330-*): a message reaction is one of the six POST reactions, so this is the post picker's own
- * `ReactionGrid` in its one-row form — same animated emojis (Telegram's animation under the finger/pointer), same highlight on the caller's
+ * `ReactionGrid` in its one-row form — same animated emojis (their animation under the finger/pointer), same highlight on the caller's
  * current reaction, picking it again takes it back (the parent's `onSelect` toggles). The chosen reaction's animation + big effect play on
  * the message's reaction badge (`MessageReactionBadge`), where the reaction lands. Keyboard emoji (the composer's picker) is a different thing.
  */

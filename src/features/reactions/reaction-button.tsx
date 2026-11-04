@@ -19,7 +19,7 @@ import { playReactionEffect } from "./reaction-player";
 
 /**
  * The one reaction control of every like surface (docs/history/265-*; `LikeButton` is this): the press opens the six-reaction picker (nothing is
- * selected or liked until an emoji is picked; picking your current one again takes it back); the chosen emoji replaces the heart, plays its own animation and Telegram's big effect over the page. Every reaction is one like — the count
+ * selected or liked until an emoji is picked; picking your current one again takes it back); the chosen emoji replaces the heart, plays its own animation and the reaction effect bursts around it (docs/history/334-*). Every reaction is one like — the count
  * is the total and keeps its meaning. Signed out, it opens the login dialog (as the heart did). State and persistence: `useLikeState`.
  */
 export function ReactionButton({

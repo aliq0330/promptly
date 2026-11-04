@@ -1,4 +1,4 @@
-// Tepkiler (docs/history/265-*): beğeni düğmesi altı tepkilik seçiciyi açar (Telegram emojileri), seçilen emoji düğmede görünür ve efekti oynar,
+// Tepkiler (docs/history/265-*): beğeni düğmesi altı tepkilik seçiciyi açar (Promptly'nin kendi emojileri, docs/history/334-*), seçilen emoji düğmede görünür ve efekti oynar,
 // "Sen, Bob ve 12 kişi tepki verdi" özeti + "Tepkiler" sayfası (sekmeler, kim ne verdi), tepki değiştirme (PATCH) / kaldırma (DELETE) / `love`
 // sütunsuz yazılır, ziyaretçi giriş penceresi, İngilizce, telefon düzeni, hareketi azalt. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ
 // (kurallar ve RLS: supabase/tests/reactions.sql).
@@ -124,9 +124,9 @@ const menu = (page) => page.getByRole("menu");
 const summary = (page) => page.locator(`[data-reaction-summary="${ID.prompt}"]`);
 /** Özet metni sayılar/arkadaşlar yüklenince oturur: eşleşene kadar bekler. */
 const summaryHas = (page, id, re) => page.waitForFunction(([sid, source]) => new RegExp(source).test(document.querySelector(`[data-reaction-summary=\"${sid}\"]`)?.textContent ?? ""), [id, re.source], { timeout: 6000 });
-const effectSvg = (page) => page.locator("[data-reaction-effects] svg");
+const effectSvg = (page) => page.locator("[data-reaction-effects] canvas");
 
-await scenario("1. Detay: kalbe dokunuş YALNIZ seçiciyi açar (hiçbir şey seçili değil, beğeni yazılmaz, sayaç 13); Ateş seçilince POST `reaction: fire` + emoji + Telegram efekti", async ({ page, state }) => {
+await scenario("1. Detay: kalbe dokunuş YALNIZ seçiciyi açar (hiçbir şey seçili değil, beğeni yazılmaz, sayaç 13); Ateş seçilince POST `reaction: fire` + emoji + efekt", async ({ page, state }) => {
   await openDetail(page);
   await summaryHas(page, ID.prompt, /Bob ve 12 kişi tepki verdi/);
   assert.equal(state.statsCalls.length >= 1 && state.friendsCalls.length >= 1, true, "per-reaction counts and followed people were read");
@@ -149,7 +149,7 @@ await scenario("1. Detay: kalbe dokunuş YALNIZ seçiciyi açar (hiçbir şey se
   assert.match((await reactButton(page).locator("img").getAttribute("src")) ?? "", /\/promptly\/reactions\/fire\.svg$/);
   assert.match(await reactButton(page).innerText(), /14/);
   await effectSvg(page).first().waitFor({ timeout: 6000 });
-  // The burst leaves from the emoji on the button (its origin sits at 78% / 50% of Telegram's effect canvas) and is at most 156 px (60% of the old 260).
+  // The burst leaves from the emoji on the button (its origin sits at 78% / 50% of the effect box, as Telegram's did) and is at most 156 px.
   const effectBox = await page.locator("[data-reaction-effects] > div").first().boundingBox();
   assert.ok(effectBox && effectBox.width <= 156.5 && effectBox.height <= 156.5, `effect is at most 156 px (got ${effectBox?.width})`);
   const iconBox = await reactButton(page).locator("img").boundingBox();
@@ -158,7 +158,7 @@ await scenario("1. Detay: kalbe dokunuş YALNIZ seçiciyi açar (hiçbir şey se
   assert.ok(Math.hypot(dx, dy) < 6, `burst origin is on the button emoji (off by ${Math.round(Math.hypot(dx, dy))} px)`);
   await summaryHas(page, ID.prompt, /Sen, Bob ve 12 kişi tepki verdi/);
   await shot(page, "rx-effect");
-  await page.waitForFunction(() => document.querySelectorAll("[data-reaction-effects] svg").length === 0, null, { timeout: 8000 });
+  await page.waitForFunction(() => document.querySelectorAll("[data-reaction-effects] canvas").length === 0, null, { timeout: 8000 });
 });
 
 await scenario("2. Detay: tepki seçilir, değiştirilir (PATCH); tepki varken dokunuş seçiciyi açar (yeni istek yok), seçili olan tepkiye TEKRAR basmak siler (DELETE, sayaç 13, kalp geri gelir)", async ({ page, state }) => {
@@ -255,7 +255,7 @@ await scenario("6. Ana Sayfa/Keşfet kartı: aynı düğme (kartta Kopyala/Çal�
   assert.equal(state.likeCalls[0].prompt_id, FEED_PROMPT);
   assert.equal(state.likeCalls[0].reaction, "haha");
   await effectSvg(page).first().waitFor({ timeout: 6000 });
-  await page.waitForFunction(() => document.querySelectorAll("[data-reaction-effects] svg").length === 0, null, { timeout: 8000 });
+  await page.waitForFunction(() => document.querySelectorAll("[data-reaction-effects] canvas").length === 0, null, { timeout: 8000 });
   await card.scrollIntoViewIfNeeded();
   await shot(page, "rx-card");
 });

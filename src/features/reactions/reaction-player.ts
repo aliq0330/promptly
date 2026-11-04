@@ -1,99 +1,76 @@
 import { prefersReducedMotion } from "@/lib/motion";
+import { REACTION_ART } from "@/lib/reaction-art";
 import type { ReactionKey } from "@/lib/reactions";
 import { publicAssetUrl } from "@/lib/utils";
+import { buildReactionEffect, drawReactionEffect, EFFECT_ORIGIN_X, EFFECT_ORIGIN_Y, effectOriginX, prepareEffectSprites } from "./reaction-fx";
 
 /*
- * Telegram hareketli emojileri (docs/history/265-*): `public/reactions/` altındaki TGS dosyaları (gzip'li Lottie) lottie-web (yalnız SVG
- * oluşturucu, "light" derleme) ile oynatılır. Hiçbiri sayfa açılışında yüklenmez: kütüphane ve dosyalar ilk kez bir tepki seçici açılınca /
- * bir tepki verilince indirilir, sonra bellekte kalır. Statik görünüm (poster) düz `<img>`dir — oynatıcıya ihtiyaç duymaz.
+ * Promptly'nin kendi tepki emojileri ve efektleri (docs/history/334-*; 265'teki Telegram TGS + lottie-web oynatıcısının yerini alır).
+ * - Statik görünüm: `public/reactions/<tepki>.svg` (düz `<img>`, dinlenme karesi; `scripts/build-reaction-posters.mjs` `lib/reaction-art.ts`'ten üretir).
+ * - Emoji animasyonu: aynı çizim satır içi SVG olarak kabın içine konur, her karede `REACTION_ART[tepki].pose(t)` yazılır.
+ * - Efekt: emojinin çevresindeki kare kutuda tuval (`reaction-fx.ts`); çıkartmalar ilk efektte bir kez hazırlanır.
+ * Sayfa açılışında hiçbir şey yüklenmez ya da çizilmez; dış dosya/kütüphane yoktur.
  */
 
-type Lottie = typeof import("lottie-web/build/player/lottie_light").default;
+export type ReactionAssetKind = "poster";
 
-export type ReactionAssetKind = "poster" | "emoji" | "effect";
-
-/** `poster` = emojinin dinlenme karesi (SVG), `emoji` = hareketli emoji (TGS), `effect` = emojinin etrafında patlayan Telegram efekti (TGS). */
-export function reactionAssetUrl(key: ReactionKey, kind: ReactionAssetKind): string {
-  return publicAssetUrl(`/reactions/${key}${kind === "effect" ? "-fx.tgs" : kind === "emoji" ? ".tgs" : ".svg"}`);
+/** `poster` = emojinin dinlenme karesi (SVG). */
+export function reactionAssetUrl(key: ReactionKey, kind: ReactionAssetKind = "poster"): string {
+  void kind;
+  return publicAssetUrl(`/reactions/${key}.svg`);
 }
 
-let lottieLoad: Promise<Lottie> | null = null;
-function loadLottie(): Promise<Lottie> {
-  if (!lottieLoad) {
-    lottieLoad = import("lottie-web/build/player/lottie_light").then((module) => module.default);
-    lottieLoad.catch(() => {
-      lottieLoad = null;
-    });
-  }
-  return lottieLoad;
-}
-
-const dataCache = new Map<string, Promise<unknown>>();
-
-/** One TGS file → its Lottie JSON (cached; a failed download is not cached, so the next try asks again). */
-function loadAnimationData(key: ReactionKey, kind: "emoji" | "effect"): Promise<unknown> {
-  const url = reactionAssetUrl(key, kind);
-  let pending = dataCache.get(url);
-  if (!pending) {
-    pending = fetch(url)
-      .then((response) => {
-        if (!response.ok || !response.body) throw new Error(`reaction asset ${response.status}`);
-        return new Response(response.body.pipeThrough(new DecompressionStream("gzip"))).json();
-      })
-      .catch((err) => {
-        dataCache.delete(url);
-        throw err;
-      });
-    dataCache.set(url, pending);
-  }
-  return pending;
-}
-
-/** Animations need `DecompressionStream` (Chrome 80+, Safari 16.4+, Firefox 113+) and a viewer who has not asked for less motion; otherwise the static poster stays. */
+/** Hareketi azaltmayı seçen izleyicide hiçbir şey oynamaz; statik poster kalır, tepki yine kaydedilir. */
 export function canAnimateReactions(): boolean {
-  return typeof window !== "undefined" && typeof DecompressionStream !== "undefined" && typeof structuredClone === "function" && !prefersReducedMotion();
+  return typeof window !== "undefined" && !prefersReducedMotion();
 }
 
 export interface ReactionPlayback {
   destroy(): void;
 }
 
-/** Plays one reaction animation once inside `container`; `onDone` runs when it ends (or could not start). Returns a handle to stop it early. */
-export function playReactionIn(container: HTMLElement, key: ReactionKey, kind: "emoji" | "effect", onDone?: () => void): ReactionPlayback {
-  let destroyed = false;
-  let animation: { destroy(): void } | null = null;
+let instance = 0;
+
+/** Emojinin kendi animasyonunu `container` içinde bir kez oynatır; bitince (ya da başlayamazsa) `onDone`. Erken durdurmak için tutamaç döner. */
+export function playReactionIn(container: HTMLElement, key: ReactionKey, kind: "emoji", onDone?: () => void): ReactionPlayback {
+  void kind;
+  const art = REACTION_ART[key];
+  const prefix = `rx${(instance += 1)}_`;
+  container.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" overflow="visible" aria-hidden="true" focusable="false">${art.markup(prefix, art.pose(0))}</svg>`;
+  const refs = new Map<string, Element>();
+  container.querySelectorAll("[data-r]").forEach((el) => refs.set(el.getAttribute("data-r") ?? "", el));
+  let frame = 0, destroyed = false;
+  const start = performance.now();
   const finish = () => {
     if (destroyed) return;
     destroyed = true;
-    animation?.destroy();
-    animation = null;
+    cancelAnimationFrame(frame);
+    container.textContent = "";
     onDone?.();
   };
-  Promise.all([loadLottie(), loadAnimationData(key, kind)])
-    .then(([lottie, data]) => {
-      if (destroyed) return;
-      const item = lottie.loadAnimation({ container, renderer: "svg", loop: false, autoplay: true, animationData: structuredClone(data) });
-      animation = item;
-      item.addEventListener("complete", finish);
-    })
-    .catch((err) => {
-      console.error("playReactionIn", err);
-      finish();
-    });
+  const step = (now: number) => {
+    if (destroyed) return;
+    const t = Math.min((now - start) / 1000, art.duration);
+    for (const [ref, attrs] of Object.entries(art.pose(t))) {
+      const el = refs.get(ref);
+      if (el) for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, value);
+    }
+    if (t >= art.duration) finish();
+    else frame = requestAnimationFrame(step);
+  };
+  frame = requestAnimationFrame(step);
   return {
     destroy() {
       if (destroyed) return;
       destroyed = true;
-      animation?.destroy();
-      animation = null;
+      cancelAnimationFrame(frame);
+      container.textContent = "";
     },
   };
 }
 
+/** Efekt kutusunun kenarı (px); dar ekranda ekran genişliğine sığar. Telegram efektiyle aynı ölçü ve çıkış noktası (265). */
 const EFFECT_MAX = 156;
-/** Where the burst leaves from inside Telegram's 512 px effect canvas (the emoji sits right of centre): measured from the effect files, as a fraction of the box. */
-const EFFECT_ORIGIN_X = 0.78;
-const EFFECT_ORIGIN_Y = 0.5;
 let effectLayer: HTMLDivElement | null = null;
 
 function getEffectLayer(): HTMLDivElement {
@@ -101,7 +78,7 @@ function getEffectLayer(): HTMLDivElement {
   const layer = document.createElement("div");
   layer.setAttribute("aria-hidden", "true");
   layer.setAttribute("data-reaction-effects", "");
-  // Above every dialog (z-70), never in the way: the burst is decoration, the pointer goes through it.
+  // Her pencerenin (z-70) üstünde, hiçbir şeyin önünde değil: efekt süstür, işaretçi içinden geçer.
   layer.style.cssText = "position:fixed;inset:0;z-index:100;pointer-events:none;overflow:hidden";
   document.body.appendChild(layer);
   effectLayer = layer;
@@ -109,30 +86,70 @@ function getEffectLayer(): HTMLDivElement {
 }
 
 /**
- * The Telegram "emoji effect": the big burst leaves from `anchor` (the reaction's icon — the burst's own origin, not the box centre, sits on it)
- * for about three seconds, over the page, and removes itself. It follows the anchor while the page scrolls. Quietly does nothing where animations are off.
+ * Tepki efekti: `anchor`'dan (tepkinin simgesi — kutunun ortası değil, efektin çıkış noktası onun üstüne oturur) ~3 sn patlar ve kendini
+ * kaldırır; sayfa kayarken çıpayı izler. Animasyon kapalıysa sessizce hiçbir şey yapmaz.
  */
 export function playReactionEffect(key: ReactionKey, anchor: Element | null): void {
   if (!anchor || !canAnimateReactions()) return;
   const size = Math.min(EFFECT_MAX, document.documentElement.clientWidth - 24);
   const box = document.createElement("div");
   box.style.cssText = `position:absolute;width:${size}px;height:${size}px`;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(size * dpr);
+  canvas.height = Math.round(size * dpr);
+  canvas.style.cssText = "display:block;width:100%;height:100%";
+  box.appendChild(canvas);
   getEffectLayer().appendChild(box);
+  // Efekt sola açılır (Telegram'daki gibi); emoji ekranın sol kenarındaysa (telefonda gönderinin tepki düğmesi) yerleşim aynalanır, sağa açılır.
+  const start0 = anchor.getBoundingClientRect(), cx0 = start0.left + start0.width / 2, viewport = document.documentElement.clientWidth;
+  const mirrored = cx0 < size * EFFECT_ORIGIN_X && viewport - cx0 > cx0;
+  const originX = effectOriginX(mirrored);
   const place = () => {
     if (!anchor.isConnected) return;
     const rect = anchor.getBoundingClientRect();
-    box.style.left = `${rect.left + rect.width / 2 - size * EFFECT_ORIGIN_X}px`;
+    box.style.left = `${rect.left + rect.width / 2 - size * originX}px`;
     box.style.top = `${rect.top + rect.height / 2 - size * EFFECT_ORIGIN_Y}px`;
   };
   place();
-  window.addEventListener("scroll", place, true);
-  let safety = 0;
+  let frame = 0, done = false;
   const cleanup = () => {
-    window.clearTimeout(safety);
+    if (done) return;
+    done = true;
+    cancelAnimationFrame(frame);
     window.removeEventListener("scroll", place, true);
-    playback.destroy();
     box.remove();
   };
-  const playback = playReactionIn(box, key, "effect", cleanup);
-  safety = window.setTimeout(cleanup, 4500);
+  window.addEventListener("scroll", place, true);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    cleanup();
+    return;
+  }
+  prepareEffectSprites()
+    .then(() => {
+      const effect = buildReactionEffect(key, size, Math.floor(Math.random() * 1e9), mirrored);
+      if (!effect || done) {
+        cleanup();
+        return;
+      }
+      const start = performance.now();
+      const step = (now: number) => {
+        if (done) return;
+        const t = (now - start) / 1000;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, size, size);
+        if (t >= effect.duration) {
+          cleanup();
+          return;
+        }
+        drawReactionEffect(effect, ctx, t);
+        frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    })
+    .catch((err) => {
+      console.error("playReactionEffect", err);
+      cleanup();
+    });
 }

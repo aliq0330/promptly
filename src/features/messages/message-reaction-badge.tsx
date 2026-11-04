@@ -11,7 +11,7 @@ import type { MessageReactionEntry } from "./message-bubble-types";
 /**
  * The small pill under a message (docs/history/330-*): the post reactions' static posters (most given first, at most three) + the total
  * when more than one person reacted. When the caller just picked a reaction (`burst`, a fresh `n` each time), that emoji plays its own
- * animation here and Telegram's big effect bursts from it — exactly what the post's reaction button does. Nothing plays where animations are off.
+ * animation here and the reaction effect bursts from it — exactly what the post's reaction button does. Nothing plays where animations are off.
  */
 export function MessageReactionBadge({
   reactions,
