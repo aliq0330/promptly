@@ -1,6 +1,6 @@
 # 329 — Çevrimiçi durum, son görülme ve gizlilik (tüm platform)
 
-Tarih: 2026-11-04 · Durum: **kodda uygulandı**; migration `20261104110000_presence.sql` canlıya **UYGULANMADI** (deploy hattı `main`'e birleşince uygular — `schema_migrations`'a bak). Kaynak: kullanıcının isteği ("bir profilin çevrimiçi/çevrimdışı durumunu göstermek, istenirse çevrimiçiyken bile değiştirebilmek; mesajlar, topluluk, topluluk grubu bağlantıları") ve ardından tek teslimde tam kapsam talimatı (faz yok).
+Tarih: 2026-11-04 · Durum: **uygulandı, CANLIDA** — PR #435 `main`'e birleşti, deploy hattı (migration + duman testi + yayın) yeşil. Canlıda doğrulandı (salt-okunur SQL): `20261104110000` `schema_migrations`'ta, `presence_state` her profil için bir satır (20/20), `realtime.messages` üzerinde "Allowed viewers can receive presence" + "Owners can track their presence" politikaları, `notifications.push_suppressed` sütunu, `authenticated` tabloyu okuyamıyor. Gerçek Realtime/Telegram/cihaz davranışı hâlâ DENENMEDİ. Kaynak: kullanıcının isteği ("bir profilin çevrimiçi/çevrimdışı durumunu göstermek, istenirse çevrimiçiyken bile değiştirebilmek; mesajlar, topluluk, topluluk grubu bağlantıları") ve ardından tek teslimde tam kapsam talimatı (faz yok).
 
 ## Davranış
 
