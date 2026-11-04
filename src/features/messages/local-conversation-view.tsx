@@ -57,6 +57,8 @@ import { fetchReactionsForConversation, removeMessageReaction, setMessageReactio
 import { mergeIncomingMessage, applyMessageUpdate, removeReactionRow, upsertReaction } from "./realtime-helpers";
 import { computeKeyboardInset } from "./viewport-helpers";
 import { ComposerReplyBar } from "./reply-quote";
+import { DockHeader, DOCK_ICON_BUTTON } from "./dock-header";
+import type { DockHandlers } from "./message-dock-provider";
 import { supabase } from "@/lib/supabase/client";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
@@ -121,17 +123,20 @@ function translateSendError(message: string, isGroup = false): string {
  * message sent in this conversation as a real, database-backed embed.
  *
  */
-export function LocalConversationView() {
+export function LocalConversationView({ dock }: { dock?: DockHandlers & { conversationId: string } } = {}) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const id = searchParams.get("id");
-  const shareParamPromptId = searchParams.get("sharePromptId");
-  const shareParamRequestId = searchParams.get("shareRequestId");
-  const shareParamWorkflowId = searchParams.get("shareWorkflowId");
-  const shareParamPresetId = searchParams.get("sharePresetId");
-  const shareParamPostId = searchParams.get("sharePostId");
-  const shareParamSpaceId = searchParams.get("shareSpaceId");
+  // Mesajlar dock'unda (docs/history/328-*) sohbet adres çubuğundan değil panelden gelir: `id` prop'tur, sayfanın `?share…=`/`?hl=`/`?panel=` parametreleri bu sohbete AİT DEĞİLDİR.
+  const id = dock ? dock.conversationId : searchParams.get("id");
+  const shareParams = dock ? null : searchParams;
+  const shareParamPromptId = shareParams?.get("sharePromptId") ?? null;
+  const shareParamRequestId = shareParams?.get("shareRequestId") ?? null;
+  const shareParamWorkflowId = shareParams?.get("shareWorkflowId") ?? null;
+  const shareParamPresetId = shareParams?.get("sharePresetId") ?? null;
+  const shareParamPostId = shareParams?.get("sharePostId") ?? null;
+  const shareParamSpaceId = shareParams?.get("shareSpaceId") ?? null;
+  const isDock = Boolean(dock);
   const { user } = useAuth();
   const {
     getCached,
@@ -260,7 +265,7 @@ export function LocalConversationView() {
   // Desktop drag-and-drop of photos anywhere on the conversation panel.
   const imageDrop = useImageDrop(composerImages.addFiles, !blockState.isBlocked && canPost);
 
-  const highlight = parseHighlightValue(searchParams.get("hl"));
+  const highlight = parseHighlightValue(dock ? null : searchParams.get("hl"));
   const highlightMessageId = highlight?.kind === "message" ? highlight.id : null;
   const [flashedMessageId, setFlashedMessageId] = useState<string | null>(null);
   const [messageHighlightNotFound, setMessageHighlightNotFound] = useState(false);
@@ -585,7 +590,7 @@ export function LocalConversationView() {
   // (adres değişmeden eski bildirimler de doğru yere gider); üyeler / sohbet ayarları bu sohbetin bilgi penceresinde bir kez açılır.
   useEffect(() => {
     if (!checked || !isGroup || !id || panelParamHandled.current) return;
-    const panel = searchParams.get("panel");
+    const panel = isDock ? null : searchParams.get("panel");
     if (!panel) return;
     panelParamHandled.current = true;
     if (panel === "requests" || panel === "invites") {
@@ -595,7 +600,7 @@ export function LocalConversationView() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- URL'den gelen tek seferlik açılış; render sırasında türetilemez
     if (panel === "members" || panel === "settings") setGroupInfoFocus(panel);
     else if (panel === "about") setGroupInfoFocus("overview");
-  }, [checked, isGroup, id, searchParams, router]);
+  }, [checked, isGroup, id, searchParams, router, isDock]);
 
   // Resolves a `?sharePromptId=`/`?shareRequestId=`deep link into a real title for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
   useEffect(() => {
@@ -707,7 +712,8 @@ export function LocalConversationView() {
   useEffect(() => {
     const panel = panelRef.current;
     const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    if (!panel || !vv) return;
+    // Dock yalnız büyük ekranda var: ekran klavyesi yok, panelin `bottom`'u dock'a ait.
+    if (!panel || !vv || isDock) return;
 
     let baselineBottom: number | null = null;
 
@@ -739,7 +745,7 @@ export function LocalConversationView() {
       vv.removeEventListener("scroll", update);
       panel.style.bottom = "";
     };
-  }, []);
+  }, [isDock]);
 
   const reactionsByMessage = useMemo(() => {
     const map = new Map<string, MessageReactionEntry[]>();
@@ -781,13 +787,13 @@ export function LocalConversationView() {
   /** Seçiciden gelen içerik, derin bağlantıyla gelen paylaşımla AYNI yoldan mesaja eklenir (`?share<Tür>Id=`): başlık çözülür, not yazılır, gönderilir. */
   function attachLibraryItem(item: ShareableContent) {
     setLibraryType(null);
-    if (!id) return;
+    if (!id || dock) return;
     const param = { prompt: "sharePromptId", request: "shareRequestId", workflow: "shareWorkflowId", preset: "sharePresetId", space: "shareSpaceId" }[item.type];
     router.replace(`/messages/local?id=${id}&${param}=${item.id}`);
   }
 
   function clearShareParams() {
-    if (!id) return;
+    if (!id || dock) return;
     router.replace(`/messages/local?id=${id}`);
   }
 
@@ -970,6 +976,10 @@ export function LocalConversationView() {
   }
 
   function handleBack() {
+    if (dock) {
+      dock.onBack();
+      return;
+    }
     // Tarayıcının kendi geri davranışıyla çakışmaması ve `/messages`'ın
     // scroll konumunu mümkün olduğunca korumak için (Aşama 7) `router.
     // back()` — düz bir `router.push("/messages")` her zaman sayfanın en
@@ -999,7 +1009,8 @@ export function LocalConversationView() {
     setIsDecliningRequest(true);
     try {
       await declineRequest(id);
-      router.push("/messages");
+      if (dock) dock.onBack();
+      else router.push("/messages");
     } catch (err) {
       console.error("declineRequest", err);
       setIsDecliningRequest(false);
@@ -1233,6 +1244,19 @@ export function LocalConversationView() {
     }
   }
 
+  // Hata/boş ekranlardaki "Mesajlara dön": sayfada bağlantı, dock'ta paneli listeye döndüren düğme.
+  const backToMessagesClass =
+    "inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong";
+  const backToMessages = dock ? (
+    <button type="button" onClick={dock.onBack} className={backToMessagesClass}>
+      {t("messages.backToMessages")}
+    </button>
+  ) : (
+    <Link href="/messages" className={backToMessagesClass}>
+      {t("messages.backToMessages")}
+    </Link>
+  );
+
   if (!user) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
@@ -1263,12 +1287,7 @@ export function LocalConversationView() {
         <p className="mb-4 text-sm text-text-muted">
           {t("messages.conversationNotFoundBody")}
         </p>
-        <Link
-          href="/messages"
-          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong"
-        >
-          {t("messages.backToMessages")}
-        </Link>
+        {backToMessages}
       </div>
     );
   }
@@ -1279,12 +1298,7 @@ export function LocalConversationView() {
         <p role="status" className="mb-4 text-sm text-text-secondary">
           {t("messages.deletedChatToast")}
         </p>
-        <Link
-          href="/messages"
-          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong"
-        >
-          {t("messages.backToMessages")}
-        </Link>
+        {backToMessages}
       </div>
     );
   }
@@ -1298,12 +1312,7 @@ export function LocalConversationView() {
         <p className="mb-4 text-sm text-text-muted">
           {leftGroup === "left" ? t("groups.chat.leftBody") : leftGroup === "deleted" ? t("groups.chat.deletedBody") : t("groups.chat.removedBody")}
         </p>
-        <Link
-          href="/messages"
-          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong"
-        >
-          {t("messages.backToMessages")}
-        </Link>
+        {backToMessages}
       </div>
     );
   }
@@ -1329,8 +1338,53 @@ export function LocalConversationView() {
     <div
       ref={panelRef}
       {...imageDrop.handlers}
-      className="fixed inset-x-0 top-0 z-10 flex flex-col bg-background bottom-0 md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
+      className={
+        dock
+          ? "relative flex h-full min-h-0 flex-1 flex-col bg-surface"
+          : "fixed inset-x-0 top-0 z-10 flex flex-col bg-background bottom-0 md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
+      }
     >
+      {dock ? (
+        <DockHeader
+          onBack={dock.onBack}
+          onExpand={dock.onExpand}
+          expandLabel={t("dock.openChatPage")}
+          onMinimize={dock.onMinimize}
+          actions={
+            <button
+              type="button"
+              onClick={() => setSearchOpen((open) => !open)}
+              aria-label={t("chat.search.open")}
+              title={t("chat.search.open")}
+              aria-pressed={searchOpen}
+              data-chat-search-toggle
+              className={cn(DOCK_ICON_BUTTON, searchOpen && "bg-primary-soft text-primary")}
+            >
+              <Search size={18} aria-hidden />
+            </button>
+          }
+        >
+          <span className="flex min-w-0 items-center gap-2.5" data-dock-chat-title="">
+            {group ? (
+              <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={34} badge />
+            ) : (
+              <Avatar src={participant.avatarUrl} alt={participant.displayName} size={34} />
+            )}
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate font-display text-[1rem] font-semibold tracking-[-0.01em] text-text">{group ? group.name : participant.displayName}</span>
+              {typingText ? (
+                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
+                  {typingText}
+                </span>
+              ) : group ? (
+                <span className="block truncate text-caption text-text-muted">{memberCountText(t, group.memberCount)}</span>
+              ) : (
+                <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
+              )}
+            </span>
+          </span>
+        </DockHeader>
+      ) : (
       <div className="flex items-center gap-1 bg-background px-1 py-2 max-md:pt-[calc(0.5rem+env(safe-area-inset-top))] md:px-2 lg:px-4">
         <button
           type="button"
@@ -1487,6 +1541,7 @@ export function LocalConversationView() {
         />
         )}
       </div>
+      )}
       {searchOpen && (
         <ConversationSearchPanel
           conversationId={conversation.id}
@@ -1527,7 +1582,7 @@ export function LocalConversationView() {
         ref={listRef}
         // Message popovers stay inside this list's visible area (`useAnchoredPopover`, docs/history/212-*).
         data-chat-scroll
-        className="min-h-0 flex-1 overflow-y-auto px-3 py-3 lg:px-6"
+        className={cn("min-h-0 flex-1 overflow-y-auto px-3 py-3", !dock && "lg:px-6")}
         onScroll={handleListScroll}
         onClick={(event) => {
           // A tap on truly blank list space (not on any message's own
@@ -1681,8 +1736,9 @@ export function LocalConversationView() {
         onDismissNotice={composerImages.dismissNotice}
         error={sendError}
         dragActive={imageDrop.isDragging}
-        onPickLibrary={user ? setLibraryType : undefined}
-        onImport={user ? () => setImportOpen(true) : undefined}
+        // Kütüphaneden paylaş / prompt içe aktar adres parametresiyle çalışır (`?share…=`): dock'ta yok, tam sayfada var; fotoğraf ve GIF dock'ta da çalışır.
+        onPickLibrary={user && !dock ? setLibraryType : undefined}
+        onImport={user && !dock ? () => setImportOpen(true) : undefined}
         onPickGif={user ? (gif) => void sendGif(gif) : undefined}
         banners={
           <>

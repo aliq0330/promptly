@@ -15,6 +15,8 @@ import { gifAttachment, removeMessageImages, uploadMessageImage } from "@/lib/su
 import type { GifItem } from "@/lib/giphy";
 import { conversationIdByUser, filterMessageableUsers, sendMessage } from "@/lib/supabase/messages";
 import { computeKeyboardInset } from "./viewport-helpers";
+import { DockHeader } from "./dock-header";
+import type { DockHandlers } from "./message-dock-provider";
 import { messageHref, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation, MessageAttachment, UserProfile } from "@/types";
@@ -29,7 +31,7 @@ import type { Conversation, MessageAttachment, UserProfile } from "@/types";
  * person is forwarded to it, and someone who can't be messaged sees the same
  * generic notice the picker shows.
  */
-export function NewChatDraftView({ userId }: { userId: string }) {
+export function NewChatDraftView({ userId, dock }: { userId: string; dock?: DockHandlers & { onOpenConversation: (conversationId: string) => void } }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
@@ -53,7 +55,8 @@ export function NewChatDraftView({ userId }: { userId: string }) {
       try {
         const existing = conversationIdByUser(conversations).get(userId);
         if (existing) {
-          router.replace(messageHref({ id: existing }));
+          if (dock) dock.onOpenConversation(existing);
+          else router.replace(messageHref({ id: existing }));
           return;
         }
         const [profile, reachable, blockedIds] = await Promise.all([
@@ -80,11 +83,13 @@ export function NewChatDraftView({ userId }: { userId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, userId]);
 
+  const isDock = Boolean(dock);
+
   // Mobile keyboard: lift the composer above it (same helper the open thread uses).
   useEffect(() => {
     const panel = panelRef.current;
     const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    if (!panel || !vv) return;
+    if (!panel || !vv || isDock) return;
     let baselineBottom: number | null = null;
     function update() {
       if (!panel || !vv) return;
@@ -104,9 +109,13 @@ export function NewChatDraftView({ userId }: { userId: string }) {
       vv.removeEventListener("scroll", update);
       panel.style.bottom = "";
     };
-  }, []);
+  }, [isDock]);
 
   function handleBack() {
+    if (dock) {
+      dock.onBack();
+      return;
+    }
     if (typeof window !== "undefined" && window.history.length > 1) router.back();
     else router.push("/messages");
   }
@@ -130,7 +139,8 @@ export function NewChatDraftView({ userId }: { userId: string }) {
       }
       await sendMessage(conversation.id, user.id, { body: trimmed || undefined, attachments: uploaded });
       for (const image of composerImages.take()) URL.revokeObjectURL(image.previewUrl);
-      router.replace(messageHref(conversation));
+      if (dock) dock.onOpenConversation(conversation.id);
+      else router.replace(messageHref(conversation));
     } catch (err) {
       console.error("first message", err);
       // Photos that reached storage but belong to no message.
@@ -150,7 +160,8 @@ export function NewChatDraftView({ userId }: { userId: string }) {
       if (!createdRef.current) createdRef.current = await startConversationWith(target);
       const conversation = createdRef.current;
       await sendMessage(conversation.id, user.id, { attachments: [gifAttachment(gif)] });
-      router.replace(messageHref(conversation));
+      if (dock) dock.onOpenConversation(conversation.id);
+      else router.replace(messageHref(conversation));
     } catch (err) {
       console.error("first message (gif)", err);
       setError(t("messages.gifSendFailed"));
@@ -163,17 +174,21 @@ export function NewChatDraftView({ userId }: { userId: string }) {
   }
 
   if (state === "unavailable" || !target) {
+    const backClass = "inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong";
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <p role="alert" className="mb-4 text-sm text-text-secondary">
           {t("messages.newChatUnavailable")}
         </p>
-        <Link
-          href="/messages"
-          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong"
-        >
-          {t("messages.backToMessages")}
-        </Link>
+        {dock ? (
+          <button type="button" onClick={dock.onBack} className={backClass}>
+            {t("messages.backToMessages")}
+          </button>
+        ) : (
+          <Link href="/messages" className={backClass}>
+            {t("messages.backToMessages")}
+          </Link>
+        )}
       </div>
     );
   }
@@ -182,8 +197,23 @@ export function NewChatDraftView({ userId }: { userId: string }) {
     <div
       ref={panelRef}
       {...imageDrop.handlers}
-      className="fixed inset-x-0 top-0 z-10 flex flex-col bg-background bottom-0 md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
+      className={
+        dock
+          ? "relative flex h-full min-h-0 flex-1 flex-col bg-surface"
+          : "fixed inset-x-0 top-0 z-10 flex flex-col bg-background bottom-0 md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
+      }
     >
+      {dock ? (
+        <DockHeader onBack={dock.onBack} onMinimize={dock.onMinimize}>
+          <span className="flex min-w-0 items-center gap-2.5" data-dock-chat-title="">
+            <Avatar src={target.avatarUrl} alt={target.displayName} size={34} />
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate font-display text-[1rem] font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>
+              <span className="block truncate text-caption text-text-muted">@{target.username}</span>
+            </span>
+          </span>
+        </DockHeader>
+      ) : (
       <div className="flex items-center gap-1 border-b border-border-soft bg-surface px-2 py-2 max-md:pt-[calc(0.5rem+env(safe-area-inset-top))] lg:px-4">
         <button
           type="button"
@@ -204,6 +234,7 @@ export function NewChatDraftView({ userId }: { userId: string }) {
           </span>
         </Link>
       </div>
+      )}
       <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-4">
         <p className="max-w-xs text-center text-sm text-text-muted">{t("messages.draftHint")}</p>
       </div>

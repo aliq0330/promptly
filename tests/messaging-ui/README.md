@@ -329,3 +329,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-notification
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-comment-reactions.mjs   # 4/4 beklenir
 ```
+
+## Mesajlar dock'u (`docs/history/328-*`)
+
+`run-message-dock.mjs` (17 senaryo): büyük ekranda (≥ lg) sağ altta sabit hap + okunmamış sohbet sayısı, panelin sağ altta açılması (modal değil, adres değişmez), panelde sohbet açma/mesaj gönderme, sayfa değişince kalma, küçült/odak/geri, "Tam sayfada aç", üst menü simgesi, `/messages`'ta/tablette/telefonda/ziyaretçide dock yok, 1023↔1024 eşiği (canlı yeniden boyutlama), mesaj istekleri, arama, yeni sohbet (var olan kişi / taslak / ilk mesajla oluşma), İngilizce, yazma ekranında gizlenme, koyu tema + taşma. Ağ taklidi `mock.mjs`. Gerçek Supabase'e/Realtime'a/cihaza KARŞI DENENMEDİ.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-message-dock.mjs   # 17/17 beklenir (port 4198)
+```

@@ -17,6 +17,7 @@ export function ConversationRow({
   onUnarchive,
   unarchiveBusy,
   selection,
+  onOpen,
 }: {
   conversation: Conversation;
   /** Set by `/messages?sharePromptId=`/`?shareRequestId=` — appended so picking this conversation attaches the shared content there. */
@@ -28,6 +29,8 @@ export function ConversationRow({
   unarchiveBusy?: boolean;
   /** Seçim modu: satır bağlantı olmaktan çıkar, dokununca seçilir/bırakılır; solda seçim halkası kayarak açılır. */
   selection?: { selected: boolean; onToggle: () => void };
+  /** Mesajlar dock'u (docs/history/328-*): satır sayfaya götüren bir bağlantı değil, sohbeti panelde açan bir düğme olur. */
+  onOpen?: (conversation: Conversation) => void;
 }) {
   const { t, language } = useTranslation();
   const participant = conversation.participants[0];
@@ -96,6 +99,10 @@ export function ConversationRow({
     <div className="flex items-stretch">
       {selecting ? (
         <button type="button" role="checkbox" aria-checked={selected} aria-label={title} onClick={selection.onToggle} data-conversation-row className={cn(rowClass, "min-w-0 flex-1")}>
+          {content}
+        </button>
+      ) : onOpen ? (
+        <button type="button" onClick={() => onOpen(conversation)} aria-current={isActive ? "true" : undefined} data-conversation-row className={cn(rowClass, "min-w-0 flex-1")}>
           {content}
         </button>
       ) : (

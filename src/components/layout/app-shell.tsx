@@ -10,6 +10,8 @@ import { WelcomeTour } from "@/features/onboarding/welcome-tour";
 import { AnnounceReportNotice } from "@/features/communities/announce-picker";
 import { TermsUpdateNotice } from "@/features/legal/terms-update-notice";
 import { NoticeHost } from "@/components/layout/notice-host";
+import { MessageDock } from "@/features/messages/message-dock";
+import { MessageDockProvider } from "@/features/messages/message-dock-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 interface AppShellProps {
@@ -27,6 +29,7 @@ interface AppShellProps {
  * Odak (`/focus`) is a page of its own (docs/history/248-*): its route gets NO bars at all — no header, sidebar, bottom nav or
  * skip link in the DOM — only the providers, the notices and its own full-screen stage. (Hiding them was not enough on iPhone:
  * Safari took the strip behind its toolbar from the fixed bottom nav even while it was hidden.)
+ * From `lg` a signed-in member also gets the Messages dock (docs/history/328-*): a pill fixed to the bottom-right that opens a chat panel without leaving the page.
  */
 export function AppShell({ children, aside }: AppShellProps) {
   const { t } = useTranslation();
@@ -45,6 +48,7 @@ export function AppShell({ children, aside }: AppShellProps) {
     );
   }
   return (
+    <MessageDockProvider>
     <div className="flex min-h-screen">
       <a
         href="#main-content"
@@ -65,10 +69,12 @@ export function AppShell({ children, aside }: AppShellProps) {
         </div>
       </div>
       <MobileNav />
+      <MessageDock />
       <WelcomeTour />
       <TermsUpdateNotice />
       <AnnounceReportNotice />
       <NoticeHost />
     </div>
+    </MessageDockProvider>
   );
 }
