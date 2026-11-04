@@ -1,9 +1,10 @@
 import { supabase } from "./client";
 import { chunk } from "./paged";
 import { fetchAttachmentCards, attachmentKey, type AttachmentCard } from "./comment-attachments";
-import { isReactionKey, type ReactionKey } from "@/lib/reactions";
+import { mapCommentAttachment, mapCommentMedia } from "@/lib/comment-extras-model";
+import type { AttachmentState } from "@/features/content/compact-content-card";
 import { linkedContent, notificationCommentId, quickActionKind, suggestionId } from "@/lib/notification-actions";
-import type { NotificationCard } from "@/types";
+import type { CommentAttachment, CommentMedia, NotificationCard } from "@/types";
 
 /**
  * Bildirim kartlarının görünür kısmı için gereken EK veri (docs/history/326-*): yorum gövdesi + benim tepkim, takip-geri durumu, düzenleme
@@ -14,8 +15,11 @@ export interface CommentContext {
   id: string;
   body: string;
   deleted: boolean;
-  /** Benim bu yoruma verdiğim tepki; `null` = vermedim. */
-  myReaction: ReactionKey | null;
+  /** Toplam tepki sayısı (`prompt_comments.like_count`); benim tepkim `useLikeState`'tedir (gönderideki tepki sistemi, docs/history/327-*). */
+  likeCount: number;
+  /** Yorumun fotoğrafı/GIF'i ve içerik eki (docs/history/308-*): bildirimde önizlenir. */
+  media: CommentMedia | null;
+  attachment: CommentAttachment | null;
 }
 
 export interface SuggestionContext {
@@ -34,7 +38,11 @@ export interface NotificationContext {
   /** Takip ettiğim kullanıcı kimlikleri (yalnız kartların son aktörleri sorulur). */
   following: Set<string>;
   suggestions: Map<string, SuggestionContext>;
+  /** Bağlı içerik kartları + yorum eklerinin kartları (aynı `tür:kimlik` anahtarı). */
   linked: Map<string, AttachmentCard>;
+  /** Okuması tamamlanan (kart dönmese de "gizli" sayılan) ve okuması çöken ek anahtarları: `loading` ile `hidden`/`error` ayrımı için. */
+  attachmentSettled: Set<string>;
+  attachmentFailed: Set<string>;
 }
 
 export const EMPTY_NOTIFICATION_CONTEXT: NotificationContext = {
@@ -42,6 +50,8 @@ export const EMPTY_NOTIFICATION_CONTEXT: NotificationContext = {
   following: new Set(),
   suggestions: new Map(),
   linked: new Map(),
+  attachmentSettled: new Set(),
+  attachmentFailed: new Set(),
 };
 
 /** Kimlik listesini 100'lük parçalara bölüp sorguları paralel çalıştırır; ilk hatada fırlatır. */
@@ -70,23 +80,44 @@ export async function fetchNotificationContext(cards: NotificationCard[], userId
   }
   const linkedItems = cards.flatMap((card) => (card.type === "follow" ? [] : [linkedContent(card)])).filter((item): item is NonNullable<typeof item> => item != null);
 
-  const out: NotificationContext = { comments: new Map(), following: new Set(), suggestions: new Map(), linked: new Map() };
+  const out: NotificationContext = { comments: new Map(), following: new Set(), suggestions: new Map(), linked: new Map(), attachmentSettled: new Set(), attachmentFailed: new Set() };
+  /** Yorum eklerinin içerik kartları, yorumlar okununca eklenir (aynı toplu okumaya katılır). */
+  const commentAttachments: CommentAttachment[] = [];
+  const commentsDone = (async () => {
+    if (commentIds.size === 0) return;
+    try {
+      const rows = await inChunks<{
+        id: string;
+        body: string;
+        deleted_at: string | null;
+        like_count: number;
+        media_kind: string | null;
+        media_ref: string | null;
+        media_width: number | null;
+        media_height: number | null;
+        attach_type: string | null;
+        attach_id: string | null;
+      }>([...commentIds], (part) =>
+        supabase.from("prompt_comments").select("id, body, deleted_at, like_count, media_kind, media_ref, media_width, media_height, attach_type, attach_id").in("id", part),
+      );
+      // Okunamayan (silinmiş ya da RLS'in gizlediği) yorum da "yerleşmiş" sayılır: yoksa kart sonsuza dek "yükleniyor" kalırdı.
+      const seen = new Set(rows.map((row) => row.id));
+      for (const id of commentIds) {
+        if (!seen.has(id)) out.comments.set(id, { id, body: "", deleted: true, likeCount: 0, media: null, attachment: null });
+      }
+      for (const row of rows) {
+        const deleted = Boolean(row.deleted_at);
+        const attachment = deleted ? null : mapCommentAttachment(row);
+        out.comments.set(row.id, { id: row.id, body: row.body, deleted, likeCount: row.like_count ?? 0, media: deleted ? null : mapCommentMedia(row), attachment });
+        if (attachment) commentAttachments.push(attachment);
+      }
+    } catch (err) {
+      console.error("notification context: comments", err);
+    }
+  })();
 
   await Promise.all([
-    (async () => {
-      if (commentIds.size === 0) return;
-      try {
-        const ids = [...commentIds];
-        const [rows, likes] = await Promise.all([
-          inChunks<{ id: string; body: string; deleted_at: string | null }>(ids, (part) => supabase.from("prompt_comments").select("id, body, deleted_at").in("id", part)),
-          inChunks<{ comment_id: string; reaction?: string | null }>(ids, (part) => supabase.from("comment_likes").select("comment_id, reaction").eq("user_id", userId).in("comment_id", part)),
-        ]);
-        const mine = new Map(likes.map((row) => [row.comment_id, row.reaction && isReactionKey(row.reaction) ? row.reaction : "love"] as const));
-        for (const row of rows) out.comments.set(row.id, { id: row.id, body: row.body, deleted: Boolean(row.deleted_at), myReaction: mine.get(row.id) ?? null });
-      } catch (err) {
-        console.error("notification context: comments", err);
-      }
-    })(),
+    commentsDone,
     (async () => {
       if (followActorIds.size === 0) return;
       try {
@@ -120,16 +151,33 @@ export async function fetchNotificationContext(cards: NotificationCard[], userId
       }
     })(),
     (async () => {
-      if (linkedItems.length === 0) return;
+      // Bağlı içerik + yorum ekleri tek toplu okumada (tür başına tek sorgu); yorum ekleri yorumlar okununca bilinir.
+      await commentsDone;
+      const wanted = new Map<string, CommentAttachment>();
+      for (const item of [...linkedItems, ...commentAttachments]) wanted.set(attachmentKey(item), item);
+      if (wanted.size === 0) return;
       try {
-        const { cards: map } = await fetchAttachmentCards(linkedItems);
+        const { cards: map, failed } = await fetchAttachmentCards([...wanted.values()]);
         for (const [key, card] of map) out.linked.set(key, card);
+        for (const [key, item] of wanted) {
+          out.attachmentSettled.add(key);
+          if (failed.has(item.type)) out.attachmentFailed.add(key);
+        }
       } catch (err) {
         console.error("notification context: linked", err);
       }
     })(),
   ]);
   return out;
+}
+
+/** Bir yorum ekinin o anki hâli (`CompactContentCard` durumu): okunmadıysa `loading`, okundu ama dönmediyse `hidden`, sorgu çöktüyse `error`. */
+export function attachmentStateIn(context: NotificationContext, attachment: CommentAttachment): AttachmentState {
+  const key = attachmentKey(attachment);
+  const card = context.linked.get(key);
+  if (card) return { status: "ready", card };
+  if (context.attachmentFailed.has(key)) return { status: "error" };
+  return context.attachmentSettled.has(key) ? { status: "hidden" } : { status: "loading" };
 }
 
 /** Bir kartın bağlı içerik önizlemesi (varsa). */

@@ -8,11 +8,12 @@ import { Button, buttonClassName } from "@/components/ui/button";
 import { StorageImage } from "@/components/ui/storage-media";
 import { LoadMore } from "@/features/feed/load-more";
 import { ReactionIcon } from "@/features/reactions/reaction-icon";
+import { DetailReactionSection } from "./comment-reaction-controls";
 import { CommentExtrasPreview, CommentExtrasToolbar, useCommentExtras } from "@/features/prompts/comment-extras";
 import { shareOrCopyLink } from "@/features/prompts/share-button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { DetailFooterActions } from "./notification-menus";
-import { CardAvatar, CardHeadline, ReactionPickRow } from "./notification-parts";
+import { CardAvatar, CardHeadline, CommentExtrasStrip } from "./notification-parts";
 import { attachmentHref } from "@/features/content/compact-content-card";
 import { useCardActions } from "./use-card-actions";
 import { useNotifications } from "./notifications-provider";
@@ -181,9 +182,15 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
   const body = (
     <>
       {kind === "comment" && (
-        <p className="max-w-[66ch] whitespace-pre-line break-words text-[1.0625rem] leading-relaxed text-text [overflow-wrap:anywhere]" data-detail-body="">
-          {comment ? (comment.deleted ? t("nc.commentDeleted") : comment.body) : "…"}
-        </p>
+        <div className="space-y-3" data-detail-body="">
+          {(!comment || comment.deleted || comment.body.trim()) && (
+            <p className="max-w-[66ch] whitespace-pre-line break-words text-[1.0625rem] leading-relaxed text-text [overflow-wrap:anywhere]">
+              {comment ? (comment.deleted ? t("nc.commentDeleted") : comment.body) : "…"}
+            </p>
+          )}
+          {/* Ayrıntıda yorumun/yanıtın TAMAMI: tam metin + her ek, tam boy. */}
+          <CommentExtrasStrip comment={comment} context={list.context} all />
+        </div>
       )}
       {(kind === "members" || (card.type === "like" && card.rowCount >= 1)) && (
         <>
@@ -293,26 +300,20 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
 
   const commentExtras = kind === "comment" && (
     <>
-      <div>
-        <p className="mb-2 text-label font-bold text-text-secondary">{t("nc.quickReaction")}</p>
-        <ReactionPickRow current={actions.myReaction} disabled={actions.busy === "react"} onPick={(reaction) => void actions.react(reaction)} showLabels={variant === "panel"} size={variant === "panel" ? 22 : 26} />
-        {variant === "page" && (
-          <p className="mt-2 text-caption text-text-muted" data-reaction-hint="">
-            {actions.myReaction ? t("nc.reactionHintOn", { label: t(REACTION_LABEL[actions.myReaction]) }) : t("nc.reactionHintOff")}
-          </p>
-        )}
-      </div>
+      {/* Seçici AÇIK gelir (kartta dokununca açılan emoji menüsünün aynısı), altında tepki özeti. */}
+      <DetailReactionSection card={card} list={list} showHint={variant === "page"} />
       {local?.reply && (
         <div className="flex flex-col items-end gap-1">
           <p className="max-w-[80%] whitespace-pre-line break-words rounded-2xl rounded-br-md bg-primary px-4 py-3 text-body text-primary-foreground [overflow-wrap:anywhere]" data-reply-bubble="">{local.reply.body}</p>
           <p className="text-caption text-text-muted">{t("nc.replyJustNow")}</p>
         </div>
       )}
-      {variant === "panel" && actions.replyTarget && user && (
-        <div>
+      {/* Yanıt kutusu içeriğin AKIŞINDA (sabit çubuk değil): telefonda altındaki Sessize al / Yarın hatırlat satırını örtmez. */}
+      {actions.replyTarget && user && (
+        <div data-reply-composer="">
           <label htmlFor="detail-reply" className="mb-2 block text-label font-bold text-text-secondary">{t("nc.replyLabel")}</label>
           <div className="space-y-2.5 rounded-2xl border border-border bg-surface p-3 pl-4">
-            <textarea id="detail-reply" rows={3} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} placeholder={t("nc.replyPlaceholder", { name: actor?.displayName ?? "" })} className="w-full resize-none bg-transparent text-body text-text outline-none placeholder:text-text-muted" />
+            <textarea id="detail-reply" rows={variant === "panel" ? 3 : 2} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} placeholder={t("nc.replyPlaceholder", { name: actor?.displayName ?? "" })} className="w-full resize-none bg-transparent text-body text-text outline-none placeholder:text-text-muted" />
             <CommentExtrasPreview extras={extras} />
             <div className="flex flex-wrap items-center gap-1.5">
               <CommentExtrasToolbar extras={extras} userId={user.id} disabled={actions.busy === "reply"} />
@@ -357,20 +358,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
           <MoreVertical size={20} />
         </span>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{content}</div>
-      {kind === "comment" && actions.replyTarget && user && (
-        <div className="shrink-0 border-t border-border-soft bg-surface px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2.5">
-          <CommentExtrasPreview extras={extras} />
-          <div className="flex items-end gap-1.5">
-            <CommentExtrasToolbar extras={extras} userId={user.id} disabled={actions.busy === "reply"} />
-            <label htmlFor="detail-reply-m" className="sr-only">{t("nc.replyLabel")}</label>
-            <textarea id="detail-reply-m" rows={1} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} placeholder={t("nc.replyPlaceholder", { name: actor?.displayName ?? "" })} className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-[1.375rem] bg-surface-soft px-4 py-2.5 text-body text-text outline-none placeholder:text-text-muted" />
-            <button type="button" onClick={() => void send()} disabled={actions.busy === "reply" || extras.isPreparing || (!draft.trim() && !extras.hasExtras)} aria-label={t("nc.send")} data-action="reply-send" className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <Send size={20} aria-hidden />
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4">{content}</div>
     </div>
   );
 }

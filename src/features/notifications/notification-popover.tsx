@@ -60,10 +60,14 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
     const onPointer = (event: PointerEvent) => {
       const target = event.target as Node;
       if (panelRef.current?.contains(target) || anchor?.contains(target)) return;
+      // Karttan açılan emoji seçicisi ve "Tepkiler" penceresi gövdeye portallanır: panelin DIŞINDA görünür ama panelin parçasıdır (docs/history/327-*).
+      if ((target as Element).closest?.("[data-reaction-picker], [aria-modal='true']")) return;
       onClose();
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        // Açık bir emoji seçici/pencere varsa Esc önce onu kapatır, panel yerinde kalır.
+        if (document.querySelector("[data-reaction-picker], [aria-modal='true']")) return;
         onClose();
         anchor?.focus();
       }

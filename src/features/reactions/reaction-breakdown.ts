@@ -3,7 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { emptyCounts, shiftCounts, type ReactionCounts, type ReactionFriend, type ReactionKey } from "@/lib/reactions";
 import { fetchReactionCounts, fetchReactionFriends } from "@/lib/supabase/reactions";
-import type { LikeableContentType } from "@/lib/supabase/likes";
+import type { ReactionTargetType } from "@/lib/supabase/likes";
 
 /**
  * Session-wide breakdown of one target's reactions (per-reaction counts + the people the viewer follows who reacted), next to
@@ -22,7 +22,7 @@ const store = new Map<string, Breakdown>();
 const listeners = new Map<string, Set<() => void>>();
 const loading = new Set<string>();
 
-const keyOf = (contentType: LikeableContentType, id: string) => `${contentType}:${id}`;
+const keyOf = (contentType: ReactionTargetType, id: string) => `${contentType}:${id}`;
 
 function notify(key: string) {
   for (const fn of listeners.get(key) ?? []) fn();
@@ -41,12 +41,12 @@ function subscribe(key: string, onChange: () => void) {
   };
 }
 
-async function load(contentType: LikeableContentType, id: string, userId: string | null) {
+async function load(contentType: ReactionTargetType, id: string, userId: string | null) {
   const key = keyOf(contentType, id);
   if (loading.has(key)) return;
   loading.add(key);
   try {
-    const [counts, friends] = await Promise.all([fetchReactionCounts(id), fetchReactionFriends(id, userId)]);
+    const [counts, friends] = await Promise.all([fetchReactionCounts(id, contentType), fetchReactionFriends(id, userId, contentType)]);
     store.set(key, { counts: counts ?? emptyCounts(), friends, loaded: true });
     notify(key);
   } finally {
@@ -55,7 +55,7 @@ async function load(contentType: LikeableContentType, id: string, userId: string
 }
 
 /** The viewer changed their reaction (`null` = none): move the counts right away; `refreshBreakdown` then confirms them. */
-export function shiftBreakdown(contentType: LikeableContentType, id: string, from: ReactionKey | null, to: ReactionKey | null) {
+export function shiftBreakdown(contentType: ReactionTargetType, id: string, from: ReactionKey | null, to: ReactionKey | null) {
   const key = keyOf(contentType, id);
   const prev = store.get(key);
   if (!prev?.loaded) return;
@@ -64,14 +64,14 @@ export function shiftBreakdown(contentType: LikeableContentType, id: string, fro
 }
 
 /** Re-reads the server's counts quietly (no loading state), e.g. after the viewer's own change was saved. */
-export async function refreshBreakdown(contentType: LikeableContentType, id: string, userId: string | null) {
+export async function refreshBreakdown(contentType: ReactionTargetType, id: string, userId: string | null) {
   const key = keyOf(contentType, id);
   if (!store.get(key)?.loaded) return;
   await load(contentType, id, userId);
 }
 
 /** The target's breakdown; asks for it the first time `enabled` (a target with no reactions has nothing to load). */
-export function useReactionBreakdown(contentType: LikeableContentType, id: string, userId: string | null, enabled: boolean): Breakdown {
+export function useReactionBreakdown(contentType: ReactionTargetType, id: string, userId: string | null, enabled: boolean): Breakdown {
   const key = keyOf(contentType, id);
   useEffect(() => {
     if (enabled && !store.get(key)?.loaded) void load(contentType, id, userId);

@@ -561,7 +561,11 @@ await scenario("21. Yorum beğenisi gerçek istekle; kapatma yolları: üstteki 
   await openFocus(page);
   await openComments(page);
   const row = sheet(page).locator("[data-comment-id='c0000000-0000-4000-8000-000000000002']");
-  await row.getByRole("button", { name: /Beğen/ }).last().click();
+  // Yorum tepkisi gönderideki sistemdir (docs/history/327-*): dokununca emoji seçici açılır, seçilene kadar hiçbir şey yazılmaz.
+  await row.locator("[data-comment-reactions] button").first().click();
+  await page.locator("[data-reaction-picker]").waitFor();
+  assert.ok(!db.calls.some((c) => c.table === "comment_likes"), "emoji seçilene kadar beğeni yazılmaz");
+  await page.locator('[data-reaction-picker] [data-reaction="love"]').click();
   await page.waitForTimeout(400);
   assert.ok(db.calls.some((c) => c.table === "comment_likes" && c.body.comment_id === "c0000000-0000-4000-8000-000000000002"));
   assert.match(await row.textContent(), /45/);

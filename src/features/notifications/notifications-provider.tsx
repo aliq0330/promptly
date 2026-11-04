@@ -11,7 +11,6 @@ import {
   fetchUnreadCountsByCategory,
   markCardRead,
   markCardUnread,
-  setNotificationMute,
   snoozeCard,
   unsnoozeCard,
 } from "@/lib/supabase/notifications";
@@ -19,6 +18,7 @@ import { supabase } from "@/lib/supabase/client";
 import { dispatchMyEventReminders } from "@/lib/supabase/communities";
 import { clearThrottle, shouldRunNow } from "@/lib/run-throttle";
 import { announceNotice } from "@/lib/app-notice";
+import { applyMute } from "./mute-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { NotificationCategoryName } from "@/lib/notification-mirror";
 import type { NotificationCard } from "@/types";
@@ -65,6 +65,8 @@ interface NotificationsContextValue {
   snooze: (card: NotificationCard, until: Date, label: string) => Promise<void>;
   unsnooze: (card: NotificationCard) => Promise<void>;
   mute: (kind: "actor" | "content", target: string, label: string, text: string) => Promise<void>;
+  /** Sesini açar (sessize almanın tersi); "Geri al" şeridi tekrar sessize alır. */
+  unmute: (kind: "actor" | "content", target: string, label: string, text: string) => Promise<void>;
   undoNotice: UndoNotice | null;
   pushUndo: (text: string, undo: () => Promise<void> | void) => void;
   runUndo: () => Promise<void>;
@@ -369,13 +371,27 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const mute = useCallback(
     async (kind: "actor" | "content", target: string, label: string, text: string) => {
       try {
-        await setNotificationMute(kind, target, label, true);
+        await applyMute(kind, target, label, true);
       } catch (err) {
         console.error("mute", err);
         announceNotice(t("nc.actionFailed"));
         return;
       }
-      pushUndo(text, () => setNotificationMute(kind, target, label, false));
+      pushUndo(text, () => applyMute(kind, target, label, false));
+    },
+    [pushUndo, t],
+  );
+
+  const unmute = useCallback(
+    async (kind: "actor" | "content", target: string, label: string, text: string) => {
+      try {
+        await applyMute(kind, target, label, false);
+      } catch (err) {
+        console.error("unmute", err);
+        announceNotice(t("nc.actionFailed"));
+        return;
+      }
+      pushUndo(text, () => applyMute(kind, target, label, true));
     },
     [pushUndo, t],
   );
@@ -396,12 +412,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       snooze,
       unsnooze,
       mute,
+      unmute,
       undoNotice,
       pushUndo,
       runUndo,
       dismissUndo,
     }),
-    [unread, snoozed, incoming, loadCategoryCounts, refreshCounters, subscribe, markRead, markUnread, markAllRead, clearAll, remove, snooze, unsnooze, mute, undoNotice, pushUndo, runUndo, dismissUndo],
+    [unread, snoozed, incoming, loadCategoryCounts, refreshCounters, subscribe, markRead, markUnread, markAllRead, clearAll, remove, snooze, unsnooze, mute, unmute, undoNotice, pushUndo, runUndo, dismissUndo],
   );
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { LikeToggleResult } from "@/components/ui/like-toggle";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
@@ -22,8 +21,6 @@ import {
   postCommentOnSpace,
   postCommentOnQuote,
 } from "@/lib/supabase/comments";
-import { fetchMyCommentReactions, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
-import { DEFAULT_REACTION, type ReactionKey } from "@/lib/reactions";
 import { removeCommentPhotos } from "@/lib/supabase/comment-media";
 import type { CommentExtras } from "@/lib/supabase/comments";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -92,12 +89,6 @@ export function useCommentThread(
   const [replyDraft, setReplyDraft] = useState("");
   const [replyError, setReplyError] = useState<string | null>(null);
   const [isPostingReply, setIsPostingReply] = useState(false);
-
-  // The viewer's own reaction per liked comment (docs/history/326-*); `likedIds` is its key set. A tap on the heart is the default `love`; other reactions come from the notification card.
-  const [myReactions, setMyReactions] = useState<Map<string, ReactionKey>>(new Map());
-  const likedIds = useMemo(() => new Set(myReactions.keys()), [myReactions]);
-  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
-  const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(new Set());
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -209,15 +200,7 @@ export function useCommentThread(
         if (cancelled) return;
         setComments(result);
         setNextOffset(next);
-        setLikeCounts(Object.fromEntries(result.map((c) => [c.id, c.likeCount])));
         setLoaded(true);
-        if (user) {
-          const reactions = await fetchMyCommentReactions(
-            result.map((c) => c.id),
-            user.id,
-          );
-          if (!cancelled) setMyReactions(reactions);
-        }
 
         // Land on a specific comment/reply from a notification (Aşama 4.2-4.4)
         // — only once per `highlightCommentId` (a like on this same thread
@@ -271,15 +254,7 @@ export function useCommentThread(
     try {
       const page = await fetchCommentThreadPage(scopeRef.current, nextOffset);
       setComments((prev) => mergeComments(prev, page.comments));
-      setLikeCounts((prev) => ({ ...Object.fromEntries(page.comments.map((c) => [c.id, c.likeCount])), ...prev }));
       setNextOffset(page.nextOffset);
-      if (user && page.comments.length > 0) {
-        const reactions = await fetchMyCommentReactions(
-          page.comments.map((c) => c.id),
-          user.id,
-        );
-        setMyReactions((prev) => new Map([...prev, ...reactions]));
-      }
     } catch (err) {
       console.error("comment thread (more)", err);
       setMoreFailed(true);
@@ -340,45 +315,6 @@ export function useCommentThread(
     });
   }
 
-  async function toggleLike(id: string): Promise<LikeToggleResult> {
-    if (!user) {
-      requireAuth("like");
-      return "ignored";
-    }
-    if (pendingLikeIds.has(id)) return "ignored";
-    const wasLiked = likedIds.has(id);
-    const previousReaction = myReactions.get(id) ?? null;
-    setPendingLikeIds((prev) => new Set(prev).add(id));
-    setMyReactions((prev) => {
-      const next = new Map(prev);
-      if (wasLiked) next.delete(id);
-      else next.set(id, DEFAULT_REACTION);
-      return next;
-    });
-    setLikeCounts((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + (wasLiked ? -1 : 1)) }));
-    try {
-      if (wasLiked) await unlikeComment(id, user.id);
-      else await likeComment(id, user.id);
-      return wasLiked ? "unliked" : "liked";
-    } catch (err) {
-      console.error("toggleCommentLike", err);
-      setMyReactions((prev) => {
-        const next = new Map(prev);
-        if (wasLiked && previousReaction) next.set(id, previousReaction);
-        else next.delete(id);
-        return next;
-      });
-      setLikeCounts((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + (wasLiked ? 1 : -1)) }));
-      return "failed";
-    } finally {
-      setPendingLikeIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }
-  }
-
   function startReply(id: string) {
     setReplyingTo(id);
     setReplyDraft("");
@@ -402,7 +338,6 @@ export function useCommentThread(
       const posted = await postWithExtras(replyExtras, user.id, trimmed, parentId, null);
       bumpCommentCount(targetId, 1);
       setComments((prev) => [...prev, posted]);
-      setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setExpandedIds((prev) => new Set(prev).add(parentId));
       pendingScrollToId.current = posted.id;
       setReplyingTo(null);
@@ -427,7 +362,6 @@ export function useCommentThread(
       const posted = await postWithExtras(composerExtras, user.id, trimmed, null, rating);
       bumpCommentCount(targetId, 1);
       setComments((prev) => [...prev, posted]);
-      setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setDraft("");
       setDraftRating(0);
       setShowAll(true);
@@ -546,11 +480,6 @@ export function useCommentThread(
     postError: replyError,
     canInteract: Boolean(user),
     currentUserId: user?.id ?? null,
-    likedIds,
-    reactionById: myReactions,
-    likeCounts,
-    pendingLikeIds,
-    onToggleLike: toggleLike,
     editingId,
     onStartEdit: startEdit,
     onCancelEdit: cancelEdit,

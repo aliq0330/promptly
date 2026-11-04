@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, ChevronDown, CornerUpLeft, Heart, Send, Share2 } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, CornerUpLeft, Send, Share2 } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
-import { ReactionIcon } from "@/features/reactions/reaction-icon";
 import { shareOrCopyLink } from "@/features/prompts/share-button";
-import { CardAvatar, CardHeadline, ReactionPickRow, StackedAvatars } from "./notification-parts";
+import { CardAvatar, CardHeadline, CommentExtrasStrip, StackedAvatars, commentExtrasCount } from "./notification-parts";
+import { CardReactionButton } from "./comment-reaction-controls";
 import { useCardActions, type CardActions } from "./use-card-actions";
 import { useNotifications } from "./notifications-provider";
 import type { useNotificationCards } from "./use-notification-cards";
@@ -16,7 +16,6 @@ import { quickActionKind } from "@/lib/notification-actions";
 import { notificationCommentId } from "@/lib/notification-actions";
 import { parseNotificationHref } from "@/lib/notification-mirror";
 import { announceNotice } from "@/lib/app-notice";
-import { REACTION_LABEL } from "@/lib/reactions";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import type { NotificationCard } from "@/types";
@@ -27,13 +26,13 @@ export function detailHref(key: string): string {
   return `/notifications?n=${encodeURIComponent(key)}`;
 }
 
-/** Karttaki alıntı kutusunun metni: yorum gövdesi (toplu sorgudan), yoksa sunucu önizlemesi. */
+/** Karttaki alıntı kutusunun metni: yorum gövdesi (toplu sorgudan), yoksa sunucu önizlemesi; boş yazı (yalnız ek) → null. */
 function usePreviewText(card: NotificationCard, list: List): string | null {
   const { t } = useTranslation();
   const commentId = notificationCommentId(card);
   const comment = commentId ? list.context.comments.get(commentId) : undefined;
-  if (comment) return comment.deleted ? t("nc.commentDeleted") : comment.body;
-  if (card.type === "comment" || card.type === "comment_reply") return quotedPreview(card.latestMessage);
+  if (comment) return comment.deleted ? t("nc.commentDeleted") : comment.body.trim() ? comment.body : null;
+  if (card.type === "comment" || card.type === "comment_reply") return quotedPreview(card.latestMessage)?.trim() || null;
   return null;
 }
 
@@ -71,18 +70,14 @@ function QuickActionsRow({
   list,
   actions,
   onNavigate,
-  onOpenPicker,
   onOpenReply,
-  pickerOpen,
   replyOpen,
 }: {
   card: NotificationCard;
   list: List;
   actions: CardActions;
   onNavigate?: () => void;
-  onOpenPicker: () => void;
   onOpenReply: () => void;
-  pickerOpen: boolean;
   replyOpen: boolean;
 }) {
   const { t, language } = useTranslation();
@@ -90,7 +85,6 @@ function QuickActionsRow({
   const kind = quickActionKind(card);
   const local = list.local[card.key];
   const detail = detailHref(card.key);
-  const me = actions.myReaction;
   const follow = actions.following;
   const suggestion = actions.suggestion;
   const stats = parseNotificationHref(card.targetHref);
@@ -99,10 +93,10 @@ function QuickActionsRow({
     <div className="mt-3 flex flex-wrap items-center gap-2" data-quick-actions={kind}>
       {kind === "comment" && (
         <>
-          <ActionButton variant={me ? "secondary" : "outline"} aria-expanded={pickerOpen} onClick={onOpenPicker} data-action="like">
-            {me ? <ReactionIcon reaction={me} size={18} /> : <Heart size={18} strokeWidth={1.75} aria-hidden />}
-            <span>{me ? t("nc.reactedLabel", { label: t(REACTION_LABEL[me]) }) : t("nc.quickLike")}</span>
-          </ActionButton>
+          {/* Gönderideki tepki sistemi: dokununca altı hareketli emojili seçici açılır (docs/history/327-*). */}
+          <span className="contents" data-action="like">
+            <CardReactionButton card={card} list={list} />
+          </span>
           {actions.replyTarget && (
             <ActionButton variant="outline" aria-expanded={replyOpen} onClick={onOpenReply} data-action="reply">
               <CornerUpLeft size={18} strokeWidth={1.75} aria-hidden />
@@ -210,7 +204,6 @@ export function NotificationCardView({
   const { t, language } = useTranslation();
   const actions = useCardActions(card, list);
   const { markRead } = useNotifications();
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const preview = usePreviewText(card, list);
@@ -222,13 +215,22 @@ export function NotificationCardView({
   const summary = reactionSummary(card.reactionCounts, t);
   const replyName = card.latestActor?.displayName ?? "";
   const isMilestone = kind === "milestone";
+  const commentId = notificationCommentId(card);
+  const comment = commentId ? list.context.comments.get(commentId) : undefined;
+  const extrasCount = commentExtrasCount(comment);
+  const articleRef = useRef<HTMLElement>(null);
 
   const header = (
     <>
       <CardAvatar card={card} size={variant === "popover" ? 40 : 44} />
       <div className="min-w-0 flex-1 text-left">
         <CardHeadline card={card} className="leading-snug" />
-        {!expanded && (preview || summary) && <p className="mt-1 line-clamp-2 text-small text-text-muted">{preview ?? summary}</p>}
+        {!expanded && (preview || summary || extrasCount > 0) && (
+          <p className="mt-1 line-clamp-2 text-small text-text-muted">
+            {preview ?? summary ?? (extrasCount > 0 ? t(extrasCount === 1 ? "nc.extras.one" : "nc.extras.many", { count: extrasCount }) : null)}
+            {preview && extrasCount > 0 && <span className="ml-1.5 font-semibold text-text-secondary">· {t(extrasCount === 1 ? "nc.extras.one" : "nc.extras.many", { count: extrasCount })}</span>}
+          </p>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-1.5 pt-0.5 text-caption text-text-muted">
         {unread && (
@@ -245,6 +247,7 @@ export function NotificationCardView({
 
   return (
     <article
+      ref={articleRef}
       tabIndex={-1}
       aria-keyshortcuts="J K L R E"
       onKeyDown={(event) => {
@@ -252,12 +255,12 @@ export function NotificationCardView({
         if (target.matches("input, textarea, select, [contenteditable='true']") || event.metaKey || event.ctrlKey || event.altKey) return;
         if (event.key === "e") void markRead(card);
         if (event.key === "l" && kind === "comment") {
-          setPickerOpen(true);
+          // "L": tepki seçicisini açar (gönderideki ReactionButton'un kendi açılışı).
+          articleRef.current?.querySelector<HTMLButtonElement>('[data-action="like"] button')?.click();
           setReplyOpen(false);
         }
         if (event.key === "r" && kind === "comment" && actions.replyTarget) {
           setReplyOpen(true);
-          setPickerOpen(false);
         }
       }}
       data-notification-card={card.key}
@@ -274,7 +277,8 @@ export function NotificationCardView({
 
       {expanded && (
         <div className={cn(variant === "popover" ? "pl-[3.25rem]" : "pl-14")}>
-          {preview != null && kind !== "suggestion" && <p className="mt-2 whitespace-pre-line break-words rounded-xl bg-surface-soft px-3 py-2 text-small text-text-secondary [overflow-wrap:anywhere]" data-card-quote="">{preview}</p>}
+          {preview != null && kind !== "suggestion" && <p className="mt-2 line-clamp-4 whitespace-pre-line break-words rounded-xl bg-surface-soft px-3 py-2 text-small text-text-secondary [overflow-wrap:anywhere]" data-card-quote="">{preview}</p>}
+          {kind === "comment" && <CommentExtrasStrip comment={comment} context={list.context} className="mt-2" />}
           {kind === "suggestion" && <SuggestionPreview card={card} list={list} clamp={variant === "popover"} />}
           {card.rowCount > 1 && card.actors.length > 0 && (
             <div className="mt-2.5 flex items-center gap-3">
@@ -289,29 +293,9 @@ export function NotificationCardView({
             list={list}
             actions={actions}
             onNavigate={onNavigate}
-            pickerOpen={pickerOpen}
             replyOpen={replyOpen}
-            onOpenPicker={() => {
-              setPickerOpen((v) => !v);
-              setReplyOpen(false);
-            }}
-            onOpenReply={() => {
-              setReplyOpen((v) => !v);
-              setPickerOpen(false);
-            }}
+            onOpenReply={() => setReplyOpen((v) => !v)}
           />
-
-          {pickerOpen && (
-            <ReactionPickRow
-              className="mt-2 w-fit rounded-full border border-border-soft bg-surface p-1 shadow-card"
-              current={actions.myReaction}
-              disabled={actions.busy === "react"}
-              onPick={(reaction) => {
-                void actions.react(reaction);
-                setPickerOpen(false);
-              }}
-            />
-          )}
 
           {replyOpen && !local?.reply && (
             <form

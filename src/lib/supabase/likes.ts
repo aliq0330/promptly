@@ -1,6 +1,7 @@
 import { supabase } from "./client";
 import { batcherRegistry } from "./batched-lookup";
 import { DEFAULT_REACTION, type ReactionKey } from "@/lib/reactions";
+import { likeComment, unlikeComment } from "./comment-likes";
 
 /**
  * `prompt_likes` holds likes for several content types — a nullable
@@ -11,6 +12,12 @@ import { DEFAULT_REACTION, type ReactionKey } from "@/lib/reactions";
  * migration than the naming mismatch is worth).
  */
 export type LikeableContentType = "prompt" | "request" | "prompt_result" | "workflow" | "preset" | "community_post" | "space" | "quote";
+
+/**
+ * Tepki verilebilen her hedef: içerik türleri + YORUM (docs/history/327-*). Yorum beğenisi `comment_likes`'tadır (`prompt_likes` değil); tepki arayüzü
+ * (`ReactionButton`/`ReactionSummary`/`ReactionSheet`/`useLikeState`) bu tür üzerinden ikisini de aynı bileşenle çizer, veri katmanı türe göre tabloyu seçer.
+ */
+export type ReactionTargetType = LikeableContentType | "comment";
 
 /** `community_post` = bir topluluk gönderisinin KENDİ beğenisi: işaret ettiği içeriğin beğeni sayısından bağımsızdır. */
 function targetColumn(
@@ -47,7 +54,8 @@ export async function fetchIsLiked(id: string, userId: string, contentType: Like
 }
 
 /** Genuinely, permanently likes a real prompt. `handle_prompt_like_change` (Bölüm 19/9.34) keeps like_count in sync, even across users. */
-export async function likeContent(id: string, userId: string, contentType: LikeableContentType = "prompt", reaction: ReactionKey = DEFAULT_REACTION): Promise<void> {
+export async function likeContent(id: string, userId: string, contentType: ReactionTargetType = "prompt", reaction: ReactionKey = DEFAULT_REACTION): Promise<void> {
+  if (contentType === "comment") return likeComment(id, userId, reaction);
   // Her beğeni bir tepkidir (docs/history/265-*). `love` sütunsuz yazılır: varsayılanı odur, migration öncesi şemada da çalışır.
   const { error } = await supabase
     .from("prompt_likes")
@@ -55,7 +63,8 @@ export async function likeContent(id: string, userId: string, contentType: Likea
   if (error) throw new Error(error.message);
 }
 
-export async function unlikeContent(id: string, userId: string, contentType: LikeableContentType = "prompt"): Promise<void> {
+export async function unlikeContent(id: string, userId: string, contentType: ReactionTargetType = "prompt"): Promise<void> {
+  if (contentType === "comment") return unlikeComment(id, userId);
   const { error } = await supabase
     .from("prompt_likes")
     .delete()

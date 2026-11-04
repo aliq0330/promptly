@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Ban, MoreVertical } from "lucide-react";
+import { Ban, BellOff, BellRing, MoreVertical } from "lucide-react";
 import { ReportButton } from "@/features/moderation/report-button";
 import { useBlockState } from "@/features/moderation/use-block-state";
+import { useMuteToggle } from "@/features/notifications/mute-store";
+import { announceNotice } from "@/lib/app-notice";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
@@ -31,6 +33,20 @@ export function ProfileMoreMenu({
   const [open, setOpen] = useState(false);
   const [confirmingBlock, setConfirmingBlock] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // Bildirimleri sessize al / sesi aç (docs/history/327-*): kişiyi engellemeden yalnız bildirimlerini keser; durum bildirim merkeziyle ortaktır.
+  const mute = useMuteToggle("actor", blockState.canBlock ? user.id : null, user.displayName);
+
+  async function handleMuteClick() {
+    setOpen(false);
+    setConfirmingBlock(false);
+    try {
+      const nowMuted = await mute.toggle();
+      announceNotice(t(nowMuted ? "nc.mutedPerson" : "nc.unmutedPerson", { name: user.displayName }));
+    } catch (err) {
+      console.error("profile mute", err);
+      announceNotice(t("nc.actionFailed"));
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -91,6 +107,13 @@ export function ProfileMoreMenu({
               })}
             </div>
           )}
+          <button type="button" role="menuitem" onClick={() => void handleMuteClick()} disabled={!mute.loaded} data-action={mute.muted ? "profile-unmute" : "profile-mute"} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft disabled:opacity-60">
+            {mute.muted ? <BellRing size={14} aria-hidden /> : <BellOff size={14} aria-hidden />}
+            <span className="min-w-0">
+              <span className="block">{mute.muted ? t("nc.profile.unmute") : t("nc.profile.mute")}</span>
+              <span className="block text-caption text-text-muted">{mute.muted ? t("nc.profile.unmuteHint") : t("nc.profile.muteHint")}</span>
+            </span>
+          </button>
           <button
             type="button"
             role="menuitem"

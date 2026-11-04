@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  * Tek "Geri al" şeridi (docs/history/326-*): sağlayıcıdaki bekleyen eylemi gösterir. `inline` (zil panelinin içinde) ve `fixed` (sayfada, ekranın
  * altında; telefonda alt menünün üstünde) iki yerleşimi vardır; panel açıkken sayfadaki sabit şerit gizlenir ki ikisi üst üste görünmesin.
  */
-export function UndoBar({ placement }: { placement: "inline" | "fixed" }) {
+export function UndoBar({ placement, aboveNav = true }: { placement: "inline" | "fixed"; /** Telefonda alt menünün üstünde durur; tam ekran ayrıntıda (alt menü yok) en alta yakın. */ aboveNav?: boolean }) {
   const { t } = useTranslation();
   const { undoNotice, runUndo } = useNotifications();
 
@@ -32,7 +32,10 @@ export function UndoBar({ placement }: { placement: "inline" | "fixed" }) {
         "flex items-center gap-2.5 rounded-full bg-text py-1 pl-4 pr-1.5 text-background",
         placement === "inline" && "mx-2.5 mb-2",
         placement === "fixed" &&
-          "fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 shadow-pop md:inset-x-auto md:bottom-6 md:left-1/2 md:w-[26rem] md:-translate-x-1/2 [html[data-undo-inline]_&]:hidden",
+          cn(
+            "fixed inset-x-3 z-40 shadow-pop md:inset-x-auto md:bottom-6 md:left-1/2 md:w-[26rem] md:-translate-x-1/2 [html[data-undo-inline]_&]:hidden",
+            aboveNav ? "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]" : "bottom-[calc(1rem+env(safe-area-inset-bottom))]",
+          ),
       )}
     >
       <Check size={18} aria-hidden />

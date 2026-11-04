@@ -24,6 +24,40 @@ export function ReactionPicker({
   onChoose: (reaction: ReactionKey | null) => void;
 }) {
   const { t } = useTranslation();
+
+  return (
+    <div
+      ref={panelRef}
+      role="menu"
+      aria-label={t("reaction.pickerAria")}
+      data-reaction-picker=""
+      style={style}
+      // The panel is a React child of the card it was opened from (a portal keeps the tree): its clicks must not reach the card.
+      onClick={(event) => event.stopPropagation()}
+      className="z-[75] w-[min(calc(100vw-16px),400px)] animate-pop-in rounded-[28px] border border-border-soft bg-surface p-2 shadow-pop"
+    >
+      <ReactionGrid current={current} onChoose={(key) => onChoose(key)} />
+    </div>
+  );
+}
+
+/**
+ * The picker's content on its own (docs/history/327-*): the six animated emojis + "Tepkini kaldır". The popover above wraps it in the floating panel; the
+ * notification detail shows it OPEN, in the page (`InlineReactionPicker`). `playOnChoose` plays the chosen emoji's animation too (the popover closes at once,
+ * so it does not need to); `onChoose` also gets the emoji element so the caller can centre Telegram's big effect on it.
+ */
+export function ReactionGrid({
+  current,
+  onChoose,
+  playOnChoose = false,
+  className,
+}: {
+  current: ReactionKey | null;
+  onChoose: (reaction: ReactionKey | null, element?: HTMLElement | null) => void;
+  playOnChoose?: boolean;
+  className?: string;
+}) {
+  const { t } = useTranslation();
   const icons = useRef<Partial<Record<ReactionKey, ReactionIconHandle | null>>>({});
 
   function moveFocus(event: React.KeyboardEvent, delta: number) {
@@ -35,17 +69,11 @@ export function ReactionPicker({
 
   return (
     <div
-      ref={panelRef}
-      role="menu"
-      aria-label={t("reaction.pickerAria")}
-      style={style}
-      // The panel is a React child of the card it was opened from (a portal keeps the tree): its clicks must not reach the card.
-      onClick={(event) => event.stopPropagation()}
+      className={className}
       onKeyDown={(event) => {
         if (event.key === "ArrowRight") moveFocus(event, 1);
         else if (event.key === "ArrowLeft") moveFocus(event, -1);
       }}
-      className="z-[75] w-[min(calc(100vw-16px),400px)] animate-pop-in rounded-[28px] border border-border-soft bg-surface p-2 shadow-pop"
     >
       <div className="grid grid-cols-6 gap-0.5">
         {REACTION_KEYS.map((key) => (
@@ -53,8 +81,13 @@ export function ReactionPicker({
             key={key}
             type="button"
             role="menuitem"
+            data-reaction={key}
             aria-current={current === key ? "true" : undefined}
-            onClick={() => onChoose(key)}
+            onClick={() => {
+              const handle = icons.current[key];
+              if (playOnChoose && current !== key) handle?.play();
+              onChoose(key, handle?.element() ?? null);
+            }}
             onPointerEnter={() => icons.current[key]?.play()}
             className={cn(
               "group flex min-w-0 flex-col items-center gap-0.5 rounded-[20px] pb-1.5 pt-2 text-caption transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",

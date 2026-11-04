@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Heart } from "lucide-react";
-import { formatCount } from "@/lib/utils";
+import { cn, formatCount } from "@/lib/utils";
 import { RollingCount } from "@/components/ui/like-toggle";
 import { contentActionClassName, overlayActionClassName } from "@/features/content/action-styles";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAnchoredPopover } from "@/features/messages/use-anchored-popover";
-import { useLikeState } from "@/features/prompts/use-like-state";
+import { useLikeState, type ReactResult } from "@/features/prompts/use-like-state";
+import { buttonClassName } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { REACTION_LABEL, type ReactionKey } from "@/lib/reactions";
-import type { LikeableContentType } from "@/lib/supabase/likes";
+import type { ReactionTargetType } from "@/lib/supabase/likes";
 import { ReactionIcon, type ReactionIconHandle } from "./reaction-icon";
 import { ReactionPicker } from "./reaction-picker";
 import { playReactionEffect } from "./reaction-player";
@@ -28,14 +29,20 @@ export function ReactionButton({
   size = 16,
   className,
   tone = "default",
+  labelText,
+  onResult,
 }: {
   id: string;
   likeCount: number;
-  contentType?: LikeableContentType;
+  contentType?: ReactionTargetType;
   size?: number;
   className?: string;
   /** "overlay": a translucent pill for laying over a picture; the count is left out while it is 0. */
-  tone?: "default" | "overlay";
+  tone?: "default" | "overlay" | "action";
+  /** `action` tone (docs/history/327-*): a labelled outline pill (the notification card's "Hızlı beğen"): the label shows until a reaction is given, then the reaction's name; no count. */
+  labelText?: string;
+  /** Called after a reaction was given/changed/removed (`prev`/`next` = the viewer's reaction before/after): the notification card offers "Geri al" with it. */
+  onResult?: (result: ReactResult, prev: ReactionKey | null, next: ReactionKey | null) => void;
 }) {
   const { reaction, likeCount: count, react, canLike } = useLikeState(id, likeCount, contentType);
   const { t } = useTranslation();
@@ -85,14 +92,22 @@ export function ReactionButton({
     // Picking the reaction you already gave takes it back (the picker marks it as selected).
     if (next !== null && next === reaction) next = null;
     if (next !== null) playWhenShown.current = next;
+    const prev = reaction;
     void react(next).then((result) => {
       if (result === "failed" || result === "ignored") playWhenShown.current = null;
+      else onResult?.(result, prev, next);
     });
   }
 
   const overlay = tone === "overlay";
-  const classes = overlay ? overlayActionClassName(className) : contentActionClassName(Boolean(reaction), className);
-  const showCount = !overlay || count > 0;
+  const action = tone === "action";
+  const classes = action
+    ? buttonClassName({ variant: reaction ? "secondary" : "outline", className: cn("h-11 gap-2 text-small", className) })
+    : overlay
+      ? overlayActionClassName(className)
+      : contentActionClassName(Boolean(reaction), className);
+  const showCount = action ? false : !overlay || count > 0;
+  const actionLabel = action ? <span>{reaction ? t(REACTION_LABEL[reaction]) : labelText ?? t("reaction.add")}</span> : null;
 
   if (!canLike) {
     return (
@@ -109,6 +124,7 @@ export function ReactionButton({
         className={classes}
       >
         <Heart size={size} strokeWidth={1.75} />
+        {actionLabel}
         {showCount && <span aria-hidden>{formatCount(count)}</span>}
       </button>
     );
@@ -138,6 +154,7 @@ export function ReactionButton({
         ) : (
           <Heart size={size} strokeWidth={1.75} />
         )}
+        {actionLabel}
         {showCount && <RollingCount value={count} />}
       </button>
       {/* `createPortal` directly (not `Portal`, which mounts one render late): the popover hook measures the panel in the commit that opens it. */}

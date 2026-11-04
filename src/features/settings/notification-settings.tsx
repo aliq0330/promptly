@@ -6,11 +6,12 @@ import { BellOff, Clock, Trash2, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SettingsCard } from "@/features/settings/settings-ui";
 import { useNotifications } from "@/features/notifications/notifications-provider";
-import { fetchDisabledNotificationPrefs, fetchNotificationMutes, setNotificationMute, setNotificationTypePref } from "@/lib/supabase/notifications";
+import { fetchDisabledNotificationPrefs, fetchNotificationMutes, setNotificationTypePref } from "@/lib/supabase/notifications";
 import { NOTIFICATION_PREF_KEYS, type NotificationPrefKeyName } from "@/lib/notification-mirror";
 import { announceNotice } from "@/lib/app-notice";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { applyMute } from "@/features/notifications/mute-store";
 import type { NotificationMute } from "@/types";
 
 /**
@@ -66,7 +67,7 @@ export function NotificationSettings() {
   const unmute = async (mute: NotificationMute) => {
     setMutes((prev) => prev.filter((item) => !(item.kind === mute.kind && item.target === mute.target)));
     try {
-      await setNotificationMute(mute.kind, mute.target, mute.label, false);
+      await applyMute(mute.kind, mute.target, mute.label, false);
     } catch (err) {
       console.error("unmute", err);
       announceNotice(t("nc.actionFailed"));

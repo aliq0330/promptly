@@ -7,7 +7,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useEngagementEntry } from "@/features/content/engagement-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { DEFAULT_REACTION, summaryParts, topReactions, type ReactionKey } from "@/lib/reactions";
-import type { LikeableContentType } from "@/lib/supabase/likes";
+import type { ReactionTargetType } from "@/lib/supabase/likes";
 import { useReactionBreakdown } from "./reaction-breakdown";
 import { ReactionIcon } from "./reaction-icon";
 import { ReactionSheet } from "./reaction-sheet";
@@ -18,7 +18,7 @@ import { ReactionSheet } from "./reaction-sheet";
  * everyone and their reaction. Draws nothing while the target has no reaction. The total and the viewer's own reaction are the like store's
  * (the same ones the button shows); the per-reaction counts and the followed people load once per target (batched across a page).
  */
-export function ReactionSummary({ contentType, id, likeCount, className }: { contentType: LikeableContentType; id: string; likeCount: number; className?: string }) {
+export function ReactionSummary({ contentType, id, likeCount, className, overLayers = false }: { contentType: ReactionTargetType; id: string; likeCount: number; className?: string; overLayers?: boolean }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const entry = useEngagementEntry("like", contentType, id, likeCount);
@@ -75,7 +75,7 @@ export function ReactionSummary({ contentType, id, likeCount, className }: { con
         </span>
         <ChevronRight size={14} strokeWidth={2} className="shrink-0" aria-hidden />
       </button>
-      {open && <ReactionSheet contentType={contentType} id={id} likeCount={likeCount} counts={breakdown.counts} onClose={() => setOpen(false)} />}
+      {open && <ReactionSheet contentType={contentType} id={id} likeCount={likeCount} counts={breakdown.counts} overLayers={overLayers} onClose={() => setOpen(false)} />}
     </>
   );
 }

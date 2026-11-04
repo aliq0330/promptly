@@ -15,7 +15,7 @@ import { useLikeState } from "@/features/prompts/use-like-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { REACTION_KEYS, REACTION_LABEL, type ReactionCounts, type ReactionKey } from "@/lib/reactions";
 import { fetchReactorsPage, type Reactor } from "@/lib/supabase/reactions";
-import type { LikeableContentType } from "@/lib/supabase/likes";
+import type { ReactionTargetType } from "@/lib/supabase/likes";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
 import { ReactionIcon } from "./reaction-icon";
 
@@ -93,12 +93,15 @@ export function ReactionSheet({
   id,
   likeCount,
   counts,
+  overLayers = false,
   onClose,
 }: {
-  contentType: LikeableContentType;
+  contentType: ReactionTargetType;
   id: string;
   likeCount: number;
   counts: ReactionCounts;
+  /** Opened from a full-screen layer (the notification detail page, z-55): the sheet must sit above it. */
+  overLayers?: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -111,7 +114,7 @@ export function ReactionSheet({
   const list = usePagedList<Reactor>(`reactors|${contentType}|${id}|${active}`, true, (offset) => fetchReactorsPage(contentType, id, active === "all" ? null : active, offset), (row) => row.key);
 
   return (
-    <Modal onClose={onClose} labelledBy="reaction-sheet-title">
+    <Modal onClose={onClose} labelledBy="reaction-sheet-title" overLayers={overLayers}>
       <div
         className="flex h-[640px] max-h-[75dvh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}

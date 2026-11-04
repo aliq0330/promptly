@@ -184,7 +184,7 @@ Topluluklar sade düzen (`docs/history/232-*`): üst düzey sekmeler tek "Gönde
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-exchange.mjs   # 30/30 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-exchange.mjs   # 33/33 beklenir
 DEBUG=1 ONLY="5" node tests/messaging-ui/run-exchange.mjs   # konsol/sayfa hatalarını yazdırır, yalnız "5" ile başlayan senaryo
 ```
 
@@ -313,9 +313,19 @@ SHOTS=/tmp/shots node tests/messaging-ui/run-comment-extras.mjs   # ekran görü
 
 ## Bildirim merkezi (`docs/history/326-*`)
 
-`run-notifications.mjs`: zil rozeti (kart sayısı), zilin altında hızlı eylemli panel (konum/ok/Esc/dışarı tıklama), sunucu gruplaması ("Amy, Carol ve 1 kişi daha"), hızlı beğen + tepki değiştirme/geri alma, satır içi yanıt, takip-geri, öneri farkı + kabul/reddet, mesaj isteği, kilometre taşı, gerçek zamanlı "N yeni" hapı (liste yeniden dizilmez), bölünmüş gelen kutusu + `?n=`, sessize al / ertele / tür kapat, silme + geri al (5 sn), süzgeç menüsü (sunucuda), sayfa sayfa yükleme, mobil genişleyen kart + tam sayfa detay, İngilizce, koyu tema + J/K/E kısayolları, Ayarlar → Bildirimler (30/30 beklenir). RPC'ler dosyada JS ile taklit edilir (`makeNotifications`); asıl SQL doğrulaması `supabase/tests/notification-center.sql`'dedir. Gerçek Supabase'e/Realtime'a KARŞI DENENMEDİ.
+`run-notifications.mjs`: zil rozeti (kart sayısı), zilin altında hızlı eylemli panel (konum/ok/Esc/dışarı tıklama), sunucu gruplaması ("Amy, Carol ve 1 kişi daha"), hızlı beğen + tepki değiştirme/geri alma, satır içi yanıt, takip-geri, öneri farkı + kabul/reddet, mesaj isteği, kilometre taşı, gerçek zamanlı "N yeni" hapı (liste yeniden dizilmez), bölünmüş gelen kutusu + `?n=`, sessize al / ertele / tür kapat, silme + geri al (5 sn), süzgeç menüsü (sunucuda), sayfa sayfa yükleme, mobil genişleyen kart + tam sayfa detay, İngilizce, koyu tema + J/K/E kısayolları, Ayarlar → Bildirimler, ardından (327) emoji seçicisi kartta açılır/ayrıntıda açık gelir, yorum ek önizlemesi (1 ek / 2 ek), "Sesi aç" durumu + kişi ⋮ menüsü, tam sayfa ayrıntıda onay penceresi ve yanıt kutusu yerleşimi (34 senaryo beklenir). RPC'ler dosyada JS ile taklit edilir (`makeNotifications`); asıl SQL doğrulaması `supabase/tests/notification-center.sql`'dedir. Gerçek Supabase'e/Realtime'a KARŞI DENENMEDİ.
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-notifications.mjs   # 30/30 beklenir
+```
+
+
+### Yorum tepkileri (`docs/history/327-*`)
+
+`run-comment-reactions.mjs`: prompt sayfasındaki yorum dizisi gönderideki tepki sistemini kullanır — kalbe dokununca altı emojili seçici, seçilen emoji kalbin yerine geçer, sayı toplamdır (başkalarının tepkileri dahil), en çok verilen emojiler yığında, yığın "Tepkiler" penceresini açar, mobilde seçici ekrana sığar. Sayılar `comment_reaction_counts` RPC'sinden taklit edilir; SQL doğrulaması `supabase/tests/comment-reaction-counts.sql`'dedir. Gerçek Supabase'e KARŞI DENENMEDİ.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-comment-reactions.mjs   # 4/4 beklenir
 ```
