@@ -10,7 +10,7 @@
  */
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { bearerOf, checkRequest, clientKeyOf, looksLikeCredential, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type MeBackend, type PromptUseRecorder, type RateLimiter, type RestClient } from "../../src/lib/public-api/index.ts";
-import { createPromptlyServer } from "./server.ts";
+import { createPromptlyServer, type MeToolsOptions } from "./server.ts";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -38,7 +38,7 @@ export interface RemoteHandlerOptions {
    * `resourceMetadataUrl`/`authorizationServers`: OAuth istemcileri (claude.ai, ChatGPT) kimliksiz isteğe verilen 401'deki `WWW-Authenticate` başlığından
    * korumalı kaynak metadatasını (RFC 9728) bulur ve girişi başlatır.
    */
-  me?: { backend: MeBackend; resourceUrl?: string; resourceMetadataUrl?: string; authorizationServers?: string[] };
+  me?: { backend: MeBackend; attachImage?: MeToolsOptions["attachImage"]; resourceUrl?: string; resourceMetadataUrl?: string; authorizationServers?: string[] };
 }
 
 function withCors(response: Response): Response {
@@ -108,6 +108,7 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
                   "search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content",
                   "whoami", "list_my_prompts", "get_my_prompt", "list_my_content", "get_my_content", "list_my_saved",
                   "save_prompt_draft", "save_request_draft", "save_preset_draft", "save_workflow_draft", "update_my_draft",
+                  ...(options.me?.attachImage ? ["attach_image"] : []),
                 ]
               : ["search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content"],
             site: "https://aliq0330.github.io/promptly",
@@ -147,7 +148,7 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
     const { server } = createPromptlyServer({
       client,
       version: options.version,
-      me: isMe && bearer && options.me ? { backend: options.me.backend, bearer } : undefined,
+      me: isMe && bearer && options.me ? { backend: options.me.backend, bearer, attachImage: options.me.attachImage } : undefined,
       log: (message) => log(message),
       onPromptUse: options.usage ? (promptId) => options.usage!.record(promptId, clientKey) : undefined,
     });

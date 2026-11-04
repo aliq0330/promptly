@@ -33,6 +33,8 @@ import {
   promptSlug,
   searchPrompts,
   searchPublicContent,
+  type AttachImageInput,
+  type AttachImageResult,
   type MeBackend,
   type PublicPrompt,
   type RestClient,
@@ -105,6 +107,11 @@ export interface MeToolsOptions {
   backend: MeBackend;
   /** İstekteki `Authorization: Bearer …` değeri; her araç çağrısında yeniden doğrulanır (anahtar iptal edilirse sonraki çağrı çalışmaz). */
   bearer: string;
+  /**
+   * Taslağa görsel ekler (docs/history/333-*): `media-upload` işlevini çağırır — Storage'a yazan service role yalnız orada durur, bu sunucuda YOK.
+   * Verilmezse `attach_image` aracı hiç sunulmaz.
+   */
+  attachImage?: (bearer: string, input: AttachImageInput) => Promise<AttachImageResult>;
 }
 
 export interface PromptlyServerOptions {
@@ -513,6 +520,35 @@ export function createPromptlyServer({ client, version, log = () => {}, onPrompt
           ),
         ),
     );
+    if (me.attachImage) {
+      const attachImage = me.attachImage;
+      server.registerTool(
+        "attach_image",
+        {
+          title: "Attach an image to one of my prompt drafts",
+          description:
+            "Downloads ONE image from a public https URL and attaches it to one of YOUR OWN unpublished image prompts (content_type \"image\") — e.g. the picture " +
+            "you just generated for it. Create the draft first with save_prompt_draft (content_type \"image\"), then call this with the returned id. PNG, JPEG or WebP, " +
+            "up to 8 MB, at most 4 images per prompt. Needs the write scope. Nothing is published. " +
+            "Pass `image_url` (a public https link the server can open) or, in clients that hand over files, `image_file`. If neither works, tell the user to add the image on the site.",
+          inputSchema: {
+            prompt_id: z.string().describe("Draft id (UUID) from save_prompt_draft or list_my_prompts."),
+            image_url: z.string().max(2048).optional().describe("Public https URL of the image."),
+            image_file: z.object({ download_url: z.string().max(2048), file_id: z.string().max(200).optional() }).optional().describe("A file reference from the client (download_url)."),
+            alt: z.string().max(300).optional().describe("Short description of the image."),
+          },
+          annotations: writeTool,
+          // ChatGPT (Apps SDK): `image_file` istemci tarafından yüklenmiş bir dosya başvurusu (`download_url`) olarak doldurulur. Denenmedi (docs/history/333-*).
+          _meta: { "openai/fileParams": ["image_file"] },
+        },
+        (args: { prompt_id: string; image_url?: string; image_file?: { download_url: string; file_id?: string }; alt?: string }) =>
+          run(async () => {
+            const imageUrl = args.image_url ?? args.image_file?.download_url;
+            if (!imageUrl) throw new PublicApiError("bad_request", "Pass image_url (a public https link) or image_file.");
+            return await attachImage(me.bearer, { promptId: args.prompt_id, imageUrl, alt: args.alt ?? null });
+          }),
+      );
+    }
     server.registerTool(
       "update_my_draft",
       {

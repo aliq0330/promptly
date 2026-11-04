@@ -9,6 +9,7 @@ export * from "./rate-limit.ts";
 export * from "./usage.ts";
 export * from "./me.ts";
 export * from "./me-content.ts";
+export * from "./media.ts";
 export * from "./oauth.ts";
 export * from "./telegram/index.ts";
 export { createApiHandler, routeOf, type ApiHandlerOptions } from "./http.ts";

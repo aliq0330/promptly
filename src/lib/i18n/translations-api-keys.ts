@@ -89,8 +89,8 @@ export const apiKeysTranslations = {
   },
   "dev.meMcp": { tr: "Kişisel MCP (Claude Code, Cursor…)", en: "Personal MCP (Claude Code, Cursor…)" },
   "dev.meMcpBody": {
-    tr: "Aynı anahtarla kendi promptlarını yapay zekâ aracından kullan: whoami, list_my_prompts, get_my_prompt, list_my_content, get_my_content, list_my_saved ve (yazma anahtarıyla) save_prompt_draft, save_request_draft, save_preset_draft, save_workflow_draft, update_my_draft. Adres yukarıdakinden farklıdır:",
-    en: "Use your own prompts from an AI tool with the same key: whoami, list_my_prompts, get_my_prompt, list_my_content, get_my_content, list_my_saved and (with a write key) save_prompt_draft, save_request_draft, save_preset_draft, save_workflow_draft, update_my_draft. The address differs from the one above:",
+    tr: "Aynı anahtarla kendi promptlarını yapay zekâ aracından kullan: whoami, list_my_prompts, get_my_prompt, list_my_content, get_my_content, list_my_saved ve (yazma anahtarıyla) save_prompt_draft, save_request_draft, save_preset_draft, save_workflow_draft, update_my_draft, attach_image (taslağa görsel ekler). Adres yukarıdakinden farklıdır:",
+    en: "Use your own prompts from an AI tool with the same key: whoami, list_my_prompts, get_my_prompt, list_my_content, get_my_content, list_my_saved and (with a write key) save_prompt_draft, save_request_draft, save_preset_draft, save_workflow_draft, update_my_draft, attach_image (adds an image to a draft). The address differs from the one above:",
   },
   "dev.meMcpAddress": { tr: "Kişisel MCP adresi", en: "Personal MCP address" },
   "dev.meMcpCursor": { tr: "Cursor ve diğer istemciler", en: "Cursor and other clients" },

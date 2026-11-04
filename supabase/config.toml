@@ -30,3 +30,6 @@ verify_jwt = false
 
 [functions.telegram]
 verify_jwt = false
+
+[functions.media-upload]
+verify_jwt = false

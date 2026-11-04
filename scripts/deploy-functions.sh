@@ -17,7 +17,7 @@ cd "$(dirname "$0")/.."
 # Tek fonksiyon deploy'u canlıdaki diğer fonksiyonlara dokunmaz (kaynakları canlı sürümle karşılaştırılmadı — CLAUDE.md §9).
 TARGET="${1:-all}"
 case "$TARGET" in
-  all|analyze-image|cleanup-orphan-storage|delete-account|username-login|api|mcp|oauth|telegram) ;;
+  all|analyze-image|cleanup-orphan-storage|delete-account|username-login|api|mcp|oauth|telegram|media-upload) ;;
   *) echo "Unknown function: $TARGET" >&2; exit 1 ;;
 esac
 want() { [ "$TARGET" = all ] || [ "$TARGET" = "$1" ]; }
@@ -53,4 +53,10 @@ fi
 if want telegram; then
   node scripts/sync-function-shared.mjs --check
   supabase functions deploy telegram --yes --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
+fi
+
+# Taslağa görsel ekleme (docs/history/333-*): oturum açmış kullanıcı kişisel anahtarıyla çağırır, JWT taşımaz → kapalı. Bu işlev service role kullanır (yalnız Storage yazımı için).
+if want media-upload; then
+  node scripts/sync-function-shared.mjs --check
+  supabase functions deploy media-upload --yes --no-verify-jwt --project-ref "$SUPABASE_PROJECT_REF"
 fi
