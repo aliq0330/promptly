@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, Inbox, Loader2, X } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { usePagedList } from "@/features/content/use-paged-list";
@@ -89,7 +89,7 @@ export function GroupRequestsSection({
         <li key={request.id} className="space-y-2 px-3 py-3">
           <div className="flex items-center gap-3">
             <Link href={profileHref(request.user)} className="flex min-w-0 flex-1 items-center gap-3">
-              <Avatar src={request.user.avatarUrl} alt={request.user.displayName} size={40} />
+              <PresenceAvatar userId={request.user.id} src={request.user.avatarUrl} alt={request.user.displayName} size={40} />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-sm font-semibold text-text">{request.user.displayName}</span>
                 <span className="block truncate text-caption text-text-muted">

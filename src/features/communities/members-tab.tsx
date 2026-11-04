@@ -11,7 +11,9 @@ import { communityHref, membersSections, type MembersSection } from "@/lib/commu
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { GroupRole } from "@/types";
 
-const FILTERS: (GroupRole | null)[] = [null, "owner", "admin", "moderator", "member"];
+/** "online" = şu an çevrimiçi üyeler (docs/history/329-*; kişi başına gizlilik sunucuda). */
+type MemberFilter = GroupRole | null | "online";
+const FILTERS: MemberFilter[] = [null, "online", "owner", "admin", "moderator", "member"];
 
 /**
  * Üyeler: KİŞİ YÖNETİMİNİN tek yeri. Liste (arama + rol süzgeci + yetkiye göre rol atama / çıkarma / yasaklama / sahiplik devri) her üyeye
@@ -22,7 +24,7 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
   // Üye listesi yalnız üyelere açıktır (sayfa bu sekmeyi zaten yalnız üyeye gösterir); ziyaretçide hiçbir şey çizilmez.
   const { t } = useTranslation();
   const router = useRouter();
-  const [filter, setFilter] = useState<GroupRole | null>(null);
+  const [filter, setFilter] = useState<MemberFilter>(null);
   const available = membersSections(role, group.rolePermissions);
   const active: MembersSection = (available.find((key) => key === section) ?? "list") as MembersSection;
   if (!viewerId) return null;
@@ -58,11 +60,27 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
                   (filter === value ? "border-primary/50 bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
                 }
               >
-                {value ? t(`communities.members.filter.${value}`) : t("communities.filter.all")}
+                {value === "online" ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
+                    {t("presence.filterOnline")}
+                  </span>
+                ) : value ? (
+                  t(`communities.members.filter.${value}`)
+                ) : (
+                  t("communities.filter.all")
+                )}
               </button>
             ))}
           </div>
-          <GroupMembersSection group={group} viewerId={viewerId} onChanged={reload} onToast={onToast} roleFilter={filter} />
+          <GroupMembersSection
+            group={group}
+            viewerId={viewerId}
+            onChanged={reload}
+            onToast={onToast}
+            roleFilter={filter === "online" ? null : filter}
+            onlineOnly={filter === "online"}
+          />
         </>
       )}
       {active === "requests" && <GroupRequestsSection group={group} onChanged={reload} onToast={onToast} />}

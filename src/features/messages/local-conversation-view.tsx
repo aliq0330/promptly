@@ -6,13 +6,14 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Bell, BellOff, ChevronsDown, Info, LogOut, Search, Users, X } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
-import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useBlockState } from "@/features/moderation/use-block-state";
 import { ProfileMoreMenu } from "@/features/profile/profile-more-menu";
 import { ChatActionItems, ChatConfirmModal, type ChatConfirmKind } from "./chat-actions";
 import { ChatHeaderMenu } from "@/features/groups/chat-header-menu";
 import { GroupAvatar } from "@/features/groups/group-avatar";
+import { OnlineCountText, PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
+import { useCommunityPresenceCount } from "@/features/presence/community-presence";
 import { GroupInfoModal, type GroupInfoFocus } from "@/features/groups/group-info-modal";
 import { LeaveCommunityDialog } from "@/features/groups/leave-community-dialog";
 import { useReport } from "@/features/moderation/report-provider";
@@ -261,6 +262,8 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     () => [...new Set([...typingIds, ...searchSenderIds, ...pinned.items.map((item) => item.message.senderId)])],
     [typingIds, searchSenderIds, pinned.items],
   );
+  // Topluluk sohbeti başlığındaki "N çevrimiçi" (docs/history/329-*; sunucu yalnız topluluğu okuyabilene verir).
+  const groupOnline = useCommunityPresenceCount(isGroup && id ? id : null);
   const groupSenders = useGroupSenders(isGroup && id ? id : null, messages, group ? `${group.myRole}:${group.memberCount}` : "", extraSenderIds);
   // Desktop drag-and-drop of photos anywhere on the conversation panel.
   const imageDrop = useImageDrop(composerImages.addFiles, !blockState.isBlocked && canPost);
@@ -1368,7 +1371,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             {group ? (
               <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={34} badge />
             ) : (
-              <Avatar src={participant.avatarUrl} alt={participant.displayName} size={34} />
+              <PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={34} />
             )}
             <span className="min-w-0 leading-tight">
               <span className="block truncate font-display text-[1rem] font-semibold tracking-[-0.01em] text-text">{group ? group.name : participant.displayName}</span>
@@ -1377,9 +1380,12 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   {typingText}
                 </span>
               ) : group ? (
-                <span className="block truncate text-caption text-text-muted">{memberCountText(t, group.memberCount)}</span>
+                <span className="block truncate text-caption text-text-muted">
+                  {memberCountText(t, group.memberCount)}
+                  {groupOnline ? ` · ${t("presence.onlineCount", { count: groupOnline })}` : ""}
+                </span>
               ) : (
-                <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
+                <PresenceStatusText userId={participant.id} fallback={`@${participant.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
               )}
             </span>
           </span>
@@ -1423,6 +1429,8 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               ) : (
                 <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
                   <Users size={11} aria-hidden /> {memberCountText(t, group.memberCount)}
+                  {/* Çevrimiçi üye sayısı (docs/history/329-*): sunucuda, son görülme penceresinden toplu; yalnız üyeye. */}
+                  {groupOnline ? <OnlineCountText count={groupOnline} className="before:mr-0.5 before:content-['·']" /> : null}
                   {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
                 </span>
               )}
@@ -1437,7 +1445,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             data-contact-open
             className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
           >
-            <Avatar src={participant.avatarUrl} alt={participant.displayName} size={42} />
+            <PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={42} />
             <span className="min-w-0 leading-tight">
               <span className="block truncate font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{participant.displayName}</span>
               {typingText ? (
@@ -1445,7 +1453,8 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   {typingText}
                 </span>
               ) : (
-                <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
+                // Çevrimiçi / Son görülme (docs/history/329-*); görülemiyorsa (gizlilik, engel, görünmez) eskisi gibi @kullanıcı adı.
+                <PresenceStatusText userId={participant.id} fallback={`@${participant.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
               )}
             </span>
           </button>

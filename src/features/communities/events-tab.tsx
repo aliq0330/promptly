@@ -41,7 +41,11 @@ import {
 import { useGrowingList } from "@/features/content/use-growing-list";
 import { LoadMore } from "@/features/feed/load-more";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn } from "@/lib/utils";
+import { cn, profileHref } from "@/lib/utils";
+import Link from "next/link";
+import { useEventsPresence } from "@/features/presence/community-presence";
+import { PresenceAvatar } from "@/features/presence/presence-ui";
+import type { EventPresence } from "@/lib/supabase/presence";
 
 type Scope = "upcoming" | "past";
 
@@ -62,6 +66,15 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
   // İlk 50 etkinlik; devamı kaydırınca (eskiden 50'de kesiliyordu — geçmiş etkinliklere ulaşılamıyordu).
   const list = useGrowingList(`${group.id}|${role ? viewerId : ""}|${scope}`, (limit) => fetchCommunityEventsWindow(group.id, role ? viewerId : null, scope, limit));
   const events = list.items;
+  // Etkinlikte şu an çevrimiçi katılımcılar (docs/history/329-*): yalnız bitmemiş/iptal olmamış etkinlikler, tek çağrıda (≤30).
+  const presenceIds = (events ?? [])
+    .filter((event) => {
+      const phase = eventPhase(event);
+      return phase !== "past" && phase !== "cancelled";
+    })
+    .slice(0, 30)
+    .map((event) => event.id);
+  const eventPresence = useEventsPresence(presenceIds);
   const loadError = list.failed && events !== null && events.length === 0;
   const load = list.reload;
 
@@ -146,6 +159,7 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
               key={event.id}
               event={event}
               isMember={Boolean(role)}
+              presence={eventPresence.get(event.id) ?? null}
               canManage={canManage}
               busy={rsvpAction.busy}
               onRsvp={(status) => void rsvp(event, status)}
@@ -199,9 +213,12 @@ function EventCard({
   onEdit,
   onCancel,
   onDelete,
+  presence,
 }: {
   event: CommunityEvent;
   isMember: boolean;
+  /** Şu an çevrimiçi katılımcılar (toplu sayı + üyeye görebildiği kişiler); null = yok/bilinmiyor. */
+  presence: EventPresence | null;
   canManage: boolean;
   busy: boolean;
   onRsvp: (status: RsvpStatus) => void;
@@ -261,9 +278,34 @@ function EventCard({
       </div>
       {event.description && <p className="whitespace-pre-wrap break-words text-small text-text-secondary">{event.description}</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-caption text-text-muted">
-          {t("communities.events.counts", { going: event.goingCount, maybe: event.maybeCount })}
-        </p>
+        <div className="space-y-1.5">
+          <p className="text-caption text-text-muted">
+            {t("communities.events.counts", { going: event.goingCount, maybe: event.maybeCount })}
+          </p>
+          {presence && presence.onlineCount > 0 && (
+            <div className="flex flex-wrap items-center gap-2" data-event-presence={presence.onlineCount}>
+              <span className="inline-flex items-center gap-1.5 text-caption font-medium text-success">
+                <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
+                {t("presence.eventActive", { count: presence.onlineCount })}
+              </span>
+              {presence.attendees.length > 0 && (
+                <ul className="flex items-center pl-1.5" aria-label={t("presence.eventAttendeesAria")}>
+                  {presence.attendees.slice(0, 8).map((attendee) => (
+                    <li key={attendee.userId} className="-ml-1.5">
+                      <Link
+                        href={profileHref({ username: attendee.username })}
+                        title={`${attendee.displayName} · ${t(attendee.status === "maybe" ? "presence.maybe" : "presence.going")}`}
+                        className="block rounded-full ring-2 ring-surface"
+                      >
+                        <PresenceAvatar userId={attendee.userId} src={attendee.avatarUrl} alt={attendee.displayName} size={26} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
         {isMember && canRsvp(phase) && (
           <div role="group" aria-label={t("communities.events.rsvpAria")} className="flex flex-wrap gap-1.5">
             {options.map((option) => (

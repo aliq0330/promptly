@@ -136,6 +136,8 @@ export async function searchProfilesStrict(query: string, limit = 20): Promise<U
 
 /** A person offered while typing `@name` (see `features/mentions`). */
 export interface MentionCandidate {
+  /** Çevrimiçi önceliği için (docs/history/329-*). */
+  id: string;
   username: string;
   displayName: string;
   avatarUrl: string | null;
@@ -150,7 +152,7 @@ export async function searchMentionCandidates(prefix: string, limit = 6): Promis
     const pattern = `${safe.replace(/_/g, "\\_")}%`;
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, display_name, avatar_url")
+      .select("id, username, display_name, avatar_url")
       .ilike("username", pattern)
       .order("follower_count", { ascending: false })
       .limit(limit);
@@ -158,7 +160,8 @@ export async function searchMentionCandidates(prefix: string, limit = 6): Promis
       console.error("searchMentionCandidates", error);
       return [];
     }
-    return ((data ?? []) as { username: string; display_name: string; avatar_url: string | null }[]).map((row) => ({
+    return ((data ?? []) as { id: string; username: string; display_name: string; avatar_url: string | null }[]).map((row) => ({
+      id: row.id,
       username: row.username,
       displayName: row.display_name,
       avatarUrl: row.avatar_url,

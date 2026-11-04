@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type SyntheticEvent } from "react";
 import { activeMentionQuery, applyMention } from "@/lib/mentions";
 import { searchMentionCandidates, type MentionCandidate } from "@/lib/supabase/profiles";
+import { useOnlineIds } from "@/features/presence/use-presence";
+import { sortOnlineFirst } from "@/lib/presence";
 
 const DEBOUNCE_MS = 150;
 
@@ -29,10 +31,14 @@ export function useMentionAutocomplete({ value, onChange }: { value: string; onC
   const active = activeMentionQuery(value, caret);
   const queryKey = active ? `${active.start}:${active.query}` : null;
   const activeQuery = active?.query;
-  const people = useMemo(
+  const found = useMemo(
     () => (activeQuery && results?.query === activeQuery ? results.people : []),
     [activeQuery, results],
   );
+  // Çevrimiçi kişiler önce (docs/history/329-*): yalnız görmeye yetkili olduğun kişiler; grupta takipçi sırası korunur. Klavye/tıklama
+  // indeksleri bu SIRALI listeye göredir.
+  const onlineIds = useOnlineIds(useMemo(() => found.map((person) => person.id), [found]));
+  const people = useMemo(() => sortOnlineFirst(found, (person) => person.id, onlineIds), [found, onlineIds]);
   const open = Boolean(active) && people.length > 0 && dismissedKey !== queryKey;
 
   const wanted = active && active.query.length >= 1 ? active.query : null;

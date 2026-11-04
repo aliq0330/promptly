@@ -5,7 +5,7 @@
 export const settingsTranslations = {
   // --- Ana liste (kategori satırlarının kısa açıklamaları + alt sayfa açıklamaları) ---
   "settings.hub.accountDesc": { tr: "Kullanıcı adı, e-posta ve şifre.", en: "Username, email and password." },
-  "settings.hub.privacyDesc": { tr: "Sana kimin mesaj atabileceği ve engellediğin kişiler.", en: "Who can message you, and the people you've blocked." },
+  "settings.hub.privacyDesc": { tr: "Sana kimin mesaj atabileceği, çevrimiçi durumunu kimlerin göreceği ve engellediğin kişiler.", en: "Who can message you, who can see your online status, and the people you've blocked." },
   "settings.hub.preferencesDesc": { tr: "Görünüm, dil ve tanıtım turu.", en: "Appearance, language and the welcome tour." },
   "settings.hub.developerDesc": {
     tr: "Promptly'yi Claude, ChatGPT gibi araçlarla ya da kendi kodunla kullanmak için anahtarlar ve bağlantılar.",

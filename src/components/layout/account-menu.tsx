@@ -15,6 +15,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { hasSwitchOrigin, returnToOwnAccount, SWITCH_OWNER_USERNAME } from "@/lib/supabase/account-switch";
 import { cn, profileHref } from "@/lib/utils";
 import { SwitchAccountModal } from "./switch-account-modal";
+import { OwnPresenceDot, PresenceMenuToggle } from "@/features/presence/presence-menu";
 
 /** Open/close state + outside-click, Escape (returns focus to the trigger) and route-change handling shared by both menus. */
 function useDropdown() {
@@ -148,7 +149,7 @@ export function AccountMenu() {
         aria-expanded={open}
         className={cn("block rounded-full transition-shadow duration-200", open && "ring-2 ring-primary/40")}
       >
-        <Avatar src={profile.avatarUrl} alt={profile.displayName} size={36} />
+        <Avatar src={profile.avatarUrl} alt={profile.displayName} size={36} badge={<OwnPresenceDot avatarSize={36} />} />
       </button>
 
       {open && (
@@ -205,6 +206,8 @@ export function AccountMenu() {
                 />
               </span>
             </button>
+            {/* Hızlı durum değiştirme (docs/history/329-*): Görünmez ↔ Otomatik; kitle ayarı Gizlilik'te. */}
+            <PresenceMenuToggle itemClassName={ITEM_CLASS} onNavigate={close} />
             <MenuLink href="/settings" icon={Settings} label={t("nav.settings")} onNavigate={close} />
           </MenuGroup>
 

@@ -4,7 +4,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, BellOff, ChevronDown, ExternalLink, Pin, Search, Settings2, Star, UserCog, Users } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { PresenceAvatar } from "@/features/presence/presence-ui";
+import { OnlineMembersStrip } from "@/features/presence/online-members";
+import { useCommunityPresenceCount } from "@/features/presence/community-presence";
 import { Collapsible } from "@/components/ui/collapsible";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ChatActionItems, type ChatConfirmKind } from "@/features/messages/chat-actions";
@@ -84,6 +86,7 @@ export function GroupInfoModal({
   const [stack, setStack] = useState<CommunityMember[]>([]);
   const groupId = group?.id ?? "";
   const mute = useChatMute({ groupId, mutedAt: conversation.mutedAt ?? null, onMutedChange, onToast: show });
+  const onlineCount = useCommunityPresenceCount(groupId || null);
 
   // Avatar yığını için ilk sayfa (aynı `community_members` RPC'si; liste açıldığında kendi okumasını yapar).
   useEffect(() => {
@@ -132,6 +135,15 @@ export function GroupInfoModal({
             <VisibilityLabel visibility={group.visibility} className="flex items-center gap-1" />
             <span aria-hidden>·</span>
             <span>{memberCountText(t, group.memberCount)}</span>
+            {onlineCount ? (
+              <>
+                <span aria-hidden>·</span>
+                <span className="inline-flex items-center gap-1" data-online-count={onlineCount}>
+                  <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
+                  {t("presence.onlineCount", { count: onlineCount })}
+                </span>
+              </>
+            ) : null}
             <RoleBadge role={role} />
           </span>
         }
@@ -185,7 +197,7 @@ export function GroupInfoModal({
             ) : (
               stack.map((member) => (
                 <span key={member.userId} className="-ml-2 rounded-full ring-2 ring-surface">
-                  <Avatar src={member.avatarUrl} alt={member.displayName} size={36} />
+                  <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={36} />
                 </span>
               ))
             )}
@@ -210,6 +222,16 @@ export function GroupInfoModal({
           </div>
         </Collapsible>
       </InfoCard>
+
+      {/* Şu an çevrimiçi üyeler (docs/history/329-*): kişi başına gizlilik sunucuda; kendi durumunu gizleyene hiç çizilmez. */}
+      <OnlineMembersStrip
+        groupId={group.id}
+        title={t("presence.onlineMembersTitle")}
+        emptyText={t("presence.onlineMembersEmpty")}
+        moreHref={communityHref(group.id, "members")}
+        className="px-4 py-3.5"
+        frame={(content) => <InfoCard>{content}</InfoCard>}
+      />
 
       <InfoPhotosCard conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
 

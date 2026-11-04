@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "./real-messages-provider";
 import { MessageComposer, useImageDrop } from "./message-composer";
@@ -206,10 +206,10 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
       {dock ? (
         <DockHeader onBack={dock.onBack} onMinimize={dock.onMinimize}>
           <span className="flex min-w-0 items-center gap-2.5" data-dock-chat-title="">
-            <Avatar src={target.avatarUrl} alt={target.displayName} size={34} />
+            <PresenceAvatar userId={target.id} src={target.avatarUrl} alt={target.displayName} size={34} />
             <span className="min-w-0 leading-tight">
               <span className="block truncate font-display text-[1rem] font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>
-              <span className="block truncate text-caption text-text-muted">@{target.username}</span>
+              <PresenceStatusText userId={target.id} fallback={`@${target.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
             </span>
           </span>
         </DockHeader>
@@ -227,10 +227,10 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
           href={profileHref(target)}
           className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 transition-colors duration-200 ease-soft hover:bg-surface-soft"
         >
-          <Avatar src={target.avatarUrl} alt={target.displayName} size={36} />
+          <PresenceAvatar userId={target.id} src={target.avatarUrl} alt={target.displayName} size={36} />
           <span className="min-w-0 leading-tight">
             <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>
-            <span className="block truncate text-caption text-text-muted">@{target.username}</span>
+            <PresenceStatusText userId={target.id} fallback={`@${target.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
           </span>
         </Link>
       </div>

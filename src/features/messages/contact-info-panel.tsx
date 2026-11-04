@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell, BellOff, Pin, Search, Star, User, Ban, Users } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
 import { ReportButton } from "@/features/moderation/report-button";
 import type { useBlockState } from "@/features/moderation/use-block-state";
 import { ChatHeaderMenu } from "@/features/groups/chat-header-menu";
@@ -118,16 +118,20 @@ export function ContactInfoPanel({
       }
     >
       <InfoIdentity
-        media={<Avatar src={participant.avatarUrl} alt={participant.displayName} size={104} />}
+        media={<PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={104} />}
         name={participant.displayName}
         nameAttr="data-contact-name"
         sub={`@${participant.username}`}
         subAttr="data-contact-username"
         description={participant.bio}
         footer={
-          <p className="mt-2.5 text-small text-text-muted" data-contact-stats>
-            {statsText}
-          </p>
+          <>
+            {/* Çevrimiçi / Son görülme (docs/history/329-*): görülemiyorsa satır hiç çizilmez. */}
+            <PresenceStatusText userId={participant.id} className="mt-1.5 justify-center text-small text-text-secondary" />
+            <p className="mt-2.5 text-small text-text-muted" data-contact-stats>
+              {statsText}
+            </p>
+          </>
         }
       />
 

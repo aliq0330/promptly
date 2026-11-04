@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Calendar, Globe, Repeat2 } from "lucide-react";
 import { ProfileAvatar } from "./profile-avatar";
+import { UserPresenceDot } from "@/features/presence/presence-ui";
 import { ProfileStats } from "./profile-stats";
 import { ProfileBadges } from "./profile-badges";
 import { formatJoinDate } from "./profile-about";
@@ -64,6 +65,9 @@ export function ProfileHeader({
             )}
           >
             <ProfileAvatar src={user.avatarUrl} alt={user.displayName} isOwnProfile={isOwnProfile} size={88} />
+            {/* Çevrimiçi noktası (docs/history/329-*): halkalı kutu 88 + 2·3 dolgu + 2·3 kenar = 100 px; nokta halkanın DIŞINA teğet (hikâye
+                halkasıyla çakışmaz, kendi profilinde düzenle düğmesiyle de). Kendi profilinde çizilmez (kendi durumun hesap menüsünde). */}
+            {!isOwnProfile && <UserPresenceDot userId={user.id} avatarSize={100} outside borderInset={3} />}
             {stories && (
               <button
                 type="button"

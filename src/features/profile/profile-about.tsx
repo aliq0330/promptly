@@ -1,6 +1,8 @@
 "use client";
 
-import { Calendar, Globe } from "lucide-react";
+import { Calendar, Clock, Globe } from "lucide-react";
+import { usePresence } from "@/features/presence/use-presence";
+import { usePresenceLabel } from "@/features/presence/presence-ui";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language } from "@/lib/i18n/translations";
@@ -20,6 +22,8 @@ export function formatJoinDate(isoDate: string, language: Language): string {
  */
 export function ProfileAbout({ user }: { user: UserProfile }) {
   const { t, language } = useTranslation();
+  // Çevrimiçi / son görülme (docs/history/329-*): yalnız görmeye yetkiliysen; değilsen satır hiç yok (gizli olduğu da söylenmez).
+  const presenceLabel = usePresenceLabel(usePresence(user.id));
   const hasAnything = user.bio || user.website || (user.interests && user.interests.length > 0);
 
   return (
@@ -37,6 +41,12 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
             <Globe size={15} className="shrink-0" />
             {user.website}
           </a>
+        )}
+        {presenceLabel && (
+          <p className="flex items-center gap-2" data-profile-last-seen>
+            <Clock size={15} className="shrink-0" />
+            {presenceLabel}
+          </p>
         )}
         <p className="flex items-center gap-2">
           <Calendar size={15} className="shrink-0" />

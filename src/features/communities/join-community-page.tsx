@@ -20,6 +20,8 @@ import { GROUP_REQUEST_MESSAGE_MAX, isValidGroupToken } from "@/lib/chat-groups"
 import { authHref } from "@/lib/auth-redirect";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
+import { useLinkPresenceCount } from "@/features/presence/community-presence";
+import { OnlineCountText } from "@/features/presence/presence-ui";
 
 const TOKEN_STORAGE_KEY = "promptly-group-join-token";
 
@@ -177,6 +179,9 @@ export function JoinCommunityPage() {
             <span>{memberCountText(t, preview.memberCount)}</span>
             <VisibilityLabel visibility={preview.visibility} className="flex items-center gap-1" />
           </p>
+          {/* Aktif üye sayısı (docs/history/329-*) YALNIZ herkese açık toplulukta; kapalı topluluğun etkinliği bağlantıyla da sızmaz (sunucu
+              herkese açık olmayanda NULL döndürür, istemci de sormaz). */}
+          {preview.visibility === "public" && <JoinActiveCount token={current.token} />}
         </div>
       </div>
       {preview.description && <p className="break-words text-small text-text-secondary">{preview.description}</p>}
@@ -242,4 +247,10 @@ export function JoinCommunityPage() {
       )}
     </div>,
   );
+}
+
+function JoinActiveCount({ token }: { token: string }) {
+  // Önizleme üye olmayana topluluk kimliğini vermez: sayı jetonla sorulur (`community_link_presence_count`).
+  const count = useLinkPresenceCount(token);
+  return <OnlineCountText count={count} variant="activeLong" className="text-caption font-medium text-success" />;
 }

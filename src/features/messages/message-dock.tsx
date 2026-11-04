@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronUp } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
 import { GroupAvatar } from "@/features/groups/group-avatar";
+import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { bucketConversations, unreadConversationCount } from "@/lib/conversation-lists";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatUnread, messageHref } from "@/lib/utils";
@@ -67,7 +67,7 @@ function DockPill({ pillRef }: { pillRef: React.RefObject<HTMLButtonElement | nu
               {conversation.group ? (
                 <GroupAvatar name={conversation.group.name} avatarUrl={conversation.group.avatarUrl} size={32} />
               ) : (
-                <Avatar src={conversation.participants[0]?.avatarUrl} alt="" size={32} className="ring-2 ring-surface" />
+                <PresenceAvatar userId={conversation.participants[0]?.id} src={conversation.participants[0]?.avatarUrl} alt="" size={32} className="ring-2 ring-surface" />
               )}
             </span>
           ))}

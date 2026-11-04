@@ -9,6 +9,7 @@ import { ChatMuteToggle, LeaveCommunitySection } from "@/features/groups/persona
 import { RoleBadge } from "@/features/groups/role-badge";
 import { ReportButton } from "@/features/moderation/report-button";
 import { VisibilityLabel } from "./visibility-label";
+import { OnlineMembersStrip } from "@/features/presence/online-members";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import type { CommunityTabProps } from "./community-page";
@@ -92,6 +93,20 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
           )}
         </dl>
       </section>
+
+      {/* Yönetim ekibinden şu an çevrimiçi olanlar (docs/history/329-*): şikâyet/katılım isteği için kime ulaşılabileceği. Üyeye ve herkese açık
+          topluluğun okuyucusuna; kapalı topluluk üye olmayana hiçbir şey vermez (sunucu). */}
+      {viewerId && (
+        <OnlineMembersStrip
+          groupId={group.id}
+          staffOnly
+          title={t("presence.staffTitle")}
+          hint={t("presence.staffHint")}
+          emptyText={t("presence.staffEmpty")}
+          limit={8}
+          className="rounded-lg border border-border-soft bg-surface px-4 py-3"
+        />
+      )}
 
       <section aria-labelledby="about-rules-title" className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">

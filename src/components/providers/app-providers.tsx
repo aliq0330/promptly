@@ -9,6 +9,7 @@ import { NotificationsProvider } from "@/features/notifications/notifications-pr
 import { EngagementRealtimeProvider } from "@/features/content/engagement-realtime-provider";
 import { StoryViewerProvider } from "@/features/stories/story-viewer-provider";
 import { ReportProvider } from "@/features/moderation/report-provider";
+import { PresenceProvider } from "@/features/presence/presence-provider";
 
 /**
  * All of the app's client state providers composed in one place — every one
@@ -30,9 +31,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
                   <NotificationsProvider>
                     <EngagementRealtimeProvider />
                     {/* Hikâye görüntüleyicisi her sayfanın üstünde açılabilir (docs/history/198-*). */}
-                    <ReportProvider>
-                      <StoryViewerProvider>{children}</StoryViewerProvider>
-                    </ReportProvider>
+                    {/* Çevrimiçi durum (docs/history/329-*): kendi kanalım, nabız, çoklu sekme, Telegram odağı. */}
+                    <PresenceProvider>
+                      <ReportProvider>
+                        <StoryViewerProvider>{children}</StoryViewerProvider>
+                      </ReportProvider>
+                    </PresenceProvider>
                   </NotificationsProvider>
                 </RealMessagesProvider>
               </RealPresetsProvider>

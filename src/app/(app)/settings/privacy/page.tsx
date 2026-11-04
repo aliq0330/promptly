@@ -6,8 +6,9 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { SettingsCard, SettingsLinkRow, SettingsSubpage } from "@/features/settings/settings-ui";
 import { fetchOwnMessagePrivacy, updateMessagePrivacy, type MessagePrivacy } from "@/lib/supabase/profiles";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { PresenceSettingsCard } from "@/features/presence/presence-settings";
 
-/** Ayarlar → Gizlilik: kim mesaj atabilir + engellenen kişiler. */
+/** Ayarlar → Gizlilik: kim mesaj atabilir + çevrimiçi durumu (docs/history/329-*) + engellenen kişiler. */
 export default function PrivacySettingsPage() {
   const { user, loading } = useAuth();
   const { t } = useTranslation();
@@ -62,6 +63,10 @@ export default function PrivacySettingsPage() {
           </div>
         )}
       </SettingsCard>
+
+      <div id="presence">
+        <PresenceSettingsCard />
+      </div>
 
       <SettingsLinkRow href="/settings/blocked" title={t("settings.blockedUsers")} hint={t("settings.blockedUsersHint")} />
     </SettingsSubpage>

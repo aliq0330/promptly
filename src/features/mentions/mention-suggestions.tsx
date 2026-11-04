@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar } from "@/components/ui/avatar";
+import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { MentionCandidate } from "@/lib/supabase/profiles";
@@ -49,7 +49,7 @@ export function MentionSuggestions({
           onMouseEnter={() => onHover(index)}
           className={cn("flex min-h-9 cursor-pointer items-center gap-2 px-3 py-1.5", index === activeIndex ? "bg-primary-soft" : "hover:bg-surface-soft")}
         >
-          <Avatar src={person.avatarUrl} alt="" size={24} />
+          <PresenceAvatar userId={person.id} src={person.avatarUrl} alt="" size={24} />
           <span className="min-w-0 truncate text-small font-medium text-text">{person.displayName}</span>
           <span className="shrink-0 text-caption text-text-muted">@{person.username}</span>
         </li>
