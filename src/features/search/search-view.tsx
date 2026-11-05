@@ -36,8 +36,6 @@ import { categoryHref, formatCount, profileHref, tagHref, toolHref } from "@/lib
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
-import { useViewMode } from "@/features/content/view-mode-store";
-import { FocusGrid } from "@/features/focus/focus-grid";
 import { CommunityCard } from "@/features/communities/community-card";
 import { applyJoinState, ErrorBox } from "@/features/communities/home-shared";
 import { useToast } from "@/features/groups/use-toast";
@@ -81,7 +79,6 @@ const ALL_TAB_PREVIEW = 4;
 export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchScope } = {}) {
   const { t } = useTranslation();
   const router = useRouter();
-  const [viewMode] = useViewMode();
   const [tokens, setTokens] = useState<SearchToken[]>([]);
   const [text, setText] = useState("");
   const [sort, setSort] = useState<Sort>("relevant");
@@ -284,7 +281,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   const nothingFound = noPosts && (!textOnly || (users.length === 0 && tags.length === 0 && communities.items.length === 0));
   const taxonomy: TaxonomyFilterValue = { contentType: singleMedia, category, subcategory };
   const showPosts = tab === "all" || tab === "posts";
-  // The control row: result-type menu (unscoped, once there is a query) + Filtre / Kart-Izgara (post results). Embedded in Keşfet it waits for a query.
+  // The control row: result-type menu (unscoped, once there is a query) + Filtre (post results). Embedded in Keşfet it waits for a query.
   const showTabMenu = active && !scope;
   const showControls = (active || !idle) && (showTabMenu || showPosts);
 
@@ -348,7 +345,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
           <TaxonomyDeepRows value={taxonomy} onChange={(next) => setSubFilter({ category: next.category, subcategory: next.subcategory })} />
         )}
         {showControls && (
-          // docs/history/269-*: ONE control row (the shared sade row) — result-type menu · Filtre (chips + sort live in its sheet) · Kart/Izgara.
+          // docs/history/269-*: ONE control row (the shared sade row) — result-type menu · Filtre (chips + sort live in its sheet).
           <ListControlRow
             menu={
               showTabMenu
@@ -382,7 +379,6 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
                   }
                 : undefined
             }
-            showView={showPosts}
           />
         )}
       </div>
@@ -467,17 +463,13 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
             {workflows.length > 0 && (
               <section className="space-y-3">
                 <ResultsHeading count={workflows.length}>{t("nav.workflows")}</ResultsHeading>
-                {viewMode === "focus" ? (
-                  <FocusGrid items={workflows.map((data) => ({ kind: "workflow" as const, data }))} />
-                ) : (
-                  <ContentGrid>
-                    {workflows.map((workflow) => (
-                      <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
-                        <WorkflowCard workflow={workflow} />
-                      </div>
-                    ))}
-                  </ContentGrid>
-                )}
+                <ContentGrid>
+                  {workflows.map((workflow) => (
+                    <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
+                      <WorkflowCard workflow={workflow} />
+                    </div>
+                  ))}
+                </ContentGrid>
                 {loadMoreButton("workflow")}
               </section>
             )}
@@ -485,17 +477,13 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
             {presets.length > 0 && (
               <section className="space-y-3">
                 <ResultsHeading count={presets.length}>{t("nav.presets")}</ResultsHeading>
-                {viewMode === "focus" ? (
-                  <FocusGrid items={presets.map((data) => ({ kind: "preset" as const, data }))} />
-                ) : (
-                  <ContentGrid>
-                    {presets.map((preset) => (
-                      <div key={preset.id} className={CONTENT_GRID_ITEM_CLASS}>
-                        <PresetCard preset={preset} />
-                      </div>
-                    ))}
-                  </ContentGrid>
-                )}
+                <ContentGrid>
+                  {presets.map((preset) => (
+                    <div key={preset.id} className={CONTENT_GRID_ITEM_CLASS}>
+                      <PresetCard preset={preset} />
+                    </div>
+                  ))}
+                </ContentGrid>
                 {loadMoreButton("preset")}
               </section>
             )}

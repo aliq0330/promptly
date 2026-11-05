@@ -10,7 +10,7 @@ import { contentImage } from "@/features/content/content-image";
 import { SectionNav } from "@/features/content/section-nav";
 import { TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
 import { SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
-import { FeedItemsView } from "@/features/feed/feed-items-view";
+import { FeedGrid } from "@/features/feed/feed-grid";
 import { isPostItem } from "@/features/feed/types";
 import { LoadMore } from "@/features/feed/load-more";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
@@ -43,7 +43,7 @@ export interface TopicFilter {
 /**
  * The one page template behind tag, category and tool pages (docs/history/211-*): a compact Albüm band (a collage of the
  * topic's most liked pictures + kicker, title, count), one action row (`primary` — Takip Et for a tag/tool — then Paylaş),
- * then — like Ana Sayfa and Keşfet — the section tiles with ONE control row (sort, Filtre, Kart | Izgara) and the posts.
+ * then — like Ana Sayfa and Keşfet — the section tiles with ONE control row (sort, Filtre) and the posts.
  * `beforeNav` (a category's subcategory chips) sits between the action row and the tiles.
  */
 export function TopicPage({
@@ -164,7 +164,7 @@ export function TopicPage({
           <EmptyState icon={icon} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
         ) : (
           <>
-            <FeedItemsView items={feed.items} emptyTitle={section === "all" && !taxonomyActiveCount(picked, true) ? t("topic.empty") : t("topic.emptyFilter")} />
+            <FeedGrid items={feed.items} emptyTitle={section === "all" && !taxonomyActiveCount(picked, true) ? t("topic.empty") : t("topic.emptyFilter")} />
             <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
           </>
         )}

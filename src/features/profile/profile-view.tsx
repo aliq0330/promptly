@@ -8,10 +8,7 @@ import { OtherProfileActions, OwnProfileActions } from "./profile-actions";
 import { ProfileRail } from "./profile-rail";
 import { useFollowState } from "./use-follow-state";
 import { Button } from "@/components/ui/button";
-import { useViewMode } from "@/features/content/view-mode-store";
-import { CompactViewToggle } from "@/features/content/view-mode-switcher";
 import { CONTROL_ICON_BUTTON, SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
-import { FocusGrid } from "@/features/focus/focus-grid";
 import { ContributionMap } from "./contribution-map";
 import { ProfileFilterControl, type ProfileSortKey } from "./profile-toolbar";
 import { PROFILE_TYPE_OPTIONS } from "./profile-type-options";
@@ -128,7 +125,6 @@ export function ProfileView({
     const id = setTimeout(() => setDebouncedSearch(search.trim()), 300);
     return () => clearTimeout(id);
   }, [search]);
-  const [viewMode] = useViewMode();
   const [searchOpen, setSearchOpen] = useState(false);
 
   // The header numbers come from the database (`profile_content_stats`): the prompt list is read a page at a time, so its length is no count.
@@ -212,7 +208,7 @@ export function ProfileView({
   }, [liked.items, activeType, normalizedSearch, sort]);
   const list = activeTab === "liked" ? { items: filteredLiked, loading: liked.loading, failed: liked.failed, hasMore: liked.hasMore, loadingMore: liked.loadingMore, loadMore: liked.loadMore, retry: liked.retry, total: liked.total } : prompts;
 
-  // The section's own filter icon (prompts / liked lists) and the Kart | Izgara toggle (every list that has one) sit in the control row next to the menu.
+  // The section's own filter icon (prompts / liked lists) sit in the control row next to the menu.
   const filterable = activeTab === "prompts" || activeTab === "liked";
   const hasActiveFilters = activeType !== "all" || normalizedSearch.length > 0;
   // The control row shows once there is something to filter, or while a filter is on (an empty result must still let the filter be cleared).
@@ -225,7 +221,6 @@ export function ProfileView({
     if (listKnown) setFilterShown((prev) => (prev[activeTab] ? prev : { ...prev, [activeTab]: true }));
   }, [listKnown, activeTab]);
   const showFilter = filterable && (listKnown || filterShown[activeTab] === true);
-  const viewable = (filterable && (listKnown || filterShown[activeTab] === true) && (list.items.length > 0 || list.loading)) || (activeTab === "requests" && requests.items.length > 0) || (activeTab === "workflows" && workflows.items.length > 0);
 
   function clearFilters() {
     setActiveType("all");
@@ -252,7 +247,7 @@ export function ProfileView({
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
           <ProfileRail ownerId={user.id} isOwnProfile={isOwnProfile} collections={publicCollections} />
 
-          {/* Sade (docs/history/272-*): one control row — the section menu pill on the left, the section's tools on the right (search · filter · Kart|Izgara · "+" on one's own profile). */}
+          {/* Sade (docs/history/272-*): one control row — the section menu pill on the left, the section's tools on the right (search · filter · "+" on one's own profile). */}
           <div className="mt-5 flex min-w-0 items-center gap-1.5" data-profile-controls="">
             <SectionMenu items={menuItems} active={activeTab} onChange={setActiveTab} ariaLabel={t("profile.sectionsAriaLabel")} title={user.displayName} />
             <span className="flex-1" />
@@ -286,7 +281,6 @@ export function ProfileView({
                 }}
               />
             )}
-            {viewable && <CompactViewToggle />}
             {isOwnProfile && (
               <Link href="/create" aria-label={t("create.promptTitle")} title={t("create.promptTitle")} data-profile-create="" className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft")}>
                 <Plus size={22} strokeWidth={1.75} aria-hidden />
@@ -336,8 +330,6 @@ export function ProfileView({
                     description={isOwnProfile ? t("workflow.noneYetBody") : t("workflow.noneYetOtherBody")}
                     action={isOwnProfile ? { label: t("workflow.create"), href: "/workflows/create" } : undefined}
                   />
-                ) : viewMode === "focus" ? (
-                  <FocusGrid items={workflows.items.map((data) => ({ kind: "workflow" as const, data }))} />
                 ) : (
                   <ContentGrid>
                     {workflows.items.map((workflow) => (

@@ -1141,7 +1141,7 @@ await scenario("33d. Kapak · üye olmayan / ziyaretçi: kapak, kart kapağı RP
   assert.ok(calls(db, "rpc/community_card_covers").length >= 1);
 }, { guest: true, setup: (db) => { seed(db, { myRole: "none" }); db.groups.find((x) => x.id === C1).cover_color = "#7048e8"; } });
 
-await scenario("34. Sade kontrol satırı (docs/history/232-*): Topluluklar ana sayfasında arama simgesi alanı açar ✕ kapatır, Kart/Izgara tek simge; topluluk sayfasında 'Akış ▾' menüsü + aynı satırda Kart/Izgara ve 'Gönderi oluştur' simgeleri", async ({ page }) => {
+await scenario("34. Sade kontrol satırı (docs/history/232-*): Topluluklar ana sayfasında arama simgesi alanı açar ✕ kapatır, Kart/Izgara düğmesi YOK; topluluk sayfasında 'Akış ▾' menüsü + aynı satırda 'Gönderi oluştur' simgesi", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
   await page.getByRole("heading", { name: "Topluluklar", level: 1 }).waitFor();
   assert.equal(await page.getByRole("searchbox").count(), 0, "arama alanı simgeyle açılır");
@@ -1149,16 +1149,13 @@ await scenario("34. Sade kontrol satırı (docs/history/232-*): Topluluklar ana 
   await page.getByRole("searchbox").waitFor();
   await page.getByRole("button", { name: "Temizle" }).click();
   assert.equal(await page.getByRole("searchbox").count(), 0);
-  const toggle = page.locator("[data-view-toggle]");
-  const before = await toggle.getAttribute("data-view-toggle");
-  await toggle.click();
-  assert.notEqual(await page.locator("[data-view-toggle]").getAttribute("data-view-toggle"), before, "Kart/Izgara tek simgeyle değişir");
+  assert.equal(await page.locator("[data-view-toggle]").count(), 0, "Kart/Izgara düğmesi kaldırıldı");
   await open(page, C1);
   const menu = await page.locator("[data-section-menu]").boundingBox();
   const slot = page.locator("[data-community-actions-slot]");
-  await slot.locator("[data-view-toggle]").waitFor();
+  assert.equal(await slot.locator("[data-view-toggle]").count(), 0, "yuvada görünüm düğmesi yok");
   const create = await slot.locator("[data-create-post]").boundingBox();
-  assert.ok(Math.abs(menu.y + menu.height / 2 - (create.y + create.height / 2)) < 6, "menü, görünüm ve '+' aynı satırda");
+  assert.ok(Math.abs(menu.y + menu.height / 2 - (create.y + create.height / 2)) < 6, "menü ve '+' aynı satırda");
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
 let failed = 0;

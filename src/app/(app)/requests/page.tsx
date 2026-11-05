@@ -60,7 +60,6 @@ export default function RequestsPage() {
       onClearExtra={() => setStatus("all")}
       searchPlaceholder={t("search.placeholderRequests")}
       renderItems={(items) => <RequestList requests={items} />}
-      focusKind="request"
       emptyTitle={t("request.emptyListTitle")}
       emptyBody={t("request.emptyListBody")}
       hasMore={hasMore}

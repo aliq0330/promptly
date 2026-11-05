@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs } from "@/components/ui/tabs";
 import { CONTROL_ICON_BUTTON, SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
-import { CompactViewToggle } from "@/features/content/view-mode-switcher";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
@@ -131,7 +130,7 @@ export function CommunitiesPage() {
     >
       <h1 className="font-display text-[2.375rem] font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("communities.page.title")}</h1>
 
-      {/* Tek kontrol satırı (docs/history/232-*, Spaces ile aynı kalıp): bölüm menüsü · arama · Kart/Izgara · "+". */}
+      {/* Tek kontrol satırı (docs/history/232-*, Spaces ile aynı kalıp): bölüm menüsü · arama · "+". */}
       {user && searchOpen ? (
         <form role="search" onSubmit={search} className="relative">
           <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
@@ -166,7 +165,6 @@ export function CommunitiesPage() {
               <Search size={22} strokeWidth={1.75} aria-hidden />
             </button>
           )}
-          {user && (view === "posts" || view === "discover") && <CompactViewToggle />}
           {user ? (
             <Button
               type="button"

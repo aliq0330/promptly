@@ -39,9 +39,6 @@ import { fetchWorkflowsByCreatorPage } from "@/lib/supabase/workflows";
 import { fetchPresetsByCreatorPage } from "@/lib/supabase/presets";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
-import { useViewMode } from "@/features/content/view-mode-store";
-import { FocusGrid } from "@/features/focus/focus-grid";
-import type { FeedItem } from "@/features/feed/types";
 
 type Kind =
   | "prompts"
@@ -59,8 +56,6 @@ interface Entry {
   likeCount: number;
   isPrivate: boolean;
   node: ReactNode;
-  /** The same row for the Izgara view (`FocusGrid`). */
-  item: FeedItem;
 }
 
 /**
@@ -73,7 +68,6 @@ interface Entry {
 export function MyContentView() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [viewMode] = useViewMode();
 
   const [kind, setKind] = useState<Kind>("prompts");
   const [visibility, setVisibility] = useState<VisibilityFilter>("all");
@@ -127,7 +121,6 @@ export function MyContentView() {
         createdAt: p.createdAt,
         likeCount: p.likeCount,
         isPrivate: p.visibility === "private",
-        item: { kind: "prompt" as const, data: p },
         node: (
           <PromptCard
             prompt={p}
@@ -146,7 +139,6 @@ export function MyContentView() {
         likeCount: r.likeCount,
         isPrivate: r.visibility === "private",
         node: <RequestCard request={r} />,
-        item: { kind: "request" as const, data: r },
       })),
       workflows: workflows.map((w) => ({
         id: w.id,
@@ -156,7 +148,6 @@ export function MyContentView() {
         likeCount: w.likeCount,
         isPrivate: w.visibility === "private",
         node: <WorkflowCard workflow={w} />,
-        item: { kind: "workflow" as const, data: w },
       })),
       presets: presets.map((p) => ({
         id: p.id,
@@ -166,7 +157,6 @@ export function MyContentView() {
         likeCount: p.likeCount,
         isPrivate: p.visibility === "private",
         node: <PresetCard preset={p} />,
-        item: { kind: "preset" as const, data: p },
       })),
     }),
     [prompts, promptPages, requests, workflows, presets],
@@ -235,9 +225,8 @@ export function MyContentView() {
       <SadeTitle>{t("myContent.title")}</SadeTitle>
       <p className="sr-only">{t("myContent.description")}</p>
 
-      {/* Sade düzen (docs/history/235-*): tek "Promptlar ▾" tür menüsü (sayılarla) + arama · Filtre (görünürlük, sıralama) · Kart/Izgara · "+". */}
+      {/* Sade düzen (docs/history/235-*): tek "Promptlar ▾" tür menüsü (sayılarla) + arama · Filtre (görünürlük, sıralama) · "+". */}
       <ListControlRow
-        showView={kind !== "drafts"}
         menu={{ items: menuItems, active: kind, onChange: setKind, ariaLabel: t("myContent.kindsAria"), title: t("myContent.title") }}
         search={kind === "drafts" ? undefined : { open: searching, onToggle: () => (searching ? (setSearch(""), setSearchOpen(false)) : setSearchOpen(true)), label: t("myContent.searchPlaceholder") }}
         filter={
@@ -338,8 +327,6 @@ export function MyContentView() {
                 compact
               />
             )
-          ) : viewMode === "focus" ? (
-            <FocusGrid items={visible.map((entry) => entry.item)} />
           ) : (
             <ContentGrid>
               {visible.map((entry, index) => (

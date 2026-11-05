@@ -6,7 +6,7 @@ import { Bot, Hash, LayoutGrid, Quote as QuoteIcon, Sparkles, SquareTerminal, Sl
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
-import { FeedItemsView } from "./feed-items-view";
+import { FeedGrid } from "./feed-grid";
 import { LoadMore } from "./load-more";
 import { DiscoverAside, DiscoverHighlightsSkeleton, PopularStrip, TopicStrip, useDiscoverHighlights } from "./discover-highlights";
 import { useFeedPages } from "./use-feed-pages";
@@ -242,7 +242,7 @@ export function DiscoverFeed() {
           <EmptyState icon={Sparkles} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
         ) : (
           <>
-            <FeedItemsView
+            <FeedGrid
               items={feed.items}
               interest={interest}
               emptyTitle={t("discover.noMatchTitle")}

@@ -12,9 +12,6 @@ import { SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/feat
 import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
 import { type SectionMenuItem } from "@/features/content/section-menu";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { useViewMode } from "@/features/content/view-mode-store";
-import { FocusGrid } from "@/features/focus/focus-grid";
-import type { FeedItem } from "@/features/feed/types";
 import { AdvancedSearchBox } from "@/features/search/advanced-search-box";
 import { tokensToQuery, type SearchToken } from "@/features/search/search-tokens";
 import { CONTENT_TYPE_IDS, EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
@@ -59,7 +56,6 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   onClearExtra,
   searchPlaceholder,
   renderItems,
-  focusKind,
   emptyTitle,
   emptyBody,
   hasMore = false,
@@ -86,8 +82,6 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   onClearExtra?: () => void;
   searchPlaceholder?: string;
   renderItems: (items: T[]) => ReactNode;
-  /** What the items are, so the Focus View ("Izgara") can render them; `renderItems` stays the Card view. */
-  focusKind?: FeedItem["kind"];
   emptyTitle: string;
   emptyBody: string;
   /** Whether a further real page of `baseItems` exists beyond what's already loaded (CLAUDE.md's keyset-paginated "Daha fazla yükle" — only meaningful in browse mode, never while actively searching/filtering). */
@@ -101,7 +95,6 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   const [sort, setSort] = useState<ContentSortKey>("newest");
   const [searchOpen, setSearchOpen] = useState(false);
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
-  const [viewMode] = useViewMode();
   const [results, setResults] = useState<T[] | null>(null);
   const [searchCursor, setSearchCursor] = useState<SearchCursor | null>(null);
   const [searchLoadingMore, setSearchLoadingMore] = useState(false);
@@ -183,7 +176,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   return (
     <PageContainer className="space-y-5 pb-16 pt-3 sm:pt-5">
       <SadeTitle>{title}</SadeTitle>
-      {/* Sade düzen (docs/history/234-*): tek "Tümü ▾" tür menüsü + arama · Filtre · Kart/Izgara · "+". Eski açıklama, "nasıl çalışır" adımları ve sayfaya özel süzgeçler (istek durumu) Filtre penceresindedir. */}
+      {/* Sade düzen (docs/history/234-*): tek "Tümü ▾" tür menüsü + arama · Filtre · "+". Eski açıklama, "nasıl çalışır" adımları ve sayfaya özel süzgeçler (istek durumu) Filtre penceresindedir. */}
       <ListControlRow
         menu={{
           items: menuItems,
@@ -254,11 +247,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
         </>
       ) : (
         <>
-          {focusKind && viewMode === "focus" ? (
-            <FocusGrid items={visible.map((data) => ({ kind: focusKind, data }) as unknown as FeedItem)} />
-          ) : (
-            renderItems(visible)
-          )}
+          {renderItems(visible)}
           {!active && hasMore && (
             <LoadMoreButton onLoadMore={() => void onLoadMore?.()} loading={loadingMore} />
           )}

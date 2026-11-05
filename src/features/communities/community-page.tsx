@@ -45,7 +45,7 @@ export interface CommunityTabProps {
   goTab: (tab: CommunityTab, section?: string) => void;
   /** Adresteki `section` (Üyeler: list|requests|invites · Yönet: stats|settings|…); geçersizse sekme ilk bölümünü açar. */
   section: string | null;
-  /** Kontrol satırındaki eylem yuvası (docs/history/232-*): Akış, Kart/Izgara + "+" simgelerini buraya portal eder; diğer sekmeler kullanmaz. */
+  /** Kontrol satırındaki eylem yuvası (docs/history/232-*): Akış, "+" simgesini buraya portal eder; diğer sekmeler kullanmaz. */
   actionsEl: HTMLElement | null;
 }
 

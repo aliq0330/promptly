@@ -80,7 +80,7 @@ Not: `run-community-home.mjs` ve `run-community-posts.mjs` aynı portu (4176) ku
 
 ## Profil koleksiyon halkaları (`docs/history/192-*`)
 
-`run-profile-collections.mjs` (8 senaryo; 7–8 = profil bölüm menüsü grupları + Filtre/Kart-Izgara simgeleri, `docs/history/233-*`): başkasının/kendi profilinde herkese açık + boş olmayan koleksiyonların halka şeridi (özel koleksiyon sızmaz, bağlantı, kapak/simge karosu), koleksiyon yoksa şerit çizilmez, İngilizce etiket + 390px'te taşma yok. Ağ taklidi `mock.mjs` + dosya içi `db.extraRoutes` (`collections`, `collection_items`, `profiles?username=`). Gerçek Supabase'e KARŞI DENENMEDİ.
+`run-profile-collections.mjs` (8 senaryo; 7–8 = profil bölüm menüsü grupları + Filtre simgesi, `docs/history/233-*`): başkasının/kendi profilinde herkese açık + boş olmayan koleksiyonların halka şeridi (özel koleksiyon sızmaz, bağlantı, kapak/simge karosu), koleksiyon yoksa şerit çizilmez, İngilizce etiket + 390px'te taşma yok. Ağ taklidi `mock.mjs` + dosya içi `db.extraRoutes` (`collections`, `collection_items`, `profiles?username=`). Gerçek Supabase'e KARŞI DENENMEDİ.
 
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-profile-collections.mjs   # 8/8 beklenir
@@ -97,7 +97,7 @@ SHOT_DIR=/tmp/shots node tests/messaging-ui/run-stories.mjs   # ekran görüntü
 
 ## Odak (`docs/history/199-*`)
 
-`run-focus-feed.mjs` (23 senaryo; 18–23 alttan açılan yorum sayfası, `docs/history/200-*`): `/focus` tam ekran sayfası — Ana Sayfa'da Akış yok (Kart | Izgara), yan menüde ve telefon alt menüsünde Odak, üst/yan/alt menünün gizlenmesi, koyu sahne (açık temada da), klavye/tekerlek scroll-snap, tür başına slayt, video (sessiz otomatik oynatma, ses düğmesi, geçince durma) ve ses (oynat düğmesi) — yazarın `prompt_results` çıktısı, Medya süzgeci, gerçek `LikeButton` (+ geri alma), Kaydet/Paylaş pencereleri, yorum bağlantısı, "Promptu incele" + kopyalama sayacı, `feed_page` keyset sayfalama, kapat/Esc → geldiği sayfa, son açık gönderiye dönüş, misafir, 390px/820px, İngilizce, hareket azaltma. `feed_page`, içerik ve `prompt_results` satırları dosyanın içinde taklit edilir; oynatma `HTMLMediaElement.play/pause` taslağıyla sınanır. Gerçek Supabase'e/cihaza/medyaya KARŞI DENENMEDİ.
+`run-focus-feed.mjs` (23 senaryo; 18–23 alttan açılan yorum sayfası, `docs/history/200-*`): `/focus` tam ekran sayfası — Ana Sayfa'da Akış yok, Kart | Izgara seçici ve yazma çubuğu yok, yan menüde ve telefon alt menüsünde Odak, üst/yan/alt menünün gizlenmesi, koyu sahne (açık temada da), klavye/tekerlek scroll-snap, tür başına slayt, video (sessiz otomatik oynatma, ses düğmesi, geçince durma) ve ses (oynat düğmesi) — yazarın `prompt_results` çıktısı, Medya süzgeci, gerçek `LikeButton` (+ geri alma), Kaydet/Paylaş pencereleri, yorum bağlantısı, "Promptu incele" + kopyalama sayacı, `feed_page` keyset sayfalama, kapat/Esc → geldiği sayfa, son açık gönderiye dönüş, misafir, 390px/820px, İngilizce, hareket azaltma. `feed_page`, içerik ve `prompt_results` satırları dosyanın içinde taklit edilir; oynatma `HTMLMediaElement.play/pause` taslağıyla sınanır. Gerçek Supabase'e/cihaza/medyaya KARŞI DENENMEDİ.
 
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-focus-feed.mjs   # 23/23 beklenir
@@ -178,7 +178,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_K
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-preset-try.mjs   # 10/10 beklenir
 ```
 
-Topluluklar sade düzen (`docs/history/232-*`): üst düzey sekmeler tek "Gönderiler ▾ / Akış ▾" menüsüdür; `run-communities` / `run-community-home` / `run-community-shelf` / `run-groups` içindeki `pickTab` / `hasTab` / `tabNames` / `optionText` yardımcıları menüyü açıp seçeneklere bakar (içteki alt sekmeler hâlâ `tab`). `run-communities` 34: arama simgesi + tek Kart/Izgara + kontrol satırı.
+Topluluklar sade düzen (`docs/history/232-*`): üst düzey sekmeler tek "Gönderiler ▾ / Akış ▾" menüsüdür; `run-communities` / `run-community-home` / `run-community-shelf` / `run-groups` içindeki `pickTab` / `hasTab` / `tabNames` / `optionText` yardımcıları menüyü açıp seçeneklere bakar (içteki alt sekmeler hâlâ `tab`). `run-communities` 34: arama simgesi + kontrol satırı (Kart/Izgara düğmesi yok).
 
 ## Prompt dışa / içe aktarma (`docs/history/250-*`)
 

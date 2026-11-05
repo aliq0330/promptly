@@ -8,8 +8,8 @@ import type { FeedEntry } from "@/lib/supabase/feed";
 export type FeedItem = FeedEntry;
 
 /**
- * A content post (prompt, request, workflow, preset) — every feed slot except a quote (docs/history/217-*). Odak and the Izgara
- * view draw posts only: a quote is a note about another post (a Space included, docs/history/241-*), not a single output to play full screen.
+ * A content post (prompt, request, workflow, preset) — every feed slot except a quote (docs/history/217-*). Odak draw
+ * posts only: a quote is a note about another post (a Space included, docs/history/241-*), not a single output to play full screen.
  */
 export type PostFeedItem = Exclude<FeedItem, { kind: "quote" }>;
 

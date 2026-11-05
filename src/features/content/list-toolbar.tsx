@@ -7,7 +7,6 @@ import { Modal } from "@/components/ui/modal";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { TaxonomyDrillList, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SortSelect, SORT_KEYS, SORT_LABELS, type ContentSortKey } from "@/features/content/sort-select";
-import { ViewModeControls, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -142,9 +141,6 @@ export function ListFilterSheet({
               </div>
             </SheetSection>
           )}
-          <SheetSection title={t("toolbar.view")}>
-            <ViewModeSwitcher />
-          </SheetSection>
         </div>
 
         <div className="flex gap-2 border-t border-border-soft px-4 py-3">
@@ -286,7 +282,6 @@ export function ListToolbar({
           </Button>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
             {sort && onSortChange && <SortSelect value={sort} onChange={onSortChange} keys={sortKeys} />}
-            <ViewModeControls />
           </div>
         </div>
       </div>

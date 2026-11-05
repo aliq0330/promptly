@@ -32,7 +32,7 @@ async function loadShowcase(): Promise<Prompt[]> {
  * The guest's first screen on Ana Sayfa (docs/history/209-*, "Canlı vitrin"): the pitch on one side, and on the other two
  * columns of the community's most liked picture prompts drifting slowly in opposite directions. Tapping a picture stops
  * the drift and slides up the exact prompt behind it — the thing Promptly is about — with Kopyala and a link to the post.
- * Signed-in members keep the compact composer (`HomeIntro`). `onUnavailable` hands back to the compact intro when there
+ * Signed-in members see nothing here (`HomeIntro`). `onUnavailable` hands back to the compact intro when there
  * are too few pictures or the request fails, so a guest never sees an empty wall.
  */
 export function GuestShowcase({ onUnavailable }: { onUnavailable: () => void }) {

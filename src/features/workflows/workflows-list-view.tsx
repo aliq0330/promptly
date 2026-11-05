@@ -41,7 +41,6 @@ export function WorkflowsListView() {
         </ContentGrid>
       )}
       searchPlaceholder={t("search.placeholderWorkflows")}
-      focusKind="workflow"
       emptyTitle={t("workflow.noneYetTitle")}
       emptyBody={t("workflow.noneYetBody")}
       hasMore={hasMore}

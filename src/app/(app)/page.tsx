@@ -5,7 +5,7 @@ import { HomeRail } from "@/features/feed/home-rail";
 import { WeeklyChallengeBanner } from "@/features/challenges/weekly-challenge-banner";
 
 /**
- * Meydan home (docs/history/190-*): the main column (composer, story tray —
+ * Meydan home (docs/history/190-*): the main column (story tray —
  * docs/history/198-*, it replaced the community rings —, feed — the posts in the same boxed two-column grid as Keşfet from
  * `sm`, edge-to-edge rows on a phone) and, on wide screens, a right rail with
  * the weekly theme, trending tags and creators to follow. Below `xl` the rail

@@ -6,7 +6,6 @@ import { ScrollRow } from "@/components/ui/scroll-row";
 import { ListFilterSheet } from "@/features/content/list-toolbar";
 import { SortSelect, SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
 import { CONTROL_ICON_BUTTON, SectionMenu } from "@/features/content/section-menu";
-import { CompactViewToggle, MobileViewToggle, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
@@ -62,9 +61,9 @@ function useScrolledPast(ref: RefObject<HTMLElement | null>): boolean {
 
 /**
  * Home's and Keşfet's section switcher (docs/history/207-*, the "Bölüm balonları" design): big rounded-square tiles
- * (icon + name, the chosen one dark) with the list controls — sort, Filtre, Kart | Izgara — in one calm row under
+ * (icon + name, the chosen one dark) with the list controls — sort, Filtre — in one calm row under
  * them. `variant="tabs"` (docs/history/227-*, used by Home and Keşfet) swaps the tiles for ONE row of underlined text tabs
- * and leaves the phone's Kart | Izgara toggle to the Filtre sheet, so the first post starts higher. Once the tiles scroll away they fold into ONE 52px bar pinned under the header (in its place while the header
+ * so the first post starts higher. Once the tiles scroll away they fold into ONE 52px bar pinned under the header (in its place while the header
  * is hidden, `[data-sticky-under-header]`): the chosen section as a labelled pill, the others as icons, Filtre and the
  * view toggle at the end. Render it as a direct child of the TALL container (the page / feed section): the bar is a
  * zero-height `sticky` element, so its containing block must reach the end of the list.
@@ -155,7 +154,7 @@ export function SectionNav<K extends string>({
 
   return (
     <>
-      <FoldedBar items={items} active={active} onChange={onChange} ariaLabel={ariaLabel} visible={folded} actions={hideControls ? null : <>{filterButton}<MobileViewToggle className={ICON_BUTTON} /></>} />
+      <FoldedBar items={items} active={active} onChange={onChange} ariaLabel={ariaLabel} visible={folded} actions={hideControls ? null : filterButton} />
 
       <div ref={blockRef} className="space-y-3">
         {variant === "menu" ? (
@@ -168,29 +167,17 @@ export function SectionNav<K extends string>({
               title={menuTitle ?? ariaLabel}
             />
             <span className="flex-1" />
-            {!hideControls && (
-              <>
-                {menuFilterButton}
-                <CompactViewToggle />
-              </>
-            )}
+            {!hideControls && menuFilterButton}
           </div>
         ) : variant === "tabs" ? (
-          // Sade düzen (docs/history/237-*): sekmeler solda, Filtre + Kart/Izgara simgeleri AYNI satırın sağında.
+          // Sade düzen (docs/history/237-*): sekmeler solda, Filtre simgesi AYNI satırın sağında.
           <SectionTabs
             items={items}
             active={active}
             onChange={onChange}
             ariaLabel={ariaLabel}
             spread={spread}
-            end={
-              hideControls ? undefined : (
-                <>
-                  {menuFilterButton}
-                  <CompactViewToggle />
-                </>
-              )
-            }
+            end={hideControls ? undefined : menuFilterButton}
           />
         ) : (
           <div
@@ -227,8 +214,6 @@ export function SectionNav<K extends string>({
             )}
             <div className="order-3 ml-auto flex shrink-0 items-center gap-2">
               {filterButton}
-              {variant === "tiles" && <MobileViewToggle className={cn(ICON_BUTTON, "md:hidden")} />}
-              <ViewModeSwitcher className="max-md:hidden" />
             </div>
           </div>
         )}
@@ -251,7 +236,6 @@ export function SectionNav<K extends string>({
   );
 }
 
-const ICON_BUTTON = "h-10 w-10 rounded-full border-border-soft";
 const FILTER_BUTTON =
   "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary " +
   "transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1";
@@ -315,7 +299,7 @@ function SectionTabs<K extends string>({
   onChange: (key: K) => void;
   ariaLabel: string;
   spread?: boolean;
-  /** Controls at the end of the same strip (Filtre, Kart/Izgara). */
+  /** Controls at the end of the same strip (Filtre). */
   end?: ReactNode;
 }) {
   return (

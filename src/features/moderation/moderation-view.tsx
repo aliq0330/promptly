@@ -117,7 +117,6 @@ export function ModerationView() {
       </div>
       {/* Sade düzen (docs/history/235-*): tek "Şikâyetler ▾" bölüm menüsü; şikâyet durumu süzgeci Filtre penceresinde. */}
       <ListControlRow
-        showView={false}
         menu={{
           items: [
             { key: "reports" as const, label: t("admin.tabReports"), icon: Flag },

@@ -8,7 +8,6 @@ import { SpacesIcon } from "@/features/spaces/space-visuals";
 import type { CommunityPostContent, CommunityPostType } from "@/lib/supabase/communities";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptMedia, Tag, UserProfile } from "@/types";
-import type { FeedItem } from "@/features/feed/types";
 
 /** Dört içerik türünün başvuru kartı ve başvuru sayfası için ortak özeti (kart/sayfa tür bilmeden çizilir). */
 export interface ContentSummary {
@@ -141,12 +140,4 @@ export function summarizeContent(content: CommunityPostContent): ContentSummary 
     detail: null,
     fieldCount: x.fields.length,
   };
-}
-
-/**
- * Bir gönderinin Izgara görünümündeki satırı (`FocusGrid`, Keşfet'teki Kart | Izgara seçicisi): işaret ettiği içerik. İçerik okunamıyorsa
- * (silindi / gizlendi) null — Izgara'da çizilmez. Izgara kartı içeriğin kendi sayfasına gider.
- */
-export function postFeedItem(content: CommunityPostContent | null): FeedItem | null {
-  return content ? ({ kind: content.type, data: content.data } as FeedItem) : null;
 }

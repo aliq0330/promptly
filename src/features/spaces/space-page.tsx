@@ -316,7 +316,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
         {/* Sade düzen (docs/history/235-*): yedi hap sekme yerine tek "Genel bakış ▾" menüsü (sayılarla). */}
         <div className="mt-4">
           <ListControlRow
-            showView={false}
             menu={{
               items: visibleTabs.map((key) => ({
                 key,
