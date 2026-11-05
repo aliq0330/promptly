@@ -4,7 +4,8 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
-import { createDb, installMock } from "./mock.mjs";
+import { createDb, installMock, U } from "./mock.mjs";
+import { svg } from "./detail-fixtures.mjs";
 
 const BASE = "http://localhost:4187/promptly";
 const server = await serve(4187);
@@ -12,13 +13,20 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const results = [];
 const ONLY = process.env.ONLY ?? "";
 
-async function scenario(name, fn, { viewport = { width: 390, height: 844 }, reducedMotion = "no-preference" } = {}) {
+const author = (u) => ({ id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 3, following_count: 2, created_at: "2026-01-01T00:00:00Z", interests: [] });
+const CARD = { id: "b0000000-0000-4000-8000-000000000001", title: "Görsel prompt 1", description: "d", prompt_text: "cinematic photo", tool: null, tools: [], content_type: "image", category: null, subcategory: null, status: "published", origin_type: "original", request_id: null, like_count: 3, save_count: 0, comment_count: 0, copy_count: 0, created_at: "2026-10-11T10:00:00Z", show_on_profile: true, requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: "public", deleted_at: null, community_id: null, profiles: author(U.bob), prompt_media: [{ id: "m1", url: svg("#6d5bd0", "#d9d2c3", 1200, 900), width: 1200, height: 900, alt: "a", position: 0, dominant_color: "#6d5bd0", placeholder: svg("#6d5bd0", "#d9d2c3", 24, 18) }], prompt_tags: [] };
+
+async function scenario(name, fn, { viewport = { width: 390, height: 844 }, reducedMotion = "no-preference", cards = false } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  db.rpc.feed_page = () => ({ body: [] });
-  db.rpc.for_you_page = () => ({ body: [] });
+  const feed = cards ? [{ kind: "prompt", id: CARD.id, created_at: CARD.created_at, sort_rank: 1, reason_kind: "popular", reason_ref: null }] : [];
+  db.rpc.feed_page = () => ({ body: feed });
+  db.rpc.for_you_page = () => ({ body: feed });
   const context = await browser.newContext({ viewport, reducedMotion });
   await installMock(context, db);
+  if (cards) {
+    await context.route(/\/rest\/v1\/prompts\?/, (route) => (route.request().method() !== "GET" ? route.fallback() : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([CARD]) })));
+  }
   await context.addInitScript(() => {
     try {
       localStorage.setItem("promptly-language", "tr");
@@ -93,6 +101,18 @@ await scenario("5. masaüstü: alt menü yok, taşma yok", async ({ page }) => {
   assert.equal(await nav(page).isVisible(), false);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), true);
 }, { viewport: { width: 1280, height: 900 } });
+
+// Kartlardaki `CARD_SAVE_CLASS` (`[&>span]:hidden`) düğmenin doğrudan <span> çocuğunu gizler: yer imi ikonunun kökü <span> olduğunda kartta Kaydet GÖRÜNMEZ oldu (335 sonrası regresyon).
+await scenario("6. kartta Kaydet ikonu görünür (sayı gizli, ikon değil); kaydedilmemiş yer imi dolu değil", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  const save = page.locator("article button[aria-pressed]").first();
+  await save.waitFor();
+  const box = await save.locator(".mi-bm").boundingBox();
+  assert.ok(box && box.width >= 12 && box.height >= 12, `bookmark has size (${JSON.stringify(box)})`);
+  assert.equal(await save.locator(".mi-bm").getAttribute("data-filled"), "false");
+  const clip = await save.locator(".mi-bm-fill").evaluate((el) => getComputedStyle(el).clipPath);
+  assert.match(clip, /inset\(100%/, "the fill is clipped away while unsaved");
+}, { cards: true });
 
 for (const [status, name] of results) console.log(`${status === "PASS" ? "✓" : "✗"} ${name}`);
 const passed = results.filter(([s]) => s === "PASS").length;

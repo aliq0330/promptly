@@ -71,7 +71,8 @@ const BOOKMARK_PATH = "M7 3.5h10a1 1 0 0 1 1 1V20.5l-6-4.3-6 4.3V4.5a1 1 0 0 1 1
 export function BookmarkIcon({ filled, popSeq = 0, size = 24, strokeWidth = 1.75, className }: Omit<MotionIconProps, "seq"> & { filled: boolean; popSeq?: number }) {
   const sparks = [-70, -35, 0, 35, 70];
   return (
-    <span key={popSeq} data-filled={filled} className={cn("mi-bm relative inline-block shrink-0", popSeq > 0 && filled && "mi-bm-pop", className)} style={{ width: size, height: size }}>
+    // Kök <span> DEĞİL <i>: kartlardaki `CARD_SAVE_CLASS = "[&>span]:hidden"` düğmenin doğrudan <span> çocuklarını (sayıyı) gizler; kök <span> olursa ikonun kendisi de gizlenirdi.
+    <i key={popSeq} data-filled={filled} className={cn("mi-bm relative inline-block shrink-0 not-italic", popSeq > 0 && filled && "mi-bm-pop", className)} style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinejoin="round" aria-hidden focusable="false" className="absolute inset-0">
         <path d={BOOKMARK_PATH} />
       </svg>
@@ -85,7 +86,7 @@ export function BookmarkIcon({ filled, popSeq = 0, size = 24, strokeWidth = 1.75
           ))}
         </span>
       )}
-    </span>
+    </i>
   );
 }
 
@@ -98,12 +99,12 @@ export function PinIcon({ pinned, size = 24, strokeWidth = 1.75, className }: Om
     setDropped(pinned);
   }
   return (
-    <span data-pinned={pinned} data-drop={dropped && pinned} className={cn("mi-pin relative inline-flex shrink-0 items-center justify-center", className)} style={{ width: size, height: size }}>
+    <i data-pinned={pinned} data-drop={dropped && pinned} className={cn("mi-pin relative inline-flex shrink-0 items-center justify-center not-italic", className)} style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox="0 0 24 24" fill={pinned ? "currentColor" : "none"} stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden focusable="false" className="mi mi-pin-svg">
         <path d="M12 17v5" />
         <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
       </svg>
-    </span>
+    </i>
   );
 }
 
