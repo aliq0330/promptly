@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
+import { CheckDrawIcon } from "@/components/ui/motion-icons";
+import { TEXT_COPIED_EVENT } from "./copy-events";
 import { cn, copyTextToClipboard } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth-provider";
 import { recordPromptCopy } from "@/lib/supabase/prompt-usage";
@@ -64,6 +66,7 @@ export function CopyPromptButton({
 
     const ok = await copyTextToClipboard(text);
     setState(ok ? "copied" : "failed");
+    if (ok) window.dispatchEvent(new CustomEvent(TEXT_COPIED_EVENT, { detail: { text } }));
     if (ok && promptId && user) {
       // Kopyalama kaydı yazıldıktan sonra "Çalıştı mı?" bloğu oy verebilir hâle gelir (docs/history/296-*): açık blok yeniden yüklenir.
       void recordPromptCopy(promptId).finally(() => window.dispatchEvent(new CustomEvent(PROMPT_COPIED_EVENT, { detail: { promptId } })));
@@ -77,7 +80,7 @@ export function CopyPromptButton({
     );
   }
 
-  const Icon = state === "copied" ? Check : Copy;
+  const iconSize = variant === "segment" ? 16 : size === "sm" ? 12 : size === "md" ? 14 : 20;
   const displayLabel = state === "copied" ? t("common.copied") : state === "failed" ? t("prompt.copyFailed") : (label ?? t("common.copy"));
 
   return (
@@ -103,7 +106,7 @@ export function CopyPromptButton({
         className,
       )}
     >
-      <Icon key={state} size={variant === "segment" ? 16 : size === "sm" ? 12 : size === "md" ? 14 : 20} className={state === "copied" ? "animate-check-pop" : undefined} />
+      {state === "copied" ? <CheckDrawIcon size={iconSize} strokeWidth={2.4} /> : <Copy key={state} size={iconSize} />}
       {displayLabel}
     </button>
   );

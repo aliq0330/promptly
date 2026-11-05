@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useState, type HTMLAttributes, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type HTMLAttributes, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { PUBLISH_ATTEMPT_EVENT } from "./publish-attempt";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { UserProfile } from "@/types";
@@ -50,8 +51,34 @@ export function FormField({
   const { t } = useTranslation();
   const labelId = useId();
   const labelClass = "text-body font-semibold text-text";
+  // Eksik zorunlu alan: hata belirince ve her "Paylaş" denemesinde alan bir kez titrer (docs/history/335-*).
+  const [shaking, setShaking] = useState(false);
+  const errorRef = useRef(error);
+  const shakeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    errorRef.current = error;
+  }, [error]);
+  useEffect(() => {
+    function shake() {
+      setShaking(false);
+      requestAnimationFrame(() => {
+        setShaking(true);
+        clearTimeout(shakeTimer.current);
+        shakeTimer.current = setTimeout(() => setShaking(false), 450);
+      });
+    }
+    const onAttempt = () => {
+      if (errorRef.current) shake();
+    };
+    window.addEventListener(PUBLISH_ATTEMPT_EVENT, onAttempt);
+    if (errorRef.current) shake();
+    return () => {
+      window.removeEventListener(PUBLISH_ATTEMPT_EVENT, onAttempt);
+      clearTimeout(shakeTimer.current);
+    };
+  }, [error]);
   return (
-    <div className="space-y-2" role={htmlFor ? undefined : "group"} aria-labelledby={htmlFor ? undefined : labelId} {...rest}>
+    <div className={cn("space-y-2", shaking && "mi-shake")} role={htmlFor ? undefined : "group"} aria-labelledby={htmlFor ? undefined : labelId} {...rest}>
       <div className="flex items-baseline gap-2">
         {htmlFor ? (
           <label htmlFor={htmlFor} className={labelClass}>

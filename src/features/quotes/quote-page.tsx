@@ -1,9 +1,10 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, EyeOff, Flag, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, EyeOff, Flag } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
@@ -93,7 +94,7 @@ export function QuotePage() {
 
   // Alıntı işleri içeriğin NORMAL ⋮ menüsüne eklenir (ikinci menü yok); içeriğin kendi yönetimi orijinalin sayfasında kalır.
   const extras: PostMenuExtra[] = [];
-  if (user && mine) extras.push({ key: "delete", label: t("quotes.menu.delete"), icon: <Trash2 size={14} />, danger: true, onSelect: () => setDialog("delete") });
+  if (user && mine) extras.push({ key: "delete", label: t("quotes.menu.delete"), icon: <TrashIcon size={14} />, danger: true, onSelect: () => setDialog("delete") });
   if (user && !mine) extras.push({ key: "report", label: t("messages.reportAction"), icon: <Flag size={14} />, onSelect: () => setDialog("report") });
 
   return (

@@ -1,4 +1,5 @@
 "use client";
+import { announcePublished } from "@/lib/publish-celebration";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
@@ -611,6 +612,7 @@ export function CreatePromptForm() {
         setIsSubmitting(false);
         return;
       }
+      announcePublished();
       router.push((await returnToCommunity("prompt", published.id)) ?? promptHref(published));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("prompt.publishFailed"));

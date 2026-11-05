@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { FollowIcon } from "@/components/ui/motion-icons";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
@@ -72,6 +73,7 @@ export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size
       disabled={loading}
       className={cn(pressSeq > 0 && "animate-state-pop", className)}
     >
+      <FollowIcon done={isFollowing} size={size === "sm" ? 14 : 16} />
       {isFollowing ? t("common.unfollow") : t("common.follow")}
     </Button>
   );

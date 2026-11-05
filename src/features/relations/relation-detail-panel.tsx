@@ -1,8 +1,9 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Crosshair, Trash2, X } from "lucide-react";
+import { ArrowRight, Crosshair, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -145,7 +146,7 @@ export function RelationDetailPanel({
                         disabled={removingId === edge.id}
                         onClick={() => remove(edge)}
                       >
-                        <Trash2 size={14} />
+                        <TrashIcon size={14} />
                         {removingId === edge.id ? t("relations.removing") : confirmId === edge.id ? t("relations.removeConfirm") : t("relations.remove")}
                       </Button>
                     )}

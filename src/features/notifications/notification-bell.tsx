@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { BellIcon } from "@/components/ui/motion-icons";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { NotificationPopover } from "./notification-popover";
 import { useNotifications } from "./notifications-provider";
@@ -15,7 +15,14 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  */
 export function NotificationBell() {
   const { t } = useTranslation();
-  const { unreadCount } = useNotifications();
+  const { unreadCount, incoming } = useNotifications();
+  // Realtime ile yeni bir bildirim gelince zil bir kez sallanır (docs/history/335-*); sayfa açılışında/okuma sayacı değişince değil.
+  const [seenIncoming, setSeenIncoming] = useState(incoming);
+  const [ringSeq, setRingSeq] = useState(0);
+  if (incoming !== seenIncoming) {
+    setSeenIncoming(incoming);
+    if (incoming > seenIncoming) setRingSeq((n) => n + 1);
+  }
   const wide = useMinWidth(768);
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -31,7 +38,7 @@ export function NotificationBell() {
   if (!wide) {
     return (
       <Link href="/notifications" aria-label={label} title={t("header.notificationsAriaLabel")} className={iconButtonClassName(false, "shrink-0 relative")}>
-        <Bell size={20} />
+        <BellIcon size={20} strokeWidth={2} seq={ringSeq} />
         {badge}
       </Link>
     );
@@ -49,7 +56,7 @@ export function NotificationBell() {
         data-notification-bell=""
         className={iconButtonClassName(open, "shrink-0 relative")}
       >
-        <Bell size={20} />
+        <BellIcon size={20} strokeWidth={2} seq={ringSeq} />
         {badge}
       </button>
       {open && <NotificationPopover anchor={anchor} onClose={close} />}

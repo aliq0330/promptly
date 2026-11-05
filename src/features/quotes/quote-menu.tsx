@@ -1,7 +1,7 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -77,7 +77,7 @@ export function QuoteMenu({ quote, onDeleted }: { quote: Quote; onDeleted: () =>
           {(close) =>
             mine ? (
               <MenuItem
-                icon={<Trash2 size={14} />}
+                icon={<TrashIcon size={14} />}
                 label={t("quotes.menu.delete")}
                 danger
                 onClick={() => {

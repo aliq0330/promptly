@@ -1,5 +1,6 @@
 "use client";
 
+import { announcePublished } from "@/lib/publish-celebration";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -232,6 +233,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           return false;
         }
       }
+      if (target === "published" && !editId) announcePublished();
       if (target === "published") router.push((await returnToCommunity("workflow", id)) ?? `/workflows/local?id=${id}`);
       return true;
     } catch {

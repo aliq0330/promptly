@@ -1,5 +1,6 @@
 "use client";
 
+import { PUBLISH_ATTEMPT_EVENT } from "./publish-attempt";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { X, type LucideIcon } from "lucide-react";
@@ -88,7 +89,10 @@ export function ComposeShell({
           <Button
             type="button"
             size="md"
-            onClick={onPublish}
+            onClick={() => {
+              window.dispatchEvent(new Event(PUBLISH_ATTEMPT_EVENT));
+              onPublish();
+            }}
             disabled={publishDisabled}
             data-compose-publish=""
             className={cn("shrink-0 px-5", publishDimmed && "opacity-60")}

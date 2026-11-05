@@ -1,10 +1,11 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Flag, Pencil, Pin, PinOff, Plus, ShieldAlert, SquareStack, Trash2 } from "lucide-react";
+import { Flag, Pencil, Pin, PinOff, Plus, ShieldAlert, SquareStack } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -409,7 +410,7 @@ function PostItem({
           {canPin && <MenuItem icon={post.pinnedAt ? <PinOff size={15} /> : <Pin size={15} />} label={post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin")} onClick={() => { close(); onPin(post); }} />}
           {role && !mine && <MenuItem icon={<Flag size={15} />} label={t("communities.report.menu")} onClick={() => { close(); onAction({ kind: "report", post }); }} />}
           {canModerate && !mine && <MenuItem icon={<ShieldAlert size={15} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); onAction({ kind: "moderate", post }); }} />}
-          {mine && <MenuItem icon={<Trash2 size={15} />} label={t("communities.feed.deleteMine")} danger onClick={() => { close(); onAction({ kind: "delete", post }); }} />}
+          {mine && <MenuItem icon={<TrashIcon size={15} />} label={t("communities.feed.deleteMine")} danger onClick={() => { close(); onAction({ kind: "delete", post }); }} />}
         </>
       )}
     </DropdownMenu>

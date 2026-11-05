@@ -1,9 +1,11 @@
 "use client";
 
+import { ExitMotion } from "@/components/ui/exit-motion";
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { Suspense, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCheck, SlidersHorizontal, Trash2 } from "lucide-react";
+import { CheckCheck, SlidersHorizontal } from "lucide-react";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
@@ -92,7 +94,7 @@ function Inbox() {
             <SlidersHorizontal size={22} strokeWidth={1.75} aria-hidden />
           </Link>
           <button type="button" onClick={() => setConfirmClear(true)} disabled={list.cards.length === 0} aria-label={t("notifications.clearAll")} title={t("notifications.clearAll")} data-action="clear-all" className={cn(CONTROL_ICON_BUTTON, "disabled:cursor-not-allowed disabled:opacity-40")}>
-            <Trash2 size={22} strokeWidth={1.75} aria-hidden />
+            <TrashIcon size={22} strokeWidth={1.75} />
           </button>
         </>
       }
@@ -157,7 +159,11 @@ function Inbox() {
                 <section key={group} aria-label={t(GROUP_LABEL_KEYS[group])} className="space-y-1">
                   {items.map((item) => {
                     const card = cardByKey.get(item.key);
-                    return card ? <NotificationListRow key={card.key} card={card} list={list} selected={selected?.key === card.key} onSelect={() => select(card.key)} /> : null;
+                    return card ? (
+                      <ExitMotion key={card.key} leaving={list.leavingKeys.has(card.key)}>
+                        <NotificationListRow card={card} list={list} selected={selected?.key === card.key} onSelect={() => select(card.key)} />
+                      </ExitMotion>
+                    ) : null;
                   })}
                 </section>
               ))}
@@ -174,14 +180,9 @@ function Inbox() {
             list.cards.map((card, index) => {
               const open = openKey === null ? index === 0 : openKey === card.key;
               return (
-                <NotificationCardView
-                  key={card.key}
-                  card={card}
-                  list={list}
-                  variant="page"
-                  open={open}
-                  onToggle={() => setOpenKey(open ? "" : card.key)}
-                />
+                <ExitMotion key={card.key} leaving={list.leavingKeys.has(card.key)}>
+                  <NotificationCardView card={card} list={list} variant="page" open={open} onToggle={() => setOpenKey(open ? "" : card.key)} />
+                </ExitMotion>
               );
             })}
           {list.status === "ready" && <LoadMore failed={list.moreFailed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={() => void list.loadMore()} auto />}

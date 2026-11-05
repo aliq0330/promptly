@@ -1,8 +1,9 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, ChevronUp, Copy, ExternalLink, Plus, Trash2, X } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, Copy, ExternalLink, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { availableSources, newId } from "@/lib/workflow-logic";
@@ -286,7 +287,7 @@ export function SettingsPane({
           }}
           onBlur={() => setConfirm(false)}
         >
-          <Trash2 size={14} />
+          <TrashIcon size={14} />
           {confirm ? t("workflow.confirmDelete") : t("workflow.delete")}
         </Button>
       </div>
@@ -335,7 +336,7 @@ export function StepActions({
         aria-label={confirm ? t("workflow.confirmDelete") : t("workflow.delete")}
         title={confirm ? t("workflow.confirmDelete") : t("workflow.delete")}
       >
-        <Trash2 size={14} />
+        <TrashIcon size={14} />
         {confirm && t("workflow.confirmDelete")}
       </Button>
     </div>

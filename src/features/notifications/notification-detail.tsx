@@ -1,8 +1,11 @@
 "use client";
 
+import { SendIcon } from "@/components/ui/motion-icons";
+import { useCompletionSeq } from "@/lib/use-motion-seq";
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, MoreVertical, Send, Trash2, Undo2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, MoreVertical, Undo2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { StorageImage } from "@/components/ui/storage-media";
@@ -131,6 +134,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
   const { user } = useAuth();
   const { markRead, markUnread, remove } = useNotifications();
   const actions = useCardActions(card, list);
+  const replySeq = useCompletionSeq(actions.busy === "reply");
   const extras = useCommentExtras();
   const [draft, setDraft] = useState("");
   const kind = quickActionKind(card);
@@ -173,7 +177,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
           {unread ? <Check size={20} aria-hidden /> : <Undo2 size={20} aria-hidden />}
         </button>
         <button type="button" onClick={() => { remove(card); onBack?.(); }} aria-label={t("notifications.deleteNotification")} title={t("notifications.deleteNotification")} data-action="delete" className="grid size-11 place-items-center rounded-full bg-danger/10 text-danger hover:bg-danger/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger">
-          <Trash2 size={20} aria-hidden />
+          <TrashIcon size={20} />
         </button>
       </div>
     </div>
@@ -319,7 +323,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
               <CommentExtrasToolbar extras={extras} userId={user.id} disabled={actions.busy === "reply"} />
               <span className="flex-1" />
               <Button className="h-11" onClick={() => void send()} disabled={actions.busy === "reply" || extras.isPreparing || (!draft.trim() && !extras.hasExtras)} data-action="reply-send">
-                <Send size={16} aria-hidden />
+                <SendIcon size={16} seq={replySeq} />
                 {t("nc.send")}
               </Button>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useExitMotion } from "@/components/ui/exit-motion";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
@@ -97,6 +98,7 @@ export function useCommentThread(
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const { exit, isLeaving } = useExitMotion();
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
@@ -441,7 +443,10 @@ export function useCommentThread(
       // in the list anymore next time this thread is fetched fresh, and a
       // soft delete needs exactly this placeholder treatment right now.
       const deletedAt = new Date().toISOString();
-      setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: "", deletedAt, rating: null } : c)));
+      const markDeleted = () => setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: "", deletedAt, rating: null } : c)));
+      // Yanıtı olmayan yorum gerçekten silinmiştir: yer tutucu bırakmak yerine kayıp solar, satır kapanır (docs/history/335-*).
+      if (childrenByParent.has(id)) markDeleted();
+      else exit(id, () => setComments((prev) => prev.filter((c) => c.id !== id)));
       onChange?.();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : t("comments.deleteFailed"));
@@ -492,6 +497,7 @@ export function useCommentThread(
     onRequestDelete: requestDelete,
     onCancelDeleteConfirm: cancelDeleteConfirm,
     isDeletingId,
+    isLeavingId: isLeaving,
     registerNodeRef,
     highlightedId,
     onRate: ratingEnabled ? rateComment : undefined,

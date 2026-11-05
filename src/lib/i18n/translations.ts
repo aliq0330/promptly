@@ -461,6 +461,7 @@ export const translations = {
   "create.requestBody": { tr: "İhtiyacın olan promptu tarif et, topluluk yanıtlasın.", en: "Describe the prompt you need and let the community answer it." },
   "create.requestHint": { tr: "Topluluk yanıtları", en: "Community responses" },
   "common.share": { tr: "Paylaş", en: "Share" },
+  "motion.published": { tr: "Paylaşıldı", en: "Published" },
   "common.send": { tr: "Gönder", en: "Send" },
   "common.sending": { tr: "Gönderiliyor…", en: "Sending…" },
   "common.sent": { tr: "Gönderildi", en: "Sent" },

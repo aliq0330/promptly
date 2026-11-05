@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
-import { ChevronDown, Trash2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Collapsible } from "@/components/ui/collapsible";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fieldName, selectionEntries, type PresetField, type PresetSelection } from "@/lib/preset-fields";
@@ -86,7 +87,7 @@ export function PresetFieldList({
                 />
                 {onRemoveField && (!removableIds || removableIds.has(field.id)) && (
                   <button type="button" onClick={() => onRemoveField(field)} className="inline-flex items-center gap-1 text-caption text-text-muted hover:text-danger">
-                    <Trash2 size={12} aria-hidden />
+                    <TrashIcon size={12} />
                     {t("presetField.removeFromForm")}
                   </button>
                 )}

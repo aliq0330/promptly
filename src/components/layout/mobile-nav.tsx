@@ -2,15 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { CreateMenuSheet } from "@/features/prompts/create-choice";
 import { FullLoadLink } from "@/components/ui/full-load-link";
+import { CommunityIcon, CompassIcon, FocusIcon, HomeIcon, PlusIcon, type MotionIconProps } from "@/components/ui/motion-icons";
 import { cn } from "@/lib/utils";
 import { CREATE_HREF, FOCUS_HREF, guestLoginNavItem, isNavItemActive, mobileNavItems, PROFILE_NAV_PLACEHOLDER, type NavItem } from "@/components/layout/nav-items";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
 import { useTranslation } from "@/lib/i18n/language-provider";
+
+/** Her sekmenin kendi hareketli ikonu (docs/history/335-*): sekme AKTİF olunca bir kez oynar; sayfa açılışında oynamaz. Listede olmayan (giriş) kalıp lucide ikonuyla kalır. */
+const MOTION_ICONS: Record<string, ComponentType<MotionIconProps>> = {
+  "/": HomeIcon,
+  "/discover": CompassIcon,
+  "/communities": CommunityIcon,
+  [FOCUS_HREF]: FocusIcon,
+};
 
 /**
  * Mobile-only bottom navigation; the middle "Oluştur" action is visually emphasized.
@@ -34,6 +43,17 @@ export function MobileNav() {
     return status === "unauthenticated" ? guestLoginNavItem : null;
   });
 
+  // Üstteki aktif çizgi tek bir öğedir ve sekmeler arasında kayar; "+" sayfa olmadığı için yuvasını atlar (docs/history/335-*).
+  const activeIndex = items.findIndex((item) => item !== null && item.href !== CREATE_HREF && isNavItemActive(pathname, item));
+  const activeHref = activeIndex >= 0 ? items[activeIndex]!.href : null;
+  // Sekme aktif OLDUĞUNDA ikonu bir kez oynat: render sırasında önceki değerle karşılaştırılır (ilk boyamada oynamaz).
+  const [prevActive, setPrevActive] = useState(activeHref);
+  const [iconSeq, setIconSeq] = useState<Record<string, number>>({});
+  if (prevActive !== activeHref) {
+    setPrevActive(activeHref);
+    if (activeHref) setIconSeq((seqs) => ({ ...seqs, [activeHref]: (seqs[activeHref] ?? 0) + 1 }));
+  }
+
   if (inChat) return null;
 
   return (
@@ -46,12 +66,21 @@ export function MobileNav() {
       // (iOS Safari) shows this colour instead of the page background, like Instagram's — docs/history/193-*.
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border-soft bg-surface pb-[env(safe-area-inset-bottom)] after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-[50vh] after:bg-surface md:hidden"
     >
+      <span
+        aria-hidden
+        data-nav-indicator
+        className="pointer-events-none absolute left-0 top-0 flex h-[3px] w-1/5 justify-center transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.3,1.55,0.5,1)]"
+        style={{ transform: `translateX(${Math.max(activeIndex, 0) * 100}%)`, opacity: activeIndex >= 0 ? 1 : 0 }}
+      >
+        <span className="h-[3px] w-6 rounded-b-full bg-primary" />
+      </span>
       <ul className="flex h-16 items-stretch">
         {items.map((item, index) => {
           if (!item) return <li key={`slot-${index}`} aria-hidden className="flex flex-1" />;
           const href = item.href === PROFILE_NAV_PLACEHOLDER ? profileNavHref : item.href;
           const active = isNavItemActive(pathname, item);
           const Icon = item.icon;
+          const MotionIcon = MOTION_ICONS[item.href];
           const label = t(item.labelKey);
           const isCreate = item.href === CREATE_HREF;
           const itemClassName = cn(
@@ -67,12 +96,15 @@ export function MobileNav() {
                   active && "ring-2 ring-primary/30 ring-offset-2 ring-offset-surface",
                 )}
               >
-                <Icon size={20} strokeWidth={2.4} />
+                <PlusIcon open={createOpen} size={20} strokeWidth={2.4} />
               </span>
             ) : (
               <>
-                {active && <span aria-hidden className="absolute top-0 h-[3px] w-6 rounded-b-full bg-primary" />}
-                <Icon size={22} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-primary" : undefined} />
+                {MotionIcon ? (
+                  <MotionIcon size={22} strokeWidth={active ? 2.2 : 1.8} seq={iconSeq[item.href]} className={active ? "text-primary" : undefined} />
+                ) : (
+                  <Icon size={22} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-primary" : undefined} />
+                )}
               </>
             )}
             <span className={isCreate ? "sr-only" : undefined}>{label}</span>

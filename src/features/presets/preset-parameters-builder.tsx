@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
-import { Plus, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Plus, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FormSection } from "@/features/content/form-section";
@@ -158,7 +159,7 @@ export function PresetParametersBuilder({
 function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button type="button" aria-label={label} onClick={onClick} className={cn("grid h-9 w-8 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface hover:text-danger")}>
-      <Trash2 size={15} />
+      <TrashIcon size={15} />
     </button>
   );
 }

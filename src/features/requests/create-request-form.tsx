@@ -1,4 +1,5 @@
 "use client";
+import { announcePublished } from "@/lib/publish-celebration";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
@@ -262,6 +263,7 @@ export function CreateRequestForm() {
         },
         ownProfile,
       );
+      announcePublished();
       router.push((await returnToCommunity("request", request.id)) ?? requestHref(request));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("request.publishFailed"));

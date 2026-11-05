@@ -1,6 +1,7 @@
 "use client";
 
-import { CheckCheck, Copy, CornerUpLeft, Flag, Pencil, Pin, PinOff, ShieldAlert, Star, Trash2 } from "lucide-react";
+import { TrashIcon } from "@/components/ui/motion-icons";
+import { CheckCheck, Copy, CornerUpLeft, Flag, Pencil, Pin, PinOff, ShieldAlert, Star } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useReport } from "@/features/moderation/report-provider";
 import { cn } from "@/lib/utils";
@@ -175,7 +176,7 @@ export function MessageActionMenu({
             />
           )}
           <MenuItem
-            icon={<Trash2 size={14} />}
+            icon={<TrashIcon size={14} />}
             label={isDeletingHere && actions.deleteConfirm?.mode === "me" ? t("messages.deletingEllipsis") : isConfirmingDeleteMe ? t("common.confirmDelete") : t("messages.deleteForMe")}
             onClick={() => requestDelete("me")}
             onBlur={actions.onCancelDeleteConfirm}
@@ -183,7 +184,7 @@ export function MessageActionMenu({
           />
           {canEditOrDelete && (
             <MenuItem
-              icon={<Trash2 size={14} />}
+              icon={<TrashIcon size={14} />}
               label={
                 isDeletingHere && actions.deleteConfirm?.mode === "everyone"
                   ? t("messages.deletingEllipsis")
@@ -218,7 +219,7 @@ export function MessageActionMenu({
             />
           )}
           <MenuItem
-            icon={<Trash2 size={14} />}
+            icon={<TrashIcon size={14} />}
             label={isDeletingHere && actions.deleteConfirm?.mode === "me" ? t("messages.deletingEllipsis") : isConfirmingDeleteMe ? t("common.confirmDelete") : t("messages.deleteForMe")}
             onClick={() => requestDelete("me")}
             onBlur={actions.onCancelDeleteConfirm}

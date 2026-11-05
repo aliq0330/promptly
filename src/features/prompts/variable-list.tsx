@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { countVariableUsages } from "@/lib/prompt-variables";
 import { conditionStatus, describeOptions, isChoiceType } from "@/lib/prompt-variable-types";
@@ -112,7 +113,7 @@ export function VariableList({
                     aria-label={t("variable.deleteAriaLabel", { name: variable.name })}
                     className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
                   >
-                    <Trash2 size={13} />
+                    <TrashIcon size={13} />
                   </button>
                 )}
               </div>

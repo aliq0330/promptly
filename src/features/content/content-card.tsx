@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { ImageIcon, type LucideIcon } from "lucide-react";
-import { createContext, useContext, useRef } from "react";
+import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { prefersReducedMotion } from "@/lib/motion";
 import { Avatar } from "@/components/ui/avatar";
 import { rememberCardMedia, useCardMediaReturn } from "@/lib/card-transition";
 import { cn, profileHref } from "@/lib/utils";
@@ -28,6 +29,16 @@ import { splitSourceNotes } from "@/lib/source-notes";
  * create a stacking context and trap the card's own dropdown menu under the
  * next card in the column.
  */
+/**
+ * Kartın çıkış animasyonu (docs/history/335-*): ⋮ menüsü bir silme/koleksiyondan kaldırma bitirdiğinde `exit(commit)` çağırır; kart önce küçülüp solar
+ * (260 ms), sonra `commit` (listeden gerçek kaldırma) çalışır. `commit` hata fırlatırsa kart geri gelir. Sağlayıcı yoksa (kart dışı kullanım) `commit` hemen çalışır.
+ */
+type CardExit = (commit?: () => void | Promise<void>) => Promise<void>;
+const CardExitContext = createContext<CardExit | null>(null);
+export function useCardExit(): CardExit {
+  return useContext(CardExitContext) ?? (async (commit) => void (await commit?.()));
+}
+
 export function ContentCard({
   href,
   onOpen,
@@ -44,9 +55,25 @@ export function ContentCard({
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLElement>(null);
+  const [leaving, setLeaving] = useState(false);
+  const exit = useCallback<CardExit>(async (commit) => {
+    if (prefersReducedMotion()) {
+      await commit?.();
+      return;
+    }
+    setLeaving(true);
+    await new Promise((resolve) => setTimeout(resolve, 260));
+    try {
+      await commit?.();
+    } catch (error) {
+      setLeaving(false);
+      throw error;
+    }
+  }, []);
   // Back from this card's own detail page: the hero shrinks back into the cover.
   useCardMediaReturn(href, ref);
   return (
+    <CardExitContext.Provider value={exit}>
     <article
       ref={ref}
       // A click that will navigate to this card's own page remembers where the cover is, so the detail
@@ -65,6 +92,7 @@ export function ContentCard({
               // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
               "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-[1] before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
             ],
+        leaving && "pointer-events-none scale-90 opacity-0 transition-[transform,opacity] duration-[240ms] ease-soft",
         className,
       )}
     >
@@ -73,6 +101,7 @@ export function ContentCard({
           order — the card title (ContentCardTitle) is the accessible link. */}
       <Link href={href} data-card-link className="absolute inset-0 z-0 rounded-xl" aria-hidden tabIndex={-1} />
     </article>
+    </CardExitContext.Provider>
   );
 }
 

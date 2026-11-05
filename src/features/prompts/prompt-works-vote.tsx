@@ -5,6 +5,7 @@ import { BadgeCheck, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PROMPT_COPIED_EVENT } from "@/features/prompts/copy-prompt-button";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { summarizeWorks, toggleVote, type WorksState } from "@/lib/prompt-works";
 import { fetchPromptWorks, setPromptWorks } from "@/lib/supabase/prompt-works";
@@ -21,6 +22,10 @@ export function PromptWorksVote({ promptId, isOwn }: { promptId: string; isOwn: 
   const [state, setState] = useState<WorksState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Oy verince başparmak sıçrar; rozet OTURUM İÇİNDE "Kanıtlanmış"a geçerse büyüyerek gelir ve üzerinden parlama geçer (sayfa açılışında oynamaz; docs/history/335-*).
+  const [popSeq, setPopSeq] = useState(0);
+  const [provenSeq, setProvenSeq] = useState(0);
+  const [wasProven, setWasProven] = useState(false);
 
   const load = useCallback(() => {
     let cancelled = false;
@@ -44,6 +49,11 @@ export function PromptWorksVote({ promptId, isOwn }: { promptId: string; isOwn: 
 
   if (!state) return null;
   const summary = summarizeWorks(state.yes, state.no);
+  const isProven = summary.tier === "proven";
+  if (isProven !== wasProven) {
+    setWasProven(isProven);
+    if (isProven && state.myVote !== null) setProvenSeq((n) => n + 1);
+  }
   const signedInVoter = !!userId && !isOwn;
   // Oy yok + oy verme imkânı yok + ipucu da gerekmiyorsa (ziyaretçi/yazar) blok hiç çizilmez: boş "0 oy" gürültüsü olmasın.
   if (summary.tier === "none" && !state.canVote && !signedInVoter) return null;
@@ -52,6 +62,7 @@ export function PromptWorksVote({ promptId, isOwn }: { promptId: string; isOwn: 
     if (!state || busy) return;
     const previous = state;
     const next = toggleVote(state, works);
+    if (next.myVote !== null) setPopSeq((n) => n + 1);
     setState(next);
     setBusy(true);
     setError(null);
@@ -73,7 +84,7 @@ export function PromptWorksVote({ promptId, isOwn }: { promptId: string; isOwn: 
         </h3>
         <p className="flex flex-wrap items-center gap-2 text-caption text-text-secondary" data-works-summary>
           {summary.tier === "proven" && (
-            <span title={t("prompt.works.provenHint")} className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-semibold text-primary">
+            <span key={provenSeq} title={t("prompt.works.provenHint")} className={cn("inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-semibold text-primary", provenSeq > 0 && "mi-badge-in mi-shine")}>
               <BadgeCheck size={13} strokeWidth={1.75} aria-hidden />
               {t("prompt.works.proven")}
             </span>
@@ -89,10 +100,16 @@ export function PromptWorksVote({ promptId, isOwn }: { promptId: string; isOwn: 
       {state.canVote ? (
         <div role="group" aria-label={t("prompt.works.groupAria")} className="flex flex-wrap items-center gap-2">
           <Button variant={state.myVote === true ? "primary" : "outline"} size="sm" aria-pressed={state.myVote === true} disabled={busy} onClick={() => void vote(true)}>
-            <ThumbsUp size={14} strokeWidth={1.75} aria-hidden /> {t("prompt.works.yes")}
+            <span key={`up-${state.myVote === true ? popSeq : 0}`} className={cn("inline-flex", state.myVote === true && popSeq > 0 && "mi-pop")}>
+              <ThumbsUp size={14} strokeWidth={1.75} aria-hidden />
+            </span>{" "}
+            {t("prompt.works.yes")}
           </Button>
           <Button variant={state.myVote === false ? "primary" : "outline"} size="sm" aria-pressed={state.myVote === false} disabled={busy} onClick={() => void vote(false)}>
-            <ThumbsDown size={14} strokeWidth={1.75} aria-hidden /> {t("prompt.works.no")}
+            <span key={`down-${state.myVote === false ? popSeq : 0}`} className={cn("inline-flex", state.myVote === false && popSeq > 0 && "mi-pop")}>
+              <ThumbsDown size={14} strokeWidth={1.75} aria-hidden />
+            </span>{" "}
+            {t("prompt.works.no")}
           </Button>
           {state.myVote !== null && <span className="text-caption text-text-muted">{t("prompt.works.undoHint")}</span>}
         </div>

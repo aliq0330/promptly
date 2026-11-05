@@ -1,6 +1,7 @@
 "use client";
 
-import { History, Trash2 } from "lucide-react";
+import { TrashIcon } from "@/components/ui/motion-icons";
+import { History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatRelativeTime } from "@/lib/utils";
@@ -68,7 +69,7 @@ export function StudioHistory({
                   </Button>
                 </div>
                 <button type="button" onClick={() => onDelete(entry)} aria-label={t("generate.historyDelete")} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger">
-                  <Trash2 size={14} aria-hidden />
+                  <TrashIcon size={14} />
                 </button>
               </div>
             </div>

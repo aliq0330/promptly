@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useMemo, useRef, useState } from "react";
-import { Eye, EyeOff, ListChecks, Loader2, Tags, Trash2 } from "lucide-react";
+import { Eye, EyeOff, ListChecks, Loader2, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import type { ChunkOutcome } from "@/lib/exchange";
@@ -351,7 +352,7 @@ export function BulkManageCard() {
                         {t("exchange.autotag.open")}
                       </Button>
                       <Button type="button" size="sm" variant="outline" onClick={() => request("delete")} disabled={busy || selectedIds.length === 0} data-testid="manage-delete" className="text-danger">
-                        <Trash2 size={14} />
+                        <TrashIcon size={14} />
                         {t("exchange.manage.delete")}
                       </Button>
                       {running && (

@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Bookmark } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
-import { cn, formatCount } from "@/lib/utils";
+import { formatCount } from "@/lib/utils";
+import { BookmarkIcon } from "@/components/ui/motion-icons";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
@@ -104,13 +105,7 @@ export function SaveButton({
         aria-label={isSaved ? t("prompt.manageSaved") : t("prompt.saveAria", { count })}
         className={sharedClassName}
       >
-        <Bookmark
-          key={popSeq}
-          size={size}
-          fill={isSaved ? "currentColor" : "none"}
-          strokeWidth={1.75}
-          className={cn("transition-[fill] duration-200", popSeq > 0 && isSaved && "animate-state-pop")}
-        />
+        <BookmarkIcon filled={isSaved} popSeq={popSeq} size={size} strokeWidth={1.75} />
         <span aria-hidden>{formatCount(count)}</span>
       </button>
 

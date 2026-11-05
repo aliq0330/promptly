@@ -1,5 +1,6 @@
 "use client";
 
+import { poofElement } from "@/lib/dust";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   AlignCenterHorizontal,
@@ -375,6 +376,8 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       setError(t("spaces.board.lockedSkipped", { count: lockedIds.length }));
       return;
     }
+    // Nesneler toz olup dağılır (docs/history/335-*); silme başarısız olursa geri gelir.
+    const undoPoof = ids.map((id) => poofElement(document.querySelector<HTMLElement>(`[data-board-item="${id}"]`)));
     try {
       // Uçlarından biri silinen oklar sunucuda kendiliğinden gider; geri almada öğelerle birlikte geri gelsin diye saklanır.
       const touching = connections.filter((c) => ids.includes(c.fromItemId) || ids.includes(c.toItemId));
@@ -383,6 +386,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       setSelection(lockedIds);
       setUndoNotice(lockedIds.length ? t("spaces.board.lockedSkipped", { count: lockedIds.length }) : t("spaces.board.removed", { count: removed.length }));
     } catch (err) {
+      undoPoof.forEach((undo) => undo());
       setError(err instanceof Error ? err.message : t("spaces.error.generic"));
     }
   }, [editable, selection, lockedSet, connections, removeItems, t]);

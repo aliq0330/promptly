@@ -1,8 +1,9 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Copy, Download, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Shapes, Trash2 } from "lucide-react";
+import { Check, Copy, Download, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Shapes } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePostMenuExtras } from "./post-menu-extras";
 import { usePostScope } from "@/features/communities/post-scope";
@@ -20,6 +21,7 @@ import { DeletePromptDialog } from "./delete-prompt-dialog";
 import { ExportPromptsModal } from "@/features/exchange/export-prompts-modal";
 import { fetchPromptForExport } from "@/lib/supabase/prompt-exchange";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useCardExit } from "@/features/content/content-card";
 
 /**
  * Every post card's three-dot menu (header, top-right) — not just the
@@ -121,6 +123,7 @@ export function PostMenu({
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const cardExit = useCardExit();
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
@@ -185,7 +188,8 @@ export function PostMenu({
       else await deleteRealPrompt(promptId!);
       setOpen(false);
       setDeleteDialogOpen(false);
-      onDeleted?.();
+      // Kart önce küçülüp solar, sonra listeden çıkar (docs/history/335-*).
+      void cardExit(() => onDeleted?.());
     } catch (err) {
       setError(err instanceof Error ? err.message : t("common.deleteFailed"));
       setIsDeleting(false);
@@ -220,7 +224,7 @@ export function PostMenu({
     setIsRemoving(true);
     setRemoveError(null);
     try {
-      await collectionRemoval.onRemove();
+      await cardExit(() => collectionRemoval.onRemove());
       setOpen(false);
     } catch (err) {
       setRemoveError(err instanceof Error ? err.message : t("common.removeFailed"));
@@ -393,7 +397,7 @@ export function PostMenu({
                 disabled={isDeleting}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
               >
-                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <TrashIcon size={14} />}
                 {confirmingDelete && !asksInDialog ? t("common.confirmDelete") : t("common.delete")}
               </button>
             </>

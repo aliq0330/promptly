@@ -1,9 +1,11 @@
 "use client";
 
+import { ExitMotion, useExitMotion } from "@/components/ui/exit-motion";
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
-import { FileText, LayoutGrid, SlidersHorizontal, Sparkles, SquareTerminal, Trash2, Workflow as WorkflowIcon } from "lucide-react";
+import { FileText, LayoutGrid, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionMenu } from "@/features/content/section-menu";
@@ -48,6 +50,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { exit, isLeaving } = useExitMotion();
 
   const refresh = useCallback(async () => {
     const lists = await Promise.all(KIND_ORDER.map((kind) => fetchOwnDrafts(kind, userId)));
@@ -88,8 +91,8 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
     setError(null);
     try {
       await deleteDraft(row.kind, row.id);
-      setRows((prev) => (prev ? prev.filter((item) => item.id !== row.id) : prev));
       setConfirmId(null);
+      exit(row.id, () => setRows((prev) => (prev ? prev.filter((item) => item.id !== row.id) : prev)));
     } catch {
       setError(t("draft.deleteFailed"));
     } finally {
@@ -118,11 +121,14 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
       {visible.length === 0 ? (
         <EmptyState icon={FileText} title={t("draft.empty")} className="border-0" />
       ) : (
-        <ul className="space-y-2">
+        <ul>
           {visible.slice(0, shown).map((row) => {
             const Icon = KIND_META[row.kind].icon;
             return (
-              <li key={`${row.kind}-${row.id}`} className="rounded-md border border-border-soft bg-surface-soft p-3">
+              <li key={`${row.kind}-${row.id}`}>
+              <ExitMotion leaving={isLeaving(row.id)}>
+              <div className="pb-2">
+              <div className="rounded-md border border-border-soft bg-surface-soft p-3">
                 <div className="flex items-center gap-1.5 text-caption font-medium text-text-muted">
                   <Icon size={13} aria-hidden />
                   {t(KIND_META[row.kind].labelKey)}
@@ -138,7 +144,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
                     {t("draft.continue")}
                   </Link>
                   <Button type="button" variant="ghost" size="sm" disabled={busyId === row.id} onClick={() => void handleDelete(row)}>
-                    <Trash2 size={14} aria-hidden />
+                    <TrashIcon size={14} seq={busyId === row.id ? 1 : 0} />
                     {t("common.delete")}
                   </Button>
                   {confirmId === row.id && (
@@ -147,6 +153,9 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
                     </Button>
                   )}
                 </div>
+              </div>
+              </div>
+              </ExitMotion>
               </li>
             );
           })}

@@ -1,8 +1,10 @@
 "use client";
 
+import { SendArrowIcon } from "@/components/ui/motion-icons";
+import { useCompletionSeq } from "@/lib/use-motion-seq";
 import { LoadMore } from "@/features/feed/load-more";
 import { createContext, useCallback, useContext, useEffect, useId, useRef } from "react";
-import { ArrowUp, MessageCircle, X } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { FocusSheetFrame } from "./focus-sheet-frame";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,6 +98,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
   const value = replyingTo ? baseTree.replyDraft : thread.draft;
   const setValue = replyingTo ? baseTree.onReplyDraftChange : thread.setDraft;
   const posting = replyingTo ? baseTree.isPosting : thread.isPosting;
+  const sendSeq = useCompletionSeq(posting);
   const error = (replyingTo ? baseTree.postError : thread.postError) ?? thread.deleteError;
   // Tek yazma kutusu hem yorum hem yanıt yazar; ekler (fotoğraf · GIF · içerik) de yazılanın durumuna göre seçilir (docs/history/308-*).
   const extras = replyingTo ? baseTree.replyExtras : thread.composerExtras;
@@ -232,7 +235,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
                     posting && "animate-pulse",
                   )}
                 >
-                  <ArrowUp size={18} strokeWidth={2.4} aria-hidden />
+                  <SendArrowIcon size={18} strokeWidth={2.4} seq={sendSeq} />
                 </button>
               </div>
             </form>

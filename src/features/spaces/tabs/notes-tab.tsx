@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useState } from "react";
-import { Link2, Lock, MapPin, Pencil, Plus, Search, StickyNote, Trash2 } from "lucide-react";
+import { Link2, Lock, MapPin, Pencil, Plus, Search, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -144,7 +145,7 @@ export function NotesTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => voi
                         {t("common.edit")}
                       </Button>
                       <Button variant="ghost" size="sm" className="text-danger hover:bg-danger/10" onClick={() => setDeleting(note)}>
-                        <Trash2 size={13} aria-hidden />
+                        <TrashIcon size={13} />
                         {t("common.delete")}
                       </Button>
                     </>
