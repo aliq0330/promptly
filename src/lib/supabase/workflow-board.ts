@@ -19,7 +19,7 @@ import {
 import {
   addSpaceConnections,
   addSpaceItems,
-  createSpaceGroup,
+  applyWorkflowPlan,
   deleteSpaceConnections,
   deleteSpaceItems,
   fetchSpaceConnections,
@@ -88,6 +88,11 @@ export function importPlan(input: PlanInput, options: PlanOptions, items: readon
   return planWorkflowImport(input.steps, relationPairs(input.flow), options, existingBoardOf(items), planLabels());
 }
 
+/** Eski tek parça çerçeve öğeleri (docs/history/261-*): `kind='content'` + `content_type='workflow'`. Yeni yazımlar artık bunu üretmez (339). */
+export function legacyFramesOf(items: readonly SpaceItem[], workflowId: string): SpaceItem[] {
+  return items.filter((item) => item.kind === "content" && item.contentType === "workflow" && item.contentId === workflowId);
+}
+
 /** Bu workflow'dan aktarılmış nesneler panoda var mı (varsa yeniden aktarılmaz, "Güncelle" kullanılır). */
 export function workflowObjectsOn(items: readonly SpaceItem[], workflowId: string): SpaceItem[] {
   return items.filter((item) => item.sourceWorkflowId === workflowId);
@@ -117,14 +122,22 @@ export function syncPlan(input: PlanInput, items: readonly SpaceItem[], connecti
 // Çalıştırma
 // ---------------------------------------------------------------------------------------------
 
+/** İlk aktarımın TEK işlemde yazılan içeriği (docs/history/339-*): çerçeve (grup) + nesneler + oklar. */
+export interface ImportPayload {
+  group: { id: string; name: string } | null;
+  items: NewSpaceItem[];
+  connections: NewSpaceConnection[];
+}
+
 export interface PlanIO {
+  /** İlk aktarım: hepsi ya da hiçbiri (RPC). Pano sağlayıcıya, workflow formu doğrudan veri katmanına yazar. */
+  applyImport: (payload: ImportPayload) => Promise<{ group: SpaceGroup | null; items: SpaceItem[]; connections: SpaceConnection[] }>;
+  // "Güncelle" (fark) için tek tek yazımlar: kısmen uygulanırsa bir sonraki "Güncelle" kalan farkı yeniden bulur.
   addItems: (items: NewSpaceItem[]) => Promise<SpaceItem[]>;
   addConnections: (connections: NewSpaceConnection[]) => Promise<SpaceConnection[]>;
   patchItem: (id: string, patch: { title?: string; body?: string }) => Promise<unknown>;
   removeItems: (ids: string[]) => Promise<unknown>;
   removeConnections: (ids: string[]) => Promise<unknown>;
-  /** Çerçeve (grup) oluşturur; olmazsa (sınır/yetki) `null` — aktarım çerçevesiz sürer. */
-  createGroup: (name: string) => Promise<SpaceGroup | null>;
 }
 
 export interface ImportResult {
@@ -177,8 +190,9 @@ function connectionDraft(planned: PlannedConnection, spaceId: string, workflowId
 }
 
 /**
- * Planı panoya yazar: çerçeve (grup) → nesneler (tek istek) → oklar (tek istek). Prompt/görsel eklenemezse (kaynak okunamıyor)
- * yalnız adım kartlarıyla yeniden dener ve bunu `degraded` ile bildirir. Panoda 500 öğe sınırı baştan denetlenir.
+ * Planı panoya TEK işlemde yazar (çerçeve + nesneler + oklar; `space_apply_workflow_plan`). Prompt/görsel eklenemezse (kaynak okunamıyor)
+ * hiçbir şey yazılmamış olur ve yalnız adım kartlarıyla yeniden denenir (`degraded`); ikinci denemede boş grup/yarım pano kalmaz.
+ * Panoda 500 öğe sınırı baştan denetlenir.
  */
 export async function runImport({
   io,
@@ -202,14 +216,16 @@ export async function runImport({
   let plan = importPlan(input, options, existingItems);
   if (existingItems.length + plan.items.length > MAX_ITEMS) throw new SpaceError("space_item_limit", translateForRuntime("spaces.error.itemLimit"));
   let degraded = false;
-  // Çerçeve bir kez açılır (kaynak okunamayıp yeniden denenirse ikinci bir boş grup kalmasın).
-  const group = await io.createGroup(translateForRuntime("wfSpace.objects.frame", { title: workflowTitle }).slice(0, 40));
+  const group = { id: crypto.randomUUID(), name: translateForRuntime("wfSpace.objects.frame", { title: workflowTitle }).slice(0, 40) };
   const run = async (current: WorkflowImportPlan): Promise<ImportResult> => {
     const spot = findFreeSpot(existingItems, current.size, near);
     const z = topZ(existingItems);
-    const items = await io.addItems(current.items.map((planned, index) => itemDraft(planned, spaceId, workflowId, spot, z + index + 1, group?.id ?? null)));
-    const connections = await io.addConnections(current.connections.map((planned) => connectionDraft(planned, spaceId, workflowId)));
-    return { items, connections, group, degraded };
+    const result = await io.applyImport({
+      group,
+      items: current.items.map((planned, index) => itemDraft(planned, spaceId, workflowId, spot, z + index + 1, group.id)),
+      connections: current.connections.map((planned) => connectionDraft(planned, spaceId, workflowId)),
+    });
+    return { items: result.items, connections: result.connections, group: result.group, degraded };
   };
   try {
     return await run(plan);
@@ -239,18 +255,12 @@ export async function runSync({ io, spaceId, workflowId, plan, existingItems }: 
 /** Doğrudan veri katmanı (workflow formu): sağlayıcı yok, yerel durum yok. */
 export function directIO(spaceId: string, userId: string): PlanIO {
   return {
+    applyImport: (payload) => applyWorkflowPlan(spaceId, { ...payload, group: payload.group && { ...payload.group, position: 0 } }, userId),
     addItems: (items) => addSpaceItems(items, userId),
     addConnections: (connections) => addSpaceConnections(connections, userId),
     patchItem: (id, patch) => updateSpaceItem(id, patch),
     removeItems: (ids) => deleteSpaceItems(ids),
     removeConnections: (ids) => deleteSpaceConnections(ids),
-    createGroup: async (name) => {
-      try {
-        return await createSpaceGroup(spaceId, name, userId);
-      } catch {
-        return null;
-      }
-    },
   };
 }
 
@@ -264,10 +274,10 @@ export async function importOrSyncDirect({
 }: {
   spaceId: string;
   workflowId: string;
-  workflowTitle: string;
+  workflowTitle?: string;
   userId: string;
   options: PlanOptions;
-}): Promise<{ itemId: string | null; degraded: boolean }> {
+}): Promise<{ itemId: string | null; degraded: boolean; added: number }> {
   const input = await loadPlanInput(workflowId, { fresh: true });
   if (!input) throw new SpaceError("generic", translateForRuntime("wfSpace.import.loadFailed"));
   const [items, connections] = await Promise.all([fetchSpaceItems(spaceId), fetchSpaceConnections(spaceId)]);
@@ -275,9 +285,12 @@ export async function importOrSyncDirect({
   if (workflowObjectsOn(items, workflowId).some((item) => item.sourceRole === "step")) {
     const plan = syncPlan(input, items, connections, workflowId);
     if (!plan.isEmpty) await runSync({ io, spaceId, workflowId, plan, existingItems: items });
-    return { itemId: workflowObjectsOn(items, workflowId).find((item) => item.sourceRole === "step")?.id ?? null, degraded: false };
+    return { itemId: workflowObjectsOn(items, workflowId).find((item) => item.sourceRole === "step")?.id ?? null, degraded: false, added: plan.addItems.length };
   }
   const bounds = items.length ? { x: Math.min(...items.map((i) => i.x)), y: Math.max(...items.map((i) => i.y + i.h)) + 120 } : { x: 0, y: 0 };
-  const result = await runImport({ io, spaceId, workflowId, workflowTitle, input, options, existingItems: items, near: { x: bounds.x + 500, y: bounds.y + 300 } });
-  return { itemId: result.items.find((item) => item.sourceRole === "step")?.id ?? null, degraded: result.degraded };
+  const result = await runImport({ io, spaceId, workflowId, workflowTitle: workflowTitle ?? input.flow.workflow.title, input, options, existingItems: items, near: { x: bounds.x + 500, y: bounds.y + 300 } });
+  // Aynı workflow bu panoda eski tek parça çerçeve olarak duruyorsa nesneler eklendikten SONRA çerçeve kalkar (ikisi yan yana kalmasın).
+  const frames = legacyFramesOf(items, workflowId);
+  if (frames.length) await io.removeItems(frames.map((frame) => frame.id));
+  return { itemId: result.items.find((item) => item.sourceRole === "step")?.id ?? null, degraded: result.degraded, added: result.items.length };
 }

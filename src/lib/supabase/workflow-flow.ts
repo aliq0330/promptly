@@ -99,26 +99,18 @@ export interface WorkflowSpaceLink {
   objects: boolean;
 }
 
-interface LinkRow {
-  id: string;
+interface LinkRpcRow {
   space_id: string;
-  kind?: string;
-  source_role?: string | null;
-  flow_show_io?: boolean;
-  flow_show_links?: boolean;
-  flow_show_relations?: boolean;
-}
-
-interface LinkedSpaceRow {
-  id: string;
+  item_id: string;
+  objects: boolean;
+  flow_show_io: boolean | null;
+  flow_show_links: boolean | null;
+  flow_show_relations: boolean | null;
   title: string;
   visibility: SpaceVisibility;
-  archived_at: string | null;
+  archived: boolean;
   updated_at: string;
 }
-
-const MAX_LINKED_SPACES = 24;
-const MAX_LINK_ROWS = 400;
 
 /** Önizleme sırası: önce herkese açık + arşivsiz (en yeni başta), sonra okuyucunun yalnız kendi görebildikleri (en yeni başta). */
 export function sortWorkflowSpaceLinks(links: WorkflowSpaceLink[]): WorkflowSpaceLink[] {
@@ -127,55 +119,29 @@ export function sortWorkflowSpaceLinks(links: WorkflowSpaceLink[]): WorkflowSpac
 }
 
 /**
- * Bu workflow'u panosunda gösteren, OKUYUCUNUN okuyabildiği Space'ler (özel Space ziyaretçi için hiç gelmez). İki bağ biçimi vardır:
- * workflow'dan aktarılan AYRI NESNELER (`source_workflow_id` + adım kartı rolü; docs/history/262-*) ve eski tek parça çerçeve öğesi
- * (`content`/`workflow`, docs/history/261-*). Her Space bir kez döner; nesneli biçim öncelikli.
+ * Bu workflow'u panosunda gösteren, OKUYUCUNUN okuyabildiği Space'ler — tek RPC (`workflow_space_links`, SECURITY INVOKER: RLS okuyucunun
+ * yetkisiyle işler; özel Space ziyaretçi için hiç gelmez). Bağ, workflow'dan aktarılan HERHANGİ bir nesneden (adım kartı, prompt, görsel;
+ * docs/history/262-*) ya da eski tek parça çerçeve öğesinden (docs/history/261-*) bulunur; yani adım kartları silinse de bağ kaybolmaz.
+ *
+ * Hata FIRLATIR: "bağ yok" ile "okunamadı" ayrı şeylerdir (eskiden hata boş liste sayılıyor, bölüm sessizce kayboluyordu). Çağıran
+ * hatada yeniden dener ya da bunu gösterir; boş liste yalnız gerçekten bağ olmadığı anlamına gelir.
  */
 export async function fetchWorkflowSpaceLinks(workflowId: string): Promise<WorkflowSpaceLink[]> {
-  const { data, error } = await supabase
-    .from("space_items")
-    .select("id, space_id, kind, source_role, flow_show_io, flow_show_links, flow_show_relations")
-    .or(`and(source_workflow_id.eq.${workflowId},source_role.eq.step),and(kind.eq.content,content_type.eq.workflow,content_id.eq.${workflowId})`)
-    .limit(MAX_LINK_ROWS);
-  if (error) {
-    console.error("fetchWorkflowSpaceLinks", error);
-    return [];
-  }
-  const items = (data ?? []) as unknown as LinkRow[];
-  if (items.length === 0) return [];
-  const spaceIds = [...new Set(items.map((item) => item.space_id))].slice(0, MAX_LINKED_SPACES);
-  const { data: spaceData, error: spaceError } = await supabase
-    .from("spaces")
-    .select("id, title, visibility, archived_at, updated_at")
-    .in("id", spaceIds)
-    .limit(MAX_LINKED_SPACES);
-  if (spaceError) {
-    console.error("fetchWorkflowSpaceLinks spaces", spaceError);
-    return [];
-  }
-  const spaces = new Map(((spaceData ?? []) as unknown as LinkedSpaceRow[]).map((space) => [space.id, space]));
-  const bySpace = new Map<string, WorkflowSpaceLink>();
-  for (const row of items) {
-    const space = spaces.get(row.space_id);
-    if (!space) continue;
-    const isObject = row.source_role === "step";
-    const existing = bySpace.get(row.space_id);
-    // Nesneli biçim öncelikli; aynı biçimde en küçük adım numarasına değil ilk bulunana odaklanılır.
-    if (existing && (existing.objects || !isObject)) continue;
-    bySpace.set(row.space_id, {
-      itemId: row.id,
-      spaceId: row.space_id,
-      spaceTitle: space.title,
-      visibility: space.visibility,
-      archived: Boolean(space.archived_at),
-      updatedAt: space.updated_at,
-      showIo: row.flow_show_io ?? true,
-      showLinks: row.flow_show_links ?? true,
-      showRelations: row.flow_show_relations ?? true,
-      objects: isObject,
-    });
-  }
-  return sortWorkflowSpaceLinks([...bySpace.values()]);
+  const { data, error } = await supabase.rpc("workflow_space_links", { p_workflow_id: workflowId });
+  if (error) throw new Error(error.message);
+  const links = ((data ?? []) as LinkRpcRow[]).map<WorkflowSpaceLink>((row) => ({
+    itemId: row.item_id,
+    spaceId: row.space_id,
+    spaceTitle: row.title,
+    visibility: row.visibility,
+    archived: Boolean(row.archived),
+    updatedAt: row.updated_at,
+    showIo: row.flow_show_io ?? true,
+    showLinks: row.flow_show_links ?? true,
+    showRelations: row.flow_show_relations ?? true,
+    objects: Boolean(row.objects),
+  }));
+  return sortWorkflowSpaceLinks(links);
 }
 
 /** Prompt'ların görselleri (panoya getirilirken): her prompt için en çok `perPrompt`, kayıt sırasıyla. RLS: okuyucunun göremediği prompt'un görseli gelmez. */

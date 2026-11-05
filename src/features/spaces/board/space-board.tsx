@@ -84,7 +84,7 @@ import {
 import { isDuplicable, planDuplicate } from "@/lib/space-clipboard";
 import { chainPairs, connectionExists } from "@/lib/space-connectors";
 import { smartSnap, type Guide } from "@/lib/space-guides";
-import { loadPlanInput, runImport, type PlanIO } from "@/lib/supabase/workflow-board";
+import { legacyFramesOf, loadPlanInput, runImport, type PlanIO } from "@/lib/supabase/workflow-board";
 import { createSpaceGroup, uploadSpaceImage, type LayoutEntry, type SpaceConnection, type SpaceConnectionPatch, type SpaceItem } from "@/lib/supabase/spaces";
 import { useSpaceContext } from "../space-provider";
 import { DraftEditorModal, GroupsManagerModal, ItemDetailModal, NoteEditorModal, resolveSource, usePlaceNewItems, useItemTitle, type ResolvedSource } from "../space-items";
@@ -161,7 +161,7 @@ function toNewConnection(c: SpaceConnection) {
 
 export function SpaceBoard({ focusId }: { focusId: string | null }) {
   const { t } = useTranslation();
-  const { space, items, groups, palettes, sources, readable, caps, setItems, setGroups, queueLayout, layoutStatus, flushLayout, layoutNotice, dismissLayoutNotice, addItems, removeItems, patchItem, userId, connections, addConnections, removeConnections, patchConnection } =
+  const { space, items, groups, palettes, sources, readable, caps, setItems, setGroups, queueLayout, layoutStatus, flushLayout, layoutNotice, dismissLayoutNotice, addItems, applyImport, removeItems, patchItem, userId, connections, addConnections, removeConnections, patchConnection } =
     useSpaceContext();
   const itemTitle = useItemTitle();
   const place = usePlaceNewItems();
@@ -1028,23 +1028,14 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   // Workflow aktarımı / güncellemesi sağlayıcının işlevleriyle çalışır (yerel durum ve kaynak yüklemesi güncel kalır).
   const boardIO = useMemo<PlanIO>(
     () => ({
+      applyImport,
       addItems,
       addConnections,
       patchItem: (id, patch) => patchItem(id, patch),
       removeItems,
       removeConnections,
-      createGroup: async (name) => {
-        if (!userId) return null;
-        try {
-          const group = await createSpaceGroup(space.id, name, userId, groups.length);
-          setGroups((list) => [...list, group]);
-          return group;
-        } catch {
-          return null;
-        }
-      },
     }),
-    [addItems, addConnections, patchItem, removeItems, removeConnections, userId, space.id, groups.length, setGroups],
+    [applyImport, addItems, addConnections, patchItem, removeItems, removeConnections],
   );
 
   const selectedItems = items.filter((item) => selectedSet.has(item.id));
@@ -1212,7 +1203,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
             items={items}
             connections={connections}
             io={boardIO}
-            onDone={() => setUndoNotice(t("wfSpace.sync.done"))}
+            onDone={(kind, degraded) => setUndoNotice(degraded ? t("wfSpace.objects.degraded") : t(kind === "convert" ? "wfSpace.legacy.done" : "wfSpace.sync.done"))}
             onError={(message) => setError(message)}
           />
         )}
@@ -1336,6 +1327,9 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
             const input = await loadPlanInput(workflow.id, { fresh: true });
             if (!input) throw new Error(t("wfSpace.import.loadFailed"));
             const result = await runImport({ io: boardIO, spaceId: space.id, workflowId: workflow.id, workflowTitle: workflow.title, input, options, existingItems: items, near: viewCenter() });
+            // Aynı workflow bu panoda eski tek parça çerçeve olarak duruyorsa yeni nesnelerle yan yana kalmasın.
+            const frames = legacyFramesOf(items, workflow.id);
+            if (frames.length) await removeItems(frames.map((frame) => frame.id));
             setHistory((h) => pushHistory(h, { type: "import", items: result.items, connections: result.connections }));
             setSelection(result.items.map((item) => item.id));
             const { w, h } = viewSize();

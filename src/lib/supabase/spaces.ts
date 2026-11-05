@@ -898,9 +898,8 @@ export interface NewSpaceConnection {
   sourceRole?: "flow" | "link" | "relation" | null;
 }
 
-export async function addSpaceConnections(connections: NewSpaceConnection[], userId: string): Promise<SpaceConnection[]> {
-  if (connections.length === 0) return [];
-  const rows = connections.map((c) => ({
+function connectionInsertRow(c: NewSpaceConnection, userId: string): Record<string, unknown> {
+  return {
     // Kimlik istemcide üretilir: geri alınan silme aynı kimlikle geri gelir.
     id: c.id ?? crypto.randomUUID(),
     space_id: c.spaceId,
@@ -913,11 +912,36 @@ export async function addSpaceConnections(connections: NewSpaceConnection[], use
     color: c.color ?? "primary",
     ...(c.sourceWorkflowId ? { source_workflow_id: c.sourceWorkflowId, source_role: c.sourceRole ?? "flow" } : {}),
     created_by: userId,
-  }));
+  };
+}
+
+export async function addSpaceConnections(connections: NewSpaceConnection[], userId: string): Promise<SpaceConnection[]> {
+  if (connections.length === 0) return [];
+  const rows = connections.map((c) => connectionInsertRow(c, userId));
   const { data, error } = await supabase.from("space_connections").insert(rows).select(CONNECTION_COLS);
   if (error) throw toSpaceError(error);
   if (!data || data.length !== rows.length) throw new SpaceError("space_forbidden", translateForRuntime("spaces.error.forbidden"));
   return data.map((row) => mapSpaceConnection(row as ConnectionRow));
+}
+
+/**
+ * Workflow aktarımı TEK işlemde (docs/history/339-*): çerçeve (grup) + nesneler + oklar `space_apply_workflow_plan` RPC'siyle yazılır.
+ * Biri reddedilirse (yetki, kaynak okunamıyor, 500 öğe sınırı, geçersiz ok) hiçbiri kalmaz — yarım pano oluşmaz. Satır kimlikleri
+ * istemcide üretilir (grup dahil), böylece yeniden deneme ve geri al aynı kimliklerle çalışır.
+ */
+export async function applyWorkflowPlan(
+  spaceId: string,
+  plan: { group: { id: string; name: string; position: number } | null; items: NewSpaceItem[]; connections: NewSpaceConnection[] },
+  userId: string,
+): Promise<{ group: SpaceGroup | null; items: SpaceItem[]; connections: SpaceConnection[] }> {
+  const data = await rpc<{ group: GroupRow | null; items: SpaceItemRow[]; connections: ConnectionRow[] } | null>("space_apply_workflow_plan", {
+    p_space_id: spaceId,
+    p_group: plan.group ? { id: plan.group.id, name: plan.group.name, position: plan.group.position, color: "primary" } : null,
+    p_items: plan.items.map((item) => itemInsertRow(item, userId)),
+    p_connections: plan.connections.map((c) => connectionInsertRow(c, userId)),
+  });
+  if (!data || data.items.length !== plan.items.length || data.connections.length !== plan.connections.length) throw new SpaceError("space_forbidden", translateForRuntime("spaces.error.forbidden"));
+  return { group: data.group ? mapGroup(data.group) : null, items: data.items.map((row) => mapSpaceItem(row)), connections: data.connections.map((row) => mapSpaceConnection(row)) };
 }
 
 export type SpaceConnectionPatch = Partial<Pick<SpaceConnection, "label" | "lineStyle" | "arrow" | "route" | "color" | "fromItemId" | "toItemId">>;
@@ -1286,10 +1310,12 @@ export async function listEditableSpaces(): Promise<SpaceSummary[]> {
 }
 
 /** Bir Space'te bu kaynağın zaten olup olmadığı (yinelenen ekleme uyarısı). */
-export async function findExistingItems(spaceIds: string[], ref: { promptId?: string; mediaUrl?: string; contentId?: string }): Promise<Set<string>> {
+export async function findExistingItems(spaceIds: string[], ref: { promptId?: string; mediaUrl?: string; contentId?: string; workflowId?: string }): Promise<Set<string>> {
   if (spaceIds.length === 0) return new Set();
   let query = supabase.from("space_items").select("space_id").in("space_id", spaceIds);
-  if (ref.mediaUrl) query = query.eq("kind", "image").eq("media_url", ref.mediaUrl);
+  // Workflow: ayrı nesneler (kaynak işaretli) ya da eski tek parça çerçeve (docs/history/339-*).
+  if (ref.workflowId) query = query.or(`source_workflow_id.eq.${ref.workflowId},and(kind.eq.content,content_type.eq.workflow,content_id.eq.${ref.workflowId})`);
+  else if (ref.mediaUrl) query = query.eq("kind", "image").eq("media_url", ref.mediaUrl);
   else if (ref.promptId) query = query.eq("kind", "prompt").eq("is_draft", false).eq("prompt_id", ref.promptId);
   else if (ref.contentId) query = query.eq("kind", "content").eq("content_id", ref.contentId);
   else return new Set();

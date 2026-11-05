@@ -23,6 +23,8 @@ import {
   type SpacePalette,
   type SpaceSources,
 } from "@/lib/supabase/spaces";
+import { applyWorkflowPlan } from "@/lib/supabase/spaces";
+import type { ImportPayload } from "@/lib/supabase/workflow-board";
 import { spaceCapabilities, type SpaceCapabilities, type SpaceRole } from "@/lib/spaces";
 import { translateForRuntime } from "@/lib/i18n/translations";
 
@@ -58,6 +60,8 @@ interface SpaceContextValue extends SpaceData {
   setGroups: (updater: (groups: SpaceGroup[]) => SpaceGroup[]) => void;
   setPalettes: (updater: (palettes: SpacePalette[]) => SpacePalette[]) => void;
   addItems: (items: NewSpaceItem[]) => Promise<SpaceItem[]>;
+  /** Workflow'un ilk aktarımı: çerçeve + nesneler + oklar TEK işlemde (docs/history/339-*); yerel durum ve kaynak yüklemesi güncellenir. */
+  applyImport: (payload: ImportPayload) => Promise<{ group: SpaceGroup | null; items: SpaceItem[]; connections: SpaceConnection[] }>;
   removeItems: (ids: string[]) => Promise<SpaceItem[]>;
   patchItem: (id: string, patch: SpaceItemPatch) => Promise<SpaceItem>;
   setConnections: (updater: (connections: SpaceConnection[]) => SpaceConnection[]) => void;
@@ -96,6 +100,10 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
   const [role] = useState(initial.role);
   const [items, setItemsState] = useState(initial.items);
   const [groups, setGroupsState] = useState(initial.groups);
+  const groupsRef = useRef(groups);
+  useEffect(() => {
+    groupsRef.current = groups;
+  }, [groups]);
   const [palettes, setPalettesState] = useState(initial.palettes);
   const [connections, setConnectionsState] = useState(initial.connections);
   const [sources, setSources] = useState<SpaceSources>(emptySources);
@@ -237,6 +245,20 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
     [userId, loadSources],
   );
 
+  const applyImport = useCallback(
+    async (payload: ImportPayload) => {
+      if (!userId) throw new Error(translateForRuntime("spaces.error.notAuthenticated"));
+      const result = await applyWorkflowPlan(space.id, { ...payload, group: payload.group && { ...payload.group, position: groupsRef.current.length } }, userId);
+      const { group, items: created, connections: arrows } = result;
+      if (group) setGroupsState((list) => [...list.filter((g) => g.id !== group.id), group]);
+      setItemsState((list) => [...list.filter((item) => !created.some((c) => c.id === item.id)), ...created]);
+      setConnectionsState((current) => [...current.filter((c) => !arrows.some((n) => n.id === c.id)), ...arrows]);
+      void loadSources(created);
+      return result;
+    },
+    [userId, space.id, loadSources],
+  );
+
   const itemsRef = useRef(items);
   useEffect(() => {
     itemsRef.current = items;
@@ -311,6 +333,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
       setGroups: setGroupsState,
       setPalettes: setPalettesState,
       addItems,
+      applyImport,
       removeItems,
       patchItem,
       setConnections: setConnectionsState,
@@ -324,7 +347,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
       dismissLayoutNotice: () => setLayoutNotice(null),
       readable,
     }),
-    [space, role, items, groups, palettes, connections, caps, userId, sources, sourcesLoading, addItems, removeItems, patchItem, addConnections, removeConnections, patchConnection, queueLayout, flushLayout, layoutStatus, layoutNotice, readable],
+    [space, role, items, groups, palettes, connections, caps, userId, sources, sourcesLoading, addItems, applyImport, removeItems, patchItem, addConnections, removeConnections, patchConnection, queueLayout, flushLayout, layoutStatus, layoutNotice, readable],
   );
 
   return <SpaceContext.Provider value={value}>{children}</SpaceContext.Provider>;

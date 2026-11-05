@@ -108,12 +108,42 @@ function setupWorkflowSpace(db) {
       const ids = inv(q.get("prompt_id")) ?? [];
       return rows(PROMPTS.filter(([n]) => ids.includes(PID(n))).flatMap(([n]) => ["a", "b"].map((k, position) => ({ prompt_id: PID(n), url: `https://example.supabase.co/storage/v1/object/public/prompt-media/p${n}-${k}.jpg`, width: 800, height: 600, position }))));
     }
-    // Workflow'un bağlı olduğu Space'ler: nesneler (adım kartı rolü) ya da eski çerçeve öğesi (`or` süzgeci).
-    if (table === "space_items" && method === "GET" && q.get("or")) {
-      const id = /source_workflow_id\.eq\.([0-9a-f-]+)/.exec(q.get("or"))?.[1];
+    // Workflow'un bağlı olduğu Space'ler (docs/history/339-*): tek RPC; okuyucunun okuyabildiği Space başına bir satır.
+    if (table === "rpc/workflow_space_links") {
+      db.calls.push({ method: "RPC", table: "workflow_space_links", body: ctx.body });
+      if ((db.linksFail ?? 0) > 0) {
+        db.linksFail -= 1;
+        return json(500, { code: "57014", message: "canceling statement due to statement timeout" });
+      }
+      const id = ctx.body.p_workflow_id;
       const memberOf = (spaceId) => db.spaceMembers.some((m) => m.space_id === spaceId && m.user_id === signedIn);
-      const readable = (spaceId) => { const sp = db.spaces.find((x) => x.id === spaceId); return sp && (memberOf(spaceId) || (sp.visibility === "public" && !sp.archived_at)); };
-      return rows(db.spaceItems.filter((i) => readable(i.space_id) && ((i.source_workflow_id === id && i.source_role === "step") || (i.kind === "content" && i.content_type === "workflow" && i.content_id === id))));
+      const readable = (spaceId) => { const sp = db.spaces.find((x) => x.id === spaceId); return sp && (memberOf(spaceId) || (sp.visibility === "public" && !sp.archived_at) || sp.owner_id === signedIn); };
+      const mine = db.spaceItems.filter((i) => readable(i.space_id) && !i.is_private && (i.source_workflow_id === id || (i.kind === "content" && i.content_type === "workflow" && i.content_id === id)));
+      const rank = (i) => (i.source_role === "step" ? 0 : i.source_workflow_id ? 1 : 2);
+      const bySpace = new Map();
+      for (const i of mine) if (!bySpace.has(i.space_id) || rank(i) < rank(bySpace.get(i.space_id))) bySpace.set(i.space_id, i);
+      return json(200, [...bySpace.values()].map((i) => {
+        const sp = db.spaces.find((x) => x.id === i.space_id);
+        return { space_id: i.space_id, item_id: i.id, objects: Boolean(i.source_workflow_id), flow_show_io: i.flow_show_io ?? true, flow_show_links: i.flow_show_links ?? true, flow_show_relations: i.flow_show_relations ?? true, title: sp.title, visibility: sp.visibility, archived: Boolean(sp.archived_at), updated_at: sp.updated_at };
+      }));
+    }
+    // Aktarım tek işlemde (docs/history/339-*): çerçeve + nesneler + oklar; biri reddedilirse HİÇBİRİ kalmaz.
+    if (table === "rpc/space_apply_workflow_plan") {
+      const { p_space_id: spaceId, p_group: group, p_items: items, p_connections: conns } = ctx.body;
+      db.calls.push({ method: "RPC", table: "space_apply_workflow_plan", body: ctx.body });
+      const sp = db.spaces.find((x) => x.id === spaceId);
+      const role = sp?.owner_id === signedIn ? "owner" : db.spaceMembers.find((m) => m.space_id === spaceId && m.user_id === signedIn)?.role;
+      if (!signedIn || !["owner", "editor"].includes(role)) return json(400, { code: "P0001", message: "space_forbidden" });
+      if (db.spaceFail?.sourceUnavailable && items.some((r) => r.prompt_id)) return ctx.err("space_source_unavailable");
+      if (db.spaceFail?.applyConnections) return ctx.err("space_invalid");
+      const stamp = new Date().toISOString();
+      const createdGroup = group ? { id: group.id, space_id: spaceId, name: group.name, color: group.color ?? "primary", position: group.position ?? 0, created_at: stamp } : null;
+      if (createdGroup) db.spaceGroups.push(createdGroup);
+      const createdItems = items.map((r) => ({ created_at: stamp, updated_at: stamp, ...r, space_id: spaceId }));
+      db.spaceItems.push(...createdItems);
+      const createdConns = conns.map((r) => ({ created_at: stamp, ...r, space_id: spaceId }));
+      db.spaceConnections.push(...createdConns);
+      return json(200, { group: createdGroup, items: createdItems, connections: createdConns });
     }
     if (table === "content_relations" && method === "GET") return rows(db.wfRelations);
     // Düzenleme kaydı (workflow formu): içerik RPC'si + üst satır güncellemesi + yan tablolar.
@@ -152,7 +182,14 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 860 }, lan
   }
 }
 
-const calls = (db, method, table) => db.calls.filter((c) => c.method === method && c.table === table);
+// Aktarım artık tek RPC'dir (docs/history/339-*); eski "POST space_items/space_groups/space_connections" beklentileri bu gövdeleri de sayar.
+const calls = (db, method, table) => {
+  const direct = db.calls.filter((c) => c.method === method && c.table === table);
+  if (method !== "POST") return direct;
+  const plans = db.calls.filter((c) => c.method === "RPC" && c.table === "space_apply_workflow_plan").map((c) => c.body);
+  const bodies = table === "space_items" ? plans.map((b) => b.p_items) : table === "space_connections" ? plans.map((b) => b.p_connections) : table === "space_groups" ? plans.map((b) => b.p_group).filter(Boolean) : [];
+  return [...direct, ...bodies.filter((b) => (Array.isArray(b) ? b.length > 0 : true)).map((body) => ({ method, table, body }))];
+};
 const waitFor = async (check, ms = 4000) => {
   const end = Date.now() + ms;
   while (Date.now() < end) {
@@ -561,6 +598,128 @@ await scenario("8 telefon: workflow sayfası ve Space panosu taşmaz", async ({ 
   await page.locator("#workflow-space [data-step-card]").first().waitFor();
   assert.ok(await overflowFree(page), "yatay taşma yok");
 }, { viewport: { width: 390, height: 800 }, touch: true, setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowObjects(1); } });
+
+// ---------------------------------------------------------------- docs/history/339-*: tek yol, atomik aktarım, dayanıklı bağ
+
+const openAddToSpace = async (page) => {
+  await page.locator("[data-detail-menu]").getByRole("button", { name: /seçenek|options/i }).click();
+  await page.locator("[data-add-to-space]").click();
+  return page.getByTestId("add-to-space");
+};
+
+await scenario("9 Space'e ekle: workflow tek parça çerçeve DEĞİL, ayrı nesneler olarak eklenir (panodan aktarmayla aynı sonuç)", async ({ page, db }) => {
+  await page.goto(wfUrl(1));
+  const modal = await openAddToSpace(page);
+  assert.ok((await modal.innerText()).includes("adım kartları"), "ne eklendiği açıklanır");
+  await modal.locator('[data-add-space="Lansman"]').click();
+  await page.getByTestId("add-to-space-submit").click();
+  await page.getByTestId("add-to-space-done").waitFor();
+  assert.equal(calls(db, "RPC", "space_apply_workflow_plan").length, 1, "tek işlemde yazıldı");
+  assert.equal(db.spaceItems.filter((i) => i.kind === "content").length, 0, "tek parça çerçeve öğesi yazılmadı");
+  const own = db.spaceItems.filter((i) => i.source_workflow_id === WID(1));
+  assert.equal(own.filter((i) => i.source_role === "step").length, 4);
+  assert.equal(own.filter((i) => i.source_role === "prompt").length, 4);
+  assert.equal(db.spaceGroups.length, 1, "çerçeve (grup)");
+  assert.ok(db.spaceConnections.filter((c) => c.source_role === "flow").length === 3);
+  // Panoda ayrı nesneler çizilir
+  await page.goto(boardUrl(1));
+  await page.locator("[data-step-card]").first().waitFor();
+  assert.equal(await page.locator("[data-workflow-flow]").count(), 0);
+}, { setup: (db) => db.addSpace(1, { title: "Lansman", visibility: "public" }) });
+
+await scenario("9b Space'e ekle: workflow panoda zaten varsa yeniden eklenmez, fark yoksa 'zaten güncel' der", async ({ page, db }) => {
+  await page.goto(wfUrl(1));
+  const modal = await openAddToSpace(page);
+  await modal.locator('[data-add-space="Lansman"]').click();
+  assert.ok(await modal.getByText("Zaten var").isVisible());
+  await page.getByTestId("add-to-space-submit").click();
+  await page.getByTestId("add-to-space-done").waitFor();
+  assert.ok((await page.getByTestId("add-to-space-done").innerText()).includes("zaten güncel"));
+  assert.equal(calls(db, "RPC", "space_apply_workflow_plan").length, 0, "ikinci kez aktarılmadı");
+  assert.equal(db.spaceItems.filter((i) => i.source_role === "step").length, 4);
+}, { setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowObjects(1); } });
+
+await scenario("9c Space'e ekle: Space'te eski tek parça çerçeve varsa nesneler eklenir ve çerçeve kalkar (yan yana kalmaz)", async ({ page, db }) => {
+  await page.goto(wfUrl(1));
+  const modal = await openAddToSpace(page);
+  await modal.locator('[data-add-space="Lansman"]').click();
+  await page.getByTestId("add-to-space-submit").click();
+  await page.getByTestId("add-to-space-done").waitFor();
+  assert.equal(db.spaceItems.filter((i) => i.kind === "content").length, 0, "eski çerçeve kalktı");
+  assert.equal(db.spaceItems.filter((i) => i.source_role === "step").length, 4, "nesneler eklendi");
+}, { setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowItem(1); } });
+
+await scenario("9d pano: eski tek parça çerçeve için 'Ayrı nesnelere çevir' şeridi — nesneler eklenir, SONRA çerçeve kalkar", async ({ page, db }) => {
+  await page.goto(boardUrl(1));
+  const bar = page.locator("[data-workflow-legacy]");
+  await bar.waitFor();
+  assert.ok((await bar.innerText()).includes("tek parça görsel"));
+  assert.equal(calls(db, "RPC", "space_apply_workflow_plan").length, 0, "kendiliğinden çevrilmez");
+  await bar.getByRole("button", { name: "Ayrı nesnelere çevir" }).click();
+  await page.locator("[data-step-card]").first().waitFor();
+  assert.equal(await page.locator("[data-step-card]").count(), 4);
+  assert.equal(await page.locator("[data-workflow-flow]").count(), 0, "çerçeve kalktı");
+  assert.equal(await page.locator("[data-workflow-legacy]").count(), 0, "şerit kayboldu");
+  assert.equal(db.spaceItems.filter((i) => i.kind === "content").length, 0);
+  assert.equal(calls(db, "RPC", "space_apply_workflow_plan").length, 1);
+}, { setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowItem(1); } });
+
+await scenario("9e pano: çevirme başarısız olursa eski çerçeve YERİNDE kalır ve hiçbir yarım nesne bırakılmaz", async ({ page, db }) => {
+  await page.goto(boardUrl(1));
+  const bar = page.locator("[data-workflow-legacy]");
+  await bar.waitFor();
+  await bar.getByRole("button", { name: "Ayrı nesnelere çevir" }).click();
+  assert.ok(await waitFor(() => calls(db, "RPC", "space_apply_workflow_plan").length >= 1));
+  await waitFor(async () => (await page.locator("[role=alert], [data-board-error]").count()) > 0, 1500);
+  assert.equal(db.spaceItems.filter((i) => i.source_workflow_id).length, 0, "yarım nesne yok");
+  assert.equal(db.spaceGroups.length, 0, "boş grup yok");
+  assert.equal(db.spaceItems.filter((i) => i.kind === "content").length, 1, "eski çerçeve duruyor");
+  assert.equal(await page.locator("[data-workflow-legacy]").count(), 1, "şerit hâlâ var (yeniden denenebilir)");
+}, { setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowItem(1); db.spaceFail.applyConnections = true; } });
+
+await scenario("9f aktarım: prompt kaynağı okunamazsa tek seferde yeniden denenir (yalnız adım kartları), ilk deneme hiçbir şey bırakmaz", async ({ page, db }) => {
+  await page.goto(wfUrl(1));
+  const modal = await openAddToSpace(page);
+  await modal.locator('[data-add-space="Lansman"]').click();
+  await page.getByTestId("add-to-space-submit").click();
+  const done = page.getByTestId("add-to-space-done");
+  await done.waitFor();
+  assert.ok((await done.innerText()).includes("yalnız adım kartları"), "kısmi sonuç bildirilir");
+  assert.equal(calls(db, "RPC", "space_apply_workflow_plan").length, 2, "iki deneme");
+  assert.equal(db.spaceGroups.length, 1, "tek grup (ilk deneme grup bırakmadı)");
+  assert.equal(db.spaceItems.filter((i) => i.source_workflow_id).length, 4, "yalnız 4 adım kartı");
+}, { setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.spaceFail.sourceUnavailable = true; } });
+
+await scenario("10 sayfa: ilk okuma hata verirse sessizce yeniden denenir ve önizleme yine çıkar", async ({ page, db }) => {
+  await page.goto(wfUrl(1));
+  await page.locator("#workflow-space [data-step-card]").first().waitFor();
+  assert.equal(calls(db, "RPC", "workflow_space_links").length, 2, "bir hata + bir yeniden deneme");
+}, { setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowObjects(1); db.linksFail = 1; } });
+
+await scenario("10b sayfa: okuma kalıcı hata verirse bölüm KAYBOLMAZ — 'yüklenemedi' + Tekrar dene; basınca önizleme gelir", async ({ page }) => {
+  await page.goto(wfUrl(1));
+  const section = page.locator("#workflow-space");
+  await section.getByText("Space önizlemesi yüklenemedi").waitFor({ timeout: 8000 });
+  assert.equal(await section.locator("[data-step-card]").count(), 0);
+  await section.getByRole("button", { name: "Tekrar dene" }).click();
+  await section.locator("[data-step-card]").first().waitFor();
+  assert.equal(await section.getByText("Space önizlemesi yüklenemedi").count(), 0);
+}, { setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowObjects(1); db.linksFail = 2; } });
+
+await scenario("10c sayfa: adım kartları panodan silinmiş olsa da (prompt/görsel nesneleri kalıyorsa) bağ kaybolmaz", async ({ page }) => {
+  await page.goto(wfUrl(1));
+  const section = page.locator("#workflow-space");
+  await section.waitFor();
+  assert.ok(await section.locator('[data-board-item][data-kind="prompt"]').count() > 0, "prompt nesneleri önizlenir");
+  assert.equal(await section.locator("[data-step-card]").count(), 0);
+}, { setup: (db) => { db.addSpace(1, { title: "Lansman", visibility: "public" }); db.addWorkflowObjects(1); db.spaceItems = db.spaceItems.filter((i) => i.source_role !== "step"); } });
+
+await scenario("10d sayfa: özel Space'in önizlemesinde üyeye 'yalnız üyeler görür' notu çıkar", async ({ page }) => {
+  await page.goto(wfUrl(1));
+  const section = page.locator("#workflow-space");
+  await section.locator("[data-step-card]").first().waitFor();
+  assert.ok((await section.innerText()).includes("Bu Space özel"));
+}, { setup: (db) => { db.addSpace(1, { title: "Gizli", visibility: "private" }); db.addWorkflowObjects(1); } });
 
 await browser.close();
 server.close();

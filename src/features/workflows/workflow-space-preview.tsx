@@ -144,18 +144,54 @@ function MiniBoard({ spaceId, workflowId }: { spaceId: string; workflowId: strin
  */
 export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
   const { t } = useTranslation();
-  const [links, setLinks] = useState<WorkflowSpaceLink[] | null>(null);
+  const [loaded, setLoaded] = useState<{ workflowId: string; links: WorkflowSpaceLink[]; failed: boolean } | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [pickedId, setPickedId] = useState<string | null>(null);
 
+  // "Bağ yok" ile "okunamadı" ayrıdır (docs/history/339-*): hata bir kez sessizce yeniden denenir, yine olmazsa bölüm "Tekrar dene" gösterir.
   useEffect(() => {
     let cancelled = false;
-    fetchWorkflowSpaceLinks(workflowId).then((result) => !cancelled && setLinks(result));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = (retriesLeft: number) => {
+      fetchWorkflowSpaceLinks(workflowId).then(
+        (links) => !cancelled && setLoaded({ workflowId, links, failed: false }),
+        () => {
+          if (cancelled) return;
+          if (retriesLeft > 0) timer = setTimeout(() => load(retriesLeft - 1), 1200);
+          else setLoaded({ workflowId, links: [], failed: true });
+        },
+      );
+    };
+    load(1);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [workflowId]);
+  }, [workflowId, attempt]);
 
-  if (!links || links.length === 0) return null;
+  const state = loaded && loaded.workflowId === workflowId ? loaded : null;
+  if (!state) return null;
+  if (state.failed) {
+    return (
+      <DetailSection id="workflow-space" title={t("wfSpace.preview.heading")}>
+        <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface-soft px-3 py-3 text-small text-text-secondary">
+          <span className="min-w-0 flex-1">{t("wfSpace.preview.linksFailed")}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setLoaded(null);
+              setAttempt((n) => n + 1);
+            }}
+            className="inline-flex h-8 items-center rounded-full border border-border bg-surface px-3 font-semibold text-text hover:bg-surface-soft"
+          >
+            {t("wfSpace.preview.retry")}
+          </button>
+        </div>
+      </DetailSection>
+    );
+  }
+  const links = state.links;
+  if (links.length === 0) return null;
   const current = links.find((link) => link.spaceId === pickedId) ?? links[0];
   const isPublic = current.visibility === "public" && !current.archived;
 
@@ -201,6 +237,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
             </Link>
           </div>
         </div>
+        {!isPublic && <p className="border-b border-border-soft px-3 py-2 text-caption text-text-muted">{t("wfSpace.preview.privateHint")}</p>}
         <MiniBoard key={current.spaceId} spaceId={current.spaceId} workflowId={workflowId} />
       </div>
     </DetailSection>
