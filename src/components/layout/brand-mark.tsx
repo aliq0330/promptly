@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Promptly's mark (docs/history/341-*): a prompt template's curly braces with a heart inside — the prompt you fill in and
+ * Promptly's mark (docs/history/342-*): a prompt template's curly braces with a heart inside — the prompt you fill in and
  * the community that shares it. The braces take Promptly blue (`--color-primary`), the heart the logo heart's orange
  * (`--color-heart`), so the mark follows light / dark mode on its own. The same geometry is drawn into the app icons,
  * favicon and share image by `scripts/build-brand-assets.mjs` — change both together.

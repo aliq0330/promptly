@@ -10,7 +10,7 @@ import {
 } from "react";
 
 /**
- * Promptly has ONE palette (globals.css, docs/history/341-*); the only appearance choice is the mode. The six selectable
+ * Promptly has ONE palette (globals.css, docs/history/342-*); the only appearance choice is the mode. The six selectable
  * palettes were removed, so there is no palette state, attribute or storage key any more.
  */
 export type Theme = "light" | "dark";

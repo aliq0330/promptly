@@ -385,7 +385,7 @@ export interface OwnPreferences {
 
 /**
  * The signed-in user's saved language/mode choices (null = never chosen explicitly). `profiles.theme_palette` is no longer
- * read or written: the site has one palette (docs/history/341-*); the column goes in a later contract migration.
+ * read or written: the site has one palette (docs/history/342-*); the column goes in a later contract migration.
  */
 export async function fetchOwnPreferences(userId: string): Promise<OwnPreferences | null> {
   try {

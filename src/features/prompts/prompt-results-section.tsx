@@ -1,7 +1,7 @@
 "use client";
 
 import { DetailSection } from "@/features/content/detail-parts";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Plus } from "@/components/icons/plus";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { fetchResultsForPrompt } from "@/lib/supabase/prompt-results";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { AddResultModal, type AddResultModalTarget } from "./add-result-modal";
 import { ResultCard } from "./result-card";
+import { PROMPT_ADD_RESULT_EVENT } from "./works-events";
+import { useWorksVotes } from "./works-badges";
 import type { PromptResultSummary } from "@/types";
 
 const PAGE_SIZE = 6;
@@ -78,6 +80,20 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
     setLoadingMore(false);
   }
 
+  // "Çalıştı mı?" daveti (docs/history/341-*) "Sonucunu paylaş" derse bu bölümün kendi ekleme penceresi açılır (ikinci bir pencere yok).
+  useEffect(() => {
+    if (!user) return;
+    const onRequest = (event: Event) => {
+      if ((event as CustomEvent<{ promptId?: string }>).detail?.promptId === targetId) setIsAddOpen(true);
+    };
+    window.addEventListener(PROMPT_ADD_RESULT_EVENT, onRequest);
+    return () => window.removeEventListener(PROMPT_ADD_RESULT_EVENT, onRequest);
+  }, [targetId, user]);
+
+  // Sonuç paylaşanların bu promptta verdiği oy → kartta rozet (tek toplu okuma).
+  const creatorIds = useMemo(() => results.map((result) => result.creator.id), [results]);
+  const worksVotes = useWorksVotes(targetId, creatorIds);
+
   const modalTarget: AddResultModalTarget = { type: "prompt", promptId: target.promptId, promptText: target.promptText };
 
   function handleAdded() {
@@ -123,7 +139,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {results.map((result) => (
-              <ResultCard key={result.id} result={result} />
+              <ResultCard key={result.id} result={result} worksVote={worksVotes.get(result.creator.id)} />
             ))}
           </div>
           {results.length < total && (

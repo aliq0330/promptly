@@ -1,7 +1,7 @@
 -- ci:allow-destructive
--- Tek kimlik, Aşama 4 (contract) — docs/history/341-*, 342-*.
+-- Tek kimlik, Aşama 4 (contract) — docs/history/342-*, 343-*.
 --
--- Site artık tek paletlidir (341): istemci `profiles.theme_palette`'i okumaz/yazmaz (`lib/supabase/profiles.ts`, `PreferencesSync`).
+-- Site artık tek paletlidir (342): istemci `profiles.theme_palette`'i okumaz/yazmaz (`lib/supabase/profiles.ts`, `PreferencesSync`).
 -- Bu migration sütunu ve onun CHECK kısıtını siler. Kullanıcı onayı: "kalan aşamaların hepsini … 4 aşamayı birden merge" (2026-11-06).
 --
 -- Kontrol edildi (repo taraması): hiçbir SQL fonksiyonu, politika, tetikleyici, görünüm, test (`supabase/tests`), Edge Function, betik

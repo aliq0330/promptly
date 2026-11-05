@@ -1,9 +1,9 @@
-# 342 — Tek kimlik, Aşama 2–4: Solar ikonlar, lucide'in kaldırılması, `theme_palette` sütununun silinmesi
+# 343 — Tek kimlik, Aşama 2–4: Solar ikonlar, lucide'in kaldırılması, `theme_palette` sütununun silinmesi
 
 **Durum: kodlandı (repoda). Migration `20261106100000_drop_profiles_theme_palette.sql` deploy hattıyla uygulanır — canlıda olup olmadığına
 `schema_migrations`'tan bak.**
 
-341'in devamı. Kullanıcı "kalan aşamaların hepsini tek seferde yap, dört aşamayı birden merge et" dedi. Önceki önerilerin hepsi
+342'nin devamı. Kullanıcı "kalan aşamaların hepsini tek seferde yap, dört aşamayı birden merge et" dedi. Önceki önerilerin hepsi
 kabul edildi: tepki gösterimi aynı kalır (emoji), kontrol işaretleri Solar Linear, palet sütunu silinir.
 
 ## Aşama 2–3: ikonlar

@@ -30,6 +30,8 @@ import { bumpCommentCount } from "./comment-count-store";
 import type { CommentTree } from "./comment-node";
 import { useCommentExtras } from "./comment-extras";
 import { useAttachmentCards } from "./use-attachment-cards";
+import { PROMPT_COMMENT_POSTED_EVENT, type PromptCommentPostedDetail } from "./works-events";
+import { useWorksVotes } from "./works-badges";
 
 export type CommentTarget =
   | { promptId: string }
@@ -274,6 +276,24 @@ export function useCommentThread(
 
   const commentsById = useMemo(() => new Map(comments.map((c) => [c.id, c])), [comments]);
   const { stateFor: attachmentStateFor } = useAttachmentCards(comments);
+  // "Çalıştı mı?" rozeti (docs/history/341-*): yalnız prompt yorumlarında, silinmemiş yorumların yazarları için tek toplu okuma.
+  const worksAuthorIds = useMemo(
+    () => (targetKind === "prompt" ? [...new Set(comments.filter((c) => !c.deletedAt).map((c) => c.author.id))] : []),
+    [comments, targetKind],
+  );
+  const worksVotes = useWorksVotes(targetKind === "prompt" ? targetId : null, worksAuthorIds);
+  // "Çalıştı mı?" kutusundan yazılan yorum: yorum listesi yeniden yüklenmeden, kendi yorumumuz gibi listeye eklenir.
+  useEffect(() => {
+    if (targetKind !== "prompt") return;
+    const onPosted = (event: Event) => {
+      const detail = (event as CustomEvent<PromptCommentPostedDetail>).detail;
+      if (!detail || detail.promptId !== targetId) return;
+      setComments((prev) => mergeComments(prev, [detail.comment]));
+      setShowAll(true);
+    };
+    window.addEventListener(PROMPT_COMMENT_POSTED_EVENT, onPosted);
+    return () => window.removeEventListener(PROMPT_COMMENT_POSTED_EVENT, onPosted);
+  }, [targetKind, targetId]);
   // Oldest first, like the server order — pages and the viewer's own new comments merge into one chronological thread.
   const sorted = useMemo(() => [...comments].sort(byCreated), [comments]);
   const childrenByParent = useMemo(() => {
@@ -504,6 +524,7 @@ export function useCommentThread(
     replyExtras,
     editExtras,
     attachmentStateFor,
+    worksVoteOf: targetKind === "prompt" ? (authorId: string) => worksVotes.get(authorId) : undefined,
   };
 
 

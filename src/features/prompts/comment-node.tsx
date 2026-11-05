@@ -18,6 +18,9 @@ import { StarRatingDisplay, StarRatingInput } from "@/components/ui/star-rating"
 import { CompactContentCard, type AttachmentState } from "@/features/content/compact-content-card";
 import { CommentExtrasPreview, CommentExtrasToolbar, CommentMediaView, type CommentExtrasController } from "./comment-extras";
 import type { CommentAttachment } from "@/types";
+import { WorksBadge } from "./works-badges";
+
+const isDeletedComment = (comment: PromptComment) => Boolean(comment.deletedAt);
 
 /** Beyond this nesting level, indentation stops growing (mobile/readability) — the "@kime yanıt verdiği" hint below takes over showing the relationship instead. */
 const MAX_INDENT_DEPTH = 6;
@@ -67,6 +70,11 @@ export interface CommentTree {
   editExtras: CommentExtrasController;
   /** Yorumdaki içerik ekinin önizleme kartı durumu (toplu okunur, yorum başına istek yok). */
   attachmentStateFor: (attachment: CommentAttachment) => AttachmentState;
+  /**
+   * Prompt yorumlarında yazarın O PROMPTTAKİ "Çalıştı mı?" oyu (docs/history/341-*): `true` = çalıştı, `false` = çalışmadı, `undefined` = oy yok / bilinmiyor
+   * (rozet çıkmaz). Salt okunur yansımadır; yorumun içine yazılmaz.
+   */
+  worksVoteOf?: (authorId: string) => boolean | undefined;
 }
 
 /**
@@ -124,6 +132,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
   const isReplyingHere = tree.replyingTo === comment.id;
   const isDeleted = Boolean(comment.deletedAt);
   const isOwn = Boolean(tree.currentUserId) && tree.currentUserId === comment.author.id;
+  const worksVote = isDeletedComment(comment) ? undefined : tree.worksVoteOf?.(comment.author.id);
   const isEditingHere = tree.editingId === comment.id;
   const isConfirmingDelete = tree.deleteConfirmId === comment.id;
   const isDeletingHere = tree.isDeletingId === comment.id;
@@ -188,6 +197,11 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 <Link href={profileHref(comment.author)} className="font-medium text-text hover:underline">
                   {comment.author.displayName}
                 </Link>{" "}
+                {worksVote !== undefined && (
+                  <>
+                    <WorksBadge works={worksVote} className="align-middle" />{" "}
+                  </>
+                )}
                 {showParentHint && (
                   <span className="mr-1 inline-flex items-center gap-0.5 text-xs font-medium text-primary">
                     <CornerDownRight size={11} />@{parent.author.username}
@@ -322,6 +336,7 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
   const isReplyTarget = tree.replyingTo === comment.id;
   const isDeleted = Boolean(comment.deletedAt);
   const isOwn = Boolean(tree.currentUserId) && tree.currentUserId === comment.author.id;
+  const worksVote = isDeletedComment(comment) ? undefined : tree.worksVoteOf?.(comment.author.id);
   const isEditingHere = tree.editingId === comment.id;
   const isConfirmingDelete = tree.deleteConfirmId === comment.id;
   const isDeletingHere = tree.isDeletingId === comment.id;
@@ -345,6 +360,7 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
             <Link href={profileHref(comment.author)} className="truncate font-semibold text-text hover:underline">
               {comment.author.username}
             </Link>
+            {worksVote !== undefined && <WorksBadge works={worksVote} className="self-center" />}
             <span className="shrink-0 text-caption text-text-muted">
               {formatRelativeTime(comment.createdAt, language)}
               {comment.editedAt && ` · ${t("comments.edited")}`}

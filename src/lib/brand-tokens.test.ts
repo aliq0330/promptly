@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 /*
- * Promptly's one palette (docs/history/341-*): every text/ground pair must pass WCAG AA (4.5:1) in BOTH modes, and the
+ * Promptly's one palette (docs/history/342-*): every text/ground pair must pass WCAG AA (4.5:1) in BOTH modes, and the
  * logo geometry drawn by `scripts/build-brand-assets.mjs` must stay the one in `brand-mark.tsx`. Reads the real files, so a
  * token edit that breaks contrast fails here before it ships.
  */

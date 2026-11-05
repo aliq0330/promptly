@@ -1,4 +1,4 @@
-# 341 — Tek kimlik, Aşama 1: tek palet + yeni logo
+# 342 — Tek kimlik, Aşama 1: tek palet + yeni logo
 
 **Durum: uygulandı (repoda; yalnız istemci + statik dosyalar — migration yok, canlıya ayrıca bir şey uygulanmaz).**
 

@@ -7,6 +7,7 @@ import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Avatar } from "@/components/ui/avatar";
 import { LikeButton } from "@/features/prompts/like-button";
 import { ResultTypePreview } from "@/features/prompts/result-type-preview";
+import { WorksBadge } from "@/features/prompts/works-badges";
 import { profileHref, resultHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptResultSummary } from "@/types";
@@ -20,11 +21,14 @@ import type { PromptResultSummary } from "@/types";
  * `label="prompt"` (the profile's "Sonuçlar", docs/history/283-*): every card there is the same person's, so the bottom-left shows the PROMPT's
  * title instead of the creator; a result whose prompt was deleted says "Prompt silindi" and wears an "only you" mark (only its creator sees it).
  *
+ * `worksVote` (docs/history/341-*, only the prompt page passes it): the creator's own "Çalıştı mı?" vote on that prompt, a read-only "✓ Çalıştı" /
+ * "✗ Çalışmadı" mark top-left; `undefined` = no vote, no mark. Never shown in the profile list (`label="prompt"`).
+ *
  * The `<Link>` is rendered LAST, not first, even though it's `z-0` — CSS paints same-tier positioned siblings (z-index:0/auto) in DOM
  * order, so a z-0 element placed BEFORE the preview would end up painted (and hit-tested) UNDER it, silently swallowing clicks on the
  * image/video/audio preview (`ContentCard`, the shared shell every other card type uses, gets this right the same way).
  */
-export function ResultCard({ result, label = "creator" }: { result: PromptResultSummary; label?: "creator" | "prompt" }) {
+export function ResultCard({ result, label = "creator", worksVote }: { result: PromptResultSummary; label?: "creator" | "prompt"; worksVote?: boolean }) {
   const { t } = useTranslation();
   return (
     <div className="group relative overflow-hidden rounded-xl bg-surface-soft">
@@ -34,6 +38,11 @@ export function ResultCard({ result, label = "creator" }: { result: PromptResult
           <Lock size={12} aria-hidden />
           {t("result.onlyYou")}
         </span>
+      )}
+      {label === "creator" && worksVote !== undefined && (
+        <div className="absolute left-2 top-2 z-10">
+          <WorksBadge works={worksVote} tone="overlay" />
+        </div>
       )}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
       <div className="absolute inset-x-2 bottom-2 z-10 flex items-center justify-between gap-1.5">

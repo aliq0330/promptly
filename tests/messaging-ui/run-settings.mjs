@@ -95,7 +95,7 @@ await scenario("4 privacy: message permission + blocked users; the blocked page 
 
 await scenario("5 preferences: appearance, language (switching to English relabels the page), tour", async ({ page }) => {
   await page.getByRole("heading", { name: "Tercihler", level: 1 }).waitFor();
-  // One palette (docs/history/341-*): only the mode is a choice — no palette swatches, no palette attribute.
+  // One palette (docs/history/342-*): only the mode is a choice — no palette swatches, no palette attribute.
   assert.equal(await page.getByText("Renk teması").count(), 0, "the palette picker is gone");
   assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-palette")), false);
   await page.getByRole("radio", { name: "Koyu" }).click();

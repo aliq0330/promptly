@@ -7,7 +7,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
 /**
- * Mode picker (Settings → Görünüm). Promptly has one palette (docs/history/341-*), so light / dark is the only
+ * Mode picker (Settings → Görünüm). Promptly has one palette (docs/history/342-*), so light / dark is the only
  * appearance choice; the palette swatches that used to sit above it are gone.
  */
 export function AppearancePicker() {

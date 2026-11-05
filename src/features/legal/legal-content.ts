@@ -331,7 +331,7 @@ export const TERMS_OF_USE: LegalDocument = {
       ],
     },
     {
-      // docs/history/342-*: CC BY 4.0 atıf şartı. Bilgi amaçlı ek — koşulların anlamını değiştirmez, TERMS_VERSION artmadı.
+      // docs/history/343-*: CC BY 4.0 atıf şartı. Bilgi amaçlı ek — koşulların anlamını değiştirmez, TERMS_VERSION artmadı.
       title: { tr: "Üçüncü taraf lisansları", en: "Third-party credits" },
       blocks: [
         ul(

@@ -303,7 +303,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 <AssembleSweep seq={assemble.sweepSeq} />
               </div>
               <PromptActions prompt={prompt} text={displayText} />
-              <PromptWorksVote promptId={prompt.id} isOwn={isOwn} />
+              <PromptWorksVote promptId={prompt.id} isOwn={isOwn} contentType={prompt.contentType} />
             </DetailSection>
           )}
 

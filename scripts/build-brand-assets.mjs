@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Promptly brand assets (docs/history/341-*): app icons, favicon and the default share image, drawn from the ONE logo
+ * Promptly brand assets (docs/history/342-*): app icons, favicon and the default share image, drawn from the ONE logo
  * geometry (`src/components/layout/brand-mark.tsx` — the path strings below must stay identical; `brand-tokens.test.ts`
  * checks it). Outputs are committed; never edit them by hand — change the mark, then run:
  *

@@ -10,7 +10,7 @@
  * block below (`bg-surface`, `text-text-muted`, `border-border-soft`,
  * `bg-primary-soft`, `text-danger`, `shadow-card`...).
  *
- * ONE palette, two modes (docs/history/341-*): Promptly has a single brand
+ * ONE palette, two modes (docs/history/342-*): Promptly has a single brand
  * identity — the user only chooses light or dark (`.dark` class, set on
  * <html> before first paint by `themeInitScript`, theme-provider.tsx). The
  * six selectable palettes (Meydan, Beyaz, Lavanta, Okyanus, Orman, Kum) are
@@ -127,7 +127,7 @@
   --color-primary-soft: var(--p-primary-soft);
   --color-primary-foreground: var(--p-primary-fg);
   --color-secondary: var(--p-secondary);
-  /* The logo heart's fill tone (docs/history/341-*): marks and dots, never body text. */
+  /* The logo heart's fill tone (docs/history/342-*): marks and dots, never body text. */
   --color-heart: var(--p-heart);
 
   /* Status */
@@ -710,7 +710,7 @@
  * Hareketli ikonlar ve çıkış animasyonları (docs/history/335-*; `components/ui/motion-icons.tsx`, `exit-motion.tsx`).
  * Hepsi bir kez oynar; son kare dinlenme karesidir, bu yüzden aşağıdaki hareketi-azalt kuralı (süre ≈ 0) ikonu doğru yerde bırakır.
  */
-/* Icons (src/components/icons, docs/history/342-*): Solar Bold Duotone draws its second tone at opacity .5;
+/* Icons (src/components/icons, docs/history/343-*): Solar Bold Duotone draws its second tone at opacity .5;
  * `fill` on an icon (e.g. a playing ▶) or `icon-solid` turns that tone fully opaque — the "solid / active" look. */
 .icon-solid * {
   opacity: 1;

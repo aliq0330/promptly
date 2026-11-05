@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * Promptly'nin kendi hareketli ikonları (docs/history/335-*). Tepki emojileriyle aynı ilke: dış kütüphane yok, sayfa açılışında hiçbir şey
  * oynamaz — ikon yalnızca bir kullanıcı eylemi ya da durum değişimi `seq`'i artırınca bir kez oynar (svg `key` ile yeniden kurulur).
  * Animasyonlar `globals.css`'teki `.mi-*` kurallarıdır; hareketi azalt açıkken tüm süreler 0'a iner, ikon dinlenme karesinde kalır.
- * Şekiller sitenin ikon diliyle aynıdır (docs/history/342-*): "şey" ikonları Solar Bold Duotone (tek renk, yarı saydam ikinci ton —
+ * Şekiller sitenin ikon diliyle aynıdır (docs/history/343-*): "şey" ikonları Solar Bold Duotone (tek renk, yarı saydam ikinci ton —
  * Solar Icon Set, 480 Design, CC BY 4.0), kontrol işaretleri (tik, ok, +) çizgidir. Opaklığı canlandırılan parçalar bir `<g>` içindedir ki
  * yarı saydam ton animasyondan sonra da yarı saydam kalsın.
  */
