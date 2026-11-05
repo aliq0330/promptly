@@ -721,6 +721,38 @@ await scenario("10d sayfa: özel Space'in önizlemesinde üyeye 'yalnız üyeler
   assert.ok((await section.innerText()).includes("Bu Space özel"));
 }, { setup: (db) => { db.addSpace(1, { title: "Gizli", visibility: "private" }); db.addWorkflowObjects(1); } });
 
+// ---------------------------------------------------------------- girdi önerisi (docs/history/340-*)
+const recentPrompts = (page) => page.route("https://example.supabase.co/rest/v1/prompts**", (route) => {
+  const url = new URL(route.request().url());
+  if (route.request().method() !== "GET" || url.searchParams.has("id")) return route.fallback();
+  return route.fulfill({ status: 200, contentType: "application/json", headers: { "content-range": `0-${PROMPTS.length - 1}/${PROMPTS.length}` }, body: JSON.stringify(PROMPTS.map(([n, title, u]) => promptRow(n, title, u))) });
+});
+const VARIABLE = (name, order) => ({ id: `v${order}`, prompt_id: PID(5), name, default_value: "", description: null, sort_order: order, type: "text", options: null, config: {}, created_at: "2026-09-20T10:00:00Z", updated_at: "2026-09-20T10:00:00Z" });
+await scenario("10 editör: adıma prompt bağlanınca promptun değişkenleri girdi olur (bağlantısız), tek bildirim; var olan girdiler korunur", async ({ page }) => {
+  await recentPrompts(page);
+  await page.route("https://example.supabase.co/rest/v1/prompt_variables**", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([VARIABLE("ürün adı", 0), VARIABLE("ton", 1), VARIABLE("kitle", 2)]) }));
+  await page.goto(`${BASE}/workflows/create?edit=${WID(1)}`);
+  await page.getByRole("button", { name: /Yeni adım ekle/ }).first().click();
+  await page.getByRole("button", { name: /Yeni adım promptu/ }).first().click();
+  await page.getByText(/3 değişken girdi olarak eklendi/).waitFor();
+  await page.getByRole("tab", { name: /Girdi \/ Çıktı/ }).click().catch(async () => { await page.getByRole("radio", { name: /Girdi \/ Çıktı/ }).click(); });
+  const labels = await page.locator("input[aria-label='Girdi adı'], input[aria-label='Girdi']").evaluateAll((els) => els.map((e) => e.value));
+  for (const name of ["ürün adı", "ton", "kitle"]) assert.ok(labels.includes(name), `girdi var: ${name} (${JSON.stringify(labels)})`);
+  assert.equal(labels.filter((l) => l === "ton").length, 1, "aynı değişken iki kez eklenmez");
+});
+
+await scenario("10b editör: değişken okuması başarısızsa hiçbir girdi/bildirim eklenmez, adım yine eklenir", async ({ page }) => {
+  await recentPrompts(page);
+  await page.route("https://example.supabase.co/rest/v1/prompt_variables**", (route) => route.fulfill({ status: 500, contentType: "application/json", body: "{}" }));
+  await page.goto(`${BASE}/workflows/create?edit=${WID(1)}`);
+  await page.getByRole("button", { name: /Yeni adım ekle/ }).first().click();
+  await page.getByRole("button", { name: /Yeni adım promptu/ }).first().click();
+  await page.waitForTimeout(800);
+  assert.equal(await page.getByText(/değişken girdi olarak eklendi/).count(), 0);
+  assert.ok(await page.getByText(/Yeni adım promptu/).first().isVisible(), "adım eklendi");
+});
+
 await browser.close();
 server.close();
 let failed = 0;

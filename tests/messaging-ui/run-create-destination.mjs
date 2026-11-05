@@ -181,7 +181,7 @@ await scenario("7. Yalnız yönetimin paylaşabildiği topluluk: Paylaş soluk +
   assert.equal(await dimmed(page), false);
 });
 
-await scenario("8. Topluluk sayfasından gelen bağlantı (?community=): topluluk seçili gelir, Herkese açık'a çevrilebilir; aynı kabuk ve son kontrol Prompt, Workflow ve Hazır ayar'da", async ({ page }) => {
+await scenario("8. Topluluk sayfasından gelen bağlantı (?community=): topluluk seçili gelir, Herkese açık'a çevrilebilir; aynı kabuk ve son kontrol Prompt, Workflow ve Ayar paketi'da", async ({ page }) => {
   await openForm(page, `/requests/new?community=${A}`);
   await page.locator("[data-compose-audience]").getByText("Açık Topluluk").waitFor();
   await openSheet(page);
@@ -248,7 +248,7 @@ await scenario("10. ✕: değişiklik yoksa doğrudan çıkılır; yazılmışsa
   assert.equal(drafts[0].body.title, "Yarım kalan istek");
 });
 
-await scenario("11. '+' menüsü: alt menünün '+'sı alttan menü açar (Prompt, İstek, Hikâye, Workflow, Hazır ayar, Space, Var olan içeriği paylaş); Prompt yazma ekranına götürür", async ({ page }) => {
+await scenario("11. '+' menüsü: alt menünün '+'sı alttan menü açar (Prompt, İstek, Hikâye, Workflow, Ayar paketi, Space, Var olan içeriği paylaş); Prompt yazma ekranına götürür", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await page.locator("[data-nav-create]:visible").first().click();
   await page.locator("[data-create-menu]").waitFor();
@@ -313,7 +313,7 @@ await scenario("14. İngilizce: form, Kim görsün? ve ✕ penceresi çevrilmiş
   await page.getByText("Save as a draft?").waitFor();
 }, { lang: "en" });
 
-await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken ekle, Görselden yardım) · Hazır ayar · Görseller · Açıklama; isteğe bağlı satırlar Araç/Kategori/Etiketler/DNA/Referans satır içinde açılır", async ({ page }) => {
+await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken ekle, Görselden yardım) · Ayar paketi · Görseller · Açıklama; isteğe bağlı satırlar Araç/Kategori/Etiketler/DNA/Referans satır içinde açılır", async ({ page }) => {
   await openForm(page, "/create?mode=prompt");
   await page.locator("[data-compose-body]").waitFor();
   assert.equal(await page.locator("[data-compose-toolbar]").count(), 0);
@@ -331,7 +331,7 @@ await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken
   await page.locator("[data-compose-type] [data-taxonomy-type=image]").click();
   await images.first().waitFor();
   // Hazır ayar satırı eski pencereyi açar; Görselden yardım Şablon sekmesinde.
-  await page.getByRole("button", { name: /Hazır Ayarlar ve Ek Alan|Presets & Extra/ }).first().click();
+  await page.getByRole("button", { name: /Ayar Paketleri ve Ek Alan|Presets & Extra/ }).first().click();
   await page.locator("[data-extra-panel]").waitFor();
   await page.keyboard.press("Escape");
   assert.equal(await overflowFree(page), true);
@@ -347,7 +347,7 @@ await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 390, height: 844 } });
 
-await scenario("16. Büyük ekran (tablet yatay 1180x820): Workflow ve Hazır ayar da aynı etiketli form; Workflow'da adımlar ve Kategori/Araç/Etiket/Space satırları, Hazır ayar'da parametreler formda", async ({ page }) => {
+await scenario("16. Büyük ekran (tablet yatay 1180x820): Workflow ve Ayar paketi da aynı etiketli form; Workflow'da adımlar ve Kategori/Araç/Etiket/Space satırları, Ayar paketi'da parametreler formda", async ({ page }) => {
   await openForm(page, "/workflows/create");
   await page.locator("[data-compose-type]").waitFor();
   await page.locator("#wf-title").fill("Siberpunk hattı");

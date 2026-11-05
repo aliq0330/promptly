@@ -149,7 +149,7 @@ export const storyTranslations = {
   "stories.create.text": { tr: "Metin", en: "Text" },
   "stories.create.textHint": { tr: "Renkli zeminde yazı", en: "Words on a coloured ground" },
   "stories.create.content": { tr: "Promptly içeriği", en: "Promptly content" },
-  "stories.create.contentHint": { tr: "Bir prompt, workflow, hazır ayar ya da istek", en: "A prompt, workflow, preset or request" },
+  "stories.create.contentHint": { tr: "Bir prompt, workflow, ayar paketi ya da istek", en: "A prompt, workflow, preset or request" },
   "stories.create.preparing": { tr: "Dosya hazırlanıyor…", en: "Preparing the file…" },
   "stories.create.uploading": { tr: "Yükleniyor", en: "Uploading" },
   "stories.create.next": { tr: "Önizle", en: "Preview" },

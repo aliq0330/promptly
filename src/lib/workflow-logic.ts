@@ -54,6 +54,31 @@ export function appendLinkedStep(steps: WorkflowStep[], step: WorkflowStep, defa
   return [...steps.slice(0, -1), prevFixed, linked];
 }
 
+/** Most inputs one prompt step gets from the prompt's variables at once (a prompt may define many; the rest stay in the prompt itself). */
+export const MAX_SUGGESTED_INPUTS = 8;
+
+/**
+ * "What does this prompt need?" — a prompt step's `{variables}` become the step's inputs (unlinked, so the person decides which
+ * come from an earlier step and which they type by hand). Never overwrites or reorders what is already there: a variable whose
+ * name matches an existing input (case/space-insensitive) is skipped, and nothing is added to a step that has no prompt content.
+ * `added` is how many inputs were created (0 → the step is returned untouched, same reference).
+ */
+export function suggestInputsFromVariables(step: WorkflowStep, variableNames: string[]): { step: WorkflowStep; added: number } {
+  if (step.stepType !== "prompt" || !step.content) return { step, added: 0 };
+  const norm = (value: string) => value.trim().toLowerCase();
+  const taken = new Set(step.inputs.map((input) => norm(input.label)));
+  const fresh: WorkflowInput[] = [];
+  for (const raw of variableNames) {
+    const label = raw.trim().slice(0, 80);
+    if (!label || taken.has(norm(label))) continue;
+    taken.add(norm(label));
+    fresh.push({ id: newId(), label, source: null });
+    if (fresh.length >= MAX_SUGGESTED_INPUTS) break;
+  }
+  if (fresh.length === 0) return { step, added: 0 };
+  return { step: { ...step, inputs: [...step.inputs, ...fresh] }, added: fresh.length };
+}
+
 /** Copy of a step with fresh ids; its inputs are unlinked (a copy must be wired on purpose). */
 export function duplicateStep(step: WorkflowStep, copyLabel: string): WorkflowStep {
   return {

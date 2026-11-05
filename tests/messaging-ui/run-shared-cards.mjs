@@ -46,7 +46,7 @@ function seed(db) {
 const cards = (page) => page.locator("[data-shared-card]");
 const open = async (page) => { await page.goto(`${BASE}/messages/local?id=${CONV}`); await cards(page).first().waitFor(); await page.waitForTimeout(900); };
 
-await scenario("1. Okunabilir içerik: kart sahibin adını + türü, başlığı, açıklamayı gösterir ve içeriğe bağlanır (prompt · istek · workflow · hazır ayar)", async ({ page }) => {
+await scenario("1. Okunabilir içerik: kart sahibin adını + türü, başlığı, açıklamayı gösterir ve içeriğe bağlanır (prompt · istek · workflow · ayar paketi)", async ({ page }) => {
   await open(page);
   const ready = page.locator("[data-shared-card='ready']");
   assert.equal(await ready.count(), 4, "four readable cards");
@@ -54,7 +54,7 @@ await scenario("1. Okunabilir içerik: kart sahibin adını + türü, başlığ�
   const owners = await page.locator("[data-shared-card='ready'] [data-shared-owner]").allTextContents();
   const types = await page.locator("[data-shared-card='ready'] [data-shared-type]").allTextContents();
   assert.ok(owners.length >= 4 && owners.every((o) => o.trim() === "Carol"), `owner name on every card: ${JSON.stringify(owners)}`);
-  assert.ok(types.some((o) => /Prompt$/.test(o)) && types.some((o) => /İstek$/.test(o)) && types.some((o) => /Workflow$/.test(o)) && types.some((o) => /Hazır ayar$/.test(o)), JSON.stringify(types));
+  assert.ok(types.some((o) => /Prompt$/.test(o)) && types.some((o) => /İstek$/.test(o)) && types.some((o) => /Workflow$/.test(o)) && types.some((o) => /Ayar paketi$/.test(o)), JSON.stringify(types));
   assert.match(await page.locator("[data-shared-card='ready']", { hasText: "Markalı mekanik klavye tuşları" }).textContent(), /2×2 dizilmiş/, "description snippet");
   const promptCard = page.locator("[data-shared-card='ready']", { hasText: "Markalı mekanik" });
   assert.match((await promptCard.locator("a[data-shared-open]").getAttribute("href")) ?? "", /\/prompts\/local\/?\?id=/);

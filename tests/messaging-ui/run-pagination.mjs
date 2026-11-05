@@ -358,11 +358,11 @@ async function untilLinks(page, re, n) {
   assert.fail(`${n} ${re} links were never drawn (have ${await otherLinks(page, re).count()})`);
 }
 
-await scenario("11. Profil → İstekler / Workflow'lar / Hazır ayarlar (60'ar): 24'erli sayfalar, sayı sunucudan, 'Daha fazla' kendiliğinden sonraki sayfayı getirir; sınırsız istek yok", async ({ page, db }) => {
+await scenario("11. Profil → İstekler / Workflow'lar / Ayar paketleri (60'ar): 24'erli sayfalar, sayı sunucudan, 'Daha fazla' kendiliğinden sonraki sayfayı getirir; sınırsız istek yok", async ({ page, db }) => {
   withLibrary(db, U.bob, { total: 3, other: 60 });
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
   await titleLinks(page).first().waitFor();
-  for (const [tab, table, re] of [[/^Prompt İstekleri/, "prompt_requests", /^İstek \d+$/], [/^Workflow/, "workflows", /^Akış \d+$/], [/^Hazır Ayarlar/, "presets", /^Ayar \d+$/]]) {
+  for (const [tab, table, re] of [[/^Prompt İstekleri/, "prompt_requests", /^İstek \d+$/], [/^Workflow/, "workflows", /^Akış \d+$/], [/^Ayar Paketleri/, "presets", /^Ayar \d+$/]]) {
     const before = db.otherQueries.length;
     await page.locator("[data-section-menu]").click();
     const tabEl = page.getByRole("radio", { name: tab });
@@ -381,11 +381,11 @@ await scenario("11. Profil → İstekler / Workflow'lar / Hazır ayarlar (60'ar)
   }
 });
 
-await scenario("12. Kütüphanem → İstekler / Workflow'lar / Hazır ayarlar: 24'erli sayfa, menü sayısı sunucudan, 'Sadece ben' + arama + sıralama sorguya gider", async ({ page, db }) => {
+await scenario("12. Kütüphanem → İstekler / Workflow'lar / Ayar paketleri: 24'erli sayfa, menü sayısı sunucudan, 'Sadece ben' + arama + sıralama sorguya gider", async ({ page, db }) => {
   withLibrary(db, U.alice, { total: 3, other: 60 });
   await page.goto(`${BASE}/my-content`);
   await titleLinks(page).first().waitFor();
-  for (const [name, table, re] of [["Prompt İstekleri", "prompt_requests", /^İstek \d+$/], ["Workflow", "workflows", /^Akış \d+$/], ["Hazır Ayarlar", "presets", /^Ayar \d+$/]]) {
+  for (const [name, table, re] of [["Prompt İstekleri", "prompt_requests", /^İstek \d+$/], ["Workflow", "workflows", /^Akış \d+$/], ["Ayar Paketleri", "presets", /^Ayar \d+$/]]) {
     await page.locator("[data-section-menu]").click();
     assert.match(await page.getByRole("radio", { name: new RegExp(`^${name}`) }).innerText(), /60/, `${table}: menü sayısı sunucudan`);
     await page.getByRole("radio", { name: new RegExp(`^${name}`) }).click();

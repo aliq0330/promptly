@@ -221,7 +221,7 @@ await scenario("5. Yanlış dosya türü reddedilir (uyarı satırı), önizleme
   assert.equal(await extra(page, "photo").getAttribute("aria-pressed"), "false");
 });
 
-await scenario("6. İçerik eki: seçici (Prompt/İstek/Workflow/Hazır ayar/Space, Benimkiler/Kaydettiklerim, yalnız herkese açık notu); seçince küçük önizleme kartı; gönderince attach_type/attach_id", async ({ page, db }) => {
+await scenario("6. İçerik eki: seçici (Prompt/İstek/Workflow/Ayar paketi/Space, Benimkiler/Kaydettiklerim, yalnız herkese açık notu); seçince küçük önizleme kartı; gönderince attach_type/attach_id", async ({ page, db }) => {
   await composerInput(page).waitFor();
   await extra(page, "content").click();
   const picker = page.locator("[data-comment-content-picker]");

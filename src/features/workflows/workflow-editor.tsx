@@ -15,7 +15,8 @@ import { invalidateWorkflowFlow } from "@/lib/supabase/workflow-flow";
 import { applyWorkflowSpaceChoice } from "@/lib/supabase/workflow-space";
 import { WorkflowSpaceField, useWorkflowSpaceChoice } from "./workflow-space-field";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { appendLinkedStep, duplicateStep, moveStep, newStep, sanitizeLinks, validateWorkflow, type WorkflowIssue } from "@/lib/workflow-logic";
+import { appendLinkedStep, duplicateStep, moveStep, newStep, sanitizeLinks, suggestInputsFromVariables, validateWorkflow, type WorkflowIssue } from "@/lib/workflow-logic";
+import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { cn } from "@/lib/utils";
 import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
 import type { ContentVisibility, WorkflowContentRef, WorkflowStep } from "@/types";
@@ -68,6 +69,10 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   usePrefillTag(tagPicker.addManual, !editId);
   const tagsSeededRef = useRef(false);
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
+  const stepsRef = useRef(steps);
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -146,6 +151,25 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
 
   const patchStep = (id: string, patch: Partial<WorkflowStep>) => commitSteps(steps.map((s) => (s.id === id ? { ...s, ...patch } : s)));
 
+  /**
+   * A prompt just landed on a step: its `{variables}` become that step's inputs (docs/history/340-*). Runs after the step is in the
+   * list, against the LATEST steps (the person may have kept editing), and only if the step still holds that same prompt.
+   * A failed read adds nothing — the person can still add inputs by hand.
+   */
+  function suggestInputsFor(stepId: string, ref: WorkflowContentRef) {
+    if (ref.type !== "prompt") return;
+    void fetchVariablesForPrompt(ref.id).then((variables) => {
+      const names = variables.map((variable) => variable.name);
+      const live = stepsRef.current.find((s) => s.id === stepId);
+      if (!live || live.content?.id !== ref.id) return;
+      const { added } = suggestInputsFromVariables(live, names);
+      if (added === 0) return;
+      setSteps((current) => current.map((s) => (s.id === stepId && s.content?.id === ref.id ? suggestInputsFromVariables(s, names).step : s)));
+      touch();
+      setNotice(t("workflow.inputsSuggested", { count: String(added) }));
+    });
+  }
+
   function handleContent(ref: WorkflowContentRef) {
     const target = addTarget;
     setAddTarget(null);
@@ -156,6 +180,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           s.id === target.stepId ? { ...s, stepType: ref.type, content: ref, contentMissing: false, title: s.title || ref.title } : s,
         ),
       );
+      suggestInputsFor(target.stepId, ref);
       return;
     }
     const step = { ...newStep(ref.type), title: ref.title, content: ref };
@@ -163,6 +188,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     commitSteps(appendLinkedStep(steps, step, t("workflow.defaultOutputLabel")));
     setSelectedId(step.id);
     setDetailTab("general");
+    suggestInputsFor(step.id, ref);
   }
 
   function handleDuplicate(step: WorkflowStep) {

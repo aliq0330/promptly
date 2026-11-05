@@ -50,7 +50,7 @@ export const spaceTranslations = {
   "spaces.item.content": { tr: "İçerik", en: "Content" },
   "spaces.content.request": { tr: "İstek", en: "Request" },
   "spaces.content.workflow": { tr: "Workflow", en: "Workflow" },
-  "spaces.content.preset": { tr: "Hazır ayar", en: "Preset" },
+  "spaces.content.preset": { tr: "Ayar paketi", en: "Preset" },
 
   // ---- Başlangıç grupları (oluşturma anında kullanıcının dilinde yazılır) ----
   "spaces.group.references": { tr: "Referanslar", en: "References" },

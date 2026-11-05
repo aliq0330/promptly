@@ -76,7 +76,7 @@ export const apiKeysTranslations = {
   "dev.meKeyLink": { tr: "Anahtar oluştur", en: "Create a key" },
   "dev.meWho": { tr: "Kim olduğunu doğrula (kullanıcı adı, görünen ad)", en: "Check who you are (username, display name)" },
   "dev.meList": { tr: "Kendi promptlarını listele (özel taslaklar dahil)", en: "List your own prompts (private drafts included)" },
-  "dev.meListOther": { tr: "İsteklerini, hazır ayarlarını ve workflow'larını listele / oku", en: "List and read your requests, presets and workflows" },
+  "dev.meListOther": { tr: "İsteklerini, ayar paketlerini ve workflow'larını listele / oku", en: "List and read your requests, presets and workflows" },
   "dev.meUpdate": { tr: "Özel taslağı güncelle", en: "Update a private draft" },
   "dev.meUpdateBody": {
     tr: "Yalnızca yayınlanmamış taslaklar değişir; yayınlama ve silme yok. Önce taslağı oku, dönen updatedAt değerini expectedUpdatedAt olarak gönder: taslak bu arada değiştiyse güncelleme reddedilir (409). Gövde: { \"expectedUpdatedAt\": \"…\", \"changes\": { \"title\": \"…\" } }. Taslaklarda sürüm geçmişi tutulmaz.",
@@ -84,7 +84,7 @@ export const apiKeysTranslations = {
   },
   "dev.meSave": { tr: "Hesabına özel taslak ekle", en: "Add private drafts to your account" },
   "dev.meSaveBody": {
-    tr: "Gövde, sitedeki “Dışa aktar”ın JSON dosyasıdır (en çok 30 kayıt, 64 KB; istek, hazır ayar ve workflow için /me/requests, /me/presets, /me/workflows). Yazma anahtarı ister; sonuç HER ZAMAN özel taslaktır, hiçbir şey yayınlanmaz. ?dry_run=true yalnızca doğrular.",
+    tr: "Gövde, sitedeki “Dışa aktar”ın JSON dosyasıdır (en çok 30 kayıt, 64 KB; istek, ayar paketi ve workflow için /me/requests, /me/presets, /me/workflows). Yazma anahtarı ister; sonuç HER ZAMAN özel taslaktır, hiçbir şey yayınlanmaz. ?dry_run=true yalnızca doğrular.",
     en: "The body is the JSON file that the site's “Export” produces (up to 30 items, 64 KB; for requests, presets and workflows use /me/requests, /me/presets, /me/workflows). It needs a write key; the result is ALWAYS a private draft and nothing is published. ?dry_run=true only validates.",
   },
   "dev.meMcp": { tr: "Kişisel MCP (Claude Code, Cursor…)", en: "Personal MCP (Claude Code, Cursor…)" },

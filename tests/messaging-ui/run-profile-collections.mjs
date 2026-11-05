@@ -162,7 +162,7 @@ await scenario("7. Profil bölümleri: TEK menü hapı (sekme çubuğu yok) tüm
   assert.match(await menu.textContent(), /Promptlar/, "etkin bölüm hapta yazar");
   await menu.click();
   const own = (await menuRadios(page).allInnerTexts()).map((x) => x.replace(/\s*\d+$/, "").trim());
-  assert.deepEqual(own, ["Promptlar", "Prompt İstekleri", "Workflow'lar", "Hazır Ayarlar", "Alıntılar", "Sonuçlar", "Taslaklar", "Kaydedilenler", "Beğeniler", "Hakkında"]);
+  assert.deepEqual(own, ["Promptlar", "Prompt İstekleri", "Workflow'lar", "Ayar Paketleri", "Alıntılar", "Sonuçlar", "Taslaklar", "Kaydedilenler", "Beğeniler", "Hakkında"]);
   assert.equal(await page.locator("[data-section-option]").evaluateAll((els) => els.filter((el) => el.className.includes("border-t")).length), 2, "iki ayırıcı: kütüphane grubu ve Hakkında");
   await page.getByRole("radio", { name: /Beğeniler/ }).click();
   assert.match(await menu.textContent(), /Beğeniler/, "etkin bölüm menü düğmesinde yazar");

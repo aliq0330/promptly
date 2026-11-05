@@ -52,7 +52,7 @@ const select = (page, needle, caretOffset) => fsText(page).evaluate((el, [n, off
   document.dispatchEvent(new Event("selectionchange"));
 }, [needle, caretOffset]);
 
-await scenario("1. Formdaki Tam ekran düğmesi katmanı açar: başlık + sayaç, sabit satır (dönüştür + Hazır ayarlar), Bitti kapatır, metin formda kalır", async ({ page }) => {
+await scenario("1. Formdaki Tam ekran düğmesi katmanı açar: başlık + sayaç, sabit satır (dönüştür + Ayar paketleri), Bitti kapatır, metin formda kalır", async ({ page }) => {
   await openFullscreen(page);
   await page.getByRole("heading", { name: "Prompt Metni" }).last().waitFor();
   assert.match(await page.getByTestId("fullscreen-meta").innerText(), /0 değişken · \d+ karakter/);
@@ -142,7 +142,7 @@ await scenario("6. Aynı adlı değişken varsa yenisi açılmaz: 'Mevcut deği�
   assert.match(await page.getByTestId("fullscreen-meta").innerText(), /^1 değişken/, "the existing variable is kept");
 });
 
-await scenario("7. Hazır ayarlar üstte: dokununca Hazır ayarlar paneli katmanın ÜSTÜNE açılır; Escape önce paneli kapatır, katman açık kalır", async ({ page }) => {
+await scenario("7. Ayar paketleri üstte: dokununca Ayar paketleri paneli katmanın ÜSTÜNE açılır; Escape önce paneli kapatır, katman açık kalır", async ({ page }) => {
   await openFullscreen(page);
   await page.getByTestId("fullscreen-presets").click();
   await page.locator("[data-extra-panel]").waitFor();
@@ -174,7 +174,7 @@ await scenario("8. İngilizce: katman ve düğme metinleri çevrili", async ({ p
   await page.getByTestId("fullscreen-done").innerText().then((s) => assert.equal(s.trim(), "Done"));
 }, { lang: "en" });
 
-await scenario("9. Mobil (390x800): yatay taşma yok; sabit satır metin kaydırılınca yerinde kalır; düğme ile Hazır ayarlar yan yana sığar", async ({ page }) => {
+await scenario("9. Mobil (390x800): yatay taşma yok; sabit satır metin kaydırılınca yerinde kalır; düğme ile Ayar paketleri yan yana sığar", async ({ page }) => {
   const long = Array.from({ length: 40 }, (_, i) => `Cümle ${i + 1} bir kelime daha.`).join(" ");
   await openFullscreen(page, long);
   assert.equal(await overflowFree(page), true);

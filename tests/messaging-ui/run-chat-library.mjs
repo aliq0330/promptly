@@ -62,7 +62,7 @@ const openLibrary = async (page, type) => { await plus(page).click(); await page
 const lastMessage = (db) => db.messages.at(-1);
 const send = async (page) => { await page.getByRole("button", { name: "Mesaj gönder" }).click(); };
 
-await scenario("1. '+' alt sayfası: Fotoğraf yükle · Prompt içe aktar · Kütüphaneden paylaş (Prompt · İstek · Workflow · Hazır ayar · Space)", async ({ page }) => {
+await scenario("1. '+' alt sayfası: Fotoğraf yükle · Prompt içe aktar · Kütüphaneden paylaş (Prompt · İstek · Workflow · Ayar paketi · Space)", async ({ page }) => {
   await openThread(page);
   await plus(page).click();
   const sheet = page.locator("[data-chat-attach]");

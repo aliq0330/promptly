@@ -85,20 +85,20 @@ const shotView = async (page, name) => { if (SHOTS) await page.screenshot({ path
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const promptUrl = `${BASE}/prompts/local?id=${ID.prompt}`;
 
-const openSheet = async (page, name = "Hazır ayarla dene") => {
+const openSheet = async (page, name = "Ayar paketiyle dene") => {
   await page.getByRole("button", { name: new RegExp(`^${name}`) }).click();
   const dialog = page.getByRole("dialog");
   await dialog.locator("[data-preset-option]").first().waitFor();
   return dialog;
 };
 
-await scenario("1. prompt sayfası: hazır ayar sayfada gömülü değil; birleşik Kopyala | Çalıştır, Studio'da aç, sayaçlı 'Hazır ayarla dene'; araç bilgisi kutunun altında, Düzenleme öner ⋮ menüsünde", async ({ page }) => {
+await scenario("1. prompt sayfası: ayar paketi sayfada gömülü değil; birleşik Kopyala | Çalıştır, Studio'da aç, sayaçlı 'Ayar paketiyle dene'; araç bilgisi kutunun altında, Düzenleme öner ⋮ menüsünde", async ({ page }) => {
   await page.goto(promptUrl);
   const block = page.locator("[data-prompt-block]");
   await block.waitFor();
-  const trigger = page.getByRole("button", { name: /^Hazır ayarla dene/ });
+  const trigger = page.getByRole("button", { name: /^Ayar paketiyle dene/ });
   await trigger.waitFor();
-  assert.equal(await page.locator("#prompt-try").count(), 0, "gömülü hazır ayar bölümü yok");
+  assert.equal(await page.locator("#prompt-try").count(), 0, "gömülü ayar paketi bölümü yok");
   assert.equal(await page.locator("[data-preset-option]").count(), 0, "pencere kapalıyken ayar listesi çizilmez");
   assert.equal((await trigger.locator("[data-fit-count]").textContent()).trim(), "1", "yalnız tam uyan ayarlar sayılır");
   const joined = page.locator("div.divide-x", { has: page.getByRole("button", { name: "Kopyala" }) });
@@ -114,21 +114,21 @@ await scenario("1. prompt sayfası: hazır ayar sayfada gömülü değil; birle�
   await shot(page, "1-prompt-desktop");
 });
 
-await scenario("1b. 'Hazır ayarla dene' penceresi: varsayılan yalnız uyumlu olanlar; süzgeç kalkınca aynı türdeki hepsi uyuma göre dizilir (eşleşti → kısmen), farklı tür hiç gelmez, nedeni yazılır", async ({ page }) => {
+await scenario("1b. 'Ayar paketiyle dene' penceresi: varsayılan yalnız uyumlu olanlar; süzgeç kalkınca aynı türdeki hepsi uyuma göre dizilir (eşleşti → kısmen), farklı tür hiç gelmez, nedeni yazılır", async ({ page }) => {
   await page.goto(promptUrl);
   const dialog = await openSheet(page);
   const options = dialog.locator("[data-preset-option]");
   assert.equal(await options.count(), 1, "'Uyumlu olanlar' açık: yalnız tam uyan");
   assert.match(await options.first().textContent(), /Genel portre ayarı/);
   await dialog.getByRole("button", { name: "Uyumlu olanlar" }).click();
-  assert.equal(await options.count(), 3, "metin türündeki hazır ayar listede yok");
+  assert.equal(await options.count(), 3, "metin türündeki ayar paketi listede yok");
   assert.deepEqual(await options.evaluateAll((els) => els.map((el) => el.getAttribute("data-preset-option"))), [P.match, P.mj, P.portrait]);
   assert.equal(await options.first().getAttribute("aria-checked"), "true", "en uyumlu olan varsayılan seçili");
   assert.match(await options.nth(0).textContent(), /ile eşleşti/);
   assert.match(await options.nth(0).textContent(), /Araçtan bağımsız/);
   assert.match(await options.nth(1).textContent(), /Kısmen.*Başka araç: Midjourney/s);
   assert.match(await options.nth(2).textContent(), /Kısmen.*Farklı kategori/s);
-  await dialog.getByPlaceholder("Hazır ayar ara").fill("odaklı");
+  await dialog.getByPlaceholder("Ayar paketi ara").fill("odaklı");
   assert.equal(await options.count(), 1);
   assert.match(await options.first().textContent(), /Portre odaklı ayar/);
   await shot(page, "1b-sheet-desktop");
@@ -157,7 +157,7 @@ await scenario("2. pencere: son prompt kaynağı gösterir; Midjourney alanı (-
   await shot(page, "2-sheet-fields");
 });
 
-await scenario("3. Studio: ?prompt=&preset= ikisi birden — prompt taban, hazır ayar katman; neden/uyum görünür; araca özel alan kapalı; kaldırınca prompt kalır", async ({ page }) => {
+await scenario("3. Studio: ?prompt=&preset= ikisi birden — prompt taban, ayar paketi katman; neden/uyum görünür; araca özel alan kapalı; kaldırınca prompt kalır", async ({ page }) => {
   await page.goto(`${BASE}/studio?prompt=${ID.prompt}&preset=${P.match}`);
   const layer = page.locator("[data-studio-preset-layer]");
   await layer.waitFor();
@@ -172,7 +172,7 @@ await scenario("3. Studio: ?prompt=&preset= ikisi birden — prompt taban, hazı
   if (SHOTS) await preview.locator("xpath=..").screenshot({ path: `${SHOTS}/3-final-prompt.png` });
   await layer.getByRole("button", { name: /Kaldır/ }).click();
   await page.waitForURL((url) => url.searchParams.get("prompt") === ID.prompt && !url.searchParams.has("preset"));
-  await page.getByRole("button", { name: "Hazır ayar ekle (isteğe bağlı)" }).waitFor();
+  await page.getByRole("button", { name: "Ayar paketi ekle (isteğe bağlı)" }).waitFor();
   assert.equal(await page.locator("[data-from=preset]").count(), 0);
 });
 
@@ -223,7 +223,7 @@ await scenario("3d. Studio telefon 390px: iki seçenek alt alta, Çalıştır pa
   await shot(page, "3d-studio-run-mobile");
 }, { viewport: { width: 390, height: 844 } });
 
-await scenario("4. hazır ayar sayfası: 'Bir promptla dene' uyumlu promptları gösterir (Uyumlu olanlar süzgeci), seçince Studio iki kaynakla açılır", async ({ page }) => {
+await scenario("4. ayar paketi sayfası: 'Bir promptla dene' uyumlu promptları gösterir (Uyumlu olanlar süzgeci), seçince Studio iki kaynakla açılır", async ({ page }) => {
   await page.goto(`${BASE}/presets/local?id=${P.match}`);
   await page.getByRole("heading", { level: 1 }).waitFor();
   await page.getByRole("button", { name: "Bir promptla dene" }).click();
@@ -241,7 +241,7 @@ await scenario("4. hazır ayar sayfası: 'Bir promptla dene' uyumlu promptları 
 
 await scenario("5. telefon 390px: eylemler ve pencere taşmaz; birleşik düğme tam genişlik, alt çubuk düğmeleri görünür", async ({ page }) => {
   await page.goto(promptUrl);
-  await page.getByRole("button", { name: /^Hazır ayarla dene/ }).waitFor();
+  await page.getByRole("button", { name: /^Ayar paketiyle dene/ }).waitFor();
   assert.equal(await overflowFree(page), true);
   const copy = await page.getByRole("button", { name: "Kopyala" }).boundingBox();
   const run = await page.getByRole("button", { name: "Çalıştır" }).boundingBox();

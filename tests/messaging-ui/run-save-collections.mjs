@@ -209,7 +209,7 @@ await scenario("5. Pencereden yeni koleksiyon oluşturulur, hemen seçili gelir,
   assert.equal(added.body.collection_id, db.collections.find((c) => c.name === "Pro").id);
 });
 
-await scenario("6. Hazır ayar detayı: 'Kaydet' bir dokunuşla kaydeder, 'Kaydedildi' olur; tekrar dokununca koleksiyon penceresi açılır", async ({ page, db }) => {
+await scenario("6. Ayar paketi detayı: 'Kaydet' bir dokunuşla kaydeder, 'Kaydedildi' olur; tekrar dokununca koleksiyon penceresi açılır", async ({ page, db }) => {
   withCollections(db);
   await page.goto(`${BASE}${PAGES.preset}`);
   const cta = page.getByRole("button", { name: /^Kaydet$/ }).first();
