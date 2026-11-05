@@ -51,7 +51,7 @@ export const PRIVACY_POLICY: LegalDocument = {
         ul(
           [
             "Hesap bilgilerin: e-posta adresin, şifren (yalnızca şifrelenmiş olarak saklanır), kullanıcı adın ve görünen adın. Google ile giriş yaparsan Google'dan adını ve e-posta adresini alırız; profil fotoğrafını otomatik almayız.",
-            "Profilin ve içeriklerin: biyografi, avatar, ilgi alanları, paylaştığın promptlar, istekler, workflow'lar, hazır ayarlar, yorumlar, beğeniler, kaydettiklerin, koleksiyonların, takip ettiklerin, engellediklerin ve yaptığın şikâyetler.",
+            "Profilin ve içeriklerin: biyografi, avatar, ilgi alanları, paylaştığın promptlar, istekler, workflow'lar, ayar paketleri, yorumlar, beğeniler, kaydettiklerin, koleksiyonların, takip ettiklerin, engellediklerin ve yaptığın şikâyetler.",
             "Mesajların: gönderdiğin ve aldığın doğrudan mesajlar, fotoğraflar ve GIF'ler. Yalnızca konuşmanın tarafları görebilir. GIF'lerin kendisini saklamayız; yalnızca hangi GIF olduğunu belirten GIPHY kimliğini saklarız (aşağıda \"Hizmet sağlayıcılar\" bölümündeki GIPHY maddesine bak).",
             "Yüklediğin dosyalar: görsel, ses ve video dosyaları.",
             "Tercihlerin: tema, palet ve dil seçimin. Bunlar hesabında ve tarayıcında saklanır.",
@@ -220,7 +220,7 @@ export const TERMS_OF_USE: LegalDocument = {
       title: { tr: "Senin içeriklerin", en: "Your content" },
       blocks: [
         p(
-          "Paylaştığın içeriklerin (promptlar, istekler, workflow'lar, hazır ayarlar, yorumlar, görseller, ses ve video) sahibi sen kalırsın. İçeriğini yayınladığında bize, onu Promptly'de barındırmak, göstermek ve seçtiğin görünürlüğe göre diğer kullanıcılarla paylaşmak için gerekli, dünya çapında ve ücretsiz bir kullanım izni vermiş olursun. Bu izin içeriğini silmenle veya hesabını kapatmanla sona erer; başkalarının zaten yaptığı yanıtlar ve alıntılar bundan etkilenmez.",
+          "Paylaştığın içeriklerin (promptlar, istekler, workflow'lar, ayar paketleri, yorumlar, görseller, ses ve video) sahibi sen kalırsın. İçeriğini yayınladığında bize, onu Promptly'de barındırmak, göstermek ve seçtiğin görünürlüğe göre diğer kullanıcılarla paylaşmak için gerekli, dünya çapında ve ücretsiz bir kullanım izni vermiş olursun. Bu izin içeriğini silmenle veya hesabını kapatmanla sona erer; başkalarının zaten yaptığı yanıtlar ve alıntılar bundan etkilenmez.",
           "You remain the owner of the content you share (prompts, requests, workflows, presets, comments, images, audio and video). When you publish content you give us a worldwide, royalty-free permission to host it on Promptly, display it, and share it with other users according to the visibility you chose. This permission ends when you delete the content or close your account; replies and quotes other people already made are not affected.",
         ),
         p(
@@ -237,7 +237,7 @@ export const TERMS_OF_USE: LegalDocument = {
           "Anyone can read, copy, use in their own AI generations, and download (with Promptly's export, public API and MCP tools) a prompt that is published publicly on Promptly: its title, description and prompt text. By publishing a prompt publicly, its author allows these uses. You may use the outputs (images, text, audio, video) you generate with those prompts for personal or commercial purposes; the rights in outputs are subject to the terms of the AI service you use.",
         ),
         p(
-          "Aynı izin, herkese açık yayınlanan istek, hazır ayar ve workflow'ların başlığı, açıklaması ve metin ya da parametre alanları (istekte yaratıcı yön, hazır ayarda seçili değerler, workflow'da adımların başlığı, açıklaması ve yönergesi) için de geçerlidir; bunlar da aynı araçlarla okunabilir ve indirilebilir. Bunları herkese açık yayınlayan kişi bu kullanımlara izin vermiş olur ve aynı atıf kuralı geçerlidir.",
+          "Aynı izin, herkese açık yayınlanan istek, ayar paketi ve workflow'ların başlığı, açıklaması ve metin ya da parametre alanları (istekte yaratıcı yön, ayar paketinde seçili değerler, workflow'da adımların başlığı, açıklaması ve yönergesi) için de geçerlidir; bunlar da aynı araçlarla okunabilir ve indirilebilir. Bunları herkese açık yayınlayan kişi bu kullanımlara izin vermiş olur ve aynı atıf kuralı geçerlidir.",
           "The same permission applies to the title, description and text or parameter fields of requests, presets and workflows that are published publicly (a request's creative direction, a preset's selected values, a workflow's step titles, descriptions and instructions); they can be read and downloaded with the same tools. By publishing them publicly, their author allows these uses, and the same attribution rule applies.",
         ),
         p(

@@ -212,7 +212,7 @@ await scenario("6. masaüstü: taşma yok, aynı sıra", async ({ page }) => {
   await shot(page, "6-desktop");
 }, { viewport: { width: 1280, height: 900 } });
 
-await scenario("7. masaüstü: yan menü 8 giriş (Promptlar/Workflow'lar/Hazır Ayarlar/İstekler/Etiketler/Odak yok), Odak üst çubukta; gönderiler yüksekte başlar", async ({ page }) => {
+await scenario("7. masaüstü: yan menü 8 giriş (Promptlar/Workflow'lar/Ayar Paketleri/İstekler/Etiketler/Odak yok), Odak üst çubukta; gönderiler yüksekte başlar", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await page.locator("main article:has(a[data-card-link])").first().waitFor();
   const nav = page.locator("aside[aria-label] nav");

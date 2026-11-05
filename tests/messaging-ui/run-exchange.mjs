@@ -265,7 +265,7 @@ async function download(page, format) {
 }
 const upload = (page, name, content) => page.getByTestId("exchange-file-input").setInputFiles({ name, mimeType: "text/plain", buffer: Buffer.from(content, "utf8") });
 
-await scenario("1. Kütüphanem: Promptlar / İstekler / Workflow'lar / Hazır ayarlar bölümlerinde İçe/Dışa aktar; Taslaklar bölümünde yok", async ({ page }) => {
+await scenario("1. Kütüphanem: Promptlar / İstekler / Workflow'lar / Ayar paketleri bölümlerinde İçe/Dışa aktar; Taslaklar bölümünde yok", async ({ page }) => {
   await openLibrary(page);
   await page.getByTestId("my-content-import").waitFor();
   await page.locator("[data-section-menu]").click();
@@ -1094,10 +1094,10 @@ await scenario("40. İstek içe aktarma: kuru çalıştırma → özet → onay;
   assert.equal(state.imports.length, 0, "prompt RPC'sine dokunulmadı");
 });
 
-await scenario("41. Hazır ayar dışa/içe aktarma + yanlış dosya: seçim aynen taşınır; prompt dosyası bu türe alınmaz ve hiçbir çağrı yapılmaz", async ({ page, state }) => {
+await scenario("41. Ayar paketi dışa/içe aktarma + yanlış dosya: seçim aynen taşınır; prompt dosyası bu türe alınmaz ve hiçbir çağrı yapılmaz", async ({ page, state }) => {
   await openLibrary(page);
   await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name: /Hazır Ayar/i }).first().click();
+  await page.getByRole("radio", { name: /Ayar Paket/i }).first().click();
   await page.getByTestId("my-content-export").click();
   const [file] = await Promise.all([page.waitForEvent("download"), page.getByTestId("exchange-download").click()]);
   assert.match(file.suggestedFilename(), /^promptly-presets-/);
@@ -1120,7 +1120,7 @@ await scenario("41. Hazır ayar dışa/içe aktarma + yanlış dosya: seçim ayn
   assert.equal(state.contentImports[0].p_kind, "preset");
 });
 
-await scenario("42. İstek / Hazır ayar pencereleri İngilizce ve telefonda taşmadan açılır", async ({ page }) => {
+await scenario("42. İstek / Ayar paketi pencereleri İngilizce ve telefonda taşmadan açılır", async ({ page }) => {
   await page.goto(`${BASE}/my-content`);
   await page.getByTestId("my-content-export").waitFor();
   await page.locator("[data-section-menu]").click();
@@ -1183,7 +1183,7 @@ await scenario("44. Workflow içe aktarma: kuru çalıştırma + uyarı; onaylay
   await page.getByTestId("exchange-done").waitFor();
   assert.match(await page.getByTestId("exchange-done").innerText(), /1 workflow taslak olarak eklendi\./);
   assert.equal(state.workflowImports[1].p_dry_run, false);
-  assert.equal(state.contentImports.length, 0, "İstek/Hazır ayar RPC'sine dokunulmadı");
+  assert.equal(state.contentImports.length, 0, "İstek/Ayar paketi RPC'sine dokunulmadı");
 });
 
 await scenario("45. Workflow dosyasında geçersiz bağlantı (ileriye bağ) istemcide yakalanır ve çağrı yapılmaz; pencere İngilizce", async ({ page, state }) => {

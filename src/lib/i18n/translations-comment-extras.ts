@@ -82,7 +82,7 @@ export const commentExtrasTranslations = {
     en: "This content isn't public anymore, so it can't be attached to a comment.",
   },
   "notifMsg.commentedWorkflowNone": { tr: "Workflow'una yorum yaptı.", en: "Commented on your workflow." },
-  "notifMsg.commentedPresetNone": { tr: "Hazır ayarına yorum yaptı.", en: "Commented on your preset." },
+  "notifMsg.commentedPresetNone": { tr: "Ayar paketine yorum yaptı.", en: "Commented on your preset." },
   "notifMsg.commentedResultNone": { tr: "Sonucuna yorum yaptı.", en: "Commented on your result." },
   "notifMsg.commentedQuoteNone": { tr: "Alıntına yorum yaptı.", en: "Commented on your quote." },
   "notifMsg.mentionedCommentNone": { tr: "Seni bir yorumda andı.", en: "Mentioned you in a comment." },

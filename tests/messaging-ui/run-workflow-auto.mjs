@@ -109,7 +109,7 @@ await scenario("1. Panel kapalı gelir; açılınca plan notu '2 model çağrıs
   assert.equal(await page.locator("#workflow-auto-key").count(), 0, "kapalıyken form yok");
   await openPanel(page);
   await panel(page).getByText("2 model çağrısı yapılacak.").waitFor();
-  await panel(page).getByText(/Zincir 3\. adımda duracak \(metin dışı adım otomatik çalışmaz\)/).waitFor();
+  await panel(page).getByText(/Çalıştırma 3\. adımda duracak \(metin dışı adım otomatik çalışmaz\)/).waitFor();
   await panel(page).getByText(/Anahtar Promptly'ye gönderilmez/).waitFor();
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/auto-run-open.png`, fullPage: true });
 });
@@ -189,7 +189,7 @@ await scenario("7. Elle devam: görsel adımı elle yapıp çıktısını yapı�
   await page.getByRole("button", { name: /^Adım 3:/ }).click();
   await page.getByPlaceholder("Aracından aldığın sonucu buraya yapıştır").fill("Elle yapılan afiş: kırmızı arka plan");
   await panel(page).getByRole("button", { name: "Devam et" }).click();
-  await panel(page).getByText("Zincir bitti. Sonuçlar adımların çıktı alanlarında.").waitFor();
+  await panel(page).getByText("Çalıştırma bitti. Sonuçlar adımların çıktı alanlarında.").waitFor();
   assert.equal(gemini.posts.length, 3, "yalnız 4. adım çağrıldı");
   assert.equal(gemini.posts[2].prompt, "Afişe kısa bir açıklama yaz.\n\nAfiş notu:\nElle yapılan afiş: kırmızı arka plan");
   assert.equal(await statusItems(page, "kept").count(), 3, "ilk üç adım hazır sayıldı");
@@ -223,7 +223,7 @@ await scenario("9. Değişkeni varsayılansız prompt: model çağrılmadan 'var
 await scenario("10. İngilizce: panel, plan, durum ve hata cümleleri", async ({ page, gemini }) => {
   await openPanel(page);
   await panel(page).getByText("2 model call(s) will be made.").waitFor();
-  await panel(page).getByText(/The chain will stop at step 3 \(non-text steps can't run automatically\)/).waitFor();
+  await panel(page).getByText(/The run will stop at step 3 \(non-text steps can't run automatically\)/).waitFor();
   await fillKey(page);
   gemini.mode = "quota";
   await panel(page).getByRole("button", { name: "Run", exact: true }).click();

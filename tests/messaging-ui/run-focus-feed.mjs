@@ -259,14 +259,14 @@ await scenario("3. Klavye: → → ←, Home gönderiler arasında; tek durak", 
   assert.equal(await activeIndex(page), 1);
 });
 
-await scenario("4. Tür başına: görsel / metin (mono blok) / workflow / hazır ayar / istek; uzak slayt medya yüklemez", async ({ page }) => {
+await scenario("4. Tür başına: görsel / metin (mono blok) / workflow / ayar paketi / istek; uzak slayt medya yüklemez", async ({ page }) => {
   await openFocus(page);
   const s = (i) => slides(page).nth(i);
   assert.equal(await s(0).locator("img").count(), 1);
   assert.equal(await s(1).locator("img").count(), 0);
   assert.match(await s(1).locator(".prompt-text").textContent(), /deniz fenerinde/);
   assert.match(await s(2).textContent(), /3 adım/);
-  assert.match(await s(3).textContent(), /Hazır Ayar/);
+  assert.match(await s(3).textContent(), /Ayar Paketi/);
   assert.match(await s(4).textContent(), /Açık/);
   assert.match(await s(4).textContent(), /Blade Runner/);
   assert.equal(await s(4).getByRole("button", { name: /Kaydet|koleksiyon/i }).count(), 0);
@@ -313,7 +313,7 @@ await scenario("6. Ses: etkin olunca kendiliğinden (sesle) çalar ve sesi açar
   await shot(page, "06-audio");
 });
 
-await scenario("7. Medya süzgeci AÇIK başlar: görselsiz metin promptu + workflow düşer; hazır ayar, istek, video, ses kalır; kapatınca hepsi gelir", async ({ page }) => {
+await scenario("7. Medya süzgeci AÇIK başlar: görselsiz metin promptu + workflow düşer; ayar paketi, istek, video, ses kalır; kapatınca hepsi gelir", async ({ page }) => {
   await openFocus(page, { all: false });
   const texts = await slides(page).allTextContents();
   assert.ok(!texts.some((t) => /Kısa öykü açılışı|Ürün fotoğrafından/.test(t)), "text prompt and picture-less workflow are filtered out by default");
@@ -760,7 +760,7 @@ await scenario("28. Süzgeç menüsü (docs/history/245-*): üstte tek 'Tümü �
   assert.ok(thumb.width <= 40.5, `the thumbnails are small (${thumb.width}px wide)`);
 });
 
-await scenario("29. Görselsiz istek ve hazır ayar: görselin yerinde kendi metni / parametre özeti; Prompt bölümünde Medya açıkken yalnız görselli/oynatılan promptlar", async ({ page }) => {
+await scenario("29. Görselsiz istek ve ayar paketi: görselin yerinde kendi metni / parametre özeti; Prompt bölümünde Medya açıkken yalnız görselli/oynatılan promptlar", async ({ page }) => {
   await openFocus(page, { all: false });
   const request = slides(page).filter({ hasText: "Retro-fütüristik sokak posteri" }).first();
   const art = request.locator("[data-album-art]");
@@ -770,7 +770,7 @@ await scenario("29. Görselsiz istek ve hazır ayar: görselin yerinde kendi met
   assert.equal(await request.getByRole("link", { name: "Yanıtla", exact: true }).count(), 0, "no big button on the slide's face");
   assert.equal(await request.getByRole("link", { name: /Ayrıntıları aç/ }).count(), 0);
   const preset = slides(page).filter({ hasText: "Sinematik portre ayarı" }).first();
-  assert.match(await preset.locator("[data-album-art]").textContent(), /Hazır Ayar/);
+  assert.match(await preset.locator("[data-album-art]").textContent(), /Ayar Paketi/);
   // Yanıtla (open request) is in the Bilgi sheet now.
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowRight");

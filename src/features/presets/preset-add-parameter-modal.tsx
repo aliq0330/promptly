@@ -202,8 +202,8 @@ export function PresetAddParameterModal({
             </section>
           )}
           {others.length > 0 && (
-            <section aria-label={t("presetField.others")}>
-              <h3 className="mb-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("presetField.others")}</h3>
+            <section aria-label={t("presetBuilder.otherParams")}>
+              <h3 className="mb-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("presetBuilder.otherParams")}</h3>
               <ul className="space-y-1.5">{others.map(renderRow)}</ul>
             </section>
           )}

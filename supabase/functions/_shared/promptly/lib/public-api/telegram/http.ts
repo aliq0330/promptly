@@ -85,7 +85,7 @@ export function createTelegramHttpHandler(options: TelegramHttpOptions): (reques
 const COMMANDS = {
   tr: [
     ["ara", "Prompt ara"], ["populer", "Popüler promptlar"], ["prompt", "Bir promptu göster"], ["doldur", "Değişkenleri doldur"],
-    ["istek", "Bir isteği göster"], ["hazirayar", "Bir hazır ayarı göster"], ["workflow", "Bir workflow'u göster"],
+    ["istek", "Bir isteği göster"], ["hazirayar", "Bir ayar paketini göster"], ["workflow", "Bir workflow'u göster"],
     ["baglan", "Promptly hesabını bağla"], ["benim", "Promptların"], ["taslak", "Özel taslak ekle"], ["duzenle", "Taslağı düzenle"],
     ["bildirim", "Bildirim tercihleri"], ["ayril", "Bağlantıyı kaldır"], ["yardim", "Tüm komutlar"],
   ],

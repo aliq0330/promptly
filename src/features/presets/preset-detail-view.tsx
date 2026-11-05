@@ -214,6 +214,8 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
         {tab === "preset" && (<>
         <div className="flex flex-wrap items-start gap-3 rounded-[22px] border border-primary/20 bg-primary-soft/50 p-5 sm:p-6">
           <div className="min-w-0 flex-1 space-y-3">
+            {/* Ne olduğu: bir prompta bağlı değil, uyumlu her prompta uygulanır (docs/history/340-*). */}
+            <p className="text-small font-medium text-text">{t("preset.whatIs")}</p>
             {!isOwn && (
               <div className="space-y-1">
                 <p className="text-label font-semibold text-text">{t("preset.saveTitle")}</p>
