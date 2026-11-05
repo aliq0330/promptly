@@ -9,17 +9,12 @@ import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { PresetCard } from "./preset-card";
-import { useViewMode } from "@/features/content/view-mode-store";
-import { ViewModeControls } from "@/features/content/view-mode-switcher";
-import { FocusGrid } from "@/features/focus/focus-grid";
 import type { Preset } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 type Scope = "created" | "saved";
 
 function PresetGrid({ presets }: { presets: Preset[] }) {
-  const [mode] = useViewMode();
-  if (mode === "focus") return <FocusGrid items={presets.map((data) => ({ kind: "preset" as const, data }))} />;
   return (
     <ContentGrid>
       {presets.map((preset) => (
@@ -66,7 +61,6 @@ export function ProfilePresetsPanel({ ownerId, isOwn }: { ownerId: string; isOwn
             />
           )}
         </div>
-        <ViewModeControls />
       </div>
       {scope === "created" || !isOwn ? (
         <PagedListState list={createdPages}>

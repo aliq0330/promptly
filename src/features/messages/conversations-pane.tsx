@@ -192,7 +192,6 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         {/* Sade düzen (docs/history/234-*): tek "Sohbetler ▾" menüsü (istekler sayaçlı, arşiv, yıldızlı, topluluk sohbetleri) + arama simgesi + `⋯` (Sohbet seç · Tümü okundu) + yeni sohbet. */}
         <div className="mb-3">
           <ListControlRow
-            showView={false}
             menu={{ items: menuItems, active: view, onChange: pickView, ariaLabel: t("messages.sectionsAria"), title: t("header.messagesAriaLabel") }}
             search={{ open: searchShown, onToggle: () => (searchShown ? (setQuery(""), setSearchOpen(false)) : setSearchOpen(true)), label: t("messages.searchConversations") }}
             trailing={

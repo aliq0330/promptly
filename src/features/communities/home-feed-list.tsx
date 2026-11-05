@@ -5,10 +5,6 @@ import { LoadMoreButton } from "@/features/feed/load-more";
 import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { FEED_GRID_COLUMNS } from "./community-layout";
-import { postFeedItem } from "./content-summary";
-import { useViewMode } from "@/features/content/view-mode-store";
-import { FOCUS_GRID_NARROW_COLUMNS, FocusGrid } from "@/features/focus/focus-grid";
-import type { FeedItem } from "@/features/feed/types";
 import { ErrorBox } from "./home-shared";
 import { HomeFeedItem, useSeenTracker } from "./home-feed";
 import type { useHomeFeed } from "./use-home-feed";
@@ -23,7 +19,6 @@ type Feed = ReturnType<typeof useHomeFeed>;
  */
 export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: Feed; empty: ReactNode; onToast: (message: string) => void; viewerIsMember: (source: Feed["entries"][number]["source"]) => boolean }) {
   const { t } = useTranslation();
-  const [viewMode] = useViewMode();
   const tracker = useSeenTracker(true);
   const { loadMore, hasMore, loadingMore, moreError } = feed;
 
@@ -43,21 +38,13 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   return (
     <div className="space-y-4">
-      {/* Kart | Izgara anahtarı sayfanın kontrol satırındadır (docs/history/232-*); Izgara her gönderinin içeriğini gösterir (görüldü izleme kart görünümünde kalır). */}
-      {viewMode === "focus" ? (
-        <FocusGrid
-          items={feed.entries.map((entry) => postFeedItem(entry.post.content)).filter((item): item is FeedItem => item !== null)}
-          columns={FOCUS_GRID_NARROW_COLUMNS}
-        />
-      ) : (
-        <ContentGrid as="ul" columns={FEED_GRID_COLUMNS} data-testid="home-feed">
-          {feed.entries.map((entry) => {
-            const card = feed.cards.get(entry.post.communityId);
-            const mode: EngageMode = card?.closedAt ? "closed" : viewerIsMember(entry.source) ? "open" : "join";
-            return <HomeFeedItem key={entry.id} post={entry.post} community={card} mode={mode} source={entry.source} tracker={tracker} onToast={onToast} />;
-          })}
-        </ContentGrid>
-      )}
+      <ContentGrid as="ul" columns={FEED_GRID_COLUMNS} data-testid="home-feed">
+        {feed.entries.map((entry) => {
+          const card = feed.cards.get(entry.post.communityId);
+          const mode: EngageMode = card?.closedAt ? "closed" : viewerIsMember(entry.source) ? "open" : "join";
+          return <HomeFeedItem key={entry.id} post={entry.post} community={card} mode={mode} source={entry.source} tracker={tracker} onToast={onToast} />;
+        })}
+      </ContentGrid>
       {hasMore && (
         <div className="flex flex-col items-center gap-2">
           {moreError && (

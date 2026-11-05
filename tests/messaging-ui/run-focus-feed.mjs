@@ -212,12 +212,12 @@ const pickFilter = async (page, name) => {
 
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
-await scenario("1. Ana Sayfa değişmedi: Akış seçeneği yok, seçici Kart | Izgara; üst çubukta Odak (yan menüde yok)", async ({ page }) => {
+await scenario("1. Ana Sayfa: Akış seçeneği yok, Kart | Izgara seçici YOK, yazma çubuğu YOK; üst çubukta Odak (yan menüde yok)", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await page.locator("article").first().waitFor();
   assert.equal(await stage(page).count(), 0);
-  // Kart | Izgara tek simge düğmesidir (docs/history/237-*): kart görünümünde "Izgara'ya geç" der, listede tek tane var.
-  assert.equal(await page.locator("[data-view-toggle='card']").count() >= 1, true, "Kart | Izgara simgesi sekme satırında");
+  assert.equal(await page.locator("[data-view-toggle]").count(), 0, "Kart | Izgara simgesi kaldırıldı");
+  assert.equal(await page.locator("a[href*='/create?mode=prompt']").count(), 0, "Ana Sayfa yazma çubuğu kaldırıldı");
   const link = page.locator("header[data-app-header] a[href*='/focus']");
   assert.equal(await link.count(), 1, "header has Odak");
   assert.equal(await page.locator("aside[aria-label] a[href*='/focus']").count(), 0, "sidebar no longer lists Odak (docs/history/227-*)");

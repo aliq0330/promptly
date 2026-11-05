@@ -137,8 +137,8 @@ await scenario("6. Koleksiyon Albüm: bant + Takip Et; Hakkında ve sahibinin di
   assert.equal(await overflowFree(page), true);
 });
 
-// 7 — Profil bölümleri TEK menüde (docs/history/233-*): gruplar, sayılar, Filtre simgesi ve Kart | Izgara düğmesi kontrol satırında
-/** Bobun iki yayınlanmış promptu: profilde Filtre simgesi / Kart | Izgara düğmesi ancak liste doluyken çıkar. */
+// 7 — Profil bölümleri TEK menüde (docs/history/233-*): gruplar, sayılar, Filtre simgesi kontrol satırında
+/** Bobun iki yayınlanmış promptu: profilde Filtre simgesi ancak liste doluyken çıkar. */
 function withPrompts(db, owner) {
   const inner = db.extraRoutes;
   const row = (i, type) => ({
@@ -175,7 +175,7 @@ await scenario("7. Profil bölümleri: TEK menü hapı (sekme çubuğu yok) tüm
   assert.equal(await page.locator('[data-section-option="about"]').count(), 1, "Hakkında menüde");
 });
 
-await scenario("8. Profil kontrol satırı: Promptlar listesinde Filtre simgesi (tür · sıralama) + Kart | Izgara düğmesi; Hakkında'da ikisi de yok; 390px'te taşma yok", async ({ page, db }) => {
+await scenario("8. Profil kontrol satırı: Promptlar listesinde Filtre simgesi (tür · sıralama), Kart | Izgara düğmesi YOK; Hakkında'da Filtre yok; 390px'te taşma yok", async ({ page, db }) => {
   withCollections(db, U.bob);
   withPrompts(db, U.bob);
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
@@ -183,7 +183,7 @@ await scenario("8. Profil kontrol satırı: Promptlar listesinde Filtre simgesi 
   await menu.waitFor();
   const filter = page.locator("[data-profile-filter]");
   await filter.waitFor();
-  assert.ok(await page.locator("[data-view-toggle]").count(), "Kart | Izgara düğmesi");
+  assert.equal(await page.locator("[data-view-toggle]").count(), 0, "Kart | Izgara düğmesi kaldırıldı");
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/profile-sade-list-phone.png` });
   await filter.click();
   const dialog = page.getByRole("dialog");
@@ -194,7 +194,6 @@ await scenario("8. Profil kontrol satırı: Promptlar listesinde Filtre simgesi 
   await menu.click();
   await page.getByRole("radio", { name: /Hakkında/ }).click();
   assert.equal(await page.locator("[data-profile-filter]").count(), 0, "Hakkında'da Filtre yok");
-  assert.equal(await page.locator("[data-view-toggle]").count(), 0, "Hakkında'da görünüm düğmesi yok");
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 390, height: 844 } });
 
@@ -267,7 +266,7 @@ await scenario("12. Sade profil: menüden seçim hapı değiştirir; şeritte ko
   await page.locator("[data-profile-filter]").waitFor();
   const row = await page.locator("[data-profile-controls]").evaluate((el) => {
     const top = (node) => Math.round(node.getBoundingClientRect().top);
-    return [...el.querySelectorAll("[data-section-menu], [data-profile-search], [data-profile-filter], [data-view-toggle]")].map(top);
+    return [...el.querySelectorAll("[data-section-menu], [data-profile-search], [data-profile-filter]")].map(top);
   });
   assert.equal(new Set(row).size, 1, `hap ve araçlar tek satırda ${JSON.stringify(row)}`);
   assert.equal(await page.locator("[data-profile-create]").count(), 0, "başkasının profilinde '+' yok");

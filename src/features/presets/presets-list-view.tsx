@@ -36,7 +36,6 @@ export function PresetsListView() {
         </ContentGrid>
       )}
       searchPlaceholder={t("search.placeholderPresets")}
-      focusKind="preset"
       emptyTitle={t("preset.noneYetTitle")}
       emptyBody={t("preset.noneYetBody")}
       hasMore={hasMore}

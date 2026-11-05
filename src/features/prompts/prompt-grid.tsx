@@ -6,8 +6,6 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { PromptCard } from "./prompt-card";
 import type { Prompt } from "@/types";
 import { Reveal } from "@/components/ui/reveal";
-import { useViewMode } from "@/features/content/view-mode-store";
-import { FocusGrid } from "@/features/focus/focus-grid";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 type PromptGridProps = { prompts: Prompt[] };
@@ -22,7 +20,6 @@ type PromptGridProps = { prompts: Prompt[] };
  */
 export function PromptGrid(props: PromptGridProps) {
   const { t } = useTranslation();
-  const [mode] = useViewMode();
   const items: { key: string; node: React.ReactNode }[] = props.prompts.map((prompt) => ({
     key: prompt.id,
     node: <PromptCard prompt={prompt} />,
@@ -33,9 +30,6 @@ export function PromptGrid(props: PromptGridProps) {
       <EmptyState icon={SquareTerminal} title={t("prompt.noPromptsToShow")} compact />
     );
   }
-
-  // The Kart | Izgara choice (Keşfet's switcher) applies to every list of cards.
-  if (mode === "focus") return <FocusGrid items={props.prompts.map((data) => ({ kind: "prompt" as const, data }))} />;
 
   return (
     <ContentGrid>

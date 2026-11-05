@@ -6,7 +6,6 @@ import { Plus, Search, SlidersHorizontal, X } from "lucide-react";
 import { ListFilterSheet } from "@/features/content/list-toolbar";
 import { CONTROL_ICON_BUTTON, SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import type { ContentSortKey } from "@/features/content/sort-select";
-import { CompactViewToggle } from "@/features/content/view-mode-switcher";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
@@ -27,23 +26,21 @@ export interface ListFilterConfig {
 }
 
 /**
- * The sade control row (docs/history/234-*): ONE section menu on the left, then quiet icon buttons — search · Filtre · Kart/Izgara · "+".
+ * The sade control row (docs/history/234-*): ONE section menu on the left, then quiet icon buttons — search · Filtre · "+".
  * Each control is optional so the same row serves the type lists, Kaydedilenler and the topic pages; the search icon only reports its state
- * (the page decides what opens), Filtre opens the shared `ListFilterSheet`, Kart/Izgara is the shared `useViewMode` toggle.
+ * (the page decides what opens), Filtre opens the shared `ListFilterSheet`.
  */
 export function ListControlRow<K extends string>({
   menu,
   search,
   filter,
   create,
-  showView = true,
   trailing,
 }: {
   menu?: { items: SectionMenuItem<K>[]; active: K; onChange: (key: K) => void; ariaLabel: string; title: string };
   search?: { open: boolean; onToggle: () => void; label: string };
   filter?: ListFilterConfig;
   create?: { href: string; label: string };
-  showView?: boolean;
   /** Page-specific icon buttons after the filter (Bildirimler: tümünü okundu say / temizle). */
   trailing?: ReactNode;
 }) {
@@ -69,7 +66,6 @@ export function ListControlRow<K extends string>({
         </button>
       )}
       {trailing}
-      {showView && <CompactViewToggle />}
       {create && (
         <Link href={create.href} aria-label={create.label} title={create.label} data-list-create className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft")}>
           <Plus size={22} strokeWidth={1.75} aria-hidden />

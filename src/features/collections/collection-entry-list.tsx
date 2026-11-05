@@ -10,16 +10,13 @@ import { PromptCard } from "@/features/prompts/prompt-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { SavedPostCard } from "@/features/communities/saved-post-card";
-import { postFeedItem, summarizeContent } from "@/features/communities/content-summary";
+import { summarizeContent } from "@/features/communities/content-summary";
 import { useEngagementEntry } from "@/features/content/engagement-store";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CollectionEntry } from "@/lib/supabase/collections";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
-import { useViewMode } from "@/features/content/view-mode-store";
-import { FocusGrid } from "@/features/focus/focus-grid";
-import type { FeedItem } from "@/features/feed/types";
 
 export type EntryRemoval = { onRemove: () => Promise<void> };
 
@@ -61,7 +58,6 @@ export function CollectionEntryList({
   const [query, setQuery] = useState("");
   const [type, setType] = useState<CollectionEntry["type"] | "all">("all");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [viewMode] = useViewMode();
 
   // Kind chips with their counts (docs/history/203-*), only when the list holds more than one kind.
   const typeCounts = useMemo(() => {
@@ -82,7 +78,7 @@ export function CollectionEntryList({
     });
   }, [items, activeType, normalizedQuery]);
 
-  // Sade kontrol satırı (docs/history/234-*): tür menüsü (yalnız birden çok tür varken; sayılar satırlarda) · arama simgesi (alanı açar) · Kart/Izgara.
+  // Sade kontrol satırı (docs/history/234-*): tür menüsü (yalnız birden çok tür varken; sayılar satırlarda) · arama simgesi (alanı açar).
   const searching = searchOpen || query !== "";
   const menuItems: SectionMenuItem<CollectionEntry["type"] | "all">[] = [
     { key: "all", label: t("common.all"), icon: LayoutGrid, meta: Math.max(items.length, totalCount ?? 0) },
@@ -132,8 +128,6 @@ export function CollectionEntryList({
         />
       ) : items.length === 0 ? (
         <EmptyState icon={FolderOpen} title={t(emptyTitleKey)} description={t(emptyDescriptionKey)} action={{ label: t("feed.goToDiscover"), href: "/discover" }} />
-      ) : viewMode === "focus" ? (
-        <FocusGrid items={visibleItems.map(entryFeedItem).filter((item): item is FeedItem => item !== null)} />
       ) : (
         <ContentGrid>
           {visibleItems.map((entry) => (
@@ -154,12 +148,6 @@ const ENTRY_TYPE_LABELS: Record<CollectionEntry["type"], TranslationKey> = {
   preset: "nav.presets",
   community_post: "collection.typeCommunityPosts",
 };
-
-/** One entry in the Izgara view: the content itself; a saved community post shows the content it applies with. */
-function entryFeedItem(entry: CollectionEntry): FeedItem | null {
-  if (entry.type === "community_post") return postFeedItem(entry.data.content);
-  return { kind: entry.type, data: entry.data } as FeedItem;
-}
 
 /** The searchable text of one entry. A community post is searched by the content it applies with, its note and its applicant. */
 function searchFields(entry: CollectionEntry) {

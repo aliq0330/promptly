@@ -11,7 +11,7 @@ import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
-import { FeedItemsView } from "./feed-items-view";
+import { FeedGrid } from "./feed-grid";
 import { useFeedPages } from "./use-feed-pages";
 import { useForYouPages } from "./use-for-you-pages";
 import { useInterestFeedback } from "./interest-feedback";
@@ -246,7 +246,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
           aria-busy={isForYou && forYou.refreshing}
           className={cn("space-y-4 transition-opacity duration-300 ease-soft", isForYou && forYou.refreshing && "opacity-60")}
         >
-          <FeedItemsView
+          <FeedGrid
             items={feed.items}
             interest={isForYou ? interest : undefined}
             creatorStrips={creatorStrips}

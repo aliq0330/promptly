@@ -77,7 +77,6 @@ function Inbox() {
 
   const controls = (
     <ListControlRow
-      showView={false}
       menu={{ items: menu, active: view, onChange: setView, ariaLabel: t("notifications.categoriesAria"), title: t("header.notificationsAriaLabel") }}
       trailing={
         <>

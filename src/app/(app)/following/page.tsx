@@ -1,9 +1,8 @@
 "use client";
 
 import { CreatorList } from "@/features/profile/creator-list";
-import { ViewModeControls } from "@/features/content/view-mode-switcher";
 import { usePagedList } from "@/features/content/use-paged-list";
-import { FeedItemsView } from "@/features/feed/feed-items-view";
+import { FeedGrid } from "@/features/feed/feed-grid";
 import { LoadMore } from "@/features/feed/load-more";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
@@ -31,15 +30,10 @@ export default function FollowingPage() {
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-h3 font-semibold text-text">{t("following.recentPosts")}</h2>
-          {feed.items.length > 0 && (
-            <div className="flex items-center gap-2">
-              <ViewModeControls />
-            </div>
-          )}
         </div>
         {!feed.loading && (
           <>
-            <FeedItemsView items={feed.items} />
+            <FeedGrid items={feed.items} />
             <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
           </>
         )}

@@ -43,12 +43,7 @@ import { canSharePost, COMMUNITY_NOTE_MAX, postPageHref } from "@/lib/communitie
 import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { FEED_GRID_COLUMNS, FEED_ITEM_CONTEXT_CLASS } from "./community-layout";
-import { postFeedItem } from "./content-summary";
-import { useViewMode } from "@/features/content/view-mode-store";
-import { CompactViewToggle } from "@/features/content/view-mode-switcher";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
-import { FOCUS_GRID_NARROW_COLUMNS, FocusGrid } from "@/features/focus/focus-grid";
-import type { FeedItem } from "@/features/feed/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: CommunityPost };
@@ -65,7 +60,6 @@ type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: Commu
 export function FeedTab(props: CommunityTabProps) {
   const { group, role, viewerId, onToast, reload, actionsEl } = props;
   const { t } = useTranslation();
-  const [viewMode] = useViewMode();
   const router = useRouter();
   const searchParams = useSearchParams();
   // Posts read here count as seen too, so "N yeni" on the Topluluklar shelf goes down after a visit (docs/history/212-*).
@@ -175,7 +169,7 @@ export function FeedTab(props: CommunityTabProps) {
       tracker.watch(element, element.dataset.communityPost ?? ""),
     );
     return () => stops.forEach((stop) => stop());
-  }, [tracker, posts, pinned, focusPost, viewMode]);
+  }, [tracker, posts, pinned, focusPost]);
 
   return (
     <div ref={listRef} className="space-y-5">
@@ -189,11 +183,10 @@ export function FeedTab(props: CommunityTabProps) {
         </p>
       )}
 
-      {/* Kart/Izgara + "Gönderi oluştur" simgeleri sayfanın kontrol satırındaki yuvadadır (docs/history/232-*). */}
+      {/* "Gönderi oluştur" simgesi sayfanın kontrol satırındaki yuvadadır (docs/history/232-*). */}
       {actionsEl &&
         createPortal(
           <>
-            <CompactViewToggle />
             {canPost && (
               <button
                 type="button"
@@ -250,16 +243,6 @@ export function FeedTab(props: CommunityTabProps) {
           title={t("communities.feed.empty")}
           description={canPost ? t("communities.feed.emptyHelpMember") : t("communities.feed.emptyHelp")}
         />
-      ) : viewMode === "focus" ? (
-        <>
-          <FocusGrid
-            items={[...pinned, ...posts].map((post) => postFeedItem(post.content)).filter((item): item is FeedItem => item !== null)}
-            columns={FOCUS_GRID_NARROW_COLUMNS}
-          />
-          {hasMore && (
-            <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => void loadMore()} loading={loadingMore} />
-          )}
-        </>
       ) : (
         <>
           {pinned.length > 0 && (
