@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { WORKS_MIN_VOTES, summarizeWorks, toggleVote, wilsonLowerBound, type WorksState } from "./prompt-works.ts";
+import { WORKS_MIN_VOTES, summarizeWorks, toggleVote, wilsonLowerBound, worksInvitePlan, type WorksState } from "./prompt-works.ts";
 
 test("wilsonLowerBound pulls small samples down and stays within 0..1", () => {
   assert.equal(wilsonLowerBound(0, 0), 0);
@@ -34,4 +34,14 @@ test("toggleVote: new vote, change vote, same vote again removes it; input is no
   assert.deepEqual(toggleVote(yes, false), { yes: 4, no: 2, myVote: false, canVote: true });
   assert.deepEqual(toggleVote(yes, true), { yes: 4, no: 1, myVote: null, canVote: true });
   assert.deepEqual(toggleVote({ yes: 0, no: 0, myVote: true, canVote: true }, true), { yes: 0, no: 0, myVote: null, canVote: true }, "never goes below zero");
+});
+
+test("worksInvitePlan: 'didn't work' = strong comment box, no result offer; 'worked' = soft invite, result first for non-text prompts", () => {
+  assert.deepEqual(worksInvitePlan(false, "image"), { emphasis: "strong", offerResult: false, primary: "comment", commentOpen: true });
+  assert.deepEqual(worksInvitePlan(false, "text"), { emphasis: "strong", offerResult: false, primary: "comment", commentOpen: true }, "a failed output is never offered as a result, for any type");
+  for (const type of ["image", "video", "audio"]) {
+    assert.deepEqual(worksInvitePlan(true, type), { emphasis: "soft", offerResult: true, primary: "result", commentOpen: false }, type);
+  }
+  assert.deepEqual(worksInvitePlan(true, "text"), { emphasis: "soft", offerResult: true, primary: "comment", commentOpen: false }, "text prompts lead with a comment");
+  assert.equal(worksInvitePlan(true, undefined).primary, "result", "unknown type behaves like a visual prompt");
 });
