@@ -195,16 +195,18 @@ await scenario("4. Paylaş → Alıntıla: not + 'Akışta' seçili; create_quot
   const modal = page.locator('[data-share-modal="prompt"]');
   await modal.waitFor();
   await modal.locator("[data-quote-section] button[aria-expanded]").click();
-  await modal.locator("[data-quote-destination=feed]").waitFor();
-  await modal.locator("[data-quote-note-input]").fill("Harika bir ışık");
+  // Alıntıla formu Paylaş penceresinin ÜSTÜNDE ikinci bir pencerede açılır (docs/history/338-*).
+  const quote = page.locator("[data-quote-popup]");
+  await quote.locator("[data-quote-destination=feed]").waitFor();
+  await quote.locator("[data-quote-note-input]").fill("Harika bir ışık");
   await shot(page, "qt-share");
-  await modal.locator("[data-quote-submit]").click();
-  await modal.locator("[data-quote-open]").waitFor();
+  await quote.locator("[data-quote-submit]").click();
+  await quote.locator("[data-quote-open]").waitFor();
   assert.equal(state.created.length, 1);
   assert.deepEqual(state.created[0], { p_content_type: "prompt", p_content_id: PROMPT, p_note: "Harika bir ışık" });
-  assert.match((await modal.locator("[data-quote-open]").getAttribute("href")) ?? "", /\/quotes\/local\/?\?id=a0000000-0000-4000-8000-0000000000a3/);
+  assert.match((await quote.locator("[data-quote-open]").getAttribute("href")) ?? "", /\/quotes\/local\/?\?id=a0000000-0000-4000-8000-0000000000a3/);
   // Aynı içeriği tekrar alıntılama denemesi: akış kutusu başarılı olduğu için kilitli; yeni kutu seçilemez.
-  assert.equal(await modal.locator("[data-quote-destination=feed] input").isDisabled(), true);
+  assert.equal(await quote.locator("[data-quote-destination=feed] input").isDisabled(), true);
   assert.ok(db.calls.filter((c) => c.table === "create_quote").length === 1);
 });
 
@@ -216,9 +218,10 @@ await scenario("5. Alıntıla: sunucu hatası (already_quoted) nedeniyle açıkl
   await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
   const modal = page.locator('[data-share-modal="prompt"]');
   await modal.locator("[data-quote-section] button[aria-expanded]").click();
-  await modal.locator("[data-quote-submit]").click();
-  await modal.getByText("Bu içeriği son 24 saatte zaten alıntıladın.").waitFor();
-  assert.equal(await modal.locator("[data-quote-open]").count(), 0);
+  const quote = page.locator("[data-quote-popup]");
+  await quote.locator("[data-quote-submit]").click();
+  await quote.getByText("Bu içeriği son 24 saatte zaten alıntıladın.").waitFor();
+  assert.equal(await quote.locator("[data-quote-open]").count(), 0);
 });
 
 await scenario("6. Profil: 'Alıntılar' sekmesi sayıyla görünür, alıntı kartları normal ızgarada (profile_quotes_page); başka birinin boş profilinde sekme yok", async ({ page, state }) => {
