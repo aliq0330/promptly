@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { List, Pin, X } from "lucide-react";
+import { List } from "@/components/icons/list";
+import { Pin } from "@/components/icons/pin";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";

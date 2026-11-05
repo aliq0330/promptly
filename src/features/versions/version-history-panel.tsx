@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Check, Copy, History, Loader2, RotateCcw } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Copy } from "@/components/icons/copy";
+import { History } from "@/components/icons/history";
+import { Loader2 } from "@/components/icons/loader-2";
+import { RotateCcw } from "@/components/icons/rotate-ccw";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { copyTextToClipboard, formatRelativeTime } from "@/lib/utils";

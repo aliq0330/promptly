@@ -1,13 +1,14 @@
 "use client";
 
-import { Layers, Sparkle } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Layers } from "@/components/icons/layers";
+import { Sparkle } from "@/components/icons/sparkle";
+import type { IconComponent } from "@/components/icons/icon";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 interface BadgeDefinition {
   key: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   labelKey: TranslationKey;
   isEarned: (stats: { publishedPromptCount: number }) => boolean;
 }

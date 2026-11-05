@@ -2,7 +2,10 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Plus, Search, SlidersHorizontal, X } from "lucide-react";
+import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { X } from "@/components/icons/x";
 import { ListFilterSheet } from "@/features/content/list-toolbar";
 import { CONTROL_ICON_BUTTON, SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import type { ContentSortKey } from "@/features/content/sort-select";

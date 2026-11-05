@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
-import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronUp } from "@/components/icons/chevron-up";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { searchConversationMessages } from "@/lib/supabase/chat-features";
 import { normalizeSearchTerm, SEARCH_MAX_CHARS, SEARCH_MIN_CHARS, snippetAround, splitHighlight, stepIndex } from "@/lib/chat-features";
 import { cn, formatRelativeTime } from "@/lib/utils";

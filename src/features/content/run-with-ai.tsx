@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, ExternalLink, Play, X } from "lucide-react";
+import { AlertTriangle } from "@/components/icons/alert-triangle";
+import { Check } from "@/components/icons/check";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ExternalLink } from "@/components/icons/external-link";
+import { Play } from "@/components/icons/play";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { buildRunToolList, getPreferredRunTool, runWithAI, type RunToolOption, type RunWithAIResult } from "@/lib/run-with-ai";

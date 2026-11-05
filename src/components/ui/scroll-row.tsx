@@ -1,7 +1,8 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useRef, type HTMLAttributes } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft } from "@/components/icons/chevron-left";
+import { ChevronRight } from "@/components/icons/chevron-right";
 import { useHorizontalScroll } from "@/lib/use-horizontal-scroll";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { buttonClassName } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { fieldControlClassName } from "@/components/ui/field";

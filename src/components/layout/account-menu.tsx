@@ -3,8 +3,20 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftRight, BarChart3, Bookmark, LayoutGrid, LogIn, LogOut, Moon, Settings, Shapes, ShieldCheck, Undo2, User, UserPlus } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ArrowLeftRight } from "@/components/icons/arrow-left-right";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { Bookmark } from "@/components/icons/bookmark";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { LogIn } from "@/components/icons/log-in";
+import { LogOut } from "@/components/icons/log-out";
+import { Moon } from "@/components/icons/moon";
+import { Settings } from "@/components/icons/settings";
+import { Shapes } from "@/components/icons/shapes";
+import { ShieldCheck } from "@/components/icons/shield-check";
+import { Undo2 } from "@/components/icons/undo-2";
+import { User } from "@/components/icons/user";
+import { UserPlus } from "@/components/icons/user-plus";
+import type { IconComponent } from "@/components/icons/icon";
 import { Avatar } from "@/components/ui/avatar";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { useTheme } from "@/components/theme/theme-provider";
@@ -63,7 +75,7 @@ function MenuGroup({ label, children }: { label: string; children: ReactNode }) 
   );
 }
 
-function MenuLink({ href, icon: Icon, label, onNavigate }: { href: string; icon: LucideIcon; label: string; onNavigate: () => void }) {
+function MenuLink({ href, icon: Icon, label, onNavigate }: { href: string; icon: IconComponent; label: string; onNavigate: () => void }) {
   return (
     <Link href={href} role="menuitem" onClick={onNavigate} className={ITEM_CLASS}>
       <Icon size={16} className="shrink-0 text-text-secondary" />

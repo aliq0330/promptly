@@ -1,5 +1,17 @@
-import type { LucideIcon } from "lucide-react";
-import { BarChart3, Bookmark, Compass, GalleryVerticalEnd, Home, LogIn, Plus, Settings, Shapes, User, Users, UsersRound, WandSparkles } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Compass } from "@/components/icons/compass";
+import { GalleryVerticalEnd } from "@/components/icons/gallery-vertical-end";
+import { Home } from "@/components/icons/home";
+import { LogIn } from "@/components/icons/log-in";
+import { Plus } from "@/components/icons/plus";
+import { Settings } from "@/components/icons/settings";
+import { Shapes } from "@/components/icons/shapes";
+import { User } from "@/components/icons/user";
+import { Users } from "@/components/icons/users";
+import { UsersRound } from "@/components/icons/users-round";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 /** Who may see a nav entry: everyone, or only a signed-in member. */
@@ -10,7 +22,7 @@ export interface NavItem {
   /** Defaults to "public". "authenticated" entries are never rendered for guests (nor while the session is still resolving). */
   visibility?: NavVisibility;
   labelKey: TranslationKey;
-  icon: LucideIcon;
+  icon: IconComponent;
   /**
    * Path prefix that marks this item active. Defaults to `href`. The
    * profile entry's href is a placeholder resolved at render time (own

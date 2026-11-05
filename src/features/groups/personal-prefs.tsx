@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BellOff, LogOut } from "lucide-react";
+import { BellOff } from "@/components/icons/bell-off";
+import { LogOut } from "@/components/icons/log-out";
 import { Button } from "@/components/ui/button";
 import { LeaveCommunityDialog } from "./leave-community-dialog";
 import { useAsyncAction } from "./use-async-action";

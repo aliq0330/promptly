@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { FileAudio, FileVideo, Upload, X } from "lucide-react";
+import { FileAudio } from "@/components/icons/file-audio";
+import { FileVideo } from "@/components/icons/file-video";
+import { Upload } from "@/components/icons/upload";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { OUTPUT_MAX_BYTES, OUTPUT_MIME_TYPES, type OutputKind } from "@/lib/supabase/prompt-output";

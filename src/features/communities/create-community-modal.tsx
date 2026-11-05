@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Camera, X } from "lucide-react";
+import { Camera } from "@/components/icons/camera";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";

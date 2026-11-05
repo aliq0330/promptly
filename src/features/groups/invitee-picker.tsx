@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, Loader2, Search, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchFollowedProfiles, searchProfilesStrict } from "@/lib/supabase/profiles";

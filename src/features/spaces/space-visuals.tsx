@@ -1,17 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { BadgeCheck, Check, EyeOff, Globe2, ImageOff, LayoutDashboard, Link2, Lock, Shapes, Sofa, Swords, UserRound, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { BadgeCheck } from "@/components/icons/badge-check";
+import { Check } from "@/components/icons/check";
+import { EyeOff } from "@/components/icons/eye-off";
+import { Globe2 } from "@/components/icons/globe-2";
+import { ImageOff } from "@/components/icons/image-off";
+import { LayoutDashboard } from "@/components/icons/layout-dashboard";
+import { Link2 } from "@/components/icons/link-2";
+import { Lock } from "@/components/icons/lock";
+import { Shapes } from "@/components/icons/shapes";
+import { Sofa } from "@/components/icons/sofa";
+import { Swords } from "@/components/icons/swords";
+import { UserRound } from "@/components/icons/user-round";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { SPACE_VISIBILITY_LABEL, type SpaceColor, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
 
 /** Spaces'in simgesi (gezinme, bant, boş durum): her yerde aynı. */
-export const SpacesIcon: LucideIcon = Shapes;
+export const SpacesIcon: IconComponent = Shapes;
 
 /** Tür simgesi (oluşturma formu, "Yeni bir Space başlatın" karoları, kart) + yumuşak renk (hex yok, palet token'ları) — docs/history/231-*. */
-export const SPACE_KIND_ICON: Record<SpaceKind, LucideIcon> = { moodboard: LayoutDashboard, character: UserRound, brand: BadgeCheck, game_world: Swords, interior: Sofa, free: Shapes };
+export const SPACE_KIND_ICON: Record<SpaceKind, IconComponent> = { moodboard: LayoutDashboard, character: UserRound, brand: BadgeCheck, game_world: Swords, interior: Sofa, free: Shapes };
 export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
   moodboard: "bg-primary-soft text-primary",
   character: "bg-secondary/15 text-secondary",
@@ -21,7 +33,7 @@ export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
   free: "bg-surface-soft text-text-secondary",
 };
 
-export const VISIBILITY_ICON: Record<SpaceVisibility, LucideIcon> = { private: Lock, link: Link2, public: Globe2 };
+export const VISIBILITY_ICON: Record<SpaceVisibility, IconComponent> = { private: Lock, link: Link2, public: Globe2 };
 
 export function VisibilityBadge({ visibility, className }: { visibility: SpaceVisibility; className?: string }) {
   const { t } = useTranslation();

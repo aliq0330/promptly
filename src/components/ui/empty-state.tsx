@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
 import { buttonClassName } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ export function EmptyState({
   className,
   compact,
 }: {
-  icon: LucideIcon;
+  icon: IconComponent;
   title: string;
   description?: React.ReactNode;
   action?: { label: string; href: string } | { label: string; onClick: () => void; variant?: "primary" | "outline" };

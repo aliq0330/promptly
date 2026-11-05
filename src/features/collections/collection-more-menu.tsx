@@ -2,7 +2,9 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Loader2, MoreVertical, Pencil } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { MoreVertical } from "@/components/icons/more-vertical";
+import { Pencil } from "@/components/icons/pencil";
 import { Portal } from "@/components/ui/portal";
 import { deleteCollection } from "@/lib/supabase/collections";
 import { cn } from "@/lib/utils";

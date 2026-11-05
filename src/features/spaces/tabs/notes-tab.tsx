@@ -2,7 +2,13 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useState } from "react";
-import { Link2, Lock, MapPin, Pencil, Plus, Search, StickyNote } from "lucide-react";
+import { Link2 } from "@/components/icons/link-2";
+import { Lock } from "@/components/icons/lock";
+import { MapPin } from "@/components/icons/map-pin";
+import { Pencil } from "@/components/icons/pencil";
+import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
+import { StickyNote } from "@/components/icons/sticky-note";
 import { Button } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";

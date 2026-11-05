@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
 import { CodeBlock } from "@/components/ui/code-block";
 import { PageContainer } from "@/components/ui/page-header";
 import { usePageTitle } from "@/components/layout/page-title";

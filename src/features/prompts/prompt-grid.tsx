@@ -1,6 +1,6 @@
 "use client";
 
-import { SquareTerminal } from "lucide-react";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { PromptCard } from "./prompt-card";

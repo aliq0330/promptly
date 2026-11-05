@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bookmark, ChevronRight, CircleFadingPlus, Send, Shapes, Share2, X } from "lucide-react";
+import { Bookmark } from "@/components/icons/bookmark";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { CircleFadingPlus } from "@/components/icons/circle-fading-plus";
+import { Send } from "@/components/icons/send";
+import { Shapes } from "@/components/icons/shapes";
+import { Share2 } from "@/components/icons/share-2";
+import { X } from "@/components/icons/x";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";

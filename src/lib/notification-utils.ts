@@ -1,25 +1,23 @@
-import {
-  Bell,
-  ChartColumn,
-  CheckCircle2,
-  Code2,
-  Edit3,
-  Heart,
-  ImagePlus,
-  Lock,
-  Mail,
-  MessageCircle,
-  MessageCircleHeart,
-  MessageCircleQuestion,
-  MessageCircleReply,
-  PenLine,
-  Quote,
-  RotateCcw,
-  SmilePlus,
-  UserPlus,
-  XCircle,
-  type LucideIcon,
-} from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Bell } from "@/components/icons/bell";
+import { ChartColumn } from "@/components/icons/chart-column";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { Code2 } from "@/components/icons/code-2";
+import { Edit3 } from "@/components/icons/edit-3";
+import { Heart } from "@/components/icons/heart";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { Lock } from "@/components/icons/lock";
+import { Mail } from "@/components/icons/mail";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { MessageCircleHeart } from "@/components/icons/message-circle-heart";
+import { MessageCircleQuestion } from "@/components/icons/message-circle-question";
+import { MessageCircleReply } from "@/components/icons/message-circle-reply";
+import { PenLine } from "@/components/icons/pen-line";
+import { Quote } from "@/components/icons/quote";
+import { RotateCcw } from "@/components/icons/rotate-ccw";
+import { SmilePlus } from "@/components/icons/smile-plus";
+import { UserPlus } from "@/components/icons/user-plus";
+import { XCircle } from "@/components/icons/xcircle";
 import type { AppNotification, NotificationType } from "@/types";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { notificationCategoryOf } from "@/lib/notification-mirror";
@@ -158,7 +156,7 @@ export const NOTIFICATION_ICONS = {
   story_poll_vote: ChartColumn,
   story_question_answer: MessageCircleQuestion,
   quote: Quote,
-} as const satisfies Record<string, LucideIcon>;
+} as const satisfies Record<string, IconComponent>;
 
 /**
  * The key into `NOTIFICATION_ICONS` for one real event, never a single

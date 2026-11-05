@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
 import { EmptyState } from "@/components/ui/empty-state";
 
 /** Profile tab/filter empty state — delegates to the design system's shared EmptyState. */
@@ -8,7 +8,7 @@ export function ProfileEmptyState({
   description,
   action,
 }: {
-  icon: LucideIcon;
+  icon: IconComponent;
   title: string;
   description: string;
   action?: { label: string; href: string };

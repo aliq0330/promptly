@@ -1,6 +1,8 @@
 "use client";
 
-import { Calendar, Clock, Globe } from "lucide-react";
+import { Calendar } from "@/components/icons/calendar";
+import { Clock } from "@/components/icons/clock";
+import { Globe } from "@/components/icons/globe";
 import { usePresence } from "@/features/presence/use-presence";
 import { usePresenceLabel } from "@/features/presence/presence-ui";
 import { Badge } from "@/components/ui/badge";

@@ -18,7 +18,12 @@
  */
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Camera, CheckCircle2, ChevronDown, Loader2, Sparkles, X } from "lucide-react";
+import { Camera } from "@/components/icons/camera";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Sparkles } from "@/components/icons/sparkles";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";
 import { cn, copyTextToClipboard } from "@/lib/utils";

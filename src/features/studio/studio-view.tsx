@@ -2,7 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Download, Eye, EyeOff, KeyRound, Loader2, Pencil, Play, Plus, Send, Sparkles, Square, Upload, X } from "lucide-react";
+import { Download } from "@/components/icons/download";
+import { Eye } from "@/components/icons/eye";
+import { EyeOff } from "@/components/icons/eye-off";
+import { KeyRound } from "@/components/icons/key-round";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Pencil } from "@/components/icons/pencil";
+import { Play } from "@/components/icons/play";
+import { Plus } from "@/components/icons/plus";
+import { Send } from "@/components/icons/send";
+import { Sparkles } from "@/components/icons/sparkles";
+import { Square } from "@/components/icons/square";
+import { Upload } from "@/components/icons/upload";
+import { X } from "@/components/icons/x";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";

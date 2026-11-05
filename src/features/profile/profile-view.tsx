@@ -2,7 +2,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Heart, Images, Info, Pencil, Plus, Quote as QuoteIcon, Bookmark, Search, Shapes, SlidersHorizontal, SearchX, Sparkles, SquareTerminal, Folder, Workflow as WorkflowIcon, X } from "lucide-react";
+import { Heart } from "@/components/icons/heart";
+import { Images } from "@/components/icons/images";
+import { Info } from "@/components/icons/info";
+import { Pencil } from "@/components/icons/pencil";
+import { Plus } from "@/components/icons/plus";
+import { Quote as QuoteIcon } from "@/components/icons/quote";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Search } from "@/components/icons/search";
+import { Shapes } from "@/components/icons/shapes";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { SearchX } from "@/components/icons/search-x";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Folder } from "@/components/icons/folder";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
+import { X } from "@/components/icons/x";
 import { ProfileHeader } from "./profile-header";
 import { OtherProfileActions, OwnProfileActions } from "./profile-actions";
 import { ProfileRail } from "./profile-rail";

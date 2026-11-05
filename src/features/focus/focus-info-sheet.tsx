@@ -2,7 +2,9 @@
 
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, PenLine, SquareTerminal } from "lucide-react";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
+import { PenLine } from "@/components/icons/pen-line";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { useAuth } from "@/features/auth/auth-provider";
 import type { PostFeedItem } from "@/features/feed/types";
 import { focusFeedExtraImages } from "@/lib/focus-feed";

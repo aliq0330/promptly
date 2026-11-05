@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Archive, Inbox, MessageCircle, Plus, Search, Star, UsersRound } from "lucide-react";
+import { Archive } from "@/components/icons/archive";
+import { Inbox } from "@/components/icons/inbox";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
+import { Star } from "@/components/icons/star";
+import { UsersRound } from "@/components/icons/users-round";
 import { ConversationList } from "./conversation-list";
 import { ConversationsMoreMenu, SelectionActionBar, SelectionHeader, useSelectionChrome } from "./conversation-selection";
 import { NewChatModal } from "./new-chat-modal";

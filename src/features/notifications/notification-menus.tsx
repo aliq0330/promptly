@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { BellOff, BellRing, ChevronDown, Clock } from "lucide-react";
+import { BellOff } from "@/components/icons/bell-off";
+import { BellRing } from "@/components/icons/bell-ring";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { Clock } from "@/components/icons/clock";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";

@@ -710,6 +710,12 @@
  * Hareketli ikonlar ve çıkış animasyonları (docs/history/335-*; `components/ui/motion-icons.tsx`, `exit-motion.tsx`).
  * Hepsi bir kez oynar; son kare dinlenme karesidir, bu yüzden aşağıdaki hareketi-azalt kuralı (süre ≈ 0) ikonu doğru yerde bırakır.
  */
+/* Icons (src/components/icons, docs/history/342-*): Solar Bold Duotone draws its second tone at opacity .5;
+ * `fill` on an icon (e.g. a playing ▶) or `icon-solid` turns that tone fully opaque — the "solid / active" look. */
+.icon-solid * {
+  opacity: 1;
+}
+
 :root {
   --mi-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --mi-spring: cubic-bezier(0.3, 1.55, 0.5, 1);

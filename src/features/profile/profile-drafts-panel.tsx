@@ -5,8 +5,13 @@ import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
-import { FileText, LayoutGrid, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { FileText } from "@/components/icons/file-text";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
+import type { IconComponent } from "@/components/icons/icon";
 import { Button } from "@/components/ui/button";
 import { SectionMenu } from "@/features/content/section-menu";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -20,7 +25,7 @@ type DraftFilter = "all" | DraftKind;
 type DraftRow = DraftItem & { kind: DraftKind };
 
 const KIND_ORDER: DraftKind[] = ["prompt", "request", "workflow", "preset"];
-const KIND_META: Record<DraftKind, { labelKey: TranslationKey; icon: LucideIcon }> = {
+const KIND_META: Record<DraftKind, { labelKey: TranslationKey; icon: IconComponent }> = {
   prompt: { labelKey: "draft.kindPrompt", icon: SquareTerminal },
   request: { labelKey: "draft.kindRequest", icon: Sparkles },
   workflow: { labelKey: "draft.kindWorkflow", icon: WorkflowIcon },

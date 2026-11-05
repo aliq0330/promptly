@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { cn } from "@/lib/utils";
 
@@ -9,7 +9,7 @@ export interface TabItem<K extends string> {
   key: K;
   label: string;
   count?: number;
-  icon?: LucideIcon;
+  icon?: IconComponent;
 }
 
 /**

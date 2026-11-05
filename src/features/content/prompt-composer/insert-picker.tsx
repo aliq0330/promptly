@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { GripVertical, Plus, Search, X } from "lucide-react";
+import { GripVertical } from "@/components/icons/grip-vertical";
+import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Chip } from "@/components/ui/chip";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";

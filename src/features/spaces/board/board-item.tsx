@@ -1,7 +1,15 @@
 "use client";
 
 import { Component, memo, type ReactNode } from "react";
-import { AlertTriangle, EyeOff, Lock, Palette, SlidersHorizontal, Sparkles, SquareTerminal, StickyNote, Workflow } from "lucide-react";
+import { AlertTriangle } from "@/components/icons/alert-triangle";
+import { EyeOff } from "@/components/icons/eye-off";
+import { Lock } from "@/components/icons/lock";
+import { Palette } from "@/components/icons/palette";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { StickyNote } from "@/components/icons/sticky-note";
+import { Workflow } from "@/components/icons/workflow";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { SpaceItem, SpacePalette } from "@/lib/supabase/spaces";

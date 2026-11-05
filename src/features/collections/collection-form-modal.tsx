@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";
 import { useTranslation } from "@/lib/i18n/language-provider";

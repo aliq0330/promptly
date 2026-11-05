@@ -2,7 +2,13 @@
 
 import { useId, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { AlertCircle, Check, ChevronRight, Loader2, Quote as QuoteIcon, Home, X } from "lucide-react";
+import { AlertCircle } from "@/components/icons/alert-circle";
+import { Check } from "@/components/icons/check";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Quote as QuoteIcon } from "@/components/icons/quote";
+import { Home } from "@/components/icons/home";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import {

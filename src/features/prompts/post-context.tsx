@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, CheckCircle2, CornerUpRight } from "lucide-react";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { CornerUpRight } from "@/components/icons/corner-up-right";
 import { Badge } from "@/components/ui/badge";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";

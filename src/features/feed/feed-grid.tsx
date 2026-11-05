@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
-import { Inbox, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Inbox } from "@/components/icons/inbox";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
@@ -48,7 +49,7 @@ export function FeedGrid({
   flip?: boolean;
   /** "home" = Ana Sayfa's column next to its right rail (two columns at most); "grid" = the full-width lists (up to three). */
   layout?: "grid" | "home";
-  emptyIcon?: LucideIcon;
+  emptyIcon?: IconComponent;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: React.ComponentProps<typeof EmptyState>["action"];

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronRight } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { ChevronRight } from "@/components/icons/chevron-right";
 import { Collapsible } from "@/components/ui/collapsible";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { useTaxonomyVersion } from "@/features/content/taxonomy-hydrator";

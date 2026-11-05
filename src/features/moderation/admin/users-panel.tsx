@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
-import { Search, ShieldAlert } from "lucide-react";
+import { Search } from "@/components/icons/search";
+import { ShieldAlert } from "@/components/icons/shield-alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Chip, ChipRow } from "@/components/ui/chip";

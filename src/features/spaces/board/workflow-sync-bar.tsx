@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, RefreshCw, Workflow } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { RefreshCw } from "@/components/icons/refresh-cw";
+import { Workflow } from "@/components/icons/workflow";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { SpaceConnection, SpaceItem } from "@/lib/supabase/spaces";
 import { legacyFramesOf, loadPlanInput, runImport, runSync, syncPlan, workflowObjectsOn, type PlanInput, type PlanIO } from "@/lib/supabase/workflow-board";

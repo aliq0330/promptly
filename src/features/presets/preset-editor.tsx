@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
 import { ComposeAudienceLine, ComposeSection, FormDisclosure, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";

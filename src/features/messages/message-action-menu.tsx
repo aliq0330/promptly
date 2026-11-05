@@ -1,7 +1,15 @@
 "use client";
 
 import { TrashIcon } from "@/components/ui/motion-icons";
-import { CheckCheck, Copy, CornerUpLeft, Flag, Pencil, Pin, PinOff, ShieldAlert, Star } from "lucide-react";
+import { CheckCheck } from "@/components/icons/check-check";
+import { Copy } from "@/components/icons/copy";
+import { CornerUpLeft } from "@/components/icons/corner-up-left";
+import { Flag } from "@/components/icons/flag";
+import { Pencil } from "@/components/icons/pencil";
+import { Pin } from "@/components/icons/pin";
+import { PinOff } from "@/components/icons/pin-off";
+import { ShieldAlert } from "@/components/icons/shield-alert";
+import { Star } from "@/components/icons/star";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useReport } from "@/features/moderation/report-provider";
 import { cn } from "@/lib/utils";

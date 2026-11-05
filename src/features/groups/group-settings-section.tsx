@@ -3,7 +3,8 @@
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Camera, CheckCircle2 } from "lucide-react";
+import { Camera } from "@/components/icons/camera";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";

@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Check, Plus, Search, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { CONTENT_TYPE_IDS, type ContentTypeId } from "@/lib/content-taxonomy";

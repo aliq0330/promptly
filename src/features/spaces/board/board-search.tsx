@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronUp } from "@/components/icons/chevron-up";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 

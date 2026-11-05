@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, BarChart3, Check, Copy, Send } from "lucide-react";
+import { Bell } from "@/components/icons/bell";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { Check } from "@/components/icons/check";
+import { Copy } from "@/components/icons/copy";
+import { Send } from "@/components/icons/send";
 import { Button } from "@/components/ui/button";
 import { SwitchRow } from "@/features/content/visibility-switch";
 import { useTranslation } from "@/lib/i18n/language-provider";

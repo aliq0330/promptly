@@ -2,7 +2,17 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Flame, Hash, Heart, RotateCw, SlidersHorizontal, Sparkle, UserCheck, Wrench, X, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Flame } from "@/components/icons/flame";
+import { Hash } from "@/components/icons/hash";
+import { Heart } from "@/components/icons/heart";
+import { RotateCw } from "@/components/icons/rotate-cw";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkle } from "@/components/icons/sparkle";
+import { UserCheck } from "@/components/icons/user-check";
+import { Wrench } from "@/components/icons/wrench";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Modal } from "@/components/ui/modal";
@@ -179,7 +189,7 @@ export function ForYouSetupBanner({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-const REASON_ICON: Record<ForYouReason["kind"], LucideIcon> = {
+const REASON_ICON: Record<ForYouReason["kind"], IconComponent> = {
   creator: UserCheck,
   tag: Hash,
   tool: Wrench,

@@ -4,7 +4,7 @@ import { useCommunityContext, useCommunityReturn } from "@/features/communities/
 import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles } from "@/components/icons/sparkles";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RequestCard } from "./request-card";

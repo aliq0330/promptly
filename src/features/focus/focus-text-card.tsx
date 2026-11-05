@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Video } from "lucide-react";
+import { Video } from "@/components/icons/video";
 import { ContentCard } from "@/features/content/content-card";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { useTranslation } from "@/lib/i18n/language-provider";

@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { StorageImage } from "@/components/ui/storage-media";
@@ -25,7 +30,7 @@ import type { PromptMedia } from "@/types";
 
 type Section = "all" | FeedKind;
 
-const SECTIONS: { key: Section; labelKey: TranslationKey; icon: LucideIcon }[] = [
+const SECTIONS: { key: Section; labelKey: TranslationKey; icon: IconComponent }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
   { key: "prompt", labelKey: "feed.filterPrompts", icon: SquareTerminal },
   { key: "workflow", labelKey: "nav.workflows", icon: WorkflowIcon },
@@ -63,7 +68,7 @@ export function TopicPage({
   filter: TopicFilter;
   kicker: ReactNode;
   title: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   /** Known up front (a tag's `usage_count`); otherwise counted by the database with the page's own filters. */
   count?: number | null;
   countKey?: TranslationKey;

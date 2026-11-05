@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, Workflow as WorkflowIcon } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { workflowHref } from "@/lib/utils";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";

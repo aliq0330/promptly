@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Check, ChevronDown, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Check } from "@/components/icons/check";
+import { ChevronDown } from "@/components/icons/chevron-down";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +31,7 @@ export interface SectionMenuItem<K extends string> {
   count?: number;
   /** Bilgi amaçlı sayı (Profil: gönderi sayıları) — sağda sönük metin, nokta çıkarmaz. */
   meta?: number;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   /** Önceki satırdan ince çizgiyle ayrılan yeni grup (Keşfet, Profil, docs/history/233-*). */
   dividerBefore?: boolean;
 }

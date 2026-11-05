@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, ScrollText } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { ScrollText } from "@/components/icons/scroll-text";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useTranslation } from "@/lib/i18n/language-provider";

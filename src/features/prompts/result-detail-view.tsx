@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, ChevronUp, FileText, Lock, SquareTerminal } from "lucide-react";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronUp } from "@/components/icons/chevron-up";
+import { FileText } from "@/components/icons/file-text";
+import { Lock } from "@/components/icons/lock";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { buttonClassName } from "@/components/ui/button";
 import { StorageImage, StorageVideo } from "@/components/ui/storage-media";
 import {

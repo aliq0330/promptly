@@ -1,8 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, Copy, Heart, MessageCircle, X } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Copy } from "@/components/icons/copy";
+import { Heart } from "@/components/icons/heart";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { X } from "@/components/icons/x";
+import type { IconComponent } from "@/components/icons/icon";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ReactionIcon } from "@/features/reactions/reaction-icon";
@@ -17,7 +21,7 @@ import { cn, formatCount } from "@/lib/utils";
 import { UserInteractionList } from "./user-interaction-list";
 import { useEngagers } from "./use-engagers";
 
-const KIND_META: Record<StatisticsKind, { icon: LucideIcon; tab: TranslationKey; tile: TranslationKey }> = {
+const KIND_META: Record<StatisticsKind, { icon: IconComponent; tab: TranslationKey; tile: TranslationKey }> = {
   likes: { icon: Heart, tab: "statistics.tabLikes", tile: "statistics.tileLikes" },
   comments: { icon: MessageCircle, tab: "statistics.tabComments", tile: "statistics.tileComments" },
   saves: { icon: Bookmark, tab: "statistics.tabSaves", tile: "statistics.tileSaves" },

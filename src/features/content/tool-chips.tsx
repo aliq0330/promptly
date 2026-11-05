@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wrench } from "lucide-react";
+import { Wrench } from "@/components/icons/wrench";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { cn, toolHref } from "@/lib/utils";
 

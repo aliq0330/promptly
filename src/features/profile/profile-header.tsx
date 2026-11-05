@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Calendar, Globe, Repeat2 } from "lucide-react";
+import { Calendar } from "@/components/icons/calendar";
+import { Globe } from "@/components/icons/globe";
+import { Repeat2 } from "@/components/icons/repeat-2";
 import { ProfileAvatar } from "./profile-avatar";
 import { UserPresenceDot } from "@/features/presence/presence-ui";
 import { ProfileStats } from "./profile-stats";

@@ -4,7 +4,8 @@ import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, 
 import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Play, Workflow as WorkflowIcon } from "lucide-react";
+import { Play } from "@/components/icons/play";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, type TabItem } from "@/components/ui/tabs";

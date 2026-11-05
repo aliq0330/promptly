@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, CircleCheck, MessageSquareMore, MoreHorizontal } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { CircleCheck } from "@/components/icons/circle-check";
+import { MessageSquareMore } from "@/components/icons/message-square-more";
+import { MoreHorizontal } from "@/components/icons/more-horizontal";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";

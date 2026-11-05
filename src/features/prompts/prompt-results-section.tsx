@@ -2,7 +2,8 @@
 
 import { DetailSection } from "@/features/content/detail-parts";
 import { useEffect, useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Plus } from "@/components/icons/plus";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";

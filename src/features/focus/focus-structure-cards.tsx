@@ -1,7 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ArrowDown, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ArrowDown } from "@/components/icons/arrow-down";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ContentCard } from "@/features/content/content-card";
@@ -39,7 +43,7 @@ function StructureShell({
   item: PostFeedItem;
   href: string;
   creator: UserProfile;
-  icon: LucideIcon;
+  icon: IconComponent;
   badge: string;
   /** Secondary tag text (topic / content type) — hidden on the narrowest cards. */
   detail?: string | null;

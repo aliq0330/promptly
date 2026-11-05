@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Bookmark, Compass, Play, Sparkles, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Compass } from "@/components/icons/compass";
+import { Play } from "@/components/icons/play";
+import { Sparkles } from "@/components/icons/sparkles";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -14,7 +18,7 @@ const STORAGE_KEY = "promptly-tour-seen";
 const OPEN_EVENT = "promptly:open-tour";
 
 interface TourStep {
-  icon: LucideIcon;
+  icon: IconComponent;
   title: TranslationKey;
   body: TranslationKey;
 }

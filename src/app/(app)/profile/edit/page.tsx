@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Camera, X } from "lucide-react";
+import { Camera } from "@/components/icons/camera";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { INTEREST_OPTION_LABELS, INTEREST_OPTIONS } from "@/features/profile/interest-options";

@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, Code2, FileText, LogOut, Palette, ShieldCheck, TriangleAlert, UserRound, Lock } from "lucide-react";
+import { Bell } from "@/components/icons/bell";
+import { Code2 } from "@/components/icons/code-2";
+import { FileText } from "@/components/icons/file-text";
+import { LogOut } from "@/components/icons/log-out";
+import { Palette } from "@/components/icons/palette";
+import { ShieldCheck } from "@/components/icons/shield-check";
+import { TriangleAlert } from "@/components/icons/triangle-alert";
+import { UserRound } from "@/components/icons/user-round";
+import { Lock } from "@/components/icons/lock";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useAuth } from "@/features/auth/auth-provider";

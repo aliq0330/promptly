@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ArrowRight } from "@/components/icons/arrow-right";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
@@ -17,7 +18,7 @@ export function PageHeader({
   eyebrow?: string;
   title: string;
   description?: React.ReactNode;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   actions?: React.ReactNode;
   className?: string;
 }) {

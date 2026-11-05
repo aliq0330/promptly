@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, KeyRound } from "lucide-react";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { KeyRound } from "@/components/icons/key-round";
 import { Button } from "@/components/ui/button";
 import { FormIconBadge, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";

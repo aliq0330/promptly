@@ -1,6 +1,9 @@
 "use client";
 
-import { ListPlus, SlidersHorizontal, Wand2, Share2 } from "lucide-react";
+import { ListPlus } from "@/components/icons/list-plus";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Wand2 } from "@/components/icons/wand-2";
+import { Share2 } from "@/components/icons/share-2";
 import { ContentListPage } from "@/features/content/content-list-page";
 import { useRealPresetsList } from "./real-presets-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";

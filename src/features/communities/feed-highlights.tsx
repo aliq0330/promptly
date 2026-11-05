@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ScrollText } from "lucide-react";
+import { ScrollText } from "@/components/icons/scroll-text";
 import { Button } from "@/components/ui/button";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { AnnouncementsSection } from "./announcements-section";

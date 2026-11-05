@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Search, SlidersHorizontal, Sparkles, SquareTerminal, Workflow, X } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Search } from "@/components/icons/search";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Workflow } from "@/components/icons/workflow";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchLinkableContent, type LinkableContent } from "@/lib/supabase/stories";

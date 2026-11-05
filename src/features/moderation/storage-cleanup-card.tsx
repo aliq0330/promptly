@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { HardDrive } from "lucide-react";
+import { HardDrive } from "@/components/icons/hard-drive";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { supabase } from "@/lib/supabase/client";

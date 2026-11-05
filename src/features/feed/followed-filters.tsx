@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { X } from "@/components/icons/x";
 import { Chip } from "@/components/ui/chip";
 import { useAuth } from "@/features/auth/auth-provider";
 import { SheetChips, SheetSection } from "@/features/content/list-toolbar";

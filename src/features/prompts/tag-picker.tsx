@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Sparkles, X } from "lucide-react";
+import { Plus } from "@/components/icons/plus";
+import { Sparkles } from "@/components/icons/sparkles";
+import { X } from "@/components/icons/x";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { findExistingTagByLabel, getOrCreateTag } from "@/lib/supabase/tags";
 import { normalizeTagLabel } from "@/lib/tag-normalize";

@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Check, CheckCheck, ChevronRight, Megaphone, MoreHorizontal, Pin, SmilePlus, Star } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { CheckCheck } from "@/components/icons/check-check";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Megaphone } from "@/components/icons/megaphone";
+import { MoreHorizontal } from "@/components/icons/more-horizontal";
+import { Pin } from "@/components/icons/pin";
+import { SmilePlus } from "@/components/icons/smile-plus";
+import { Star } from "@/components/icons/star";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { MessageReactionPicker } from "./message-reaction-picker";

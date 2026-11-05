@@ -3,7 +3,9 @@
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BellOff, Clock, UserRound } from "lucide-react";
+import { BellOff } from "@/components/icons/bell-off";
+import { Clock } from "@/components/icons/clock";
+import { UserRound } from "@/components/icons/user-round";
 import { Button } from "@/components/ui/button";
 import { SettingsCard } from "@/features/settings/settings-ui";
 import { useNotifications } from "@/features/notifications/notifications-provider";

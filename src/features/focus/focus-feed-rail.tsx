@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Reply } from "lucide-react";
+import { Reply } from "@/components/icons/reply";
 import { Avatar } from "@/components/ui/avatar";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";

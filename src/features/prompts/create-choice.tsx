@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { ChevronRight, CircleFadingPlus, Megaphone, SlidersHorizontal, Sparkles, SquareTerminal, Workflow, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { CircleFadingPlus } from "@/components/icons/circle-fading-plus";
+import { Megaphone } from "@/components/icons/megaphone";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Workflow } from "@/components/icons/workflow";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
@@ -13,7 +20,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 import { ShareExistingModal } from "./share-existing-modal";
 
-type MenuOption = { key: string; href: string; icon: LucideIcon; titleKey: TranslationKey; hintKey?: TranslationKey };
+type MenuOption = { key: string; href: string; icon: IconComponent; titleKey: TranslationKey; hintKey?: TranslationKey };
 
 /** Büyük satırlar: en sık oluşturulanlar. */
 const ROWS: MenuOption[] = [

@@ -1,6 +1,7 @@
 "use client";
 
-import { EyeOff, Pin } from "lucide-react";
+import { EyeOff } from "@/components/icons/eye-off";
+import { Pin } from "@/components/icons/pin";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";

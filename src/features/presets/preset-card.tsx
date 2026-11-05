@@ -1,6 +1,6 @@
 "use client";
 
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { presetHref } from "@/lib/utils";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { presetParameterEntries } from "@/lib/preset-utils";

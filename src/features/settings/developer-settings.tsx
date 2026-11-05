@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Code2 } from "lucide-react";
+import { Code2 } from "@/components/icons/code-2";
 import { ConnectWizard } from "@/features/developers/connect-wizard";
 import { ApiKeysSection } from "@/features/settings/api-keys-section";
 import { ConnectedAppsSection } from "@/features/settings/connected-apps-section";

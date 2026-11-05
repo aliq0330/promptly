@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ArrowLeft, ChevronDown, Maximize2 } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { Maximize2 } from "@/components/icons/maximize-2";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 

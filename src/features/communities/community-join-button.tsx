@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Loader2, LogOut, Send, Undo2 } from "lucide-react";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { Loader2 } from "@/components/icons/loader-2";
+import { LogOut } from "@/components/icons/log-out";
+import { Send } from "@/components/icons/send";
+import { Undo2 } from "@/components/icons/undo-2";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";

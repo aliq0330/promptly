@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { Loader2 } from "@/components/icons/loader-2";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { imageSourceProblem } from "@/lib/image-processing";

@@ -1,5 +1,8 @@
-import type { LucideIcon } from "lucide-react";
-import { SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
 import { spaceHref } from "@/lib/spaces";
@@ -23,7 +26,7 @@ export interface ContentSummary {
   playable: boolean;
   tags: Tag[];
   tools: string[];
-  typeIcon: LucideIcon;
+  typeIcon: IconComponent;
   typeLabelKey: TranslationKey;
   /** İçeriğin alt türü/kategorisi (etiket satırında). */
   detail: string | null;

@@ -2,7 +2,9 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Loader2, Upload } from "lucide-react";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Upload } from "@/components/icons/upload";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { EXCHANGE_LIMITS, formatFromFileName, parsePrompts, type ExchangeFatalCode, type ExchangeIssue, type ParseResult } from "@/lib/exchange";

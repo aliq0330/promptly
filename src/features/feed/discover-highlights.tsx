@@ -2,7 +2,8 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Flame, TrendingUp } from "lucide-react";
+import { Flame } from "@/components/icons/flame";
+import { TrendingUp } from "@/components/icons/trending-up";
 import { StorageAppearanceImage } from "@/components/ui/storage-media";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";

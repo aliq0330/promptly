@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
-import { History } from "lucide-react";
+import { History } from "@/components/icons/history";
 import { Avatar } from "@/components/ui/avatar";
 import { fetchCommunityAudit, type CommunityAuditEntry } from "@/lib/supabase/communities";
 import { auditActionKey } from "@/lib/communities";

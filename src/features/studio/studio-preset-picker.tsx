@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { PresetLists, type PresetListTab } from "@/features/presets/preset-picker";

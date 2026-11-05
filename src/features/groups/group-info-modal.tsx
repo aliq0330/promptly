@@ -3,7 +3,16 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, BellOff, ChevronDown, ExternalLink, Pin, Search, Settings2, Star, UserCog, Users } from "lucide-react";
+import { Bell } from "@/components/icons/bell";
+import { BellOff } from "@/components/icons/bell-off";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ExternalLink } from "@/components/icons/external-link";
+import { Pin } from "@/components/icons/pin";
+import { Search } from "@/components/icons/search";
+import { Settings2 } from "@/components/icons/settings-2";
+import { Star } from "@/components/icons/star";
+import { UserCog } from "@/components/icons/user-cog";
+import { Users } from "@/components/icons/users";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { OnlineMembersStrip } from "@/features/presence/online-members";
 import { useCommunityPresenceCount } from "@/features/presence/community-presence";

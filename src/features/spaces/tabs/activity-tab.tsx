@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, History, Lock, MessageCircle, Pencil } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { History } from "@/components/icons/history";
+import { Lock } from "@/components/icons/lock";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Pencil } from "@/components/icons/pencil";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";

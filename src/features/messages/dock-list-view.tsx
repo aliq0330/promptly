@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Inbox, MessageCircle, Search, SquarePen } from "lucide-react";
+import { Inbox } from "@/components/icons/inbox";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Search } from "@/components/icons/search";
+import { SquarePen } from "@/components/icons/square-pen";
 import { EmptyState } from "@/components/ui/empty-state";
 import { bucketConversations, filterConversationsByQuery } from "@/lib/conversation-lists";
 import { useTranslation } from "@/lib/i18n/language-provider";

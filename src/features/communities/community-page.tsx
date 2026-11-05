@@ -3,7 +3,9 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MessageSquare, RefreshCw, UserCog } from "lucide-react";
+import { MessageSquare } from "@/components/icons/message-square";
+import { RefreshCw } from "@/components/icons/refresh-cw";
+import { UserCog } from "@/components/icons/user-cog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";

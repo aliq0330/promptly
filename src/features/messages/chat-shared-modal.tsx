@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Link2, X } from "lucide-react";
+import { Link2 } from "@/components/icons/link-2";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { fetchChatSharedItems, type ChatSharedItem, type ChatSharedKind } from "@/lib/supabase/messages";
 import { formatRelativeTime } from "@/lib/utils";

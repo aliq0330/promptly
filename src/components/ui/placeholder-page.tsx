@@ -1,10 +1,10 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 interface PlaceholderPageProps {
-  icon: LucideIcon;
+  icon: IconComponent;
   title: string;
   description: string;
 }

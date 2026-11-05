@@ -2,7 +2,12 @@
 
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, House, Link2, Loader2, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Copy } from "@/components/icons/copy";
+import { House } from "@/components/icons/house";
+import { Link2 } from "@/components/icons/link-2";
+import { Loader2 } from "@/components/icons/loader-2";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";

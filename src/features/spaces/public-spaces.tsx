@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ImageIcon, SquareTerminal } from "lucide-react";
+import { ImageIcon } from "@/components/icons/image-icon";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { AsideSection } from "@/features/content/detail-parts";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";

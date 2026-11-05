@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { DemoAccountBadge } from "@/components/ui/demo-badge";
 import { ScrollRow } from "@/components/ui/scroll-row";

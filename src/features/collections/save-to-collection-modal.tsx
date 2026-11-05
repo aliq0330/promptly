@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bookmark, Check, FolderPlus, Loader2, Plus, X } from "lucide-react";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Check } from "@/components/icons/check";
+import { FolderPlus } from "@/components/icons/folder-plus";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Plus } from "@/components/icons/plus";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";

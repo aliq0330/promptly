@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
-import type { LucideIcon } from "lucide-react";
-import { LayoutGrid } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { LayoutGrid } from "@/components/icons/layout-grid";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer } from "@/components/ui/page-header";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
@@ -22,7 +22,7 @@ import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import type { SearchCursor, SearchPage } from "@/lib/supabase/search";
 
 export interface ListPageStep {
-  icon: LucideIcon;
+  icon: IconComponent;
   titleKey: TranslationKey;
   bodyKey: TranslationKey;
 }
@@ -62,7 +62,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   loadingMore = false,
   onLoadMore,
 }: {
-  icon: LucideIcon;
+  icon: IconComponent;
   title: string;
   description: string;
   createHref: string;

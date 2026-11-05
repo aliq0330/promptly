@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowUp, Check } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { ArrowUp } from "@/components/icons/arrow-up";
+import { Check } from "@/components/icons/check";
 import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/ui/code-block";
 import { useTranslation } from "@/lib/i18n/language-provider";

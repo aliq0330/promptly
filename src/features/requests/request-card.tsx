@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Reply, Sparkles } from "lucide-react";
+import { Reply } from "@/components/icons/reply";
+import { Sparkles } from "@/components/icons/sparkles";
 import { Badge } from "@/components/ui/badge";
 import { TextArt, TextArtTitle } from "@/features/content/text-art";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";

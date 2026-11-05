@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { fieldInputClassName } from "@/components/ui/field";
 import { useRealPromptsList } from "@/features/prompts/real-prompts-provider";

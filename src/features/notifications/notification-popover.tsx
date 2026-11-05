@@ -3,7 +3,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, CheckCheck, SlidersHorizontal } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { CheckCheck } from "@/components/icons/check-check";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Portal } from "@/components/ui/portal";
 import { SectionMenu } from "@/features/content/section-menu";
 import { LoadMore } from "@/features/feed/load-more";

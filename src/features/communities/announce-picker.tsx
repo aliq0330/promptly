@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { AlertCircle, Check, Loader2, Megaphone } from "lucide-react";
+import { AlertCircle } from "@/components/icons/alert-circle";
+import { Check } from "@/components/icons/check";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Megaphone } from "@/components/icons/megaphone";
 import { Button } from "@/components/ui/button";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { useAuth } from "@/features/auth/auth-provider";

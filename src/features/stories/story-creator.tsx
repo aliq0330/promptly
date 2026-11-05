@@ -3,7 +3,25 @@
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlignCenter, AlignLeft, AlignRight, ArrowLeft, BarChart3, Check, Clapperboard, Image as ImageIcon, Link2, Loader2, Maximize2, MessageCircleQuestion, Minimize2, Plus, RotateCcw, Save, SquareTerminal, Type, X } from "lucide-react";
+import { AlignCenter } from "@/components/icons/align-center";
+import { AlignLeft } from "@/components/icons/align-left";
+import { AlignRight } from "@/components/icons/align-right";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { Check } from "@/components/icons/check";
+import { Clapperboard } from "@/components/icons/clapperboard";
+import { Image as ImageIcon } from "@/components/icons/image";
+import { Link2 } from "@/components/icons/link-2";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Maximize2 } from "@/components/icons/maximize-2";
+import { MessageCircleQuestion } from "@/components/icons/message-circle-question";
+import { Minimize2 } from "@/components/icons/minimize-2";
+import { Plus } from "@/components/icons/plus";
+import { RotateCcw } from "@/components/icons/rotate-ccw";
+import { Save } from "@/components/icons/save";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Type } from "@/components/icons/type";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import {

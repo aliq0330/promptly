@@ -3,7 +3,8 @@
 import { PUBLISH_ATTEMPT_EVENT } from "./publish-attempt";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { X, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { StorageImg } from "@/components/ui/storage-media";
@@ -114,7 +115,7 @@ export function ComposeShell({
 }
 
 /** "Kim görsün?" bölümündeki küçük önizleme (yanda canlı önizleme olmayan ekranlarda): kapak + tür + başlık + alt satır. */
-export function PublishPreview({ thumbnail, icon: Icon, typeLabel, title, meta }: { thumbnail?: string | null; icon: LucideIcon; typeLabel: string; title: string; meta: string }) {
+export function PublishPreview({ thumbnail, icon: Icon, typeLabel, title, meta }: { thumbnail?: string | null; icon: IconComponent; typeLabel: string; title: string; meta: string }) {
   return (
     <div data-publish-preview="" className="flex items-center gap-3 rounded-xl border border-border-soft bg-gradient-to-b from-primary-soft to-surface p-3">
       <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-soft text-primary">

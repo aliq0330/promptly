@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { usePagedList } from "@/features/content/use-paged-list";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Sparkles } from "@/components/icons/sparkles";
 import { Badge } from "@/components/ui/badge";
 import { fetchTagsPage, fetchTrendingTags, type TrendingTag } from "@/lib/supabase/tags";
 import { formatCount, tagHref } from "@/lib/utils";

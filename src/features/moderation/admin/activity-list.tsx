@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink } from "@/components/icons/external-link";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchAdminUserActivity, type AdminActivityItem, type AdminActivityKind } from "@/lib/supabase/admin";

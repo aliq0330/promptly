@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Lock, Shapes, SlidersHorizontal, Sparkles, Terminal, Users, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
+import { Lock } from "@/components/icons/lock";
+import { Shapes } from "@/components/icons/shapes";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { Terminal } from "@/components/icons/terminal";
+import { Users } from "@/components/icons/users";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
 import { CARD_SAVE_CLASS } from "@/features/content/action-styles";
@@ -55,7 +63,7 @@ function SharedCard({
 }: {
   state: "loading" | "hidden" | "ready";
   href: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   typeLabel: string;
   ownerName?: string | null;
   badge?: React.ReactNode;

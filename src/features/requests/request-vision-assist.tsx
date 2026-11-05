@@ -14,7 +14,11 @@
  */
 
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { Camera, ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import { Camera } from "@/components/icons/camera";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Sparkles } from "@/components/icons/sparkles";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { analyzeImageForRequest } from "@/lib/supabase/image-analysis";

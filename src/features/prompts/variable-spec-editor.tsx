@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Palette, Plus, X } from "lucide-react";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { Palette } from "@/components/icons/palette";
+import { Plus } from "@/components/icons/plus";
+import { X } from "@/components/icons/x";
 import { Chip } from "@/components/ui/chip";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { cn, resizeImageToDataUrlFit } from "@/lib/utils";

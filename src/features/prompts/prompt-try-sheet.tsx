@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search } from "@/components/icons/search";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { Chip } from "@/components/ui/chip";
 import { fieldInputClassName } from "@/components/ui/field";

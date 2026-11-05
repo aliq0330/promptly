@@ -3,7 +3,7 @@
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Hash } from "lucide-react";
+import { Hash } from "@/components/icons/hash";
 import { fetchTagBySlug } from "@/lib/supabase/tags";
 import { tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";

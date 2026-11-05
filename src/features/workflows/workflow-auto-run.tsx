@@ -1,7 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, CircleDashed, Eye, EyeOff, Loader2, Play, RotateCcw, Square, Wand2 } from "lucide-react";
+import { AlertTriangle } from "@/components/icons/alert-triangle";
+import { Check } from "@/components/icons/check";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { CircleDashed } from "@/components/icons/circle-dashed";
+import { Eye } from "@/components/icons/eye";
+import { EyeOff } from "@/components/icons/eye-off";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Play } from "@/components/icons/play";
+import { RotateCcw } from "@/components/icons/rotate-ccw";
+import { Square } from "@/components/icons/square";
+import { Wand2 } from "@/components/icons/wand-2";
 import { Button } from "@/components/ui/button";
 import { clearKey, loadKey, saveKey } from "@/lib/ai-generate/key-store";
 import { fallbackModels, generateOne, listModels } from "@/lib/ai-generate/providers";

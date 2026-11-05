@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { UserX, X } from "lucide-react";
+import { UserX } from "@/components/icons/user-x";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";

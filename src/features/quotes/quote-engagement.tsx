@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle } from "@/components/icons/message-circle";
 import { LikeButton } from "@/features/prompts/like-button";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { useCommentCountDelta } from "@/features/prompts/comment-count-store";

@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, RotateCcw, Users, WifiOff } from "lucide-react";
+import { Plus } from "@/components/icons/plus";
+import { RotateCcw } from "@/components/icons/rotate-ccw";
+import { Users } from "@/components/icons/users";
+import { WifiOff } from "@/components/icons/wifi-off";
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Skeleton } from "@/components/ui/skeleton";

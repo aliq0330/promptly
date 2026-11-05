@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCheck, Clock, X } from "lucide-react";
+import { CheckCheck } from "@/components/icons/check-check";
+import { Clock } from "@/components/icons/clock";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { Avatar } from "@/components/ui/avatar";
 import { fetchMessageReceipts, toChatFeatureError } from "@/lib/supabase/chat-features";

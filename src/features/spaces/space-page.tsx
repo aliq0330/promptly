@@ -3,7 +3,26 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Archive, ArchiveRestore, Eye, History, MessageCircle, Image as ImageIcon, LayoutDashboard, LogOut, Palette, Pin, PinOff, Presentation, Quote, Settings, Share2, SquareTerminal, StickyNote, Trash2, Users, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Archive } from "@/components/icons/archive";
+import { ArchiveRestore } from "@/components/icons/archive-restore";
+import { Eye } from "@/components/icons/eye";
+import { History } from "@/components/icons/history";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Image as ImageIcon } from "@/components/icons/image";
+import { LayoutDashboard } from "@/components/icons/layout-dashboard";
+import { LogOut } from "@/components/icons/log-out";
+import { Palette } from "@/components/icons/palette";
+import { Pin } from "@/components/icons/pin";
+import { PinOff } from "@/components/icons/pin-off";
+import { Presentation } from "@/components/icons/presentation";
+import { Quote } from "@/components/icons/quote";
+import { Settings } from "@/components/icons/settings";
+import { Share2 } from "@/components/icons/share-2";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { StickyNote } from "@/components/icons/sticky-note";
+import { Trash2 } from "@/components/icons/trash-2";
+import { Users } from "@/components/icons/users";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -130,7 +149,7 @@ export function SpacePage() {
   );
 }
 
-const SPACE_TAB_ICON: Record<SpaceTab, LucideIcon> = {
+const SPACE_TAB_ICON: Record<SpaceTab, IconComponent> = {
   overview: LayoutDashboard,
   board: Presentation,
   images: ImageIcon,

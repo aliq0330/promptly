@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MessageSquareText, Sparkles, Wand2 } from "lucide-react";
+import { MessageSquareText } from "@/components/icons/message-square-text";
+import { Sparkles } from "@/components/icons/sparkles";
+import { Wand2 } from "@/components/icons/wand-2";
 import { Chip } from "@/components/ui/chip";
 import { ContentListPage } from "@/features/content/content-list-page";
 import { SheetChips } from "@/features/content/list-toolbar";

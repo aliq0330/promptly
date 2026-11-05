@@ -2,7 +2,15 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState, type FormEvent } from "react";
-import { CalendarDays, CalendarX, Check, CircleHelp, ExternalLink, MapPin, Pencil, Plus, X } from "lucide-react";
+import { CalendarDays } from "@/components/icons/calendar-days";
+import { CalendarX } from "@/components/icons/calendar-x";
+import { Check } from "@/components/icons/check";
+import { CircleHelp } from "@/components/icons/circle-help";
+import { ExternalLink } from "@/components/icons/external-link";
+import { MapPin } from "@/components/icons/map-pin";
+import { Pencil } from "@/components/icons/pencil";
+import { Plus } from "@/components/icons/plus";
+import { X } from "@/components/icons/x";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";

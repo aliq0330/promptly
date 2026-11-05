@@ -3,7 +3,15 @@
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Copy, Download, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Shapes } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Copy } from "@/components/icons/copy";
+import { Download } from "@/components/icons/download";
+import { FolderMinus } from "@/components/icons/folder-minus";
+import { Link2 } from "@/components/icons/link-2";
+import { Loader2 } from "@/components/icons/loader-2";
+import { MoreVertical } from "@/components/icons/more-vertical";
+import { Pencil } from "@/components/icons/pencil";
+import { Shapes } from "@/components/icons/shapes";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePostMenuExtras } from "./post-menu-extras";
 import { usePostScope } from "@/features/communities/post-scope";

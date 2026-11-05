@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { buttonClassName } from "@/components/ui/button";
 import { StorageAppearanceImage } from "@/components/ui/storage-media";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";

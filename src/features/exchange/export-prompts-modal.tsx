@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { Download } from "@/components/icons/download";
+import { Loader2 } from "@/components/icons/loader-2";
 import { Button } from "@/components/ui/button";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { ExchangeError, FORMAT_META, exportFileName, serializePrompts, type ExchangeFormat, type ExchangePrompt } from "@/lib/exchange";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { X } from "lucide-react";
+import { X } from "@/components/icons/x";
 import { cn } from "@/lib/utils";
 
 /**

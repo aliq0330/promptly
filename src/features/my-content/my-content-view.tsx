@@ -1,16 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  Download,
-  FileText,
-  Search,
-  SlidersHorizontal,
-  Sparkles,
-  SquareTerminal,
-  Upload,
-  Workflow as WorkflowIcon,
-} from "lucide-react";
+import { Download } from "@/components/icons/download";
+import { FileText } from "@/components/icons/file-text";
+import { Search } from "@/components/icons/search";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Upload } from "@/components/icons/upload";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/ui/page-header";
 import { Chip } from "@/components/ui/chip";

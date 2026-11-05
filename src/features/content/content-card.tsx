@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ImageIcon, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ImageIcon } from "@/components/icons/image-icon";
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { prefersReducedMotion } from "@/lib/motion";
 import { Avatar } from "@/components/ui/avatar";
@@ -215,7 +216,7 @@ export function ContentCardPost({
   /** Muted part of the author line — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün"; kept for assistive tech only (not drawn on the picture). */
   meta: string;
   /** The small round glyph on the picture: what kind of post this is (skipped for an image prompt, whose picture says it). */
-  typeIcon?: LucideIcon;
+  typeIcon?: IconComponent;
   /** The art already shows the title (a text surface): the hover layer keeps it only for assistive tech / keyboard focus. */
   titleInArt?: boolean;
   /** Always-visible chips in the picture's bottom-right corner (clear of the type glyph and of a text surface's title) (`Badge`s: Taslak, Açık/Kapandı, Alıntı, Sabit…). */

@@ -3,7 +3,21 @@
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ErrorInfo, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, ChevronUp, GalleryVerticalEnd, Images, Inbox, MoreVertical, SlidersHorizontal, Sparkles, UserCheck, Volume2, VolumeX, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ChevronLeft } from "@/components/icons/chevron-left";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { ChevronUp } from "@/components/icons/chevron-up";
+import { GalleryVerticalEnd } from "@/components/icons/gallery-vertical-end";
+import { Images } from "@/components/icons/images";
+import { Inbox } from "@/components/icons/inbox";
+import { MoreVertical } from "@/components/icons/more-vertical";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { UserCheck } from "@/components/icons/user-check";
+import { Volume2 } from "@/components/icons/volume-2";
+import { VolumeX } from "@/components/icons/volume-x";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
@@ -222,7 +236,7 @@ function mediaBox(slide: HTMLElement): DOMRect | null {
 /** Thumbnails this far either side of the active post are mounted (the rest are empty room in the strip). */
 const STRIP_RADIUS = 14;
 
-function thumbIcon(item: PostFeedItem): LucideIcon {
+function thumbIcon(item: PostFeedItem): IconComponent {
   switch (item.kind) {
     case "prompt":
       return CONTENT_TYPE_META[item.data.contentType].icon;

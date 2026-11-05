@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus } from "@/components/icons/plus";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import type { UseTagPickerResult } from "@/features/prompts/use-tag-picker";
 import { CONTENT_TYPE_IDS } from "@/lib/content-taxonomy";

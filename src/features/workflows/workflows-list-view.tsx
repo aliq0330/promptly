@@ -1,6 +1,9 @@
 "use client";
 
-import { GitBranch, Link2, ListPlus, Workflow as WorkflowIcon } from "lucide-react";
+import { GitBranch } from "@/components/icons/git-branch";
+import { Link2 } from "@/components/icons/link-2";
+import { ListPlus } from "@/components/icons/list-plus";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { ContentListPage } from "@/features/content/content-list-page";
 import { useRealWorkflowsList } from "./real-workflows-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";

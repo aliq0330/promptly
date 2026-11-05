@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search } from "@/components/icons/search";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { X } from "@/components/icons/x";
 import { Chip } from "@/components/ui/chip";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { ListFilterSheet, SheetChips, SheetSection } from "@/features/content/list-toolbar";

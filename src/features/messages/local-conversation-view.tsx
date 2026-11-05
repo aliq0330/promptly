@@ -5,7 +5,15 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormE
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Bell, BellOff, ChevronsDown, Info, LogOut, Search, Users, X } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { Bell } from "@/components/icons/bell";
+import { BellOff } from "@/components/icons/bell-off";
+import { ChevronsDown } from "@/components/icons/chevrons-down";
+import { Info } from "@/components/icons/info";
+import { LogOut } from "@/components/icons/log-out";
+import { Search } from "@/components/icons/search";
+import { Users } from "@/components/icons/users";
+import { X } from "@/components/icons/x";
 import { Portal } from "@/components/ui/portal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useBlockState } from "@/features/moderation/use-block-state";

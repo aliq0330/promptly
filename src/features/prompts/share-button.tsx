@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Share2 } from "lucide-react";
+import { Share2 } from "@/components/icons/share-2";
 import { absoluteUrl } from "@/lib/utils";
 import { shareLinkForHref } from "@/lib/share-link";
 import { contentActionClassName } from "@/features/content/action-styles";

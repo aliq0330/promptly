@@ -2,7 +2,8 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
-import { Plus, SlidersHorizontal } from "lucide-react";
+import { Plus } from "@/components/icons/plus";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FormSection } from "@/features/content/form-section";

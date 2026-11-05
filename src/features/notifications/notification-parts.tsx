@@ -1,6 +1,6 @@
 "use client";
 
-import { Paperclip } from "lucide-react";
+import { Paperclip } from "@/components/icons/paperclip";
 import { Avatar } from "@/components/ui/avatar";
 import { CompactContentCard } from "@/features/content/compact-content-card";
 import { CommentMediaView } from "@/features/prompts/comment-extras";

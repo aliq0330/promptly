@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, SlidersHorizontal, X } from "lucide-react";
+import { ExternalLink } from "@/components/icons/external-link";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ToolChips } from "@/features/content/tool-chips";

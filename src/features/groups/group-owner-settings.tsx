@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { History, Pin, RotateCcw, ShieldCheck } from "lucide-react";
+import { History } from "@/components/icons/history";
+import { Pin } from "@/components/icons/pin";
+import { RotateCcw } from "@/components/icons/rotate-ccw";
+import { ShieldCheck } from "@/components/icons/shield-check";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard } from "@/components/ui/field";
 import { useAsyncAction } from "./use-async-action";

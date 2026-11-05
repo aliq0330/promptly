@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, BellOff, Pin, Search, Star, User, Ban, Users } from "lucide-react";
+import { Bell } from "@/components/icons/bell";
+import { BellOff } from "@/components/icons/bell-off";
+import { Pin } from "@/components/icons/pin";
+import { Search } from "@/components/icons/search";
+import { Star } from "@/components/icons/star";
+import { User } from "@/components/icons/user";
+import { Ban } from "@/components/icons/ban";
+import { Users } from "@/components/icons/users";
 import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
 import { ReportButton } from "@/features/moderation/report-button";
 import type { useBlockState } from "@/features/moderation/use-block-state";

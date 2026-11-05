@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Copy } from "lucide-react";
+import { Copy } from "@/components/icons/copy";
 import { CheckDrawIcon } from "@/components/ui/motion-icons";
 import { TEXT_COPIED_EVENT } from "./copy-events";
 import { cn, copyTextToClipboard } from "@/lib/utils";

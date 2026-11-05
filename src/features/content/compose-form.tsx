@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type HTMLAttributes, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/icons/chevron-down";
 import { Avatar } from "@/components/ui/avatar";
 import { PUBLISH_ATTEMPT_EVENT } from "./publish-attempt";
 import { useTranslation } from "@/lib/i18n/language-provider";

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bookmark, Check } from "lucide-react";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Check } from "@/components/icons/check";
 import { Button } from "@/components/ui/button";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 import { useSaveState } from "@/features/prompts/use-save-state";

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Globe, Lock, Plus } from "lucide-react";
+import { Globe } from "@/components/icons/globe";
+import { Lock } from "@/components/icons/lock";
+import { Plus } from "@/components/icons/plus";
 import { FormDisclosure } from "@/features/content/compose-form";
 import { SwitchRow } from "@/features/content/visibility-switch";
 import { SpaceCoverArt } from "@/features/spaces/space-visuals";

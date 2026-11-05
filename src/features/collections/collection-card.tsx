@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FolderOpen, Globe, Lock } from "lucide-react";
+import { FolderOpen } from "@/components/icons/folder-open";
+import { Globe } from "@/components/icons/globe";
+import { Lock } from "@/components/icons/lock";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { cn, collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";

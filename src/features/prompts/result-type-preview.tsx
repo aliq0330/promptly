@@ -1,6 +1,8 @@
 "use client";
 
-import { FileText, Music, Video } from "lucide-react";
+import { FileText } from "@/components/icons/file-text";
+import { Music } from "@/components/icons/music";
+import { Video } from "@/components/icons/video";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import { StorageAudio, StorageImage, StorageVideo } from "@/components/ui/storage-media";

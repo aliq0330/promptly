@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, ImageOff, ImagePlus, Loader2, Paperclip, Search, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { ImageOff } from "@/components/icons/image-off";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Paperclip } from "@/components/icons/paperclip";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName } from "@/components/ui/field";
 import { ImageLightbox } from "@/components/ui/image-lightbox";

@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Download, Loader2, Upload } from "lucide-react";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { Download } from "@/components/icons/download";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Upload } from "@/components/icons/upload";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { CONTENT_LIMITS, EXCHANGE_LIMITS, contentFileName, parseContent, serializeContent, type ContentParseResult, type ExchangeContentItem, type ExchangeContentKind, type ExchangeIssue } from "@/lib/exchange";

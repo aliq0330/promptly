@@ -1,7 +1,9 @@
 "use client";
 
 import type { PointerEvent as ReactPointerEvent, ReactNode, RefObject } from "react";
-import { BarChart3, Film, MessageCircleQuestion } from "lucide-react";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { Film } from "@/components/icons/film";
+import { MessageCircleQuestion } from "@/components/icons/message-circle-question";
 import { StorageImg, StorageVideo } from "@/components/ui/storage-media";
 import { SharedPresetCard, SharedPromptCard, SharedRequestCard, SharedWorkflowCard } from "@/features/messages/shared-content-card";
 import { cn } from "@/lib/utils";

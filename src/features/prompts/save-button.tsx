@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bookmark } from "lucide-react";
+import { Bookmark } from "@/components/icons/bookmark";
 import { formatCount } from "@/lib/utils";
 import { BookmarkIcon } from "@/components/ui/motion-icons";
 import { contentActionClassName } from "@/features/content/action-styles";

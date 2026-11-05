@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
-import { Clock, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, UserCheck, UserStar, Workflow as WorkflowIcon } from "lucide-react";
+import { Clock } from "@/components/icons/clock";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { UserCheck } from "@/components/icons/user-check";
+import { UserStar } from "@/components/icons/user-star";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip } from "@/components/ui/chip";
 import { SectionNav } from "@/features/content/section-nav";

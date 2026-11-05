@@ -2,7 +2,11 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useMemo, useRef, useState } from "react";
-import { Eye, EyeOff, ListChecks, Loader2, Tags } from "lucide-react";
+import { Eye } from "@/components/icons/eye";
+import { EyeOff } from "@/components/icons/eye-off";
+import { ListChecks } from "@/components/icons/list-checks";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Tags } from "@/components/icons/tags";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import type { ChunkOutcome } from "@/lib/exchange";

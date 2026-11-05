@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Lock, Mail, Send } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Lock } from "@/components/icons/lock";
+import { Mail } from "@/components/icons/mail";
+import { Send } from "@/components/icons/send";
 import { Button } from "@/components/ui/button";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { RulesAcceptModal } from "./rules-accept";

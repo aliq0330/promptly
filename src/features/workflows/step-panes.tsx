@@ -3,7 +3,13 @@
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, ChevronUp, Copy, ExternalLink, Plus, X } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronUp } from "@/components/icons/chevron-up";
+import { Copy } from "@/components/icons/copy";
+import { ExternalLink } from "@/components/icons/external-link";
+import { Plus } from "@/components/icons/plus";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { availableSources, newId } from "@/lib/workflow-logic";

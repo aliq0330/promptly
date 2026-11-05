@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Pencil, Settings } from "lucide-react";
+import { Pencil } from "@/components/icons/pencil";
+import { Settings } from "@/components/icons/settings";
 import { ShareButton } from "@/features/prompts/share-button";
 import { MessageButton } from "@/features/messages/message-button";
 import { useBlockState } from "@/features/moderation/use-block-state";

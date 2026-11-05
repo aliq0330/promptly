@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, Globe, Lock, Users } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Globe } from "@/components/icons/globe";
+import { Lock } from "@/components/icons/lock";
+import { Users } from "@/components/icons/users";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { GroupAvatar } from "@/features/groups/group-avatar";

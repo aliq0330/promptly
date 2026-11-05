@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, ExternalLink, ListChecks, RotateCcw } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { Check } from "@/components/icons/check";
+import { ExternalLink } from "@/components/icons/external-link";
+import { ListChecks } from "@/components/icons/list-checks";
+import { RotateCcw } from "@/components/icons/rotate-ccw";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { RunButton } from "@/features/content/run-with-ai";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";

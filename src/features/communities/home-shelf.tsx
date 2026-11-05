@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Mail } from "@/components/icons/mail";
 import { buttonClassName } from "@/components/ui/button";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { useStorageSrc } from "@/components/ui/storage-media";

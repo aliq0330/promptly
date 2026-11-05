@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Loader2, Search, UsersRound, X } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Search } from "@/components/icons/search";
+import { UsersRound } from "@/components/icons/users-round";
+import { X } from "@/components/icons/x";
 import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
 import { useOnlineIds } from "@/features/presence/use-presence";
 import { sortOnlineFirst } from "@/lib/presence";

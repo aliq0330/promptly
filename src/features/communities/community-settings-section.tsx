@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Unlock } from "lucide-react";
+import { Lock } from "@/components/icons/lock";
+import { Unlock } from "@/components/icons/unlock";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";

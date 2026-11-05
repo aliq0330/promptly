@@ -1,7 +1,9 @@
 "use client";
 
 import { TrashIcon } from "@/components/ui/motion-icons";
-import { Archive, ArchiveRestore, Eraser } from "lucide-react";
+import { Archive } from "@/components/icons/archive";
+import { ArchiveRestore } from "@/components/icons/archive-restore";
+import { Eraser } from "@/components/icons/eraser";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link2 } from "lucide-react";
+import { Link2 } from "@/components/icons/link-2";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentCard, ContentCardPost, ContentCardTitle, ContentGrid } from "@/features/content/content-card";

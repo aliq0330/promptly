@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FullLoadLink } from "@/components/ui/full-load-link";
-import { GalleryVerticalEnd, Languages, MessageCircle, Search } from "lucide-react";
+import { GalleryVerticalEnd } from "@/components/icons/gallery-vertical-end";
+import { Languages } from "@/components/icons/languages";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Search } from "@/components/icons/search";
 import { buttonClassName } from "@/components/ui/button";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";

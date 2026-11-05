@@ -8,7 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { ListControlRow } from "@/features/content/list-control-row";
-import { Hash, LayoutGrid, SquareTerminal, Users, UsersRound, Bot, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Hash } from "@/components/icons/hash";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Users } from "@/components/icons/users";
+import { UsersRound } from "@/components/icons/users-round";
+import { Bot } from "@/components/icons/bot";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { RequestList } from "@/features/requests/request-list";
 import { TaxonomyDeepRows } from "@/features/content/taxonomy-filter";
@@ -58,7 +64,7 @@ const SEARCH_TABS: { key: SearchTab; labelKey: TranslationKey }[] = [
   { key: "people", labelKey: "search.tabPeople" },
   { key: "communities", labelKey: "nav.communities" },
 ];
-const SEARCH_TAB_ICON: Record<SearchTab, LucideIcon> = { all: LayoutGrid, posts: SquareTerminal, people: Users, communities: UsersRound, tags: Hash, tools: Bot };
+const SEARCH_TAB_ICON: Record<SearchTab, IconComponent> = { all: LayoutGrid, posts: SquareTerminal, people: Users, communities: UsersRound, tags: Hash, tools: Bot };
 const isSearchTab = (value: string | null): value is SearchTab => SEARCH_TABS.some((tab) => tab.key === value);
 
 /**
