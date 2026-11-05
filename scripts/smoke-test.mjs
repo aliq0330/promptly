@@ -41,6 +41,8 @@ const CHECKS = [
   { name: "space_activity (önce/sonra ayrıntısı, not, yorum sayacı)", get: () => `space_activity?select=${encodeURIComponent("id,details,author_note,comment_count")}&limit=1` },
   { name: "space_connections (pano okları, docs/history/262-*)", get: () => `space_connections?select=${encodeURIComponent("id,space_id,from_item_id,to_item_id,label,line_style,arrow,route,color,source_workflow_id,source_role")}&limit=1` },
   { name: "space_items kaynak sütunları (workflow'dan aktarılan nesneler, docs/history/262-*)", get: () => `space_items?select=${encodeURIComponent("id,source_workflow_id,source_step_id,source_role,source_step_no")}&limit=1` },
+  { name: "rpc workflow_space_links (workflow sayfasındaki Space önizlemesi, ziyaretçiye de açık, docs/history/339-*)", rpc: "workflow_space_links", body: { p_workflow_id: "00000000-0000-4000-8000-000000000000" } },
+  { name: "rpc space_apply_workflow_plan ziyaretçiye KAPALI olmalı (workflow'u panoya tek işlemde yazar, docs/history/339-*)", rpc: "space_apply_workflow_plan", body: { p_space_id: "00000000-0000-4000-8000-000000000000", p_group: null, p_items: [], p_connections: [] }, mustBeDenied: true },
   { name: "prompt_comments (puan + etkinlik yorumu)", get: () => `prompt_comments?select=${encodeURIComponent("id,rating,space_activity_id")}&limit=1` },
   { name: "prompt_comments medya + içerik eki (docs/history/308-*)", get: () => `prompt_comments?select=${encodeURIComponent("id,media_kind,media_ref,media_width,media_height,attach_type,attach_id")}&limit=1` },
   { name: "prompt_likes tepki sütunu + hedef (docs/history/265-*)", get: () => `prompt_likes?select=${encodeURIComponent("id,reaction,target_id")}&limit=1` },

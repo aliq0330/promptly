@@ -45,14 +45,18 @@ export function useWorkflowSpaceChoice(workflowId: string | null, userId: string
     if (!workflowId || !spaces || prefilled.current) return;
     prefilled.current = true;
     let cancelled = false;
-    fetchWorkflowSpaceLinks(workflowId).then((links) => {
-      if (cancelled || touched.current) return;
-      const editable = new Set(spaces.map((space) => space.id));
-      const link = links.find((entry) => editable.has(entry.spaceId));
-      if (link) {
-        setChoice({ enabled: true, spaceId: link.spaceId, showIo: true, showLinks: true, showImages: true, showRelations: true, existing: { itemId: link.itemId, spaceId: link.spaceId, objects: link.objects } });
-      }
-    });
+    fetchWorkflowSpaceLinks(workflowId).then(
+      (links) => {
+        if (cancelled || touched.current) return;
+        const editable = new Set(spaces.map((space) => space.id));
+        const link = links.find((entry) => editable.has(entry.spaceId));
+        if (link) {
+          setChoice({ enabled: true, spaceId: link.spaceId, showIo: true, showLinks: true, showImages: true, showRelations: true, existing: { itemId: link.itemId, spaceId: link.spaceId, objects: link.objects } });
+        }
+      },
+      // Okunamadı: mevcut bağ bilinmiyor; seçim boş kalır (kullanıcı kendi seçimini yapabilir), formun geri kalanı çalışır.
+      (error) => console.error("fetchWorkflowSpaceLinks", error),
+    );
     return () => {
       cancelled = true;
     };

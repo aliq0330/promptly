@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { placeMany, boundsOf, topZ } from "@/lib/space-board";
 import { defaultItemSize, matchesQuery, SPACE_KIND_LABEL, spaceHref, type SpaceContentType } from "@/lib/spaces";
 import { fetchPromptById } from "@/lib/supabase/prompts";
+import { importOrSyncDirect } from "@/lib/supabase/workflow-board";
+import { choiceOptions, EMPTY_SPACE_CHOICE } from "@/lib/supabase/workflow-space";
 import {
   addSpaceItems,
   createSpace,
@@ -64,7 +66,7 @@ export function AddToSpaceModal({
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ id: string; title: string; count: number } | null>(null);
+  const [done, setDone] = useState<{ id: string; title: string; count: number; note?: "degraded" | "upToDate" } | null>(null);
   const newId = useId();
 
   useEffect(() => {
@@ -90,6 +92,7 @@ export function AddToSpaceModal({
 
   const images = useMemo(() => (prompt?.media ?? []).filter((media) => !/\.(mp4|webm|mov|mp3|wav|m4a|ogg)(\?|$)/i.test(media.url)), [prompt]);
   const primaryRef = useMemo(() => {
+    if (target.type === "workflow") return { workflowId: target.id };
     if (target.type !== "prompt") return { contentId: target.id };
     if (chosenImages[0]) return { mediaUrl: chosenImages[0] };
     return { promptId: target.id };
@@ -115,8 +118,28 @@ export function AddToSpaceModal({
     return out;
   }
 
+  /**
+   * Workflow tek parça "çerçeve" olarak DEĞİL, panoya aktarılırken olduğu gibi ayrı nesneler (adım kartı, prompt, görsel, oklar) olarak
+   * eklenir (docs/history/339-*): iki ayrı yol iki farklı görünüm üretiyordu. Panoda zaten varsa yalnız fark güncellenir.
+   */
+  async function addWorkflow(spaceId: string, title: string) {
+    if (!user) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const already = existing.has(spaceId);
+      const result = await importOrSyncDirect({ spaceId, workflowId: target.id, userId: user.id, options: choiceOptions(EMPTY_SPACE_CHOICE) });
+      setDone({ id: spaceId, title, count: result.added, note: result.degraded ? "degraded" : already && result.added === 0 ? "upToDate" : undefined });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function add(spaceId: string, title: string) {
     if (!user) return;
+    if (target.type === "workflow") return addWorkflow(spaceId, title);
     const list = drafts(spaceId);
     if (list.length === 0) {
       setError(t("spaces.add.pickSomething"));
@@ -168,8 +191,9 @@ export function AddToSpaceModal({
         <div className="space-y-4 text-center" data-testid="add-to-space-done">
           <CheckCircle2 size={36} className="mx-auto text-success" aria-hidden />
           <p role="status" className="text-body font-semibold text-text">
-            {t("spaces.add.done", { title: done.title, count: done.count })}
+            {done.note === "upToDate" ? t("wfSpace.add.upToDate", { title: done.title }) : t("spaces.add.done", { title: done.title, count: done.count })}
           </p>
+          {done.note === "degraded" && <p className="text-small text-warning">{t("wfSpace.add.degraded")}</p>}
           <div className="flex justify-center gap-2">
             <Button variant="ghost" onClick={onClose}>
               {t("common.close")}
@@ -283,7 +307,8 @@ export function AddToSpaceModal({
           </button>
         )}
 
-        {selected && existing.has(selected) && <p className="text-caption text-warning">{t("spaces.add.duplicateWarning")}</p>}
+        {target.type === "workflow" && <p className="text-caption text-text-muted">{t("wfSpace.add.workflowNote")}</p>}
+        {selected && existing.has(selected) && target.type !== "workflow" && <p className="text-caption text-warning">{t("spaces.add.duplicateWarning")}</p>}
         <FormError message={error} />
         <div data-dialog-footer className={DIALOG_FOOTER_CLASS}>
           <Button variant="ghost" onClick={onClose} disabled={busy}>

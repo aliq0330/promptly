@@ -76,4 +76,17 @@ export const workflowSpaceTranslations = {
   "wfSpace.preview.readOnly": { tr: "Salt okunur önizleme", en: "Read-only preview" },
   "wfSpace.preview.open": { tr: "Panoyu aç", en: "Open board" },
   "wfSpace.preview.failed": { tr: "Pano yüklenemedi.", en: "Couldn't load the board." },
+  "wfSpace.preview.linksFailed": { tr: "Space önizlemesi yüklenemedi.", en: "Couldn't load the Space preview." },
+  "wfSpace.preview.retry": { tr: "Tekrar dene", en: "Try again" },
+  "wfSpace.preview.privateHint": { tr: "Bu Space özel: yalnız üyeler bu önizlemeyi görür, diğer okuyucular bu bölümü görmez.", en: "This Space is private: only members see this preview; other readers don't see this section." },
+  // ---- Eski tek parça çerçeveyi ayrı nesnelere çevirme + "Space'e ekle" (docs/history/339-*) ----
+  "wfSpace.legacy.title": { tr: "\"{{title}}\" bu panoda tek parça görsel olarak duruyor", en: "\"{{title}}\" sits on this board as a single picture" },
+  "wfSpace.legacy.hint": { tr: "Ayrı nesnelere çevirirsen her adım, prompt ve görsel ayrı taşınır; aralarına oklar çizilir.", en: "Convert it to separate objects so each step, prompt and image moves on its own, with arrows between them." },
+  "wfSpace.legacy.convert": { tr: "Ayrı nesnelere çevir", en: "Convert to objects" },
+  "wfSpace.legacy.converting": { tr: "Çevriliyor…", en: "Converting…" },
+  "wfSpace.legacy.done": { tr: "Workflow ayrı nesnelere çevrildi.", en: "Workflow converted to separate objects." },
+  "wfSpace.legacy.failed": { tr: "Çevrilemedi. Eski görünüm yerinde duruyor.", en: "Couldn't convert it. The old view is still in place." },
+  "wfSpace.add.upToDate": { tr: "\"{{title}}\" Space'inde bu workflow zaten güncel.", en: "This workflow is already up to date in \"{{title}}\"." },
+  "wfSpace.add.degraded": { tr: "Bazı promptlar okunamadığı için yalnız adım kartları eklendi.", en: "Some prompts couldn't be read, so only the step cards were added." },
+  "wfSpace.add.workflowNote": { tr: "Workflow adım kartları, promptlar, görseller ve oklar olarak eklenir; kopyalanmaz, workflow değişince panoda \"Güncelle\" çıkar.", en: "The workflow is added as step cards, prompts, images and arrows. Nothing is copied; the board offers \"Update\" when the workflow changes." },
 } as const;
