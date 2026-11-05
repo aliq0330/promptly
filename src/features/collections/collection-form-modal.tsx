@@ -1,7 +1,6 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -34,21 +33,13 @@ export function CollectionFormModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h2 id="collection-form-modal-title" className="text-base font-semibold text-text">
-              {isEdit ? t("collection.editTitle") : t("collection.createNewTitle")}
-            </h2>
-            {collection?.isDefault && <Badge variant="accent">{t("collection.defaultBadge")}</Badge>}
-          </div>
+          <h2 id="collection-form-modal-title" className="min-w-0 text-base font-semibold text-text">
+            {isEdit ? t("collection.editTitle") : t("collection.createNewTitle")}
+          </h2>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
             <X size={18} />
           </button>
         </div>
-        {collection?.isDefault && (
-          <p className="text-xs text-text-muted">
-            {t("collection.defaultHint")}
-          </p>
-        )}
 
         <CollectionForm
           initialName={collection?.name}

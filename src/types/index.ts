@@ -522,12 +522,12 @@ export interface StarredMessage {
 }
 
 /**
- * A real, permanent collection a user organizes saved prompts into
+ * A collection a user created to organize what they saved
  * (`collections` — supabase/migrations/20260919260000_collections.sql).
- * The general "Kaydedilenler" bookmark is itself membership in the user's
- * default ("Genel", `is_default`) collection — there is no separate saves
- * table any more (`prompt_saves` was dropped by migration 20260919840000).
- * A prompt can belong to zero, one or several collections.
+ * Saving is separate from collections (docs/history/336-*): everything saved sits in the
+ * user's hidden SYSTEM collection ("Kaydedilenlerin tümü", `collections.is_default`), which
+ * is never a `Collection` here — it is the `/saved` page. A saved work may be in zero, one
+ * or several of these.
  */
 export interface Collection {
   id: string;
@@ -541,20 +541,6 @@ export interface Collection {
   coverImage: PromptMedia | null;
   createdAt: string;
   updatedAt: string;
-  /**
-   * Every user has exactly one of these — their "Genel" bucket, auto-created
-   * at signup (`handle_new_user`) and backfilled for older accounts
-   * (`ensure_default_collection`, `collections.is_default` +
-   * `collections_one_default_per_owner`, CLAUDE.md Bölüm 9.22). This is the
-   * ONLY durable way to recognize it — its `name` is freely renameable by
-   * the owner (e.g. "Favorilerim"), so nothing in this codebase may ever
-   * compare `name === "Genel"` to decide default-ness. Membership in this
-   * one collection is now the single source of truth for the general
-   * "kaydedildi" (bookmark-filled) state — see `use-save-state.ts`. It can
-   * never be deleted (blocked by a DB trigger, defense-in-depth against the
-   * frontend never offering the option either).
-   */
-  isDefault: boolean;
 }
 
 /**

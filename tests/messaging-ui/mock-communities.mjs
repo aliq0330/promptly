@@ -20,9 +20,10 @@ export function setupCommunities(db) {
   db.stats = null;
   db.suggestions = false; // öneri şeridi yalnız ilgili senaryolarda açılır (kartlar listede tekrar etmesin)
   db.ownContent = { prompt: [], request: [], workflow: [], preset: [] };
-  // Koleksiyonlar (docs/history/184-*): kaydet penceresi, Kaydedilenler ve gönderi kaydetme sayacı için küçük bir taklit.
+  // Koleksiyonlar (docs/history/184-*, 336-*): kaydet penceresi, Kaydedilenlerin tümü ve gönderi kaydetme sayacı için küçük bir taklit.
+  // İlki kullanıcının SİSTEM koleksiyonudur (`is_default`, "Kaydedilenlerin tümü"); koleksiyona eklenen içerik kayda da girer, `unsave_content` hepsini siler.
   db.collections = [
-    { id: "c0000000-0000-4000-8000-0000000000d1", owner_id: ME, name: "Genel", visibility: "private", item_count: 0, follower_count: 0, is_default: true, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" },
+    { id: "c0000000-0000-4000-8000-0000000000d1", owner_id: ME, name: "Kaydedilenler", visibility: "private", item_count: 0, follower_count: 0, is_default: true, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" },
     { id: "c0000000-0000-4000-8000-0000000000d2", owner_id: ME, name: "Tasarım", visibility: "private", item_count: 0, follower_count: 0, is_default: false, created_at: "2026-01-02T00:00:00Z", updated_at: "2026-01-02T00:00:00Z" },
   ];
   db.collectionItems = []; // { id, collection_id, prompt_id?, workflow_id?, preset_id?, community_post_id?, created_at }
@@ -359,10 +360,19 @@ export function setupCommunities(db) {
     }
 
     // ---- koleksiyonlar ve kaydetme (docs/history/184-*) ----
-    if (table === "rpc/get_or_create_own_default_collection") return json(200, null);
+    if (table === "rpc/get_or_create_own_default_collection") return json(200, db.collections.find((c) => c.is_default && c.owner_id === signedIn)?.id ?? null);
+    if (table === "rpc/unsave_content") {
+      const col = { prompt: "prompt_id", workflow: "workflow_id", preset: "preset_id", community_post: "community_post_id" }[body.p_type];
+      const mine = (i) => i[col] === body.p_id && db.collections.find((c) => c.id === i.collection_id)?.owner_id === signedIn;
+      const removed = db.collectionItems.filter(mine);
+      db.collectionItems = db.collectionItems.filter((i) => !mine(i));
+      for (const i of removed) { const c = db.collections.find((x) => x.id === i.collection_id); if (c) c.item_count = Math.max(0, c.item_count - 1); }
+      if (removed.length && col === "community_post_id") { const post = db.posts.find((p) => p.id === body.p_id); if (post) post.save_count = Math.max(0, (post.save_count ?? 0) - 1); }
+      return json(200, null);
+    }
     if (table === "collections" && method === "GET") {
-      const owner = eq(q, "owner_id"); const id = eq(q, "id");
-      const found = db.collections.filter((c) => (!owner || c.owner_id === owner) && (!id || c.id === id)).map((c) => ({ ...c, profiles: pub(userById(c.owner_id)) }));
+      const owner = eq(q, "owner_id"); const id = eq(q, "id"); const isDefault = eq(q, "is_default");
+      const found = db.collections.filter((c) => (!owner || c.owner_id === owner) && (!id || c.id === id) && (isDefault == null || String(c.is_default) === isDefault)).map((c) => ({ ...c, profiles: pub(userById(c.owner_id)) }));
       return id ? json(200, found[0] ?? null) : rows(found);
     }
     if (table === "collection_items") {
@@ -370,14 +380,16 @@ export function setupCommunities(db) {
       const inList = (col) => { const m = (q.get(col) ?? "").match(/^in\.\((.*)\)$/); return m ? m[1].split(",").map((x) => x.replace(/"/g, "")) : null; };
       if (method === "GET") {
         const owner = q.get("collections.owner_id")?.replace("eq.", "") ?? null;
+        const wantDefault = q.get("collections.is_default")?.replace("eq.", "") ?? null;
         const colId = eq(q, "collection_id");
         const list = db.collectionItems.filter((i) => {
           const col = db.collections.find((c) => c.id === i.collection_id);
           if (owner && col?.owner_id !== owner) return false;
+          if (wantDefault != null && String(Boolean(col?.is_default)) !== wantDefault) return false;
           if (colId && i.collection_id !== colId) return false;
           return TARGETS.every((t) => { const v = eq(q, t); const ids = inList(t); return (!v || i[t] === v) && (!ids || ids.includes(i[t])); });
         });
-        return rows(list.map((i) => ({ ...i, collections: { owner_id: db.collections.find((c) => c.id === i.collection_id)?.owner_id }, prompts: null, workflows: null, presets: null })));
+        return rows(list.map((i) => ({ ...i, collections: { owner_id: db.collections.find((c) => c.id === i.collection_id)?.owner_id, is_default: Boolean(db.collections.find((c) => c.id === i.collection_id)?.is_default) }, prompts: null, workflows: null, presets: null })));
       }
       if (method === "POST") {
         const target = TARGETS.find((t) => body[t]);
@@ -390,6 +402,12 @@ export function setupCommunities(db) {
           if (!db.member(post.community_id, signedIn) && g(post.community_id).visibility !== "public") return json(400, { code: "P0001", message: "community_content_not_readable", details: "", hint: "" });
         }
         if (db.collectionItems.some((i) => i.collection_id === body.collection_id && i[target] === body[target])) return json(409, { code: "23505", message: "duplicate key value violates unique constraint", details: "", hint: "" });
+        // Veritabanı tetikleyicisi: normal koleksiyona eklenen içerik sistem koleksiyonuna da girer.
+        const sys = db.collections.find((c) => c.is_default && c.owner_id === col.owner_id);
+        if (!col.is_default && sys && !db.collectionItems.some((i) => i.collection_id === sys.id && i[target] === body[target])) {
+          db.collectionItems.push({ id: crypto.randomUUID(), created_at: db.stamp(), ...body, collection_id: sys.id });
+          sys.item_count += 1;
+        }
         db.collectionItems.push({ id: crypto.randomUUID(), created_at: db.stamp(), ...body });
         col.item_count += 1;
         if (body.community_post_id) {

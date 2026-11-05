@@ -25,16 +25,16 @@ export type EntryRemoval = { onRemove: () => Promise<void> };
 
 /**
  * The searchable card grid shared by a collection's detail page and
- * "Kaydedilenler" — one list implementation, so both show the same cards,
+ * "Kaydedilenlerin tümü" — one list implementation, so both show the same cards,
  * search the same fields and handle every content type the same way.
  * Search runs over what's already loaded (title, description, creator, tags):
  * these are small personal lists, no extra request needed.
  *
  * `removalFor` is given only where a card gets a "Koleksiyondan kaldır" menu
- * item (a collection the viewer owns); "Kaydedilenler" leaves it out because
- * the bookmark on each card is its way to leave collections.
+ * item (a collection the viewer owns); "Kaydedilenlerin tümü" leaves it out because
+ * the bookmark on each card is its way to manage collections / unsave.
  * `dropWhenUnsaved` hides a card the moment its bookmark empties (the viewer
- * took it out of its last collection), without a refetch.
+ * chose "Kaydedilenlerden kaldır"), without a refetch.
  */
 export function CollectionEntryList({
   items,

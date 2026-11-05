@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bookmark, FolderOpen } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { CollectionCover } from "@/features/collections/collection-card";
 import { collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -38,7 +38,7 @@ export function CollectionRings({ collections }: { collections: Collection[] }) 
               <CollectionCover collection={collection} className="h-[54px] w-[54px] overflow-hidden rounded-full" />
             ) : (
               <span className="flex h-[54px] w-[54px] items-center justify-center rounded-full bg-primary-soft text-primary">
-                {collection.isDefault ? <Bookmark size={22} strokeWidth={1.75} aria-hidden /> : <FolderOpen size={22} strokeWidth={1.75} aria-hidden />}
+                <FolderOpen size={22} strokeWidth={1.75} aria-hidden />
               </span>
             )}
           </span>

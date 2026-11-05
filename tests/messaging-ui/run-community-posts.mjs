@@ -382,22 +382,31 @@ await scenario("16. Başvuru sayfası = başvurulan içeriğin NORMAL detay sayf
   assert.equal(calls(db, "prompt_likes", "POST")[0].body.prompt_id, undefined);
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Ayrıntılı prompt", note: "Denemek isteyen olur" }); } });
 
-await scenario("16a. Başvuru sayfasında KAYDET: normal koleksiyon penceresi, kaydedilen şey gönderinin kendisi (community_post_id), içerik değil; yerel içerik değil", async ({ page, db }) => {
+await scenario("16a. Başvuru sayfasında KAYDET: bir dokunuş gönderinin KENDİSİNİ kaydeder (community_post_id, içerik değil); koleksiyona ekleme ayrı adım", async ({ page, db }) => {
   const p = db.posts[0];
   await page.goto(postPage(p.id));
   await page.locator("[data-community-post-page]").waitFor();
   const bar = page.locator("[data-detail-actions]", { has: page.getByRole("button", { name: "Paylaş" }) }).first();
   await bar.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().click();
-  await dlg(page).getByRole("button", { name: "Kaydet", exact: true }).waitFor();
-  await dlg(page).getByRole("checkbox").first().check();
-  await dlg(page).getByRole("button", { name: "Kaydet", exact: true }).click();
-  await page.waitForTimeout(400);
-  const added = calls(db, "collection_items", "POST");
-  assert.equal(added.length, 1);
+  await page.locator("[data-save-toast]").getByText("Kaydedildi.").waitFor();
+  const sys = db.collections.find((c) => c.is_default).id;
+  let added = calls(db, "collection_items", "POST");
+  assert.equal(added.length, 1, "kaydetmek tek yazma");
+  assert.equal(added[0].body.collection_id, sys, "yalnız Kaydedilenlerin tümü");
   assert.equal(added[0].body.community_post_id, p.id, "the POST is saved");
   assert.equal(added[0].body.prompt_id, undefined, "never the original content");
   assert.equal(db.posts[0].save_count, 1, "the post's OWN save counter");
-  await page.waitForTimeout(300);
+  // koleksiyona ekleme ayrı adım: bildirimdeki eylem pencereyi açar; sayaç artmaz (aynı kişi)
+  await page.locator("[data-save-toast-action]").click();
+  await dlg(page).getByRole("button", { name: "Kaydet", exact: true }).waitFor();
+  await dlg(page).getByRole("checkbox", { name: /Tasarım/ }).check();
+  await dlg(page).getByRole("button", { name: "Kaydet", exact: true }).click();
+  await page.waitForTimeout(400);
+  added = calls(db, "collection_items", "POST");
+  assert.equal(added.length, 2);
+  assert.equal(added[1].body.community_post_id, p.id);
+  assert.notEqual(added[1].body.collection_id, sys);
+  assert.equal(db.posts[0].save_count, 1, "koleksiyona eklemek kaydı tekrar saymaz");
   await bar.getByRole("button", { name: /koleksiyon|Kaydedildi|Kaydet/i }).first().getByText("1", { exact: true }).waitFor();
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Kaydedilecek", note: "n" }); } });
 

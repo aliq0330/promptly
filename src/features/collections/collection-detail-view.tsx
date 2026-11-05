@@ -13,7 +13,6 @@ import { BAND_PRIMARY_CLASS, BandActionRow, DetailShell } from "@/features/conte
 import { ContentGridColumns } from "@/features/content/content-card";
 import { ShareButton } from "@/features/prompts/share-button";
 import { Portal } from "@/components/ui/portal";
-import { refreshSaveState } from "@/features/prompts/use-save-state";
 import { CollectionFormModal } from "./collection-form-modal";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { CollectionFollowButton } from "./collection-follow-button";
@@ -41,10 +40,9 @@ import type { Collection } from "@/types";
  * needs its own extra access check, the query itself enforces it.
  *
  * A collection is one list among several: removing a work here takes it out
- * of THIS collection only — "Genel" is no exception — and it vanishes from
- * the list the moment the backend confirms, no refresh needed. Whether it is
- * still "saved" (and so still in "Kaydedilenler" with a filled bookmark)
- * depends only on whether another collection still holds it.
+ * of THIS collection only and it vanishes from the list the moment the backend
+ * confirms, no refresh needed. It stays saved ("Kaydedilenlerin tümü", filled
+ * bookmark) — only "Kaydedilenlerden kaldır" in the collection sheet unsaves.
  */
 export function CollectionDetailView() {
   const { t } = useTranslation();
@@ -97,9 +95,8 @@ export function CollectionDetailView() {
    * Calls the real backend removal FIRST and only on a confirmed success
    * splices the item out of local state — never optimistic. A failure leaves
    * the list as it was and shows an error instead of a false "removed".
-   * Same single-collection removal for every collection, default or custom,
-   * and every entry type; afterwards the shared bookmark state is re-read so
-   * a work that is now in no collection stops showing as saved elsewhere.
+   * Same single-collection removal for every collection and every entry
+   * type; the work stays saved, so the shared bookmark state is untouched.
    */
   async function handleRemoveItem(id: string, contentType: "prompt" | "workflow" | "preset" | "community_post") {
     if (!collection) return;
@@ -107,7 +104,6 @@ export function CollectionDetailView() {
     entries.removeItem(`${contentType}:${id}`);
     setCollection((prev) => (prev ? { ...prev, itemCount: Math.max(0, prev.itemCount - 1) } : prev));
     showToast(t("collection.removedFromCollectionToast"));
-    if (user) void refreshSaveState(id, contentType, user.id);
   }
 
   if (!id || (loaded && !collection)) {
@@ -165,6 +161,7 @@ export function CollectionDetailView() {
             emptyTitleKey="collection.emptyItemsTitle"
             emptyDescriptionKey="collection.emptyItemsDescription"
             removalFor={isOwner ? (entry) => ({ onRemove: () => handleRemoveItem(entry.data.id, entry.type) }) : undefined}
+            dropWhenUnsaved={isOwner}
             totalCount={collection.itemCount}
             footer={<LoadMore failed={entries.failed} hasMore={entries.hasMore} loadingMore={entries.loadingMore} onLoadMore={() => void entries.loadMore()} auto />}
           />

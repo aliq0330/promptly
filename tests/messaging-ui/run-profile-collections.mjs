@@ -12,9 +12,11 @@ const ONLY = process.env.ONLY ?? "";
 
 const COLLECTIONS = [
   { id: "c1000000-0000-4000-8000-000000000001", name: "Işık denemeleri", visibility: "public", item_count: 4, follower_count: 2, is_default: false },
-  { id: "c1000000-0000-4000-8000-000000000002", name: "Genel", visibility: "public", item_count: 9, follower_count: 0, is_default: true },
+  { id: "c1000000-0000-4000-8000-000000000002", name: "Genel", visibility: "public", item_count: 9, follower_count: 0, is_default: false },
   { id: "c1000000-0000-4000-8000-000000000003", name: "Gizli klasör", visibility: "private", item_count: 3, follower_count: 0, is_default: false },
   { id: "c1000000-0000-4000-8000-000000000004", name: "Boş koleksiyon", visibility: "public", item_count: 0, follower_count: 0, is_default: false },
+  // Sistem koleksiyonu ("Kaydedilenlerin tümü", docs/history/336-*): hiçbir koleksiyon listesinde çıkmamalı — istemci `is_default=false` ister.
+  { id: "c1000000-0000-4000-8000-000000000005", name: "Kaydedilenler", visibility: "private", item_count: 20, follower_count: 0, is_default: true },
 ];
 
 const PUBLIC_COLS = ["id", "username", "display_name", "avatar_url", "cover_url", "bio", "website", "follower_count", "following_count", "created_at", "interests"];
@@ -37,6 +39,7 @@ function withCollections(db, owner) {
       let list = COLLECTIONS;
       if (q.get("visibility") === "eq.public") list = list.filter((c) => c.visibility === "public");
       if (q.get("item_count") === "gt.0") list = list.filter((c) => c.item_count > 0);
+      if (q.get("is_default") === "eq.false") list = list.filter((c) => !c.is_default);
       if (q.get("id")) list = list.filter((c) => `eq.${c.id}` === q.get("id"));
       return rows(list.map((c) => ({ ...c, created_at: "2026-02-01T00:00:00Z", updated_at: "2026-02-01T00:00:00Z", profiles: pubOf(owner) })));
     }
@@ -203,6 +206,7 @@ await scenario("9. Kaydedilenler: 'Koleksiyonlarım' rafı kendi koleksiyonları
   await shelf.waitFor();
   const names = (await shelf.locator("a p.truncate").allTextContents()).map((x) => x.trim());
   for (const wanted of ["Işık denemeleri", "Genel", "Gizli klasör"]) assert.ok(names.includes(wanted), `${wanted}: ${names.join(" | ")}`);
+  assert.ok(!names.includes("Kaydedilenler"), `sistem koleksiyonu raf kartı değildir: ${names.join(" | ")}`);
   assert.match((await shelf.locator("a").first().getAttribute("href")) ?? "", /\/collections\/local\/?\?id=/);
   assert.equal(await overflowFree(page), true);
 });

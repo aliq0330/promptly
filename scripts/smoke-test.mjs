@@ -56,6 +56,7 @@ const CHECKS = [
   { name: "rpc group_unread_counts (grup okunmamış sayısı okuma anında, docs/history/258-*; yalnız oturumlu)", rpc: "group_unread_counts", body: { p_ids: [] }, deniedOk: true, soft: true },
   { name: "rpc feed_page_proven (Keşfet → Kanıtlanmış sıralaması, docs/history/307-*)", rpc: "feed_page_proven", body: { p_limit: 1 } },
   { name: "rpc discover_tool_counts", rpc: "discover_tool_counts", body: {} },
+  { name: "rpc unsave_content (Kaydedilenlerden kaldır, docs/history/336-*; yalnız oturumlu)", rpc: "unsave_content", body: { p_type: "prompt", p_id: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
   // Yalnız oturumlu kullanıcıya açık RPC (docs/history/250-*): ziyaretçiye 401/403 dönmesi "var ama kapalı" demektir; 404 "yok" demektir ve boru hattını durdurur.
   // Bildirim merkezi (docs/history/326-*): yalnız oturumlu RPC'ler (ziyaretçiye 401/403 = "var ama kapalı"; 404 = "yok" ve boru hattını durdurur).
   { name: "rpc notifications_grouped_page (gruplu bildirim kartları, docs/history/326-*; yalnız oturumlu)", rpc: "notifications_grouped_page", body: { p_limit: 1, p_before_at: null, p_before_key: null, p_category: null, p_unread_only: false, p_snoozed_only: false }, deniedOk: true, soft: true },

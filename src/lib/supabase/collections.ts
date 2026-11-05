@@ -7,7 +7,6 @@ import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import type { LikeableContentType } from "./likes";
-import { dedupeSavedEntries } from "@/lib/saved-selection";
 import { fetchCommunityPostsByIds, type CommunityPost } from "./communities";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. A community application post is saved as the POST itself (docs/history/184-*). */
@@ -41,6 +40,7 @@ export interface CollectionRow {
   visibility: "public" | "private";
   item_count: number;
   follower_count: number;
+  /** The per-user SYSTEM collection ("Kaydedilenlerin tümü", docs/history/336-*): never listed or edited as a collection. */
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -63,16 +63,7 @@ function mapCollectionRow(row: CollectionRow, coverImage: Collection["coverImage
     coverImage,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    isDefault: row.is_default,
   };
-}
-
-/** Default collection sorts first ("Genel" always leads the collection list), the rest stay newest-first. */
-function sortWithDefaultFirst(collections: Collection[]): Collection[] {
-  return [...collections].sort((a, b) => {
-    if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
 }
 
 /**
@@ -116,55 +107,39 @@ async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collect
   }
 }
 
-async function fetchOwnCollectionsRaw(userId: string): Promise<Collection[]> {
-  const { data, error } = await supabase
-    .from("collections")
-    .select(COLLECTION_SELECT)
-    .eq("owner_id", userId)
-    .order("created_at", { ascending: false });
-  if (error || !data) {
-    if (error) console.error("fetchOwnCollections", error);
-    return [];
-  }
-  const rows = data as unknown as CollectionRow[];
-  const covers = await fetchCovers(rows.map((row) => row.id));
-  return sortWithDefaultFirst(rows.map((row) => mapCollectionRow(row, covers.get(row.id) ?? null)));
-}
-
 /**
- * Every collection this user owns, "Genel" (default) always first — for the
- * profile "Kaydedilenler" tab and the save modal. Self-healing: every real
- * account gets its default collection at signup (`handle_new_user`) and
- * every pre-existing account was backfilled once (Bölüm 9.22's migration),
- * but if this list ever comes back with no default row anyway (a stray
- * account that predates both, or any other edge case), it calls the same
- * idempotent, unique-index-guarded RPC the signup trigger itself uses and
- * refetches once — it can never end up creating a second one, and a normal
- * page load where the default already exists never calls it at all.
+ * Every collection this user created, newest first — the save modal's list and the profile shelf. The per-user SYSTEM
+ * collection ("Kaydedilenlerin tümü", `is_default`) is NOT one of them: it is the saved area itself (`/saved`), has no
+ * name, visibility or deletion of its own, and is reached through `fetchSavedItemsPage`.
  */
 export async function fetchOwnCollections(userId: string): Promise<Collection[]> {
   try {
-    const rows = await fetchOwnCollectionsRaw(userId);
-    if (rows.some((c) => c.isDefault)) return rows;
-    try {
-      await supabase.rpc("get_or_create_own_default_collection");
-    } catch (err) {
-      console.error("fetchOwnCollections: self-heal", err);
-      return rows;
+    const { data, error } = await supabase
+      .from("collections")
+      .select(COLLECTION_SELECT)
+      .eq("owner_id", userId)
+      .eq("is_default", false)
+      .order("created_at", { ascending: false });
+    if (error || !data) {
+      if (error) console.error("fetchOwnCollections", error);
+      return [];
     }
-    return await fetchOwnCollectionsRaw(userId);
+    const rows = data as unknown as CollectionRow[];
+    const covers = await fetchCovers(rows.map((row) => row.id));
+    return rows.map((row) => mapCollectionRow(row, covers.get(row.id) ?? null));
   } catch (err) {
     console.error("fetchOwnCollections", err);
     return [];
   }
 }
 
-/** A single collection by id — RLS hides a private collection from anyone but its owner automatically, so a "not found" and "exists but private" both just resolve to null here (same honest ambiguity as fetchConversationForUser, Bölüm 21 Faz 6). */
+/** A single collection by id — RLS hides a private collection from anyone but its owner automatically, so a "not found" and "exists but private" both just resolve to null here (same honest ambiguity as fetchConversationForUser, Bölüm 21 Faz 6). The system "Kaydedilenlerin tümü" row is never a collection page (it resolves to null; its page is `/saved`). */
 export async function fetchCollectionById(id: string): Promise<Collection | null> {
   try {
     const { data, error } = await supabase.from("collections").select(COLLECTION_SELECT).eq("id", id).maybeSingle();
     if (error || !data) return null;
     const row = data as unknown as CollectionRow;
+    if (row.is_default) return null;
     const covers = await fetchCovers([row.id]);
     return mapCollectionRow(row, covers.get(row.id) ?? null);
   } catch (err) {
@@ -339,18 +314,19 @@ export const COLLECTION_PAGE = 24;
 export const collectionEntryKey = (entry: CollectionEntry) => `${entry.type}:${entry.data.id}`;
 
 /**
- * "Kaydedilenler": every distinct work in at least one of this user's own collections — "Genel" and the custom ones alike — newest save
- * first, one page at a time. It is a read over `collection_items`, the same rows `isPromptSaved` looks at, so the list and the bookmark
- * icon can't disagree. The owner filter is explicit because the select policy also exposes other people's public collections. A work held
- * by several collections is one entry (a repeat on a later page is dropped by the list's own de-duplication, `collectionEntryKey`).
+ * "Kaydedilenlerin tümü": every work the viewer saved, newest save first, one page at a time. It is the viewer's SYSTEM
+ * collection (`is_default`), which holds each saved work exactly once — a work in several collections is still one row
+ * here — and is a superset of all their collections (docs/history/336-*). The owner filter is explicit because the select
+ * policy also exposes other people's public collections.
  *
  * Unlike the per-collection fetch this THROWS on failure: a failed load must not look like "nothing saved".
  */
 export async function fetchSavedItemsPage(userId: string, offset = 0, limit = COLLECTION_PAGE): Promise<PagedResult<CollectionEntry>> {
   const { data, count, error } = await supabase
     .from("collection_items")
-    .select(`created_at, community_post_id, collections!inner ( owner_id ), prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
+    .select(`created_at, community_post_id, collections!inner ( owner_id, is_default ), prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
     .eq("collections.owner_id", userId)
+    .eq("collections.is_default", true)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .range(offset, offset + limit - 1);
@@ -359,17 +335,14 @@ export async function fetchSavedItemsPage(userId: string, offset = 0, limit = CO
     throw new Error(error.message);
   }
   const rows = (data ?? []) as unknown as CollectionItemRow[];
-  return { items: dedupeSavedEntries(mapCollectionItemRows(rows, await resolvePostEntries(rows))), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
+  return { items: mapCollectionItemRows(rows, await resolvePostEntries(rows)), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
 }
 
 /**
- * Whether this viewer saved a work — true iff it's a member of ANY of their
- * own collections (the default "Genel" one or a custom one), never decided by
- * a collection's name. This is the one definition of "saved": the bookmark
- * fill, "Kaydedilenler" (`fetchSavedItems`) and the save modal all read the
- * same `collection_items` rows. Leaving a single collection never unsaves
- * anything while another still holds the work. `contentType` defaults to
- * `"prompt"`.
+ * Whether this viewer saved a work — true iff it is in their SYSTEM collection ("Kaydedilenlerin tümü"). Saving is its
+ * own state, separate from collections: a saved work may be in no collection, and leaving every collection never unsaves
+ * it (docs/history/336-*). This is the one definition of "saved": the bookmark fill, `/saved` and the collection modal all
+ * read the same rows. `contentType` defaults to `"prompt"`.
  */
 export async function isPromptSaved(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<boolean> {
   return saveLookup(`${userId}|${contentType}`)(id);
@@ -381,8 +354,9 @@ const saveLookup = batcherRegistry((key) => {
   return async (ids) => {
     const { data, error } = await supabase
       .from("collection_items")
-      .select(`${column}, collections!inner ( owner_id )`)
+      .select(`${column}, collections!inner ( owner_id, is_default )`)
       .eq("collections.owner_id", userId)
+      .eq("collections.is_default", true)
       .in(column, ids);
     if (error || !data) return new Set();
     return new Set((data as unknown as Record<string, string>[]).map((row) => row[column]));
@@ -390,22 +364,77 @@ const saveLookup = batcherRegistry((key) => {
 });
 
 /**
- * Which of this user's own collections already contain this work — powers the
- * save modal's per-row state. THROWS on failure: an unknown membership must
- * never be read as "in no collection", or the modal would offer to save over
- * something it just failed to see.
+ * Which of this user's own (non-system) collections already contain this work — powers the collection modal's per-row
+ * ticks. THROWS on failure: an unknown membership must never be read as "in no collection", or the modal would offer to
+ * add over something it just failed to see.
  */
 export async function fetchCollectionIdsContaining(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<Set<string>> {
   const { data, error } = await supabase
     .from("collection_items")
-    .select("collection_id, collections!inner ( owner_id )")
+    .select("collection_id, collections!inner ( owner_id, is_default )")
     .eq(saveTargetColumn(contentType), id)
-    .eq("collections.owner_id", userId);
+    .eq("collections.owner_id", userId)
+    .eq("collections.is_default", false);
   if (error) {
     console.error("fetchCollectionIdsContaining", error);
     throw new Error(error.message);
   }
   return new Set(((data ?? []) as unknown as { collection_id: string }[]).map((row) => row.collection_id));
+}
+
+/** Like `isPromptSaved` but THROWS on failure, for the modal (an unknown state must not be read as "not saved"). */
+export async function fetchIsSaved(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("collection_items")
+    .select("id, collections!inner ( owner_id, is_default )")
+    .eq(saveTargetColumn(contentType), id)
+    .eq("collections.owner_id", userId)
+    .eq("collections.is_default", true)
+    .limit(1);
+  if (error) {
+    console.error("fetchIsSaved", error);
+    throw new Error(error.message);
+  }
+  return (data ?? []).length > 0;
+}
+
+/** The viewer's system collection id, found once per session (the row exists from signup; the RPC is the idempotent safety net for accounts that predate it). */
+const savedCollectionIds = new Map<string, Promise<string>>();
+async function savedCollectionId(userId: string): Promise<string> {
+  let pending = savedCollectionIds.get(userId);
+  if (!pending) {
+    pending = (async () => {
+      const { data, error } = await supabase.from("collections").select("id").eq("owner_id", userId).eq("is_default", true).maybeSingle();
+      if (error) throw new Error(error.message);
+      if (data?.id) return data.id as string;
+      const { data: created, error: rpcError } = await supabase.rpc("get_or_create_own_default_collection");
+      if (rpcError || !created) throw new Error(rpcError?.message ?? translateForRuntime("common.actionFailedRetry"));
+      return created as string;
+    })();
+    savedCollectionIds.set(userId, pending);
+    pending.catch(() => savedCollectionIds.delete(userId));
+  }
+  return pending;
+}
+
+/**
+ * Saves a work: puts it in the viewer's system collection ("Kaydedilenlerin tümü") and in NO other collection — adding it
+ * to collections is a separate step (`addItemToCollection`). Idempotent: the unique index turns a repeat into `23505`,
+ * which is success.
+ */
+export async function saveWork(userId: string, id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
+  const collectionId = await savedCollectionId(userId);
+  const { error } = await supabase.from("collection_items").insert({ collection_id: collectionId, [saveTargetColumn(contentType)]: id });
+  if (error && error.code !== "23505") throw new Error(error.message);
+}
+
+/**
+ * "Kaydedilenlerden kaldır": takes the work out of the saved area AND every one of the viewer's collections in one
+ * statement (`unsave_content`). A no-op when it wasn't saved. This is the only way a collection member stops being saved.
+ */
+export async function unsaveWork(id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
+  const { error } = await supabase.rpc("unsave_content", { p_type: contentType, p_id: id });
+  if (error) throw new Error(error.message);
 }
 
 export async function createCollection(
@@ -429,11 +458,10 @@ export async function createCollection(
     coverImage: null,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
-    isDefault: false,
   };
 }
 
-/** Renames/re-visibilities a real collection the caller owns — works identically for the default collection (Bölüm 9.22 §11: renaming "Genel" is allowed, its identity never depends on the name) or a custom one. Never sends `is_default` — the DB additionally rejects any attempt to change it outright (`collections_before_update` trigger), so this can't accidentally flip it even if a future edit ever tried to. */
+/** Renames/re-visibilities a real collection the caller owns. Never sends `is_default` — the DB additionally rejects any attempt to change it, and also rejects editing the system collection ("Kaydedilenlerin tümü") at all (`collections_before_update` trigger). */
 export async function updateCollection(
   collectionId: string,
   patch: { name: string; visibility: "public" | "private" },
@@ -445,21 +473,17 @@ export async function updateCollection(
   if (error) throw new Error(error.message);
 }
 
-/** Deletes a real, non-default collection the caller owns (RLS enforces ownership) — only removes the collection and its collection_items rows (on delete cascade); the prompts themselves, other collections, and the general "kaydedildi" state are never touched. The default ("Genel") collection can never be deleted — the `collections_before_delete` trigger rejects it with a clear message before the frontend even needs its own check (Bölüm 9.22 §12). */
+/** Deletes a collection the caller owns (RLS enforces ownership) — only removes the collection and its collection_items rows (on delete cascade); the works themselves stay saved ("Kaydedilenlerin tümü"), other collections are untouched. The system collection can never be deleted (the `collections_before_delete` trigger rejects it). */
 export async function deleteCollection(collectionId: string): Promise<void> {
   const { error } = await supabase.from("collections").delete().eq("id", collectionId);
   if (error) throw new Error(error.message);
 }
 
 /**
- * Adds a real item to a real collection the caller owns. This is the ONLY
- * way an item joins a collection (and so becomes "saved") — there is no
- * separate saves table; `prompt_saves` was dropped by migration
- * 20260919840000. Saved = in at least one collection, so adding to any
- * collection fills the bookmark; adding to a second one is just membership
- * in that additional collection. Idempotent: the unique index on
- * (collection_id, target) makes a concurrent or repeated add a no-op
- * (`23505`), not a failure. `contentType` defaults to `"prompt"`.
+ * Adds a work to a collection the caller owns. If the work isn't saved yet the database saves it too (the BEFORE INSERT
+ * trigger puts it in "Kaydedilenlerin tümü" first, so the work is always a saved work that is also in collections).
+ * Idempotent: the unique index on (collection_id, target) makes a concurrent or repeated add a no-op (`23505`), not a
+ * failure. `contentType` defaults to `"prompt"`.
  */
 export async function addItemToCollection(collectionId: string, id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
   const { error } = await supabase.from("collection_items").insert({ collection_id: collectionId, [saveTargetColumn(contentType)]: id });
@@ -467,12 +491,9 @@ export async function addItemToCollection(collectionId: string, id: string, cont
 }
 
 /**
- * Removes a work from exactly one collection and nothing else — never from
- * another collection, never from "Genel" unless that is the one named. If it
- * was the work's last membership the bookmark empties (saved = in at least one
- * collection); otherwise it stays filled. Deleting a row that is already gone
- * is a no-op, so a repeated or concurrent remove is harmless. RLS only lets
- * the collection's owner delete.
+ * Removes a work from exactly one collection and nothing else — never from another collection and never from the saved
+ * area: it stays saved. Deleting a row that is already gone is a no-op, so a repeated or concurrent remove is harmless.
+ * RLS only lets the collection's owner delete.
  */
 export async function removeFromCollection(collectionId: string, id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
   const { error } = await supabase.from("collection_items").delete().eq("collection_id", collectionId).eq(saveTargetColumn(contentType), id);

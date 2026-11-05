@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, FolderPlus, Loader2, Plus, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Bookmark, Check, FolderPlus, Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";
@@ -12,11 +11,13 @@ import {
   addItemToCollection,
   createCollection,
   fetchCollectionIdsContaining,
+  fetchIsSaved,
   fetchOwnCollections,
   removeFromCollection,
+  unsaveWork,
 } from "@/lib/supabase/collections";
 import type { LikeableContentType } from "@/lib/supabase/likes";
-import { applyMembershipResult, diffMembership, savedTransition } from "@/lib/saved-selection";
+import { applyMembershipResult, diffMembership, savedAfterCommit } from "@/lib/saved-selection";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. */
 type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset" | "community_post">;
@@ -27,21 +28,19 @@ import type { Collection } from "@/types";
 import { StorageBackground } from "@/components/ui/storage-media";
 
 /**
- * The one place a work's collection memberships are changed. Opened from the
- * bookmark both when it is empty ("save it somewhere") and when it is filled
- * ("where is it saved? take it out of some of them"); "saved" means the work
- * is in at least one of the viewer's collections, so the modal lists every
- * collection with a tick on the ones that hold it.
+ * "Koleksiyona ekle" — the one place a work's collection memberships are changed (docs/history/336-*). Saving and
+ * collections are separate: the bookmark saves a work on its own ("Kaydedilenlerin tümü"), and this sheet then files it
+ * into any number of the viewer's collections. Every collection is listed with a tick on the ones holding the work;
+ * leaving a collection only takes it out of that one, it stays saved. Adding an unsaved work to a collection saves it
+ * as well (the database does it). The only way to stop a work being saved is "Kaydedilenlerden kaldır" at the bottom:
+ * it removes the work from the saved area and from every collection.
  *
- * Ticks are a draft: nothing is written until "Kaydet", and closing the modal
- * any other way (Vazgeç, ✕, Escape, backdrop) changes nothing. Saving writes
- * only the collections whose tick actually changed — leaving one collection
- * never touches another. Each write is independent, so on a partial failure
- * the modal re-syncs to what really happened, keeps the failed rows as a
- * pending draft and says so, instead of claiming success. The bookmark is
- * told about the 0 ↔ 1+ memberships transition only (`onAdded`/`onRemoved`).
- * "+ Yeni koleksiyon oluştur" swaps this SAME modal's content to the create
- * form; the new collection (a real, explicit create) is ticked in the draft.
+ * Ticks are a draft: nothing is written until "Kaydet", and closing the modal any other way (Vazgeç, ✕, Escape,
+ * backdrop) changes nothing. Saving writes only the collections whose tick actually changed. Each write is
+ * independent, so on a partial failure the modal re-syncs to what really happened, keeps the failed rows as a pending
+ * draft and says so, instead of claiming success. The bookmark is told about unsaved → saved (`onAdded`) and
+ * "Kaydedilenlerden kaldır" (`onRemoved`) only. "+ Yeni koleksiyon oluştur" swaps this SAME modal's content to the
+ * create form; the new collection (a real, explicit create) is ticked in the draft.
  *
  * Pass exactly one of `promptId`/`workflowId`/`presetId`/`communityPostId`.
  */
@@ -59,9 +58,9 @@ export function SaveToCollectionModal({
   presetId?: string;
   communityPostId?: string;
   onClose: () => void;
-  /** Called when a save leaves the work in 1+ collections after it was in none — lets the caller (SaveButton) fill the bookmark without waiting for a refetch. */
+  /** Called when adding to a collection saved a work that was not saved yet — lets the caller (SaveButton) fill the bookmark without waiting for a refetch. */
   onAdded?: () => void;
-  /** Called when a save leaves the work in no collection after it was in 1+ — empties the bookmark without a refetch. */
+  /** Called after "Kaydedilenlerden kaldır" — empties the bookmark without a refetch. */
   onRemoved?: () => void;
 }) {
   const { t } = useTranslation();
@@ -73,15 +72,18 @@ export function SaveToCollectionModal({
 
   const [view, setView] = useState<"list" | "create">("list");
   const [collections, setCollections] = useState<Collection[]>([]);
-  /** What the database holds for this work right now (as last read or confirmed by a write). */
+  /** Whether the work is saved at all ("Kaydedilenlerin tümü"), as last read or confirmed by a write. */
+  const [isSaved, setIsSaved] = useState(false);
+  /** The collections the database holds the work in right now (as last read or confirmed by a write). */
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   /** The draft: what the ticks currently say. */
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmingUnsave, setConfirmingUnsave] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** The bookmark state the parent last heard about — so each commit reports a transition at most once. */
+  /** The saved state the parent last heard about — so each commit reports a transition at most once. */
   const reportedSavedRef = useRef(false);
   const savingRef = useRef(false);
 
@@ -94,13 +96,14 @@ export function SaveToCollectionModal({
     }
     setLoading(true);
     setLoadFailed(false);
-    Promise.all([fetchOwnCollections(user.id), fetchCollectionIdsContaining(contentId, user.id, contentType)])
-      .then(([ownCollections, ids]) => {
+    Promise.all([fetchOwnCollections(user.id), fetchCollectionIdsContaining(contentId, user.id, contentType), fetchIsSaved(contentId, user.id, contentType)])
+      .then(([ownCollections, ids, saved]) => {
         if (cancelled) return;
         setCollections(ownCollections);
         setSavedIds(ids);
         setSelectedIds(new Set(ids));
-        reportedSavedRef.current = ids.size > 0;
+        setIsSaved(saved);
+        reportedSavedRef.current = saved;
       })
       .catch(() => {
         if (!cancelled) setLoadFailed(true);
@@ -115,11 +118,11 @@ export function SaveToCollectionModal({
 
   const { add, remove } = diffMembership(savedIds, selectedIds);
   const isDirty = add.length > 0 || remove.length > 0;
-  const wasSaved = savedIds.size > 0;
 
   function handleToggle(collectionId: string) {
     if (saving) return;
     setError(null);
+    setConfirmingUnsave(false);
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(collectionId)) next.delete(collectionId);
@@ -171,11 +174,11 @@ export function SaveToCollectionModal({
       })),
     );
 
-    const transition = savedTransition(reportedSavedRef.current, nextSaved.size);
-    if (transition) {
-      reportedSavedRef.current = nextSaved.size > 0;
-      if (transition === "saved") onAdded?.();
-      else onRemoved?.();
+    // Adding an unsaved work to a collection saved it too; removing from collections never changes the saved state.
+    if (savedAfterCommit(reportedSavedRef.current, appliedAdd.length)) {
+      reportedSavedRef.current = true;
+      setIsSaved(true);
+      onAdded?.();
     }
 
     savingRef.current = false;
@@ -185,6 +188,31 @@ export function SaveToCollectionModal({
       return;
     }
     onClose();
+  }
+
+  /** "Kaydedilenlerden kaldır": two taps (the second confirms), then the work leaves the saved area and every collection. */
+  async function handleUnsave() {
+    if (!user || savingRef.current) return;
+    if (!confirmingUnsave) {
+      setConfirmingUnsave(true);
+      return;
+    }
+    savingRef.current = true;
+    setSaving(true);
+    setError(null);
+    try {
+      await unsaveWork(contentId, contentType);
+      reportedSavedRef.current = false;
+      onRemoved?.();
+      savingRef.current = false;
+      setSaving(false);
+      onClose();
+    } catch (err) {
+      savingRef.current = false;
+      setSaving(false);
+      setConfirmingUnsave(false);
+      setError(err instanceof Error && err.message ? err.message : t("common.actionFailedRetry"));
+    }
   }
 
   /** Closing discards the draft, but never while a write is in flight (it would hide a failure). */
@@ -209,10 +237,10 @@ export function SaveToCollectionModal({
         <div className="flex items-start justify-between gap-2">
           <div>
             <h2 id="save-modal-title" className="text-base font-semibold text-text">
-              {view === "create" ? t("collection.createNewTitle") : wasSaved ? t("collection.manageTitle") : t("common.save")}
+              {view === "create" ? t("collection.createNewTitle") : t("collection.addToTitle")}
             </h2>
             {view === "list" && (
-              <p className="text-xs text-text-muted">{wasSaved ? t("collection.manageHint") : t("collection.pickToSaveHint")}</p>
+              <p className="text-xs text-text-muted">{isSaved ? t("collection.manageHint") : t("collection.pickToSaveHint")}</p>
             )}
           </div>
           <button type="button" onClick={requestClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
@@ -258,11 +286,6 @@ export function SaveToCollectionModal({
                       <span className="min-w-0 flex-1">
                         <span className="flex min-w-0 items-center gap-1.5">
                           <span className="block truncate text-sm font-medium text-text">{collection.name}</span>
-                          {collection.isDefault && (
-                            <Badge variant="accent" className="shrink-0">
-                              {t("collection.defaultBadge")}
-                            </Badge>
-                          )}
                         </span>
                         <span className="text-xs text-text-muted">{t("collection.itemCount", { count: collection.itemCount })}</span>
                       </span>
@@ -290,6 +313,22 @@ export function SaveToCollectionModal({
               <Plus size={16} />
               {t("collection.createNewTitle")}
             </button>
+
+            {isSaved && !loading && !loadFailed && (
+              <button
+                type="button"
+                onClick={handleUnsave}
+                disabled={saving}
+                data-unsave-button=""
+                className={cn(
+                  "mt-2 flex w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-medium transition-colors disabled:opacity-50",
+                  confirmingUnsave ? "bg-danger text-white" : "text-danger hover:bg-surface-soft",
+                )}
+              >
+                <Bookmark size={16} />
+                {confirmingUnsave ? t("collection.removeFromSavedConfirm") : t("collection.removeFromSaved")}
+              </button>
+            )}
 
             <div className="mt-3 flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={requestClose} disabled={saving}>
