@@ -47,6 +47,29 @@ export function summarizeWorks(yes: number, no: number): WorksSummary {
   return { total, percent, tier: proven ? "proven" : "mixed" };
 }
 
+export type WorksInviteEmphasis = "strong" | "soft";
+export type WorksInviteAction = "comment" | "result";
+
+export interface WorksInvitePlan {
+  /** `strong`: kutu doğrudan açılır ve belirgindir ("Çalışmadı" — yaratıcı için en değerli bilgi); `soft`: tek satır + düğmeler. */
+  emphasis: WorksInviteEmphasis;
+  /** Sonuç paylaşma önerisi var mı (başarısız çıktı sonuç olarak yayınlatılmaz → yalnız "çalıştı" için). */
+  offerResult: boolean;
+  /** Öne çıkan seçenek: görsel/video/ses promptlarında sonuç, metin promptlarında yorum (sonuç görsel kanıttır). */
+  primary: WorksInviteAction;
+  /** Yorum kutusu davet açılır açılmaz açık mı. */
+  commentOpen: boolean;
+}
+
+/**
+ * Oy verildikten hemen sonra gösterilen isteğe bağlı davetin biçimi (docs/history/341-*). Oyun kendisi tek dokunuş ve tek doğruluk kaynağıdır;
+ * bu yalnız "nedenini/çıktını göster" önerisidir ve hiçbir şeyi zorunlu kılmaz.
+ */
+export function worksInvitePlan(vote: boolean, contentType: string | null | undefined): WorksInvitePlan {
+  if (!vote) return { emphasis: "strong", offerResult: false, primary: "comment", commentOpen: true };
+  return { emphasis: "soft", offerResult: true, primary: contentType === "text" ? "comment" : "result", commentOpen: false };
+}
+
 /**
  * İyimser güncelleme: `vote` (true/false) verilir, aynı oy tekrar verilirse GERİ ALINIR (null). Girdiyi değiştirmez.
  * Sunucu cevabı gelince gerçek sayılarla değiştirilir.

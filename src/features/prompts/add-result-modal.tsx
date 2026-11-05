@@ -1,7 +1,7 @@
 "use client";
 
 import { imageSourceProblem } from "@/lib/image-processing";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
@@ -12,6 +12,9 @@ import {
 } from "@/lib/prompt-result-media";
 import { createPromptResult } from "@/lib/supabase/prompt-results";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import type { WorksState } from "@/lib/prompt-works";
+import { fetchPromptWorks, setPromptWorks } from "@/lib/supabase/prompt-works";
+import { publishWorksVote } from "./works-badges";
 import type { PromptResultMediaType } from "@/types";
 
 type Mode = "file" | "text";
@@ -85,6 +88,20 @@ export function AddResultModal({
   const [modifiedPromptText, setModifiedPromptText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Çalıştı mı?" (docs/history/341-*): sonuç paylaşan henüz oy vermediyse ve oy verebiliyorsa (promptu kopyalamış) "Çalıştı olarak da işaretle" önerilir.
+  // Kutu BOŞ başlar, kendiliğinden oy atılmaz; oy zaten varsa yalnız "sonucunla birlikte görünür" notu çıkar.
+  const [works, setWorks] = useState<WorksState | null>(null);
+  const [markWorked, setMarkWorked] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchPromptWorks(target.promptId).then((next) => {
+      if (!cancelled) setWorks(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [target.promptId]);
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const picked = event.target.files?.[0] ?? null;
@@ -143,6 +160,15 @@ export function AddResultModal({
         },
         user.id,
       );
+      // Sonuç paylaşıldı; oy işareti ikinci, bağımsız bir adımdır — başarısız olursa sonucu bozmaz.
+      if (markWorked && works?.canVote && works.myVote === null) {
+        try {
+          await setPromptWorks(target.promptId, true);
+          publishWorksVote(target.promptId, user.id, true);
+        } catch (voteError) {
+          console.error("result: works vote", voteError);
+        }
+      }
       onAdded();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("result.shareFailed"));
@@ -348,6 +374,21 @@ export function AddResultModal({
               )}
             </>
           }
+
+          {works?.myVote === null && works.canVote && (
+            <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border-soft bg-surface-soft p-3" data-works-mark>
+              <input type="checkbox" checked={markWorked} onChange={(event) => setMarkWorked(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-primary" />
+              <span className="space-y-0.5">
+                <span className="block text-sm font-medium text-text">{t("result.markWorked")}</span>
+                <span className="block text-xs text-text-muted">{t("result.markWorkedHint")}</span>
+              </span>
+            </label>
+          )}
+          {works && works.myVote !== null && (
+            <p className="text-xs text-text-muted" data-works-shown>
+              {works.myVote ? t("result.worksShownYes") : t("result.worksShownNo")}
+            </p>
+          )}
 
           {error && <p className="text-sm text-danger">{error}</p>}
 

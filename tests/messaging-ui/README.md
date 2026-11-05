@@ -348,3 +348,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-message-dock
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-presence.mjs   # 25/25 beklenir
 ```
+
+## "Çalıştı mı?" rozeti + oydan sonra davet (`docs/history/341-*`)
+
+`run-works-badges.mjs` (14 senaryo): oydan sonra isteğe bağlı davet ("Çalışmadı" = belirgin yorum kutusu ve sonuç önerisi YOK, "Çalıştı" = sönük + "Sonucunu paylaş" öne çıkar, "Şimdi değil"/geri alma daveti kapatır, oy durur), yazılan yorumun yeniden yüklemeden listeye eklenmesi ve yazarın oyunun rozet olarak yanında durması, yorumlarda ✓/✗ rozeti (oy vermemişte yok; TEK toplu `prompt_works_for_users` çağrısı), ziyaretçi de görür, kendi oyum rozeti anında değiştirir/kaldırır, sonuç kartında rozet, sonuç penceresinde BOŞ gelen "Çalıştı olarak da işaretle" kutusu (işaretlenince `set_prompt_works(true)`, işaretlenmezse oy yazılmaz; oy varsa not, oy veremeyende hiçbiri), rozet okuması 500 verirse sessiz kalır, İngilizce, 390 px taşma yok. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ — gizlilik/erişim kuralları `supabase/tests/prompt-works-for-users.sql`'dedir.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-works-badges.mjs   # 14/14 beklenir
+```
