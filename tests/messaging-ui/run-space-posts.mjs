@@ -213,9 +213,11 @@ await scenario("4. Sahip: Paylaş tek pencere — 'Akışta paylaş' anahtarı; 
   // Alıntıla satırında akış hedefi yok (yönetim yukarıdaki anahtarda); yalnız topluluklar.
   await page.locator("[data-quote-section]").waitFor();
   await page.locator("[data-quote-section] button").first().click();
-  await page.waitForTimeout(200);
-  assert.equal(await page.locator('[data-quote-section] [data-quote-destination="feed"]').count(), 0);
+  await page.locator("[data-quote-popup]").waitFor();
+  assert.equal(await page.locator('[data-quote-popup] [data-quote-destination="feed"]').count(), 0);
   await shot(page, "sp-share-modal");
+  await page.keyboard.press("Escape");
+  await page.locator("[data-quote-popup]").waitFor({ state: "detached" });
   // Kapatınca alıntı silinir.
   await toggle.click();
   end = Date.now() + 4000;
@@ -255,8 +257,17 @@ await scenario("5. Oluştur menüsü: 'Space' karosu Spaces'te oluşturma pencer
   await page.getByRole("tab", { name: "Space" }).click().catch(() => page.getByRole("button", { name: "Space", exact: true }).click());
   await page.locator("[data-share-existing-item]").first().waitFor();
   await page.locator("[data-share-existing-item]").first().click();
-  await page.locator("[data-share-existing] [data-quote-section]").waitFor();
+  // Seçim Alıntıla formunu listenin ÜSTÜNDE ikinci bir pencerede açar; liste aşağı kaydırılmaz (docs/history/338-*).
+  await page.locator("[data-quote-popup]").waitFor();
+  await shot(page, "sp-existing-popup");
+  assert.equal(await page.locator("[data-share-existing] [data-quote-section]").count(), 0);
   assert.equal(await overflowFree(page), true);
+  await page.keyboard.press("Escape");
+  await page.locator("[data-quote-popup]").waitFor({ state: "detached" });
+  await page.locator("[data-share-existing]").waitFor();
+  assert.equal(await page.locator("[data-share-existing-item] input:checked").count(), 1, "seçim pencere kapanınca korunur");
+  await page.locator("[data-share-existing-item]").first().click();
+  await page.locator("[data-quote-popup]").waitFor();
 });
 
 await scenario("6. Genel akış: alıntılanmış içeriğin kartında 'X topluluğunda alıntılandı' çipi YOK ve topluluk gönderisi sorgusu yapılmaz (docs/history/278-*)", async ({ page, state }) => {

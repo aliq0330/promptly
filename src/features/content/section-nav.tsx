@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useState, type ReactNode } from "react";
 import { SlidersHorizontal, type LucideIcon } from "lucide-react";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { ListFilterSheet } from "@/features/content/list-toolbar";
@@ -13,60 +13,34 @@ export interface SectionNavItem<K extends string> {
   key: K;
   label: string;
   icon: LucideIcon;
-  /** Something waiting there (Topluluklar' invitations): a small count on the tile and on the folded bar's icon. */
+  /** Something waiting there (Topluluklar' invitations): a small count on the tile. */
   count?: number;
   /** `variant="menu"`: a divider line before this row (a new group of the menu). */
   dividerBefore?: boolean;
 }
 
 /**
- * The count badge of a tile or of a folded-bar icon. It comes AFTER the label in the DOM (the tab is read as "Davetler 3"),
- * placed over the icon's top-right corner: on a tile from the tile's centre (the icon is centred, at most 60px wide; the tile
- * row leaves room above it), on the folded bar `inside` the button's corner (that row scrolls sideways and would clip it).
+ * The count badge of a tile. It comes AFTER the label in the DOM (the tab is read as "Davetler 3"),
+ * placed over the icon's top-right corner: from the tile's centre (the icon is centred, at most 60px wide; the tile
+ * row leaves room above it).
  */
-function CountBadge({ count, inside }: { count: number; inside?: boolean }) {
+function CountBadge({ count }: { count: number }) {
   return (
     <span
       data-section-count=""
-      className={cn(
-        "pointer-events-none absolute flex items-center justify-center rounded-full bg-primary font-bold leading-none text-primary-foreground ring-2 ring-background",
-        inside ? "right-0 top-0 h-4 min-w-4 px-0.5 text-[0.625rem]" : "-top-1.5 left-[calc(50%+1.125rem)] h-5 min-w-5 px-1 text-[0.6875rem]",
-      )}
+      className="pointer-events-none absolute -top-1.5 left-[calc(50%+1.125rem)] flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-bold leading-none text-primary-foreground ring-2 ring-background"
     >
       {count > 99 ? "99+" : count}
     </span>
   );
 }
 
-/** Clears the 4rem header (`Header`, h-16): the tiles count as "scrolled away" once they are above it. */
-const HEADER_OFFSET = 64;
-
-/**
- * true once `ref`'s element has scrolled up out of view (under the header). No React work while scrolling: the
- * observer only fires when the element crosses the edge.
- */
-function useScrolledPast(ref: RefObject<HTMLElement | null>): boolean {
-  const [past, setPast] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(([entry]) => setPast(!entry.isIntersecting && entry.boundingClientRect.top < 0), {
-      rootMargin: `-${HEADER_OFFSET}px 0px 0px 0px`,
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [ref]);
-  return past;
-}
-
 /**
  * Home's and Keşfet's section switcher (docs/history/207-*, the "Bölüm balonları" design): big rounded-square tiles
  * (icon + name, the chosen one dark) with the list controls — sort, Filtre — in one calm row under
  * them. `variant="tabs"` (docs/history/227-*, used by Home and Keşfet) swaps the tiles for ONE row of underlined text tabs
- * so the first post starts higher. Once the tiles scroll away they fold into ONE 52px bar pinned under the header (in its place while the header
- * is hidden, `[data-sticky-under-header]`): the chosen section as a labelled pill, the others as icons, Filtre and the
- * view toggle at the end. Render it as a direct child of the TALL container (the page / feed section): the bar is a
- * zero-height `sticky` element, so its containing block must reach the end of the list.
+ * so the first post starts higher. Nothing is pinned while scrolling (docs/history/338-*: the folded 52px bar that used to hang under the header was removed) —
+ * the switcher scrolls away with the page.
  */
 export function SectionNav<K extends string>({
   items,
@@ -118,8 +92,6 @@ export function SectionNav<K extends string>({
 }) {
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const blockRef = useRef<HTMLDivElement>(null);
-  const folded = useScrolledPast(blockRef);
 
   const totalActive = activeCount + desktopActiveExtra;
   const filterLabel = activeCount > 0 ? t("toolbar.filterWithCount", { count: activeCount }) : t("toolbar.filter");
@@ -154,9 +126,7 @@ export function SectionNav<K extends string>({
 
   return (
     <>
-      <FoldedBar items={items} active={active} onChange={onChange} ariaLabel={ariaLabel} visible={folded} actions={hideControls ? null : filterButton} />
-
-      <div ref={blockRef} className="space-y-3">
+      <div className="space-y-3">
         {variant === "menu" ? (
           <div className="flex min-w-0 items-center gap-1.5">
             <SectionMenu
@@ -332,72 +302,6 @@ function SectionTabs<K extends string>({
         })}
       </ScrollRow>
       {end && <div className="flex shrink-0 items-center gap-0.5 pl-1">{end}</div>}
-    </div>
-  );
-}
-
-/** The folded state: a zero-height sticky anchor whose absolutely positioned bar hangs below the header (or the screen's top once the header slid away). */
-function FoldedBar<K extends string>({
-  items,
-  active,
-  onChange,
-  ariaLabel,
-  visible,
-  actions,
-}: {
-  items: SectionNavItem<K>[];
-  active: K;
-  onChange: (key: K) => void;
-  ariaLabel: string;
-  visible: boolean;
-  actions: ReactNode;
-}) {
-  const rowRef = useRef<HTMLElement>(null);
-  // The chosen pill can sit beyond the edge of a scrolling row (Keşfet's last sections): bring it into view whenever it changes or the bar appears.
-  useLayoutEffect(() => {
-    const row = rowRef.current;
-    const chosen = row?.querySelector<HTMLElement>('[aria-pressed="true"]');
-    if (row && chosen) row.scrollLeft = Math.max(0, chosen.offsetLeft - 8);
-  }, [active, visible]);
-
-  return (
-    // `margin: 0` inline: a `space-y-*` parent must not add a gap around this zero-height element.
-    <div data-sticky-under-header style={{ margin: 0 }} className="sticky z-20 h-0">
-      <div
-        inert={!visible}
-        className={cn(
-          "absolute -inset-x-3 top-0 flex h-[3.25rem] items-center gap-2 border-b border-border-soft bg-background/90 px-3 backdrop-blur-xl backdrop-saturate-150 sm:inset-x-0 sm:px-0",
-          "transition-[opacity,transform] duration-300 ease-soft",
-          visible ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0",
-        )}
-      >
-        <ScrollRow ref={rowRef} role="group" aria-label={ariaLabel} wrapperClassName="flex-1" className="relative items-center gap-1.5">
-          {items.map((item) => {
-            const Icon = item.icon;
-            const selected = item.key === active;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                aria-pressed={selected}
-                aria-label={item.label}
-                title={item.label}
-                onClick={() => onChange(item.key)}
-                className={cn(
-                  "relative inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full text-label font-semibold whitespace-nowrap",
-                  "transition-[background-color,color,padding] duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
-                  selected ? "bg-text pl-3 pr-4 text-background" : "w-10 bg-surface-soft text-text-secondary hover:bg-border-soft hover:text-text",
-                )}
-              >
-                <Icon size={16} strokeWidth={1.9} aria-hidden />
-                {selected && item.label}
-                {item.count ? <CountBadge count={item.count} inside /> : null}
-              </button>
-            );
-          })}
-        </ScrollRow>
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
-      </div>
     </div>
   );
 }
