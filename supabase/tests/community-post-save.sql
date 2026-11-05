@@ -195,7 +195,13 @@ set role authenticated;
 select public._as_user(:dave);
 delete from public.collections where id = 'c3000000-0000-4000-8000-000000000001';
 reset role;
-select public._check(24, 'tek koleksiyonu silinen kullanıcı için sayaç düşer (2 → 1)', (select save_count from public.community_posts where id = public._g('WA')) = 1);
+-- 336: koleksiyonu silmek kaydı silmez (içerik "Kaydedilenlerin tümü"nde kalır) → sayaç düşmez; kaydı kaldırınca düşer.
+select public._check(24, 'tek koleksiyonu silinen kullanıcının kaydı sürer, sayaç düşmez (2)', (select save_count from public.community_posts where id = public._g('WA')) = 2);
+set role authenticated;
+select public._as_user(:dave);
+select public.unsave_content('community_post', public._g('WA'));
+reset role;
+select public._check(25, 'Kaydedilenlerden kaldırınca sayaç düşer (2 → 1)', (select save_count from public.community_posts where id = public._g('WA')) = 1);
 set role authenticated;
 select public._as_user(:bobby);
 select public.delete_community_post(public._g('WA'));

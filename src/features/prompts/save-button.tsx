@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bookmark } from "lucide-react";
-import { Portal } from "@/components/ui/portal";
 import { formatCount } from "@/lib/utils";
 import { BookmarkIcon } from "@/components/ui/motion-icons";
 import { contentActionClassName } from "@/features/content/action-styles";
@@ -10,15 +9,13 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useSaveState } from "./use-save-state";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
+import { SaveFeedbackToast } from "./save-feedback-toast";
 
 /**
- * Kaydet — the bookmark always opens the same collection picker
- * (`SaveToCollectionModal`): empty → "pick where to save it", filled → "it is
- * in these collections, untick the ones to leave". A filled bookmark never
- * removes anything by itself — saved means "in at least one collection", so
- * un-saving is the user taking it out of every collection, one explicit
- * choice at a time. The bookmark empties only when the modal reports that no
- * collection holds the work any more.
+ * Kaydet (docs/history/336-*) — saving and collections are separate. An empty bookmark SAVES the work with one tap
+ * ("Kaydedilenlerin tümü") and offers "Koleksiyona ekle" in a toast; a filled bookmark opens the collection sheet
+ * (`SaveToCollectionModal`: tick collections, create one, or "Kaydedilenlerden kaldır"). A filled bookmark never
+ * removes anything by itself.
  *
  * Pass exactly one of `promptId` (mirrors `PostMenu`'s/
  * `CommentCountLink`'s established pattern) — workflows and presets use this
@@ -47,11 +44,11 @@ export function SaveButton({
   const { requireAuth } = useAuthPrompt();
   const id = (communityPostId ?? presetId ?? workflowId ?? promptId)!;
   const contentType = communityPostId ? "community_post" : presetId ? "preset" : workflowId ? "workflow" : "prompt";
-  const { isSaved, saveCount: count, markSaved, markUnsaved, canSave } = useSaveState(id, contentType, saveCount);
+  const { isSaved, saveCount: count, markSaved, markUnsaved, quickSave, saving, canSave } = useSaveState(id, contentType, saveCount);
   const [modalOpen, setModalOpen] = useState(false);
   // Counted on the viewer's own save/unsave, never on the async "is it saved?" answer arriving.
   const [popSeq, setPopSeq] = useState(0);
-  const [showRemovedToast, setShowRemovedToast] = useState(false);
+  const [toast, setToast] = useState<{ kind: "saved" | "removed" | "failed" } | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -82,16 +79,27 @@ export function SaveButton({
     );
   }
 
-  function handleClick(event: React.MouseEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    setModalOpen(true);
+  function showToast(kind: "saved" | "removed" | "failed") {
+    setToast({ kind });
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setToast(null), kind === "saved" ? 4500 : 2200);
   }
 
-  function showRemoved() {
-    setShowRemovedToast(true);
-    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    toastTimeoutRef.current = setTimeout(() => setShowRemovedToast(false), 2200);
+  async function handleClick(event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    // Saved → the collection sheet. Not saved → save right away; filing it into collections is the toast's "Koleksiyona ekle".
+    if (isSaved) {
+      setModalOpen(true);
+      return;
+    }
+    if (saving) return;
+    if (await quickSave()) {
+      setPopSeq((n) => n + 1);
+      showToast("saved");
+    } else {
+      showToast("failed");
+    }
   }
 
   return (
@@ -100,9 +108,9 @@ export function SaveButton({
         type="button"
         onClick={handleClick}
         aria-pressed={isSaved}
-        aria-haspopup="dialog"
-        title={isSaved ? t("prompt.manageSaved") : t("prompt.addToCollection")}
-        aria-label={isSaved ? t("prompt.manageSaved") : t("prompt.saveAria", { count })}
+        aria-haspopup={isSaved ? "dialog" : undefined}
+        title={isSaved ? t("prompt.addToCollection") : t("common.save")}
+        aria-label={isSaved ? t("prompt.addToCollection") : t("prompt.saveAria", { count })}
         className={sharedClassName}
       >
         <BookmarkIcon filled={isSaved} popSeq={popSeq} size={size} strokeWidth={1.75} />
@@ -119,22 +127,24 @@ export function SaveButton({
           }}
           onRemoved={() => {
             markUnsaved();
-            showRemoved();
+            showToast("removed");
           }}
         />
       )}
 
-      {showRemovedToast && (
-        <Portal>
-          <div
-            role="status"
-            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-6"
-          >
-            <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">
-              {t("prompt.removedFromSavedToast")}
-            </div>
-          </div>
-        </Portal>
+      {toast && (
+        <SaveFeedbackToast
+          message={toast.kind === "saved" ? t("prompt.savedToast") : toast.kind === "removed" ? t("prompt.removedFromSavedToast") : t("common.actionFailedRetry")}
+          actionLabel={toast.kind === "saved" ? t("prompt.addToCollection") : undefined}
+          onAction={
+            toast.kind === "saved"
+              ? () => {
+                  setToast(null);
+                  setModalOpen(true);
+                }
+              : undefined
+          }
+        />
       )}
     </>
   );

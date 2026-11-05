@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bookmark, FolderOpen, Globe, Lock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { FolderOpen, Globe, Lock } from "lucide-react";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { cn, collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -35,14 +34,7 @@ export function CollectionCard({
           <div className="relative space-y-2.5">
             <CollectionCover collection={collection} className="aspect-[4/3] w-full overflow-hidden rounded-lg shadow-pop" />
             <div className="min-w-0 space-y-0.5 px-1">
-              <div className="flex min-w-0 items-center gap-1.5">
-                <p className="truncate font-display text-[1.0625rem] font-extrabold leading-tight tracking-[-0.015em] text-text">{collection.name}</p>
-                {collection.isDefault && (
-                  <Badge variant="default" className="shrink-0">
-                    {t("collection.defaultBadge")}
-                  </Badge>
-                )}
-              </div>
+              <p className="truncate font-display text-[1.0625rem] font-extrabold leading-tight tracking-[-0.015em] text-text">{collection.name}</p>
             </div>
           </div>
         </div>
@@ -79,7 +71,7 @@ export function CollectionCover({ collection, className }: { collection: Collect
   return (
     <div className={cn("flex items-center justify-center bg-surface-soft text-primary", className)}>
       <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary-soft">
-        {collection.isDefault ? <Bookmark size={22} strokeWidth={1.75} /> : <FolderOpen size={22} strokeWidth={1.75} />}
+        <FolderOpen size={22} strokeWidth={1.75} />
       </span>
     </div>
   );

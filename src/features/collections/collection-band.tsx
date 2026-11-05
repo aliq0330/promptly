@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Bookmark, FolderOpen } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { StorageImage } from "@/components/ui/storage-media";
 import { CollageArt, DetailBand, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import type { CollectionEntry } from "@/lib/supabase/collections";
@@ -34,14 +33,11 @@ export function CollectionBand({ collection, items }: { collection: Collection; 
     <DetailBand
       data-collection-band=""
       backdrop={images[0] ? <StorageImage src={images[0].url} alt="" fill sizes="100vw" className="object-cover" /> : undefined}
-      art={<CollageArt images={images} icon={collection.isDefault ? Bookmark : FolderOpen} data-collection-art={String(images.length)} />}
+      art={<CollageArt images={images} icon={FolderOpen} data-collection-art={String(images.length)} />}
       kicker={
-        <div className="flex flex-wrap items-center gap-2">
-          <Eyebrow tone="primary">
-            {t("collection.kicker")} · {collection.visibility === "public" ? t("collection.visibilityPublicShort") : t("collection.visibilityPrivateShort")}
-          </Eyebrow>
-          {collection.isDefault && <Badge variant="default">{t("collection.defaultBadge")}</Badge>}
-        </div>
+        <Eyebrow tone="primary">
+          {t("collection.kicker")} · {collection.visibility === "public" ? t("collection.visibilityPublicShort") : t("collection.visibilityPrivateShort")}
+        </Eyebrow>
       }
       title={<DetailTitle>{collection.name}</DetailTitle>}
       byline={

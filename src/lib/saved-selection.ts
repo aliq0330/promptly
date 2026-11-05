@@ -1,7 +1,9 @@
 /**
- * Pure rules behind "Kaydedilenler" and the collection picker. A work counts
- * as saved while it sits in at least one of the viewer's own collections;
- * these helpers hold the parts of that rule that don't need a network.
+ * Pure rules behind the collection picker. Saving and collections are separate
+ * (docs/history/336-*): a work is "saved" when it is in the viewer's system
+ * collection ("Kaydedilenlerin tümü"); collections are an extra layer on top
+ * and leaving them never unsaves anything. These helpers hold the parts of the
+ * picker's rules that don't need a network.
  */
 
 /** Which collections to add the work to / remove it from so that `initial` becomes `selected`. */
@@ -27,26 +29,10 @@ export function applyMembershipResult(
   return next;
 }
 
-/** Whether the bookmark flips: saved = member of at least one collection. `null` = no change. */
-export function savedTransition(wasSaved: boolean, memberCount: number): "saved" | "unsaved" | null {
-  const isSaved = memberCount > 0;
-  if (isSaved === wasSaved) return null;
-  return isSaved ? "saved" : "unsaved";
-}
-
 /**
- * One entry per distinct work, keeping the first occurrence. The input is
- * newest-membership-first, so a work in several collections shows up once, at
- * the position of its most recent save.
+ * Whether a commit flips the bookmark. Only an ADD can save an unsaved work (the database saves it along with the
+ * collection); removing from collections never changes the saved state. `null` = no change.
  */
-export function dedupeSavedEntries<T extends { type: string; data: { id: string } }>(entries: readonly T[]): T[] {
-  const seen = new Set<string>();
-  const out: T[] = [];
-  for (const entry of entries) {
-    const key = `${entry.type}:${entry.data.id}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(entry);
-  }
-  return out;
+export function savedAfterCommit(wasSaved: boolean, appliedAddCount: number): "saved" | null {
+  return !wasSaved && appliedAddCount > 0 ? "saved" : null;
 }

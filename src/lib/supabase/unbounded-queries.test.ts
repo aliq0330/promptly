@@ -19,6 +19,7 @@ const BOUNDED_BY_DESIGN: Record<string, string> = {
   "chat-features.ts:fetchStarredMessages": "the viewer's own starred messages",
   "chat-groups.ts:fetchGroupLinks": "invite links of one community",
   "chat-groups.ts:fetchProfilesByIds": "ids come from one page of members",
+  "collections.ts:fetchOwnCollections": "the viewer's own collections, listed whole in the save sheet and on the profile shelf (a person makes a handful, not thousands)",
   "collections.ts:fetchPublicCollectionsByOwner": "one person's public collections (capped by the product at 200)",
   "collections.ts:fetchFollowedCollections": "followed collections (capped at 200 by `collection_follows`)",
   "collections.ts:isPromptSaved": "one work",

@@ -122,8 +122,8 @@ export interface PickableContent {
 }
 
 /**
- * Kullanıcının kendi koleksiyonlarındaki herkese açık, yayında içerikler (başkasınınki de olabilir): yoruma eklenebilirliğin sunucu kuralıyla aynı
- * süzgeç sorguda uygulanır; aynı içerik birkaç koleksiyondaysa tek satır sayılır. `limit` satırlık pencere + "daha var mı".
+ * Kullanıcının kaydettiği herkese açık, yayında içerikler (başkasınınki de olabilir): yoruma eklenebilirliğin sunucu kuralıyla aynı
+ * süzgeç sorguda uygulanır; kaydedilen içerik sistem koleksiyonunda ("Kaydedilenlerin tümü") tek satırdır. `limit` satırlık pencere + "daha var mı".
  */
 export async function fetchSavedPickableWindow(
   userId: string,
@@ -134,8 +134,9 @@ export async function fetchSavedPickableWindow(
   const text = sanitizeSearchText(search);
   let query = supabase
     .from("collection_items")
-    .select(`created_at, collections!inner ( owner_id ), ${table}!inner ( id, title )`)
+    .select(`created_at, collections!inner ( owner_id, is_default ), ${table}!inner ( id, title )`)
     .eq("collections.owner_id", userId)
+    .eq("collections.is_default", true)
     .eq(`${table}.visibility`, "public")
     .eq(`${table}.status`, "published")
     .is(`${table}.community_id`, null);

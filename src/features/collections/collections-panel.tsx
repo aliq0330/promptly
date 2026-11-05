@@ -15,9 +15,9 @@ import type { Collection, UserProfile } from "@/types";
  * The profile "Kaydedilenler" tab — only ever rendered for the signed-in
  * owner viewing their own profile (ProfileView already gates the whole tab
  * this way), so every collection here belongs to the viewer regardless of its
- * visibility flag. The first tile opens "Kaydedilenler" (`/saved`, the union
- * of everything in any collection); the cards after it are the collections
- * themselves, "Genel" first, each an independent list.
+ * visibility flag. The first tile opens "Kaydedilenlerin tümü" (`/saved`, everything
+ * the viewer saved — a system area, not a collection); the cards after it are the
+ * viewer's own collections, each an independent list.
  */
 export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; ownerProfile: UserProfile }) {
   const { t } = useTranslation();
@@ -126,7 +126,7 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
   );
 }
 
-/** The "Kaydedilenler" tile: not a collection, a view over all of them — styled like a collection card so it reads as the first item in the shelf. */
+/** The "Kaydedilenlerin tümü" tile: the system saved area, not a collection — styled like a collection card so it reads as the first item in the shelf. */
 function SavedShortcutCard() {
   const { t } = useTranslation();
   return (
@@ -140,7 +140,7 @@ function SavedShortcutCard() {
         </span>
       </div>
       <div className="min-w-0 space-y-1 p-3">
-        <p className="truncate text-label font-semibold text-text">{t("nav.saved")}</p>
+        <p className="truncate text-label font-semibold text-text">{t("saved.allTitle")}</p>
         <p className="text-caption text-text-muted">{t("saved.tileHint")}</p>
       </div>
     </Link>

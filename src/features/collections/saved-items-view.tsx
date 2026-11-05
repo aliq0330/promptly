@@ -20,12 +20,10 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection, PromptMedia } from "@/types";
 
 /**
- * `/saved` — "Kaydedilenler": every distinct work in at least one of the
- * viewer's collections (Genel included), each once however many collections
- * hold it. It is a view over the same memberships the bookmark reads, not a
- * list of its own, so there is nothing here to delete: a card leaves the list
- * when its bookmark is emptied (taken out of its last collection) and
- * otherwise stays — leaving one of several collections doesn't remove it.
+ * `/saved` — "Kaydedilenlerin tümü" (docs/history/336-*): everything the viewer saved, each work once, whatever
+ * collections it is in. It is the viewer's system collection — the same rows the bookmark reads — with the viewer's
+ * own collections as a shelf above it. A card leaves the list only when its bookmark is emptied through
+ * "Kaydedilenlerden kaldır"; filing it into or out of collections never removes it from here.
  */
 export function SavedItemsView() {
   const { t } = useTranslation();
@@ -46,7 +44,7 @@ export function SavedItemsView() {
   const saved = usePagedList(`saved|${user?.id ?? ""}`, Boolean(user), (offset) => fetchSavedItemsPage(user?.id ?? "", offset), collectionEntryKey);
   const items = saved.items;
 
-  // Everything listed here is in a collection: make the shared bookmark state say so, even if an earlier session-local guess differed.
+  // Everything listed here is saved: make the shared bookmark state say so, even if an earlier session-local guess differed.
   useEffect(() => {
     for (const entry of items) engagementStore.setActive(engagementStore.keyOf("save", entry.type, entry.data.id), true);
   }, [items]);
@@ -70,7 +68,7 @@ export function SavedItemsView() {
           backdrop={images[0] ? <StorageImage src={images[0].url} alt="" fill sizes="100vw" className="object-cover" /> : undefined}
           art={<CollageArt images={images} icon={Bookmark} />}
           kicker={<Eyebrow tone="primary">{t("collection.visibilityPrivateShort")} · {t("collection.itemCount", { count: Math.max(items.length, saved.total ?? 0) })}</Eyebrow>}
-          title={<DetailTitle>{t("nav.saved")}</DetailTitle>}
+          title={<DetailTitle>{t("saved.allTitle")}</DetailTitle>}
           byline={<p className="text-body text-text-secondary">{t("saved.subtitle")}</p>}
         />
       }

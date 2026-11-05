@@ -274,16 +274,16 @@ export async function fetchPresetsByCreator(creatorId: string): Promise<Preset[]
 }
 
 /**
- * "Kaydettiklerim" — presets in ANY of the viewer's own collections (the one
- * shared save/collection system, Bölüm 9.38), newest save first, one row per
- * preset. Presets that are no longer visible (made private/deleted) simply
+ * "Kaydettiklerim" — presets the viewer saved (their system collection
+ * "Kaydedilenlerin tümü", one row per preset, docs/history/336-*), newest save first. Presets that are no longer visible (made private/deleted) simply
  * drop out (RLS yields a null embed).
  */
 export async function fetchSavedPresetsPage(userId: string, offset = 0, limit = OWNED_PAGE): Promise<PagedResult<Preset>> {
   const { data, count, error } = await supabase
     .from("collection_items")
-    .select(`id, created_at, collections!inner ( owner_id ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
+    .select(`id, created_at, collections!inner ( owner_id, is_default ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
     .eq("collections.owner_id", userId)
+    .eq("collections.is_default", true)
     .not("preset_id", "is", null)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
