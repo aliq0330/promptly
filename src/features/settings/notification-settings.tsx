@@ -1,8 +1,9 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BellOff, Clock, Trash2, UserRound } from "lucide-react";
+import { BellOff, Clock, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SettingsCard } from "@/features/settings/settings-ui";
 import { useNotifications } from "@/features/notifications/notifications-provider";
@@ -141,7 +142,7 @@ export function NotificationSettings() {
                   <span className="block text-caption text-text-muted">{t(mute.kind === "actor" ? "nc.settings.mutedPerson" : "nc.settings.mutedContent")}</span>
                 </span>
                 <Button variant="outline" size="sm" className="h-9" onClick={() => void unmute(mute)} aria-label={t("nc.settings.unmute", { name: mute.label || mute.target })}>
-                  <Trash2 size={14} aria-hidden />
+                  <TrashIcon size={14} />
                   {t("nc.settings.unmuteShort")}
                 </Button>
               </li>

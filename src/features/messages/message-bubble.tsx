@@ -359,6 +359,7 @@ export function MessageBubble({
         isMe ? "items-end" : "items-start",
         groupStart ? "mt-3 first:mt-0" : "mt-0.5",
         isHighlighted && "-mx-1.5 bg-primary/10 px-1.5 py-1 ring-1 ring-primary/40",
+        actions.isLeavingId?.(message.id) && cn("pointer-events-none opacity-0 transition-[opacity,transform] duration-200 ease-soft", isMe ? "translate-x-4" : "-translate-x-4"),
       )}
     >
       {replyPreview && (

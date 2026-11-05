@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Dna, Pencil, Plus, Trash2, WandSparkles } from "lucide-react";
+import { Check, ChevronDown, Dna, Pencil, Plus, WandSparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";
@@ -297,7 +298,7 @@ export function PromptDnaEditor({
                         aria-label={t("dna.removeAria", { label: heading })}
                         className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger"
                       >
-                        <Trash2 size={15} />
+                        <TrashIcon size={15} />
                       </button>
                     </div>
                   </div>

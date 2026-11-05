@@ -1,5 +1,6 @@
 "use client";
 
+import { ExitMotion } from "@/components/ui/exit-motion";
 import { CommentReactions } from "@/features/reactions/comment-reactions";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, CornerDownRight } from "lucide-react";
@@ -46,6 +47,8 @@ export interface CommentTree {
   onRequestDelete: (id: string) => void;
   onCancelDeleteConfirm: () => void;
   isDeletingId: string | null;
+  /** Silinen yorum çıkış animasyonundayken true (docs/history/335-*): kayıp solar, yüksekliği kapanır, sonra listeden çıkar. */
+  isLeavingId: (id: string) => boolean;
   registerNodeRef: (id: string, el: HTMLDivElement | null) => void;
   /** The comment/reply currently flashed after a notification jump (Aşama 5) — null once the flash has faded or nothing was jumped to. */
   highlightedId: string | null;
@@ -81,8 +84,8 @@ export function CommentNode({
   depth: number;
   tree: CommentTree;
 }) {
-  if (tree.layout === "sheet") return <SheetCommentNode comment={comment} depth={depth} tree={tree} />;
-  return <ThreadCommentNode comment={comment} depth={depth} tree={tree} />;
+  const node = tree.layout === "sheet" ? <SheetCommentNode comment={comment} depth={depth} tree={tree} /> : <ThreadCommentNode comment={comment} depth={depth} tree={tree} />;
+  return <ExitMotion leaving={tree.isLeavingId(comment.id)}>{node}</ExitMotion>;
 }
 
 /** Space yorumunun puanı: başkasınınki yalnız yıldız, kendininki dokunarak değişir (docs/history/242-*). Puan yorumla birlikte, yorumun üstünde görünür. */
@@ -444,7 +447,7 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
       {hasChildren && isExpanded && (
         <div className={cn("mt-1 space-y-1", depth < SHEET_MAX_INDENT_DEPTH && "pl-12")}>
           {children.map((child) => (
-            <SheetCommentNode key={child.id} comment={child} depth={depth + 1} tree={tree} />
+            <CommentNode key={child.id} comment={child} depth={depth + 1} tree={tree} />
           ))}
         </div>
       )}

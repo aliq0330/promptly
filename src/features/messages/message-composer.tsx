@@ -1,7 +1,9 @@
 "use client";
 
+import { SendArrowIcon } from "@/components/ui/motion-icons";
+import { useCompletionSeq } from "@/lib/use-motion-seq";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { ArrowUp, Keyboard, Loader2, Plus, Smile, X } from "lucide-react";
+import { Keyboard, Loader2, Plus, Smile, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ALLOWED_IMAGE_MIME } from "@/lib/supabase/message-images";
@@ -127,6 +129,7 @@ export function MessageComposer({
   onPickGif?: (gif: GifItem) => void;
 }) {
   const { t } = useTranslation();
+  const sendSeq = useCompletionSeq(isSending);
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -373,7 +376,7 @@ export function MessageComposer({
           title={t("common.send")}
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,background-color] duration-200 ease-soft hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-40"
         >
-          {isSending ? <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <ArrowUp size={22} strokeWidth={2.2} aria-hidden />}
+          {isSending ? <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <SendArrowIcon size={22} strokeWidth={2.2} seq={sendSeq} />}
         </button>
       </div>
       {emojiPanel && (

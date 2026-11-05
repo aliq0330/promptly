@@ -23,6 +23,8 @@ export interface MessageBubbleActions {
   onCancelDeleteConfirm: () => void;
   deleteConfirm: { id: string; mode: DeleteMode } | null;
   isDeletingId: string | null;
+  /** "Benden sil" çıkış animasyonundaki mesaj (docs/history/335-*): kayıp solar, sonra listeden çıkar. */
+  isLeavingId?: (id: string) => boolean;
   /** Grup sohbeti: bu mesajı yönetici olarak silebilir miyim (gönderen daha düşük rütbede mi)? Birebir sohbette verilmez. */
   canModerate?: (message: Message) => boolean;
   /** Yıldız (kişiye özel): mesaj benim için yıldızlı mı ve değiştirme. */

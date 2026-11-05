@@ -1,9 +1,11 @@
 "use client";
 
+import { ExitMotion, useExitMotion } from "@/components/ui/exit-motion";
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
-import { FileText, Trash2, X } from "lucide-react";
+import { FileText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -44,6 +46,7 @@ export function DraftsButton({
   const [open, setOpen] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const { exit, isLeaving } = useExitMotion();
   const [error, setError] = useState<string | null>(null);
   // A bulk import can leave thousands of drafts: all are loaded (a light row each) but drawn 50 at a time.
   const [shown, setShown] = useState(DRAFTS_SHOWN_STEP);
@@ -70,8 +73,8 @@ export function DraftsButton({
     setError(null);
     try {
       await onDelete(id);
-      setItems((prev) => (prev ? prev.filter((item) => item.id !== id) : prev));
       setConfirmId(null);
+      exit(id, () => setItems((prev) => (prev ? prev.filter((item) => item.id !== id) : prev)));
     } catch {
       setError(t("draft.deleteFailed"));
     } finally {
@@ -134,9 +137,12 @@ export function DraftsButton({
             ) : items.length === 0 ? (
               <p className="rounded-md border border-dashed border-border p-4 text-center text-sm text-text-muted">{t("draft.empty")}</p>
             ) : (
-              <ul className="space-y-2">
+              <ul>
                 {items.slice(0, shown).map((item) => (
-                  <li key={item.id} className="rounded-md border border-border-soft bg-surface-soft p-3">
+                  <li key={item.id}>
+                  <ExitMotion leaving={isLeaving(item.id)}>
+                  <div className="pb-2">
+                  <div className="rounded-md border border-border-soft bg-surface-soft p-3">
                     <p className="truncate text-sm font-medium text-text">{item.title.trim() || t("draft.untitled")}</p>
                     <p className="mb-2 text-xs text-text-muted">{t("draft.lastEdited", { time: formatRelativeTime(item.updatedAt, language) })}</p>
                     {confirmId === item.id && <p className="mb-2 text-xs text-danger">{t("draft.deleteConfirm")}</p>}
@@ -145,7 +151,7 @@ export function DraftsButton({
                         {t("draft.continue")}
                       </Link>
                       <Button type="button" variant="ghost" size="sm" disabled={busyId === item.id} onClick={() => void handleDelete(item.id)}>
-                        <Trash2 size={14} aria-hidden />
+                        <TrashIcon size={14} seq={busyId === item.id ? 1 : 0} />
                         {t("common.delete")}
                       </Button>
                       {confirmId === item.id && (
@@ -154,6 +160,9 @@ export function DraftsButton({
                         </Button>
                       )}
                     </div>
+                  </div>
+                  </div>
+                  </ExitMotion>
                   </li>
                 ))}
               </ul>

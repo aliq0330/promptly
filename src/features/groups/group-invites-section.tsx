@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Link2, Loader2, Send, Trash2, UserCheck } from "lucide-react";
+import { Copy, Link2, Loader2, Send, UserCheck } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { Button } from "@/components/ui/button";
@@ -321,7 +322,7 @@ export function GroupInvitesSection({
                       disabled={rowAction.busy}
                       onClick={() => void runRow(() => revokeChatGroupLink(item.id), t("groups.link.revokedToast"))}
                     >
-                      <Trash2 size={14} /> {t("groups.link.revoke")}
+                      <TrashIcon size={14} /> {t("groups.link.revoke")}
                     </Button>
                   </li>
                 ))}

@@ -1,9 +1,10 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Flag, Pencil, ShieldAlert, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Flag, Pencil, ShieldAlert } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
@@ -127,7 +128,7 @@ export function CommunityPostPage() {
   if (mine) extras.push({ key: "edit-note", label: t("communities.feed.editNote"), icon: <Pencil size={14} />, onSelect: () => setDialog("edit") });
   if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={14} />, onSelect: () => setDialog("report") });
   if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={14} />, danger: true, onSelect: () => setDialog("moderate") });
-  if (mine) extras.push({ key: "delete", label: t("communities.feed.deleteMine"), icon: <Trash2 size={14} />, danger: true, onSelect: () => setDialog("delete") });
+  if (mine) extras.push({ key: "delete", label: t("communities.feed.deleteMine"), icon: <TrashIcon size={14} />, danger: true, onSelect: () => setDialog("delete") });
 
   const content = post.content;
   const originalHref = content ? summarizeContent(content).href : null;

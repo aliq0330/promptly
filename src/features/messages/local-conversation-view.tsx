@@ -1,5 +1,6 @@
 "use client";
 
+import { useExitMotion } from "@/components/ui/exit-motion";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
@@ -196,6 +197,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; mode: DeleteMode } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { exit, isLeaving } = useExitMotion();
   const [isDecliningRequest, setIsDecliningRequest] = useState(false);
   // Sohbet menüsü eylemleri (docs/history/171-*): onay penceresi, devam eden işlem, hata ve geçici bildirim.
   const [confirmKind, setConfirmKind] = useState<ChatConfirmKind | null>(null);
@@ -1199,7 +1201,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         );
       } else {
         await hideMessageForMe(messageId, user.id);
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+        exit(messageId, () => setMessages((prev) => prev.filter((m) => m.id !== messageId)));
       }
     } catch (err) {
       console.error("delete message", err);
@@ -1625,6 +1627,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                 onCancelDeleteConfirm: () => setDeleteConfirm(null),
                 deleteConfirm,
                 isDeletingId: deletingId,
+                isLeavingId: isLeaving,
                 canModerate: group
                   ? (target) => target.senderId !== user.id && !target.deletedAt && canModerateMessage(group.myRole, groupSenders.roleFor(target.senderId), group.rolePermissions)
                   : undefined,

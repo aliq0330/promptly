@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Megaphone, Pencil, Pin, Plus, Trash2 } from "lucide-react";
+import { Megaphone, Pencil, Pin, Plus } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -127,7 +128,7 @@ export function AnnouncementsSection({
                       <Pencil size={15} />
                     </button>
                     <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger/10 hover:text-danger">
-                      <Trash2 size={15} />
+                      <TrashIcon size={15} />
                     </button>
                   </div>
                 )}

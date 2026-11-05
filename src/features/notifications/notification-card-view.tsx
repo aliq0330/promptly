@@ -1,8 +1,10 @@
 "use client";
 
+import { SendIcon } from "@/components/ui/motion-icons";
+import { useCompletionSeq } from "@/lib/use-motion-seq";
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, ChevronDown, CornerUpLeft, Send, Share2 } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, CornerUpLeft, Share2 } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { shareOrCopyLink } from "@/features/prompts/share-button";
 import { CardAvatar, CardHeadline, CommentExtrasStrip, StackedAvatars, commentExtrasCount } from "./notification-parts";
@@ -203,6 +205,7 @@ export function NotificationCardView({
 }) {
   const { t, language } = useTranslation();
   const actions = useCardActions(card, list);
+  const replySeq = useCompletionSeq(actions.busy === "reply");
   const { markRead } = useNotifications();
   const [replyOpen, setReplyOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -321,7 +324,7 @@ export function NotificationCardView({
                 className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-body text-text outline-none placeholder:text-text-muted"
               />
               <Button type="submit" size="md" className="h-11 shrink-0" disabled={actions.busy === "reply" || !draft.trim()} data-action="reply-send">
-                <Send size={16} aria-hidden />
+                <SendIcon size={16} seq={replySeq} />
                 <span className="hidden sm:inline">{t("nc.send")}</span>
                 <span className="sr-only sm:hidden">{t("nc.send")}</span>
               </Button>

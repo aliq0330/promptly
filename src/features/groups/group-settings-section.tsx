@@ -1,8 +1,9 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Camera, CheckCircle2, Trash2 } from "lucide-react";
+import { Camera, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -345,7 +346,7 @@ export function GroupSettingsSection({
           </h3>
           <p className="text-small text-text-secondary">{t("groups.settings.deleteHelp")}</p>
           <Button type="button" variant="danger" size="sm" onClick={() => { deleteAction.setError(null); setDeleteConfirmName(""); setDeleting(true); }}>
-            <Trash2 size={14} /> {t("groups.settings.deleteGroup")}
+            <TrashIcon size={14} /> {t("groups.settings.deleteGroup")}
           </Button>
         </section>
       )}

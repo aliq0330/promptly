@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EXIT_MS } from "@/components/ui/exit-motion";
+import { prefersReducedMotion } from "@/lib/motion";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useNotifications, type CardEvent } from "./notifications-provider";
 import { fetchNotificationCardsPage, NOTIFICATION_CARDS_PAGE, type NotificationCardsQuery } from "@/lib/supabase/notifications";
@@ -32,6 +34,9 @@ export function useNotificationCards(query: NotificationCardsQuery, enabled = tr
   const { user } = useAuth();
   const { subscribe, incoming } = useNotifications();
   const [cards, setCards] = useState<NotificationCard[]>([]);
+  // Çıkış animasyonundaki (silinen) kartlar: listede kalır, `ExitMotion` ile kapanır.
+  const [leavingKeys, setLeavingKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const leaveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const [status, setStatus] = useState<CardsStatus>("loading");
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -118,6 +123,14 @@ export function useNotificationCards(query: NotificationCardsQuery, enabled = tr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, hasMore, queryKey]);
 
+  useEffect(() => {
+    const timers = leaveTimers.current;
+    return () => {
+      timers.forEach(clearTimeout);
+      timers.clear();
+    };
+  }, []);
+
   // Sağlayıcının iyimser olayları.
   useEffect(() => {
     return subscribe((event: CardEvent) => {
@@ -125,12 +138,45 @@ export function useNotificationCards(query: NotificationCardsQuery, enabled = tr
         case "read":
           setCards((prev) => prev.map((card) => (card.key === event.key ? { ...card, unreadCount: event.read ? 0 : Math.max(1, card.unreadCount) } : card)));
           break;
-        case "remove":
-          setCards((prev) => prev.filter((card) => card.key !== event.key));
+        case "remove": {
+          // Kart hemen çıkmaz: önce kayıp solar, satır kapanır (docs/history/335-*), sonra listeden düşer. Hareketi azalt açıkken anında.
+          const key = event.key;
+          if (prefersReducedMotion()) {
+            setCards((prev) => prev.filter((card) => card.key !== key));
+            break;
+          }
+          if (leaveTimers.current.has(key)) break;
+          setLeavingKeys((prev) => new Set(prev).add(key));
+          leaveTimers.current.set(
+            key,
+            setTimeout(() => {
+              leaveTimers.current.delete(key);
+              setLeavingKeys((prev) => {
+                const next = new Set(prev);
+                next.delete(key);
+                return next;
+              });
+              setCards((prev) => prev.filter((card) => card.key !== key));
+            }, EXIT_MS),
+          );
           break;
-        case "restore":
+        }
+        case "restore": {
+          // "Geri al" çıkış sürerken gelirse kart zaten listede: yalnız çıkışı iptal et.
+          const pending = leaveTimers.current.get(event.card.key);
+          if (pending) {
+            clearTimeout(pending);
+            leaveTimers.current.delete(event.card.key);
+            setLeavingKeys((prev) => {
+              const next = new Set(prev);
+              next.delete(event.card.key);
+              return next;
+            });
+            break;
+          }
           setCards((prev) => insertSorted(prev, event.card));
           break;
+        }
         case "readAll":
           setCards((prev) => prev.map((card) => (card.unreadCount ? { ...card, unreadCount: 0 } : card)));
           break;
@@ -187,7 +233,7 @@ export function useNotificationCards(query: NotificationCardsQuery, enabled = tr
   const reload = useCallback(() => load(true), [load]);
 
   return useMemo(
-    () => ({ cards, status, hasMore, loadingMore, moreFailed, loadMore, reload, newCount, context, local, setLocal, setFollowing, patchSuggestion }),
-    [cards, status, hasMore, loadingMore, moreFailed, loadMore, reload, newCount, context, local, setLocal, setFollowing, patchSuggestion],
+    () => ({ cards, leavingKeys, status, hasMore, loadingMore, moreFailed, loadMore, reload, newCount, context, local, setLocal, setFollowing, patchSuggestion }),
+    [cards, leavingKeys, status, hasMore, loadingMore, moreFailed, loadMore, reload, newCount, context, local, setLocal, setFollowing, patchSuggestion],
   );
 }

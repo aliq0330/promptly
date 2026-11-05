@@ -1,5 +1,6 @@
 "use client";
 
+import { PinIcon } from "@/components/ui/motion-icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -141,7 +142,7 @@ export function SpaceCard({
         space.isFavorite ? "px-2.5 text-primary" : "w-9 text-text-muted hover:text-text",
       )}
     >
-      <Pin size={15} strokeWidth={space.isFavorite ? 2.25 : 1.75} aria-hidden />
+      <PinIcon pinned={space.isFavorite} size={15} strokeWidth={space.isFavorite ? 2.25 : 1.75} />
       {space.isFavorite && <span aria-hidden>{t("spaces.card.pinned")}</span>}
     </button>
   );

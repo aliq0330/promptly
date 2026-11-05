@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Loader2, MoreVertical, Pencil } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { deleteCollection } from "@/lib/supabase/collections";
 import { cn } from "@/lib/utils";
@@ -172,7 +173,7 @@ export function CollectionMoreMenu({
               disabled={isDeleting}
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
             >
-              {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <TrashIcon size={14} />}
               {confirmingDelete ? t("common.confirmDelete") : t("collection.delete")}
             </button>
             {error && <p className="px-3 py-1 text-xs text-danger">{error}</p>}

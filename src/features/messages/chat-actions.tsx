@@ -1,6 +1,7 @@
 "use client";
 
-import { Archive, ArchiveRestore, Eraser, Trash2 } from "lucide-react";
+import { TrashIcon } from "@/components/ui/motion-icons";
+import { Archive, ArchiveRestore, Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
@@ -72,7 +73,7 @@ export function ChatActionItems({
         }}
         className={cn(itemClass, "text-danger")}
       >
-        <Trash2 size={14} />
+        <TrashIcon size={14} />
         {conversation.kind === "group" ? t("groups.chat.hideFromList") : t("messages.deleteChat")}
       </button>
     </>

@@ -1,8 +1,9 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import Link from "next/link";
 import { useId, useState } from "react";
-import { Check, Copy, ExternalLink, Layers, Loader2, Lock, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Copy, ExternalLink, Layers, Loader2, Lock, MapPin, Pencil, Plus } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -360,7 +361,7 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard }: { itemId: st
             )}
             {caps.edit && (
               <Button type="button" variant="ghost" size="sm" className="text-danger hover:bg-danger/10" onClick={() => setConfirmRemove(true)}>
-                <Trash2 size={14} aria-hidden />
+                <TrashIcon size={14} />
                 {t("spaces.detail.remove")}
               </Button>
             )}
@@ -705,7 +706,7 @@ export function GroupsManagerModal({ onClose }: { onClose: () => void }) {
                         <Pencil size={15} />
                       </button>
                       <button type="button" onClick={() => setConfirmDelete(group.id)} aria-label={t("spaces.groups.delete", { name: group.name })} className="rounded-full p-2 text-text-muted hover:bg-danger/10 hover:text-danger">
-                        <Trash2 size={15} />
+                        <TrashIcon size={15} />
                       </button>
                     </>
                   )}

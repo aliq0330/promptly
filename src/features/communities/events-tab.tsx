@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState, type FormEvent } from "react";
-import { CalendarDays, CalendarX, Check, CircleHelp, ExternalLink, MapPin, Pencil, Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, CalendarX, Check, CircleHelp, ExternalLink, MapPin, Pencil, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -271,7 +272,7 @@ function EventCard({
               </button>
             )}
             <button type="button" onClick={onDelete} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger/10 hover:text-danger">
-              <Trash2 size={15} />
+              <TrashIcon size={15} />
             </button>
           </div>
         )}

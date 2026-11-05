@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState } from "react";
-import { Check, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, Loader2, Pencil, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -301,7 +302,7 @@ export function HighlightEditor({
         <div className="flex items-center justify-between gap-2 border-t border-border-soft px-4 py-3">
           {highlight ? (
             <Button type="button" variant="ghost" size="sm" className="text-danger" onClick={() => void remove()} disabled={busy}>
-              <Trash2 size={14} aria-hidden /> {t("stories.highlight.delete")}
+              <TrashIcon size={14} /> {t("stories.highlight.delete")}
             </Button>
           ) : (
             <span />

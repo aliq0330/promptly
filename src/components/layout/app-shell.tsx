@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { PublishCelebration } from "@/components/layout/publish-celebration";
 import { useChromeAutoHide } from "@/components/layout/use-chrome-autohide";
 import { WelcomeTour } from "@/features/onboarding/welcome-tour";
 import { AnnounceReportNotice } from "@/features/communities/announce-picker";
@@ -43,6 +44,7 @@ export function AppShell({ children, aside }: AppShellProps) {
         </main>
         <WelcomeTour />
         <AnnounceReportNotice />
+      <PublishCelebration />
         <NoticeHost />
       </div>
     );

@@ -934,6 +934,426 @@
   }
 }
 
+/*
+ * Hareketli ikonlar ve çıkış animasyonları (docs/history/335-*; `components/ui/motion-icons.tsx`, `exit-motion.tsx`).
+ * Hepsi bir kez oynar; son kare dinlenme karesidir, bu yüzden aşağıdaki hareketi-azalt kuralı (süre ≈ 0) ikonu doğru yerde bırakır.
+ */
+:root {
+  --mi-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --mi-spring: cubic-bezier(0.3, 1.55, 0.5, 1);
+}
+.mi {
+  overflow: visible;
+}
+.mi * {
+  transform-box: view-box;
+}
+
+/* Çöp kutusu */
+.mi-trash .mi-lid {
+  transform-origin: 5px 6.5px;
+  transition: transform 180ms var(--mi-ease);
+}
+:is(button, a, [role="menuitem"]):hover .mi-trash:not(.mi-play) .mi-lid {
+  transform: rotate(-16deg) translateY(-0.5px);
+}
+.mi-trash.mi-play .mi-lid {
+  animation: mi-lid 900ms var(--mi-ease) both;
+}
+.mi-trash.mi-play .mi-bin {
+  animation: mi-bin 900ms both;
+}
+.mi-trash.mi-play .mi-l1,
+.mi-trash.mi-play .mi-l2 {
+  animation: mi-drop 900ms both;
+}
+.mi-trash.mi-play .mi-l2 {
+  animation-delay: 50ms;
+}
+@keyframes mi-lid {
+  0% { transform: none; }
+  18%, 60% { transform: rotate(-26deg) translateY(-1px); }
+  80% { transform: rotate(3deg); }
+  100% { transform: none; }
+}
+@keyframes mi-bin {
+  0%, 72% { transform: none; }
+  80% { transform: translateY(0.9px); }
+  90% { transform: translateY(-0.4px); }
+  100% { transform: none; }
+}
+@keyframes mi-drop {
+  0%, 14% { transform: none; opacity: 1; }
+  46% { transform: translateY(6px); opacity: 0; }
+  78% { transform: none; opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* Çizilen tik */
+.mi-chk {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.mi-chk-on {
+  stroke-dashoffset: 0;
+  animation: mi-draw 320ms var(--mi-ease) both;
+}
+@keyframes mi-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Yer imi */
+.mi-bm-fill {
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path 300ms var(--mi-ease);
+}
+.mi-bm[data-filled="true"] .mi-bm-fill {
+  clip-path: inset(0);
+}
+.mi-bm-pop {
+  animation: mi-bm-pop 440ms var(--mi-ease);
+}
+@keyframes mi-bm-pop {
+  0% { transform: scale(1); }
+  28% { transform: scale(0.8); }
+  62% { transform: scale(1.2); }
+  82% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+.mi-pop {
+  animation: mi-bm-pop 440ms var(--mi-ease);
+}
+.mi-sparks {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.mi-sparks i {
+  position: absolute;
+  left: -1px;
+  top: -3px;
+  width: 2px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--color-secondary);
+  opacity: 0;
+  animation: mi-spark 460ms var(--mi-ease) 90ms both;
+}
+@keyframes mi-spark {
+  0% { opacity: 0; transform: rotate(var(--a)) translateY(-8px) scaleY(0.3); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-19px) scaleY(1); }
+}
+
+/* Raptiye */
+.mi-pin-svg {
+  transform: rotate(45deg);
+  transition: transform 200ms;
+}
+.mi-pin[data-pinned="true"] .mi-pin-svg {
+  transform: none;
+}
+.mi-pin[data-drop="true"] .mi-pin-svg {
+  animation: mi-pin-drop 520ms var(--mi-ease);
+}
+.mi-pin[data-drop="true"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 1px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  pointer-events: none;
+  animation: mi-ripple 600ms var(--mi-ease) 230ms both;
+}
+@keyframes mi-pin-drop {
+  0% { transform: translateY(-9px) rotate(40deg); opacity: 0.2; }
+  55% { transform: translateY(1.5px) rotate(-6deg); opacity: 1; }
+  100% { transform: none; }
+}
+@keyframes mi-ripple {
+  from { transform: scale(0.6); opacity: 0.9; }
+  to { transform: scale(3.4); opacity: 0; }
+}
+
+/* Zil */
+.mi-bell .mi-bb {
+  transform-origin: 12px 3px;
+}
+.mi-bell.mi-play .mi-bb {
+  animation: mi-swing 900ms ease-out both;
+}
+.mi-bell.mi-play .mi-clap {
+  animation: mi-clap 900ms ease-out both;
+}
+@keyframes mi-swing {
+  0% { transform: none; }
+  14% { transform: rotate(15deg); }
+  28% { transform: rotate(-12deg); }
+  42% { transform: rotate(8deg); }
+  56% { transform: rotate(-5deg); }
+  70% { transform: rotate(2.5deg); }
+  100% { transform: none; }
+}
+@keyframes mi-clap {
+  0% { transform: none; }
+  20% { transform: translateX(-1.6px); }
+  40% { transform: translateX(1.4px); }
+  60% { transform: translateX(-0.8px); }
+  100% { transform: none; }
+}
+
+/* Kâğıt uçak */
+.mi-send.mi-play {
+  animation: mi-fly 560ms var(--mi-ease) both;
+}
+@keyframes mi-fly {
+  0% { transform: none; opacity: 1; }
+  45% { transform: translate(14px, -14px) scale(0.7); opacity: 0; }
+  46% { transform: translate(-12px, 12px) scale(0.7); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+
+.mi-sendup.mi-play {
+  animation: mi-sendup 380ms var(--mi-ease) both;
+}
+@keyframes mi-sendup {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* Takip: kişi+ → tik */
+.mi-follow .mi-person {
+  transform-origin: 12px 12px;
+  transition: transform 240ms var(--mi-ease), opacity 180ms;
+}
+.mi-follow[data-done="true"] .mi-person {
+  opacity: 0;
+  transform: scale(0.4) rotate(-40deg);
+}
+.mi-follow .mi-follow-chk {
+  stroke-dashoffset: 1;
+}
+.mi-follow[data-done="true"] .mi-follow-chk {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 300ms var(--mi-ease) 120ms;
+}
+
+/* Alt menü ikonları: aktif olunca bir kez */
+.mi-home.mi-play .mi-roof {
+  animation: mi-roof 560ms var(--mi-ease) both;
+}
+.mi-home.mi-play .mi-door {
+  transform-origin: 12px 20.5px;
+  animation: mi-door 420ms var(--mi-spring) 130ms both;
+}
+@keyframes mi-roof {
+  0% { transform: translateY(-4.5px); }
+  55% { transform: translateY(0.9px); }
+  100% { transform: none; }
+}
+@keyframes mi-door {
+  from { transform: scaleY(0.05); }
+  to { transform: none; }
+}
+.mi-compass.mi-play .mi-needle {
+  transform-origin: 12px 12px;
+  animation: mi-needle 760ms cubic-bezier(0.2, 0.9, 0.3, 1.12) both;
+}
+@keyframes mi-needle {
+  from { transform: rotate(-230deg); }
+  to { transform: none; }
+}
+.mi-community.mi-play .mi-pa {
+  animation: mi-pa 520ms var(--mi-spring) both;
+}
+.mi-community.mi-play .mi-pb {
+  animation: mi-pb 520ms var(--mi-spring) 40ms both;
+}
+@keyframes mi-pa {
+  from { transform: translateX(-5px); }
+  to { transform: none; }
+}
+@keyframes mi-pb {
+  from { transform: translateX(6px) scale(0.9); }
+  to { transform: none; }
+}
+.mi-focus.mi-play .mi-fmid {
+  animation: mi-fmid 460ms var(--mi-spring) both;
+}
+.mi-focus.mi-play .mi-ftop {
+  animation: mi-ftop 400ms var(--mi-ease) both;
+}
+.mi-focus.mi-play .mi-fbot {
+  animation: mi-fbot 400ms var(--mi-ease) both;
+}
+@keyframes mi-fmid {
+  from { transform: translateY(9px) scale(0.88); opacity: 0.2; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes mi-ftop {
+  from { transform: translateY(5px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes mi-fbot {
+  from { transform: translateY(-6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.mi-plus {
+  transition: transform 380ms var(--mi-spring);
+}
+.mi-plus[data-open="true"] {
+  transform: rotate(135deg);
+}
+
+/* Çıkış: önce sağa kayıp solar (200 ms), sonra yükseklik kapanır (260 ms) ve alttakiler yükselir. `data-collapse="false"` kartlarda yalnız küçülüp solar (masonry sütunları FLIP ile yeniden dizilir). */
+.mi-exit {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 260ms var(--mi-ease), margin-block 260ms var(--mi-ease);
+}
+.mi-exit > .mi-exit-in {
+  min-height: 0;
+  min-width: 0;
+  transition: transform 200ms var(--mi-ease), opacity 200ms;
+}
+.mi-exit[data-leaving="true"] {
+  grid-template-rows: 0fr;
+  margin-block: 0 !important; /* `space-y-*` aralığı da kapanır, yoksa satır silinince 10 px sıçrar */
+  transition-delay: 180ms;
+  pointer-events: none;
+}
+.mi-exit[data-leaving="true"] > .mi-exit-in {
+  overflow: hidden;
+  transform: translateX(18px) scale(0.98);
+  opacity: 0;
+}
+.mi-exit[data-collapse="false"] {
+  display: block;
+}
+.mi-exit[data-collapse="false"][data-leaving="true"] > .mi-exit-in {
+  transform: scale(0.92);
+}
+/* Toz: nesne küçülüp bulanıklaşır, parçacıklar saçılır (Space panosu) */
+.mi-poof {
+  animation: mi-poof 300ms var(--mi-ease) forwards;
+  pointer-events: none;
+}
+@keyframes mi-poof {
+  to { transform: scale(0.5) rotate(-6deg); opacity: 0; filter: blur(3px); }
+}
+.mi-dust {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  pointer-events: none;
+  animation: mi-dust 520ms var(--mi-ease) forwards;
+}
+.mi-dust:nth-child(3n) { background: var(--color-secondary); }
+.mi-dust:nth-child(3n + 1) { background: var(--color-border-strong); }
+@keyframes mi-dust {
+  from { transform: translate(0, 0) scale(1); opacity: 0.9; }
+  to { transform: translate(var(--dx), var(--dy)) scale(0.1); opacity: 0; }
+}
+
+/* Form titremesi, parlama ve çizilen halka */
+@keyframes mi-shake {
+  0%, 100% { transform: none; }
+  15% { transform: translateX(-7px); }
+  30% { transform: translateX(7px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
+.mi-shake {
+  animation: mi-shake 400ms ease-out;
+}
+.mi-shine {
+  position: relative;
+  overflow: hidden;
+}
+.mi-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / 0.7) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: mi-sweep 800ms var(--mi-ease) 380ms forwards;
+  pointer-events: none;
+}
+@keyframes mi-sweep {
+  to { transform: translateX(120%); }
+}
+/* Kopyalayınca prompt bloğunun üzerinden tek bir renk akıp söner (kaydırmayı/yerleşimi etkilemez). */
+.mi-copy-flash {
+  animation: mi-copy-flash 900ms var(--mi-ease) both;
+}
+@keyframes mi-copy-flash {
+  0% { box-shadow: inset 0 0 0 999px color-mix(in oklab, var(--color-primary) 20%, transparent); }
+  100% { box-shadow: inset 0 0 0 999px transparent; }
+}
+/* Paylaşıldı kutlaması: kutu belirir, halka çizilir, tik gelir, yankı halkası yayılır, kutu söner */
+.mi-celebrate {
+  animation: mi-celebrate 1500ms var(--mi-ease) both;
+}
+@keyframes mi-celebrate {
+  0% { opacity: 0; transform: scale(0.85); }
+  14% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.96); }
+}
+.mi-ring,
+.mi-tick {
+  stroke-dasharray: 1;
+}
+.mi-ring {
+  animation: mi-draw 480ms var(--mi-ease) 120ms both;
+  transform: rotate(-90deg);
+  transform-origin: 34px 34px;
+}
+.mi-tick {
+  animation: mi-draw 320ms var(--mi-ease) 500ms both;
+}
+.mi-pulse {
+  transform-origin: 34px 34px;
+  animation: mi-pulse 600ms var(--mi-ease) 760ms both;
+}
+@keyframes mi-pulse {
+  from { transform: scale(1); opacity: 0.7; }
+  to { transform: scale(1.55); opacity: 0; }
+}
+.mi-empty-tile {
+  animation: mi-badge-in 480ms var(--mi-spring) 80ms both;
+}
+.mi-empty-spark {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  animation: mi-spark-pop 380ms var(--mi-spring) both;
+  animation-delay: calc(480ms + var(--i) * 90ms);
+}
+@keyframes mi-spark-pop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+.mi-badge-in {
+  animation: mi-badge-in 420ms var(--mi-spring) both;
+}
+@keyframes mi-badge-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
 /* Scroll-reveal: hidden until its IntersectionObserver fires (src/components/ui/reveal.tsx). */
 [data-reveal="pending"] {
   opacity: 0;

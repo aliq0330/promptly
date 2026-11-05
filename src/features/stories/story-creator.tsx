@@ -1,29 +1,9 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  AlignCenter,
-  AlignLeft,
-  AlignRight,
-  ArrowLeft,
-  BarChart3,
-  Check,
-  Clapperboard,
-  Image as ImageIcon,
-  Link2,
-  Loader2,
-  Maximize2,
-  MessageCircleQuestion,
-  Minimize2,
-  Plus,
-  RotateCcw,
-  Save,
-  SquareTerminal,
-  Trash2,
-  Type,
-  X,
-} from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowLeft, BarChart3, Check, Clapperboard, Image as ImageIcon, Link2, Loader2, Maximize2, MessageCircleQuestion, Minimize2, Plus, RotateCcw, Save, SquareTerminal, Type, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
@@ -504,7 +484,7 @@ export function StoryCreator() {
                       }}
                       className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-surface-soft hover:text-danger"
                     >
-                      <Trash2 size={14} aria-hidden />
+                      <TrashIcon size={14} />
                     </button>
                   </div>
                 </li>
@@ -835,7 +815,7 @@ function LayerPanel({ layer, onChange, onRemove, onDone }: { layer: StoryTextLay
       </div>
       <div className="flex justify-between">
         <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="text-danger">
-          <Trash2 size={14} aria-hidden /> {t("stories.editor.removeLayer")}
+          <TrashIcon size={14} /> {t("stories.editor.removeLayer")}
         </Button>
         <Button type="button" variant="secondary" size="sm" onClick={onDone}>
           {t("stories.editor.done")}
@@ -890,7 +870,7 @@ function StickerPanel({ sticker, onChange, onRemove }: { sticker: StorySticker; 
       )}
       {sticker.kind === "question" && <p className="text-caption text-text-muted">{t("stories.editor.questionPolicy")}</p>}
       <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="text-danger">
-        <Trash2 size={14} aria-hidden /> {t("stories.editor.removeSticker")}
+        <TrashIcon size={14} /> {t("stories.editor.removeSticker")}
       </Button>
     </section>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { announcePublished } from "@/lib/publish-celebration";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -150,6 +151,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
         user.id,
       );
       if (asDraft && leaving) return true;
+      if (!asDraft && !editId) announcePublished();
       router.push(asDraft ? "/presets" : ((await returnToCommunity("preset", id)) ?? presetHref({ id })));
       return true;
     } catch (err) {

@@ -1,7 +1,8 @@
 "use client";
 
+import { TrashIcon } from "@/components/ui/motion-icons";
 import { useId, useState } from "react";
-import { ChevronLeft, ChevronRight, Copy, LayoutDashboard, Loader2, Palette, Pencil, Pipette, Plus, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, LayoutDashboard, Loader2, Palette, Pencil, Pipette, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -172,7 +173,7 @@ function PaletteCard({ palette }: { palette: SpacePalette }) {
                 <Pencil size={14} aria-hidden />
               </Button>
               <Button variant="ghost" size="sm" className="text-danger hover:bg-danger/10" onClick={() => setConfirmDelete(true)} aria-label={t("spaces.palette.delete")}>
-                <Trash2 size={14} aria-hidden />
+                <TrashIcon size={14} />
               </Button>
             </>
           )}
@@ -259,7 +260,7 @@ function PaletteCard({ palette }: { palette: SpacePalette }) {
                   setHex("");
                 }}
               >
-                <Trash2 size={14} aria-hidden />
+                <TrashIcon size={14} />
                 {t("spaces.palette.removeColor")}
               </Button>
               <Button type="button" variant="ghost" size="icon" onClick={() => setSelected(null)} aria-label={t("common.cancel")}>
