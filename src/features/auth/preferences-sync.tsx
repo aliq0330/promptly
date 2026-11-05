@@ -7,7 +7,7 @@ import { useTheme } from "@/components/theme/theme-provider";
 import { fetchOwnPreferences, updateOwnPreferences } from "@/lib/supabase/profiles";
 
 /**
- * Keeps the signed-in user's language / color mode / palette in their
+ * Keeps the signed-in user's language / color mode in their
  * `profiles` row so the choice follows the account across devices.
  *
  * - On sign-in the saved values (when the user has ever chosen one) are
@@ -22,14 +22,14 @@ import { fetchOwnPreferences, updateOwnPreferences } from "@/lib/supabase/profil
 export function PreferencesSync() {
   const { user } = useAuth();
   const { language, setLanguage } = useLanguage();
-  const { theme, setTheme, palette, setPalette } = useTheme();
+  const { theme, setTheme } = useTheme();
 
-  const current = useRef({ language, theme, palette });
+  const current = useRef({ language, theme });
   useEffect(() => {
-    current.current = { language, theme, palette };
-  }, [language, theme, palette]);
+    current.current = { language, theme };
+  }, [language, theme]);
   // What the backend is known to hold (null until sign-in hydration finishes).
-  const synced = useRef<{ language: string; theme: string; palette: string } | null>(null);
+  const synced = useRef<{ language: string; theme: string } | null>(null);
   const userId = user?.id ?? null;
 
   useEffect(() => {
@@ -43,18 +43,16 @@ export function PreferencesSync() {
       const next = {
         language: prefs?.language ?? now.language,
         theme: prefs?.themeMode ?? now.theme,
-        palette: prefs?.themePalette ?? now.palette,
       };
       // Mark as synced first so applying the saved values below is not echoed back.
       synced.current = next;
       if (next.language !== now.language) setLanguage(next.language as "tr" | "en");
       if (next.theme !== now.theme) setTheme(next.theme as "light" | "dark");
-      if (next.palette !== now.palette) setPalette(next.palette as "lavender");
     })();
     return () => {
       cancelled = true;
     };
-  }, [userId, setLanguage, setTheme, setPalette]);
+  }, [userId, setLanguage, setTheme]);
 
   useEffect(() => {
     const known = synced.current;
@@ -62,11 +60,10 @@ export function PreferencesSync() {
     const patch: Record<string, string> = {};
     if (language !== known.language) patch.language = language;
     if (theme !== known.theme) patch.themeMode = theme;
-    if (palette !== known.palette) patch.themePalette = palette;
     if (Object.keys(patch).length === 0) return;
-    synced.current = { language, theme, palette };
+    synced.current = { language, theme };
     updateOwnPreferences(userId, patch).catch((err) => console.error("updateOwnPreferences", err));
-  }, [userId, language, theme, palette]);
+  }, [userId, language, theme]);
 
   return null;
 }

@@ -381,20 +381,22 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
 export interface OwnPreferences {
   language: "tr" | "en" | null;
   themeMode: "light" | "dark" | null;
-  themePalette: "meydan" | "mono" | "lavender" | "ocean" | "forest" | "sand" | null;
 }
 
-/** The signed-in user's saved language/theme choices (null = never chosen explicitly). */
+/**
+ * The signed-in user's saved language/mode choices (null = never chosen explicitly). `profiles.theme_palette` is no longer
+ * read or written: the site has one palette (docs/history/341-*); the column goes in a later contract migration.
+ */
 export async function fetchOwnPreferences(userId: string): Promise<OwnPreferences | null> {
   try {
     const { data, error } = await supabase
       .from("profiles")
-      .select("language, theme_mode, theme_palette")
+      .select("language, theme_mode")
       .eq("id", userId)
       .maybeSingle();
     if (error || !data) return null;
-    const row = data as { language: OwnPreferences["language"]; theme_mode: OwnPreferences["themeMode"]; theme_palette: OwnPreferences["themePalette"] };
-    return { language: row.language, themeMode: row.theme_mode, themePalette: row.theme_palette };
+    const row = data as { language: OwnPreferences["language"]; theme_mode: OwnPreferences["themeMode"] };
+    return { language: row.language, themeMode: row.theme_mode };
   } catch (err) {
     console.error("fetchOwnPreferences", err);
     return null;
@@ -405,7 +407,6 @@ export async function updateOwnPreferences(userId: string, patch: Partial<OwnPre
   const row: Record<string, unknown> = {};
   if (patch.language !== undefined) row.language = patch.language;
   if (patch.themeMode !== undefined) row.theme_mode = patch.themeMode;
-  if (patch.themePalette !== undefined) row.theme_palette = patch.themePalette;
   if (Object.keys(row).length === 0) return;
   const { error } = await supabase.from("profiles").update(row).eq("id", userId);
   if (error) throw new Error(error.message);

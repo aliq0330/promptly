@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StorageImg, useStorageSrc } from "@/components/ui/storage-media";
-import { holdDarkMode, useTheme } from "@/components/theme/theme-provider";
+import { holdDarkMode } from "@/components/theme/theme-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { feedItemKey } from "@/features/feed/types";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
@@ -27,8 +27,8 @@ import { isPostItem, type PostFeedItem } from "@/features/feed/types";
 
 /**
  * Odak (`/focus`, docs/history/199-*) — everyone's public posts, one per screen, scrolled vertically, full screen (the
- * header, sidebar and bottom nav hide while it is open, like the story viewer). Always on a dark stage in the visitor's
- * own palette. Data is Ana Sayfa's: `feed_page` (newest, every kind; "Takip" = people you follow) through `useFeedPages`,
+ * header, sidebar and bottom nav hide while it is open, like the story viewer). Always on a dark stage (the site's
+ * one palette, dark mode). Data is Ana Sayfa's: `feed_page` (newest, every kind; "Takip" = people you follow) through `useFeedPages`,
  * so only published + public, non-community content appears. Like / comment / save / share / copy and the login prompts
  * are the cards' own components.
  *
@@ -115,13 +115,11 @@ function useFullScreenChrome() {
   }, []);
 }
 
-/** The dark stage in the visitor's palette (`.dark` + `data-palette` re-scope every token for this subtree). */
+/** The dark stage (`.dark` re-scopes every token for this subtree, globals.css). */
 function Stage({ children, className, commentsOpen = false }: { children: ReactNode; className?: string; commentsOpen?: boolean }) {
-  const { palette } = useTheme();
   return (
     <div
       data-focus-feed
-      data-palette={palette}
       data-comments-open={commentsOpen ? "" : undefined}
       className={cn("group/stage dark fixed inset-0 z-[45] flex flex-col overflow-hidden bg-background text-text", className)}
     >

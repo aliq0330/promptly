@@ -104,8 +104,7 @@ Sayfalar feature bileşenlerini birleştiren ince katmandır.
 > yeni bir bileşen yazılırken önce bu bölüm okunmalı.
 
 Tasarım dili: **Meydan** — parlak, sosyal, topluluk öncelikli bir prompt topluluğu
-(görsel üretim sitesi değil). Beyaza yakın zemin, kobalt birincil, sıcak turuncu
-ikincil vurgu; gereksiz gradient / glassmorphism / neon / ağır gölge yok. İnce
+(görsel üretim sitesi değil). Beyaza yakın zemin, Promptly mavisi birincil, logonun kalbinden gelen turuncu ikincil vurgu (tek palet, `docs/history/341-*`); gereksiz gradient / glassmorphism / neon / ağır gölge yok. İnce
 (`border-soft`) kenarlıklar, çok hafif gölgeler (`shadow-card`), yumuşak köşeler
 (kart `rounded-lg` = 16px, `rounded-xl` = 22px), **düğmeler hap biçimli**
 (`Button` = `rounded-full`), 200ms `ease-soft` geçişler. Ana Sayfa ana sütun (gönderiler
@@ -135,19 +134,19 @@ yeni tokenların alias'ı olarak korunuyor. `cn()` (tailwind-merge) bu özel
 tokenları tanıyacak şekilde genişletildi — aksi hâlde `text-caption` ile
 `text-text-muted` birbirini silerdi.
 
-**Temalar — iki bağımsız eksen**, ikisi de `themeInitScript` ile ilk
-boyamadan önce `<html>`'e uygulanır, localStorage'da (`promptly-theme`,
-`promptly-palette`) tutulur, `/settings → Görünüm`'den seçilir:
-- mod: `.dark` sınıfı (açık/koyu)
-- palet: `data-palette` = `meydan` (beyaz + kobalt + turuncu, **varsayılan** —
-  `docs/history/190-*`) / `mono` (Beyaz — nötr siyah-beyaz) / `lavender` /
-  `ocean` (lacivert + elektrik mavisi) / `forest` (orman + nane) / `sand` (kum + mercan,
-  `docs/history/057-*`). Yeni palet eklenirse `profiles_theme_palette_check` de genişletilir.
-
-Her palet her iki modda aynı tam token setini tanımlar (12 kombinasyonun
-hepsinde metin/zemin çiftleri WCAG AA ≥ 4.5:1 — `docs/history/050-*`, `114-*`). Palet
-seçicileri her elemente uyar, bu yüzden bir alt ağaç başka paletin gerçek
-tokenlarıyla önizlenebilir (Ayarlar'daki renk örnekleri böyle çalışır).
+**Tek palet, iki mod** (`docs/history/341-*`; altı seçilebilir palet — Meydan/Beyaz/Lavanta/Okyanus/Orman/Kum — kalktı):
+`globals.css`'te tek `:root` (açık) + `.dark` (koyu) blok; mod `themeInitScript` ile ilk boyamadan önce `<html>`'e uygulanır,
+`promptly-theme`'de ve oturumluysa `profiles.theme_mode`'da tutulur, `/settings → Tercihler → Görünüm`'den seçilir. `.dark`
+herhangi bir elemana uyar (Odak sahnesi kendi alt ağacını koyu yapar). **Palet seçici / `data-palette` / ikinci palet YAZMA**
+— kimlik tektir. **Renk rolleri kuraldır:** `primary` (Promptly mavisi `#3b5be2`/`#738cf0`) = yapabileceğin şey (düğme,
+bağlantı, seçili sekme, odak halkası); `secondary` (metin için güvenli turuncu) ve `heart` (logonun kalbinin parlak dolgu tonu
+— işaret/nokta, gövde metni DEĞİL) = senin olan (prompt `{değişken}`leri, yeni/okunmamış işaretleri); turuncu asla düğme ya da
+hata değildir, durum renkleri (`success/warning/danger`) ayrıdır. Her metin/zemin çifti iki modda WCAG AA ≥ 4.5:1 —
+`brand-tokens.test.ts` `globals.css`'i okuyup denetler; token değiştirirsen test geçmeli. **Logo** `components/layout/brand-mark.tsx`:
+`BrandMark` (süslü parantez + kalp; renkler tokenlardan) + `BrandWordmark` (küçük harf "promptly", Bricolage 800; cümle içinde
+ad yine "Promptly"); uygulama ikonları, favicon ve varsayılan paylaşım görseli aynı geometriden `node scripts/build-brand-assets.mjs`
+ile üretilir (elle düzenlenmez). `profiles.theme_palette` artık okunmaz/yazılmaz; sütun "Açık işler"deki contract migration'ıyla
+silinecek.
 
 **Ortak bileşenler:** `components/ui/` — `Button` (+ `buttonClassName` Link
 için), `Badge`, `Card`, `Chip`/`ChipRow`, `Tabs` (underline / segmented / pill),
@@ -441,6 +440,14 @@ ayrıntılı liste kelimesi kelimesine `docs/history/286-*` içinde.
 - **Performans denetimi (`docs/history/325-*`, 2026-11-03) — CANLIDA:** PR #430 `main`'e birleşti; migration `20261103100000_performance_indexes_and_rls.sql` deploy hattıyla uygulandı ("Apply pending migrations" + "Smoke test" yeşil; `schema_migrations`'ta, `prompts_public_like_idx` + `blocked_user_ids()` + 6 `*_hide_blocked` politikası + `trending_tags` DEFINER canlıda doğrulandı). Uygulama sonrası canlı ölçüm (`authenticated`, RLS açık, 7 tekrar medyanı): `trending_tags` 14,4 ms · `related_prompts` 102 ms · `feed_page` newest 35,6 ms · `for_you_page` 108,6 ms · `suggest_creators` 28,3 ms. Gerçek ağ şeması/Web Vitals/Lighthouse ölçülemedi (araç hazır, ağı olan makinede `--live`). Açık: i18n sözlüğü her sayfada 160 KB gz (dile göre bölme), 137 `auth_rls_initplan` politikası, `feed_page`/`for_you_page` O(N), Realtime `engagement-counts` süzgeçsiz, kart boyutlu görsel yok.
 - **Bildirim merkezi (`docs/history/326-*`, `327-*`, 2026-11-03/04):** `20261103110000` + `20261103120000` migration'ları CANLIDA (PR #432 deploy hattıyla uygulandı; 2026-11-03); `20261104100000_comment_reaction_counts.sql` (327) boru hattıyla uygulanır — `schema_migrations`'a bak; sonra `notifications_grouped_page` canlı hacimde `EXPLAIN` + `pg_stat_statements` ile ölçülmeli (§8.13). Ağ taklitli Playwright (`run-notifications` 34 senaryo, `run-comment-reactions` 4) + yerel PostgreSQL SQL testleri (`notification-center` 42, `comment-reaction-counts` 10); gerçek Supabase/Realtime/cihaz/Telegram'a karşı DENENMEDİ (327'deki telefon düzeltmeleri — onay penceresi katmanı, yanıt kutusu — kullanıcının iPhone ekran görüntüsünden çıktı, düzeltme gerçek cihazda ayrıca denenmedi). Bilinçli sınırlar: gruplama taraması en yeni 5000 satır; Telegram'da gruplama yok; öneri kabulü/reddi geri alınamaz; satır içi "Kabul et" yalnız önerenin tam metni varsa; takip ayrıntısında "Mesaj gönder" yok; yorum tepkileri için gerçek zamanlı sayaç yok (yorum sayıları sayfa açılışında okunur, kendi değişikliğin anında görünür); kişi profilinin kendi sayfası sahte ağlı testte açılamadı (mock eksik) — ⋮ menüsü bileşeni sohbet başlığında test edildi.
 - **Çevrimiçi durum (`docs/history/329-*`):** migration `20261104110000_presence.sql` deploy hattıyla uygulanır — `schema_migrations`'a bak; canlıda `realtime.messages` presence politikalarının oluştuğunu doğrula (migration oluşturamazsa uyarı yazar ve canlı nokta çalışmaz, son görülme çalışır). Gerçek Supabase Realtime (private presence yetkisi, Presence sınırları), gerçek Telegram ve gerçek cihaz DENENMEDİ; global etkin kişi sayısı büyüyünce topluluk sayımı (`community_presence_counts`) canlıda `EXPLAIN` ile ölçülmeli (§8.13).
+- **Tek kimlik (`docs/history/341-*`):** Aşama 1 (tek palet + yeni logo + marka dosyaları) uygulandı. Kalan: **Aşama 2** —
+  Solar Bold Duotone ikonları (480 Design, **CC BY 4.0 — atıf Yasal sayfasına yazılmalı**) için `@iconify-json/solar` geliştirme
+  bağımlılığı + `scripts/build-icons.mjs` üreticisi (kullanılan ikonları `src/components/icons/` altına üretir; çalışma zamanında
+  paket/ağ yok) + ~30 imza ikonun geçişi + doğrudan lucide importunu yasaklayan test; **Aşama 3** — kalan ~240 lucide ikonu
+  (anlam taşıyanlar bold duotone, `X`/`Check`/ok gibi kontrol işaretleri Solar linear, `Loader2` kendi halkamız),
+  `motion-icons.tsx` şekillerinin Solar diline çevrilmesi, sonunda `lucide-react`'in kaldırılması; **Aşama 4** (yıkıcı, kullanıcı
+  onayı ister) — `profiles.theme_palette` sütunu + `profiles_theme_palette_check` silinir (`-- ci:allow-destructive`), yalnız
+  Aşama 1 canlıda sorunsuz çalıştıktan sonra. Gerçek cihazda ana ekran ikonu / maskable kırpma DENENMEDİ.
 - **Dağıtım:** `deploy-functions.yml` hiç çalıştırılmadı (artık `function` seçeneğiyle tek fonksiyon deploy edebilir; `switch-account` betikte YOK); Edge Function kaynakları canlı sürümle karşılaştırılmadı; hatada geri alma ve yıkıcı SQL engeli canlıda denenmedi (`226-*`); `supabase db push` güvenilir değil (kayıt dosya sürümüyle düşülür, MCP `apply_migration` ayrı zaman damgası yazar — `158-*`).
 
 **Bilinen sınırlar (özellik başına ayrıntı `docs/history/NNN-*`'te; sonucu `docs/history/`de yazılı olmayan gerçek cihaz/oturum denemesi yapılmamış sayılır):**
@@ -473,5 +480,5 @@ ayrıntılı liste kelimesi kelimesine `docs/history/286-*` içinde.
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — en son 336. bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — en son 341. bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

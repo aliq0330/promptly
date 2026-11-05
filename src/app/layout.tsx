@@ -22,7 +22,7 @@ const body = DM_Sans({
 const display = Bricolage_Grotesque({
   variable: "--font-display-face",
   subsets: ["latin", "latin-ext"],
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800"],
 });
 
 // The literal prompt text (`prompt-text` utility) — the thing users copy.

@@ -8,7 +8,7 @@ import { openWelcomeTour } from "@/features/onboarding/welcome-tour";
 import { SettingsCard, SettingsSubpage } from "@/features/settings/settings-ui";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
-/** Ayarlar → Tercihler: görünüm (mod + palet), dil, tanıtım turu. Yalnız istemcide tutulur (localStorage). */
+/** Ayarlar → Tercihler: görünüm (açık/koyu mod — tek palet, docs/history/341-*), dil, tanıtım turu. */
 export default function PreferencesSettingsPage() {
   const { user, loading } = useAuth();
   const { t, language, setLanguage } = useTranslation();

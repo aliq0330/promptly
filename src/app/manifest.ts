@@ -7,8 +7,9 @@ const BASE = "/promptly";
 
 // Installable web app only — there is deliberately no service worker (a stale cached build
 // could not be shipped away), so the app needs a connection like the website does.
-// Colors are the default palette (Sand, light); the live page chrome follows the chosen
-// palette/mode through the `theme-color` meta that ThemeProvider keeps in sync.
+// Colors are the site's one palette in light mode (docs/history/341-*); the live page chrome follows
+// the chosen mode through the `theme-color` meta that ThemeProvider keeps in sync. Icons are drawn by
+// `scripts/build-brand-assets.mjs`.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: `${BASE}/`,
@@ -19,8 +20,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: `${BASE}/`,
     scope: `${BASE}/`,
     display: "standalone",
-    background_color: "#f7f3ed",
-    theme_color: "#f7f3ed",
+    background_color: "#f8f8fb",
+    theme_color: "#f8f8fb",
     icons: [
       { src: `${BASE}/icons/icon-192.png`, sizes: "192x192", type: "image/png", purpose: "any" },
       { src: `${BASE}/icons/icon-512.png`, sizes: "512x512", type: "image/png", purpose: "any" },
