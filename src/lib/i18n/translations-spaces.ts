@@ -309,6 +309,8 @@ export const spaceTranslations = {
   "spaces.detail.removeBody": { tr: "Öğe bu Space'ten kaldırılır. Kaynak Promptly gönderisi etkilenmez.", en: "The item is removed from this Space. The source Promptly post is not affected." },
 
   // ---- Görseller ----
+  "spaces.images.showcaseAria": { tr: "Space'in son görselleri", en: "The Space's latest images" },
+  "spaces.images.showcaseHint": { tr: "Ortadaki görsele dokun: ayrıntıyı aç", en: "Tap the centre image to open its details" },
   "spaces.images.search": { tr: "Görsellerde ara…", en: "Search images…" },
   "spaces.images.upload": { tr: "Görsel yükle", en: "Upload images" },
   "spaces.images.uploading": { tr: "Yükleniyor {{done}}/{{total}}", en: "Uploading {{done}}/{{total}}" },

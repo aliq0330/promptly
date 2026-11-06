@@ -1,51 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { buttonClassName } from "@/components/ui/button";
+import { Coverflow, CoverflowArrows } from "@/components/ui/coverflow";
 import { StorageAppearanceImage } from "@/components/ui/storage-media";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
-import { EMPTY_TAXONOMY_FILTER } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { fetchFeedPage } from "@/lib/supabase/feed";
+import { stepIndex } from "@/lib/coverflow";
 import { cn, promptHref } from "@/lib/utils";
 import type { Prompt } from "@/types";
+import { loadShowcase, SHOWCASE_MIN_ITEMS } from "./showcase-data";
 
-/** Below this many picture prompts the wall would visibly repeat: the compact intro is shown instead. */
-const MIN_ITEMS = 4;
-const FETCH_LIMIT = 16;
-
-/** The most liked public picture prompts that have both a picture and a prompt text. */
-async function loadShowcase(): Promise<Prompt[]> {
-  const page = await fetchFeedPage({
-    scope: "all",
-    order: "popular",
-    kind: "prompt",
-    taxonomy: { ...EMPTY_TAXONOMY_FILTER, contentType: "image" },
-    limit: FETCH_LIMIT,
-  });
-  return page.items.flatMap((item) => (item.kind === "prompt" && item.data.media[0] && item.data.promptText.trim() ? [item.data] : []));
-}
+const STAGE_HEIGHT = "h-[18rem] sm:h-[20rem] md:h-[23rem]";
 
 /**
- * The guest's first screen on Ana Sayfa (docs/history/209-*, "Canlı vitrin"): the pitch on one side, and on the other two
- * columns of the community's most liked picture prompts drifting slowly in opposite directions. Tapping a picture stops
- * the drift and slides up the exact prompt behind it — the thing Promptly is about — with Kopyala and a link to the post.
- * Signed-in members see nothing here (`HomeIntro`). `onUnavailable` hands back to the compact intro when there
- * are too few pictures or the request fails, so a guest never sees an empty wall.
+ * The guest's first screen on Ana Sayfa (docs/history/209-*, 346-*): the pitch on one side, and on the other a coverflow of the
+ * community's most liked picture prompts. Tapping a side card brings it to the centre; tapping the centre card slides up the
+ * exact prompt behind it — the thing Promptly is about — with Kopyala and a link to the post. Signed-in members see nothing
+ * here (`HomeIntro`). `onUnavailable` hands back to the compact intro when there are too few pictures or the request fails,
+ * so a guest never sees an empty gallery.
  */
 export function GuestShowcase({ onUnavailable }: { onUnavailable: () => void }) {
   const { t } = useTranslation();
   const [prompts, setPrompts] = useState<Prompt[] | null>(null);
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [active, setActive] = useState(0);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
     loadShowcase()
       .then((items) => {
         if (!alive) return;
-        if (items.length < MIN_ITEMS) onUnavailable();
+        if (items.length < SHOWCASE_MIN_ITEMS) onUnavailable();
         else setPrompts(items);
       })
       .catch((err) => {
@@ -57,7 +45,11 @@ export function GuestShowcase({ onUnavailable }: { onUnavailable: () => void }) 
     };
   }, [onUnavailable]);
 
-  const columns = prompts ? [prompts.filter((_, i) => i % 2 === 0), prompts.filter((_, i) => i % 2 === 1)] : [[], []];
+  const go = useCallback((index: number) => {
+    setActive(index);
+    setOpen(false);
+  }, []);
+  const current = prompts?.[active];
 
   return (
     <section
@@ -80,59 +72,59 @@ export function GuestShowcase({ onUnavailable }: { onUnavailable: () => void }) 
         </div>
       </div>
 
-      <div
-        className={cn(
-          "showcase-wall relative grid h-[19rem] grid-cols-2 gap-2.5 overflow-hidden px-3 sm:h-[22rem] sm:px-4 md:h-[26rem]",
-          openKey && "showcase-paused",
-        )}
-        aria-label={t("showcase.wallAria")}
-        role="group"
-      >
-        {prompts === null
-          ? [0, 1].map((col) => (
-              <div key={col} className="space-y-2.5 pt-3">
-                {[0, 1, 2].map((row) => (
-                  <div key={row} className="skeleton-shimmer rounded-lg bg-surface-soft" style={{ aspectRatio: row % 2 === col % 2 ? 1.05 : 0.8 }} />
-                ))}
-              </div>
-            ))
-          : columns.map((column, col) => (
-              <div key={col} className="min-w-0">
-                {/* The list twice, so the drift loops seamlessly; the copy is invisible to assistive tech and the tab order. */}
-                <div className={cn("showcase-track flex flex-col gap-2.5", col === 1 && "showcase-track-reverse")}>
-                  {[0, 1].map((copy) => (
-                    <div key={copy} className="flex flex-col gap-2.5" aria-hidden={copy === 1 || undefined} inert={copy === 1}>
-                      {column.map((prompt, index) => {
-                        const key = `${copy}-${prompt.id}`;
-                        return (
-                          <ShowcaseTile
-                            key={key}
-                            prompt={prompt}
-                            tall={(index + col) % 2 === 1}
-                            open={openKey === key}
-                            onToggle={() => setOpenKey((current) => (current === key ? null : key))}
-                          />
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              </div>
+      <div className="flex min-w-0 flex-col bg-surface-soft">
+        {prompts === null ? (
+          <div className={cn("flex items-center justify-center gap-3 px-6", STAGE_HEIGHT)} aria-hidden>
+            {[0.72, 1, 0.72].map((scale, index) => (
+              <div key={index} className="skeleton-shimmer aspect-[4/5] h-[72%] rounded-lg bg-surface" style={{ transform: `scale(${scale})`, opacity: scale === 1 ? 1 : 0.6 }} />
             ))}
+          </div>
+        ) : (
+          <Coverflow
+            items={prompts}
+            active={active}
+            onActiveChange={go}
+            itemKey={(prompt) => prompt.id}
+            itemLabel={(prompt) => prompt.title}
+            label={t("showcase.wallAria")}
+            className={STAGE_HEIGHT}
+            renderCard={(prompt, state) => <ShowcaseCard prompt={prompt} active={state.active} open={state.active && open} onToggle={() => setOpen((value) => !value)} />}
+          />
+        )}
+        <div className="flex items-center gap-3 px-4 pb-4 pt-1 sm:px-5" aria-live="polite">
+          <div className="min-w-0 flex-1">
+            {current ? (
+              <>
+                <p className="truncate text-caption font-semibold uppercase tracking-[0.07em] text-text-muted">
+                  {current.tool ? `${current.author.displayName} · ${current.tool}` : current.author.displayName}
+                </p>
+                <p className="truncate font-display text-body font-bold text-text">{current.title}</p>
+                <p className="text-caption text-text-muted">{t("showcase.hint")}</p>
+              </>
+            ) : (
+              <div className="space-y-1.5" aria-hidden>
+                <div className="skeleton-shimmer h-3 w-1/3 rounded bg-surface" />
+                <div className="skeleton-shimmer h-4 w-1/2 rounded bg-surface" />
+              </div>
+            )}
+          </div>
+          {prompts && <CoverflowArrows onPrev={() => go(stepIndex(active, -1, prompts.length))} onNext={() => go(stepIndex(active, 1, prompts.length))} />}
+        </div>
       </div>
     </section>
   );
 }
 
-function ShowcaseTile({ prompt, tall, open, onToggle }: { prompt: Prompt; tall: boolean; open: boolean; onToggle: () => void }) {
+/** One card: the picture and its title; on the centre card a button slides the prompt up over the picture. */
+function ShowcaseCard({ prompt, active, open, onToggle }: { prompt: Prompt; active: boolean; open: boolean; onToggle: () => void }) {
   const { t } = useTranslation();
   const media = prompt.media[0];
   return (
-    <div className="relative overflow-hidden rounded-lg bg-surface-soft" style={{ aspectRatio: tall ? 0.8 : 1.05 }}>
+    <>
       <button
         type="button"
         onClick={onToggle}
-        aria-expanded={open}
+        aria-expanded={active ? open : undefined}
         aria-label={t("showcase.tileAria", { title: prompt.title })}
         className="group absolute inset-0 block text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
       >
@@ -142,7 +134,7 @@ function ShowcaseTile({ prompt, tall, open, onToggle }: { prompt: Prompt; tall: 
           color={media.color}
           placeholder={media.placeholder}
           sizes="(min-width: 768px) 22vw, 45vw"
-          className="object-cover transition-transform duration-700 ease-soft group-hover:scale-[1.04]"
+          className="object-cover"
         />
         <span
           className={cn(
@@ -154,28 +146,30 @@ function ShowcaseTile({ prompt, tall, open, onToggle }: { prompt: Prompt; tall: 
         </span>
       </button>
       {/* The prompt slides up over the picture; its controls only exist while it is open. */}
-      <div
-        className={cn(
-          "absolute inset-0 flex flex-col justify-end gap-2 bg-black/80 p-3 text-white transition-[transform,visibility] duration-500 ease-soft",
-          open ? "visible translate-y-0" : "invisible translate-y-full",
-        )}
-        onClick={onToggle}
-      >
-        <p className="line-clamp-5 font-mono text-[0.6875rem] leading-relaxed text-white/90">{prompt.promptText}</p>
-        {open && (
-          <div className="flex items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
-            <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="sm" variant="primary" className="h-8 min-w-0 rounded-full px-3" />
-            <Link
-              href={promptHref(prompt)}
-              aria-label={t("showcase.open")}
-              title={t("showcase.open")}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25"
-            >
-              <ArrowUpRight size={15} aria-hidden />
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>
+      {active && (
+        <div
+          className={cn(
+            "absolute inset-0 flex flex-col justify-end gap-2 bg-black/80 p-3 text-white transition-[transform,visibility] duration-500 ease-soft",
+            open ? "visible translate-y-0" : "invisible translate-y-full",
+          )}
+          onClick={onToggle}
+        >
+          <p className="line-clamp-6 font-mono text-[0.6875rem] leading-relaxed text-white/90">{prompt.promptText}</p>
+          {open && (
+            <div className="flex items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
+              <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="sm" variant="primary" className="h-8 min-w-0 rounded-full px-3" />
+              <Link
+                href={promptHref(prompt)}
+                aria-label={t("showcase.open")}
+                title={t("showcase.open")}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25"
+              >
+                <ArrowUpRight size={15} aria-hidden />
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+    </>
   );
 }

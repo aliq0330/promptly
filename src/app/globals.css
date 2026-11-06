@@ -677,35 +677,6 @@
   transition: none !important;
 }
 
-/* Guest showcase (src/features/feed/guest-showcase.tsx, docs/history/209-*): two columns drift slowly in opposite directions
- * (each holds its list twice, so -50% lands on the same picture), fading out at the top and bottom edges. Hovering, focusing or
- * opening a picture stops them; reduced motion stops them altogether (the rule below cuts every animation short). */
-@keyframes showcase-drift {
-  to {
-    transform: translateY(-50%);
-  }
-}
-.showcase-wall {
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 12%, #000 88%, transparent);
-  mask-image: linear-gradient(180deg, transparent 0, #000 12%, #000 88%, transparent);
-}
-.showcase-track {
-  animation: showcase-drift 70s linear infinite;
-}
-.showcase-track-reverse {
-  animation-direction: reverse;
-  animation-duration: 84s;
-}
-.showcase-paused .showcase-track,
-.showcase-wall:focus-within .showcase-track {
-  animation-play-state: paused;
-}
-@media (hover: hover) {
-  .showcase-wall:hover .showcase-track {
-    animation-play-state: paused;
-  }
-}
-
 /*
  * Hareketli ikonlar ve çıkış animasyonları (docs/history/335-*; `components/ui/motion-icons.tsx`, `exit-motion.tsx`).
  * Hepsi bir kez oynar; son kare dinlenme karesidir, bu yüzden aşağıdaki hareketi-azalt kuralı (süre ≈ 0) ikonu doğru yerde bırakır.
