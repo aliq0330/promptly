@@ -2,7 +2,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { BarChart3 } from "@/components/icons/bar-chart-3";
 import { Bookmark } from "@/components/icons/bookmark";
 import { Compass } from "@/components/icons/compass";
-import { GalleryVerticalEnd } from "@/components/icons/gallery-vertical-end";
+import { Focus } from "@/components/icons/focus";
 import { Home } from "@/components/icons/home";
 import { LogIn } from "@/components/icons/log-in";
 import { Plus } from "@/components/icons/plus";
@@ -88,7 +88,7 @@ export const mobileNavItems: NavItem[] = [
   { href: CREATE_HREF, labelKey: "nav.createShort", icon: Plus },
   { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
   // Odak (docs/history/199-*) took the profile slot: the profile stays one tap away in the header's account menu (guests: its login menu).
-  { href: FOCUS_HREF, labelKey: "nav.focus", icon: GalleryVerticalEnd },
+  { href: FOCUS_HREF, labelKey: "nav.focus", icon: Focus },
 ];
 
 export function isNavItemActive(pathname: string, item: NavItem) {

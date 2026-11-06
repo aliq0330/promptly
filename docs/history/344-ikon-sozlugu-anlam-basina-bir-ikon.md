@@ -47,3 +47,6 @@ yeni bir yüzey önce buna bakar.
 
 ## Düzeltme (aynı gün, gerçek telefon ekran görüntüsüyle)
 - Mesajlar için seçilen `chat-square-2` çubuklu bir kare; telefonda istatistik grafiği gibi okundu (üst menü ve "Sohbeti aç"). `MessagesSquare` artık Solar `dialog-2` (üst üste iki balon, noktalı) — Yorum'un tek yuvarlak balonundan ayrılır. Ders: ikon seçimini 20–24 px'te ve gerçek bağlamda kontrol et, yalnız büyük önizlemede değil.
+
+## Odak ikonu (aynı gün)
+- Odak iki ayrı ikonla geçiyordu (alt menüde köşe çerçeveli kare, masaüstü üst menüde `GalleryVerticalEnd` = dikey). Odak yatay kaydırmalıdır (ortada kart, yanlarda soluk komşular), bu yüzden tek ikon Solar `posts-carousel-horizontal`: yeni `Focus` (üst menü, kenar çubuğu girişi, boş durum) ve hareketli `FocusIcon` (alt menü; yan kartlar yanlardan, orta kart ölçekle gelir, son kare = dinlenme karesi). `GalleryVerticalEnd` kalktı.
