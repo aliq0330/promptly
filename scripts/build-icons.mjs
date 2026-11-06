@@ -174,7 +174,7 @@ export const ICON_MAP = {
   MapPin: "map-point",
   Maximize: "maximize:l",
   Maximize2: "full-screen:l",
-  Megaphone: "notification-unread-lines",
+  Megaphone: "@custom",
   MessageCircle: "chat-round-dots",
   MessageCircleHeart: "chat-round-like",
   MessageCircleQuestion: "chat-round-question-mark",
@@ -188,7 +188,7 @@ export const ICON_MAP = {
   MessagesSquare: "chat-square-2",
   Mic: "microphone",
   MicVocal: "microphone-3",
-  Microscope: "object-scan",
+  Microscope: "@custom",
   Minimize2: "quit-full-screen:l",
   Minus: "minus:l",
   MonitorPlay: "monitor",
@@ -209,7 +209,7 @@ export const ICON_MAP = {
   PenTool: "pen-new-round",
   Pencil: "pen",
   Pin: "pin",
-  PinOff: "pin-circle",
+  PinOff: "@custom",
   Pipette: "pipette",
   Play: "play",
   Plug: "plug-circle",
@@ -256,7 +256,7 @@ export const ICON_MAP = {
   Star: "star",
   StickyNote: "notes",
   Sun: "sun-2",
-  Swords: "gamepad",
+  Swords: "@custom",
   Tag: "tag",
   Tags: "tag-horizontal",
   Terminal: "programming",
@@ -298,6 +298,28 @@ export const ICON_MAP = {
 
 /** Our own three-quarter ring for `Loader2` (spun by the caller's `animate-spin`). */
 const SPINNER_BODY = '<path d="M12 3a9 9 0 1 0 9 9"/>';
+
+/**
+ * Icons Solar has no counterpart for, drawn by us in Solar's Bold Duotone manner (24 grid, solid shapes, the lighter layer
+ * at opacity .5, a few round-capped 1.6 strokes for fine detail). `@custom` entries of ICON_MAP read this table; a value is
+ * an SVG body or `(resolve) => body` to build on a Solar shape. When Solar adds a real equivalent, point the map at it.
+ */
+const SWORD = '<path d="M12 1.8l1.7 2.2v8.9h-3.4V4z"/><path d="M7.6 13.6h8.8a.9.9 0 0 1 0 1.8H7.6a.9.9 0 0 1 0-1.8z"/><path d="M11 15.4h2v3.9h-2z"/><circle cx="12" cy="20.4" r="1.3"/>';
+const CUSTOM = {
+  Megaphone:
+    '<path d="M16 4.1v15.8c0 .8-.9 1.3-1.6.9L8.5 17H8V7h.5l5.9-3.8c.7-.4 1.6.1 1.6.9z" opacity=".5"/>' +
+    '<path d="M5 7h3.5v10H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>' +
+    '<path d="M5.6 17.4h3.1l1.1 3.4a1 1 0 0 1-1 1.3H8a1.2 1.2 0 0 1-1.1-.8z"/>' +
+    '<path d="M18.9 9.4a3.5 3.5 0 0 1 0 5.2M21 7.2a6.4 6.4 0 0 1 0 9.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  Swords: `<g transform="rotate(-45 12 12)" opacity=".5">${SWORD}</g><g transform="rotate(45 12 12)">${SWORD}</g>`,
+  Microscope:
+    '<path d="M12 8c4.2.4 6.7 3.6 6.2 7.2-.3 2-1.6 3.6-3.6 4.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".5"/>' +
+    '<rect x="8.4" y="1.8" width="4" height="10" rx="1.2" transform="rotate(20 10.4 6.8)"/>' +
+    '<rect x="6" y="14.4" width="8" height="1.9" rx=".95"/>' +
+    '<path d="M5 19.4h14a1.3 1.3 0 0 1 0 2.6H5a1.3 1.3 0 0 1 0-2.6z"/>',
+  PinOff: (resolve) =>
+    resolve("pin-bold-duotone") + '<path d="M3.5 3.5l17 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+};
 
 const camel = (name) => name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 
@@ -428,6 +450,16 @@ function render() {
       jsx = SPINNER_BODY;
       linear = true;
       source = "Promptly's own spinner ring";
+    } else if (spec === "@custom") {
+      const made = CUSTOM[component];
+      const raw = typeof made === "function" ? made(resolve) : made;
+      if (!raw) {
+        problems.push(`${component}: CUSTOM tablosunda yok`);
+        continue;
+      }
+      linear = false;
+      jsx = toJsx(raw, { linear: false });
+      source = "Promptly's own icon, drawn in the Solar Bold Duotone manner";
     } else {
       const [base, style] = spec.split(":");
       linear = style === "l";
