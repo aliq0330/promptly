@@ -31,7 +31,7 @@ export const TERMS_VERSION = "2026-11-02";
 export const TERMS_EFFECTIVE_AT = "2026-11-02T12:00:00Z";
 
 // İki belge ayrı güncellenir: birinin değişmesi diğerinin tarihini oynatmaz.
-const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 2 Kasım 2026", en: "Last updated: November 2, 2026" };
+const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 6 Kasım 2026", en: "Last updated: November 6, 2026" };
 const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 2 Kasım 2026", en: "Last updated: November 2, 2026" };
 
 const p = (tr: string, en: string): LegalBlock => ({ type: "p", text: { tr, en } });
@@ -51,7 +51,7 @@ export const PRIVACY_POLICY: LegalDocument = {
         ul(
           [
             "Hesap bilgilerin: e-posta adresin, şifren (yalnızca şifrelenmiş olarak saklanır), kullanıcı adın ve görünen adın. Google ile giriş yaparsan Google'dan adını ve e-posta adresini alırız; profil fotoğrafını otomatik almayız.",
-            "Profilin ve içeriklerin: biyografi, avatar, ilgi alanları, paylaştığın promptlar, istekler, workflow'lar, ayar paketleri, yorumlar, beğeniler, kaydettiklerin, koleksiyonların, takip ettiklerin, engellediklerin ve yaptığın şikâyetler.",
+            "Profilin ve içeriklerin: biyografi, avatar, ilgi alanları, paylaştığın promptlar, istekler, workflow'lar, ayar paketleri, yorumlar, beğeniler, kaydettiklerin, koleksiyonların, takip ettiklerin, engellediklerin ve yaptığın şikâyetler. Bir promptu kopyaladıktan sonra verdiğin \"Çalıştı mı?\" oyu da burada sayılır: oyunun kendisi gizlidir, ama o promptta yorum ya da sonuç bıraktıysan oyun yorumunun ve sonucunun yanında rozet olarak herkese görünür.",
             "Mesajların: gönderdiğin ve aldığın doğrudan mesajlar, fotoğraflar ve GIF'ler. Yalnızca konuşmanın tarafları görebilir. GIF'lerin kendisini saklamayız; yalnızca hangi GIF olduğunu belirten GIPHY kimliğini saklarız (aşağıda \"Hizmet sağlayıcılar\" bölümündeki GIPHY maddesine bak).",
             "Yüklediğin dosyalar: görsel, ses ve video dosyaları.",
             "Tercihlerin: tema, palet ve dil seçimin. Bunlar hesabında ve tarayıcında saklanır.",
@@ -60,7 +60,7 @@ export const PRIVACY_POLICY: LegalDocument = {
           ],
           [
             "Your account details: your email address, your password (stored only in encrypted form), your username and your display name. If you sign in with Google, we receive your name and email address from Google; we do not import your profile picture automatically.",
-            "Your profile and content: bio, avatar, interests, the prompts, requests, workflows and presets you share, comments, likes, saves, collections, the people you follow or block, and the reports you file.",
+            "Your profile and content: bio, avatar, interests, the prompts, requests, workflows and presets you share, comments, likes, saves, collections, the people you follow or block, and the reports you file. This also includes your \"Did it work?\" vote, which you can cast after copying a prompt: the vote itself is private, but if you leave a comment or a result on that prompt, your vote is shown next to it as a badge that everyone can see.",
             "Your messages: the direct messages, photos and GIFs you send and receive. Only the people in the conversation can see them. We do not store the GIFs themselves; we only store the GIPHY ID that says which GIF it is (see the GIPHY item under \"Service providers\" below).",
             "Files you upload: image, audio and video files.",
             "Your preferences: theme, palette and language. These are stored in your account and in your browser.",

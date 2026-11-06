@@ -173,8 +173,8 @@ await scenario("4. Etkinlik sekmesi (üye olmayan, varsayılan 'herkes'): önizl
   await list.waitFor();
   const rename = list.locator("[data-activity='renamed']");
   await rename.getByText("Neon sokak").waitFor();
-  await rename.getByText("Önce").waitFor();
-  await rename.getByText("Sonra").waitFor();
+  await rename.getByText("Önce", { exact: true }).waitFor();
+  await rename.getByText("Sonra", { exact: true }).waitFor();
   const pal = list.locator("[data-activity='palette_updated']");
   assert.equal(await pal.locator("[data-activity-side='before'] i").count(), 3);
   assert.equal(await pal.locator("[data-activity-side='after'] i").count(), 4);
