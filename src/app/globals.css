@@ -715,6 +715,12 @@
 .icon-solid * {
   opacity: 1;
 }
+/* Etkin ikon (docs/history/345-*): ikinci ton turuncu (`heart` = "senin olan": seçili sekme, kaydedilmiş). Yalnız etkin durumda;
+ * normal ikon aynı rengin yarı saydamıdır. Katmanı opacity=".5" özniteliği işaretler (Solar duotone + bizim çizimlerimiz). */
+.icon-accent [opacity] {
+  fill: var(--color-heart);
+  opacity: 1;
+}
 
 :root {
   --mi-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -783,6 +789,7 @@
 
 /* Yer imi */
 .mi-bm-fill {
+  color: var(--color-heart);
   clip-path: inset(100% 0 0 0);
   transition: clip-path 300ms var(--mi-ease);
 }

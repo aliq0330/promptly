@@ -26,7 +26,7 @@ import { Share2 } from "@/components/icons/share-2";
 import { ShoppingBag } from "@/components/icons/shopping-bag";
 import { Smartphone } from "@/components/icons/smartphone";
 import { Sparkles } from "@/components/icons/sparkles";
-import { Users } from "@/components/icons/users";
+import { UsersRound } from "@/components/icons/users-round";
 import { Video } from "@/components/icons/video";
 import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { Waves } from "@/components/icons/waves";
@@ -37,7 +37,7 @@ import { Waves } from "@/components/icons/waves";
  * folder, so a new database row never crashes the picker.
  */
 export const TAXONOMY_ICONS: Record<string, IconComponent> = {
-  users: Users,
+  users: UsersRound,
   camera: Camera,
   palette: Palette,
   sparkles: Sparkles,

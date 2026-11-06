@@ -101,9 +101,9 @@ export function MobileNav() {
             ) : (
               <>
                 {MotionIcon ? (
-                  <MotionIcon size={22} strokeWidth={active ? 2.2 : 1.8} seq={iconSeq[item.href]} className={active ? "text-primary" : undefined} />
+                  <MotionIcon size={22} strokeWidth={active ? 2.2 : 1.8} seq={iconSeq[item.href]} className={active ? "icon-accent text-text" : undefined} />
                 ) : (
-                  <Icon size={22} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-primary" : undefined} />
+                  <Icon size={22} strokeWidth={active ? 2.2 : 1.8} className={active ? "icon-accent text-text" : undefined} />
                 )}
               </>
             )}

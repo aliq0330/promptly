@@ -58,7 +58,7 @@ export function Sidebar() {
             active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
           )}
         >
-          <Icon size={21} strokeWidth={active ? 2.2 : 1.8} />
+          <Icon size={21} strokeWidth={active ? 2.2 : 1.8} className={active ? "icon-accent text-text" : undefined} />
           <span className="sr-only lg:not-sr-only">{label}</span>
         </Link>
       </li>

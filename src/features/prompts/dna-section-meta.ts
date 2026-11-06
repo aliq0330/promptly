@@ -23,7 +23,7 @@ import { Sparkles } from "@/components/icons/sparkles";
 import { Tag } from "@/components/icons/tag";
 import { User } from "@/components/icons/user";
 import { UserCog } from "@/components/icons/user-cog";
-import { Users } from "@/components/icons/users";
+import { UsersRound } from "@/components/icons/users-round";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { DnaSection, DnaSectionType } from "@/lib/prompt-dna/types";
 
@@ -47,7 +47,7 @@ export const DNA_ICONS: Record<DnaSectionType, IconComponent> = {
   task: ListChecks,
   role: UserCog,
   constraints: ShieldAlert,
-  audience: Users,
+  audience: UsersRound,
   tone: MessageSquareQuote,
   platform: Globe,
   format: FileText,
