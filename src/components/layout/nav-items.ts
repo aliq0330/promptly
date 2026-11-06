@@ -52,7 +52,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { href: "/", labelKey: "nav.home", icon: Home },
       { href: "/discover", labelKey: "nav.discover", icon: Compass, alsoMatch: ["/prompts", "/requests", "/workflows", "/presets", "/tags", "/categories", "/tools", "/results", "/quotes"] },
-      { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
+      { href: "/communities", labelKey: "nav.communities", icon: Users },
       // Promptly Spaces (docs/history/213-*): ziyaretçi de herkese açık Space'leri görür.
       { href: "/spaces", labelKey: "nav.spaces", icon: Shapes },
       { href: "/studio", labelKey: "nav.studio", icon: WandSparkles },
@@ -62,7 +62,7 @@ export const navGroups: NavGroup[] = [
     labelKey: "nav.groupLibrary",
     items: [
       { href: "/saved", labelKey: "nav.saved", icon: Bookmark, match: "/saved", visibility: "authenticated" },
-      { href: "/following", labelKey: "nav.followingPeople", icon: Users, visibility: "authenticated" },
+      { href: "/following", labelKey: "nav.followingPeople", icon: UsersRound, visibility: "authenticated" },
       // Yaratıcı paneli (docs/history/294-*): kişinin kendi promptlarının performansı.
       { href: "/insights", labelKey: "nav.insights", icon: BarChart3, visibility: "authenticated" },
       { href: PROFILE_NAV_PLACEHOLDER, labelKey: "nav.profile", icon: User, match: "/profile", visibility: "authenticated" },
@@ -86,7 +86,7 @@ export const mobileNavItems: NavItem[] = [
   { href: "/", labelKey: "nav.home", icon: Home },
   { href: "/discover", labelKey: "nav.discover", icon: Compass },
   { href: CREATE_HREF, labelKey: "nav.createShort", icon: Plus },
-  { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
+  { href: "/communities", labelKey: "nav.communities", icon: Users },
   // Odak (docs/history/199-*) took the profile slot: the profile stays one tap away in the header's account menu (guests: its login menu).
   { href: FOCUS_HREF, labelKey: "nav.focus", icon: Focus },
 ];
