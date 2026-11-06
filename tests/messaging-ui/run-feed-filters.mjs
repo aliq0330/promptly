@@ -225,7 +225,7 @@ await scenario("1. Ana Sayfa: yalnız Sana özel + Takip Ettiklerim; En yeni / P
   assert.equal(await page.getByRole("group", { name: "Gönderi türü" }).count(), 0, "tür çip satırı sayfada yok (docs/history/237-*)");
   await openFilter(page);
   await page.getByRole("dialog").getByRole("heading", { name: "Gönderi türü" }).waitFor();
-  assert.equal(await page.getByRole("dialog").getByRole("button", { name: /^(Tümü|Promptlar|İstekler|İstek|Workflow'lar|Hazır [Aa]yarlar)$/ }).count(), 6, "Hepsi + dört tür Filtre penceresinde (Tümü iki bölümde de var: gönderi türü + içerik türü)");
+  assert.equal(await page.getByRole("dialog").getByRole("button", { name: /^(Tümü|Promptlar|İstekler|İstek|Workflow'lar|Hazır [Aa]yarlar|Ayar [Pp]aketleri)$/ }).count(), 6, "Hepsi + dört tür Filtre penceresinde (Tümü iki bölümde de var: gönderi türü + içerik türü)");
   // İçerik türü (docs/history/245-*): ikinci bir Tümü + Görsel · Metin · Ses · Video; kategori / alt kategori yine yalnız Keşfet'te.
   await page.getByRole("dialog").getByRole("heading", { name: "İçerik türü" }).waitFor();
   assert.equal(await page.getByRole("dialog").getByRole("button", { name: /^(Tümü|Görsel|Metin|Ses|Video)$/ }).count(), 6, "Gönderi türünün Tümü'sü + içerik türünün Tümü'sü + dört içerik türü");
