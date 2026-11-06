@@ -113,7 +113,7 @@ export const ICON_MAP = {
   Flag: "flag",
   Flame: "fire",
   FlaskConical: "test-tube",
-  Focus: "posts-carousel-horizontal",
+  Focus: "slider-vertical",
   Folder: "folder",
   FolderMinus: "remove-folder",
   FolderOpen: "folder-open",
