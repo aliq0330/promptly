@@ -7,7 +7,7 @@ import { Clock } from "@/components/icons/clock";
 import { Info } from "@/components/icons/info";
 import { LayoutGrid } from "@/components/icons/layout-grid";
 import { MailOpen } from "@/components/icons/mail-open";
-import { MessageCircle } from "@/components/icons/message-circle";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { UserPlus } from "@/components/icons/user-plus";
@@ -37,7 +37,7 @@ const CATEGORY_ICONS: Record<NotificationCategoryName, IconComponent> = {
   posts: SquareTerminal,
   requests: Sparkles,
   follow: UserPlus,
-  messages: MessageCircle,
+  messages: MessagesSquare,
   community: Users,
   system: Info,
 };

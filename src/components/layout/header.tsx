@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { FullLoadLink } from "@/components/ui/full-load-link";
 import { GalleryVerticalEnd } from "@/components/icons/gallery-vertical-end";
 import { Languages } from "@/components/icons/languages";
-import { MessageCircle } from "@/components/icons/message-circle";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { Search } from "@/components/icons/search";
 import { buttonClassName } from "@/components/ui/button";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -92,7 +92,7 @@ export function Header() {
                 data-header-messages=""
                 className={iconButtonClassName(dock.open, "shrink-0 relative")}
               >
-                <MessageCircle size={20} />
+                <MessagesSquare size={20} />
                 {hasUnreadMessages && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />}
               </button>
             ) : (
@@ -103,7 +103,7 @@ export function Header() {
                 data-header-messages=""
                 className={iconButtonClassName(false, "shrink-0 relative")}
               >
-                <MessageCircle size={20} />
+                <MessagesSquare size={20} />
                 {hasUnreadMessages && (
                   <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
                 )}
