@@ -44,3 +44,6 @@ yeni bir yüzey önce buna bakar.
 - Anlam kararları metin anahtarı + dosya bağlamından okundu; 1603 kullanımın her biri ekranda tek tek açılıp görülmedi.
 - Bilerek aynı kaldı: `Copy` hem "kopyala" hem "çoğalt"; `Lock` hem özel hem "kilitle/kilitli nesne"; `Star` yıldızlı mesaj ve Space puanı; `Inbox` boş durum + istek kutusu; `Clock` birkaç zaman anlamı.
 - Gerçek telefonda/koyu temada görünüm denenmedi.
+
+## Düzeltme (aynı gün, gerçek telefon ekran görüntüsüyle)
+- Mesajlar için seçilen `chat-square-2` çubuklu bir kare; telefonda istatistik grafiği gibi okundu (üst menü ve "Sohbeti aç"). `MessagesSquare` artık Solar `dialog-2` (üst üste iki balon, noktalı) — Yorum'un tek yuvarlak balonundan ayrılır. Ders: ikon seçimini 20–24 px'te ve gerçek bağlamda kontrol et, yalnız büyük önizlemede değil.
