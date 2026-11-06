@@ -473,6 +473,38 @@ await scenario("25. ziyaretçi Space'i vitrin olarak görür: Görseller açıl�
   },
 });
 
+await scenario("25b. ziyaretçi vitrini: Görseller coverflow ile açılır (yan görsel öne gelir, ortadaki ayrıntıyı açar)", async ({ page }) => {
+  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
+  await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();
+  const showcase = page.getByTestId("space-showcase");
+  await showcase.waitFor();
+  await page.waitForFunction(() => document.querySelectorAll("[data-coverflow-card]").length === 4);
+  assert.equal(await page.locator("[data-coverflow-card][data-active]").getAttribute("data-coverflow-card"), "0");
+  await page.locator('[data-coverflow-card="1"]').click();
+  await page.waitForFunction(() => document.querySelector("[data-coverflow-card][data-active]")?.getAttribute("data-coverflow-card") === "1");
+  // Aynı görseller altındaki ızgarada da durur (coverflow yalnız kapak).
+  assert.equal(await page.locator("[data-image-item]").count(), 4);
+  await page.locator('[data-coverflow-card="1"]').click();
+  await page.getByRole("dialog").waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), true);
+}, {
+  setup: (db) => {
+    db.addSpace(1, { title: "Ejderha Dünyası", owner: U.bob.id, visibility: "public" });
+    for (let i = 1; i <= 4; i++) db.addItem(SID(1), { kind: "image", media_url: MEDIA(SID(1), i), title: `Görsel ${i}`, created_by: U.bob.id });
+  },
+});
+
+await scenario("25c. üç görselden azında coverflow yok (ızgara kalır)", async ({ page }) => {
+  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
+  await page.getByTestId("space-images").waitFor();
+  assert.equal(await page.getByTestId("space-showcase").count(), 0);
+}, {
+  setup: (db) => {
+    db.addSpace(1, { title: "Ejderha Dünyası", owner: U.bob.id, visibility: "public" });
+    for (let i = 1; i <= 2; i++) db.addItem(SID(1), { kind: "image", media_url: MEDIA(SID(1), i), created_by: U.bob.id });
+  },
+});
+
 await scenario("26. sahip: bant paleti + ⋮ → Sabitle (set_space_favorite); ana sayfa kartı Albüm bandı + palet çizgisi + Sabitli", async ({ page, db }) => {
   await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
   await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();

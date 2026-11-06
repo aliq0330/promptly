@@ -99,36 +99,47 @@ const waitUntil = async (cond, ms = 4000) => {
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
-// 1 — misafir vitrini
-await scenario("1. misafir: canlı vitrin akar; görsele dokununca akış durur, prompt + Kopyala + Gönderiyi aç görünür", async ({ page }) => {
+// 1 — misafir vitrini (docs/history/346-*: coverflow)
+await scenario("1. misafir: vitrin coverflow; yan karta dokununca öne gelir, ortadaki karta dokununca prompt + Kopyala + Gönderiyi aç görünür", async ({ page }) => {
   await page.goto(`${BASE}/`);
-  const wall = page.locator(".showcase-wall");
-  await wall.waitFor();
+  const stage = page.getByTestId("coverflow");
+  await stage.waitFor();
   await page.getByRole("heading", { name: "Görselin arkasındaki prompt'u gör." }).waitFor();
-  await page.waitForFunction(() => document.querySelectorAll(".showcase-wall button[aria-expanded]").length >= 8);
-  const anim = await page.locator(".showcase-track").first().evaluate((el) => getComputedStyle(el).animationName);
-  assert.equal(anim, "showcase-drift");
-  // Kopya liste ekran okuyucu ve sekme sırasından gizli: yalnız 8 erişilebilir döşeme.
-  assert.equal(await page.getByRole("button", { name: /promptu göster/ }).count(), 8);
+  await page.waitForFunction(() => document.querySelectorAll("[data-coverflow-card]").length === 8);
+  assert.equal(await page.locator("[data-coverflow-card][data-active]").getAttribute("data-coverflow-card"), "0");
+  // Yalnız en yakın kartlar görünür (±2); gerisi saydam ve ekran okuyucudan gizli.
+  assert.equal(await page.locator('[data-coverflow-card="5"]').getAttribute("aria-hidden"), "true");
+  assert.equal(await page.locator('[data-coverflow-card="1"]').getAttribute("aria-hidden"), null);
   await shot(page, "1-showcase");
-  const tile = page.getByRole("button", { name: "Görsel prompt 1: promptu göster" });
-  await tile.evaluate((el) => el.click());
-  await page.waitForTimeout(600);
+  // Yan kart (inert içerik) dokununca öne gelir; prompt katmanı açılmaz.
+  await page.locator('[data-coverflow-card="1"]').click();
+  await page.waitForFunction(() => document.querySelector("[data-coverflow-card][data-active]")?.getAttribute("data-coverflow-card") === "1");
+  assert.equal(await page.locator("[aria-expanded=true]").count(), 0);
+  const tile = page.getByRole("button", { name: "Görsel prompt 2: promptu göster" });
+  await tile.click();
   assert.equal(await tile.getAttribute("aria-expanded"), "true");
-  assert.equal(await wall.evaluate((el) => el.classList.contains("showcase-paused")), true, "drift paused");
-  assert.equal(await page.locator(".showcase-track").first().evaluate((el) => getComputedStyle(el).animationPlayState), "paused");
   const overlay = tile.locator("xpath=following-sibling::div");
-  await overlay.getByText("cinematic photo number 1").waitFor();
+  await overlay.getByText("cinematic photo number 2").waitFor();
   await overlay.getByRole("button", { name: /Kopyala/ }).waitFor();
-  assert.match(await overlay.getByRole("link", { name: /Gönderiyi aç/ }).getAttribute("href"), /\/prompts\/local\/?\?id=b0000000-0000-4000-8000-000000000001/);
+  assert.match(await overlay.getByRole("link", { name: /Gönderiyi aç/ }).getAttribute("href"), /\/prompts\/local\/?\?id=b0000000-0000-4000-8000-000000000002/);
   await shot(page, "1-showcase-open");
+  // Başka karta geçince açık katman kapanır.
+  await page.getByRole("button", { name: "Sonraki" }).click();
+  await page.waitForFunction(() => document.querySelector("[data-coverflow-card][data-active]")?.getAttribute("data-coverflow-card") === "2");
+  assert.equal(await page.locator("[aria-expanded=true]").count(), 0);
+  // Klavye: odaktaki sahnede ← / → kartları gezdirir (başa sarar).
+  await stage.focus();
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.waitForFunction(() => document.querySelector("[data-coverflow-card][data-active]")?.getAttribute("data-coverflow-card") === "7");
   assert.equal(await overflowFree(page), true);
 }, { guest: true });
 
 await scenario("2. misafir: 4'ten az görsel → kompakt tanıtım (boş duvar yok)", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await page.getByRole("heading", { name: "Promptları keşfet, geliştir, paylaş." }).waitFor();
-  assert.equal(await page.locator(".showcase-wall").count(), 0);
+  assert.equal(await page.getByTestId("coverflow").count(), 0);
 }, { guest: true, count: 3 });
 
 // 3 — Sana özel
@@ -271,22 +282,54 @@ await scenario("7. kart → detay: detay iskeletsiz hemen çizilir ve kapak büy
   assert.equal(await page.evaluate(() => window.__coverAnimated), true, "the hero shrank back into the card");
 });
 
-await scenario("8. hareket azaltma: vitrin akmaz, kapak büyümez", async ({ page }) => {
+await scenario("8. hareket azaltma: vitrin geçişleri anlık, kapak büyümez", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(`${BASE}/`);
-  await page.locator(".showcase-wall").waitFor();
+  await page.getByTestId("coverflow").waitFor();
+  await page.waitForFunction(() => document.querySelectorAll("[data-coverflow-card]").length === 8);
   await page.waitForTimeout(300);
-  const t = await page.locator(".showcase-track").first().evaluate((el) => getComputedStyle(el).transform);
-  assert.ok(t === "none" || t === "matrix(1, 0, 0, 1, 0, 0)", `drift stopped (${t})`);
+  const duration = await page.locator('[data-coverflow-card="0"]').evaluate((el) => parseFloat(getComputedStyle(el).transitionDuration));
+  assert.ok(duration < 0.001, `card moves are instant (${duration}s)`);
 }, { guest: true });
 
-await scenario("9. masaüstü 1280: vitrin iki sütunlu yerleşim, taşma yok", async ({ page }) => {
+await scenario("9. masaüstü 1280: vitrin yan yana yerleşim, kartlar kutunun içinde, taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/`);
-  await page.locator(".showcase-wall").waitFor();
-  await page.waitForFunction(() => document.querySelectorAll(".showcase-wall button[aria-expanded]").length >= 8);
+  await page.getByTestId("coverflow").waitFor();
+  await page.waitForFunction(() => document.querySelectorAll("[data-coverflow-card]").length === 8);
   await shot(page, "9-showcase-desktop");
+  const box = await page.getByTestId("coverflow").boundingBox();
+  const centre = await page.locator('[data-coverflow-card="0"]').boundingBox();
+  assert.ok(centre.x > box.x && centre.x + centre.width < box.x + box.width, "the centre card sits inside the stage");
+  assert.ok(centre.height <= box.height, "and is no taller than it");
   assert.equal(await overflowFree(page), true);
 }, { guest: true, viewport: { width: 1280, height: 900 } });
+
+// 10 — giriş sayfası paneli
+await scenario("10. giriş: masaüstünde panel coverflow gösterir ve kendiliğinden döner; hareket azaltmada durur", async ({ page }) => {
+  await page.goto(`${BASE}/login`);
+  await page.getByTestId("coverflow").waitFor();
+  await page.waitForFunction(() => document.querySelectorAll("[data-coverflow-card]").length === 8);
+  const activeIndex = () => page.locator("[data-coverflow-card][data-active]").getAttribute("data-coverflow-card");
+  assert.equal(await activeIndex(), "0");
+  await page.mouse.move(5, 5);
+  await page.waitForFunction(() => document.querySelector("[data-coverflow-card][data-active]")?.getAttribute("data-coverflow-card") === "1", null, { timeout: 6000 });
+  await shot(page, "10-auth-showcase");
+  const still = await page.context().newPage();
+  await still.emulateMedia({ reducedMotion: "reduce" });
+  await still.goto(`${BASE}/login`);
+  await still.getByTestId("coverflow").waitFor();
+  await still.waitForTimeout(4200);
+  assert.equal(await still.locator("[data-coverflow-card][data-active]").getAttribute("data-coverflow-card"), "0", "no autoplay with reduced motion");
+  await still.close();
+}, { guest: true, viewport: { width: 1280, height: 900 } });
+
+await scenario("10b. giriş: telefonda panel yok, vitrin verisi istenmez", async ({ page }) => {
+  await page.goto(`${BASE}/login`);
+  await page.getByRole("heading", { name: /Tekrar hoş geldin|Giriş yap/ }).first().waitFor();
+  await page.waitForTimeout(400);
+  assert.equal(await page.getByTestId("coverflow").count(), 0);
+  assert.equal(await overflowFree(page), true);
+}, { guest: true });
 
 for (const [status, name] of results) console.log(`${status === "PASS" ? "✓" : "✗"} ${name}`);
 const passed = results.filter(([s]) => s === "PASS").length;

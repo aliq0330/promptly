@@ -20,6 +20,7 @@ import { uploadSpaceImage } from "@/lib/supabase/spaces";
 import { useSpaceContext } from "../space-provider";
 import { GroupPill, GroupsManagerModal, ItemDetailModal, resolveSource, sourceReasonKey, usePlaceNewItems, useItemTitle } from "../space-items";
 import { SpaceImage } from "../space-visuals";
+import { SPACE_SHOWCASE_MAX, SPACE_SHOWCASE_MIN, SpaceShowcase } from "../space-showcase";
 
 /** Grup süzgecinin değerleri: hepsi, grupsuz ya da bir grup kimliği. */
 type GroupFilter = "all" | "none" | string;
@@ -65,6 +66,16 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
   );
   const total = items.filter((item) => item.kind === "image").length;
 
+  // Vitrin (docs/history/346-*): someone who is not a member sees the Space's newest pictures as a coverflow above the grid.
+  // It shows only pictures that can be drawn (a picture whose source is gone stays in the grid as a placeholder) and steps aside
+  // while a search or a group filter is narrowing the list.
+  const showcaseItems = useMemo(() => {
+    if (caps.member || query.trim() !== "" || group !== "all") return [];
+    return images
+      .filter((item) => item.mediaUrl && !sourceReasonKey(resolveSource(item, sources, readable).state))
+      .slice(0, SPACE_SHOWCASE_MAX);
+  }, [caps.member, query, group, images, sources, readable]);
+
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     const list = [...files];
@@ -92,6 +103,8 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
 
   return (
     <div className="space-y-4" data-testid="space-images">
+      {showcaseItems.length >= SPACE_SHOWCASE_MIN && <SpaceShowcase items={showcaseItems} onOpen={setOpenId} />}
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
           <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />

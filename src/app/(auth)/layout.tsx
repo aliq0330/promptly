@@ -3,11 +3,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { BrandMark, BrandWordmark } from "@/components/layout/brand-mark";
+import { AuthShowcase } from "@/features/auth/auth-showcase";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Auth pages: a calm split on desktop (a short statement of what Promptly
- * is, beside the form) and a single centered form card on mobile.
+ * is with a coverflow of favourite prompts, beside the form) and a single centered form card on mobile.
  */
 export default function AuthGroupLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -23,20 +24,7 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
           <p className="max-w-sm text-body text-text-secondary">
             {t("auth.taglineDescription")}
           </p>
-          <div aria-hidden className="space-y-2 pt-2">
-            {["cinematic portrait, neon rain, 85mm", "system: you are a senior reviewer…", "lo-fi hip hop, 80 bpm, vinyl crackle"].map(
-              (line, index) => (
-                <div
-                  key={line}
-                  className="prompt-text flex max-w-sm items-center gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-2 text-text-muted shadow-xs"
-                  style={{ opacity: 1 - index * 0.25 }}
-                >
-                  <span className="text-primary">›</span>
-                  {line}
-                </div>
-              ),
-            )}
-          </div>
+          <AuthShowcase />
         </div>
         <p className="text-caption text-text-muted">{t("nav.tagline")}</p>
       </aside>
