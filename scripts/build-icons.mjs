@@ -174,7 +174,7 @@ export const ICON_MAP = {
   MessageSquareOff: "chat-square-off",
   MessageSquareQuote: "chat-square-quote",
   MessageSquareWarning: "chat-square-warning",
-  MessagesSquare: "chat-square-2",
+  MessagesSquare: "dialog-2",
   Mic: "microphone",
   MicVocal: "microphone-3",
   Microscope: "@custom",
