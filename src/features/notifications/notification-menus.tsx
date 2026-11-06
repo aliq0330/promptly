@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { BellOff } from "@/components/icons/bell-off";
-import { BellRing } from "@/components/icons/bell-ring";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { Clock } from "@/components/icons/clock";
+import { Bell } from "@/components/icons/bell";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
@@ -89,7 +89,7 @@ export function DetailFooterActions({ card, list, onAfterHide }: { card: Notific
             }}
             data-action={allMuted ? "unmute" : "mute"}
           >
-            {allMuted ? <BellRing size={16} aria-hidden /> : <BellOff size={16} aria-hidden />}
+            {allMuted ? <Bell size={16} aria-hidden /> : <BellOff size={16} aria-hidden />}
             {allMuted ? t("nc.unmute") : t("nc.mute")}
             {!singleChoice && <ChevronDown size={14} aria-hidden className={cn("transition-transform", open === "mute" && "rotate-180")} />}
           </Button>

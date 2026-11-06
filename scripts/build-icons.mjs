@@ -28,15 +28,14 @@ const OUT_DIR = join(ROOT, "src/components/icons");
 /** Component name → Solar icon (`<name>` = Bold Duotone, `<name>:l` = Linear). Keep alphabetical. */
 export const ICON_MAP = {
   AlertCircle: "danger-circle",
-  AlertTriangle: "danger-triangle",
-  AlignCenter: "align-horizontal-center:l",
+  AlignCenter: "@custom",
   AlignCenterHorizontal: "align-horizontal-center:l",
   AlignCenterVertical: "align-vertical-center:l",
   AlignEndHorizontal: "align-bottom:l",
   AlignEndVertical: "align-right:l",
   AlignHorizontalDistributeCenter: "align-horizontal-spacing:l",
-  AlignLeft: "align-left:l",
-  AlignRight: "align-right:l",
+  AlignLeft: "@custom",
+  AlignRight: "@custom",
   AlignStartHorizontal: "align-top:l",
   AlignStartVertical: "align-left:l",
   AlignVerticalDistributeCenter: "align-vertical-spacing:l",
@@ -54,7 +53,6 @@ export const ICON_MAP = {
   BarChart3: "chart-2",
   Bell: "bell",
   BellOff: "bell-off",
-  BellRing: "bell-bing",
   Blocks: "blocks",
   BookOpen: "book",
   Bookmark: "bookmark",
@@ -71,7 +69,6 @@ export const ICON_MAP = {
   ChartNoAxesColumn: "chart-square",
   Check: "check:l",
   CheckCheck: "check-read:l",
-  CheckCircle2: "check-circle",
   ChevronDown: "alt-arrow-down:l",
   ChevronLeft: "alt-arrow-left:l",
   ChevronRight: "alt-arrow-right:l",
@@ -91,9 +88,6 @@ export const ICON_MAP = {
   Compass: "compass",
   Copy: "copy",
   Copyright: "copyright",
-  CornerDownRight: "forward-right:l",
-  CornerUpLeft: "undo-left:l",
-  CornerUpRight: "undo-right:l",
   Cpu: "cpu",
   Crosshair: "target",
   Crown: "crown",
@@ -103,7 +97,6 @@ export const ICON_MAP = {
   DoorClosed: "exit",
   Download: "download-minimalistic",
   Droplet: "waterdrop",
-  Edit3: "pen",
   Ellipsis: "menu-dots",
   Eraser: "eraser",
   ExternalLink: "square-arrow-right-up:l",
@@ -115,6 +108,7 @@ export const ICON_MAP = {
   FileSymlink: "file-send",
   FileText: "file-text",
   FileVideo: "file-video-camera",
+  Filter: "filter",
   Film: "video-frame-2",
   Flag: "flag",
   Flame: "fire",
@@ -140,7 +134,6 @@ export const ICON_MAP = {
   History: "history",
   Home: "home-smile",
   House: "home-2",
-  Image: "gallery",
   ImageIcon: "gallery",
   ImageOff: "gallery-remove",
   ImagePlus: "gallery-add",
@@ -160,7 +153,6 @@ export const ICON_MAP = {
   Link2Off: "link-broken",
   List: "list",
   ListChecks: "checklist",
-  ListFilter: "sort-from-top-to-bottom",
   ListPlus: "list-plus",
   Loader2: "@spinner",
   Lock: "lock",
@@ -179,11 +171,8 @@ export const ICON_MAP = {
   MessageCircleHeart: "chat-round-like",
   MessageCircleQuestion: "chat-round-question-mark",
   MessageCircleReply: "chat-round-replay",
-  MessageSquare: "chat-square",
-  MessageSquareMore: "chat-square-dots",
   MessageSquareOff: "chat-square-off",
   MessageSquareQuote: "chat-square-quote",
-  MessageSquareText: "chat-square-line",
   MessageSquareWarning: "chat-square-warning",
   MessagesSquare: "chat-square-2",
   Mic: "microphone",
@@ -193,7 +182,6 @@ export const ICON_MAP = {
   Minus: "minus:l",
   MonitorPlay: "monitor",
   Moon: "moon",
-  MoreHorizontal: "menu-dots",
   MoreVertical: "menu-dots-vertical",
   MousePointer2: "cursor",
   Music: "music-note-2",
@@ -224,7 +212,6 @@ export const ICON_MAP = {
   Replace: "square-transfer-horizontal",
   Reply: "reply",
   RotateCcw: "restart:l",
-  RotateCw: "refresh:l",
   Save: "diskette",
   ScrollText: "document-text",
   Search: "magnifer",
@@ -232,9 +219,7 @@ export const ICON_MAP = {
   Send: "plain-2",
   SendToBack: "square-bottom-down",
   Settings: "settings",
-  Settings2: "settings-minimalistic",
   Shapes: "widget-4",
-  Share: "square-share-line",
   Share2: "share",
   ShieldAlert: "shield-warning",
   ShieldCheck: "shield-check",
@@ -259,7 +244,6 @@ export const ICON_MAP = {
   Swords: "@custom",
   Tag: "tag",
   Tags: "tag-horizontal",
-  Terminal: "programming",
   TextCursorInput: "text-field-focus",
   ThumbsDown: "dislike",
   ThumbsUp: "like",
@@ -270,7 +254,6 @@ export const ICON_MAP = {
   Type: "text",
   Undo2: "undo-left-round:l",
   Ungroup: "square-dot-dashed",
-  Unlock: "lock-unlocked",
   Upload: "upload-minimalistic",
   User: "user",
   UserCheck: "user-check",
@@ -280,13 +263,12 @@ export const ICON_MAP = {
   UserRound: "user-rounded",
   UserStar: "user-heart",
   UserX: "user-cross",
-  Users: "users-group-rounded",
-  UsersRound: "users-group-two-rounded",
+  Users: "users-group-two-rounded",
+  UsersRound: "users-group-rounded",
   Video: "videocamera",
   Volume2: "volume-loud",
   VolumeX: "volume-cross",
-  Wand2: "magic-wand",
-  WandSparkles: "magic-stick",
+  WandSparkles: "stars",
   Waves: "soundwave-square",
   WifiOff: "wi-fi-off",
   Workflow: "routing",
@@ -302,7 +284,7 @@ const SPINNER_BODY = '<path d="M12 3a9 9 0 1 0 9 9"/>';
 /**
  * Icons Solar has no counterpart for, drawn by us in Solar's Bold Duotone manner (24 grid, solid shapes, the lighter layer
  * at opacity .5, a few round-capped 1.6 strokes for fine detail). `@custom` entries of ICON_MAP read this table; a value is
- * an SVG body or `(resolve) => body` to build on a Solar shape. When Solar adds a real equivalent, point the map at it.
+ * an SVG body, `(resolve) => body` to build on a Solar shape, or `{ linear: true, body }` for a stroke icon (the `<svg>` supplies the stroke). When Solar adds a real equivalent, point the map at it.
  */
 const SWORD = '<path d="M12 1.8l1.7 2.2v8.9h-3.4V4z"/><path d="M7.6 13.6h8.8a.9.9 0 0 1 0 1.8H7.6a.9.9 0 0 1 0-1.8z"/><path d="M11 15.4h2v3.9h-2z"/><circle cx="12" cy="20.4" r="1.3"/>';
 const CUSTOM = {
@@ -317,6 +299,10 @@ const CUSTOM = {
     '<rect x="8.4" y="1.8" width="4" height="10" rx="1.2" transform="rotate(20 10.4 6.8)"/>' +
     '<rect x="6" y="14.4" width="8" height="1.9" rx=".95"/>' +
     '<path d="M5 19.4h14a1.3 1.3 0 0 1 0 2.6H5a1.3 1.3 0 0 1 0-2.6z"/>',
+  // Text alignment (story text editor): lines of unequal length. The Solar align-* icons are OBJECT alignment (Space board) — a different meaning.
+  AlignLeft: { linear: true, body: '<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>' },
+  AlignCenter: { linear: true, body: '<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>' },
+  AlignRight: { linear: true, body: '<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>' },
   PinOff: (resolve) =>
     resolve("pin-bold-duotone") + '<path d="M3.5 3.5l17 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
 };
@@ -452,13 +438,14 @@ function render() {
       source = "Promptly's own spinner ring";
     } else if (spec === "@custom") {
       const made = CUSTOM[component];
-      const raw = typeof made === "function" ? made(resolve) : made;
+      const resolved = typeof made === "function" ? made(resolve) : made;
+      const raw = typeof resolved === "object" ? resolved?.body : resolved;
       if (!raw) {
         problems.push(`${component}: CUSTOM tablosunda yok`);
         continue;
       }
-      linear = false;
-      jsx = toJsx(raw, { linear: false });
+      linear = typeof resolved === "object" && resolved.linear === true;
+      jsx = toJsx(raw, { linear });
       source = "Promptly's own icon, drawn in the Solar Bold Duotone manner";
     } else {
       const [base, style] = spec.split(":");

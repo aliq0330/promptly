@@ -19,11 +19,11 @@
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Camera } from "@/components/icons/camera";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { Loader2 } from "@/components/icons/loader-2";
-import { Sparkles } from "@/components/icons/sparkles";
 import { X } from "@/components/icons/x";
+import { CircleCheck } from "@/components/icons/circle-check";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";
 import { cn, copyTextToClipboard } from "@/lib/utils";
@@ -185,7 +185,7 @@ export function ImageHelpPanel({
         aria-controls="image-help-body"
         className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-small font-medium text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        <Sparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+        <WandSparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden />
         <span className="min-w-0 flex-1">{t("vision.helpTitle")}</span>
         <ChevronDown size={16} className={cn("shrink-0 text-text-muted transition-transform duration-200", expanded && "rotate-180")} aria-hidden />
       </button>
@@ -228,7 +228,7 @@ export function ImageHelpPanel({
 
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" onClick={runPrompt} disabled={!file || busy}>
-              {promptStatus === "loading" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
+              {promptStatus === "loading" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <WandSparkles className="h-4 w-4" aria-hidden />}
               {promptStatus === "loading" ? t("vision.analyzing") : t("vision.suggestPrompt")}
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={runVariables} disabled={!file || busy}>
@@ -340,7 +340,7 @@ export function ImageHelpPanel({
 
           {appliedMessage && (
             <div className="flex items-start gap-2 rounded-md bg-primary/10 px-3 py-2 text-caption text-text">
-              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+              <CircleCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
               <p className="flex-1">{appliedMessage}</p>
               <button type="button" onClick={() => setAppliedMessage(null)} aria-label={t("vision.closeThisInfo")} className="shrink-0 text-text-muted hover:text-text">
                 <X className="h-3.5 w-3.5" aria-hidden />

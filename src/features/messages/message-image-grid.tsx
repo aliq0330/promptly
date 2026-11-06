@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle } from "@/components/icons/alert-triangle";
 import { ImageOff } from "@/components/icons/image-off";
 import { Loader2 } from "@/components/icons/loader-2";
-import { RotateCw } from "@/components/icons/rotate-cw";
+import { AlertCircle } from "@/components/icons/alert-circle";
+import { RefreshCw } from "@/components/icons/refresh-cw";
 import { getCachedSignedUrl, resolveSignedUrls } from "@/lib/supabase/message-images";
 import { gifIdFromPath, giphyUrl } from "@/lib/giphy";
 import { usePrefersReducedMotion } from "@/lib/motion";
@@ -211,7 +211,7 @@ export function SendStateOverlay({
   }
   return (
     <span className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 rounded-xl bg-background/75 p-2 text-center">
-      <AlertTriangle size={20} className="text-danger" aria-hidden />
+      <AlertCircle size={20} className="text-danger" aria-hidden />
       {onRetry && (
         <button
           type="button"
@@ -221,7 +221,7 @@ export function SendStateOverlay({
           }}
           className="inline-flex items-center gap-1 rounded-full bg-danger px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
         >
-          <RotateCw size={12} aria-hidden />
+          <RefreshCw size={12} aria-hidden />
           {t("common.retry")}
         </button>
       )}

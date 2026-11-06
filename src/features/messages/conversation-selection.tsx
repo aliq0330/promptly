@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Check } from "@/components/icons/check";
 import { CircleCheck } from "@/components/icons/circle-check";
-import { MessageSquareMore } from "@/components/icons/message-square-more";
-import { MoreHorizontal } from "@/components/icons/more-horizontal";
+import { CheckCheck } from "@/components/icons/check-check";
+import { MoreVertical } from "@/components/icons/more-vertical";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -64,7 +64,7 @@ export function ConversationsMoreMenu({
         data-conversations-more
         className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft", open && "bg-border-soft")}
       >
-        <MoreHorizontal size={22} strokeWidth={1.75} aria-hidden />
+        <MoreVertical size={22} strokeWidth={1.75} aria-hidden />
       </button>
       {open && (
         <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-60 rounded-xl border border-border-soft bg-surface p-2 shadow-pop animate-pop-in">
@@ -93,7 +93,7 @@ export function ConversationsMoreMenu({
             data-conversations-mark-all
             className={itemClass}
           >
-            <MessageSquareMore size={20} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />
+            <CheckCheck size={20} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />
             {t("messages.markAllRead")}
           </button>
         </div>

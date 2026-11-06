@@ -8,7 +8,6 @@ import { Check } from "@/components/icons/check";
 import { Grid2x2 } from "@/components/icons/grid-2x2";
 import { ImageIcon } from "@/components/icons/image-icon";
 import { List } from "@/components/icons/list";
-import { ListFilter } from "@/components/icons/list-filter";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Mail } from "@/components/icons/mail";
 import { Plus } from "@/components/icons/plus";
@@ -16,6 +15,7 @@ import { Search } from "@/components/icons/search";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { X } from "@/components/icons/x";
+import { Filter } from "@/components/icons/filter";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -266,7 +266,7 @@ export function SpacesHome() {
                 data-filter-button
                 className={cn(iconButton, "relative", filtersActive && "bg-surface-soft")}
               >
-                <ListFilter size={22} strokeWidth={1.75} aria-hidden />
+                <Filter size={22} strokeWidth={1.75} aria-hidden />
                 {filtersActive && <span aria-hidden className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />}
               </button>
               <button

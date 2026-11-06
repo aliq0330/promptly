@@ -2,8 +2,8 @@
 
 import { ListPlus } from "@/components/icons/list-plus";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
-import { Wand2 } from "@/components/icons/wand-2";
 import { Share2 } from "@/components/icons/share-2";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { ContentListPage } from "@/features/content/content-list-page";
 import { useRealPresetsList } from "./real-presets-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -24,7 +24,7 @@ export function PresetsListView() {
       steps={[
         { icon: ListPlus, titleKey: "preset.step1Title", bodyKey: "preset.step1Body" },
         { icon: Share2, titleKey: "preset.step2Title", bodyKey: "preset.step2Body" },
-        { icon: Wand2, titleKey: "preset.step3Title", bodyKey: "preset.step3Body" },
+        { icon: WandSparkles, titleKey: "preset.step3Title", bodyKey: "preset.step3Body" },
       ]}
       baseItems={presets}
       loading={loading}

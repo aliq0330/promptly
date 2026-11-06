@@ -7,10 +7,10 @@ import { Check } from "@/components/icons/check";
 import { CheckCheck } from "@/components/icons/check-check";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { Megaphone } from "@/components/icons/megaphone";
-import { MoreHorizontal } from "@/components/icons/more-horizontal";
 import { Pin } from "@/components/icons/pin";
 import { SmilePlus } from "@/components/icons/smile-plus";
 import { Star } from "@/components/icons/star";
+import { MoreVertical } from "@/components/icons/more-vertical";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { MessageReactionPicker } from "./message-reaction-picker";
@@ -298,7 +298,7 @@ export function MessageBubble({
           }}
           className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
         >
-          <MoreHorizontal size={16} />
+          <MoreVertical size={16} />
         </button>
         {/* Portalled by the sheet itself (so the scrolling list never clips it) but still a React child of this row: its clicks stop above. */}
         {sheetOpen && !isDeleted && !isEditingHere && (

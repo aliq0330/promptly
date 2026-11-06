@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { ChevronRight } from "@/components/icons/chevron-right";
-import { Sparkles } from "@/components/icons/sparkles";
 import { X } from "@/components/icons/x";
+import { Settings } from "@/components/icons/settings";
 import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";
 import { Modal } from "@/components/ui/modal";
@@ -102,7 +102,7 @@ export function ExtraSettingsSection({
         aria-haspopup="dialog"
         className="flex w-full items-center gap-3 rounded-md border border-dashed border-border-strong bg-surface-soft px-3 py-2.5 text-left transition-colors hover:border-primary hover:bg-primary-soft"
       >
-        <Sparkles size={18} className="shrink-0 text-primary" aria-hidden />
+        <Settings size={18} className="shrink-0 text-primary" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
           <span className="block text-caption text-text-secondary">{t("extra.hint")}</span>
@@ -241,7 +241,7 @@ function ExtraSettingsPanel({
           className="flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-lg border border-border bg-surface shadow-pop"
         >
           <div className="flex items-start gap-3 border-b border-border-soft px-4 py-3">
-            <Sparkles size={18} className="mt-0.5 shrink-0 text-primary" aria-hidden />
+            <Settings size={18} className="mt-0.5 shrink-0 text-primary" aria-hidden />
             <div className="min-w-0 flex-1">
               <h2 id="extra-settings-title" className="text-h3 font-semibold text-text">
                 {t("extra.title")}

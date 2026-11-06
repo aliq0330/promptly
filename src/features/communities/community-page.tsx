@@ -3,9 +3,9 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MessageSquare } from "@/components/icons/message-square";
 import { RefreshCw } from "@/components/icons/refresh-cw";
 import { UserCog } from "@/components/icons/user-cog";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -196,7 +196,7 @@ function CommunityPageInner() {
         <BandActionRow label={t("communities.band.actionsAria")} data-community-actions="">
           {role && (
             <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg", className: BAND_PRIMARY_CLASS })}>
-              <MessageSquare size={18} aria-hidden /> {t("communities.detail.openChat")}
+              <MessagesSquare size={18} aria-hidden /> {t("communities.detail.openChat")}
               {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground px-1.5 text-caption text-primary">{unread}</span>}
             </Link>
           )}

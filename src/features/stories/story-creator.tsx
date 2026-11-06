@@ -9,19 +9,19 @@ import { AlignRight } from "@/components/icons/align-right";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { BarChart3 } from "@/components/icons/bar-chart-3";
 import { Check } from "@/components/icons/check";
-import { Clapperboard } from "@/components/icons/clapperboard";
-import { Image as ImageIcon } from "@/components/icons/image";
 import { Link2 } from "@/components/icons/link-2";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Maximize2 } from "@/components/icons/maximize-2";
 import { MessageCircleQuestion } from "@/components/icons/message-circle-question";
 import { Minimize2 } from "@/components/icons/minimize-2";
 import { Plus } from "@/components/icons/plus";
-import { RotateCcw } from "@/components/icons/rotate-ccw";
 import { Save } from "@/components/icons/save";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Type } from "@/components/icons/type";
 import { X } from "@/components/icons/x";
+import { ImageIcon } from "@/components/icons/image-icon";
+import { RefreshCw } from "@/components/icons/refresh-cw";
+import { Video } from "@/components/icons/video";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
@@ -462,7 +462,7 @@ export function StoryCreator() {
         </header>
         <div className="grid grid-cols-2 gap-3">
           <ChoiceTile icon={ImageIcon} label={t("stories.create.photo")} hint={t("stories.create.photoHint")} onClick={() => photoInput.current?.click()} />
-          <ChoiceTile icon={Clapperboard} label={t("stories.create.video")} hint={t("stories.create.videoHint", { seconds: STORY_LIMITS.videoMaxMs / 1000 })} onClick={() => videoInput.current?.click()} />
+          <ChoiceTile icon={Video} label={t("stories.create.video")} hint={t("stories.create.videoHint", { seconds: STORY_LIMITS.videoMaxMs / 1000 })} onClick={() => videoInput.current?.click()} />
           <ChoiceTile icon={Type} label={t("stories.create.text")} hint={t("stories.create.textHint")} onClick={() => { startText("cobalt"); setSelected(null); }} />
           <ChoiceTile icon={SquareTerminal} label={t("stories.create.content")} hint={t("stories.create.contentHint")} onClick={() => setPickerOpen(true)} />
         </div>
@@ -684,7 +684,7 @@ export function StoryCreator() {
               {error}
               {media && !media.uploadedUrl && media.prepared && !busy && (
                 <button type="button" onClick={() => void (isPreview ? onPublish() : onSaveDraft())} className="inline-flex items-center gap-1 font-semibold text-primary">
-                  <RotateCcw size={13} aria-hidden /> {t("common.retry")}
+                  <RefreshCw size={13} aria-hidden /> {t("common.retry")}
                 </button>
               )}
             </p>

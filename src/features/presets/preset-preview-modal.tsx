@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink } from "@/components/icons/external-link";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { X } from "@/components/icons/x";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ToolChips } from "@/features/content/tool-chips";
@@ -98,7 +98,7 @@ export function PresetPreviewModal({
             aria-label={t("preset.openInNewTab", { name: preset.title })}
             className="mr-auto inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-small text-text-muted hover:bg-surface-soft hover:text-text"
           >
-            <ExternalLink size={14} aria-hidden />
+            <ArrowUpRight size={14} aria-hidden />
             <span className="max-sm:sr-only">{t("preset.openPage")}</span>
           </Link>
           {!isOwn && <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} size="sm" onChange={onSavedChange} />}

@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Search } from "@/components/icons/search";
-import { UsersRound } from "@/components/icons/users-round";
 import { X } from "@/components/icons/x";
+import { Users } from "@/components/icons/users";
 import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
 import { useOnlineIds } from "@/features/presence/use-presence";
 import { sortOnlineFirst } from "@/lib/presence";
@@ -222,7 +222,7 @@ export function NewChatModal({
               onClick={onClose}
               className="mt-3 flex items-center gap-2 rounded-lg border border-border-soft bg-surface px-3 py-2.5 text-left text-small font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
             >
-              <UsersRound size={16} className="shrink-0 text-primary" aria-hidden />
+              <Users size={16} className="shrink-0 text-primary" aria-hidden />
               {t("communities.messages.link")}
             </Link>
           )}

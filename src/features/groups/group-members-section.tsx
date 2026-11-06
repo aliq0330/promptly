@@ -10,13 +10,13 @@ import { Search } from "@/components/icons/search";
 import { ShieldCheck } from "@/components/icons/shield-check";
 import { UserMinus } from "@/components/icons/user-minus";
 import { UserRound } from "@/components/icons/user-round";
+import { UsersRound } from "@/components/icons/users-round";
 import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
 import { useMyPresence } from "@/features/presence/presence-provider";
 import { fetchCommunityOnlineMembers } from "@/lib/supabase/presence";
 import { isSelfHidden } from "@/lib/presence";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Users } from "@/components/icons/users";
 import { ConfirmDialog } from "./confirm-dialog";
 import { RoleBadge } from "./role-badge";
 import { useAsyncAction } from "./use-async-action";
@@ -214,7 +214,7 @@ export function GroupMembersSection({
           {t("presence.hiddenSelfNote")}
         </p>
       ) : current.members.length === 0 ? (
-        <EmptyState icon={Users} title={onlineOnly ? t("presence.onlineMembersEmpty") : t("groups.members.empty")} compact />
+        <EmptyState icon={UsersRound} title={onlineOnly ? t("presence.onlineMembersEmpty") : t("groups.members.empty")} compact />
       ) : (
         <>
           <ul className="divide-y divide-border-soft rounded-lg border border-border-soft" aria-label={t("groups.members.listLabel")}>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "@/components/icons/arrow-left";
-import { ExternalLink } from "@/components/icons/external-link";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { type TabItem } from "@/components/ui/tabs";
@@ -119,7 +119,7 @@ export function UserDetail({ userId, onBack }: { userId: string; onBack: () => v
             </p>
             {user.bio && <p className="mt-2 break-words text-small text-text-secondary">{user.bio}</p>}
             <Link href={`/profile/real?username=${encodeURIComponent(user.username)}`} className="mt-2 inline-flex items-center gap-1 text-caption font-medium text-primary hover:underline">
-              <ExternalLink size={12} aria-hidden /> {t("admin.user.openProfile")}
+              <ArrowUpRight size={12} aria-hidden /> {t("admin.user.openProfile")}
             </Link>
           </div>
         </div>

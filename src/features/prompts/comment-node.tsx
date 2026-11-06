@@ -5,7 +5,7 @@ import { CommentReactions } from "@/features/reactions/comment-reactions";
 import Link from "next/link";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { ChevronUp } from "@/components/icons/chevron-up";
-import { CornerDownRight } from "@/components/icons/corner-down-right";
+import { Reply } from "@/components/icons/reply";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
@@ -204,7 +204,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 )}
                 {showParentHint && (
                   <span className="mr-1 inline-flex items-center gap-0.5 text-xs font-medium text-primary">
-                    <CornerDownRight size={11} />@{parent.author.username}
+                    <Reply size={11} />@{parent.author.username}
                   </span>
                 )}
                 <span className="text-text-muted">

@@ -7,8 +7,8 @@ import Link from "next/link";
 import { ArrowRight } from "@/components/icons/arrow-right";
 import { Check } from "@/components/icons/check";
 import { ChevronDown } from "@/components/icons/chevron-down";
-import { CornerUpLeft } from "@/components/icons/corner-up-left";
 import { Share2 } from "@/components/icons/share-2";
+import { Reply } from "@/components/icons/reply";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { shareOrCopyLink } from "@/features/prompts/share-button";
 import { CardAvatar, CardHeadline, CommentExtrasStrip, StackedAvatars, commentExtrasCount } from "./notification-parts";
@@ -105,7 +105,7 @@ function QuickActionsRow({
           </span>
           {actions.replyTarget && (
             <ActionButton variant="outline" aria-expanded={replyOpen} onClick={onOpenReply} data-action="reply">
-              <CornerUpLeft size={18} strokeWidth={1.75} aria-hidden />
+              <Reply size={18} strokeWidth={1.75} aria-hidden />
               <span>{t("nc.reply")}</span>
             </ActionButton>
           )}

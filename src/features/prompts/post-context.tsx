@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
-import { CornerUpRight } from "@/components/icons/corner-up-right";
+import { CircleCheck } from "@/components/icons/circle-check";
+import { Reply } from "@/components/icons/reply";
 import { Badge } from "@/components/ui/badge";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
@@ -65,7 +65,7 @@ export function RequestResponseContext({
     return (
       <ContextBox href={requestHref({ id: requestId })}>
         <span className="flex items-center gap-1.5 text-caption font-medium text-text-muted">
-          <CornerUpRight size={13} />
+          <Reply size={13} />
           {t("prompt.replyToARequest")}
         </span>
         <span className="block text-small text-text-muted">{t("request.thisRequestWasDeleted")}</span>
@@ -77,7 +77,7 @@ export function RequestResponseContext({
     <ContextBox href={requestHref({ id: requestId })}>
       <span className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 text-caption font-medium text-text-muted">
-          <CornerUpRight size={13} className="shrink-0 text-primary" />
+          <Reply size={13} className="shrink-0 text-primary" />
           <span className="truncate">
             {t("prompt.replyToARequest")}
             {request && <> · {request.author.displayName}</>}
@@ -93,7 +93,7 @@ export function RequestResponseContext({
 
       {isSelected && (
         <span className="mt-1 flex w-fit items-center gap-1 rounded-xs bg-success/12 px-2 py-0.5 text-caption font-medium text-success">
-          <CheckCircle2 size={12} />
+          <CircleCheck size={12} />
           {t("request.thisReplyWasSelected")}
         </span>
       )}

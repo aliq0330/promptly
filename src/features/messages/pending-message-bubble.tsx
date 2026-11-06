@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle } from "@/components/icons/alert-triangle";
-import { RotateCw } from "@/components/icons/rotate-cw";
 import { X } from "@/components/icons/x";
+import { AlertCircle } from "@/components/icons/alert-circle";
+import { RefreshCw } from "@/components/icons/refresh-cw";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -70,7 +70,7 @@ export function PendingMessageBubble({
         ) : (
           <>
             <span className="inline-flex items-center gap-1 text-danger">
-              <AlertTriangle size={12} aria-hidden />
+              <AlertCircle size={12} aria-hidden />
               {pending.error ?? t("messages.sendFailedShort")}
             </span>
             <button
@@ -78,7 +78,7 @@ export function PendingMessageBubble({
               onClick={() => onRetry(pending.id)}
               className="inline-flex items-center gap-1 font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
             >
-              <RotateCw size={11} aria-hidden />
+              <RefreshCw size={11} aria-hidden />
               {t("common.retry")}
             </button>
             <button

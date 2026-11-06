@@ -2,9 +2,9 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Upload } from "@/components/icons/upload";
+import { CircleCheck } from "@/components/icons/circle-check";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { EXCHANGE_LIMITS, formatFromFileName, parsePrompts, type ExchangeFatalCode, type ExchangeIssue, type ParseResult } from "@/lib/exchange";
@@ -128,7 +128,7 @@ export function ImportPromptsModal({ onClose, onImported }: { onClose: () => voi
       <div className="space-y-4" data-testid="exchange-import">
         {step === "done" ? (
           <div className="flex items-start gap-3" data-testid="exchange-done">
-            <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-success" aria-hidden />
+            <CircleCheck size={22} className="mt-0.5 shrink-0 text-success" aria-hidden />
             <div>
               <p className="text-small font-semibold text-text">{t("exchange.import.done", { count: created })}</p>
               <p className="text-small text-text-secondary">{t("exchange.import.doneHint")}</p>

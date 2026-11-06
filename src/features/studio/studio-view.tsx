@@ -11,10 +11,10 @@ import { Pencil } from "@/components/icons/pencil";
 import { Play } from "@/components/icons/play";
 import { Plus } from "@/components/icons/plus";
 import { Send } from "@/components/icons/send";
-import { Sparkles } from "@/components/icons/sparkles";
 import { Square } from "@/components/icons/square";
 import { Upload } from "@/components/icons/upload";
 import { X } from "@/components/icons/x";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
@@ -792,7 +792,7 @@ export function StudioView() {
             )}
             <div className="flex flex-wrap items-center gap-3">
               <Button type="button" onClick={onGenerate} disabled={running} className="h-12 px-8 text-[1rem] font-bold">
-                {running ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Sparkles size={16} aria-hidden />}
+                {running ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <WandSparkles size={16} aria-hidden />}
                 {running ? t("generate.running") : t("generate.run")}
               </Button>
               {running && (

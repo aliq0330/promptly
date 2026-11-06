@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Search } from "@/components/icons/search";
-import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { X } from "@/components/icons/x";
+import { Filter } from "@/components/icons/filter";
 import { Chip } from "@/components/ui/chip";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { ListFilterSheet, SheetChips, SheetSection } from "@/features/content/list-toolbar";
@@ -63,7 +63,7 @@ export function ProfileFilterControl({
         data-profile-filter
         className={cn(CONTROL_ICON_BUTTON, "relative")}
       >
-        <SlidersHorizontal size={22} strokeWidth={1.75} aria-hidden />
+        <Filter size={22} strokeWidth={1.75} aria-hidden />
         {activeCount > 0 && (
           <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold tabular-nums text-primary-foreground">
             {activeCount}

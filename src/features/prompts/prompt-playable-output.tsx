@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clapperboard } from "@/components/icons/clapperboard";
 import { Music } from "@/components/icons/music";
 import { Play } from "@/components/icons/play";
+import { Video } from "@/components/icons/video";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchResultById, fetchResultsForPrompt } from "@/lib/supabase/prompt-results";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -88,5 +88,5 @@ export function PromptPlayableOutput({ prompt }: { prompt: Prompt }) {
   if (loading) return <Skeleton className="h-48 w-full max-w-xl rounded-[22px]" />;
 
   // Nothing uploaded yet: the art still says what kind of post this is.
-  return <DetailArtPlaceholder icon={prompt.contentType === "audio" ? Music : Clapperboard} />;
+  return <DetailArtPlaceholder icon={prompt.contentType === "audio" ? Music : Video} />;
 }

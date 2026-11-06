@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "@/components/icons/arrow-right";
 import { ChevronLeft } from "@/components/icons/chevron-left";
 import { ChevronRight } from "@/components/icons/chevron-right";
-import { Sparkles } from "@/components/icons/sparkles";
+import { Sparkle } from "@/components/icons/sparkle";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { CardBandBackdrop } from "@/features/content/content-card";
 import { Eyebrow } from "@/features/content/detail-parts";
@@ -93,7 +93,7 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="suggestion-strip-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-            <Sparkles size={14} className="text-primary" aria-hidden /> {t("communities.strip.title")}
+            <Sparkle size={14} className="text-primary" aria-hidden /> {t("communities.strip.title")}
           </h2>
           <p className="text-caption text-text-muted">{t("communities.strip.help")}</p>
         </div>

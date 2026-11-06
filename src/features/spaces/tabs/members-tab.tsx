@@ -7,11 +7,11 @@ import { Crown } from "@/components/icons/crown";
 import { Eye } from "@/components/icons/eye";
 import { Loader2 } from "@/components/icons/loader-2";
 import { LogOut } from "@/components/icons/log-out";
-import { PenLine } from "@/components/icons/pen-line";
 import { Share2 } from "@/components/icons/share-2";
 import { UserMinus } from "@/components/icons/user-minus";
 import { UserPlus } from "@/components/icons/user-plus";
 import { X } from "@/components/icons/x";
+import { Pencil } from "@/components/icons/pencil";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -34,7 +34,7 @@ import { FormError } from "../space-forms";
 import { ShareSpaceModal } from "../space-modals";
 import { VisibilityBadge } from "../space-visuals";
 
-const ROLE_ICON: Record<SpaceRole, typeof Crown> = { owner: Crown, editor: PenLine, viewer: Eye };
+const ROLE_ICON: Record<SpaceRole, typeof Crown> = { owner: Crown, editor: Pencil, viewer: Eye };
 
 /**
  * Üyeler ve erişim (docs/history/213-*; yalnız üyelere görünür): üye listesi, sahibe rol değiştirme / çıkarma / kullanıcı adıyla

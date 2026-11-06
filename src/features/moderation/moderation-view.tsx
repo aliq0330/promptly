@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { BarChart3 } from "@/components/icons/bar-chart-3";
 import { CalendarDays } from "@/components/icons/calendar-days";
-import { ExternalLink } from "@/components/icons/external-link";
 import { Flag } from "@/components/icons/flag";
 import { ShieldCheck } from "@/components/icons/shield-check";
-import { Users } from "@/components/icons/users";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
+import { UsersRound } from "@/components/icons/users-round";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { Badge } from "@/components/ui/badge";
@@ -126,7 +126,7 @@ export function ModerationView() {
           items: [
             { key: "reports" as const, label: t("admin.tabReports"), icon: Flag },
             { key: "stats" as const, label: t("admin.tabStats"), icon: BarChart3 },
-            { key: "users" as const, label: t("admin.tabUsers"), icon: Users },
+            { key: "users" as const, label: t("admin.tabUsers"), icon: UsersRound },
             { key: "challenges" as const, label: t("admin.tabChallenges"), icon: CalendarDays },
           ],
           active: tab,
@@ -269,7 +269,7 @@ function ReportCard({ report, onDone }: { report: ModerationReport; onDone: () =
             )}
             {report.targetHref && (
               <Link href={report.targetHref} className="mt-1 inline-flex items-center gap-1 text-caption font-medium text-primary hover:underline">
-                <ExternalLink size={12} /> {t("moderation.open")}
+                <ArrowUpRight size={12} /> {t("moderation.open")}
               </Link>
             )}
           </>

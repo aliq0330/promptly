@@ -17,8 +17,8 @@ import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { Camera } from "@/components/icons/camera";
 import { ImagePlus } from "@/components/icons/image-plus";
 import { Loader2 } from "@/components/icons/loader-2";
-import { Sparkles } from "@/components/icons/sparkles";
 import { X } from "@/components/icons/x";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { analyzeImageForRequest } from "@/lib/supabase/image-analysis";
@@ -109,7 +109,7 @@ export function RequestVisionAssist({
         aria-controls="request-vision-assist-body"
         className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-text"
       >
-        <Sparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+        <WandSparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
         <span className="flex-1">{t("vision.requestTitle")}</span>
         <span className="text-xs font-normal text-text-muted">{expanded ? t("vision.hide") : t("vision.show")}</span>
       </button>
@@ -171,7 +171,7 @@ export function RequestVisionAssist({
 
           <div className="flex flex-wrap items-center gap-3">
             <Button type="button" size="sm" onClick={handleAnalyze} disabled={!file || status === "loading"}>
-              {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
+              {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <WandSparkles className="h-4 w-4" aria-hidden="true" />}
               {status === "loading" ? t("vision.analyzing") : t("vision.analyze")}
             </Button>
             {status === "loading" && (

@@ -2,8 +2,8 @@
 
 import { useId, useState, type ReactNode } from "react";
 import { Check } from "@/components/icons/check";
-import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { X } from "@/components/icons/x";
+import { Filter } from "@/components/icons/filter";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -278,7 +278,7 @@ export function ListToolbar({
             aria-label={filterLabel}
             className="h-11 gap-2 rounded-lg px-3.5 md:h-10"
           >
-            <SlidersHorizontal size={16} aria-hidden />
+            <Filter size={16} aria-hidden />
             {t("toolbar.filter")}
             {filterCountBadge}
           </Button>

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Heart } from "@/components/icons/heart";
 import { Images } from "@/components/icons/images";
 import { Info } from "@/components/icons/info";
-import { Pencil } from "@/components/icons/pencil";
 import { Plus } from "@/components/icons/plus";
 import { Quote as QuoteIcon } from "@/components/icons/quote";
 import { Bookmark } from "@/components/icons/bookmark";
@@ -18,6 +17,7 @@ import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Folder } from "@/components/icons/folder";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
+import { FileText } from "@/components/icons/file-text";
 import { ProfileHeader } from "./profile-header";
 import { OtherProfileActions, OwnProfileActions } from "./profile-actions";
 import { ProfileRail } from "./profile-rail";
@@ -196,7 +196,7 @@ export function ProfileView({
     };
     if (spaceCount > 0) group({ key: "spaces", label: t("spaces.discover.profileTab"), icon: Shapes, meta: spaceCount });
     if (isOwnProfile) {
-      group({ key: "drafts", label: t("profile.tabDrafts"), icon: Pencil });
+      group({ key: "drafts", label: t("profile.tabDrafts"), icon: FileText });
       group({ key: "saved", label: t("profile.tabSaved"), icon: Bookmark });
       group({ key: "liked", label: t("profile.tabLiked"), icon: Heart, meta: liked.total ?? undefined });
     }

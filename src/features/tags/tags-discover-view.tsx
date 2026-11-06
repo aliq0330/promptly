@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Flame } from "@/components/icons/flame";
 import { Hash } from "@/components/icons/hash";
 import { Search } from "@/components/icons/search";
-import { Sparkles } from "@/components/icons/sparkles";
+import { TrendingUp } from "@/components/icons/trending-up";
 import { Badge } from "@/components/ui/badge";
 import { fetchAllTagsWithStats, fetchPopularTags, fetchTrendingTags, type TrendingTag } from "@/lib/supabase/tags";
 import { formatCount, tagHref } from "@/lib/utils";
@@ -106,7 +106,7 @@ export function TagsDiscoverView() {
 
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
-              <Sparkles size={16} className="text-primary" />
+              <TrendingUp size={16} className="text-primary" />
               <h2 className="text-h3 font-semibold text-text">{t("tag.risingHeading")}</h2>
             </div>
             {trending.length === 0 ? (

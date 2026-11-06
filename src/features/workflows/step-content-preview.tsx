@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink } from "@/components/icons/external-link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchPromptById } from "@/lib/supabase/prompts";
 import type { WorkflowContentRef, WorkflowStep } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
 import { StorageImg } from "@/components/ui/storage-media";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 
 /** What a step's hover/tap preview shows beyond the light `WorkflowContentRef`. */
 type PreviewData =
@@ -109,7 +109,7 @@ export function StepPreviewBody({ step }: { step: WorkflowStep }) {
 
       {ref.published && (
         <Link href={ref.href} className="inline-flex items-center gap-1.5 text-label font-medium text-primary hover:underline">
-          <ExternalLink size={14} />
+          <ArrowUpRight size={14} />
           {t("workflow.flowOpen")}
         </Link>
       )}

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { IconComponent } from "@/components/icons/icon";
-import { ExternalLink } from "@/components/icons/external-link";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { SquareTerminal } from "@/components/icons/square-terminal";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { StorageImg } from "@/components/ui/storage-media";
 import { findTool } from "@/lib/ai-tool-catalog";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
@@ -71,7 +71,7 @@ export function StudioSourceCard({
           {t("studio.change")}
         </button>
         <Link href={href} target="_blank" rel="noopener" className="hidden min-h-9 items-center gap-1 text-primary hover:underline sm:inline-flex">
-          <ExternalLink size={12} aria-hidden /> {t("studio.openOriginal")}
+          <ArrowUpRight size={12} aria-hidden /> {t("studio.openOriginal")}
         </Link>
         <button type="button" onClick={onRemove} className="min-h-9 font-medium text-text-muted hover:text-text">
           {t("studio.remove")}

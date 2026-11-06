@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useId, useMemo, useState } from "react";
 import { Check } from "@/components/icons/check";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
 import { ImageIcon } from "@/components/icons/image-icon";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
 import { SquareTerminal } from "@/components/icons/square-terminal";
+import { CircleCheck } from "@/components/icons/circle-check";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { fieldInputClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -195,7 +195,7 @@ export function AddToSpaceModal({
     return (
       <SpaceDialog title={t("spaces.add.title")} onClose={onClose} overLayers={overLayers}>
         <div className="space-y-4 text-center" data-testid="add-to-space-done">
-          <CheckCircle2 size={36} className="mx-auto text-success" aria-hidden />
+          <CircleCheck size={36} className="mx-auto text-success" aria-hidden />
           <p role="status" className="text-body font-semibold text-text">
             {done.note === "upToDate" ? t("wfSpace.add.upToDate", { title: done.title }) : t("spaces.add.done", { title: done.title, count: done.count })}
           </p>

@@ -8,9 +8,9 @@ import { Lock } from "@/components/icons/lock";
 import { Shapes } from "@/components/icons/shapes";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
-import { Terminal } from "@/components/icons/terminal";
 import { Users } from "@/components/icons/users";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
 import { CARD_SAVE_CLASS } from "@/features/content/action-styles";
@@ -172,7 +172,7 @@ export function SharedPromptCard({ promptId }: { promptId: string }) {
     <SharedCard
       state={settled && !prompt ? "hidden" : prompt ? "ready" : "loading"}
       href={promptHref({ id: promptId })}
-      icon={Terminal}
+      icon={SquareTerminal}
       typeLabel={t("communities.feed.type.prompt")}
       ownerName={prompt?.author?.displayName}
       thumbnail={prompt?.media[0]}

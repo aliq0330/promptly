@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ExternalLink } from "@/components/icons/external-link";
 import { Pencil } from "@/components/icons/pencil";
 import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
 import { SquareTerminal } from "@/components/icons/square-terminal";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Button } from "@/components/ui/button";
 import { SectionMenu } from "@/features/content/section-menu";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -176,7 +176,7 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
                   {text && !reason && <CopyTextButton text={text} />}
                   {resolved.href && rowSource !== "draft" && (
                     <Link href={resolved.href} className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-label font-semibold text-text-secondary hover:bg-surface-soft hover:text-text">
-                      <ExternalLink size={14} aria-hidden />
+                      <ArrowUpRight size={14} aria-hidden />
                       {t("spaces.source.open")}
                     </Link>
                   )}

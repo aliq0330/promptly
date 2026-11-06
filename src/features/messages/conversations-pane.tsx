@@ -8,7 +8,7 @@ import { MessagesSquare } from "@/components/icons/messages-square";
 import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
 import { Star } from "@/components/icons/star";
-import { UsersRound } from "@/components/icons/users-round";
+import { Users } from "@/components/icons/users";
 import { ConversationList } from "./conversation-list";
 import { ConversationsMoreMenu, SelectionActionBar, SelectionHeader, useSelectionChrome } from "./conversation-selection";
 import { NewChatModal } from "./new-chat-modal";
@@ -176,7 +176,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     { key: "archived", label: t("messages.archivedHeading"), icon: Archive, meta: buckets.archived.length },
     // Not views but doors: the starred messages screen and the communities (their chats live there).
     { key: "starred", label: t("chat.starred.title"), icon: Star, dividerBefore: true },
-    { key: "communities", label: t("communities.messages.entryAria"), icon: UsersRound },
+    { key: "communities", label: t("communities.messages.entryAria"), icon: Users },
   ];
   function pickView(next: MessagesView) {
     if (next === "starred") return router.push("/messages/starred");

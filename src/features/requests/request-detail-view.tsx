@@ -6,7 +6,6 @@ import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MessageSquareOff } from "@/components/icons/message-square-off";
-import { PenLine } from "@/components/icons/pen-line";
 import { Reply } from "@/components/icons/reply";
 import { Sparkles } from "@/components/icons/sparkles";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -217,7 +216,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       </Button>
     ) : (
       <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
-        <PenLine size={18} />
+        <Reply size={18} />
         {t("request.reply")}
       </Link>
     )

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Archive } from "@/components/icons/archive";
 import { ArchiveRestore } from "@/components/icons/archive-restore";
-import { ExternalLink } from "@/components/icons/external-link";
 import { ImageIcon } from "@/components/icons/image-icon";
 import { LogOut } from "@/components/icons/log-out";
 import { Pencil } from "@/components/icons/pencil";
@@ -16,7 +15,8 @@ import { Share2 } from "@/components/icons/share-2";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { Trash2 } from "@/components/icons/trash-2";
-import { Users } from "@/components/icons/users";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
+import { UsersRound } from "@/components/icons/users-round";
 import { Avatar } from "@/components/ui/avatar";
 import { StorageImg } from "@/components/ui/storage-media";
 import { CardBandBackdrop } from "@/features/content/content-card";
@@ -91,7 +91,7 @@ export function SpaceCard({
     <SpaceMenu
       label={t("spaces.card.menu", { title: space.title })}
       items={[
-        { key: "open", label: t("spaces.card.open"), icon: ExternalLink, onSelect: () => router.push(href) },
+        { key: "open", label: t("spaces.card.open"), icon: ArrowUpRight, onSelect: () => router.push(href) },
         { key: "rename", label: t("spaces.card.rename"), icon: Pencil, onSelect: () => setDialog("settings"), hidden: !caps.owner || Boolean(space.archivedAt) },
         { key: "favorite", label: space.isFavorite ? t("spaces.card.unfavorite") : t("spaces.card.favorite"), icon: space.isFavorite ? PinOff : Pin, onSelect: () => void toggleFavorite(), hidden: !userId },
         { key: "share", label: t("spaces.card.share"), icon: Share2, onSelect: () => setDialog("share"), hidden: !caps.share },
@@ -121,7 +121,7 @@ export function SpaceCard({
       </span>
       {space.memberCount !== null && space.memberCount > 1 && (
         <span className="inline-flex items-center gap-1" title={t("spaces.count.members", { count: space.memberCount })}>
-          <Users size={13} aria-hidden />
+          <UsersRound size={13} aria-hidden />
           <span aria-hidden>{space.memberCount}</span>
         </span>
       )}

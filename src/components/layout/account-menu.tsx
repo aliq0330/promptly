@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { ArrowLeftRight } from "@/components/icons/arrow-left-right";
 import { BarChart3 } from "@/components/icons/bar-chart-3";
 import { Bookmark } from "@/components/icons/bookmark";
-import { LayoutGrid } from "@/components/icons/layout-grid";
 import { LogIn } from "@/components/icons/log-in";
 import { LogOut } from "@/components/icons/log-out";
 import { Moon } from "@/components/icons/moon";
@@ -16,6 +15,7 @@ import { ShieldCheck } from "@/components/icons/shield-check";
 import { Undo2 } from "@/components/icons/undo-2";
 import { User } from "@/components/icons/user";
 import { UserPlus } from "@/components/icons/user-plus";
+import { Library } from "@/components/icons/library";
 import type { IconComponent } from "@/components/icons/icon";
 import { Avatar } from "@/components/ui/avatar";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -184,7 +184,7 @@ export function AccountMenu() {
           </Link>
 
           <MenuGroup label={t("account.groupAccount")}>
-            <MenuLink href="/my-content" icon={LayoutGrid} label={t("account.myContent")} onNavigate={close} />
+            <MenuLink href="/my-content" icon={Library} label={t("account.myContent")} onNavigate={close} />
             <MenuLink href="/saved" icon={Bookmark} label={t("nav.saved")} onNavigate={close} />
             <MenuLink href="/spaces" icon={Shapes} label={t("nav.spaces")} onNavigate={close} />
             <MenuLink href="/insights" icon={BarChart3} label={t("nav.insights")} onNavigate={close} />

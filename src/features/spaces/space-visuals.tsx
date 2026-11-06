@@ -5,7 +5,6 @@ import type { IconComponent } from "@/components/icons/icon";
 import { BadgeCheck } from "@/components/icons/badge-check";
 import { Check } from "@/components/icons/check";
 import { EyeOff } from "@/components/icons/eye-off";
-import { Globe2 } from "@/components/icons/globe-2";
 import { ImageOff } from "@/components/icons/image-off";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
 import { Link2 } from "@/components/icons/link-2";
@@ -14,6 +13,7 @@ import { Shapes } from "@/components/icons/shapes";
 import { Sofa } from "@/components/icons/sofa";
 import { Swords } from "@/components/icons/swords";
 import { UserRound } from "@/components/icons/user-round";
+import { Globe } from "@/components/icons/globe";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
   free: "bg-surface-soft text-text-secondary",
 };
 
-export const VISIBILITY_ICON: Record<SpaceVisibility, IconComponent> = { private: Lock, link: Link2, public: Globe2 };
+export const VISIBILITY_ICON: Record<SpaceVisibility, IconComponent> = { private: Lock, link: Link2, public: Globe };
 
 export function VisibilityBadge({ visibility, className }: { visibility: SpaceVisibility; className?: string }) {
   const { t } = useTranslation();

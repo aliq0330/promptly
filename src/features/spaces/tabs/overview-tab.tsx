@@ -10,7 +10,7 @@ import { LayoutDashboard } from "@/components/icons/layout-dashboard";
 import { Palette } from "@/components/icons/palette";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
-import { Users } from "@/components/icons/users";
+import { UsersRound } from "@/components/icons/users-round";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -196,7 +196,7 @@ function OverviewAside({ groupsCount }: { groupsCount?: number }) {
             </li>
           ))}
           <li className="flex items-center gap-2">
-            <Users size={15} className="text-text-muted" aria-hidden />
+            <UsersRound size={15} className="text-text-muted" aria-hidden />
             {t(SPACE_VISIBILITY_LABEL[space.visibility as SpaceVisibility])}
           </li>
         </ul>

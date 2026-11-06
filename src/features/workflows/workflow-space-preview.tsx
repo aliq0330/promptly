@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink } from "@/components/icons/external-link";
 import { Globe } from "@/components/icons/globe";
 import { Lock } from "@/components/icons/lock";
 import { Shapes } from "@/components/icons/shapes";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { BoardItem } from "@/features/spaces/board/board-item";
 import { BoardConnectors } from "@/features/spaces/board/board-connectors";
 import { resolveSource } from "@/features/spaces/space-items";
@@ -236,7 +236,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
               className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-small font-semibold text-text hover:bg-surface-soft"
             >
               {t("wfSpace.preview.open")}
-              <ExternalLink size={13} aria-hidden />
+              <ArrowUpRight size={13} aria-hidden />
             </Link>
           </div>
         </div>

@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { usePagedList } from "@/features/content/use-paged-list";
 import Link from "next/link";
-import { Sparkles } from "@/components/icons/sparkles";
 import { Badge } from "@/components/ui/badge";
 import { fetchTagsPage, fetchTrendingTags, type TrendingTag } from "@/lib/supabase/tags";
 import { formatCount, tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { TagFollowButton } from "./tag-follow-button";
 import type { Tag } from "@/types";
+import { TrendingUp } from "@/components/icons/trending-up";
 
 /**
  * Keşfet → Etiketler (docs/history/221-*): the rising tags (only when there is real recent data, never an invented trend) and every
@@ -37,7 +37,7 @@ export function TagsSection() {
       {trending.length > 0 && (
         <div className="space-y-2">
           <h2 className="flex items-center gap-1.5 text-h3 font-semibold text-text">
-            <Sparkles size={16} className="text-primary" aria-hidden />
+            <TrendingUp size={16} className="text-primary" aria-hidden />
             {t("tag.risingHeading")}
           </h2>
           <div className="flex flex-wrap gap-2">

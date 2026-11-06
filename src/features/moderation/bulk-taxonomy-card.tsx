@@ -3,9 +3,9 @@
 import { useRef, useState } from "react";
 import { Download } from "@/components/icons/download";
 import { Loader2 } from "@/components/icons/loader-2";
-import { Shapes } from "@/components/icons/shapes";
 import { Undo2 } from "@/components/icons/undo-2";
 import { Upload } from "@/components/icons/upload";
+import { Tags } from "@/components/icons/tags";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { downloadTextFile } from "@/features/exchange/download-file";
@@ -142,7 +142,7 @@ export function BulkTaxonomyCard() {
   return (
     <section className="space-y-3 rounded-lg border border-border bg-surface p-4" data-testid="bulk-taxonomy">
       <div className="flex items-start gap-3">
-        <Shapes size={18} className="mt-0.5 shrink-0 text-text-muted" />
+        <Tags size={18} className="mt-0.5 shrink-0 text-text-muted" />
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-text">{t("exchange.taxonomy.title")}</h2>
           <p className="text-small text-text-secondary">{t("exchange.taxonomy.hint")}</p>

@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
 import { Flag } from "@/components/icons/flag";
-import { MessageSquare } from "@/components/icons/message-square";
 import { SquareStack } from "@/components/icons/square-stack";
+import { CircleCheck } from "@/components/icons/circle-check";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,7 +76,7 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
         <div className="h-24 animate-pulse rounded-lg border border-border-soft bg-surface-soft" aria-busy="true" />
       ) : reports.length === 0 ? (
         <p className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-small text-text-muted">
-          <CheckCircle2 size={16} aria-hidden /> {filter === "open" ? t("communities.moderation.emptyOpen") : t("communities.moderation.emptyClosed")}
+          <CircleCheck size={16} aria-hidden /> {filter === "open" ? t("communities.moderation.emptyOpen") : t("communities.moderation.emptyClosed")}
         </p>
       ) : (
         <ul className="space-y-3">
@@ -84,7 +84,7 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
             <li key={report.id} className="space-y-2.5 rounded-lg border border-border-soft bg-surface p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="neutral">
-                  {report.kind === "post" ? <SquareStack size={11} aria-hidden /> : <MessageSquare size={11} aria-hidden />}
+                  {report.kind === "post" ? <SquareStack size={11} aria-hidden /> : <MessagesSquare size={11} aria-hidden />}
                   {report.kind === "post" ? t("communities.moderation.kindPost") : t("communities.moderation.kindMessage")}
                 </Badge>
                 {report.status !== "open" && <Badge variant={report.status === "dismissed" ? "outline" : "success"}>{report.status === "dismissed" ? t("communities.moderation.dismissed") : t("communities.moderation.resolved")}</Badge>}

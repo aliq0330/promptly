@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle } from "@/components/icons/alert-triangle";
 import { Check } from "@/components/icons/check";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { CircleDashed } from "@/components/icons/circle-dashed";
@@ -9,9 +8,10 @@ import { Eye } from "@/components/icons/eye";
 import { EyeOff } from "@/components/icons/eye-off";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Play } from "@/components/icons/play";
-import { RotateCcw } from "@/components/icons/rotate-ccw";
 import { Square } from "@/components/icons/square";
-import { Wand2 } from "@/components/icons/wand-2";
+import { AlertCircle } from "@/components/icons/alert-circle";
+import { RefreshCw } from "@/components/icons/refresh-cw";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { Button } from "@/components/ui/button";
 import { clearKey, loadKey, saveKey } from "@/lib/ai-generate/key-store";
 import { fallbackModels, generateOne, listModels } from "@/lib/ai-generate/providers";
@@ -227,7 +227,7 @@ export function WorkflowAutoRun({
         className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
-          <Wand2 size={18} strokeWidth={1.75} />
+          <WandSparkles size={18} strokeWidth={1.75} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-small font-semibold text-text">{t("workflow.auto.title")}</span>
@@ -324,7 +324,7 @@ export function WorkflowAutoRun({
             )}
             {!running && hasProgress && (
               <Button variant="outline" onClick={() => void start(true)} disabled={key.trim() === ""}>
-                <RotateCcw size={14} aria-hidden /> {t("workflow.auto.rerun")}
+                <RefreshCw size={14} aria-hidden /> {t("workflow.auto.rerun")}
               </Button>
             )}
             {key.trim() === "" && <span className="text-caption text-text-muted">{t("generate.needKey")}</span>}
@@ -338,7 +338,7 @@ export function WorkflowAutoRun({
                 return (
                   <li key={step.id} data-status={status.kind} className="flex items-start gap-2 text-small">
                     <span className="mt-0.5 shrink-0 text-text-muted" aria-hidden>
-                      {status.kind === "running" ? <Loader2 size={15} className="animate-spin" /> : status.kind === "done" || status.kind === "kept" ? <Check size={15} className="text-success" /> : status.kind === "blocked" ? <CircleDashed size={15} /> : <AlertTriangle size={15} className="text-danger" />}
+                      {status.kind === "running" ? <Loader2 size={15} className="animate-spin" /> : status.kind === "done" || status.kind === "kept" ? <Check size={15} className="text-success" /> : status.kind === "blocked" ? <CircleDashed size={15} /> : <AlertCircle size={15} className="text-danger" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="font-medium text-text">{t("workflow.stepN", { n: String(index + 1) })}</span>

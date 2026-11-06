@@ -3,8 +3,8 @@
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
-import { PenLine } from "@/components/icons/pen-line";
 import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Reply } from "@/components/icons/reply";
 import { useAuth } from "@/features/auth/auth-provider";
 import type { PostFeedItem } from "@/features/feed/types";
 import { focusFeedExtraImages } from "@/lib/focus-feed";
@@ -67,7 +67,7 @@ export function FocusInfoSheet({ item, onClose }: { item: PostFeedItem; onClose:
               href={`/create?answerRequest=${item.data.id}`}
               className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-3.5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <PenLine size={15} aria-hidden />
+              <Reply size={15} aria-hidden />
               {t("request.reply")}
             </Link>
           )}
