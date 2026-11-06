@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Clock, Delete } from "lucide-react";
+import { Clock } from "@/components/icons/clock";
+import { Delete } from "@/components/icons/delete";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { EMOJI_CATEGORIES, readRecentEmojis, rememberEmoji } from "./emoji-data";

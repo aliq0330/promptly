@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ExternalLink, SlidersHorizontal, SquareTerminal, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ExternalLink } from "@/components/icons/external-link";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StorageImg } from "@/components/ui/storage-media";
 import { findTool } from "@/lib/ai-tool-catalog";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
@@ -14,7 +17,7 @@ import type { Preset, Prompt } from "@/types";
 
 type Source = { kind: "prompt"; item: Prompt } | { kind: "preset"; item: Preset };
 
-const KIND: Record<Source["kind"], { icon: LucideIcon; label: TranslationKey }> = {
+const KIND: Record<Source["kind"], { icon: IconComponent; label: TranslationKey }> = {
   prompt: { icon: SquareTerminal, label: "studio.source.prompt" },
   preset: { icon: SlidersHorizontal, label: "studio.source.preset" },
 };

@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BarChart3, CalendarDays, ExternalLink, Flag, ShieldCheck, Users } from "lucide-react";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { CalendarDays } from "@/components/icons/calendar-days";
+import { ExternalLink } from "@/components/icons/external-link";
+import { Flag } from "@/components/icons/flag";
+import { ShieldCheck } from "@/components/icons/shield-check";
+import { Users } from "@/components/icons/users";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { Badge } from "@/components/ui/badge";

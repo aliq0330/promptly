@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Palette } from "lucide-react";
+import { Palette } from "@/components/icons/palette";
 import { Button } from "@/components/ui/button";
 import { imageAppearanceFromUrl } from "@/lib/image-appearance";
 import { useTranslation } from "@/lib/i18n/language-provider";

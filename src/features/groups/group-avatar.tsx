@@ -1,6 +1,6 @@
 "use client";
 
-import { Users } from "lucide-react";
+import { Users } from "@/components/icons/users";
 import { Avatar } from "@/components/ui/avatar";
 import { useStorageSrc } from "@/components/ui/storage-media";
 import { cn } from "@/lib/utils";

@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Info, Network, PanelBottomOpen, Plus, RotateCcw } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { Info } from "@/components/icons/info";
+import { Network } from "@/components/icons/network";
+import { PanelBottomOpen } from "@/components/icons/panel-bottom-open";
+import { Plus } from "@/components/icons/plus";
+import { RotateCcw } from "@/components/icons/rotate-ccw";
 import { Button } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";

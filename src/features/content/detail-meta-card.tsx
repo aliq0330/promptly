@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Quote, Wrench } from "lucide-react";
+import { Quote } from "@/components/icons/quote";
+import { Wrench } from "@/components/icons/wrench";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ReactNode } from "react";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";

@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ExternalLink, Globe, Lock, Shapes } from "lucide-react";
+import { ExternalLink } from "@/components/icons/external-link";
+import { Globe } from "@/components/icons/globe";
+import { Lock } from "@/components/icons/lock";
+import { Shapes } from "@/components/icons/shapes";
 import { BoardItem } from "@/features/spaces/board/board-item";
 import { BoardConnectors } from "@/features/spaces/board/board-connectors";
 import { resolveSource } from "@/features/spaces/space-items";

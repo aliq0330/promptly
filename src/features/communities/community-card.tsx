@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, MessageSquare, SquareStack } from "lucide-react";
+import { CalendarDays } from "@/components/icons/calendar-days";
+import { MessageSquare } from "@/components/icons/message-square";
+import { SquareStack } from "@/components/icons/square-stack";
 import { Badge } from "@/components/ui/badge";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { RoleBadge } from "@/features/groups/role-badge";

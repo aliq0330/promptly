@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Loader2, PackagePlus, Upload } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { PackagePlus } from "@/components/icons/package-plus";
+import { Upload } from "@/components/icons/upload";
 import { Button } from "@/components/ui/button";
 import { FATAL_KEYS, FIELD_KEYS, issueKey } from "@/features/exchange/exchange-labels";
 import {

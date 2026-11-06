@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, FilePlus2, FileSymlink, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { FilePlus2 } from "@/components/icons/file-plus-2";
+import { FileSymlink } from "@/components/icons/file-symlink";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Modal } from "@/components/ui/modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityPostType } from "@/lib/supabase/communities";
@@ -11,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 /** Mevcut oluşturma ekranları — ikinci bir form YOK: topluluk bağlamı yalnızca `?community=` ile taşınır. */
 const CREATE_HREF: Record<Exclude<CommunityPostType, "space">, string> = { prompt: "/create?mode=prompt", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
-const TYPES: { type: Exclude<CommunityPostType, "space">; icon: LucideIcon; label: TranslationKey }[] = [
+const TYPES: { type: Exclude<CommunityPostType, "space">; icon: IconComponent; label: TranslationKey }[] = [
   { type: "prompt", icon: SquareTerminal, label: "communities.feed.type.prompt" },
   { type: "request", icon: Sparkles, label: "communities.feed.type.request" },
   { type: "workflow", icon: WorkflowIcon, label: "communities.feed.type.workflow" },

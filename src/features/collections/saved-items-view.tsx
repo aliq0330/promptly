@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bookmark } from "lucide-react";
+import { Bookmark } from "@/components/icons/bookmark";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { StorageImage } from "@/components/ui/storage-media";
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";

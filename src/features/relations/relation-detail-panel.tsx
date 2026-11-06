@@ -3,7 +3,9 @@
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Crosshair, X } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { Crosshair } from "@/components/icons/crosshair";
+import { X } from "@/components/icons/x";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

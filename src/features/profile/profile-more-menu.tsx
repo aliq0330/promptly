@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Ban, BellOff, BellRing, MoreVertical } from "lucide-react";
+import { Ban } from "@/components/icons/ban";
+import { BellOff } from "@/components/icons/bell-off";
+import { BellRing } from "@/components/icons/bell-ring";
+import { MoreVertical } from "@/components/icons/more-vertical";
 import { ReportButton } from "@/features/moderation/report-button";
 import { useBlockState } from "@/features/moderation/use-block-state";
 import { useMuteToggle } from "@/features/notifications/mute-store";

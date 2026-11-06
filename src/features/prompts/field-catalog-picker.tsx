@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Blocks, Check, ChevronDown, ChevronRight, Eye, Plus, Search, X } from "lucide-react";
+import { Blocks } from "@/components/icons/blocks";
+import { Check } from "@/components/icons/check";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Eye } from "@/components/icons/eye";
+import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { normalizeTagLabel } from "@/lib/tag-normalize";

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bot, Wrench } from "lucide-react";
+import { Bot } from "@/components/icons/bot";
+import { Wrench } from "@/components/icons/wrench";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AI_TOOLS, searchTools, type AiTool } from "@/lib/ai-tool-catalog";
 import { useTranslation } from "@/lib/i18n/language-provider";

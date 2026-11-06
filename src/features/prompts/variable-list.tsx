@@ -2,7 +2,7 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil } from "@/components/icons/pencil";
 import { Badge } from "@/components/ui/badge";
 import { countVariableUsages } from "@/lib/prompt-variables";
 import { conditionStatus, describeOptions, isChoiceType } from "@/lib/prompt-variable-types";

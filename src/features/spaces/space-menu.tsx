@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { MoreVertical, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { MoreVertical } from "@/components/icons/more-vertical";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
 export interface SpaceMenuItem {
   key: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   onSelect: () => void;
   danger?: boolean;
   hidden?: boolean;

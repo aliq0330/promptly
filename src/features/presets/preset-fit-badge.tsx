@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check } from "@/components/icons/check";
 import { findTool } from "@/lib/ai-tool-catalog";
 import { contentTypeLabelKey, findCategory, taxonomyLabel } from "@/lib/content-taxonomy";
 import type { PresetFit } from "@/lib/preset-fit";

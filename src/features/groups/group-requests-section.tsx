@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Inbox, Loader2, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Inbox } from "@/components/icons/inbox";
+import { Loader2 } from "@/components/icons/loader-2";
+import { X } from "@/components/icons/x";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";

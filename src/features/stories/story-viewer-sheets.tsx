@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, Eye, Loader2, Plus, Share, X } from "lucide-react";
+import { Ban } from "@/components/icons/ban";
+import { Eye } from "@/components/icons/eye";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Plus } from "@/components/icons/plus";
+import { Share } from "@/components/icons/share";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";

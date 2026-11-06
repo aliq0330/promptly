@@ -2,7 +2,8 @@
 
 import type { FormEvent, ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { ChevronRight } from "@/components/icons/chevron-right";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useTranslation } from "@/lib/i18n/language-provider";
 

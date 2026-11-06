@@ -1,6 +1,6 @@
 "use client";
 
-import { Images } from "lucide-react";
+import { Images } from "@/components/icons/images";
 import { ResultCard } from "@/features/prompts/result-card";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListState } from "@/features/feed/paged-list-state";

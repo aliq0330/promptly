@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { Pencil } from "@/components/icons/pencil";
 import { Avatar } from "@/components/ui/avatar";
 import { useTranslation } from "@/lib/i18n/language-provider";
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Copy } from "@/components/icons/copy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { copyTextToClipboard } from "@/lib/utils";
 

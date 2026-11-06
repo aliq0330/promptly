@@ -1,7 +1,10 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
+import { ChevronLeft } from "@/components/icons/chevron-left";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { X } from "@/components/icons/x";
 import { resizeImageToDataUrlFit } from "@/lib/utils";
 import { ImageProcessingError } from "@/lib/image-processing";
 import { useTranslation } from "@/lib/i18n/language-provider";

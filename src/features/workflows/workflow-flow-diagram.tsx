@@ -1,7 +1,10 @@
 "use client";
 
 import { memo, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Link2Off, Sparkles, SquareTerminal, Workflow as WorkflowIcon } from "lucide-react";
+import { Link2Off } from "@/components/icons/link-2off";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { RELATION_TYPES } from "@/lib/relations/types";

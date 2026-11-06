@@ -1,25 +1,23 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import {
-  Ban,
-  BookOpen,
-  CheckCircle2,
-  Copyright,
-  Ellipsis,
-  EyeOff,
-  Flag,
-  Loader2,
-  Lock,
-  MessageSquareWarning,
-  ShieldAlert,
-  Tag,
-  TriangleAlert,
-  UserX,
-  X,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Ban } from "@/components/icons/ban";
+import { BookOpen } from "@/components/icons/book-open";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { Copyright } from "@/components/icons/copyright";
+import { Ellipsis } from "@/components/icons/ellipsis";
+import { EyeOff } from "@/components/icons/eye-off";
+import { Flag } from "@/components/icons/flag";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Lock } from "@/components/icons/lock";
+import { MessageSquareWarning } from "@/components/icons/message-square-warning";
+import { ShieldAlert } from "@/components/icons/shield-alert";
+import { Tag } from "@/components/icons/tag";
+import { TriangleAlert } from "@/components/icons/triangle-alert";
+import { UserX } from "@/components/icons/user-x";
+import { X } from "@/components/icons/x";
+import { Zap } from "@/components/icons/zap";
 import { Modal } from "@/components/ui/modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -35,7 +33,7 @@ export interface ReportTarget {
   subtitle?: string | null;
 }
 
-const REASON_ICON: Record<ReportReasonCode, LucideIcon> = {
+const REASON_ICON: Record<ReportReasonCode, IconComponent> = {
   spam: TriangleAlert,
   harassment: MessageSquareWarning,
   hate: ShieldAlert,

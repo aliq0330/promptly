@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle } from "@/components/icons/message-circle";
 import { formatCount, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useCommentCountDelta } from "./comment-count-store";

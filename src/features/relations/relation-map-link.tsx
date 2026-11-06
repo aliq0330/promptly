@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Network } from "lucide-react";
+import { Network } from "@/components/icons/network";
 import { PostMenuExtras, usePostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useTranslation } from "@/lib/i18n/language-provider";

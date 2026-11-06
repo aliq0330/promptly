@@ -2,7 +2,12 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Dna, Pencil, Plus, WandSparkles } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { Dna } from "@/components/icons/dna";
+import { Pencil } from "@/components/icons/pencil";
+import { Plus } from "@/components/icons/plus";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";

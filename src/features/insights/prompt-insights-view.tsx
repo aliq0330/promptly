@@ -3,7 +3,14 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BarChart3, Bookmark, ChevronLeft, Copy, Heart, ImagePlus, MessageCircle, Plug } from "lucide-react";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { Bookmark } from "@/components/icons/bookmark";
+import { ChevronLeft } from "@/components/icons/chevron-left";
+import { Copy } from "@/components/icons/copy";
+import { Heart } from "@/components/icons/heart";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Plug } from "@/components/icons/plug";
 import { PageContainer } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";

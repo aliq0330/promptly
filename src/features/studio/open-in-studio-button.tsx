@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { WandSparkles } from "lucide-react";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { buttonClassName } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 

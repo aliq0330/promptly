@@ -2,7 +2,11 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Link2, Loader2, Send, UserCheck } from "lucide-react";
+import { Copy } from "@/components/icons/copy";
+import { Link2 } from "@/components/icons/link-2";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Send } from "@/components/icons/send";
+import { UserCheck } from "@/components/icons/user-check";
 import { Avatar } from "@/components/ui/avatar";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { Button } from "@/components/ui/button";

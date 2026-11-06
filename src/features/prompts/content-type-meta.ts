@@ -1,5 +1,8 @@
-import { FileText, ImageIcon, Music, Video } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { FileText } from "@/components/icons/file-text";
+import { ImageIcon } from "@/components/icons/image-icon";
+import { Music } from "@/components/icons/music";
+import { Video } from "@/components/icons/video";
+import type { IconComponent } from "@/components/icons/icon";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptContentType } from "@/types";
 
@@ -8,7 +11,7 @@ import type { PromptContentType } from "@/types";
  * `labelKey` (looked up via `useTranslation().t()` at every render site)
  * instead of a hardcoded string, same as `GENERATOR_CATEGORY_TOPIC_LABELS`.
  */
-export const CONTENT_TYPE_META: Record<PromptContentType, { icon: LucideIcon; labelKey: TranslationKey }> = {
+export const CONTENT_TYPE_META: Record<PromptContentType, { icon: IconComponent; labelKey: TranslationKey }> = {
   image: { icon: ImageIcon, labelKey: "contentType.image" },
   text: { icon: FileText, labelKey: "contentType.text" },
   audio: { icon: Music, labelKey: "contentType.audio" },

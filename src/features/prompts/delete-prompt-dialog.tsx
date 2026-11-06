@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart } from "@/components/icons/heart";
+import { Loader2 } from "@/components/icons/loader-2";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";

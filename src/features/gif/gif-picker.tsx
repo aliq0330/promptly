@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { fieldControlClassName } from "@/components/ui/field";

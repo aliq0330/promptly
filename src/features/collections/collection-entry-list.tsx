@@ -1,9 +1,17 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { FolderOpen, LayoutGrid, Search, SearchX, SlidersHorizontal, SquareTerminal, Users, Workflow as WorkflowIcon, X } from "lucide-react";
+import { FolderOpen } from "@/components/icons/folder-open";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { Search } from "@/components/icons/search";
+import { SearchX } from "@/components/icons/search-x";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Users } from "@/components/icons/users";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
+import { X } from "@/components/icons/x";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
 import { ListControlRow } from "@/features/content/list-control-row";
 import type { SectionMenuItem } from "@/features/content/section-menu";
 import { PromptCard } from "@/features/prompts/prompt-card";
@@ -141,7 +149,7 @@ export function CollectionEntryList({
 }
 
 const ENTRY_TYPES: CollectionEntry["type"][] = ["prompt", "workflow", "preset", "community_post"];
-const ENTRY_TYPE_ICONS: Record<CollectionEntry["type"], LucideIcon> = { prompt: SquareTerminal, workflow: WorkflowIcon, preset: SlidersHorizontal, community_post: Users };
+const ENTRY_TYPE_ICONS: Record<CollectionEntry["type"], IconComponent> = { prompt: SquareTerminal, workflow: WorkflowIcon, preset: SlidersHorizontal, community_post: Users };
 const ENTRY_TYPE_LABELS: Record<CollectionEntry["type"], TranslationKey> = {
   prompt: "feed.filterPrompts",
   workflow: "nav.workflows",

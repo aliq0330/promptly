@@ -1,12 +1,12 @@
 import { forwardRef, type ButtonHTMLAttributes } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
 import { cn } from "@/lib/utils";
 import { ScrollRow } from "@/components/ui/scroll-row";
 
 /** Filter/selection chip — a real toggle button (`aria-pressed`). */
 export const Chip = forwardRef<
   HTMLButtonElement,
-  ButtonHTMLAttributes<HTMLButtonElement> & { selected?: boolean; icon?: LucideIcon }
+  ButtonHTMLAttributes<HTMLButtonElement> & { selected?: boolean; icon?: IconComponent }
 >(({ selected, icon: Icon, className, children, ...props }, ref) => (
   <button
     ref={ref}

@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Maximize2, Minus, Plus } from "lucide-react";
+import { Maximize2 } from "@/components/icons/maximize-2";
+import { Minus } from "@/components/icons/minus";
+import { Plus } from "@/components/icons/plus";
 import { cn } from "@/lib/utils";
 import { CENTER_H, CENTER_W, NODE_H, NODE_W, fitTransform, layoutRadial, type Point } from "@/lib/relations/graph-layout";
 import { FILTER_ORDER, RELATION_TYPES, otherEnd, type RelationEdge, type RelationNode } from "@/lib/relations/types";

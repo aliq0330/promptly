@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,7 +13,7 @@ export function ContentTypeLabel({
   detail,
   className,
 }: {
-  icon: LucideIcon;
+  icon: IconComponent;
   label: string;
   detail?: string | null;
   className?: string;
@@ -43,7 +43,7 @@ export function ContentTypeLabel({
  * A card's kicker (Albüm card, docs/history/202-*): the type's icon + an uppercase label (+ `detail`, e.g. the tool), in the
  * brand colour — the same voice as the detail band's `ContentTypeLabel`.
  */
-export function ContentTypePill({ icon: Icon, label, detail, className }: { icon: LucideIcon; label: string; detail?: string | null; className?: string }) {
+export function ContentTypePill({ icon: Icon, label, detail, className }: { icon: IconComponent; label: string; detail?: string | null; className?: string }) {
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-1.5 text-[0.6875rem] font-bold uppercase leading-none tracking-[0.08em] text-primary", className)}>
       <Icon size={13} strokeWidth={2.1} aria-hidden className="shrink-0" />

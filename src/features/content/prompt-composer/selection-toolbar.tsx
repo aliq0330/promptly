@@ -1,8 +1,9 @@
 "use client";
 
 import { useLayoutEffect, useState } from "react";
-import type { LucideIcon } from "lucide-react";
-import { Check, X } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Check } from "@/components/icons/check";
+import { X } from "@/components/icons/x";
 import { Portal } from "@/components/ui/portal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -10,7 +11,7 @@ import { cn } from "@/lib/utils";
 export interface ToolbarAction {
   id: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   onClick: () => void;
   primary?: boolean;
 }

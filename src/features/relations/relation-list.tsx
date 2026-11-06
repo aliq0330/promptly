@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight } from "@/components/icons/chevron-right";
 import { cn } from "@/lib/utils";
 import { RELATION_TYPES, otherEnd, type RelationEdge, type RelationNode } from "@/lib/relations/types";
 import { KIND_ICON, useRelationText } from "./relation-text";

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronUp } from "lucide-react";
+import { ChevronUp } from "@/components/icons/chevron-up";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { bucketConversations, unreadConversationCount } from "@/lib/conversation-lists";

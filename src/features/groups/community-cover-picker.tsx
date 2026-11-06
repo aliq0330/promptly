@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { Camera, Check } from "lucide-react";
+import { Camera } from "@/components/icons/camera";
+import { Check } from "@/components/icons/check";
 import { CommunityCover } from "@/features/communities/community-cover";
 import { COMMUNITY_COVER_COLORS, normalizeCoverColor, type CoverMode } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";

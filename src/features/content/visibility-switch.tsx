@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Globe, Lock } from "lucide-react";
+import { Globe } from "@/components/icons/globe";
+import { Lock } from "@/components/icons/lock";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { ContentVisibility } from "@/types";

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { LoadMore } from "@/features/feed/load-more";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode } from "./comment-node";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { MentionInput } from "@/features/mentions/mention-field";
 import { useCommentThread, type CommentTarget } from "./use-comment-thread";

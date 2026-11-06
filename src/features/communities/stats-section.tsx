@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BarChart3, CalendarDays, Heart, MessageCircle, MessagesSquare, SquareStack, UserMinus, UserPlus, Users } from "lucide-react";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { CalendarDays } from "@/components/icons/calendar-days";
+import { Heart } from "@/components/icons/heart";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { MessagesSquare } from "@/components/icons/messages-square";
+import { SquareStack } from "@/components/icons/square-stack";
+import { UserMinus } from "@/components/icons/user-minus";
+import { UserPlus } from "@/components/icons/user-plus";
+import { Users } from "@/components/icons/users";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { fetchCommunityStats } from "@/lib/supabase/communities";

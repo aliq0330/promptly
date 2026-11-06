@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Grid2x2, ImageIcon, Layers, List, Loader2, Search, Upload } from "lucide-react";
+import { Grid2x2 } from "@/components/icons/grid-2x2";
+import { ImageIcon } from "@/components/icons/image-icon";
+import { Layers } from "@/components/icons/layers";
+import { List } from "@/components/icons/list";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Search } from "@/components/icons/search";
+import { Upload } from "@/components/icons/upload";
 import { Button } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { SectionMenu } from "@/features/content/section-menu";

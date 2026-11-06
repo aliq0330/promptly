@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Loader2, Lock, Shapes, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Lock } from "@/components/icons/lock";
+import { Shapes } from "@/components/icons/shapes";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
+import { X } from "@/components/icons/x";
 import { Badge } from "@/components/ui/badge";
 import { StorageImage } from "@/components/ui/storage-media";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
@@ -12,7 +21,7 @@ import { spaceHref } from "@/lib/spaces";
 import { presetHref, promptHref, requestHref, workflowHref, cn } from "@/lib/utils";
 import type { CommentAttachment, CommentAttachmentType } from "@/types";
 
-export const ATTACHMENT_ICONS: Record<CommentAttachmentType, LucideIcon> = {
+export const ATTACHMENT_ICONS: Record<CommentAttachmentType, IconComponent> = {
   prompt: SquareTerminal,
   request: Sparkles,
   workflow: WorkflowIcon,

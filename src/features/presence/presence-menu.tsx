@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { EyeOff, Lock } from "lucide-react";
+import { EyeOff } from "@/components/icons/eye-off";
+import { Lock } from "@/components/icons/lock";
 import { cn } from "@/lib/utils";
 import { isSelfHidden } from "@/lib/presence";
 import { useTranslation } from "@/lib/i18n/language-provider";

@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
-import { ArrowLeft, Compass, Search } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { Compass } from "@/components/icons/compass";
+import { Search } from "@/components/icons/search";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionMenu } from "@/features/content/section-menu";
 import { useAuth } from "@/features/auth/auth-provider";

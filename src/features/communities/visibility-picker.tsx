@@ -1,7 +1,8 @@
 "use client";
 
 import { useId } from "react";
-import { Check, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { X } from "@/components/icons/x";
 import { Badge } from "@/components/ui/badge";
 import { fieldLabelClassName } from "@/components/ui/field";
 import { VISIBILITY_ICONS } from "./visibility-label";

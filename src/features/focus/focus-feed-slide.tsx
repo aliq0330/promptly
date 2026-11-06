@@ -2,7 +2,17 @@
 
 import { createContext, memo, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight, ChevronUp, ImageOff, Music, Shapes, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ArrowDown } from "@/components/icons/arrow-down";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
+import { ChevronUp } from "@/components/icons/chevron-up";
+import { ImageOff } from "@/components/icons/image-off";
+import { Music } from "@/components/icons/music";
+import { Shapes } from "@/components/icons/shapes";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
@@ -35,7 +45,7 @@ export interface SlideModel {
   href: string;
   author: UserProfile;
   createdAt: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   typeLabel: string;
   title: string;
   /** Description without the "Kaynak: …" credit lines (those belong on the detail page, as on the cards). */

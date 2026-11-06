@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, History, ImageIcon, Layers, LayoutDashboard, Palette, SquareTerminal, StickyNote, Users } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { History } from "@/components/icons/history";
+import { ImageIcon } from "@/components/icons/image-icon";
+import { Layers } from "@/components/icons/layers";
+import { LayoutDashboard } from "@/components/icons/layout-dashboard";
+import { Palette } from "@/components/icons/palette";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { StickyNote } from "@/components/icons/sticky-note";
+import { Users } from "@/components/icons/users";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";

@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Check, FileDown, ImagePlus, Search, Shapes, SlidersHorizontal, Sparkles, SquareTerminal, Workflow, X, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Check } from "@/components/icons/check";
+import { FileDown } from "@/components/icons/file-down";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { Search } from "@/components/icons/search";
+import { Shapes } from "@/components/icons/shapes";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Workflow } from "@/components/icons/workflow";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
@@ -13,7 +23,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
 /** Sohbette kütüphaneden paylaşılabilen türler (docs/history/268-*): "Var olan içeriği paylaş" (`ShareExistingModal`) ile aynı beş tür ve aynı sorgu. */
-export const LIBRARY_TYPES: { type: CommunityPostType; icon: LucideIcon }[] = [
+export const LIBRARY_TYPES: { type: CommunityPostType; icon: IconComponent }[] = [
   { type: "prompt", icon: SquareTerminal },
   { type: "request", icon: Sparkles },
   { type: "workflow", icon: Workflow },

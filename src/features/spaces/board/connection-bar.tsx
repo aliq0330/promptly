@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, ArrowRight, Check, Minus, MoreHorizontal, Spline, Trash2, X, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ArrowLeftRight } from "@/components/icons/arrow-left-right";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { Check } from "@/components/icons/check";
+import { Minus } from "@/components/icons/minus";
+import { MoreHorizontal } from "@/components/icons/more-horizontal";
+import { Spline } from "@/components/icons/spline";
+import { Trash2 } from "@/components/icons/trash-2";
+import { X } from "@/components/icons/x";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONNECTOR_ARROWS, CONNECTOR_ROUTES, CONNECTOR_STYLES } from "@/lib/space-connectors";
 import type { SpaceConnection, SpaceConnectionPatch } from "@/lib/supabase/spaces";
@@ -10,9 +18,9 @@ import { cn } from "@/lib/utils";
 import { SpaceMenu } from "../space-menu";
 import { SPACE_COLOR_CLASS } from "../space-visuals";
 
-const STYLE_ICON: Record<(typeof CONNECTOR_STYLES)[number], LucideIcon> = { solid: Minus, dashed: MoreHorizontal, dotted: MoreHorizontal };
-const ARROW_ICON: Record<(typeof CONNECTOR_ARROWS)[number], LucideIcon> = { end: ArrowRight, start: ArrowRight, both: ArrowLeftRight, none: Minus };
-const ROUTE_ICON: Record<(typeof CONNECTOR_ROUTES)[number], LucideIcon> = { curve: Spline, straight: Minus, elbow: ArrowRight };
+const STYLE_ICON: Record<(typeof CONNECTOR_STYLES)[number], IconComponent> = { solid: Minus, dashed: MoreHorizontal, dotted: MoreHorizontal };
+const ARROW_ICON: Record<(typeof CONNECTOR_ARROWS)[number], IconComponent> = { end: ArrowRight, start: ArrowRight, both: ArrowLeftRight, none: Minus };
+const ROUTE_ICON: Record<(typeof CONNECTOR_ROUTES)[number], IconComponent> = { curve: Spline, straight: Minus, elbow: ArrowRight };
 
 /**
  * Seçili okun düzenleme çubuğu (docs/history/262-*): etiket, çizgi stili, ok başı, yol, renk, yönü çevir, sil. Yalnız düzenleyiciye;
@@ -115,7 +123,7 @@ export function ConnectionBar({
   );
 }
 
-function BarButton({ icon: Icon, label, onClick, danger }: { icon: LucideIcon; label: string; onClick: () => void; danger?: boolean }) {
+function BarButton({ icon: Icon, label, onClick, danger }: { icon: IconComponent; label: string; onClick: () => void; danger?: boolean }) {
   return (
     <button
       type="button"

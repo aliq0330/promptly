@@ -331,6 +331,24 @@ export const TERMS_OF_USE: LegalDocument = {
       ],
     },
     {
+      // docs/history/343-*: CC BY 4.0 atıf şartı. Bilgi amaçlı ek — koşulların anlamını değiştirmez, TERMS_VERSION artmadı.
+      title: { tr: "Üçüncü taraf lisansları", en: "Third-party credits" },
+      blocks: [
+        ul(
+          [
+            "İkonlar: Solar Icon Set — 480 Design. Creative Commons Atıf 4.0 (CC BY 4.0, creativecommons.org/licenses/by/4.0) lisansıyla kullanılır; Promptly için bileşenlere dönüştürüldü ve bazıları canlandırıldı.",
+            "Yazı tipleri: Bricolage Grotesque, DM Sans ve JetBrains Mono — SIL Open Font License 1.1.",
+            "Promptly logosu, tepki emojileri ve efektleri Promptly'nindir.",
+          ],
+          [
+            "Icons: Solar Icon Set by 480 Design, used under Creative Commons Attribution 4.0 (CC BY 4.0, creativecommons.org/licenses/by/4.0); converted into components for Promptly, some of them animated.",
+            "Fonts: Bricolage Grotesque, DM Sans and JetBrains Mono, under the SIL Open Font License 1.1.",
+            "The Promptly logo, reaction emoji and their effects are Promptly's own.",
+          ],
+        ),
+      ],
+    },
+    {
       title: { tr: "Değişiklikler", en: "Changes" },
       blocks: [
         p(

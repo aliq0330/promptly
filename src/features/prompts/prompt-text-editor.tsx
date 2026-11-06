@@ -2,7 +2,9 @@
 
 import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Eye, FileText, Maximize2 } from "lucide-react";
+import { Eye } from "@/components/icons/eye";
+import { FileText } from "@/components/icons/file-text";
+import { Maximize2 } from "@/components/icons/maximize-2";
 import {
   countRawOccurrences,
   extractVariableTokenNames,

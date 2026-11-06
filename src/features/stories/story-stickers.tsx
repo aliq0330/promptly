@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Send } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Send } from "@/components/icons/send";
 import { answerStoryQuestion, fetchPollResults, voteStoryPoll } from "@/lib/supabase/stories";
 import { STORY_LIMITS, pollPercentages } from "@/lib/stories";
 import { useTranslation } from "@/lib/i18n/language-provider";

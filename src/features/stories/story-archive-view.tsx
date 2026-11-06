@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Archive, Highlighter, Loader2, Plus } from "lucide-react";
+import { Archive } from "@/components/icons/archive";
+import { Highlighter } from "@/components/icons/highlighter";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Plus } from "@/components/icons/plus";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { EmptyState } from "@/components/ui/empty-state";

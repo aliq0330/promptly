@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Flag, MessageSquare, SquareStack } from "lucide-react";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { Flag } from "@/components/icons/flag";
+import { MessageSquare } from "@/components/icons/message-square";
+import { SquareStack } from "@/components/icons/square-stack";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

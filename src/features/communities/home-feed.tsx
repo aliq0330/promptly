@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { Users } from "@/components/icons/users";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Compass, Flame } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { Compass } from "@/components/icons/compass";
+import { Flame } from "@/components/icons/flame";
 import { EmptyState } from "@/components/ui/empty-state";
 import { buttonClassName } from "@/components/ui/button";
 import { HomeFeedList } from "./home-feed-list";

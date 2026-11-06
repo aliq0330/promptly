@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Braces, Loader2 } from "lucide-react";
+import { Braces } from "@/components/icons/braces";
+import { Loader2 } from "@/components/icons/loader-2";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {

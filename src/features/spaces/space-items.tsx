@@ -3,7 +3,15 @@
 import { TrashIcon } from "@/components/ui/motion-icons";
 import Link from "next/link";
 import { useId, useState } from "react";
-import { Check, Copy, ExternalLink, Layers, Loader2, Lock, MapPin, Pencil, Plus } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Copy } from "@/components/icons/copy";
+import { ExternalLink } from "@/components/icons/external-link";
+import { Layers } from "@/components/icons/layers";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Lock } from "@/components/icons/lock";
+import { MapPin } from "@/components/icons/map-pin";
+import { Pencil } from "@/components/icons/pencil";
+import { Plus } from "@/components/icons/plus";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";

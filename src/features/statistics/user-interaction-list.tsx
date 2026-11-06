@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { LoadMoreButton } from "@/features/feed/load-more";
-import type { LucideIcon } from "lucide-react";
-import { UserX } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { UserX } from "@/components/icons/user-x";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -97,7 +97,7 @@ export function UserInteractionList({
   onNavigate,
 }: {
   kind: StatisticsKind;
-  icon: LucideIcon;
+  icon: IconComponent;
   list: {
     items: ContentEngager[];
     status: "loading" | "ready" | "error";

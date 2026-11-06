@@ -4,7 +4,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bookmark, FolderPlus, Plus } from "lucide-react";
+import { Bookmark } from "@/components/icons/bookmark";
+import { FolderPlus } from "@/components/icons/folder-plus";
+import { Plus } from "@/components/icons/plus";
 import { CollectionCard } from "./collection-card";
 import { CollectionFormModal } from "./collection-form-modal";
 import { createCollection, fetchFollowedCollections, fetchOwnCollections, updateCollection } from "@/lib/supabase/collections";

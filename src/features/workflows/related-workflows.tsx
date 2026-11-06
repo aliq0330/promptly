@@ -1,6 +1,6 @@
 "use client";
 
-import { Workflow as WorkflowIcon } from "lucide-react";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { AsideSection } from "@/features/content/detail-parts";
 import { RelatedCards, RelatedCardsSkeleton } from "@/features/content/related-cards";
 import { useRelated } from "@/features/content/use-related";

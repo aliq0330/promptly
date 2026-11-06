@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Check, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { X } from "@/components/icons/x";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { announceNotice } from "@/lib/app-notice";

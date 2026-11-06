@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Ban, Lock, SquareTerminal } from "lucide-react";
+import { Ban } from "@/components/icons/ban";
+import { Lock } from "@/components/icons/lock";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Avatar } from "@/components/ui/avatar";
 import { LikeButton } from "@/features/prompts/like-button";
 import { ResultTypePreview } from "@/features/prompts/result-type-preview";

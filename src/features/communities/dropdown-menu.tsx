@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical } from "@/components/icons/more-vertical";
 
 /**
  * Küçük "⋮" açılır menüsü (dışarı tıklama ve Escape ile kapanır). `children(close)` menü öğelerini çizer.

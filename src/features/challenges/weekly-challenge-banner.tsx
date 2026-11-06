@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import { Trophy } from "@/components/icons/trophy";
 import { buttonClassName } from "@/components/ui/button";
 import { CardBandBackdrop } from "@/features/content/content-card";
 import { Eyebrow } from "@/features/content/detail-parts";

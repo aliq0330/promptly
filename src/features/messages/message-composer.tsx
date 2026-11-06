@@ -3,7 +3,11 @@
 import { SendArrowIcon } from "@/components/ui/motion-icons";
 import { useCompletionSeq } from "@/lib/use-motion-seq";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { Keyboard, Loader2, Plus, Smile, X } from "lucide-react";
+import { Keyboard } from "@/components/icons/keyboard";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Plus } from "@/components/icons/plus";
+import { Smile } from "@/components/icons/smile";
+import { X } from "@/components/icons/x";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ALLOWED_IMAGE_MIME } from "@/lib/supabase/message-images";

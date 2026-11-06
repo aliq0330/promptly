@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Sparkles, X } from "lucide-react";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Sparkles } from "@/components/icons/sparkles";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";
 import { Modal } from "@/components/ui/modal";

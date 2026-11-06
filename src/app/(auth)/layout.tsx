@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { BrandMark } from "@/components/layout/brand-mark";
+import { BrandMark, BrandWordmark } from "@/components/layout/brand-mark";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -14,9 +14,9 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden border-r border-border-soft bg-surface p-10 lg:flex">
-        <Link href="/" className="flex items-center gap-2.5">
-          <BrandMark size={32} />
-          <span className="font-display text-[1.45rem] font-bold tracking-[-0.035em] text-text">Promptly</span>
+        <Link href="/" className="flex items-center gap-2" aria-label="Promptly">
+          <BrandMark size={34} />
+          <BrandWordmark className="text-[1.6rem]" />
         </Link>
         <div className="space-y-5">
           <h2 className="max-w-md text-display text-text">{t("home.heroTitle")}</h2>
@@ -42,9 +42,9 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <main id="main-content" className="flex flex-1 flex-col items-center justify-center px-4 py-12">
-        <Link href="/" className="mb-8 flex items-center gap-2.5 lg:hidden">
-          <BrandMark size={30} />
-          <span className="font-display text-[1.35rem] font-bold tracking-[-0.035em] text-text">Promptly</span>
+        <Link href="/" className="mb-8 flex items-center gap-2 lg:hidden" aria-label="Promptly">
+          <BrandMark size={32} />
+          <BrandWordmark className="text-[1.5rem]" />
         </Link>
         <div className="w-full max-w-sm animate-rise-in rounded-xl border border-border-soft bg-surface p-6 shadow-card sm:p-8">{children}</div>
       </main>

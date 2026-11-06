@@ -2,7 +2,7 @@
 
 import { imageSourceProblem } from "@/lib/image-processing";
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";

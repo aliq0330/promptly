@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, SlidersHorizontal } from "lucide-react";
+import { Bookmark } from "@/components/icons/bookmark";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs } from "@/components/ui/tabs";
 import { fetchPresetsByCreatorPage, fetchSavedPresetsPage } from "@/lib/supabase/presets";

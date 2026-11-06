@@ -4,29 +4,27 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import Link from "next/link";
 import { AddToSpaceModal, type AddToSpaceTarget } from "@/features/spaces/add-to-space-modal";
 import { useRouter } from "next/navigation";
-import {
-  Archive,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Flag,
-  Highlighter,
-  Link2,
-  Loader2,
-  MoreVertical,
-  Pause,
-  Play,
-  Repeat2,
-  RotateCcw,
-  Send,
-  Shapes,
-  ShieldOff,
-  Trash2,
-  Users,
-  Volume2,
-  VolumeX,
-  X,
-} from "lucide-react";
+import { Archive } from "@/components/icons/archive";
+import { ChevronLeft } from "@/components/icons/chevron-left";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Eye } from "@/components/icons/eye";
+import { Flag } from "@/components/icons/flag";
+import { Highlighter } from "@/components/icons/highlighter";
+import { Link2 } from "@/components/icons/link-2";
+import { Loader2 } from "@/components/icons/loader-2";
+import { MoreVertical } from "@/components/icons/more-vertical";
+import { Pause } from "@/components/icons/pause";
+import { Play } from "@/components/icons/play";
+import { Repeat2 } from "@/components/icons/repeat-2";
+import { RotateCcw } from "@/components/icons/rotate-ccw";
+import { Send } from "@/components/icons/send";
+import { Shapes } from "@/components/icons/shapes";
+import { ShieldOff } from "@/components/icons/shield-off";
+import { Trash2 } from "@/components/icons/trash-2";
+import { Users } from "@/components/icons/users";
+import { Volume2 } from "@/components/icons/volume-2";
+import { VolumeX } from "@/components/icons/volume-x";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";

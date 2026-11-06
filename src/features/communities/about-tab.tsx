@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, BellOff, Check, ScrollText } from "lucide-react";
+import { Bell } from "@/components/icons/bell";
+import { BellOff } from "@/components/icons/bell-off";
+import { Check } from "@/components/icons/check";
+import { ScrollText } from "@/components/icons/scroll-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChatMuteToggle, LeaveCommunitySection } from "@/features/groups/personal-prefs";

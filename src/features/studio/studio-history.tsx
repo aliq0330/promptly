@@ -1,7 +1,7 @@
 "use client";
 
 import { TrashIcon } from "@/components/ui/motion-icons";
-import { History } from "lucide-react";
+import { History } from "@/components/icons/history";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatRelativeTime } from "@/lib/utils";

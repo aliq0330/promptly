@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Trophy } from "lucide-react";
+import { Plus } from "@/components/icons/plus";
+import { Trophy } from "@/components/icons/trophy";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";

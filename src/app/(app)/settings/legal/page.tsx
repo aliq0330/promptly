@@ -1,6 +1,7 @@
 "use client";
 
-import { FileText, Lock } from "lucide-react";
+import { FileText } from "@/components/icons/file-text";
+import { Lock } from "@/components/icons/lock";
 import { useAuth } from "@/features/auth/auth-provider";
 import { SettingsLinkRow, SettingsSubpage } from "@/features/settings/settings-ui";
 import { useTranslation } from "@/lib/i18n/language-provider";

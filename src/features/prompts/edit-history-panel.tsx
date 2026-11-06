@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { History } from "lucide-react";
+import { History } from "@/components/icons/history";
 import { fetchEditHistory } from "@/lib/supabase/content-edits";
 import { editHistoryExtraFields } from "@/lib/version-history";
 import { formatRelativeTime } from "@/lib/utils";

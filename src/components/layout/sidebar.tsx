@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CreateMenuSheet } from "@/features/prompts/create-choice";
-import { Plus, ShieldCheck } from "lucide-react";
+import { Plus } from "@/components/icons/plus";
+import { ShieldCheck } from "@/components/icons/shield-check";
 import { cn } from "@/lib/utils";
-import { BrandMark } from "@/components/layout/brand-mark";
+import { BrandMark, BrandWordmark } from "@/components/layout/brand-mark";
 import { buttonClassName } from "@/components/ui/button";
 import { filterNavItems, guestLoginNavItem, isNavItemActive, navGroups, PROFILE_NAV_PLACEHOLDER, settingsNavItem, type NavItem } from "@/components/layout/nav-items";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
@@ -68,9 +69,9 @@ export function Sidebar() {
     <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className="sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border-soft bg-surface md:flex md:w-[72px] lg:w-64">
       <div className="flex h-16 items-center justify-center px-3 lg:justify-start lg:px-5">
         <Link href="/" className="flex items-center gap-2.5 rounded-md" aria-label="Promptly">
-          <BrandMark size={30} />
+          <BrandMark size={32} />
           <span className="hidden leading-none lg:block">
-            <span className="block font-display text-[1.45rem] font-bold tracking-[-0.035em] text-text">Promptly</span>
+            <BrandWordmark className="block text-[1.55rem]" />
             <span className="mt-0.5 block text-caption text-text-muted">{t("nav.tagline")}</span>
           </span>
         </Link>

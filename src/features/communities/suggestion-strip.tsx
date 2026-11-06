@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { ChevronLeft } from "@/components/icons/chevron-left";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Sparkles } from "@/components/icons/sparkles";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { CardBandBackdrop } from "@/features/content/content-card";
 import { Eyebrow } from "@/features/content/detail-parts";

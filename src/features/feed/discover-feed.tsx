@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Bot, Hash, LayoutGrid, Quote as QuoteIcon, Sparkles, SquareTerminal, SlidersHorizontal, Users, UsersRound, Workflow as WorkflowIcon } from "lucide-react";
+import { Bot } from "@/components/icons/bot";
+import { Hash } from "@/components/icons/hash";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { Quote as QuoteIcon } from "@/components/icons/quote";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Users } from "@/components/icons/users";
+import { UsersRound } from "@/components/icons/users-round";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";

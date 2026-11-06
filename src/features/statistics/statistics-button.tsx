@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { ChartNoAxesColumn } from "lucide-react";
+import { ChartNoAxesColumn } from "@/components/icons/chart-no-axes-column";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { StatisticsModal, type StatisticsTarget } from "./statistics-modal";

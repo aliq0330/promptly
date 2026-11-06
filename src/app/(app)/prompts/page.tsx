@@ -1,6 +1,9 @@
 "use client";
 
-import { Copy, PenLine, SquareTerminal, Send } from "lucide-react";
+import { Copy } from "@/components/icons/copy";
+import { PenLine } from "@/components/icons/pen-line";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { Send } from "@/components/icons/send";
 import { ContentListPage } from "@/features/content/content-list-page";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { useRealPromptsList } from "@/features/prompts/real-prompts-provider";

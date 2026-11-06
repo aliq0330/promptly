@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useId, useMemo, useState } from "react";
-import { Check, CheckCircle2, ImageIcon, Loader2, Plus, Search, SquareTerminal } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { ImageIcon } from "@/components/icons/image-icon";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { fieldInputClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";

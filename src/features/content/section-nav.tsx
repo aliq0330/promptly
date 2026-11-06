@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { SlidersHorizontal, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { ListFilterSheet } from "@/features/content/list-toolbar";
 import { SortSelect, SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
 export interface SectionNavItem<K extends string> {
   key: K;
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   /** Something waiting there (Topluluklar' invitations): a small count on the tile. */
   count?: number;
   /** `variant="menu"`: a divider line before this row (a new group of the menu). */

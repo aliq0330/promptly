@@ -2,7 +2,7 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/icons/chevron-down";
 import { Collapsible } from "@/components/ui/collapsible";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fieldName, selectionEntries, type PresetField, type PresetSelection } from "@/lib/preset-fields";

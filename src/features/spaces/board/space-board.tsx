@@ -2,46 +2,47 @@
 
 import { poofElement } from "@/lib/dust";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import {
-  AlignCenterHorizontal,
-  AlignCenterVertical,
-  AlignEndHorizontal,
-  AlignEndVertical,
-  AlignHorizontalDistributeCenter,
-  AlignStartHorizontal,
-  AlignStartVertical,
-  AlignVerticalDistributeCenter,
-  BringToFront,
-  Copy,
-  ExternalLink,
-  Group,
-  Hand,
-  ImagePlus,
-  Keyboard,
-  LayoutGrid,
-  Layers,
-  Loader2,
-  Map as MapIcon,
-  Maximize,
-  Maximize2,
-  Minimize2,
-  Minus,
-  MousePointer2,
-  Palette,
-  Plus,
-  Redo2,
-  Search,
-  SendToBack,
-  Spline,
-  SquareDashedMousePointer,
-  SquareTerminal,
-  StickyNote,
-  Trash2,
-  Undo2,
-  Ungroup,
-  Workflow as WorkflowIcon,
-  X,
-  type LucideIcon, Lock, LockOpen } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { AlignCenterHorizontal } from "@/components/icons/align-center-horizontal";
+import { AlignCenterVertical } from "@/components/icons/align-center-vertical";
+import { AlignEndHorizontal } from "@/components/icons/align-end-horizontal";
+import { AlignEndVertical } from "@/components/icons/align-end-vertical";
+import { AlignHorizontalDistributeCenter } from "@/components/icons/align-horizontal-distribute-center";
+import { AlignStartHorizontal } from "@/components/icons/align-start-horizontal";
+import { AlignStartVertical } from "@/components/icons/align-start-vertical";
+import { AlignVerticalDistributeCenter } from "@/components/icons/align-vertical-distribute-center";
+import { BringToFront } from "@/components/icons/bring-to-front";
+import { Copy } from "@/components/icons/copy";
+import { ExternalLink } from "@/components/icons/external-link";
+import { Group } from "@/components/icons/group";
+import { Hand } from "@/components/icons/hand";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { Keyboard } from "@/components/icons/keyboard";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { Layers } from "@/components/icons/layers";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Map as MapIcon } from "@/components/icons/map";
+import { Maximize } from "@/components/icons/maximize";
+import { Maximize2 } from "@/components/icons/maximize-2";
+import { Minimize2 } from "@/components/icons/minimize-2";
+import { Minus } from "@/components/icons/minus";
+import { MousePointer2 } from "@/components/icons/mouse-pointer-2";
+import { Palette } from "@/components/icons/palette";
+import { Plus } from "@/components/icons/plus";
+import { Redo2 } from "@/components/icons/redo-2";
+import { Search } from "@/components/icons/search";
+import { SendToBack } from "@/components/icons/send-to-back";
+import { Spline } from "@/components/icons/spline";
+import { SquareDashedMousePointer } from "@/components/icons/square-dashed-mouse-pointer";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { StickyNote } from "@/components/icons/sticky-note";
+import { Trash2 } from "@/components/icons/trash-2";
+import { Undo2 } from "@/components/icons/undo-2";
+import { Ungroup } from "@/components/icons/ungroup";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
+import { X } from "@/components/icons/x";
+import { Lock } from "@/components/icons/lock";
+import { LockOpen } from "@/components/icons/lock-open";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { WorkflowImportModal } from "../workflow-import-modal";
 import { BoardConnectors, type ConnectorDraft } from "./board-connectors";
@@ -1343,7 +1344,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   );
 }
 
-function ToolButton({ icon: Icon, label, onClick, active, disabled, danger, className }: { icon: LucideIcon; label: string; onClick: () => void; active?: boolean; disabled?: boolean; danger?: boolean; className?: string }) {
+function ToolButton({ icon: Icon, label, onClick, active, disabled, danger, className }: { icon: IconComponent; label: string; onClick: () => void; active?: boolean; disabled?: boolean; danger?: boolean; className?: string }) {
   return (
     <button
       type="button"

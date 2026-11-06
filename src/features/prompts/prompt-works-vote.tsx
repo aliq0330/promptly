@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BadgeCheck, Check, ImagePlus, ThumbsDown, ThumbsUp } from "lucide-react";
+import { BadgeCheck } from "@/components/icons/badge-check";
+import { Check } from "@/components/icons/check";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { ThumbsDown } from "@/components/icons/thumbs-down";
+import { ThumbsUp } from "@/components/icons/thumbs-up";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PROMPT_COPIED_EVENT } from "@/features/prompts/copy-prompt-button";

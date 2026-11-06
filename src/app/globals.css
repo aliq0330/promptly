@@ -2,299 +2,60 @@
 
 /*
  * ============================================================================
- * PROMPTLY 2.0 DESIGN SYSTEM — token layer
+ * PROMPTLY DESIGN SYSTEM — token layer
  * ============================================================================
  * Single source of truth for every color, radius, shadow, type size and
- * motion value in the app (CLAUDE.md §4 / Bölüm 9.50). Components never
- * hardcode a hex value — they use the semantic utilities generated from the
- * `@theme inline` block below (`bg-surface`, `text-text-muted`,
- * `border-border-soft`, `bg-primary-soft`, `text-danger`, `shadow-card`...).
+ * motion value in the app (CLAUDE.md §4). Components never hardcode a hex
+ * value — they use the semantic utilities generated from the `@theme inline`
+ * block below (`bg-surface`, `text-text-muted`, `border-border-soft`,
+ * `bg-primary-soft`, `text-danger`, `shadow-card`...).
  *
- * Two independent axes, both set on <html> before first paint by
- * `themeInitScript` (theme-provider.tsx):
- *   - mode:    `.dark` class              → light / dark
- *   - palette: `data-palette` attribute   → meydan (default) / mono / lavender / ocean / forest / sand
+ * ONE palette, two modes (docs/history/342-*): Promptly has a single brand
+ * identity — the user only chooses light or dark (`.dark` class, set on
+ * <html> before first paint by `themeInitScript`, theme-provider.tsx). The
+ * six selectable palettes (Meydan, Beyaz, Lavanta, Okyanus, Orman, Kum) are
+ * gone. `.dark` matches any element, so a subtree can be dark on its own
+ * (Odak's stage does exactly this).
  *
- * Every palette defines the SAME full set of raw `--p-*` variables in both
- * modes, so every component renders correctly in all 12 combinations without
- * a single palette-specific class anywhere in the component tree. Palette
- * selectors match any element (not only <html>), so a subtree can preview
- * another palette with real tokens (the Settings swatches do exactly this).
+ * Color roles are a rule, not a suggestion:
+ *   - primary (Promptly blue)  → what you can DO: buttons, links, the
+ *                                selected tab, focus rings.
+ *   - secondary / heart        → what is YOURS: the logo's heart, prompt
+ *                                {variables}, your unread/new markers.
+ *                                Never a button, never an error.
+ *     `secondary` is the text-safe orange (AA on every surface);
+ *     `heart` is the brighter fill tone of the logo's heart (dots, marks —
+ *     never body text).
+ *   - status colors (success / warning / danger) stay separate.
+ * Every text/ground pair passes WCAG AA in both modes — `brand-tokens.test.ts`
+ * reads this file and fails if one does not.
  *
  * Legacy token names (`accent-surface`, `primary-dark`, `accent`) used
- * throughout the pre-2.0 codebase are kept as aliases of the new semantic
- * tokens so nothing that already works has to change to pick up a theme.
+ * throughout the pre-2.0 codebase are kept as aliases of the semantic tokens.
  */
 
 /* ---------------------------------------------------------------------------
- * Palette: Lavender — calm violet, the original Promptly identity
+ * Light (default)
  * ------------------------------------------------------------------------- */
-[data-palette="lavender"] {
-  --p-bg: #f3f1f9;
-  --p-surface: #fefdff;
-  --p-surface-soft: #edeaf6;
-  --p-surface-elevated: #ffffff;
-  --p-text: #1b1828;
-  --p-text-secondary: #463f5c;
-  --p-text-muted: #666079;
-  --p-border: #e0dbec;
-  --p-border-soft: #eae6f3;
-  --p-border-strong: #cfc8e2;
-  --p-primary: #6a3de0;
-  --p-primary-hover: #5730c2;
-  --p-primary-soft: #ece5fd;
-  --p-primary-fg: #ffffff;
-  --p-secondary: #1f9e8f;
-  --p-shadow: 38 24 84;
-
-  --p-success: #15803d;
-  --p-warning: #b45309;
-  --p-danger: #d12f2f;
-}
-
-.dark[data-palette="lavender"],
-.dark [data-palette="lavender"] {
-  --p-bg: #0f0d15;
-  --p-surface: #1a1724;
-  --p-surface-soft: #221e2e;
-  --p-surface-elevated: #27223a;
-  --p-text: #f2effa;
-  --p-text-secondary: #cbc5dc;
-  --p-text-muted: #968fad;
-  --p-border: #2e2940;
-  --p-border-soft: #25202f;
-  --p-border-strong: #433b5c;
-  --p-primary: #b49dff;
-  --p-primary-hover: #cab9ff;
-  --p-primary-soft: #2a2342;
-  --p-primary-fg: #16121f;
-  --p-secondary: #5fd3c2;
-  --p-shadow: 0 0 0;
-
-  --p-success: #4ade80;
-  --p-warning: #fbbf24;
-  --p-danger: #f87171;
-}
-
-/* ---------------------------------------------------------------------------
- * Palette: Ocean — deep navy with an electric blue accent
- * ------------------------------------------------------------------------- */
-[data-palette="ocean"] {
-  --p-bg: #f1f4f9;
-  --p-surface: #fdfeff;
-  --p-surface-soft: #e9eef7;
-  --p-surface-elevated: #ffffff;
-  --p-text: #0d1730;
-  --p-text-secondary: #36435f;
-  --p-text-muted: #5a6680;
-  --p-border: #dae2ee;
-  --p-border-soft: #e6ecf4;
-  --p-border-strong: #c5d0e2;
-  --p-primary: #2856e0;
-  --p-primary-hover: #1f45bd;
-  --p-primary-soft: #e4ecfd;
-  --p-primary-fg: #ffffff;
-  --p-secondary: #0f9fb5;
-  --p-shadow: 15 30 70;
-}
-
-.dark[data-palette="ocean"],
-.dark [data-palette="ocean"] {
-  --p-bg: #080c18;
-  --p-surface: #111a2d;
-  --p-surface-soft: #172137;
-  --p-surface-elevated: #1b2741;
-  --p-text: #edf2fb;
-  --p-text-secondary: #c1cbe0;
-  --p-text-muted: #8392ae;
-  --p-border: #22304d;
-  --p-border-soft: #1a2640;
-  --p-border-strong: #33456b;
-  --p-primary: #7aa3ff;
-  --p-primary-hover: #9cbbff;
-  --p-primary-soft: #182a4f;
-  --p-primary-fg: #0a0f1e;
-  --p-secondary: #4fd1e3;
-  --p-shadow: 0 0 0;
-}
-
-/* ---------------------------------------------------------------------------
- * Palette: Forest — deep green with a fresh mint accent
- * ------------------------------------------------------------------------- */
-[data-palette="forest"] {
-  --p-bg: #f1f5f2;
-  --p-surface: #fdfefd;
-  --p-surface-soft: #e8efea;
-  --p-surface-elevated: #ffffff;
-  --p-text: #11201a;
-  --p-text-secondary: #384b41;
-  --p-text-muted: #596a61;
-  --p-border: #d8e4dc;
-  --p-border-soft: #e5ede8;
-  --p-border-strong: #c1d3c8;
-  --p-primary: #1b7453;
-  --p-primary-hover: #155d43;
-  --p-primary-soft: #ddefe5;
-  --p-primary-fg: #ffffff;
-  --p-secondary: #b7791f;
-  --p-shadow: 18 50 35;
-}
-
-.dark[data-palette="forest"],
-.dark [data-palette="forest"] {
-  --p-bg: #0a100d;
-  --p-surface: #131c18;
-  --p-surface-soft: #19241f;
-  --p-surface-elevated: #1e2b25;
-  --p-text: #e9f3ee;
-  --p-text-secondary: #bdcdc4;
-  --p-text-muted: #869a8f;
-  --p-border: #24342d;
-  --p-border-soft: #1c2924;
-  --p-border-strong: #35493f;
-  --p-primary: #62d6a8;
-  --p-primary-hover: #88e2bf;
-  --p-primary-soft: #16332a;
-  --p-primary-fg: #0c1310;
-  --p-secondary: #f0b95c;
-  --p-shadow: 0 0 0;
-}
-
-/* ---------------------------------------------------------------------------
- * Palette: White (mono) — a professional, neutral black-and-white palette.
- * Zinc greys, ink-black primary (white in dark mode), a quiet blue secondary.
- * ------------------------------------------------------------------------- */
-[data-palette="mono"] {
-  --p-bg: #f7f7f8;
-  --p-surface: #ffffff;
-  --p-surface-soft: #f1f1f3;
-  --p-surface-elevated: #ffffff;
-  --p-text: #09090b;
-  --p-text-secondary: #3f3f46;
-  --p-text-muted: #5f5f68;
-  --p-border: #e4e4e7;
-  --p-border-soft: #ececee;
-  --p-border-strong: #d4d4d8;
-  --p-primary: #18181b;
-  --p-primary-hover: #3f3f46;
-  --p-primary-soft: #ececef;
-  --p-primary-fg: #ffffff;
-  --p-secondary: #1d4ed8;
-  --p-shadow: 9 9 11;
-}
-
-.dark[data-palette="mono"],
-.dark [data-palette="mono"] {
-  --p-bg: #09090b;
-  --p-surface: #111113;
-  --p-surface-soft: #18181b;
-  --p-surface-elevated: #1c1c1f;
-  --p-text: #fafafa;
-  --p-text-secondary: #d4d4d8;
-  --p-text-muted: #a1a1aa;
-  --p-border: #27272a;
-  --p-border-soft: #1f1f22;
-  --p-border-strong: #3f3f46;
-  --p-primary: #f4f4f5;
-  --p-primary-hover: #ffffff;
-  --p-primary-soft: #26262a;
-  --p-primary-fg: #09090b;
-  --p-secondary: #60a5fa;
-  --p-shadow: 0 0 0;
-}
-
-/* ---------------------------------------------------------------------------
- * Palette: Meydan (default) — bright social: white, cobalt, warm orange
- * (docs/history/190-*). `secondary` is the warm accent (community rings,
- * small highlights); kept dark enough to pass AA as text on white.
- * ------------------------------------------------------------------------- */
-/* Meydan is the site default: also applies when no palette attribute is set. */
-:root:not([data-palette]),
-[data-palette="meydan"] {
-  --p-bg: #fafafb;
-  --p-surface: #ffffff;
-  --p-surface-soft: #f2f2f5;
-  --p-surface-elevated: #ffffff;
-  --p-text: #111114;
-  --p-text-secondary: #3b3b45;
-  --p-text-muted: #5e5e6a;
-  --p-border: #e3e3ea;
-  --p-border-soft: #ececf1;
-  --p-border-strong: #cfcfda;
-  --p-primary: #2f5bea;
-  --p-primary-hover: #2449d8;
-  --p-primary-soft: #eef2fe;
-  --p-primary-fg: #ffffff;
-  --p-secondary: #c2531f;
-  --p-shadow: 17 17 40;
-}
-
-.dark:root:not([data-palette]),
-.dark[data-palette="meydan"],
-.dark [data-palette="meydan"] {
-  --p-bg: #0b0b0f;
-  --p-surface: #141419;
-  --p-surface-soft: #1b1b22;
-  --p-surface-elevated: #202028;
-  --p-text: #f4f4f7;
-  --p-text-secondary: #c9c9d4;
-  --p-text-muted: #9a9aa8;
-  --p-border: #2a2a33;
-  --p-border-soft: #202028;
-  --p-border-strong: #3a3a46;
-  --p-primary: #7d9bff;
-  --p-primary-hover: #9cb3ff;
-  --p-primary-soft: #1c2440;
-  --p-primary-fg: #0b0b0f;
-  --p-secondary: #ff9a6b;
-  --p-shadow: 0 0 0;
-}
-
-/* ---------------------------------------------------------------------------
- * Palette: Sand — warm neutrals with a coral accent (default until 186)
- * ------------------------------------------------------------------------- */
-[data-palette="sand"] {
-  --p-bg: #f7f3ed;
-  --p-surface: #fffdfa;
-  --p-surface-soft: #f3ede5;
-  --p-surface-elevated: #ffffff;
-  --p-text: #221a14;
-  --p-text-secondary: #52443a;
-  --p-text-muted: #74665b;
-  --p-border: #e8dfd3;
-  --p-border-soft: #efe8de;
-  --p-border-strong: #d8c9b8;
-  --p-primary: #b7432a;
-  --p-primary-hover: #9a3822;
-  --p-primary-soft: #fbe8e1;
-  --p-primary-fg: #ffffff;
-  --p-secondary: #3d7a8c;
-  --p-shadow: 80 45 25;
-}
-
-.dark[data-palette="sand"],
-.dark [data-palette="sand"] {
-  --p-bg: #13100d;
-  --p-surface: #1c1814;
-  --p-surface-soft: #25201b;
-  --p-surface-elevated: #2a241e;
-  --p-text: #f6efe7;
-  --p-text-secondary: #d3c6b8;
-  --p-text-muted: #a39383;
-  --p-border: #342b24;
-  --p-border-soft: #29231e;
-  --p-border-strong: #4a3e34;
-  --p-primary: #ff8c6e;
-  --p-primary-hover: #ffa88f;
-  --p-primary-soft: #3a241c;
-  --p-primary-fg: #1a120e;
-  --p-secondary: #7fc3d6;
-  --p-shadow: 0 0 0;
-}
-
-/* Status colors are palette-independent: defined once here so every palette
- * (not just lavender) gets them. Lavender's identical values stay harmless. */
 :root {
+  --p-bg: #f8f8fb;
+  --p-surface: #ffffff;
+  --p-surface-soft: #f0f0f5;
+  --p-surface-elevated: #ffffff;
+  --p-text: #121218;
+  --p-text-secondary: #464854;
+  --p-text-muted: #62646f;
+  --p-border: #e4e4ec;
+  --p-border-soft: #ececf2;
+  --p-border-strong: #cfd0dc;
+  --p-primary: #3b5be2;
+  --p-primary-hover: #2e4bc9;
+  --p-primary-soft: #eceffd;
+  --p-primary-fg: #ffffff;
+  --p-secondary: #b04e1c;
+  --p-heart: #d86934;
+  --p-shadow: 18 18 40;
+
   --p-success: #15803d;
   --p-warning: #b45309;
   --p-danger: #d12f2f;
@@ -311,7 +72,28 @@
   --motion-emphasis: 340ms;
 }
 
+/* ---------------------------------------------------------------------------
+ * Dark — on <html> (the user's mode) or on any subtree (Odak's stage)
+ * ------------------------------------------------------------------------- */
 .dark {
+  --p-bg: #0b0a0f;
+  --p-surface: #16151c;
+  --p-surface-soft: #1e1d26;
+  --p-surface-elevated: #23222c;
+  --p-text: #f3f3f7;
+  --p-text-secondary: #c8c8d3;
+  --p-text-muted: #9a9aaa;
+  --p-border: #2a2933;
+  --p-border-soft: #201f28;
+  --p-border-strong: #3a3946;
+  --p-primary: #738cf0;
+  --p-primary-hover: #93a6f4;
+  --p-primary-soft: #1c2142;
+  --p-primary-fg: #0b0a0f;
+  --p-secondary: #f29051;
+  --p-heart: #f29051;
+  --p-shadow: 0 0 0;
+
   --p-success: #4ade80;
   --p-warning: #fbbf24;
   --p-danger: #f87171;
@@ -345,6 +127,8 @@
   --color-primary-soft: var(--p-primary-soft);
   --color-primary-foreground: var(--p-primary-fg);
   --color-secondary: var(--p-secondary);
+  /* The logo heart's fill tone (docs/history/342-*): marks and dots, never body text. */
+  --color-heart: var(--p-heart);
 
   /* Status */
   --color-success: var(--p-success);
@@ -926,6 +710,12 @@
  * Hareketli ikonlar ve çıkış animasyonları (docs/history/335-*; `components/ui/motion-icons.tsx`, `exit-motion.tsx`).
  * Hepsi bir kez oynar; son kare dinlenme karesidir, bu yüzden aşağıdaki hareketi-azalt kuralı (süre ≈ 0) ikonu doğru yerde bırakır.
  */
+/* Icons (src/components/icons, docs/history/343-*): Solar Bold Duotone draws its second tone at opacity .5;
+ * `fill` on an icon (e.g. a playing ▶) or `icon-solid` turns that tone fully opaque — the "solid / active" look. */
+.icon-solid * {
+  opacity: 1;
+}
+
 :root {
   --mi-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --mi-spring: cubic-bezier(0.3, 1.55, 0.5, 1);

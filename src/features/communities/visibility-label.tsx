@@ -1,11 +1,14 @@
 "use client";
 
-import { DoorClosed, Globe, Lock, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { DoorClosed } from "@/components/icons/door-closed";
+import { Globe } from "@/components/icons/globe";
+import { Lock } from "@/components/icons/lock";
 import { VISIBILITY_LABEL_KEYS } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { GroupVisibility } from "@/types";
 
-export const VISIBILITY_ICONS: Record<GroupVisibility, LucideIcon> = {
+export const VISIBILITY_ICONS: Record<GroupVisibility, IconComponent> = {
   public: Globe,
   restricted: DoorClosed,
   private: Lock,

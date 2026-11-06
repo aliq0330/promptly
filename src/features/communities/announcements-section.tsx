@@ -2,7 +2,10 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Megaphone, Pencil, Pin, Plus } from "lucide-react";
+import { Megaphone } from "@/components/icons/megaphone";
+import { Pencil } from "@/components/icons/pencil";
+import { Pin } from "@/components/icons/pin";
+import { Plus } from "@/components/icons/plus";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";

@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe2, Loader2, UserCheck, Users } from "lucide-react";
+import { Globe2 } from "@/components/icons/globe-2";
+import { Loader2 } from "@/components/icons/loader-2";
+import { UserCheck } from "@/components/icons/user-check";
+import { Users } from "@/components/icons/users";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { listMyCommunities, type CommunitySummary } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";

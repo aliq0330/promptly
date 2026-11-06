@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { Loader2 } from "@/components/icons/loader-2";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";

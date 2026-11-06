@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Braces, Check, Pencil, Redo2, SlidersHorizontal, Undo2, X } from "lucide-react";
+import { Braces } from "@/components/icons/braces";
+import { Check } from "@/components/icons/check";
+import { Pencil } from "@/components/icons/pencil";
+import { Redo2 } from "@/components/icons/redo-2";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Undo2 } from "@/components/icons/undo-2";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { Portal } from "@/components/ui/portal";

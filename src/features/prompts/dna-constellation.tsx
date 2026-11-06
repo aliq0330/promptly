@@ -2,7 +2,9 @@
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Dna, Network, Plus } from "lucide-react";
+import { Dna } from "@/components/icons/dna";
+import { Network } from "@/components/icons/network";
+import { Plus } from "@/components/icons/plus";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DnaSection } from "@/lib/prompt-dna/types";

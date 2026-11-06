@@ -1,6 +1,9 @@
 "use client";
 
-import { AlertCircle, Check, CloudOff, Loader2 } from "lucide-react";
+import { AlertCircle } from "@/components/icons/alert-circle";
+import { Check } from "@/components/icons/check";
+import { CloudOff } from "@/components/icons/cloud-off";
+import { Loader2 } from "@/components/icons/loader-2";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 

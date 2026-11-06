@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, ImageOff, Loader2, RotateCw } from "lucide-react";
+import { AlertTriangle } from "@/components/icons/alert-triangle";
+import { ImageOff } from "@/components/icons/image-off";
+import { Loader2 } from "@/components/icons/loader-2";
+import { RotateCw } from "@/components/icons/rotate-cw";
 import { getCachedSignedUrl, resolveSignedUrls } from "@/lib/supabase/message-images";
 import { gifIdFromPath, giphyUrl } from "@/lib/giphy";
 import { usePrefersReducedMotion } from "@/lib/motion";

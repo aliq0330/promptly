@@ -1,7 +1,9 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { Check, SlidersHorizontal, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { ScrollRow } from "@/components/ui/scroll-row";

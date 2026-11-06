@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FullLoadLink } from "@/components/ui/full-load-link";
-import { GalleryVerticalEnd, Languages, MessageCircle, Search } from "lucide-react";
+import { GalleryVerticalEnd } from "@/components/icons/gallery-vertical-end";
+import { Languages } from "@/components/icons/languages";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Search } from "@/components/icons/search";
 import { buttonClassName } from "@/components/ui/button";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -15,7 +18,7 @@ import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/icon-button";
-import { BrandMark } from "@/components/layout/brand-mark";
+import { BrandMark, BrandWordmark } from "@/components/layout/brand-mark";
 import { AccountMenu, GuestAuthMenu } from "@/components/layout/account-menu";
 
 /**
@@ -45,7 +48,7 @@ export function Header() {
         className="flex shrink-0 items-center gap-2 rounded-md md:hidden"
       >
         <BrandMark size={30} />
-        <span className="font-display text-[1.3rem] font-bold tracking-[-0.035em] text-text max-[359px]:hidden">Promptly</span>
+        <BrandWordmark className="text-[1.4rem] max-[359px]:hidden" />
       </Link>
 
       <div className="hidden min-w-0 flex-1 items-center md:flex">

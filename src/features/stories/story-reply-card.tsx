@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleSlash } from "lucide-react";
+import { CircleSlash } from "@/components/icons/circle-slash";
 import { fetchStoryById } from "@/lib/supabase/stories";
 import { isStoryActive } from "@/lib/stories";
 import { useTranslation } from "@/lib/i18n/language-provider";

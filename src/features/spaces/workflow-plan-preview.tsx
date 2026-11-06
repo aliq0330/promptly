@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { SquareTerminal } from "lucide-react";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fitScale } from "@/lib/workflow-flow-layout";

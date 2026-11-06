@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Compass } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { Compass } from "@/components/icons/compass";
 import { homeHref } from "@/lib/community-home";
 import { listMyCommunities, type CommunitySummary } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";

@@ -1,6 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatInsightNumber, trendOf } from "@/lib/insights";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ export function InsightStatTile({
   detail,
   className,
 }: {
-  icon: LucideIcon;
+  icon: IconComponent;
   label: string;
   current: number;
   previous: number;

@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { PenLine, Sparkles } from "lucide-react";
+import { PenLine } from "@/components/icons/pen-line";
+import { Sparkles } from "@/components/icons/sparkles";
 import { buttonClassName } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";

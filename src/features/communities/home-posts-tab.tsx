@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Compass, SquareStack } from "lucide-react";
+import { Compass } from "@/components/icons/compass";
+import { SquareStack } from "@/components/icons/square-stack";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HomeFeedList } from "./home-feed-list";
 import { useHomeFeed } from "./use-home-feed";

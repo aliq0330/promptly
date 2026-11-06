@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CircleSlash, Loader2 } from "lucide-react";
+import { CircleSlash } from "@/components/icons/circle-slash";
+import { Loader2 } from "@/components/icons/loader-2";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fetchActiveStoryIds, fetchStoryById } from "@/lib/supabase/stories";
 import { isStoryActive } from "@/lib/stories";

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { Check, Search, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { Chip } from "@/components/ui/chip";
 import { SheetChips, SheetSection } from "@/features/content/list-toolbar";

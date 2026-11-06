@@ -9,40 +9,27 @@ import {
   useState,
 } from "react";
 
-export type Theme = "light" | "dark";
-
 /**
- * Color palettes of the Promptly 2.0 design system (globals.css). Each one
- * defines the full semantic token set for BOTH modes, so palette and mode
- * are two independent choices.
+ * Promptly has ONE palette (globals.css, docs/history/342-*); the only appearance choice is the mode. The six selectable
+ * palettes were removed, so there is no palette state, attribute or storage key any more.
  */
-export const PALETTES = ["meydan", "mono", "lavender", "ocean", "forest", "sand"] as const;
-export type Palette = (typeof PALETTES)[number];
-
-/** Site default until the visitor (or their account) picks another one. */
-export const DEFAULT_PALETTE: Palette = "meydan";
+export type Theme = "light" | "dark";
 
 interface ThemeContextValue {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
-  palette: Palette;
-  setPalette: (palette: Palette) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 const STORAGE_KEY = "promptly-theme";
-const PALETTE_STORAGE_KEY = "promptly-palette";
-
-function isPalette(value: unknown): value is Palette {
-  return typeof value === "string" && (PALETTES as readonly string[]).includes(value);
-}
+/** Where the removed palette choice used to live; cleared once so it does not linger in the visitor's storage. */
+const LEGACY_PALETTE_STORAGE_KEY = "promptly-palette";
 
 /**
- * Inline script injected before hydration so the correct mode class and
- * palette attribute are applied before first paint (no light/dark or
- * lavender→other-palette flash on load).
+ * Inline script injected before hydration so the correct mode class is
+ * applied before first paint (no light/dark flash on load).
  */
 export const themeInitScript = `
 (function () {
@@ -53,27 +40,21 @@ export const themeInitScript = `
       ? stored
       : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     root.classList.toggle("dark", theme === "dark");
-    var palette = localStorage.getItem("${PALETTE_STORAGE_KEY}");
-    root.setAttribute("data-palette", ${JSON.stringify(PALETTES)}.indexOf(palette) >= 0 ? palette : "${DEFAULT_PALETTE}");
+    localStorage.removeItem("${LEGACY_PALETTE_STORAGE_KEY}");
   } catch (e) {}
 })();
 `;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
-  const [palette, setPaletteState] = useState<Palette>(DEFAULT_PALETTE);
 
-  // The real theme/palette are applied to <html> synchronously by
-  // themeInitScript before hydration (to avoid a flash); this effect only
-  // re-reads that DOM state into React state once, so controls like
-  // ThemeToggle / the settings palette picker render the right state.
+  // The real mode is applied to <html> synchronously by themeInitScript
+  // before hydration (to avoid a flash); this effect only re-reads that DOM
+  // state into React state once, so controls like ThemeToggle / the settings
+  // mode picker render the right state.
   useEffect(() => {
-    const root = document.documentElement;
-    const attr = root.getAttribute("data-palette");
-    /* eslint-disable react-hooks/set-state-in-effect */
-    setThemeState(root.classList.contains("dark") ? "dark" : "light");
-    setPaletteState(isPalette(attr) ? attr : DEFAULT_PALETTE);
-    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setThemeState(document.documentElement.classList.contains("dark") ? "dark" : "light");
   }, []);
 
   const setTheme = useCallback((next: Theme) => {
@@ -90,19 +71,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(theme === "dark" ? "light" : "dark");
   }, [theme, setTheme]);
 
-  const setPalette = useCallback((next: Palette) => {
-    setPaletteState(next);
-    const root = document.documentElement;
-    withInstantSwitch(() => root.setAttribute("data-palette", next));
-    try {
-      localStorage.setItem(PALETTE_STORAGE_KEY, next);
-    } catch {
-      // localStorage may be unavailable (private mode); palette just won't persist.
-    }
-  }, []);
-
   // Browser / installed-app chrome (address bar, status bar) follows the page background of the
-  // chosen mode + palette. The DOM class/attribute are already switched by the time this runs.
+  // chosen mode. The DOM class is already switched by the time this runs.
   useEffect(() => {
     const color = getComputedStyle(document.body).backgroundColor;
     if (!color) return;
@@ -113,12 +83,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.head.appendChild(meta);
     }
     meta.content = color;
-  }, [theme, palette]);
+  }, [theme]);
 
-  const value = useMemo(
-    () => ({ theme, setTheme, toggleTheme, palette, setPalette }),
-    [theme, setTheme, toggleTheme, palette, setPalette],
-  );
+  const value = useMemo(() => ({ theme, setTheme, toggleTheme }), [theme, setTheme, toggleTheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
@@ -130,7 +97,7 @@ export function useTheme() {
 }
 
 /**
- * A mode/palette switch must be instant. Many elements carry their own
+ * A mode switch must be instant. Many elements carry their own
  * `transition-colors`, so flipping the theme normally makes each one fade on
  * its own clock and the page looks like it stutters. `.theme-instant` turns
  * all transitions off, the switch is applied and flushed (forced reflow), and

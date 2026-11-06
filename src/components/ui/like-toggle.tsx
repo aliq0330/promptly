@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
-import { Heart } from "lucide-react";
+import { Heart } from "@/components/icons/heart";
 import { cn, formatCount } from "@/lib/utils";
 import { MOTION_MS, usePrefersReducedMotion } from "@/lib/motion";
 

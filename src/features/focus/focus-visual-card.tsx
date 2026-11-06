@@ -1,6 +1,7 @@
 "use client";
 
-import { Play, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Play } from "@/components/icons/play";
 import { ContentCard } from "@/features/content/content-card";
 import type { PostFeedItem } from "@/features/feed/types";
 import type { PromptMedia, UserProfile } from "@/types";
@@ -33,7 +34,7 @@ export function FocusVisualCard({
   image: PromptMedia;
   creator: UserProfile;
   title: string;
-  badgeIcon: LucideIcon;
+  badgeIcon: IconComponent;
   badgeLabel: string;
   /** Secondary tag text (e.g. step count) — hidden on the narrowest cards. */
   badgeDetail?: string;

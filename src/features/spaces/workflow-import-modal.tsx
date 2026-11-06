@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useId, useMemo, useState } from "react";
-import { Check, Lock, Workflow as WorkflowIcon } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Lock } from "@/components/icons/lock";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePagedList } from "@/features/content/use-paged-list";

@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderMinus } from "lucide-react";
+import { FolderMinus } from "@/components/icons/folder-minus";
 import { useToast } from "@/features/groups/use-toast";
 import { ApplicationCard } from "./application-card";
 import { DropdownMenu, MenuItem } from "./dropdown-menu";

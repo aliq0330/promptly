@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Clock, LayoutGrid, SlidersHorizontal, Sparkles, SquareTerminal, UserCheck, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Check } from "@/components/icons/check";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { Clock } from "@/components/icons/clock";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { UserCheck } from "@/components/icons/user-check";
+import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { FOCUS_CHANNELS, type FocusChannel } from "@/lib/focus-feed";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -16,7 +25,7 @@ import { cn } from "@/lib/utils";
 
 export type FocusTab = "newest" | "following";
 
-export const CHANNEL_META: Record<FocusChannel, { icon: LucideIcon; label: TranslationKey }> = {
+export const CHANNEL_META: Record<FocusChannel, { icon: IconComponent; label: TranslationKey }> = {
   all: { icon: LayoutGrid, label: "focusFeed.all" },
   prompt: { icon: SquareTerminal, label: "nav.prompts" },
   request: { icon: Sparkles, label: "nav.requestsShort" },
@@ -24,7 +33,7 @@ export const CHANNEL_META: Record<FocusChannel, { icon: LucideIcon; label: Trans
   preset: { icon: SlidersHorizontal, label: "nav.presets" },
 };
 
-const TAB_META: Record<FocusTab, { icon: LucideIcon; label: TranslationKey }> = {
+const TAB_META: Record<FocusTab, { icon: IconComponent; label: TranslationKey }> = {
   newest: { icon: Clock, label: "home.tabNewest" },
   following: { icon: UserCheck, label: "nav.following" },
 };

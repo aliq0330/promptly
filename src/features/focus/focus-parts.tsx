@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Reply, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Reply } from "@/components/icons/reply";
 import { Avatar } from "@/components/ui/avatar";
 import { cn, formatCount, profileHref, requestHref } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
@@ -37,7 +38,7 @@ export function FocusCreator({ user, onImage = false }: { user: UserProfile; onI
 }
 
 /** The small "what is this" tag: ICON · TÜR. */
-export function FocusTypeBadge({ icon: Icon, label, onImage = false, className }: { icon: LucideIcon; label: string; onImage?: boolean; className?: string }) {
+export function FocusTypeBadge({ icon: Icon, label, onImage = false, className }: { icon: IconComponent; label: string; onImage?: boolean; className?: string }) {
   return (
     <span
       className={cn(

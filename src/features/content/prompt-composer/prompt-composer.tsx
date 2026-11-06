@@ -1,7 +1,18 @@
 "use client";
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Braces, Library, PanelRight, Pencil, Plus, Replace, TextCursorInput, Trash2, Type, X } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { ArrowRight } from "@/components/icons/arrow-right";
+import { Braces } from "@/components/icons/braces";
+import { Library } from "@/components/icons/library";
+import { PanelRight } from "@/components/icons/panel-right";
+import { Pencil } from "@/components/icons/pencil";
+import { Plus } from "@/components/icons/plus";
+import { Replace } from "@/components/icons/replace";
+import { TextCursorInput } from "@/components/icons/text-cursor-input";
+import { Trash2 } from "@/components/icons/trash-2";
+import { Type } from "@/components/icons/type";
+import { X } from "@/components/icons/x";
 import { moveTokenByWord, tokenRanges, unwrapTokenEdit } from "@/lib/prompt-doc";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";

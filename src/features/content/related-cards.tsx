@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
 import { StorageImage } from "@/components/ui/storage-media";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -10,7 +10,7 @@ export interface RelatedCardItem {
   href: string;
   title: string;
   meta: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   /** The post's first picture, when it has one — shown instead of the icon. */
   image?: { url: string; alt: string } | null;
 }

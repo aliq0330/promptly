@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronUp } from "@/components/icons/chevron-up";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { activeSectionIndex, neighborSection, pagerProgress } from "@/lib/section-pager";
 import { cn } from "@/lib/utils";

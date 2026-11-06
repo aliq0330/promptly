@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Link2, Loader2, Mail, Send, ShieldCheck } from "lucide-react";
+import { Link2 } from "@/components/icons/link-2";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Mail } from "@/components/icons/mail";
+import { Send } from "@/components/icons/send";
+import { ShieldCheck } from "@/components/icons/shield-check";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";

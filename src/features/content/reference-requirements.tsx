@@ -1,6 +1,8 @@
 "use client";
 
-import { Image as ImageIcon, Music, Video } from "lucide-react";
+import { Image as ImageIcon } from "@/components/icons/image";
+import { Music } from "@/components/icons/music";
+import { Video } from "@/components/icons/video";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptContentType } from "@/types";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { EyeOff } from "lucide-react";
+import { EyeOff } from "@/components/icons/eye-off";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { ArrowRight } from "@/components/icons/arrow-right";
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { DemoAccountBadge } from "@/components/ui/demo-badge";
@@ -196,7 +197,7 @@ export function CollageArt({
   ...rest
 }: {
   images: { url: string }[];
-  icon: LucideIcon;
+  icon: IconComponent;
   /** 96px on phones (beside the title, `DetailBand compact`), the usual size from `lg`. */
   compact?: boolean;
   [data: `data-${string}`]: string | undefined;
@@ -234,7 +235,7 @@ export function CollageArt({
 }
 
 /** Art for a post without a picture: its type's icon on a soft tile, so every band has the same rhythm. */
-export function DetailArtPlaceholder({ icon: Icon }: { icon: LucideIcon }) {
+export function DetailArtPlaceholder({ icon: Icon }: { icon: IconComponent }) {
   return (
     <span aria-hidden className="flex h-36 w-36 items-center justify-center rounded-[22px] bg-surface/80 text-primary shadow-pop lg:h-48 lg:w-48">
       <Icon size={56} strokeWidth={1.4} />
@@ -287,7 +288,7 @@ export function Eyebrow({
   className,
 }: {
   children: ReactNode;
-  icon?: LucideIcon;
+  icon?: IconComponent;
   as?: "p" | "h2" | "h3" | "span";
   id?: string;
   tone?: "muted" | "primary";
@@ -533,7 +534,7 @@ export function AsideLinkRow({
   meta,
 }: {
   href: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   title: ReactNode;
   meta: ReactNode;
 }) {

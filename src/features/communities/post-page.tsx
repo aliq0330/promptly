@@ -4,7 +4,11 @@ import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Flag, Pencil, ShieldAlert } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
+import { Flag } from "@/components/icons/flag";
+import { Pencil } from "@/components/icons/pencil";
+import { ShieldAlert } from "@/components/icons/shield-alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
@@ -30,7 +34,7 @@ import { can, isGroupStaff } from "@/lib/chat-groups";
 import { communityHref } from "@/lib/communities";
 import { formatRelativeTime, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { EyeOff } from "lucide-react";
+import { EyeOff } from "@/components/icons/eye-off";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {

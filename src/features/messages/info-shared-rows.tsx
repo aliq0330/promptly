@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Image as ImageIcon, LayoutGrid } from "lucide-react";
+import { Image as ImageIcon } from "@/components/icons/image";
+import { LayoutGrid } from "@/components/icons/layout-grid";
 import { fetchChatSharedStats, type ChatSharedStats } from "@/lib/supabase/messages";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ChatSharedModal } from "./chat-shared-modal";

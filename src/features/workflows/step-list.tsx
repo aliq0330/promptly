@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ChevronDown, ChevronUp, GripVertical, Plus } from "lucide-react";
+import { ArrowDown } from "@/components/icons/arrow-down";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronUp } from "@/components/icons/chevron-up";
+import { GripVertical } from "@/components/icons/grip-vertical";
+import { Plus } from "@/components/icons/plus";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";

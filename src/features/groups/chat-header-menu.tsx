@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical } from "@/components/icons/more-vertical";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /** Grup sohbeti başlığındaki "⋮" menüsü (birebir sohbetteki `ProfileMoreMenu` ile aynı görünüm; engelle/şikayet yerine grup eylemleri). */

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft } from "@/components/icons/chevron-left";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { X } from "@/components/icons/x";
 import { Portal } from "./portal";
 import { lockBodyScroll, unlockBodyScroll } from "./modal";
 import { useTranslation } from "@/lib/i18n/language-provider";

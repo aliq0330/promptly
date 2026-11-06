@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Link2Off, Loader2 } from "lucide-react";
+import { Link2Off } from "@/components/icons/link-2off";
+import { Loader2 } from "@/components/icons/loader-2";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";

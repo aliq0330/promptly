@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { X } from "lucide-react";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { communityHref } from "@/lib/communities";

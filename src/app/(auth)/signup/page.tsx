@@ -3,7 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MailCheck, UserPlus } from "lucide-react";
+import { MailCheck } from "@/components/icons/mail-check";
+import { UserPlus } from "@/components/icons/user-plus";
 import { Button } from "@/components/ui/button";
 import { FormIconBadge, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";

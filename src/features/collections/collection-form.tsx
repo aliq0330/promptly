@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Globe, Loader2, Lock } from "lucide-react";
+import { Globe } from "@/components/icons/globe";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Lock } from "@/components/icons/lock";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";

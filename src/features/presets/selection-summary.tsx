@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X } from "@/components/icons/x";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { removeEntry, selectionEntries, type PresetField, type PresetSelection } from "@/lib/preset-fields";
 

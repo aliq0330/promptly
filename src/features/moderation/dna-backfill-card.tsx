@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Dna } from "lucide-react";
+import { Dna } from "@/components/icons/dna";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";

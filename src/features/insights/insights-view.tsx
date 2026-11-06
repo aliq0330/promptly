@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BarChart3, Bookmark, Copy, Heart, ImagePlus, Info, MessageCircle, Plug, UserPlus } from "lucide-react";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { Bookmark } from "@/components/icons/bookmark";
+import { Copy } from "@/components/icons/copy";
+import { Heart } from "@/components/icons/heart";
+import { ImagePlus } from "@/components/icons/image-plus";
+import { Info } from "@/components/icons/info";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Plug } from "@/components/icons/plug";
+import { UserPlus } from "@/components/icons/user-plus";
 import { PageContainer } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";

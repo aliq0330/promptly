@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Eye, Palette } from "lucide-react";
+import { Eye } from "@/components/icons/eye";
+import { Palette } from "@/components/icons/palette";
 import { Avatar } from "@/components/ui/avatar";
 import { StorageImg } from "@/components/ui/storage-media";
 import { buttonClassName } from "@/components/ui/button";

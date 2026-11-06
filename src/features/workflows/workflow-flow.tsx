@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowLeft, Check, ExternalLink, WandSparkles, X } from "lucide-react";
+import { ArrowDown } from "@/components/icons/arrow-down";
+import { ArrowLeft } from "@/components/icons/arrow-left";
+import { Check } from "@/components/icons/check";
+import { ExternalLink } from "@/components/icons/external-link";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
+import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { Portal } from "@/components/ui/portal";
 import { useTranslation } from "@/lib/i18n/language-provider";

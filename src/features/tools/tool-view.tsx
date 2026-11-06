@@ -1,7 +1,12 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Code2, FileText, Image as ImageIcon, Music, Video, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { Code2 } from "@/components/icons/code-2";
+import { FileText } from "@/components/icons/file-text";
+import { Image as ImageIcon } from "@/components/icons/image";
+import { Music } from "@/components/icons/music";
+import { Video } from "@/components/icons/video";
 import { BAND_PRIMARY_CLASS } from "@/features/content/detail-parts";
 import { TopicKicker, TopicPage } from "@/features/content/topic-page";
 import { EMPTY_TAXONOMY_FILTER } from "@/lib/content-taxonomy";
@@ -10,7 +15,7 @@ import { toolHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ToolFollowButton } from "./tool-follow-button";
 
-const TOOL_ICON: Record<AiTool["icon"], LucideIcon> = { image: ImageIcon, text: FileText, audio: Music, video: Video, code: Code2 };
+const TOOL_ICON: Record<AiTool["icon"], IconComponent> = { image: ImageIcon, text: FileText, audio: Music, video: Video, code: Code2 };
 
 /**
  * An AI tool's page (`/tools/local?id=<catalog id>`, docs/history/211-*): the topic-page template listing every post that

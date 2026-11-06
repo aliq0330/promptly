@@ -3,7 +3,9 @@
 import { ExitMotion } from "@/components/ui/exit-motion";
 import { CommentReactions } from "@/features/reactions/comment-reactions";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, CornerDownRight } from "lucide-react";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronUp } from "@/components/icons/chevron-up";
+import { CornerDownRight } from "@/components/icons/corner-down-right";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";

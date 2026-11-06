@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Heart } from "lucide-react";
+import { Heart } from "@/components/icons/heart";
 import { cn, formatCount } from "@/lib/utils";
 import { RollingCount } from "@/components/ui/like-toggle";
 import { contentActionClassName, overlayActionClassName } from "@/features/content/action-styles";

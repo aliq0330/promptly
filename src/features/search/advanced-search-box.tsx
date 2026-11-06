@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { Clock, Search, X } from "lucide-react";
+import { Clock } from "@/components/icons/clock";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";

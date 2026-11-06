@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle } from "@/components/icons/message-circle";
 import { ConversationsPane } from "@/features/messages/conversations-pane";
 import { useTranslation } from "@/lib/i18n/language-provider";
 

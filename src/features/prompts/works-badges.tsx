@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import { Check, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { X } from "@/components/icons/x";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchWorksVotesForUsers } from "@/lib/supabase/prompt-works";

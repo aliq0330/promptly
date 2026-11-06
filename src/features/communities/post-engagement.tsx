@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart } from "@/components/icons/heart";
+import { MessageCircle } from "@/components/icons/message-circle";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { useAuth } from "@/features/auth/auth-provider";

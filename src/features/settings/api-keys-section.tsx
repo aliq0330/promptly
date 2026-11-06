@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { Check, Copy, KeyRound } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Copy } from "@/components/icons/copy";
+import { KeyRound } from "@/components/icons/key-round";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldInputClassName } from "@/components/ui/field";

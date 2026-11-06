@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeftRight, Search, X } from "lucide-react";
+import { ArrowLeftRight } from "@/components/icons/arrow-left-right";
+import { Search } from "@/components/icons/search";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { Modal } from "@/components/ui/modal";

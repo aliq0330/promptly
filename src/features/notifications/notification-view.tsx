@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BellOff, Clock, Info, LayoutGrid, MailOpen, MessageCircle, Sparkles, SquareTerminal, UserPlus, Users, type LucideIcon } from "lucide-react";
+import type { IconComponent } from "@/components/icons/icon";
+import { BellOff } from "@/components/icons/bell-off";
+import { Clock } from "@/components/icons/clock";
+import { Info } from "@/components/icons/info";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { MailOpen } from "@/components/icons/mail-open";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
+import { UserPlus } from "@/components/icons/user-plus";
+import { Users } from "@/components/icons/users";
 import { useNotifications } from "./notifications-provider";
 import type { SectionMenuItem } from "@/features/content/section-menu";
 import type { NotificationCardsQuery } from "@/lib/supabase/notifications";
@@ -23,7 +33,7 @@ const CATEGORY_LABEL: Record<NotificationCategoryName, TranslationKey> = {
   system: "notifications.categorySystem",
 };
 
-const CATEGORY_ICONS: Record<NotificationCategoryName, LucideIcon> = {
+const CATEGORY_ICONS: Record<NotificationCategoryName, IconComponent> = {
   posts: SquareTerminal,
   requests: Sparkles,
   follow: UserPlus,

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArchiveRestore, BellOff, Check } from "lucide-react";
+import { ArchiveRestore } from "@/components/icons/archive-restore";
+import { BellOff } from "@/components/icons/bell-off";
+import { Check } from "@/components/icons/check";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { cn, formatRelativeTime, formatUnread, messageHref } from "@/lib/utils";

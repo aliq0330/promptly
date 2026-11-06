@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ExternalLink, Pencil, Plus, Search, SquareTerminal } from "lucide-react";
+import { ExternalLink } from "@/components/icons/external-link";
+import { Pencil } from "@/components/icons/pencil";
+import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Button } from "@/components/ui/button";
 import { SectionMenu } from "@/features/content/section-menu";
 import { EmptyState } from "@/components/ui/empty-state";

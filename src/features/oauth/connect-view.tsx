@@ -2,7 +2,10 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Check, Plus, ShieldAlert, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Plus } from "@/components/icons/plus";
+import { ShieldAlert } from "@/components/icons/shield-alert";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/ui/page-header";
 import { usePageTitle } from "@/components/layout/page-title";

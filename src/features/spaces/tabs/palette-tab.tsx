@@ -2,7 +2,16 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useId, useState } from "react";
-import { ChevronLeft, ChevronRight, Copy, LayoutDashboard, Loader2, Palette, Pencil, Pipette, Plus, X } from "lucide-react";
+import { ChevronLeft } from "@/components/icons/chevron-left";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Copy } from "@/components/icons/copy";
+import { LayoutDashboard } from "@/components/icons/layout-dashboard";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Palette } from "@/components/icons/palette";
+import { Pencil } from "@/components/icons/pencil";
+import { Pipette } from "@/components/icons/pipette";
+import { Plus } from "@/components/icons/plus";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";

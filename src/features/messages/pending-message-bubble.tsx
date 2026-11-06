@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, RotateCw, X } from "lucide-react";
+import { AlertTriangle } from "@/components/icons/alert-triangle";
+import { RotateCw } from "@/components/icons/rotate-cw";
+import { X } from "@/components/icons/x";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";

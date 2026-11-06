@@ -7,7 +7,7 @@ import { CollectionEntryList } from "./collection-entry-list";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { Pencil } from "@/components/icons/pencil";
 import { Button } from "@/components/ui/button";
 import { BAND_PRIMARY_CLASS, BandActionRow, DetailShell } from "@/features/content/detail-parts";
 import { ContentGridColumns } from "@/features/content/content-card";

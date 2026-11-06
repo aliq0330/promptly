@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@/components/icons/arrow-left";
 import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "./real-messages-provider";

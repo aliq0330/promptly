@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ChevronDown, PenLine } from "lucide-react";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { PenLine } from "@/components/icons/pen-line";
 import { linkifyNote } from "@/lib/source-notes";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";

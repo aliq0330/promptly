@@ -13,7 +13,7 @@ import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
-/** Her sekmenin kendi hareketli ikonu (docs/history/335-*): sekme AKTİF olunca bir kez oynar; sayfa açılışında oynamaz. Listede olmayan (giriş) kalıp lucide ikonuyla kalır. */
+/** Her sekmenin kendi hareketli ikonu (docs/history/335-*): sekme AKTİF olunca bir kez oynar; sayfa açılışında oynamaz. Listede olmayan (giriş) kalıp sitenin ikon setinden (`@/components/icons`) gelir. */
 const MOTION_ICONS: Record<string, ComponentType<MotionIconProps>> = {
   "/": HomeIcon,
   "/discover": CompassIcon,

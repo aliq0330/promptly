@@ -1,7 +1,13 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState, type ReactNode } from "react";
-import { AlertCircle, Check, ChevronRight, Globe, Loader2, Lock, Users } from "lucide-react";
+import { AlertCircle } from "@/components/icons/alert-circle";
+import { Check } from "@/components/icons/check";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Globe } from "@/components/icons/globe";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Lock } from "@/components/icons/lock";
+import { Users } from "@/components/icons/users";
 import { Button } from "@/components/ui/button";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { useAuth } from "@/features/auth/auth-provider";

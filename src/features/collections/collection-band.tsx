@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen } from "@/components/icons/folder-open";
 import { Avatar } from "@/components/ui/avatar";
 import { StorageImage } from "@/components/ui/storage-media";
 import { CollageArt, DetailBand, DetailTitle, Eyebrow } from "@/features/content/detail-parts";

@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Flame, Hash, Search, Sparkles } from "lucide-react";
+import { Flame } from "@/components/icons/flame";
+import { Hash } from "@/components/icons/hash";
+import { Search } from "@/components/icons/search";
+import { Sparkles } from "@/components/icons/sparkles";
 import { Badge } from "@/components/ui/badge";
 import { fetchAllTagsWithStats, fetchPopularTags, fetchTrendingTags, type TrendingTag } from "@/lib/supabase/tags";
 import { formatCount, tagHref } from "@/lib/utils";

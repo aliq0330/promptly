@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@/components/icons/arrow-right";
 import { Avatar } from "@/components/ui/avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { fetchCommunityMembers, type CommunityMember } from "@/lib/supabase/communities";

@@ -2,7 +2,11 @@
 
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useCallback, useEffect, useState } from "react";
-import { Check, Loader2, Pencil, Plus, X } from "lucide-react";
+import { Check } from "@/components/icons/check";
+import { Loader2 } from "@/components/icons/loader-2";
+import { Pencil } from "@/components/icons/pencil";
+import { Plus } from "@/components/icons/plus";
+import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
