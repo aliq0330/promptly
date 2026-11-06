@@ -9,6 +9,7 @@ import {
   emptySources,
   fetchSpaceSources,
   saveSpaceLayout,
+  setSpaceItemApproval,
   updateSpaceItem,
   updateSpaceConnection,
   type LayoutEntry,
@@ -64,6 +65,8 @@ interface SpaceContextValue extends SpaceData {
   applyImport: (payload: ImportPayload) => Promise<{ group: SpaceGroup | null; items: SpaceItem[]; connections: SpaceConnection[] }>;
   removeItems: (ids: string[]) => Promise<SpaceItem[]>;
   patchItem: (id: string, patch: SpaceItemPatch) => Promise<SpaceItem>;
+  /** Ekip kütüphanesinde onay ver / geri al (yalnız sahip; sunucu da denetler, docs/history/348-*). */
+  approveItem: (id: string, approved: boolean) => Promise<void>;
   setConnections: (updater: (connections: SpaceConnection[]) => SpaceConnection[]) => void;
   addConnections: (connections: NewSpaceConnection[]) => Promise<SpaceConnection[]>;
   removeConnections: (ids: string[]) => Promise<SpaceConnection[]>;
@@ -286,6 +289,14 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
     return updated;
   }, []);
 
+  const approveItem = useCallback(
+    async (id: string, approved: boolean) => {
+      const at = await setSpaceItemApproval(id, approved);
+      setItemsState((list) => list.map((item) => (item.id === id ? { ...item, approvedAt: at, approvedBy: at ? userId : null } : item)));
+    },
+    [userId],
+  );
+
   // ---- oklar ----
   const addConnections = useCallback(
     async (list: NewSpaceConnection[]) => {
@@ -336,6 +347,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
       applyImport,
       removeItems,
       patchItem,
+      approveItem,
       setConnections: setConnectionsState,
       addConnections,
       removeConnections,
@@ -347,7 +359,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
       dismissLayoutNotice: () => setLayoutNotice(null),
       readable,
     }),
-    [space, role, items, groups, palettes, connections, caps, userId, sources, sourcesLoading, addItems, applyImport, removeItems, patchItem, addConnections, removeConnections, patchConnection, queueLayout, flushLayout, layoutStatus, layoutNotice, readable],
+    [space, role, items, groups, palettes, connections, caps, userId, sources, sourcesLoading, addItems, applyImport, removeItems, patchItem, approveItem, addConnections, removeConnections, patchConnection, queueLayout, flushLayout, layoutStatus, layoutNotice, readable],
   );
 
   return <SpaceContext.Provider value={value}>{children}</SpaceContext.Provider>;

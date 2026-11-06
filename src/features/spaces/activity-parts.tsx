@@ -31,6 +31,8 @@ export const ACTIVITY_KEY: Record<SpaceActivityAction, TranslationKey> = {
   role_changed: "spaces.activity.role_changed",
   link_created: "spaces.activity.link_created",
   link_revoked: "spaces.activity.link_revoked",
+  item_approved: "spaces.activity.item_approved",
+  item_unapproved: "spaces.activity.item_unapproved",
 };
 
 export type ActivityCategory = "palette" | "items" | "settings" | "other";
@@ -38,7 +40,7 @@ export type ActivityCategory = "palette" | "items" | "settings" | "other";
 /** Etkinlik sekmesindeki süzgeç grupları. */
 export function activityCategory(action: SpaceActivityAction): ActivityCategory {
   if (action.startsWith("palette_")) return "palette";
-  if (action === "image_added" || action === "image_removed" || action === "prompt_added" || action === "note_added" || action === "content_added" || action === "item_removed") return "items";
+  if (action === "image_added" || action === "image_removed" || action === "prompt_added" || action === "note_added" || action === "content_added" || action === "item_removed" || action === "item_approved" || action === "item_unapproved") return "items";
   if (action === "renamed" || action === "visibility_changed" || action === "archived" || action === "unarchived") return "settings";
   return "other";
 }
@@ -52,7 +54,7 @@ export function useActivityText() {
       label:
         entry.action === "visibility_changed" && entry.label
           ? t(SPACE_VISIBILITY_LABEL[entry.label as SpaceVisibility] ?? "spaces.visibility.private")
-          : (entry.label ?? ""),
+          : (entry.label || (entry.action === "item_approved" || entry.action === "item_unapproved" ? t("spaces.activity.untitledPrompt") : "")),
     });
 }
 

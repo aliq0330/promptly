@@ -357,3 +357,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-presence.mjs
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-works-badges.mjs   # 14/14 beklenir
 ```
+
+## Ekip kütüphanesi (`docs/history/348-*`)
+
+`run-space-library.mjs` (8 senaryo): yeni Space türü `team_library` (şablon grupları, özel değilse görünürlük uyarısı, oluşturulunca Promptlar sekmesine açılır), sahibin onay işareti (rozet, "Onaylı"/"Onay bekleyen" süzgeci, Onayla/Onayı kaldır RPC'si, etkinlik cümleleri), onaylı taslağın metni değişince onayın düşmesi, ekip ortak değişkenleri (düzenleyici ekler/günceller/siler, geçersiz ve yinelenen ad anında reddedilir, izleyici yalnız okur, üye olmayana panel ve istek yok) ve "Doldur ve kopyala" (ekip değerleri hazır, yazılan değer ezer, boş kalan jeton kalır, panoya kopyalar), İngilizce + telefon. Ağ taklidi `mock-spaces.mjs` (`db.spaceVariables`, `space_set_item_approval`, `space_set_variable`, `space_delete_variable`); gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/space-team-library.sql`'dedir.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-space-library.mjs   # 8/8 beklenir
+```

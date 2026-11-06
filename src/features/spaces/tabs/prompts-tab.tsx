@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { CircleCheck } from "@/components/icons/circle-check";
 import { Pencil } from "@/components/icons/pencil";
 import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
@@ -13,14 +14,24 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { formatRelativeTime } from "@/lib/utils";
+import { extractVariableTokenNames } from "@/lib/prompt-variables";
+import { approvalStateOf } from "@/lib/space-library";
 import { matchesQuery } from "@/lib/spaces";
 import type { SpaceItem } from "@/lib/supabase/spaces";
 import { useSpaceContext } from "../space-provider";
 import { CopyTextButton, DraftEditorModal, ItemDetailModal, resolveSource, sourceReasonKey, usePlaceNewItems, useItemTitle } from "../space-items";
 import { SpaceImage } from "../space-visuals";
+import { ApprovalBadge, FillAndCopyModal, LibraryVariablesPanel, useLibraryVariables } from "../library-parts";
 
 type Source = "all" | "post" | "draft" | "image";
 type Sort = "newest" | "oldest" | "title";
+type Approval = "all" | "approved" | "pending";
+
+const APPROVAL_LABEL: Record<Approval, TranslationKey> = {
+  all: "spaces.library.statusAll",
+  approved: "spaces.library.statusApproved",
+  pending: "spaces.library.statusPending",
+};
 
 const SOURCE_LABEL: Record<Source, TranslationKey> = {
   all: "spaces.prompts.sourceAll",
@@ -41,12 +52,17 @@ interface Row {
  */
 export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => void }) {
   const { t, language } = useTranslation();
-  const { space, items, sources, readable, caps, addItems } = useSpaceContext();
+  const { space, items, sources, readable, caps, addItems, approveItem } = useSpaceContext();
+  const isLibrary = space.kind === "team_library";
+  const library = useLibraryVariables(space.id, isLibrary && caps.member);
   const itemTitle = useItemTitle();
   const place = usePlaceNewItems();
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<Source>("all");
   const [sort, setSort] = useState<Sort>("newest");
+  const [approval, setApproval] = useState<Approval>("all");
+  const [filling, setFilling] = useState<{ title: string; text: string } | null>(null);
+  const [approving, setApproving] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<SpaceItem | null | "new">(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +87,7 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
 
   const visible = rows
     .filter((row) => source === "all" || row.source === source)
+    .filter((row) => approval === "all" || approvalStateOf(row.item) === (approval === "approved" ? "approved" : "pending"))
     .filter((row) => {
       const resolved = resolveSource(row.item, sources, readable);
       return matchesQuery(query, row.item.title, row.item.body, row.item.note, resolved.prompt?.title, resolved.prompt?.promptText);
@@ -91,8 +108,21 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
     }
   }
 
+  async function toggleApproval(item: SpaceItem) {
+    setError(null);
+    setApproving(item.id);
+    try {
+      await approveItem(item.id, !item.approvedAt);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+    } finally {
+      setApproving(null);
+    }
+  }
+
   return (
     <div className="space-y-4" data-testid="space-prompts">
+      {isLibrary && caps.member && <LibraryVariablesPanel library={library} canEdit={caps.edit} />}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
           <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
@@ -128,6 +158,15 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
           ariaLabel={t("spaces.prompts.sourceFilter")}
           title={t("spaces.prompts.sourceFilter")}
         />
+        {isLibrary && (
+          <SectionMenu
+            items={(Object.keys(APPROVAL_LABEL) as Approval[]).map((key) => ({ key, label: t(APPROVAL_LABEL[key]) }))}
+            active={approval}
+            onChange={setApproval}
+            ariaLabel={t("spaces.library.statusFilter")}
+            title={t("spaces.library.statusFilter")}
+          />
+        )}
       </div>
       {error && (
         <p role="alert" className="text-small text-danger">
@@ -143,13 +182,19 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
           action={caps.edit ? { label: t("spaces.prompts.newDraft"), onClick: () => setEditing("new") } : undefined}
         />
       ) : visible.length === 0 ? (
-        <EmptyState icon={Search} title={t("spaces.home.noResults")} compact />
+        approval === "approved" ? (
+          <EmptyState icon={CircleCheck} title={t("spaces.library.emptyApproved")} description={t("spaces.library.emptyApprovedHelp")} compact />
+        ) : (
+          <EmptyState icon={Search} title={t("spaces.home.noResults")} compact />
+        )
       ) : (
         <ul className="space-y-3">
           {visible.map(({ item, source: rowSource }) => {
             const resolved = resolveSource(item, sources, readable);
             const reason = rowSource === "draft" ? null : sourceReasonKey(resolved.state);
             const text = rowSource === "draft" ? item.body : (resolved.prompt?.promptText ?? "");
+            const approvalState = isLibrary ? approvalStateOf(item) : "none";
+            const hasVariables = isLibrary && Boolean(text) && !reason && extractVariableTokenNames(text).length > 0;
             return (
               <li key={`${rowSource}-${item.id}`} data-prompt-row={rowSource} className="rounded-lg border border-border-soft bg-surface p-3.5 shadow-xs">
                 <div className="flex items-start gap-3">
@@ -164,6 +209,7 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
                       {" · "}
                       {formatRelativeTime(item.createdAt, language)}
                     </p>
+                    {approvalState !== "none" && <ApprovalBadge state={approvalState} approvedAt={item.approvedAt} />}
                   </div>
                 </div>
                 {reason ? (
@@ -174,6 +220,17 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
                 {item.note && <p className="mt-2 break-words text-caption text-text-secondary">{item.note}</p>}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {text && !reason && <CopyTextButton text={text} />}
+                  {hasVariables && (
+                    <Button variant="outline" size="sm" onClick={() => setFilling({ title: itemTitle(item), text })}>
+                      {t("spaces.library.fillCopy")}
+                    </Button>
+                  )}
+                  {caps.approve && approvalState !== "none" && (
+                    <Button variant="ghost" size="sm" disabled={approving === item.id} onClick={() => void toggleApproval(item)} title={t("spaces.library.approvalHint")}>
+                      <CircleCheck size={14} aria-hidden />
+                      {item.approvedAt ? t("spaces.library.unapprove") : t("spaces.library.approve")}
+                    </Button>
+                  )}
                   {resolved.href && rowSource !== "draft" && (
                     <Link href={resolved.href} className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-label font-semibold text-text-secondary hover:bg-surface-soft hover:text-text">
                       <ArrowUpRight size={14} aria-hidden />
@@ -200,6 +257,7 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
       )}
 
       {openId && <ItemDetailModal itemId={openId} onClose={() => setOpenId(null)} onShowOnBoard={onShowOnBoard} />}
+      {filling && <FillAndCopyModal title={filling.title} text={filling.text} shared={library.shared} onClose={() => setFilling(null)} />}
       {editing && <DraftEditorModal draft={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
     </div>
   );

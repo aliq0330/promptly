@@ -176,7 +176,8 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   });
   // Bir yorum bildiriminden gelen bağlantı (`hl=comment:…`) yorumlara açılır.
   const commentLink = searchParams.get("hl")?.startsWith("comment:") ?? false;
-  const defaultTab: SpaceTab = commentLink ? "comments" : caps.member ? "overview" : "images";
+  // Ekip kütüphanesi üyesi doğrudan promptlara iner (kütüphanenin işi bu); öteki türler Genel bakışla açılır.
+  const defaultTab: SpaceTab = commentLink ? "comments" : caps.member ? (space.kind === "team_library" ? "prompts" : "overview") : "images";
   const tab: SpaceTab = isSpaceTab(tabParam) && visibleTabs.includes(tabParam) ? tabParam : defaultTab;
   const focusId = searchParams.get("focus");
   const [dialog, setDialog] = useState<null | "settings" | "share" | "delete" | "leave">(null);

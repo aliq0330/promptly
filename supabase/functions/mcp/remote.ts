@@ -107,7 +107,7 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
             tools: isMe
               ? [
                   "search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content",
-                  "whoami", "list_my_prompts", "get_my_prompt", "list_my_content", "get_my_content", "list_my_saved",
+                  "whoami", "list_my_prompts", "get_my_prompt", "list_my_content", "get_my_content", "list_my_saved", "list_my_libraries", "get_library_prompts",
                   "save_prompt_draft", "save_request_draft", "save_preset_draft", "save_workflow_draft", "update_my_draft",
                   ...(options.me?.attachImage ? ["attach_image"] : []),
                 ]
