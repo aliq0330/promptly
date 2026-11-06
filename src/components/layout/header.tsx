@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FullLoadLink } from "@/components/ui/full-load-link";
-import { GalleryVerticalEnd } from "@/components/icons/gallery-vertical-end";
+import { Focus } from "@/components/icons/focus";
 import { Languages } from "@/components/icons/languages";
 import { MessagesSquare } from "@/components/icons/messages-square";
 import { Search } from "@/components/icons/search";
@@ -76,7 +76,7 @@ export function Header() {
         )}
         {/* Odak (docs/history/227-*): from `md` it is a header button — a vertical full-screen feed is not a sidebar destination; on a phone it keeps its bottom-nav slot. A full page load, not a client-side swap (docs/history/249-*). */}
         <FullLoadLink href="/focus" className={buttonClassName({ variant: "outline", size: "sm", className: "mr-1 hidden shrink-0 gap-1.5 md:inline-flex" })}>
-          <GalleryVerticalEnd size={16} aria-hidden />
+          <Focus size={16} aria-hidden />
           {t("header.focusLink")}
         </FullLoadLink>
         {status === "authenticated" && (

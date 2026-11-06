@@ -7,7 +7,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { ChevronLeft } from "@/components/icons/chevron-left";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { ChevronUp } from "@/components/icons/chevron-up";
-import { GalleryVerticalEnd } from "@/components/icons/gallery-vertical-end";
+import { Focus } from "@/components/icons/focus";
 import { Images } from "@/components/icons/images";
 import { Inbox } from "@/components/icons/inbox";
 import { MoreVertical } from "@/components/icons/more-vertical";
@@ -169,7 +169,7 @@ function FocusFailed({ onRetry }: { onRetry: () => void }) {
   useFullScreenChrome();
   return createPortal(
     <Stage className="items-center justify-center px-4">
-      <EmptyState icon={GalleryVerticalEnd} title={t("focusFeed.failedTitle")} action={{ label: t("common.retry"), onClick: onRetry }} />
+      <EmptyState icon={Focus} title={t("focusFeed.failedTitle")} action={{ label: t("common.retry"), onClick: onRetry }} />
       <Button variant="outline" className="mt-3" onClick={() => router.push("/")}>
         {t("focusFeed.backHome")}
       </Button>

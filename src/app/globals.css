@@ -973,15 +973,15 @@
   animation: mi-fbot 400ms var(--mi-ease) both;
 }
 @keyframes mi-fmid {
-  from { transform: translateY(9px) scale(0.88); opacity: 0.2; }
-  to { transform: none; opacity: 1; }
+  from { transform: scale(0.82); opacity: 0.2; transform-origin: 12px 12px; }
+  to { transform: none; opacity: 1; transform-origin: 12px 12px; }
 }
 @keyframes mi-ftop {
-  from { transform: translateY(5px); opacity: 0; }
+  from { transform: translateX(-6px); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
 @keyframes mi-fbot {
-  from { transform: translateY(-6px); opacity: 0; }
+  from { transform: translateX(6px); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
 .mi-plus {
