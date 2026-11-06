@@ -12,8 +12,8 @@ import { ChevronsDown } from "@/components/icons/chevrons-down";
 import { Info } from "@/components/icons/info";
 import { LogOut } from "@/components/icons/log-out";
 import { Search } from "@/components/icons/search";
-import { Users } from "@/components/icons/users";
 import { X } from "@/components/icons/x";
+import { UsersRound } from "@/components/icons/users-round";
 import { Portal } from "@/components/ui/portal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useBlockState } from "@/features/moderation/use-block-state";
@@ -1401,7 +1401,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
-                  <Users size={11} aria-hidden /> {memberCountText(t, group.memberCount)}
+                  <UsersRound size={11} aria-hidden /> {memberCountText(t, group.memberCount)}
                   {/* Çevrimiçi üye sayısı (docs/history/329-*): sunucuda, son görülme penceresinden toplu; yalnız üyeye. */}
                   {groupOnline ? <OnlineCountText count={groupOnline} className="before:mr-0.5 before:content-['·']" /> : null}
                   {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}

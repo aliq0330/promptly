@@ -2,7 +2,7 @@
 
 import { Calendar } from "@/components/icons/calendar";
 import { Clock } from "@/components/icons/clock";
-import { Globe } from "@/components/icons/globe";
+import { Link2 } from "@/components/icons/link-2";
 import { usePresence } from "@/features/presence/use-presence";
 import { usePresenceLabel } from "@/features/presence/presence-ui";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,7 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
             rel="noreferrer noopener"
             className="flex items-center gap-2 text-primary hover:underline"
           >
-            <Globe size={15} className="shrink-0" />
+            <Link2 size={15} className="shrink-0" />
             {user.website}
           </a>
         )}

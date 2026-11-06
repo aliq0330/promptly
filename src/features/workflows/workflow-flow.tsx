@@ -5,9 +5,9 @@ import Link from "next/link";
 import { ArrowDown } from "@/components/icons/arrow-down";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { Check } from "@/components/icons/check";
-import { ExternalLink } from "@/components/icons/external-link";
 import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { X } from "@/components/icons/x";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Modal } from "@/components/ui/modal";
 import { Portal } from "@/components/ui/portal";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -287,7 +287,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
             title={t("workflow.flowOpen")}
             className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
           >
-            <ExternalLink size={15} />
+            <ArrowUpRight size={15} />
           </Link>
         </div>
       )}

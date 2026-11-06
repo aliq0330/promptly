@@ -1,7 +1,6 @@
 "use client";
 
 import { Component, memo, type ReactNode } from "react";
-import { AlertTriangle } from "@/components/icons/alert-triangle";
 import { EyeOff } from "@/components/icons/eye-off";
 import { Lock } from "@/components/icons/lock";
 import { Palette } from "@/components/icons/palette";
@@ -10,6 +9,7 @@ import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { Workflow } from "@/components/icons/workflow";
+import { AlertCircle } from "@/components/icons/alert-circle";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { SpaceItem, SpacePalette } from "@/lib/supabase/spaces";
@@ -252,7 +252,7 @@ function BrokenItem() {
   const { t } = useTranslation();
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-danger/50 bg-danger/5 p-2 text-center text-caption text-danger">
-      <AlertTriangle size={16} aria-hidden />
+      <AlertCircle size={16} aria-hidden />
       {t("spaces.board.brokenItem")}
     </div>
   );

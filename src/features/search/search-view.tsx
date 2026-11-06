@@ -64,7 +64,7 @@ const SEARCH_TABS: { key: SearchTab; labelKey: TranslationKey }[] = [
   { key: "people", labelKey: "search.tabPeople" },
   { key: "communities", labelKey: "nav.communities" },
 ];
-const SEARCH_TAB_ICON: Record<SearchTab, IconComponent> = { all: LayoutGrid, posts: SquareTerminal, people: Users, communities: UsersRound, tags: Hash, tools: Bot };
+const SEARCH_TAB_ICON: Record<SearchTab, IconComponent> = { all: LayoutGrid, posts: SquareTerminal, people: UsersRound, communities: Users, tags: Hash, tools: Bot };
 const isSearchTab = (value: string | null): value is SearchTab => SEARCH_TABS.some((tab) => tab.key === value);
 
 /**

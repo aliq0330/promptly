@@ -9,7 +9,7 @@ import { MessagesSquare } from "@/components/icons/messages-square";
 import { SquareStack } from "@/components/icons/square-stack";
 import { UserMinus } from "@/components/icons/user-minus";
 import { UserPlus } from "@/components/icons/user-plus";
-import { Users } from "@/components/icons/users";
+import { UsersRound } from "@/components/icons/users-round";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { fetchCommunityStats } from "@/lib/supabase/communities";
@@ -84,7 +84,7 @@ function StatsBody({ stats }: { stats: CommunityStats }) {
   const { t } = useTranslation();
   const net = stats.members.net;
   const cards: { icon: React.ReactNode; label: string; value: string; hint?: string }[] = [
-    { icon: <Users size={15} />, label: t("communities.stats.totalMembers"), value: formatCount(stats.members.total) },
+    { icon: <UsersRound size={15} />, label: t("communities.stats.totalMembers"), value: formatCount(stats.members.total) },
     { icon: <UserPlus size={15} />, label: t("communities.stats.newMembers"), value: formatCount(stats.members.joined) },
     { icon: <UserMinus size={15} />, label: t("communities.stats.leftMembers"), value: formatCount(stats.members.left), hint: t("communities.stats.net", { value: `${net > 0 ? "+" : ""}${net}` }) },
     { icon: <SquareStack size={15} />, label: t("communities.stats.posts"), value: formatCount(stats.posts.inPeriod), hint: t("communities.stats.postsTotal", { count: stats.posts.total }) },
@@ -92,7 +92,7 @@ function StatsBody({ stats }: { stats: CommunityStats }) {
     { icon: <MessageCircle size={15} />, label: t("communities.stats.comments"), value: formatCount(stats.engagement.comments) },
     { icon: <CalendarDays size={15} />, label: t("communities.stats.eventsRsvp"), value: formatCount(stats.events.goingUpcoming), hint: t("communities.stats.eventsHint", { upcoming: stats.events.upcoming, total: stats.events.total }) },
     { icon: <MessagesSquare size={15} />, label: t("communities.stats.messages"), value: formatCount(stats.chat.messagesInPeriod) },
-    { icon: <Users size={15} />, label: t("communities.stats.activeSenders"), value: formatCount(stats.chat.activeSendersInPeriod) },
+    { icon: <UsersRound size={15} />, label: t("communities.stats.activeSenders"), value: formatCount(stats.chat.activeSendersInPeriod) },
   ];
   return (
     <div className="space-y-5">

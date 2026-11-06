@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight } from "@/components/icons/arrow-right";
 import { CheckCheck } from "@/components/icons/check-check";
-import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Filter } from "@/components/icons/filter";
 import { Portal } from "@/components/ui/portal";
 import { SectionMenu } from "@/features/content/section-menu";
 import { LoadMore } from "@/features/feed/load-more";
@@ -111,7 +111,7 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
             <CheckCheck size={20} aria-hidden className="hidden max-[520px]:block" />
           </button>
           <Link href="/settings/notifications" onClick={onClose} aria-label={t("nc.settings")} title={t("nc.settings")} data-action="settings" className="grid size-11 place-items-center rounded-full text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-            <SlidersHorizontal size={20} strokeWidth={1.75} aria-hidden />
+            <Filter size={20} strokeWidth={1.75} aria-hidden />
           </Link>
         </div>
 

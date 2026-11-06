@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus } from "@/components/icons/plus";
-import { RotateCcw } from "@/components/icons/rotate-ccw";
 import { Users } from "@/components/icons/users";
 import { WifiOff } from "@/components/icons/wifi-off";
+import { RefreshCw } from "@/components/icons/refresh-cw";
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -166,7 +166,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
         <p className="flex items-center gap-2 text-caption text-text-muted" role="status">
           {t("stories.tray.failed")}
           <button type="button" onClick={reload} className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 font-semibold text-primary hover:bg-primary-soft">
-            <RotateCcw size={12} aria-hidden /> {t("common.retry")}
+            <RefreshCw size={12} aria-hidden /> {t("common.retry")}
           </button>
         </p>
       ) : items !== null && others.length === 0 ? (

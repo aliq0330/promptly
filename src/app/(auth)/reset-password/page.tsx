@@ -3,8 +3,8 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
 import { KeyRound } from "@/components/icons/key-round";
+import { CircleCheck } from "@/components/icons/circle-check";
 import { Button } from "@/components/ui/button";
 import { FormIconBadge, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
         <FormIconBadge>
-          <CheckCircle2 size={22} />
+          <CircleCheck size={22} />
         </FormIconBadge>
         <h1 className="text-h2 text-text">{t("auth.passwordUpdatedTitle")}</h1>
         <Button className="w-full" onClick={() => router.push("/")}>
@@ -161,7 +161,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
         <FormIconBadge>
-          <CheckCircle2 size={22} />
+          <CircleCheck size={22} />
         </FormIconBadge>
         <h1 className="text-h2 text-text">{t("auth.linkSentTitle")}</h1>
         <p className="text-sm text-text-muted">

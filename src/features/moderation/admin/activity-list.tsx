@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
-import { ExternalLink } from "@/components/icons/external-link";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchAdminUserActivity, type AdminActivityItem, type AdminActivityKind } from "@/lib/supabase/admin";
 import { formatCount, formatRelativeTime } from "@/lib/utils";
 import { formatDateTime, kindKey } from "./format";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 
 const PAGE = 30;
 
@@ -64,7 +64,7 @@ function ActivityRow({ item, kind }: { item: AdminActivityItem; kind: AdminActiv
       )}
       {item.href && (
         <Link href={item.href} className="inline-flex items-center gap-1 text-caption font-medium text-primary hover:underline">
-          <ExternalLink size={12} aria-hidden /> {t("moderation.open")}
+          <ArrowUpRight size={12} aria-hidden /> {t("moderation.open")}
         </Link>
       )}
     </li>

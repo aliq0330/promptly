@@ -6,7 +6,7 @@ import { Suspense, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCheck } from "@/components/icons/check-check";
-import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Filter } from "@/components/icons/filter";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
@@ -91,7 +91,7 @@ function Inbox() {
             <CheckCheck size={22} strokeWidth={1.75} aria-hidden />
           </button>
           <Link href="/settings/notifications" aria-label={t("nc.settings")} title={t("nc.settings")} data-action="settings" className={CONTROL_ICON_BUTTON}>
-            <SlidersHorizontal size={22} strokeWidth={1.75} aria-hidden />
+            <Filter size={22} strokeWidth={1.75} aria-hidden />
           </Link>
           <button type="button" onClick={() => setConfirmClear(true)} disabled={list.cards.length === 0} aria-label={t("notifications.clearAll")} title={t("notifications.clearAll")} data-action="clear-all" className={cn(CONTROL_ICON_BUTTON, "disabled:cursor-not-allowed disabled:opacity-40")}>
             <TrashIcon size={22} strokeWidth={1.75} />

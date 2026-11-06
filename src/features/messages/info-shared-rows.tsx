@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Image as ImageIcon } from "@/components/icons/image";
 import { LayoutGrid } from "@/components/icons/layout-grid";
+import { ImageIcon } from "@/components/icons/image-icon";
 import { fetchChatSharedStats, type ChatSharedStats } from "@/lib/supabase/messages";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ChatSharedModal } from "./chat-shared-modal";

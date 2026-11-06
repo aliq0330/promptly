@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Inbox } from "@/components/icons/inbox";
-import { MessageCircle } from "@/components/icons/message-circle";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { Search } from "@/components/icons/search";
 import { SquarePen } from "@/components/icons/square-pen";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -91,7 +91,7 @@ export function DockListView({ kind, onExpand }: { kind: "list" | "requests"; on
         {inRequests && <p className="px-4 pb-2 text-caption text-text-muted">{t("messages.messageRequestsHint")}</p>}
         {nothingAtAll ? (
           <EmptyState
-            icon={MessageCircle}
+            icon={MessagesSquare}
             title={t("messages.emptyTitle")}
             description={t("messages.emptyDescription")}
             action={{ label: t("messages.startChat"), onClick: () => setNewChatOpen(true), variant: "primary" }}

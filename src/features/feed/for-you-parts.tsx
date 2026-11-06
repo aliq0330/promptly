@@ -7,12 +7,12 @@ import { ChevronRight } from "@/components/icons/chevron-right";
 import { Flame } from "@/components/icons/flame";
 import { Hash } from "@/components/icons/hash";
 import { Heart } from "@/components/icons/heart";
-import { RotateCw } from "@/components/icons/rotate-cw";
-import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkle } from "@/components/icons/sparkle";
 import { UserCheck } from "@/components/icons/user-check";
 import { Wrench } from "@/components/icons/wrench";
 import { X } from "@/components/icons/x";
+import { RefreshCw } from "@/components/icons/refresh-cw";
+import { Settings } from "@/components/icons/settings";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Modal } from "@/components/ui/modal";
@@ -133,11 +133,11 @@ export function ForYouSheetSection({ onRefresh, onOpenSettings, refreshing }: { 
     <SheetSection title={t("home.tabForYou")}>
       <div className="flex flex-wrap gap-2" data-for-you-toolbar>
         <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing} className="gap-1.5">
-          <RotateCw size={14} aria-hidden className={refreshing ? "animate-spin" : undefined} />
+          <RefreshCw size={14} aria-hidden className={refreshing ? "animate-spin" : undefined} />
           {t("forYou.refresh")}
         </Button>
         <Button variant="outline" size="sm" onClick={onOpenSettings} aria-haspopup="dialog" className="gap-1.5">
-          <SlidersHorizontal size={14} aria-hidden />
+          <Settings size={14} aria-hidden />
           {t("forYou.settings")}
         </Button>
       </div>

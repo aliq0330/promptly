@@ -5,13 +5,13 @@ import Link from "next/link";
 import { useId, useState } from "react";
 import { Check } from "@/components/icons/check";
 import { Copy } from "@/components/icons/copy";
-import { ExternalLink } from "@/components/icons/external-link";
 import { Layers } from "@/components/icons/layers";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Lock } from "@/components/icons/lock";
 import { MapPin } from "@/components/icons/map-pin";
 import { Pencil } from "@/components/icons/pencil";
 import { Plus } from "@/components/icons/plus";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -254,7 +254,7 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard }: { itemId: st
             )}
             <Link href={source.href} className="inline-flex items-center gap-1 text-small font-semibold text-primary hover:underline">
               {t("spaces.source.open")}
-              <ExternalLink size={14} aria-hidden />
+              <ArrowUpRight size={14} aria-hidden />
             </Link>
           </div>
         )}

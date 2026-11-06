@@ -5,6 +5,7 @@ import { Globe2 } from "@/components/icons/globe-2";
 import { Loader2 } from "@/components/icons/loader-2";
 import { UserCheck } from "@/components/icons/user-check";
 import { Users } from "@/components/icons/users";
+import { Globe } from "@/components/icons/globe";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { listMyCommunities, type CommunitySummary } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -13,7 +14,7 @@ import { cn } from "@/lib/utils";
 import type { StoryAudience } from "@/types";
 
 const OPTIONS: { value: StoryAudience; icon: typeof Globe2; label: TranslationKey; hint: TranslationKey }[] = [
-  { value: "public", icon: Globe2, label: "stories.audience.public", hint: "stories.audience.publicHint" },
+  { value: "public", icon: Globe, label: "stories.audience.public", hint: "stories.audience.publicHint" },
   { value: "followers", icon: UserCheck, label: "stories.audience.followers", hint: "stories.audience.followersHint" },
   { value: "community", icon: Users, label: "stories.audience.community", hint: "stories.audience.communityHint" },
 ];

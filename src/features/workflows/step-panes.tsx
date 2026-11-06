@@ -7,9 +7,9 @@ import { ArrowRight } from "@/components/icons/arrow-right";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { ChevronUp } from "@/components/icons/chevron-up";
 import { Copy } from "@/components/icons/copy";
-import { ExternalLink } from "@/components/icons/external-link";
 import { Plus } from "@/components/icons/plus";
 import { X } from "@/components/icons/x";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { availableSources, newId } from "@/lib/workflow-logic";
@@ -122,7 +122,7 @@ export function ContentPane({
       <div className="flex flex-wrap gap-2">
         {c && (
           <Link href={c.href} target="_blank" className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-label font-medium text-text hover:bg-surface-soft">
-            <ExternalLink size={14} />
+            <ArrowUpRight size={14} />
             {t("workflow.viewContent")}
           </Link>
         )}

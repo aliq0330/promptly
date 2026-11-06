@@ -4,7 +4,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { Ban } from "@/components/icons/ban";
 import { BookOpen } from "@/components/icons/book-open";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
 import { Copyright } from "@/components/icons/copyright";
 import { Ellipsis } from "@/components/icons/ellipsis";
 import { EyeOff } from "@/components/icons/eye-off";
@@ -18,6 +17,7 @@ import { TriangleAlert } from "@/components/icons/triangle-alert";
 import { UserX } from "@/components/icons/user-x";
 import { X } from "@/components/icons/x";
 import { Zap } from "@/components/icons/zap";
+import { CircleCheck } from "@/components/icons/circle-check";
 import { Modal } from "@/components/ui/modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -175,7 +175,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
         {phase === "success" ? (
           <div role="status" data-report-success="" className="flex flex-1 flex-col items-center justify-center gap-3.5 px-7 py-9 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success/12 text-success" aria-hidden>
-              <CheckCircle2 size={32} strokeWidth={1.75} />
+              <CircleCheck size={32} strokeWidth={1.75} />
             </span>
             <h2 id={titleId} className="font-display text-h2 font-bold text-text">
               {t("report.modal.successTitle")}

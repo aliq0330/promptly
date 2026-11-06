@@ -18,6 +18,7 @@ import { Volume2 } from "@/components/icons/volume-2";
 import { VolumeX } from "@/components/icons/volume-x";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
+import { AlertCircle } from "@/components/icons/alert-circle";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
@@ -686,7 +687,7 @@ function FocusScreen() {
           </CenteredState>
         ) : failed && total === 0 && !hasMore ? (
           <CenteredState>
-            <EmptyState icon={Sparkles} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
+            <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
           </CenteredState>
         ) : total === 0 && !hasMore ? (
           <CenteredState>
@@ -797,7 +798,7 @@ function FeedEndSlide({
   return (
     <section data-slide-index={index} className={cn("flex h-full shrink-0 snap-center snap-always items-center justify-center", FOCUS_SLIDE_WIDTH)}>
       {failed ? (
-        <EmptyState icon={Sparkles} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: onRetry }} />
+        <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: onRetry }} />
       ) : hasMore || loadingMore ? (
         <p role="status" className="text-small text-text-muted">
           {t("common.loadingMore")}

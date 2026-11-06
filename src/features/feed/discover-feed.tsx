@@ -12,6 +12,7 @@ import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Users } from "@/components/icons/users";
 import { UsersRound } from "@/components/icons/users-round";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
+import { AlertCircle } from "@/components/icons/alert-circle";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
@@ -55,8 +56,8 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
   // … and the things to find and follow (docs/history/221-*).
   { key: "tools", labelKey: "discover.sectionTools", icon: Bot, dividerBefore: true },
   { key: "tags", labelKey: "discover.sectionTags", icon: Hash },
-  { key: "creators", labelKey: "discover.creators", icon: Users },
-  { key: "communities", labelKey: "discover.sectionCommunities", icon: UsersRound },
+  { key: "creators", labelKey: "discover.creators", icon: UsersRound },
+  { key: "communities", labelKey: "discover.sectionCommunities", icon: Users },
 ];
 
 /** Section → `p_kinds` of `public.feed_page` (`all` = no kind filter). The entity sections are not feeds. */
@@ -232,9 +233,9 @@ export function DiscoverFeed() {
           creatorPages.loading ? (
             <PromptCardSkeletonGrid count={3} />
           ) : creatorPages.failed && creatorPages.creators.length === 0 ? (
-            <EmptyState icon={Users} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: creatorPages.retry }} />
+            <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: creatorPages.retry }} />
           ) : creatorPages.creators.length === 0 ? (
-            <EmptyState icon={Users} title={t("discover.noCreatorsYet")} />
+            <EmptyState icon={UsersRound} title={t("discover.noCreatorsYet")} />
           ) : (
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
@@ -248,7 +249,7 @@ export function DiscoverFeed() {
         ) : feed.loading ? (
           <PromptCardSkeletonGrid count={6} />
         ) : feed.failed && feed.items.length === 0 ? (
-          <EmptyState icon={Sparkles} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
+          <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
         ) : (
           <>
             <FeedGrid

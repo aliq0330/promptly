@@ -5,9 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
-import { AlertTriangle } from "@/components/icons/alert-triangle";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
+import { TriangleAlert } from "@/components/icons/triangle-alert";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -575,7 +575,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           {attempted && warnings.length > 0 && (
             <div role="status" className="rounded-md border border-warning/40 bg-warning/5 p-3">
               <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-text">
-                <AlertTriangle size={14} className="text-warning" />
+                <TriangleAlert size={14} className="text-warning" />
                 {t("workflow.issuesHeading")}
               </p>
               <ul className="list-disc space-y-0.5 pl-5 text-caption text-text-secondary">

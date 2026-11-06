@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Plus } from "@/components/icons/plus";
-import { Sparkles } from "@/components/icons/sparkles";
 import { X } from "@/components/icons/x";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { findExistingTagByLabel, getOrCreateTag } from "@/lib/supabase/tags";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
@@ -22,7 +22,7 @@ interface TagPickerProps {
  * The one shared tag UI behind both the prompt and request forms (CLAUDE.md
  * Bölüm 9.23 §2's "tüm özellikler aynı tek etiket sistemi üzerinden
  * çalışmalı"): accepted chips (automatic ones visually marked with a
- * Sparkles badge + "Otomatik" label + a hover/accessible explanation,
+ * WandSparkles badge + "Otomatik" label + a hover/accessible explanation,
  * manual ones plain — §4), a row of lower-confidence suggestions the user
  * can accept with one tap (§7), and a real-catalog-backed autocomplete that
  * offers an existing tag first and only shows "create new" when no
@@ -86,7 +86,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
             >
               {source === "automatic" && (
                 <span title={t("tagPicker.autoSuggestedTitle")} className="inline-flex shrink-0">
-                  <Sparkles size={11} aria-hidden="true" />
+                  <WandSparkles size={11} aria-hidden="true" />
                   <span className="sr-only">{t("tagPicker.autoSuggestedSr")}</span>
                 </span>
               )}

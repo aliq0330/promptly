@@ -6,8 +6,8 @@ import { Ban } from "@/components/icons/ban";
 import { Eye } from "@/components/icons/eye";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Plus } from "@/components/icons/plus";
-import { Share } from "@/components/icons/share";
 import { X } from "@/components/icons/x";
+import { Share2 } from "@/components/icons/share-2";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -274,7 +274,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                       }}
                       className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 font-semibold text-primary hover:bg-primary-soft"
                     >
-                      <Share size={13} aria-hidden /> {t("stories.question.shareAnswer")}
+                      <Share2 size={13} aria-hidden /> {t("stories.question.shareAnswer")}
                     </button>
                   </div>
                 </li>

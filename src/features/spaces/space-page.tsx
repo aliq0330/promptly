@@ -9,7 +9,6 @@ import { ArchiveRestore } from "@/components/icons/archive-restore";
 import { Eye } from "@/components/icons/eye";
 import { History } from "@/components/icons/history";
 import { MessageCircle } from "@/components/icons/message-circle";
-import { Image as ImageIcon } from "@/components/icons/image";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
 import { LogOut } from "@/components/icons/log-out";
 import { Palette } from "@/components/icons/palette";
@@ -22,7 +21,8 @@ import { Share2 } from "@/components/icons/share-2";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { Trash2 } from "@/components/icons/trash-2";
-import { Users } from "@/components/icons/users";
+import { ImageIcon } from "@/components/icons/image-icon";
+import { UsersRound } from "@/components/icons/users-round";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -158,7 +158,7 @@ const SPACE_TAB_ICON: Record<SpaceTab, IconComponent> = {
   notes: StickyNote,
   comments: MessageCircle,
   activity: History,
-  members: Users,
+  members: UsersRound,
 };
 
 function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; initialFavorite: boolean }) {

@@ -2,8 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 import { Calendar } from "@/components/icons/calendar";
-import { Globe } from "@/components/icons/globe";
 import { Repeat2 } from "@/components/icons/repeat-2";
+import { Link2 } from "@/components/icons/link-2";
 import { ProfileAvatar } from "./profile-avatar";
 import { UserPresenceDot } from "@/features/presence/presence-ui";
 import { ProfileStats } from "./profile-stats";
@@ -118,7 +118,7 @@ export function ProfileHeader({
               rel="noreferrer noopener"
               className="inline-flex min-w-0 items-center gap-1.5 text-primary hover:underline"
             >
-              <Globe size={15} className="shrink-0" aria-hidden />
+              <Link2 size={15} className="shrink-0" aria-hidden />
               <span className="truncate">{website}</span>
             </a>
           )}

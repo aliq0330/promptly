@@ -16,7 +16,6 @@ import { MoreVertical } from "@/components/icons/more-vertical";
 import { Pause } from "@/components/icons/pause";
 import { Play } from "@/components/icons/play";
 import { Repeat2 } from "@/components/icons/repeat-2";
-import { RotateCcw } from "@/components/icons/rotate-ccw";
 import { Send } from "@/components/icons/send";
 import { Shapes } from "@/components/icons/shapes";
 import { ShieldOff } from "@/components/icons/shield-off";
@@ -25,6 +24,7 @@ import { Users } from "@/components/icons/users";
 import { Volume2 } from "@/components/icons/volume-2";
 import { VolumeX } from "@/components/icons/volume-x";
 import { X } from "@/components/icons/x";
+import { RefreshCw } from "@/components/icons/refresh-cw";
 import { Avatar } from "@/components/ui/avatar";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -630,7 +630,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-story-scrim px-6 text-center" data-story-interactive>
                 <p role="alert" className="text-small">{t("stories.error.media")}</p>
                 <button type="button" onClick={() => setMediaAttempt((n) => n + 1)} className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-story-white/15 px-4 text-small font-semibold">
-                  <RotateCcw size={14} aria-hidden /> {t("common.retry")}
+                  <RefreshCw size={14} aria-hidden /> {t("common.retry")}
                 </button>
               </div>
             )}

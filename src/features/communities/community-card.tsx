@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { CalendarDays } from "@/components/icons/calendar-days";
-import { MessageSquare } from "@/components/icons/message-square";
 import { SquareStack } from "@/components/icons/square-stack";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { Badge } from "@/components/ui/badge";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
@@ -112,7 +112,7 @@ export function CommunityCard({
           )}
           {community.unreadCount > 0 && (
             <span className="flex items-center gap-1 text-primary">
-              <MessageSquare size={12} aria-hidden /> {t("communities.card.unread", { count: formatUnread(community.unreadCount) })}
+              <MessagesSquare size={12} aria-hidden /> {t("communities.card.unread", { count: formatUnread(community.unreadCount) })}
             </span>
           )}
           {community.pendingRequestCount > 0 && <span className="text-primary">{t("communities.card.pendingRequests", { count: community.pendingRequestCount })}</span>}

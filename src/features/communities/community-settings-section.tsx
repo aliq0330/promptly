@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Lock } from "@/components/icons/lock";
-import { Unlock } from "@/components/icons/unlock";
+import { LockOpen } from "@/components/icons/lock-open";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
@@ -137,7 +137,7 @@ export function CommunitySettingsSection({ group, onChanged, onToast }: { group:
           </h3>
           <p className="text-small text-text-secondary">{group.closedAt ? t("communities.settings.reopenHelp") : t("communities.settings.closeHelp")}</p>
           <Button type="button" size="sm" variant="outline" onClick={() => { closeAction.setError(null); setConfirmClose(true); }}>
-            {group.closedAt ? <Unlock size={14} /> : <Lock size={14} />}
+            {group.closedAt ? <LockOpen size={14} /> : <Lock size={14} />}
             {group.closedAt ? t("communities.settings.reopen") : t("communities.settings.close")}
           </Button>
         </section>

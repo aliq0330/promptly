@@ -4,8 +4,8 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
-import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { X } from "@/components/icons/x";
+import { Filter } from "@/components/icons/filter";
 import { ListFilterSheet } from "@/features/content/list-toolbar";
 import { CONTROL_ICON_BUTTON, SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import type { ContentSortKey } from "@/features/content/sort-select";
@@ -62,7 +62,7 @@ export function ListControlRow<K extends string>({
       )}
       {filter && (
         <button type="button" onClick={() => setSheetOpen(true)} aria-haspopup="dialog" aria-label={filterLabel} title={t("toolbar.filter")} data-list-filter className={cn(CONTROL_ICON_BUTTON, "relative")}>
-          <SlidersHorizontal size={22} strokeWidth={1.75} aria-hidden />
+          <Filter size={22} strokeWidth={1.75} aria-hidden />
           {active > 0 && (
             <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold tabular-nums text-primary-foreground">{active}</span>
           )}

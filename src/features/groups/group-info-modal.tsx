@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import { Bell } from "@/components/icons/bell";
 import { BellOff } from "@/components/icons/bell-off";
 import { ChevronDown } from "@/components/icons/chevron-down";
-import { ExternalLink } from "@/components/icons/external-link";
 import { Pin } from "@/components/icons/pin";
 import { Search } from "@/components/icons/search";
-import { Settings2 } from "@/components/icons/settings-2";
 import { Star } from "@/components/icons/star";
 import { UserCog } from "@/components/icons/user-cog";
 import { Users } from "@/components/icons/users";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
+import { Settings } from "@/components/icons/settings";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { OnlineMembersStrip } from "@/features/presence/online-members";
 import { useCommunityPresenceCount } from "@/features/presence/community-presence";
@@ -160,7 +160,7 @@ export function GroupInfoModal({
       />
 
       <InfoTiles>
-        <InfoTile icon={<ExternalLink size={22} strokeWidth={1.75} />} label={t("groups.info.communityPageTile")} href={communityHref(group.id)} badge={pendingRequests} testId="community" attrs={{ "data-info-community-link": "" }} />
+        <InfoTile icon={<ArrowUpRight size={22} strokeWidth={1.75} />} label={t("groups.info.communityPageTile")} href={communityHref(group.id)} badge={pendingRequests} testId="community" attrs={{ "data-info-community-link": "" }} />
         <InfoTile icon={<Search size={22} strokeWidth={1.75} />} label={t("messages.contact.search")} onClick={onSearch} testId="search" />
         <InfoTile
           icon={mute.muted ? <Bell size={22} strokeWidth={1.75} /> : <BellOff size={22} strokeWidth={1.75} />}
@@ -276,7 +276,7 @@ export function GroupInfoModal({
               className="flex h-14 w-full items-center gap-3.5 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary" aria-hidden>
-                <Settings2 size={18} strokeWidth={1.75} />
+                <Settings size={18} strokeWidth={1.75} />
               </span>
               <span id="info-settings-title" className="min-w-0 flex-1">
                 {t("groups.info.chatSettings")}

@@ -1,9 +1,7 @@
 import type { IconComponent } from "@/components/icons/icon";
 import { Bell } from "@/components/icons/bell";
 import { ChartColumn } from "@/components/icons/chart-column";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
 import { Code2 } from "@/components/icons/code-2";
-import { Edit3 } from "@/components/icons/edit-3";
 import { Heart } from "@/components/icons/heart";
 import { ImagePlus } from "@/components/icons/image-plus";
 import { Lock } from "@/components/icons/lock";
@@ -18,6 +16,8 @@ import { RotateCcw } from "@/components/icons/rotate-ccw";
 import { SmilePlus } from "@/components/icons/smile-plus";
 import { UserPlus } from "@/components/icons/user-plus";
 import { XCircle } from "@/components/icons/xcircle";
+import { CircleCheck } from "@/components/icons/circle-check";
+import { Pencil } from "@/components/icons/pencil";
 import type { AppNotification, NotificationType } from "@/types";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { notificationCategoryOf } from "@/lib/notification-mirror";
@@ -140,16 +140,16 @@ export const NOTIFICATION_ICONS = {
   comment_reply: MessageCircleReply,
   follow: UserPlus,
   request_response_new: Code2,
-  request_response_selected: CheckCircle2,
+  request_response_selected: CircleCheck,
   request_response_unselected: RotateCcw,
   request_response_closed: Lock,
   message: Mail,
   message_request: Mail,
   system: Bell,
-  prompt_edited: Edit3,
-  request_edited: Edit3,
+  prompt_edited: Pencil,
+  request_edited: Pencil,
   edit_suggestion_received: PenLine,
-  edit_suggestion_accepted: CheckCircle2,
+  edit_suggestion_accepted: CircleCheck,
   edit_suggestion_rejected: XCircle,
   prompt_result_shared: ImagePlus,
   story_reaction: SmilePlus,

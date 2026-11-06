@@ -63,3 +63,10 @@ denendi ve REDDEDİLDİ: yarıçapı kirişin yarısına çok yakın iki yaydan 
 - Gerçek telefonda ikonların küçük boyutta okunurluğu, iOS ana ekran ikonu ve maskable kırpma DENENMEDİ.
 - Ikon görünümü ekran görüntüleriyle bakıldı; 267 ikonun her birinin bağlamında anlamca doğru olduğu tek tek denetlenmedi.
 - Gerçek Supabase'e karşı DENENMEDİ; migration'ı canlıya deploy hattı uygular.
+
+## Sonradan: çakışma düzeltmesi ve elle çizilen ikonlar (2026-11-06)
+- **Mesajlar yorumdan ayrıldı:** Mesajlar (üst menü, `/messages`, dock, Sohbetler, "Mesaj gönder", bildirim kategorisi) `MessagesSquare` (`chat-square-2`); `MessageCircle` yalnız Yorum. `Send` bilerek değişmedi (hepsi "gönder" ailesi). `RotateCw`/`RefreshCw` aynı anlam (yenile/yeniden dene).
+- **Anlama göre eşleme:** `Highlighter` (hikâye öne çıkanı) `star-shine`; `Swords` Space "oyun dünyası" için de bizim çizimimiz.
+- **Solar'da karşılığı olmayanlar bizim çizimimiz** (`scripts/build-icons.mjs` `CUSTOM`, ICON_MAP'te `"@custom"`): `Megaphone`, `Swords`, `Microscope`, `PinOff` (Solar `pin` gövdesi + çapraz çizgi). Solar Bold Duotone diline uyar: dolu şekiller, açık ton opaklık .5, ince detay 1.6 yuvarlak uçlu çizgi. Solar eklerse harita ona çevrilir.
+- Metin hizalama (`AlignLeft/Center/Right`) kodda kullanılmıyor, Space panosu nesne hizalamasını kullanıyor; dokunulmadı.
+- Denenmedi: gerçek telefonda 16–24 px okunurluk (kılıçlar küçük boyutta X'e yakın görünür).

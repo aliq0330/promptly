@@ -3,13 +3,13 @@
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { CheckCheck } from "@/components/icons/check-check";
 import { Copy } from "@/components/icons/copy";
-import { CornerUpLeft } from "@/components/icons/corner-up-left";
 import { Flag } from "@/components/icons/flag";
 import { Pencil } from "@/components/icons/pencil";
 import { Pin } from "@/components/icons/pin";
 import { PinOff } from "@/components/icons/pin-off";
 import { ShieldAlert } from "@/components/icons/shield-alert";
 import { Star } from "@/components/icons/star";
+import { Reply } from "@/components/icons/reply";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useReport } from "@/features/moderation/report-provider";
 import { cn } from "@/lib/utils";
@@ -123,7 +123,7 @@ export function MessageActionMenu({
         {formatMessageStamp(message.createdAt, language)}
       </div>
       <MenuItem
-        icon={<CornerUpLeft size={14} />}
+        icon={<Reply size={14} />}
         label={t("request.reply")}
         onClick={() => {
           onReply();

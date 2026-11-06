@@ -2,13 +2,13 @@
 
 import { useState, type ReactNode } from "react";
 import type { IconComponent } from "@/components/icons/icon";
-import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { ListFilterSheet } from "@/features/content/list-toolbar";
 import { SortSelect, SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
 import { CONTROL_ICON_BUTTON, SectionMenu } from "@/features/content/section-menu";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { Filter } from "@/components/icons/filter";
 
 export interface SectionNavItem<K extends string> {
   key: K;
@@ -105,7 +105,7 @@ export function SectionNav<K extends string>({
       title={t("toolbar.filter")}
       className={cn(FILTER_BUTTON, "relative")}
     >
-      <SlidersHorizontal size={17} strokeWidth={1.9} aria-hidden />
+      <Filter size={17} strokeWidth={1.9} aria-hidden />
       {totalActive > 0 && (
         <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold tabular-nums text-primary-foreground">
           {totalActive}
@@ -116,7 +116,7 @@ export function SectionNav<K extends string>({
   // The sade control row (docs/history/233-*) uses the same quiet icon button as Spaces / Topluluklar.
   const menuFilterButton = (
     <button type="button" onClick={() => setSheetOpen(true)} aria-haspopup="dialog" aria-label={filterLabel} title={t("toolbar.filter")} className={cn(CONTROL_ICON_BUTTON, "relative")}>
-      <SlidersHorizontal size={22} strokeWidth={1.75} aria-hidden />
+      <Filter size={22} strokeWidth={1.75} aria-hidden />
       {totalActive > 0 && (
         <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold tabular-nums text-primary-foreground">
           {totalActive}

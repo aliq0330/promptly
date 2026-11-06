@@ -70,3 +70,14 @@ test("ikon dosyaları Solar atfını ve lisansını taşır", () => {
   assert.match(FACTORY, /CC BY 4\.0/);
   assert.match(readFileSync(join(ICON_DIR, "heart.tsx"), "utf8"), /solar:heart-bold-duotone — Solar Icon Set by 480 Design.*CC BY 4\.0/);
 });
+
+test("ICON_MAP: aynı Solar ikonuna iki bileşen adı gitmez (aynı anlam = tek ad, farklı anlam = farklı ikon)", () => {
+  const map = readFileSync(join(ROOT, "scripts/build-icons.mjs"), "utf8").match(/export const ICON_MAP = \{([\s\S]*?)\n\};/)?.[1] ?? "";
+  const byTarget = new Map<string, string[]>();
+  for (const m of map.matchAll(/^\s+(\w+):\s*"([^"]+)",?/gm)) {
+    if (m[2] === "@custom") continue;
+    byTarget.set(m[2], [...(byTarget.get(m[2]) ?? []), m[1]]);
+  }
+  const dupes = [...byTarget].filter(([, names]) => names.length > 1).map(([target, names]) => `${target}: ${names.join(", ")}`);
+  assert.deepEqual(dupes, [], "iki ad aynı ikona gidiyor — anlam aynıysa tek ada indir, farklıysa birine başka ikon ver (docs/history/344-*)");
+});

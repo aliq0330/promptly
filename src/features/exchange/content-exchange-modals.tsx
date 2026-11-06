@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
 import { Download } from "@/components/icons/download";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Upload } from "@/components/icons/upload";
+import { CircleCheck } from "@/components/icons/circle-check";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { CONTENT_LIMITS, EXCHANGE_LIMITS, contentFileName, parseContent, serializeContent, type ContentParseResult, type ExchangeContentItem, type ExchangeContentKind, type ExchangeIssue } from "@/lib/exchange";
@@ -230,7 +230,7 @@ export function ImportContentModal<K extends ExchangeContentKind>({ kind, onClos
       <div className="space-y-4" data-testid="exchange-import" data-kind={kind} data-limit-title={limits.title}>
         {step === "done" ? (
           <div className="flex items-start gap-3" data-testid="exchange-done">
-            <CheckCircle2 size={22} className="mt-0.5 shrink-0 text-success" aria-hidden />
+            <CircleCheck size={22} className="mt-0.5 shrink-0 text-success" aria-hidden />
             <div>
               <p className="text-small font-semibold text-text">{t(keys.importDone, { count: created })}</p>
               <p className="text-small text-text-secondary">{t("exchange.import.doneHint")}</p>

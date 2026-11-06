@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Ban } from "@/components/icons/ban";
 import { BellOff } from "@/components/icons/bell-off";
-import { BellRing } from "@/components/icons/bell-ring";
 import { MoreVertical } from "@/components/icons/more-vertical";
+import { Bell } from "@/components/icons/bell";
 import { ReportButton } from "@/features/moderation/report-button";
 import { useBlockState } from "@/features/moderation/use-block-state";
 import { useMuteToggle } from "@/features/notifications/mute-store";
@@ -111,7 +111,7 @@ export function ProfileMoreMenu({
             </div>
           )}
           <button type="button" role="menuitem" onClick={() => void handleMuteClick()} disabled={!mute.loaded} data-action={mute.muted ? "profile-unmute" : "profile-mute"} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft disabled:opacity-60">
-            {mute.muted ? <BellRing size={14} aria-hidden /> : <BellOff size={14} aria-hidden />}
+            {mute.muted ? <Bell size={14} aria-hidden /> : <BellOff size={14} aria-hidden />}
             <span className="min-w-0">
               <span className="block">{mute.muted ? t("nc.profile.unmute") : t("nc.profile.mute")}</span>
               <span className="block text-caption text-text-muted">{mute.muted ? t("nc.profile.unmuteHint") : t("nc.profile.muteHint")}</span>

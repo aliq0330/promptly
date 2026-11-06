@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MessageSquareText } from "@/components/icons/message-square-text";
 import { Sparkles } from "@/components/icons/sparkles";
-import { Wand2 } from "@/components/icons/wand-2";
+import { PenLine } from "@/components/icons/pen-line";
+import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { Chip } from "@/components/ui/chip";
 import { ContentListPage } from "@/features/content/content-list-page";
 import { SheetChips } from "@/features/content/list-toolbar";
@@ -49,8 +49,8 @@ export default function RequestsPage() {
       createHref="/requests/new"
       createLabel={t("request.createRequestTitle")}
       steps={[
-        { icon: MessageSquareText, titleKey: "request.step1Title", bodyKey: "request.step1Body" },
-        { icon: Wand2, titleKey: "request.step2Title", bodyKey: "request.step2Body" },
+        { icon: PenLine, titleKey: "request.step1Title", bodyKey: "request.step1Body" },
+        { icon: WandSparkles, titleKey: "request.step2Title", bodyKey: "request.step2Body" },
         { icon: Sparkles, titleKey: "request.step3Title", bodyKey: "request.step3Body" },
       ]}
       baseItems={realRequests}

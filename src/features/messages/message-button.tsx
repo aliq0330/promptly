@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle } from "@/components/icons/message-circle";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "./real-messages-provider";
@@ -39,7 +39,7 @@ export function MessageButton({ user, compact = false }: { user: UserProfile; co
         aria-label={t("messages.sendMessage")}
         className={className}
       >
-        <MessageCircle size={18} aria-hidden />
+        <MessagesSquare size={18} aria-hidden />
         <span className={LABEL_CLASS}>{t("messages.sendMessage")}</span>
       </button>
     );
@@ -61,7 +61,7 @@ export function MessageButton({ user, compact = false }: { user: UserProfile; co
   return (
     <div className="flex flex-col items-center gap-1">
       <button type="button" onClick={handleClick} disabled={isStarting} aria-label={t("messages.sendMessage")} className={className}>
-        <MessageCircle size={18} aria-hidden />
+        <MessagesSquare size={18} aria-hidden />
         <span className={LABEL_CLASS}>{isStarting ? t("messages.startingEllipsis") : t("messages.sendMessage")}</span>
       </button>
       {error && <p className="text-xs text-danger">{error}</p>}

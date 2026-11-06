@@ -2,8 +2,8 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { PenLine } from "@/components/icons/pen-line";
 import { Sparkles } from "@/components/icons/sparkles";
+import { SquareTerminal } from "@/components/icons/square-terminal";
 import { buttonClassName } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -44,7 +44,7 @@ function QuickActions() {
   return (
     <div className="flex flex-wrap gap-2">
       <Link href="/create?mode=prompt" className={buttonClassName({ size: "sm" })}>
-        <PenLine size={15} />
+        <SquareTerminal size={15} />
         {t("home.sharePrompt")}
       </Link>
       <Link href="/requests/new" className={buttonClassName({ size: "sm", variant: "ghost" })}>

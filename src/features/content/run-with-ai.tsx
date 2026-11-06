@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle } from "@/components/icons/alert-triangle";
 import { Check } from "@/components/icons/check";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { ExternalLink } from "@/components/icons/external-link";
 import { Play } from "@/components/icons/play";
 import { X } from "@/components/icons/x";
+import { AlertCircle } from "@/components/icons/alert-circle";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { buildRunToolList, getPreferredRunTool, runWithAI, type RunToolOption, type RunWithAIResult } from "@/lib/run-with-ai";
@@ -239,7 +239,7 @@ function RunOutcome({
   return (
     <div className="space-y-3" role="status">
       <div className={cn("flex items-start gap-2 rounded-md border px-3 py-2.5", ok ? "border-success/30 bg-success/5" : "border-warning/40 bg-warning/5")}>
-        {ok ? <Check size={16} className="mt-0.5 shrink-0 text-success" aria-hidden /> : <AlertTriangle size={16} className="mt-0.5 shrink-0 text-warning" aria-hidden />}
+        {ok ? <Check size={16} className="mt-0.5 shrink-0 text-success" aria-hidden /> : <AlertCircle size={16} className="mt-0.5 shrink-0 text-warning" aria-hidden />}
         <div className="space-y-1 text-small text-text">
           {!result.opened && <p>{t("run.popupBlocked", { tool: toolName })}</p>}
           {result.opened && result.prefilled && (

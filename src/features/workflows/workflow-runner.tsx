@@ -5,9 +5,9 @@ import Link from "next/link";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { ArrowRight } from "@/components/icons/arrow-right";
 import { Check } from "@/components/icons/check";
-import { ExternalLink } from "@/components/icons/external-link";
 import { ListChecks } from "@/components/icons/list-checks";
 import { RotateCcw } from "@/components/icons/rotate-ccw";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { RunButton } from "@/features/content/run-with-ai";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
@@ -228,7 +228,7 @@ function StepPrompt({ step }: { step: WorkflowStep }) {
         <p className="text-small text-text-muted">{t("workflow.run.requestHint")}</p>
         {ref.published && (
           <Link href={ref.href} className={buttonClassName({ variant: "outline", size: "sm" })}>
-            <ExternalLink size={14} aria-hidden /> {t("workflow.flowOpen")}
+            <ArrowUpRight size={14} aria-hidden /> {t("workflow.flowOpen")}
           </Link>
         )}
       </div>
@@ -261,7 +261,7 @@ function StepPrompt({ step }: { step: WorkflowStep }) {
         <RunButton text={text} recommendedRefs={prompt.tools} promptId={prompt.id} />
         <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
         <Link href={ref.href} className={buttonClassName({ variant: "ghost", size: "sm" })}>
-          <ExternalLink size={14} aria-hidden /> {t("workflow.flowOpen")}
+          <ArrowUpRight size={14} aria-hidden /> {t("workflow.flowOpen")}
         </Link>
       </div>
     </div>

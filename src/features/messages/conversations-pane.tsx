@@ -4,11 +4,11 @@ import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Archive } from "@/components/icons/archive";
 import { Inbox } from "@/components/icons/inbox";
-import { MessageCircle } from "@/components/icons/message-circle";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
 import { Star } from "@/components/icons/star";
-import { UsersRound } from "@/components/icons/users-round";
+import { Users } from "@/components/icons/users";
 import { ConversationList } from "./conversation-list";
 import { ConversationsMoreMenu, SelectionActionBar, SelectionHeader, useSelectionChrome } from "./conversation-selection";
 import { NewChatModal } from "./new-chat-modal";
@@ -171,12 +171,12 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   }
 
   const menuItems: SectionMenuItem<MessagesView>[] = [
-    { key: "inbox", label: t("messages.chatsHeading"), icon: MessageCircle },
+    { key: "inbox", label: t("messages.chatsHeading"), icon: MessagesSquare },
     { key: "requests", label: t("messages.messageRequestsHeading"), icon: Inbox, count: buckets.requests.length || undefined },
     { key: "archived", label: t("messages.archivedHeading"), icon: Archive, meta: buckets.archived.length },
     // Not views but doors: the starred messages screen and the communities (their chats live there).
     { key: "starred", label: t("chat.starred.title"), icon: Star, dividerBefore: true },
-    { key: "communities", label: t("communities.messages.entryAria"), icon: UsersRound },
+    { key: "communities", label: t("communities.messages.entryAria"), icon: Users },
   ];
   function pickView(next: MessagesView) {
     if (next === "starred") return router.push("/messages/starred");
@@ -291,7 +291,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           </>
         ) : nothingAtAll ? (
           <EmptyState
-            icon={MessageCircle}
+            icon={MessagesSquare}
             title={t("messages.emptyTitle")}
             description={t("messages.emptyDescription")}
             action={{ label: t("messages.startChat"), onClick: () => setNewChatOpen(true), variant: "primary" }}

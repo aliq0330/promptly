@@ -13,7 +13,6 @@ import { AlignStartVertical } from "@/components/icons/align-start-vertical";
 import { AlignVerticalDistributeCenter } from "@/components/icons/align-vertical-distribute-center";
 import { BringToFront } from "@/components/icons/bring-to-front";
 import { Copy } from "@/components/icons/copy";
-import { ExternalLink } from "@/components/icons/external-link";
 import { Group } from "@/components/icons/group";
 import { Hand } from "@/components/icons/hand";
 import { ImagePlus } from "@/components/icons/image-plus";
@@ -43,6 +42,7 @@ import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
 import { Lock } from "@/components/icons/lock";
 import { LockOpen } from "@/components/icons/lock-open";
+import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { WorkflowImportModal } from "../workflow-import-modal";
 import { BoardConnectors, type ConnectorDraft } from "./board-connectors";
@@ -1262,7 +1262,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
         <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center px-3">
           <div role="toolbar" aria-label={t("spaces.board.selectionToolbar")} data-board-selection={selectedItems.length} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full border border-border-soft bg-surface px-1.5 py-1 shadow-pop">
             <span className="shrink-0 px-2 text-caption font-semibold text-text-secondary">{t("spaces.board.selected", { count: selectedItems.length })}</span>
-            {single && single.kind !== "palette" && <ToolButton icon={ExternalLink} label={t("spaces.board.open")} onClick={() => openItem(single.id)} />}
+            {single && single.kind !== "palette" && <ToolButton icon={ArrowUpRight} label={t("spaces.board.open")} onClick={() => openItem(single.id)} />}
             {editable && single && single.kind !== "note" && single.kind !== "palette" && <ToolButton icon={StickyNote} label={t("spaces.board.attachNote")} onClick={() => setDialog({ kind: "note", attachTo: single.id })} />}
             {editable && (
               <>

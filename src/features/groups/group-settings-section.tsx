@@ -4,7 +4,7 @@ import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Camera } from "@/components/icons/camera";
-import { CheckCircle2 } from "@/components/icons/check-circle-2";
+import { CircleCheck } from "@/components/icons/circle-check";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -400,7 +400,7 @@ function VisibilityResultDialog({ result, onClose }: { result: VisibilityChangeR
     <Modal onClose={onClose} labelledBy="visibility-result-title">
       <div className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
         <h2 id="visibility-result-title" className="flex items-center gap-2 text-base font-semibold text-text">
-          <CheckCircle2 size={18} className="text-success" aria-hidden /> {t("groups.settings.resultTitle")}
+          <CircleCheck size={18} className="text-success" aria-hidden /> {t("groups.settings.resultTitle")}
         </h2>
         <ul className="space-y-1.5 text-small text-text-secondary">
           <li>{t("groups.settings.resultAccepted", { count: result.acceptedCount })}</li>
