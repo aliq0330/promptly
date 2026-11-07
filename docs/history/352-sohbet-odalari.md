@@ -46,9 +46,13 @@ Migration `20261109100000_community_rooms.sql` yalnız ekleyicidir (`drop` yok).
 - Gerçek Supabase/Realtime'a, gerçek cihaza KARŞI DENENMEDİ: SQL testi yerel PostgreSQL'de, arayüz testi ağ taklitli (`run-rooms.mjs`).
 - `run-chat.mjs` 9 numaralı senaryo "Koşullar güncellendi" bandı alt köşede "Güncel mesajlara dön" düğmesini örttüğü için bu ortamda düşüyor (ekran görüntüsünde görüldü; odalarla ilgisiz birebir sohbet senaryosu, temel sürümle karşılaştırılmadı).
 
+## Düzeltme: ziyaretçi okuması (`20261109110000_community_rooms_anon_read.sql`)
+
+İlk birleştirmede deploy hattının duman testi kırmızı oldu (`permission denied for function can_read_room`): `messages` okuma politikası `can_read_room`'u çağırır, ziyaretçi (anon) rolünün `EXECUTE` yetkisi yoktu; site yayınlanmadı (migration uygulanmıştı). `can_read_room` anon'a açıldı (`auth.uid()` boş → hep false, ziyaretçi satır görmez). `community_rooms` tablosu ziyaretçiye KAPALI kalır (duman testi bunu tersine denetler). SQL testine anon kontrolleri (38, 39) eklendi; düzeltme olmadan 38 düşer. **Ders:** politikanın çağırdığı her fonksiyonun anon `EXECUTE` durumu, politikanın tabi olduğu her rol için ayrıca denenmeli — yerel testim yalnız `authenticated` ile çalışıyordu.
+
 ## Testler
 
-- `supabase/tests/community-rooms.sql` (37 kontrol) — varsayılan oda, yetenek, doğrulamalar, yazma/okuma kuralları, özel oda gizliliği, okunmamış, okundu imleci, sessize alma, arşiv/silme, sıralama, sınır, doğrudan yazma kapalı, sabitleme.
+- `supabase/tests/community-rooms.sql` (39 kontrol) — varsayılan oda, yetenek, doğrulamalar, yazma/okuma kuralları, özel oda gizliliği, okunmamış, okundu imleci, sessize alma, arşiv/silme, sıralama, sınır, doğrudan yazma kapalı, sabitleme.
 - `tests/messaging-ui/run-rooms.mjs` (29 senaryo) — mockup'ın yedi ekranı + İngilizce + mobil taşma + eski veritabanı geri dönüşü.
 - `src/lib/community-rooms.test.ts` (11).
 - Regresyon: SQL `chat-groups`, `group-unread`, `chat-features`, `chat-group-permissions`, `communities`, `team-spaces` (hepsi `FAILED=0`); arayüz `run-groups` 36/36, `run-chat-select` 10/10, `run-message-dock` 17/17, `run-community-home` 38/38, `run-team-spaces` 25/25, `run-teams` 16/16.

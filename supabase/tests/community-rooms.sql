@@ -277,5 +277,27 @@ select public._check(37, 'sohbet sabitleme kişisel: yalnız bob''un satırında
   (select count(*) from public.conversation_members where conversation_id = (select v::uuid from public._ctx where k = 'g') and pinned_at is not null) = 1
   and :pin_n = 1);
 
+-- 14. Ziyaretçi (anon): messages okuması HATA vermez ve satır görmez (politika can_read_room'a anon EXECUTE ister);
+-- community_rooms tablosu ziyaretçiye KAPALIDIR (odalar yalnız üyeye görünür).
+select set_config('request.jwt.claim.sub', '', false), set_config('request.jwt.claim.role', 'anon', false);
+set role anon;
+do $$
+declare
+  v_msgs integer;
+begin
+  select count(*) into v_msgs from public.messages;
+  perform public._check(38, 'anon messages okuması hata vermez ve satır görmez', v_msgs = 0, v_msgs::text);
+exception when others then
+  perform public._check(38, 'anon messages okuması hata vermez ve satır görmez', false, sqlerrm);
+end $$;
+do $$
+begin
+  perform count(*) from public.community_rooms;
+  perform public._check(39, 'anon community_rooms tablosunu OKUYAMAZ', false);
+exception when others then
+  perform public._check(39, 'anon community_rooms tablosunu OKUYAMAZ', sqlerrm like 'permission denied%', sqlerrm);
+end $$;
+reset role;
+
 select n, case when ok then 'PASS' else 'FAIL' end as result, name, detail from public._results order by n;
 select 'FAILED=' || count(*) filter (where not ok) from public._results;
