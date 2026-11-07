@@ -27,6 +27,7 @@ const ERROR_KEYS: Record<GroupErrorCode, TranslationKey> = {
   account_suspended: "groups.error.account_suspended",
   group_not_found: "groups.error.group_not_found",
   forbidden: "groups.error.forbidden",
+  community_has_team_spaces: "groups.error.community_has_team_spaces",
   invalid_name: "groups.error.invalid_name",
   invalid_description: "groups.error.invalid_description",
   invalid_visibility: "groups.error.generic",

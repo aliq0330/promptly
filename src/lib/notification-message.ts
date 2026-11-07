@@ -160,6 +160,15 @@ export function localizeNotificationMessage(rawMessage: string, language: "tr" |
   // Promptly Spaces (docs/history/213-*): Space adı çevrilmez.
   const spaceInvited = /^Seni "([\s\S]*)" Space'ine davet etti\.$/.exec(message);
   if (spaceInvited) return t("notifMsg.spaceInvited", { name: spaceInvited[1] });
+  // Ekip alanı (docs/history/349-*): Space/prompt adı çevrilmez.
+  const teamSpaceOpened = /^"([\s\S]*)" adlı yeni ekip Space'ini açtı\.$/.exec(message);
+  if (teamSpaceOpened) return t("notifMsg.teamSpaceOpened", { name: teamSpaceOpened[1] });
+  const teamApproved = /^"([\s\S]*)" promptunu ekip kütüphanesinde onayladı\.$/.exec(message);
+  if (teamApproved) return t("notifMsg.teamPromptApproved", { name: teamApproved[1] });
+  const teamUnapproved = /^"([\s\S]*)" promptunun onayını kaldırdı\.$/.exec(message);
+  if (teamUnapproved) return t("notifMsg.teamPromptUnapproved", { name: teamUnapproved[1] });
+  const teamReview = /^"([\s\S]*)" promptu için onay istedi\.$/.exec(message);
+  if (teamReview) return t("notifMsg.teamReviewRequested", { name: teamReview[1] });
   const spaceJoined = /^"([\s\S]*)" Space'ine katıldı\.$/.exec(message);
   if (spaceJoined) return t("notifMsg.spaceJoined", { name: spaceJoined[1] });
   // Yaratıcı paneli kilometre taşları (docs/history/295-*): prompt başlığı çevrilmez.

@@ -106,6 +106,11 @@ export function MembersTab() {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]" data-testid="space-members">
       <div className="min-w-0 space-y-6">
+        {caps.teamManaged && (
+          <p role="note" data-testid="team-members-note" className="rounded-md bg-surface-soft px-3 py-2 text-small text-text-secondary">
+            {t("team.space.membersNote")}
+          </p>
+        )}
         {caps.manageMembers && (
           <form onSubmit={invite} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4" data-testid="invite-member">
             <h2 className="text-h3 font-semibold text-text">{t("spaces.members.inviteTitle")}</h2>

@@ -411,7 +411,10 @@ export type GroupCapability =
   | "manage_announcements"
   | "manage_events"
   | "edit_rules"
-  | "view_stats";
+  | "view_stats"
+  // Ekip alanı (docs/history/349-*)
+  | "create_spaces"
+  | "approve_library";
 export type RolePermissions = Record<"admin" | "moderator", Record<GroupCapability, boolean>>;
 
 /** Topluluk kategorisi (DB'de sabit liste; etiket/taksonomi sisteminden bağımsız). */

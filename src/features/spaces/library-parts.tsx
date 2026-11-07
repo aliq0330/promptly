@@ -4,15 +4,16 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { CircleCheck } from "@/components/icons/circle-check";
 import { CircleDashed } from "@/components/icons/circle-dashed";
 import { Pencil } from "@/components/icons/pencil";
+import { UserCheck } from "@/components/icons/user-check";
 import { Button } from "@/components/ui/button";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { normalizeVariableName } from "@/lib/prompt-variables";
-import { libraryVariableProblem, planLibraryFill, type LibraryVariableProblem } from "@/lib/space-library";
+import { libraryVariableProblem, planLibraryFill, versionPreview, type LibraryVariableProblem } from "@/lib/space-library";
 import { SPACE_VARIABLES_MAX, SPACE_VARIABLE_NAME_MAX, SPACE_VARIABLE_VALUE_MAX } from "@/lib/spaces";
-import { fetchSpaceVariables, removeSpaceVariable, saveSpaceVariable, type SpaceVariable } from "@/lib/supabase/spaces";
+import { fetchItemVersions, fetchSpaceVariables, removeSpaceVariable, saveSpaceVariable, type SpaceItemVersion, type SpaceVariable } from "@/lib/supabase/spaces";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { CopyTextButton } from "./space-items";
 import { SpaceDialog } from "./space-modals";
@@ -38,6 +39,125 @@ export function ApprovalBadge({ state, approvedAt }: { state: "approved" | "pend
       <Icon size={12} aria-hidden />
       {approved ? t("spaces.library.approved") : t("spaces.library.pending")}
     </span>
+  );
+}
+
+/** "Onay istendi" işareti (docs/history/349-*): bir düzenleyici onay yetkililerinden karar bekliyor. */
+export function ReviewBadge() {
+  const { t } = useTranslation();
+  return (
+    <span data-review-requested title={t("spaces.library.reviewRequestedTitle")} className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-medium text-primary">
+      <UserCheck size={12} aria-hidden />
+      {t("spaces.library.reviewRequested")}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Sürüm geçmişi (docs/history/349-*)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Ekip kütüphanesindeki bir prompt taslağının eski sürümleri. Okuma Space'i okuyan herkese açıktır; "Geri yükle" düzenleyicinindir ve YENİ bir
+ * düzenlemedir (şimdiki hâl de sürüm olur, onay kalkar). Sunucu yetkiyi ve kilidi yeniden denetler.
+ */
+export function ItemVersionsModal({
+  itemId,
+  itemTitle,
+  canRestore,
+  onRestore,
+  onClose,
+}: {
+  itemId: string;
+  itemTitle: string;
+  canRestore: boolean;
+  onRestore: (version: SpaceItemVersion) => Promise<void>;
+  onClose: () => void;
+}) {
+  const { t, language } = useTranslation();
+  const [versions, setVersions] = useState<SpaceItemVersion[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [open, setOpen] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetchItemVersions(itemId)
+      .then((list) => alive && setVersions(list))
+      .catch(() => alive && setFailed(true));
+    return () => {
+      alive = false;
+    };
+  }, [itemId]);
+
+  async function restore(version: SpaceItemVersion) {
+    setError(null);
+    setRestoring(version.id);
+    try {
+      await onRestore(version);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+      setRestoring(null);
+    }
+  }
+
+  return (
+    <SpaceDialog title={`${t("spaces.library.versionsTitle")} · ${itemTitle}`} onClose={onClose} busy={restoring !== null} wide>
+      <div data-testid="item-versions" className="space-y-3">
+        <p className="text-small text-text-secondary">{t("spaces.library.versionsIntro")}</p>
+        {error && (
+          <p role="alert" className="text-small text-danger">
+            {error}
+          </p>
+        )}
+        {failed ? (
+          <p role="alert" className="text-small text-danger">
+            {t("spaces.library.versionsError")}
+          </p>
+        ) : versions === null ? (
+          <p className="text-small text-text-muted">…</p>
+        ) : versions.length === 0 ? (
+          <p className="text-small text-text-muted">{t("spaces.library.versionsEmpty")}</p>
+        ) : (
+          <ul className="space-y-2">
+            {versions.map((version) => {
+              const expanded = open === version.id;
+              return (
+                <li key={version.id} data-version-row className="rounded-md border border-border-soft bg-surface-soft p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{version.title || t("spaces.activity.untitledPrompt")}</span>
+                    {version.wasApproved && (
+                      <span className="rounded-full bg-success/12 px-2 py-0.5 text-caption font-medium text-success">{t("spaces.library.versionWasApproved")}</span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-caption text-text-muted">
+                    {formatRelativeTime(version.createdAt, language)}
+                    {version.authorName && <> · {t("spaces.library.versionBy", { name: version.authorName })}</>}
+                  </p>
+                  {expanded ? (
+                    <pre className="prompt-text mt-2 whitespace-pre-wrap break-words rounded-md bg-surface p-3 text-small text-text">{version.body}</pre>
+                  ) : (
+                    <p className="mt-2 break-words text-small text-text-secondary">{versionPreview(version.body)}</p>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setOpen(expanded ? null : version.id)} aria-expanded={expanded}>
+                      {expanded ? t("spaces.library.versionHide") : t("spaces.library.versionShow")}
+                    </Button>
+                    {canRestore && (
+                      <Button variant="outline" size="sm" disabled={restoring !== null} onClick={() => void restore(version)} data-version-restore>
+                        {restoring === version.id ? t("spaces.library.versionRestoring") : t("spaces.library.versionRestore")}
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </SpaceDialog>
   );
 }
 

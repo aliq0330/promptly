@@ -9,6 +9,9 @@ import {
   emptySources,
   fetchSpaceSources,
   saveSpaceLayout,
+  fetchCanApprove,
+  requestItemReview,
+  restoreItemVersion,
   setSpaceItemApproval,
   updateSpaceItem,
   updateSpaceConnection,
@@ -67,6 +70,10 @@ interface SpaceContextValue extends SpaceData {
   patchItem: (id: string, patch: SpaceItemPatch) => Promise<SpaceItem>;
   /** Ekip kütüphanesinde onay ver / geri al (yalnız sahip; sunucu da denetler, docs/history/348-*). */
   approveItem: (id: string, approved: boolean) => Promise<void>;
+  /** "Onaya gönder" / isteği geri çek (docs/history/349-*): bildirim ve yetki sunucuda. */
+  requestReview: (id: string, withdraw?: boolean) => Promise<void>;
+  /** Sürümü geri yükle: YENİ düzenleme (onay düşer, istek kalır); yerel durum yüklenen metinle güncellenir. */
+  restoreVersion: (itemId: string, version: { id: string; title: string; body: string }) => Promise<void>;
   setConnections: (updater: (connections: SpaceConnection[]) => SpaceConnection[]) => void;
   addConnections: (connections: NewSpaceConnection[]) => Promise<SpaceConnection[]>;
   removeConnections: (ids: string[]) => Promise<SpaceConnection[]>;
@@ -114,7 +121,23 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
   const [layoutStatus, setLayoutStatus] = useState<SaveStatus>("idle");
   const [layoutNotice, setLayoutNotice] = useState<string | null>(null);
 
-  const caps = useMemo(() => spaceCapabilities(role, Boolean(space.archivedAt), space.activityVisibility), [role, space.archivedAt, space.activityVisibility]);
+  const baseCaps = useMemo(() => spaceCapabilities(role, Boolean(space.archivedAt), space.activityVisibility, space.communityId !== null), [role, space.archivedAt, space.activityVisibility, space.communityId]);
+
+  // Ekibe bağlı ekip kütüphanesinde onay yetkisi `approve_library` yeteneğidir (docs/history/349-*): "sahip gibi çalışmak" onaylamak demek değildir.
+  // Karar sunucudan gelir; bilinmezken düğme kapalı kalır (sunucu zaten yeniden denetler).
+  const approvalGoverned = space.communityId !== null && space.kind === "team_library" && role !== null;
+  const [teamApprove, setTeamApprove] = useState<boolean>(false);
+  useEffect(() => {
+    if (!approvalGoverned) return;
+    let alive = true;
+    fetchCanApprove(space.id)
+      .then((allowed) => alive && setTeamApprove(allowed))
+      .catch(() => alive && setTeamApprove(false));
+    return () => {
+      alive = false;
+    };
+  }, [approvalGoverned, space.id, role]);
+  const caps = useMemo(() => (approvalGoverned ? { ...baseCaps, approve: teamApprove && baseCaps.edit } : baseCaps), [approvalGoverned, baseCaps, teamApprove]);
 
   // ---- kaynak içerik: başta bir kez, sonra yalnız YENİ başvurular için ----
   const loadedRefs = useRef(new Set<string>());
@@ -292,10 +315,26 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
   const approveItem = useCallback(
     async (id: string, approved: boolean) => {
       const at = await setSpaceItemApproval(id, approved);
-      setItemsState((list) => list.map((item) => (item.id === id ? { ...item, approvedAt: at, approvedBy: at ? userId : null } : item)));
+      // Sunucu onay kararıyla bekleyen inceleme isteğini de temizler.
+      setItemsState((list) => list.map((item) => (item.id === id ? { ...item, approvedAt: at, approvedBy: at ? userId : null, reviewRequestedAt: null, reviewRequestedBy: null } : item)));
     },
     [userId],
   );
+
+  const requestReview = useCallback(
+    async (id: string, withdraw = false) => {
+      const at = await requestItemReview(id, withdraw);
+      setItemsState((list) => list.map((item) => (item.id === id ? { ...item, reviewRequestedAt: at, reviewRequestedBy: at ? userId : null } : item)));
+    },
+    [userId],
+  );
+
+  const restoreVersion = useCallback(async (itemId: string, version: { id: string; title: string; body: string }) => {
+    await restoreItemVersion(version.id);
+    setItemsState((list) =>
+      list.map((item) => (item.id === itemId ? { ...item, title: version.title, body: version.body, approvedAt: null, approvedBy: null, updatedAt: new Date().toISOString() } : item)),
+    );
+  }, []);
 
   // ---- oklar ----
   const addConnections = useCallback(
@@ -348,6 +387,8 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
       removeItems,
       patchItem,
       approveItem,
+      requestReview,
+      restoreVersion,
       setConnections: setConnectionsState,
       addConnections,
       removeConnections,
@@ -359,7 +400,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
       dismissLayoutNotice: () => setLayoutNotice(null),
       readable,
     }),
-    [space, role, items, groups, palettes, connections, caps, userId, sources, sourcesLoading, addItems, applyImport, removeItems, patchItem, approveItem, addConnections, removeConnections, patchConnection, queueLayout, flushLayout, layoutStatus, layoutNotice, readable],
+    [space, role, items, groups, palettes, connections, caps, userId, sources, sourcesLoading, addItems, applyImport, removeItems, patchItem, approveItem, requestReview, restoreVersion, addConnections, removeConnections, patchConnection, queueLayout, flushLayout, layoutStatus, layoutNotice, readable],
   );
 
   return <SpaceContext.Provider value={value}>{children}</SpaceContext.Provider>;

@@ -15,6 +15,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { absoluteUrl, cn, formatRelativeTime } from "@/lib/utils";
 import {
   createSpace,
+  createTeamSpace,
   createSpaceLink,
   deleteSpace,
   fetchSpaceItems,
@@ -594,5 +595,70 @@ export function DeleteSpaceDialog({ space, onClose, onDeleted }: { space: Pick<S
         }
       }}
     />
+  );
+}
+
+/**
+ * Ekibe Space aç (docs/history/349-*): görünürlük/kapak sorulmaz — Space her zaman özeldir, bütün ekip üyeleri düzenleyici olarak yansıtılır.
+ * Yetki ve 50 Space sınırı sunucudadır (`create_team_space`); burası yalnız çağırır ve hatayı çevrilmiş gösterir.
+ */
+export function CreateTeamSpaceModal({ communityId, onClose, onCreated }: { communityId: string; onClose: () => void; onCreated: (id: string) => void }) {
+  const { t } = useTranslation();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [kind, setKind] = useState<SpaceKind>("team_library");
+  const [template, setTemplate] = useState<"empty" | "template">("template");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!title.trim()) {
+      setError(t("spaces.error.titleRequired"));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const id = await createTeamSpace({
+        communityId,
+        title,
+        description,
+        kind,
+        groups: template === "template" ? SPACE_TEMPLATE_GROUPS[kind].map((key) => t(key)) : [],
+      });
+      onCreated(id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <SpaceDialog
+      title={t("team.spaces.createTitle")}
+      onClose={onClose}
+      busy={busy}
+      wide
+      onSubmit={submit}
+      formTestId="create-team-space-form"
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+            {t("common.cancel")}
+          </Button>
+          <SubmitButton busy={busy}>{busy ? t("spaces.create.creating") : t("spaces.create.submit")}</SubmitButton>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <p className="rounded-md bg-surface-soft px-3 py-2 text-caption text-text-secondary">{t("team.spaces.createHelp")}</p>
+        <TitleField value={title} onChange={setTitle} autoFocus />
+        <DescriptionField value={description} onChange={setDescription} />
+        <KindField value={kind} onChange={setKind} />
+        <TemplateField kind={kind} value={template} onChange={setTemplate} />
+        <FormError message={error} />
+      </div>
+    </SpaceDialog>
   );
 }

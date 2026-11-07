@@ -20,6 +20,7 @@ import { communityTranslations } from "./translations-communities";
 import { storyTranslations } from "./translations-stories";
 import { spaceTranslations } from "./translations-spaces";
 import { teamLibraryTranslations } from "./translations-team-library";
+import { teamSpacesTranslations } from "./translations-team-spaces";
 import { workflowSpaceTranslations } from "./translations-workflow-space";
 import { spaceConnectionTranslations } from "./translations-space-connections";
 import { reactionTranslations } from "./translations-reactions";
@@ -2847,11 +2848,11 @@ export const translations = {
   "groups.role.member": { tr: "Üye", en: "Member" },
   "groups.visibility.label": { tr: "Görünürlük", en: "Visibility" },
   "groups.visibility.public": { tr: "Herkese açık", en: "Public" },
-  "groups.visibility.private": { tr: "Tamamen kapalı", en: "Invite only" },
+  "groups.visibility.private": { tr: "Tamamen kapalı (ekip alanı)", en: "Invite only (team space)" },
   "groups.visibility.restricted": { tr: "Kapalı", en: "Private" },
   "groups.visibility.restrictedHelp": { tr: "Topluluk aramada bulunabilir; gönderileri yalnızca üyeler görebilir. Katılmak için istek gönderilir.", en: "The community can be found in search; only members can see its posts. People send a request to join." },
   "groups.visibility.publicHelp": { tr: "Herkes topluluğu keşfedebilir ve gönderileri okuyabilir. Katılım doğrudandır.", en: "Anyone can discover the community and read its posts. Joining is direct." },
-  "groups.visibility.privateHelp": { tr: "Topluluk gizlidir; erişim davetle sağlanır. Hiçbir listede, aramada ya da öneride görünmez.", en: "The community is hidden; access is by invitation. It never appears in lists, search or suggestions." },
+  "groups.visibility.privateHelp": { tr: "Topluluk gizlidir; erişim davetle sağlanır. Hiçbir listede, aramada ya da öneride görünmez. Ekip alanıdır: ortak Space'ler açabilirsiniz.", en: "The community is hidden; access is by invitation. It never appears in lists, search or suggestions. It is a team space: you can open shared Spaces." },
   "groups.page.eyebrow": { tr: "Topluluk", en: "Community" },
   "groups.page.title": { tr: "Topluluklar", en: "Communities" },
   "groups.page.description": { tr: "Herkese açık toplulukları keşfet, katıl ya da kendi topluluğunu kur. Kapalı topluluklara davetle girilir.", en: "Discover public communities, join them or start your own. Private communities are joined by invitation." },
@@ -3264,6 +3265,7 @@ export const translations = {
   ...communityTranslations,
   ...spaceTranslations,
   ...teamLibraryTranslations,
+  ...teamSpacesTranslations,
   ...workflowSpaceTranslations,
   ...spaceConnectionTranslations,
   ...reactionTranslations,
