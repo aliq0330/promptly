@@ -140,14 +140,16 @@ export function membersSections(role: GroupRole | null | undefined, perms?: Role
 }
 
 /** "Yönet" sekmesinin bölümleri: topluluğun yapılandırması ve moderasyonu (kişi yönetimi "Üyeler"dedir). */
-export type ManageSection = "stats" | "settings" | "announcements" | "moderation" | "history";
+export type ManageSection = "stats" | "settings" | "rooms" | "announcements" | "moderation" | "history";
 
-export const MANAGE_SECTIONS: readonly ManageSection[] = ["stats", "settings", "announcements", "moderation", "history"];
+export const MANAGE_SECTIONS: readonly ManageSection[] = ["stats", "settings", "rooms", "announcements", "moderation", "history"];
 
 export function manageSections(role: GroupRole | null | undefined, perms?: RolePermissions): ManageSection[] {
   const sections: ManageSection[] = [];
   if (can(role, "view_stats", perms)) sections.push("stats");
   if (canSeeSettingsTab(role, perms) || can(role, "edit_rules", perms)) sections.push("settings");
+  // Sohbet odaları (docs/history/352-*): oda yönetme yeteneği olan görür.
+  if (can(role, "manage_rooms", perms)) sections.push("rooms");
   if (can(role, "manage_announcements", perms)) sections.push("announcements");
   if (can(role, "moderate_posts", perms) || can(role, "delete_messages", perms)) sections.push("moderation");
   if (isGroupManager(role)) sections.push("history");

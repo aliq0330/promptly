@@ -17,6 +17,7 @@ function msg(id: string, senderId: string, createdAt: string, extra: Partial<Mes
     deletedAt: null,
     createdAt,
     announcementId: null,
+    roomId: null,
     storyId: null,
     isStoryReply: false,
     ...extra,

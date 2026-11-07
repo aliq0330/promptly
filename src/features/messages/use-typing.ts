@@ -19,11 +19,14 @@ import { shouldSendTyping, TYPING_IDLE_MS, TypingTracker, typingTopic } from "@/
  */
 export function useTyping({
   conversationId,
+  roomKey,
   userId,
   enabled,
   canSend,
 }: {
   conversationId: string | null;
+  /** Topluluk sohbet odası (docs/history/352-*): sinyal yalnız aynı odadakilere gösterilir. `undefined` = odasız (birebir); `null` = oda henüz çözülmedi. */
+  roomKey?: string | null;
   userId: string | null;
   /** Kanalı hiç açma (oturum yok, sohbet yüklenmedi, üyelik bitti...). */
   enabled: boolean;
@@ -36,16 +39,18 @@ export function useTyping({
   const lastSentRef = useRef<number | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canSendRef = useRef(canSend);
+  const roomKeyRef = useRef(roomKey);
 
   useEffect(() => {
     canSendRef.current = canSend;
-  }, [canSend]);
+    roomKeyRef.current = roomKey;
+  }, [canSend, roomKey]);
 
   const send = useCallback(
     (typing: boolean) => {
       const channel = channelRef.current;
       if (!channel || !subscribedRef.current || !userId) return;
-      channel.send({ type: "broadcast", event: "typing", payload: { userId, typing } }).catch(() => {
+      channel.send({ type: "broadcast", event: "typing", payload: { userId, typing, room: roomKeyRef.current ?? null } }).catch(() => {
         /* geçici ağ hatası: gösterge kaybolur, başka bir şey etkilenmez */
       });
     },
@@ -91,8 +96,11 @@ export function useTyping({
     const channel = supabase
       .channel(typingTopic(conversationId), { config: { private: true, broadcast: { self: false } } })
       .on("broadcast", { event: "typing" }, ({ payload }) => {
-        const body = payload as { userId?: unknown; typing?: unknown } | null;
+        const body = payload as { userId?: unknown; typing?: unknown; room?: unknown } | null;
         if (!body || typeof body.userId !== "string" || body.userId === userId) return;
+        // Başka odadaki yazıyor sinyali bu odada gösterilmez (eski istemcilerin sinyali `room` taşımaz → gösterilir).
+        const myRoom = roomKeyRef.current;
+        if (myRoom !== undefined && typeof body.room === "string" && body.room !== myRoom) return;
         if (body.typing === false) tracker.stop(body.userId);
         else tracker.receive(body.userId, Date.now());
         publish();
@@ -124,7 +132,7 @@ export function useTyping({
       void supabase.removeChannel(channel);
       setTypingIds([]);
     };
-  }, [enabled, conversationId, userId, stopTyping]);
+    }, [enabled, conversationId, userId, stopTyping, roomKey]);
 
   return { typingIds, notifyTyping, stopTyping };
 }

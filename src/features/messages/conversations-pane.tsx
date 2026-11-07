@@ -20,12 +20,21 @@ import { Modal } from "@/components/ui/modal";
 import { Portal } from "@/components/ui/portal";
 import { useToast } from "@/features/groups/use-toast";
 import { bucketConversations, filterConversationsByQuery } from "@/lib/conversation-lists";
+import { isTeamVisibility } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, messageHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
 import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
 import { CONTROL_ICON_BUTTON, type SectionMenuItem } from "@/features/content/section-menu";
 import type { Conversation } from "@/types";
+
+type KindFilter = "all" | "personal" | "community" | "team";
+
+/** Sohbet türü çipleri (docs/history/352-*): Tümü · Kişisel · Topluluk · Ekip. Ekip = tamamen kapalı topluluk (docs/history/350-*). */
+function kindOf(conversation: Conversation): Exclude<KindFilter, "all"> {
+  if (conversation.kind !== "group" || !conversation.group) return "personal";
+  return isTeamVisibility(conversation.group.visibility) ? "team" : "community";
+}
 
 type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities" | "teams";
 
@@ -37,12 +46,13 @@ type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities
  */
 export function ConversationsPane({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation();
-  const { conversations, startConversationWith, unarchiveConversation, archiveConversation, deleteConversation, markConversationRead } = useRealMessages();
+  const { conversations, startConversationWith, unarchiveConversation, archiveConversation, pinConversation, deleteConversation, markConversationRead } = useRealMessages();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<MessagesView>("inbox");
+  const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [searchOpen, setSearchOpen] = useState(false);
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -81,13 +91,15 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   const buckets = useMemo(() => bucketConversations(conversations), [conversations]);
   const matches = (list: Conversation[]) => filterConversationsByQuery(list, query);
 
-  const accepted = matches(buckets.inbox);
+  const byKind = (list: Conversation[]) => (kindFilter === "all" ? list : list.filter((c) => kindOf(c) === kindFilter));
+  const accepted = byKind(matches(buckets.inbox));
   const pending = matches(buckets.requests);
   const archived = matches(buckets.archived);
   const searching = query.trim() !== "";
   const inArchive = view === "archived";
   const inRequests = view === "requests";
   const noMatches = searching && (inArchive ? archived.length === 0 : inRequests ? pending.length === 0 : accepted.length === 0 && pending.length === 0);
+  const kindEmpty = !searching && view === "inbox" && kindFilter !== "all" && accepted.length === 0 && buckets.inbox.length > 0;
   const nothingAtAll = !searching && view === "inbox" && buckets.inbox.length === 0 && buckets.requests.length === 0;
 
   // Seçim yalnız gelen kutusunda ve arşivde (istekler kendi kabul/ret akışına sahip).
@@ -129,7 +141,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     return failed;
   }
 
-  async function applyBulk(kind: "archive" | "read" | "delete" | "readAll") {
+  async function applyBulk(kind: "archive" | "read" | "delete" | "readAll" | "pin") {
     if (bulkBusy) return;
     const ids = (kind === "readAll" ? unreadList : selectedList).map((c) => c.id);
     if (ids.length === 0) {
@@ -138,13 +150,28 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     }
     setBulkBusy(true);
     setBulkError(null);
-    const act = kind === "archive" ? (inArchive ? unarchiveConversation : archiveConversation) : kind === "delete" ? deleteConversation : markConversationRead;
+    // Sabitle: seçilenlerin hepsi zaten sabitliyse sabitleme kalkar, değilse hepsi sabitlenir (tek dokunuşla ters çevrilir).
+    const unpinning = kind === "pin" && selectedList.every((c) => Boolean(c.pinnedAt));
+    const act =
+      kind === "pin"
+        ? (conversationId: string) => pinConversation(conversationId, !unpinning)
+        : kind === "archive"
+          ? inArchive
+            ? unarchiveConversation
+            : archiveConversation
+          : kind === "delete"
+            ? deleteConversation
+            : markConversationRead;
     const failed = await runBulk(ids, act);
     const done = ids.length - failed.length;
     if (done > 0) {
-      const toastKey =
-        kind === "archive" ? (inArchive ? "messages.bulkUnarchivedToast" : "messages.bulkArchivedToast") : kind === "delete" ? "messages.bulkDeletedToast" : "messages.bulkReadToast";
-      showToast(t(toastKey, { count: done }));
+      if (kind === "pin") {
+        showToast(unpinning ? t("rooms.list.unpinnedToast") : t("rooms.list.pinnedToast"));
+      } else {
+        const toastKey =
+          kind === "archive" ? (inArchive ? "messages.bulkUnarchivedToast" : "messages.bulkArchivedToast") : kind === "delete" ? "messages.bulkDeletedToast" : "messages.bulkReadToast";
+        showToast(t(toastKey, { count: done }));
+      }
     }
     setConfirmDelete(false);
     if (failed.length > 0) {
@@ -230,6 +257,26 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         </div>
           </>
         )}
+        {!selectionActive && view === "inbox" && (
+          <div role="group" aria-label={t("rooms.filter.aria")} data-kind-chips className="mb-3 flex gap-2 overflow-x-auto scrollbar-none">
+            {(["all", "personal", "community", "team"] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={kindFilter === key}
+                data-kind-chip={key}
+                onClick={() => setKindFilter(key)}
+                className={cn(
+                  "shrink-0 rounded-full text-small transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  embedded ? "h-9 px-3.5" : "h-10 px-[18px]",
+                  kindFilter === key ? "bg-primary font-semibold text-primary-foreground" : "border border-border-soft bg-surface font-medium text-text hover:border-border-strong",
+                )}
+              >
+                {t(`rooms.filter.${key}` as const)}
+              </button>
+            ))}
+          </div>
+        )}
         {searchShown && (
           <label className="relative mb-3 block">
             <span className="sr-only">{t("messages.searchConversations")}</span>
@@ -277,6 +324,8 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
       <div className={cn("min-h-0 flex-1", embedded && "overflow-y-auto", selectionActive && !embedded && "pb-28")}>
         {noMatches ? (
           <p className="py-10 text-center text-sm text-text-muted">{t("messages.noConversationMatches")}</p>
+        ) : kindEmpty ? (
+          <p data-kind-empty className="py-10 text-center text-sm text-text-muted">{t("rooms.filter.empty")}</p>
         ) : inArchive ? (
           <ConversationList
             conversations={archived}
@@ -337,6 +386,8 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             disabled={selectedList.length === 0}
             busy={bulkBusy}
             onArchive={() => void applyBulk("archive")}
+            onPin={inArchive ? undefined : () => void applyBulk("pin")}
+            pinLabel={selectedList.length > 0 && selectedList.every((c) => Boolean(c.pinnedAt)) ? t("rooms.list.unpin") : t("rooms.list.pin")}
             onRead={() => void applyBulk("read")}
             onDelete={() => setConfirmDelete(true)}
           />
@@ -349,6 +400,8 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             disabled={selectedList.length === 0}
             busy={bulkBusy}
             onArchive={() => void applyBulk("archive")}
+            onPin={inArchive ? undefined : () => void applyBulk("pin")}
+            pinLabel={selectedList.length > 0 && selectedList.every((c) => Boolean(c.pinnedAt)) ? t("rooms.list.unpin") : t("rooms.list.pin")}
             onRead={() => void applyBulk("read")}
             onDelete={() => setConfirmDelete(true)}
           />

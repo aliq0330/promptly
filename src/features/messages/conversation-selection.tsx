@@ -134,6 +134,8 @@ export function SelectionActionBar({
   onArchive,
   onRead,
   onDelete,
+  onPin,
+  pinLabel,
   embedded,
 }: {
   archiveLabel: string;
@@ -142,11 +144,14 @@ export function SelectionActionBar({
   onArchive: () => void;
   onRead: () => void;
   onDelete: () => void;
+  /** Sabitle / Sabitlemeyi kaldır (docs/history/352-*): verilirse Arşivle'nin yanında dördüncü düğme çıkar. */
+  onPin?: () => void;
+  pinLabel?: string;
   embedded?: boolean;
 }) {
   const { t } = useTranslation();
   const pill =
-    "pointer-events-auto h-12 rounded-full border border-border-soft bg-surface/95 px-6 text-body font-semibold text-text shadow-pop backdrop-blur-xl transition-[opacity,background-color] duration-200 ease-soft hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-45";
+    "pointer-events-auto h-12 rounded-full border border-border-soft bg-surface/95 px-4 text-body sm:px-6 font-semibold text-text shadow-pop backdrop-blur-xl transition-[opacity,background-color] duration-200 ease-soft hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-45";
   return (
     <div
       role="toolbar"
@@ -160,6 +165,11 @@ export function SelectionActionBar({
       <button type="button" onClick={onArchive} disabled={disabled || busy} className={pill} data-selection-archive>
         {archiveLabel}
       </button>
+      {onPin && (
+        <button type="button" onClick={onPin} disabled={disabled || busy} className={pill} data-selection-pin>
+          {pinLabel}
+        </button>
+      )}
       <button type="button" onClick={onRead} disabled={disabled || busy} className={pill} data-selection-read>
         {t("messages.markRead")}
       </button>

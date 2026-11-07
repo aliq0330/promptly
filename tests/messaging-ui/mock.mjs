@@ -531,6 +531,9 @@ export async function installMock(context, db, opts = {}) {
         if ((q.get("attachments") ?? "").includes("[object Object]")) return json(400, { code: "22P02", message: "invalid input syntax for type json" });
         if ((q.get("attachments") ?? "").startsWith("cs.")) list = list.filter((m) => Array.isArray(m.attachments) && m.attachments.length > 0);
         if (q.get("deleted_at") === "is.null") list = list.filter((m) => !m.deleted_at);
+        // Sohbet odaları (docs/history/352-*): `room_id is null` = varsayılan oda; `room_id=eq.<id>` = o oda.
+        if (q.get("room_id") === "is.null") list = list.filter((m) => !m.room_id);
+        else if (val(q.get("room_id") ?? "", "eq")) list = list.filter((m) => m.room_id === val(q.get("room_id"), "eq"));
         const order = q.get("order") ?? "";
         list = list.slice().sort((a, b) => a.created_at.localeCompare(b.created_at) * (order.includes("desc") ? -1 : 1));
         const lim = Number(q.get("limit") ?? 0); if (lim) list = list.slice(0, lim);
@@ -541,9 +544,15 @@ export async function installMock(context, db, opts = {}) {
         const isGroupConv = db.conversations.find((c) => c.id === body.conversation_id)?.kind === "group";
         const g = isGroupConv ? db.groups.find((x) => x.id === body.conversation_id) : null;
         const others = isGroupConv ? [] : db.members.filter((m) => m.conversation_id === body.conversation_id && m.user_id !== signedIn);
-        const cannotPostInGroup = g && g.posting_policy === "admins" && member && member.role === "member";
+        // Oda kuralı (`can_post_room`): arşivli oda ya da yalnız yönetimin yazdığı odada üye yazamaz; varsayılan odanın mesajı NULL saklanır.
+        const room = body.room_id ? (db.rooms ?? []).find((r) => r.id === body.room_id && r.community_id === body.conversation_id) : null;
+        if (body.room_id && !room) return json(400, { code: "P0001", message: "room_not_found", details: "", hint: "" });
+        const roomBlocks = room && !room.is_default && (room.archived_at || (room.posting_policy === "admins" && member && member.role === "member") || (room.read_policy === "staff" && member && member.role === "member"));
+        const cannotPostInGroup = (g && !room && g.posting_policy === "admins" && member && member.role === "member") || roomBlocks;
         if (!member || cannotPostInGroup || others.some((m) => db.isBlocked(signedIn, m.user_id))) return json(403, { code: "42501", message: 'new row violates row-level security policy for table "messages"' });
         const row = db.addMessage(body.conversation_id, signedIn, body.body);
+        if (room && !room.is_default) row.room_id = room.id;
+        if (body.id) row.id = body.id;
         if (body.reply_to_message_id) row.reply_to_message_id = body.reply_to_message_id;
         if (body.shared_prompt_id) row.shared_prompt_id = body.shared_prompt_id;
         if (body.shared_request_id) row.shared_request_id = body.shared_request_id;

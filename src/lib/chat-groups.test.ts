@@ -212,13 +212,16 @@ test("saklı yetkiler normalize edilir: eksik/bozuk anahtar → varsayılan; mod
   assert.equal(normalizeRolePermissions({ admin: { edit_settings: false } }).admin.edit_settings, false);
   assert.equal(capabilitiesFor("moderator").includes("manage_roles"), false);
   assert.equal(capabilitiesFor("admin").includes("manage_roles"), true);
-  assert.equal(capabilitiesFor("admin").length, 17);
+  assert.equal(capabilitiesFor("admin").length, 18);
   // Ekip alanı (docs/history/349-*): yönetici varsayılan olarak Space açar ve ekip kütüphanesinde onaylar; moderatör ikisine de sahip değildir.
   assert.equal(normalizeRolePermissions(null).admin.create_spaces, true);
   assert.equal(normalizeRolePermissions(null).admin.approve_library, true);
   assert.equal(normalizeRolePermissions(null).moderator.create_spaces, false);
   assert.equal(normalizeRolePermissions(null).moderator.approve_library, false);
   assert.equal(normalizeRolePermissions({ moderator: { approve_library: true } }).moderator.approve_library, true);
+  // Sohbet odaları (docs/history/352-*): yönetici varsayılan olarak odaları yönetir; moderatör yönetmez.
+  assert.equal(normalizeRolePermissions(null).admin.manage_rooms, true);
+  assert.equal(normalizeRolePermissions(null).moderator.manage_rooms, false);
   // Eski gruplarda bu anahtarlar yoktur: varsayılana düşer.
   assert.equal(normalizeRolePermissions({ admin: { edit_settings: true } }).admin.create_spaces, true);
   // Eski gruplarda `pin_messages` anahtarı yoktur: varsayılan (admin + moderatör) geçerli olur.

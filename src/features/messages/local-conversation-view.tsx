@@ -61,6 +61,7 @@ import {
   hideMessageForMe,
   mapMessageRow,
   sendMessage,
+  type MessageRoomScope,
   type MessageRow,
 } from "@/lib/supabase/messages";
 import { fetchReactionsForConversation, reactionRowFromDb, removeMessageReaction, setMessageReaction, type MessageReactionRow, type RawReactionRow } from "@/lib/supabase/message-reactions";
@@ -74,7 +75,16 @@ import { supabase } from "@/lib/supabase/client";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn } from "@/lib/utils";
+import { cn, roomsHubHref } from "@/lib/utils";
+import { messageRoomId, pickRoom, readLastRoomId, roomSlug, totalRoomUnread } from "@/lib/community-rooms";
+import { markRoomReadUpTo, setRoomMuted } from "@/lib/supabase/community-rooms";
+import { getCachedRooms, patchCachedRoom, refreshCommunityRooms, useCommunityRooms } from "./rooms/use-community-rooms";
+import { useActiveRoom } from "./rooms/use-active-room";
+import { RoomSwitcher } from "./rooms/room-switcher";
+import { RoomFormModal } from "./rooms/room-form-modal";
+import { RoomChipRow } from "./rooms/room-chip-row";
+import { Users } from "@/components/icons/users";
+import { RoomSidePanel } from "./rooms/room-side-panel";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 import { communityHref } from "@/lib/communities";
@@ -254,10 +264,33 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   const group = conversation?.group ?? null;
   const blockState = useBlockState(conversation?.participants[0] ?? EMPTY_PARTICIPANT);
   // Grup: gönderen adları/avatarları + kadro rolleri; "kim yazabilir" ayarı.
-  const canPost = !isGroup || (group ? canPostInGroup(group.myRole, group.postingPolicy) : false);
+  // Sohbet odaları (docs/history/352-*): topluluk sohbeti birden çok odaya bölünür; mesajlar/okundu/yazıyor açık odayla sınırlıdır.
+  const roomsState = useCommunityRooms(isGroup && id ? id : null);
+  const { room: activeRoom, setRoomId, requestedId: requestedRoomId } = useActiveRoom(isGroup && id ? id : null, roomsState.rooms, isDock);
+  const activeRoomMessageId = activeRoom ? messageRoomId(activeRoom) : null;
+  const roomScope = useMemo<MessageRoomScope | undefined>(() => (isGroup && activeRoom ? { id: activeRoomMessageId } : undefined), [isGroup, activeRoom, activeRoomMessageId]);
+  const roomScopeRef = useRef<MessageRoomScope | undefined>(undefined);
+  const requestedRoomRef = useRef<string | null>(null);
+  const loadedRoomRef = useRef<string | null>(null);
+  const pendingJumpRef = useRef<string | null>(null);
+  const [jumpTick, setJumpTick] = useState(0);
+  const activeRoomIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    activeRoomIdRef.current = activeRoom?.id ?? null;
+    roomScopeRef.current = roomScope;
+    requestedRoomRef.current = requestedRoomId;
+  });
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  // Masaüstü "Bu oda" paneli: otomatik = 2xl ve üstünde açık; üye düğmesi bunu açık/kapalı yapar (docs/history/352-*).
+  const [roomPanel, setRoomPanel] = useState<"auto" | "open" | "closed">("auto");
+  const [roomFormOpen, setRoomFormOpen] = useState(false);
+  const canManageRooms = group ? can(group.myRole, "manage_rooms", group.rolePermissions) : false;
+  // Oda bilgisi yoksa (eski veritabanı / yüklenemedi) eski kural: topluluğun "kim yazar" ayarı.
+  const canPost = !isGroup || (activeRoom ? activeRoom.canPost : group ? canPostInGroup(group.myRole, group.postingPolicy) : false);
   // "Yazıyor…" (docs/history/174-*): Realtime Broadcast, kalıcı değil. Bekleyen istekte, engelliyken ya da yazamıyorsam sinyal GÖNDERMEM.
   const { typingIds, notifyTyping, stopTyping } = useTyping({
     conversationId: id,
+    roomKey: isGroup ? (activeRoom ? (messageRoomId(activeRoom) ?? "default") : null) : undefined,
     userId: user?.id ?? null,
     enabled: checked && Boolean(conversation) && !leftGroup && !removedFromList,
     canSend: canPost && !blockState.isBlocked && conversation?.myStatus !== "pending",
@@ -266,7 +299,12 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   // Bekleyen katılım istekleri topluluk sayfasına aittir; sohbette yalnız yetkiliye sayı rozeti ve oraya kısa yol gösterilir.
   const pendingRequestsForMe = group && can(group.myRole, "manage_requests", group.rolePermissions) ? group.pendingRequestCount : 0;
   const canPin = canPinMessages(group) && conversation?.myStatus !== "pending";
-  const pinned = usePinnedMessages(id, user?.id ?? null, messages, checked && Boolean(conversation) && !leftGroup && !removedFromList);
+  const pinnedAll = usePinnedMessages(id, user?.id ?? null, messages, checked && Boolean(conversation) && !leftGroup && !removedFromList);
+  // Sabit mesajlar odaya aittir: açık odanın dışındakiler bu odanın şeridinde görünmez.
+  const pinned = useMemo(
+    () => (roomScope ? { ...pinnedAll, items: pinnedAll.items.filter((item) => (item.message.roomId ?? null) === roomScope.id) } : pinnedAll),
+    [pinnedAll, roomScope],
+  );
   // Mesajı yüklü olmayan ama adı gereken kişiler (yazıyor diyenler, arama sonucu / sabit mesaj göndericileri) için ek profil sorgusu.
   const [searchSenderIds, setSearchSenderIds] = useState<string[]>([]);
   const extraSenderIds = useMemo(
@@ -370,8 +408,16 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         setChecked(true);
         return;
       }
+      // Topluluk sohbeti: önce odalar (hangi odanın mesajları yükleneceği), sonra o odanın sayfası.
+      let scope: MessageRoomScope | undefined;
+      if (found.kind === "group") {
+        const rooms = await refreshCommunityRooms(id).catch(() => getCachedRooms(id) ?? []);
+        const picked = rooms.length > 0 ? pickRoom(rooms, requestedRoomRef.current, readLastRoomId(id)) : null;
+        scope = picked ? { id: messageRoomId(picked) } : undefined;
+        loadedRoomRef.current = picked?.id ?? null;
+      }
       const [page, reactions, partnerRead, starred] = await Promise.all([
-        fetchMessagePage(id, user.id),
+        fetchMessagePage(id, user.id, { room: scope }),
         fetchReactionsForConversation(id),
         found.kind === "direct" ? fetchPartnerReadAt(id, user.id) : Promise.resolve(null),
         fetchStarredMessageIds(id),
@@ -390,6 +436,38 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
+
+  // Oda değişince (oda çipi, adres, bildirim): yeni odanın mesajları yüklenir; başka odadan gelen "mesaja atla" yüklenince tamamlanır.
+  const activeRoomId = activeRoom?.id ?? null;
+  useEffect(() => {
+    if (!id || !user || !checked || !isGroup || !activeRoomId) return;
+    if (loadedRoomRef.current === activeRoomId) return;
+    loadedRoomRef.current = activeRoomId;
+    let cancelled = false;
+    setMessages([]);
+    setHasOlder(false);
+    setHasNewer(false);
+    setIsNearBottom(true);
+    setReplyingTo(null);
+    lastAckedRef.current = null;
+    fetchMessagePage(id, user.id, { room: roomScopeRef.current }).then((page) => {
+      if (cancelled) return;
+      setMessages(page.messages);
+      setHasOlder(page.hasMore);
+      if (pendingJumpRef.current) setJumpTick((n) => n + 1);
+    });
+    return () => {
+      cancelled = true;
+      // Yarım kalan yükleme iptal edildiyse bir sonraki çalıştırma yeniden yüklesin.
+      if (loadedRoomRef.current === activeRoomId) loadedRoomRef.current = null;
+    };
+  }, [id, user, checked, isGroup, activeRoomId]);
+
+  // Sohbet listesindeki okunmamış rozeti odaların toplamıdır (sessize alınanlar hariç): oda sayıları değişince listeye yansıtılır.
+  useEffect(() => {
+    if (!isGroup || !id || roomsState.rooms.length === 0) return;
+    patchConversation(id, { unreadCount: totalRoomUnread(roomsState.rooms) });
+  }, [isGroup, id, roomsState.rooms, patchConversation]);
 
   // Land on the specific message a mesaj bildirimi pointed at (Aşama 4.8) —
   // once the thread has actually loaded. A message that isn't in the loaded
@@ -432,6 +510,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${id}` },
         (payload) => {
           const incoming = mapMessageRow(payload.new as MessageRow);
+          // Topluluk sohbeti: yalnız açık odanın mesajı listeye girer (diğer odalar okunmamış sayısını `useCommunityRooms` günceller).
+          const scope = roomScopeRef.current;
+          if (scope && incoming.roomId !== scope.id) return;
           // Eski bir pencerede (mesaja atlandıktan sonra) gezilirken canlı mesaj araya eklenmez; "güncel mesajlara dön" hepsini getirir.
           if (hasNewerRef.current) return;
           setMessages((prev) => mergeIncomingMessage(prev, incoming));
@@ -504,10 +585,14 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     const ack = nextReadAck(messages, user.id, lastAckedRef.current);
     if (!ack || ackInFlightRef.current) return;
     ackInFlightRef.current = true;
-    void markConversationReadUpTo(id, ack).then((result) => {
+    const readRoomId = roomScopeRef.current?.id ?? null;
+    // Genel (varsayılan oda) okundu imleci üyelik satırındadır; diğer odalarınki `community_room_state`te.
+    const done = readRoomId ? markRoomReadUpTo(readRoomId, ack).then((ok) => (ok ? ack : null)) : markConversationReadUpTo(id, ack);
+    void done.then((result) => {
       ackInFlightRef.current = false;
       if (result) {
         lastAckedRef.current = ack;
+        if (roomScopeRef.current && activeRoomIdRef.current) patchCachedRoom(id, activeRoomIdRef.current, { unreadCount: 0 });
         setAckVersion((v) => v + 1);
       }
     });
@@ -838,7 +923,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         uploaded[i] = await uploadMessageImage(id, user.id, prepared);
         patchPending(initial.id, { uploaded: [...uploaded] });
       }
-      const sent = await sendMessage(id, user.id, {
+      const sent = await sendMessage(id, user.id, { roomId: sendRoomId,
         id: initial.id,
         body: initial.body,
         attachments: uploaded.filter((a): a is MessageAttachment => Boolean(a)),
@@ -855,12 +940,14 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       if (raw.toLowerCase().includes("duplicate key")) {
         // An earlier attempt did land — the message exists (Realtime/refetch shows it); nothing to retry.
         dropPending(initial.id, { revoke: true });
-        if (user) fetchMessagePage(id, user.id).then((page) => setMessages(page.messages));
+        if (user) fetchMessagePage(id, user.id, { room: roomScopeRef.current }).then((page) => setMessages(page.messages));
         return;
       }
       patchPending(initial.id, { status: "failed", error: raw ? translateSendError(raw, isGroup) : t("messages.sendFailed") });
     }
   }
+
+  const sendRoomId = isGroup ? messageRoomId(activeRoom) : null;
 
   function retryPending(pendingId: string) {
     const target = pendingRef.current.find((p) => p.id === pendingId);
@@ -910,7 +997,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     setIsSending(true);
     setSendError(null);
     try {
-      const sent = await sendMessage(id, user.id, {
+      const sent = await sendMessage(id, user.id, { roomId: sendRoomId,
         body: composeOutgoingBody(trimmed),
         sharedPromptId: pendingShare?.type === "prompt" ? pendingShare.id : undefined,
         sharedRequestId: pendingShare?.type === "request" ? pendingShare.id : undefined,
@@ -940,7 +1027,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     setIsSending(true);
     setSendError(null);
     try {
-      const sent = await sendMessage(id, user.id, { id: crypto.randomUUID(), attachments: [gifAttachment(gif)], replyToMessageId: replyingTo?.id });
+      const sent = await sendMessage(id, user.id, { roomId: sendRoomId, id: crypto.randomUUID(), attachments: [gifAttachment(gif)], replyToMessageId: replyingTo?.id });
       setMessages((prev) => mergeIncomingMessage(prev, sent));
       setReplyingTo(null);
       afterSuccessfulSend();
@@ -1064,7 +1151,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     const el = listRef.current;
     const previousHeight = el?.scrollHeight ?? 0;
     try {
-      const page = await fetchMessagePage(id, user.id, { before: messages[0].createdAt });
+      const page = await fetchMessagePage(id, user.id, { before: messages[0].createdAt, room: roomScopeRef.current });
       setMessages((prev) => {
         const known = new Set(prev.map((m) => m.id));
         return [...page.messages.filter((m) => !known.has(m.id)), ...prev];
@@ -1091,6 +1178,17 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     }
     const win = await fetchMessageWindow(id, user.id, messageId);
     if (!win) return false;
+    // Mesaj başka bir odada: o odaya geç, yüklenince mesaja atla.
+    const scope = roomScopeRef.current;
+    if (scope && win.roomId !== scope.id) {
+      const target = (getCachedRooms(id) ?? []).find((r) => messageRoomId(r) === win.roomId);
+      if (target) {
+        pendingJumpRef.current = messageId;
+        showToast(t("rooms.chat.otherRoomHit"));
+        setRoomId(target.id);
+        return true;
+      }
+    }
     skipAutoScrollRef.current = true;
     setMessages(win.messages);
     setHasOlder(win.hasOlder);
@@ -1104,11 +1202,20 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     if (!ok) showToast(t("chat.jump.failed"));
   }
 
+  // Başka odadaki bir mesaja atlama: oda yüklendikten sonra mesaja gidilir (yükleme `activeRoomId` efektindedir).
+  useEffect(() => {
+    const jump = pendingJumpRef.current;
+    if (!jump || jumpTick === 0) return;
+    pendingJumpRef.current = null;
+    void jumpWithFeedback(jump);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız oda yüklenince (jumpTick) çalışmalı
+  }, [jumpTick]);
+
   /** "Güncel mesajlara dön": atlama penceresinden çıkıp en yeni sayfayı yükler. */
   async function returnToLatest() {
     if (!id || !user) return;
     try {
-      const page = await fetchMessagePage(id, user.id);
+      const page = await fetchMessagePage(id, user.id, { room: roomScopeRef.current });
       setMessages(page.messages);
       setHasOlder(page.hasMore);
       setHasNewer(false);
@@ -1116,6 +1223,21 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     } catch (err) {
       console.error("returnToLatest", err);
       showToast(t("common.actionFailedRetry"));
+    }
+  }
+
+  /** Odayı sessize al / sesini aç (kişisel; topluluğun genel sessize alması ayrıdır). */
+  async function toggleRoomMute() {
+    if (!id || !activeRoom) return;
+    const muting = !activeRoom.muted;
+    patchCachedRoom(id, activeRoom.id, { muted: muting });
+    try {
+      await setRoomMuted(activeRoom.id, muting);
+      showToast(muting ? t("rooms.chat.mutedToast") : t("rooms.chat.unmutedToast"));
+    } catch (err) {
+      console.error("setRoomMuted", err);
+      patchCachedRoom(id, activeRoom.id, { muted: !muting });
+      showToast(t("rooms.chat.muteFailed"));
     }
   }
 
@@ -1310,7 +1432,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   const visiblePending = pendingSends.filter((p) => !messagesById.has(p.id));
   const messageLayout = layoutChatMessages(messages);
 
+  const panelClass = roomPanel === "closed" ? "hidden" : roomPanel === "open" ? "hidden lg:flex" : "hidden 2xl:flex";
   return (
+    <div className={isDock ? "contents" : "contents md:flex md:min-h-0 md:flex-1"}>
     <div
       ref={panelCallbackRef}
       {...imageDrop.handlers}
@@ -1376,9 +1500,10 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         {group ? (
           <button
             type="button"
-            onClick={() => setGroupInfoFocus("overview")}
-            aria-haspopup="dialog"
-            aria-label={t("groups.chat.openInfoAria", { name: group.name })}
+            onClick={() => (activeRoom && id ? router.push(roomsHubHref(id)) : setGroupInfoFocus("overview"))}
+            aria-haspopup={activeRoom ? undefined : "dialog"}
+            aria-label={activeRoom ? t("rooms.chat.openHub") : t("groups.chat.openInfoAria", { name: group.name })}
+            data-room-header
             className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
           >
             <span className="relative shrink-0">
@@ -1394,10 +1519,15 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               )}
             </span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{group.name}</span>
+              <span className="block truncate font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{activeRoom ? activeRoom.name : group.name}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
                   {typingText}
+                </span>
+              ) : activeRoom ? (
+                <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
+                  {group.name}
+                  {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
@@ -1430,6 +1560,19 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                 <PresenceStatusText userId={participant.id} fallback={`@${participant.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
               )}
             </span>
+          </button>
+        )}
+        {group && activeRoom && (
+          <button
+            type="button"
+            onClick={() => setRoomPanel((current) => (current === "closed" || (current === "auto" && !window.matchMedia("(min-width: 1536px)").matches) ? "open" : "closed"))}
+            aria-label={t("rooms.panel.toggle")}
+            title={t("rooms.panel.toggle")}
+            aria-pressed={roomPanel === "open" || roomPanel === "auto"}
+            data-room-panel-toggle
+            className="hidden h-9 shrink-0 items-center gap-1.5 rounded-full bg-surface-soft px-3 text-small font-semibold text-text-secondary transition-colors hover:bg-border-soft hover:text-text lg:flex"
+          >
+            <Users size={16} aria-hidden /> {group.memberCount.toLocaleString()}
           </button>
         )}
         <button
@@ -1474,6 +1617,21 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   {conversation.mutedAt ? <Bell size={14} /> : <BellOff size={14} />}
                   {conversation.mutedAt ? t("groups.chat.unmute") : t("groups.chat.mute")}
                 </button>
+                {activeRoom && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-room-mute
+                    onClick={() => {
+                      close();
+                      void toggleRoomMute();
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
+                  >
+                    {activeRoom.muted ? <Bell size={14} /> : <BellOff size={14} />}
+                    {activeRoom.muted ? t("rooms.chat.unmute") : t("rooms.chat.mute")}
+                  </button>
+                )}
                 <ChatActionItems
                   conversation={conversation}
                   busy={actionBusy}
@@ -1523,6 +1681,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         />
         )}
       </div>
+      )}
+      {isGroup && activeRoom && (
+        <RoomChipRow room={activeRoom} online={groupOnline} onOpenSwitcher={() => setSwitcherOpen(true)} className={dock ? "px-3 pt-2 lg:px-3" : undefined} />
       )}
       {searchOpen && (
         <ConversationSearchPanel
@@ -1702,7 +1863,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           if (value.trim()) notifyTyping();
           else stopTyping();
         }}
-        placeholder={pendingShare ? t("messages.addNotePlaceholder") : t("messages.writeMessagePlaceholder")}
+        placeholder={
+          pendingShare ? t("messages.addNotePlaceholder") : isGroup && activeRoom ? t("rooms.chat.placeholder", { slug: roomSlug(activeRoom.name) }) : t("messages.writeMessagePlaceholder")
+        }
         disabled={blockState.isBlocked || !canPost}
         canSend={
           (Boolean(draft.trim()) || Boolean(pendingShare) || composerImages.images.length > 0) &&
@@ -1726,8 +1889,8 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         banners={
           <>
     {isGroup && !canPost && (
-      <div role="status" className="mb-2 rounded-lg bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
-        {t("groups.chat.adminsOnly")}
+      <div role="status" data-room-readonly-notice className="mb-2 rounded-lg bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
+        {activeRoom?.archivedAt ? t("rooms.chat.archivedNotice") : group?.closedAt ? t("rooms.chat.closedNotice") : activeRoom && !activeRoom.isDefault ? t("rooms.chat.readOnlyNotice") : t("groups.chat.adminsOnly")}
       </div>
     )}
     {blockState.isBlocked && (
@@ -1835,6 +1998,27 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           }}
         />
       )}
+      {switcherOpen && group && id && (
+        <RoomSwitcher
+          communityId={id}
+          communityName={group.name}
+          rooms={roomsState.rooms}
+          currentRoomId={activeRoom?.id ?? null}
+          canManage={canManageRooms}
+          onSelect={(picked) => {
+            setSwitcherOpen(false);
+            setRoomId(picked.id);
+          }}
+          onAddRoom={() => {
+            setSwitcherOpen(false);
+            setRoomFormOpen(true);
+          }}
+          onClose={() => setSwitcherOpen(false)}
+        />
+      )}
+      {roomFormOpen && id && (
+        <RoomFormModal communityId={id} rooms={roomsState.rooms} onClose={() => setRoomFormOpen(false)} onSaved={(roomId) => roomId && setRoomId(roomId)} />
+      )}
       {leaveOpen && group && (
         <LeaveCommunityDialog
           groupId={group.id}
@@ -1845,6 +2029,18 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           onClose={() => setLeaveOpen(false)}
         />
       )}
+    </div>
+    {!isDock && group && activeRoom && (
+      <RoomSidePanel
+        group={group}
+        room={activeRoom}
+        pinned={pinned.items}
+        canManage={canManageRooms}
+        senderLabel={senderLabel}
+        onJump={(message) => void jumpWithFeedback(message.id)}
+        className={panelClass}
+      />
+    )}
     </div>
   );
 }
