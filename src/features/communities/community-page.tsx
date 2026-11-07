@@ -29,7 +29,7 @@ import { useCommunity } from "./use-community";
 import { CommunityAside, MemberStack, useCommunityPeople } from "./community-aside";
 import { CommunityCover } from "./community-cover";
 import { BAND_PRIMARY_CLASS, BandActionRow, DetailBand, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
-import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, resolveCommunityView, type CommunityTab } from "@/lib/communities";
+import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, isTeamVisibility, resolveCommunityView, type CommunityTab } from "@/lib/communities";
 import { can } from "@/lib/chat-groups";
 import { memberCountText } from "@/lib/group-labels";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -122,7 +122,8 @@ function CommunityPageInner() {
 
   const ready = state;
   const tabLabels: Record<CommunityTab, string> = {
-    feed: t("communities.detail.tab.feed"),
+    // Ekipte Akış "Paylaşımlar"dır (docs/history/350-*): sohbet ve Space ile karışmasın.
+    feed: isTeamVisibility(ready.group.visibility) ? t("teams.tab.feed") : t("communities.detail.tab.feed"),
     spaces: t("communities.detail.tab.spaces"),
     events: t("communities.detail.tab.events"),
     members: t("communities.detail.tab.members"),
@@ -141,7 +142,7 @@ function CommunityPageInner() {
   async function membershipChanged(next: JoinState) {
     void refresh();
     if (next === "none" && ready.group.visibility === "private") {
-      router.replace("/communities");
+      router.replace("/teams");
       return;
     }
     await reload();
@@ -153,6 +154,7 @@ function CommunityPageInner() {
   const g = ready.group;
 
   const categoryLabel = t(CATEGORY_LABEL_KEYS[g.category]);
+  const isTeam = isTeamVisibility(g.visibility);
 
   return (
     // Albüm (docs/history/203-*): band tinted by the community's cover (photo › colour › its picture) · actions row · tabs + content.
@@ -168,7 +170,7 @@ function CommunityPageInner() {
         }
         kicker={
           <Eyebrow tone="primary">
-            {t("groups.page.eyebrow")} · <span>{categoryLabel}</span>
+            {isTeam ? t("teams.band.eyebrow") : <>{t("groups.page.eyebrow")} · <span>{categoryLabel}</span></>}
           </Eyebrow>
         }
         title={<DetailTitle>{g.name}</DetailTitle>}
@@ -198,7 +200,7 @@ function CommunityPageInner() {
         <BandActionRow label={t("communities.band.actionsAria")} data-community-actions="">
           {role && (
             <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg", className: BAND_PRIMARY_CLASS })}>
-              <MessagesSquare size={18} aria-hidden /> {t("communities.detail.openChat")}
+              <MessagesSquare size={18} aria-hidden /> {isTeam ? t("teams.band.openChat") : t("communities.detail.openChat")}
               {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground px-1.5 text-caption text-primary">{unread}</span>}
             </Link>
           )}

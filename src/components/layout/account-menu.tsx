@@ -10,6 +10,7 @@ import { LogIn } from "@/components/icons/log-in";
 import { LogOut } from "@/components/icons/log-out";
 import { Moon } from "@/components/icons/moon";
 import { Settings } from "@/components/icons/settings";
+import { Briefcase } from "@/components/icons/briefcase";
 import { Shapes } from "@/components/icons/shapes";
 import { ShieldCheck } from "@/components/icons/shield-check";
 import { Undo2 } from "@/components/icons/undo-2";
@@ -186,6 +187,7 @@ export function AccountMenu() {
           <MenuGroup label={t("account.groupAccount")}>
             <MenuLink href="/my-content" icon={Library} label={t("account.myContent")} onNavigate={close} />
             <MenuLink href="/saved" icon={Bookmark} label={t("nav.saved")} onNavigate={close} />
+            <MenuLink href="/teams" icon={Briefcase} label={t("nav.teams")} onNavigate={close} />
             <MenuLink href="/spaces" icon={Shapes} label={t("nav.spaces")} onNavigate={close} />
             <MenuLink href="/insights" icon={BarChart3} label={t("nav.insights")} onNavigate={close} />
           </MenuGroup>

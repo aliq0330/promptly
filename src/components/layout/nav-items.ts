@@ -1,5 +1,6 @@
 import type { IconComponent } from "@/components/icons/icon";
 import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { Briefcase } from "@/components/icons/briefcase";
 import { Bookmark } from "@/components/icons/bookmark";
 import { Compass } from "@/components/icons/compass";
 import { Focus } from "@/components/icons/focus";
@@ -62,6 +63,8 @@ export const navGroups: NavGroup[] = [
     labelKey: "nav.groupLibrary",
     items: [
       { href: "/saved", labelKey: "nav.saved", icon: Bookmark, match: "/saved", visibility: "authenticated" },
+      // Ekipler (docs/history/350-*): tamamen kapalı topluluk = ekip; günlük çalışma alanı, Topluluklar'dan ayrı bir giriş.
+      { href: "/teams", labelKey: "nav.teams", icon: Briefcase, visibility: "authenticated" },
       { href: "/following", labelKey: "nav.followingPeople", icon: UsersRound, visibility: "authenticated" },
       // Yaratıcı paneli (docs/history/294-*): kişinin kendi promptlarının performansı.
       { href: "/insights", labelKey: "nav.insights", icon: BarChart3, visibility: "authenticated" },

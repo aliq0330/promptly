@@ -30,7 +30,7 @@ import {
   validateGroupName,
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
-import { communityChatHref, COMMUNITY_COVER_COLORS, coverModeOf, normalizeCoverColor, type CoverMode } from "@/lib/communities";
+import { communityChatHref, COMMUNITY_COVER_COLORS, COMMUNITY_VISIBILITY_OPTIONS, coverModeOf, isTeamVisibility, normalizeCoverColor, type CoverMode } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupVisibility } from "@/types";
 
@@ -318,7 +318,16 @@ export function GroupSettingsSection({
 
       )}
 
-      {canChangeVisibility && (
+      {canChangeVisibility && isTeamVisibility(group.visibility) && (
+      <section aria-labelledby="settings-visibility-title" className="space-y-2 border-t border-border-soft pt-6">
+        <h3 id="settings-visibility-title" className="text-label font-semibold text-text">
+          {t("groups.visibility.label")}
+        </h3>
+        <p data-team-visibility-note className="text-small text-text-secondary">{t("teams.settings.alwaysPrivate")}</p>
+      </section>
+      )}
+
+      {canChangeVisibility && !isTeamVisibility(group.visibility) && (
       <section aria-labelledby="settings-visibility-title" className="space-y-3 border-t border-border-soft pt-6">
         <h3 id="settings-visibility-title" className="text-label font-semibold text-text">
           {t("groups.visibility.label")}
@@ -328,6 +337,7 @@ export function GroupSettingsSection({
           currentLabel={t("groups.settings.visibilityCurrent")}
           disabled={visibilityAction.busy}
           name="settings-visibility"
+          options={COMMUNITY_VISIBILITY_OPTIONS}
           onChange={(next) => {
             if (next === group.visibility) return;
             visibilityAction.setError(null);

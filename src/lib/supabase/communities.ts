@@ -437,12 +437,22 @@ interface MineRow {
   my_role: GroupRole | null; unread_count: number; pending_request_count: number;
 }
 
-export async function listMyCommunities(scope: MyCommunityScope, offset = 0): Promise<{ communities: CommunitySummary[]; hasMore: boolean }> {
+/**
+ * Üyesi olduğum topluluklar. `excludeTeams`: Topluluklar sayfasının listeleri ekipleri (tamamen kapalı) göstermez — onlar "Ekipler" başlığındadır
+ * (docs/history/350-*). Seçiciler (paylaşım hedefi, hikâye kitlesi, alıntı) ekipleri de listeler, çünkü ekibe de paylaşılır.
+ * `nextOffset`: sonraki sayfanın SUNUCU konumu — süzgeç satır saydığı için istemci `communities.length`i ofset diye KULLANMAZ.
+ */
+export async function listMyCommunities(
+  scope: MyCommunityScope,
+  offset = 0,
+  options: { excludeTeams?: boolean } = {},
+): Promise<{ communities: CommunitySummary[]; hasMore: boolean; nextOffset: number }> {
   const rows = await callRpc<MineRow[]>("list_my_communities", { p_scope: scope, p_limit: COMMUNITY_PAGE_SIZE + 1, p_offset: offset });
   const list = rows ?? [];
   return {
     hasMore: list.length > COMMUNITY_PAGE_SIZE,
-    communities: list.slice(0, COMMUNITY_PAGE_SIZE).map((row) => ({
+    nextOffset: offset + Math.min(list.length, COMMUNITY_PAGE_SIZE),
+    communities: list.filter((row) => !(options.excludeTeams && row.visibility === "private")).slice(0, COMMUNITY_PAGE_SIZE).map((row) => ({
       id: row.id,
       name: row.name,
       description: row.description,
@@ -460,6 +470,54 @@ export async function listMyCommunities(scope: MyCommunityScope, offset = 0): Pr
       myStatus: row.my_role ? "member" : "none",
       myRole: row.my_role,
       unreadCount: row.unread_count,
+      pendingRequestCount: row.pending_request_count,
+    })),
+  };
+}
+
+/** "Ekipler" başlığındaki bir ekip (üye olduğum tamamen kapalı topluluk; `list_my_teams`, docs/history/350-*). */
+export interface TeamSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  avatarUrl: string | null;
+  memberCount: number;
+  closed: boolean;
+  createdAt: string;
+  lastActivityAt: string | null;
+  myRole: GroupRole;
+  unreadCount: number;
+  /** Arşivlenmemiş ekip Space'lerinin sayısı. */
+  spaceCount: number;
+  pendingRequestCount: number;
+}
+
+export const TEAM_PAGE_SIZE = 24;
+
+interface TeamRow {
+  id: string; name: string; description: string | null; avatar_url: string | null; member_count: number; closed: boolean; created_at: string;
+  last_activity_at: string | null; my_role: GroupRole; unread_count: number; space_count: number; pending_request_count: number;
+}
+
+/** Üye olduğum ekipler, sayfa sayfa (docs/history/350-*). Ekip = tamamen kapalı topluluk; üye olmadığım ekibin varlığı sızmaz (sunucu üyelik arar). */
+export async function listMyTeams(offset = 0): Promise<{ items: TeamSummary[]; total: number | null; nextOffset: number | null }> {
+  const rows = (await callRpc<TeamRow[]>("list_my_teams", { p_limit: TEAM_PAGE_SIZE + 1, p_offset: offset })) ?? [];
+  const page = rows.slice(0, TEAM_PAGE_SIZE);
+  return {
+    total: null,
+    nextOffset: rows.length > TEAM_PAGE_SIZE ? offset + TEAM_PAGE_SIZE : null,
+    items: page.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      avatarUrl: row.avatar_url,
+      memberCount: row.member_count,
+      closed: row.closed,
+      createdAt: row.created_at,
+      lastActivityAt: row.last_activity_at,
+      myRole: row.my_role,
+      unreadCount: row.unread_count,
+      spaceCount: row.space_count,
       pendingRequestCount: row.pending_request_count,
     })),
   };

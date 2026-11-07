@@ -67,6 +67,7 @@ export function VisibilityPicker({
   disabled = false,
   name = "community-visibility",
   currentLabel,
+  options = VISIBILITY_OPTIONS,
 }: {
   value: GroupVisibility;
   onChange: (next: GroupVisibility) => void;
@@ -74,14 +75,16 @@ export function VisibilityPicker({
   name?: string;
   /** Verilirse seçili kartta "Seçili" yerine bu etiket (ör. Ayarlar'da "Şu anki"). */
   currentLabel?: string;
+  /** Seçilebilir düzeyler (varsayılan hepsi). Topluluklarda "Tamamen kapalı" = ekip yoktur (docs/history/350-*). */
+  options?: readonly GroupVisibility[];
 }) {
   const { t } = useTranslation();
   const baseId = useId();
   return (
     <fieldset className="space-y-3" disabled={disabled}>
       <legend className={fieldLabelClassName}>{t("groups.visibility.label")}</legend>
-      <div role="radiogroup" aria-label={t("communities.visibility.optionsAria")} className="grid gap-2 md:grid-cols-3">
-        {VISIBILITY_OPTIONS.map((option) => {
+      <div role="radiogroup" aria-label={t("communities.visibility.optionsAria")} className={cn("grid gap-2", options.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3")}>
+        {options.map((option) => {
           const Icon = VISIBILITY_ICONS[option];
           const selected = value === option;
           return (
@@ -133,7 +136,7 @@ export function VisibilityPicker({
           <thead>
             <tr className="bg-surface-soft/60">
               <th scope="col" className="w-1/4 px-3 py-2 font-medium text-text-muted" />
-              {VISIBILITY_OPTIONS.map((option) => (
+              {options.map((option) => (
                 <th key={option} scope="col" className={cn("px-3 py-2 font-semibold", value === option ? "bg-primary-soft/60 text-primary" : "text-text")}>
                   {t(VISIBILITY_LABEL_KEYS[option])}
                 </th>
@@ -146,7 +149,7 @@ export function VisibilityPicker({
                 <th scope="row" className="px-3 py-2 align-top font-medium text-text-muted">
                   {t(FACT_LABEL_KEYS[fact])}
                 </th>
-                {VISIBILITY_OPTIONS.map((option) => (
+                {options.map((option) => (
                   <td key={option} className={cn("px-3 py-2 align-top text-text-secondary", value === option && "bg-primary-soft/30")}>
                     <span className="flex items-start gap-1.5">
                       {isOpen(option, fact) ? <Check size={12} className="mt-0.5 shrink-0 text-success" aria-hidden /> : <X size={12} className="mt-0.5 shrink-0 text-text-muted" aria-hidden />}

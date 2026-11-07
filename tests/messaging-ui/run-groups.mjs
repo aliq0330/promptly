@@ -136,7 +136,7 @@ await scenario("5. Admin (topluluk Yönet → Ayarlar): kapalı→açık onay me
   await page.getByText("3 üye").first().waitFor();
 }, {
   setup: (db) => {
-    seed(db, { myRole: "admin", members: [[U.bob, "member"]], member_limit: 3, pending: 3, texts: [] });
+    seed(db, { myRole: "admin", visibility: "restricted", members: [[U.bob, "member"]], member_limit: 3, pending: 3, texts: [] }); // kapalı (restricted): tamamen kapalı artık ekip, görünürlüğü değişmez (docs/history/350-*)
     for (const u of [U.carol, U.dave, U.amy]) db.requests.push({ id: crypto.randomUUID(), group_id: G, user_id: u.id, message: null, status: "pending", created_at: db.stamp() });
   },
 });
@@ -149,8 +149,8 @@ await scenario("6. Görünürlük değişikliği başarısızsa başarı göster
   await dlg(page).getByRole("button", { name: "Herkese açık yap" }).click();
   await dlg(page).getByRole("alert").getByText("Bu işlem için yetkin yok.").waitFor();
   assert.equal(await page.getByRole("heading", { name: "Topluluk herkese açık yapıldı" }).count(), 0);
-  assert.equal(db.groups[0].visibility, "private");
-}, { setup: (db) => { seed(db, { myRole: "admin" }); db.rpc.set_chat_group_visibility = () => ({ status: 400, body: { code: "P0001", message: "forbidden", details: "", hint: "" } }); } });
+  assert.equal(db.groups[0].visibility, "restricted");
+}, { setup: (db) => { seed(db, { myRole: "admin", visibility: "restricted" }); db.rpc.set_chat_group_visibility = () => ({ status: 400, body: { code: "P0001", message: "forbidden", details: "", hint: "" } }); } });
 
 // 7
 await scenario("7. 'Yalnızca yöneticiler yazabilir': üyede giriş kapalı + açıklama; moderatörde açık", async ({ page }) => {
@@ -504,7 +504,7 @@ await scenario("26. Topluluk sayfası: yetkiliye başlıkta 'N bekleyen istek' k
   await page.getByRole("button", { name: "Erin isteğini kabul et" }).click();
   await page.getByText("Erin topluluğa kabul edildi.").waitFor();
   assert.equal(calls(db, "rpc/decide_chat_group_join_request").length, 1);
-}, { setup: (db) => { seed(db, { myRole: "admin", members: [[U.dave, "member"]], pending: 2 }); db.requests.push({ id: "e0000000-0000-4000-8000-000000000001", group_id: G, user_id: U.erin.id, message: null, status: "pending", created_at: db.stamp() }, { id: "e0000000-0000-4000-8000-000000000002", group_id: G, user_id: U.zed.id, message: null, status: "pending", created_at: db.stamp() }); } });
+}, { setup: (db) => { seed(db, { myRole: "admin", visibility: "restricted", members: [[U.dave, "member"]], pending: 2 }); db.requests.push({ id: "e0000000-0000-4000-8000-000000000001", group_id: G, user_id: U.erin.id, message: null, status: "pending", created_at: db.stamp() }, { id: "e0000000-0000-4000-8000-000000000002", group_id: G, user_id: U.zed.id, message: null, status: "pending", created_at: db.stamp() }); } });
 
 await scenario("26b. Sıradan üye ve istek yokken: başlıkta kısayol, sayaç ve sohbet rozeti çizilmez", async ({ page }) => {
   await openCommunity(page);
@@ -521,7 +521,7 @@ await scenario("27. Topluluk ↔ sohbet geçişi: başlıktaki 'Sohbeti aç' soh
   await dlg(page).locator("[data-info-community-link]").click();
   await page.waitForURL(/communities\/local\/?\?id=/);
   assert.equal(await tabIsActive(page, "Akış"), true);
-}, { setup: (db) => seed(db, { myRole: "member" }) });
+}, { setup: (db) => seed(db, { myRole: "member", visibility: "restricted" }) });
 
 await scenario("28. Hakkında: kişiye özel tercihler (topluluk bildirim düzeyi + sohbeti sessize al + ayrıl) topluluk sayfasında; sessize alma bilgi penceresiyle AYNI durumu değiştirir", async ({ page, db }) => {
   await openCommunity(page, "about");

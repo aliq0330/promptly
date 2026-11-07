@@ -24,7 +24,7 @@ export function HomePostsTab({ onToast }: { onToast: (message: string) => void }
   useEffect(() => {
     if (!emptyReady) return;
     let cancelled = false;
-    listMyCommunities("member", 0)
+    listMyCommunities("member", 0, { excludeTeams: true })
       .then((page) => !cancelled && setMemberOfAny(page.communities.length > 0))
       .catch(() => !cancelled && setMemberOfAny(null));
     return () => {

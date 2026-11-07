@@ -106,6 +106,17 @@ export function setupCommunities(db) {
       }));
       return json(200, list);
     }
+    // Ekipler (docs/history/350-*): üye olduğum tamamen kapalı topluluklar (sunucudaki `list_my_teams` kuralı).
+    if (table === "rpc/list_my_teams") {
+      log("list_my_teams", body);
+      const list = db.groups.filter((x) => x.visibility === "private" && Boolean(role(x.id))).map((x) => ({
+        id: x.id, name: x.name, description: x.description, avatar_url: x.avatar_url ?? null, member_count: x.member_count, closed: Boolean(x.closed_at), created_at: x.created_at,
+        last_activity_at: x.last_activity_at ?? null, my_role: role(x.id), unread_count: db.member(x.id, signedIn)?.unread_count ?? 0,
+        space_count: (db.spaces ?? []).filter((sp) => sp.community_id === x.id && !sp.archived_at).length, pending_request_count: staff(x.id) ? x.pending_request_count : 0,
+      }));
+      const offset = body.p_offset ?? 0;
+      return json(200, list.slice(offset, offset + (body.p_limit ?? 30)));
+    }
     if (table === "rpc/community_members") {
       if (!db.member(body.p_group_id, signedIn)) return json(200, []);
       const term = (body.p_search ?? "").toLowerCase();

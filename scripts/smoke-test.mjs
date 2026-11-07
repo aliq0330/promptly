@@ -54,6 +54,7 @@ const CHECKS = [
   { name: "rpc space_request_review ziyaretçiye KAPALI olmalı (Onaya gönder, docs/history/349-*)", rpc: "space_request_review", body: { p_item: "00000000-0000-4000-8000-000000000000", p_withdraw: false }, mustBeDenied: true },
   { name: "rpc space_restore_item_version ziyaretçiye KAPALI olmalı (sürüm geri yükleme, docs/history/349-*)", rpc: "space_restore_item_version", body: { p_version: "00000000-0000-4000-8000-000000000000" }, mustBeDenied: true },
   { name: "rpc space_can_approve ziyaretçiye KAPALI olmalı (docs/history/349-*)", rpc: "space_can_approve", body: { p_space: "00000000-0000-4000-8000-000000000000" }, mustBeDenied: true },
+  { name: "rpc list_my_teams ziyaretçiye KAPALI olmalı (Ekipler listesi, docs/history/350-*)", rpc: "list_my_teams", body: { p_limit: 1, p_offset: 0 }, mustBeDenied: true },
   { name: "rpc api_me_libraries ziyaretçiye KAPALI olmalı (kişisel API okuması, docs/history/348-*)", rpc: "api_me_libraries", body: {}, mustBeDenied: true },
   { name: "prompt_comments (puan + etkinlik yorumu)", get: () => `prompt_comments?select=${encodeURIComponent("id,rating,space_activity_id")}&limit=1` },
   { name: "prompt_comments medya + içerik eki (docs/history/308-*)", get: () => `prompt_comments?select=${encodeURIComponent("id,media_kind,media_ref,media_width,media_height,attach_type,attach_id")}&limit=1` },

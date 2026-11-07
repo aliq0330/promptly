@@ -77,7 +77,7 @@ await scenario("1. 'Space'ler' sekmesi YALNIZ tamamen kapalı (ekip alanı) topl
   await openTeam(page, "feed");
   const names = await sectionNames(page);
   assert.ok(names.includes("Space'ler"), `ekipte sekme var: ${names}`);
-  assert.ok(names.indexOf("Space'ler") === 1, "Akış'tan hemen sonra");
+  assert.ok(names.indexOf("Space'ler") === 0 && names.indexOf("Paylaşımlar") === 1, "ekipte Space'ler ilk, Akış 'Paylaşımlar' adıyla ikinci (docs/history/350-*)");
   for (const id of [OPEN, RESTRICTED]) {
     await page.goto(`${BASE}/communities/local?id=${id}`);
     await page.locator("h1").first().waitFor();
@@ -176,13 +176,13 @@ await scenario("8. Yönetim → Ayarlar: iki yeni yetenek (Ekibe Space açma ve 
   await shot(page, "team-capabilities");
 });
 
-await scenario("9. Topluluk oluştur: üçüncü seçenek 'Tamamen kapalı (ekip alanı)' ve açıklaması", async ({ page }) => {
+await scenario("9. Topluluk oluştur: 'Tamamen kapalı' artık ekip — seçenek yok (iki düzey kalır); ekip yalnız Ekipler'den kurulur (run-teams)", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const d = page.getByRole("dialog").last();
-  await d.getByRole("radio", { name: /^Tamamen kapalı \(ekip alanı\)/ }).waitFor();
-  await d.getByText(/ortak Space'ler açabilirsiniz/).waitFor();
-  assert.equal(await d.getByRole("radio", { name: /^(Herkese açık|Kapalı|Tamamen kapalı)/ }).count(), 3);
+  await d.getByRole("radio", { name: /^Kapalı/ }).waitFor();
+  assert.equal(await d.getByRole("radio", { name: /^Tamamen kapalı/ }).count(), 0);
+  assert.equal(await d.getByRole("radio", { name: /^(Herkese açık|Kapalı|Tamamen kapalı)/ }).count(), 2);
 }, { setup: null });
 
 await scenario("10. İngilizce + telefon: sekme, yeni Space penceresi ve şerit çevrili; yatay taşma yok", async ({ page }) => {

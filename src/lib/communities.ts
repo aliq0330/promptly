@@ -54,6 +54,17 @@ export const CATEGORY_LABEL_KEYS: Record<CommunityCategory, TranslationKey> = {
 /** Seçicilerde gösterim sırası: en açıktan en kapalıya. */
 export const VISIBILITY_OPTIONS: readonly GroupVisibility[] = ["public", "restricted", "private"];
 
+/**
+ * "Topluluk oluştur" ve topluluk ayarlarında seçilebilen düzeyler (docs/history/350-*): "Tamamen kapalı" artık EKİP'tir ve yalnız "Ekip oluştur"la
+ * kurulur; bir topluluk ekibe, ekip topluluğa arayüzden çevrilmez (sunucu kuralları değişmedi).
+ */
+export const COMMUNITY_VISIBILITY_OPTIONS: readonly GroupVisibility[] = ["public", "restricted"];
+
+/** Ekip = "tamamen kapalı" topluluk (docs/history/349-*, 350-*): tek tanım. */
+export function isTeamVisibility(visibility: GroupVisibility): boolean {
+  return visibility === "private";
+}
+
 export const VISIBILITY_LABEL_KEYS: Record<GroupVisibility, TranslationKey> = {
   public: "groups.visibility.public",
   restricted: "groups.visibility.restricted",
@@ -150,7 +161,7 @@ export function canSeeManageTab(role: GroupRole | null | undefined, perms?: Role
 
 /**
  * Topluluk sayfasında kullanıcıya hangi sekmeler gösterilir:
- *   üye            → Akış · Etkinlikler · Üyeler · Hakkında (+ yönetim bölümü açılabiliyorsa Yönet)
+ *   üye            → Akış · Etkinlikler · Üyeler · Hakkında (+ yönetim bölümü açılabiliyorsa Yönet); EKİPTE (tamamen kapalı) Space'ler Akış'tan ÖNCE gelir
  *   üye değil      → herkese açık toplulukta Akış · Etkinlikler · Hakkında (okuma); kapalı toplulukta yalnızca "geçit" (sekme yok)
  * Üye listesi üyelik gerektirir; kapalı topluluğun içeriği üyelik olmadan okunamaz (RLS de böyle).
  */
@@ -158,7 +169,8 @@ export function accessibleTabs(args: { role: GroupRole | null; visibility: Group
   const { role, visibility, perms } = args;
   if (!role) return visibility === "public" ? ["feed", "events", "about"] : [];
   // "Space'ler" yalnız ekip alanında (tamamen kapalı topluluk; docs/history/349-*).
-  const tabs: CommunityTab[] = visibility === "private" ? ["feed", "spaces", "events", "members", "about"] : ["feed", "events", "members", "about"];
+  // Ekipte günlük iş Space'lerdedir: "Space'ler" ilk sekme (varsayılan açılış), Akış ikinci ("Paylaşımlar", docs/history/350-*).
+  const tabs: CommunityTab[] = visibility === "private" ? ["spaces", "feed", "events", "members", "about"] : ["feed", "events", "members", "about"];
   if (canSeeManageTab(role, perms)) tabs.push("manage");
   return tabs;
 }
