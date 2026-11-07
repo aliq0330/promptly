@@ -13,6 +13,7 @@ import {
   getOrCreateDirectConversation,
   restoreConversationToList,
   setConversationArchived,
+  setConversationPinned,
 } from "@/lib/supabase/messages";
 import { markConversationReadUpTo } from "@/lib/supabase/chat-features";
 import { supabase } from "@/lib/supabase/client";
@@ -41,6 +42,8 @@ interface RealMessagesContextValue {
    * a rejected promise means nothing changed, so callers show an error, never a success.
    */
   archiveConversation: (conversationId: string) => Promise<void>;
+  /** Sohbeti listenin başına sabitler / sabitlemeyi kaldırır (docs/history/352-*); yalnız kendi satırı, sunucu onayından sonra yerel liste değişir. */
+  pinConversation: (conversationId: string, pinned: boolean) => Promise<void>;
   unarchiveConversation: (conversationId: string) => Promise<void>;
   deleteConversation: (conversationId: string) => Promise<void>;
   clearConversation: (conversationId: string) => Promise<void>;
@@ -195,6 +198,15 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
     [user, patchConversation],
   );
 
+  const pinConversation = useCallback(
+    async (conversationId: string, pinned: boolean) => {
+      if (!user) return;
+      const pinnedAt = await setConversationPinned(conversationId, user.id, pinned);
+      patchConversation(conversationId, { pinnedAt });
+    },
+    [user, patchConversation],
+  );
+
   const unarchiveConversation = useCallback(
     async (conversationId: string) => {
       if (!user) return;
@@ -267,6 +279,7 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
       acceptRequest,
       declineRequest,
       archiveConversation,
+      pinConversation,
       unarchiveConversation,
       deleteConversation,
       clearConversation,
@@ -285,6 +298,7 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
       declineRequest,
       archiveConversation,
       unarchiveConversation,
+      pinConversation,
       deleteConversation,
       clearConversation,
       markConversationRead,

@@ -1,12 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ArchiveRestore } from "@/components/icons/archive-restore";
 import { BellOff } from "@/components/icons/bell-off";
 import { Check } from "@/components/icons/check";
+import { ChevronDown } from "@/components/icons/chevron-down";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { Pin } from "@/components/icons/pin";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
-import { cn, formatRelativeTime, formatUnread, messageHref } from "@/lib/utils";
+import { RoomTree } from "./rooms/room-tree";
+import { cn, formatRelativeTime, formatUnread, messageHref, roomsHubHref } from "@/lib/utils";
+import { isTeamVisibility } from "@/lib/communities";
+import { roomSlug } from "@/lib/community-rooms";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation } from "@/types";
 
@@ -20,6 +28,7 @@ export function ConversationRow({
   unarchiveBusy,
   selection,
   onOpen,
+  expandable = false,
 }: {
   conversation: Conversation;
   /** Set by `/messages?sharePromptId=`/`?shareRequestId=` — appended so picking this conversation attaches the shared content there. */
@@ -33,6 +42,8 @@ export function ConversationRow({
   selection?: { selected: boolean; onToggle: () => void };
   /** Mesajlar dock'u (docs/history/328-*): satır sayfaya götüren bir bağlantı değil, sohbeti panelde açan bir düğme olur. */
   onOpen?: (conversation: Conversation) => void;
+  /** İki bölmeli masaüstü paneli (docs/history/352-*): topluluk satırının altında oda ağacı açılır; ok, oda listesi bağlantısı yerine ağacı açıp kapatır. */
+  expandable?: boolean;
 }) {
   const { t, language } = useTranslation();
   const participant = conversation.participants[0];
@@ -41,7 +52,13 @@ export function ConversationRow({
   const muted = Boolean(conversation.mutedAt);
   const selecting = selection !== undefined;
   const selected = selection?.selected === true;
+  const [treeOpen, setTreeOpen] = useState<boolean | null>(null);
+  // Sol panel telefonda gizlidir (`hidden md:flex`) ama bağlıdır: oda ağacı yalnız görünür olduğunda yüklenir/çizilir.
+  const paneVisible = useMediaQuery("(min-width: 768px)");
   const unread = conversation.unreadCount > 0;
+  const isTeam = group ? isTeamVisibility(group.visibility) : false;
+  const pinned = Boolean(conversation.pinnedAt);
+  const lastRoom = group ? conversation.lastRoom : null;
 
   const content = (
     <>
@@ -68,6 +85,7 @@ export function ConversationRow({
         <span className="flex items-baseline justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1.5">
             <span className={cn("truncate text-body tracking-[-0.01em] text-text", unread ? "font-bold" : "font-semibold")}>{title}</span>
+            {isTeam && <span data-team-tag className="shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-[11px] font-bold text-text-secondary">{t("rooms.list.teamTag")}</span>}
             {muted && <BellOff size={12} className="shrink-0 text-text-muted" aria-label={t("groups.about.muteLabel")} />}
           </span>
           <span className={cn("shrink-0 text-caption tabular-nums", unread ? "font-semibold text-text" : "text-text-muted")}>
@@ -75,7 +93,11 @@ export function ConversationRow({
           </span>
         </span>
         <span className="flex items-start justify-between gap-2">
-          <span className={cn("line-clamp-2 min-w-0 flex-1 break-words text-small", unread ? "font-medium text-text" : "text-text-muted")}>{conversation.lastMessage}</span>
+          <span className={cn("line-clamp-2 min-w-0 flex-1 break-words text-small", unread ? "font-medium text-text" : "text-text-muted")}>
+            {lastRoom && <span data-last-room className="font-bold text-primary"># {roomSlug(lastRoom.name)} </span>}
+            {conversation.lastMessage}
+          </span>
+          {pinned && !unread && <Pin size={14} className="mt-1 shrink-0 text-text-muted" aria-label={t("rooms.list.pinned")} />}
           {unread && (
             <span
               className={cn(
@@ -98,6 +120,7 @@ export function ConversationRow({
   );
 
   return (
+    <div>
     <div className="flex items-stretch">
       {selecting ? (
         <button type="button" role="checkbox" aria-checked={selected} aria-label={title} onClick={selection.onToggle} data-conversation-row className={cn(rowClass, "min-w-0 flex-1")}>
@@ -117,6 +140,28 @@ export function ConversationRow({
           {content}
         </Link>
       )}
+      {group && expandable && !onOpen && !selecting && !onUnarchive && (
+        <button
+          type="button"
+          onClick={() => setTreeOpen(!(treeOpen ?? Boolean(isActive)))}
+          aria-expanded={treeOpen ?? Boolean(isActive)}
+          aria-label={(treeOpen ?? Boolean(isActive)) ? t("rooms.tree.collapse") : t("rooms.tree.expand")}
+          data-toggle-rooms
+          className="flex w-11 shrink-0 items-center justify-center text-text-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        >
+          {(treeOpen ?? Boolean(isActive)) ? <ChevronDown size={22} aria-hidden /> : <ChevronRight size={22} aria-hidden />}
+        </button>
+      )}
+      {group && !expandable && !onOpen && !selecting && !onUnarchive && (
+        <Link
+          href={roomsHubHref(group.id)}
+          aria-label={t("rooms.list.openRooms", { name: group.name })}
+          data-open-rooms
+          className={cn("flex w-11 shrink-0 items-center justify-center text-text-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary", isActive && "bg-primary-soft")}
+        >
+          <ChevronRight size={22} aria-hidden />
+        </Link>
+      )}
       {onUnarchive && !selecting && (
         <button
           type="button"
@@ -129,6 +174,8 @@ export function ConversationRow({
           <ArchiveRestore size={16} />
         </button>
       )}
+    </div>
+    {group && expandable && paneVisible && !selecting && !onOpen && (treeOpen ?? Boolean(isActive)) && <RoomTree communityId={group.id} isActiveConversation={Boolean(isActive)} />}
     </div>
   );
 }

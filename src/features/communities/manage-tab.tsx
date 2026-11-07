@@ -10,6 +10,7 @@ import { AuditSection } from "./audit-section";
 import { CommunitySettingsSection } from "./community-settings-section";
 import { ModerationSection } from "./moderation-section";
 import { StatsSection } from "./stats-section";
+import { RoomsManageSection } from "@/features/messages/rooms/rooms-manage-section";
 import type { CommunityTabProps } from "./community-page";
 import { canSeeSettingsTab } from "@/lib/chat-groups";
 import { communityHref, manageSections, type ManageSection } from "@/lib/communities";
@@ -34,6 +35,7 @@ export function ManageTab({ group, role, onToast, reload, section }: CommunityTa
     const labels: Record<ManageSection, string> = {
       stats: t("communities.manage.stats"),
       settings: t("groups.tab.settings"),
+      rooms: t("rooms.manage.title"),
       announcements: t("communities.manage.announcements"),
       moderation: t("communities.manage.moderation"),
       history: t("communities.manage.history"),
@@ -79,6 +81,7 @@ export function ManageTab({ group, role, onToast, reload, section }: CommunityTa
             )}
           </div>
         )}
+        {active === "rooms" && <RoomsManageSection group={group} onToast={onToast} />}
         {active === "announcements" && <AnnouncementsSection group={group} role={role} limit={50} onToast={onToast} />}
         {active === "moderation" && <ModerationSection groupId={group.id} onChanged={reload} />}
         {active === "history" && <AuditSection groupId={group.id} />}

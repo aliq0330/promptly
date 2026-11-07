@@ -24,7 +24,7 @@ Topluluklar, ortak ilgi alanında toplanan kişilerin kendi **akışı**, **sohb
 | Bilgi/ayar paneli | Sekmeler (Akış · Etkinlikler · Üyeler · Hakkında · Yönet) | Kompakt "sohbet bilgi penceresi" |
 | Okuma erişimi | Herkese açık toplulukta ziyaretçi bile | Yalnız üye |
 
-Veri düzeyinde ikisi **aynı kayıttır**: `chat_groups.id = conversations.id = topluluk kimliği` (bkz. Kategori 8). Her topluluğun **tam bir** sohbeti vardır; birden fazla sohbet desteklenmez. Üyelik tek satırdır (`conversation_members`): topluluğa katılan sohbete de katılmış olur, ayrılan/çıkarılan ikisinden de çıkar.
+Veri düzeyinde ikisi **aynı kayıttır**: `chat_groups.id = conversations.id = topluluk kimliği` (bkz. Kategori 8). Her topluluğun tek bir SOHBETİ vardır; bu sohbet **birden çok odaya** bölünür (`docs/history/352-*`): mesajlar aynı sohbette kalır, `messages.room_id` NULL = varsayılan oda ("Genel"), dolu = `community_rooms` satırı. Ayrı bir sohbet/üyelik açılmaz. Üyelik tek satırdır (`conversation_members`): topluluğa katılan sohbete de katılmış olur, ayrılan/çıkarılan ikisinden de çıkar.
 
 ### Temel bileşenler
 
@@ -270,6 +270,13 @@ Admin/moderatör yetkileri rol adına değil **yeteneğe** bağlıdır (`chat_gr
 - **Mesaj gönderme**: `can_send_message` — üye + `posting_policy` ('members' | 'admins') + kapatılmamış topluluk + engel yok.
 - **Geçmiş**: grupta `created_at >= joined_at`, owner `history_visible` açarsa yeni üyeler önceki mesajları da görür.
 - **Moderasyon**: `delete_messages` yeteneği (`moderate_chat_group_message`), rütbe kuralıyla; mesajı topluluk yöneticilerine bildirme (`report_community_content`).
+
+### Sohbet odaları (`docs/history/352-*`)
+
+- **Veri:** `community_rooms` (ad ≤40, açıklama ≤120, simge, bölüm, sıra, `posting_policy` members|admins, `read_policy` all|staff, `is_default`, `archived_at`; ≤20 etkin oda), `community_room_state` (okundu imleci + sessize alma, yalnız kendi satırım), `messages.room_id`. Genel odası her topluluğun tetikleyiciyle açılan varsayılan odasıdır; silinemez/arşivlenemez; "kim yazar" ayarı `chat_groups.posting_policy`'dir.
+- **Yetki:** `manage_rooms` (oluştur/düzenle/sırala/arşivle: sahip + varsayılan yönetici; silme yalnız sahip). Okuma `can_read_room`, yazma `can_post_room` (messages RLS); özel odanın mesajı üyeye görünmez.
+- **Ekranlar:** Mesajlar satırı (`# oda` etiketi, ok) → sohbet merkezi `/messages/local?id=&view=rooms` → oda `?room=`; oda çipi oda değiştiriciyi açar; Yönetim → Sohbet odaları; masaüstünde sol panelde oda ağacı ve sağda "Bu oda" paneli.
+- **Okunmamış:** okuma anında (`community_rooms_overview`, genişleyen `group_unread_counts`); oda mesajı bildirim üretmez.
 
 ### Grup bilgisi penceresi (kompakt sohbet paneli)
 

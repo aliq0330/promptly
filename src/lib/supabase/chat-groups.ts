@@ -102,6 +102,16 @@ const ERROR_KEYS: Record<GroupErrorCode, TranslationKey> = {
   report_limit: "communities.error.report_limit",
   already_reported: "communities.error.already_reported",
   invalid_action: "communities.error.generic",
+  // Sohbet odaları (docs/history/352-*)
+  invalid_room_name: "rooms.error.invalidName",
+  invalid_room_description: "rooms.error.invalidDescription",
+  invalid_room_section: "rooms.error.invalidSection",
+  invalid_room_icon: "groups.error.generic",
+  invalid_room_policy: "groups.error.generic",
+  room_limit_reached: "rooms.error.limitReached",
+  room_name_taken: "rooms.error.nameTaken",
+  room_not_found: "rooms.error.notFound",
+  room_default_locked: "rooms.error.defaultLocked",
 };
 
 export class GroupActionError extends Error {

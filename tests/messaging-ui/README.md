@@ -372,3 +372,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-space-librar
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-team-spaces.mjs   # 25/25 beklenir
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-teams.mjs   # 16/16 beklenir
 ```
+
+## Topluluk sohbet odaları (`docs/history/352-*`)
+
+`run-rooms.mjs` (29 senaryo): Mesajlar çipleri (Tümü · Kişisel · Topluluk · Ekip, boş durum), topluluk satırında `# oda` etiketi + ok, sohbet merkezi (bölümler, rozet, kilit, yetkiye göre Oda Ekle), oda sohbeti (çip, başlık, yalnız açık odanın mesajları, başlıktan merkeze), oda değiştirici (arama, geçiş), gönderme (`room_id`), salt okunur oda, okundu imleci, sessize alma, oda ekle/düzenle formu (doğrulama, "ne olacak" cümlesi, RPC parametreleri, aynı ad hatası), yönetim (sayaç, sıralama, arşiv, silme yalnız sahip, Bölüme taşı, 20 sınırı), masaüstü oda ağacı + "Bu oda" paneli, sohbet sabitleme, İngilizce, mobil taşma, eski veritabanı geri dönüşü. Ağ taklidi `mock-rooms.mjs` (`db.rpc` geçersiz kılmaları + `db.addRoom`); gerçek kurallar `supabase/tests/community-rooms.sql`'dedir. Gerçek Supabase'e KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-rooms.mjs   # 29/29 beklenir (port 4179)
+```
+

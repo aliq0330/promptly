@@ -24,6 +24,7 @@ interface MembershipRow {
   deleted_at: string | null;
   cleared_at: string | null;
   muted_at: string | null;
+  pinned_at?: string | null;
   conversations: ConversationEmbed | null;
 }
 
@@ -44,9 +45,11 @@ export interface MessageRow {
   /** Hikâyeye özel yanıt (docs/history/198-*): yalnız `reply_to_story` doldurur. */
   story_id?: string | null;
   is_story_reply?: boolean | null;
+  /** Topluluk sohbet odası (docs/history/352-*): null = varsayılan oda. */
+  room_id?: string | null;
 }
 
-const MEMBERSHIP_SELECT = `conversation_id, unread_count, status, role, archived_at, deleted_at, cleared_at, muted_at, conversations(id, last_message_at, kind, chat_groups(${CHAT_GROUP_SELECT}))`;
+const MEMBERSHIP_SELECT = `conversation_id, unread_count, status, role, archived_at, deleted_at, cleared_at, muted_at, pinned_at, conversations(id, last_message_at, kind, chat_groups(${CHAT_GROUP_SELECT}))`;
 
 /** Üyelik satırının grup tarafı (grup değilse null). */
 function groupFromMembership(row: MembershipRow) {
@@ -57,7 +60,7 @@ function groupFromMembership(row: MembershipRow) {
 }
 
 export const MESSAGE_SELECT =
-  "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, attachments, edited_at, deleted_at, created_at, announcement_id, story_id, is_story_reply";
+  "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, attachments, edited_at, deleted_at, created_at, announcement_id, story_id, is_story_reply, room_id";
 
 /** Defensive read of the `attachments` jsonb column — anything that isn't a well-formed `{path, mime}` entry is dropped rather than trusted. */
 function parseAttachments(raw: unknown): MessageAttachment[] {
@@ -92,6 +95,7 @@ export function mapMessageRow(row: MessageRow): Message {
     deletedAt: row.deleted_at,
     createdAt: row.created_at,
     announcementId: row.announcement_id ?? null,
+    roomId: row.room_id ?? null,
     storyId: row.story_id ?? null,
     isStoryReply: row.is_story_reply === true,
   };
@@ -156,6 +160,8 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
 
     // Her konuşmanın görünür SON mesajı (sunucu: kişisel temizleme + RLS uygulanmış, konuşma başına tek satır).
     const lastMessageByConversation = await fetchLastMessages(conversationIds);
+    // Topluluk sohbetlerinde son mesajın odası ("# oda" etiketi); eksik migration → boş harita.
+    const lastRoomByConversation = await fetchLastRooms(rows.filter((m) => m.conversations?.kind === "group").map((m) => m.conversation_id));
     // Grupta okunmamış sayısı sunucuda okuma anında hesaplanır (docs/history/258-*); migration yoksa sütun değeri kalır.
     const groupUnread = await fetchGroupUnreadCounts(rows.filter((m) => m.conversations?.kind === "group").map((m) => m.conversation_id));
 
@@ -181,6 +187,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
           deletedAt: m.deleted_at,
           mutedAt: m.muted_at,
           clearedAt: m.cleared_at,
+          pinnedAt: m.pinned_at ?? null,
         };
         if (m.conversations?.kind === "group") {
           const group = groupFromMembership(m);
@@ -191,6 +198,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
             group,
             participants: [],
             lastMessage: groupPreview(last, last?.sender_id === userId ? null : groupSenderNames.get(last?.sender_id ?? "")),
+            lastRoom: lastRoomByConversation.get(m.conversation_id) ?? null,
           };
         }
         const otherProfile = otherByConversation.get(m.conversation_id);
@@ -225,6 +233,20 @@ async function fetchLastMessages(conversationIds: string[]): Promise<Map<string,
     }),
   );
   for (const row of answers.flat()) result.set(row.conversation_id, row);
+  return result;
+}
+
+/** `community_last_rooms` RPC: topluluk sohbetinin son görünür mesajının odası. Hata/eksik migration → boş harita (etiket çizilmez). */
+async function fetchLastRooms(groupIds: string[]): Promise<Map<string, { id: string; name: string }>> {
+  const result = new Map<string, { id: string; name: string }>();
+  const answers = await Promise.all(
+    chunk(groupIds, 200).map(async (ids) => {
+      const { data, error } = await supabase.rpc("community_last_rooms", { p_conversation_ids: ids });
+      if (error || !Array.isArray(data)) return [];
+      return data as { conversation_id: string; room_id: string | null; room_name: string | null }[];
+    }),
+  );
+  for (const row of answers.flat()) if (row.room_id && row.room_name) result.set(row.conversation_id, { id: row.room_id, name: row.room_name });
   return result;
 }
 
@@ -304,13 +326,15 @@ export async function fetchConversationForUser(conversationId: string, userId: s
       deletedAt: row.deleted_at,
       mutedAt: row.muted_at,
       clearedAt: row.cleared_at,
+      pinnedAt: row.pinned_at ?? null,
     };
 
     if (isGroup) {
       const group = groupFromMembership(row);
       if (!group) return null;
       const names = await fetchSenderNames([last?.sender_id], userId);
-      return { ...base, kind: "group", group, participants: [], lastMessage: groupPreview(last, last?.sender_id === userId ? null : names.get(last?.sender_id ?? "")) };
+      const lastRoom = (await fetchLastRooms([conversationId])).get(conversationId) ?? null;
+      return { ...base, kind: "group", group, participants: [], lastMessage: groupPreview(last, last?.sender_id === userId ? null : names.get(last?.sender_id ?? "")), lastRoom };
     }
     return { ...base, kind: "direct", group: null, participants: [mapProfileRow(otherProfile as ProfileRow)], lastMessage: previewTextFor(last) };
   } catch (err) {
@@ -332,6 +356,19 @@ export async function fetchMessages(conversationId: string, viewerId: string): P
   return (await fetchMessagePage(conversationId, viewerId)).messages;
 }
 
+/**
+ * Topluluk sohbet odası kapsamı (docs/history/352-*): `id` null = varsayılan oda (mesajlarda room_id NULL), dolu = o oda.
+ * `undefined` (birebir sohbet ya da süzgeçsiz okuma) = oda süzgeci yok.
+ */
+export type MessageRoomScope = { id: string | null };
+
+/** Sorguyu odaya daraltır (varsayılan oda: `room_id is null`). Tip karmaşıklığını önlemek için gevşek bir sözleşmeyle çalışır; sorgu zinciri aynı kalır. */
+function scopeToRoom<T>(query: T, room: MessageRoomScope | undefined): T {
+  if (!room) return query;
+  const filter = query as unknown as { is: (column: string, value: null) => unknown; eq: (column: string, value: string) => unknown };
+  return (room.id === null ? filter.is("room_id", null) : filter.eq("room_id", room.id)) as T;
+}
+
 /** Bir seferde yüklenen en yeni mesaj sayısı; daha eskileri `before` ile istenir (büyük grup sohbetleri tüm geçmişi tek seferde çekmesin). */
 export const MESSAGE_PAGE_SIZE = 200;
 
@@ -343,7 +380,7 @@ export const MESSAGE_PAGE_SIZE = 200;
 export async function fetchMessagePage(
   conversationId: string,
   viewerId: string,
-  options: { before?: string } = {},
+  options: { before?: string; room?: MessageRoomScope } = {},
 ): Promise<{ messages: Message[]; hasMore: boolean }> {
   try {
     const { data: membership, error: membershipError } = await supabase
@@ -355,7 +392,7 @@ export async function fetchMessagePage(
     if (membershipError) return { messages: [], hasMore: false };
     const clearedAt = (membership as { cleared_at: string | null } | null)?.cleared_at ?? null;
 
-    let query = supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId);
+    let query = scopeToRoom(supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId), options.room);
     if (clearedAt) query = query.gt("created_at", clearedAt);
     if (options.before) query = query.lt("created_at", options.before);
     const [{ data, error }, { data: hidden }] = await Promise.all([
@@ -390,7 +427,7 @@ export async function fetchMessageWindow(
   conversationId: string,
   viewerId: string,
   messageId: string,
-): Promise<{ messages: Message[]; hasOlder: boolean; hasNewer: boolean } | null> {
+): Promise<{ messages: Message[]; hasOlder: boolean; hasNewer: boolean; roomId: string | null } | null> {
   try {
     const [{ data: membership }, { data: target }, { data: hiddenTarget }] = await Promise.all([
       supabase.from("conversation_members").select("cleared_at").eq("conversation_id", conversationId).eq("user_id", viewerId).maybeSingle(),
@@ -402,8 +439,10 @@ export async function fetchMessageWindow(
     const anchor = mapMessageRow(target as MessageRow);
     if (clearedAt && anchor.createdAt <= clearedAt) return null;
 
-    let olderQuery = supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId).lt("created_at", anchor.createdAt);
-    const newerQuery = supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId).gt("created_at", anchor.createdAt);
+    // Pencere hedef mesajın KENDİ odasıyla sınırlıdır (topluluk sohbetinde başka odanın mesajları araya karışmaz).
+    const room: MessageRoomScope = { id: anchor.roomId };
+    let olderQuery = scopeToRoom(supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId), room).lt("created_at", anchor.createdAt);
+    const newerQuery = scopeToRoom(supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId), room).gt("created_at", anchor.createdAt);
     if (clearedAt) {
       olderQuery = olderQuery.gt("created_at", clearedAt);
     }
@@ -421,6 +460,7 @@ export async function fetchMessageWindow(
       messages: rows.map((row) => mapMessageRow(row as MessageRow)).filter((message) => !hiddenIds.has(message.id)),
       hasOlder: olderRows.length > MESSAGE_WINDOW_SIZE,
       hasNewer: newerRows.length > MESSAGE_WINDOW_SIZE,
+      roomId: anchor.roomId,
     };
   } catch (err) {
     console.error("fetchMessageWindow", err);
@@ -436,6 +476,8 @@ export interface SendMessageInput {
   sharedPromptId?: string;
   sharedRequestId?: string;
   replyToMessageId?: string;
+  /** Topluluk sohbet odası (docs/history/352-*): null/yok = varsayılan oda. */
+  roomId?: string | null;
 }
 
 /** Genuinely, permanently sends a message — plain text, a shared prompt/request (with an optional caption), or a reply. Bölüm 19's handle_new_message trigger updates conversations.last_message_at and every other member's unread_count; the messages_has_content CHECK (Faz A) rejects a completely empty send at the database level. */
@@ -452,6 +494,7 @@ export async function sendMessage(conversationId: string, senderId: string, inpu
       shared_prompt_id: input.sharedPromptId ?? null,
       shared_request_id: input.sharedRequestId ?? null,
       reply_to_message_id: input.replyToMessageId ?? null,
+      ...(input.roomId ? { room_id: input.roomId } : {}),
     })
     .select(MESSAGE_SELECT)
     .single();
@@ -659,7 +702,7 @@ export async function declineMessageRequest(conversationId: string, userId: stri
 }
 
 /** The per-viewer state columns a chat-menu action writes (docs/history/171-*) — always the viewer's OWN membership row, never the other side's. */
-export type MemberStatePatch = { archived_at?: string | null; deleted_at?: string | null; cleared_at?: string | null };
+export type MemberStatePatch = { archived_at?: string | null; deleted_at?: string | null; cleared_at?: string | null; pinned_at?: string | null };
 
 /** Writes `patch` to the viewer's own membership row. "0 rows" is a failure, not a silent success (the row is missing or RLS refused it). */
 async function updateOwnMembership(conversationId: string, userId: string, patch: MemberStatePatch): Promise<void> {
@@ -692,6 +735,13 @@ export async function setConversationArchived(conversationId: string, userId: st
   const archivedAt = archived ? new Date().toISOString() : null;
   await updateOwnMembership(conversationId, userId, { archived_at: archivedAt });
   return archivedAt;
+}
+
+/** Sohbeti listenin başına sabitler / sabitlemeyi kaldırır (docs/history/352-*): yalnız kendi üyelik satırı. Saklanan değeri döndürür. */
+export async function setConversationPinned(conversationId: string, userId: string, pinned: boolean): Promise<string | null> {
+  const pinnedAt = pinned ? new Date().toISOString() : null;
+  await updateOwnMembership(conversationId, userId, { pinned_at: pinnedAt });
+  return pinnedAt;
 }
 
 /** Listemden kaldırılmış / arşivlenmiş sohbeti (özellikle grubu) kişisel listeye geri koyar; yalnız kendi üyelik satırı. */

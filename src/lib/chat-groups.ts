@@ -49,6 +49,8 @@ export const GROUP_CAPABILITIES: readonly GroupCapability[] = [
   // Ekip alanı (docs/history/349-*): ekibe Space açma/yönetme ve ekip kütüphanesinde onay
   "create_spaces",
   "approve_library",
+  // Sohbet odaları (docs/history/352-*): oda oluşturma, düzenleme, sıralama, arşivleme
+  "manage_rooms",
 ];
 
 /** Moderatöre `manage_roles` verilemez (rütbe kuralı gereği anlamsız; sunucu da reddeder). */
@@ -59,11 +61,11 @@ export function capabilitiesFor(role: "admin" | "moderator"): readonly GroupCapa
 export const DEFAULT_ROLE_PERMISSIONS: RolePermissions = {
   admin: {
     edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true, pin_messages: true,
-    moderate_posts: true, pin_posts: true, manage_announcements: true, manage_events: true, edit_rules: true, view_stats: true, create_spaces: true, approve_library: true,
+    moderate_posts: true, pin_posts: true, manage_announcements: true, manage_events: true, edit_rules: true, view_stats: true, create_spaces: true, approve_library: true, manage_rooms: true,
   },
   moderator: {
     edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true, pin_messages: true,
-    moderate_posts: true, pin_posts: true, manage_announcements: false, manage_events: false, edit_rules: false, view_stats: false, create_spaces: false, approve_library: false,
+    moderate_posts: true, pin_posts: true, manage_announcements: false, manage_events: false, edit_rules: false, view_stats: false, create_spaces: false, approve_library: false, manage_rooms: false,
   },
 };
 
@@ -285,6 +287,16 @@ export const GROUP_ERROR_CODES = [
   "report_limit",
   "already_reported",
   "invalid_action",
+  // Sohbet odaları (docs/history/352-*)
+  "invalid_room_name",
+  "invalid_room_description",
+  "invalid_room_section",
+  "invalid_room_icon",
+  "invalid_room_policy",
+  "room_limit_reached",
+  "room_name_taken",
+  "room_not_found",
+  "room_default_locked",
 ] as const;
 
 export type GroupErrorCode = (typeof GROUP_ERROR_CODES)[number];

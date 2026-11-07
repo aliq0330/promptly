@@ -92,7 +92,7 @@ test("Üyeler bölümleri yeteneğe göre: üye yalnız liste; varsayılan moder
 });
 
 test("Yönet bölümleri yeteneğe göre: istek/davet artık burada değil; geçmiş yalnız owner/admin", () => {
-  assert.deepEqual(manageSections("owner", DEFAULT_ROLE_PERMISSIONS), ["stats", "settings", "announcements", "moderation", "history"]);
+  assert.deepEqual(manageSections("owner", DEFAULT_ROLE_PERMISSIONS), ["stats", "settings", "rooms", "announcements", "moderation", "history"]);
   assert.deepEqual(manageSections("moderator", DEFAULT_ROLE_PERMISSIONS), ["moderation"]);
   assert.deepEqual(manageSections("member", DEFAULT_ROLE_PERMISSIONS), []);
   for (const role of ["owner", "admin", "moderator"] as const) assert.ok(!(manageSections(role, DEFAULT_ROLE_PERMISSIONS) as string[]).includes("requests"));

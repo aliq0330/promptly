@@ -227,6 +227,16 @@ export function messageHref(conversation: Pick<Conversation, "id">): string {
   return `/messages/local?id=${conversation.id}`;
 }
 
+/** Topluluk sohbetinin belirli bir odası (docs/history/352-*): `?room=` yoksa son açılan/varsayılan oda açılır. */
+export function roomHref(communityId: string, roomId: string): string {
+  return `/messages/local?id=${communityId}&room=${roomId}`;
+}
+
+/** Topluluğun sohbet merkezi (oda listesi) — Mesajlar satırındaki ok ve oda sohbeti başlığı buraya gider. */
+export function roomsHubHref(communityId: string): string {
+  return `/messages/local?id=${communityId}&view=rooms`;
+}
+
 /**
  * Same idea as `promptHref`, for a tag — tags are seeded rows (see
  * `supabase/migrations/20260919120600_seed_tags.sql`), not known at build

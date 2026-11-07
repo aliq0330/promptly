@@ -6,7 +6,11 @@
  * no second store.
  */
 
+import { comparePinnedFirst } from "./community-rooms.ts";
+
 export interface ConversationListFields {
+  /** Kişisel sohbet sabitleme (docs/history/352-*): doluysa gelen kutusunun başında durur. */
+  pinnedAt?: string | null;
   myStatus: "accepted" | "pending";
   archivedAt: string | null;
   deletedAt: string | null;
@@ -40,7 +44,7 @@ export function bucketConversations<T extends ConversationListFields>(conversati
     else if (conversation.archivedAt) archived.push(conversation);
     else inbox.push(conversation);
   }
-  return { requests: requests.sort(byNewest), inbox: inbox.sort(byNewest), archived: archived.sort(byNewest) };
+  return { requests: requests.sort(byNewest), inbox: inbox.sort(comparePinnedFirst), archived: archived.sort(byNewest) };
 }
 
 /** The header's unread dot: only chats that are actually listed in the inbox or requests count — an archived, deleted or muted chat must not light it. */

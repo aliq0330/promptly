@@ -414,7 +414,9 @@ export type GroupCapability =
   | "view_stats"
   // Ekip alanı (docs/history/349-*)
   | "create_spaces"
-  | "approve_library";
+  | "approve_library"
+  // Sohbet odaları (docs/history/352-*): oda oluşturma, düzenleme, sıralama, arşivleme
+  | "manage_rooms";
 export type RolePermissions = Record<"admin" | "moderator", Record<GroupCapability, boolean>>;
 
 /** Topluluk kategorisi (DB'de sabit liste; etiket/taksonomi sisteminden bağımsız). */
@@ -479,6 +481,35 @@ export interface Conversation {
   mutedAt: string | null;
   /** Messages created before this are hidden from THIS viewer only; the message rows themselves stay. */
   clearedAt: string | null;
+  /** Kişisel sohbet sabitleme (docs/history/352-*): doluysa liste başında durur; yalnız bu kullanıcıya aittir. */
+  pinnedAt?: string | null;
+  /** Topluluk sohbetinde son görünür mesajın odası ("# oda" önizleme etiketi); birebir sohbette yok. */
+  lastRoom?: { id: string; name: string } | null;
+}
+
+/** Topluluk sohbet odasının simge anahtarı (DB CHECK ile aynı liste; `lib/community-rooms.ts` simge bileşenine çevirir). */
+export type CommunityRoomIcon = "message" | "prompt" | "image" | "megaphone" | "sparkles" | "help" | "shield" | "palette";
+
+/** Topluluk sohbet odası + çağıranın kişisel durumu (`community_rooms_overview`). `isDefault` = "Genel" (mesajlarda room_id NULL). */
+export interface CommunityRoom {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: CommunityRoomIcon;
+  /** Bölüm başlığı (kullanıcı metni; boşsa varsayılan bölüm). */
+  section: string | null;
+  position: number;
+  /** "members" = tüm üyeler yazar; "admins" = yalnız yönetim (sahip/yönetici/moderatör). */
+  postingPolicy: "members" | "admins";
+  /** "all" = tüm üyeler görür; "staff" = özel oda (yalnız yönetim görür). */
+  readPolicy: "all" | "staff";
+  isDefault: boolean;
+  archivedAt: string | null;
+  muted: boolean;
+  unreadCount: number;
+  lastMessageAt: string | null;
+  /** Çağıran şu an bu odaya yazabilir mi (sunucu hesaplar: arşiv, kapalı topluluk, politika). */
+  canPost: boolean;
 }
 
 /** Sabitlenmiş mesaj (`pinned_messages`): mesajın kendisi kopyalanmaz, yalnız başvuru + kim/ne zaman sabitledi. */
@@ -859,6 +890,8 @@ export interface Message {
   createdAt: string;
   /** Bir topluluk duyurusuna bağlı mesajsa duyurunun kimliği (gövde = duyuru başlığı); sohbette kart olarak çizilir. */
   announcementId: string | null;
+  /** Topluluk sohbet odası (docs/history/352-*): null = varsayılan oda ("Genel"); birebir sohbette hep null. */
+  roomId: string | null;
   /** Hikâyeye özel yanıt (docs/history/198-*): yanıtlanan hikâye; hikâye silinince null olur ama `isStoryReply` kalır. */
   storyId: string | null;
   isStoryReply: boolean;
