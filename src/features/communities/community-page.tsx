@@ -29,10 +29,10 @@ import { useCommunity } from "./use-community";
 import { CommunityAside, MemberStack, useCommunityPeople } from "./community-aside";
 import { CommunityCover } from "./community-cover";
 import { BAND_PRIMARY_CLASS, BandActionRow, DetailBand, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
-import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, isTeamVisibility, resolveCommunityView, type CommunityTab } from "@/lib/communities";
+import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, isTeamVisibility, resolveCommunityView, teamHref, type CommunityTab } from "@/lib/communities";
 import { can } from "@/lib/chat-groups";
 import { memberCountText } from "@/lib/group-labels";
-import { useTranslation } from "@/lib/i18n/language-provider";
+import { TeamLanguageScope, useTeamT, useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
 import type { MyCommunityMembership } from "@/lib/supabase/communities";
 
@@ -59,16 +59,17 @@ export interface CommunityTabProps {
  * Hakkında ve kurallar · Yönet (yalnız yetkililere). Her sekmenin erişimi `accessibleTabs`'tan gelir ve veritabanındaki RLS ile aynıdır: üye olmayan kapalı
  * topluluğun içeriğini göremez (yalnız davet/başvuru "geçidi" görünür), sohbet ve üye listesi üyelik gerektirir.
  */
-export function CommunityPage() {
+export function CommunityPage({ expect = "community" }: { expect?: "community" | "team" }) {
   return (
     <Suspense fallback={<DetailSkeleton />}>
-      <CommunityPageInner />
+      <CommunityPageInner expect={expect} />
     </Suspense>
   );
 }
 
-function CommunityPageInner() {
-  const { t } = useTranslation();
+function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
+  const { t: baseT } = useTranslation();
+  const teamT = useTeamT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
@@ -86,9 +87,23 @@ function CommunityPageInner() {
   const unread = conversations.find((c) => c.id === id)?.unreadCount ?? 0;
   const people = useCommunityPeople(id ?? "", Boolean(id && role));
 
+  // Ekip ve topluluk ayrı rotalardadır (docs/history/351-*): kimlik yanlış rotada açıldıysa (bildirim, eski bağlantı, sohbet) doğru rotaya yönlenir,
+  // adres parametreleri (tab, section, post…) aynen taşınır. Karar sunucudan gelen görünürlüğe bağlıdır; yönlenene kadar iskelet çizilir.
+  const groupIsTeam = group ? isTeamVisibility(group.visibility) : null;
+  const wrongRoute = groupIsTeam !== null && groupIsTeam !== (expect === "team");
+  const hrefFor = groupIsTeam ? teamHref : communityHref;
+  // Ekip sayfasının kendi metinleri de ekip dilindedir; altındaki bileşenler aynısını `TeamLanguageScope`tan alır.
+  const t = groupIsTeam ? teamT : baseT;
+
   function goTab(next: CommunityTab, section?: string) {
-    if (id) router.replace(communityHref(id, next, section));
+    if (id) router.replace(hrefFor(id, next, section));
   }
+
+  useEffect(() => {
+    if (!wrongRoute) return;
+    const query = searchParams.toString();
+    router.replace(`${groupIsTeam ? "/teams/local" : "/communities/local"}${query ? `?${query}` : ""}`);
+  }, [wrongRoute, groupIsTeam, searchParams, router]);
 
   // Eski `tab=chat` bağlantısı: sohbet ayrı çalışma alanıdır, sekme yoktur.
   useEffect(() => {
@@ -96,7 +111,7 @@ function CommunityPageInner() {
   }, [toChat, id, router]);
 
   if (!id) return <NotFoundBlock title={t("communities.notFound.title")} description={t("communities.notFound.body")} />;
-  if (authLoading || state.status === "loading") return <DetailSkeleton />;
+  if (authLoading || state.status === "loading" || wrongRoute) return <DetailSkeleton />;
   if (state.status === "notfound") {
     return (
       <div className="mx-auto max-w-md space-y-4 px-4 py-16 text-center">
@@ -156,7 +171,7 @@ function CommunityPageInner() {
   const categoryLabel = t(CATEGORY_LABEL_KEYS[g.category]);
   const isTeam = isTeamVisibility(g.visibility);
 
-  return (
+  const body = (
     // Albüm (docs/history/203-*): band tinted by the community's cover (photo › colour › its picture) · actions row · tabs + content.
     <div className="w-full">
       <DetailBand
@@ -258,4 +273,5 @@ function CommunityPageInner() {
       </CommunityLayout>
     </div>
   );
+  return <TeamLanguageScope enabled={isTeam}>{body}</TeamLanguageScope>;
 }

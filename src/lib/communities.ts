@@ -460,6 +460,11 @@ export function communityHref(id: string, tab?: CommunityTab, section?: string):
   return `/communities/local?id=${encodeURIComponent(id)}${tab ? `&tab=${tab}` : ""}${tab && section ? `&section=${section}` : ""}`;
 }
 
+/** Ekip detay adresi (docs/history/351-*): ekip sayfası kendi rotasındadır; sekme ve bölüm parametreleri topluluktakiyle aynıdır. */
+export function teamHref(id: string, tab?: CommunityTab, section?: string): string {
+  return `/teams/local?id=${encodeURIComponent(id)}${tab ? `&tab=${tab}` : ""}${tab && section ? `&section=${section}` : ""}`;
+}
+
 /** Bir topluluk gönderisinin bağlantısı (akış sekmesi + gönderi kimliği): bildirimler ve "bağlantıyı kopyala" aynı adresi kullanır. */
 export function postHref(communityId: string, postId: string): string {
   return `${communityHref(communityId, "feed")}&post=${encodeURIComponent(postId)}`;

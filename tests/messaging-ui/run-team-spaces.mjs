@@ -63,7 +63,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 }
 
 const openTeam = async (page, tab = "spaces") => {
-  await page.goto(`${BASE}/communities/local?id=${TEAM}&tab=${tab}`);
+  await page.goto(`${BASE}/teams/local?id=${TEAM}&tab=${tab}`);
   await page.locator("h1").first().waitFor();
 };
 const sectionNames = async (page) => {
@@ -150,7 +150,7 @@ await scenario("6. Space sayfası: ekip şeridi (ekip adı + Ekip sayfası + Eki
   const strip = page.getByTestId("team-space-strip");
   await strip.waitFor();
   await strip.getByText("Ekip: Ekip Atölyesi").waitFor();
-  assert.match(await strip.locator("[data-team-open-page]").getAttribute("href"), new RegExp(`communities/local/?\\?id=${TEAM}&tab=spaces`));
+  assert.match(await strip.locator("[data-team-open-page]").getAttribute("href"), new RegExp(`teams/local/?\\?id=${TEAM}&tab=spaces`));
   assert.match(await strip.locator("[data-team-open-chat]").getAttribute("href"), new RegExp(`messages/local/?\\?id=${TEAM}`));
   assert.equal(await page.locator(`[data-space-page="${SID(1)}"]`).getAttribute("data-space-role"), "owner", "ekip yöneticisi Space'in sahibi gibi çalışır");
 }, { setup: (db) => seed(db, { role: "admin" }) });
@@ -170,7 +170,7 @@ await scenario("7. ekibe bağlı Space'in Üyeler sekmesi: 'ekipten gelir' notu;
 }, { setup: (db) => seed(db, { role: "admin" }) });
 
 await scenario("8. Yönetim → Ayarlar: iki yeni yetenek (Ekibe Space açma ve yönetme · Ekip kütüphanesinde onay verme) rol tablosunda", async ({ page }) => {
-  await page.goto(`${BASE}/communities/local?id=${TEAM}&tab=manage&section=settings`);
+  await page.goto(`${BASE}/teams/local?id=${TEAM}&tab=manage&section=settings`);
   await page.getByText("Ekibe Space açma ve yönetme").first().waitFor();
   await page.getByText("Ekip kütüphanesinde onay verme").first().waitFor();
   await shot(page, "team-capabilities");
@@ -220,7 +220,7 @@ await scenario("12. ekip sohbetinin bilgi panelinde 'Ortak Space'ler' kartı: Sp
   const card = page.getByTestId("team-spaces-info");
   await card.waitFor();
   await card.getByText("Pazarlama kütüphanesi").waitFor();
-  assert.match(await card.locator("[data-info-row='team-spaces-all']").getAttribute("href"), new RegExp(`communities/local/?\\?id=${TEAM}&tab=spaces`));
+  assert.match(await card.locator("[data-info-row='team-spaces-all']").getAttribute("href"), new RegExp(`teams/local/?\\?id=${TEAM}&tab=spaces`));
 }, { setup: (db) => seed(db, { role: "admin" }) });
 
 await scenario("12b. herkese açık toplulukta 'Ortak Space'ler' kartı çizilmez", async ({ page }) => {

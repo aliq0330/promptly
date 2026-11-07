@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { translations, type Language, type TranslationKey } from "./translations";
+import { teamWording } from "./team-wording";
 
 /** Values substituted into a `{{token}}` placeholder inside a translation string. */
 type TranslationParams = Record<string, string | number>;
@@ -114,6 +115,34 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => ({ language, setLanguage, t }), [language, setLanguage, t]);
 
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+}
+
+/**
+ * Ekip sayfasının altındaki her şey (sekmeler, pencereler) ekip dilini konuşur (docs/history/351-*): bir anahtarın özel `<anahtar>.team` karşılığı varsa o,
+ * yoksa şablon metnindeki "topluluk/community" sözcükleri `teamWording` ile çevrilir. Çeviri ŞABLONDA yapılır, parametreler sonradan girer —
+ * kullanıcı içeriği (ekip adı, açıklama) hiç değişmez.
+ */
+function makeTeamT(language: Language): TFunction {
+  return (key, params) => {
+    const entry = translations[key] as { tr: string; en: string } | undefined;
+    const override = (translations as Record<string, { tr: string; en: string } | undefined>)[`${key}.team`];
+    // `teams.*` metinleri zaten ekip diliyle yazılmıştır ("topluluğa çevir" gibi ifadeler kasıtlıdır): çevrilmez.
+    const raw = override?.[language] ?? (entry ? (key.startsWith("teams.") ? entry[language] : teamWording(entry[language], language)) : key);
+    if (!params) return raw;
+    return raw.replace(/\{\{(\w+)\}\}/g, (match, token: string) => (token in params ? String(params[token]) : match));
+  };
+}
+
+/** Ekip dilinde `t` (ekip sayfasının KENDİ metinleri için; altındaki bileşenler `TeamLanguageScope` ile aynısını alır). */
+export function useTeamT(): TFunction {
+  const { language } = useLanguage();
+  return useMemo(() => makeTeamT(language), [language]);
+}
+
+export function TeamLanguageScope({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
+  const parent = useContext(LanguageContext);
+  const value = useMemo(() => (!enabled || !parent ? parent : { ...parent, t: makeTeamT(parent.language) }), [enabled, parent]);
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 

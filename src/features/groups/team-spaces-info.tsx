@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Shapes } from "@/components/icons/shapes";
 import { InfoCard, InfoRow } from "@/features/messages/info-panel-kit";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { communityHref } from "@/lib/communities";
+import { teamHref } from "@/lib/communities";
 import { spaceHref } from "@/lib/spaces";
 import { fetchTeamSpaces, type SpaceSummary } from "@/lib/supabase/spaces";
 
@@ -37,7 +37,7 @@ export function TeamSpacesInfo({ groupId }: { groupId: string }) {
           {space.title}
         </InfoRow>
       ))}
-      <InfoRow icon={<Shapes size={18} strokeWidth={1.75} />} href={communityHref(groupId, "spaces")} value={spaces.length > 4 ? "…" : undefined} testId="team-spaces-all">
+      <InfoRow icon={<Shapes size={18} strokeWidth={1.75} />} href={teamHref(groupId, "spaces")} value={spaces.length > 4 ? "…" : undefined} testId="team-spaces-all">
         {t("team.chat.allSpaces")}
       </InfoRow>
     </InfoCard>

@@ -140,8 +140,8 @@ await scenario("5. Davetler: kabul edilince topluluğa gidilir (kurallı davette
   assert.ok(db.member(C2, ME));
 }, {
   setup: (db) => {
-    db.addCommunity(C2, { name: "Davetli Topluluk", visibility: "private", myRole: "none", rules: "Kural: saygılı ol", rulesRequired: true, members: [[U.bob, "owner"]] });
-    db.addCommunity(C3, { name: "Reddedilecek", visibility: "private", myRole: "none", members: [[U.bob, "owner"]] });
+    db.addCommunity(C2, { name: "Davetli Topluluk", visibility: "restricted", myRole: "none", rules: "Kural: saygılı ol", rulesRequired: true, members: [[U.bob, "owner"]] });
+    db.addCommunity(C3, { name: "Reddedilecek", visibility: "restricted", myRole: "none", members: [[U.bob, "owner"]] });
     db.invitations.push({ id: "f0000000-0000-4000-8000-000000000001", group_id: C2, invitee_id: ME, inviter_id: U.bob.id, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" });
     db.invitations.push({ id: "f0000000-0000-4000-8000-000000000002", group_id: C3, invitee_id: ME, inviter_id: U.bob.id, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" });
   },
@@ -293,7 +293,9 @@ await scenario("11. Üye olmayan, açık topluluk: salt-okunur sekmeler (Üyeler
 await scenario("11b. Kapalı topluluk, yalnız davetli: içerik/sohbet/üye listesi yok, yalnız davet kartı; kabul edince açılır", async ({ page, db }) => {
   await open(page, C1);
   assert.equal(await page.locator("[data-section-menu]").count(), 0, "no content tabs for a non-member of a private community");
-  await page.getByText("Bob seni bu topluluğa davet etti").waitFor();
+  // Tamamen kapalı = ekip (docs/history/350-*, 351-*): kimlik /teams/local'a yönlenir ve metinler ekip diliyle yazılır.
+  await page.waitForURL(/\/teams\/local\/?\?id=/);
+  await page.getByText("Bob seni bu ekibe davet etti").waitFor();
   await page.getByRole("button", { name: "Kabul et" }).click();
   await waitTab(page, "Space'ler"); // ekipte (tamamen kapalı) ilk sekme Space'ler (docs/history/350-*)
   assert.ok(db.member(C1, ME));
@@ -857,6 +859,7 @@ await scenario("27. Oluştur: iki görünürlük seçeneği (Herkese açık · K
   await page.goto(`${BASE}/communities`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const d = dlg(page);
+  await d.getByRole("radio", { name: /^Kapalı/ }).waitFor();
   assert.equal(await d.getByRole("radio", { name: /^(Herkese açık|Kapalı|Tamamen kapalı)/ }).count(), 2);
   assert.equal(await d.getByRole("radio", { name: /^Tamamen kapalı/ }).count(), 0, "tamamen kapalı = ekip, Topluluk oluştur'da yok");
   assert.equal(await d.getByRole("radio", { name: /^Kapalı/ }).isChecked(), true, "default is Kapalı");

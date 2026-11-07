@@ -166,7 +166,23 @@ interface InvitesState {
 }
 
 /** Bana gelen davetler: kabul / reddet (kuralları kabul zorunluysa önce kural metni onaylanır). */
-export function InvitesView({ userId, onCount, onToast, onJoined }: { userId: string; onCount: (n: number) => void; onToast: (message: string) => void; onJoined: (groupId: string) => void }) {
+export function InvitesView({
+  userId,
+  onCount,
+  onToast,
+  onJoined,
+  kind = "community",
+  hideWhenEmpty = false,
+}: {
+  userId: string;
+  onCount: (n: number) => void;
+  onToast: (message: string) => void;
+  onJoined: (groupId: string) => void;
+  /** Topluluklar "community", Ekipler "team" (docs/history/351-*): tamamen kapalı = ekip, davetleri Ekipler'de görünür. */
+  kind?: "community" | "team";
+  /** Ekipler sayfasında davet yoksa hiçbir şey çizilmez (boş durum kartı yok). */
+  hideWhenEmpty?: boolean;
+}) {
   const { t, language } = useTranslation();
   const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<InvitesState | null>(null);
@@ -177,7 +193,7 @@ export function InvitesView({ userId, onCount, onToast, onJoined }: { userId: st
   const key = `${userId}|${reloadKey}`;
   useEffect(() => {
     let cancelled = false;
-    fetchMyInvitations(userId)
+    fetchMyInvitations(userId, kind)
       .then((invitations) => {
         if (cancelled) return;
         setState({ key, invitations, error: false });
@@ -190,7 +206,7 @@ export function InvitesView({ userId, onCount, onToast, onJoined }: { userId: st
     return () => {
       cancelled = true;
     };
-  }, [userId, key, onCount]);
+  }, [userId, key, onCount, kind]);
 
   const current = state && state.key === key ? state : null;
 
@@ -227,7 +243,7 @@ export function InvitesView({ userId, onCount, onToast, onJoined }: { userId: st
     );
   }
   if (current.error) return <ErrorBox message={t("groups.invites.loadError")} onRetry={() => setReloadKey((k) => k + 1)} />;
-  if (current.invitations.length === 0) return <EmptyState icon={Mail} title={t("groups.invites.empty")} description={t("groups.invites.emptyHelp")} />;
+  if (current.invitations.length === 0) return hideWhenEmpty ? null : <EmptyState icon={Mail} title={t("groups.invites.empty")} description={t("groups.invites.emptyHelp")} />;
 
   return (
     <div className="space-y-3">

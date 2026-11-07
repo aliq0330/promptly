@@ -21,11 +21,6 @@ export const teamsTranslations = {
     tr: "Ekip, yalnızca davet ettiğin kişilerin girebildiği kapalı bir çalışma alanıdır: ortak Space'ler, sohbet ve paylaşımlar bir arada.",
     en: "A team is a private workspace only the people you invite can enter: shared Spaces, chat and posts in one place.",
   },
-  "teams.empty.invite": {
-    tr: "Bir ekibe davet edildiysen davetin Topluluklar → Davet ve başvurular bölümünde.",
-    en: "If you were invited to a team, the invitation is under Communities → Invites and requests.",
-  },
-  "teams.empty.inviteLink": { tr: "Davetlerime bak", en: "See my invitations" },
 
   "teams.create.title": { tr: "Ekip oluştur", en: "Create a team" },
   "teams.create.nameLabel": { tr: "Ekip adı", en: "Team name" },
@@ -39,6 +34,29 @@ export const teamsTranslations = {
     tr: "Ekipler her zaman tamamen kapalıdır; görünürlük değiştirilemez.",
     en: "Teams are always invite-only; the visibility cannot be changed.",
   },
+
+  "teams.convert.toTeam": { tr: "Ekibe çevir", en: "Turn into a team" },
+  "teams.convert.toTeamHelp": {
+    tr: "Bu topluluğu ekibe çevirirsen Ekipler'e taşınır: Keşfet ve aramadan kalkar, yalnızca davetle girilir; ortak Space'ler açabilirsin.",
+    en: "Turning this community into a team moves it to Teams: it leaves Discover and search, joining is by invitation only, and you can open shared Spaces.",
+  },
+  "teams.convert.toTeamTitle": { tr: "Topluluk ekibe çevrilsin mi?", en: "Turn this community into a team?" },
+  "teams.convert.toTeamBody": {
+    tr: "Topluluk Ekipler'e taşınır ve Topluluklar'dan kalkar. Keşfet, arama ve önerilerden tamamen çıkar; içerik yalnızca üyelere açık kalır. Yeni üyelik yalnızca davetle olur. Mevcut üyeler kalır; bekleyen başvurular senin kararını bekler.",
+    en: "The community moves to Teams and leaves Communities. It disappears from Discover, search and suggestions entirely; content stays members-only. New members join only by invitation. Current members stay; pending requests wait for your decision.",
+  },
+  "teams.convert.toTeamToast": { tr: "Topluluk ekibe çevrildi.", en: "The community is now a team." },
+  "teams.convert.toCommunity": { tr: "Topluluğa çevir", en: "Turn into a community" },
+  "teams.convert.toCommunityHelp": {
+    tr: "İstersen bu ekibi (kapalı) topluluğa çevirebilirsin. Ekibe bağlı Space varken (arşivlenmiş olanlar dahil) çevrilemez; önce o Space'leri silmen gerekir.",
+    en: "You can turn this team into a (private) community. It can't be converted while any team Space (archived ones included) is linked to it; delete those Spaces first.",
+  },
+  "teams.convert.toCommunityTitle": { tr: "Ekip topluluğa çevrilsin mi?", en: "Turn this team into a community?" },
+  "teams.convert.toCommunityBody": {
+    tr: "Ekip Topluluklar'a taşınır ve Ekipler'den kalkar. Arama ve önerilerde görünür olur (ad, açıklama, görsel, üye sayısı); içerik yine yalnızca üyelerde kalır. Katılım istek ve onayla olur. Mevcut üyeler ve bekleyen başvurular değişmez.",
+    en: "The team moves to Communities and leaves Teams. It becomes visible in search and suggestions (name, description, picture, member count); content stays members-only. Joining needs a request and approval. Current members and pending requests are unchanged.",
+  },
+  "teams.convert.toCommunityToast": { tr: "Ekip topluluğa çevrildi.", en: "The team is now a community." },
 
   "teams.tab.feed": { tr: "Paylaşımlar", en: "Posts" },
   "teams.band.eyebrow": { tr: "Ekip", en: "Team" },

@@ -17,6 +17,7 @@ const results = [];
 const ONLY = process.env.ONLY ?? "";
 const T1 = "c1000000-0000-4000-8000-000000000b01";
 const T2 = "c1000000-0000-4000-8000-000000000b02";
+const T3 = "c1000000-0000-4000-8000-000000000b05";
 const OPEN = "c1000000-0000-4000-8000-000000000b03";
 const RESTRICTED = "c1000000-0000-4000-8000-000000000b04";
 const calls = (db, name) => db.calls.filter((c) => c.method === "RPC" && c.table === name);
@@ -77,15 +78,13 @@ await scenario("1. /teams: yalnız üye olduğum tamamen kapalı topluluklar (ek
 await scenario("2. Ekip kartı: 'Space'ler' ekibin Space'ler sekmesine, 'Ekip sohbeti' ekip sohbetine gider", async ({ page }) => {
   await page.goto(`${BASE}/teams`);
   const card = page.locator(`[data-team-card="${T1}"]`);
-  assert.match(await card.locator("[data-team-open-spaces]").getAttribute("href"), new RegExp(`communities/local/?\\?id=${T1}&tab=spaces`));
+  assert.match(await card.locator("[data-team-open-spaces]").getAttribute("href"), new RegExp(`teams/local/?\\?id=${T1}&tab=spaces`));
   assert.match(await card.locator("[data-team-open-chat]").getAttribute("href"), new RegExp(`messages/local/?\\?id=${T1}`));
 });
 
 await scenario("3. ekibim yoksa: boş durum + davet ipucu; 'Ekip oluştur' pencereyi açar", async ({ page }) => {
   await page.goto(`${BASE}/teams`);
   await page.getByText("Henüz bir ekibin yok").waitFor();
-  const link = page.getByRole("link", { name: "Davetlerime bak" });
-  assert.match(await link.getAttribute("href"), /communities\/?\?tab=invites/);
   await page.locator("[data-team-create]").click();
   await page.getByRole("dialog").last().getByRole("heading", { name: "Ekip oluştur" }).waitFor();
 }, { setup: (db) => seed(db, { teams: false }) });
@@ -100,7 +99,7 @@ await scenario("4. Ekip oluştur: görünürlük seçici/kategori/akış/kuralla
   assert.equal(await d.getByLabel("Kategori").count(), 0);
   await d.getByLabel("Ekip adı").fill("Yeni Ekip");
   await d.getByRole("button", { name: "Ekibi oluştur" }).click();
-  await page.waitForURL(/communities\/local\/?\?id=.*tab=spaces/);
+  await page.waitForURL(/teams\/local\/?\?id=.*tab=spaces/);
   const call = calls(db, "create_community")[0].body;
   assert.equal(call.p_visibility, "private");
   assert.equal(call.p_name, "Yeni Ekip");
@@ -144,7 +143,7 @@ await scenario("7. Mesajlar menüsü: 'Ekip sohbetleri' ayrı kapı — Ekipler'
 });
 
 await scenario("8. Ekip sayfası: kapak 'Ekip' yazar, ilk sekme Space'ler, Akış 'Paylaşımlar'; 'Ekip sohbetini aç'; görünürlük etiketi 'Ekip · tamamen kapalı'", async ({ page }) => {
-  await page.goto(`${BASE}/communities/local?id=${T1}`);
+  await page.goto(`${BASE}/teams/local?id=${T1}`);
   await page.locator("h1").first().waitFor();
   await page.getByTestId("team-spaces").waitFor();
   await page.getByText("Ekip", { exact: true }).first().waitFor();
@@ -156,14 +155,16 @@ await scenario("8. Ekip sayfası: kapak 'Ekip' yazar, ilk sekme Space'ler, Akı�
   assert.ok(!names.includes("Akış"));
 });
 
-await scenario("9. Ayarlar: ekipte görünürlük değiştirilemez (not var, seçici yok); toplulukta yalnız iki düzey seçilir", async ({ page }) => {
-  await page.goto(`${BASE}/communities/local?id=${T1}&tab=manage&section=settings`);
+await scenario("9. Ayarlar: ekipte görünürlük seçilemez (not + 'Topluluğa çevir'), toplulukta yalnız iki düzey + 'Ekibe çevir'", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=${T1}&tab=manage&section=settings`);
   await page.locator("[data-team-visibility-note]").waitFor();
+  await page.locator("[data-convert-to-community]").waitFor();
   assert.equal(await page.getByRole("radio", { name: /^(Herkese açık|Kapalı|Tamamen kapalı)/ }).count(), 0);
   await page.goto(`${BASE}/communities/local?id=${OPEN}&tab=manage&section=settings`);
   await page.getByRole("radio", { name: /^Herkese açık/ }).waitFor();
   assert.equal(await page.getByRole("radio", { name: /^(Herkese açık|Kapalı|Tamamen kapalı)/ }).count(), 2);
   assert.equal(await page.getByRole("radio", { name: /^Tamamen kapalı/ }).count(), 0);
+  await page.locator("[data-convert-to-team]").waitFor();
 });
 
 await scenario("10. İngilizce + telefon: Teams başlığı, kart, boş durum, oluşturma penceresi çevrili; yatay taşma yok", async ({ page }) => {
@@ -177,12 +178,70 @@ await scenario("10. İngilizce + telefon: Teams başlığı, kart, boş durum, o
   await d.getByLabel("Team name").waitFor();
   assert.ok(await overflowFree(page));
   await page.keyboard.press("Escape");
-  await page.goto(`${BASE}/communities/local?id=${T1}`);
+  await page.goto(`${BASE}/teams/local?id=${T1}`);
   await page.getByText("Open team chat").waitFor();
   await page.locator("[data-section-menu]").first().click();
   const names = (await page.locator("[data-section-option]").allInnerTexts()).map((x) => x.split("\n")[0].trim());
   assert.deepEqual(names.slice(0, 2), ["Spaces", "Posts"]);
 }, { viewport: { width: 390, height: 844 }, lang: "en" });
+
+await scenario("11. Rotalar ayrı: topluluk rotasında açılan ekip kimliği /teams/local'a (tab/section korunur), ekip rotasında açılan topluluk /communities/local'a yönlenir; kenar çubuğunda Ekipler yanar", async ({ page }) => {
+  await page.goto(`${BASE}/communities/local?id=${T1}&tab=members`);
+  await page.waitForURL(/\/teams\/local\/?\?id=.*tab=members/);
+  await page.getByRole("complementary", { name: "Yan menü" }).locator("a[aria-current='page']").getByText("Ekipler").waitFor();
+  await page.goto(`${BASE}/teams/local?id=${OPEN}&tab=events`);
+  await page.waitForURL(/\/communities\/local\/?\?id=.*tab=events/);
+});
+
+await scenario("12. Ekip davetleri Ekipler'de görünür (Kabul et → ekibin Space'lerine gider); Topluluklar → Davetler'de GÖRÜNMEZ", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams`);
+  const box = page.getByTestId("team-invites");
+  await box.getByText("Davetli Ekip").waitFor();
+  await page.goto(`${BASE}/communities?tab=invites`);
+  await page.getByText("Bekleyen davetin ya da başvurun yok").waitFor();
+  assert.equal(await page.getByText("Davetli Ekip").count(), 0, "ekip daveti Topluluklar'da yok");
+  await page.goto(`${BASE}/teams`);
+  await page.getByTestId("team-invites").getByRole("button", { name: "Kabul et" }).click();
+  await page.waitForURL(/\/teams\/local\/?\?id=.*tab=spaces/);
+  assert.ok(db.member(T3, ME), "kabul sonrası üye");
+}, { setup: (db) => { seed(db); db.addCommunity(T3, { name: "Davetli Ekip", visibility: "private", myRole: "none", members: [[U.bob, "owner"]] }); db.invitations.push({ id: "f0000000-0000-4000-8000-0000000000a1", group_id: T3, invitee_id: ME, inviter_id: U.bob.id, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" }); } });
+
+await scenario("13. Ekip dili derin sekmelerde: Hakkında'da 'topluluk' sözcüğü yok ('ekip' diliyle yazılır); kullanıcının yazdığı ekip adı değişmez", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=${T1}&tab=about`);
+  await page.getByText("Topluluk Notları Ekibi").first().waitFor();
+  const text = (await page.locator("main").innerText()).replace(/Topluluk Notları Ekibi/g, "");
+  assert.ok(!/topluluk/i.test(text), `ekip sayfasında 'topluluk' kalmamalı: ${text.match(/.{0,30}topluluk.{0,30}/i)?.[0]}`);
+  await page.goto(`${BASE}/communities/local?id=${OPEN}&tab=about`);
+  await page.getByText(/topluluk/i).first().waitFor();
+}, { setup: (db) => { seed(db); db.groups.find((g) => g.id === T1).name = "Topluluk Notları Ekibi"; } });
+
+await scenario("14. Dönüşüm: ekip → topluluk (onay penceresi, p_visibility=restricted, /communities/local'a yönlenir); Space varken sunucu reddeder ve hata gösterilir", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=${T2}&tab=manage&section=settings`);
+  await page.locator("[data-convert-to-community]").click();
+  const d = page.getByRole("dialog").last();
+  await d.getByText("Ekip topluluğa çevrilsin mi?").waitFor();
+  await d.getByRole("button", { name: "Topluluğa çevir" }).click();
+  await page.waitForURL(/\/communities\/local\/?\?id=/);
+  assert.equal(db.groups.find((g) => g.id === T2).visibility, "restricted");
+  // Space'li ekip: reddedilir.
+  await page.goto(`${BASE}/teams/local?id=${T1}&tab=manage&section=settings`);
+  await page.locator("[data-convert-to-community]").click();
+  await page.getByRole("dialog").last().getByRole("button", { name: "Topluluğa çevir" }).click();
+  await page.getByRole("dialog").last().getByRole("alert").waitFor();
+  assert.equal(db.groups.find((g) => g.id === T1).visibility, "private");
+}, { setup: (db) => { seed(db); db.groups.find((g) => g.id === T2).role_permissions = {}; db.members.find((m) => m.conversation_id === T2 && m.user_id === ME).role = "owner"; } });
+
+await scenario("15. Dönüşüm: topluluk → ekip ('Ekibe çevir', onay, p_visibility=private, /teams/local'a yönlenir, Ekipler listesinde görünür)", async ({ page, db }) => {
+  await page.goto(`${BASE}/communities/local?id=${OPEN}&tab=manage&section=settings`);
+  await page.locator("[data-convert-to-team]").click();
+  const d = page.getByRole("dialog").last();
+  await d.getByText("Topluluk ekibe çevrilsin mi?").waitFor();
+  await d.getByRole("button", { name: "Ekibe çevir" }).click();
+  await page.waitForURL(/\/teams\/local\/?\?id=/);
+  assert.equal(db.groups.find((g) => g.id === OPEN).visibility, "private");
+  await page.goto(`${BASE}/teams`);
+  await page.locator(`[data-team-card="${OPEN}"]`).waitFor();
+});
 
 console.log(results.map(([status, name]) => `${status === "PASS" ? "✓" : "✗"} ${name}`).join("\n"));
 const failed = results.filter(([status]) => status === "FAIL").length;

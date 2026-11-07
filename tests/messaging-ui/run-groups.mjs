@@ -45,7 +45,8 @@ const openInfo = async (page) => { await page.locator("button[aria-haspopup='dia
 const openCommunity = async (page, tab, section) => { await page.goto(`${BASE}/communities/local?id=${G}${tab ? `&tab=${tab}` : ""}${section ? `&section=${section}` : ""}`); await page.locator("h1").first().waitFor(); await page.waitForTimeout(300); };
 const tabNames = async (page, index = 0) => page.getByRole("tablist").nth(index).getByRole("tab").allInnerTexts().then((list) => list.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()));
 const seed = (db, opts = {}) => {
-  db.addGroup(G, { members: [[U.bob, "admin"], [U.carol, "moderator"], [U.dave, "member"]], texts: [[U.bob, "merhaba topluluk"], [U.dave, "selam"]], ...opts });
+  // Varsayılan "kapalı" topluluk: tamamen kapalı (private) artık EKİP'tir ve kendi rotasında/diliyle açılır (docs/history/350-*, 351-*).
+  db.addGroup(G, { visibility: "restricted", members: [[U.bob, "admin"], [U.carol, "moderator"], [U.dave, "member"]], texts: [[U.bob, "merhaba topluluk"], [U.dave, "selam"]], ...opts });
   Object.assign(db.groups.find((g) => g.id === G), { category: "general", feed_policy: "members", rules: null, rules_required: false, closed_at: null, origin: "native", post_count: 0 });
 };
 

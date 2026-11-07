@@ -15,12 +15,14 @@ import { usePagedList } from "@/features/content/use-paged-list";
 import { SadeTitle } from "@/features/content/list-control-row";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { CreateCommunityModal } from "@/features/communities/create-community-modal";
+import { InvitesView } from "@/features/communities/home-invites-tab";
+import { useToast } from "@/features/groups/use-toast";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
-import { communityChatHref, communityHref } from "@/lib/communities";
+import { communityChatHref, teamHref } from "@/lib/communities";
 import { memberCountText } from "@/lib/group-labels";
-import { useTranslation } from "@/lib/i18n/language-provider";
+import { TeamLanguageScope, useTranslation } from "@/lib/i18n/language-provider";
 import { listMyTeams, type TeamSummary } from "@/lib/supabase/communities";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -28,11 +30,14 @@ import { formatRelativeTime } from "@/lib/utils";
  * `/teams`: Ekipler (docs/history/350-*). Ekip = üyesi olduğum "tamamen kapalı" topluluk; bu sayfa onların günlük kapısıdır: her kartta ekibin
  * Space'lerine ve sohbetine kısayol. Veri tek RPC'dir (`list_my_teams`, sayfalı); ekip sayfası mevcut topluluk sayfasıdır (ekipte "Space'ler" ilk sekme).
  */
+const ignoreCount = () => undefined;
+
 export function TeamsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const { refresh } = useRealMessages();
+  const { node: toastNode, show } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
   const list = usePagedList<TeamSummary>(`teams|${user?.id ?? ""}`, Boolean(user), (offset) => listMyTeams(offset));
 
@@ -48,6 +53,25 @@ export function TeamsPage() {
           {t("teams.create")}
         </Button>
       </div>
+
+      {/* Ekip davetleri (docs/history/351-*): tamamen kapalı = ekip, davetleri Topluluklar'da değil burada görünür; kabul edince ekibin sayfasına gidilir. */}
+      {user && (
+        <TeamLanguageScope enabled>
+          <div data-testid="team-invites">
+            <InvitesView
+              kind="team"
+              hideWhenEmpty
+              userId={user.id}
+              onCount={ignoreCount}
+              onToast={show}
+              onJoined={(groupId) => {
+                void refresh();
+                router.push(teamHref(groupId, "spaces"));
+              }}
+            />
+          </div>
+        </TeamLanguageScope>
+      )}
 
       <PagedListState
         list={list}
@@ -66,12 +90,6 @@ export function TeamsPage() {
               description={t("teams.empty.body")}
               action={{ label: t("teams.create"), onClick: () => setCreateOpen(true) }}
             />
-            <p className="text-center text-small text-text-muted">
-              {t("teams.empty.invite")}{" "}
-              <Link href="/communities?tab=invites" className="font-medium text-primary hover:underline">
-                {t("teams.empty.inviteLink")}
-              </Link>
-            </p>
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2" data-testid="teams-list">
@@ -82,6 +100,7 @@ export function TeamsPage() {
         )}
       </PagedListState>
 
+      {toastNode}
       {createOpen && (
         <CreateCommunityModal
           mode="team"
@@ -89,7 +108,7 @@ export function TeamsPage() {
           onCreated={(groupId) => {
             setCreateOpen(false);
             void refresh();
-            router.push(communityHref(groupId, "spaces"));
+            router.push(teamHref(groupId, "spaces"));
           }}
         />
       )}
@@ -101,7 +120,7 @@ function TeamCard({ team }: { team: TeamSummary }) {
   const { t, language } = useTranslation();
   return (
     <li data-team-card={team.id} className="flex flex-col gap-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card transition-colors duration-200 ease-soft hover:border-border-strong">
-      <Link href={communityHref(team.id, "spaces")} className="flex items-start gap-3">
+      <Link href={teamHref(team.id, "spaces")} className="flex items-start gap-3">
         <GroupAvatar name={team.name} avatarUrl={team.avatarUrl} size={52} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-body font-semibold text-text">{team.name}</span>
@@ -116,7 +135,7 @@ function TeamCard({ team }: { team: TeamSummary }) {
       </Link>
       {team.lastActivityAt && <p className="text-caption text-text-muted">{t("teams.card.active", { time: formatRelativeTime(team.lastActivityAt, language) })}</p>}
       <div className="mt-auto flex flex-wrap gap-2">
-        <Link href={communityHref(team.id, "spaces")} data-team-open-spaces className={buttonClassName({ size: "sm" })}>
+        <Link href={teamHref(team.id, "spaces")} data-team-open-spaces className={buttonClassName({ size: "sm" })}>
           <Shapes size={14} aria-hidden />
           {t("teams.card.openSpaces")}
         </Link>

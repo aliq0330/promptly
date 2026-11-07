@@ -182,6 +182,7 @@ export async function installMock(context, db, opts = {}) {
     if (table === "rpc/set_chat_group_visibility") {
       const g = groupOf(body.p_group_id);
       if (!g || !["owner", "admin"].includes(roleOf(g.id) ?? "")) return err("forbidden");
+      if (g.visibility === "private" && body.p_visibility !== "private" && (db.spaces ?? []).some((sp) => sp.community_id === g.id)) return err("community_has_team_spaces");
       if (g.visibility === body.p_visibility) return json(200, { changed: false, visibility: g.visibility, accepted_count: 0, already_member_count: 0, skipped_count: 0, skipped: [], pending_remaining: g.pending_request_count, member_count: g.member_count });
       g.visibility = body.p_visibility;
       let accepted = 0; const skipped = [];

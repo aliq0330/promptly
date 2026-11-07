@@ -44,6 +44,7 @@ const ROUTE_TITLES: Record<string, TranslationKey> = {
   "/groups": "nav.communities",
   "/groups/join": "nav.communities",
   "/teams": "teams.title",
+  "/teams/local": "teams.title",
   "/communities": "nav.communities",
   "/communities/join": "nav.communities",
   "/communities/local": "nav.communities",

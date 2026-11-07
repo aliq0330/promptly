@@ -104,7 +104,7 @@ export function CommunitiesPage() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    fetchMyInvitations(user.id)
+    fetchMyInvitations(user.id, "community")
       .then((list) => {
         if (!cancelled) setInvitations(list);
       })
