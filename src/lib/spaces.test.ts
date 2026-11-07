@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   defaultItemSize,
+  TEAM_SPACES_MAX,
   extractSpaceErrorCode,
   isSpaceTab,
   matchesQuery,
@@ -84,4 +85,19 @@ test("activity visibility: members always see it, strangers only when the owner 
 
 test("spaceActivityHref opens the activity tab on one event", () => {
   assert.equal(spaceActivityHref("s1", "e 2"), "/spaces/local?id=s1&tab=activity&event=e%202");
+});
+
+test("spaceCapabilities: ekibe bağlı Space’te kişi yönetimi, paylaşım ve ayrılma kapanır; düzenleme ve sahiplik rolü kalır (docs/history/349-*)", () => {
+  const personal = spaceCapabilities("owner", false, "members", false);
+  assert.equal(personal.manageMembers, true);
+  assert.equal(personal.share, true);
+  const team = spaceCapabilities("owner", false, "members", true);
+  assert.equal(team.manageMembers, false);
+  assert.equal(team.share, false);
+  assert.equal(team.edit, true);
+  assert.equal(team.owner, true);
+  const teamEditor = spaceCapabilities("editor", false, "members", true);
+  assert.equal(teamEditor.edit, true);
+  assert.equal(teamEditor.owner, false);
+  assert.equal(TEAM_SPACES_MAX, 50);
 });

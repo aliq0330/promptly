@@ -147,6 +147,22 @@ Eski adresler çalışır (`resolveCommunityView`, `lib/communities.ts`): `tab=o
 | `restricted` Kapalı | ✗ | ✓ | yalnız üye | istek + yönetici onayı |
 | `private` Tamamen kapalı | ✗ | ✗ | yalnız üye, id ile bile bulunamaz | yalnız davet |
 
+### Ekip alanı = "Tamamen kapalı" topluluk (docs/history/349-*)
+
+`private` topluluk aynı zamanda **ekip alanıdır**: ayrı bir tablo yok. Üyelik kaynaktır (`conversation_members`); ekibe bağlı Space'in (`spaces.community_id`)
+`space_members` satırları bunun tetikleyiciyle eşitlenen yansımasıdır, Space sahibi (`owner_id`) her zaman topluluk sahibidir, herkes Space'te düzenleyicidir.
+
+| Konu | Kural |
+|---|---|
+| Space açma | `create_team_space` — yalnız `create_spaces` yeteneği olan (sahip her zaman; yönetici varsayılan EVET; moderatör HAYIR), `private` ve kapatılmamış toplulukta; ekip başına 50 |
+| Onay | Ekip kütüphanesinde onay `approve_library` yeteneğidir (sahip her zaman; yönetici varsayılan EVET); istemci kararı `space_can_approve` ile sorar |
+| Üye yönetimi | Space'te elle yok (`space_team_managed`); ekibe alma/çıkarma Space'lere kendiliğinden yansır |
+| Görünürlük | Topluluk Space varken `private`tan çıkamaz (`community_has_team_spaces`); Space her zaman özel kalır |
+| Silme / devir | Topluluk silinince Space'ler silinmez, sahibinin kişisel Space'i olur; sahiplik devrinde Space sahibi de değişir |
+| Sohbet bağı | Space şeridinde "Ekip sohbeti" + "Sohbete gönder"; sohbet bilgisinde "Ortak Space'ler" (yönetim yok); Space olayları yalnız bildirim üretir |
+
+Yeni yetenek ya da Space türü eklerken yukarıdaki üçlü güncelleme kuralı geçerlidir; ekip dışı kişi için `_group_can` NULL döner — çağıran `coalesce(…, false)` yazar.
+
 ### Üyelik politikaları ve durumlar
 
 - Kural kabulü zorunluysa katılımda kural metni okunur (`rules_required`, `rules_version`).

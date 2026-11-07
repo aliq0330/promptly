@@ -49,8 +49,11 @@ test("kategori: bilinmeyen değer 'general'e düşer, her kategorinin etiket ana
 test("sekmeler: üye olmayan kapalı toplulukta sekme yok; açıkta yalnız okuma sekmeleri; üye Akış ilk olmak üzere beş sekme alır", () => {
   assert.deepEqual(accessibleTabs({ role: null, visibility: "private" }), []);
   assert.deepEqual(accessibleTabs({ role: null, visibility: "public" }), ["feed", "events", "about"]);
+  // "Space'ler" sekmesi yalnız tamamen kapalı (ekip alanı) toplulukta vardır (docs/history/349-*).
   const member = accessibleTabs({ role: "member", visibility: "private" });
-  assert.deepEqual(member, ["feed", "events", "members", "about"]);
+  assert.deepEqual(member, ["feed", "spaces", "events", "members", "about"]);
+  assert.deepEqual(accessibleTabs({ role: "member", visibility: "restricted" }), ["feed", "events", "members", "about"]);
+  assert.deepEqual(accessibleTabs({ role: "member", visibility: "public" }), ["feed", "events", "members", "about"]);
   assert.ok(!member.includes("manage"));
   assert.ok(accessibleTabs({ role: "owner", visibility: "private" }).includes("manage"));
   assert.ok(accessibleTabs({ role: "moderator", visibility: "private" }).includes("manage"));

@@ -60,3 +60,11 @@ test("the app-connected sentence (docs/history/317-*) is recognised and the app 
     { key: "notifMsg.oauthConnected", params: { name: "Claude <b>x</b>" } },
   );
 });
+
+test("ekip alanı bildirimleri (docs/history/349-*) Space/prompt adı çevrilmeden doğru anahtara düşer", () => {
+  assert.deepEqual(JSON.parse(run('"Pazarlama" adlı yeni ekip Space\'ini açtı.')), { key: "notifMsg.teamSpaceOpened", params: { name: "Pazarlama" } });
+  assert.deepEqual(JSON.parse(run('"Satış e-postası" promptunu ekip kütüphanesinde onayladı.')), { key: "notifMsg.teamPromptApproved", params: { name: "Satış e-postası" } });
+  assert.deepEqual(JSON.parse(run('"Satış e-postası" promptunun onayını kaldırdı.')), { key: "notifMsg.teamPromptUnapproved", params: { name: "Satış e-postası" } });
+  assert.deepEqual(JSON.parse(run('"Satış e-postası" promptu için onay istedi.')), { key: "notifMsg.teamReviewRequested", params: { name: "Satış e-postası" } });
+  assert.equal(run('"Satış e-postası" promptu için onay istedi.', "tr"), '"Satış e-postası" promptu için onay istedi.');
+});

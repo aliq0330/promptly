@@ -52,3 +52,29 @@ export function approvalStateOf(item: { kind: string; isDraft: boolean; approved
   if (item.kind !== "prompt" || !item.isDraft) return "none";
   return item.approvedAt ? "approved" : "pending";
 }
+
+/** "Onaya gönder" durumu (docs/history/349-*): bekleyen istek yalnız onaylanmamış prompt taslağında anlamlıdır. */
+export function reviewStateOf(item: { kind: string; isDraft: boolean; approvedAt?: string | null; reviewRequestedAt?: string | null }): "requested" | "none" {
+  if (item.kind !== "prompt" || !item.isDraft || item.approvedAt) return "none";
+  return item.reviewRequestedAt ? "requested" : "none";
+}
+
+/**
+ * Satırda hangi inceleme düğmesi görünür? Onay yetkilisi doğrudan onaylar (istek gerekmez); düzenleyici yetkisiz kişi ister ya da kendi/başkasının
+ * bekleyen isteğini geri çeker. Onaylı ya da taslak olmayan satırda hiçbiri.
+ */
+export function reviewActionOf(
+  item: { kind: string; isDraft: boolean; approvedAt?: string | null; reviewRequestedAt?: string | null },
+  caps: { edit: boolean; approve: boolean },
+): "request" | "withdraw" | null {
+  if (item.kind !== "prompt" || !item.isDraft || item.approvedAt || !caps.edit) return null;
+  if (item.reviewRequestedAt) return "withdraw";
+  return caps.approve ? null : "request";
+}
+
+/** Sürüm listesinde bir sürümün özet satırı: ilk dolu satır, en çok `max` karakter. */
+export function versionPreview(body: string, max = 140): string {
+  const line = body.split("\n").find((part) => part.trim() !== "") ?? "";
+  const text = line.trim();
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}

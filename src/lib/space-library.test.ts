@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { approvalStateOf, libraryVariableProblem, planLibraryFill } from "./space-library.ts";
+import { approvalStateOf, libraryVariableProblem, planLibraryFill, reviewActionOf, reviewStateOf, versionPreview } from "./space-library.ts";
 import { SPACE_KINDS, SPACE_TEMPLATE_GROUPS, spaceCapabilities } from "./spaces.ts";
 
 test("planLibraryFill: yazılan değer ekibin ortak değerini ezer, ortak değer boşlukları doldurur, geri kalan jeton olarak kalır", () => {
@@ -51,4 +51,30 @@ test("ekip kütüphanesi: yalnız sahip onaylar (arşivde kimse), her tür şabl
   assert.ok(!spaceCapabilities("owner", true).approve);
   assert.ok(SPACE_KINDS.includes("team_library"));
   for (const kind of SPACE_KINDS) assert.ok(SPACE_TEMPLATE_GROUPS[kind].length > 0, kind);
+});
+
+// ---- Aşama 3: Onaya gönder + sürüm geçmişi (docs/history/349-*) ----
+const draft = { kind: "prompt", isDraft: true };
+test("reviewStateOf: yalnız onaysız prompt taslağında bekleyen istek", () => {
+  assert.equal(reviewStateOf({ ...draft, reviewRequestedAt: "2026-11-07T10:00:00Z" }), "requested");
+  assert.equal(reviewStateOf({ ...draft }), "none");
+  assert.equal(reviewStateOf({ ...draft, approvedAt: "2026-11-07T11:00:00Z", reviewRequestedAt: "2026-11-07T10:00:00Z" }), "none");
+  assert.equal(reviewStateOf({ kind: "note", isDraft: false, reviewRequestedAt: "2026-11-07T10:00:00Z" }), "none");
+  assert.equal(reviewStateOf({ kind: "prompt", isDraft: false, reviewRequestedAt: "2026-11-07T10:00:00Z" }), "none");
+});
+
+test("reviewActionOf: yetkisiz düzenleyici ister; yetkili ister DEĞİL (doğrudan onaylar); bekleyen istek geri çekilir", () => {
+  assert.equal(reviewActionOf({ ...draft }, { edit: true, approve: false }), "request");
+  assert.equal(reviewActionOf({ ...draft }, { edit: true, approve: true }), null);
+  assert.equal(reviewActionOf({ ...draft, reviewRequestedAt: "2026-11-07T10:00:00Z" }, { edit: true, approve: false }), "withdraw");
+  assert.equal(reviewActionOf({ ...draft, reviewRequestedAt: "2026-11-07T10:00:00Z" }, { edit: true, approve: true }), "withdraw");
+  assert.equal(reviewActionOf({ ...draft }, { edit: false, approve: false }), null);
+  assert.equal(reviewActionOf({ ...draft, approvedAt: "2026-11-07T11:00:00Z" }, { edit: true, approve: false }), null);
+  assert.equal(reviewActionOf({ kind: "image", isDraft: false }, { edit: true, approve: false }), null);
+});
+
+test("versionPreview: ilk dolu satır, uzunsa kısaltılır", () => {
+  assert.equal(versionPreview("\n  \nMerhaba {musteri}\nikinci"), "Merhaba {musteri}");
+  assert.equal(versionPreview(""), "");
+  assert.equal(versionPreview("a".repeat(200), 10), "aaaaaaaaa…");
 });

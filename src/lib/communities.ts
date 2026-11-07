@@ -107,9 +107,9 @@ export function normalizeFeedPolicy(value: unknown): CommunityFeedPolicy {
  * Topluluk sayfasının sekmeleri. Akış ilk açılış ekranıdır; sohbet bir sekme DEĞİL, başlıktaki "Sohbeti aç" eylemidir. Eski adresler
  * (`tab=overview` → Akış, `tab=chat` → sohbet, `tab=manage&section=requests|invites` → Üyeler) `resolveCommunityView` ile yönlenir.
  */
-export type CommunityTab = "feed" | "events" | "members" | "about" | "manage";
+export type CommunityTab = "feed" | "spaces" | "events" | "members" | "about" | "manage";
 
-export const COMMUNITY_TABS: readonly CommunityTab[] = ["feed", "events", "members", "about", "manage"];
+export const COMMUNITY_TABS: readonly CommunityTab[] = ["feed", "spaces", "events", "members", "about", "manage"];
 
 export function isCommunityTab(value: unknown): value is CommunityTab {
   return typeof value === "string" && (COMMUNITY_TABS as readonly string[]).includes(value);
@@ -157,7 +157,8 @@ export function canSeeManageTab(role: GroupRole | null | undefined, perms?: Role
 export function accessibleTabs(args: { role: GroupRole | null; visibility: GroupVisibility; perms?: RolePermissions }): CommunityTab[] {
   const { role, visibility, perms } = args;
   if (!role) return visibility === "public" ? ["feed", "events", "about"] : [];
-  const tabs: CommunityTab[] = ["feed", "events", "members", "about"];
+  // "Space'ler" yalnız ekip alanında (tamamen kapalı topluluk; docs/history/349-*).
+  const tabs: CommunityTab[] = visibility === "private" ? ["feed", "spaces", "events", "members", "about"] : ["feed", "events", "members", "about"];
   if (canSeeManageTab(role, perms)) tabs.push("manage");
   return tabs;
 }

@@ -22,6 +22,7 @@ import { VisibilityLabel } from "./visibility-label";
 import { FeedTab } from "./feed-tab";
 import { MembersTab } from "./members-tab";
 import { EventsTab } from "./events-tab";
+import { SpacesTab } from "./spaces-tab";
 import { AboutTab } from "./about-tab";
 import { ManageTab } from "./manage-tab";
 import { useCommunity } from "./use-community";
@@ -122,6 +123,7 @@ function CommunityPageInner() {
   const ready = state;
   const tabLabels: Record<CommunityTab, string> = {
     feed: t("communities.detail.tab.feed"),
+    spaces: t("communities.detail.tab.spaces"),
     events: t("communities.detail.tab.events"),
     members: t("communities.detail.tab.members"),
     about: t("communities.detail.tab.about"),
@@ -241,6 +243,7 @@ function CommunityPageInner() {
               {tab !== "feed" && (
                 <CommunityReadingColumn className={tab === "manage" ? "max-w-4xl" : undefined}>
                   {tab === "members" && role && <MembersTab {...common} />}
+                  {tab === "spaces" && role && <SpacesTab {...common} />}
                   {tab === "events" && <EventsTab {...common} />}
                   {tab === "about" && <AboutTab {...common} />}
                   {tab === "manage" && role && <ManageTab {...common} />}

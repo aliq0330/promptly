@@ -37,6 +37,8 @@ export const SPACE_PALETTE_NAME_MAX = 60;
 export const SPACE_PALETTE_DESCRIPTION_MAX = 300;
 export const SPACE_PALETTE_COLORS_MAX = 24;
 export const SPACE_ITEMS_MAX = 500;
+/** Bir ekibe (tamamen kapalı topluluk) bağlanabilecek en çok Space (docs/history/349-*; sunucu `create_team_space` de uygular). */
+export const TEAM_SPACES_MAX = 50;
 /** Ekip kütüphanesinin ortak değişkenleri (docs/history/348-*): Space başına sayı, ad ve değer uzunluğu (DB CHECK'leriyle aynı). */
 export const SPACE_VARIABLES_MAX = 50;
 export const SPACE_VARIABLE_NAME_MAX = 40;
@@ -120,23 +122,27 @@ export function parseSpaceLinkToken(hash: string): string | null {
 }
 
 /** Arayüz yetkisi (göster/gizle). Arşivlenen Space herkes için salt-okunurdur. */
-export function spaceCapabilities(role: SpaceRole | null, archived: boolean, activityVisibility: SpaceActivityVisibility = "members") {
+export function spaceCapabilities(role: SpaceRole | null, archived: boolean, activityVisibility: SpaceActivityVisibility = "members", teamManaged = false) {
   const member = role !== null;
   const editor = (role === "owner" || role === "editor") && !archived;
   return {
     member,
     edit: editor,
     owner: role === "owner",
-    manageMembers: role === "owner" && !archived,
-    // Ekip kütüphanesinde "onaylı" işaretini yalnız sahip verir/geri alır (sunucu da böyle: space_set_item_approval).
+    // Ekibe bağlı Space'te kişi listesi ekipten gelir: davet/rol/çıkarma/paylaşım/ayrılma yoktur (docs/history/349-*).
+    manageMembers: role === "owner" && !archived && !teamManaged,
+    // Ekip kütüphanesinde "onaylı" işaretini sahip verir/geri alır (sunucu: space_set_item_approval). Ekibe bağlı Space'te asıl yetki `approve_library`
+    // yeteneğidir; sağlayıcı bu değeri `space_can_approve` ile ezer (docs/history/349-*).
     approve: role === "owner" && !archived,
-    share: role === "owner" && !archived,
+    share: role === "owner" && !archived && !teamManaged,
     archive: role === "owner",
     delete: role === "owner",
     // Etkinlik: üyeye her zaman; "herkes" ayarında Space'i okuyan herkese (ziyaretçi dahil).
     seeActivity: member || activityVisibility === "everyone",
     seePrivateNotes: member,
-    leave: member && role !== "owner",
+    leave: member && role !== "owner" && !teamManaged,
+    /** Ekibe bağlı Space (üyelik ekipten eşitlenir). */
+    teamManaged,
   };
 }
 
@@ -209,7 +215,10 @@ export const SPACE_ERROR_CODES = [
   "space_rating_owner",
   "space_item_locked",
   "space_approval_forbidden",
+  "space_review_forbidden",
   "space_variable_limit",
+  "space_team_managed",
+  "team_space_limit",
 ] as const;
 export type SpaceErrorCode = (typeof SPACE_ERROR_CODES)[number];
 
