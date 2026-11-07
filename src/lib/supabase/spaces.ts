@@ -8,6 +8,7 @@ import { resizeImageToBlob } from "@/lib/utils";
 import {
   extractSpaceErrorCode,
   SPACE_PAGE_SIZE,
+  SPACE_VARIABLES_MAX,
   type SpaceColor,
   type SpaceContentType,
   type SpaceErrorCode,
@@ -57,6 +58,8 @@ const SPACE_ERROR_KEYS: Record<SpaceErrorCode, TranslationKey> = {
   space_too_empty: "spaces.error.tooEmpty",
   space_rating_owner: "spaces.error.ratingOwner",
   space_item_locked: "spaces.error.itemLocked",
+  space_approval_forbidden: "spaces.error.approvalForbidden",
+  space_variable_limit: "spaces.error.variableLimit",
 };
 
 export class SpaceError extends Error {
@@ -181,6 +184,12 @@ export interface SpaceItem {
   sourceStepNo: number | null;
   /** Kilitli nesne taşınamaz, boyutlanamaz, düzenlenemez, silinemez (docs/history/307-*; sunucu tetikleyicisi de uygular). */
   locked?: boolean;
+  /**
+   * Ekip kütüphanesinde sahibin verdiği onay (docs/history/348-*; yalnız kendi metnini taşıyan prompt taslağında). Metin/başlık değişince
+   * sunucu onayı KENDİLİĞİNDEN düşürür; istemci bu alanı doğrudan yazamaz (`setSpaceItemApproval`).
+   */
+  approvedAt?: string | null;
+  approvedBy?: string | null;
   createdBy: string | null;
   updatedBy: string | null;
   createdAt: string;
@@ -256,7 +265,8 @@ export type SpaceActivityAction =
   | "created" | "renamed" | "visibility_changed" | "archived" | "unarchived"
   | "image_added" | "image_removed" | "prompt_added" | "note_added" | "content_added" | "item_removed"
   | "palette_created" | "palette_updated" | "palette_deleted" | "group_created" | "group_deleted"
-  | "member_invited" | "member_joined" | "member_removed" | "role_changed" | "link_created" | "link_revoked";
+  | "member_invited" | "member_joined" | "member_removed" | "role_changed" | "link_created" | "link_revoked"
+  | "item_approved" | "item_unapproved";
 
 /** Etkinliğin önce/sonra ayrıntısı (`space_activity.details`, docs/history/242-*). Alanlar eylem türüne göre dolar. */
 export interface SpaceActivityItem {
@@ -378,6 +388,8 @@ export interface SpaceItemRow {
   source_role?: "step" | "prompt" | "image" | null;
   source_step_no?: number | null;
   locked?: boolean;
+  approved_at?: string | null;
+  approved_by?: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -386,7 +398,7 @@ export interface SpaceItemRow {
 
 // `flow_show_*` (docs/history/261-*) yoksa istek sütunsuz yeniden denenir (server-errors.ts OPTIONAL_COLUMNS) — Space'ler migration'dan önce de açılır.
 const ITEM_COLS =
-  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, created_by, updated_by, created_at, updated_at";
+  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, approved_at, approved_by, created_by, updated_by, created_at, updated_at";
 
 export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
   return {
@@ -422,6 +434,8 @@ export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
     sourceRole: row.source_role ?? null,
     sourceStepNo: row.source_step_no ?? null,
     locked: Boolean(row.locked),
+    approvedAt: row.approved_at ?? null,
+    approvedBy: row.approved_by ?? null,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     createdAt: row.created_at,
@@ -803,6 +817,41 @@ export async function addSpaceItems(items: NewSpaceItem[], userId: string): Prom
 /** Kaldırılmış bir öğeyi aynı kimlikle geri koyar (geri al). Kaynağı artık okunamıyorsa sunucu reddeder. */
 export async function restoreSpaceItems(items: SpaceItem[], userId: string): Promise<SpaceItem[]> {
   return addSpaceItems(items, userId);
+}
+
+/**
+ * Ekip kütüphanesinde bir prompt taslağını onaylar / onayı geri alır (docs/history/348-*). Yalnız Space SAHİBİ; sunucu `space_set_item_approval`
+ * yetkiyi, türü ve taslak olmayı yeniden denetler. Dönen değer sunucunun yazdığı onay anıdır (geri almada `null`).
+ */
+export async function setSpaceItemApproval(itemId: string, approved: boolean): Promise<string | null> {
+  const at = await rpc<string | null>("space_set_item_approval", { p_item: itemId, p_approved: approved });
+  return approved ? (at ?? new Date().toISOString()) : null;
+}
+
+/** Ekibin ortak `{değişken}` değeri (yalnız ÜYE okur; Space başına en çok 50). */
+export interface SpaceVariable {
+  name: string;
+  value: string;
+  updatedAt: string;
+}
+
+export async function fetchSpaceVariables(spaceId: string): Promise<SpaceVariable[]> {
+  const { data, error } = await supabase
+    .from("space_variables")
+    .select("name, value, updated_at")
+    .eq("space_id", spaceId)
+    .order("name")
+    .limit(SPACE_VARIABLES_MAX);
+  if (error) throw toSpaceError(error);
+  return ((data ?? []) as { name: string; value: string | null; updated_at: string }[]).map((row) => ({ name: row.name, value: row.value ?? "", updatedAt: row.updated_at }));
+}
+
+export async function saveSpaceVariable(spaceId: string, name: string, value: string): Promise<void> {
+  await rpc<void>("space_set_variable", { p_space: spaceId, p_name: name, p_value: value });
+}
+
+export async function removeSpaceVariable(spaceId: string, name: string): Promise<void> {
+  await rpc<void>("space_delete_variable", { p_space: spaceId, p_name: name });
 }
 
 export type SpaceItemPatch = Partial<Pick<SpaceItem, "title" | "body" | "note" | "color" | "isPrivate" | "attachedItemId" | "groupId" | "flowShowIo" | "flowShowLinks" | "flowShowRelations" | "locked">>;

@@ -7,7 +7,7 @@
  */
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-export type SpaceKind = "moodboard" | "character" | "brand" | "game_world" | "interior" | "free";
+export type SpaceKind = "moodboard" | "character" | "brand" | "game_world" | "interior" | "free" | "team_library";
 export type SpaceVisibility = "private" | "link" | "public";
 export type SpaceRole = "owner" | "editor" | "viewer";
 export type SpaceItemKind = "image" | "prompt" | "note" | "palette" | "content";
@@ -20,7 +20,7 @@ export type SpaceActivityVisibility = "everyone" | "members";
 export type SpaceFilter = "all" | "mine" | "shared" | "favorites" | "public" | "archived";
 export type SpaceSort = "updated" | "opened" | "created" | "title";
 
-export const SPACE_KINDS: readonly SpaceKind[] = ["moodboard", "character", "brand", "game_world", "interior", "free"];
+export const SPACE_KINDS: readonly SpaceKind[] = ["moodboard", "character", "brand", "game_world", "interior", "free", "team_library"];
 export const SPACE_VISIBILITIES: readonly SpaceVisibility[] = ["private", "link", "public"];
 export const SPACE_TABS: readonly SpaceTab[] = ["overview", "board", "images", "prompts", "palette", "notes", "comments", "activity", "members"];
 export const SPACE_FILTERS: readonly SpaceFilter[] = ["all", "mine", "shared", "favorites", "public", "archived"];
@@ -37,6 +37,10 @@ export const SPACE_PALETTE_NAME_MAX = 60;
 export const SPACE_PALETTE_DESCRIPTION_MAX = 300;
 export const SPACE_PALETTE_COLORS_MAX = 24;
 export const SPACE_ITEMS_MAX = 500;
+/** Ekip kütüphanesinin ortak değişkenleri (docs/history/348-*): Space başına sayı, ad ve değer uzunluğu (DB CHECK'leriyle aynı). */
+export const SPACE_VARIABLES_MAX = 50;
+export const SPACE_VARIABLE_NAME_MAX = 40;
+export const SPACE_VARIABLE_VALUE_MAX = 500;
 export const SPACE_PAGE_SIZE = 24;
 
 export const SPACE_KIND_LABEL: Record<SpaceKind, TranslationKey> = {
@@ -46,6 +50,7 @@ export const SPACE_KIND_LABEL: Record<SpaceKind, TranslationKey> = {
   game_world: "spaces.kind.game_world",
   interior: "spaces.kind.interior",
   free: "spaces.kind.free",
+  team_library: "spaces.kind.team_library",
 };
 
 export const SPACE_VISIBILITY_LABEL: Record<SpaceVisibility, TranslationKey> = {
@@ -83,6 +88,8 @@ export const SPACE_TEMPLATE_GROUPS: Record<SpaceKind, TranslationKey[]> = {
   game_world: ["spaces.group.characters", "spaces.group.places", "spaces.group.objects", "spaces.group.lore"],
   interior: ["spaces.group.rooms", "spaces.group.materials", "spaces.group.furniture", "spaces.group.references"],
   free: ["spaces.group.references", "spaces.group.done"],
+  // Konuya göre gruplar; "onaylı / onaysız" ayrımı grup değil ÖĞENİN onay işaretidir (grup adı onayla çelişebilirdi).
+  team_library: ["spaces.group.general", "spaces.group.marketing", "spaces.group.support", "spaces.group.development"],
 };
 
 export function isSpaceTab(value: string | null | undefined): value is SpaceTab {
@@ -121,6 +128,8 @@ export function spaceCapabilities(role: SpaceRole | null, archived: boolean, act
     edit: editor,
     owner: role === "owner",
     manageMembers: role === "owner" && !archived,
+    // Ekip kütüphanesinde "onaylı" işaretini yalnız sahip verir/geri alır (sunucu da böyle: space_set_item_approval).
+    approve: role === "owner" && !archived,
     share: role === "owner" && !archived,
     archive: role === "owner",
     delete: role === "owner",
@@ -199,6 +208,8 @@ export const SPACE_ERROR_CODES = [
   "space_too_empty",
   "space_rating_owner",
   "space_item_locked",
+  "space_approval_forbidden",
+  "space_variable_limit",
 ] as const;
 export type SpaceErrorCode = (typeof SPACE_ERROR_CODES)[number];
 

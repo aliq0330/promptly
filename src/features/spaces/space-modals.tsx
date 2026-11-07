@@ -27,7 +27,7 @@ import {
 } from "@/lib/supabase/spaces";
 import { createQuote, deleteQuote, fetchOwnSpaceQuoteId } from "@/lib/supabase/quotes";
 import { SPACE_TEMPLATE_GROUPS, spaceHref, spaceLinkHref, type SpaceActivityVisibility, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
-import { CoverPicker, DescriptionField, FormError, KindField, SubmitButton, TemplateField, TitleField, VisibilityField } from "./space-forms";
+import { CoverPicker, DescriptionField, FormError, KindField, LibraryVisibilityNote, SubmitButton, TemplateField, TitleField, VisibilityField } from "./space-forms";
 import { SpaceImage } from "./space-visuals";
 
 /** Gövdenin İÇİNDE yazılmış alt düğme satırı (Vazgeç / Kaydet) için: kayan gövdenin altına yapışır (`has-[[data-dialog-footer]]:pb-0` altındaki boşluğu kaldırır). `footer` prop'u varsa gerek yok. */
@@ -189,6 +189,7 @@ export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose:
         <KindField value={kind} onChange={setKind} />
         <TemplateField kind={kind} value={template} onChange={setTemplate} />
         <VisibilityField value={visibility} onChange={setVisibility} />
+        <LibraryVisibilityNote kind={kind} visibility={visibility} />
         <CoverPicker file={cover} onChange={setCover} />
         <FormError message={error} />
       </div>
@@ -479,6 +480,7 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
   return (
       <div className="space-y-4" data-testid="share-space-modal">
         <VisibilityField value={visibility} onChange={(next) => void applyVisibility(next)} name="share-visibility" />
+        <LibraryVisibilityNote kind={current.kind} visibility={visibility} />
         <p className="rounded-md bg-surface-soft px-3 py-2 text-caption text-text-secondary">{t("spaces.share.neverPublished")}</p>
 
         {canFeed && (

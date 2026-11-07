@@ -27,6 +27,8 @@ import {
   listMyContent,
   listMyPrompts,
   listMySaved,
+  listMyLibraries,
+  getLibraryPrompts,
   updateMyDraft,
   popularPrompts,
   promptSlug,
@@ -306,6 +308,32 @@ export function createPromptlyServer({ client, version, log = () => {}, onPrompt
         annotations: own,
       },
       (args: IdArgs) => run(() => me.backend.withUser(me.bearer, "read", (tx) => getMyPrompt(tx, me.backend.siteUrl, args.id))),
+    );
+    server.registerTool(
+      "list_my_libraries",
+      {
+        title: "List my team libraries",
+        description: "Team libraries (shared prompt collections of a team) you are a member of in Promptly. Read-only.",
+        inputSchema: {},
+        annotations: own,
+      },
+      () => run(() => me.backend.withUser(me.bearer, "read", (tx) => listMyLibraries(tx, me.backend.siteUrl))),
+    );
+    server.registerTool(
+      "get_library_prompts",
+      {
+        title: "Get the prompts of a team library",
+        description:
+          "The team's APPROVED prompts, with the team's shared {variables} already filled in (`filledText`). Variables the team has no value for stay as {tokens} and are listed in `missing`: ask the user for those. " +
+          "Set include_unapproved to also get drafts that the owner has not approved yet (say so when you show them). Read-only.",
+        inputSchema: {
+          id: z.string().describe("Team library id (UUID) from list_my_libraries."),
+          include_unapproved: z.boolean().optional().describe("Also return drafts that are not approved yet. Default: false."),
+        },
+        annotations: own,
+      },
+      (args: { id: string; include_unapproved?: boolean }) =>
+        run(() => me.backend.withUser(me.bearer, "read", (tx) => getLibraryPrompts(tx, me.backend.siteUrl, args.id, { includeUnapproved: args.include_unapproved === true }))),
     );
     server.registerTool(
       "list_my_saved",
