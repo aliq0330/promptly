@@ -140,8 +140,8 @@ await scenario("5. Davetler: kabul edilince topluluğa gidilir (kurallı davette
   assert.ok(db.member(C2, ME));
 }, {
   setup: (db) => {
-    db.addCommunity(C2, { name: "Davetli Topluluk", visibility: "private", myRole: "none", rules: "Kural: saygılı ol", rulesRequired: true, members: [[U.bob, "owner"]] });
-    db.addCommunity(C3, { name: "Reddedilecek", visibility: "private", myRole: "none", members: [[U.bob, "owner"]] });
+    db.addCommunity(C2, { name: "Davetli Topluluk", visibility: "restricted", myRole: "none", rules: "Kural: saygılı ol", rulesRequired: true, members: [[U.bob, "owner"]] });
+    db.addCommunity(C3, { name: "Reddedilecek", visibility: "restricted", myRole: "none", members: [[U.bob, "owner"]] });
     db.invitations.push({ id: "f0000000-0000-4000-8000-000000000001", group_id: C2, invitee_id: ME, inviter_id: U.bob.id, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" });
     db.invitations.push({ id: "f0000000-0000-4000-8000-000000000002", group_id: C3, invitee_id: ME, inviter_id: U.bob.id, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" });
   },
@@ -293,9 +293,11 @@ await scenario("11. Üye olmayan, açık topluluk: salt-okunur sekmeler (Üyeler
 await scenario("11b. Kapalı topluluk, yalnız davetli: içerik/sohbet/üye listesi yok, yalnız davet kartı; kabul edince açılır", async ({ page, db }) => {
   await open(page, C1);
   assert.equal(await page.locator("[data-section-menu]").count(), 0, "no content tabs for a non-member of a private community");
-  await page.getByText("Bob seni bu topluluğa davet etti").waitFor();
+  // Tamamen kapalı = ekip (docs/history/350-*, 351-*): kimlik /teams/local'a yönlenir ve metinler ekip diliyle yazılır.
+  await page.waitForURL(/\/teams\/local\/?\?id=/);
+  await page.getByText("Bob seni bu ekibe davet etti").waitFor();
   await page.getByRole("button", { name: "Kabul et" }).click();
-  await waitTab(page, "Akış");
+  await waitTab(page, "Space'ler"); // ekipte (tamamen kapalı) ilk sekme Space'ler (docs/history/350-*)
   assert.ok(db.member(C1, ME));
 }, { setup: (db) => { seed(db, { myRole: "none", visibility: "private" }); db.invitations.push({ id: "f0000000-0000-4000-8000-000000000003", group_id: C1, invitee_id: ME, inviter_id: U.bob.id, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" }); } });
 
@@ -853,14 +855,15 @@ await scenario("26. Öneriler (Keşfet şeridi): ortak kategori önce, kapalı t
   },
 });
 
-await scenario("27. Oluştur: üç görünürlük seçeneği (Herkese açık · Kapalı · Tamamen kapalı); 'Kapalı' seçimi p_visibility=restricted gönderir", async ({ page, db }) => {
+await scenario("27. Oluştur: iki görünürlük seçeneği (Herkese açık · Kapalı; 'Tamamen kapalı' artık EKİP, docs/history/350-*); varsayılan Kapalı, p_visibility=restricted gönderir", async ({ page, db }) => {
   await page.goto(`${BASE}/communities`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const d = dlg(page);
-  assert.equal(await d.getByRole("radio", { name: /^(Herkese açık|Kapalı|Tamamen kapalı)/ }).count(), 3);
-  assert.equal(await d.getByRole("radio", { name: /^Tamamen kapalı/ }).isChecked(), true, "default stays fully closed (previous behaviour)");
+  await d.getByRole("radio", { name: /^Kapalı/ }).waitFor();
+  assert.equal(await d.getByRole("radio", { name: /^(Herkese açık|Kapalı|Tamamen kapalı)/ }).count(), 2);
+  assert.equal(await d.getByRole("radio", { name: /^Tamamen kapalı/ }).count(), 0, "tamamen kapalı = ekip, Topluluk oluştur'da yok");
+  assert.equal(await d.getByRole("radio", { name: /^Kapalı/ }).isChecked(), true, "default is Kapalı");
   await d.getByLabel("Topluluk adı").fill("Kapalı Kulüp");
-  await d.getByRole("radio", { name: /^Kapalı/ }).check();
   await d.getByRole("button", { name: "Topluluğu oluştur" }).click();
   await page.waitForURL(/communities\/local\/?\?id=/);
   assert.equal(calls(db, "create_community", "RPC")[0].body.p_visibility, "restricted");
@@ -995,17 +998,17 @@ await scenario("31. Görünürlük seçici (oluştur): seçili düzey vurgulanı
   const d = dlg(page);
   const radios = d.getByRole("radio", { name: /^(Herkese açık|Kapalı|Tamamen kapalı)/ });
   await radios.first().waitFor();
-  assert.equal(await radios.count(), 3);
+  assert.equal(await radios.count(), 2);
   assert.equal(await d.getByText("Seçili", { exact: true }).count(), 1, "exactly one level is marked as selected");
-  assert.equal(await d.getByRole("radio", { name: /^Tamamen kapalı/ }).isChecked(), true);
+  assert.equal(await d.getByRole("radio", { name: /^Kapalı/ }).isChecked(), true);
   const table = d.getByRole("table", { name: "Görünürlük düzeylerinin karşılaştırması" });
   await table.waitFor();
-  for (const text of ["Listelenir", "Hiç görünmez", "Herkes okur (ziyaretçiler dahil)", "İstek gönderilir, yönetici onaylar", "Yalnızca davetle"]) await table.getByText(text).first().waitFor();
-  await d.getByRole("radio", { name: /^Herkese açık/ }).focus();
-  await page.keyboard.press("ArrowDown");
-  assert.equal(await d.getByRole("radio", { name: /^Kapalı/ }).isChecked(), true, "arrow keys move the selection");
+  for (const text of ["Listelenir", "Herkes okur (ziyaretçiler dahil)", "İstek gönderilir, yönetici onaylar"]) await table.getByText(text).first().waitFor();
+  await d.getByRole("radio", { name: /^Kapalı/ }).focus();
+  await page.keyboard.press("ArrowUp");
+  assert.equal(await d.getByRole("radio", { name: /^Herkese açık/ }).isChecked(), true, "arrow keys move the selection");
   assert.equal(await d.getByText("Seçili", { exact: true }).count(), 1);
-  assert.ok((await d.getByText("Seçili", { exact: true }).locator("xpath=ancestor::label").innerText()).startsWith("Kapalı"), "the badge moved with the selection");
+  assert.ok((await d.getByText("Seçili", { exact: true }).locator("xpath=ancestor::label").innerText()).startsWith("Herkese açık"), "the badge moved with the selection");
 });
 
 for (const [label, viewport] of [["mobil 390x800", { width: 390, height: 800 }], ["tablet 820x1100", { width: 820, height: 1100 }]]) {
@@ -1018,7 +1021,7 @@ for (const [label, viewport] of [["mobil 390x800", { width: 390, height: 800 }],
     const tableVisible = await d.getByRole("table").isVisible();
     if (label.startsWith("mobil")) {
       assert.equal(tableVisible, false);
-      assert.equal(await d.getByText("Yalnızca davetle").first().isVisible(), true, "facts are shown inside each card on small screens");
+      assert.equal(await d.getByText("İstek gönderilir, yönetici onaylar").first().isVisible(), true, "facts are shown inside each card on small screens");
     } else assert.equal(tableVisible, true);
     const heights = await d.getByRole("radio").evaluateAll((els) => els.map((el) => Math.round(el.closest("label").getBoundingClientRect().height)));
     assert.ok(heights.every((h) => h >= 36), `option cards too small: ${heights}`);

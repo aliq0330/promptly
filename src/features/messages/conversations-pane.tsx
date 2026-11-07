@@ -8,6 +8,7 @@ import { MessagesSquare } from "@/components/icons/messages-square";
 import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
 import { Star } from "@/components/icons/star";
+import { Briefcase } from "@/components/icons/briefcase";
 import { Users } from "@/components/icons/users";
 import { ConversationList } from "./conversation-list";
 import { ConversationsMoreMenu, SelectionActionBar, SelectionHeader, useSelectionChrome } from "./conversation-selection";
@@ -26,7 +27,7 @@ import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
 import { CONTROL_ICON_BUTTON, type SectionMenuItem } from "@/features/content/section-menu";
 import type { Conversation } from "@/types";
 
-type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities";
+type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities" | "teams";
 
 /**
  * The conversation list (message requests + chats) with its own search box.
@@ -177,10 +178,13 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     // Not views but doors: the starred messages screen and the communities (their chats live there).
     { key: "starred", label: t("chat.starred.title"), icon: Star, dividerBefore: true },
     { key: "communities", label: t("communities.messages.entryAria"), icon: Users },
+    // Ekip sohbetleri Topluluk sohbetlerinden ayrı bir kapıdır (docs/history/350-*).
+    { key: "teams", label: t("teams.messages.entryAria"), icon: Briefcase },
   ];
   function pickView(next: MessagesView) {
     if (next === "starred") return router.push("/messages/starred");
     if (next === "communities") return router.push("/communities");
+    if (next === "teams") return router.push("/teams");
     setView(next);
     setActionError(false);
     exitSelection();

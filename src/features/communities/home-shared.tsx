@@ -11,6 +11,8 @@ export interface ListState {
   items: CommunitySummary[];
   hasMore: boolean;
   error: string | null;
+  /** Sonraki sayfanın sunucu konumu (yalnız `listMyCommunities` listelerinde; süzgeç satır saydığı için `items.length` ofset DEĞİLDİR). */
+  nextOffset?: number;
 }
 
 export function LoadingRows({ count = 3 }: { count?: number }) {

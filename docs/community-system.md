@@ -161,6 +161,8 @@ Eski adresler çalışır (`resolveCommunityView`, `lib/communities.ts`): `tab=o
 | Silme / devir | Topluluk silinince Space'ler silinmez, sahibinin kişisel Space'i olur; sahiplik devrinde Space sahibi de değişir |
 | Sohbet bağı | Space şeridinde "Ekip sohbeti" + "Sohbete gönder"; sohbet bilgisinde "Ortak Space'ler" (yönetim yok); Space olayları yalnız bildirim üretir |
 
+**Ekipler başlığı** (`docs/history/350-*`): ekibin giriş noktası `/teams`dir (`list_my_teams`); Topluluklar listeleri ekipleri göstermez, "Topluluk oluştur"da "Tamamen kapalı" seçeneği yoktur, ekip yalnız "Ekip oluştur"la kurulur ve görünürlüğü arayüzden değişmez. Ekip sayfası aynı bileşendir ama kendi rotasındadır (`/teams/local`, `docs/history/351-*`; yanlış rotadaki kimlik yönlenir): ilk sekme Space'ler, Akış = "Paylaşımlar", metinler ekip dilinde (`TeamLanguageScope`). Ekip davetleri Ekipler'de görünür; Ayarlar'da topluluk ↔ ekip dönüşümü vardır (ekibe bağlı Space varken ekip topluluğa çevrilemez).
+
 Yeni yetenek ya da Space türü eklerken yukarıdaki üçlü güncelleme kuralı geçerlidir; ekip dışı kişi için `_group_can` NULL döner — çağıran `coalesce(…, false)` yazar.
 
 ### Üyelik politikaları ve durumlar

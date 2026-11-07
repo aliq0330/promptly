@@ -6,7 +6,7 @@ import { listMyCommunities, type CommunitySummary } from "@/lib/supabase/communi
 const MAX_PAGES = 5;
 
 /**
- * Yönettiğim topluluklar (sahip/yönetici/moderatör; `list_my_communities` 'managed'). "Yönettiklerim" sekmesinin görünürlüğü ve
+ * Yönettiğim topluluklar (sahip/yönetici/moderatör; `list_my_communities` 'managed'; ekipler hariç — onlar "Ekipler" başlığındadır, docs/history/350-*). "Yönettiklerim" sekmesinin görünürlüğü ve
  * "Gelen başvurular" sayaçları buradan gelir. `ready` olmadan sekme çizilmez (yanıp sönme yok); hata → yönetilen yok sayılır.
  */
 export function useManagedCommunities(userId: string | null) {
@@ -18,9 +18,11 @@ export function useManagedCommunities(userId: string | null) {
     let cancelled = false;
     (async () => {
       const all: CommunitySummary[] = [];
+      let offset = 0;
       for (let page = 0; page < MAX_PAGES; page += 1) {
-        const result = await listMyCommunities("managed", all.length);
+        const result = await listMyCommunities("managed", offset, { excludeTeams: true });
         all.push(...result.communities);
+        offset = result.nextOffset;
         if (!result.hasMore) break;
       }
       return all;

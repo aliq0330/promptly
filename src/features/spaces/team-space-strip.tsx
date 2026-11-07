@@ -9,7 +9,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { composeSpaceShareBody } from "@/features/messages/space-share-format";
 import { sendMessage } from "@/lib/supabase/messages";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { communityChatHref, communityHref } from "@/lib/communities";
+import { communityChatHref, teamHref } from "@/lib/communities";
 import { fetchCommunityCard } from "@/lib/supabase/communities";
 
 /**
@@ -77,7 +77,7 @@ export function TeamSpaceStrip({ communityId, space }: { communityId: string; sp
         <span className="truncate">{name ? t("team.space.badge", { name }) : t("team.space.badge", { name: "…" })}</span>
       </span>
       <span className="flex-1" />
-      <Link href={communityHref(communityId, "spaces")} data-team-open-page className={buttonClassName({ size: "sm", variant: "outline" })}>
+      <Link href={teamHref(communityId, "spaces")} data-team-open-page className={buttonClassName({ size: "sm", variant: "outline" })}>
         {t("team.space.openTeam")}
       </Link>
       {share.state === "sent" && <span role="status" className="text-caption text-success">{t("team.share.sent")}</span>}

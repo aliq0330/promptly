@@ -595,7 +595,7 @@ export async function fetchGroupJoinRequestsPage(groupId: string, offset = 0, li
 export interface GroupInvitation {
   id: string;
   groupId: string;
-  group: { name: string; avatarUrl: string | null; memberCount: number; description: string | null; rules: string | null; rulesRequired: boolean } | null;
+  group: { name: string; avatarUrl: string | null; memberCount: number; description: string | null; rules: string | null; rulesRequired: boolean; visibility: GroupVisibility } | null;
   user: UserProfile | null;
   inviter: UserProfile | null;
   createdAt: string;
@@ -694,8 +694,11 @@ export async function fetchCommunityCards(ids: string[]): Promise<CommunityCard[
   }));
 }
 
-/** Bana gelen bekleyen davetler. Topluluk kartı `community_cards` RPC'sinden gelir (`chat_groups` satırı üye olmayana okunmaz). */
-export async function fetchMyInvitations(userId: string): Promise<GroupInvitation[]> {
+/**
+ * Bana gelen bekleyen davetler. Topluluk kartı `community_cards` RPC'sinden gelir (`chat_groups` satırı üye olmayana okunmaz).
+ * `kind`: Topluluklar "community" (tamamen kapalı = ekip DEĞİL), Ekipler "team" ister (docs/history/351-*); verilmezse hepsi.
+ */
+export async function fetchMyInvitations(userId: string, kind?: "community" | "team"): Promise<GroupInvitation[]> {
   const { data, error } = await supabase
     .from("chat_group_invitations")
     .select(
@@ -716,7 +719,7 @@ export async function fetchMyInvitations(userId: string): Promise<GroupInvitatio
   };
   const rows = (data ?? []) as unknown as Row[];
   const cards = new Map((await fetchCommunityCards(rows.map((row) => row.group_id))).map((card) => [card.id, card]));
-  return rows.map((row) => {
+  const all = rows.map((row) => {
     const card = cards.get(row.group_id);
     return {
     id: row.id,
@@ -729,6 +732,7 @@ export async function fetchMyInvitations(userId: string): Promise<GroupInvitatio
           memberCount: card.memberCount,
           rules: card.rules,
           rulesRequired: card.rulesRequired,
+          visibility: card.visibility,
         }
       : null,
     user: null,
@@ -737,6 +741,9 @@ export async function fetchMyInvitations(userId: string): Promise<GroupInvitatio
     expiresAt: row.expires_at,
     };
   });
+  if (!kind) return all;
+  // Kartı okunamayan davet (group null) topluluk sayılır: eski davranış (listede görünür, kabul/ret çalışır).
+  return all.filter((invitation) => (invitation.group?.visibility === "private") === (kind === "team"));
 }
 
 export interface MyJoinRequest {
