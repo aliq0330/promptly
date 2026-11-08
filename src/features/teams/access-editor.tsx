@@ -17,12 +17,15 @@ export function AccessEditor({
   entries,
   onChange,
   levels = true,
+  variant = "default",
 }: {
   teamId: string;
   entries: AccessEntry[];
   onChange: (next: AccessEntry[]) => void;
   /** `false`: düzey seçimi yok (kanal üyeliği — herkes yazabilir/okuyabilir). */
   levels?: boolean;
+  /** "space": Space erişimi penceresi (mockup 9 / P10) — "Erişimi olanlar · N" başlığı ve "+ Üye, grup veya konuk ekle…" satırı. */
+  variant?: "default" | "space";
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -39,6 +42,7 @@ export function AccessEditor({
     return () => window.clearTimeout(handle);
   }, [teamId, query]);
 
+  const spaceVariant = variant === "space";
   const has = (type: AccessEntry["type"], id: string) => entries.some((entry) => entry.type === type && entry.id === id);
   const add = (entry: AccessEntry) => {
     if (!has(entry.type, entry.id)) onChange([...entries, entry]);
@@ -46,12 +50,15 @@ export function AccessEditor({
   const remove = (entry: AccessEntry) => onChange(entries.filter((item) => !(item.type === entry.type && item.id === entry.id)));
   const setLevel = (entry: AccessEntry, level: AccessEntry["level"]) => onChange(entries.map((item) => (item.type === entry.type && item.id === entry.id ? { ...item, level } : item)));
 
-  const candidatesPeople = people.filter((person) => !has("member", person.userId));
-  const candidatesGroups = groups.filter((group) => !has("group", group.id) && (!query || group.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));
+  // Space erişimi penceresinde (mockup 9) öneriler yalnız yazmaya başlayınca açılır.
+  const showCandidates = !spaceVariant || query.trim().length > 0;
+  const candidatesPeople = showCandidates ? people.filter((person) => !has("member", person.userId)) : [];
+  const candidatesGroups = showCandidates ? groups.filter((group) => !has("group", group.id) && (!query || group.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))) : [];
 
   return (
     <div className="space-y-3" data-testid="access-editor">
-      <ul className="divide-y divide-border-soft rounded-lg border border-border-soft">
+      {spaceVariant && <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">{t("tm.access.listHeading", { count: entries.length })}</p>}
+      <ul className={cn("divide-y divide-border-soft border border-border-soft", spaceVariant ? "overflow-hidden rounded-xl" : "rounded-lg")}>
         {entries.length === 0 && <li className="px-3 py-3 text-small text-text-muted">{t("tm.access.none")}</li>}
         {entries.map((entry) => (
           <li key={`${entry.type}-${entry.id}`} className="px-3">
@@ -60,22 +67,35 @@ export function AccessEditor({
               username={entry.type === "member" ? entry.username : undefined}
               sub={entry.type === "group" ? t("tm.access.groupSub", { count: Number(entry.sub ?? 0) }) : undefined}
               right={
-                <>
-                  {levels && (
-                    <select
-                      aria-label={t("tm.access.level")}
-                      value={entry.level}
-                      onChange={(event) => setLevel(entry, event.target.value as AccessEntry["level"])}
-                      className="h-8 rounded-lg border border-border bg-background px-2 text-caption"
-                    >
-                      <option value="edit">{t("tm.access.edit")}</option>
-                      <option value="view">{t("tm.access.view")}</option>
-                    </select>
-                  )}
-                  <button type="button" onClick={() => remove(entry)} aria-label={t("tm.access.remove")} className="grid h-8 w-8 place-items-center rounded-full text-text-muted hover:bg-surface-soft">
-                    <X size={14} aria-hidden />
-                  </button>
-                </>
+                spaceVariant ? (
+                  <select
+                    aria-label={t("tm.access.level")}
+                    value={entry.level}
+                    onChange={(event) => (event.target.value === "remove" ? remove(entry) : setLevel(entry, event.target.value as AccessEntry["level"]))}
+                    className="h-8 rounded-full border border-border bg-background px-3 text-caption font-semibold"
+                  >
+                    <option value="edit">{t("tm.access.editFull")}</option>
+                    <option value="view">{t("tm.access.viewFull")}</option>
+                    <option value="remove">{t("tm.access.remove")}</option>
+                  </select>
+                ) : (
+                  <>
+                    {levels && (
+                      <select
+                        aria-label={t("tm.access.level")}
+                        value={entry.level}
+                        onChange={(event) => setLevel(entry, event.target.value as AccessEntry["level"])}
+                        className="h-8 rounded-lg border border-border bg-background px-2 text-caption"
+                      >
+                        <option value="edit">{t("tm.access.edit")}</option>
+                        <option value="view">{t("tm.access.view")}</option>
+                      </select>
+                    )}
+                    <button type="button" onClick={() => remove(entry)} aria-label={t("tm.access.remove")} className="grid h-8 w-8 place-items-center rounded-full text-text-muted hover:bg-surface-soft">
+                      <X size={14} aria-hidden />
+                    </button>
+                  </>
+                )
               }
             />
           </li>
@@ -86,9 +106,9 @@ export function AccessEditor({
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("tm.access.search")}
+          placeholder={spaceVariant ? t("tm.access.addPlaceholder") : t("tm.access.search")}
           aria-label={t("tm.access.search")}
-          className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small"
+          className={cn("h-10 w-full border border-border bg-background px-3 text-small", spaceVariant ? "rounded-xl" : "rounded-lg")}
         />
         <ul className={cn("mt-2 max-h-56 divide-y divide-border-soft overflow-y-auto rounded-lg border border-border-soft", candidatesPeople.length + candidatesGroups.length === 0 && "hidden")}>
           {candidatesGroups.map((group) => (

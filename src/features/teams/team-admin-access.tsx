@@ -68,6 +68,7 @@ export function AdminAccessSection({ ctx }: { ctx: TeamCtx }) {
         <SpaceAccessDialog
           teamId={ctx.team.id}
           space={{ id: edit.spaceId, title: edit.title, accessMode: edit.mode }}
+          memberCount={ctx.team.memberCount}
           onClose={() => setEdit(null)}
           onSaved={() => {
             setEdit(null);

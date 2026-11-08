@@ -21,15 +21,24 @@ const TONE_CLASS: Record<string, string> = {
   sky: "bg-primary-soft text-primary",
 };
 
+const SOLID_TONE_CLASS: Record<string, string> = {
+  primary: "bg-primary text-primary-foreground",
+  secondary: "bg-secondary text-white",
+  success: "bg-success text-white",
+  warning: "bg-warning text-white",
+  plum: "bg-text-secondary text-white",
+  sky: "bg-primary text-primary-foreground",
+};
+
 export const toneClass = (tone: string | null | undefined) => TONE_CLASS[tone ?? "primary"] ?? TONE_CLASS.primary;
 
 /** Ekibin kare "logosu": renk tonu + adın baş harfleri. Kullanıcı içeriği olan ad çevrilmez. */
-export function TeamMark({ name, tone, size = 40, className }: { name: string; tone?: string | null; size?: number; className?: string }) {
+export function TeamMark({ name, tone, size = 40, className, solid = false }: { name: string; tone?: string | null; size?: number; className?: string; /** Dolu zemin + beyaz harf (ekip sayfası başlığı, Ekipler kartları — mockup). */ solid?: boolean }) {
   const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part.charAt(0)).join("").toLocaleUpperCase() || "?";
   return (
     <span
       aria-hidden
-      className={cn("inline-grid shrink-0 place-items-center rounded-xl font-display font-bold", toneClass(tone), className)}
+      className={cn("inline-grid shrink-0 place-items-center rounded-xl font-display font-bold", solid ? (SOLID_TONE_CLASS[tone ?? "primary"] ?? SOLID_TONE_CLASS.primary) : toneClass(tone), className)}
       style={{ width: size, height: size, fontSize: size * 0.38 }}
     >
       {initials}
@@ -150,4 +159,13 @@ export function formatShortDate(iso: string | null | undefined, language: string
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleDateString(language === "en" ? "en-US" : "tr-TR", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** "4 gündür bekliyor" (süre cümlesi; `formatRelativeTime` "4 gün önce" verir, "beri" ile birleşmez). */
+export function waitingText(t: (key: TranslationKey, params?: Record<string, string | number>) => string, iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (minutes >= 24 * 60) return t("tm.lib.waitDays", { count: Math.max(1, Math.floor(minutes / (24 * 60))) });
+  if (minutes >= 60) return t("tm.lib.waitHours", { count: Math.floor(minutes / 60) });
+  return t("tm.lib.waitMinutes", { count: Math.max(1, minutes) });
 }

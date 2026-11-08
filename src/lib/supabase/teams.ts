@@ -78,6 +78,9 @@ export interface TeamSummary {
   lastActivityAt: string;
   librarySpaceId: string | null;
   guestUntil: string | null;
+  /** Yalnız `listMyTeams` doldurur (Ekipler kartı): ilk üç üye ve herkese açık son etkinlik. */
+  membersPreview?: { userId: string; username: string; displayName: string; avatarUrl: string | null }[];
+  recent?: { action: string; label: string | null; actorName: string | null; at: string } | null;
 }
 
 export interface TeamInvitation {
@@ -300,8 +303,12 @@ export interface ReviewComment {
 }
 
 export interface ItemReview {
-  item: { id: string; title: string; body: string; rev: number; state: string; reviewRequestedAt: string | null; requestedBy: string | null; createdBy: string | null; updatedAt: string };
+  item: { id: string; title: string; body: string; rev: number; state: string; reviewRequestedAt: string | null; requestedBy: string | null; requestedByName?: string | null; createdBy: string | null; updatedAt: string };
+  /** Gönderenin eklediği örnek çıktı (satır başına bir örnek); yoksa null. */
+  sample?: { body: string; author: string | null; at: string } | null;
   needed: number;
+  /** Onay verebilecek kişilerin adları (en çok 6). */
+  approvers?: string[];
   canDecide: boolean;
   base: { title: string; body: string; wasApproved: boolean; at: string; author: string | null } | null;
   approvals: { userId: string; name: string; decision: string; note: string | null; checklist: { key: string; done: boolean }[] | null; at: string }[];
@@ -345,7 +352,17 @@ export const PAGE = 30;
 
 export async function listMyTeams(offset = 0): Promise<{ items: TeamSummary[]; total: null; nextOffset: number | null }> {
   const data = await rows<TeamSummary>("my_teams", { p_limit: PAGE + 1, p_offset: offset });
-  return { items: data.slice(0, PAGE), total: null, nextOffset: data.length > PAGE ? offset + PAGE : null };
+  const items = data.slice(0, PAGE);
+  // Kart önizlemesi (avatar yığını + son etkinlik) ayrı, ekleyici bir RPC'dir; okunamazsa kart onsuz çizilir.
+  const preview = items.length
+    ? await rows<{ teamId: string; membersPreview: TeamSummary["membersPreview"]; recent: TeamSummary["recent"] }>("my_teams_preview", { p_ids: items.map((team) => team.id) }).catch(() => [])
+    : [];
+  const byTeam = new Map((Array.isArray(preview) ? preview : []).map((row) => [row.teamId, row]));
+  return {
+    items: items.map((team) => ({ ...team, membersPreview: byTeam.get(team.id)?.membersPreview ?? [], recent: byTeam.get(team.id)?.recent ?? null })),
+    total: null,
+    nextOffset: data.length > PAGE ? offset + PAGE : null,
+  };
 }
 
 export const createTeam = (name: string, description: string, tone: string) => rpc<string>("team_create", { p_name: name, p_description: description, p_tone: tone });
@@ -504,6 +521,15 @@ export async function listLibraryItems(team: string, status: string | null, sear
 }
 
 export const fetchLibraryCounts = (team: string) => rpc<TeamLibraryCounts>("team_library_counts", { p_team: team });
+
+export const setReviewSample = (item: string, sample: string) => rpc<void>("space_set_review_sample", { p_item: item, p_sample: sample });
+
+/** Ekip kütüphanesindeki bir prompt taslağının metni (Space'i okuyan herkes; gizlenmiş/onaysız öğe RLS ile gelmez). */
+export async function fetchLibraryItemBody(item: string): Promise<{ id: string; title: string; body: string; rev: number } | null> {
+  const { data, error } = await supabase.from("space_items").select("id, title, body, content_rev").eq("id", item).maybeSingle();
+  if (error) throw toTeamError(error);
+  return data ? { id: data.id as string, title: String(data.title ?? ""), body: String(data.body ?? ""), rev: Number(data.content_rev ?? 1) } : null;
+}
 
 export const requestReview = (item: string, withdraw = false) => rpc<string | null>("space_request_review", { p_item: item, p_withdraw: withdraw });
 

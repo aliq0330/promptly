@@ -483,6 +483,13 @@
     padding-bottom: 0 !important;
   }
 
+  /* Telefonda tam ekran ayrıntı sayfası (Ekip kütüphanesi prompt ayrıntısı, docs/history/355-*): alt menü sabit düğmelerin üstünü örtmesin. */
+  @media (max-width: 767.98px) {
+    html[data-fullscreen-detail] [data-app-nav] {
+      display: none !important;
+    }
+  }
+
   /* Sohbet seçim modu (Mesajlar): telefonda üst ve alt uygulama menüleri yerini seçim başlığına ve sabit alt işlem çubuğuna bırakır. */
   html[data-chat-select] [data-app-nav] {
     display: none !important;

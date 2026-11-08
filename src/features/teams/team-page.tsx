@@ -7,8 +7,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Briefcase } from "@/components/icons/briefcase";
 import Link from "next/link";
 import { ScrollRow } from "@/components/ui/scroll-row";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClassName } from "@/components/ui/button";
 import { ArrowLeft } from "@/components/icons/arrow-left";
+import { Bell } from "@/components/icons/bell";
+import { MessageCircle } from "@/components/icons/message-circle";
+import { SectionMenu } from "@/features/content/section-menu";
 import { InviteDialog } from "./team-invites";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -20,7 +23,7 @@ import { TeamLibrarySection } from "./team-library-section";
 import { TeamMembersSection } from "./team-members-section";
 import { TeamPanelSection } from "./team-panel-section";
 import { TeamSpacesSection } from "./team-spaces-section";
-import { RoleChip, TeamMark } from "./team-ui";
+import { TeamMark } from "./team-ui";
 
 export interface TeamCtx {
   team: TeamSummary;
@@ -28,7 +31,12 @@ export interface TeamCtx {
   can: (cap: TeamCapability) => boolean;
   policy: TeamPolicy | null;
   reload: () => void;
+  /** Telefonda sekme satırının yerini alan "Bölüm ▾" menüsü (mockup P2–P16); bölümler kendi kontrol satırının başına koyar. */
+  sectionMenu: React.ReactNode;
 }
+
+/** Kontrol satırında "Bölüm ▾" menüsünü kendisi çizen bölümler; diğerlerinde menü sayfanın üstünde tek başına durur. */
+const OWN_MENU_TABS: readonly TeamTab[] = ["spaces", "library", "members"];
 
 /**
  * Ekip sayfası (`/teams/local?id=&tab=`). Bölümler tek "Space'ler ▾" menüsüdür (4+ bölüm = menü kuralı); konuklar yalnız Space'ler ve Sohbet'i görür.
@@ -120,7 +128,16 @@ export function TeamPage() {
     );
   }
 
-  const ctx: TeamCtx = { team, can, policy, reload };
+  const sectionMenu = (
+    <SectionMenu
+      items={items.map((item) => ({ key: item.key, label: item.label }))}
+      active={tab}
+      onChange={go}
+      ariaLabel={t("tm.tab.aria")}
+      title={t("tm.tab.aria")}
+    />
+  );
+  const ctx: TeamCtx = { team, can, policy, reload, sectionMenu };
   const body = (() => {
     switch (tab) {
       case "library":
@@ -138,32 +155,98 @@ export function TeamPage() {
     }
   })();
 
+  const onSpaces = tab === "spaces";
+  const chatTarget = teamLink(id, "chat");
+  // Onay incelemesi tam sayfadır (mockup 11); telefonda prompt ayrıntısı da kendi üst çubuğunu çizer (P4).
+  const reviewing = tab === "library" && Boolean(params.get("review"));
+  const itemOpen = tab === "library" && Boolean(params.get("item"));
+  if (reviewing) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-5 md:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
+        <div data-team-tab={tab}>{body}</div>
+      </div>
+    );
+  }
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
-      <Link href="/teams" className={`items-center gap-1.5 text-small font-medium text-text-secondary hover:text-text ${chatFocus ? "hidden md:inline-flex" : "inline-flex"}`} data-team-back>
+    <div className="mx-auto w-full max-w-5xl px-3 pb-5 sm:px-5 md:space-y-4 md:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
+      {/* Telefon (mockup P1–P16): üst menü yerine ekibin kendi çubuğu; Space'ler'de büyük başlık, diğer bölümlerde kompakt başlık. */}
+      {!chatFocus && !itemOpen && (
+        <div className="-mx-3 mb-3 md:hidden" data-team-phone-bar>
+          <div className="flex h-14 items-center gap-2 border-b border-border-soft bg-surface px-2">
+            <Link href={onSpaces ? "/teams" : teamLink(id, "spaces")} aria-label={t("tm.title")} className="grid h-10 w-10 place-items-center rounded-full text-text hover:bg-surface-soft" data-team-back>
+              <ArrowLeft size={20} aria-hidden />
+            </Link>
+            {onSpaces ? (
+              <span className="min-w-0 flex-1 truncate text-body font-semibold">{t("tm.title")}</span>
+            ) : (
+              <>
+                <TeamMark name={team.name} tone={team.tone} size={30} solid className="rounded-lg" />
+                <span className="min-w-0 flex-1 truncate text-body font-semibold">{team.name}</span>
+              </>
+            )}
+            {onSpaces ? (
+              <Link href="/notifications" aria-label={t("header.notificationsAriaLabel")} className="grid h-10 w-10 place-items-center rounded-full text-text hover:bg-surface-soft">
+                <Bell size={20} aria-hidden />
+              </Link>
+            ) : (
+              <Link href={chatTarget} aria-label={t("tm.tab.chat")} className="grid h-10 w-10 place-items-center rounded-full text-text hover:bg-surface-soft">
+                <MessageCircle size={20} aria-hidden />
+              </Link>
+            )}
+          </div>
+          {onSpaces && (
+            <div className="space-y-3 px-3 pt-4" data-team-phone-identity>
+              <div className="flex items-center gap-3">
+                <TeamMark name={team.name} tone={team.tone} size={56} solid className="rounded-2xl" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h1 className="truncate text-h2">{team.name}</h1>
+                    <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-primary-soft px-2.5 text-caption font-bold text-primary">{t("tm.badge")}</span>
+                  </div>
+                  <p className="text-small text-text-secondary">
+                    {t("tm.card.members", { count: team.memberCount })} · {t("tm.card.spaces", { count: team.spaceCount })}
+                  </p>
+                </div>
+              </div>
+              <Link href={chatTarget} className={buttonClassName({ variant: "primary", className: "h-12 w-full gap-2" })} data-team-open-chat>
+                <MessageCircle size={18} aria-hidden />
+                {t("tm.header.openChat")}
+                {team.unreadCount > 0 && <span className="grid h-6 min-w-6 place-items-center rounded-full bg-white px-1.5 text-caption font-bold text-primary">{team.unreadCount}</span>}
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+      <Link href="/teams" className={`items-center gap-1.5 text-small font-medium text-text-secondary underline-offset-2 hover:text-text hover:underline max-md:hidden ${chatFocus ? "hidden md:inline-flex" : "inline-flex"}`} data-team-back-desktop>
         <ArrowLeft size={15} aria-hidden />
         {t("tm.title")}
       </Link>
-      <header className={`flex-wrap items-center gap-3 ${chatFocus ? "hidden md:flex" : "flex"}`}>
-        <TeamMark name={team.name} tone={team.tone} size={56} className="max-sm:!h-14 max-sm:!w-14" />
-        <div className="min-w-0 flex-1 max-sm:basis-[calc(100%-4.5rem)]">
+      <header className={`items-center gap-4 max-md:hidden ${chatFocus ? "hidden md:flex" : "flex"}`} data-team-header-block>
+        <TeamMark name={team.name} tone={team.tone} size={56} solid className="rounded-2xl" />
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-h2 sm:text-h1">{team.name}</h1>
+            <h1 className="truncate text-h1">{team.name}</h1>
             <span className="inline-flex h-6 items-center rounded-full bg-primary-soft px-2.5 text-caption font-bold text-primary">{t("tm.badge")}</span>
-            <RoleChip role={team.myRole} />
           </div>
           <p className="mt-0.5 text-small text-text-secondary">
             {t("tm.card.members", { count: team.memberCount })} · {t("tm.card.spaces", { count: team.spaceCount })} · {t("tm.header.inviteOnly")}
           </p>
         </div>
         {can("manage_members") && !isGuest && (
-          <Button type="button" variant="outline" className="max-sm:w-full" onClick={() => setInviteOpen(true)} data-team-invite-header>
+          <Button type="button" variant="outline" onClick={() => setInviteOpen(true)} data-team-invite-header>
             {t("tm.invite.title")}
           </Button>
         )}
+        {tab !== "chat" && (
+          <Link href={chatTarget} className={buttonClassName({ variant: "primary", className: "gap-2" })} data-team-open-chat-desktop>
+            <MessageCircle size={17} aria-hidden />
+            {t("tm.header.openChat")}
+          </Link>
+        )}
       </header>
-      <nav aria-label={t("tm.tab.aria")} className={`border-b border-border-soft ${chatFocus ? "max-md:hidden" : ""}`} data-testid="team-tabs">
-        <ScrollRow className="gap-6 -mb-px">
+      {/* Telefonda "Davet et" kompakt başlıkta yer almaz: Üyeler'in kontrol satırında durur. */}
+      <nav aria-label={t("tm.tab.aria")} className={`border-b border-border-soft max-md:hidden ${chatFocus ? "hidden" : ""}`} data-testid="team-tabs">
+        <ScrollRow className="gap-7 -mb-px">
           {items.map((item) => (
             <button
               key={item.key}
@@ -176,12 +259,11 @@ export function TeamPage() {
               }`}
             >
               {item.label}
-              {item.count ? <span className="rounded-full bg-secondary px-1.5 text-caption text-white">{item.count}</span> : null}
             </button>
           ))}
         </ScrollRow>
       </nav>
-      {team.description && <p className={`max-w-2xl break-words text-small text-text-secondary ${chatFocus ? "max-md:hidden" : ""}`}>{team.description}</p>}
+      {!chatFocus && !OWN_MENU_TABS.includes(tab) && <div className="md:hidden" data-team-phone-menu>{sectionMenu}</div>}
       {isGuest && team.guestUntil && <p className="rounded-lg bg-warning/10 px-3 py-2 text-small text-warning">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>}
       <div data-team-tab={tab}>{body}</div>
       {inviteOpen && <InviteDialog ctx={ctx} onClose={() => setInviteOpen(false)} onDone={() => undefined} />}
