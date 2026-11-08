@@ -100,7 +100,6 @@ export function TeamSpacesSection({ ctx }: { ctx: TeamCtx }) {
   return (
     <section className="space-y-4" data-testid="team-spaces">
       <div className="flex items-center gap-2" data-spaces-controls>
-        <div className="md:hidden">{ctx.sectionMenu}</div>
         <div className="max-md:hidden">
           <SectionMenu items={filterItems} active={filter} onChange={setFilter} ariaLabel={t("tm.spaces.filter")} title={t("tm.spaces.filter")} />
         </div>

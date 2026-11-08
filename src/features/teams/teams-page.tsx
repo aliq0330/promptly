@@ -8,6 +8,7 @@ import { Check } from "@/components/icons/check";
 import { Eye } from "@/components/icons/eye";
 import { MessageCircle } from "@/components/icons/message-circle";
 import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -16,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { SadeTitle } from "@/features/content/list-control-row";
+import { CONTROL_ICON_BUTTON, SectionMenu } from "@/features/content/section-menu";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { useToast } from "@/features/groups/use-toast";
 import { SpaceDialog } from "@/features/spaces/space-modals";
@@ -45,6 +47,9 @@ export function TeamsPage() {
   const { user } = useAuth();
   const { node: toastNode, show } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
+  const [filter, setFilter] = useState<"all" | "managed">("all");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const list = usePagedList<TeamSummary>(`teams2|${user?.id ?? ""}`, Boolean(user), (offset) => listMyTeams(offset));
   const [invites, setInvites] = useState<TeamInvitation[]>([]);
   const [todos, setTodos] = useState<TeamTodo[]>([]);
@@ -67,14 +72,43 @@ export function TeamsPage() {
     }
   };
 
+  const needle = query.trim().toLocaleLowerCase();
+  const visibleTeams = list.items.filter((team) => (filter === "all" || team.myRole === "owner" || team.myRole === "admin") && (!needle || team.name.toLocaleLowerCase().includes(needle)));
+
   return (
     <div className="mx-auto w-full max-w-5xl px-3 pb-6 sm:px-5 md:space-y-5 md:py-6 lg:px-8 lg:py-8" data-testid="teams-page">
-      {/* Telefon (mockup P1): üst menü yerine "Ekipler" + yuvarlak "+" çubuğu. */}
-      <div className="-mx-3 mb-3 flex h-14 items-center gap-2 border-b border-border-soft bg-surface px-4 md:hidden" data-teams-phone-bar>
-        <h1 className="flex-1 text-h3 font-bold">{t("tm.title")}</h1>
-        <button type="button" onClick={() => setCreateOpen(true)} aria-label={t("tm.create")} data-team-create-phone className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground">
-          <Plus size={20} aria-hidden />
-        </button>
+      {/* Telefon (docs/history/357-*): Topluluklar ile AYNI iskelet — büyük başlık + tek denetim satırı (süzgeç hapı · ara · "+"). */}
+      <div className="mb-3 space-y-3 pt-2 md:hidden" data-teams-phone-bar>
+        <SadeTitle>{t("tm.title")}</SadeTitle>
+        <div className="flex items-center gap-1.5">
+          <SectionMenu
+            items={[
+              { key: "all", label: t("tm.filter.all") },
+              { key: "managed", label: t("tm.filter.managed") },
+            ]}
+            active={filter}
+            onChange={setFilter}
+            ariaLabel={t("tm.filter.aria")}
+            title={t("tm.title")}
+          />
+          <span className="flex-1" />
+          <button type="button" onClick={() => setSearchOpen((open) => !open)} aria-label={t("header.searchAriaLabel")} aria-pressed={searchOpen} data-teams-search className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft")}>
+            <Search size={18} aria-hidden />
+          </button>
+          <button type="button" onClick={() => setCreateOpen(true)} aria-label={t("tm.create")} data-team-create-phone className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft")}>
+            <Plus size={20} aria-hidden />
+          </button>
+        </div>
+        {searchOpen && (
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("tm.filter.search")}
+            aria-label={t("tm.filter.search")}
+            className={fieldInputClassName}
+          />
+        )}
       </div>
       <div className="flex flex-wrap items-end justify-between gap-3 max-md:hidden">
         <div className="min-w-0 space-y-1.5">
@@ -126,7 +160,7 @@ export function TeamsPage() {
           <EmptyState icon={Briefcase} title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: () => setCreateOpen(true) }} />
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4" data-testid="teams-list">
-            {list.items.map((team) => (
+            {visibleTeams.map((team) => (
               <TeamCard key={team.id} team={team} />
             ))}
             <li className="max-md:hidden">

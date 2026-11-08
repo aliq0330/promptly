@@ -4,6 +4,10 @@
  */
 export const teamSystemTranslations = {
   // Ekipler sayfası
+  "tm.filter.all": { tr: "Tümü", en: "All" },
+  "tm.filter.managed": { tr: "Yönettiklerim", en: "I manage" },
+  "tm.filter.aria": { tr: "Ekip süzgeci", en: "Team filter" },
+  "tm.filter.search": { tr: "Ekip ara…", en: "Search teams…" },
   "tm.title": { tr: "Ekipler", en: "Teams" },
   "tm.intro": {
     tr: "Birlikte çalıştığın özel çalışma alanları. Ekipler Keşfet'te görünmez; yalnızca davetle girilir.",

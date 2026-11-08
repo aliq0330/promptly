@@ -705,20 +705,57 @@ await scenario("37. Telefon: Ekip sayfasında genel üst menü görünür; açı
   assert.equal(await page.locator("[data-app-header]").isVisible(), false, "açık kanal: üst menü gizli");
 }, { viewport: { width: 390, height: 800 } });
 
-await scenario("38. Telefon: Yönetim'de ekip sekme menüsü ile bölüm menüsü TEK satırda yan yana (alt alta değil)", async ({ page }) => {
-  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=audit`);
-  const row = page.locator("[data-admin-phone-menus]");
-  await row.waitFor();
-  const buttons = row.locator("button[aria-haspopup], button");
-  assert.ok((await buttons.count()) >= 2, "iki menü düğmesi");
-  const a = await buttons.nth(0).boundingBox();
-  const b = await buttons.nth(1).boundingBox();
-  assert.ok(Math.abs(a.y - b.y) < 4, `aynı satırda olmalı (${a.y} / ${b.y})`);
-  assert.equal(await page.locator("[data-team-phone-menu]").count(), 0, "ayrı tek menü satırı yok");
+await scenario("38. Telefon (Yön C): Ekip kökü = kimlik + sohbet düğmesi + bölüm LİSTESİ; satır alt sayfa açar (geri çubuğu), hap/menü yok", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor`);
+  const root = page.getByTestId("team-phone-root");
+  await root.waitFor();
+  const list = root.locator("[data-phone-section-list]");
+  for (const key of ["spaces", "library", "chat", "members", "panel", "admin"]) await list.locator(`[data-phone-section=${key}]`).waitFor();
+  assert.equal(await page.locator("[data-team-tabs], [data-team-tab-link]").first().isVisible().catch(() => false), false, "sekme çubuğu telefonda yok");
+  await list.locator("[data-phone-section=library]").click();
+  await page.waitForFunction(() => location.search.includes("tab=library"));
+  const bar = page.locator("[data-phone-subbar]");
+  await bar.waitFor();
+  assert.match(await bar.innerText(), /Atölye Mor/);
+  assert.match(await bar.innerText(), /Kütüphane/);
+  await bar.locator("[data-phone-back]").click();
+  await page.getByTestId("team-phone-root").waitFor();
+}, { viewport: { width: 390, height: 800 } });
+
+await scenario("39. Telefon (Yön C): Yönetim = liste → alt sayfa; alt sayfa 'Atölye Mor · Yönetim / Denetim günlüğü' çubuğu, geri Yönetim listesine döner", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin`);
+  const list = page.locator("[data-phone-admin-list] [data-phone-section-list]");
+  await list.waitFor();
+  assert.ok((await list.locator("a").count()) >= 5, "yönetim bölümleri listelenir");
+  await list.locator("[data-phone-section=audit]").click();
+  await page.waitForFunction(() => location.search.includes("section=audit"));
+  const bar = page.locator("[data-phone-subbar]");
+  await bar.waitFor();
+  const text = await bar.innerText();
+  assert.match(text, /Yönetim/);
+  assert.match(text, /Denetim günlüğü/);
+  await page.locator("[data-audit-stats]").waitFor();
+  assert.equal(await page.locator("[data-admin-phone-menus]").count(), 0, "eski çift hap yok");
+  await bar.locator("[data-phone-back]").click();
+  await page.waitForFunction(() => !location.search.includes("section="));
+  await page.locator("[data-phone-admin-list]").waitFor();
 }, { viewport: { width: 390, height: 800 }, setup: (db) => {
   db.rpc.team_audit_list = () => ({ body: [] });
   db.rpc.team_audit_stats = () => ({ body: { total: 0, role_access: 0, deletes: 0 } });
 } });
+
+await scenario("40. Telefon: Ekipler listesi Topluluklar ile aynı iskelet — büyük başlık + süzgeç hapı + ara + '+'; masaüstü eski düzen", async ({ page }) => {
+  await page.goto(`${BASE}/teams`);
+  const bar = page.locator("[data-teams-phone-bar]");
+  await bar.waitFor();
+  await bar.getByRole("heading", { name: "Ekipler" }).waitFor();
+  await bar.locator("[data-teams-search]").waitFor();
+  await bar.locator("[data-team-create-phone]").waitFor();
+  await page.getByTestId("teams-list").locator(`[data-team-card="${TEAM}"]`).waitFor();
+  await bar.locator("[data-teams-search]").click();
+  await bar.getByPlaceholder("Ekip ara…").fill("zzz");
+  await page.waitForFunction(() => document.querySelectorAll("[data-team-card]").length === 0);
+}, { viewport: { width: 390, height: 800 } });
 
 await browser.close();
 server.close();

@@ -10,7 +10,14 @@ import { ScrollRow } from "@/components/ui/scroll-row";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { MessageCircle } from "@/components/icons/message-circle";
-import { SectionMenu } from "@/features/content/section-menu";
+import { BarChart3 } from "@/components/icons/bar-chart-3";
+import { BookOpen } from "@/components/icons/book-open";
+import { MessagesSquare } from "@/components/icons/messages-square";
+import { Settings } from "@/components/icons/settings";
+import { Shapes } from "@/components/icons/shapes";
+import { Users } from "@/components/icons/users";
+import { PhoneSectionList, PhoneSubBar, type PhoneSectionItem } from "@/features/content/phone-sections";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { InviteDialog } from "./team-invites";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -30,12 +37,9 @@ export interface TeamCtx {
   can: (cap: TeamCapability) => boolean;
   policy: TeamPolicy | null;
   reload: () => void;
-  /** Telefonda sekme satırının yerini alan "Bölüm ▾" menüsü (mockup P2–P16); bölümler kendi kontrol satırının başına koyar. */
+  /** Eski telefon "Bölüm ▾" menüsü yuvası: artık hep null (telefonda bölümler liste → alt sayfadır, docs/history/357-*); bölüm kodları geriye uyumluluk için okur. */
   sectionMenu: React.ReactNode;
 }
-
-/** Kontrol satırında "Bölüm ▾" menüsünü kendisi çizen bölümler; diğerlerinde menü sayfanın üstünde tek başına durur. */
-const OWN_MENU_TABS: readonly TeamTab[] = ["spaces", "library", "members", "admin"];
 
 /**
  * Ekip sayfası (`/teams/local?id=&tab=`). Bölümler tek "Space'ler ▾" menüsüdür (4+ bölüm = menü kuralı); konuklar yalnız Space'ler ve Sohbet'i görür.
@@ -52,6 +56,7 @@ export function TeamPage() {
   const [policy, setPolicy] = useState<TeamPolicy | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "missing" | "failed">("loading");
   const [tick, setTick] = useState(0);
+  const phone = useMediaQuery("(max-width: 767.98px)");
 
   useEffect(() => {
     if (!id || !user) return;
@@ -134,16 +139,7 @@ export function TeamPage() {
     );
   }
 
-  const sectionMenu = (
-    <SectionMenu
-      items={items.map((item) => ({ key: item.key, label: item.label }))}
-      active={tab}
-      onChange={go}
-      ariaLabel={t("tm.tab.aria")}
-      title={t("tm.tab.aria")}
-    />
-  );
-  const ctx: TeamCtx = { team, can, policy, reload, sectionMenu };
+  const ctx: TeamCtx = { team, can, policy, reload, sectionMenu: null };
   const body = (() => {
     switch (tab) {
       case "library":
@@ -161,8 +157,20 @@ export function TeamPage() {
     }
   })();
 
-  const onSpaces = tab === "spaces";
   const chatTarget = teamLink(id, "chat");
+  // Telefon: `tab` adreste yoksa kök liste; varsa alt sayfa. Masaüstü hep sekmeli eski düzen (varsayılan Space'ler).
+  const phoneRoot = phone && !rawTab && !params.get("channel");
+  const phoneSub = phone && !phoneRoot;
+  const TAB_ICON: Record<TeamTab, PhoneSectionItem["icon"]> = { spaces: Shapes, library: BookOpen, chat: MessagesSquare, members: Users, panel: BarChart3, admin: Settings };
+  const TAB_META: Partial<Record<TeamTab, string | number>> = { spaces: team.spaceCount, members: team.memberCount };
+  const sectionItems: PhoneSectionItem[] = items.map((item) => ({
+    key: item.key,
+    label: item.label,
+    href: teamLink(id, item.key),
+    icon: TAB_ICON[item.key],
+    meta: TAB_META[item.key],
+    badge: item.key === "chat" ? team.unreadCount || undefined : undefined,
+  }));
   // Onay incelemesi tam sayfadır (mockup 11); telefonda prompt ayrıntısı da kendi üst çubuğunu çizer (P4).
   const reviewing = tab === "library" && Boolean(params.get("review"));
   const itemOpen = tab === "library" && Boolean(params.get("item"));
@@ -175,48 +183,40 @@ export function TeamPage() {
   }
   return (
     <div className="mx-auto w-full max-w-5xl px-3 pb-5 sm:px-5 md:space-y-4 md:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
-      {/* Telefon (mockup P1–P16): üst menü yerine ekibin kendi çubuğu; Space'ler'de büyük başlık, diğer bölümlerde kompakt başlık. */}
-      {!chatFocus && !itemOpen && (
-        <div className="-mx-3 mb-3 md:hidden" data-team-phone-bar>
-          <div className="flex h-14 items-center gap-2 border-b border-border-soft bg-surface px-2">
-            <Link href={onSpaces ? "/teams" : teamLink(id, "spaces")} aria-label={t("tm.title")} className="grid h-10 w-10 place-items-center rounded-full text-text hover:bg-surface-soft" data-team-back>
+      {/* Telefon (docs/history/357-*, Yön C): kök = kimlik + sohbet düğmesi + bölüm LİSTESİ; bir bölüm açılınca alt sayfa çubuğu. Yönetim kendi çubuklarını çizer. */}
+      {!chatFocus && !itemOpen && phoneRoot && (
+        <div className="-mx-3 mb-3 md:hidden" data-team-phone-bar data-testid="team-phone-root">
+          <div className="flex h-12 items-center gap-1 px-2">
+            <Link href="/teams" aria-label={t("tm.title")} className="grid h-10 w-10 place-items-center rounded-full text-text hover:bg-surface-soft" data-team-back>
               <ArrowLeft size={20} aria-hidden />
             </Link>
-            {onSpaces ? (
-              <span className="min-w-0 flex-1 truncate text-body font-semibold">{t("tm.title")}</span>
-            ) : (
-              <>
-                <TeamMark name={team.name} tone={team.tone} size={30} solid className="rounded-lg" />
-                <span className="min-w-0 flex-1 truncate text-body font-semibold">{team.name}</span>
-              </>
-            )}
-            {onSpaces ? null : (
-              <Link href={chatTarget} aria-label={t("tm.tab.chat")} className="grid h-10 w-10 place-items-center rounded-full text-text hover:bg-surface-soft">
-                <MessageCircle size={20} aria-hidden />
-              </Link>
-            )}
+            <span className="text-small font-medium text-text-secondary">{t("tm.title")}</span>
           </div>
-          {onSpaces && (
-            <div className="space-y-3 px-3 pt-4" data-team-phone-identity>
-              <div className="flex items-center gap-3">
-                <TeamMark name={team.name} tone={team.tone} size={56} solid className="rounded-2xl" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h1 className="truncate text-h2">{team.name}</h1>
-                    <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-primary-soft px-2.5 text-caption font-bold text-primary">{t("tm.badge")}</span>
-                  </div>
-                  <p className="text-small text-text-secondary">
-                    {t("tm.card.members", { count: team.memberCount })} · {t("tm.card.spaces", { count: team.spaceCount })}
-                  </p>
+          <div className="space-y-3 px-3 pt-1" data-team-phone-identity>
+            <div className="flex items-center gap-3">
+              <TeamMark name={team.name} tone={team.tone} size={56} solid className="rounded-2xl" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h1 className="truncate text-h2">{team.name}</h1>
+                  <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-primary-soft px-2.5 text-caption font-bold text-primary">{t("tm.badge")}</span>
                 </div>
+                <p className="text-small text-text-secondary">
+                  {t("tm.card.members", { count: team.memberCount })} · {t("tm.card.spaces", { count: team.spaceCount })}
+                </p>
               </div>
-              <Link href={chatTarget} className={buttonClassName({ variant: "primary", className: "h-12 w-full gap-2" })} data-team-open-chat>
-                <MessageCircle size={18} aria-hidden />
-                {t("tm.header.openChat")}
-                {team.unreadCount > 0 && <span className="grid h-6 min-w-6 place-items-center rounded-full bg-white px-1.5 text-caption font-bold text-primary">{team.unreadCount}</span>}
-              </Link>
             </div>
-          )}
+            <Link href={chatTarget} className={buttonClassName({ variant: "primary", className: "h-12 w-full gap-2" })} data-team-open-chat>
+              <MessageCircle size={18} aria-hidden />
+              {t("tm.header.openChat")}
+              {team.unreadCount > 0 && <span className="grid h-6 min-w-6 place-items-center rounded-full bg-white px-1.5 text-caption font-bold text-primary">{team.unreadCount}</span>}
+            </Link>
+            <PhoneSectionList ariaLabel={t("tm.tab.aria")} items={sectionItems} />
+          </div>
+        </div>
+      )}
+      {!chatFocus && !itemOpen && phoneSub && tab !== "admin" && (
+        <div data-team-phone-bar>
+          <PhoneSubBar parent={team.name} title={items.find((item) => item.key === tab)?.label ?? ""} backHref={teamLink(id)} />
         </div>
       )}
       <Link href="/teams" className={`items-center gap-1.5 text-small font-medium text-text-secondary underline-offset-2 hover:text-text hover:underline max-md:hidden ${chatFocus ? "hidden md:inline-flex" : "inline-flex"}`} data-team-back-desktop>
@@ -265,9 +265,8 @@ export function TeamPage() {
           ))}
         </ScrollRow>
       </nav>
-      {!chatFocus && !OWN_MENU_TABS.includes(tab) && <div className="md:hidden" data-team-phone-menu>{sectionMenu}</div>}
       {isGuest && team.guestUntil && <p className="rounded-lg bg-warning/10 px-3 py-2 text-small text-warning">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>}
-      <div data-team-tab={tab}>{body}</div>
+      {!phoneRoot && <div data-team-tab={tab}>{body}</div>}
       {inviteOpen && <InviteDialog ctx={ctx} onClose={() => setInviteOpen(false)} onDone={() => undefined} />}
     </div>
   );

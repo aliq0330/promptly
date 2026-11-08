@@ -160,7 +160,6 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
   return (
     <section className="space-y-4" data-testid="team-members">
       <div className="flex items-center gap-2">
-        <div className="md:hidden">{ctx.sectionMenu}</div>
         <button type="button" onClick={() => setSearchOpen((o) => !o)} aria-label={t("tm.members.search")} aria-pressed={searchOpen} data-members-search className="ml-auto grid h-11 w-11 place-items-center rounded-full bg-surface-soft text-text-secondary md:ml-0 md:order-last">
           <Search size={18} aria-hidden />
         </button>

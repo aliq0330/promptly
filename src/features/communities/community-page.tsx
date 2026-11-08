@@ -6,6 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { RefreshCw } from "@/components/icons/refresh-cw";
 import { UserCog } from "@/components/icons/user-cog";
 import { MessagesSquare } from "@/components/icons/messages-square";
+import { CalendarDays } from "@/components/icons/calendar-days";
+import { Info } from "@/components/icons/info";
+import { List } from "@/components/icons/list";
+import { Settings } from "@/components/icons/settings";
+import { Users } from "@/components/icons/users";
+import { PhoneSectionList, PhoneSubBar, type PhoneSectionItem } from "@/features/content/phone-sections";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -76,6 +83,7 @@ function CommunityPageInner() {
   const { node: toastNode, show } = useToast();
   const { state, reload } = useCommunity(authLoading ? null : id, user?.id ?? null);
   const [actionsEl, setActionsEl] = useState<HTMLElement | null>(null);
+  const phone = useMediaQuery("(max-width: 767.98px)");
 
   const role = state.status === "ready" ? (state.membership?.role ?? null) : null;
   const group = state.status === "ready" ? state.group : null;
@@ -152,9 +160,41 @@ function CommunityPageInner() {
 
   const categoryLabel = t(CATEGORY_LABEL_KEYS[g.category]);
 
+  // Telefon (docs/history/357-*, Yön C): `tab` adreste yoksa kök = kompakt kapak + eylemler + bölüm LİSTESİ; varsa alt sayfa (kendi geri çubuğu).
+  // Masaüstü eski düzen (kapak bandı + sekme menüsü, varsayılan Akış).
+  const phoneRoot = phone && searchParams.get("tab") === null;
+  const phoneSub = phone && !phoneRoot && Boolean(tab);
+  const TAB_ICON: Record<CommunityTab, PhoneSectionItem["icon"]> = { feed: List, events: CalendarDays, members: Users, about: Info, manage: Settings };
+  const sectionItems: PhoneSectionItem[] = tabs.map((item) => ({
+    key: item.key,
+    label: item.label,
+    href: communityHref(g.id, item.key),
+    icon: TAB_ICON[item.key],
+    badge: item.count,
+  }));
+
   const body = (
     // Albüm (docs/history/203-*): band tinted by the community's cover (photo › colour › its picture) · actions row · tabs + content.
     <div className="w-full">
+      {phone ? (
+        !phoneSub && (
+          <div className="flex items-center gap-3 px-3 pt-3" data-testid="community-header-compact">
+            <GroupAvatar name={g.name} avatarUrl={g.avatarUrl} size={64} className="[&>span:first-child]:rounded-[1.1rem]" />
+            <div className="min-w-0 flex-1">
+              <p className="text-caption font-bold uppercase tracking-[0.08em] text-primary">
+                {t("groups.page.eyebrow")} · {categoryLabel}
+              </p>
+              <h1 className="font-display text-h2 font-bold leading-tight text-text [overflow-wrap:anywhere]">{g.name}</h1>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-small text-text-secondary">
+                <VisibilityLabel visibility={g.visibility} />
+                <span>{memberCountText(t, g.memberCount)}</span>
+                {role && <RoleBadge role={role} />}
+                {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
+              </div>
+            </div>
+          </div>
+        )
+      ) : (
       <DetailBand
         align="center"
         data-testid="community-header"
@@ -188,11 +228,16 @@ function CommunityPageInner() {
           </div>
         }
       />
+      )}
       <CommunityLayout
         aside={tab === "feed" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
         asideLabel={t("communities.aside.pageLabel")}
         className="pt-3 sm:pt-4"
       >
+        {phoneSub && tab !== "manage" && (
+          <PhoneSubBar className="-mt-3" parent={g.name} title={tabLabels[tab ?? "feed"]} backHref={communityHref(g.id)} right={<div ref={setActionsEl} className="flex items-center gap-1.5" data-community-actions-slot />} />
+        )}
+        {!phoneSub && (
         <BandActionRow label={t("communities.band.actionsAria")} data-community-actions="">
           {role && (
             <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg", className: BAND_PRIMARY_CLASS })}>
@@ -222,6 +267,7 @@ function CommunityPageInner() {
             </Link>
           )}
         </BandActionRow>
+        )}
 
         {!tab ? (
           <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} />
@@ -230,12 +276,17 @@ function CommunityPageInner() {
             {!role && (
               <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />
             )}
-            {/* Tek kontrol satırı (docs/history/232-*): bölüm menüsü ("Akış ▾") + sekmenin kendi eylem yuvası. */}
-            <div className="flex items-center gap-1.5">
-              <SectionMenu items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} title={g.name} />
-              <span className="flex-1" />
-              <div ref={setActionsEl} className="flex items-center gap-1.5" data-community-actions-slot />
-            </div>
+            {/* Tek kontrol satırı (docs/history/232-*): bölüm menüsü ("Akış ▾") + sekmenin kendi eylem yuvası. Telefonda yok: bölümler liste → alt sayfa. */}
+            {!phone && (
+              <div className="flex items-center gap-1.5">
+                <SectionMenu items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} title={g.name} />
+                <span className="flex-1" />
+                <div ref={setActionsEl} className="flex items-center gap-1.5" data-community-actions-slot />
+              </div>
+            )}
+            {phoneRoot ? (
+              <PhoneSectionList ariaLabel={t("communities.detail.tabsAria")} items={sectionItems} className="mt-2" />
+            ) : (
             <div role="tabpanel">
               {tab === "feed" && <FeedTab {...common} />}
               {tab !== "feed" && (
@@ -247,6 +298,7 @@ function CommunityPageInner() {
                 </CommunityReadingColumn>
               )}
             </div>
+            )}
           </>
         )}
         {toastNode}

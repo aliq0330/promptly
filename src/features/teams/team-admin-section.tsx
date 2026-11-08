@@ -3,6 +3,18 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Check } from "@/components/icons/check";
+import { Download } from "@/components/icons/download";
+import { History } from "@/components/icons/history";
+import { Info } from "@/components/icons/info";
+import { LayoutGrid } from "@/components/icons/layout-grid";
+import { Plug } from "@/components/icons/plug";
+import { ShieldCheck } from "@/components/icons/shield-check";
+import { TriangleAlert } from "@/components/icons/triangle-alert";
+import { UserPlus } from "@/components/icons/user-plus";
+import { UserRound } from "@/components/icons/user-round";
+import { Users } from "@/components/icons/users";
+import { PhoneSectionList, PhoneSubBar, type PhoneSectionItem } from "@/features/content/phone-sections";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -88,6 +100,46 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
   })();
 
   const go = (key: Section) => router.replace(teamLink(team.id, "admin", { section: key }));
+  const phone = useMediaQuery("(max-width: 767.98px)");
+
+  // Telefon (docs/history/357-*, Yön C): Yönetim bir bölüm LİSTESİDİR; satır alt sayfayı açar, alt sayfa kendi geri çubuğunu çizer.
+  if (phone) {
+    const ICONS: Record<Section, PhoneSectionItem["icon"]> = {
+      general: Info,
+      policies: ShieldCheck,
+      invites: UserPlus,
+      access: LayoutGrid,
+      groups: Users,
+      guests: UserRound,
+      integrations: Plug,
+      audit: History,
+      export: Download,
+      danger: TriangleAlert,
+    };
+    const chosen = items.find((item) => item.key === raw)?.key ?? null;
+    if (!chosen) {
+      return (
+        <section data-testid="team-admin" data-phone-admin-list>
+          <div data-team-phone-bar>
+            <PhoneSubBar parent={team.name} title={t("tm.tab.admin")} backHref={teamLink(team.id)} />
+          </div>
+          <PhoneSectionList
+            ariaLabel={t("tm.admin.aria")}
+            items={items.map((item) => ({ key: item.key, label: item.label, href: teamLink(team.id, "admin", { section: item.key }), icon: ICONS[item.key], danger: item.key === "danger" }))}
+          />
+        </section>
+      );
+    }
+    return (
+      <section data-testid="team-admin">
+        <div data-team-phone-bar>
+          <PhoneSubBar parent={`${team.name} · ${t("tm.tab.admin")}`} title={items.find((item) => item.key === chosen)?.label ?? ""} backHref={teamLink(team.id, "admin")} />
+        </div>
+        <div className="min-w-0 space-y-4">{body}</div>
+      </section>
+    );
+  }
+
   return (
     <section className="md:grid md:grid-cols-[13rem_minmax(0,1fr)] md:items-start md:gap-8" data-testid="team-admin">
       <nav aria-label={t("tm.admin.aria")} className="sticky top-4 space-y-0.5 max-md:hidden" data-admin-nav>
@@ -108,14 +160,7 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
           </div>
         ))}
       </nav>
-      <div className="min-w-0 space-y-4">
-        {/* Telefon: ekip sekme menüsü + bölüm menüsü TEK satırda yan yana (alt alta iki büyük hap değil). */}
-        <div className="flex flex-wrap items-center gap-2 md:hidden" data-admin-phone-menus>
-          {ctx.sectionMenu}
-          <SectionMenu items={items} active={active} onChange={go} ariaLabel={t("tm.admin.aria")} title={t("tm.admin.aria")} />
-        </div>
-        {body}
-      </div>
+      <div className="min-w-0 space-y-4">{body}</div>
     </section>
   );
 }
