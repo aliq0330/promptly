@@ -707,7 +707,9 @@ for (const [label, viewport, theme] of [["mobil 390x800", { width: 390, height: 
     assert.ok(await overflowFree(page), "communities home overflows horizontally");
     await open(page, C1);
     assert.ok(await overflowFree(page), "detail overflows horizontally");
-    await pickTab(page, "Akış");
+    // Telefon (docs/history/357-*, Yön C): kökte bölüm LİSTESİ var; "Akış" satırı alt sayfayı açar.
+    if (page.viewportSize().width < 768) await page.locator("[data-phone-section=feed]").click();
+    else await pickTab(page, "Akış");
     await page.getByText("Normal içerik").first().waitFor();
     assert.ok(await overflowFree(page), "feed overflows horizontally");
     const heights = await page.locator("button:visible, a[class*='h-']:visible").evaluateAll((els) => els.slice(0, 40).map((el) => Math.round(el.getBoundingClientRect().height)));
@@ -1112,6 +1114,7 @@ await scenario("33b. Kapak · Fotoğraf: ağır (8 MB üstü) fotoğraf reddedil
   assert.match(patch.cover_url, /\/storage\/v1\/object\/public\/community-avatars\/.+\/cover-[0-9a-f-]+\.jpg$/);
   assert.equal(patch.cover_color, null);
   await page.waitForFunction(() => document.querySelector("[data-community-cover]")?.getAttribute("data-community-cover") === "photo");
+  for (let i = 0; i < 30 && !db.calls.some((c) => c.method === "SIGN" && c.table === "community-avatars"); i += 1) await page.waitForTimeout(100);
   assert.ok(db.calls.some((c) => c.method === "SIGN" && c.table === "community-avatars"), "the cover is shown through a signed URL");
   assert.equal(db.calls.filter((c) => c.method === "PUBLICGET").length, 0, "the shared public address is never requested");
 }, { setup: (db) => seed(db, { myRole: "owner" }) });

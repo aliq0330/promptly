@@ -450,7 +450,8 @@ for (const [label, width, aside, columns] of [["1440", 1440, true, 2], ["1280", 
 await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ xl'de Hakkında/Kurallar/Yöneticiler sütunu), Yönetim ayarları kartlara bölünür; taşma yok", async ({ page }) => {
   for (const [w, cols] of [[1440, 2], [820, 2], [390, 1]]) {
     await page.setViewportSize({ width: w, height: 900 });
-    await page.goto(`${BASE}/communities/local?id=${id(1)}`);
+    // Telefonda kök bölüm listesidir (docs/history/357-*); akış alt sayfadır.
+    await page.goto(`${BASE}/communities/local?id=${id(1)}${w < 500 ? "&tab=feed" : ""}`);
     await page.locator("[data-community-post]").first().waitFor();
     await page.waitForTimeout(300);
     const posts = await page.locator("[data-community-post]").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { left: Math.round(r.left), width: Math.round(r.width) }; }));
@@ -462,8 +463,13 @@ await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ x
     assert.equal(new Set(posts.map((b) => b.left)).size, Math.min(cols, posts.length), `${w}: columns`);
     // Albüm (docs/history/203-*): the band + the actions row are taller on purpose (big art, big title, one big action); together
     // they must still leave the tabs and the start of the feed in the first screen (900px tall).
-    const header = await page.locator("[data-community-actions]").evaluate((el) => el.getBoundingClientRect().bottom + window.scrollY);
-    assert.ok(header <= (w < 500 ? 560 : 520), `${w}: header too tall (${header})`);
+    if (w >= 500) {
+      const header = await page.locator("[data-community-actions]").evaluate((el) => el.getBoundingClientRect().bottom + window.scrollY);
+      assert.ok(header <= 520, `${w}: header too tall (${header})`);
+    } else {
+      const bar = await page.locator("[data-phone-subbar]").evaluate((el) => el.getBoundingClientRect().bottom + window.scrollY);
+      assert.ok(bar <= 140, `${w}: sub-bar should sit at the top (${bar})`);
+    }
     assert.equal(await overflowFree(page), true, `${w}: overflow`);
   }
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -520,6 +526,37 @@ await scenario("27b. Masaüstünde (≥640px) ortalanmış pencere sürükleninc
   await page.waitForTimeout(500);
   assert.equal(await dialog.count(), 1, "centered dialog is not swipe-dismissed");
 }, { viewport: { width: 1000, height: 800 }, hasTouch: true, setup: world });
+
+// 28 — Telefon (docs/history/357-*, Yön C): topluluk kökü = kompakt kapak + eylemler + bölüm LİSTESİ; satır alt sayfa açar; Yönetim de liste → alt sayfa
+await scenario("28. Telefon (Yön C): topluluk kökü kompakt kapak + bölüm listesi; 'Akış' alt sayfa (geri çubuğu); Yönetim → liste → alt sayfa; hap/menü yok", async ({ page }) => {
+  await page.goto(`${BASE}/communities/local?id=${id(1)}`);
+  const head = page.getByTestId("community-header-compact");
+  await head.waitFor();
+  assert.equal(await page.getByTestId("community-header").count(), 0, "dev kapak bandı telefonda yok");
+  const list = page.locator("[data-phone-section-list]");
+  for (const key of ["feed", "events", "members", "about", "manage"]) await list.locator(`[data-phone-section=${key}]`).waitFor();
+  assert.equal(await page.locator("[data-section-menu]").count(), 0, "telefonda bölüm hapı yok");
+  assert.ok(await overflowFree(page));
+  await list.locator("[data-phone-section=feed]").click();
+  const bar = page.locator("[data-phone-subbar]");
+  await bar.waitFor();
+  assert.match(await bar.innerText(), /Sahibi Olduğum/);
+  assert.match(await bar.innerText(), /Akış/);
+  await page.locator("[data-community-post]").first().waitFor();
+  await bar.locator("[data-phone-back]").click();
+  await page.getByTestId("community-header-compact").waitFor();
+  await page.locator("[data-phone-section=manage]").click();
+  await page.getByTestId("community-manage-list").waitFor();
+  await page.locator("[data-phone-section=settings]").click();
+  await page.waitForFunction(() => location.search.includes("section=settings"));
+  const bar2 = page.locator("[data-phone-subbar]");
+  assert.match(await bar2.innerText(), /Yönetim/);
+  assert.match(await bar2.innerText(), /Ayarlar/);
+  await page.getByRole("heading", { name: "Topluluk ayarları" }).waitFor();
+  await bar2.locator("[data-phone-back]").click();
+  await page.getByTestId("community-manage-list").waitFor();
+  assert.ok(await overflowFree(page));
+}, { viewport: { width: 390, height: 800 }, setup: (db) => { db.addCommunity(id(1), { name: "Sahibi Olduğum", myRole: "owner", members: [[U.bob, "owner"]], rules: "1. Saygılı ol" }); for (let i = 1; i <= 3; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` }); } });
 
 await browser.close(); server.close();
 let failed = 0;
