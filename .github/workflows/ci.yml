@@ -108,6 +108,10 @@ jobs:
           set -o pipefail
           status=0
           for s in run-safety run-shared-cards run-detail-pages run-home-motion run-feed-filters run-search-notifications run-comment-extras run-telegram-settings run-save-collections; do
-            echo "== $s"; node tests/messaging-ui/$s.mjs | tail -3 || status=1
+            echo "== $s"
+            out=$(node tests/messaging-ui/$s.mjs 2>&1) && ok=1 || { ok=0; status=1; }
+            echo "$out" | tail -3
+            # Düşen senaryonun adı ve hata ayrıntısı günlükte görünsün (son 3 satır yetmiyordu, #466).
+            [ "$ok" = 1 ] || echo "$out" | grep -A12 -E "^(✗|FAIL)" | head -60
           done
           exit $status
