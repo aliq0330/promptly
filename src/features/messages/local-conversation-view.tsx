@@ -9,6 +9,7 @@ import { ArrowLeft } from "@/components/icons/arrow-left";
 import { Bell } from "@/components/icons/bell";
 import { BellOff } from "@/components/icons/bell-off";
 import { ChevronsDown } from "@/components/icons/chevrons-down";
+import { Hash } from "@/components/icons/hash";
 import { Info } from "@/components/icons/info";
 import { LogOut } from "@/components/icons/log-out";
 import { Search } from "@/components/icons/search";
@@ -75,14 +76,19 @@ import { supabase } from "@/lib/supabase/client";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, roomsHubHref } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { messageRoomId, pickRoom, readLastRoomId, roomSlug, totalRoomUnread } from "@/lib/community-rooms";
 import { markRoomReadUpTo, setRoomMuted } from "@/lib/supabase/community-rooms";
 import { getCachedRooms, patchCachedRoom, refreshCommunityRooms, useCommunityRooms } from "./rooms/use-community-rooms";
 import { useActiveRoom } from "./rooms/use-active-room";
-import { RoomSwitcher } from "./rooms/room-switcher";
 import { RoomFormModal } from "./rooms/room-form-modal";
-import { RoomChipRow } from "./rooms/room-chip-row";
+import { RoomInfoSheet } from "./rooms/room-info-sheet";
+import { ChannelChipsRow, type ChannelChip } from "./channel-chips-row";
+import { useChannelPresence, useTeamChannelList, useTeamSummary } from "@/features/teams/team-chat-data";
+import { TeamMark } from "@/features/teams/team-ui";
+import { TeamInfoModal } from "@/features/teams/team-info-modal";
+import { ChannelInfoSheet } from "@/features/teams/channel-info-sheet";
+import { GuestBanner } from "@/features/teams/guest-banner";
 import { Users } from "@/components/icons/users";
 import { RoomSidePanel } from "./rooms/room-side-panel";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -145,7 +151,7 @@ function translateSendError(message: string, isGroup = false): string {
  * message sent in this conversation as a real, database-backed embed.
  *
  */
-export function LocalConversationView({ dock }: { dock?: DockHandlers & { conversationId: string; /** Ekip sayfasına gömülü (docs/history/353-*): başlığı sayfa çizer, burada çizilmez. */ embedded?: boolean } } = {}) {
+export function LocalConversationView({ dock }: { dock?: DockHandlers & { conversationId: string; /** Ekip sayfasına gömülü (docs/history/353-*): başlığı sayfa çizer, burada çizilmez. */ embedded?: boolean; /** Dock: kanal/oda çipi başka bir sohbeti panelde açar. */ onOpenConversation?: (conversationId: string) => void } } = {}) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -266,9 +272,25 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   // Ekip kanalı (docs/history/353-*): topluluk özellikleri (oda, topluluk bilgisi, çevrimiçi sayısı) kapalıdır; bilgi/yönetim ekip sayfasındadır.
   const teamChannel = group?.team ?? null;
   const communityId = isGroup && !teamChannel && id ? id : null;
+  // Ekip sohbeti başlığı, kanal çipleri ve bilgi sayfaları (Yön A, docs/history/353-*): kanallar/özet/çevrimiçi ortak kancalardan gelir.
+  const teamChannelsState = useTeamChannelList(teamChannel?.id);
+  const teamSummary = useTeamSummary(teamChannel?.id);
+  const channelPresence = useChannelPresence(teamChannel ? id : null);
+  const currentTeamChannel = teamChannelsState.channels.find((channel) => channel.id === id) ?? null;
+  const [teamInfoOpen, setTeamInfoOpen] = useState(false);
+  const [channelInfoOpen, setChannelInfoOpen] = useState(false);
+  const fromTeamPage = !dock && searchParams.get("from") === "team";
   const openGroupInfo = (focus: GroupInfoFocus) => {
-    if (teamChannel) router.push(teamLink(teamChannel.slug, "chat", { channel: teamChannel.channelName }));
+    if (teamChannel) setTeamInfoOpen(true);
     else setGroupInfoFocus(focus);
+  };
+  /** Başka bir kanala geç: sayfada adres değişir (geri tuşu bozulmaz: replace), dock'ta panel yeni sohbeti açar. */
+  const openTeamChannel = (channelId: string) => {
+    if (channelId === id) return;
+    setTeamInfoOpen(false);
+    setChannelInfoOpen(false);
+    if (dock?.onOpenConversation) dock.onOpenConversation(channelId);
+    else if (!dock) router.replace(`/messages/local?id=${channelId}${fromTeamPage ? "&from=team" : ""}`);
   };
   const blockState = useBlockState(conversation?.participants[0] ?? EMPTY_PARTICIPANT);
   // Grup: gönderen adları/avatarları + kadro rolleri; "kim yazabilir" ayarı.
@@ -288,10 +310,10 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     roomScopeRef.current = roomScope;
     requestedRoomRef.current = requestedRoomId;
   });
-  const [switcherOpen, setSwitcherOpen] = useState(false);
   // Masaüstü "Bu oda" paneli: otomatik = 2xl ve üstünde açık; üye düğmesi bunu açık/kapalı yapar (docs/history/352-*).
   const [roomPanel, setRoomPanel] = useState<"auto" | "open" | "closed">("auto");
   const [roomFormOpen, setRoomFormOpen] = useState(false);
+  const [roomInfoId, setRoomInfoId] = useState<string | null>(null);
   const canManageRooms = group ? can(group.myRole, "manage_rooms", group.rolePermissions) : false;
   // Oda bilgisi yoksa (eski veritabanı / yüklenemedi) eski kural: topluluğun "kim yazar" ayarı.
   const canPost = !isGroup || (activeRoom ? activeRoom.canPost : group ? canPostInGroup(group.myRole, group.postingPolicy) : false);
@@ -1051,6 +1073,11 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       dock.onBack();
       return;
     }
+    // Ekip sayfasından açılan kanalda geri, ekip sayfasının Sohbet sekmesine döner (telefonda tam ekran sohbet).
+    if (fromTeamPage && teamChannel) {
+      router.push(teamLink(teamChannel.slug, "chat"));
+      return;
+    }
     // Tarayıcının kendi geri davranışıyla çakışmaması ve `/messages`'ın
     // scroll konumunu mümkün olduğunca korumak için (Aşama 7) `router.
     // back()` — düz bir `router.push("/messages")` her zaman sayfanın en
@@ -1508,14 +1535,15 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         {group ? (
           <button
             type="button"
-            onClick={() => (activeRoom && id ? router.push(roomsHubHref(id)) : openGroupInfo("overview"))}
-            aria-haspopup={activeRoom ? undefined : "dialog"}
-            aria-label={activeRoom ? t("rooms.chat.openHub") : t("groups.chat.openInfoAria", { name: group.name })}
+            onClick={() => openGroupInfo("overview")}
+            aria-haspopup="dialog"
+            aria-label={teamChannel ? t("tm.chat.openInfoAria", { name: teamChannel.name }) : t("groups.chat.openInfoAria", { name: group.name })}
             data-room-header
+            {...(teamChannel ? { "data-team-header": "" } : {})}
             className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
           >
             <span className="relative shrink-0">
-              <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={42} badge />
+              {teamChannel ? <TeamMark name={teamChannel.name} tone={teamChannel.tone} size={42} className="rounded-[14px]" /> : <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={42} badge />}
               {pendingRequestsForMe > 0 && (
                 <span
                   data-community-link-badge
@@ -1527,14 +1555,31 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               )}
             </span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{activeRoom ? activeRoom.name : group.name}</span>
+              <span className="block truncate font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{teamChannel ? teamChannel.name : group.name}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
                   {typingText}
                 </span>
+              ) : teamChannel ? (
+                <span data-team-header-sub className="flex items-center gap-1.5 truncate text-caption text-text-muted">
+                  {t("tm.chat.headerSub", { channel: teamChannel.channelName, members: t("tm.chat.memberCount", { count: currentTeamChannel?.memberCount ?? teamSummary?.memberCount ?? group.memberCount }) })}
+                  {channelPresence.onlineCount > 0 && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span className="inline-flex items-center gap-1" data-online-count={channelPresence.onlineCount}>
+                        <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
+                        {t("tm.chat.onlineCount", { count: channelPresence.onlineCount })}
+                      </span>
+                    </>
+                  )}
+                  {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
+                </span>
               ) : activeRoom ? (
                 <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
-                  {group.name}
+                  <span className="font-semibold text-success"># {activeRoom.name}</span>
+                  <span aria-hidden>·</span>
+                  {memberCountText(t, group.memberCount)}
+                  {groupOnline ? <OnlineCountText count={groupOnline} className="before:mr-0.5 before:content-['·']" /> : null}
                   {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
                 </span>
               ) : (
@@ -1610,8 +1655,22 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
                 >
-                  <Info size={14} /> {t("groups.chat.info")}
+                  <Info size={14} /> {teamChannel ? t("tm.info.title") : t("groups.chat.info")}
                 </button>
+                {teamChannel && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-menu-channel-info
+                    onClick={() => {
+                      close();
+                      setChannelInfoOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
+                  >
+                    <Hash size={14} /> {t("tm.info.channelInfo")}
+                  </button>
+                )}
                 <button
                   type="button"
                   role="menuitem"
@@ -1625,6 +1684,20 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   {conversation.mutedAt ? <Bell size={14} /> : <BellOff size={14} />}
                   {conversation.mutedAt ? t("groups.chat.unmute") : t("groups.chat.mute")}
                 </button>
+                {activeRoom && !teamChannel && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-menu-room-info
+                    onClick={() => {
+                      close();
+                      setRoomInfoId(activeRoom.id);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
+                  >
+                    <Info size={14} /> {t("rooms.info.roomInfoMenu")}
+                  </button>
+                )}
                 {activeRoom && (
                   <button
                     type="button"
@@ -1694,8 +1767,32 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         )}
       </div>
       )}
-      {isGroup && activeRoom && (
-        <RoomChipRow room={activeRoom} online={groupOnline} onOpenSwitcher={() => setSwitcherOpen(true)} className={dock ? "px-3 pt-2 lg:px-3" : undefined} />
+      {teamChannel && !dock?.embedded && teamSummary?.myRole === "guest" && <GuestBanner guestUntil={teamSummary.guestUntil} />}
+      {teamChannel && !dock?.embedded && teamChannelsState.channels.length > 0 && (
+        <ChannelChipsRow
+          tone="team"
+          ariaLabel={t("tm.chat.channelsAria")}
+          activeId={id}
+          items={teamChannelsState.channels.map<ChannelChip>((channel) => ({ id: channel.id, name: channel.name, locked: channel.mode === "private", unread: channel.unreadCount, muted: channel.muted }))}
+          onSelect={(item) => openTeamChannel(item.id)}
+        />
+      )}
+      {isGroup && !teamChannel && activeRoom && roomsState.rooms.filter((room) => !room.archivedAt).length > 1 && (
+        <ChannelChipsRow
+          tone="community"
+          ariaLabel={t("rooms.chat.roomsAria")}
+          activeId={activeRoom.id}
+          items={roomsState.rooms
+            .filter((room) => !room.archivedAt)
+            .map<ChannelChip>((room) => ({
+              id: room.id,
+              name: room.name,
+              locked: room.readPolicy === "staff" || (!room.isDefault && room.postingPolicy === "admins" && !room.canPost),
+              unread: room.unreadCount,
+              muted: room.muted,
+            }))}
+          onSelect={(item) => setRoomId(item.id)}
+        />
       )}
       {dock?.embedded && !searchOpen && (
         <div className="flex shrink-0 justify-end px-3 pt-2">
@@ -2022,26 +2119,104 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             setGroupInfoFocus(null);
             setSearchOpen(true);
           }}
-        />
-      )}
-      {switcherOpen && group && id && (
-        <RoomSwitcher
-          communityId={id}
-          communityName={group.name}
           rooms={roomsState.rooms}
-          currentRoomId={activeRoom?.id ?? null}
-          canManage={canManageRooms}
-          onSelect={(picked) => {
-            setSwitcherOpen(false);
-            setRoomId(picked.id);
+          activeRoomId={activeRoom?.id ?? null}
+          canManageRooms={canManageRooms}
+          onSelectRoom={(roomId) => {
+            setRoomId(roomId);
+            setGroupInfoFocus(null);
+          }}
+          onOpenRoomInfo={(roomId) => {
+            setGroupInfoFocus(null);
+            setRoomInfoId(roomId);
           }}
           onAddRoom={() => {
-            setSwitcherOpen(false);
+            setGroupInfoFocus(null);
             setRoomFormOpen(true);
           }}
-          onClose={() => setSwitcherOpen(false)}
         />
       )}
+      {teamInfoOpen && teamChannel && (
+        <TeamInfoModal
+          team={teamChannel}
+          summary={teamSummary}
+          channels={teamChannelsState.channels}
+          currentChannelId={id ?? ""}
+          muted={Boolean(conversation.mutedAt)}
+          muteBusy={actionBusy}
+          onToggleMute={() => void toggleGroupMute()}
+          onClose={() => setTeamInfoOpen(false)}
+          onSearch={() => {
+            setTeamInfoOpen(false);
+            setSearchOpen(true);
+          }}
+          onSelectChannel={openTeamChannel}
+          onOpenChannelInfo={(channelId) => {
+            if (channelId === id) {
+              setTeamInfoOpen(false);
+              setChannelInfoOpen(true);
+            } else openTeamChannel(channelId);
+          }}
+          onChannelsChanged={teamChannelsState.reload}
+        />
+      )}
+      {channelInfoOpen && teamChannel && currentTeamChannel && (
+        <ChannelInfoSheet
+          team={teamChannel}
+          channel={currentTeamChannel}
+          summary={teamSummary}
+          onlineCount={channelPresence.onlineCount}
+          pinnedCount={pinned.items.length}
+          onShowPinned={() => {
+            const first = pinned.items[0];
+            setChannelInfoOpen(false);
+            if (first) void jumpWithFeedback(first.message.id);
+          }}
+          onSearch={() => {
+            setChannelInfoOpen(false);
+            setSearchOpen(true);
+          }}
+          onClose={() => setChannelInfoOpen(false)}
+          onChanged={teamChannelsState.reload}
+          onGone={() => {
+            const next = teamChannelsState.channels.find((channel) => channel.id !== id);
+            setChannelInfoOpen(false);
+            teamChannelsState.reload();
+            if (next) openTeamChannel(next.id);
+            else router.push("/messages");
+          }}
+        />
+      )}
+      {roomInfoId && id && group && (() => {
+        const infoRoom = roomsState.rooms.find((room) => room.id === roomInfoId);
+        if (!infoRoom) return null;
+        const isActive = infoRoom.id === activeRoom?.id;
+        return (
+          <RoomInfoSheet
+            community={{ id, name: group.name }}
+            rooms={roomsState.rooms}
+            room={infoRoom}
+            canManage={canManageRooms}
+            pinnedCount={isActive ? pinned.items.length : 0}
+            onShowPinned={() => {
+              const first = pinned.items[0];
+              setRoomInfoId(null);
+              if (first) void jumpWithFeedback(first.message.id);
+            }}
+            onSearch={() => {
+              if (!isActive) setRoomId(infoRoom.id);
+              setRoomInfoId(null);
+              setSearchOpen(true);
+            }}
+            onClose={() => setRoomInfoId(null)}
+            onGone={() => {
+              const fallback = roomsState.rooms.find((room) => room.isDefault) ?? roomsState.rooms[0];
+              setRoomInfoId(null);
+              if (fallback && isActive) setRoomId(fallback.id);
+            }}
+          />
+        );
+      })()}
       {roomFormOpen && id && (
         <RoomFormModal communityId={id} rooms={roomsState.rooms} onClose={() => setRoomFormOpen(false)} onSaved={(roomId) => roomId && setRoomId(roomId)} />
       )}

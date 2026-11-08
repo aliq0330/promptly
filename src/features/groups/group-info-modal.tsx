@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Bell } from "@/components/icons/bell";
 import { BellOff } from "@/components/icons/bell-off";
 import { ChevronDown } from "@/components/icons/chevron-down";
+import { Info } from "@/components/icons/info";
+import { Lock } from "@/components/icons/lock";
 import { Pin } from "@/components/icons/pin";
 import { Search } from "@/components/icons/search";
 import { Star } from "@/components/icons/star";
@@ -35,8 +37,9 @@ import { communityHref, manageSections, membersSections } from "@/lib/communitie
 import { fetchCommunityMembers, type CommunityMember } from "@/lib/supabase/communities";
 import { memberCountText } from "@/lib/group-labels";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn } from "@/lib/utils";
-import type { Conversation } from "@/types";
+import { cn, formatUnread } from "@/lib/utils";
+import type { CommunityRoom, Conversation } from "@/types";
+import { RoomIconTile } from "@/features/messages/rooms/room-icon";
 
 /** Pencerenin hangi bölümü açık başlayacağı (bildirimden `?panel=` ile gelince). */
 export type GroupInfoFocus = "overview" | "members" | "settings";
@@ -65,6 +68,12 @@ export function GroupInfoModal({
   onShowPinned,
   onToggleArchive,
   onAsk,
+  rooms = [],
+  activeRoomId = null,
+  canManageRooms = false,
+  onSelectRoom,
+  onOpenRoomInfo,
+  onAddRoom,
 }: {
   conversation: Conversation;
   focus?: GroupInfoFocus;
@@ -84,6 +93,13 @@ export function GroupInfoModal({
   onShowPinned: () => void;
   onToggleArchive: () => void;
   onAsk: (kind: ChatConfirmKind) => void;
+  /** Topluluğun sohbet odaları (Yön A, docs/history/353-*): tek bilgi sayfasında "Odalar" bölümü; oda merkezi ayrı bir ekran değildir. */
+  rooms?: readonly CommunityRoom[];
+  activeRoomId?: string | null;
+  canManageRooms?: boolean;
+  onSelectRoom?: (roomId: string) => void;
+  onOpenRoomInfo?: (roomId: string) => void;
+  onAddRoom?: () => void;
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -189,6 +205,66 @@ export function GroupInfoModal({
             <span className="block text-caption text-text-muted">{t("groups.info.pendingRequestsHelp")}</span>
           </span>
         </Link>
+      )}
+
+      {rooms.length > 0 && (
+        <InfoCard aria-labelledby="info-rooms-title" data-info-rooms="">
+          <div className="flex items-center px-4 pb-1 pt-3.5">
+            <h3 id="info-rooms-title" className="min-w-0 flex-1 font-display text-body font-bold text-text">
+              {t("rooms.info.rooms")}
+            </h3>
+            {canManageRooms && onAddRoom && (
+              <button type="button" onClick={onAddRoom} data-info-add-room className="text-small font-bold text-primary hover:underline">
+                {t("rooms.info.addRoom")}
+              </button>
+            )}
+          </div>
+          <div role="list" className="pb-2">
+            {rooms
+              .filter((room) => !room.archivedAt)
+              .map((room) => {
+                const current = room.id === activeRoomId;
+                const unread = !room.muted && room.unreadCount > 0 && !current;
+                const sub = current
+                  ? t("rooms.row.current")
+                  : room.readPolicy === "staff"
+                    ? t("rooms.row.privateStaff")
+                    : room.muted
+                      ? t("rooms.row.muted")
+                      : !room.isDefault && room.postingPolicy === "admins"
+                        ? t("rooms.row.readOnlyStaff")
+                        : (room.description ?? "");
+                return (
+                  <div key={room.id} role="listitem" className={cn("flex items-center gap-1 pr-2", current && "bg-success/10")}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectRoom?.(room.id)}
+                      data-info-room={room.name}
+                      aria-current={current ? "true" : undefined}
+                      className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                    >
+                      <RoomIconTile icon={room.icon} size={36} />
+                      <span className="min-w-0 flex-1">
+                        <span className={cn("block truncate text-body", current || unread ? "font-bold text-text" : "font-semibold text-text")}>{room.name}</span>
+                        {sub && <span className={cn("block truncate text-caption", current ? "font-semibold text-success" : "text-text-muted")}>{sub}</span>}
+                      </span>
+                      {room.readPolicy === "staff" && <Lock size={15} className="shrink-0 text-text-muted" aria-hidden />}
+                      {unread && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(room.unreadCount)}</span>}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenRoomInfo?.(room.id)}
+                      aria-label={t("rooms.info.roomInfoAria", { name: room.name })}
+                      data-info-room-info={room.name}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <Info size={17} aria-hidden />
+                    </button>
+                  </div>
+                );
+              })}
+          </div>
+        </InfoCard>
       )}
 
       <InfoCard aria-labelledby="info-members-title">

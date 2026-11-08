@@ -19,6 +19,8 @@ export function ConversationList({
   conversations,
   shareQuery,
   activeId,
+  activeTeamId,
+  showKindTag,
   flush,
   emptyLabel,
   onUnarchive,
@@ -30,6 +32,10 @@ export function ConversationList({
   shareQuery?: string;
   /** Conversation currently open in the right-hand pane (tablet/desktop). */
   activeId?: string | null;
+  /** Açık sohbet bir ekip kanalıysa ekibin kimliği: o ekibin tek satırı açık görünür (kanallar tek satıra toplanır). */
+  activeTeamId?: string | null;
+  /** "Tümü" görünümünde ekip/topluluk etiketi. */
+  showKindTag?: boolean;
   /** Drop the card border/radius — used inside the side pane, which already has its own frame. */
   flush?: boolean;
   /** Shown when the list is empty (defaults to the inbox wording). */
@@ -55,7 +61,7 @@ export function ConversationList({
     ];
   }
   // Açık sohbet pencerenin dışında kalmasın (derin bağlantıyla açılan eski bir sohbet).
-  const activeIndex = activeId ? conversations.findIndex((conversation) => conversation.id === activeId) : -1;
+  const activeIndex = activeId ? conversations.findIndex((conversation) => conversation.id === activeId || Boolean(activeTeamId && conversation.group?.team?.id === activeTeamId)) : -1;
   const visibleCount = Math.max(shown, activeIndex + 1);
   if (conversations.length === 0) {
     return (
@@ -71,7 +77,8 @@ export function ConversationList({
           key={conversation.id}
           conversation={conversation}
           shareQuery={shareQuery}
-          isActive={activeId === conversation.id}
+          isActive={activeId === conversation.id || Boolean(activeTeamId && conversation.teamRollup && conversation.group?.team?.id === activeTeamId)}
+          showKindTag={showKindTag}
           onUnarchive={onUnarchive ? () => onUnarchive(conversation.id) : undefined}
           unarchiveBusy={busyId === conversation.id}
           onOpen={onOpen}

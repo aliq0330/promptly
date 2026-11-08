@@ -232,10 +232,6 @@ export function roomHref(communityId: string, roomId: string): string {
   return `/messages/local?id=${communityId}&room=${roomId}`;
 }
 
-/** Topluluğun sohbet merkezi (oda listesi) — Mesajlar satırındaki ok ve oda sohbeti başlığı buraya gider. */
-export function roomsHubHref(communityId: string): string {
-  return `/messages/local?id=${communityId}&view=rooms`;
-}
 
 /**
  * Same idea as `promptHref`, for a tag — tags are seeded rows (see

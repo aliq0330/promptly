@@ -484,6 +484,8 @@ export interface Conversation {
   pinnedAt?: string | null;
   /** Topluluk sohbetinde son görünür mesajın odası ("# oda" önizleme etiketi); birebir sohbette yok. */
   lastRoom?: { id: string; name: string } | null;
+  /** Mesajlar listesinde bir ekibin kanalları TEK satıra toplanır (docs/history/353-*, Yön A): satır temsilci kanalı gösterir, bu alan toplamı taşır. */
+  teamRollup?: { channelCount: number; unreadChannelCount: number; channelName: string };
 }
 
 /** Topluluk sohbet odasının simge anahtarı (DB CHECK ile aynı liste; `lib/community-rooms.ts` simge bileşenine çevirir). */

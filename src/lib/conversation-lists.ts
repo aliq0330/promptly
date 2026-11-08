@@ -66,10 +66,56 @@ export function filterConversationsByQuery<
   const q = query.trim().toLowerCase();
   if (!q) return conversations;
   return conversations.filter((conversation) => {
-    if (conversation.group) return conversation.group.name.toLowerCase().includes(q) || conversation.lastMessage.toLowerCase().includes(q);
+    if (conversation.group) {
+      const teamName = (conversation.group as { team?: { name: string } | null }).team?.name ?? "";
+      return conversation.group.name.toLowerCase().includes(q) || teamName.toLowerCase().includes(q) || conversation.lastMessage.toLowerCase().includes(q);
+    }
     const person = conversation.participants[0];
     return person?.displayName.toLowerCase().includes(q) || person?.username.toLowerCase().includes(q) || conversation.lastMessage.toLowerCase().includes(q);
   });
+}
+
+/** Ekip kanalı olan bir sohbetin alanları (`Conversation` ile uyumlu en küçük şekil). */
+export interface TeamChannelFields extends ConversationListFields {
+  id: string;
+  lastMessage: string;
+  group?: { team?: { id: string; channelName: string } | null } | null;
+  teamRollup?: { channelCount: number; unreadChannelCount: number; channelName: string };
+}
+
+/**
+ * Mesajlar listesinde bir ekibin kanallarını TEK satıra toplar (docs/history/353-*, Yön A mockup'ı): her kanal ayrı konuşmadır ama listede ekip başına
+ * bir satır görünür. Temsilci kanal: okunmamışı olan en yeni kanal, yoksa en yeni kanal; satır onu açar. Sayaç tüm kanalların toplamıdır (sessize alınan
+ * kanalın okunmamışı toplama girmez). Ekip olmayan sohbetler aynen kalır; sonuç gelen kutusu sırasındadır (sabitlenenler önce, sonra en yeni).
+ */
+export function rollUpTeamChannels<T extends TeamChannelFields>(conversations: readonly T[]): T[] {
+  const byTeam = new Map<string, T[]>();
+  const rest: T[] = [];
+  for (const conversation of conversations) {
+    const team = conversation.group?.team;
+    if (!team) {
+      rest.push(conversation);
+      continue;
+    }
+    const list = byTeam.get(team.id) ?? [];
+    list.push(conversation);
+    byTeam.set(team.id, list);
+  }
+  const rolled: T[] = [];
+  for (const channels of byTeam.values()) {
+    const ordered = [...channels].sort(byNewest);
+    const representative = ordered.find((channel) => channel.unreadCount > 0 && !channel.mutedAt) ?? ordered[0];
+    const unread = channels.filter((channel) => channel.unreadCount > 0 && !channel.mutedAt);
+    rolled.push({
+      ...representative,
+      unreadCount: unread.reduce((sum, channel) => sum + channel.unreadCount, 0),
+      lastMessageAt: ordered[0].lastMessageAt,
+      pinnedAt: channels.map((channel) => channel.pinnedAt ?? null).filter(Boolean).sort().at(-1) ?? null,
+      mutedAt: channels.every((channel) => Boolean(channel.mutedAt)) ? (representative.mutedAt ?? null) : null,
+      teamRollup: { channelCount: channels.length, unreadChannelCount: unread.length, channelName: representative.group?.team?.channelName ?? "" },
+    });
+  }
+  return [...rest, ...rolled].sort(comparePinnedFirst);
 }
 
 /** Oldest message time the viewer may still see in a thread, or null when nothing was cleared. */

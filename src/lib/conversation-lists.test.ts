@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { bucketConversations, hasUnreadInInbox, filterConversationsByQuery, isAfterClear, unreadConversationCount } from "./conversation-lists.ts";
+import { bucketConversations, hasUnreadInInbox, filterConversationsByQuery, isAfterClear, rollUpTeamChannels, unreadConversationCount, type TeamChannelFields } from "./conversation-lists.ts";
 
 const conv = (id: string, over: Partial<Parameters<typeof bucketConversations>[0][number]> = {}) => ({
   id,
@@ -98,4 +98,51 @@ test("filterConversationsByQuery matches group names, people's names/usernames a
   assert.deepEqual(filterConversationsByQuery(list, "atölye").length, 1, "group name");
   assert.deepEqual(filterConversationsByQuery(list, "workflow").length, 1, "last message");
   assert.equal(filterConversationsByQuery(list, "yok böyle").length, 0);
+});
+
+// Ekip kanalları Mesajlar listesinde ekip başına TEK satırdır (Yön A, docs/history/353-*).
+const channel = (id: string, teamId: string, over: Record<string, unknown> = {}) => ({
+  ...conv(id),
+  lastMessage: "",
+  pinnedAt: null as string | null,
+  mutedAt: null as string | null,
+  group: { team: { id: teamId, name: `Ekip ${teamId}`, channelName: id } },
+  ...over,
+});
+
+test("a team's channels collapse into one row; other chats stay as they are", () => {
+  const rolled = rollUpTeamChannels<TeamChannelFields & Record<string, unknown>>([channel("genel", "t1"), channel("tasarim", "t1"), channel("genel2", "t2"), { ...conv("dm"), lastMessage: "", pinnedAt: null, mutedAt: null, group: undefined }]);
+  assert.equal(rolled.length, 3);
+  assert.equal(rolled.find((c) => c.group?.team?.id === "t1")?.teamRollup?.channelCount, 2);
+  assert.equal(rolled.find((c) => c.id === "dm")?.teamRollup, undefined);
+});
+
+test("the roll-up opens the newest channel with unread messages and sums their counts", () => {
+  const rolled = rollUpTeamChannels<TeamChannelFields & Record<string, unknown>>([
+    channel("genel", "t1", { lastMessageAt: "2026-03-01T00:00:00Z" }),
+    channel("tasarim", "t1", { lastMessageAt: "2026-02-01T00:00:00Z", unreadCount: 3 }),
+    channel("sunum", "t1", { lastMessageAt: "2026-01-15T00:00:00Z", unreadCount: 2 }),
+  ]);
+  assert.equal(rolled.length, 1);
+  assert.equal(rolled[0].id, "tasarim");
+  assert.equal(rolled[0].unreadCount, 5);
+  assert.equal(rolled[0].lastMessageAt, "2026-03-01T00:00:00Z");
+  assert.deepEqual(rolled[0].teamRollup, { channelCount: 3, unreadChannelCount: 2, channelName: "tasarim" });
+});
+
+test("a muted channel's unread messages do not count toward the team row", () => {
+  const rolled = rollUpTeamChannels<TeamChannelFields & Record<string, unknown>>([channel("genel", "t1", { unreadCount: 4, mutedAt: "2026-02-01T00:00:00Z" }), channel("tasarim", "t1")]);
+  assert.equal(rolled[0].unreadCount, 0);
+  assert.equal(rolled[0].teamRollup?.unreadChannelCount, 0);
+});
+
+test("with nothing unread the row opens the newest channel; pinned teams sort first", () => {
+  const rolled = rollUpTeamChannels<TeamChannelFields & Record<string, unknown>>([
+    channel("eski", "t1", { lastMessageAt: "2026-01-01T00:00:00Z" }),
+    channel("yeni", "t1", { lastMessageAt: "2026-02-01T00:00:00Z" }),
+    channel("baska", "t2", { lastMessageAt: "2026-03-01T00:00:00Z" }),
+  ]);
+  assert.equal(rolled.find((c) => c.group?.team?.id === "t1")?.id, "yeni");
+  const pinned = rollUpTeamChannels<TeamChannelFields & Record<string, unknown>>([channel("a", "t1", { pinnedAt: "2026-01-01T00:00:00Z", lastMessageAt: "2025-01-01T00:00:00Z" }), channel("b", "t2", { lastMessageAt: "2026-03-01T00:00:00Z" })]);
+  assert.equal(pinned[0].group?.team?.id, "t1");
 });

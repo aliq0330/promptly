@@ -17,6 +17,7 @@ import { useOnlineIds } from "@/features/presence/use-presence";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useMediaQuery } from "@/lib/use-media-query";
 import {
   archiveTeamChannel,
   createTeamChannel,
@@ -85,14 +86,25 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   }, [activeId]);
   const online = useOnlineIds(members.map((m) => m.userId));
   const onlineMembers = members.filter((m) => online.has(m.userId));
-  const select = (channel: TeamChannel) => router.replace(teamLink(team.id, "chat", { channel: channel.name }));
+  // Telefonda ekip sohbeti Mesajlar'daki TAM EKRAN sohbettir (Yön A, "Ekip 2", docs/history/353-*): burada yalnız kanal listesi vardır,
+  // kanala dokunmak sohbeti açar (tek ince başlık + kanal çipleri; geri düğmesi bu sayfaya döner). Masaüstü/tablette sohbet burada gömülü kalır.
+  const phone = !useMediaQuery("(min-width: 768px)");
+  const select = (channel: TeamChannel) => {
+    if (phone) router.push(`/messages/local?id=${channel.id}&from=team`);
+    else router.replace(teamLink(team.id, "chat", { channel: channel.name }));
+  };
+  // `?new=1` (bilgi sayfasındaki "Kanal ekle") ve `?settings=1` (kanal bilgisindeki "Düzenle") ilgili pencereyi adresten açar; kapanınca adresten kalkar.
+  const manage = can("manage_channels");
+  const newVisible = newOpen || (params.get("new") === "1" && manage);
+  const settingsTarget = settingsFor ?? (params.get("settings") === "1" && manage ? active : null);
+  const clearRequest = () => router.replace(teamLink(team.id, "chat", wanted ? { channel: wanted } : {}));
 
   if (failed) return <EmptyState icon={Hash} title={t("tm.chat.failed")} action={{ label: t("common.retry"), onClick: load }} />;
   if (!channels) return <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>;
 
   return (
     <section className="grid gap-4 md:grid-cols-[15rem_minmax(0,1fr)]" data-testid="team-chat">
-      <aside className={cn("space-y-3", wanted && "max-md:hidden")} data-testid="team-channel-aside">
+      <aside className="space-y-3" data-testid="team-channel-aside">
         <div className="flex items-center justify-between">
           <h2 className="text-label font-semibold uppercase tracking-wide text-text-muted">{t("tm.chat.channels")}</h2>
           {can("manage_channels") && (
@@ -153,7 +165,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
 
       {active ? (
         // Telefonda tek bölme: kanal seçilene kadar yalnız liste, seçilince yalnız sohbet (+ geri). Masaüstünde ikisi yan yana.
-        <div className={cn("min-w-0", !wanted && "max-md:hidden")}>
+        <div className="min-w-0 max-md:hidden">
           <ChannelView
             key={active.id}
             ctx={ctx}
@@ -170,10 +182,13 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
         <EmptyState icon={Hash} title={t("tm.chat.empty.title")} description={t("tm.chat.empty.body")} />
       )}
 
-      {newOpen && (
+      {newVisible && (
         <NewChannelDialog
           ctx={ctx}
-          onClose={() => setNewOpen(false)}
+          onClose={() => {
+            setNewOpen(false);
+            if (params.get("new") === "1") clearRequest();
+          }}
           onCreated={(name) => {
             setNewOpen(false);
             load();
@@ -181,13 +196,17 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
           }}
         />
       )}
-      {settingsFor && (
+      {settingsTarget && (
         <ChannelSettingsDialog
           ctx={ctx}
-          channel={settingsFor}
-          onClose={() => setSettingsFor(null)}
+          channel={settingsTarget}
+          onClose={() => {
+            setSettingsFor(null);
+            if (params.get("settings") === "1") clearRequest();
+          }}
           onChanged={() => {
             setSettingsFor(null);
+            if (params.get("settings") === "1") clearRequest();
             load();
           }}
         />

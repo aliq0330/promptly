@@ -120,6 +120,7 @@ function DockPanel() {
             onBack: backToList,
             onExpand: () => expand(messageHref({ id: view.conversationId })),
             onMinimize: dock.minimize,
+            onOpenConversation: (conversationId: string) => dock.openChat(conversationId),
           }}
         />
       ) : view.kind === "draft" ? (
