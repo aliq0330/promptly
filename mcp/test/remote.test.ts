@@ -509,3 +509,24 @@ test("attach_image: no image given, or the service refuses → a tool error with
   assert.equal(result.isError, true);
   assert.match(result.content[0].text, /conflict: Images can only be added/);
 });
+
+// Ekip adresi `/mcp/team/<kısa-ad>` (docs/history/353-*)
+test("/mcp/team/<ad> is the personal address narrowed to one team: list_my_libraries asks for that team's library only", async () => {
+  const sqls: string[] = [];
+  const params: unknown[][] = [];
+  const handler = meHandler(["read"], sqls);
+  const TEAM_URL = "https://example.test/functions/v1/mcp/team/atolye-mor";
+  const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => handler(new Request(input as string, init))) as typeof fetch;
+  const client = new Client({ name: "remote-team-test", version: "1.0.0" });
+  await client.connect(new StreamableHTTPClientTransport(new URL(TEAM_URL), { fetch: fetchImpl, requestInit: { headers: { authorization: `Bearer ${KEY}` } } }));
+  void params;
+  await client.callTool({ name: "list_my_libraries", arguments: { team: "baska-ekip" } });
+  assert.ok(sqls.some((sql) => sql.includes("api_me_team_libraries")), "the team-scoped RPC is used");
+  assert.ok(!sqls.some((sql) => sql.includes("api_me_libraries()")), "the unscoped list is not used on a team address");
+});
+
+test("/mcp/team/<ad> needs a credential like /mcp/me does", async () => {
+  const handler = meHandler(["read"]);
+  const response = await handler(new Request("https://example.test/functions/v1/mcp/team/atolye-mor", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }));
+  assert.equal(response.status, 401);
+});

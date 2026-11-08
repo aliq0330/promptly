@@ -458,6 +458,8 @@ export interface ChatGroup {
   postCount: number;
   /** 'legacy_group' = topluluk sistemine geçmeden önce oluşturulmuş eski grup sohbeti. */
   origin: "native" | "legacy_group";
+  /** Ekip kanalıysa ekibi (docs/history/353-*): sohbet ekranı topluluk işlerini (oda, yönetim, katılım) çizmez, ekip sayfasına bağlanır. */
+  team?: { id: string; slug: string; name: string; tone: string; channelName: string } | null;
 }
 
 export interface Conversation {

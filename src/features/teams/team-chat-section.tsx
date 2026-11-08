@@ -1,23 +1,18 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Hash } from "@/components/icons/hash";
 import { Lock } from "@/components/icons/lock";
 import { Plus } from "@/components/icons/plus";
-import { Send } from "@/components/icons/send";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
-import { useAuth } from "@/features/auth/auth-provider";
-import { applyMessageUpdate, mergeIncomingMessage } from "@/features/messages/realtime-helpers";
+import { LocalConversationView } from "@/features/messages/local-conversation-view";
+import { PresenceAvatar } from "@/features/presence/presence-ui";
+import { useOnlineIds } from "@/features/presence/use-presence";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
-import { useToast } from "@/features/groups/use-toast";
 import { SpaceDialog } from "@/features/spaces/space-modals";
-import { markConversationReadUpTo } from "@/lib/supabase/chat-features";
-import { supabase } from "@/lib/supabase/client";
-import { fetchMessagePage, mapMessageRow, sendMessage, type MessageRow } from "@/lib/supabase/messages";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   archiveTeamChannel,
@@ -27,7 +22,6 @@ import {
   listChannelMembers,
   listTeamChannels,
   listTeamSpaces,
-  moderateTeamMessage,
   setChannelAccess,
   setChannelNotify,
   updateTeamChannel,
@@ -38,8 +32,7 @@ import {
   type TeamSpaceRow,
 } from "@/lib/supabase/teams";
 import { teamLink } from "@/lib/teams";
-import type { Message } from "@/types";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { AccessEditor } from "./access-editor";
 import type { TeamCtx } from "./team-page";
 import { PillChoice } from "./team-ui";
@@ -59,6 +52,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   const [newOpen, setNewOpen] = useState(false);
   const [settingsFor, setSettingsFor] = useState<TeamChannel | null>(null);
   const wanted = params.get("channel");
+  const [members, setMembers] = useState<ChannelMember[]>([]);
 
   const load = useCallback(() => {
     void listTeamChannels(team.id).then(
@@ -74,6 +68,20 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   const visible = useMemo(() => (channels ?? []).filter((c) => !c.archivedAt), [channels]);
   const archived = useMemo(() => (channels ?? []).filter((c) => c.archivedAt), [channels]);
   const active = visible.find((c) => c.id === wanted || c.name === wanted) ?? visible[0] ?? null;
+  const activeId = active?.id ?? null;
+  useEffect(() => {
+    if (!activeId) return;
+    let cancelled = false;
+    void listChannelMembers(activeId).then(
+      (rows) => !cancelled && setMembers(rows),
+      () => undefined,
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [activeId]);
+  const online = useOnlineIds(members.map((m) => m.userId));
+  const onlineMembers = members.filter((m) => online.has(m.userId));
   const select = (channel: TeamChannel) => router.replace(teamLink(team.id, "chat", { channel: channel.name }));
 
   if (failed) return <EmptyState icon={Hash} title={t("tm.chat.failed")} action={{ label: t("common.retry"), onClick: load }} />;
@@ -125,6 +133,19 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
             </ul>
           </details>
         )}
+        {onlineMembers.length > 0 && (
+          <div data-testid="team-online">
+            <h2 className="mb-1 mt-3 text-label font-semibold uppercase tracking-wide text-text-muted">{t("tm.chat.online", { count: onlineMembers.length })}</h2>
+            <ul className="space-y-1">
+              {onlineMembers.slice(0, 8).map((m) => (
+                <li key={m.userId} className="flex items-center gap-2 text-small text-text-secondary">
+                  <PresenceAvatar userId={m.userId} src={m.avatarUrl} alt={m.displayName || m.username} size={24} />
+                  <span className="truncate">{m.displayName || m.username}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </aside>
 
       {active ? (
@@ -133,7 +154,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
           <button type="button" onClick={() => router.replace(teamLink(team.id, "chat"))} className="mb-2 inline-flex items-center gap-1 text-small text-primary md:hidden" data-channel-back>
             ‹ {t("tm.chat.channels")}
           </button>
-          <ChannelView key={active.id} ctx={ctx} channel={active} onSettings={() => setSettingsFor(active)} onChanged={load} />
+          <ChannelView key={active.id} ctx={ctx} channel={active} onlineCount={onlineMembers.length} onSettings={() => setSettingsFor(active)} onChanged={load} />
         </div>
       ) : (
         <EmptyState icon={Hash} title={t("tm.chat.empty.title")} description={t("tm.chat.empty.body")} />
@@ -165,109 +186,20 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   );
 }
 
-function ChannelView({ ctx, channel, onSettings, onChanged }: { ctx: TeamCtx; channel: TeamChannel; onSettings: () => void; onChanged: () => void }) {
-  const { t, language } = useTranslation();
-  const { user } = useAuth();
-  const { node: toastNode, show } = useToast();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [members, setMembers] = useState<Record<string, ChannelMember>>({});
-  const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const userId = user?.id ?? "";
-
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    void fetchMessagePage(channel.id, userId).then((page) => {
-      if (cancelled) return;
-      setMessages(page.messages);
-      setHasMore(page.hasMore);
-      setLoading(false);
-    });
-    void listChannelMembers(channel.id).then(
-      (rows) => !cancelled && setMembers(Object.fromEntries(rows.map((m) => [m.userId, m]))),
-      () => undefined,
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [channel.id, userId]);
-
-  useEffect(() => {
-    if (!userId) return;
-    const live = supabase
-      .channel(`team-channel:${channel.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${channel.id}` }, (payload) => {
-        setMessages((prev) => mergeIncomingMessage(prev, mapMessageRow(payload.new as MessageRow)));
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${channel.id}` }, (payload) => {
-        setMessages((prev) => applyMessageUpdate(prev, mapMessageRow(payload.new as MessageRow)));
-      })
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(live);
-    };
-  }, [channel.id, userId]);
-
-  // Okundu imleci: ekranda görünürken en yeni mesaja kadar (yalnız ileri; Mesajlar'daki liste aynı imleci okur).
-  const newest = messages[messages.length - 1]?.createdAt;
-  useEffect(() => {
-    if (newest && document.visibilityState === "visible") void markConversationReadUpTo(channel.id, newest).then(onChanged);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız en yeni mesaj değişince
-  }, [newest, channel.id]);
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
-
-  const older = async () => {
-    const first = messages[0]?.createdAt;
-    if (!first) return;
-    const page = await fetchMessagePage(channel.id, userId, { before: first });
-    setMessages((prev) => [...page.messages, ...prev]);
-    setHasMore(page.hasMore);
-  };
-
-  const send = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const body = draft.trim();
-    if (!body || sending || !userId) return;
-    setSending(true);
-    try {
-      const sent = await sendMessage(channel.id, userId, { body });
-      setMessages((prev) => mergeIncomingMessage(prev, sent));
-      setDraft("");
-    } catch (error) {
-      show((error as Error).message);
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const moderate = async (message: Message) => {
-    try {
-      await moderateTeamMessage(message.id);
-      setMessages((prev) => applyMessageUpdate(prev, { ...message, body: null, deletedAt: new Date().toISOString(), attachments: [] }));
-    } catch (error) {
-      show((error as TeamActionError).message);
-    }
-  };
-
-  const nameOf = (id: string) => members[id]?.displayName || members[id]?.username || t("tm.chat.former");
-  const canModerate = ctx.can("manage_channels");
+function ChannelView({ ctx, channel, onlineCount, onSettings, onChanged }: { ctx: TeamCtx; channel: TeamChannel; onlineCount: number; onSettings: () => void; onChanged: () => void }) {
+  const { t } = useTranslation();
 
   return (
-    <div className="flex min-h-[60vh] flex-col rounded-lg border border-border-soft bg-surface" data-testid="team-channel-view" data-channel-id={channel.id}>
-      <header className="flex items-center gap-2 border-b border-border-soft px-4 py-3">
+    <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-lg border border-border-soft bg-surface md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
+      <header className="flex shrink-0 items-center gap-2 border-b border-border-soft px-4 py-3">
         {channel.mode === "private" ? <Lock size={16} aria-hidden /> : <Hash size={16} aria-hidden />}
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-body font-semibold">{channel.name}</h3>
+          <h3 className="truncate font-display text-body font-semibold"># {channel.name}</h3>
           <p className="truncate text-caption text-text-muted">
             {channel.description || t(channel.mode === "private" ? "tm.chat.modePrivate" : channel.mode === "space" ? "tm.chat.modeSpace" : "tm.chat.modeOpen")}
             {" · "}
             {t("tm.chat.memberCount", { count: channel.memberCount })}
+            {onlineCount > 0 && ` · ${t("tm.chat.onlineCount", { count: onlineCount })}`}
           </p>
         </div>
         <select
@@ -286,71 +218,15 @@ function ChannelView({ ctx, channel, onSettings, onChanged }: { ctx: TeamCtx; ch
           </Button>
         )}
       </header>
-
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3" aria-live="polite" data-testid="team-messages">
-        {hasMore && (
-          <button type="button" onClick={() => void older()} className="mx-auto block text-caption text-primary hover:underline">
-            {t("tm.chat.older")}
-          </button>
-        )}
-        {loading && <p className="text-center text-small text-text-muted">{t("common.loading")}</p>}
-        {!loading && messages.length === 0 && <p className="py-8 text-center text-small text-text-muted">{t("tm.chat.noMessages")}</p>}
-        {messages.map((message) => {
-          const mine = message.senderId === userId;
-          const sender = members[message.senderId];
-          return (
-            <div key={message.id} className="group flex gap-3" data-message-id={message.id}>
-              <Avatar src={sender?.avatarUrl} alt={nameOf(message.senderId)} size={32} />
-              <div className="min-w-0 flex-1">
-                <p className="text-caption text-text-muted">
-                  <span className={cn("font-medium", mine ? "text-primary" : "text-text")}>{nameOf(message.senderId)}</span> · {formatRelativeTime(message.createdAt, language)}
-                  {message.editedAt && ` · ${t("tm.chat.edited")}`}
-                </p>
-                {message.deletedAt ? (
-                  <p className="text-small italic text-text-muted">{t("tm.chat.deleted")}</p>
-                ) : (
-                  <p className="whitespace-pre-wrap break-words text-small">{message.body}</p>
-                )}
-              </div>
-              {canModerate && !message.deletedAt && !mine && (
-                <button type="button" onClick={() => void moderate(message)} className="self-start text-caption text-text-muted opacity-0 transition-opacity hover:text-danger focus:opacity-100 group-hover:opacity-100">
-                  {t("tm.chat.removeMessage")}
-                </button>
-              )}
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
+      {/* Mesajlar'daki GERÇEK sohbet ekranı (tepki, yanıt, sabitleme, fotoğraf, GIF, yıldız, düzenleme, "yazıyor…"): aynı konuşma, iki giriş. */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <LocalConversationView key={channel.id} dock={{ conversationId: channel.id, embedded: true, onBack: noop, onExpand: noop, onMinimize: noop }} />
       </div>
-
-      {channel.canPost ? (
-        <form onSubmit={(event) => void send(event)} className="flex items-end gap-2 border-t border-border-soft p-3">
-          <textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                void send(event);
-              }
-            }}
-            rows={1}
-            maxLength={4000}
-            placeholder={t("tm.chat.placeholder", { name: channel.name })}
-            aria-label={t("tm.chat.placeholder", { name: channel.name })}
-            className="max-h-32 min-h-10 flex-1 resize-none rounded-xl border border-border bg-background px-3 py-2 text-small"
-          />
-          <Button type="submit" size="icon" disabled={!draft.trim() || sending} aria-label={t("tm.chat.send")}>
-            <Send size={16} aria-hidden />
-          </Button>
-        </form>
-      ) : (
-        <p className="border-t border-border-soft px-4 py-3 text-center text-caption text-text-muted">{t("tm.chat.readOnly")}</p>
-      )}
-      {toastNode}
     </div>
   );
 }
+
+const noop = () => undefined;
 
 type ChannelMode = "open" | "private" | "space";
 

@@ -88,6 +88,7 @@ import { RoomSidePanel } from "./rooms/room-side-panel";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 import { communityHref } from "@/lib/communities";
+import { teamLink } from "@/lib/teams";
 import { fetchCommunityPostById } from "@/lib/supabase/communities";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
@@ -144,7 +145,7 @@ function translateSendError(message: string, isGroup = false): string {
  * message sent in this conversation as a real, database-backed embed.
  *
  */
-export function LocalConversationView({ dock }: { dock?: DockHandlers & { conversationId: string } } = {}) {
+export function LocalConversationView({ dock }: { dock?: DockHandlers & { conversationId: string; /** Ekip sayfasına gömülü (docs/history/353-*): başlığı sayfa çizer, burada çizilmez. */ embedded?: boolean } } = {}) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -262,11 +263,18 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   // false, ve id boş olduğunda sorgu hiçbir şeye eşleşmiyor.
   const isGroup = conversation?.kind === "group";
   const group = conversation?.group ?? null;
+  // Ekip kanalı (docs/history/353-*): topluluk özellikleri (oda, topluluk bilgisi, çevrimiçi sayısı) kapalıdır; bilgi/yönetim ekip sayfasındadır.
+  const teamChannel = group?.team ?? null;
+  const communityId = isGroup && !teamChannel && id ? id : null;
+  const openGroupInfo = (focus: GroupInfoFocus) => {
+    if (teamChannel) router.push(teamLink(teamChannel.slug, "chat", { channel: teamChannel.channelName }));
+    else setGroupInfoFocus(focus);
+  };
   const blockState = useBlockState(conversation?.participants[0] ?? EMPTY_PARTICIPANT);
   // Grup: gönderen adları/avatarları + kadro rolleri; "kim yazabilir" ayarı.
   // Sohbet odaları (docs/history/352-*): topluluk sohbeti birden çok odaya bölünür; mesajlar/okundu/yazıyor açık odayla sınırlıdır.
-  const roomsState = useCommunityRooms(isGroup && id ? id : null);
-  const { room: activeRoom, setRoomId, requestedId: requestedRoomId } = useActiveRoom(isGroup && id ? id : null, roomsState.rooms, isDock);
+  const roomsState = useCommunityRooms(communityId);
+  const { room: activeRoom, setRoomId, requestedId: requestedRoomId } = useActiveRoom(communityId, roomsState.rooms, isDock);
   const activeRoomMessageId = activeRoom ? messageRoomId(activeRoom) : null;
   const roomScope = useMemo<MessageRoomScope | undefined>(() => (isGroup && activeRoom ? { id: activeRoomMessageId } : undefined), [isGroup, activeRoom, activeRoomMessageId]);
   const roomScopeRef = useRef<MessageRoomScope | undefined>(undefined);
@@ -312,7 +320,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     [typingIds, searchSenderIds, pinned.items],
   );
   // Topluluk sohbeti başlığındaki "N çevrimiçi" (docs/history/329-*; sunucu yalnız topluluğu okuyabilene verir).
-  const groupOnline = useCommunityPresenceCount(isGroup && id ? id : null);
+  const groupOnline = useCommunityPresenceCount(communityId);
   const groupSenders = useGroupSenders(isGroup && id ? id : null, messages, group ? `${group.myRole}:${group.memberCount}` : "", extraSenderIds);
   // Desktop drag-and-drop of photos anywhere on the conversation panel.
   const imageDrop = useImageDrop(composerImages.addFiles, !blockState.isBlocked && canPost);
@@ -1444,7 +1452,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           : "fixed inset-x-0 top-0 z-10 flex flex-col bg-background bottom-0 md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
       }
     >
-      {dock ? (
+      {dock?.embedded ? null : dock ? (
         <DockHeader
           onBack={dock.onBack}
           onExpand={dock.onExpand}
@@ -1500,7 +1508,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         {group ? (
           <button
             type="button"
-            onClick={() => (activeRoom && id ? router.push(roomsHubHref(id)) : setGroupInfoFocus("overview"))}
+            onClick={() => (activeRoom && id ? router.push(roomsHubHref(id)) : openGroupInfo("overview"))}
             aria-haspopup={activeRoom ? undefined : "dialog"}
             aria-label={activeRoom ? t("rooms.chat.openHub") : t("groups.chat.openInfoAria", { name: group.name })}
             data-room-header
@@ -1598,7 +1606,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   role="menuitem"
                   onClick={() => {
                     close();
-                    setGroupInfoFocus("overview");
+                    openGroupInfo("overview");
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
                 >
@@ -1632,6 +1640,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                     {activeRoom.muted ? t("rooms.chat.unmute") : t("rooms.chat.mute")}
                   </button>
                 )}
+                {!teamChannel && (
                 <ChatActionItems
                   conversation={conversation}
                   busy={actionBusy}
@@ -1642,19 +1651,22 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                     setConfirmKind(kind);
                   }}
                 />
+                )}
+                {!teamChannel && (
                 <button
                   type="button"
                   role="menuitem"
                   onClick={() => {
                     close();
                     // Sahip başka üye varken ayrılamaz: açıklama ve devir yolu bilgi penceresindedir.
-                    if (group && leaveOutcome(group.myRole, group.memberCount) === "must_transfer") setGroupInfoFocus("overview");
+                    if (group && leaveOutcome(group.myRole, group.memberCount) === "must_transfer") openGroupInfo("overview");
                     else setLeaveOpen(true);
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-danger hover:bg-surface-soft"
                 >
                   <LogOut size={14} /> {t("groups.about.leave")}
                 </button>
+                )}
               </>
             )}
           </ChatHeaderMenu>
