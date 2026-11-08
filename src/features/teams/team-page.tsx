@@ -9,7 +9,6 @@ import Link from "next/link";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { ArrowLeft } from "@/components/icons/arrow-left";
-import { Bell } from "@/components/icons/bell";
 import { MessageCircle } from "@/components/icons/message-circle";
 import { SectionMenu } from "@/features/content/section-menu";
 import { InviteDialog } from "./team-invites";
@@ -106,6 +105,13 @@ export function TeamPage() {
   const chatFocus = tab === "chat" && Boolean(params.get("channel"));
   const go = (next: TeamTab) => router.replace(teamLink(id, next));
   const [inviteOpen, setInviteOpen] = useState(false);
+  // Açık kanal tam ekran sohbettir: telefonda genel üst menü yalnız o durumda gizlenir (globals.css `data-team-focus`); alt menüye dokunulmaz.
+  useEffect(() => {
+    if (!chatFocus) return;
+    const root = document.documentElement;
+    root.setAttribute("data-team-focus", "");
+    return () => root.removeAttribute("data-team-focus");
+  }, [chatFocus]);
 
   if (state === "loading") {
     return (
@@ -184,11 +190,7 @@ export function TeamPage() {
                 <span className="min-w-0 flex-1 truncate text-body font-semibold">{team.name}</span>
               </>
             )}
-            {onSpaces ? (
-              <Link href="/notifications" aria-label={t("header.notificationsAriaLabel")} className="grid h-10 w-10 place-items-center rounded-full text-text hover:bg-surface-soft">
-                <Bell size={20} aria-hidden />
-              </Link>
-            ) : (
+            {onSpaces ? null : (
               <Link href={chatTarget} aria-label={t("tm.tab.chat")} className="grid h-10 w-10 place-items-center rounded-full text-text hover:bg-surface-soft">
                 <MessageCircle size={20} aria-hidden />
               </Link>

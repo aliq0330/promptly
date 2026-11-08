@@ -690,6 +690,21 @@ await scenario("36. Telefon: Yönetim bölümleri (Denetim, Panel, Politikalar, 
   db.rpc.team_integrations = () => ({ body: { slug: "atolye-mor", enabled: true, audience: "members", month_reads: 0, apps: [] } });
 } });
 
+await scenario("37. Telefon: Ekip sayfasında genel üst menü görünür; açık kanalda (tam ekran sohbet) ve Kütüphane ayrıntısında gizlenir", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
+  await page.locator("[data-team-phone-bar]").waitFor();
+  assert.equal(await page.locator("[data-app-header]").isVisible(), true, "Space'ler: üst menü görünür");
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=members`);
+  await page.locator("[data-team-phone-bar]").waitFor();
+  assert.equal(await page.locator("[data-app-header]").isVisible(), true, "Üyeler: üst menü görünür");
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=library&item=${ITEM}`);
+  await page.waitForFunction(() => document.documentElement.hasAttribute("data-fullscreen-detail"));
+  assert.equal(await page.locator("[data-app-header]").isVisible(), false, "Kütüphane ayrıntısı tam ekran: üst menü gizli");
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=chat&channel=genel`);
+  await page.waitForFunction(() => document.documentElement.hasAttribute("data-team-focus"));
+  assert.equal(await page.locator("[data-app-header]").isVisible(), false, "açık kanal: üst menü gizli");
+}, { viewport: { width: 390, height: 800 } });
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => r[0] === "FAIL");
