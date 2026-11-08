@@ -103,19 +103,31 @@ export function TeamLibrarySection({ ctx }: { ctx: TeamCtx }) {
 
   return (
     <section className="space-y-4" data-testid="team-library">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 max-sm:hidden sm:grid-cols-4">
         <StatTile label={t("tm.lib.state.approved")} value={counts?.approved ?? "–"} />
         <StatTile label={t("tm.lib.state.pending")} value={counts?.pending ?? "–"} delta={counts?.oldestPendingAt ? t("tm.lib.oldest", { time: formatRelativeTime(counts.oldestPendingAt, language) }) : undefined} />
         <StatTile label={t("tm.lib.state.draft")} value={counts?.draft ?? "–"} />
         <StatTile label={t("tm.lib.state.deprecated")} value={counts?.deprecated ?? "–"} />
       </div>
 
+      {counts && counts.pending > 0 && (
+        <div className="flex items-center gap-3 rounded-xl bg-warning/10 px-3.5 py-2.5 sm:hidden" data-lib-pending-banner>
+          <p className="min-w-0 flex-1 text-small text-text">
+            <strong>{t("tm.lib.pendingBanner", { count: counts.pending })}</strong>
+            {counts.oldestPendingAt ? ` ${t("tm.lib.oldest", { time: formatRelativeTime(counts.oldestPendingAt, language) })}` : ""}
+          </p>
+          <Button type="button" size="sm" variant="outline" onClick={() => setStatus("pending")}>
+            {t("tm.lib.review")}
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3">
         <PillChoice<Status>
           ariaLabel={t("tm.lib.filter")}
           value={status}
           onChange={setStatus}
-          options={STATUSES.map((key) => ({ key, label: key === "all" ? t("tm.lib.all") : t(STATE_KEY[key]) }))}
+          options={STATUSES.map((key) => ({ key, label: `${key === "all" ? t("tm.lib.all") : t(STATE_KEY[key])}${counts ? ` ${key === "all" ? counts.total : counts[key]}` : ""}` }))}
         />
         <label className="relative ml-auto block w-full sm:w-64">
           <Search size={14} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />

@@ -1697,6 +1697,20 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       {isGroup && activeRoom && (
         <RoomChipRow room={activeRoom} online={groupOnline} onOpenSwitcher={() => setSwitcherOpen(true)} className={dock ? "px-3 pt-2 lg:px-3" : undefined} />
       )}
+      {dock?.embedded && !searchOpen && (
+        <div className="flex shrink-0 justify-end px-3 pt-2">
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label={t("chat.search.open")}
+            title={t("chat.search.open")}
+            data-chat-search-toggle
+            className={DOCK_ICON_BUTTON}
+          >
+            <Search size={18} aria-hidden />
+          </button>
+        </div>
+      )}
       {searchOpen && (
         <ConversationSearchPanel
           conversationId={conversation.id}
@@ -1894,9 +1908,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         onDismissNotice={composerImages.dismissNotice}
         error={sendError}
         dragActive={imageDrop.isDragging}
-        // Kütüphaneden paylaş / prompt içe aktar adres parametresiyle çalışır (`?share…=`): dock'ta yok, tam sayfada var; fotoğraf ve GIF dock'ta da çalışır.
-        onPickLibrary={user && !dock ? setLibraryType : undefined}
-        onImport={user && !dock ? () => setImportOpen(true) : undefined}
+        // Kütüphaneden paylaş / prompt içe aktar adres parametresiyle çalışmaz (durum içi pencere): dock'ta yok; sayfada ve ekip sayfasına gömülü sohbette (docs/history/353-*) var; fotoğraf ve GIF dock'ta da çalışır.
+        onPickLibrary={user && (!dock || dock.embedded) ? setLibraryType : undefined}
+        onImport={user && (!dock || dock.embedded) ? () => setImportOpen(true) : undefined}
         onPickGif={user ? (gif) => void sendGif(gif) : undefined}
         banners={
           <>

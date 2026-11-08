@@ -14,6 +14,8 @@ for f in migrations/*.sql; do
   psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$f" >/dev/null 2>/tmp/migration-err.txt || { echo "MIGRATION FAILED: $f"; cat /tmp/migration-err.txt; exit 1; }
 done
 echo "migrations OK"
+# Eski topluluk fixture'ları 'private' düzeyi kurar; canlıda bu düzey yeni girişe kapalıdır (20261112100000). Yalnız test veritabanında açılır.
+psql -q -v ON_ERROR_STOP=1 -d "$DB" -c "alter database \"$DB\" set promptly.allow_private_community = 'on'" >/dev/null
 for t in "${TESTS[@]}"; do
   echo "== $t"
   psql -d "$DB" -f "$t" 2>&1 | grep -E "FAIL|ERROR" | head -60

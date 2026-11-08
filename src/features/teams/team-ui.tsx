@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AlertCircle } from "@/components/icons/alert-circle";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { TeamRole } from "@/lib/teams";
@@ -123,7 +124,7 @@ export function PillChoice<K extends string>({
   ariaLabel: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={ariaLabel} className="flex flex-wrap gap-2">
+    <ScrollRow role="radiogroup" aria-label={ariaLabel} className="gap-2 md:flex-wrap">
       {options.map((option) => (
         <button
           key={option.key}
@@ -133,14 +134,14 @@ export function PillChoice<K extends string>({
           title={option.hint}
           onClick={() => onChange(option.key)}
           className={cn(
-            "min-h-9 rounded-full border px-3.5 text-small transition-colors",
+            "min-h-9 shrink-0 whitespace-nowrap rounded-full border px-3.5 text-small transition-colors",
             value === option.key ? "border-primary bg-primary-soft font-medium text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft",
           )}
         >
           {option.label}
         </button>
       ))}
-    </div>
+    </ScrollRow>
   );
 }
 

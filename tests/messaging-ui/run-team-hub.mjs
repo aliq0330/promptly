@@ -247,13 +247,28 @@ await scenario("12. İngilizce: Ekipler başlığı, ekip sekmeleri ve rol", asy
   await page.getByText("Pending approval").first().waitFor();
 }, { lang: "en" });
 
+const shot = (page, name) => (process.env.SHOT ? page.screenshot({ path: `${process.env.SHOT}/${name}.png` }).catch(() => undefined) : undefined);
+
 await scenario("13. Telefon: Ekipler, ekip sayfası ve Yönetim yatay taşmaz", async ({ page }) => {
   await page.goto(`${BASE}/teams`);
   await page.getByTestId("teams-list").waitFor();
   assert.ok(await overflowFree(page), "teams");
+  await shot(page, "m_teams");
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
   await page.getByTestId("team-spaces").waitFor();
   assert.ok(await overflowFree(page), "team page");
+  await shot(page, "m_spaces");
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=library`);
+  await page.getByTestId("team-library").waitFor();
+  await page.locator("[data-lib-pending-banner]").waitFor();
+  assert.equal(await page.locator("[data-testid=team-library] .grid.grid-cols-2").first().isVisible(), false, "telefonda istatistik kartları gizli");
+  assert.ok(await overflowFree(page), "library");
+  await shot(page, "m_library");
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=members`);
+  await page.getByTestId("team-tabs").waitFor();
+  await page.waitForTimeout(400);
+  assert.ok(await overflowFree(page), "members");
+  await shot(page, "m_members");
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=invites`);
   await page.getByTestId("team-invites-panel").waitFor();
   assert.ok(await overflowFree(page), "admin");
@@ -267,9 +282,29 @@ await scenario("14. Telefon: Sohbet tek bölmedir — önce kanal listesi, seçi
   await page.getByTestId("team-channel-view").waitFor();
   assert.equal(await page.getByTestId("team-channel-aside").isVisible(), false, "sohbet açıkken liste gizli");
   assert.ok(await overflowFree(page));
+  await shot(page, "m_chat");
+  // Mockup: açık kanal tam ekran sohbettir — ekip başlığı ve sekmeler gizli, kanal çipleri ve geri düğmesi sohbet başlığında.
+  assert.equal(await page.getByTestId("team-tabs").isVisible(), false, "sohbet tam ekran: sekmeler gizli");
+  assert.equal(await page.locator("[data-team-invite-header]").isVisible(), false, "sohbet tam ekran: ekip başlığı gizli");
+  await page.getByTestId("team-channel-chips").waitFor();
+  assert.ok((await page.locator("[data-channel-chip]").count()) >= 2, "kanal çipleri");
+  await page.locator('[data-channel-chip="yonetim"]').click().catch(() => undefined);
   await page.locator("[data-channel-back]").click();
   await page.getByTestId("team-channel-list").waitFor();
-}, { viewport: { width: 390, height: 800 } });
+  assert.equal(await page.getByTestId("team-tabs").isVisible(), true, "liste açıkken sekmeler görünür");
+}, { viewport: { width: 390, height: 800 }, setup: (db) => { db.addTeamChannel(CH_GENERAL, { name: "genel", members: [[U.bob, "member"]], texts: [[U.bob, "lansman afişi hazır"]] }); } });
+
+await scenario("17. Ekip sohbeti (gömülü): '+' menüsünde Kütüphaneden paylaş ve içe aktar, sohbette ara düğmesi", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=chat&channel=genel`);
+  await page.getByTestId("team-channel-view").waitFor();
+  await page.locator("[data-chat-search-toggle]").first().waitFor();
+  await page.locator("[data-chat-search-toggle]").first().click();
+  await page.getByPlaceholder(/ara/i).first().waitFor();
+  // "+" menüsü: kütüphaneden paylaş + içe aktar (dock'ta yoktu, ekip sohbetinde var)
+  await page.locator("[data-composer-plus]").click();
+  await page.getByText("Prompt içe aktar").first().waitFor();
+  assert.ok((await page.getByText("Kütüphaneden").count()) >= 1, "Kütüphaneden paylaş seçenekleri");
+}, { setup: (db) => { db.addTeamChannel(CH_GENERAL, { name: "genel", members: [[U.bob, "member"]], texts: [[U.bob, "lansman afişi hazır"]] }); } });
 
 await scenario("15. Ekip başlığı (mockup): geri bağlantısı, Ekip rozeti, üye · Space · Yalnızca davetle satırı, Davet et; kenar çubuğunda Ekiplerim", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);

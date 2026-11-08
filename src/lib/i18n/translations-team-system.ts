@@ -103,6 +103,7 @@ export const teamSystemTranslations = {
   "tm.lib.approvals": { tr: "{{have}}/{{need}} onay", en: "{{have}}/{{need}} approvals" },
   "tm.lib.uses": { tr: "{{count}} kullanım", en: "{{count}} uses" },
   "tm.lib.works": { tr: "{{yes}}/{{total}} “çalıştı”", en: "{{yes}}/{{total}} “worked”" },
+  "tm.lib.pendingBanner": { tr: "{{count}} prompt onay bekliyor.", en: "{{count}} prompts awaiting approval." },
   "tm.lib.review": { tr: "İncele", en: "Review" },
   "tm.lib.requestReview": { tr: "Onaya gönder", en: "Send for approval" },
   "tm.lib.requested": { tr: "Onaya gönderildi.", en: "Sent for approval." },
