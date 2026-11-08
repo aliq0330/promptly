@@ -24,7 +24,7 @@ import { TeamMark } from "./team-ui";
 const TAB_ICON: Record<TeamTab, PhoneSectionItem["icon"]> = { spaces: Shapes, library: BookOpen, chat: MessagesSquare, members: Users, panel: BarChart3, admin: Settings };
 
 /** Bir "senden bekleyen" satırının başlığı ve alt satırı (`my_team_todos` türleri). */
-function todoLine(t: ReturnType<typeof useTranslation>["t"], todo: TeamTodo): { title: string; sub: string; action: "review" | "chat" } {
+export function todoLine(t: ReturnType<typeof useTranslation>["t"], todo: TeamTodo): { title: string; sub: string; action: "review" | "chat" } {
   switch (todo.kind) {
     case "review": {
       const [title, who] = (todo.label ?? "").split(" · ");
@@ -170,19 +170,26 @@ export function TeamPhoneHome({ team, tabs, canInvite, onInvite }: { team: TeamS
         <PhoneHomeSection title={t("tm.home.recentSpaces")} href={teamLink(team.id, "spaces")} linkLabel={t("tm.home.all")} testId="team-phone-spaces">
           <ul className="grid grid-cols-2 gap-2">
             {recentSpaces.map((space) => (
-              <li key={space.id}>
-                <Link href={`/spaces/local?id=${space.id}`} className="block overflow-hidden rounded-2xl border border-border-soft bg-surface transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-phone-space={space.id}>
-                  <StorageBackground url={space.coverUrl ?? space.coverItemUrl ?? space.previewUrls?.[0] ?? null} className="block h-14 bg-primary-soft bg-cover bg-center" />
-                  <span className="block px-2.5 py-2 leading-tight">
-                    <span className="block truncate text-small font-bold text-text">{space.title}</span>
-                    <span className="block truncate text-caption text-text-muted">{t("tm.home.items", { count: space.imageCount + space.promptCount + space.noteCount })}</span>
-                  </span>
-                </Link>
-              </li>
+              <TeamSpaceMini key={space.id} space={space} sub={t("tm.home.items", { count: space.imageCount + space.promptCount + space.noteCount })} />
             ))}
           </ul>
         </PhoneHomeSection>
       )}
     </div>
+  );
+}
+
+/** Space küçük kartı (kapak + ad + alt satır): Ekip ana ekranı ve Ekipler listesi "Son Space'ler" şeridi ortak kullanır. */
+export function TeamSpaceMini({ space, sub }: { space: TeamSpaceRow; sub: string }) {
+  return (
+    <li>
+      <Link href={`/spaces/local?id=${space.id}`} className="block overflow-hidden rounded-2xl border border-border-soft bg-surface transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-phone-space={space.id}>
+        <StorageBackground url={space.coverUrl ?? space.coverItemUrl ?? space.previewUrls?.[0] ?? null} className="block h-14 bg-primary-soft bg-cover bg-center" />
+        <span className="block px-2.5 py-2 leading-tight">
+          <span className="block truncate text-small font-bold text-text">{space.title}</span>
+          <span className="block truncate text-caption text-text-muted">{sub}</span>
+        </span>
+      </Link>
+    </li>
   );
 }

@@ -778,4 +778,7 @@ export const teamSystemTranslations = {
   "tm.home.open": { tr: "Aç", en: "Open" },
   "tm.home.recentSpaces": { tr: "Son Space’ler", en: "Recent Spaces" },
   "tm.home.items": { tr: "{{count}} öğe", en: "{{count}} items" },
+  "tm.home.myTeams": { tr: "Ekiplerim", en: "My teams" },
+  "tm.home.pendingApprovals": { tr: "{{count}} onay bekliyor", en: "{{count}} awaiting approval" },
+  "tm.home.unreadMessages": { tr: "{{count}} yeni mesaj", en: "{{count}} new messages" },
 } as const;

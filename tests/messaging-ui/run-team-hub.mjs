@@ -792,6 +792,32 @@ await scenario("41. Telefon ana ekranı (docs/history/358-*, mockup birebir): or
   db.rpc.my_team_todos = () => ({ body: [{ team_id: TEAM, team_name: "Atölye Mor", team_slug: "atolye-mor", kind: "approvals", n: 1, label: null, href: `/teams/local?id=${TEAM}&tab=library&status=pending`, at: "2026-11-08T08:00:00Z" }, { team_id: TEAM, team_name: "Atölye Mor", team_slug: "atolye-mor", kind: "review", n: 1, label: "Ürün tanıtım · Carol", href: `/teams/local?id=${TEAM}&tab=library&review=${ITEM}`, at: "2026-11-08T08:00:00Z" }] });
 } });
 
+await scenario("42. Telefon /teams (docs/history/359-*): Senden bekleyenler + Ekiplerim (bantlı kart, rozetler, Aç) + Son Space'ler; alt menü kadar boşluk; masaüstü eski kart", async ({ page }) => {
+  await page.goto(`${BASE}/teams`);
+  const todos = page.getByTestId("team-phone-todos");
+  await todos.getByText("Ürün tanıtım").waitFor();
+  await todos.getByRole("link", { name: "İncele" }).waitFor();
+  const card = page.locator(`[data-team-phone-card][data-team-card="${TEAM}"]`);
+  await card.waitFor();
+  assert.match(await card.innerText(), /Atölye Mor/);
+  assert.match(await card.innerText(), /6 üye · 2 Space/);
+  await card.locator("[data-team-chip=unread]").waitFor();
+  await card.locator("[data-team-chip=approvals]").waitFor();
+  await card.getByRole("link", { name: "Aç" }).waitFor();
+  await page.getByTestId("teams-phone-spaces").getByText("Kampanya panosu").waitFor();
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "yatay taşma yok");
+  const gap = await page.evaluate(async () => {
+    const nav = document.querySelector("[data-app-nav]");
+    const last = document.querySelector("[data-testid=teams-phone-spaces]");
+    for (const el of [document.scrollingElement, ...document.querySelectorAll("main, [data-app-scroll]")]) el?.scrollTo?.(0, 1e6);
+    await new Promise((r) => setTimeout(r, 200));
+    return nav.getBoundingClientRect().top - last.getBoundingClientRect().bottom;
+  });
+  assert.ok(gap >= 8, `son bölüm alt menünün üstünde kalır (boşluk ${gap}px)`);
+}, { viewport: { width: 390, height: 800 }, setup: (db) => {
+  db.rpc.my_team_todos = () => ({ body: [{ team_id: TEAM, team_name: "Atölye Mor", team_slug: "atolye-mor", kind: "approvals", n: 1, label: null, href: `/teams/local?id=${TEAM}&tab=library&status=pending`, at: "2026-11-08T08:00:00Z" }, { team_id: TEAM, team_name: "Atölye Mor", team_slug: "atolye-mor", kind: "review", n: 1, label: "Ürün tanıtım · Carol", href: `/teams/local?id=${TEAM}&tab=library&review=${ITEM}`, at: "2026-11-08T08:00:00Z" }] });
+} });
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => r[0] === "FAIL");
