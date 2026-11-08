@@ -141,7 +141,7 @@ begin
     left join public.space_groups g on g.id = i.group_id
    where i.space_id = p_space and i.kind = 'prompt' and i.is_draft and i.deprecated_at is null
      and not public._team_item_hidden(i.space_id, i.kind, i.is_draft, i.approved_at, i.group_id)
-     and (i.approved_at is not null or (coalesce(p_include_unapproved, false) and v_role in ('owner', 'editor')))
+     and (i.approved_at is not null or (coalesce(p_include_unapproved, false) and (s.team_id is null or v_role in ('owner', 'editor'))))
    order by coalesce(g.position, 0), g.name nulls first, i.title, i.id
    limit 200;
   if s.team_id is not null then

@@ -12,7 +12,6 @@ import { GroupAvatar } from "@/features/groups/group-avatar";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { RoomTree } from "./rooms/room-tree";
 import { cn, formatRelativeTime, formatUnread, messageHref, roomsHubHref } from "@/lib/utils";
-import { isTeamVisibility } from "@/lib/communities";
 import { roomSlug } from "@/lib/community-rooms";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -56,7 +55,6 @@ export function ConversationRow({
   // Sol panel telefonda gizlidir (`hidden md:flex`) ama bağlıdır: oda ağacı yalnız görünür olduğunda yüklenir/çizilir.
   const paneVisible = useMediaQuery("(min-width: 768px)");
   const unread = conversation.unreadCount > 0;
-  const isTeam = group ? isTeamVisibility(group.visibility) : false;
   const pinned = Boolean(conversation.pinnedAt);
   const lastRoom = group ? conversation.lastRoom : null;
 
@@ -85,7 +83,6 @@ export function ConversationRow({
         <span className="flex items-baseline justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1.5">
             <span className={cn("truncate text-body tracking-[-0.01em] text-text", unread ? "font-bold" : "font-semibold")}>{title}</span>
-            {isTeam && <span data-team-tag className="shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-[11px] font-bold text-text-secondary">{t("rooms.list.teamTag")}</span>}
             {muted && <BellOff size={12} className="shrink-0 text-text-muted" aria-label={t("groups.about.muteLabel")} />}
           </span>
           <span className={cn("shrink-0 text-caption tabular-nums", unread ? "font-semibold text-text" : "text-text-muted")}>

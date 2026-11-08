@@ -293,13 +293,12 @@ await scenario("11. Üye olmayan, açık topluluk: salt-okunur sekmeler (Üyeler
 await scenario("11b. Kapalı topluluk, yalnız davetli: içerik/sohbet/üye listesi yok, yalnız davet kartı; kabul edince açılır", async ({ page, db }) => {
   await open(page, C1);
   assert.equal(await page.locator("[data-section-menu]").count(), 0, "no content tabs for a non-member of a private community");
-  // Tamamen kapalı = ekip (docs/history/350-*, 351-*): kimlik /teams/local'a yönlenir ve metinler ekip diliyle yazılır.
-  await page.waitForURL(/\/teams\/local\/?\?id=/);
-  await page.getByText("Bob seni bu ekibe davet etti").waitFor();
+  // Tamamen kapalı düzey ve ekip yönlendirmesi kalktı (docs/history/353-*): davetli, topluluk sayfasında davet kartını görür.
+  await page.getByText("Bob seni bu topluluğa davet etti").waitFor();
   await page.getByRole("button", { name: "Kabul et" }).click();
-  await waitTab(page, "Space'ler"); // ekipte (tamamen kapalı) ilk sekme Space'ler (docs/history/350-*)
+  await waitTab(page, "Üyeler");
   assert.ok(db.member(C1, ME));
-}, { setup: (db) => { seed(db, { myRole: "none", visibility: "private" }); db.invitations.push({ id: "f0000000-0000-4000-8000-000000000003", group_id: C1, invitee_id: ME, inviter_id: U.bob.id, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" }); } });
+}, { setup: (db) => { seed(db, { myRole: "none", visibility: "restricted" }); db.invitations.push({ id: "f0000000-0000-4000-8000-000000000003", group_id: C1, invitee_id: ME, inviter_id: U.bob.id, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" }); } });
 
 await scenario("11c. Erişimi olmayan kapalı topluluk: 'bulunamadı' (varlığı sızmaz)", async ({ page, db }) => {
   db.groups = db.groups.map((g) => g); // satır var ama RLS taklidi: üye/davetli değilse okunamaz

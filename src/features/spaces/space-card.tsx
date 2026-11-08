@@ -54,7 +54,7 @@ export function SpaceCard({
 }) {
   const { t, language } = useTranslation();
   const router = useRouter();
-  const caps = spaceCapabilities(space.myRole, Boolean(space.archivedAt), "members", Boolean(space.communityId));
+  const caps = spaceCapabilities(space.myRole, Boolean(space.archivedAt), "members", Boolean(space.teamId));
   const [dialog, setDialog] = useState<null | "settings" | "share" | "delete" | "leave">(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -121,11 +121,11 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
   const [layoutStatus, setLayoutStatus] = useState<SaveStatus>("idle");
   const [layoutNotice, setLayoutNotice] = useState<string | null>(null);
 
-  const baseCaps = useMemo(() => spaceCapabilities(role, Boolean(space.archivedAt), space.activityVisibility, space.communityId !== null), [role, space.archivedAt, space.activityVisibility, space.communityId]);
+  const baseCaps = useMemo(() => spaceCapabilities(role, Boolean(space.archivedAt), space.activityVisibility, space.teamId !== null), [role, space.archivedAt, space.activityVisibility, space.teamId]);
 
   // Ekibe bağlı ekip kütüphanesinde onay yetkisi `approve_library` yeteneğidir (docs/history/349-*): "sahip gibi çalışmak" onaylamak demek değildir.
   // Karar sunucudan gelir; bilinmezken düğme kapalı kalır (sunucu zaten yeniden denetler).
-  const approvalGoverned = space.communityId !== null && space.kind === "team_library" && role !== null;
+  const approvalGoverned = space.teamId !== null && space.kind === "team_library" && role !== null;
   const [teamApprove, setTeamApprove] = useState<boolean>(false);
   useEffect(() => {
     if (!approvalGoverned) return;

@@ -26,7 +26,6 @@ import { ChatHeaderMenu } from "./chat-header-menu";
 import { GroupAvatar } from "./group-avatar";
 import { VisibilityLabel } from "@/features/communities/visibility-label";
 import { ChatSettingsSection } from "./chat-settings-section";
-import { TeamSpacesInfo } from "./team-spaces-info";
 import { GroupMembersSection } from "./group-members-section";
 import { LeaveCommunitySection, useChatMute } from "./personal-prefs";
 import { RoleBadge } from "./role-badge";
@@ -246,8 +245,6 @@ export function GroupInfoModal({
       <InfoPhotosCard conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
 
       <InfoSharedRows conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
-
-      {group.visibility === "private" && <TeamSpacesInfo groupId={group.id} />}
 
       <InfoCard>
         <InfoRow icon={<Pin size={18} strokeWidth={1.75} />} onClick={pinnedCount > 0 ? onShowPinned : undefined} value={pinnedCount > 0 ? pinnedCount : t("messages.contact.none")} testId="pinned">

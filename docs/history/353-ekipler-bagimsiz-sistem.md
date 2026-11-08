@@ -39,7 +39,7 @@ Sahip hepsi; yönetici hepsi (sahipliği devretme/ekibi silme hariç); düzenley
 Kanal ayrı konuşma olduğu için mesaj okuyan her yol üyelikle kapanır. Yine de tek bir SQL testi şunları özel kanal üyesi OLMAYAN ekip üyesi ve konuk için dener:
 okuma, yazma, arama, yıldız, paylaşılan medya, sabit, okundu bilgisi, "yazıyor" konusu, depolama (`message-images`), son mesaj önizlemesi, okunmamış sayacı, bildirim; hem `authenticated` hem `anon` ile.
 
-## Kaldırılacaklar (WP9)
+## Kaldırılanlar (WP9; `private` düzeyi hariç, aşağıdaki not)
 
 `chat_groups.visibility='private'` seviyesi (CHECK, `can_read_community` dalları, keşif/arama dışlamaları) · `spaces.community_id` ve ekip tetikleyicileri · `create_team_space` · `list_my_teams` · `community_has_team_spaces` · topluluk yeteneklerinden `create_spaces`/`approve_library` (üçlü güncelleme geri) · `isTeamVisibility` · `excludeTeams` · `TeamLanguageScope` + `team-wording.ts` (+test) · "Ekibe çevir / Topluluğa çevir" · `CreateCommunityModal mode="team"` · `team-spaces-info.tsx` · davet `kind` ayrımı · Mesajlar'daki "Ekip = tamamen kapalı topluluk" çipleri · eski çeviriler ve testler.
 
@@ -56,4 +56,18 @@ okuma, yazma, arama, yıldız, paylaşılan medya, sabit, okundu bilgisi, "yazı
 
 ## Uygulama kaydı
 
-(Her çalışma paketi bittikçe buraya yazılır.)
+**Kullanıcı kararı (uygulama başında):** alan adı/e-posta ile katılma YOK; katılım yalnız kullanıcı adıyla davet ve davet bağlantısı (bağlantıyla yalnız Üye/Düzenleyici; Konuk ve Yönetici kullanıcı adıyla).
+
+| WP | Ne | Doğrulama |
+|---|---|---|
+| 2 | `teams_core`: tablolar, roller, politika, erişim/eşitleme motoru, denetim | `teams-core.sql` 61 |
+| 3 | Kütüphane yönetişimi (durumlar, n onay, inceleme, kullanım, Çalıştı mı, kullanımdan kaldırma) | `team-library-governance.sql` 59 |
+| 4 | Kanallar: her kanal ayrı `team_channel` konuşması, sızıntı testleri | `team-channels.sql` 60 |
+| 5 | Davet (kullanıcı adı + bağlantı), gruplar, konuklar, çıkarma/devir, sahiplik | `team-membership.sql` 69 |
+| 6 | Panel, denetim listesi, entegrasyon/API kullanım günlüğü, dışa aktarma, bildirim kategorisi | `team-admin.sql` 37 |
+| 7–8 | İstemci: Ekipler, ekip sayfası (Space'ler/Kütüphane/Sohbet/Üyeler/Panel/Yönetim), `/team-join`, Mesajlar "Ekip sohbetleri", bildirim "Ekipler" | `run-team-hub` 16/16, birim 991 |
+| 9 | Eski yapı kaldırıldı: `20261111100000_remove_team_as_community.sql` (yıkıcı), istemci kalıntıları, eski testler | topluluk/sohbet/api-me SQL regresyonları temiz |
+
+**Düzeltilen hatalar (testlerin yakaladığı):** `conversation_members.notify_level` zaten topluluğun sütunuydu (`all/important/none`) → kanal düzeyi `team_notify_level`e taşındı; `_team_role` NULL döndüğü için `not in` karşılaştırmaları ownership devrini bypass ediyordu → `coalesce`; `api_me_library_prompts` kişisel kütüphanede görüntüleyicinin onaysızları görmesini bozmuştu → ekip dışı için eski davranış.
+
+**Bilerek yapılmayanlar:** `chat_groups_visibility_check` hâlâ `private` kabul eder (arayüzde yok; daraltmak onlarca topluluk SQL fixture'ını yeniden yazmayı ister); ekip kanalı sohbeti kompakt görünüm (Mesajlar'daki tam sohbet ekranı `team_channel` için bağlanmadı); `/mcp/team/<ad>` ve MCP `team` argümanı; telefon için ayrı tasarım yerine duyarlı bileşenler; Space sayfasında ekip şeridi; kanal mesajı şikâyeti; Gizlilik/Koşullar metni.

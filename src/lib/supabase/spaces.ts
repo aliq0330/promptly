@@ -123,8 +123,8 @@ export interface SpaceSummary {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
-  /** Ekibe bağlıysa topluluk kimliği; `listSpaces` ayrı bir okumayla doldurur (liste RPC'si değişmedi). */
-  communityId?: string | null;
+  /** Ekibe bağlıysa ekip kimliği (`spaces.team_id`, docs/history/353-*); `listSpaces` ayrı bir okumayla doldurur (liste RPC'si değişmedi). */
+  teamId?: string | null;
 }
 
 export interface Space {
@@ -151,8 +151,8 @@ export interface Space {
   /** Genel yorum sayısı (etkinlik yorumları hariç). */
   commentCount: number;
   activityVisibility: SpaceActivityVisibility;
-  /** Ekibe (tamamen kapalı topluluğa) bağlıysa topluluk kimliği (docs/history/349-*); kişisel Space'te `null`. */
-  communityId: string | null;
+  /** Ekibe bağlıysa ekip kimliği (docs/history/353-*); kişisel Space'te `null`. */
+  teamId: string | null;
 }
 
 export interface SpaceItem {
@@ -338,11 +338,11 @@ interface SpaceRow {
   rating_count: number | null;
   comment_count: number | null;
   activity_visibility: SpaceActivityVisibility | null;
-  community_id?: string | null;
+  team_id?: string | null;
 }
 
 const SPACE_COLS =
-  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, quote_count, rating_avg, rating_count, comment_count, activity_visibility, community_id";
+  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, quote_count, rating_avg, rating_count, comment_count, activity_visibility, team_id";
 
 function mapSpace(row: SpaceRow): Space {
   return {
@@ -363,7 +363,7 @@ function mapSpace(row: SpaceRow): Space {
     ratingCount: row.rating_count ?? 0,
     commentCount: row.comment_count ?? 0,
     activityVisibility: row.activity_visibility ?? "everyone",
-    communityId: row.community_id ?? null,
+    teamId: row.team_id ?? null,
   };
 }
 
@@ -596,39 +596,19 @@ export async function listSpaces({
     p_limit: limit,
     p_offset: offset,
   });
-  return withCommunityIds((rows ?? []).map(mapSpaceSummary));
+  return withTeamIds((rows ?? []).map(mapSpaceSummary));
 }
 
-/** Liste satırlarına `communityId` ekler (ekibe bağlı Space'in kartında üyelik/paylaşım eylemleri gizlensin diye). Tek, sınırlı okuma; yoksa/başarısızsa kişisel sayılır. */
-async function withCommunityIds(list: SpaceSummary[]): Promise<SpaceSummary[]> {
+/** Liste satırlarına `teamId` ekler (ekibe bağlı Space'in kartında üyelik/paylaşım eylemleri gizlensin diye). Tek, sınırlı okuma; yoksa/başarısızsa kişisel sayılır. */
+async function withTeamIds(list: SpaceSummary[]): Promise<SpaceSummary[]> {
   if (list.length === 0) return list;
   try {
-    const { data } = await supabase.from("spaces").select("id, community_id").in("id", list.map((s) => s.id)).limit(list.length);
-    const map = new Map<string, string | null>(((data ?? []) as { id: string; community_id: string | null }[]).map((r) => [r.id, r.community_id ?? null]));
-    return list.map((s) => ({ ...s, communityId: map.get(s.id) ?? null }));
+    const { data } = await supabase.from("spaces").select("id, team_id").in("id", list.map((s) => s.id)).limit(list.length);
+    const map = new Map<string, string | null>(((data ?? []) as { id: string; team_id: string | null }[]).map((r) => [r.id, r.team_id ?? null]));
+    return list.map((s) => ({ ...s, teamId: map.get(s.id) ?? null }));
   } catch {
     return list;
   }
-}
-
-/**
- * Ekibe (tamamen kapalı topluluğa) Space açar (docs/history/349-*). Yetki ve 50 Space sınırı sunucudadır (`create_team_space`):
- * Space'in sahibi topluluk sahibidir, bütün ekip üyeleri düzenleyici olarak yansıtılır, görünürlük hep özeldir.
- */
-export async function createTeamSpace(input: { communityId: string; title: string; description: string; kind: SpaceKind; groups: string[] }): Promise<string> {
-  return rpc<string>("create_team_space", {
-    p_community: input.communityId,
-    p_title: input.title.trim(),
-    p_description: input.description.trim(),
-    p_kind: input.kind,
-    p_groups: input.groups,
-  });
-}
-
-/** Ekibin Space'leri (çağıranın okuyabildiği; yalnız üye görür). */
-export async function fetchTeamSpaces(communityId: string, limit = 50): Promise<SpaceSummary[]> {
-  const rows = await rpc<SummaryRow[]>("list_team_spaces", { p_community: communityId, p_limit: limit, p_offset: 0 });
-  return (rows ?? []).map((row) => ({ ...mapSpaceSummary(row), communityId }));
 }
 
 /**
@@ -1491,7 +1471,7 @@ export function spaceFromSummary(summary: SpaceSummary): Space {
     ratingCount: 0,
     commentCount: 0,
     activityVisibility: "everyone",
-    communityId: summary.communityId ?? null,
+    teamId: summary.teamId ?? null,
   };
 }
 

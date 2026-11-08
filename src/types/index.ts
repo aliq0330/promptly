@@ -412,9 +412,6 @@ export type GroupCapability =
   | "manage_events"
   | "edit_rules"
   | "view_stats"
-  // Ekip alanı (docs/history/349-*)
-  | "create_spaces"
-  | "approve_library"
   // Sohbet odaları (docs/history/352-*): oda oluşturma, düzenleme, sıralama, arşivleme
   | "manage_rooms";
 export type RolePermissions = Record<"admin" | "moderator", Record<GroupCapability, boolean>>;

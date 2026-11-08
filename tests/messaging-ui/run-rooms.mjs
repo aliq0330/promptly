@@ -56,7 +56,7 @@ const openChat = async (page, room) => { await page.goto(`${BASE}/messages/local
 const messageTexts = async (page) => page.locator("[data-chat-scroll]").innerText();
 
 // 1
-await scenario("1. Mesajlar çipleri: Tümü · Kişisel · Topluluk · Ekip süzer; türde sohbet yoksa boş durum", async ({ page }) => {
+await scenario("1. Mesajlar çipleri: Tümü · Kişisel · Topluluk süzer (Ekip çipi kalktı, docs/history/353-*); türde sohbet yoksa boş durum", async ({ page }) => {
   await page.goto(`${BASE}/messages`);
   await page.locator("[data-kind-chips]:visible").waitFor();
   const rows = () => page.locator("[data-conversation-row]:visible");
@@ -64,12 +64,9 @@ await scenario("1. Mesajlar çipleri: Tümü · Kişisel · Topluluk · Ekip sü
   assert.equal(await rows().count(), 3, "Tümü: üç sohbet");
   assert.equal(await page.locator("[data-kind-chip='all']:visible").getAttribute("aria-pressed"), "true");
   await page.locator("[data-kind-chip='community']:visible").click();
-  assert.equal(await rows().count(), 1);
-  await rows().first().getByText("Tasarım Atölyesi").waitFor();
-  await page.locator("[data-kind-chip='team']:visible").click();
-  assert.equal(await rows().count(), 1);
-  await rows().first().getByText("Promptly Ekibi").waitFor();
-  await rows().first().locator("[data-team-tag]").waitFor();
+  assert.equal(await rows().count(), 2);
+  await rows().filter({ hasText: "Tasarım Atölyesi" }).first().waitFor();
+  assert.equal(await page.locator("[data-kind-chip='team']").count(), 0, "Ekip çipi yok");
   await page.locator("[data-kind-chip='personal']:visible").click();
   assert.equal(await rows().count(), 1);
   await rows().first().getByText("Bob").waitFor();
@@ -390,7 +387,7 @@ await scenario("13. Sohbet sabitleme: seçim modu → Sabitle; satır başa çı
 await scenario("14. İngilizce: çipler, hub, oda değiştirici, form ve yönetim İngilizce", async ({ page }) => {
   await page.goto(`${BASE}/messages`);
   await page.locator("[data-kind-chips]:visible").waitFor();
-  for (const label of ["All", "Personal", "Community", "Team"]) await page.locator("[data-kind-chips]:visible").getByRole("button", { name: label, exact: true }).waitFor();
+  for (const label of ["All", "Personal", "Community"]) await page.locator("[data-kind-chips]:visible").getByRole("button", { name: label, exact: true }).waitFor();
   await openHub(page);
   await page.getByRole("heading", { name: "Chat Rooms" }).waitFor();
   await page.locator("[data-hub-add-room]").getByText("Add Room").waitFor();

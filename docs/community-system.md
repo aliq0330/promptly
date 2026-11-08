@@ -147,23 +147,11 @@ Eski adresler çalışır (`resolveCommunityView`, `lib/communities.ts`): `tab=o
 | `restricted` Kapalı | ✗ | ✓ | yalnız üye | istek + yönetici onayı |
 | `private` Tamamen kapalı | ✗ | ✗ | yalnız üye, id ile bile bulunamaz | yalnız davet |
 
-### Ekip alanı = "Tamamen kapalı" topluluk (docs/history/349-*)
+### Ekip alanı (eski; docs/history/353-* ile topluluktan ayrıldı)
 
-`private` topluluk aynı zamanda **ekip alanıdır**: ayrı bir tablo yok. Üyelik kaynaktır (`conversation_members`); ekibe bağlı Space'in (`spaces.community_id`)
-`space_members` satırları bunun tetikleyiciyle eşitlenen yansımasıdır, Space sahibi (`owner_id`) her zaman topluluk sahibidir, herkes Space'te düzenleyicidir.
+**Ekipler artık topluluktan bağımsızdır** (`docs/history/353-*`): `private` topluluk ekip DEĞİLDİR; ekip alanı (`spaces.community_id`, `create_team_space`, `list_my_teams`) ve topluluk yetenekleri `create_spaces`/`approve_library` kaldırıldı. Ekipler `teams` tablolarında, `/teams` rotalarındadır. Veritabanında `private` düzeyi hâlâ geçerli bir değerdir ama arayüzden seçilemez.
 
-| Konu | Kural |
-|---|---|
-| Space açma | `create_team_space` — yalnız `create_spaces` yeteneği olan (sahip her zaman; yönetici varsayılan EVET; moderatör HAYIR), `private` ve kapatılmamış toplulukta; ekip başına 50 |
-| Onay | Ekip kütüphanesinde onay `approve_library` yeteneğidir (sahip her zaman; yönetici varsayılan EVET); istemci kararı `space_can_approve` ile sorar |
-| Üye yönetimi | Space'te elle yok (`space_team_managed`); ekibe alma/çıkarma Space'lere kendiliğinden yansır |
-| Görünürlük | Topluluk Space varken `private`tan çıkamaz (`community_has_team_spaces`); Space her zaman özel kalır |
-| Silme / devir | Topluluk silinince Space'ler silinmez, sahibinin kişisel Space'i olur; sahiplik devrinde Space sahibi de değişir |
-| Sohbet bağı | Space şeridinde "Ekip sohbeti" + "Sohbete gönder"; sohbet bilgisinde "Ortak Space'ler" (yönetim yok); Space olayları yalnız bildirim üretir |
-
-**Ekipler başlığı** (`docs/history/350-*`): ekibin giriş noktası `/teams`dir (`list_my_teams`); Topluluklar listeleri ekipleri göstermez, "Topluluk oluştur"da "Tamamen kapalı" seçeneği yoktur, ekip yalnız "Ekip oluştur"la kurulur ve görünürlüğü arayüzden değişmez. Ekip sayfası aynı bileşendir ama kendi rotasındadır (`/teams/local`, `docs/history/351-*`; yanlış rotadaki kimlik yönlenir): ilk sekme Space'ler, Akış = "Paylaşımlar", metinler ekip dilinde (`TeamLanguageScope`). Ekip davetleri Ekipler'de görünür; Ayarlar'da topluluk ↔ ekip dönüşümü vardır (ekibe bağlı Space varken ekip topluluğa çevrilemez).
-
-Yeni yetenek ya da Space türü eklerken yukarıdaki üçlü güncelleme kuralı geçerlidir; ekip dışı kişi için `_group_can` NULL döner — çağıran `coalesce(…, false)` yazar.
+Yeni topluluk yeteneği eklerken üçlü güncelleme kuralı geçerlidir; üye olmayan için `_group_can` NULL döner — çağıran `coalesce(…, false)` yazar.
 
 ### Üyelik politikaları ve durumlar
 

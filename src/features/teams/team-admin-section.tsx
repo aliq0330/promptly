@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useToast } from "@/features/groups/use-toast";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -382,11 +383,7 @@ function AuditSection({ ctx }: { ctx: TeamCtx }) {
           </li>
         ))}
       </ul>
-      {more && (
-        <Button type="button" variant="outline" onClick={() => void loadMore()}>
-          {t("common.loadMore")}
-        </Button>
-      )}
+      {more && <LoadMoreButton onLoadMore={() => void loadMore()} label={t("common.loadMore")} />}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+-- ci:allow-destructive (yalnız `revoke … truncate` ifadesi yetki kaldırır; veri silmez)
 -- Ekipler, WP2 (docs/history/353-*): topluluktan BAĞIMSIZ ekip çekirdeği.
 --
 -- Tasarım: ekip ayrı bir varlıktır (`teams`); `chat_groups`'a bağı YOKTUR. Ekip üyeliği KAYNAKTIR (`team_members`); Space'in `space_members`

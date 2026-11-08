@@ -20,7 +20,6 @@ import { Modal } from "@/components/ui/modal";
 import { Portal } from "@/components/ui/portal";
 import { useToast } from "@/features/groups/use-toast";
 import { bucketConversations, filterConversationsByQuery } from "@/lib/conversation-lists";
-import { isTeamVisibility } from "@/lib/communities";
 import { TeamChannelsInbox } from "@/features/teams/team-channels-inbox";
 import { listMyTeams } from "@/lib/supabase/teams";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -30,12 +29,12 @@ import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
 import { CONTROL_ICON_BUTTON, type SectionMenuItem } from "@/features/content/section-menu";
 import type { Conversation } from "@/types";
 
-type KindFilter = "all" | "personal" | "community" | "team";
+type KindFilter = "all" | "personal" | "community";
 
-/** Sohbet türü çipleri (docs/history/352-*): Tümü · Kişisel · Topluluk · Ekip. Ekip = tamamen kapalı topluluk (docs/history/350-*). */
+/** Sohbet türü çipleri (docs/history/352-*): Tümü · Kişisel · Topluluk. Ekip kanalları ayrı "Ekip sohbetleri" görünümündedir (docs/history/353-*). */
 function kindOf(conversation: Conversation): Exclude<KindFilter, "all"> {
   if (conversation.kind !== "group" || !conversation.group) return "personal";
-  return isTeamVisibility(conversation.group.visibility) ? "team" : "community";
+  return "community";
 }
 
 type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities" | "teams";
@@ -220,7 +219,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     { key: "starred", label: t("chat.starred.title"), icon: Star, dividerBefore: true },
     { key: "communities", label: t("communities.messages.entryAria"), icon: Users },
     // Ekip sohbetleri Topluluk sohbetlerinden ayrı bir kapıdır (docs/history/350-*).
-    { key: "teams", label: t("teams.messages.entryAria"), icon: Briefcase, count: teamUnread || undefined },
+    { key: "teams", label: t("tm.messages.entry"), icon: Briefcase, count: teamUnread || undefined },
   ];
   function pickView(next: MessagesView) {
     if (next === "starred") return router.push("/messages/starred");
@@ -272,7 +271,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         )}
         {!selectionActive && view === "inbox" && (
           <div role="group" aria-label={t("rooms.filter.aria")} data-kind-chips className="mb-3 flex gap-2 overflow-x-auto scrollbar-none">
-            {(["all", "personal", "community", "team"] as const).map((key) => (
+            {(["all", "personal", "community"] as const).map((key) => (
               <button
                 key={key}
                 type="button"

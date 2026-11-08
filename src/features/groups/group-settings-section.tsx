@@ -30,7 +30,7 @@ import {
   validateGroupName,
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
-import { communityChatHref, COMMUNITY_COVER_COLORS, COMMUNITY_VISIBILITY_OPTIONS, coverModeOf, isTeamVisibility, normalizeCoverColor, type CoverMode } from "@/lib/communities";
+import { communityChatHref, COMMUNITY_COVER_COLORS, COMMUNITY_VISIBILITY_OPTIONS, coverModeOf, normalizeCoverColor, type CoverMode } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupVisibility } from "@/types";
 
@@ -89,7 +89,6 @@ export function GroupSettingsSection({
   const [touched, setTouched] = useState(false);
   const [targetVisibility, setTargetVisibility] = useState<GroupVisibility | null>(null);
   // Topluluk ↔ ekip dönüşümü (docs/history/351-*): görünürlük değişimiyle aynı yoldan geçer, yalnız onay penceresinin metni "ekip" diliyle yazılır.
-  const [converting, setConverting] = useState(false);
   const [visibilityResult, setVisibilityResult] = useState<VisibilityChangeResult | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
@@ -187,10 +186,8 @@ export function GroupSettingsSection({
     const result = await visibilityAction.run(() => setChatGroupVisibility(group.id, targetVisibility));
     if (!result) return;
     setTargetVisibility(null);
-    setConverting(false);
     await onChanged();
     if (result.changed && result.visibility === "public") setVisibilityResult(result);
-    else if (converting) onToast(t(result.visibility === "private" ? "teams.convert.toTeamToast" : "teams.convert.toCommunityToast"));
     else onToast(!result.changed ? t("groups.settings.visibilityUnchangedToast") : result.visibility === "restricted" ? t("groups.settings.visibilityRestrictedToast") : t("groups.settings.visibilityPrivateToast"));
   }
 
@@ -322,22 +319,7 @@ export function GroupSettingsSection({
 
       )}
 
-      {canChangeVisibility && isTeamVisibility(group.visibility) && (
-      <section aria-labelledby="settings-visibility-title" className="space-y-2 border-t border-border-soft pt-6">
-        <h3 id="settings-visibility-title" className="text-label font-semibold text-text">
-          {t("groups.visibility.label")}
-        </h3>
-        <p data-team-visibility-note className="text-small text-text-secondary">{t("teams.settings.alwaysPrivate")}</p>
-        <div className="space-y-1.5 pt-1">
-          <p className="text-small text-text-muted">{t("teams.convert.toCommunityHelp")}</p>
-          <Button type="button" size="sm" variant="outline" data-convert-to-community disabled={visibilityAction.busy} onClick={() => { visibilityAction.setError(null); setConverting(true); setTargetVisibility("restricted"); }}>
-            {t("teams.convert.toCommunity")}
-          </Button>
-        </div>
-      </section>
-      )}
-
-      {canChangeVisibility && !isTeamVisibility(group.visibility) && (
+      {canChangeVisibility && (
       <section aria-labelledby="settings-visibility-title" className="space-y-3 border-t border-border-soft pt-6">
         <h3 id="settings-visibility-title" className="text-label font-semibold text-text">
           {t("groups.visibility.label")}
@@ -354,12 +336,6 @@ export function GroupSettingsSection({
             setTargetVisibility(next);
           }}
         />
-        <div className="space-y-1.5 border-t border-border-soft pt-4">
-          <p className="text-small text-text-muted">{t("teams.convert.toTeamHelp")}</p>
-          <Button type="button" size="sm" variant="outline" data-convert-to-team disabled={visibilityAction.busy} onClick={() => { visibilityAction.setError(null); setConverting(true); setTargetVisibility("private"); }}>
-            {t("teams.convert.toTeam")}
-          </Button>
-        </div>
       </section>
 
       )}
@@ -381,13 +357,13 @@ export function GroupSettingsSection({
       {targetVisibility && (
         <ConfirmDialog
           id="visibility-confirm-title"
-          title={converting ? t(targetVisibility === "private" ? "teams.convert.toTeamTitle" : "teams.convert.toCommunityTitle") : t(VISIBILITY_ACTION_KEYS[targetVisibility].title)}
-          body={converting ? t(targetVisibility === "private" ? "teams.convert.toTeamBody" : "teams.convert.toCommunityBody") : t(VISIBILITY_CHANGE_KEYS[`${group.visibility}_${targetVisibility}`])}
-          confirmLabel={converting ? t(targetVisibility === "private" ? "teams.convert.toTeam" : "teams.convert.toCommunity") : t(VISIBILITY_ACTION_KEYS[targetVisibility].label)}
+          title={t(VISIBILITY_ACTION_KEYS[targetVisibility].title)}
+          body={t(VISIBILITY_CHANGE_KEYS[`${group.visibility}_${targetVisibility}`])}
+          confirmLabel={t(VISIBILITY_ACTION_KEYS[targetVisibility].label)}
           busy={visibilityAction.busy}
           error={visibilityAction.error}
           onConfirm={() => void applyVisibility()}
-          onCancel={() => { setTargetVisibility(null); setConverting(false); }}
+          onCancel={() => setTargetVisibility(null)}
         />
       )}
 

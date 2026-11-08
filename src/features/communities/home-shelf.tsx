@@ -36,7 +36,7 @@ export function MyCommunitiesShelf() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([listMyCommunities("member", 0, { excludeTeams: true }), fetchMyUnseenCounts()])
+    Promise.all([listMyCommunities("member", 0), fetchMyUnseenCounts()])
       .then(([page, unseen]) => {
         if (cancelled) return;
         const activity = (c: CommunitySummary) => Date.parse(c.lastActivityAt ?? c.createdAt) || 0;

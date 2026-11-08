@@ -10,6 +10,7 @@ export const teamSystemTranslations = {
     en: "Shared Spaces, a prompt library and channels with your team — open only to members (and the guests you invite).",
   },
   "tm.create": { tr: "Ekip oluştur", en: "Create team" },
+  "tm.messages.entry": { tr: "Ekip sohbetleri", en: "Team chats" },
   "tm.create.submit": { tr: "Oluştur", en: "Create" },
   "tm.create.name": { tr: "Ekip adı", en: "Team name" },
   "tm.create.description": { tr: "Açıklama (isteğe bağlı)", en: "Description (optional)" },

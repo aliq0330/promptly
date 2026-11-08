@@ -19,7 +19,7 @@ import { GroupAvatar } from "@/features/groups/group-avatar";
 import { OnlineCountText } from "@/features/presence/presence-ui";
 import { useCommunityPresenceCount } from "@/features/presence/community-presence";
 import { can } from "@/lib/chat-groups";
-import { communityHref, isTeamVisibility, teamHref } from "@/lib/communities";
+import { communityHref } from "@/lib/communities";
 import { groupRoomsBySection, pickRoom, readLastRoomId } from "@/lib/community-rooms";
 import { memberCountText } from "@/lib/group-labels";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -66,7 +66,7 @@ export function RoomsHub({ communityId }: { communityId: string }) {
   const sections = useMemo(() => groupRoomsBySection(rooms, t("rooms.sectionDefault")), [rooms, t]);
   const current = useMemo(() => pickRoom(rooms, null, readLastRoomId(communityId)), [rooms, communityId]);
   const canManage = group ? can(group.myRole, "manage_rooms", group.rolePermissions) : false;
-  const pageHref = group && isTeamVisibility(group.visibility) ? teamHref(communityId) : communityHref(communityId);
+  const pageHref = communityHref(communityId);
 
   const shell = "fixed inset-x-0 top-0 z-10 flex flex-col bg-background bottom-0 md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1";
 
