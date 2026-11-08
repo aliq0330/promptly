@@ -6,12 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { RefreshCw } from "@/components/icons/refresh-cw";
 import { UserCog } from "@/components/icons/user-cog";
 import { MessagesSquare } from "@/components/icons/messages-square";
-import { CalendarDays } from "@/components/icons/calendar-days";
-import { Info } from "@/components/icons/info";
-import { List } from "@/components/icons/list";
-import { Settings } from "@/components/icons/settings";
-import { Users } from "@/components/icons/users";
-import { PhoneSectionList, PhoneSubBar, type PhoneSectionItem } from "@/features/content/phone-sections";
+import { PhoneSubBar } from "@/features/content/phone-sections";
+import { CommunityPhoneHome } from "./community-phone-home";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
@@ -164,20 +160,37 @@ function CommunityPageInner() {
   // Masaüstü eski düzen (kapak bandı + sekme menüsü, varsayılan Akış).
   const phoneRoot = phone && searchParams.get("tab") === null;
   const phoneSub = phone && !phoneRoot && Boolean(tab);
-  const TAB_ICON: Record<CommunityTab, PhoneSectionItem["icon"]> = { feed: List, events: CalendarDays, members: Users, about: Info, manage: Settings };
-  const sectionItems: PhoneSectionItem[] = tabs.map((item) => ({
-    key: item.key,
-    label: item.label,
-    href: communityHref(g.id, item.key),
-    icon: TAB_ICON[item.key],
-    badge: item.count,
-  }));
+  // Ana ekran yalnız bölüme erişimi olana (`tab` çözüldüyse); geçit (erişimsiz kapalı topluluk) eski kompakt başlığı ve geçidi gösterir.
+  const phoneHome = phoneRoot && Boolean(tab);
+  const joinButton = (
+    <CommunityJoinButton
+      target={{ id: g.id, name: g.name, visibility: g.visibility, rulesRequired: g.rulesRequired, memberCount: g.memberCount, memberLimit: g.memberLimit, closed: Boolean(g.closedAt) }}
+      status={joinState}
+      role={role}
+      rules={g.rules}
+      size="lg"
+      onChange={(next) => void membershipChanged(next)}
+      onToast={show}
+    />
+  );
 
   const body = (
     // Albüm (docs/history/203-*): band tinted by the community's cover (photo › colour › its picture) · actions row · tabs + content.
     <div className="w-full">
       {phone ? (
-        !phoneSub && (
+        phoneHome ? (
+          <CommunityPhoneHome
+            group={g}
+            role={role}
+            viewerId={user?.id ?? null}
+            tabs={tabs}
+            unread={unread}
+            join={joinButton}
+            gate={!role ? <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact /> : undefined}
+            onToast={show}
+          />
+        ) : (
+          !phoneSub && (
           <div className="flex items-center gap-3 px-3 pt-3" data-testid="community-header-compact">
             <GroupAvatar name={g.name} avatarUrl={g.avatarUrl} size={64} className="[&>span:first-child]:rounded-[1.1rem]" />
             <div className="min-w-0 flex-1">
@@ -193,6 +206,7 @@ function CommunityPageInner() {
               </div>
             </div>
           </div>
+          )
         )
       ) : (
       <DetailBand
@@ -237,7 +251,7 @@ function CommunityPageInner() {
         {phoneSub && tab !== "manage" && (
           <PhoneSubBar className="-mt-3" parent={g.name} title={tabLabels[tab ?? "feed"]} backHref={communityHref(g.id)} right={<div ref={setActionsEl} className="flex items-center gap-1.5" data-community-actions-slot />} />
         )}
-        {!phoneSub && (
+        {!phoneSub && !phoneHome && (
         <BandActionRow label={t("communities.band.actionsAria")} data-community-actions="">
           {role && (
             <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg", className: BAND_PRIMARY_CLASS })}>
@@ -273,7 +287,7 @@ function CommunityPageInner() {
           <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} />
         ) : (
           <>
-            {!role && (
+            {!role && !phoneHome && (
               <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />
             )}
             {/* Tek kontrol satırı (docs/history/232-*): bölüm menüsü ("Akış ▾") + sekmenin kendi eylem yuvası. Telefonda yok: bölümler liste → alt sayfa. */}
@@ -284,9 +298,7 @@ function CommunityPageInner() {
                 <div ref={setActionsEl} className="flex items-center gap-1.5" data-community-actions-slot />
               </div>
             )}
-            {phoneRoot ? (
-              <PhoneSectionList ariaLabel={t("communities.detail.tabsAria")} items={sectionItems} className="mt-2" />
-            ) : (
+            {phoneRoot ? null : (
             <div role="tabpanel">
               {tab === "feed" && <FeedTab {...common} />}
               {tab !== "feed" && (
