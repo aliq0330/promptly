@@ -27,3 +27,7 @@
 - Birim 998/998; `tsc`, `lint` (hata 0), `build` temiz; ağ taklitli `run-team-hub` **40/40** (yeni senaryo 30–36: sol gezinme + Politikalar Kaydet, Denetim + `message_reported` + CSV, Panel, Gruplar, Konuklar, Entegrasyonlar, telefon taşma).
 - İngilizce karşılıkları eklendi (`translations-team-system.ts`, tüm yeni anahtarlar `{tr, en}`).
 - **Denenmedi:** gerçek Supabase, gerçek cihaz. Mockup karşılaştırması Playwright ekran görüntüleriyle (masaüstü + telefon) yapıldı.
+
+## Düzeltme: telefonda genel üst menü geri geldi (2026-11-08)
+
+Faz 1'de `/teams*` için telefonda genel üst menü (`[data-app-header]`) gizlenmişti (`header.tsx` `inChat`). Kullanıcı geri istedi: artık Ekipler ve Ekip sayfasında üst menü görünür. Yalnız tam ekran durumlarda gizlenir: Kütüphane prompt ayrıntısı ve Onay incelemesi (`html[data-fullscreen-detail]`, kendi üst çubuklarını çizer) ve açık kanal sohbeti (`html[data-team-focus]`, `team-page.tsx` ayarlar; alt menüye dokunulmaz). Ekip çubuğundaki yinelenen zil kaldırıldı (üst menüde zil var). Test: `run-team-hub` senaryo 37.

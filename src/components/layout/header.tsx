@@ -38,7 +38,7 @@ export function Header() {
   const pathname = usePathname() ?? "";
   const hasOwnSearch = /^\/(discover|search)(\/|$)/.test(pathname);
   // Açık sohbette telefonda üst menü yok: sohbet paneli ekranın üstüne kadar uzanır (alt menüyle aynı kural, docs/history/194-*).
-  const inChat = pathname.startsWith("/messages/local") || /^\/teams(\/|$)/.test(pathname);
+  const inChat = pathname.startsWith("/messages/local");
 
   return (
     <header data-app-chrome data-app-header className={cn("sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-soft bg-surface/90 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5 lg:px-8", inChat && "max-md:hidden")}>

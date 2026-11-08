@@ -483,9 +483,11 @@
     padding-bottom: 0 !important;
   }
 
-  /* Telefonda tam ekran ayrıntı sayfası (Ekip kütüphanesi prompt ayrıntısı, docs/history/355-*): alt menü sabit düğmelerin üstünü örtmesin. */
+  /* Telefonda tam ekran ayrıntı sayfası (Ekip kütüphanesi prompt ayrıntısı, docs/history/355-*): alt menü sabit düğmelerin üstünü örtmesin; üst menü de gizlenir (ayrıntı/inceleme/açık kanal kendi üst çubuğunu çizer). */
   @media (max-width: 767.98px) {
-    html[data-fullscreen-detail] [data-app-nav] {
+    html[data-fullscreen-detail] [data-app-nav],
+    html[data-fullscreen-detail] [data-app-header],
+    html[data-team-focus] [data-app-header] {
       display: none !important;
     }
   }
