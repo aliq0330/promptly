@@ -444,6 +444,41 @@ await scenario("23. İngilizce: ekip bilgisi ve kanal bilgisi başlıkları", as
   await page.locator("[data-channel-info]").getByText("Who can see it").waitFor().catch(async () => { await page.locator("[data-channel-info]").getByText(/Channel/).first().waitFor(); });
 }, { lang: "en", setup: twoChannels() });
 
+// --- Masaüstü çalışma alanı (Seçenek 1, docs/history/354-*) ---
+const withMembers = (db) => {
+  db.rpc.team_channel_members = () => ({ body: [U.bob, U.carol, U.dave].map((u) => ({ user_id: u.id, username: u.username, display_name: u.display_name ?? u.username, avatar_url: null, team_role: "member" })) });
+};
+
+await scenario("24. Masaüstü sohbet = çalışma alanı: solda kanal kartı (rozet, alt satır 'çevrimiçi · üye'), sağda sohbet kartı (başlık, yüzler, Ara, bilgi); bilgi düğmesi kanal bilgisini açar", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=chat&channel=genel`);
+  const view = page.getByTestId("team-channel-view");
+  await view.waitFor();
+  const aside = page.getByTestId("team-channel-aside");
+  assert.equal(await aside.isVisible(), true);
+  await aside.locator("[data-channel='genel']").getByText("3").waitFor();
+  await page.getByTestId("team-online").getByText(/çevrimiçi/).waitFor();
+  assert.match(await view.locator("h3").innerText(), /# genel/);
+  await view.locator("[data-channel-faces]").waitFor();
+  assert.equal(await view.getByTestId("team-channel-chips").isVisible(), false, "masaüstünde çip satırı yok (kanallar solda)");
+  await view.locator("[data-chat-search-toggle]").getByText("Ara…").waitFor();
+  await view.locator("[data-chat-search-toggle]").click();
+  await page.getByPlaceholder(/ara/i).first().waitFor();
+  await view.locator("[data-channel-info-open]").click();
+  await page.locator("[data-channel-info]").waitFor();
+  await page.locator("[data-channel-info]").getByText("genel").first().waitFor();
+}, { setup: (db) => { withMembers(db); db.addTeamChannel(CH_GENERAL, { name: "genel", myRole: "owner", members: [[U.bob, "member"]], texts: [[U.bob, "lansman afişi hazır"]] }); } });
+
+await scenario("25. Tablet: kanal kartı gizli, kanallar sohbet kartının çip satırında; çip kanalı değiştirir", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=chat&channel=genel`);
+  await page.getByTestId("team-channel-view").waitFor();
+  assert.equal(await page.getByTestId("team-channel-aside").isVisible(), false, "tablette kanal kartı yok");
+  const chips = page.getByTestId("team-channel-chips");
+  await chips.waitFor();
+  assert.ok((await chips.locator("[data-channel-chip]").count()) >= 2);
+  await chips.locator("[data-channel-chip='yonetim']").click();
+  await page.waitForFunction(() => location.search.includes("channel=yonetim"));
+}, { viewport: { width: 834, height: 1000 }, setup: (db) => { db.addTeamChannel(CH_GENERAL, { name: "genel", members: [[U.bob, "member"]], texts: [[U.bob, "lansman afişi hazır"]] }); } });
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => r[0] === "FAIL");

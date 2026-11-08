@@ -29,8 +29,13 @@ Her ekip/topluluk **Mesajlar'da tek satır**, **tek sohbet**, **tek bilgi sayfas
 ## Dürüst sınırlar
 - Liste meta satırı üye sayısı gösterir (çevrimiçi sayısı değil); `@` bahsetme rozeti yok.
 - Ekip bildirim anahtarı ekibin tüm kanallarına uygulanır; oda bildirimi iki düzeylidir (Tümü / Sessiz) — sunucuda üçüncü düzey yok.
-- Masaüstü ekip sayfası içindeki sohbet DEĞİŞMEDİ: kullanıcı iki mockup seçeneği (üç bölme / odak) arasından seçince uygulanacak.
 - iOS klavye/safe-area ve gerçek Supabase/Realtime denenmedi.
 
 ## Test
 `npm test` (conversation-lists 14), ağ taklitli `run-rooms` 29/29 (hub/çip/değiştirici senaryoları bilgi sayfası akışına çevrildi), `run-team-hub` 27/27 (yeni 18–23), `run`, `run-groups`, `run-chat-popovers` geçti.
+
+## Ek: masaüstü ekip sayfası sohbeti — Seçenek 1 "çalışma alanı" (kullanıcı seçti)
+- `lg`+: solda kanal kartı (`rounded-[20px]`; açık kanal mavi, okunmamış turuncu rozet, kanallar yanında "+", altta "N çevrimiçi · N üye"), sağda sohbet kartı: `# kanal` + açıklama, üye yüzleri (+N), "Ara…" ve kanal bilgisi (ⓘ) düğmeleri. Kanal bilgisi aynı `ChannelInfoSheet`'tir (gömülü sohbet `EmbeddedChatControls` tutamacıyla `openSearch` / `openChannelInfo` verir; eski başı boş arama satırı kalktı).
+- `md`–`lg` (tablet): kanal kartı gizli, kanallar sohbet kartının çip satırındadır (+ yönetene "+"); telefon değişmedi (liste → tam ekran sohbet).
+- Eski başlıktaki bildirim seçicisi ve "Ayarlar" düğmesi kalktı: bildirim düzeyi ve Düzenle kanal bilgisindedir.
+- Test: `run-team-hub` 29/29 (yeni 24 masaüstü, 25 tablet).

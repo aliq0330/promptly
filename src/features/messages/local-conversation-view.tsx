@@ -1,7 +1,7 @@
 "use client";
 
 import { useExitMotion } from "@/components/ui/exit-motion";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from "react";
+import { Fragment, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type FormEvent, type Ref, type UIEvent } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -151,7 +151,12 @@ function translateSendError(message: string, isGroup = false): string {
  * message sent in this conversation as a real, database-backed embed.
  *
  */
-export function LocalConversationView({ dock }: { dock?: DockHandlers & { conversationId: string; /** Ekip sayfasına gömülü (docs/history/353-*): başlığı sayfa çizer, burada çizilmez. */ embedded?: boolean; /** Dock: kanal/oda çipi başka bir sohbeti panelde açar. */ onOpenConversation?: (conversationId: string) => void } } = {}) {
+export interface EmbeddedChatControls {
+  openSearch: () => void;
+  openChannelInfo: () => void;
+}
+
+export function LocalConversationView({ dock }: { dock?: DockHandlers & { conversationId: string; /** Ekip sayfasına gömülü (docs/history/353-*): başlığı sayfa çizer, burada çizilmez. */ embedded?: boolean; /** Gömülü sohbeti sayfanın başlığı yönetir: "Ara" ve "Kanal bilgisi" bu tutamaçla açılır. */ controlRef?: Ref<EmbeddedChatControls>; /** Dock: kanal/oda çipi başka bir sohbeti panelde açar. */ onOpenConversation?: (conversationId: string) => void } } = {}) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -280,6 +285,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   const [teamInfoOpen, setTeamInfoOpen] = useState(false);
   const [channelInfoOpen, setChannelInfoOpen] = useState(false);
   const fromTeamPage = !dock && searchParams.get("from") === "team";
+  useImperativeHandle(dock?.controlRef, () => ({ openSearch: () => setSearchOpen(true), openChannelInfo: () => setChannelInfoOpen(true) }), []);
   const openGroupInfo = (focus: GroupInfoFocus) => {
     if (teamChannel) setTeamInfoOpen(true);
     else setGroupInfoFocus(focus);
@@ -1793,20 +1799,6 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             }))}
           onSelect={(item) => setRoomId(item.id)}
         />
-      )}
-      {dock?.embedded && !searchOpen && (
-        <div className="flex shrink-0 justify-end px-3 pt-2">
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            aria-label={t("chat.search.open")}
-            title={t("chat.search.open")}
-            data-chat-search-toggle
-            className={DOCK_ICON_BUTTON}
-          >
-            <Search size={18} aria-hidden />
-          </button>
-        </div>
       )}
       {searchOpen && (
         <ConversationSearchPanel

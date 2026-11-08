@@ -251,6 +251,7 @@ export const teamSystemTranslations = {
   "tm.chat.notify": { tr: "Bildirimler", en: "Notifications" },
   "tm.chat.notify.all": { tr: "Tüm mesajlar", en: "All messages" },
   "tm.chat.notify.mentions": { tr: "Yalnızca bahsetmeler", en: "Mentions only" },
+  "tm.chat.searchHint": { tr: "Ara…", en: "Search…" },
   "tm.chat.notify.none": { tr: "Sessiz", en: "Muted" },
   "tm.chat.notify.mentionsShort": { tr: "Bahsetmeler", en: "Mentions" },
   "tm.chat.memberCount": { tr: "{{count}} kişi", en: "{{count}} people" },
