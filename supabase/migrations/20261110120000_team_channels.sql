@@ -30,7 +30,7 @@ begin
   return new;
 end $$;
 
-alter table public.conversation_members add column if not exists notify_level text check (notify_level is null or notify_level in ('all', 'mentions', 'none'));
+alter table public.conversation_members add column if not exists team_notify_level text check (team_notify_level is null or team_notify_level in ('all', 'mentions', 'none'));
 
 -- ============================================================================
 -- 2. Kanal tablosu
@@ -598,7 +598,7 @@ returns table (id uuid, name text, description text, mode text, space_id uuid, s
 language sql stable security definer set search_path = public as $$
   select tc.id, tc.name, tc.description, tc.mode, tc.space_id, s.title, tc.posting_policy, tc.notify_default, tc.is_default, tc.position, tc.archived_at,
          coalesce((select u.unread_count from public.group_unread_counts(array[tc.id]) u), 0),
-         m.muted_at is not null, coalesce(m.notify_level, tc.notify_default), c.last_message_at,
+         m.muted_at is not null, coalesce(m.team_notify_level, tc.notify_default), c.last_message_at,
          (select count(*)::integer from public.conversation_members x where x.conversation_id = tc.id),
          public.can_send_message(tc.id)
     from public.team_channels tc
@@ -653,7 +653,7 @@ begin
   if auth.uid() is null then raise exception 'not_authenticated'; end if;
   if p_level is not null and p_level not in ('all', 'mentions', 'none') then raise exception 'channel_invalid'; end if;
   if not exists (select 1 from public.team_channels tc where tc.id = p_channel) then raise exception 'channel_not_found'; end if;
-  update public.conversation_members set notify_level = p_level, muted_at = case when p_level = 'none' then coalesce(muted_at, now()) else null end
+  update public.conversation_members set team_notify_level = p_level, muted_at = case when p_level = 'none' then coalesce(muted_at, now()) else null end
    where conversation_id = p_channel and user_id = auth.uid();
   if not found then raise exception 'channel_not_found'; end if;
 end $$;
@@ -695,7 +695,7 @@ begin
   if not found then return null; end if;
   select coalesce(nullif(p.display_name, ''), p.username) into v_name from public.profiles p where p.id = new.sender_id;
   for r in
-    select distinct m.user_id, coalesce(m.notify_level, tc.notify_default) as lvl
+    select distinct m.user_id, coalesce(m.team_notify_level, tc.notify_default) as lvl
       from (select lower(x[1]) as uname from regexp_matches(new.body, '(?:^|[^a-zA-Z0-9_])@([a-zA-Z0-9_]{3,30})', 'g') as x limit 20) mt
       join public.profiles p on lower(p.username) = mt.uname
       join public.conversation_members m on m.conversation_id = new.conversation_id and m.user_id = p.id
