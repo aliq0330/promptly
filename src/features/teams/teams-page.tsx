@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Briefcase } from "@/components/icons/briefcase";
 import { Check } from "@/components/icons/check";
 import { Eye } from "@/components/icons/eye";
@@ -20,22 +20,27 @@ import { SadeTitle } from "@/features/content/list-control-row";
 import { CONTROL_ICON_BUTTON, SectionMenu } from "@/features/content/section-menu";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { useToast } from "@/features/groups/use-toast";
+import { PHONE_HOME_BOTTOM_PAD, PHONE_HOME_PILL, PHONE_HOME_PILL_OUTLINE, PhoneHomeCard, PhoneHomeRow, PhoneHomeSection } from "@/features/content/phone-home";
 import { SpaceDialog } from "@/features/spaces/space-modals";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   createTeam,
   listMyInvitations,
   listMyTeams,
   listMyTodos,
+  listTeamSpaces,
   respondInvitation,
   type TeamActionError,
   type TeamInvitation,
+  type TeamSpaceRow,
   type TeamSummary,
   type TeamTodo,
 } from "@/lib/supabase/teams";
 import { teamLink } from "@/lib/teams";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
+import { TeamSpaceMini, todoLine } from "./team-phone-home";
 
 /**
  * `/teams`: Ekipler (docs/history/353-*). Ekip artık topluluktan bağımsız bir sistemdir: bu sayfa üyesi olduğum ekiplerin günlük kapısı —
@@ -53,6 +58,8 @@ export function TeamsPage() {
   const list = usePagedList<TeamSummary>(`teams2|${user?.id ?? ""}`, Boolean(user), (offset) => listMyTeams(offset));
   const [invites, setInvites] = useState<TeamInvitation[]>([]);
   const [todos, setTodos] = useState<TeamTodo[]>([]);
+  const phone = useMediaQuery("(max-width: 767.98px)");
+  const [recentSpaces, setRecentSpaces] = useState<{ space: TeamSpaceRow; teamName: string }[]>([]);
 
   const loadSide = useCallback(() => {
     if (!user) return;
@@ -60,6 +67,38 @@ export function TeamsPage() {
     void listMyTodos().then(setTodos, () => setTodos([]));
   }, [user]);
   useEffect(loadSide, [loadSide]);
+
+  // Telefon "Son Space'ler" şeridi (docs/history/359-*): ilk üç ekibin Space'leri, en son güncellenen iki tanesi.
+  const teamKey = list.items.slice(0, 3).map((team) => team.id).join(",");
+  useEffect(() => {
+    if (!phone || !teamKey) return;
+    let cancelled = false;
+    const teams = list.items.slice(0, 3).filter((team) => team.spaceCount > 0);
+    void Promise.all(teams.map((team) => listTeamSpaces(team.id).then((page) => page.items.map((space) => ({ space, teamName: team.name })), () => [] as { space: TeamSpaceRow; teamName: string }[]))).then((all) => {
+      if (cancelled) return;
+      setRecentSpaces(
+        all
+          .flat()
+          .filter(({ space }) => !space.isLibrary && !space.archivedAt)
+          .sort((a, b) => b.space.updatedAt.localeCompare(a.space.updatedAt))
+          .slice(0, 2),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `list.items` her çizimde değişebilir; ekip kimlikleri `teamKey`'de.
+  }, [phone, teamKey]);
+
+  const phoneTodos = useMemo(() => {
+    const withReview = new Set(todos.filter((todo) => todo.kind === "review").map((todo) => todo.teamId));
+    return todos.filter((todo) => !(todo.kind === "approvals" && withReview.has(todo.teamId))).slice(0, 5);
+  }, [todos]);
+  const approvalsByTeam = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const todo of todos) if (todo.kind === "approvals") map.set(todo.teamId, todo.n);
+    return map;
+  }, [todos]);
 
   const answer = async (invitation: TeamInvitation, accept: boolean) => {
     try {
@@ -76,7 +115,7 @@ export function TeamsPage() {
   const visibleTeams = list.items.filter((team) => (filter === "all" || team.myRole === "owner" || team.myRole === "admin") && (!needle || team.name.toLocaleLowerCase().includes(needle)));
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-3 pb-6 sm:px-5 md:space-y-5 md:py-6 lg:px-8 lg:py-8" data-testid="teams-page">
+    <div className={cn("mx-auto w-full max-w-5xl px-3 pb-6 sm:px-5 md:space-y-5 md:py-6 lg:px-8 lg:py-8", PHONE_HOME_BOTTOM_PAD, "md:pb-6")} data-testid="teams-page">
       {/* Telefon (docs/history/357-*): Topluluklar ile AYNI iskelet — büyük başlık + tek denetim satırı (süzgeç hapı · ara · "+"). */}
       <div className="mb-3 space-y-3 pt-2 md:hidden" data-teams-phone-bar>
         <SadeTitle>{t("tm.title")}</SadeTitle>
@@ -147,6 +186,30 @@ export function TeamsPage() {
         </ul>
       )}
 
+      {phone && phoneTodos.length > 0 && (
+        <PhoneHomeSection title={t("tm.home.waiting", { count: phoneTodos.length })} testId="team-phone-todos">
+          <PhoneHomeCard>
+            {phoneTodos.map((todo, index) => {
+              const line = todoLine(t, todo);
+              return (
+                <PhoneHomeRow
+                  key={`${todo.teamId}-${todo.kind}-${index}`}
+                  thumb={line.action === "chat" ? <MessageCircle size={20} aria-hidden /> : <Check size={20} aria-hidden />}
+                  title={line.title}
+                  sub={`${line.sub} · ${todo.teamName}`}
+                  href={todo.href}
+                  action={
+                    <Link href={todo.href} className={line.action === "chat" ? PHONE_HOME_PILL_OUTLINE : PHONE_HOME_PILL}>
+                      {t(line.action === "chat" ? "tm.home.open" : "tm.todos.review.action")}
+                    </Link>
+                  }
+                />
+              );
+            })}
+          </PhoneHomeCard>
+        </PhoneHomeSection>
+      )}
+
       <PagedListState
         list={list}
         skeleton={
@@ -159,6 +222,15 @@ export function TeamsPage() {
         {list.items.length === 0 && !list.failed ? (
           <EmptyState icon={Briefcase} title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: () => setCreateOpen(true) }} />
         ) : (
+          phone ? (
+            <PhoneHomeSection title={t("tm.home.myTeams")}>
+              <ul className="space-y-3" data-testid="teams-list">
+                {visibleTeams.map((team) => (
+                  <PhoneTeamCard key={team.id} team={team} approvals={approvalsByTeam.get(team.id) ?? 0} />
+                ))}
+              </ul>
+            </PhoneHomeSection>
+          ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4" data-testid="teams-list">
             {visibleTeams.map((team) => (
               <TeamCard key={team.id} team={team} />
@@ -178,10 +250,21 @@ export function TeamsPage() {
               </button>
             </li>
           </ul>
+          )
         )}
       </PagedListState>
 
-      {todos.length > 0 && <TodoList todos={todos} />}
+      {phone && recentSpaces.length > 0 && (
+        <PhoneHomeSection title={t("tm.home.recentSpaces")} testId="teams-phone-spaces">
+          <ul className="grid grid-cols-2 gap-2">
+            {recentSpaces.map(({ space, teamName }) => (
+              <TeamSpaceMini key={space.id} space={space} sub={teamName} />
+            ))}
+          </ul>
+        </PhoneHomeSection>
+      )}
+
+      {!phone && todos.length > 0 && <TodoList todos={todos} />}
 
       {toastNode}
       {createOpen && (
@@ -263,6 +346,64 @@ function recentLine(t: ReturnType<typeof useTranslation>["t"], language: string,
   if (recent.action === "item_approved") return t("tm.card.recent.approved", { name: who, title: recent.label ?? "", time: when });
   if (recent.action === "variable_updated") return t("tm.card.recent.variables", { name: who, time: when });
   return t("tm.card.recent.joined", { name: who, time: when });
+}
+
+const BAND_GRADIENT: Record<string, string> = {
+  primary: "from-primary/60 to-primary",
+  secondary: "from-secondary/60 to-secondary",
+  success: "from-success/60 to-success",
+  warning: "from-warning/60 to-warning",
+  plum: "from-text-secondary/60 to-text-secondary",
+  sky: "from-primary/50 to-primary",
+};
+
+/** Telefon ekip kartı (docs/history/359-*): renkli bant + taşan karo + üye yığını + rol/sayılar + bekleyen iş rozetleri + "Aç". */
+function PhoneTeamCard({ team, approvals }: { team: TeamSummary; approvals: number }) {
+  const { t } = useTranslation();
+  const preview = team.membersPreview ?? [];
+  const more = Math.max(0, team.memberCount - preview.length);
+  return (
+    <li data-team-card={team.id} data-team-phone-card className="relative overflow-hidden rounded-2xl border border-border-soft bg-surface">
+      <div className={cn("relative h-12 bg-gradient-to-br", BAND_GRADIENT[team.tone] ?? BAND_GRADIENT.primary)} aria-hidden />
+      <TeamMark name={team.name} tone={team.tone} size={44} className="absolute left-3 top-[1.625rem] rounded-xl bg-surface ring-2 ring-surface" />
+      <div className="px-3.5 pb-3 pt-6">
+        <Link href={teamLink(team.id)} className="block after:absolute after:inset-0" data-team-open-spaces>
+          <span className="flex items-center gap-2">
+            <span className="min-w-0 flex-1 truncate font-display text-h3 font-bold leading-tight text-text">{team.name}</span>
+            {preview.length > 0 && (
+              <span className="flex shrink-0 items-center" data-team-avatars>
+                {preview.map((person) => (
+                  <span key={person.userId} className="-ml-1.5 rounded-full ring-2 ring-surface first:ml-0">
+                    <Avatar src={person.avatarUrl} alt={person.displayName || person.username} size={24} />
+                  </span>
+                ))}
+                {more > 0 && <span className="ml-1.5 text-caption font-bold text-text-muted">+{more}</span>}
+              </span>
+            )}
+          </span>
+          <span className="mt-0.5 block text-small text-text-secondary">
+            {t(roleLabelKey(team.myRole))} · {t("tm.card.members", { count: team.memberCount })} · {t("tm.card.spaces", { count: team.spaceCount })}
+          </span>
+        </Link>
+        <div className="relative z-10 mt-2.5 flex items-center gap-2">
+          {approvals > 0 && (
+            <Link href={`${teamLink(team.id, "library")}&status=pending`} className="inline-flex h-6 items-center rounded-full bg-secondary px-2.5 text-caption font-bold text-white" data-team-chip="approvals">
+              {t("tm.home.pendingApprovals", { count: approvals })}
+            </Link>
+          )}
+          {team.unreadCount > 0 && (
+            <Link href={teamLink(team.id, "chat")} className="inline-flex h-6 items-center rounded-full bg-secondary px-2.5 text-caption font-bold text-white" data-team-open-chat data-team-chip="unread">
+              {t("tm.home.unreadMessages", { count: team.unreadCount })}
+            </Link>
+          )}
+          <span className="flex-1" />
+          <Link href={teamLink(team.id)} className={team.unreadCount > 0 || approvals > 0 ? PHONE_HOME_PILL : PHONE_HOME_PILL_OUTLINE}>
+            {t("tm.home.open")}
+          </Link>
+        </div>
+      </div>
+    </li>
+  );
 }
 
 function TeamCard({ team }: { team: TeamSummary }) {
