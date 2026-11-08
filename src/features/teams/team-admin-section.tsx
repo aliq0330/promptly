@@ -109,7 +109,9 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
         ))}
       </nav>
       <div className="min-w-0 space-y-4">
-        <div className="md:hidden">
+        {/* Telefon: ekip sekme menüsü + bölüm menüsü TEK satırda yan yana (alt alta iki büyük hap değil). */}
+        <div className="flex flex-wrap items-center gap-2 md:hidden" data-admin-phone-menus>
+          {ctx.sectionMenu}
           <SectionMenu items={items} active={active} onChange={go} ariaLabel={t("tm.admin.aria")} title={t("tm.admin.aria")} />
         </div>
         {body}
@@ -627,12 +629,13 @@ function AuditSection({ ctx }: { ctx: TeamCtx }) {
 
   return (
     <div className="space-y-4" data-testid="team-audit">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2 md:flex-wrap">
         <h2 className="mr-auto font-display text-h2 font-bold max-md:hidden">{t("tm.admin.audit")}</h2>
         <SectionMenu items={categoryItems} active={category} onChange={setCategory} ariaLabel={t("tm.admin.audit.category")} title={t("tm.admin.audit.category")} align="end" />
         <SectionMenu items={dayItems} active={String(days) as "7" | "30" | "90"} onChange={(key) => setDays(Number(key) as 7 | 30 | 90)} ariaLabel={t("tm.panel.range")} title={t("tm.panel.range")} align="end" />
         <Button type="button" variant="secondary" size="sm" onClick={() => void exportCsv()} disabled={exporting} data-audit-csv>
-          {t("tm.audit.csv")}
+          <span className="max-md:hidden">{t("tm.audit.csv")}</span>
+          <span className="md:hidden">CSV</span>
         </Button>
       </div>
       <div className="grid grid-cols-3 gap-3" data-audit-stats>

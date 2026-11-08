@@ -35,7 +35,7 @@ export interface TeamCtx {
 }
 
 /** Kontrol satırında "Bölüm ▾" menüsünü kendisi çizen bölümler; diğerlerinde menü sayfanın üstünde tek başına durur. */
-const OWN_MENU_TABS: readonly TeamTab[] = ["spaces", "library", "members"];
+const OWN_MENU_TABS: readonly TeamTab[] = ["spaces", "library", "members", "admin"];
 
 /**
  * Ekip sayfası (`/teams/local?id=&tab=`). Bölümler tek "Space'ler ▾" menüsüdür (4+ bölüm = menü kuralı); konuklar yalnız Space'ler ve Sohbet'i görür.
