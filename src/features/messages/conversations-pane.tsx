@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Archive } from "@/components/icons/archive";
 import { Inbox } from "@/components/icons/inbox";
@@ -19,7 +20,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { Portal } from "@/components/ui/portal";
 import { useToast } from "@/features/groups/use-toast";
-import { bucketConversations, filterConversationsByQuery } from "@/lib/conversation-lists";
+import { bucketConversations, filterConversationsByQuery, rollUpTeamChannels } from "@/lib/conversation-lists";
 import { TeamChannelsInbox } from "@/features/teams/team-channels-inbox";
 import { listMyTeams } from "@/lib/supabase/teams";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -105,7 +106,12 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   const matches = (list: Conversation[]) => filterConversationsByQuery(list, query);
 
   const byKind = (list: Conversation[]) => (kindFilter === "all" ? list : list.filter((c) => kindOf(c) === kindFilter));
-  const accepted = byKind(matches(buckets.inbox));
+  // Bir ekibin kanalları listede TEK satırdır (Yön A, docs/history/353-*): aramada eşleşen kanallardan toplanır, açılan satır temsilci kanaldır.
+  const accepted = byKind(rollUpTeamChannels(matches(buckets.inbox)));
+  const activeTeamId = activeId ? (conversations.find((c) => c.id === activeId)?.group?.team?.id ?? null) : null;
+  const teamChannelIds = (teamId: string) => buckets.inbox.filter((c) => c.group?.team?.id === teamId).map((c) => c.id);
+  const kindCount = accepted.length;
+  const kindUnread = accepted.reduce((sum, c) => sum + (c.unreadCount > 0 && !c.mutedAt ? c.unreadCount : 0), 0);
   const pending = matches(buckets.requests);
   const archived = matches(buckets.archived);
   const searching = query.trim() !== "";
@@ -156,7 +162,8 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
 
   async function applyBulk(kind: "archive" | "read" | "delete" | "readAll" | "pin") {
     if (bulkBusy) return;
-    const ids = (kind === "readAll" ? unreadList : selectedList).map((c) => c.id);
+    // Ekip satırı tüm kanallarını temsil eder: toplu eylem ekibin her kanalına uygulanır.
+    const ids = [...new Set((kind === "readAll" ? unreadList : selectedList).flatMap((c) => (c.teamRollup && c.group?.team ? teamChannelIds(c.group.team.id) : [c.id])))];
     if (ids.length === 0) {
       if (kind === "readAll") showToast(t("messages.nothingUnreadToast"));
       return;
@@ -289,6 +296,11 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             ))}
           </div>
         )}
+        {!selectionActive && view === "inbox" && (kindFilter === "team" || kindFilter === "community") && kindCount > 0 && (
+          <p data-kind-summary className="mb-2 px-1 text-caption text-text-muted">
+            {t(kindFilter === "team" ? "tm.list.summaryTeams" : "tm.list.summaryCommunities", { count: kindCount, unread: kindUnread })}
+          </p>
+        )}
         {searchShown && (
           <label className="relative mb-3 block">
             <span className="sr-only">{t("messages.searchConversations")}</span>
@@ -389,9 +401,25 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                 conversations={accepted}
                 shareQuery={shareQuery}
                 activeId={activeId}
+                activeTeamId={activeTeamId}
+                showKindTag={kindFilter === "all"}
                 flush={embedded}
                 selection={selectionActive ? { selectedIds, onToggle: toggleSelected } : undefined}
               />
+              {!selectionActive && !searching && (kindFilter === "team" || kindFilter === "community") && (
+                <Link
+                  href={kindFilter === "team" ? "/teams" : "/communities/all"}
+                  data-kind-cta={kindFilter}
+                  className={cn(
+                    "mt-3 flex h-14 items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed text-small font-bold transition-colors",
+                    embedded && "mx-4",
+                    kindFilter === "team" ? "border-primary/30 text-primary hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success/10",
+                  )}
+                >
+                  {kindFilter === "team" ? <Plus size={18} aria-hidden /> : <Search size={18} aria-hidden />}
+                  {t(kindFilter === "team" ? "tm.create" : "tm.list.discoverCommunities")}
+                </Link>
+              )}
             </>
           )
         )}

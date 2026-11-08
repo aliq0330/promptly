@@ -6,7 +6,7 @@ import { MessagesSquare } from "@/components/icons/messages-square";
 import { Search } from "@/components/icons/search";
 import { SquarePen } from "@/components/icons/square-pen";
 import { EmptyState } from "@/components/ui/empty-state";
-import { bucketConversations, filterConversationsByQuery } from "@/lib/conversation-lists";
+import { bucketConversations, filterConversationsByQuery, rollUpTeamChannels } from "@/lib/conversation-lists";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ConversationList } from "./conversation-list";
 import { DockHeader, DOCK_ICON_BUTTON } from "./dock-header";
@@ -28,7 +28,8 @@ export function DockListView({ kind, onExpand }: { kind: "list" | "requests"; on
   const buckets = useMemo(() => bucketConversations(conversations), [conversations]);
   const inRequests = kind === "requests";
   const source = inRequests ? buckets.requests : buckets.inbox;
-  const shown = filterConversationsByQuery(source, query);
+  // Ekip kanalları panelde de ekip başına tek satırdır (Yön A, docs/history/353-*).
+  const shown = rollUpTeamChannels(filterConversationsByQuery(source, query));
   const searching = query.trim() !== "";
   const nothingAtAll = !inRequests && buckets.inbox.length === 0 && buckets.requests.length === 0;
 

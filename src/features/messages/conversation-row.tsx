@@ -10,8 +10,11 @@ import { ChevronRight } from "@/components/icons/chevron-right";
 import { Pin } from "@/components/icons/pin";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
+import { TeamMark } from "@/features/teams/team-ui";
+import { VisibilityLabel } from "@/features/communities/visibility-label";
+import { memberCountText } from "@/lib/group-labels";
 import { RoomTree } from "./rooms/room-tree";
-import { cn, formatRelativeTime, formatUnread, messageHref, roomsHubHref } from "@/lib/utils";
+import { cn, formatRelativeTime, formatUnread, messageHref } from "@/lib/utils";
 import { roomSlug } from "@/lib/community-rooms";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -28,6 +31,7 @@ export function ConversationRow({
   selection,
   onOpen,
   expandable = false,
+  showKindTag = false,
 }: {
   conversation: Conversation;
   /** Set by `/messages?sharePromptId=`/`?shareRequestId=` — appended so picking this conversation attaches the shared content there. */
@@ -43,11 +47,15 @@ export function ConversationRow({
   onOpen?: (conversation: Conversation) => void;
   /** İki bölmeli masaüstü paneli (docs/history/352-*): topluluk satırının altında oda ağacı açılır; ok, oda listesi bağlantısı yerine ağacı açıp kapatır. */
   expandable?: boolean;
+  /** "Tümü" görünümünde ekip/topluluk satırının adının yanında EKİP / TOPLULUK etiketi (Yön A, docs/history/353-*). */
+  showKindTag?: boolean;
 }) {
   const { t, language } = useTranslation();
   const participant = conversation.participants[0];
   const group = conversation.group;
-  const title = group ? group.name : participant?.displayName;
+  const team = group?.team ?? null;
+  // Ekip satırında başlık ekibin adıdır (kanalın adı değil); kanal adı ikinci satırda "# kanal" olarak görünür.
+  const title = team ? team.name : group ? group.name : participant?.displayName;
   const muted = Boolean(conversation.mutedAt);
   const selecting = selection !== undefined;
   const selected = selection?.selected === true;
@@ -72,7 +80,9 @@ export function ConversationRow({
         </span>
       </span>
       <span className="py-2.5 pr-3">
-        {group ? (
+        {team ? (
+          <TeamMark name={team.name} tone={team.tone} size={AVATAR_SIZE} className="rounded-[18px]" />
+        ) : group ? (
           <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={AVATAR_SIZE} badge />
         ) : (
           <PresenceAvatar userId={participant?.id} src={participant?.avatarUrl} alt={participant?.displayName ?? t("common.genericUser")} size={AVATAR_SIZE} />
@@ -84,6 +94,14 @@ export function ConversationRow({
           <span className="flex min-w-0 items-center gap-1.5">
             <span className={cn("truncate text-body tracking-[-0.01em] text-text", unread ? "font-bold" : "font-semibold")}>{title}</span>
             {muted && <BellOff size={12} className="shrink-0 text-text-muted" aria-label={t("groups.about.muteLabel")} />}
+            {showKindTag && group && (
+              <span
+                data-kind-tag={team ? "team" : "community"}
+                className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em]", team ? "bg-primary-soft text-primary" : "bg-success/10 text-success")}
+              >
+                {t(team ? "rooms.filter.team" : "rooms.filter.community")}
+              </span>
+            )}
           </span>
           <span className={cn("shrink-0 text-caption tabular-nums", unread ? "font-semibold text-text" : "text-text-muted")}>
             {formatRelativeTime(conversation.lastMessageAt, language)}
@@ -91,7 +109,11 @@ export function ConversationRow({
         </span>
         <span className="flex items-start justify-between gap-2">
           <span className={cn("line-clamp-2 min-w-0 flex-1 break-words text-small", unread ? "font-medium text-text" : "text-text-muted")}>
-            {group?.team && <span data-team-tag className="font-bold text-primary">{group.team.name} · </span>}
+            {team && (
+              <span data-team-channel className="font-bold text-primary">
+                # {team.channelName} ·{" "}
+              </span>
+            )}
             {lastRoom && <span data-last-room className="font-bold text-primary"># {roomSlug(lastRoom.name)} </span>}
             {conversation.lastMessage}
           </span>
@@ -107,6 +129,25 @@ export function ConversationRow({
             </span>
           )}
         </span>
+        {group && (
+          <span data-row-meta className="truncate text-caption text-text-muted">
+            {team ? (
+              <>
+                {conversation.teamRollup && conversation.teamRollup.unreadChannelCount > 0
+                  ? t("tm.list.rollup", { count: conversation.teamRollup.unreadChannelCount })
+                  : t("tm.list.noNew")}
+                {" · "}
+                {memberCountText(t, group.memberCount)}
+              </>
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                <VisibilityLabel visibility={group.visibility} size={11} className="inline-flex items-center gap-1" />
+                <span aria-hidden>·</span>
+                {memberCountText(t, group.memberCount)}
+              </span>
+            )}
+          </span>
+        )}
       </span>
     </>
   );
@@ -138,7 +179,7 @@ export function ConversationRow({
           {content}
         </Link>
       )}
-      {group && expandable && !onOpen && !selecting && !onUnarchive && (
+      {group && !team && expandable && !onOpen && !selecting && !onUnarchive && (
         <button
           type="button"
           onClick={() => setTreeOpen(!(treeOpen ?? Boolean(isActive)))}
@@ -149,16 +190,6 @@ export function ConversationRow({
         >
           {(treeOpen ?? Boolean(isActive)) ? <ChevronDown size={22} aria-hidden /> : <ChevronRight size={22} aria-hidden />}
         </button>
-      )}
-      {group && !expandable && !onOpen && !selecting && !onUnarchive && (
-        <Link
-          href={roomsHubHref(group.id)}
-          aria-label={t("rooms.list.openRooms", { name: group.name })}
-          data-open-rooms
-          className={cn("flex w-11 shrink-0 items-center justify-center text-text-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary", isActive && "bg-primary-soft")}
-        >
-          <ChevronRight size={22} aria-hidden />
-        </Link>
       )}
       {onUnarchive && !selecting && (
         <button
@@ -173,7 +204,7 @@ export function ConversationRow({
         </button>
       )}
     </div>
-    {group && expandable && paneVisible && !selecting && !onOpen && (treeOpen ?? Boolean(isActive)) && <RoomTree communityId={group.id} isActiveConversation={Boolean(isActive)} />}
+    {group && !team && expandable && paneVisible && !selecting && !onOpen && (treeOpen ?? Boolean(isActive)) && <RoomTree communityId={group.id} isActiveConversation={Boolean(isActive)} />}
     </div>
   );
 }

@@ -62,6 +62,9 @@ function seed(db, { role = "owner", invitations = [] } = {}) {
   reply("space_decide_item", () => ({ state: "approved" }));
   reply("team_list_channels", () => [channel(CH_GENERAL, "genel", "open", { unread_count: 3 }), channel(CH_SECRET, "yonetim", "private")]);
   reply("team_channel_members", () => []);
+  reply("team_set_channel_notify", () => null);
+  reply("team_archive_channel", () => null);
+  reply("team_delete_channel", () => null);
   reply("team_list_invitations", () => []);
   reply("team_list_invite_links", () => []);
   reply("team_invite_user", () => "e1000000-0000-4000-8000-0000000000c1");
@@ -274,24 +277,23 @@ await scenario("13. Telefon: Ekipler, ekip sayfası ve Yönetim yatay taşmaz", 
   assert.ok(await overflowFree(page), "admin");
 }, { viewport: { width: 390, height: 800 } });
 
-await scenario("14. Telefon: Sohbet tek bölmedir — önce kanal listesi, seçince sohbet + geri düğmesi", async ({ page }) => {
+await scenario("14. Telefon: ekip sayfasında Sohbet = kanal listesi; kanala dokunmak Mesajlar'daki TAM EKRAN sohbeti açar (ekip başlığı + kanal çipleri), geri düğmesi ekip sayfasına döner", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=chat`);
   await page.getByTestId("team-channel-list").waitFor();
-  assert.equal(await page.getByTestId("team-channel-view").isVisible(), false, "liste açıkken sohbet gizli");
+  assert.equal(await page.getByTestId("team-channel-view").isVisible().catch(() => false), false, "telefonda sayfa içinde gömülü sohbet yok");
+  assert.ok(await overflowFree(page));
   await page.locator('[data-channel="genel"]').click();
-  await page.getByTestId("team-channel-view").waitFor();
-  assert.equal(await page.getByTestId("team-channel-aside").isVisible(), false, "sohbet açıkken liste gizli");
+  await page.waitForURL(/\/messages\/local\/?\?id=.*from=team/);
+  await page.locator("[data-team-header]").waitFor();
+  assert.match(await page.locator("[data-team-header]").innerText(), /Atölye Mor/);
+  await page.locator("[data-team-header-sub]").waitFor();
+  await page.locator("[data-channel-chips]").waitFor();
+  assert.ok((await page.locator("[data-channel-chip]").count()) >= 1, "kanal çipleri");
   assert.ok(await overflowFree(page));
   await shot(page, "m_chat");
-  // Mockup: açık kanal tam ekran sohbettir — ekip başlığı ve sekmeler gizli, kanal çipleri ve geri düğmesi sohbet başlığında.
-  assert.equal(await page.getByTestId("team-tabs").isVisible(), false, "sohbet tam ekran: sekmeler gizli");
-  assert.equal(await page.locator("[data-team-invite-header]").isVisible(), false, "sohbet tam ekran: ekip başlığı gizli");
-  await page.getByTestId("team-channel-chips").waitFor();
-  assert.ok((await page.locator("[data-channel-chip]").count()) >= 2, "kanal çipleri");
-  await page.locator('[data-channel-chip="yonetim"]').click().catch(() => undefined);
-  await page.locator("[data-channel-back]").click();
+  await page.getByRole("button", { name: /Mesaj listesine dön|Back to message list/i }).first().click();
+  await page.waitForURL(/\/teams\/local\/?\?id=atolye-mor/);
   await page.getByTestId("team-channel-list").waitFor();
-  assert.equal(await page.getByTestId("team-tabs").isVisible(), true, "liste açıkken sekmeler görünür");
 }, { viewport: { width: 390, height: 800 }, setup: (db) => { db.addTeamChannel(CH_GENERAL, { name: "genel", members: [[U.bob, "member"]], texts: [[U.bob, "lansman afişi hazır"]] }); } });
 
 await scenario("17. Ekip sohbeti (gömülü): '+' menüsünde Kütüphaneden paylaş ve içe aktar, sohbette ara düğmesi", async ({ page }) => {
@@ -329,9 +331,118 @@ await scenario("16. Ekip kanalı = gerçek sohbet ekranı: mesajlar, yazma alan�
   assert.ok(db.messages.some((m) => m.conversation_id === CH_GENERAL && m.body === "harika, teşekkürler"), "mesaj ekip kanalı konuşmasına yazıldı");
   await page.goto(`${BASE}/messages`);
   const row = page.locator("[data-conversation-row]:visible").first();
-  await row.getByText("#genel").waitFor();
-  await row.locator("[data-team-tag]").getByText("Atölye Mor").waitFor();
+  await row.getByText("Atölye Mor").first().waitFor();
+  await row.locator("[data-team-channel]").getByText("# genel").waitFor();
+  await row.locator("[data-kind-tag]").getByText("Ekip").waitFor();
 }, { setup: (db) => { db.addTeamChannel(CH_GENERAL, { name: "genel", members: [[U.bob, "member"]], texts: [[U.bob, "lansman afişi hazır"]] }); } });
+
+// --- Yön A: tek sohbet, tek bilgi sayfası (docs/history/353-*) ---
+const twoChannels = (role = "owner") => (db) => {
+  db.addTeamChannel(CH_GENERAL, { name: "genel", myRole: role, members: [[U.bob, "member"]], texts: [[U.bob, "lansman afişi hazır"]] });
+  db.addTeamChannel(CH_SECRET, { name: "yonetim", myRole: role, members: [[U.bob, "member"]], texts: [[U.bob, "bütçe toplantısı"]] });
+};
+
+await scenario("18. Mesajlar: ekibin iki kanalı TEK satırdır (ekip adı + etiket + '# kanal' + özet), özet satırı ve CTA", async ({ page }) => {
+  await page.goto(`${BASE}/messages`);
+  const rows = page.locator("[data-conversation-row]:visible");
+  await rows.first().waitFor();
+  assert.equal(await rows.count(), 1, "iki kanal tek ekip satırı");
+  const row = rows.first();
+  await row.getByText("Atölye Mor").first().waitFor();
+  await row.locator("[data-team-channel]").waitFor();
+  await row.locator("[data-kind-tag]").getByText("Ekip").waitFor();
+  await row.locator("[data-row-meta]").waitFor();
+  await page.locator("[data-kind-chip='team']:visible").click();
+  await page.locator("[data-kind-summary]:visible").waitFor();
+  assert.match(await page.locator("[data-kind-summary]:visible").innerText(), /1 ekip/);
+  await page.locator("[data-kind-cta]:visible").waitFor();
+  assert.ok(await overflowFree(page));
+}, { setup: twoChannels() });
+
+await scenario("19. Ekip sohbeti başlığı: ekip adı + '# kanal · N üye'; kanal çipleri; çip kanalı değiştirir", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?id=${CH_GENERAL}`);
+  const header = page.locator("[data-team-header]");
+  await header.waitFor();
+  assert.match(await header.innerText(), /Atölye Mor/);
+  assert.match(await page.locator("[data-team-header-sub]").innerText(), /# genel/);
+  const chips = page.locator("[data-channel-chips] [data-channel-chip]");
+  await chips.first().waitFor();
+  assert.equal(await chips.count(), 2);
+  assert.equal(await page.locator("[data-channel-chip='genel']").getAttribute("aria-selected"), "true");
+  await page.locator("[data-channel-chip='yonetim']").click();
+  await page.waitForFunction((id) => location.search.includes(`id=${id}`), CH_SECRET);
+  await page.locator("[data-chat-scroll]").getByText("bütçe toplantısı").waitFor();
+}, { setup: twoChannels() });
+
+await scenario("20. Ekip bilgisi (E3): tek sayfa — kanal listesi (açık olan işaretli), Ekip sayfası, Kanal ekle (new=1), kanallara toplu bildirim düzeyi", async ({ page, db }) => {
+  await page.goto(`${BASE}/messages/local?id=${CH_GENERAL}`);
+  await page.locator("[data-team-header]").click();
+  const info = page.locator("[data-team-info]");
+  await info.waitFor();
+  await info.locator("[data-info-channel='genel'][aria-current='true']").waitFor();
+  await info.locator("[data-info-channel='yonetim']").waitFor();
+  assert.match(await info.locator("[data-info-team-link]").first().getAttribute("href"), /teams\/local\/?\?id=/);
+  assert.match(await info.locator("[data-info-add-channel]").getAttribute("href"), /new=1/);
+  await info.locator("[data-segmented='team-notify'] [data-segment='none']").click();
+  await page.waitForFunction(() => true);
+  await page.waitForTimeout(400);
+  const calls = called(db, "team_set_channel_notify");
+  assert.equal(calls.length, 2, "ekibin her kanalına yazılır");
+  assert.ok(calls.every((c) => c.body.p_level === "none"));
+  await info.locator("[data-info-channel='yonetim']").click();
+  await page.waitForFunction((id) => location.search.includes(`id=${id}`), CH_SECRET);
+}, { setup: twoChannels() });
+
+await scenario("21. Kanal bilgisi (E4): kim görür/yazar, bildirim düzeyi, yönetici Düzenle (settings=1) · Arşivle onayı; üye yönetimi görmez", async ({ page, db }) => {
+  await page.goto(`${BASE}/messages/local?id=${CH_GENERAL}`);
+  await page.locator("[data-team-header]").click();
+  await page.locator("[data-info-channel-info='genel']").click();
+  const sheet = page.locator("[data-channel-info]");
+  await sheet.waitFor();
+  await sheet.getByText("Kim görür").waitFor();
+  await sheet.locator("[data-segmented='channel-notify'] [data-segment='all']").click();
+  await page.waitForTimeout(300);
+  assert.ok(called(db, "team_set_channel_notify").some((c) => c.body.p_channel === CH_GENERAL && c.body.p_level === "all"));
+  assert.match(await sheet.locator("[data-channel-edit]").getAttribute("href"), /settings=1/);
+  assert.equal(await sheet.locator("[data-channel-archive]").count(), 0, "varsayılan kanal arşivlenemez");
+}, { setup: twoChannels() });
+
+await scenario("21b. Kanal bilgisi: yönetici gizli olmayan kanalı arşivler (onaylı); üye Düzenle/Arşivle görmez", async ({ page, db }) => {
+  await page.goto(`${BASE}/messages/local?id=${CH_SECRET}`);
+  await page.locator("[data-team-header]").click();
+  await page.locator("[data-info-channel-info='yonetim']").click();
+  await page.locator("[data-channel-info]").waitFor();
+  await page.locator("[data-channel-archive]").click();
+  await page.locator("#channel-confirm-title").waitFor();
+  await page.getByRole("button", { name: "Arşivle", exact: true }).last().click();
+  await page.waitForTimeout(400);
+  assert.equal(called(db, "team_archive_channel").length, 1);
+}, { setup: twoChannels() });
+
+await scenario("21c. Üye: kanal bilgisinde yönetim bölümü yok", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?id=${CH_GENERAL}`);
+  await page.locator("[data-team-header]").click();
+  await page.locator("[data-info-channel-info='genel']").click();
+  await page.locator("[data-channel-info]").waitFor();
+  assert.equal(await page.locator("[data-channel-admin]").count(), 0);
+}, { role: "member", setup: twoChannels("member") });
+
+await scenario("22. Konuk (E5): sohbette 'Konuk erişimi' bandı; Kanal ekle yok", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?id=${CH_GENERAL}`);
+  await page.locator("[data-guest-banner]").waitFor();
+  assert.match(await page.locator("[data-guest-banner]").innerText(), /Konuk erişimi/);
+  await page.locator("[data-team-header]").click();
+  await page.locator("[data-team-info]").waitFor();
+  assert.equal(await page.locator("[data-info-add-channel]").count(), 0);
+}, { role: "guest", setup: twoChannels("guest") });
+
+await scenario("23. İngilizce: ekip bilgisi ve kanal bilgisi başlıkları", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?id=${CH_GENERAL}`);
+  await page.locator("[data-team-header]").click();
+  await page.getByRole("heading", { name: "Team info" }).waitFor();
+  await page.locator("[data-info-channel-info='genel']").click();
+  await page.locator("[data-channel-info]").getByText("Who can see it").waitFor().catch(async () => { await page.locator("[data-channel-info]").getByText(/Channel/).first().waitFor(); });
+}, { lang: "en", setup: twoChannels() });
 
 await browser.close();
 server.close();
