@@ -83,7 +83,6 @@ export function ConversationRow({
         <span className="flex items-baseline justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1.5">
             <span className={cn("truncate text-body tracking-[-0.01em] text-text", unread ? "font-bold" : "font-semibold")}>{title}</span>
-            {group?.team && <span data-team-tag className="shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-[11px] font-bold text-text-secondary">{group.team.name}</span>}
             {muted && <BellOff size={12} className="shrink-0 text-text-muted" aria-label={t("groups.about.muteLabel")} />}
           </span>
           <span className={cn("shrink-0 text-caption tabular-nums", unread ? "font-semibold text-text" : "text-text-muted")}>
@@ -92,6 +91,7 @@ export function ConversationRow({
         </span>
         <span className="flex items-start justify-between gap-2">
           <span className={cn("line-clamp-2 min-w-0 flex-1 break-words text-small", unread ? "font-medium text-text" : "text-text-muted")}>
+            {group?.team && <span data-team-tag className="font-bold text-primary">{group.team.name} · </span>}
             {lastRoom && <span data-last-room className="font-bold text-primary"># {roomSlug(lastRoom.name)} </span>}
             {conversation.lastMessage}
           </span>

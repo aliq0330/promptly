@@ -5,7 +5,7 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
-import { createDb, installMock } from "./mock.mjs";
+import { createDb, installMock, U } from "./mock.mjs";
 
 const PORT = 4219;
 const BASE = `http://localhost:${PORT}/promptly`;
@@ -72,10 +72,11 @@ function seed(db, { role = "owner", invitations = [] } = {}) {
   reply("join_team_via_link", () => ({ team_id: TEAM, slug: "atolye-mor" }));
 }
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", role = "owner", invitations = [] } = {}) {
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", role = "owner", invitations = [], setup } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
   seed(db, { role, invitations });
+  setup?.(db);
   const context = await browser.newContext({ viewport });
   await installMock(context, db, {});
   await context.addInitScript((l) => { try { localStorage.setItem("promptly-language", l); localStorage.setItem("promptly-tour-seen", "1"); } catch {} }, lang);
@@ -85,6 +86,8 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   page.on("pageerror", (e) => errors.push(String(e)));
   try {
     await fn({ page, db });
+    // SHOT=<klasör>: her senaryonun son ekranını kaydeder (görsel inceleme için; test sonucunu etkilemez).
+    if (process.env.SHOT) await page.screenshot({ path: `${process.env.SHOT}/${name.split(".")[0].replace(/\W+/g, "_")}.png` }).catch(() => undefined);
     assert.deepEqual(errors, [], "no uncaught page errors");
     results.push(["PASS", name]);
   } catch (e) {
@@ -96,8 +99,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 }
 const called = (db, name) => db.teamCalls.filter((c) => c.name === name);
 const tabs = async (page) => {
-  await page.locator("[data-section-menu]").first().click();
-  const items = await page.locator("[data-section-option]").allInnerTexts();
+  const items = await page.locator("[data-team-tab-link]").allInnerTexts();
   return items.map((t) => t.replace(/\s+/g, " ").trim());
 };
 
@@ -110,7 +112,7 @@ await scenario("1. /teams: ekip kartı (üye + Space sayısı, rol), tek RPC; So
   await card.getByText("2 Space").waitFor();
   await card.getByText("Sahip", { exact: true }).waitFor();
   await card.locator("[data-team-open-chat]").getByText("3").waitFor();
-  assert.equal(called(db, "my_teams").length, 1);
+  assert.ok(called(db, "my_teams").length <= 2, "sayfa + kenar çubuğu en çok iki istek");
 });
 
 await scenario("2. Bekleyen davet: Katıl → team_respond_invitation(kabul) ve ekip sayfasına gider", async ({ page, db }) => {
@@ -195,7 +197,7 @@ await scenario("8. Sohbet: kanal listesi (özel kanalda kilit), okunmamış roze
   await list.waitFor();
   await list.locator('[data-channel="genel"]').getByText("3").waitFor();
   await list.locator('[data-channel="yonetim"]').click();
-  await page.getByTestId("team-channel-view").getByRole("heading", { name: "yonetim" }).waitFor();
+  await page.getByTestId("team-channel-view").getByRole("heading", { name: /yonetim/ }).waitFor();
   assert.equal(await page.locator(`[data-channel-id="${CH_SECRET}"]`).count(), 1);
 });
 
@@ -233,7 +235,8 @@ await scenario("11. /team-join: geçersiz jeton hiçbir ekip bilgisi vermez", as
   db.rpc.preview_team_link = () => ({ status: 400, body: { code: "P0001", message: "link_not_found" } });
   await page.goto(`${BASE}/team-join#${TOKEN}`);
   await page.getByText("Bu bağlantı geçerli değil").waitFor();
-  assert.equal(await page.getByText("Atölye Mor").count(), 0);
+  assert.equal(await page.getByTestId("team-join").count(), 0, "önizleme kartı yok");
+  assert.equal(await page.locator("main").getByText("Atölye Mor").count(), 0);
 });
 
 await scenario("12. İngilizce: Ekipler başlığı, ekip sekmeleri ve rol", async ({ page }) => {
@@ -267,6 +270,33 @@ await scenario("14. Telefon: Sohbet tek bölmedir — önce kanal listesi, seçi
   await page.locator("[data-channel-back]").click();
   await page.getByTestId("team-channel-list").waitFor();
 }, { viewport: { width: 390, height: 800 } });
+
+await scenario("15. Ekip başlığı (mockup): geri bağlantısı, Ekip rozeti, üye · Space · Yalnızca davetle satırı, Davet et; kenar çubuğunda Ekiplerim", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
+  await page.getByTestId("team-page").waitFor();
+  await page.locator("[data-team-back]").waitFor();
+  await page.getByText("Yalnızca davetle").waitFor();
+  await page.locator("[data-team-invite-header]").waitFor();
+  const sidebar = page.getByTestId("sidebar-teams");
+  await sidebar.getByText("Atölye Mor").waitFor();
+  await sidebar.getByText("Ekiplerim").waitFor();
+});
+
+await scenario("16. Ekip kanalı = gerçek sohbet ekranı: mesajlar, yazma alanı, gönderme; Mesajlar listesinde Ekip rozetiyle AYNI konuşma", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=chat&channel=genel`);
+  const view = page.getByTestId("team-channel-view");
+  await view.waitFor();
+  await view.getByText("lansman afişi hazır").waitFor();
+  const box = view.getByRole("textbox").last();
+  await box.fill("harika, teşekkürler");
+  await box.press("Enter");
+  await view.getByText("harika, teşekkürler").waitFor();
+  assert.ok(db.messages.some((m) => m.conversation_id === CH_GENERAL && m.body === "harika, teşekkürler"), "mesaj ekip kanalı konuşmasına yazıldı");
+  await page.goto(`${BASE}/messages`);
+  const row = page.locator("[data-conversation-row]:visible").first();
+  await row.getByText("#genel").waitFor();
+  await row.locator("[data-team-tag]").getByText("Atölye Mor").waitFor();
+}, { setup: (db) => { db.addTeamChannel(CH_GENERAL, { name: "genel", members: [[U.bob, "member"]], texts: [[U.bob, "lansman afişi hazır"]] }); } });
 
 await browser.close();
 server.close();

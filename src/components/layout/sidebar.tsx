@@ -14,6 +14,7 @@ import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
+import { SidebarTeams } from "@/components/layout/sidebar-teams";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -103,6 +104,7 @@ export function Sidebar() {
             <ul className="space-y-0.5">{group.items.map(renderItem)}</ul>
           </div>
         ))}
+        {isAuthenticated && <SidebarTeams />}
       </nav>
 
       {bottomItems.length > 0 && (

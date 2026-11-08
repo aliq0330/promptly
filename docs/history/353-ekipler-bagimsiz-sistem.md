@@ -71,3 +71,20 @@ okuma, yazma, arama, yıldız, paylaşılan medya, sabit, okundu bilgisi, "yazı
 **Düzeltilen hatalar (testlerin yakaladığı):** `conversation_members.notify_level` zaten topluluğun sütunuydu (`all/important/none`) → kanal düzeyi `team_notify_level`e taşındı; `_team_role` NULL döndüğü için `not in` karşılaştırmaları ownership devrini bypass ediyordu → `coalesce`; `api_me_library_prompts` kişisel kütüphanede görüntüleyicinin onaysızları görmesini bozmuştu → ekip dışı için eski davranış.
 
 **Bilerek yapılmayanlar:** `chat_groups_visibility_check` hâlâ `private` kabul eder (arayüzde yok; daraltmak onlarca topluluk SQL fixture'ını yeniden yazmayı ister); ekip kanalı sohbeti kompakt görünüm (Mesajlar'daki tam sohbet ekranı `team_channel` için bağlanmadı); `/mcp/team/<ad>` ve MCP `team` argümanı; telefon için ayrı tasarım yerine duyarlı bileşenler; Space sayfasında ekip şeridi; kanal mesajı şikâyeti; Gizlilik/Koşullar metni.
+
+
+## İkinci tur — eksiklerin kapatılması (2026-11-08)
+
+Kullanıcı listeyi verip "eksikleri yap" dedi. Mockup (`Promptly Ekipler Mockup`, 54 dosya) okunup karşılaştırıldı: kenar çubuğunda **Ekiplerim**, ekip başlığında **Ekip rozeti + "N üye · N Space · Yalnızca davetle" + Davet et**, alt çizgili sekme satırı, sohbette kanal listesi + **çevrimiçi listesi**, paylaşılan içerik kartları — bunlar yapıldı.
+
+| Eksik | Çözüm |
+|---|---|
+| Tam sohbet ekranı ekip kanalına bağlı değildi | `messages.ts` `team_channel`ı grup gibi eşler (`groupFromTeamChannel`; `group.team` dolu); `LocalConversationView` `dock.embedded` ile ekip sayfasına gömülür; topluluk işleri `teamChannel` ile kapatılır; Mesajlar listesi "Ekip" çipi + etiket. Tepki/yanıt/sabitleme/yıldız/fotoğraf/GIF/düzenleme/"yazıyor" hazır sohbetten gelir (üyelik tabanlı RLS zaten kapsıyordu). |
+| Kanal mesajı şikâyeti | `team_report_message` (+ `submit_report` yönlendirmesi): ekip sahip + yöneticilerine bildirim, denetim günlüğü `message_reported`; site moderatörüne gitmez. |
+| Gizlilik/Koşullar | "Ekipler" bölümleri (denetim günlüğü, API kullanım kaydı, konuk verisi); `TERMS_VERSION` 2026-11-08. |
+| Ekip MCP adresi | `/mcp/team/<ad>` (kişisel adres + o ekibe daraltma), `list_my_libraries` `team` argümanı, Yönetim → Entegrasyonlar'da adres. |
+| Space sayfası | `TeamSpaceStrip`: ekip sayfası, ekip sohbeti, "Sohbete gönder" (Space başlık+bağlantı bloğu). |
+| Ekip bildirimleri tek dilli | `notification-message.ts` ekip kalıpları + `notifMsg.team*` çevirileri. |
+| Görsel uyum / telefon | Ekran görüntüsüyle gözden geçirildi; başlık telefonda yığılır, "Davet et" tam genişlik, tek bölmeli sohbet. Mockup'taki 16 telefon ekranı BİREBİR yeniden çizilmedi. |
+
+Yapılmayan: `private` CHECK daraltma (fixture maliyeti), gömülü sohbette kütüphane/içe aktarma, mockup piksel eşleşmesi.

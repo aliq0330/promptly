@@ -119,6 +119,7 @@ const CHECKS = [
   { name: "rpc my_teams (Ekipler, docs/history/353-*; yalnız oturumlu)", rpc: "my_teams", body: { p_limit: 1, p_offset: 0 }, deniedOk: true, soft: true },
   { name: "rpc team_list_channels (ekip kanalları; yalnız oturumlu)", rpc: "team_list_channels", body: { p_team: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
   { name: "rpc preview_team_link (davet bağlantısı; yalnız oturumlu)", rpc: "preview_team_link", body: { p_token: "x" }, deniedOk: true, soft: true },
+  { name: "rpc team_report_message (ekip kanalı mesajı şikâyeti; yalnız oturumlu)", rpc: "team_report_message", body: { p_message: "00000000-0000-4000-8000-000000000000", p_reason_code: "spam" }, deniedOk: true, soft: true },
   { name: "spaces.team_id (ekibe bağlı Space, docs/history/353-*)", get: () => `spaces?select=id,team_id&limit=1` },
   { name: "profiles.suspended_reason ziyaretçiye KAPALI olmalı (moderasyon gerekçesi, docs/history/302-*)", get: () => `profiles?select=suspended_reason&limit=1`, mustBeDenied: true },
   { name: "rpc public_api_rate_hit sırsız REDDEDİLMELİ (hız sınırı sayacı, docs/history/302-*)", rpc: "public_api_rate_hit", body: { p_secret: "smoke-test-wrong-secret", p_bucket: "smoke-test-00000000", p_limit: 1, p_window_seconds: 60 }, mustBeDenied: true },
