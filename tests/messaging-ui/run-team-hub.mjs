@@ -705,6 +705,21 @@ await scenario("37. Telefon: Ekip sayfasında genel üst menü görünür; açı
   assert.equal(await page.locator("[data-app-header]").isVisible(), false, "açık kanal: üst menü gizli");
 }, { viewport: { width: 390, height: 800 } });
 
+await scenario("38. Telefon: Yönetim'de ekip sekme menüsü ile bölüm menüsü TEK satırda yan yana (alt alta değil)", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=audit`);
+  const row = page.locator("[data-admin-phone-menus]");
+  await row.waitFor();
+  const buttons = row.locator("button[aria-haspopup], button");
+  assert.ok((await buttons.count()) >= 2, "iki menü düğmesi");
+  const a = await buttons.nth(0).boundingBox();
+  const b = await buttons.nth(1).boundingBox();
+  assert.ok(Math.abs(a.y - b.y) < 4, `aynı satırda olmalı (${a.y} / ${b.y})`);
+  assert.equal(await page.locator("[data-team-phone-menu]").count(), 0, "ayrı tek menü satırı yok");
+}, { viewport: { width: 390, height: 800 }, setup: (db) => {
+  db.rpc.team_audit_list = () => ({ body: [] });
+  db.rpc.team_audit_stats = () => ({ body: { total: 0, role_access: 0, deletes: 0 } });
+} });
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => r[0] === "FAIL");

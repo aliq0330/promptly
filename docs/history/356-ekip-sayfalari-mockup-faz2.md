@@ -31,3 +31,7 @@
 ## Düzeltme: telefonda genel üst menü geri geldi (2026-11-08)
 
 Faz 1'de `/teams*` için telefonda genel üst menü (`[data-app-header]`) gizlenmişti (`header.tsx` `inChat`). Kullanıcı geri istedi: artık Ekipler ve Ekip sayfasında üst menü görünür. Yalnız tam ekran durumlarda gizlenir: Kütüphane prompt ayrıntısı ve Onay incelemesi (`html[data-fullscreen-detail]`, kendi üst çubuklarını çizer) ve açık kanal sohbeti (`html[data-team-focus]`, `team-page.tsx` ayarlar; alt menüye dokunulmaz). Ekip çubuğundaki yinelenen zil kaldırıldı (üst menüde zil var). Test: `run-team-hub` senaryo 37.
+
+## Düzeltme: telefonda Yönetim menüleri tek satır (2026-11-08)
+
+Telefonda Yönetim'de ekip sekme menüsü ("Yönetim ▾"), bölüm menüsü ("Denetim günlüğü ▾") ve süzgeç hapları alt alta üç dört satır tutuyordu (kullanıcı ekran görüntüsüyle bildirdi). Artık ilk iki menü tek satırda yan yana (`[data-admin-phone-menus]`; `admin` sekmesi `OWN_MENU_TABS`'a girdi, ayrı menü satırı yok) ve Denetim süzgeçleri (Tüm olaylar · Son N gün · CSV) tek satır. Test: `run-team-hub` senaryo 38.
