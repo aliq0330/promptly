@@ -757,6 +757,41 @@ await scenario("40. Telefon: Ekipler listesi Topluluklar ile aynı iskelet — b
   await page.waitForFunction(() => document.querySelectorAll("[data-team-card]").length === 0);
 }, { viewport: { width: 390, height: 800 } });
 
+await scenario("41. Telefon ana ekranı (docs/history/358-*, mockup birebir): ortak kimlik bloğu + 2×3 karo (sayı + rozet) + Senden bekleyenler + Son Space'ler; alt menü kadar boşluk", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor`);
+  const root = page.getByTestId("team-phone-root");
+  await root.waitFor();
+  const identity = root.getByTestId("team-phone-identity");
+  await identity.locator("[data-phone-back]").waitFor();
+  assert.match(await identity.innerText(), /EKİP/);
+  assert.match(await identity.innerText(), /Atölye Mor/);
+  assert.match(await identity.innerText(), /6 üye · 2 Space/);
+  await identity.locator("[data-team-open-chat]").waitFor();
+  await identity.locator("[data-team-invite-phone]").waitFor();
+  const tiles = root.locator("[data-phone-tiles] [data-phone-section]");
+  assert.equal(await tiles.count(), 6, "altı bölüm karosu");
+  assert.match(await root.locator("[data-phone-section=chat]").innerText(), /\d+ kanal/);
+  await root.locator("[data-phone-section=library]").getByText("3 prompt").waitFor();
+  await root.locator("[data-phone-section=library] [data-phone-badge]").waitFor();
+  const todos = root.getByTestId("team-phone-todos");
+  await todos.getByText("Ürün tanıtım").waitFor();
+  await todos.getByRole("link", { name: "İncele" }).waitFor();
+  const spaces = root.getByTestId("team-phone-spaces");
+  await spaces.getByText("Kampanya panosu").waitFor();
+  // Alt menünün altında hiçbir şey kalmasın: sona kaydır, son bölümün alt kenarı alt menünün üst kenarından yukarıda olmalı.
+  const gap = await page.evaluate(async () => {
+    const nav = document.querySelector("[data-app-nav]");
+    const last = document.querySelector("[data-testid=team-phone-spaces]");
+    for (const el of [document.scrollingElement, ...document.querySelectorAll("main, [data-app-scroll]")]) el?.scrollTo?.(0, 1e6);
+    await new Promise((r) => setTimeout(r, 200));
+    return nav.getBoundingClientRect().top - last.getBoundingClientRect().bottom;
+  });
+  assert.ok(gap >= 8, `son bölüm alt menünün üstünde kalır (boşluk ${gap}px)`);
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "yatay taşma yok");
+}, { viewport: { width: 390, height: 800 }, setup: (db) => {
+  db.rpc.my_team_todos = () => ({ body: [{ team_id: TEAM, team_name: "Atölye Mor", team_slug: "atolye-mor", kind: "approvals", n: 1, label: null, href: `/teams/local?id=${TEAM}&tab=library&status=pending`, at: "2026-11-08T08:00:00Z" }, { team_id: TEAM, team_name: "Atölye Mor", team_slug: "atolye-mor", kind: "review", n: 1, label: "Ürün tanıtım · Carol", href: `/teams/local?id=${TEAM}&tab=library&review=${ITEM}`, at: "2026-11-08T08:00:00Z" }] });
+} });
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => r[0] === "FAIL");

@@ -10,13 +10,7 @@ import { ScrollRow } from "@/components/ui/scroll-row";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { MessageCircle } from "@/components/icons/message-circle";
-import { BarChart3 } from "@/components/icons/bar-chart-3";
-import { BookOpen } from "@/components/icons/book-open";
-import { MessagesSquare } from "@/components/icons/messages-square";
-import { Settings } from "@/components/icons/settings";
-import { Shapes } from "@/components/icons/shapes";
-import { Users } from "@/components/icons/users";
-import { PhoneSectionList, PhoneSubBar, type PhoneSectionItem } from "@/features/content/phone-sections";
+import { PhoneSubBar } from "@/features/content/phone-sections";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { InviteDialog } from "./team-invites";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -29,6 +23,7 @@ import { TeamLibrarySection } from "./team-library-section";
 import { TeamMembersSection } from "./team-members-section";
 import { TeamPanelSection } from "./team-panel-section";
 import { TeamSpacesSection } from "./team-spaces-section";
+import { TeamPhoneHome } from "./team-phone-home";
 import { TeamMark } from "./team-ui";
 
 export interface TeamCtx {
@@ -158,19 +153,9 @@ export function TeamPage() {
   })();
 
   const chatTarget = teamLink(id, "chat");
-  // Telefon: `tab` adreste yoksa kök liste; varsa alt sayfa. Masaüstü hep sekmeli eski düzen (varsayılan Space'ler).
+  // Telefon: `tab` adreste yoksa kök ana ekran; varsa alt sayfa. Masaüstü hep sekmeli eski düzen (varsayılan Space'ler).
   const phoneRoot = phone && !rawTab && !params.get("channel");
   const phoneSub = phone && !phoneRoot;
-  const TAB_ICON: Record<TeamTab, PhoneSectionItem["icon"]> = { spaces: Shapes, library: BookOpen, chat: MessagesSquare, members: Users, panel: BarChart3, admin: Settings };
-  const TAB_META: Partial<Record<TeamTab, string | number>> = { spaces: team.spaceCount, members: team.memberCount };
-  const sectionItems: PhoneSectionItem[] = items.map((item) => ({
-    key: item.key,
-    label: item.label,
-    href: teamLink(id, item.key),
-    icon: TAB_ICON[item.key],
-    meta: TAB_META[item.key],
-    badge: item.key === "chat" ? team.unreadCount || undefined : undefined,
-  }));
   // Onay incelemesi tam sayfadır (mockup 11); telefonda prompt ayrıntısı da kendi üst çubuğunu çizer (P4).
   const reviewing = tab === "library" && Boolean(params.get("review"));
   const itemOpen = tab === "library" && Boolean(params.get("item"));
@@ -185,34 +170,7 @@ export function TeamPage() {
     <div className="mx-auto w-full max-w-5xl px-3 pb-5 sm:px-5 md:space-y-4 md:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
       {/* Telefon (docs/history/357-*, Yön C): kök = kimlik + sohbet düğmesi + bölüm LİSTESİ; bir bölüm açılınca alt sayfa çubuğu. Yönetim kendi çubuklarını çizer. */}
       {!chatFocus && !itemOpen && phoneRoot && (
-        <div className="-mx-3 mb-3 md:hidden" data-team-phone-bar data-testid="team-phone-root">
-          <div className="flex h-12 items-center gap-1 px-2">
-            <Link href="/teams" aria-label={t("tm.title")} className="grid h-10 w-10 place-items-center rounded-full text-text hover:bg-surface-soft" data-team-back>
-              <ArrowLeft size={20} aria-hidden />
-            </Link>
-            <span className="text-small font-medium text-text-secondary">{t("tm.title")}</span>
-          </div>
-          <div className="space-y-3 px-3 pt-1" data-team-phone-identity>
-            <div className="flex items-center gap-3">
-              <TeamMark name={team.name} tone={team.tone} size={56} solid className="rounded-2xl" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="truncate text-h2">{team.name}</h1>
-                  <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-primary-soft px-2.5 text-caption font-bold text-primary">{t("tm.badge")}</span>
-                </div>
-                <p className="text-small text-text-secondary">
-                  {t("tm.card.members", { count: team.memberCount })} · {t("tm.card.spaces", { count: team.spaceCount })}
-                </p>
-              </div>
-            </div>
-            <Link href={chatTarget} className={buttonClassName({ variant: "primary", className: "h-12 w-full gap-2" })} data-team-open-chat>
-              <MessageCircle size={18} aria-hidden />
-              {t("tm.header.openChat")}
-              {team.unreadCount > 0 && <span className="grid h-6 min-w-6 place-items-center rounded-full bg-white px-1.5 text-caption font-bold text-primary">{team.unreadCount}</span>}
-            </Link>
-            <PhoneSectionList ariaLabel={t("tm.tab.aria")} items={sectionItems} />
-          </div>
-        </div>
+        <TeamPhoneHome team={team} tabs={items} canInvite={can("manage_members") && !isGuest} onInvite={() => setInviteOpen(true)} />
       )}
       {!chatFocus && !itemOpen && phoneSub && tab !== "admin" && (
         <div data-team-phone-bar>

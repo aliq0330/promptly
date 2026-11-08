@@ -558,6 +558,37 @@ await scenario("28. Telefon (Yön C): topluluk kökü kompakt kapak + bölüm li
   assert.ok(await overflowFree(page));
 }, { viewport: { width: 390, height: 800 }, setup: (db) => { db.addCommunity(id(1), { name: "Sahibi Olduğum", myRole: "owner", members: [[U.bob, "owner"]], rules: "1. Saygılı ol" }); for (let i = 1; i <= 3; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` }); } });
 
+// 29 — Telefon ana ekranı (docs/history/358-*): ekiple aynı kimlik bloğu + karolar + yaklaşan etkinlik + son gönderiler; alt menü kadar boşluk
+await scenario("29. Telefon ana ekranı (mockup birebir): kimlik bloğu (geri, etiket, ad, özet, Sohbeti aç + üyelik) + karolar (sayı) + Yaklaşan etkinlik + Son gönderiler", async ({ page }) => {
+  await page.goto(`${BASE}/communities/local?id=${id(1)}`);
+  const head = page.getByTestId("community-header-compact");
+  await head.waitFor();
+  const identity = head.locator("[data-phone-home-identity]");
+  await identity.locator("[data-phone-back]").waitFor();
+  assert.match(await identity.innerText(), /Sahibi Olduğum/);
+  await identity.locator("[data-open-chat]").waitFor();
+  const tiles = head.locator("[data-phone-tiles] [data-phone-section]");
+  assert.ok((await tiles.count()) >= 5, "bölüm karoları");
+  await head.locator("[data-phone-section=feed]").getByText("3 gönderi").waitFor();
+  await head.getByTestId("community-phone-event").getByText("Yaklaşan Etkinlik", { exact: true }).waitFor();
+  await head.getByTestId("community-phone-event").locator("[data-event-join]").click();
+  await head.getByTestId("community-phone-event").locator("[data-event-going]").waitFor();
+  await head.getByTestId("community-phone-posts").getByText("Düzen gönderisi").first().waitFor();
+  const gap = await page.evaluate(async () => {
+    const nav = document.querySelector("[data-app-nav]");
+    const last = document.querySelector("[data-testid=community-phone-posts]");
+    for (const el of [document.scrollingElement, ...document.querySelectorAll("main, [data-app-scroll]")]) el?.scrollTo?.(0, 1e6);
+    await new Promise((r) => setTimeout(r, 200));
+    return nav.getBoundingClientRect().top - last.getBoundingClientRect().bottom;
+  });
+  assert.ok(gap >= 8, `son bölüm alt menünün üstünde kalır (boşluk ${gap}px)`);
+  assert.ok(await overflowFree(page));
+}, { viewport: { width: 390, height: 800 }, setup: (db) => {
+  db.addCommunity(id(1), { name: "Sahibi Olduğum", myRole: "owner", members: [[U.bob, "owner"]], rules: "1. Saygılı ol" });
+  for (let i = 1; i <= 3; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` });
+  db.events.push({ id: "22222222-aaaa-4000-8000-000000000001", community_id: id(1), title: "Yaklaşan Etkinlik", description: null, starts_at: new Date(Date.now() + 5 * 86400000).toISOString(), ends_at: null, timezone: "Europe/Istanbul", location: null, online_url: null, status: "scheduled", going_count: 0, maybe_count: 0, rsvps: {} });
+} });
+
 await browser.close(); server.close();
 let failed = 0;
 for (const [status, name] of results) { console.log(`${status === "PASS" ? "✓" : "✗"} ${name}`); if (status === "FAIL") failed += 1; }

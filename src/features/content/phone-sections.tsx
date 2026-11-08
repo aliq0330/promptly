@@ -58,6 +58,8 @@ export interface PhoneSectionItem {
   /** Bekleyen iş: sayı kutusu turuncu çıkar (okunmamış/onay bekleyen). */
   badge?: number;
   danger?: boolean;
+  /** Karo (`PhoneTileGrid`) görünümünde etiketin altındaki küçük sayı/özet ("3 Space"); satır listesi görmez. */
+  sub?: string;
 }
 
 /** Bölüm listesi: simge dairesi + ad + sağda meta + ›. Her satır gerçek bağlantıdır (adres = bölüm). */
