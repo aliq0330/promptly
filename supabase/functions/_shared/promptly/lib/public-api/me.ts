@@ -76,7 +76,7 @@ async function runAsUser<T>(tx: MeTx, identity: MeIdentity, need: MeScope, fn: (
     throw new PublicApiError("insufficient_scope", `This credential does not have the "${need}" scope.`);
   }
   await tx("set local role authenticated");
-  await tx("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: identity.userId, role: "authenticated" })]);
+  await tx("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: identity.userId, role: "authenticated", token_id: identity.tokenId, via: identity.via })]);
   await tx("select public.api_me_throttle($1)", [need === "write"]);
   return await fn(tx, identity);
 }

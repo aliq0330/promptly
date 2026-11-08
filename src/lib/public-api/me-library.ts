@@ -67,8 +67,10 @@ function libraryOf(row: Record<string, unknown>, siteUrl: string): MeLibrary {
 }
 
 /** Üyesi olduğum ekip kütüphaneleri (arşivlenmemiş; en çok 50). */
-export async function listMyLibraries(tx: MeTx, siteUrl: string): Promise<{ items: MeLibrary[] }> {
-  const rows = await tx("select * from public.api_me_libraries()");
+export async function listMyLibraries(tx: MeTx, siteUrl: string, options: { team?: string | null } = {}): Promise<{ items: MeLibrary[] }> {
+  const team = options.team?.trim();
+  // `team` = ekip kısa adı (docs/history/353-*): yalnız o ekibin kütüphanesi; ekip politikası (MCP kapalı/kitle/engel) SQL'de uygulanır.
+  const rows = team ? await tx("select * from public.api_me_team_libraries($1)", [team]) : await tx("select * from public.api_me_libraries()");
   return { items: rows.map((row) => libraryOf(row, siteUrl)) };
 }
 
