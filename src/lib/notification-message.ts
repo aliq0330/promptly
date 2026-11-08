@@ -78,6 +78,16 @@ const COMMUNITY_TEMPLATES: [re: RegExp, key: string][] = [
   [/^"([\s\S]*)" topluluğunda rolün üye olarak değiştirildi\.$/, "notifMsg.communityRoleMember"],
 ];
 
+/** Ekip bildirimleri: ilk alıntı → `name`, kanal → `channel`, üçüncü → `preview`. */
+const TEAM_TEMPLATES: [re: RegExp, key: string][] = [
+  [/^"([\s\S]*)" ekibine davet etti\.$/, "notifMsg.teamInvited"],
+  [/^"([\s\S]*)" ekibinden çıkarıldın\.$/, "notifMsg.teamRemoved"],
+  [/^"([\s\S]*)" ekibi silindi\.$/, "notifMsg.teamDeleted"],
+  [/^"([\s\S]*)" promptunda değişiklik istedi\.$/, "notifMsg.teamChangesRequested"],
+  [/^([\s\S]*?) seni #([^\s]*) kanalında andı: "([\s\S]*)"$/, "notifMsg.teamMentioned"],
+  [/^([\s\S]*?) #([^\s]*) kanalında bir mesajı bildirdi\.$/, "notifMsg.teamMessageReported"],
+];
+
 const WEEKLY_PART_KEYS: Record<string, TranslationKey> = {
   kopyalama: "notifMsg.weeklyCopies",
   tepki: "notifMsg.weeklyReactions",
@@ -169,6 +179,19 @@ export function localizeNotificationMessage(rawMessage: string, language: "tr" |
   if (teamUnapproved) return t("notifMsg.teamPromptUnapproved", { name: teamUnapproved[1] });
   const teamReview = /^"([\s\S]*)" promptu için onay istedi\.$/.exec(message);
   if (teamReview) return t("notifMsg.teamReviewRequested", { name: teamReview[1] });
+  // Ekipler (docs/history/353-*): ekip/prompt/kanal adı çevrilmez.
+  for (const [re, key] of TEAM_TEMPLATES) {
+    const m = re.exec(message);
+    if (m) return t(key as TranslationKey, { name: m[1] ?? "", channel: m[2] ?? "", preview: m[3] ?? "" });
+  }
+  const TEAM_FIXED: Record<string, string> = {
+    "ekip davetini kabul etti.": "notifMsg.teamInviteAccepted",
+    "davet bağlantınla ekibe katıldı.": "notifMsg.teamLinkJoined",
+    "ekipteki rolünü değiştirdi.": "notifMsg.teamRoleChanged",
+    "ekibin sahipliğini sana devretti.": "notifMsg.teamOwnershipGiven",
+    "ekip erişim süreni uzattı.": "notifMsg.teamGuestExtended",
+  };
+  if (TEAM_FIXED[message]) return t(TEAM_FIXED[message] as TranslationKey);
   const spaceJoined = /^"([\s\S]*)" Space'ine katıldı\.$/.exec(message);
   if (spaceJoined) return t("notifMsg.spaceJoined", { name: spaceJoined[1] });
   // Yaratıcı paneli kilometre taşları (docs/history/295-*): prompt başlığı çevrilmez.

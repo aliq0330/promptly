@@ -27,11 +27,11 @@ export const LEGAL_CONTACT_EMAIL = "aliq0330@gmail.com";
  * "Kullanım Koşulları güncellendi" bandı yeniden çıkar (`features/legal/terms-update-notice.tsx`, karar `lib/legal-notice.ts`).
  * Yürürlükten sonra hesap açan kişi bandı görmez (kayıt ekranında yeni metni zaten görmüştür). Yalnız yazım düzeltmesi için artırma.
  */
-export const TERMS_VERSION = "2026-11-02";
-export const TERMS_EFFECTIVE_AT = "2026-11-02T12:00:00Z";
+export const TERMS_VERSION = "2026-11-08";
+export const TERMS_EFFECTIVE_AT = "2026-11-08T12:00:00Z";
 
 // İki belge ayrı güncellenir: birinin değişmesi diğerinin tarihini oynatmaz.
-const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 6 Kasım 2026", en: "Last updated: November 6, 2026" };
+const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 8 Kasım 2026", en: "Last updated: November 8, 2026" };
 const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 2 Kasım 2026", en: "Last updated: November 2, 2026" };
 
 const p = (tr: string, en: string): LegalBlock => ({ type: "p", text: { tr, en } });
@@ -99,6 +99,23 @@ export const PRIVACY_POLICY: LegalDocument = {
         p(
           "Herkese açık yayınladığın içerikler ve profil bilgilerin (kullanıcı adın, görünen adın, avatarın, biyografin) siteyi ziyaret eden herkes tarafından görülebilir. Özel olarak işaretlediğin içerikler ve taslakların yalnızca sana görünür; bu içeriklerin görsel, ses ve video dosyalarına başkaları erişemez. E-posta adresin başkalarına gösterilmez. Kişisel bilgilerini satmıyoruz.",
           "Content you publish publicly and your profile details (username, display name, avatar, bio) can be seen by anyone who visits the site. Content you mark private and your drafts are visible only to you, and other people cannot access the image, audio and video files of that content. Your email address is not shown to others. We do not sell your personal information.",
+        ),
+      ],
+    },
+    {
+      title: { tr: "Ekipler", en: "Teams" },
+      blocks: [
+        p(
+          "Bir ekibe katıldığında; ekipteki rolün, katılma tarihin, davet edenin ve (konuksan) kurum adın ile erişim bitiş tarihin saklanır. Ekibin Space'leri, kütüphanesi ve kanalları yalnızca erişimi olan ekip üyelerine ve konuklara görünür; özel kanalın varlığı ve mesajları kanalda olmayan üyelere de gösterilmez. Ekip yöneticileri üyelik, rol ve erişim bilgilerini görür ve ekibin verilerini dışa aktarabilir.",
+          "When you join a team we store your role in it, your join date, who invited you and, if you are a guest, your organisation name and the date your access ends. The team's Spaces, library and channels are visible only to team members and guests who have access; the existence and messages of a private channel are not shown even to members who are not in it. Team admins can see membership, role and access information and can export the team's data.",
+        ),
+        p(
+          "Ekibin Denetim günlüğü, ekipte kimin neyi ne zaman yaptığını kaydeder (üye ekleme/çıkarma, rol ve erişim değişiklikleri, prompt onayları, politika değişiklikleri, kanal işlemleri, bir kanal mesajının bildirilmesi, dışa aktarma). Kayıtta mesaj ya da prompt metni değil, işlemin türü, hedefin adı ve gerektiğinde kısa bir ayrıntı bulunur. Günlüğü yalnızca ekip yönetimi görür; ekip silinince günlük de silinir, hesabını silersen kayıtlardaki adın kaldırılır ama işlem kaydı kalır.",
+          "The team's Audit log records who did what and when in the team (adding and removing members, role and access changes, prompt approvals, policy changes, channel actions, reporting a channel message, exports). An entry holds the kind of action, the name of its target and, when needed, a short detail — not message or prompt text. Only team admins can see the log; it is deleted with the team, and if you delete your account your name is removed from entries but the record of the action stays.",
+        ),
+        p(
+          "Ekip kütüphanesini API ya da MCP ile okuyan kişi ve anahtar için gün başına okunan prompt sayısı tutulur (hangi kişinin hangi anahtarı ya da uygulaması, hangi gün, kaç okuma); prompt metni tutulmaz. Ekip yönetimi bu özeti görür ve bir anahtarı ekip kütüphanesinden engelleyebilir. Hesabını silersen bu kullanım kayıtların da silinir. Bir kanal mesajını bildirirsen şikâyet site moderatörlerine değil yalnızca o ekibin sahip ve yöneticilerine gider.",
+          "For each person and key that reads the team library through the API or MCP we keep how many prompts were read per day (which person's key or app, which day, how many reads); the prompt text is not kept. Team admins can see this summary and can block a key from the team library. If you delete your account your usage records are deleted too. If you report a channel message, the report goes only to that team's owner and admins, not to site moderators.",
         ),
       ],
     },
@@ -271,6 +288,19 @@ export const TERMS_OF_USE: LegalDocument = {
         p(
           "Kişisel bir API anahtarı oluşturursan, o anahtarla yapılan her işlem senin adına yapılmış sayılır. Anahtarını kimseyle paylaşma ve herkese açık yerlere (depo, ekran görüntüsü, paylaşılan not) koyma; sızdığını düşünürsen hemen iptal et. Anahtarla da içerik kuralları, hız sınırları ve hesap kısıtlamaları aynen geçerlidir; kötüye kullanılan ya da siteye zarar veren anahtarları iptal edebiliriz.",
           "If you create a personal API key, everything done with that key counts as done by you. Do not share your key or put it anywhere public (a repository, a screenshot, a shared note); if you think it has leaked, revoke it right away. The content rules, rate limits and account restrictions apply to actions made with a key too; we may revoke keys that are abused or that harm the site.",
+        ),
+      ],
+    },
+    {
+      title: { tr: "Ekipler", en: "Teams" },
+      blocks: [
+        p(
+          "Bir ekipte yaptığın işlemler ekibin Denetim günlüğüne kaydedilir ve ekip yönetimi tarafından görülebilir. Ekibe yazdığın promptlar, değişkenler ve mesajlar ekibin çalışma alanındadır: ekip yönetimi bunları onaylayabilir, kullanımdan kaldırabilir ya da dışa aktarabilir; ekipten çıkarılırsan içeriklerin akıbeti ekibin politikasına ve çıkarılırken yöneticinin seçtiği seçeneğe göre belirlenir (ekipte kalır, bir üyeye devredilir ya da sana kişisel kopya olarak verilir).",
+          "What you do in a team is recorded in the team's Audit log and can be seen by the team's admins. The prompts, variables and messages you write to a team live in the team's workspace: admins can approve, deprecate or export them, and if you are removed from the team, what happens to your content follows the team's policy and the option the admin picks when removing you (it stays with the team, is handed to a member, or is given to you as a personal copy).",
+        ),
+        p(
+          "Ekip kütüphanesini API ya da MCP ile okuyan bir araç, ekip yönetiminin belirlediği kurallara tabidir; yönetim erişimi kapatabilir ya da bir anahtarı engelleyebilir. Ekibe, erişimi olmayan kişilerin içeriği görmesini sağlayacak biçimde bilgi taşımamalısın.",
+          "A tool that reads the team library through the API or MCP is subject to the rules the team's admins set; they can switch the access off or block a key. You must not move team information in a way that lets people who do not have access see it.",
         ),
       ],
     },

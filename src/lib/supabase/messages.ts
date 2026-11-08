@@ -4,13 +4,14 @@ import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
 import { isGifOnly, removeMessageImages } from "./message-images";
 import { mapChatGroupRow, CHAT_GROUP_SELECT, type ChatGroupRow } from "./chat-groups";
+import { DEFAULT_ROLE_PERMISSIONS } from "@/lib/chat-groups";
 import { fetchAllRows } from "./paged";
 import type { GroupRole } from "@/types";
 
 interface ConversationEmbed {
   id: string;
   last_message_at: string | null;
-  kind: "direct" | "group";
+  kind: "direct" | "group" | "team_channel";
   /** Grup konuşmalarında 1:1 gömülü `chat_groups` satırı (PK = FK olduğundan nesne; olası dizi biçimine de dayanıklı). */
   chat_groups: ChatGroupRow | ChatGroupRow[] | null;
 }
@@ -57,6 +58,72 @@ function groupFromMembership(row: MembershipRow) {
   if (!embed || embed.kind !== "group") return null;
   const group = Array.isArray(embed.chat_groups) ? embed.chat_groups[0] : embed.chat_groups;
   return group ? mapChatGroupRow(group, row.role) : null;
+}
+
+/** Sohbet türü grup gibi çalışır mı: topluluk sohbeti ya da ekip kanalı (docs/history/353-*). */
+const isGroupKind = (kind: string | undefined | null): boolean => kind === "group" || kind === "team_channel";
+
+interface TeamChannelInfoRow {
+  id: string;
+  name: string;
+  description: string | null;
+  mode: string;
+  posting_policy: "members" | "admins";
+  archived_at: string | null;
+  team_id: string;
+  teams: { id: string; slug: string; name: string; tone: string; member_count: number; created_at: string } | { id: string; slug: string; name: string; tone: string; member_count: number; created_at: string }[] | null;
+}
+
+/** Ekip kanallarının adı/ekibi/yazma ilkesi (üye kanalı okuyabilir; RLS). Okunamazsa boş harita → kanal listeden atlanır. */
+async function fetchTeamChannelInfos(ids: string[]): Promise<Map<string, TeamChannelInfoRow>> {
+  const map = new Map<string, TeamChannelInfoRow>();
+  if (ids.length === 0) return map;
+  for (const part of chunk(ids, ID_CHUNK)) {
+    const { data } = await supabase
+      .from("team_channels")
+      .select("id, name, description, mode, posting_policy, archived_at, team_id, teams(id, slug, name, tone, member_count, created_at)")
+      .in("id", part);
+    for (const row of (data ?? []) as unknown as TeamChannelInfoRow[]) map.set(row.id, row);
+  }
+  return map;
+}
+
+/**
+ * Ekip kanalı → sohbet ekranının beklediği grup şekli. Kanal bir topluluk DEĞİLDİR: topluluk alanları nötrdür, `team` doludur ve topluluk işleri
+ * (oda, yönetim, katılma istekleri) bu grupta çizilmez. Yazma ilkesi kanalınkidir (`admins` → ekip yönetimi dışındakiler yazamaz).
+ */
+function groupFromTeamChannel(row: MembershipRow, info: TeamChannelInfoRow | undefined) {
+  if (!info) return null;
+  const team = Array.isArray(info.teams) ? info.teams[0] : info.teams;
+  if (!team) return null;
+  const admin = row.role === "owner" || row.role === "admin";
+  return {
+    id: info.id,
+    name: `#${info.name}`,
+    description: info.description,
+    avatarUrl: null,
+    coverUrl: null,
+    coverColor: null,
+    visibility: "restricted" as const,
+    postingPolicy: info.posting_policy === "admins" ? ("admins" as const) : ("members" as const),
+    memberLimit: 1000,
+    memberCount: team.member_count,
+    pendingRequestCount: 0,
+    historyVisible: true,
+    membersCanPin: false,
+    rolePermissions: DEFAULT_ROLE_PERMISSIONS,
+    createdAt: team.created_at,
+    myRole: admin ? ("admin" as const) : ("member" as const),
+    category: "general" as const,
+    feedPolicy: "members" as const,
+    rules: null,
+    rulesVersion: 1,
+    rulesRequired: false,
+    closedAt: info.archived_at,
+    postCount: 0,
+    origin: "native" as const,
+    team: { id: team.id, slug: team.slug, name: team.name, tone: team.tone, channelName: info.name },
+  };
 }
 
 export const MESSAGE_SELECT =
@@ -139,7 +206,8 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
 
     const rows = memberships as unknown as MembershipRow[];
     const conversationIds = rows.map((m) => m.conversation_id);
-    const directIds = rows.filter((m) => m.conversations?.kind !== "group").map((m) => m.conversation_id);
+    const directIds = rows.filter((m) => !isGroupKind(m.conversations?.kind)).map((m) => m.conversation_id);
+    const teamInfos = await fetchTeamChannelInfos(rows.filter((m) => m.conversations?.kind === "team_channel").map((m) => m.conversation_id));
 
     // Birebir sohbetlerin karşı tarafı. Gruplarda üye listesi bu yoldan ASLA çekilmez (RLS yalnız kendi satırımı verir; liste `chat_group_members` RPC'sinde).
     // Kimlikler adrese yazıldığı için parça parça (yüzlerce birebir sohbette tek `in(...)` adres sınırını aşar ve liste hiç gelmezdi).
@@ -163,7 +231,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
     // Topluluk sohbetlerinde son mesajın odası ("# oda" etiketi); eksik migration → boş harita.
     const lastRoomByConversation = await fetchLastRooms(rows.filter((m) => m.conversations?.kind === "group").map((m) => m.conversation_id));
     // Grupta okunmamış sayısı sunucuda okuma anında hesaplanır (docs/history/258-*); migration yoksa sütun değeri kalır.
-    const groupUnread = await fetchGroupUnreadCounts(rows.filter((m) => m.conversations?.kind === "group").map((m) => m.conversation_id));
+    const groupUnread = await fetchGroupUnreadCounts(rows.filter((m) => isGroupKind(m.conversations?.kind)).map((m) => m.conversation_id));
 
     const otherByConversation = new Map<string, ProfileRow>();
     for (const row of (otherMembers ?? []) as unknown as { conversation_id: string; profiles: ProfileRow | null }[]) {
@@ -171,7 +239,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
     }
 
     const groupSenderNames = await fetchSenderNames(
-      rows.filter((m) => m.conversations?.kind === "group").map((m) => lastMessageByConversation.get(m.conversation_id)?.sender_id),
+      rows.filter((m) => isGroupKind(m.conversations?.kind)).map((m) => lastMessageByConversation.get(m.conversation_id)?.sender_id),
       userId,
     );
 
@@ -181,7 +249,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
         const base = {
           id: m.conversation_id,
           lastMessageAt: m.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
-          unreadCount: m.conversations?.kind === "group" ? (groupUnread.get(m.conversation_id) ?? m.unread_count) : m.unread_count,
+          unreadCount: isGroupKind(m.conversations?.kind) ? (groupUnread.get(m.conversation_id) ?? m.unread_count) : m.unread_count,
           myStatus: m.status,
           archivedAt: m.archived_at,
           deletedAt: m.deleted_at,
@@ -189,8 +257,8 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
           clearedAt: m.cleared_at,
           pinnedAt: m.pinned_at ?? null,
         };
-        if (m.conversations?.kind === "group") {
-          const group = groupFromMembership(m);
+        if (isGroupKind(m.conversations?.kind)) {
+          const group = m.conversations?.kind === "team_channel" ? groupFromTeamChannel(m, teamInfos.get(m.conversation_id)) : groupFromMembership(m);
           if (!group) return null; // grup satırı okunamadı — listede göstermek yerine atla
           return {
             ...base,
@@ -300,7 +368,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
     if (error || !membership) return null;
 
     const row = membership as unknown as MembershipRow;
-    const isGroup = row.conversations?.kind === "group";
+    const isGroup = isGroupKind(row.conversations?.kind);
 
     let otherProfile: ProfileRow | null | undefined = null;
     if (!isGroup) {
@@ -330,10 +398,11 @@ export async function fetchConversationForUser(conversationId: string, userId: s
     };
 
     if (isGroup) {
-      const group = groupFromMembership(row);
+      const isTeamChannel = row.conversations?.kind === "team_channel";
+      const group = isTeamChannel ? groupFromTeamChannel(row, (await fetchTeamChannelInfos([conversationId])).get(conversationId)) : groupFromMembership(row);
       if (!group) return null;
       const names = await fetchSenderNames([last?.sender_id], userId);
-      const lastRoom = (await fetchLastRooms([conversationId])).get(conversationId) ?? null;
+      const lastRoom = isTeamChannel ? null : ((await fetchLastRooms([conversationId])).get(conversationId) ?? null);
       return { ...base, kind: "group", group, participants: [], lastMessage: groupPreview(last, last?.sender_id === userId ? null : names.get(last?.sender_id ?? "")), lastRoom };
     }
     return { ...base, kind: "direct", group: null, participants: [mapProfileRow(otherProfile as ProfileRow)], lastMessage: previewTextFor(last) };

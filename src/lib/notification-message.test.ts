@@ -68,3 +68,12 @@ test("ekip alanı bildirimleri (docs/history/349-*) Space/prompt adı çevrilmed
   assert.deepEqual(JSON.parse(run('"Satış e-postası" promptu için onay istedi.')), { key: "notifMsg.teamReviewRequested", params: { name: "Satış e-postası" } });
   assert.equal(run('"Satış e-postası" promptu için onay istedi.', "tr"), '"Satış e-postası" promptu için onay istedi.');
 });
+
+test("ekip bildirimleri (docs/history/353-*) adlar çevrilmeden doğru anahtara düşer", () => {
+  assert.deepEqual(JSON.parse(run('"Atölye Mor" ekibine davet etti.')), { key: "notifMsg.teamInvited", params: { name: "Atölye Mor", channel: "", preview: "" } });
+  assert.deepEqual(JSON.parse(run('"Atölye Mor" ekibinden çıkarıldın.')).key, "notifMsg.teamRemoved");
+  assert.deepEqual(JSON.parse(run('"Afiş" promptunda değişiklik istedi.')).key, "notifMsg.teamChangesRequested");
+  assert.deepEqual(JSON.parse(run('Elif seni #genel kanalında andı: "bakar mısın @ali"')), { key: "notifMsg.teamMentioned", params: { name: "Elif", channel: "genel", preview: "bakar mısın @ali" } });
+  assert.deepEqual(JSON.parse(run("Elif #gizli kanalında bir mesajı bildirdi.")), { key: "notifMsg.teamMessageReported", params: { name: "Elif", channel: "gizli", preview: "" } });
+  assert.equal(JSON.parse(run("ekipteki rolünü değiştirdi.")).key, "notifMsg.teamRoleChanged");
+});

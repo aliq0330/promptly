@@ -64,6 +64,17 @@ export function createDb() {
     texts.forEach(([u, text]) => db.addMessage(id, u.id, text));
     return id;
   };
+  // Ekip kanalı (docs/history/353-*): `conversations.kind = 'team_channel'` + `team_channels` satırı (ekip gömülü).
+  db.teamChannels = [];
+  db.addTeamChannel = (id, { name = "genel", team = { id: "e1000000-0000-4000-8000-000000000001", slug: "atolye-mor", name: "Atölye Mor", tone: "primary", member_count: 6, created_at: "2026-10-01T00:00:00Z" }, myRole = "member", members = [], posting_policy = "members", texts = [] } = {}) => {
+    db.conversations.push({ id, last_message_at: db.stamp(), kind: "team_channel" });
+    const base = { status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null };
+    db.members.push({ conversation_id: id, user_id: ME, role: myRole, ...base });
+    for (const [u, role] of members) db.members.push({ conversation_id: id, user_id: u.id, role, ...base });
+    db.teamChannels.push({ id, name, description: null, mode: "open", posting_policy, archived_at: null, team_id: team.id, teams: team });
+    texts.forEach(([u, text]) => db.addMessage(id, u.id, text));
+    return id;
+  };
   db.addMessage = (conversation_id, sender_id, body) => {
     const created_at = db.stamp();
     const row = { id: crypto.randomUUID(), conversation_id, sender_id, body, shared_prompt_id: null, shared_request_id: null, reply_to_message_id: null, attachments: [], edited_at: null, deleted_at: null, created_at };
@@ -497,6 +508,10 @@ export async function installMock(context, db, opts = {}) {
       const b = val(q.get("blocker_id") ?? "", "eq");
       return rows(db.blocks.filter((x) => !b || x.blocker_id === b).map((x) => ({ blocked_id: x.blocked_id, profiles: pub(Object.values(U).find((u) => u.id === x.blocked_id)) })));
     }
+    if (table === "team_channels" && method === "GET") {
+      const ids = (q.get("id") ?? "").replace(/^in\.\(|\)$/g, "").split(",").filter(Boolean);
+      return rows(db.teamChannels.filter((c) => ids.length === 0 || ids.includes(c.id)));
+    }
     if (table === "conversation_members") {
       if (method === "GET") {
         let list = filterRows(db.members, q, ["conversation_id", "user_id"]);
@@ -541,8 +556,8 @@ export async function installMock(context, db, opts = {}) {
       }
       if (method === "POST") {
         const member = db.member(body.conversation_id, signedIn);
-        const isGroupConv = db.conversations.find((c) => c.id === body.conversation_id)?.kind === "group";
-        const g = isGroupConv ? db.groups.find((x) => x.id === body.conversation_id) : null;
+        const isGroupConv = ["group", "team_channel"].includes(db.conversations.find((c) => c.id === body.conversation_id)?.kind);
+        const g = isGroupConv ? db.groups.find((x) => x.id === body.conversation_id) ?? null : null;
         const others = isGroupConv ? [] : db.members.filter((m) => m.conversation_id === body.conversation_id && m.user_id !== signedIn);
         // Oda kuralı (`can_post_room`): arşivli oda ya da yalnız yönetimin yazdığı odada üye yazamaz; varsayılan odanın mesajı NULL saklanır.
         const room = body.room_id ? (db.rooms ?? []).find((r) => r.id === body.room_id && r.community_id === body.conversation_id) : null;

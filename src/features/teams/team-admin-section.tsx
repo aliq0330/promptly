@@ -25,6 +25,7 @@ import {
   type TeamMember,
   type TeamPolicy,
 } from "@/lib/supabase/teams";
+import { developerEndpoints, teamMcpUrl } from "@/lib/developers";
 import { teamLink } from "@/lib/teams";
 import { absoluteUrl, formatRelativeTime } from "@/lib/utils";
 import { AdminAccessSection, AdminGroupsSection, AdminGuestsSection } from "./team-admin-access";
@@ -260,6 +261,8 @@ function IntegrationsSection({ ctx }: { ctx: TeamCtx }) {
   }, [ctx.team.id, tick]);
   const policy = ctx.policy;
   const address = data ? absoluteUrl(`/developers`) : "";
+  const endpoints = developerEndpoints(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const mcpAddress = data && endpoints ? teamMcpUrl(endpoints, data.slug) : null;
   return (
     <div className="space-y-4" data-testid="team-integrations">
       <Panel title={t("tm.admin.int.title")} hint={t("tm.admin.int.hint")}>
@@ -275,9 +278,17 @@ function IntegrationsSection({ ctx }: { ctx: TeamCtx }) {
           </div>
         )}
         {data && (
-          <p className="mt-3 rounded-lg bg-surface-soft px-3 py-2 text-caption text-text-secondary">
-            {t("tm.admin.int.slug", { slug: data.slug })} · <a href={address} className="text-primary hover:underline">{t("tm.admin.int.docs")}</a>
-          </p>
+          <div className="mt-3 space-y-2 rounded-lg bg-surface-soft px-3 py-2 text-caption text-text-secondary">
+            <p>
+              {t("tm.admin.int.slug", { slug: data.slug })} · <a href={address} className="text-primary hover:underline">{t("tm.admin.int.docs")}</a>
+            </p>
+            {mcpAddress && (
+              <label className="block">
+                <span className="mb-1 block font-medium text-text">{t("tm.admin.int.mcpAddress")}</span>
+                <input readOnly value={mcpAddress} onFocus={(e) => e.currentTarget.select()} className="h-9 w-full rounded-lg border border-border bg-background px-2 text-caption" />
+              </label>
+            )}
+          </div>
         )}
       </Panel>
       <div className="grid grid-cols-2 gap-3">

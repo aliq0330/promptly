@@ -15,6 +15,11 @@ export interface DeveloperEndpoints {
 }
 
 /** `https://<ref>.supabase.co` → uç noktalar. Adres boşsa null (sayfa örnek göstermez, yalnız açıklama gösterir). */
+/** Ekip MCP adresi (`…/mcp/team/<kısa-ad>`, docs/history/353-*): kişisel adresin ekip kütüphanesine daraltılmış hâli. */
+export function teamMcpUrl(endpoints: DeveloperEndpoints, slug: string): string {
+  return `${endpoints.mcpUrl}/team/${slug}`;
+}
+
 export function developerEndpoints(supabaseUrl: string | undefined | null): DeveloperEndpoints | null {
   const base = (supabaseUrl ?? "").trim().replace(/\/+$/, "");
   if (!/^https:\/\/[^/\s]+$/.test(base)) return null;

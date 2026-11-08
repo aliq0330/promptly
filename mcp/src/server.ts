@@ -113,6 +113,11 @@ export interface MeToolsOptions {
    * Verilmezse `attach_image` aracı hiç sunulmaz.
    */
   attachImage?: (bearer: string, input: AttachImageInput) => Promise<AttachImageResult>;
+  /**
+   * Ekip adresi `…/mcp/team/<kısa-ad>` (docs/history/353-*): kişisel araçların aynısı, ama ekip kütüphanesi araçları o ekibe daraltılır
+   * (`list_my_libraries` yalnız o ekibin kütüphanesini döner). Ekip politikası (MCP açık mı, kitle, engel) SUNUCUDA uygulanır; burası yalnız süzer.
+   */
+  teamSlug?: string;
 }
 
 export interface PromptlyServerOptions {
@@ -313,11 +318,13 @@ export function createPromptlyServer({ client, version, log = () => {}, onPrompt
       "list_my_libraries",
       {
         title: "List my team libraries",
-        description: "Team libraries (shared prompt collections of a team) you are a member of in Promptly. Read-only.",
-        inputSchema: {},
+        description:
+          "Team libraries (shared prompt collections of a team) you are a member of in Promptly. Read-only. Pass `team` (the team handle, e.g. atolye-mor) to list only that team's library; " +
+          "the team's own policy decides whether its library is available through MCP at all.",
+        inputSchema: { team: z.string().min(2).max(40).optional().describe("Team handle (the part after @ on the team page). Omit for all your teams.") },
         annotations: own,
       },
-      () => run(() => me.backend.withUser(me.bearer, "read", (tx) => listMyLibraries(tx, me.backend.siteUrl))),
+      (args: { team?: string }) => run(() => me.backend.withUser(me.bearer, "read", (tx) => listMyLibraries(tx, me.backend.siteUrl, { team: me.teamSlug ?? args.team ?? null }))),
     );
     server.registerTool(
       "get_library_prompts",
