@@ -158,8 +158,10 @@ export interface TeamGroup {
   leadsApprove: boolean;
   memberCount: number;
   memberIds: string[] | null;
-  spaces: { id: string; title: string }[] | null;
-  folders: { id: string; name: string; spaceId: string }[] | null;
+  /** Grubun Space erişimi (`level`: edit | view). */
+  spaces: { spaceId: string; title: string; level: "edit" | "view" }[] | null;
+  /** Gruba bağlı Space klasörleri (`prompts` = klasördeki prompt sayısı). */
+  folders: { spaceGroupId: string; name: string; prompts: number }[] | null;
 }
 
 export interface TeamGuest {
@@ -171,8 +173,8 @@ export interface TeamGuest {
   guestUntil: string | null;
   joinedAt: string;
   expired: boolean;
-  spaces: { id: string; title: string }[] | null;
-  channels: { id: string; name: string }[] | null;
+  spaces: { spaceId: string; title: string; role: string }[] | null;
+  channels: { channelId: string; name: string }[] | null;
 }
 
 export interface TeamChannel {

@@ -169,3 +169,19 @@ export function waitingText(t: (key: TranslationKey, params?: Record<string, str
   if (minutes >= 60) return t("tm.lib.waitHours", { count: Math.floor(minutes / 60) });
   return t("tm.lib.waitMinutes", { count: Math.max(1, minutes) });
 }
+
+/** Hap biçimli aç/kapa anahtarı (mockup: Politikalar, Gruplar). */
+export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={cn("relative h-7 w-12 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2", checked ? "bg-primary" : "bg-border-strong")}
+    >
+      <span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-all", checked ? "left-[22px]" : "left-0.5")} />
+    </button>
+  );
+}
