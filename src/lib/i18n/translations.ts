@@ -22,6 +22,7 @@ import { spaceTranslations } from "./translations-spaces";
 import { teamLibraryTranslations } from "./translations-team-library";
 import { teamSpacesTranslations } from "./translations-team-spaces";
 import { teamsTranslations } from "./translations-teams";
+import { teamSystemTranslations } from "./translations-team-system";
 import { roomsTranslations } from "./translations-rooms";
 import { workflowSpaceTranslations } from "./translations-workflow-space";
 import { spaceConnectionTranslations } from "./translations-space-connections";
@@ -3269,6 +3270,7 @@ export const translations = {
   ...teamLibraryTranslations,
   ...teamSpacesTranslations,
   ...teamsTranslations,
+  ...teamSystemTranslations,
   ...roomsTranslations,
   ...workflowSpaceTranslations,
   ...spaceConnectionTranslations,

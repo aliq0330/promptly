@@ -90,3 +90,19 @@ export function teamRoleCan(role: TeamRole | null | undefined, cap: TeamCapabili
 export function isTeamRole(value: unknown): value is TeamRole {
   return typeof value === "string" && (TEAM_ROLES as readonly string[]).includes(value);
 }
+
+/** Ekip sayfası sekmeleri (`/teams/local?id=&tab=`). */
+export type TeamTab = "spaces" | "library" | "chat" | "members" | "panel" | "admin";
+export const TEAM_TABS: readonly TeamTab[] = ["spaces", "library", "chat", "members", "panel", "admin"];
+
+export function isTeamTab(value: unknown): value is TeamTab {
+  return typeof value === "string" && (TEAM_TABS as readonly string[]).includes(value);
+}
+
+/** Ekip sayfası adresi; `id` kimlik ya da kısa ad olabilir. `extra` ek sorgu parametreleridir (ör. `channel`, `status`, `section`). */
+export function teamLink(id: string, tab?: TeamTab, extra: Record<string, string | null | undefined> = {}): string {
+  const params = new URLSearchParams({ id });
+  if (tab) params.set("tab", tab);
+  for (const [key, value] of Object.entries(extra)) if (value) params.set(key, value);
+  return `/teams/local?${params.toString()}`;
+}
