@@ -2,54 +2,143 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Check } from "@/components/icons/check";
+import { ChevronRight } from "@/components/icons/chevron-right";
 import { Search } from "@/components/icons/search";
 import { Button } from "@/components/ui/button";
-import { fieldLabelClassName } from "@/components/ui/field";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useToast } from "@/features/groups/use-toast";
+import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import {
   leaveTeam,
+  listPendingInvites,
+  listTeamGroups,
+  listTeamGuests,
   listTeamMembers,
   memberContentSummary,
   removeMember,
   setMemberRole,
   type TeamActionError,
+  type TeamGroup,
+  type TeamGuest,
   type TeamMember,
+  type TeamPendingInvite,
 } from "@/lib/supabase/teams";
-import { teamRank, type TeamRole } from "@/lib/teams";
-import { formatRelativeTime } from "@/lib/utils";
+import { teamRank, teamRoleCan, type TeamCapability, type TeamRole } from "@/lib/teams";
+import { cn } from "@/lib/utils";
 import { InviteDialog } from "./team-invites";
 import type { TeamCtx } from "./team-page";
-import { PersonRow, PillChoice, RoleChip, formatShortDate, roleLabelKey } from "./team-ui";
+import { PersonRow, formatShortDate, roleLabelKey } from "./team-ui";
 
-type RoleFilter = "all" | TeamRole;
-const FILTERS: readonly RoleFilter[] = ["all", "owner", "admin", "editor", "member", "guest"];
+type MembersView = "members" | "guests" | "invites" | "groups";
 
-/** Üyeler sekmesi: arama + rol süzgeci, rol değiştirme, çıkarma (içerik devri seçenekli), ekipten ayrılma ve davet. */
+const MATRIX: { key: TranslationKey; cap: TeamCapability | "use_library" }[] = [
+  { key: "tm.matrix.manageMembers", cap: "manage_members" },
+  { key: "tm.matrix.createSpaces", cap: "create_spaces" },
+  { key: "tm.matrix.approve", cap: "approve_library" },
+  { key: "tm.matrix.variables", cap: "write_variables" },
+  { key: "tm.matrix.publish", cap: "publish_external" },
+  { key: "tm.matrix.audit", cap: "view_audit" },
+  { key: "tm.matrix.useLibrary", cap: "use_library" },
+];
+const MATRIX_ROLES: { role: TeamRole; key: TranslationKey }[] = [
+  { role: "owner", key: "tm.role.short.owner" },
+  { role: "admin", key: "tm.role.short.admin" },
+  { role: "editor", key: "tm.role.short.editor" },
+  { role: "member", key: "tm.role.short.member" },
+  { role: "guest", key: "tm.role.short.guest" },
+];
+
+/** "Roller ve yetkiler" (mockup 4): yetki role değil yeteneğe bağlıdır; tablo `teamRoleCan` ile aynı kuraldan çizilir. */
+function RolesMatrix({ ctx }: { ctx: TeamCtx }) {
+  const { t } = useTranslation();
+  const policy = ctx.policy
+    ? { publish_external_role: ctx.policy.publishExternalRole, guest_invite_role: ctx.policy.guestInviteRole, export_role: ctx.policy.exportRole }
+    : undefined;
+  return (
+    <div data-roles-matrix>
+      <p className="mb-3 text-small text-text-secondary">{t("tm.matrix.hint")}</p>
+      <table className="w-full text-small">
+        <thead>
+          <tr className="text-caption font-bold text-text-muted">
+            <th className="pb-2 text-left font-bold" />
+            {MATRIX_ROLES.map((r) => (
+              <th key={r.role} className="w-10 pb-2 text-center font-bold">
+                {t(r.key)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {MATRIX.map((row) => (
+            <tr key={row.cap} className="border-t border-border-soft">
+              <td className="py-2 pr-2 text-text">{t(row.key)}</td>
+              {MATRIX_ROLES.map((r) => {
+                const allowed = row.cap === "use_library" ? r.role !== "guest" : teamRoleCan(r.role, row.cap, policy);
+                return (
+                  <td key={r.role} className="py-2 text-center">
+                    {allowed ? <Check size={15} className="mx-auto text-success" aria-label="✓" /> : <span className="text-text-muted" aria-label="–">–</span>}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="mt-3 text-caption text-text-muted">{t("tm.matrix.guestNote")}</p>
+    </div>
+  );
+}
+
+const ROLE_CHIP_TONE: Record<TeamRole, string> = {
+  owner: "bg-primary-soft text-primary",
+  admin: "bg-primary-soft text-primary",
+  editor: "bg-success/10 text-success",
+  member: "bg-surface-soft text-text-secondary",
+  guest: "bg-warning/10 text-warning",
+};
+
+/**
+ * Üyeler sekmesi (mockup 4 / P5): üstte Üyeler · Konuklar · Bekleyen davetler · Gruplar sayaç çipleri, tablo (Üye · Rol · Grup · Durum) ve sağda
+ * "Roller ve yetkiler" matrisi + Gruplar özeti. Rol değiştirme, çıkarma (içerik devri seçenekli), ekipten ayrılma ve davet korunur.
+ */
 export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const { team, can } = ctx;
   const { node: toastNode, show } = useToast();
+  const [view, setView] = useState<MembersView>("members");
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<RoleFilter>("all");
   const [version, setVersion] = useState(0);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [removing, setRemoving] = useState<TeamMember | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [matrixOpen, setMatrixOpen] = useState(false);
+  const [groups, setGroups] = useState<TeamGroup[]>([]);
+  const [pending, setPending] = useState<TeamPendingInvite[]>([]);
+  const [guests, setGuests] = useState<TeamGuest[]>([]);
+  const canManage = can("manage_members");
 
   useEffect(() => {
     const handle = window.setTimeout(() => setQuery(search.trim()), 250);
     return () => window.clearTimeout(handle);
   }, [search]);
+  useEffect(() => {
+    void listTeamGroups(team.id).then(setGroups, () => setGroups([]));
+    if (canManage) {
+      void listPendingInvites(team.id).then(setPending, () => setPending([]));
+      void listTeamGuests(team.id).then(setGuests, () => setGuests([]));
+    }
+  }, [team.id, canManage, version]);
 
-  const list = usePagedList<TeamMember>(`team-members|${team.id}|${query}|${filter}|${version}`, true, (offset) => listTeamMembers(team.id, query, filter === "all" ? null : filter, offset), (m) => m.userId);
+  const list = usePagedList<TeamMember>(`team-members|${team.id}|${query}|${version}`, view === "members", (offset) => listTeamMembers(team.id, query, null, offset), (m) => m.userId);
   const refresh = () => setVersion((v) => v + 1);
-
   const changeRole = async (member: TeamMember, role: TeamRole) => {
     try {
       await setMemberRole(team.id, member.userId, role);
@@ -59,89 +148,193 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
       show((error as TeamActionError).message);
     }
   };
-
-  const canManage = can("manage_members");
   const myRank = teamRank(team.myRole);
+
+  const views: { key: MembersView; label: string; count: number | null; show: boolean }[] = [
+    { key: "members", label: t("tm.members.viewMembers"), count: team.memberCount, show: true },
+    { key: "guests", label: t("tm.members.viewGuests"), count: canManage ? guests.length : team.guestCount, show: team.guestCount > 0 || canManage },
+    { key: "invites", label: t("tm.members.viewInvites"), count: pending.length, show: canManage },
+    { key: "groups", label: t("tm.members.viewGroups"), count: groups.length, show: true },
+  ];
 
   return (
     <section className="space-y-4" data-testid="team-members">
-      <div className="flex flex-wrap items-center gap-3">
-        <PillChoice<RoleFilter>
-          ariaLabel={t("tm.members.filter")}
-          value={filter}
-          onChange={setFilter}
-          options={FILTERS.map((key) => ({ key, label: key === "all" ? t("tm.members.all") : t(roleLabelKey(key)) }))}
-        />
-        <label className="relative ml-auto block w-full sm:w-60">
-          <Search size={14} aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("tm.members.search")} aria-label={t("tm.members.search")} className="h-10 w-full rounded-full border border-border bg-background pl-9 pr-3 text-small" />
-        </label>
+      <div className="flex items-center gap-2">
+        <div className="md:hidden">{ctx.sectionMenu}</div>
+        <button type="button" onClick={() => setSearchOpen((o) => !o)} aria-label={t("tm.members.search")} aria-pressed={searchOpen} data-members-search className="ml-auto grid h-11 w-11 place-items-center rounded-full bg-surface-soft text-text-secondary md:ml-0 md:order-last">
+          <Search size={18} aria-hidden />
+        </button>
         {canManage && (
-          <Button type="button" onClick={() => setInviteOpen(true)} data-team-invite>
+          <Button type="button" onClick={() => setInviteOpen(true)} data-team-invite className="md:hidden">
             {t("tm.invite.title")}
           </Button>
         )}
       </div>
+      {searchOpen && <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("tm.members.search")} aria-label={t("tm.members.search")} autoFocus className="h-11 w-full rounded-full border border-border bg-surface px-4 text-small" />}
+      <div className="-mt-1 flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" role="tablist" aria-label={t("tm.members.filter")}>
+        {views
+          .filter((v) => v.show)
+          .map((v) => (
+            <button
+              key={v.key}
+              type="button"
+              role="tab"
+              aria-selected={view === v.key}
+              onClick={() => setView(v.key)}
+              data-members-view={v.key}
+              className={cn("inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-small transition-colors", view === v.key ? "border-primary bg-primary-soft font-bold text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
+            >
+              {v.label}
+              {v.count !== null && <span className="tabular-nums">{v.count}</span>}
+            </button>
+          ))}
+      </div>
 
-      <PagedListState list={list}>
-        <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-4" data-testid="team-members-list">
-          {list.items.map((member) => {
-            const manageable = canManage && member.role !== "owner" && teamRank(member.role) < myRank;
-            return (
-              <li key={member.userId} data-member={member.username}>
-                <PersonRow
-                  name={member.displayName || member.username}
-                  username={member.username}
-                  avatarUrl={member.avatarUrl}
-                  sub={
-                    <>
-                      @{member.username}
-                      {member.groupNames && member.groupNames.length > 0 && ` · ${member.groupNames.join(", ")}`}
-                      {member.role === "guest" && member.guestUntil && ` · ${t("tm.members.guestUntil", { date: formatShortDate(member.guestUntil, language) })}`}
-                      {member.role !== "guest" && ` · ${t("tm.members.joined", { time: formatRelativeTime(member.joinedAt, language) })}`}
-                    </>
-                  }
-                  right={
-                    manageable ? (
-                      <>
-                        <select
-                          aria-label={t("tm.members.changeRole")}
-                          value={member.role}
-                          onChange={(event) => void changeRole(member, event.target.value as TeamRole)}
-                          className="h-8 rounded-lg border border-border bg-background px-2 text-caption"
-                        >
-                          {(["admin", "editor", "member", "guest"] as TeamRole[])
-                            .filter((role) => teamRank(role) < myRank)
-                            .map((role) => (
-                              <option key={role} value={role} disabled={role === "guest" && member.role !== "guest"}>
-                                {t(roleLabelKey(role))}
-                              </option>
-                            ))}
-                        </select>
-                        <Button type="button" size="sm" variant="ghost" onClick={() => setRemoving(member)} data-member-remove>
-                          {t("tm.members.remove")}
-                        </Button>
-                      </>
-                    ) : (
-                      <RoleChip role={member.role} />
-                    )
-                  }
-                />
-              </li>
-            );
-          })}
-        </ul>
-      </PagedListState>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="min-w-0">
+          {view === "members" && (
+            <PagedListState list={list}>
+              <div className="overflow-hidden rounded-2xl border border-border-soft bg-surface max-md:border-0 max-md:bg-transparent" data-testid="team-members-list">
+                <div className="grid grid-cols-[minmax(0,1.5fr)_8rem_minmax(0,1fr)_7rem_3.5rem] gap-3 border-b border-border-soft px-4 py-2.5 text-caption font-bold uppercase tracking-[0.06em] text-text-muted max-md:hidden">
+                  <span>{t("tm.members.col.member")}</span>
+                  <span>{t("tm.members.col.role")}</span>
+                  <span>{t("tm.members.col.group")}</span>
+                  <span>{t("tm.members.col.status")}</span>
+                  <span />
+                </div>
+                <ul>
+                  {list.items.map((member) => {
+                    const manageable = canManage && member.role !== "owner" && teamRank(member.role) < myRank;
+                    const name = member.displayName || member.username;
+                    const you = false;
+                    return (
+                      <li key={member.userId} data-member={member.username} className="md:grid md:grid-cols-[minmax(0,1.5fr)_8rem_minmax(0,1fr)_7rem_3.5rem] md:items-center md:gap-3 md:border-b md:border-border-soft md:px-4 md:py-2.5 md:last:border-b-0 max-md:flex max-md:items-center max-md:gap-3 max-md:py-2.5">
+                        <span className="flex min-w-0 flex-1 items-center gap-3">
+                          <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={name} size={38} />
+                          <span className="min-w-0">
+                            <span className="block truncate text-small font-bold text-text">
+                              {name}
+                              {you && ` (${t("tm.members.you")})`}
+                            </span>
+                            <span className="block truncate text-caption text-text-muted">
+                              @{member.username}
+                              <span className="md:hidden">{member.groupNames && member.groupNames.length > 0 ? ` · ${member.groupNames.join(", ")}` : ""}</span>
+                            </span>
+                          </span>
+                        </span>
+                        <span>
+                          {manageable ? (
+                            <select
+                              aria-label={t("tm.members.changeRole")}
+                              value={member.role}
+                              onChange={(event) => void changeRole(member, event.target.value as TeamRole)}
+                              className={cn("h-7 appearance-none rounded-full border-0 px-3 text-caption font-bold", ROLE_CHIP_TONE[member.role])}
+                            >
+                              {(["admin", "editor", "member", "guest"] as TeamRole[])
+                                .filter((role) => teamRank(role) < myRank)
+                                .map((role) => (
+                                  <option key={role} value={role} disabled={role === "guest" && member.role !== "guest"}>
+                                    {t(roleLabelKey(role))}
+                                  </option>
+                                ))}
+                            </select>
+                          ) : (
+                            <span className={cn("inline-flex h-7 items-center rounded-full px-3 text-caption font-bold", ROLE_CHIP_TONE[member.role])}>{t(roleLabelKey(member.role))}</span>
+                          )}
+                        </span>
+                        <span className="truncate text-small text-text-secondary max-md:hidden">{member.groupNames?.join(", ") || (member.role === "guest" ? member.guestOrg : "") || ""}</span>
+                        <span className="text-small text-text-secondary max-md:hidden">
+                          <PresenceStatusText userId={member.userId} fallback="—" />
+                        </span>
+                        <span className="text-right">
+                          {manageable && (
+                            <button type="button" onClick={() => setRemoving(member)} data-member-remove className="text-caption font-medium text-text-muted hover:text-danger">
+                              {t("tm.members.remove")}
+                            </button>
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </PagedListState>
+          )}
+          {view === "guests" && (
+            <ul className="divide-y divide-border-soft rounded-2xl border border-border-soft bg-surface px-4" data-members-guests>
+              {guests.length === 0 && <li className="py-5 text-small text-text-muted">{t("tm.guests.empty")}</li>}
+              {guests.map((g) => (
+                <li key={g.userId}>
+                  <PersonRow name={g.displayName || g.username} username={g.username} avatarUrl={g.avatarUrl} sub={[g.guestOrg, g.guestUntil ? t("tm.members.guestUntil", { date: formatShortDate(g.guestUntil, "tr") }) : null].filter(Boolean).join(" · ")} />
+                </li>
+              ))}
+            </ul>
+          )}
+          {view === "invites" && (
+            <ul className="divide-y divide-border-soft rounded-2xl border border-border-soft bg-surface px-4" data-members-invites>
+              {pending.length === 0 && <li className="py-5 text-small text-text-muted">{t("tm.admin.invites.none")}</li>}
+              {pending.map((p) => (
+                <li key={p.id}>
+                  <PersonRow name={p.inviteeName || p.inviteeUsername} username={p.inviteeUsername} avatarUrl={p.inviteeAvatarUrl} sub={`@${p.inviteeUsername} · ${t(roleLabelKey(p.role))}`} />
+                </li>
+              ))}
+            </ul>
+          )}
+          {view === "groups" && (
+            <ul className="divide-y divide-border-soft rounded-2xl border border-border-soft bg-surface px-4" data-members-groups>
+              {groups.length === 0 && <li className="py-5 text-small text-text-muted">{t("tm.groups.empty")}</li>}
+              {groups.map((g) => (
+                <li key={g.id} className="flex items-center justify-between py-3 text-small">
+                  <span className="font-bold text-text">{g.name}</span>
+                  <span className="text-text-muted">{t("tm.members.groupCount", { count: g.memberCount })}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
-      {team.myRole !== "owner" && (
-        <div className="flex justify-end">
-          <Button type="button" variant="outline" onClick={() => setLeaveOpen(true)} data-team-leave>
-            {t("tm.members.leave")}
-          </Button>
+          {team.myRole !== "owner" && (
+            <div className="mt-4 flex justify-end">
+              <Button type="button" variant="outline" onClick={() => setLeaveOpen(true)} data-team-leave>
+                {t("tm.members.leave")}
+              </Button>
+            </div>
+          )}
+          <button type="button" onClick={() => setMatrixOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3.5 text-left md:hidden" data-roles-open>
+            <span className="min-w-0 flex-1">
+              <span className="block text-small font-bold text-text">{t("tm.matrix.title")}</span>
+              <span className="block text-caption text-text-secondary">{t("tm.matrix.subtitle")}</span>
+            </span>
+            <ChevronRight size={18} className="text-text-muted" aria-hidden />
+          </button>
         </div>
-      )}
+
+        <aside className="space-y-4 max-lg:hidden">
+          <section className="rounded-2xl border border-border-soft bg-surface p-4">
+            <h2 className="mb-2 text-h3 font-bold">{t("tm.matrix.title")}</h2>
+            <RolesMatrix ctx={ctx} />
+          </section>
+          {groups.length > 0 && (
+            <section className="rounded-2xl border border-border-soft bg-surface p-4" data-members-groups-card>
+              <h2 className="mb-3 text-h3 font-bold">{t("tm.members.viewGroups")}</h2>
+              <div className="flex flex-wrap gap-2">
+                {groups.map((g, index) => (
+                  <span key={g.id} className={cn("inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-caption font-bold", ["bg-primary-soft text-primary", "bg-warning/10 text-warning", "bg-success/10 text-success", "bg-text-secondary/10 text-text-secondary"][index % 4])}>
+                    {g.name}
+                    <span className="font-medium">{g.memberCount}</span>
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+        </aside>
+      </div>
 
       {toastNode}
+      {matrixOpen && (
+        <SpaceDialog title={t("tm.matrix.title")} onClose={() => setMatrixOpen(false)}>
+          <RolesMatrix ctx={ctx} />
+        </SpaceDialog>
+      )}
       {inviteOpen && <InviteDialog ctx={ctx} onClose={() => setInviteOpen(false)} onDone={() => undefined} />}
       {removing && (
         <RemoveMemberDialog
@@ -160,6 +353,8 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
     </section>
   );
 }
+
+const initialsOf = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((part) => part.charAt(0)).join("").toLocaleUpperCase() || "?";
 
 /** Çıkarma: önce üyenin ekipteki içeriğinin özeti, sonra içeriğin kime kalacağı ("ekipte kal" / "bir üyeye devret" / "kişisel kopya"). */
 function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; member: TeamMember; onClose: () => void; onDone: () => void }) {
@@ -194,59 +389,103 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
     }
   };
 
+  const name = member.displayName || member.username;
+  const first = name.split(" ")[0] || name;
   const total = (summary?.prompts ?? 0) + (summary?.items ?? 0) + (summary?.variables ?? 0);
+  const modes: { key: "team" | "member" | "personal"; title: TranslationKey; hint: string; badge?: boolean }[] = [
+    { key: "team", title: "tm.members.fate.team", hint: t("tm.members.fate.teamHint", { name: first }), badge: true },
+    { key: "member", title: "tm.members.fate.member", hint: t("tm.members.fate.memberHint") },
+    { key: "personal", title: "tm.members.fate.personal", hint: t("tm.members.fate.personalHint", { name: first }) },
+  ];
+  const stats: [number, TranslationKey][] = [
+    [summary?.prompts ?? 0, "tm.members.stat.prompts"],
+    [summary?.items ?? 0, "tm.members.stat.items"],
+    [summary?.variables ?? 0, "tm.members.stat.variables"],
+  ];
   return (
     <SpaceDialog
-      title={t("tm.members.removeTitle", { name: member.displayName || member.username })}
+      eyebrow={t("tm.members.removeEyebrow")}
+      leading={
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-secondary/10 text-body font-bold text-secondary" aria-hidden>
+          {initialsOf(name)}
+        </span>
+      }
+      title={t("tm.members.removeTitle", { name })}
       onClose={onClose}
       busy={busy}
       onSubmit={(event) => void submit(event)}
       formTestId="team-remove-form"
+      wide
       footer={
         <>
-          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={busy} className="max-sm:flex-1">
             {t("common.cancel")}
           </Button>
-          <Button type="submit" variant="danger" disabled={busy || !summary}>
+          <Button type="submit" variant="danger" disabled={busy || !summary} className="max-sm:flex-1">
             {t("tm.members.removeConfirm")}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
-        <p className="text-small text-text-secondary">
-          {summary ? t("tm.members.summary", { prompts: summary.prompts ?? 0, items: summary.items ?? 0, variables: summary.variables ?? 0 }) : t("common.loading")}
-        </p>
-        {total > 0 && (
-          <div>
-            <span className={fieldLabelClassName}>{t("tm.members.contentFate")}</span>
-            <PillChoice<"team" | "member" | "personal">
-              ariaLabel={t("tm.members.contentFate")}
-              value={mode}
-              onChange={setMode}
-              options={[
-                { key: "team", label: t("tm.members.fate.team"), hint: t("tm.members.fate.teamHint") },
-                { key: "member", label: t("tm.members.fate.member"), hint: t("tm.members.fate.memberHint") },
-                { key: "personal", label: t("tm.members.fate.personal"), hint: t("tm.members.fate.personalHint") },
-              ]}
-            />
-            <p className="mt-1.5 text-caption text-text-muted">{t(`tm.members.fate.${mode}Hint` as "tm.members.fate.teamHint")}</p>
-          </div>
-        )}
-        {mode === "member" && total > 0 && (
-          <select value={owner} onChange={(event) => setOwner(event.target.value)} aria-label={t("tm.members.pickOwner")} className="h-11 w-full rounded-lg border border-border bg-background px-3 text-small">
-            <option value="">{t("tm.members.pickOwner")}</option>
-            {candidates.map((c) => (
-              <option key={c.userId} value={c.userId}>
-                {c.displayName || c.username}
-              </option>
+        <div>
+          <p className="mb-2 text-small text-text-secondary">{summary ? t("tm.members.contentOf", { name: first }) : t("common.loading")}</p>
+          <div className="grid grid-cols-3 gap-2" data-remove-stats>
+            {stats.map(([value, label]) => (
+              <div key={label} className="rounded-lg bg-surface-soft px-3 py-2.5">
+                <p className="text-h3 font-bold leading-tight text-text">{value}</p>
+                <p className="text-caption text-text-secondary">{t(label)}</p>
+              </div>
             ))}
-          </select>
-        )}
-        <label className="flex items-center gap-2 text-small">
-          <input type="checkbox" checked={notify} onChange={(event) => setNotify(event.target.checked)} />
-          {t("tm.members.notify")}
+          </div>
+        </div>
+        <div className="space-y-2" role="radiogroup" aria-label={t("tm.members.contentFate")}>
+          <p className="text-small font-bold text-text">{t("tm.members.contentFate")}</p>
+          {modes.map((m) => {
+            const on = mode === m.key;
+            return (
+              <div key={m.key} className={cn("flex items-center gap-3 rounded-lg border px-3.5 py-2.5", on ? "border-2 border-primary bg-primary-soft/40" : "border-border-soft")}>
+                <button type="button" role="radio" aria-checked={on} data-remove-mode={m.key} onClick={() => setMode(m.key)} className="flex min-w-0 flex-1 items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2", on ? "border-primary" : "border-border-strong")} aria-hidden>
+                    {on && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex flex-wrap items-center gap-2 text-small font-bold text-text">
+                      {t(m.title)}
+                      {m.badge && <span className="rounded-full bg-success/10 px-2 py-0.5 text-caption font-bold text-success">{t("tm.members.recommended")}</span>}
+                    </span>
+                    <span className="block text-caption text-text-secondary">{m.hint}</span>
+                  </span>
+                </button>
+                {m.key === "member" && (
+                  <select
+                    value={owner}
+                    onChange={(event) => {
+                      setOwner(event.target.value);
+                      setMode("member");
+                    }}
+                    aria-label={t("tm.members.pickOwner")}
+                    data-remove-owner
+                    className="h-9 max-w-[9.5rem] shrink-0 rounded-full border border-border bg-background px-3 text-caption font-bold text-text"
+                  >
+                    <option value="">{t("tm.members.pickShort")}</option>
+                    {candidates.map((c) => (
+                      <option key={c.userId} value={c.userId}>
+                        {c.displayName || c.username}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <p className="rounded-lg bg-primary-soft px-3.5 py-2.5 text-caption text-primary">{t("tm.members.alwaysStays")}</p>
+        <label className="flex items-center gap-2.5 text-small text-text">
+          <input type="checkbox" checked={notify} onChange={(event) => setNotify(event.target.checked)} className="h-5 w-5 accent-primary" />
+          {t("tm.members.notifyName", { name })}
         </label>
+        {total === 0 && summary && <p className="text-caption text-text-muted">{t("tm.members.nothingToMove")}</p>}
         {error && (
           <p role="alert" className="text-small text-danger">
             {error}

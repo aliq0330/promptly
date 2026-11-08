@@ -117,6 +117,8 @@ const CHECKS = [
   { name: "rpc set_prompt_works (Çalıştı mı? oyu; yalnız oturumlu)", rpc: "set_prompt_works", body: { p_prompt_id: "00000000-0000-4000-8000-000000000000", p_works: null }, deniedOk: true, soft: true },
   { name: "prompt_works_stats (prompt başına evet/hayır sayıları, docs/history/296-*)", get: () => `prompt_works_stats?select=${encodeURIComponent("prompt_id,yes_count,no_count")}&limit=1` },
   { name: "rpc my_teams (Ekipler, docs/history/353-*; yalnız oturumlu)", rpc: "my_teams", body: { p_limit: 1, p_offset: 0 }, deniedOk: true, soft: true },
+  { name: "rpc my_teams_preview (Ekipler kartı, docs/history/355-*; yalnız oturumlu)", rpc: "my_teams_preview", body: { p_ids: [] }, deniedOk: true, soft: true },
+  { name: "rpc space_set_review_sample (onay incelemesi örnek çıktısı, docs/history/355-*; yalnız oturumlu)", rpc: "space_set_review_sample", body: { p_item: "00000000-0000-0000-0000-000000000000", p_sample: "" }, deniedOk: true, soft: true },
   { name: "rpc team_list_channels (ekip kanalları; yalnız oturumlu)", rpc: "team_list_channels", body: { p_team: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
   { name: "rpc preview_team_link (davet bağlantısı; yalnız oturumlu)", rpc: "preview_team_link", body: { p_token: "x" }, deniedOk: true, soft: true },
   { name: "rpc team_report_message (ekip kanalı mesajı şikâyeti; yalnız oturumlu)", rpc: "team_report_message", body: { p_message: "00000000-0000-4000-8000-000000000000", p_reason_code: "spam" }, deniedOk: true, soft: true },

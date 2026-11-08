@@ -47,8 +47,14 @@ export function SpaceDialog({
   wide,
   busy,
   overLayers,
+  eyebrow,
+  leading,
 }: {
   title: string;
+  /** Başlığın üstünde küçük büyük harfli etiket (ör. "ERİŞİM"). */
+  eyebrow?: string;
+  /** Başlığın solunda küçük görsel (ör. kişinin baş harfleri). */
+  leading?: React.ReactNode;
   onClose: () => void;
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -73,9 +79,13 @@ export function SpaceDialog({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-soft px-5 py-3.5">
-          <h2 id={id} className="text-h3 font-semibold text-text">
-            {title}
-          </h2>
+          {leading}
+          <div className="min-w-0 flex-1">
+            {eyebrow && <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">{eyebrow}</p>}
+            <h2 id={id} className="truncate text-h3 font-semibold text-text">
+              {title}
+            </h2>
+          </div>
           <button type="button" onClick={onClose} disabled={busy} aria-label={t("common.close")} className="rounded-full p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
             <X size={18} />
           </button>
