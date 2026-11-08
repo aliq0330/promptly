@@ -675,7 +675,7 @@ begin
   perform public._team_require(tc.team_id, 'manage_channels');
   if m.deleted_at is not null then return; end if;
   v_sender_role := public._team_role(tc.team_id, m.sender_id);
-  if m.sender_id <> v_uid and v_sender_role = 'owner' and public._team_role(tc.team_id, v_uid) <> 'owner' then raise exception 'forbidden'; end if;
+  if m.sender_id <> v_uid and v_sender_role = 'owner' and public._team_role(tc.team_id, v_uid) is distinct from 'owner' then raise exception 'forbidden'; end if;
   update public.messages set deleted_at = now(), body = null, shared_prompt_id = null, shared_request_id = null, attachments = '[]'::jsonb where id = p_message;
   perform public._team_audit(tc.team_id, 'channel', 'message_deleted', tc.name, jsonb_build_object('sender', m.sender_id));
 end $$;

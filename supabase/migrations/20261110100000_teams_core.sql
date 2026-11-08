@@ -425,7 +425,7 @@ begin
   end if;
   if (new.owner_id <> old.owner_id or new.community_id is distinct from old.community_id or new.team_id is distinct from old.team_id
       or new.team_creator_id is distinct from old.team_creator_id or new.team_access_mode is distinct from old.team_access_mode)
-     and not public._team_sync_on() then
+     and not public._team_sync_on() and pg_trigger_depth() <= 1 then
     raise exception 'space_invalid';
   end if;
   if (new.community_id is not null or new.team_id is not null) and new.visibility <> 'private' then
