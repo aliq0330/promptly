@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Archive } from "@/components/icons/archive";
 import { Inbox } from "@/components/icons/inbox";
@@ -21,6 +21,8 @@ import { Portal } from "@/components/ui/portal";
 import { useToast } from "@/features/groups/use-toast";
 import { bucketConversations, filterConversationsByQuery } from "@/lib/conversation-lists";
 import { isTeamVisibility } from "@/lib/communities";
+import { TeamChannelsInbox } from "@/features/teams/team-channels-inbox";
+import { listMyTeams } from "@/lib/supabase/teams";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, messageHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
@@ -52,6 +54,18 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<MessagesView>("inbox");
+  // Ekip kanallarında okunmamış toplamı (docs/history/353-*): "Ekip sohbetleri" satırında sayaç.
+  const [teamUnread, setTeamUnread] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    void listMyTeams(0).then(
+      (page) => !cancelled && setTeamUnread(page.items.reduce((sum, team) => sum + team.unreadCount, 0)),
+      () => undefined,
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [searchOpen, setSearchOpen] = useState(false);
   const [newChatOpen, setNewChatOpen] = useState(false);
@@ -206,12 +220,11 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     { key: "starred", label: t("chat.starred.title"), icon: Star, dividerBefore: true },
     { key: "communities", label: t("communities.messages.entryAria"), icon: Users },
     // Ekip sohbetleri Topluluk sohbetlerinden ayrı bir kapıdır (docs/history/350-*).
-    { key: "teams", label: t("teams.messages.entryAria"), icon: Briefcase },
+    { key: "teams", label: t("teams.messages.entryAria"), icon: Briefcase, count: teamUnread || undefined },
   ];
   function pickView(next: MessagesView) {
     if (next === "starred") return router.push("/messages/starred");
     if (next === "communities") return router.push("/communities");
-    if (next === "teams") return router.push("/teams");
     setView(next);
     setActionError(false);
     exitSelection();
@@ -322,7 +335,11 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         )}
       </div>
       <div className={cn("min-h-0 flex-1", embedded && "overflow-y-auto", selectionActive && !embedded && "pb-28")}>
-        {noMatches ? (
+        {view === "teams" ? (
+          <div className={cn(embedded && "px-4")}>
+            <TeamChannelsInbox />
+          </div>
+        ) : noMatches ? (
           <p className="py-10 text-center text-sm text-text-muted">{t("messages.noConversationMatches")}</p>
         ) : kindEmpty ? (
           <p data-kind-empty className="py-10 text-center text-sm text-text-muted">{t("rooms.filter.empty")}</p>

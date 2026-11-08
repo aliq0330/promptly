@@ -53,6 +53,10 @@ test("kategori: SQL'de geçen her tür TS'te de aynı kategoriye düşer", () =>
   assert.equal(notificationCategoryOf("like", "/communities/post/local?id=1"), "community");
   assert.equal(notificationCategoryOf("system", "/messages/local?id=1"), "community");
   assert.equal(notificationCategoryOf("system", "/insights"), "system");
+  assert.equal(notificationCategoryOf("system", "/teams/local?id=1&tab=library"), "teams");
+  assert.equal(notificationCategoryOf("system", "/teams"), "teams");
+  assert.equal(notificationCategoryOf("system", "/spaces/local?id=1&tab=prompts"), "teams");
+  assert.equal(notificationCategoryOf("like", "/prompts/local?id=1"), "posts");
 });
 
 test("adres tabanı hl= parametresini atar (SQL testi 1 ile aynı)", () => {

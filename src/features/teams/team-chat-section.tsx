@@ -81,7 +81,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
 
   return (
     <section className="grid gap-4 md:grid-cols-[15rem_minmax(0,1fr)]" data-testid="team-chat">
-      <aside className="space-y-3">
+      <aside className={cn("space-y-3", wanted && "max-md:hidden")} data-testid="team-channel-aside">
         <div className="flex items-center justify-between">
           <h2 className="text-label font-semibold uppercase tracking-wide text-text-muted">{t("tm.chat.channels")}</h2>
           {can("manage_channels") && (
@@ -128,7 +128,13 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
       </aside>
 
       {active ? (
-        <ChannelView key={active.id} ctx={ctx} channel={active} onSettings={() => setSettingsFor(active)} onChanged={load} />
+        // Telefonda tek bölme: kanal seçilene kadar yalnız liste, seçilince yalnız sohbet (+ geri). Masaüstünde ikisi yan yana.
+        <div className={cn("min-w-0", !wanted && "max-md:hidden")}>
+          <button type="button" onClick={() => router.replace(teamLink(team.id, "chat"))} className="mb-2 inline-flex items-center gap-1 text-small text-primary md:hidden" data-channel-back>
+            ‹ {t("tm.chat.channels")}
+          </button>
+          <ChannelView key={active.id} ctx={ctx} channel={active} onSettings={() => setSettingsFor(active)} onChanged={load} />
+        </div>
       ) : (
         <EmptyState icon={Hash} title={t("tm.chat.empty.title")} description={t("tm.chat.empty.body")} />
       )}

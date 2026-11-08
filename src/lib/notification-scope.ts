@@ -13,3 +13,15 @@ export function isCommunityNotification(type: string, targetHref: string): boole
   if (COMMUNITY_PAGE.test(targetHref)) return true;
   return type === "system" && targetHref.startsWith("/messages/local");
 }
+
+/**
+ * Bildirim merkezinin "Ekipler" sekmesi (docs/history/353-*): ekip sayfasına (`/teams…`) giden her bildirim ile ekip kütüphanesinin Space'inde
+ * onay/inceleme için yazılan `system` bildirimleri (`/spaces/local?…&tab=prompts`). SQL `_notification_category` ile aynı.
+ */
+const TEAM_PAGE = /^\/teams(?=[/?#]|$)/;
+const TEAM_LIBRARY_SPACE = /^\/spaces\/local\?.*&tab=prompts/;
+
+export function isTeamNotification(type: string, targetHref: string): boolean {
+  if (TEAM_PAGE.test(targetHref)) return true;
+  return type === "system" && TEAM_LIBRARY_SPACE.test(targetHref);
+}

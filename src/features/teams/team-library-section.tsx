@@ -249,7 +249,7 @@ function ReviewDialog({ itemId, onClose, onChanged }: { itemId: string; onClose:
           {error ?? t("common.loading")}
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4" data-testid="team-review">
           <div>
             <span className={fieldLabelClassName}>{t("tm.lib.current")}</span>
             <pre className="prompt-text max-h-60 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-surface-soft p-3 text-small">{review.item.body}</pre>
