@@ -94,6 +94,8 @@ export function TeamPage() {
   }, [t, isGuest, can, adminVisible, team?.unreadCount]);
 
   const tab: TeamTab = isTeamTab(rawTab) && items.some((item) => item.key === rawTab) ? rawTab : "spaces";
+  // Telefonda açık bir kanal tam ekran sohbettir (mockup): ekip başlığı, sekmeler ve notlar gizlenir, geri düğmesi sohbet başlığındadır.
+  const chatFocus = tab === "chat" && Boolean(params.get("channel"));
   const go = (next: TeamTab) => router.replace(teamLink(id, next));
   const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -138,11 +140,11 @@ export function TeamPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-4 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
-      <Link href="/teams" className="inline-flex items-center gap-1.5 text-small font-medium text-text-secondary hover:text-text" data-team-back>
+      <Link href="/teams" className={`items-center gap-1.5 text-small font-medium text-text-secondary hover:text-text ${chatFocus ? "hidden md:inline-flex" : "inline-flex"}`} data-team-back>
         <ArrowLeft size={15} aria-hidden />
         {t("tm.title")}
       </Link>
-      <header className="flex flex-wrap items-center gap-3">
+      <header className={`flex-wrap items-center gap-3 ${chatFocus ? "hidden md:flex" : "flex"}`}>
         <TeamMark name={team.name} tone={team.tone} size={56} className="max-sm:!h-14 max-sm:!w-14" />
         <div className="min-w-0 flex-1 max-sm:basis-[calc(100%-4.5rem)]">
           <div className="flex flex-wrap items-center gap-2">
@@ -160,7 +162,7 @@ export function TeamPage() {
           </Button>
         )}
       </header>
-      <nav aria-label={t("tm.tab.aria")} className="border-b border-border-soft" data-testid="team-tabs">
+      <nav aria-label={t("tm.tab.aria")} className={`border-b border-border-soft ${chatFocus ? "max-md:hidden" : ""}`} data-testid="team-tabs">
         <ScrollRow className="gap-6 -mb-px">
           {items.map((item) => (
             <button
@@ -179,7 +181,7 @@ export function TeamPage() {
           ))}
         </ScrollRow>
       </nav>
-      {team.description && <p className="max-w-2xl break-words text-small text-text-secondary">{team.description}</p>}
+      {team.description && <p className={`max-w-2xl break-words text-small text-text-secondary ${chatFocus ? "max-md:hidden" : ""}`}>{team.description}</p>}
       {isGuest && team.guestUntil && <p className="rounded-lg bg-warning/10 px-3 py-2 text-small text-warning">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>}
       <div data-team-tab={tab}>{body}</div>
       {inviteOpen && <InviteDialog ctx={ctx} onClose={() => setInviteOpen(false)} onDone={() => undefined} />}

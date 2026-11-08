@@ -88,3 +88,11 @@ Kullanıcı listeyi verip "eksikleri yap" dedi. Mockup (`Promptly Ekipler Mockup
 | Görsel uyum / telefon | Ekran görüntüsüyle gözden geçirildi; başlık telefonda yığılır, "Davet et" tam genişlik, tek bölmeli sohbet. Mockup'taki 16 telefon ekranı BİREBİR yeniden çizilmedi. |
 
 Yapılmayan: `private` CHECK daraltma (fixture maliyeti), gömülü sohbette kütüphane/içe aktarma, mockup piksel eşleşmesi.
+
+
+## Üçüncü tur — kalan eksikler (2026-11-08)
+
+- **Gömülü sohbet:** `LocalConversationView` `dock.embedded` kipinde artık "+" menüsünde "Kütüphaneden paylaş" ve "Prompt içe aktar" (durum içi pencereler, adres parametresi gerekmez) ve başlıksız kipte sağ üstte "Sohbette ara" düğmesi var.
+- **`private` düzeyi:** `20261112100000_chat_groups_no_new_private.sql` — `_chat_groups_reject_new_private` tetikleyicisi yeni `private` girişini (INSERT ya da başka düzeyden geçiş) `invalid_visibility` ile reddeder; mevcut `private` satırın başka sütunları ve değişmeyen yeniden yazımı serbesttir. CHECK daraltılmadı (okuma yolları ve eski istemciler değerini tanımaya devam eder). Canlıda 0 `private` satır vardı (2026-11-08). Yerel test paketi (`supabase/tests/run-local.sh`) eski topluluk fixture'ları için veritabanına `promptly.allow_private_community = 'on'` yazar; canlıda ayar yoktur. Test: `chat-groups-no-new-private.sql` (7 kontrol), mevcut communities/chat-groups/community-privacy testleri değişmeden geçer.
+- **Telefon (mockup karşılaştırması):** mockup'taki Ekipler, Kütüphane, Ekip sohbeti ve Denetim günlüğü panoları okunup 390 px ekran görüntüleriyle karşılaştırıldı. Düzeltilenler: açık kanal tam ekran sohbet (ekip başlığı/sekmeler/açıklama gizli, geri düğmesi + kanal adı + çevrimiçi satırı + kanal çipleri sohbet başlığında; bildirim düzeyi seçici telefonda gizli, ayarlar simgesi); kütüphanede dört istatistik kartı yalnız `sm`+, telefonda "N prompt onay bekliyor · İncele" şeridi ve sayaçlı yatay kaydırmalı durum çipleri (`PillChoice` = `ScrollRow`). Karşılaştırılmayanlar: Üyeler, Politikalar, Konuklar, Gruplar, Entegrasyonlar, Panel, Erişim, Çıkış telefon panoları.
+- Test: `run-team-hub` 19/19 (13/14 telefon senaryoları genişledi, 17 yeni).

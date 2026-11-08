@@ -2,11 +2,14 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronLeft } from "@/components/icons/chevron-left";
 import { Hash } from "@/components/icons/hash";
 import { Lock } from "@/components/icons/lock";
 import { Plus } from "@/components/icons/plus";
+import { Settings } from "@/components/icons/settings";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { LocalConversationView } from "@/features/messages/local-conversation-view";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
@@ -151,10 +154,17 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
       {active ? (
         // Telefonda tek bölme: kanal seçilene kadar yalnız liste, seçilince yalnız sohbet (+ geri). Masaüstünde ikisi yan yana.
         <div className={cn("min-w-0", !wanted && "max-md:hidden")}>
-          <button type="button" onClick={() => router.replace(teamLink(team.id, "chat"))} className="mb-2 inline-flex items-center gap-1 text-small text-primary md:hidden" data-channel-back>
-            ‹ {t("tm.chat.channels")}
-          </button>
-          <ChannelView key={active.id} ctx={ctx} channel={active} onlineCount={onlineMembers.length} onSettings={() => setSettingsFor(active)} onChanged={load} />
+          <ChannelView
+            key={active.id}
+            ctx={ctx}
+            channel={active}
+            channels={visible}
+            onSelect={select}
+            onBack={() => router.replace(teamLink(team.id, "chat"))}
+            onlineCount={onlineMembers.length}
+            onSettings={() => setSettingsFor(active)}
+            onChanged={load}
+          />
         </div>
       ) : (
         <EmptyState icon={Hash} title={t("tm.chat.empty.title")} description={t("tm.chat.empty.body")} />
@@ -186,13 +196,34 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   );
 }
 
-function ChannelView({ ctx, channel, onlineCount, onSettings, onChanged }: { ctx: TeamCtx; channel: TeamChannel; onlineCount: number; onSettings: () => void; onChanged: () => void }) {
+function ChannelView({
+  ctx,
+  channel,
+  channels,
+  onSelect,
+  onBack,
+  onlineCount,
+  onSettings,
+  onChanged,
+}: {
+  ctx: TeamCtx;
+  channel: TeamChannel;
+  channels: TeamChannel[];
+  onSelect: (channel: TeamChannel) => void;
+  onBack: () => void;
+  onlineCount: number;
+  onSettings: () => void;
+  onChanged: () => void;
+}) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-lg border border-border-soft bg-surface md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
-      <header className="flex shrink-0 items-center gap-2 border-b border-border-soft px-4 py-3">
-        {channel.mode === "private" ? <Lock size={16} aria-hidden /> : <Hash size={16} aria-hidden />}
+    <div className="flex flex-col overflow-hidden rounded-lg border border-border-soft bg-surface max-md:h-[calc(100dvh-11rem)] max-md:rounded-none max-md:border-0 md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
+      <header className="flex shrink-0 items-center gap-2 border-b border-border-soft px-4 py-3 max-md:px-1">
+        <button type="button" onClick={onBack} aria-label={t("tm.chat.channels")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text hover:bg-surface-soft md:hidden" data-channel-back>
+          <ChevronLeft size={20} aria-hidden />
+        </button>
+        <span className="max-md:hidden">{channel.mode === "private" ? <Lock size={16} aria-hidden /> : <Hash size={16} aria-hidden />}</span>
         <div className="min-w-0 flex-1">
           <h3 className="truncate font-display text-body font-semibold"># {channel.name}</h3>
           <p className="truncate text-caption text-text-muted">
@@ -206,18 +237,42 @@ function ChannelView({ ctx, channel, onlineCount, onSettings, onChanged }: { ctx
           aria-label={t("tm.chat.notify")}
           value={channel.notifyLevel}
           onChange={(event) => void setChannelNotify(channel.id, event.target.value as "all" | "mentions" | "none").then(onChanged)}
-          className="h-8 rounded-lg border border-border bg-background px-2 text-caption"
+          className="h-8 rounded-lg border border-border bg-background px-2 text-caption max-md:hidden"
         >
           <option value="all">{t("tm.chat.notify.all")}</option>
           <option value="mentions">{t("tm.chat.notify.mentions")}</option>
           <option value="none">{t("tm.chat.notify.none")}</option>
         </select>
         {ctx.can("manage_channels") && (
-          <Button type="button" size="sm" variant="outline" onClick={onSettings} data-channel-settings>
-            {t("tm.chat.settings")}
-          </Button>
+          <>
+            <Button type="button" size="sm" variant="outline" onClick={onSettings} className="max-md:hidden" data-channel-settings>
+              {t("tm.chat.settings")}
+            </Button>
+            <button type="button" onClick={onSettings} aria-label={t("tm.chat.settings")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft md:hidden" data-channel-settings-mobile>
+              <Settings size={20} aria-hidden />
+            </button>
+          </>
         )}
       </header>
+      <ScrollRow className="shrink-0 gap-2 border-b border-border-soft px-3 py-2 md:hidden" data-testid="team-channel-chips">
+        {channels.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => onSelect(c)}
+            aria-current={c.id === channel.id ? "true" : undefined}
+            data-channel-chip={c.name}
+            className={cn(
+              "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-small font-medium",
+              c.id === channel.id ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary",
+            )}
+          >
+            {c.mode === "private" ? <Lock size={13} aria-hidden /> : <Hash size={13} aria-hidden />}
+            {c.name}
+            {c.unreadCount > 0 && !c.muted && c.id !== channel.id && <span className="rounded-full bg-secondary px-1.5 text-caption text-white">{c.unreadCount}</span>}
+          </button>
+        ))}
+      </ScrollRow>
       {/* Mesajlar'daki GERÇEK sohbet ekranı (tepki, yanıt, sabitleme, fotoğraf, GIF, yıldız, düzenleme, "yazıyor…"): aynı konuşma, iki giriş. */}
       <div className="relative flex min-h-0 flex-1 flex-col">
         <LocalConversationView key={channel.id} dock={{ conversationId: channel.id, embedded: true, onBack: noop, onExpand: noop, onMinimize: noop }} />
