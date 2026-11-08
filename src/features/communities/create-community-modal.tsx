@@ -37,17 +37,16 @@ const ACCEPTED_AVATAR_TYPES = "image/jpeg,image/png,image/webp";
  * oluşturan owner olur; sohbet modülü aynı işlemde kurulur). Davetliler üye YAPILMAZ; davet edilir, kabul ederlerse katılırlar.
  * Görsel yüklenemezse topluluk görselsiz kurulabilir; yeniden denemeyi kullanıcı seçer.
  */
-export function CreateCommunityModal({ onClose, onCreated, mode = "community" }: { onClose: () => void; onCreated: (groupId: string) => void; mode?: "community" | "team" }) {
+export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => void; onCreated: (groupId: string) => void }) {
   const { t } = useTranslation();
   // Ekip (docs/history/350-*): görünürlük HEP tamamen kapalıdır, kategori/akış politikası/kurallar sorulmaz (sonradan Ayarlar'dan açılır).
-  const team = mode === "team";
   const { user } = useAuth();
   const { busy, error, setError, run } = useAsyncAction();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [visibility, setVisibility] = useState<GroupVisibility>(team ? "private" : "restricted");
+  const [visibility, setVisibility] = useState<GroupVisibility>("restricted");
   const [memberLimit, setMemberLimit] = useState(String(GROUP_MEMBER_LIMIT_DEFAULT));
   const [category, setCategory] = useState<CommunityCategory>("general");
   const [postingPolicy, setPostingPolicy] = useState<GroupPostingPolicy>("members");
@@ -136,7 +135,7 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
           </ul>
           <div className="flex justify-end">
             <Button type="button" size="sm" onClick={() => onCreated(created.groupId)}>
-              {team ? t("teams.create.goToTeam") : t("communities.create.goToCommunity")}
+              {t("communities.create.goToCommunity")}
             </Button>
           </div>
         </div>
@@ -154,7 +153,7 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
       >
         <div className="flex items-center justify-between gap-2 px-5 pb-3 pt-5">
           <h2 id="create-community-title" className="text-base font-semibold text-text">
-            {team ? t("teams.create.title") : t("communities.create.title")}
+            {t("communities.create.title")}
           </h2>
           <button
             type="button"
@@ -176,7 +175,7 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
               aria-label={t("communities.create.avatarPick")}
               className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <GroupAvatar name={name || (team ? t("teams.create.title") : t("communities.create.title"))} avatarUrl={avatarPreview} size={64} />
+              <GroupAvatar name={name || t("communities.create.title")} avatarUrl={avatarPreview} size={64} />
               <span className="absolute inset-0 flex items-center justify-center rounded-full bg-text/40 text-background opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                 <Camera size={20} />
               </span>
@@ -204,7 +203,7 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
 
           <div>
             <label htmlFor="group-name" className={fieldLabelClassName}>
-              {team ? t("teams.create.nameLabel") : t("communities.create.nameLabel")}
+              {t("communities.create.nameLabel")}
             </label>
             <input
               id="group-name"
@@ -245,13 +244,7 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
             </p>
           </div>
 
-          {team ? (
-            <p data-team-private-note className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-secondary">
-              {t("teams.create.privateNote")}
-            </p>
-          ) : (
-            <VisibilityPicker value={visibility} onChange={setVisibility} disabled={busy} options={COMMUNITY_VISIBILITY_OPTIONS} />
-          )}
+          <VisibilityPicker value={visibility} onChange={setVisibility} disabled={busy} options={COMMUNITY_VISIBILITY_OPTIONS} />
 
           <div>
             <label htmlFor="group-limit" className={fieldLabelClassName}>
@@ -275,7 +268,6 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
           </div>
 
 
-          {!team && (
           <div>
             <label htmlFor="community-category" className={fieldLabelClassName}>
               {t("communities.create.categoryLabel")}
@@ -289,7 +281,6 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
             </select>
             <p className="mt-1 text-caption text-text-muted">{t("communities.create.categoryHelp")}</p>
           </div>
-          )}
 
           <fieldset className="space-y-2">
             <legend className={fieldLabelClassName}>{t("communities.create.chatPolicyLabel")}</legend>
@@ -303,8 +294,6 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
             </ChoiceCard>
           </fieldset>
 
-          {!team && (
-            <>
           <fieldset className="space-y-2">
             <legend className={fieldLabelClassName}>{t("communities.create.feedPolicyLabel")}</legend>
             <ChoiceCard>
@@ -339,8 +328,6 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
               {touched && rulesProblem ? t("communities.create.rulesProblem", { max: COMMUNITY_RULES_MAX }) : t("communities.create.rulesRequiredHelp")}
             </p>
           </div>
-            </>
-          )}
 
           <div>
             <p className={fieldLabelClassName}>
@@ -367,7 +354,7 @@ export function CreateCommunityModal({ onClose, onCreated, mode = "community" }:
             {t("common.cancel")}
           </Button>
           <Button type="submit" size="sm" disabled={busy} onClick={() => setError(null)}>
-            {busy ? t("common.creating") : team ? t("teams.create.submit") : t("communities.create.submit")}
+            {busy ? t("common.creating") : t("communities.create.submit")}
           </Button>
         </div>
       </form>

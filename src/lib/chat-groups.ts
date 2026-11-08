@@ -46,9 +46,6 @@ export const GROUP_CAPABILITIES: readonly GroupCapability[] = [
   "manage_events",
   "edit_rules",
   "view_stats",
-  // Ekip alanı (docs/history/349-*): ekibe Space açma/yönetme ve ekip kütüphanesinde onay
-  "create_spaces",
-  "approve_library",
   // Sohbet odaları (docs/history/352-*): oda oluşturma, düzenleme, sıralama, arşivleme
   "manage_rooms",
 ];
@@ -61,11 +58,11 @@ export function capabilitiesFor(role: "admin" | "moderator"): readonly GroupCapa
 export const DEFAULT_ROLE_PERMISSIONS: RolePermissions = {
   admin: {
     edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true, pin_messages: true,
-    moderate_posts: true, pin_posts: true, manage_announcements: true, manage_events: true, edit_rules: true, view_stats: true, create_spaces: true, approve_library: true, manage_rooms: true,
+    moderate_posts: true, pin_posts: true, manage_announcements: true, manage_events: true, edit_rules: true, view_stats: true, manage_rooms: true,
   },
   moderator: {
     edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true, pin_messages: true,
-    moderate_posts: true, pin_posts: true, manage_announcements: false, manage_events: false, edit_rules: false, view_stats: false, create_spaces: false, approve_library: false, manage_rooms: false,
+    moderate_posts: true, pin_posts: true, manage_announcements: false, manage_events: false, edit_rules: false, view_stats: false, manage_rooms: false,
   },
 };
 
@@ -235,7 +232,6 @@ export const GROUP_ERROR_CODES = [
   "cannot_join",
   "cannot_target_self",
   "owner_must_transfer",
-  "community_has_team_spaces",
   "request_not_found",
   "request_cooldown",
   "request_limit_reached",

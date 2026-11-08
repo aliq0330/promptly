@@ -55,15 +55,10 @@ export const CATEGORY_LABEL_KEYS: Record<CommunityCategory, TranslationKey> = {
 export const VISIBILITY_OPTIONS: readonly GroupVisibility[] = ["public", "restricted", "private"];
 
 /**
- * "Topluluk oluştur" ve topluluk ayarlarında seçilebilen düzeyler (docs/history/350-*): "Tamamen kapalı" artık EKİP'tir ve yalnız "Ekip oluştur"la
- * kurulur; bir topluluk ekibe, ekip topluluğa arayüzden çevrilmez (sunucu kuralları değişmedi).
+ * "Topluluk oluştur" ve topluluk ayarlarında seçilebilen düzeyler (docs/history/353-*): "Tamamen kapalı" düzeyi kalktı; ekipler artık
+ * topluluktan bağımsızdır (`/teams`). Veritabanında eski değer hâlâ geçerlidir ama arayüz onu sunmaz.
  */
 export const COMMUNITY_VISIBILITY_OPTIONS: readonly GroupVisibility[] = ["public", "restricted"];
-
-/** Ekip = "tamamen kapalı" topluluk (docs/history/349-*, 350-*): tek tanım. */
-export function isTeamVisibility(visibility: GroupVisibility): boolean {
-  return visibility === "private";
-}
 
 export const VISIBILITY_LABEL_KEYS: Record<GroupVisibility, TranslationKey> = {
   public: "groups.visibility.public",
@@ -118,9 +113,9 @@ export function normalizeFeedPolicy(value: unknown): CommunityFeedPolicy {
  * Topluluk sayfasının sekmeleri. Akış ilk açılış ekranıdır; sohbet bir sekme DEĞİL, başlıktaki "Sohbeti aç" eylemidir. Eski adresler
  * (`tab=overview` → Akış, `tab=chat` → sohbet, `tab=manage&section=requests|invites` → Üyeler) `resolveCommunityView` ile yönlenir.
  */
-export type CommunityTab = "feed" | "spaces" | "events" | "members" | "about" | "manage";
+export type CommunityTab = "feed" | "events" | "members" | "about" | "manage";
 
-export const COMMUNITY_TABS: readonly CommunityTab[] = ["feed", "spaces", "events", "members", "about", "manage"];
+export const COMMUNITY_TABS: readonly CommunityTab[] = ["feed", "events", "members", "about", "manage"];
 
 export function isCommunityTab(value: unknown): value is CommunityTab {
   return typeof value === "string" && (COMMUNITY_TABS as readonly string[]).includes(value);
@@ -170,9 +165,7 @@ export function canSeeManageTab(role: GroupRole | null | undefined, perms?: Role
 export function accessibleTabs(args: { role: GroupRole | null; visibility: GroupVisibility; perms?: RolePermissions }): CommunityTab[] {
   const { role, visibility, perms } = args;
   if (!role) return visibility === "public" ? ["feed", "events", "about"] : [];
-  // "Space'ler" yalnız ekip alanında (tamamen kapalı topluluk; docs/history/349-*).
-  // Ekipte günlük iş Space'lerdedir: "Space'ler" ilk sekme (varsayılan açılış), Akış ikinci ("Paylaşımlar", docs/history/350-*).
-  const tabs: CommunityTab[] = visibility === "private" ? ["spaces", "feed", "events", "members", "about"] : ["feed", "events", "members", "about"];
+  const tabs: CommunityTab[] = ["feed", "events", "members", "about"];
   if (canSeeManageTab(role, perms)) tabs.push("manage");
   return tabs;
 }
@@ -460,11 +453,6 @@ export function parseCommunityStats(raw: unknown): CommunityStats | null {
 /** Topluluk detay adresi (statik export: kimlik sorgu parametresindedir). */
 export function communityHref(id: string, tab?: CommunityTab, section?: string): string {
   return `/communities/local?id=${encodeURIComponent(id)}${tab ? `&tab=${tab}` : ""}${tab && section ? `&section=${section}` : ""}`;
-}
-
-/** Ekip detay adresi (docs/history/351-*): ekip sayfası kendi rotasındadır; sekme ve bölüm parametreleri topluluktakiyle aynıdır. */
-export function teamHref(id: string, tab?: CommunityTab, section?: string): string {
-  return `/teams/local?id=${encodeURIComponent(id)}${tab ? `&tab=${tab}` : ""}${tab && section ? `&section=${section}` : ""}`;
 }
 
 /** Bir topluluk gönderisinin bağlantısı (akış sekmesi + gönderi kimliği): bildirimler ve "bağlantıyı kopyala" aynı adresi kullanır. */

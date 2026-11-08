@@ -104,7 +104,7 @@ export function CommunitiesPage() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    fetchMyInvitations(user.id, "community")
+    fetchMyInvitations(user.id)
       .then((list) => {
         if (!cancelled) setInvitations(list);
       })
@@ -396,7 +396,7 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
   const key = `${scope}|${reloadKey}`;
   useEffect(() => {
     let cancelled = false;
-    listMyCommunities(scope, 0, { excludeTeams: true })
+    listMyCommunities(scope, 0)
       .then((page) => {
         if (!cancelled) setState({ key, items: page.communities, hasMore: page.hasMore, error: null, nextOffset: page.nextOffset });
       })
@@ -415,7 +415,7 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
     if (!current || loadingMore) return;
     setLoadingMore(true);
     try {
-      const page = await listMyCommunities(scope, current.nextOffset ?? current.items.length, { excludeTeams: true });
+      const page = await listMyCommunities(scope, current.nextOffset ?? current.items.length);
       setState({ key, items: [...current.items, ...page.communities], hasMore: page.hasMore, error: null, nextOffset: page.nextOffset });
     } catch (err) {
       onToast(toGroupError(err instanceof Error ? err : null).message);

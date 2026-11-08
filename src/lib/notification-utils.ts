@@ -27,7 +27,7 @@ import { notificationCategoryOf } from "@/lib/notification-mirror";
  * `NotificationType` values — no new backend concept, just a client-side
  * grouping of what's already there.
  */
-export type NotificationCategory = "posts" | "requests" | "follow" | "messages" | "community" | "system";
+export type NotificationCategory = "posts" | "requests" | "follow" | "messages" | "community" | "teams" | "system";
 
 export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategory> = {
   like: "posts",
@@ -77,6 +77,7 @@ export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; labelKey: Tr
   { key: "follow", labelKey: "notifications.categoryFollow" },
   { key: "messages", labelKey: "header.messagesAriaLabel" },
   { key: "community", labelKey: "nav.communities" },
+  { key: "teams", labelKey: "nav.teams" },
   { key: "system", labelKey: "notifications.categorySystem" },
 ];
 

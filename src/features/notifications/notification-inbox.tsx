@@ -33,7 +33,7 @@ const GROUP_LABEL_KEYS: Record<NotificationDayGroup, TranslationKey> = {
   older: "notifications.groupOlder",
 };
 
-const VIEW_PARAMS: NotificationView[] = ["all", "unread", "posts", "requests", "follow", "messages", "community", "system", "snoozed"];
+const VIEW_PARAMS: NotificationView[] = ["all", "unread", "posts", "requests", "follow", "messages", "community", "teams", "system", "snoozed"];
 
 /**
  * `/notifications` (docs/history/326-*): bildirim DETAY sayfası. Masaüstünde (≥ lg) bölünmüş gelen kutusu — solda kart listesi, sağda seçili bildirimin

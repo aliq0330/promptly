@@ -78,13 +78,13 @@ export function DescriptionField({ value, onChange }: { value: string; onChange:
   );
 }
 
-export function KindField({ value, onChange }: { value: SpaceKind; onChange: (value: SpaceKind) => void }) {
+export function KindField({ value, onChange, kinds = SPACE_KINDS }: { value: SpaceKind; onChange: (value: SpaceKind) => void; kinds?: readonly SpaceKind[] }) {
   const { t } = useTranslation();
   return (
     <fieldset>
       <legend className={fieldLabelClassName}>{t("spaces.form.kind")}</legend>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {SPACE_KINDS.map((kind) => {
+        {kinds.map((kind) => {
           const Icon = KIND_ICON[kind];
           return (
             <label

@@ -24,7 +24,6 @@ import { useSpaceContext } from "../space-provider";
 import { CopyTextButton, DraftEditorModal, ItemDetailModal, resolveSource, sourceReasonKey, usePlaceNewItems, useItemTitle } from "../space-items";
 import { SpaceImage } from "../space-visuals";
 import { ApprovalBadge, FillAndCopyModal, ItemVersionsModal, LibraryVariablesPanel, ReviewBadge, useLibraryVariables } from "../library-parts";
-import { TeamShareButton } from "../team-space-strip";
 
 type Source = "all" | "post" | "draft" | "image";
 type Sort = "newest" | "oldest" | "title";
@@ -254,7 +253,6 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
                       {t("spaces.library.fillCopy")}
                     </Button>
                   )}
-                  {space.communityId && rowSource === "draft" && <TeamShareButton communityId={space.communityId} space={{ id: space.id, title: space.title }} title={itemTitle(item)} />}
                   {isLibrary && rowSource === "draft" && reviewActionOf(item, caps) !== null && (
                     <Button
                       variant="ghost"

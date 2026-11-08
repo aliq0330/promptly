@@ -60,7 +60,7 @@ test("the user is established in ONE transaction, in order: authenticate → rol
   assert.ok(calls[0].sql.includes("_api_token_authenticate") && calls[0].params[0] === KEY);
   assert.equal(calls[1].sql, "set local role authenticated");
   assert.ok(calls[2].sql.includes("request.jwt.claims"));
-  assert.deepEqual(JSON.parse(String(calls[2].params[0])), { sub: USER, role: "authenticated" });
+  assert.deepEqual(JSON.parse(String(calls[2].params[0])), { sub: USER, role: "authenticated", token_id: "tok-1", via: "key" });
   assert.ok(calls[3].sql.includes("api_me_throttle") && calls[3].params[0] === false);
   assert.ok(calls[4].sql.includes("api_me_whoami"));
   assert.deepEqual(await response.json(), {

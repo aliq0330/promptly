@@ -12,6 +12,7 @@ import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { UserPlus } from "@/components/icons/user-plus";
 import { Users } from "@/components/icons/users";
+import { Briefcase } from "@/components/icons/briefcase";
 import { useNotifications } from "./notifications-provider";
 import type { SectionMenuItem } from "@/features/content/section-menu";
 import type { NotificationCardsQuery } from "@/lib/supabase/notifications";
@@ -22,7 +23,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 /** "Tümü ▾" menüsünün seçenekleri: tümü, okunmamış, kategoriler, ertelenenler (docs/history/326-*; eski `/notifications` kategori menüsü + iki yeni öğe). */
 export type NotificationView = "all" | "unread" | NotificationCategoryName | "snoozed";
 
-const CATEGORY_ORDER: NotificationCategoryName[] = ["posts", "requests", "follow", "messages", "community", "system"];
+const CATEGORY_ORDER: NotificationCategoryName[] = ["posts", "requests", "follow", "messages", "community", "teams", "system"];
 
 const CATEGORY_LABEL: Record<NotificationCategoryName, TranslationKey> = {
   posts: "notifications.categoryPosts",
@@ -30,6 +31,7 @@ const CATEGORY_LABEL: Record<NotificationCategoryName, TranslationKey> = {
   follow: "notifications.categoryFollow",
   messages: "header.messagesAriaLabel",
   community: "nav.communities",
+  teams: "nav.teams",
   system: "notifications.categorySystem",
 };
 
@@ -39,6 +41,7 @@ const CATEGORY_ICONS: Record<NotificationCategoryName, IconComponent> = {
   follow: UserPlus,
   messages: MessagesSquare,
   community: Users,
+  teams: Briefcase,
   system: Info,
 };
 

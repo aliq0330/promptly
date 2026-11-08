@@ -6,7 +6,7 @@ import { useCommunityOnlineMembers } from "@/features/presence/community-presenc
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { communityHref, isTeamVisibility, teamHref } from "@/lib/communities";
+import { communityHref } from "@/lib/communities";
 import { cn, profileHref } from "@/lib/utils";
 import type { ChatGroup, CommunityRoom, Message } from "@/types";
 import { messagePreviewText } from "../message-preview";
@@ -35,7 +35,7 @@ export function RoomSidePanel({
   const { t, language } = useTranslation();
   const { enabled, members } = useCommunityOnlineMembers(group.id, { limit: 6 });
   const firstPin = pinned[0];
-  const pageHref = isTeamVisibility(group.visibility) ? teamHref(group.id) : communityHref(group.id);
+  const pageHref = communityHref(group.id);
   const link = "flex min-h-11 items-center justify-between gap-2 rounded-lg border border-border-soft px-3 text-small font-semibold text-text transition-colors hover:border-border-strong hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
   void language;
   return (

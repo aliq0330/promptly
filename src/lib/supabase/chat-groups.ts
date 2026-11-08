@@ -27,7 +27,6 @@ const ERROR_KEYS: Record<GroupErrorCode, TranslationKey> = {
   account_suspended: "groups.error.account_suspended",
   group_not_found: "groups.error.group_not_found",
   forbidden: "groups.error.forbidden",
-  community_has_team_spaces: "groups.error.community_has_team_spaces",
   invalid_name: "groups.error.invalid_name",
   invalid_description: "groups.error.invalid_description",
   invalid_visibility: "groups.error.generic",
@@ -706,9 +705,8 @@ export async function fetchCommunityCards(ids: string[]): Promise<CommunityCard[
 
 /**
  * Bana gelen bekleyen davetler. Topluluk kartı `community_cards` RPC'sinden gelir (`chat_groups` satırı üye olmayana okunmaz).
- * `kind`: Topluluklar "community" (tamamen kapalı = ekip DEĞİL), Ekipler "team" ister (docs/history/351-*); verilmezse hepsi.
  */
-export async function fetchMyInvitations(userId: string, kind?: "community" | "team"): Promise<GroupInvitation[]> {
+export async function fetchMyInvitations(userId: string): Promise<GroupInvitation[]> {
   const { data, error } = await supabase
     .from("chat_group_invitations")
     .select(
@@ -729,7 +727,7 @@ export async function fetchMyInvitations(userId: string, kind?: "community" | "t
   };
   const rows = (data ?? []) as unknown as Row[];
   const cards = new Map((await fetchCommunityCards(rows.map((row) => row.group_id))).map((card) => [card.id, card]));
-  const all = rows.map((row) => {
+  return rows.map((row) => {
     const card = cards.get(row.group_id);
     return {
     id: row.id,
@@ -751,9 +749,6 @@ export async function fetchMyInvitations(userId: string, kind?: "community" | "t
     expiresAt: row.expires_at,
     };
   });
-  if (!kind) return all;
-  // Kartı okunamayan davet (group null) topluluk sayılır: eski davranış (listede görünür, kabul/ret çalışır).
-  return all.filter((invitation) => (invitation.group?.visibility === "private") === (kind === "team"));
 }
 
 export interface MyJoinRequest {

@@ -22,17 +22,16 @@ import { VisibilityLabel } from "./visibility-label";
 import { FeedTab } from "./feed-tab";
 import { MembersTab } from "./members-tab";
 import { EventsTab } from "./events-tab";
-import { SpacesTab } from "./spaces-tab";
 import { AboutTab } from "./about-tab";
 import { ManageTab } from "./manage-tab";
 import { useCommunity } from "./use-community";
 import { CommunityAside, MemberStack, useCommunityPeople } from "./community-aside";
 import { CommunityCover } from "./community-cover";
 import { BAND_PRIMARY_CLASS, BandActionRow, DetailBand, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
-import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, isTeamVisibility, resolveCommunityView, teamHref, type CommunityTab } from "@/lib/communities";
+import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, resolveCommunityView, type CommunityTab } from "@/lib/communities";
 import { can } from "@/lib/chat-groups";
 import { memberCountText } from "@/lib/group-labels";
-import { TeamLanguageScope, useTeamT, useTranslation } from "@/lib/i18n/language-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
 import type { MyCommunityMembership } from "@/lib/supabase/communities";
 
@@ -59,17 +58,16 @@ export interface CommunityTabProps {
  * Hakkında ve kurallar · Yönet (yalnız yetkililere). Her sekmenin erişimi `accessibleTabs`'tan gelir ve veritabanındaki RLS ile aynıdır: üye olmayan kapalı
  * topluluğun içeriğini göremez (yalnız davet/başvuru "geçidi" görünür), sohbet ve üye listesi üyelik gerektirir.
  */
-export function CommunityPage({ expect = "community" }: { expect?: "community" | "team" }) {
+export function CommunityPage() {
   return (
     <Suspense fallback={<DetailSkeleton />}>
-      <CommunityPageInner expect={expect} />
+      <CommunityPageInner />
     </Suspense>
   );
 }
 
-function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
-  const { t: baseT } = useTranslation();
-  const teamT = useTeamT();
+function CommunityPageInner() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
@@ -87,23 +85,9 @@ function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
   const unread = conversations.find((c) => c.id === id)?.unreadCount ?? 0;
   const people = useCommunityPeople(id ?? "", Boolean(id && role));
 
-  // Ekip ve topluluk ayrı rotalardadır (docs/history/351-*): kimlik yanlış rotada açıldıysa (bildirim, eski bağlantı, sohbet) doğru rotaya yönlenir,
-  // adres parametreleri (tab, section, post…) aynen taşınır. Karar sunucudan gelen görünürlüğe bağlıdır; yönlenene kadar iskelet çizilir.
-  const groupIsTeam = group ? isTeamVisibility(group.visibility) : null;
-  const wrongRoute = groupIsTeam !== null && groupIsTeam !== (expect === "team");
-  const hrefFor = groupIsTeam ? teamHref : communityHref;
-  // Ekip sayfasının kendi metinleri de ekip dilindedir; altındaki bileşenler aynısını `TeamLanguageScope`tan alır.
-  const t = groupIsTeam ? teamT : baseT;
-
   function goTab(next: CommunityTab, section?: string) {
-    if (id) router.replace(hrefFor(id, next, section));
+    if (id) router.replace(communityHref(id, next, section));
   }
-
-  useEffect(() => {
-    if (!wrongRoute) return;
-    const query = searchParams.toString();
-    router.replace(`${groupIsTeam ? "/teams/local" : "/communities/local"}${query ? `?${query}` : ""}`);
-  }, [wrongRoute, groupIsTeam, searchParams, router]);
 
   // Eski `tab=chat` bağlantısı: sohbet ayrı çalışma alanıdır, sekme yoktur.
   useEffect(() => {
@@ -111,7 +95,7 @@ function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
   }, [toChat, id, router]);
 
   if (!id) return <NotFoundBlock title={t("communities.notFound.title")} description={t("communities.notFound.body")} />;
-  if (authLoading || state.status === "loading" || wrongRoute) return <DetailSkeleton />;
+  if (authLoading || state.status === "loading") return <DetailSkeleton />;
   if (state.status === "notfound") {
     return (
       <div className="mx-auto max-w-md space-y-4 px-4 py-16 text-center">
@@ -137,9 +121,7 @@ function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
 
   const ready = state;
   const tabLabels: Record<CommunityTab, string> = {
-    // Ekipte Akış "Paylaşımlar"dır (docs/history/350-*): sohbet ve Space ile karışmasın.
-    feed: isTeamVisibility(ready.group.visibility) ? t("teams.tab.feed") : t("communities.detail.tab.feed"),
-    spaces: t("communities.detail.tab.spaces"),
+    feed: t("communities.detail.tab.feed"),
     events: t("communities.detail.tab.events"),
     members: t("communities.detail.tab.members"),
     about: t("communities.detail.tab.about"),
@@ -169,7 +151,6 @@ function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
   const g = ready.group;
 
   const categoryLabel = t(CATEGORY_LABEL_KEYS[g.category]);
-  const isTeam = isTeamVisibility(g.visibility);
 
   const body = (
     // Albüm (docs/history/203-*): band tinted by the community's cover (photo › colour › its picture) · actions row · tabs + content.
@@ -185,7 +166,7 @@ function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
         }
         kicker={
           <Eyebrow tone="primary">
-            {isTeam ? t("teams.band.eyebrow") : <>{t("groups.page.eyebrow")} · <span>{categoryLabel}</span></>}
+            <>{t("groups.page.eyebrow")} · <span>{categoryLabel}</span></>
           </Eyebrow>
         }
         title={<DetailTitle>{g.name}</DetailTitle>}
@@ -215,7 +196,7 @@ function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
         <BandActionRow label={t("communities.band.actionsAria")} data-community-actions="">
           {role && (
             <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg", className: BAND_PRIMARY_CLASS })}>
-              <MessagesSquare size={18} aria-hidden /> {isTeam ? t("teams.band.openChat") : t("communities.detail.openChat")}
+              <MessagesSquare size={18} aria-hidden /> {t("communities.detail.openChat")}
               {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground px-1.5 text-caption text-primary">{unread}</span>}
             </Link>
           )}
@@ -260,7 +241,6 @@ function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
               {tab !== "feed" && (
                 <CommunityReadingColumn className={tab === "manage" ? "max-w-4xl" : undefined}>
                   {tab === "members" && role && <MembersTab {...common} />}
-                  {tab === "spaces" && role && <SpacesTab {...common} />}
                   {tab === "events" && <EventsTab {...common} />}
                   {tab === "about" && <AboutTab {...common} />}
                   {tab === "manage" && role && <ManageTab {...common} />}
@@ -273,5 +253,5 @@ function CommunityPageInner({ expect }: { expect: "community" | "team" }) {
       </CommunityLayout>
     </div>
   );
-  return <TeamLanguageScope enabled={isTeam}>{body}</TeamLanguageScope>;
+  return body;
 }

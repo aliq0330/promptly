@@ -20,7 +20,7 @@ export function HomeAside({ managedCount, actionCount }: { managedCount: number;
 
   useEffect(() => {
     let cancelled = false;
-    listMyCommunities("member", 0, { excludeTeams: true })
+    listMyCommunities("member", 0)
       .then((page) => {
         if (cancelled) return;
         setItems(page.communities);

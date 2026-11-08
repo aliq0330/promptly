@@ -171,15 +171,12 @@ export function InvitesView({
   onCount,
   onToast,
   onJoined,
-  kind = "community",
   hideWhenEmpty = false,
 }: {
   userId: string;
   onCount: (n: number) => void;
   onToast: (message: string) => void;
   onJoined: (groupId: string) => void;
-  /** Topluluklar "community", Ekipler "team" (docs/history/351-*): tamamen kapalı = ekip, davetleri Ekipler'de görünür. */
-  kind?: "community" | "team";
   /** Ekipler sayfasında davet yoksa hiçbir şey çizilmez (boş durum kartı yok). */
   hideWhenEmpty?: boolean;
 }) {
@@ -193,7 +190,7 @@ export function InvitesView({
   const key = `${userId}|${reloadKey}`;
   useEffect(() => {
     let cancelled = false;
-    fetchMyInvitations(userId, kind)
+    fetchMyInvitations(userId)
       .then((invitations) => {
         if (cancelled) return;
         setState({ key, invitations, error: false });
@@ -206,7 +203,7 @@ export function InvitesView({
     return () => {
       cancelled = true;
     };
-  }, [userId, key, onCount, kind]);
+  }, [userId, key, onCount]);
 
   const current = state && state.key === key ? state : null;
 

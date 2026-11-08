@@ -245,7 +245,7 @@ async function meRoute(request: Request, url: URL, segments: string[], method: s
   // Ekip kütüphanesi (docs/history/348-*): yalnız OKUMA — üyesi olduğum kütüphaneler ve onaylı promptları (ortak değişkenlerle doldurulmuş).
   if (sub[0] === "libraries") {
     if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
-    if (sub.length === 1) return reply(await me.withUser(bearer, "read", (tx) => listMyLibraries(tx, me.siteUrl)));
+    if (sub.length === 1) return reply(await me.withUser(bearer, "read", (tx) => listMyLibraries(tx, me.siteUrl, { team: url.searchParams.get("team") })));
     if (sub.length === 3 && sub[2] === "prompts") {
       const include = url.searchParams.get("include");
       if (include !== null && include !== "unapproved") return errorResponse("bad_request", 'include must be "unapproved" (or omitted).', 400);

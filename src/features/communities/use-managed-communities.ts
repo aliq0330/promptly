@@ -20,7 +20,7 @@ export function useManagedCommunities(userId: string | null) {
       const all: CommunitySummary[] = [];
       let offset = 0;
       for (let page = 0; page < MAX_PAGES; page += 1) {
-        const result = await listMyCommunities("managed", offset, { excludeTeams: true });
+        const result = await listMyCommunities("managed", offset);
         all.push(...result.communities);
         offset = result.nextOffset;
         if (!result.hasMore) break;

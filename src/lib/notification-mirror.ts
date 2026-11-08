@@ -5,7 +5,7 @@
  * birini değiştirirsen diğerini de değiştir.
  */
 
-import { isCommunityNotification } from "./notification-scope.ts";
+import { isCommunityNotification, isTeamNotification } from "./notification-scope.ts";
 
 /** Sunucuda tek karta birleşen (sayı) bildirim türleri. */
 export const GROUPABLE_NOTIFICATION_TYPES = ["like", "follow", "story_reaction", "story_poll_vote"] as const;
@@ -137,10 +137,11 @@ export function parseNotificationHref(href: string): ParsedNotificationHref {
   };
 }
 
-export type NotificationCategoryName = "posts" | "requests" | "follow" | "messages" | "community" | "system";
+export type NotificationCategoryName = "posts" | "requests" | "follow" | "messages" | "community" | "teams" | "system";
 
 /** Kategori menüsü: tür + (topluluğa giden adres). SQL `_notification_category` ile aynı. */
 export function notificationCategoryOf(type: string, href: string): NotificationCategoryName {
+  if (isTeamNotification(type, href)) return "teams";
   if (isCommunityNotification(type, href)) return "community";
   switch (type) {
     case "request_response":

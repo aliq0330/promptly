@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {
   accessibleTabs,
   COMMUNITY_VISIBILITY_OPTIONS,
-  isTeamVisibility,
   VISIBILITY_OPTIONS,
   visibilityTraits,
   canModeratePost,
@@ -51,10 +50,9 @@ test("kategori: bilinmeyen değer 'general'e düşer, her kategorinin etiket ana
 test("sekmeler: üye olmayan kapalı toplulukta sekme yok; açıkta yalnız okuma sekmeleri; üye Akış ilk olmak üzere beş sekme alır", () => {
   assert.deepEqual(accessibleTabs({ role: null, visibility: "private" }), []);
   assert.deepEqual(accessibleTabs({ role: null, visibility: "public" }), ["feed", "events", "about"]);
-  // "Space'ler" sekmesi yalnız tamamen kapalı (ekip alanı) toplulukta vardır (docs/history/349-*).
+  // "Space'ler" sekmesi kalktı: ekipler topluluktan bağımsızdır (docs/history/353-*).
   const member = accessibleTabs({ role: "member", visibility: "private" });
-  // Ekipte günlük iş Space'lerdedir: "Space'ler" Akış'tan ÖNCE gelir (varsayılan açılış, docs/history/350-*).
-  assert.deepEqual(member, ["spaces", "feed", "events", "members", "about"]);
+  assert.deepEqual(member, ["feed", "events", "members", "about"]);
   assert.deepEqual(accessibleTabs({ role: "member", visibility: "restricted" }), ["feed", "events", "members", "about"]);
   assert.deepEqual(accessibleTabs({ role: "member", visibility: "public" }), ["feed", "events", "members", "about"]);
   assert.ok(!member.includes("manage"));
@@ -286,17 +284,15 @@ test("coverModeOf: fotoğraf > renk > otomatik", () => {
   assert.equal(coverModeOf({ coverUrl: null, coverColor: null }), "auto");
 });
 
-test("ekip = tamamen kapalı topluluk; topluluk oluştururken/ayarlarda yalnız açık ve kapalı seçilir (docs/history/350-*)", () => {
-  assert.equal(isTeamVisibility("private"), true);
-  assert.equal(isTeamVisibility("restricted"), false);
-  assert.equal(isTeamVisibility("public"), false);
+test("topluluk oluştururken/ayarlarda yalnız açık ve kapalı seçilir; ekipler topluluktan bağımsızdır (docs/history/353-*)", () => {
   assert.deepEqual([...COMMUNITY_VISIBILITY_OPTIONS], ["public", "restricted"]);
   assert.ok(!COMMUNITY_VISIBILITY_OPTIONS.includes("private"));
 });
 
-test("ekipte ilk sekme Space'ler: adreste sekme yokken Space'ler açılır; Akış adresle yine açılır", () => {
-  const allowed = accessibleTabs({ role: "member", visibility: "private" });
-  assert.equal(resolveCommunityView(null, null, allowed).view?.tab, "spaces");
+test("adreste sekme yokken Akış açılır; eski ekip sekmesi (spaces) Akış'a düşer", () => {
+  const allowed = accessibleTabs({ role: "member", visibility: "restricted" });
+  assert.equal(resolveCommunityView(null, null, allowed).view?.tab, "feed");
+  assert.equal(resolveCommunityView("spaces", null, allowed).view?.tab, "feed");
   assert.equal(resolveCommunityView("feed", null, allowed).view?.tab, "feed");
   assert.equal(resolveCommunityView("overview", null, allowed).view?.tab, "feed");
   const open = accessibleTabs({ role: "member", visibility: "public" });

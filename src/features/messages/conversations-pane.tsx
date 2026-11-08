@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Archive } from "@/components/icons/archive";
 import { Inbox } from "@/components/icons/inbox";
@@ -20,7 +20,8 @@ import { Modal } from "@/components/ui/modal";
 import { Portal } from "@/components/ui/portal";
 import { useToast } from "@/features/groups/use-toast";
 import { bucketConversations, filterConversationsByQuery } from "@/lib/conversation-lists";
-import { isTeamVisibility } from "@/lib/communities";
+import { TeamChannelsInbox } from "@/features/teams/team-channels-inbox";
+import { listMyTeams } from "@/lib/supabase/teams";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, messageHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
@@ -28,12 +29,12 @@ import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
 import { CONTROL_ICON_BUTTON, type SectionMenuItem } from "@/features/content/section-menu";
 import type { Conversation } from "@/types";
 
-type KindFilter = "all" | "personal" | "community" | "team";
+type KindFilter = "all" | "personal" | "community";
 
-/** Sohbet türü çipleri (docs/history/352-*): Tümü · Kişisel · Topluluk · Ekip. Ekip = tamamen kapalı topluluk (docs/history/350-*). */
+/** Sohbet türü çipleri (docs/history/352-*): Tümü · Kişisel · Topluluk. Ekip kanalları ayrı "Ekip sohbetleri" görünümündedir (docs/history/353-*). */
 function kindOf(conversation: Conversation): Exclude<KindFilter, "all"> {
   if (conversation.kind !== "group" || !conversation.group) return "personal";
-  return isTeamVisibility(conversation.group.visibility) ? "team" : "community";
+  return "community";
 }
 
 type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities" | "teams";
@@ -52,6 +53,18 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<MessagesView>("inbox");
+  // Ekip kanallarında okunmamış toplamı (docs/history/353-*): "Ekip sohbetleri" satırında sayaç.
+  const [teamUnread, setTeamUnread] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    void listMyTeams(0).then(
+      (page) => !cancelled && setTeamUnread(page.items.reduce((sum, team) => sum + team.unreadCount, 0)),
+      () => undefined,
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [searchOpen, setSearchOpen] = useState(false);
   const [newChatOpen, setNewChatOpen] = useState(false);
@@ -206,12 +219,11 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     { key: "starred", label: t("chat.starred.title"), icon: Star, dividerBefore: true },
     { key: "communities", label: t("communities.messages.entryAria"), icon: Users },
     // Ekip sohbetleri Topluluk sohbetlerinden ayrı bir kapıdır (docs/history/350-*).
-    { key: "teams", label: t("teams.messages.entryAria"), icon: Briefcase },
+    { key: "teams", label: t("tm.messages.entry"), icon: Briefcase, count: teamUnread || undefined },
   ];
   function pickView(next: MessagesView) {
     if (next === "starred") return router.push("/messages/starred");
     if (next === "communities") return router.push("/communities");
-    if (next === "teams") return router.push("/teams");
     setView(next);
     setActionError(false);
     exitSelection();
@@ -259,7 +271,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         )}
         {!selectionActive && view === "inbox" && (
           <div role="group" aria-label={t("rooms.filter.aria")} data-kind-chips className="mb-3 flex gap-2 overflow-x-auto scrollbar-none">
-            {(["all", "personal", "community", "team"] as const).map((key) => (
+            {(["all", "personal", "community"] as const).map((key) => (
               <button
                 key={key}
                 type="button"
@@ -322,7 +334,11 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         )}
       </div>
       <div className={cn("min-h-0 flex-1", embedded && "overflow-y-auto", selectionActive && !embedded && "pb-28")}>
-        {noMatches ? (
+        {view === "teams" ? (
+          <div className={cn(embedded && "px-4")}>
+            <TeamChannelsInbox />
+          </div>
+        ) : noMatches ? (
           <p className="py-10 text-center text-sm text-text-muted">{t("messages.noConversationMatches")}</p>
         ) : kindEmpty ? (
           <p data-kind-empty className="py-10 text-center text-sm text-text-muted">{t("rooms.filter.empty")}</p>
