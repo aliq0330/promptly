@@ -550,6 +550,146 @@ await scenario("29. Telefon: Üyeler satırında Roller ve yetkiler açılır, �
   db.rpc.team_list_members = () => ({ body: [member("u-aylin", "Aylin Demir", "aylin", "owner"), member("u-elif", "Elif Kaya", "elifk", "member")] });
 } });
 
+// --- Faz 2: Yönetim (sol gezinme), Denetim, Panel, Politikalar, Gruplar, Konuklar, Entegrasyonlar (docs/history/356-*) ---
+const POLICY_ROW = { require_approval: true, approvals_needed: 1, hide_unapproved: true, content_owner: "team", offboard_default: "ask", version_keep: 50, default_member_role: "member", invite_link_ttl_days: 7, publish_external_role: "admin", guest_invite_role: "admin", export_role: "owner", mcp_enabled: true, mcp_audience: "members" };
+const withPolicy = async (page) => {
+  await page.route((url) => url.pathname.endsWith("/rest/v1/teams") && url.search.includes("require_approval"), (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(POLICY_ROW) }));
+};
+const auditRow = (id, category, action, extra = {}) => ({ id, created_at: new Date().toISOString(), category, action, target_label: null, details: null, actor_id: "u-elif", actor_username: "elifk", actor_name: "Elif Kaya", actor_avatar_url: null, ...extra });
+
+await scenario("30. Yönetim: masaüstünde sol dikey alt gezinme bölüm değiştirir; Politikalar iki sütun + tek Kaydet (değişmeden pasif, sonra team_update)", async ({ page, db }) => {
+  await withPolicy(page);
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=audit`);
+  const nav = page.locator("[data-admin-nav]");
+  await nav.waitFor();
+  await nav.locator("[data-admin-nav-item=policies]").click();
+  await page.waitForFunction(() => location.search.includes("section=policies"));
+  await page.getByTestId("team-policies").waitFor();
+  const save = page.locator("[data-policy-save]");
+  assert.equal(await save.isDisabled(), true, "değişiklik yokken Kaydet pasif");
+  await page.getByLabel("Gereken onay").selectOption("2");
+  assert.equal(await save.isDisabled(), false);
+  await page.locator("[data-policy-approvers]").waitFor();
+  await save.click();
+  await page.waitForFunction(() => document.body.innerText.includes("Kaydedildi") || true);
+  await page.waitForTimeout(300);
+  const body = called(db, "team_update").at(-1)?.body;
+  assert.deepEqual(body?.p_patch, { approvals_needed: 2 });
+}, { setup: (db) => {
+  db.rpc.team_update = (body) => { db.teamCalls.push({ name: "team_update", body }); return { body: null }; };
+  db.rpc.team_audit_list = () => ({ body: [] });
+  db.rpc.team_audit_stats = () => ({ body: { total: 0, role_access: 0, deletes: 0 } });
+} });
+
+await scenario("31. Denetim günlüğü: istatistik kartları, satır (zaman · avatar · cümle · kategori etiketi), message_reported çevirili, CSV indir tüm satırları yazar", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=audit`);
+  await page.locator("[data-audit-stats]").waitFor();
+  const rows = page.locator("[data-audit-row]");
+  await rows.first().waitFor();
+  assert.equal(await rows.count(), 3);
+  await page.getByText("bir mesajı şikâyet etti").first().waitFor();
+  assert.equal(await page.locator("[data-audit-tag=approval]").first().innerText(), "Onay");
+  assert.equal(await page.getByText("tm.audit.action").count(), 0, "ham çeviri anahtarı görünmez");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.locator("[data-audit-csv]").click()]);
+  assert.match(download.suggestedFilename(), /audit\.csv$/);
+  const text = await (await import("node:fs/promises")).readFile(await download.path(), "utf8");
+  assert.match(text, /Zaman,Yapan,Kategori,Olay/);
+  assert.match(text, /Elif Kaya/);
+}, { setup: (db) => {
+  db.rpc.team_audit_list = () => ({ body: [auditRow("a1", "approval", "item_approved", { target_label: "Lansman afişi" }), auditRow("a2", "member", "message_reported"), auditRow("a3", "role", "role_changed", { target_label: "Kaan Aksoy", details: { from: "member", to: "editor" } })] });
+  db.rpc.team_audit_stats = () => ({ body: { total: 214, role_access: 18, deletes: 3 } });
+} });
+
+await scenario("32. Panel: başlık, dönem hapları, dört kart (renkli değişim), günlük grafik, Dikkat gerekenler, en çok kullanılanlar tablosu (Çalıştı mı? %)", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=panel`);
+  await page.getByText("Ekip kütüphanesi nasıl kullanılıyor?").waitFor();
+  await page.locator("[data-panel-stats]").waitFor();
+  await page.locator("[data-panel-chart]").waitFor();
+  await page.locator("[data-panel-alerts]").waitFor();
+  const row = page.locator("[data-panel-top-row]").first();
+  await row.getByText("%92").waitFor();
+  await row.getByText("Ürün tanıtım metni").waitFor();
+}, { setup: (db) => {
+  db.rpc.team_insights = () => ({ body: { days: 30, copies: 1284, copies_prev: 1146, approval_hours: 3, approval_hours_prev: 4, contributors: 31, contributors_prev: 27, members: 48, stale: 9,
+    daily: Array.from({ length: 30 }, (_, i) => ({ day: `2026-10-${String((i % 28) + 1).padStart(2, "0")}`, n: 10 + ((i * 7) % 50) })),
+    alerts: { pending: 6, oldest_pending_days: 4, stale: 9, deprecated_used: 2 },
+    top: [{ id: "t1", title: "Ürün tanıtım metni", copies: 312, works_yes: 35, works_no: 3, rev: 4, updated_at: "2026-11-05T00:00:00Z", stale: false }] } });
+} });
+
+await scenario("33. Gruplar: sol liste + sağ ayrıntı (üyeler, Space erişimi, kütüphane klasörü); gruba dokununca ayrıntı değişir; liderler onay anahtarı team_update_group'a gider", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=groups`);
+  await page.locator("[data-group-list]").waitFor();
+  const detail = page.locator("[data-group-detail]");
+  await detail.getByText("Marka görsel dili").waitFor();
+  await detail.getByText("Yalnız görüntüler").waitFor();
+  await detail.getByText("Grup klasörü: Tasarım promptları").waitFor();
+  await page.locator("[data-group-item=g2]").click();
+  await page.locator("[data-group-detail=g2]").waitFor();
+  await page.locator("[data-group-leads-approve] button").click();
+  await page.waitForTimeout(300);
+  const body = called(db, "team_update_group").at(-1)?.body;
+  assert.equal(body?.p_group, "g2");
+  assert.deepEqual(body?.p_patch, { leads_approve: true });
+}, { setup: (db) => {
+  const g = (id, name, n, extra = {}) => ({ id, name, tone: "primary", lead_id: null, lead_name: "Elif Kaya", leads_approve: false, member_count: n, member_ids: [], spaces: [], folders: [], ...extra });
+  db.rpc.team_list_groups = () => ({ body: [g("g1", "Tasarım", 14, { spaces: [{ space_id: "s1", title: "Marka görsel dili", level: "edit" }, { space_id: "s3", title: "Sosyal medya takvimi", level: "view" }], folders: [{ space_group_id: "f1", name: "Tasarım promptları", prompts: 18 }] }), g("g2", "Pazarlama", 11)] });
+  db.rpc.team_update_group = (body) => { db.teamCalls.push({ name: "team_update_group", body }); return { body: null }; };
+} });
+
+await scenario("34. Konuklar: istatistik kartları, tablo (Konuk/Space'ler/Yetki/Erişim süresi/Son giriş), 'N gün kaldı' etiketi, 'Konuk neleri göremez?'; süre uzatma team_extend_guest'e gider", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=guests`);
+  await page.locator("[data-guest-stats]").waitFor();
+  const row = page.locator("[data-guest-row]").first();
+  await row.getByText("Okan Sel").waitFor();
+  await row.getByText("Yalnız görüntüler").waitFor();
+  await row.getByText(/gün kaldı/).waitFor();
+  await page.locator("[data-guest-hidden]").getByText("Ekip sohbeti").waitFor();
+  await row.locator("[data-guest-extend]").selectOption("14");
+  await page.waitForTimeout(300);
+  assert.equal(called(db, "team_extend_guest").at(-1)?.body.p_days, 14);
+}, { setup: (db) => {
+  const until = new Date(Date.now() + 12 * 86_400_000).toISOString();
+  db.rpc.team_list_guests = () => ({ body: [{ user_id: "gu1", username: "okans", display_name: "Okan Sel", avatar_url: null, guest_org: "Kuzey Kafe", guest_until: until, joined_at: "2026-10-01T00:00:00Z", expired: false, spaces: [{ space_id: "s1", title: "Müşteri: Kuzey Kafe", role: "viewer" }], channels: [] }] });
+  db.rpc.team_extend_guest = (body) => { db.teamCalls.push({ name: "team_extend_guest", body }); return { body: until }; };
+} });
+
+await scenario("35. Entegrasyonlar: adres + Kopyala, 3 adım, 'Neye erişir?', 'Kimler kullanabilir?' seçici, bu ay okuma ve bağlı uygulama tablosu; Engelle team_set_api_block'a gider", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=integrations`);
+  const address = page.locator("[data-int-address]");
+  await address.waitFor();
+  assert.match(await address.inputValue(), /\/mcp\/team\/atolye-mor$/);
+  await page.locator("[data-int-copy]").waitFor();
+  await page.getByText("Claude'da Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle.").waitFor();
+  await page.locator("[data-int-access]").getByText("Onaylı promptlar").waitFor();
+  await page.locator("[data-int-access]").getByText("Yazma ve düzenleme").waitFor();
+  await page.locator("[data-int-reads]").getByText("222").waitFor();
+  const app = page.locator("[data-int-app]").first();
+  await app.getByText("Claude").waitFor();
+  await app.locator("[data-int-block]").click();
+  await page.waitForTimeout(300);
+  assert.equal(called(db, "team_set_api_block").at(-1)?.body.p_blocked, true);
+}, { setup: (db) => {
+  db.rpc.team_integrations = () => ({ body: { slug: "atolye-mor", enabled: true, audience: "members", month_reads: 222, apps: [{ user_id: "u-elif", user_name: "Elif Kaya", name: "Claude", via: "oauth", reads: 142, last_day: "2026-11-07", token_id: "tok1", blocked: false }] } });
+  db.rpc.team_set_api_block = (body) => { db.teamCalls.push({ name: "team_set_api_block", body }); return { body: null }; };
+} });
+
+await scenario("36. Telefon: Yönetim bölümleri (Denetim, Panel, Politikalar, Gruplar, Konuklar, Entegrasyonlar) yatay taşmaz; masaüstü gezinme gizli", async ({ page }) => {
+  await withPolicy(page);
+  for (const [tab, section, marker] of [["admin", "audit", "[data-audit-stats]"], ["panel", "", "[data-panel-stats]"], ["admin", "policies", "[data-policy-save]"], ["admin", "groups", "[data-group-list]"], ["admin", "guests", "[data-guest-stats]"], ["admin", "integrations", "[data-int-connector]"]]) {
+    await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=${tab}${section ? `&section=${section}` : ""}`);
+    await page.locator(marker).waitFor();
+    assert.ok(await overflowFree(page), `${tab}/${section}`);
+    assert.equal(await page.locator("[data-admin-nav]").isVisible().catch(() => false), false, "telefonda dikey gezinme yok");
+  }
+}, { viewport: { width: 390, height: 800 }, setup: (db) => {
+  db.rpc.team_audit_list = () => ({ body: [auditRow("a1", "approval", "item_approved", { target_label: "Lansman afişi" })] });
+  db.rpc.team_audit_stats = () => ({ body: { total: 1, role_access: 0, deletes: 0 } });
+  db.rpc.team_insights = () => ({ body: { days: 30, copies: 10, copies_prev: 5, approval_hours: null, approval_hours_prev: null, contributors: 1, contributors_prev: 1, members: 6, stale: 0, daily: [{ day: "2026-11-01", n: 3 }, { day: "2026-11-02", n: 5 }], alerts: { pending: 0, oldest_pending_days: null, stale: 0, deprecated_used: 0 }, top: [] } });
+  db.rpc.team_list_groups = () => ({ body: [{ id: "g1", name: "Tasarım", tone: "primary", lead_id: null, lead_name: null, leads_approve: false, member_count: 3, member_ids: [], spaces: [], folders: [] }] });
+  db.rpc.team_list_guests = () => ({ body: [] });
+  db.rpc.team_integrations = () => ({ body: { slug: "atolye-mor", enabled: true, audience: "members", month_reads: 0, apps: [] } });
+} });
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => r[0] === "FAIL");
