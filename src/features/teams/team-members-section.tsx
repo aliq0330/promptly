@@ -37,14 +37,12 @@ import { PersonRow, formatShortDate, roleLabelKey } from "./team-ui";
 
 type MembersView = "members" | "guests" | "invites" | "groups";
 
-const MATRIX: { key: TranslationKey; cap: TeamCapability | "use_library" }[] = [
+const MATRIX: { key: TranslationKey; cap: TeamCapability }[] = [
   { key: "tm.matrix.manageMembers", cap: "manage_members" },
   { key: "tm.matrix.createSpaces", cap: "create_spaces" },
-  { key: "tm.matrix.approve", cap: "approve_library" },
   { key: "tm.matrix.variables", cap: "write_variables" },
   { key: "tm.matrix.publish", cap: "publish_external" },
   { key: "tm.matrix.audit", cap: "view_audit" },
-  { key: "tm.matrix.useLibrary", cap: "use_library" },
 ];
 const MATRIX_ROLES: { role: TeamRole; key: TranslationKey }[] = [
   { role: "owner", key: "tm.role.short.owner" },
@@ -79,7 +77,7 @@ function RolesMatrix({ ctx }: { ctx: TeamCtx }) {
             <tr key={row.cap} className="border-t border-border-soft">
               <td className="py-2 pr-2 text-text">{t(row.key)}</td>
               {MATRIX_ROLES.map((r) => {
-                const allowed = row.cap === "use_library" ? r.role !== "guest" : teamRoleCan(r.role, row.cap, policy);
+                const allowed = teamRoleCan(r.role, row.cap, policy);
                 return (
                   <td key={r.role} className="py-2 text-center">
                     {allowed ? <Check size={15} className="mx-auto text-success" aria-label="✓" /> : <span className="text-text-muted" aria-label="–">–</span>}

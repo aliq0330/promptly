@@ -1,5 +1,6 @@
 "use client";
 
+import { ItemReviewBadge } from "@/features/teams/project-ui";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Grid2x2 } from "@/components/icons/grid-2x2";
 import { ImageIcon } from "@/components/icons/image-icon";
@@ -228,6 +229,7 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
                     className="aspect-square w-full rounded-md ring-primary transition-shadow group-hover:shadow-card-hover group-focus-visible:ring-2"
                   />
                   <span className="block truncate text-small font-medium text-text">{itemTitle(item)}</span>
+                  <ItemReviewBadge state={item.revState} />
                   <GroupPill groupId={item.groupId} />
                 </button>
               </li>
@@ -249,6 +251,7 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
                       {source.prompt ? source.prompt.author.displayName : reason ? t(reason) : t("spaces.images.ownUpload")} · {formatRelativeTime(item.createdAt, language)}
                     </span>
                     {item.note && <span className="block truncate text-caption text-text-secondary">{item.note}</span>}
+                    <ItemReviewBadge state={item.revState} />
                   </span>
                   <GroupPill groupId={item.groupId} />
                 </button>

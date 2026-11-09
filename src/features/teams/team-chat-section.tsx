@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FolderOpen } from "@/components/icons/folder-open";
 import { Hash } from "@/components/icons/hash";
 import { Lock } from "@/components/icons/lock";
 import { Plus } from "@/components/icons/plus";
@@ -34,6 +35,7 @@ import {
   type TeamChannel,
   type TeamSpaceRow,
 } from "@/lib/supabase/teams";
+import { fetchProjectChannels } from "@/lib/supabase/team-projects";
 import { teamLink } from "@/lib/teams";
 import { cn, formatUnread } from "@/lib/utils";
 import { AccessEditor } from "./access-editor";
@@ -67,6 +69,14 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
     );
   }, [team.id]);
   useEffect(load, [load]);
+  // Proje sohbetleri (docs/history/362-*): kanal adı proje başlığından üretilmiş kısa addır; listede projenin kendi başlığı görünür.
+  const [projectTitles, setProjectTitles] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    void fetchProjectChannels(team.id).then(
+      (list) => setProjectTitles(new Map(list.map((ref) => [ref.channelId, ref.projectTitle]))),
+      () => setProjectTitles(new Map()),
+    );
+  }, [team.id]);
 
   const visible = useMemo(() => (channels ?? []).filter((c) => !c.archivedAt), [channels]);
   const archived = useMemo(() => (channels ?? []).filter((c) => c.archivedAt), [channels]);
@@ -98,6 +108,31 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   const settingsTarget = settingsFor ?? (params.get("settings") === "1" && manage ? active : null);
   const clearRequest = () => router.replace(teamLink(team.id, "chat", wanted ? { channel: wanted } : {}));
 
+  const renderChannel = (channel: TeamChannel) => {
+    const current = active?.id === channel.id;
+    const unread = channel.unreadCount > 0 && !channel.muted;
+    const isProject = channel.mode === "project";
+    return (
+      <li key={channel.id}>
+        <button
+          type="button"
+          onClick={() => select(channel)}
+          data-channel={channel.name}
+          data-channel-mode={channel.mode}
+          aria-current={current ? "true" : undefined}
+          className={cn(
+            "flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            current ? "bg-primary-soft font-bold text-primary" : cn("text-text-secondary hover:bg-surface-soft", unread && "font-bold text-text"),
+          )}
+        >
+          {channel.mode === "private" ? <Lock size={14} aria-hidden /> : isProject ? <FolderOpen size={14} aria-hidden /> : <Hash size={14} aria-hidden />}
+          <span className="min-w-0 flex-1 truncate">{isProject ? (projectTitles.get(channel.id) ?? channel.name) : channel.name}</span>
+          {unread && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(channel.unreadCount)}</span>}
+        </button>
+      </li>
+    );
+  };
+
   if (failed) return <EmptyState icon={Hash} title={t("tm.chat.failed")} action={{ label: t("common.retry"), onClick: load }} />;
   if (!channels) return <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>;
 
@@ -117,29 +152,18 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
           )}
         </div>
         <ul className="space-y-0.5" data-testid="team-channel-list">
-          {visible.map((channel) => {
-            const current = active?.id === channel.id;
-            const unread = channel.unreadCount > 0 && !channel.muted;
-            return (
-              <li key={channel.id}>
-                <button
-                  type="button"
-                  onClick={() => select(channel)}
-                  data-channel={channel.name}
-                  aria-current={current ? "true" : undefined}
-                  className={cn(
-                    "flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                    current ? "bg-primary-soft font-bold text-primary" : cn("text-text-secondary hover:bg-surface-soft", unread && "font-bold text-text"),
-                  )}
-                >
-                  {channel.mode === "private" ? <Lock size={14} aria-hidden /> : <Hash size={14} aria-hidden />}
-                  <span className="min-w-0 flex-1 truncate">{channel.name}</span>
-                  {unread && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(channel.unreadCount)}</span>}
-                </button>
-              </li>
-            );
-          })}
+          {visible.filter((channel) => channel.mode !== "project").map((channel) => renderChannel(channel))}
         </ul>
+        {visible.some((channel) => channel.mode === "project") && (
+          <>
+            <h3 className="px-3 pt-2 text-caption font-semibold uppercase tracking-wide text-text-muted lg:px-2" data-testid="team-project-channels-heading">
+              {t("tp.chat.projects")}
+            </h3>
+            <ul className="space-y-0.5" data-testid="team-project-channel-list">
+              {visible.filter((channel) => channel.mode === "project").map((channel) => renderChannel(channel))}
+            </ul>
+          </>
+        )}
         {archived.length > 0 && can("manage_channels") && (
           <details className="text-caption text-text-muted">
             <summary className="cursor-pointer lg:px-2">{t("tm.chat.archived", { count: archived.length })}</summary>
@@ -233,7 +257,7 @@ function ChannelView({
             <span className="truncate"># {channel.name}</span>
           </h3>
           <p className="truncate text-caption text-text-muted">
-            {channel.description || t(channel.mode === "private" ? "tm.chat.modePrivate" : channel.mode === "space" ? "tm.chat.modeSpace" : "tm.chat.modeOpen")}
+            {channel.description || t(channel.mode === "private" ? "tm.chat.modePrivate" : channel.mode === "project" ? "tp.chat.modeProject" : channel.mode === "space" ? "tm.chat.modeSpace" : "tm.chat.modeOpen")}
             <span className="lg:hidden">
               {" · "}
               {t("tm.chat.memberCount", { count: channel.memberCount })}
@@ -393,7 +417,6 @@ function NewChannelDialog({ ctx, onClose, onCreated }: { ctx: TeamCtx; onClose: 
             options={[
               { key: "open", label: t("tm.chat.mode.open"), hint: t("tm.chat.mode.openHint") },
               { key: "private", label: t("tm.chat.mode.private"), hint: t("tm.chat.mode.privateHint") },
-              { key: "space", label: t("tm.chat.mode.space"), hint: t("tm.chat.mode.spaceHint") },
             ]}
           />
           <p className="mt-1.5 text-caption text-text-muted">{t(`tm.chat.mode.${mode}Hint` as "tm.chat.mode.openHint")}</p>

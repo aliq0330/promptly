@@ -48,6 +48,8 @@ import {
   updateSpace,
   type SpacePerson,
 } from "@/lib/supabase/spaces";
+import { fetchAreaInfo } from "@/lib/supabase/team-projects";
+import { projectLink } from "@/lib/team-projects";
 import { isSpaceTab, SPACE_KIND_LABEL, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, type SpaceTab } from "@/lib/spaces";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
@@ -65,7 +67,6 @@ import { CommentsTab, formatRating } from "./tabs/comments-tab";
 import { ActivityTab } from "./tabs/activity-tab";
 import { StarRatingDisplay } from "@/components/ui/star-rating";
 import { SpaceBoard } from "./board/space-board";
-import { TeamSpaceStrip } from "./team-space-strip";
 import { SaveIndicator } from "./save-indicator";
 
 type LoadState = { status: "loading" } | { status: "missing" } | { status: "error" } | { status: "ready"; data: SpaceData; owner: SpacePerson | null; favorite: boolean };
@@ -80,6 +81,7 @@ export function SpacePage() {
   const id = searchParams.get("id") ?? "";
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id ?? null;
+  const router = useRouter();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [reload, setReload] = useState(0);
 
@@ -120,7 +122,24 @@ export function SpacePage() {
     };
   }, [id, userId, authLoading, reload]);
 
-  if (state.status === "loading") return <DetailSkeleton />;
+  // Ekip projesinin alanı (docs/history/362-*) Space değildir: kendi sayfasına yönlenir (dosyanın ana alanı → dosya, diğerleri → pano).
+  const areaProject = state.status === "ready" ? state.data.space.teamProjectId : null;
+  const areaId = state.status === "ready" ? state.data.space.id : null;
+  useEffect(() => {
+    if (!areaProject || !areaId) return;
+    let alive = true;
+    void fetchAreaInfo(areaId).then(
+      (info) => {
+        if (alive && info) router.replace(projectLink(info.teamId, info.projectId, info.isMain && info.fileId ? { file: info.fileId } : { board: info.spaceId }));
+      },
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [areaProject, areaId, router]);
+
+  if (state.status === "loading" || areaProject) return <DetailSkeleton />;
   if (state.status === "missing") {
     return (
       <div className="mx-auto max-w-xl px-4 py-16">
@@ -178,7 +197,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   // Bir yorum bildiriminden gelen bağlantı (`hl=comment:…`) yorumlara açılır.
   const commentLink = searchParams.get("hl")?.startsWith("comment:") ?? false;
   // Ekip kütüphanesi üyesi doğrudan promptlara iner (kütüphanenin işi bu); öteki türler Genel bakışla açılır.
-  const defaultTab: SpaceTab = commentLink ? "comments" : caps.member ? (space.kind === "team_library" ? "prompts" : "overview") : "images";
+  const defaultTab: SpaceTab = commentLink ? "comments" : caps.member ? "overview" : "images";
   const tab: SpaceTab = isSpaceTab(tabParam) && visibleTabs.includes(tabParam) ? tabParam : defaultTab;
   const focusId = searchParams.get("focus");
   const [dialog, setDialog] = useState<null | "settings" | "share" | "delete" | "leave">(null);
@@ -316,8 +335,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
             )}
           </BandActionRow>
         )}
-
-        {space.teamId && <TeamSpaceStrip teamId={space.teamId} space={{ id: space.id, title: space.title }} />}
 
         {space.archivedAt && (
           <div role="status" className="mt-4 flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-small text-text sm:flex-row sm:items-center sm:justify-between">

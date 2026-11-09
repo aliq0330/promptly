@@ -73,9 +73,7 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
 
     const pathname = new URL(request.url).pathname;
     const isMeta = /\/oauth-protected-resource\/?$/.test(pathname);
-    // Ekip adresi (docs/history/353-*): `…/mcp/team/<kısa-ad>` = kişisel adres + ekip kütüphanesi araçları o ekibe daraltılmış.
-    const teamSlug = /\/team\/([a-z0-9][a-z0-9-]{1,39})\/?$/.exec(pathname)?.[1] ?? null;
-    const isMe = !isMeta && (/\/me\/?$/.test(pathname) || teamSlug !== null);
+    const isMe = !isMeta && /\/me\/?$/.test(pathname);
     if ((isMe || isMeta) && !options.me) return jsonRpcError(404, -32000, "Not found.");
     if (isMeta && options.me) {
       return withCors(
@@ -102,15 +100,13 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
             name: "Promptly MCP",
             version: options.version,
             transport: "streamable-http (stateless, JSON)",
-            usage: teamSlug
-              ? `Promptly MCP for the team "${teamSlug}": your team library, on YOUR account. Send a personal API key (Promptly → Settings → Developer keys) as \`Authorization: Bearer pmt_…\`, or sign in via OAuth. Read-only; only approved prompts.`
-              : isMe
+            usage: isMe
               ? "Personal Promptly MCP: works on YOUR account. Send a personal API key (Promptly → Settings → Developer keys) as `Authorization: Bearer pmt_…`, or sign in via OAuth."
               : "Add this URL as a remote MCP server / custom connector in your MCP client. No account or key needed; read-only.",
             tools: isMe
               ? [
                   "search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content",
-                  "whoami", "list_my_prompts", "get_my_prompt", "list_my_content", "get_my_content", "list_my_saved", "list_my_libraries", "get_library_prompts",
+                  "whoami", "list_my_prompts", "get_my_prompt", "list_my_content", "get_my_content", "list_my_saved",
                   "save_prompt_draft", "save_request_draft", "save_preset_draft", "save_workflow_draft", "update_my_draft",
                   ...(options.me?.attachImage ? ["attach_image"] : []),
                 ]
@@ -152,7 +148,7 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
     const { server } = createPromptlyServer({
       client,
       version: options.version,
-      me: isMe && bearer && options.me ? { backend: options.me.backend, bearer, attachImage: options.me.attachImage, teamSlug: teamSlug ?? undefined } : undefined,
+      me: isMe && bearer && options.me ? { backend: options.me.backend, bearer, attachImage: options.me.attachImage } : undefined,
       log: (message) => log(message),
       onPromptUse: options.usage ? (promptId) => options.usage!.record(promptId, clientKey) : undefined,
     });

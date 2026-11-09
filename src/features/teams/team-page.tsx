@@ -19,10 +19,10 @@ import { fetchMyTeam, fetchTeamPolicy, type TeamPolicy, type TeamSummary } from 
 import { DEFAULT_TEAM_ROLE_POLICY, isTeamTab, teamLink, teamRoleCan, type TeamCapability, type TeamRolePolicy, type TeamTab } from "@/lib/teams";
 import { TeamAdminSection } from "./team-admin-section";
 import { TeamChatSection } from "./team-chat-section";
-import { TeamLibrarySection } from "./team-library-section";
 import { TeamMembersSection } from "./team-members-section";
 import { TeamPanelSection } from "./team-panel-section";
-import { TeamSpacesSection } from "./team-spaces-section";
+import { TeamProjectPage } from "./team-project-page";
+import { TeamProjectsSection } from "./team-projects-section";
 import { TeamPhoneHome } from "./team-phone-home";
 import { TeamMark } from "./team-ui";
 
@@ -37,7 +37,8 @@ export interface TeamCtx {
 }
 
 /**
- * Ekip sayfası (`/teams/local?id=&tab=`). Bölümler tek "Space'ler ▾" menüsüdür (4+ bölüm = menü kuralı); konuklar yalnız Space'ler ve Sohbet'i görür.
+ * Ekip sayfası (`/teams/local?id=&tab=`). Bölümler: Projeler · Sohbet · Üyeler · Panel · Yönetim; konuklar yalnız Projeler ve Sohbet'i görür
+ * (docs/history/362-*). Eski `tab=spaces|library` adresleri Projeler'e yönlenir.
  * Ekibe üye olmayan kimlik (ya da var olmayan ekip) "bulunamadı" görür: varlığı sızmaz.
  */
 export function TeamPage() {
@@ -91,8 +92,7 @@ export function TeamPage() {
   const isGuest = team?.myRole === "guest";
   const adminVisible = Boolean(team) && !isGuest && (can("manage_team") || can("manage_members") || can("manage_groups") || can("view_audit"));
   const items: { key: TeamTab; label: string; count?: number }[] = useMemo(() => {
-    const list: { key: TeamTab; label: string; count?: number }[] = [{ key: "spaces", label: t("tm.tab.spaces") }];
-    if (!isGuest) list.push({ key: "library", label: t("tm.tab.library") });
+    const list: { key: TeamTab; label: string; count?: number }[] = [{ key: "projects", label: t("tp.tab.projects") }];
     list.push({ key: "chat", label: t("tm.tab.chat"), count: team?.unreadCount || undefined });
     if (!isGuest) list.push({ key: "members", label: t("tm.tab.members") });
     if (!isGuest && can("view_audit")) list.push({ key: "panel", label: t("tm.tab.panel") });
@@ -100,7 +100,9 @@ export function TeamPage() {
     return list;
   }, [t, isGuest, can, adminVisible, team?.unreadCount]);
 
-  const tab: TeamTab = isTeamTab(rawTab) && items.some((item) => item.key === rawTab) ? rawTab : "spaces";
+  // Eski adresler (`spaces`, `library`) Projeler'e yönlenir; bilinmeyen/yetkisiz sekme de Projeler'dir.
+  const wantedTab = rawTab === "spaces" || rawTab === "library" ? "projects" : rawTab;
+  const tab: TeamTab = isTeamTab(wantedTab) && items.some((item) => item.key === wantedTab) ? wantedTab : "projects";
   // Telefonda açık bir kanal tam ekran sohbettir (mockup): ekip başlığı, sekmeler ve notlar gizlenir, geri düğmesi sohbet başlığındadır.
   const chatFocus = tab === "chat" && Boolean(params.get("channel"));
   const go = (next: TeamTab) => router.replace(teamLink(id, next));
@@ -137,8 +139,6 @@ export function TeamPage() {
   const ctx: TeamCtx = { team, can, policy, reload, sectionMenu: null };
   const body = (() => {
     switch (tab) {
-      case "library":
-        return <TeamLibrarySection ctx={ctx} />;
       case "chat":
         return <TeamChatSection ctx={ctx} />;
       case "members":
@@ -148,7 +148,7 @@ export function TeamPage() {
       case "admin":
         return <TeamAdminSection ctx={ctx} />;
       default:
-        return <TeamSpacesSection ctx={ctx} />;
+        return params.get("project") ? <TeamProjectPage ctx={ctx} /> : <TeamProjectsSection ctx={ctx} />;
     }
   })();
 
@@ -156,9 +156,9 @@ export function TeamPage() {
   // Telefon: `tab` adreste yoksa kök ana ekran; varsa alt sayfa. Masaüstü hep sekmeli eski düzen (varsayılan Space'ler).
   const phoneRoot = phone && !rawTab && !params.get("channel");
   const phoneSub = phone && !phoneRoot;
-  // Onay incelemesi tam sayfadır (mockup 11); telefonda prompt ayrıntısı da kendi üst çubuğunu çizer (P4).
-  const reviewing = tab === "library" && Boolean(params.get("review"));
-  const itemOpen = tab === "library" && Boolean(params.get("item"));
+  // Lider onay incelemesi tam sayfadır: ekip başlığı/sekmeleri gizlenir.
+  const reviewing = tab === "projects" && Boolean(params.get("project")) && Boolean(params.get("review"));
+  const itemOpen = false;
   if (reviewing) {
     return (
       <div className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-5 md:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
@@ -189,7 +189,7 @@ export function TeamPage() {
             <span className="inline-flex h-6 items-center rounded-full bg-primary-soft px-2.5 text-caption font-bold text-primary">{t("tm.badge")}</span>
           </div>
           <p className="mt-0.5 text-small text-text-secondary">
-            {t("tm.card.members", { count: team.memberCount })} · {t("tm.card.spaces", { count: team.spaceCount })} · {t("tm.header.inviteOnly")}
+            {t("tm.card.members", { count: team.memberCount })} · {t("tp.header.projects", { count: team.spaceCount })} · {t("tm.header.inviteOnly")}
           </p>
         </div>
         {can("manage_members") && !isGuest && (

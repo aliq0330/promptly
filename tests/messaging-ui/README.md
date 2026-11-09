@@ -358,19 +358,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_K
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-works-badges.mjs   # 14/14 beklenir
 ```
 
-## Ekip kütüphanesi (`docs/history/348-*`)
+## Ekip kütüphanesi — KALDIRILDI (`docs/history/362-*`)
 
-`run-space-library.mjs` (8 senaryo): yeni Space türü `team_library` (şablon grupları, özel değilse görünürlük uyarısı, oluşturulunca Promptlar sekmesine açılır), sahibin onay işareti (rozet, "Onaylı"/"Onay bekleyen" süzgeci, Onayla/Onayı kaldır RPC'si, etkinlik cümleleri), onaylı taslağın metni değişince onayın düşmesi, ekip ortak değişkenleri (düzenleyici ekler/günceller/siler, geçersiz ve yinelenen ad anında reddedilir, izleyici yalnız okur, üye olmayana panel ve istek yok) ve "Doldur ve kopyala" (ekip değerleri hazır, yazılan değer ezer, boş kalan jeton kalır, panoya kopyalar), İngilizce + telefon. Ağ taklidi `mock-spaces.mjs` (`db.spaceVariables`, `space_set_item_approval`, `space_set_variable`, `space_delete_variable`); gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/space-team-library.sql`'dedir.
-
-`run-team-spaces.mjs` (25 senaryo): ekip alanı (docs/history/349-*) — "Space'ler" sekmesi yalnız tamamen kapalı toplulukta, yetkiye bağlı "Yeni Space" (sahip/yönetici; moderatör ancak sahibin `create_spaces` ayarıyla), ekip başına 50 sınırı, Space sayfasında ekip şeridi (Ekip sayfası/Ekip sohbeti/Sohbete gönder), ekibe bağlı Space'te sahip/düzenleyici rolleri ve Üyeler sekmesinin "ekipten gelir" notu, iki yeni yetenek satırı, topluluk oluşturmada "Tamamen kapalı (ekip alanı)", sohbet bilgi panelinde "Ortak Space'ler", Aşama 3: "Onaya gönder"/"İsteği geri çek", "Onay istendi" rozeti ve süzgeci, `approve_library` kararı sunucudan (`space_can_approve`), "Sürümler" penceresi (yazar, "Onaylıydı", Geri yükle, kilitli öğe), İngilizce + telefon. Ağ taklidi `mock-spaces.mjs` (`community_id`, `teamCan`, `space_role`, `list_team_spaces`, `create_team_space`, `space_can_approve`, `space_request_review`, `list_space_item_versions`, `space_restore_item_version`); gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/team-spaces.sql` (70) ve `team-spaces-review.sql` (34) içindedir.
-
-`run-teams.mjs` (16 senaryo): Ekipler başlığı (docs/history/350-*) — `/teams` yalnız üye olunan tamamen kapalı toplulukları listeler (kartta üye + Space sayısı, Space'ler/Ekip sohbeti kısayolları), boş durum + davet ipucu, "Ekip oluştur" (görünürlük seçici/kategori/kurallar yok, `p_visibility=private`, Space'ler sekmesine gider), Topluluklar listeleri ekipleri göstermez, kenar çubuğu/hesap menüsü/Mesajlar "Ekip sohbetleri" girişleri, ekip sayfasında "Ekip" dili + Space'ler ilk sekme + "Paylaşımlar", ayarlarda ekibin görünürlüğü kilitli / toplulukta iki düzey, İngilizce + telefon; docs/history/351-*: ekip rotası (`/teams/local`) yönlenmeleri + kenar çubuğu, ekip davetleri, derin sekmede "ekip" dili, topluluk ↔ ekip dönüşümü. Ağ taklidi `mock-communities.mjs` (`list_my_teams`); gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/teams-home.sql`.
+Ekip kütüphanesi, onay akışı ve ekip API/MCP PR-C ile kalktı; eski `run-space-library`/`run-team-spaces`/`run-teams` paketleri silindi. Ekip arayüzü artık `run-team-hub.mjs` ve `run-team-projects.mjs` ile sınanır.
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
-CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-space-library.mjs   # 8/8 beklenir
-CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-team-spaces.mjs   # 25/25 beklenir
-CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-teams.mjs   # 16/16 beklenir
 ```
 
 ## Topluluk sohbet odaları (`docs/history/352-*`)
@@ -381,3 +374,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-teams.mjs   
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-rooms.mjs   # 29/29 beklenir (port 4179)
 ```
 
+
+## Ekip projeleri v2 (`docs/history/362-*`)
+
+`run-team-projects.mjs`: Projeler sekmesi, proje/dosya/pano sayfaları, alan görünümü (mevcut Space sağlayıcısı + `mock-spaces.mjs`: `addSpace(…, { teamId, teamProjectId, teamFileId })`, `addItem(…, { rev_state, rev_note, created_by })`), onay paneli, değişiklik önerisi, lider onay kuyruğu, proje sohbeti grubu, İngilizce ve telefon. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/team-projects-v2.sql` ve `team-project-review.sql`.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium/chrome node tests/messaging-ui/run-team-projects.mjs   # 17/17 beklenir
+```

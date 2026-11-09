@@ -76,11 +76,6 @@ export const apiKeysTranslations = {
   "dev.meKeyLink": { tr: "Anahtar oluştur", en: "Create a key" },
   "dev.meWho": { tr: "Kim olduğunu doğrula (kullanıcı adı, görünen ad)", en: "Check who you are (username, display name)" },
   "dev.meList": { tr: "Kendi promptlarını listele (özel taslaklar dahil)", en: "List your own prompts (private drafts included)" },
-  "dev.meLibrary": { tr: "Ekip kütüphanelerini ve onaylı promptlarını oku", en: "Read your team libraries and their approved prompts" },
-  "dev.meLibraryBody": {
-    tr: "Üyesi olduğun ekip kütüphaneleri ve onaylı promptları gelir; ekibin ortak değişkenleri `filledText` içine doldurulur, değeri olmayanlar `missing` listesinde kalır. Onaysız taslaklar için `?include=unapproved` ekle. Yalnızca okur.",
-    en: "Returns the team libraries you belong to and their approved prompts; the team's shared variables are filled into `filledText`, and ones without a value stay in the `missing` list. Add `?include=unapproved` for drafts too. Read-only.",
-  },
   "dev.meListOther": { tr: "İsteklerini, ayar paketlerini ve workflow'larını listele / oku", en: "List and read your requests, presets and workflows" },
   "dev.meUpdate": { tr: "Özel taslağı güncelle", en: "Update a private draft" },
   "dev.meUpdateBody": {
@@ -94,8 +89,8 @@ export const apiKeysTranslations = {
   },
   "dev.meMcp": { tr: "Kişisel MCP (Claude Code, Cursor…)", en: "Personal MCP (Claude Code, Cursor…)" },
   "dev.meMcpBody": {
-    tr: "Aynı anahtarla kendi promptlarını yapay zekâ aracından kullan: whoami, list_my_prompts, get_my_prompt, list_my_content, get_my_content, list_my_saved, list_my_libraries, get_library_prompts (ekip kütüphanesinin onaylı promptları, ekibin ortak değişkenleriyle doldurulmuş) ve (yazma anahtarıyla) save_prompt_draft, save_request_draft, save_preset_draft, save_workflow_draft, update_my_draft, attach_image (taslağa görsel ekler). Adres yukarıdakinden farklıdır:",
-    en: "Use your own prompts from an AI tool with the same key: whoami, list_my_prompts, get_my_prompt, list_my_content, get_my_content, list_my_saved, list_my_libraries, get_library_prompts (the approved prompts of a team library, filled in with the team's shared variables) and (with a write key) save_prompt_draft, save_request_draft, save_preset_draft, save_workflow_draft, update_my_draft, attach_image (adds an image to a draft). The address differs from the one above:",
+    tr: "Aynı anahtarla kendi promptlarını yapay zekâ aracından kullan: whoami, list_my_prompts, get_my_prompt, list_my_content, get_my_content, list_my_saved, ve (yazma anahtarıyla) save_prompt_draft, save_request_draft, save_preset_draft, save_workflow_draft, update_my_draft, attach_image (taslağa görsel ekler). Adres yukarıdakinden farklıdır:",
+    en: "Use your own prompts from an AI tool with the same key: whoami, list_my_prompts, get_my_prompt, list_my_content, get_my_content, list_my_saved, and (with a write key) save_prompt_draft, save_request_draft, save_preset_draft, save_workflow_draft, update_my_draft, attach_image (adds an image to a draft). The address differs from the one above:",
   },
   "dev.meMcpAddress": { tr: "Kişisel MCP adresi", en: "Personal MCP address" },
   "dev.meMcpCursor": { tr: "Cursor ve diğer istemciler", en: "Cursor and other clients" },

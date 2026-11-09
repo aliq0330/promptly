@@ -13,7 +13,6 @@ import { serializeJson } from "../exchange/json.ts";
 import { serializeMarkdown } from "../exchange/markdown.ts";
 import type { ExchangePrompt } from "../exchange/prompt-format.ts";
 import { bearerOf, getMyPrompt, importMyPrompts, listMyPrompts, listMySaved, type MeBackend } from "./me.ts";
-import { getLibraryPrompts, listMyLibraries } from "./me-library.ts";
 import { getMyContent, getWhoami, importMyContent, listMyContent, ME_KIND_SEGMENTS, updateMyDraft, type MeDraftKind } from "./me-content.ts";
 import { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";
 import { getPublicContent, PUBLIC_KIND_SEGMENTS, searchPublicContent } from "./public-content.ts";
@@ -141,7 +140,7 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
       version: PUBLIC_API_VERSION,
       docs: `${serverUrlOf(url, publicBaseUrl)}/openapi.json`,
       site: client.siteUrl,
-      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /requests", "GET /requests/{id}", "GET /presets", "GET /presets/{id}", "GET /workflows", "GET /workflows/{id}", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "PATCH /me/prompts/{id}", "GET /me/requests", "POST /me/requests", "GET /me/requests/{id}", "PATCH /me/requests/{id}", "GET /me/presets", "POST /me/presets", "GET /me/presets/{id}", "PATCH /me/presets/{id}", "GET /me/workflows", "POST /me/workflows", "GET /me/workflows/{id}", "PATCH /me/workflows/{id}", "GET /me/saved", "GET /me/libraries", "GET /me/libraries/{id}/prompts"],
+      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /requests", "GET /requests/{id}", "GET /presets", "GET /presets/{id}", "GET /workflows", "GET /workflows/{id}", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "PATCH /me/prompts/{id}", "GET /me/requests", "POST /me/requests", "GET /me/requests/{id}", "PATCH /me/requests/{id}", "GET /me/presets", "POST /me/presets", "GET /me/presets/{id}", "PATCH /me/presets/{id}", "GET /me/workflows", "POST /me/workflows", "GET /me/workflows/{id}", "PATCH /me/workflows/{id}", "GET /me/saved"],
     });
   }
   if (segments.length === 1 && segments[0] === "openapi.json") {
@@ -241,16 +240,6 @@ async function meRoute(request: Request, url: URL, segments: string[], method: s
   if (sub[0] === "saved" && sub.length === 1) {
     if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
     return reply(await me.withUser(bearer, "read", (tx) => listMySaved(tx, me.siteUrl, { limit: intParam(url, "limit"), cursor: url.searchParams.get("cursor") })));
-  }
-  // Ekip kütüphanesi (docs/history/348-*): yalnız OKUMA — üyesi olduğum kütüphaneler ve onaylı promptları (ortak değişkenlerle doldurulmuş).
-  if (sub[0] === "libraries") {
-    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
-    if (sub.length === 1) return reply(await me.withUser(bearer, "read", (tx) => listMyLibraries(tx, me.siteUrl, { team: url.searchParams.get("team") })));
-    if (sub.length === 3 && sub[2] === "prompts") {
-      const include = url.searchParams.get("include");
-      if (include !== null && include !== "unapproved") return errorResponse("bad_request", 'include must be "unapproved" (or omitted).', 400);
-      return reply(await me.withUser(bearer, "read", (tx) => getLibraryPrompts(tx, me.siteUrl, sub[1], { includeUnapproved: include === "unapproved" })));
-    }
   }
   if (sub[0] === "prompts" && sub.length === 1) {
     if (method === "GET") {

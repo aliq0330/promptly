@@ -5,10 +5,10 @@ import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
 import { resizeImageToBlob } from "@/lib/utils";
+import { isReviewState, type ReviewState } from "@/lib/team-projects";
 import {
   extractSpaceErrorCode,
   SPACE_PAGE_SIZE,
-  SPACE_VARIABLES_MAX,
   type SpaceColor,
   type SpaceContentType,
   type SpaceErrorCode,
@@ -58,9 +58,6 @@ const SPACE_ERROR_KEYS: Record<SpaceErrorCode, TranslationKey> = {
   space_too_empty: "spaces.error.tooEmpty",
   space_rating_owner: "spaces.error.ratingOwner",
   space_item_locked: "spaces.error.itemLocked",
-  space_approval_forbidden: "spaces.error.approvalForbidden",
-  space_review_forbidden: "spaces.error.reviewForbidden",
-  space_variable_limit: "spaces.error.variableLimit",
   space_team_managed: "spaces.error.teamManaged",
   team_space_limit: "spaces.error.teamSpaceLimit",
 };
@@ -153,6 +150,9 @@ export interface Space {
   activityVisibility: SpaceActivityVisibility;
   /** Ekibe bağlıysa ekip kimliği (docs/history/353-*); kişisel Space'te `null`. */
   teamId: string | null;
+  /** Ekip projesinin alanıysa proje/dosya kimliği (docs/history/362-*); kişisel Space'te `null`. */
+  teamProjectId: string | null;
+  teamFileId: string | null;
 }
 
 export interface SpaceItem {
@@ -191,15 +191,13 @@ export interface SpaceItem {
   sourceStepNo: number | null;
   /** Kilitli nesne taşınamaz, boyutlanamaz, düzenlenemez, silinemez (docs/history/307-*; sunucu tetikleyicisi de uygular). */
   locked?: boolean;
-  /**
-   * Ekip kütüphanesinde sahibin verdiği onay (docs/history/348-*; yalnız kendi metnini taşıyan prompt taslağında). Metin/başlık değişince
-   * sunucu onayı KENDİLİĞİNDEN düşürür; istemci bu alanı doğrudan yazamaz (`setSpaceItemApproval`).
-   */
-  approvedAt?: string | null;
-  approvedBy?: string | null;
-  /** "Onaya gönder" isteği (docs/history/349-*): bekleyen istek; onay/geri alma ya da geri çekme temizler. İstemci doğrudan yazamaz (`requestItemReview`). */
-  reviewRequestedAt?: string | null;
-  reviewRequestedBy?: string | null;
+  /** Ekip projesi onay durumu (docs/history/362-*): kişisel Space ve eski ekip Space'inde hep `approved`. Yalnız `team_review_*` RPC'leri değiştirir. */
+  revState: ReviewState;
+  revNote?: string | null;
+  revSubmittedAt?: string | null;
+  revDecidedAt?: string | null;
+  /** Birlikte karar verilen paket (aynı workflow'un nesneleri). */
+  revUnit?: string | null;
   createdBy: string | null;
   updatedBy: string | null;
   createdAt: string;
@@ -275,8 +273,7 @@ export type SpaceActivityAction =
   | "created" | "renamed" | "visibility_changed" | "archived" | "unarchived"
   | "image_added" | "image_removed" | "prompt_added" | "note_added" | "content_added" | "item_removed"
   | "palette_created" | "palette_updated" | "palette_deleted" | "group_created" | "group_deleted"
-  | "member_invited" | "member_joined" | "member_removed" | "role_changed" | "link_created" | "link_revoked"
-  | "item_approved" | "item_unapproved";
+  | "member_invited" | "member_joined" | "member_removed" | "role_changed" | "link_created" | "link_revoked";
 
 /** Etkinliğin önce/sonra ayrıntısı (`space_activity.details`, docs/history/242-*). Alanlar eylem türüne göre dolar. */
 export interface SpaceActivityItem {
@@ -339,10 +336,12 @@ interface SpaceRow {
   comment_count: number | null;
   activity_visibility: SpaceActivityVisibility | null;
   team_id?: string | null;
+  team_project_id?: string | null;
+  team_file_id?: string | null;
 }
 
 const SPACE_COLS =
-  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, quote_count, rating_avg, rating_count, comment_count, activity_visibility, team_id";
+  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, quote_count, rating_avg, rating_count, comment_count, activity_visibility, team_id, team_project_id, team_file_id";
 
 function mapSpace(row: SpaceRow): Space {
   return {
@@ -364,6 +363,8 @@ function mapSpace(row: SpaceRow): Space {
     commentCount: row.comment_count ?? 0,
     activityVisibility: row.activity_visibility ?? "everyone",
     teamId: row.team_id ?? null,
+    teamProjectId: row.team_project_id ?? null,
+    teamFileId: row.team_file_id ?? null,
   };
 }
 
@@ -404,6 +405,11 @@ export interface SpaceItemRow {
   approved_by?: string | null;
   review_requested_at?: string | null;
   review_requested_by?: string | null;
+  rev_state?: string | null;
+  rev_note?: string | null;
+  rev_submitted_at?: string | null;
+  rev_decided_at?: string | null;
+  rev_unit?: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -412,7 +418,7 @@ export interface SpaceItemRow {
 
 // `flow_show_*` (docs/history/261-*) yoksa istek sütunsuz yeniden denenir (server-errors.ts OPTIONAL_COLUMNS) — Space'ler migration'dan önce de açılır.
 const ITEM_COLS =
-  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, approved_at, approved_by, review_requested_at, review_requested_by, created_by, updated_by, created_at, updated_at";
+  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, approved_at, approved_by, review_requested_at, review_requested_by, rev_state, rev_note, rev_submitted_at, rev_decided_at, rev_unit, created_by, updated_by, created_at, updated_at";
 
 export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
   return {
@@ -448,10 +454,11 @@ export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
     sourceRole: row.source_role ?? null,
     sourceStepNo: row.source_step_no ?? null,
     locked: Boolean(row.locked),
-    approvedAt: row.approved_at ?? null,
-    approvedBy: row.approved_by ?? null,
-    reviewRequestedAt: row.review_requested_at ?? null,
-    reviewRequestedBy: row.review_requested_by ?? null,
+    revState: isReviewState(row.rev_state) ? row.rev_state : "approved",
+    revNote: row.rev_note ?? null,
+    revSubmittedAt: row.rev_submitted_at ?? null,
+    revDecidedAt: row.rev_decided_at ?? null,
+    revUnit: row.rev_unit ?? null,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     createdAt: row.created_at,
@@ -708,13 +715,6 @@ export async function fetchMyRole(spaceId: string, userId: string | null): Promi
   return (data as SpaceRole | null) ?? null;
 }
 
-/** Ekip kütüphanesinde onay verebilir miyim? (ekip Space'inde `approve_library` yeteneği; kişisel kütüphanede sahiplik). Yalnız arayüz içindir. */
-export async function fetchCanApprove(spaceId: string): Promise<boolean> {
-  const { data, error } = await supabase.rpc("space_can_approve", { p_space: spaceId });
-  if (error) throw toSpaceError(error);
-  return data === true;
-}
-
 export async function fetchSpaceItems(spaceId: string): Promise<SpaceItem[]> {
   const { data, error } = await supabase.from("space_items").select(ITEM_COLS).eq("space_id", spaceId).order("z", { ascending: true }).limit(1000);
   if (error) throw toSpaceError(error);
@@ -853,83 +853,6 @@ export async function addSpaceItems(items: NewSpaceItem[], userId: string): Prom
 /** Kaldırılmış bir öğeyi aynı kimlikle geri koyar (geri al). Kaynağı artık okunamıyorsa sunucu reddeder. */
 export async function restoreSpaceItems(items: SpaceItem[], userId: string): Promise<SpaceItem[]> {
   return addSpaceItems(items, userId);
-}
-
-/**
- * Ekip kütüphanesinde bir prompt taslağını onaylar / onayı geri alır (docs/history/348-*). Yalnız Space SAHİBİ; sunucu `space_set_item_approval`
- * yetkiyi, türü ve taslak olmayı yeniden denetler. Dönen değer sunucunun yazdığı onay anıdır (geri almada `null`).
- */
-export async function setSpaceItemApproval(itemId: string, approved: boolean): Promise<string | null> {
-  const at = await rpc<string | null>("space_set_item_approval", { p_item: itemId, p_approved: approved });
-  return approved ? (at ?? new Date().toISOString()) : null;
-}
-
-/**
- * "Onaya gönder" (docs/history/349-*): düzenleyici, onaylanmamış prompt taslağı için onay yetkililerinden onay ister (`withdraw` = isteği geri çek).
- * Yetki, tür, onaysız olma ve bildirim sunucudadır (`space_request_review`); dönen değer isteğin yeni zamanı, geri çekmede `null`.
- */
-export async function requestItemReview(itemId: string, withdraw = false): Promise<string | null> {
-  const at = await rpc<string | null>("space_request_review", { p_item: itemId, p_withdraw: withdraw });
-  return withdraw ? null : (at ?? new Date().toISOString());
-}
-
-/** Ekip kütüphanesindeki bir prompt taslağının eski hâli (başlık/metin değişince sunucu saklar; öğe başına son 50). */
-export interface SpaceItemVersion {
-  id: string;
-  title: string;
-  body: string;
-  authorId: string | null;
-  authorName: string;
-  authorUsername: string;
-  wasApproved: boolean;
-  createdAt: string;
-}
-
-export async function fetchItemVersions(itemId: string): Promise<SpaceItemVersion[]> {
-  const rows = await rpc<
-    { id: string; title: string; body: string; author_id: string | null; author_name: string | null; author_username: string | null; was_approved: boolean; created_at: string }[] | null
-  >("list_space_item_versions", { p_item: itemId });
-  return (rows ?? []).map((row) => ({
-    id: row.id,
-    title: row.title ?? "",
-    body: row.body ?? "",
-    authorId: row.author_id,
-    authorName: row.author_name ?? row.author_username ?? "",
-    authorUsername: row.author_username ?? "",
-    wasApproved: Boolean(row.was_approved),
-    createdAt: row.created_at,
-  }));
-}
-
-/** Seçilen sürümü geri yükler: YENİ bir düzenleme sayılır (şimdiki hâl de sürüm olur, onay düşer). Dönen değer öğe kimliğidir. */
-export async function restoreItemVersion(versionId: string): Promise<string> {
-  return rpc<string>("space_restore_item_version", { p_version: versionId });
-}
-
-/** Ekibin ortak `{değişken}` değeri (yalnız ÜYE okur; Space başına en çok 50). */
-export interface SpaceVariable {
-  name: string;
-  value: string;
-  updatedAt: string;
-}
-
-export async function fetchSpaceVariables(spaceId: string): Promise<SpaceVariable[]> {
-  const { data, error } = await supabase
-    .from("space_variables")
-    .select("name, value, updated_at")
-    .eq("space_id", spaceId)
-    .order("name")
-    .limit(SPACE_VARIABLES_MAX);
-  if (error) throw toSpaceError(error);
-  return ((data ?? []) as { name: string; value: string | null; updated_at: string }[]).map((row) => ({ name: row.name, value: row.value ?? "", updatedAt: row.updated_at }));
-}
-
-export async function saveSpaceVariable(spaceId: string, name: string, value: string): Promise<void> {
-  await rpc<void>("space_set_variable", { p_space: spaceId, p_name: name, p_value: value });
-}
-
-export async function removeSpaceVariable(spaceId: string, name: string): Promise<void> {
-  await rpc<void>("space_delete_variable", { p_space: spaceId, p_name: name });
 }
 
 export type SpaceItemPatch = Partial<Pick<SpaceItem, "title" | "body" | "note" | "color" | "isPrivate" | "attachedItemId" | "groupId" | "flowShowIo" | "flowShowLinks" | "flowShowRelations" | "locked">>;
@@ -1472,6 +1395,8 @@ export function spaceFromSummary(summary: SpaceSummary): Space {
     commentCount: 0,
     activityVisibility: "everyone",
     teamId: summary.teamId ?? null,
+    teamProjectId: null,
+    teamFileId: null,
   };
 }
 

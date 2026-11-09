@@ -128,8 +128,9 @@ export function roleCanHoldSpaceLevel(role: TeamRole | null | undefined, level: 
 }
 
 /** Ekip sayfası sekmeleri (`/teams/local?id=&tab=`). */
-export type TeamTab = "spaces" | "library" | "chat" | "members" | "panel" | "admin";
-export const TEAM_TABS: readonly TeamTab[] = ["spaces", "library", "chat", "members", "panel", "admin"];
+/** `spaces` ve `library` ESKİ adreslerdir (docs/history/362-*): sayfa bunları `projects`'e yönlendirir; sekme menüsünde yalnız `projects` görünür. */
+export type TeamTab = "projects" | "spaces" | "library" | "chat" | "members" | "panel" | "admin";
+export const TEAM_TABS: readonly TeamTab[] = ["projects", "spaces", "library", "chat", "members", "panel", "admin"];
 
 export function isTeamTab(value: unknown): value is TeamTab {
   return typeof value === "string" && (TEAM_TABS as readonly string[]).includes(value);

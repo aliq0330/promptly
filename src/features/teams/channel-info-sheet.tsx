@@ -53,7 +53,7 @@ export function ChannelInfoSheet({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const canManage = teamRoleCan(summary?.myRole, "manage_channels");
-  const seesKey = channel.mode === "private" ? "tm.chan.seesPrivate" : channel.mode === "space" ? "tm.chan.seesSpace" : "tm.chan.seesAll";
+  const seesKey = channel.mode === "private" ? "tm.chan.seesPrivate" : channel.mode === "project" ? "tp.chat.seesProject" : channel.mode === "space" ? "tm.chan.seesSpace" : "tm.chan.seesAll";
 
   async function run(action: () => Promise<void>, after: () => void) {
     setBusy(true);

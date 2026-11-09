@@ -1,5 +1,6 @@
 "use client";
 
+import { ItemReviewBadge } from "@/features/teams/project-ui";
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useEffect, useMemo, useState } from "react";
 import { Link2 } from "@/components/icons/link-2";
@@ -121,6 +122,7 @@ export function NotesTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => voi
               <li key={note.id} data-note={note.title || note.id} className={cn("flex flex-col rounded-lg border p-3.5", SPACE_COLOR_CLASS[note.color].surface, SPACE_COLOR_CLASS[note.color].border)}>
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="min-w-0 break-words text-body font-semibold text-text">{note.title || t("spaces.notes.untitled")}</h3>
+                  <ItemReviewBadge state={note.revState} />
                   {note.isPrivate && (
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface/80 px-2 py-0.5 text-caption text-text-secondary" title={t("spaces.notes.privateHelp")}>
                       <Lock size={11} aria-hidden />

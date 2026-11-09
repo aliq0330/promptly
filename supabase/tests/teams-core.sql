@@ -66,15 +66,14 @@ insert into public.team_members (team_id, user_id, role, guest_until, guest_org)
 insert into public.team_groups (team_id, name, lead_id) values (public._g('T'), 'Tasarım', :carol) returning id as v \gset g_
 insert into public._ctx values ('G', :'g_v');
 insert into public.team_group_members (group_id, user_id) values (public._g('G'), :carol);
-insert into public._ctx select 'LIB', library_space_id::text from public.teams where id = public._g('T');
 
 -- 1) Kurulum ----------------------------------------------------------------------------------------------------------------------------
-select public._check(1, 'team_create: ekip, sahip üyeliği ve ekip kütüphanesi Space’i kuruldu; kısa ad Türkçe karaktersiz',
-  (select slug = 'atolye-mor' and name = 'Atölye Mor' and library_space_id is not null from public.teams where id = public._g('T'))
+select public._check(1, 'team_create: ekip + sahip üyeliği kuruldu, kütüphane Space’i AÇILMAZ (docs/history/362-*); kısa ad Türkçe karaktersiz',
+  (select slug = 'atolye-mor' and name = 'Atölye Mor' and library_space_id is null from public.teams where id = public._g('T'))
   and (select role from public.team_members where team_id = public._g('T') and user_id = :alice) = 'owner'
-  and (select kind = 'team_library' and owner_id = :alice::uuid and visibility = 'private' and team_id = public._g('T') from public.spaces where id = public._g('LIB')));
-select public._check(2, 'sayaçlar: 4 üye, 1 konuk, 1 Space',
-  (select member_count = 4 and guest_count = 1 and space_count = 1 from public.teams where id = public._g('T')));
+  and not exists (select 1 from public.spaces where team_id = public._g('T')));
+select public._check(2, 'sayaçlar: 4 üye, 1 konuk, 0 Space',
+  (select member_count = 4 and guest_count = 1 and space_count = 0 from public.teams where id = public._g('T')));
 select public._check(3, 'aynı adla ikinci ekip benzersiz kısa ad alır',
   (select (public._as_user(:gina) is not null or true) and (select count(*) from public.teams) >= 1));
 set role authenticated;
@@ -103,14 +102,14 @@ select public._check(10, 'politika: dışa aktarma varsayılan yalnız sahip; ya
 -- 3) Politika güncelleme ----------------------------------------------------------------------------------------------------------------
 set role authenticated;
 select public._as_user(:bobby);
-select public._check(11, 'yönetici politikayı günceller', public._try(format($$select public.team_update(%L, %L::jsonb)$$, public._g('T'), '{"approvals_needed": 2, "export_role": "admin", "publish_external_role": "editor"}')) = 'ok');
+select public._check(11, 'yönetici politikayı günceller', public._try(format($$select public.team_update(%L, %L::jsonb)$$, public._g('T'), '{"invite_link_ttl_days": 7, "export_role": "admin", "publish_external_role": "editor"}')) = 'ok');
 select public._as_user(:carol);
-select public._check(12, 'düzenleyici politikayı güncelleyemez', public._try(format($$select public.team_update(%L, %L::jsonb)$$, public._g('T'), '{"hide_unapproved": false}')) like '%team_forbidden%');
+select public._check(12, 'düzenleyici politikayı güncelleyemez', public._try(format($$select public.team_update(%L, %L::jsonb)$$, public._g('T'), '{"invite_link_ttl_days": 5}')) like '%team_forbidden%');
 select public._as_user(:frank);
-select public._check(13, 'yabancı için ekip görünmez (varlık sızmaz)', public._try(format($$select public.team_update(%L, %L::jsonb)$$, public._g('T'), '{"hide_unapproved": false}')) like '%team_not_found%');
+select public._check(13, 'yabancı için ekip görünmez (varlık sızmaz)', public._try(format($$select public.team_update(%L, %L::jsonb)$$, public._g('T'), '{"invite_link_ttl_days": 5}')) like '%team_not_found%');
 select public._as_user(:bobby);
 select public._check(14, 'geçersiz değer ve bilinmeyen anahtar reddedilir',
-  public._try(format($$select public.team_update(%L, %L::jsonb)$$, public._g('T'), '{"approvals_needed": 9}')) like '%team_invalid%'
+  public._try(format($$select public.team_update(%L, %L::jsonb)$$, public._g('T'), '{"invite_link_ttl_days": 99}')) like '%team_invalid%'
   and public._try(format($$select public.team_update(%L, %L::jsonb)$$, public._g('T'), '{"slug": "hile"}')) like '%team_invalid%');
 reset role;
 select public._check(15, 'politika değişince yetenek kararı değişir (düzenleyici yayınlar, yönetici dışa aktarır)',
@@ -119,11 +118,6 @@ select public._check(16, 'denetim günlüğüne politika kaydı düştü',
   (select count(*) from public.team_audit where team_id = public._g('T') and action = 'team_updated') = 1);
 
 -- 4) Space oluşturma ve yansıma ----------------------------------------------------------------------------------------------------------
-select public._check(17, 'kütüphane Space’inde yansıma: yönetici/düzenleyici düzenleyici, üye görüntüleyici, konuk YOK',
-  (select role from public.space_members where space_id = public._g('LIB') and user_id = :bobby) = 'editor'
-  and (select role from public.space_members where space_id = public._g('LIB') and user_id = :carol) = 'editor'
-  and (select role from public.space_members where space_id = public._g('LIB') and user_id = :dave) = 'viewer'
-  and not exists (select 1 from public.space_members where space_id = public._g('LIB') and user_id = :erin));
 set role authenticated;
 select public._as_user(:carol);
 select public.team_create_space(public._g('T'), 'Moodboard', '', 'moodboard', array['Referanslar']) as v \gset s1_
@@ -189,7 +183,6 @@ select public._check(33, '"tüm ekip" modunda: dave görüntüleyici, carol düz
 select public._check(34, 'DEĞİŞMEZ (tüm ekip)', public._inv());
 set role authenticated;
 select public._as_user(:bobby);
-select public._check(35, 'kütüphane Space’i "tüm ekip"ten başka moda alınamaz', public._try(format($$select public.team_set_space_access(%L, 'admins', '[]')$$, public._g('LIB'))) like '%team_library_locked%');
 select public._check(36, 'geçersiz özne (ekip dışı kullanıcı) ve fazla giriş reddedilir',
   public._try(format($$select public.team_set_space_access(%L, 'selected', %L::jsonb)$$, public._g('S1'),
     json_build_array(json_build_object('type','member','id',:frank::text,'level','edit'))::text)) like '%space_invalid%'
@@ -225,11 +218,7 @@ select public._check(44, 'ekip Space’ine doğrudan üye eklenemez/silinemez (s
   and public._try(format($$update public.spaces set team_id = null where id = %L$$, public._g('S1'))) ~ 'space_invalid|permission denied'
   and public._try(format($$update public.spaces set visibility = 'public' where id = %L$$, public._g('S1'))) ~ 'space_team_managed|space_invalid');
 select public._as_user(:bobby);
-select public._check(45, 'kütüphane Space’i arşivlenemez ve silinemez',
-  public._try(format($$update public.spaces set archived_at = now() where id = %L$$, public._g('LIB'))) ~ 'team_library_locked|space_forbidden|permission denied'
-  and public._try(format($$delete from public.spaces where id = %L$$, public._g('LIB'))) ~ 'team_library_locked|permission denied|row-level security');
 reset role;
-select public._check(46, 'kütüphane Space’i yerinde duruyor', exists (select 1 from public.spaces where id = public._g('LIB')));
 
 -- 8) Okuma politikaları -------------------------------------------------------------------------------------------------------------------
 set role authenticated;
@@ -254,10 +243,10 @@ select public._check(51, 'my_teams: sahip kendi ekibini, konuk rolüyle ekibini,
 select public._as_user(:frank);
 select public._check(52, 'yabancının my_teams listesi boş', (select count(*) from public.my_teams()) = 0);
 select public._as_user(:alice);
-select public._check(53, 'sahibin my_teams satırı: rol, sayaçlar, kütüphane Space’i', (select my_role = 'owner' and member_count = 3 and space_count = 2 and library_space_id is not null from public.my_teams() where slug = 'atolye-mor'));
-select public._check(54, 'team_list_spaces: kütüphane en üstte, erişim modu ve kütüphane işareti',
-  (select is_library and access_mode = 'all' from public.team_list_spaces(public._g('T')) limit 1)
-  and (select count(*) from public.team_list_spaces(public._g('T'))) = 2);
+select public._check(53, 'sahibin my_teams satırı: rol, sayaçlar, kütüphane YOK', (select my_role = 'owner' and member_count = 3 and space_count = 1 and library_space_id is null from public.my_teams() where slug = 'atolye-mor'));
+select public._check(54, 'team_list_spaces: yalnız ekip Space’i (kütüphane yok), erişim modu',
+  (select not is_library and access_mode = 'all' from public.team_list_spaces(public._g('T')) limit 1)
+  and (select count(*) from public.team_list_spaces(public._g('T'))) = 1);
 select public._check(55, 'team_space_access: mod ve girişler JSON olarak döner', (public.team_space_access(public._g('S1')) ->> 'mode') = 'all');
 reset role;
 update public.team_members set guest_until = now() - interval '1 day' where team_id = public._g('T') and user_id = :erin;

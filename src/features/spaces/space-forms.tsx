@@ -218,14 +218,3 @@ export function SubmitButton({ busy, children, disabled }: { busy: boolean; chil
     </Button>
   );
 }
-
-/** Ekip kütüphanesi özel değilse sahibe ne açtığını söyler (onaylı olanlar değil, TÜM promptlar görünür; değişken değerleri yalnız üyede kalır). */
-export function LibraryVisibilityNote({ kind, visibility }: { kind: SpaceKind; visibility: SpaceVisibility }) {
-  const { t } = useTranslation();
-  if (kind !== "team_library" || visibility === "private") return null;
-  return (
-    <p role="note" data-testid="library-visibility-note" className="rounded-md bg-warning/12 px-3 py-2 text-caption text-text-secondary">
-      {t("spaces.library.publicWarning")}
-    </p>
-  );
-}

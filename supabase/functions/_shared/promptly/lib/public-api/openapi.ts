@@ -242,27 +242,6 @@ export function openApiDocument(serverUrl: string): Record<string, unknown> {
         patch: patchDraftOperation("prompt"),
       },
       ...meContentPaths(),
-      "/me/libraries": {
-        get: {
-          summary: "My team libraries (needs a key)",
-          description: "Team libraries (Spaces of the team-library kind) you are a member of. Read-only.",
-          security: [{ bearerAuth: [] }],
-          responses: { "200": { description: "The libraries", content: { "application/json": { schema: { type: "object", properties: { items: { type: "array", items: { type: "object" } } } } } } }, "401": errorResponse },
-        },
-      },
-      "/me/libraries/{id}/prompts": {
-        get: {
-          summary: "Prompts of one team library (needs a key)",
-          description:
-            "The APPROVED prompts of a team library you belong to, each with the team's shared {variables} already filled in (`filledText`; variables the team has no value for stay as tokens and are listed in `missing`). Add `?include=unapproved` for drafts too. Read-only.",
-          security: [{ bearerAuth: [] }],
-          parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-            { name: "include", in: "query", required: false, schema: { type: "string", enum: ["unapproved"] } },
-          ],
-          responses: { "200": { description: "The prompts", content: { "application/json": { schema: { type: "object" } } } }, "400": errorResponse, "401": errorResponse, "404": errorResponse },
-        },
-      },
       "/me/saved": {
         get: {
           summary: "Prompts I saved (needs a key)",

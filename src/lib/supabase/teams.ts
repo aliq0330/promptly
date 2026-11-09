@@ -22,8 +22,11 @@ const KNOWN_CODES = new Set([
   "channel_not_found", "channel_invalid", "channel_default_locked", "channel_name_taken", "group_not_found", "group_invalid", "group_name_taken",
   "member_not_found", "user_not_found", "already_member", "invitation_not_found", "invitation_expired", "link_not_found", "link_unavailable",
   "link_limit_reached", "invite_blocked", "owner_must_transfer", "item_not_approved", "item_deprecated", "pin_limit_reached", "message_not_found",
-  "self_vote_not_allowed", "copy_required", "space_approval_forbidden", "space_variable_limit", "space_item_limit", "rate_limit",
+  "self_vote_not_allowed", "copy_required", "space_item_limit", "rate_limit",
   "space_project_managed", "project_library_exists", "project_channel_exists",
+  // Ekip projeleri v2 (docs/history/362-*)
+  "project_not_found", "project_invalid", "project_archived", "project_lockout", "team_project_limit", "team_file_limit", "team_board_limit",
+  "team_variable_limit", "team_area_managed", "channel_project_managed", "review_protected", "review_content_locked", "review_delete_forbidden",
 ]);
 
 function errorCodeOf(message: string | undefined): string | null {
@@ -50,14 +53,14 @@ export function camelize<T>(value: unknown): T {
   return value as T;
 }
 
-async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
+export async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw toTeamError(error);
   return camelize<T>(data);
 }
 
 /** Liste RPC'leri dizi döner; beklenmedik biçim (eski/eksik sunucu işlevi) boş liste sayılır, arayüz çökmez. */
-const rows = async <T>(fn: string, args?: Record<string, unknown>): Promise<T[]> => {
+export const rows = async <T>(fn: string, args?: Record<string, unknown>): Promise<T[]> => {
   const data = await rpc<T[] | null>(fn, args);
   return Array.isArray(data) ? data : [];
 };
@@ -186,7 +189,7 @@ export interface TeamChannel {
   id: string;
   name: string;
   description: string | null;
-  mode: "open" | "private" | "space";
+  mode: "open" | "private" | "space" | "project";
   spaceId: string | null;
   spaceTitle: string | null;
   postingPolicy: "members" | "admins";
@@ -202,51 +205,14 @@ export interface TeamChannel {
   canPost: boolean;
 }
 
-export interface TeamLibraryItem {
-  id: string;
-  title: string;
-  groupId: string | null;
-  groupName: string | null;
-  state: "draft" | "pending" | "approved" | "deprecated";
-  contentRev: number;
-  useCount: number;
-  worksYes: number;
-  worksNo: number;
-  approvals: number;
-  approvalsNeeded: number;
-  updatedAt: string;
-  updatedBy: string | null;
-  updatedByName: string | null;
-  createdBy: string | null;
-  reviewRequestedAt: string | null;
-  approvedAt: string | null;
-  deprecatedAt: string | null;
-  locked: boolean;
-}
-
-export interface TeamLibraryCounts {
-  total: number;
-  approved: number;
-  pending: number;
-  draft: number;
-  deprecated: number;
-  oldestPendingAt: string | null;
-}
-
 export interface TeamPolicy {
-  requireApproval: boolean;
-  approvalsNeeded: number;
-  hideUnapproved: boolean;
   contentOwner: "team" | "author";
   offboardDefault: "ask" | "team" | "admin";
-  versionKeep: number;
   defaultMemberRole: "member" | "editor";
   inviteLinkTtlDays: number;
   publishExternalRole: "owner" | "admin" | "editor";
   guestInviteRole: "owner" | "admin" | "editor";
   exportRole: "owner" | "admin";
-  mcpEnabled: boolean;
-  mcpAudience: "members" | "editors" | "admins";
 }
 
 export interface TeamAuditEntry {
@@ -299,43 +265,20 @@ export interface AccessEntry {
   guestUntil?: string | null;
 }
 
-export interface ReviewComment {
-  id: string;
-  userId: string | null;
-  name: string | null;
-  username: string | null;
-  kind: string;
-  body: string;
-  rev: number;
-  at: string;
-}
-
-export interface ItemReview {
-  item: { id: string; title: string; body: string; rev: number; state: string; reviewRequestedAt: string | null; requestedBy: string | null; requestedByName?: string | null; createdBy: string | null; updatedAt: string };
-  /** Gönderenin eklediği örnek çıktı (satır başına bir örnek); yoksa null. */
-  sample?: { body: string; author: string | null; at: string } | null;
-  needed: number;
-  /** Onay verebilecek kişilerin adları (en çok 6). */
-  approvers?: string[];
-  canDecide: boolean;
-  base: { title: string; body: string; wasApproved: boolean; at: string; author: string | null } | null;
-  approvals: { userId: string; name: string; decision: string; note: string | null; checklist: { key: string; done: boolean }[] | null; at: string }[];
-  comments: ReviewComment[];
-}
-
+/** Panel (`team_insights`, docs/history/362-*): PROJE etkinliği — ekip alanlarına eklenen öğeler, onay süresi, katkı verenler, bekleyenler. */
 export interface TeamInsightsData {
   days: number;
-  copies: number;
-  copiesPrev: number;
+  added: number;
+  addedPrev: number;
   approvalHours: number | null;
   approvalHoursPrev: number | null;
   contributors: number;
   contributorsPrev: number;
   members: number;
-  stale: number;
+  projects: number;
   daily: { day: string; n: number }[];
-  alerts: { pending: number; oldestPendingDays: number | null; stale: number; deprecatedUsed: number };
-  top: { id: string; title: string; copies: number; worksYes: number; worksNo: number; rev: number; updatedAt: string; stale: boolean }[];
+  alerts: { pending: number; oldestPendingDays: number | null; changes: number };
+  top: { id: string; title: string; added: number; pending: number }[];
 }
 
 export interface TeamAccessOverviewRow {
@@ -392,7 +335,7 @@ export const fetchTeamPolicy = async (team: string): Promise<TeamPolicy> => {
   const { data, error } = await supabase
     .from("teams")
     .select(
-      "require_approval, approvals_needed, hide_unapproved, content_owner, offboard_default, version_keep, default_member_role, invite_link_ttl_days, publish_external_role, guest_invite_role, export_role, mcp_enabled, mcp_audience",
+      "content_owner, offboard_default, default_member_role, invite_link_ttl_days, publish_external_role, guest_invite_role, export_role",
     )
     .eq("id", team)
     .maybeSingle();
@@ -538,75 +481,7 @@ export const setChannelAccess = (channel: string, entries: AccessEntry[]) => rpc
 export const moderateTeamMessage = (message: string) => rpc<void>("team_moderate_message", { p_message: message });
 
 // ---------------------------------------------------------------------------------------------
-// Kütüphane yönetişimi
-// ---------------------------------------------------------------------------------------------
-
-/** Okuyabildiğim kütüphaneler: ekip kütüphanesi + proje kütüphaneleri (docs/history/360-*). */
-export interface TeamLibraryRef {
-  id: string;
-  title: string;
-  projectId: string | null;
-  projectTitle: string | null;
-  isMain: boolean;
-  approvedCount: number;
-  pendingCount: number;
-  canApprove: boolean;
-  accessMode: string;
-  /** Etkin onay sayısı (proje değeri ya da ekip değeri) ve proje değerinin özel olup olmadığı. */
-  approvalsNeeded: number;
-  approvalsCustom: boolean;
-}
-
-export const listTeamLibraries = (team: string) => rows<TeamLibraryRef>("team_libraries", { p_team: team });
-
-/** Projenin kütüphanesini aç (projede `manage`); erişim projeden türer. */
-export const createProjectLibrary = (project: string) => rpc<string>("team_create_project_library", { p_project: project });
-
-/** Proje kütüphanesinin onay sayısı (1–3); `null` ekip değerine döner. */
-export const setProjectApprovals = (space: string, needed: number | null) => rpc<void>("space_set_project_approvals", { p_space: space, p_needed: needed });
-
-export async function listLibraryItems(team: string, status: string | null, search: string, offset = 0, space: string | null = null): Promise<{ items: TeamLibraryItem[]; total: null; nextOffset: number | null }> {
-  const data = await rows<TeamLibraryItem>("team_library_items", {
-    p_team: team,
-    p_status: status,
-    p_search: search || null,
-    p_limit: PAGE + 1,
-    p_offset: offset,
-    ...(space ? { p_space: space } : {}),
-  });
-  return { items: data.slice(0, PAGE), total: null, nextOffset: data.length > PAGE ? offset + PAGE : null };
-}
-
-export const fetchLibraryCounts = (team: string, space: string | null = null) => rpc<TeamLibraryCounts>("team_library_counts", { p_team: team, ...(space ? { p_space: space } : {}) });
-
-export const setReviewSample = (item: string, sample: string) => rpc<void>("space_set_review_sample", { p_item: item, p_sample: sample });
-
-/** Ekip kütüphanesindeki bir prompt taslağının metni (Space'i okuyan herkes; gizlenmiş/onaysız öğe RLS ile gelmez). */
-export async function fetchLibraryItemBody(item: string): Promise<{ id: string; title: string; body: string; rev: number } | null> {
-  const { data, error } = await supabase.from("space_items").select("id, title, body, content_rev").eq("id", item).maybeSingle();
-  if (error) throw toTeamError(error);
-  return data ? { id: data.id as string, title: String(data.title ?? ""), body: String(data.body ?? ""), rev: Number(data.content_rev ?? 1) } : null;
-}
-
-export const requestReview = (item: string, withdraw = false) => rpc<string | null>("space_request_review", { p_item: item, p_withdraw: withdraw });
-
-export const decideItem = (item: string, decision: "approve" | "changes", note: string, checklist: { key: string; done: boolean }[]) =>
-  rpc<Record<string, unknown>>("space_decide_item", { p_item: item, p_decision: decision, p_note: note, p_checklist: checklist });
-
-export const setItemDeprecated = (item: string, deprecated: boolean) => rpc<string | null>("space_set_item_deprecated", { p_item: item, p_deprecated: deprecated });
-
-export const addReviewComment = (item: string, body: string) => rpc<string>("space_add_review_comment", { p_item: item, p_body: body });
-
-export const fetchItemReview = (item: string) => rpc<ItemReview>("space_item_review", { p_item: item });
-
-export const canApproveItem = async (item: string) => Boolean(await rpc<boolean>("space_can_approve_item", { p_item: item }));
-
-export const recordItemUse = (item: string) => rpc<boolean>("space_record_item_use", { p_item: item });
-
-export const setItemWorks = (item: string, works: boolean | null) => rpc<Record<string, unknown>>("space_set_item_works", { p_item: item, p_works: works });
-
-// ---------------------------------------------------------------------------------------------
-// Panel, denetim, entegrasyon, dışa aktarma
+// Panel, denetim, dışa aktarma
 // ---------------------------------------------------------------------------------------------
 
 export const fetchTeamInsights = (team: string, days: number) => rpc<TeamInsightsData>("team_insights", { p_team: team, p_days: days });
@@ -618,18 +493,6 @@ export async function listAudit(team: string, category: string | null, days: num
 }
 
 export const fetchAuditStats = (team: string, days: number) => rpc<Record<string, number>>("team_audit_stats", { p_team: team, p_days: days });
-
-export interface TeamIntegrations {
-  slug: string;
-  enabled: boolean;
-  audience: string;
-  monthReads: number;
-  apps: { userId: string; userName: string; name: string; via: string; reads: number; lastDay: string; tokenId: string | null; blocked: boolean }[];
-}
-
-export const fetchIntegrations = (team: string) => rpc<TeamIntegrations>("team_integrations", { p_team: team });
-
-export const setApiBlock = (team: string, user: string, token: string | null, blocked: boolean) => rpc<void>("team_set_api_block", { p_team: team, p_user: user, p_token: token, p_blocked: blocked });
 
 export const exportTeam = (team: string) => rpc<Record<string, unknown>>("team_export", { p_team: team });
 

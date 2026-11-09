@@ -260,9 +260,6 @@ function fakeMeDb(scopes: string[], sqls: string[] = []): MeDb {
         if (sql.includes("api_me_prompts")) return [{ id: MY_ID, title: "Gizli taslak", description: "d", content_type: "text", status: "draft", visibility: "private", created_at: new Date("2026-10-01"), updated_at: new Date("2026-10-01"), created_cursor: "2026-10-01T00:00:00.000000Z" }];
         if (sql.includes("api_me_prompt($1")) return [{ id: MY_ID, title: "Gizli taslak", description: "d", prompt_text: "Logo for {brand}", content_type: "text", status: "draft", visibility: "private", tags: [], created_at: new Date(), updated_at: new Date() }];
         if (sql.includes("import_prompts")) return [{ report: { dryRun: false, ok: true, created: 1, items: [{ index: 1, status: "ok", id: MY_ID }] } }];
-        if (sql.includes("api_me_libraries")) return [{ id: MY_ID, title: "Pazarlama ekibi", description: "", role: "viewer", approved_count: 1, updated_at: new Date("2026-11-06T10:00:00Z") }];
-        if (sql.includes("api_me_library_prompts")) return [{ id: "p1", title: "Satış e-postası", body: "Merhaba {musteri}, {marka_adi} adına.", group_name: null, approved_at: new Date("2026-11-05T10:00:00Z"), updated_at: new Date("2026-11-05T10:00:00Z") }];
-        if (sql.includes("api_me_library_variables")) return [{ name: "marka_adi", value: "Acme" }];
         if (sql.includes("api_me_whoami")) return [{ user_id: USER, username: "ayse", display_name: "Ayşe K.", avatar_url: null }];
         if (sql.includes("api_me_requests(")) return [{ id: MY_ID, title: "Neon istek", description: "d", content_type: "image", status: "draft", visibility: "private", created_at: new Date("2026-10-01"), updated_at: new Date("2026-10-01T10:00:00.123Z"), created_cursor: "2026-10-01T00:00:00.000000Z" }];
         if (sql.includes("api_me_workflow($1")) return [{ detail: { id: MY_ID, title: "Zincir", steps: [{ position: 1, title: "Bir" }], updatedAt: "2026-10-01T10:00:00.123Z" } }];
@@ -332,7 +329,7 @@ test("/mcp/me lists the personal tools next to the public ones; the draft tool i
   const client = await connectMe(meHandler(["read", "write"]));
   const { tools } = await client.listTools();
   assert.deepEqual(tools.map((tool) => tool.name).sort(), [
-    "fill_prompt", "get_content", "get_library_prompts", "get_my_content", "get_my_prompt", "get_prompt", "list_my_content", "list_my_libraries", "list_my_prompts", "list_my_saved", "popular_prompts",
+    "fill_prompt", "get_content", "get_my_content", "get_my_prompt", "get_prompt", "list_my_content", "list_my_prompts", "list_my_saved", "popular_prompts",
     "save_preset_draft", "save_prompt_draft", "save_request_draft", "save_workflow_draft", "search_content", "search_prompts", "update_my_draft", "whoami",
   ]);
   const writers = ["save_prompt_draft", "save_request_draft", "save_preset_draft", "save_workflow_draft", "update_my_draft"];
@@ -375,20 +372,6 @@ test("a revoked / unknown key: the call fails inside the tool (isError) and noth
   assert.equal(result.isError, true);
   assert.match(result.content[0].text, /unauthorized/);
   assert.ok(!sqls.some((sql) => sql.startsWith("set local role")));
-});
-
-test("team libraries: list_my_libraries and get_library_prompts read the approved prompts filled with the team's variables, and never write", async () => {
-  const sqls: string[] = [];
-  const client = await connectMe(meHandler(["read"], sqls));
-  const list = textOf(await client.callTool({ name: "list_my_libraries", arguments: {} }));
-  assert.ok(list.includes("Pazarlama ekibi") && list.includes('"approvedCount": 1'));
-  const prompts = textOf(await client.callTool({ name: "get_library_prompts", arguments: { id: MY_ID } }));
-  assert.ok(prompts.includes("Merhaba {musteri}, Acme adına."), "ortak değişken dolduruldu, eksik jeton kaldı");
-  assert.ok(prompts.includes('"missing": [\n        "musteri"\n      ]'));
-  const notFound = (await client.callTool({ name: "get_library_prompts", arguments: { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" } })) as { isError?: boolean; content: { text: string }[] };
-  assert.equal(notFound.isError, true);
-  assert.match(notFound.content[0].text, /not_found/);
-  assert.ok(sqls.every((sql) => !/\b(insert|update|delete)\b/i.test(sql)), "kütüphane araçları hiçbir şey yazmaz");
 });
 
 test("whoami returns the account's username, display name and the connection's scopes", async () => {
@@ -510,23 +493,3 @@ test("attach_image: no image given, or the service refuses → a tool error with
   assert.match(result.content[0].text, /conflict: Images can only be added/);
 });
 
-// Ekip adresi `/mcp/team/<kısa-ad>` (docs/history/353-*)
-test("/mcp/team/<ad> is the personal address narrowed to one team: list_my_libraries asks for that team's library only", async () => {
-  const sqls: string[] = [];
-  const params: unknown[][] = [];
-  const handler = meHandler(["read"], sqls);
-  const TEAM_URL = "https://example.test/functions/v1/mcp/team/atolye-mor";
-  const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => handler(new Request(input as string, init))) as typeof fetch;
-  const client = new Client({ name: "remote-team-test", version: "1.0.0" });
-  await client.connect(new StreamableHTTPClientTransport(new URL(TEAM_URL), { fetch: fetchImpl, requestInit: { headers: { authorization: `Bearer ${KEY}` } } }));
-  void params;
-  await client.callTool({ name: "list_my_libraries", arguments: { team: "baska-ekip" } });
-  assert.ok(sqls.some((sql) => sql.includes("api_me_team_libraries")), "the team-scoped RPC is used");
-  assert.ok(!sqls.some((sql) => sql.includes("api_me_libraries()")), "the unscoped list is not used on a team address");
-});
-
-test("/mcp/team/<ad> needs a credential like /mcp/me does", async () => {
-  const handler = meHandler(["read"]);
-  const response = await handler(new Request("https://example.test/functions/v1/mcp/team/atolye-mor", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }));
-  assert.equal(response.status, 401);
-});
