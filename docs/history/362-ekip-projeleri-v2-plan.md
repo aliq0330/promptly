@@ -1,6 +1,6 @@
 # 362 — Ekip projeleri v2: proje → dosya → içerik, dosya başına onay, kütüphane YOK (PLAN)
 
-**Durum: PLAN — varsayımlar (§3) kullanıcı onayı bekliyor. Henüz kod yazılmadı.**
+**Durum: PR-A KODLANDI (ekleyici veritabanı katmanı; §11) — PR-B (arayüz) ve PR-C (yıkıcı temizlik) bekliyor. Varsayımlar (§3) kullanıcı "Başla" dediği için bu hâliyle uygulandı.**
 `360-*`/`361-*` (proje başına 4 seviye + proje kütüphanesi) bu planla **geçersiz kalır**: ekip artık Space'e ve kütüphaneye dayanmaz.
 Mockup: kullanıcıya gösterilen 5 ekranlı tasarım (proje sayfası, dosya sayfası, düzenleyici telefon, "Ekle" menüsü, lider onay incelemesi).
 
@@ -47,7 +47,7 @@ Bu bilinçli bir seçimdir (§9 R-1): paralel bir "ekip panosu" yazmak ~10 tablo
 |---|---|---|
 | A1 | **Tek lider onayı yeter** (çoklu onay sayısı YOK). | Kullanıcının tarifi "liderden onay iste". Eski `approvals_needed` kalkar. |
 | A2 | **Taslağı yalnız ekleyen + liderler + ekip sahip/yöneticisi görür.** Diğer düzenleyiciler/görüntüleyiciler görmez. | Yarım iş panoda dolaşmasın. Alternatif: soluk "öneri" olarak herkese görünür (kod maliyeti benzer). |
-| A3 | **Onaylı öğenin İÇERİĞİNİ (başlık, metin, medya, prompt) yalnız lider değiştirir.** Düzenleyici "Değişiklik öner" ile kopya taslak açar (`supersedes_item_id`); lider onaylayınca kopya eskisinin yerine geçer. | Sürüm tablosu kurmadan "onaylı sürüm görünür kalsın" kuralını sağlar. |
+| A3 | **Onaylı öğenin İÇERİĞİNİ (başlık, metin, medya, prompt) yalnız lider değiştirir.** Düzenleyici "Değişiklik öner" der: öneri AYRI tabloda (`space_item_proposals`) durur, onaylı öğe olduğu gibi görünür kalır; lider onaylayınca alanlar öğeye yazılır. | Sürüm tablosu ve kopya öğe (tekil dizin çakışması) olmadan "onaylı sürüm görünür kalsın" kuralını sağlar; öneri metni öğe satırında durmadığı için herkese okunmaz. |
 | A4 | Düzenleyici yalnız KENDİ taslağını / değişiklik istenenini siler; onaylıyı lider siler. | |
 | A5 | **Konum, boyut, renk, grup, ok çizme** onaya tabi DEĞİL (yerleşim işi). | Pano kullanılamaz hâle gelmesin. |
 | A6 | **Değişkenler onay kapsamı dışı**; düzenleyici+ yazar, herkes (görebilen) okur. | Hızlı çalışsın; içerik değil ayar. |
@@ -74,7 +74,7 @@ Mevcut tablolara eklenen sütunlar (hepsi null/varsayılanlı → kişisel Space
 | Tablo | Sütun |
 |---|---|
 | `spaces` | `team_project_id`, `team_file_id` (null = proje geneli), `team_area_main boolean`, `kind` CHECK'ine `'team_area'` (**üç yer birlikte:** `spaces_kind_check`, `create_space` tür listesi, `SPACE_KINDS` + etiket/ikon/çeviri). `spaces.team_id` AYNEN dolu kalır → kişisel listelerdeki `team_id is null` süzgeçleri (9 migration'da) alanları kendiliğinden dışarıda tutar. |
-| `space_items` | `review_state text not null default 'approved'` CHECK (`draft`,`pending`,`approved`,`changes`), `review_requested_at`, `review_decided_by`, `review_decided_at`, `review_note` (≤500), `review_unit uuid null` (workflow paketi), `supersedes_item_id uuid null` |
+| `space_items` | `rev_state text not null default 'approved'` CHECK (`draft`,`pending`,`approved`,`changes`), `rev_submitted_at/by`, `rev_decided_at/by`, `rev_note` (≤500), `rev_unit uuid null` (workflow paketi). (`review_*` adları eski kütüphane sütunlarıyla çakıştığı için `rev_*` seçildi.) |
 | `team_channels` | `project_id uuid null` FK (`on delete cascade`), `mode` CHECK'ine `'project'` (eski `'space'` ve `space_id` contract'ta kalkar) |
 
 **Tüm yeni sütunların varsayılanı kişisel Space'i bozmaz:** kişisel öğeler hep `approved`; yeni kural yalnız `spaces.team_project_id is not null` alanlarda çalışır.
@@ -94,7 +94,7 @@ Mevcut tablolara eklenen sütunlar (hepsi null/varsayılanlı → kişisel Space
 | Gönder | `team_review_submit(item_ids)` → `pending`; workflow paketi aynı `review_unit` ile birlikte. |
 | Karar | `team_review_decide(item_id, 'approve'\|'changes', note)` → `approved` / `changes` (değişiklikte not zorunlu). Karar verebilen: o projede `lead`. Kendi öğesini de onaylayabilir (lider). |
 | Geri çek | Ekleyen `pending` öğesini `draft`'a geri alabilir. |
-| Öner | `team_review_propose_change(item_id)` → `supersedes_item_id` dolu kopya `draft` (A3); onaylanınca eski öğenin konumuna geçer, eski silinir. |
+| Öner | `team_review_propose(item, başlık, metin, not)` → `space_item_proposals` satırı (A3); `team_review_decide_proposal` onaylarsa alanlar öğeye yazılır, öneri silinir. |
 | Korumalar | Durum sütunları yalnız bu RPC'lerle değişir (`BEFORE UPDATE` korumalı sütun tetikleyicisi, `protect_counter_columns` kalıbı); toplu pano kaydı (`space_save_layout`) durum alanlarına DOKUNAMAZ ve onaylı öğenin içerik sütunlarını yazamaz. |
 | Dosya anahtarı | `team_file_set_review(file, bool)` — yalnız lider. Kapatınca bekleyenler `approved` olmaz, olduğu gibi kalır ve lidere "N öğe bekliyor" uyarısı çıkar (kendiliğinden onaylamak onay anlamını bozar); lider "hepsini onayla" diyebilir. |
 
@@ -180,7 +180,7 @@ Kurallar: token'lar (hex yok), `Modal`/`SectionMenu`/`PhoneSectionList`/`ScrollR
 | Katman | Kapsam |
 |---|---|
 | **SQL (yerel PostgreSQL)** `team-projects-core` | Rol çözümü (kişi/grup/en yüksek/NULL), ekip sahip=lider, konuk sınırı, `space_members` + `conversation_members` yansıma **değişmezi** (`_inv()` her adımda), projeyi görmeyen kişi için alan/öğe/dosya/değişken/kanal/mesaj/`my_team_todos` okuması reddi |
-| `team-project-review` | Durum makinesi (draft→pending→approved/changes→…), A2 gizleme (ekleyen/lider/yönetici görür, diğerleri görmez), ok/etkinlik/Storage/sayaç sızıntısı, `space_save_layout` korumalı sütunlara yazamaz, onaylı öğe içeriği düzenleyiciye kapalı, `supersedes` değişimi, workflow paketi birlikte karar, dosya anahtarı kapanınca davranış, kişisel Space'in **hiç etkilenmediği** (öğe durumu hep `approved`, politika devreye girmez) |
+| `team-project-review` | Durum makinesi (draft→pending→approved/changes→…), A2 gizleme (ekleyen/lider/yönetici görür, diğerleri görmez), ok/etkinlik/Storage/sayaç sızıntısı, `space_save_layout` korumalı sütunlara yazamaz, onaylı öğe içeriği düzenleyiciye kapalı, öneri (propose/decide), workflow paketi birlikte karar, dosya anahtarı kapanınca davranış, kişisel Space'in **hiç etkilenmediği** (öğe durumu hep `approved`, politika devreye girmez) |
 | `team-project-variables`, `team-project-chat` | dosya>proje önceliği, ad doğrulama; kanal otomatik açma/arşiv/silme, 50 sınırı |
 | `anon-hardening` | yeni fonksiyonlarda anon `EXECUTE` kapalı, yeni tablolarda anon yazma yok |
 | **Birim** | `lib/team-projects.ts` aynası SQL ile eşit (rol→yetki), `planProjectFill`, durum rozeti kararı |
@@ -206,3 +206,40 @@ Kurallar: token'lar (hex yok), `Modal`/`SectionMenu`/`PhoneSectionList`/`ScrollR
 - Dosya başına rol, dosya başına sohbet, çoklu onay, onay geçmişi/sürüm karşılaştırma, proje şablonları, projeler arası kopyalama YOK.
 - Ekip API/MCP dışarıya açık (K-8: kalktı); sonra yeniden istenirse ayrı tasarım.
 - Gerçek Supabase, Realtime ve cihaz bu ortamda DENENEMEZ; yalnız yerel PostgreSQL + ağ taklitli Playwright. Hukuki metin (Gizlilik/Koşullar "Ekipler" bölümü) kütüphane/API cümleleri için güncellenir; `TERMS_VERSION` artışı gerekiyorsa sahibi onaylar.
+
+## 11. Uygulama kaydı — PR-A (veritabanı; ekleyici)
+
+Dört migration (`20261115100000`…`20261115130000`), iki SQL testi, duman testi satırları. Arayüze DOKUNULMADI; eski sistem aynen çalışır.
+
+| Migration | İçerik |
+|---|---|
+| `…100000_team_projects_schema` | `team_projects`, `team_files`, `team_project_access`, `team_variables` (RLS açık, istemci erişimi yok); `spaces.team_project_id/team_file_id/team_area_main` + `kind='team_area'` + `spaces_team_area_shape` CHECK (alan her zaman `private`); alan doğrudan silinemez (`spaces_team_area_guard`); alan Etkinlik günlüğü okunamaz; `space_items.rev_*`; `team_channels.project_id` + `mode='project'`; `_team_recount` projeleri sayar; **`list_spaces` artık `s.team_id is null` ile ekip Space'lerini/alanlarını dışlar** |
+| `…110000_team_projects_engine` | `_team_project_role` (lead/edit/view; ekip sahibi/yöneticisi örtük lider, konuk ≤ edit, `all` modunda taban proje ayarından); **`_team_space_access_level` alan için proje rolünü döndürür** → mevcut eşitleme tetikleyicileri (ekip/grup üyeliği) alanlarda kendiliğinden çalışır; `_team_channel_level` `project` kolu; `_team_sync_project`; üye/grup temizliği; arşiv/silme zinciri; proje kanalı; `_team_item_visible` |
+| `…120000_team_projects_rpc` | `team_create_project/update/set_access/archive/delete`, `team_create_file/rename/file_set_review/delete`, `team_create/rename/delete_board`, `team_set/delete/list_variable(s)`, `team_projects_list`, `team_project_get`, `team_project_access`, `team_project_channels`, `team_area_info`; **kendini kilitleme koruması** (`project_lockout`) |
+| `…130000_team_project_review` | onay motoru (tetikleyiciler + RPC), `space_item_proposals`, RESTRICTIVE RLS (öğe/ok/Storage), `team_review_submit/withdraw/decide/propose/withdraw_proposal/decide_proposal/pending`, `team_project_todos`, `team_area_is_lead` |
+
+### Faz 0 bulguları (kanıtla)
+
+1. **Plan yanlış varsaymıştı:** kişisel Space listesi ekip Space'lerini bugüne kadar DIŞLAMIYORDU (yalnız kartta `teamId` işaretiyle gizleniyordu; `team_id is null` ifadeleri başka işlevlerdeydi). Çözüm: `list_spaces` `s.team_id is null` ile süzülür (eski ekip Space'leri de kişisel listeden çıkar; ekip sayfası kendi RPC'sini kullanır). Alanlar ayrıca `visibility='private'` CHECK'iyle herkese açık/bağlantılı/alıntı yollarından yapısal olarak dışlanır.
+2. **SpaceProvider ekip sayfasında takılabilir mi:** PR-B'de doğrulanacak (arayüz işi).
+3. **Storage:** `space-media` yolu `{space}/{uuid}.ext`; taslak görselin dosyası RESTRICTIVE `storage.objects` politikasıyla gizlenir (`_team_media_hidden`); test: taslakta ekleyen+lider okur, diğerleri okuyamaz, onaylanınca açılır.
+4. **Realtime:** Space tabloları yayında DEĞİL ve Space kodunda `postgres_changes` aboneliği yok → taslak Realtime ile sızmaz.
+5. **Bildirim kalıbı:** `_team_notify` (`system` türü, `/teams/...` adresi, `dedupe_key`); yeni tür açılmadı.
+6. **Silme envanteri:** PR-C'ye bırakıldı; `team_create` PR-A'da kütüphane açmaya DEVAM eder (eski istemci kırılmasın).
+7. **Yetenekler:** `create_spaces` proje oluşturma yeteneği olarak kullanıldı; `approve_library` dokunulmadı (PR-C).
+8. **Olay yoğunluğu:** `space_activity` satırı yalnız "bir görsel eklendi" der; alanlarda tamamen okunamaz kılındı.
+
+### Test kaydı (yerel PostgreSQL 16)
+
+- `team-projects-v2.sql` 63/63, `team-project-review.sql` 78/78 (rol çözümü, değişmez `_inv()`, kişisel liste dışlama, silme koruması, dosya/pano/değişken, erişim + bildirim, üye/grup temizliği, arşiv/silme, ekip silme, anon kapıları; taslak görünürlüğü, ok/Storage/etkinlik gizleme, içerik kilidi, öneri, paket kararı, onay anahtarı, kilitli öğe, kişisel Space etkilenmedi).
+- Tüm mevcut SQL paketi (89 dosya) yeni şemaya karşı koşuldu: 86'sı ilk koşuda `FAILED=0`; kırmızı 3'ü: `anon-hardening` ve `contract-cleanup` (**ikisi de PR-A'dan önce, temiz baz veritabanında da aynı kırmızı** — bu işin kapsamında değil), ve eski `team-projects.sql` test 104 ("kütüphane çocuğu `space_count`'a girmez") — PR-A'nın `_team_recount` gövdesini eski sürümden kopyalamasından doğan GERÇEK bir gerileme; düzeltildi (gövde artık 20261114110000'dakiyle aynı + yalnız alan/proje eklendi), ilgili ekip paketleri yeniden koşuldu: hepsi 0.
+- Birim testleri: 1001 testin 1000'i geçti; kırmızı olan `icons.test.ts` ("üretilen ikon dosyaları güncel") bu ortamda `node_modules` yok diye PR-A'dan bağımsız düşüyor. `node scripts/apply-migrations.mjs --check` temiz.
+- `anon-hardening.sql` test 4 ("yeni tabloda anon yazma hakkı yok") **PR-A'dan ÖNCE de kırmızıdır** (temiz baz veritabanında aynı hata; yerel kurulum varsayılan yetkisi) — bu işin kapsamında değil.
+- Gerçek Supabase / Realtime / cihaz DENENMEDİ.
+
+### Bilinçli sınırlar (PR-A)
+
+- `team_create` hâlâ kütüphane Space'i açar; ekip Space/kütüphane arayüzü ve API/MCP yerinde (PR-B/PR-C).
+- Dosya arşivleme yok (yalnız silme). Pano/dosya yeniden sıralama yok.
+- `space_comments` (Space yorumu/puanı) alanlarda DB'de kapatılmadı; arayüz ekip bağlamında göstermez (PR-B).
+- Realtime ve çoklu onay yok (kapsam dışı, A1).
