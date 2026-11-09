@@ -1,5 +1,6 @@
 // Ekip projeleri v2 arayüzü (docs/history/362-*): Projeler sekmesi (kartlar, bekleyen bandı, oluşturma), proje sayfası (dosyalar, panolar,
 // kişiler ve roller, proje değişkenleri), dosya sayfası (alan görünümü: mevcut Space sağlayıcısı + sekmeler, onay rozetleri, onaya gönder,
+// Gezgin düzeni [docs/history/363-*]: tek üst çubuk, klasör listesi, satır satır alan listesi, Ekle, bilgi penceresi, telefonda gruplanmış pano araç çubuğu, "Space" metni yok,
 // onay anahtarı, dosya değişkeni projeyi ezer), düzenleyici/görüntüleyici görünümü, değişiklik önerisi, lider onay kuyruğu (paket, not zorunlu,
 // hepsini onayla, öneri kararı), proje sohbeti grubu, eski adreslerin yönlenmesi, İngilizce ve telefon. Ağ taklitli (`db.rpc` geçersiz kılmaları +
 // `mock-spaces.mjs`); gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/team-projects-v2.sql` ve `team-project-review.sql`.
@@ -128,6 +129,9 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     await context.close();
   }
 }
+const openInfo = async (page) => {
+  await page.locator("[data-path-info]").click();
+};
 const called = (db, name) => db.teamCalls.filter((c) => c.name === name);
 const projectUrl = (extra = "") => `${BASE}/teams/local?id=atolye-mor&tab=projects&project=${PROJECT}${extra}`;
 const NOTE = (n) => `17e30000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -175,16 +179,18 @@ await scenario("3. Proje sayfası (lider): dosyalar, panolar, kişiler ve roller
   await home.locator(`[data-file-card="${FILE}"]`).getByText("Mutfak").waitFor();
   await home.locator(`[data-file-card="${FILE}"]`).getByText("Onay açık").waitFor();
   await home.locator(`[data-file-card="${FILE2}"]`).getByText("Onay kapalı").waitFor();
-  await home.locator(`[data-board-card="${BOARD}"]`).getByText("Müşteri toplantısı").waitFor();
-  await home.locator("[data-project-main-area]").getByText("Proje geneli").waitFor();
-  const people = home.getByTestId("project-people");
+  await home.locator("[data-project-main-area]").getByText("Ortak").waitFor();
+  await home.locator("[data-project-review-link]").waitFor();
+  await openInfo(page);
+  await page.locator("[data-project-open-chat]").waitFor();
+  const people = page.getByTestId("project-people");
   await people.getByText("Mert", { exact: true }).waitFor();
   await people.getByText("Sahip", { exact: true }).waitFor();
   await people.getByText("Ekip yöneticisi · her projede lider").waitFor();
-  const vars = home.locator('[data-variable-scope="project"]');
+  const vars = page.locator('[data-variable-scope="project"]');
   await vars.locator('[data-variable-row="musteri"]').getByText("Ahmet Bey").waitFor();
-  await home.locator("[data-project-review-link]").waitFor();
-  await home.locator("[data-project-open-chat]").waitFor();
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => !document.querySelector("[data-testid=project-info-sheet]"));
   await home.locator("[data-project-new-file]").click();
   const form = page.getByTestId("team-new-file-form");
   await form.waitFor();
@@ -199,6 +205,7 @@ await scenario("3. Proje sayfası (lider): dosyalar, panolar, kişiler ve roller
 
 await scenario("4. Proje değişkeni: Ekle → team_set_variable(proje kapsamı)", async ({ page, db }) => {
   await page.goto(projectUrl());
+  await openInfo(page);
   await page.locator('[data-variable-scope="project"] [data-variable-add]').click();
   const form = page.getByTestId("team-variable-form");
   await form.waitFor();
@@ -220,19 +227,22 @@ await scenario("5. Dosya sayfası (lider): onaysız öğeler rozetli, dosya değ
   await panel.locator('[data-review-item][data-review-state="pending"]').getByText("Onay bekliyor").waitFor();
   await panel.locator("[data-review-open-queue]").waitFor();
   // Değişkenler: dosyadaki stil=Skandinav projedeki Modern Akdeniz'i ezer; musteri projeden gelir.
-  const vars = view.locator('[data-variable-scope="file"]');
+  await openInfo(page);
+  const vars = page.locator('[data-variable-scope="file"]');
   await vars.locator('[data-variable-row="stil"]').getByText("Skandinav").waitFor();
   await vars.locator('[data-variable-row="stil"]').getByText("dosyadan").waitFor();
   await vars.locator('[data-variable-row="musteri"]').getByText("projeden").waitFor();
   await vars.getByText("dosyadaki değer geçerli", { exact: false }).waitFor();
   // Onay anahtarı
-  const switchRow = view.locator("[data-file-review-switch]");
+  const switchRow = page.locator("[data-file-review-switch]");
   await switchRow.getByText("Bu dosyada onay: Açık").waitFor();
   await switchRow.getByRole("switch").click();
   await page.waitForFunction(() => document.body.innerText.includes("2 öğe hâlâ onaysız"));
   assert.equal(called(db, "team_file_set_review").at(-1)?.body.p_on, false);
-  // Alan görünümünün sekmeleri
-  for (const key of ["board", "images", "prompts", "content", "notes", "palette"]) await view.locator(`[data-area-tab=${key}]`).waitFor();
+  // Alan görünümünün sekmeleri (liste kipinde değil, bir öğeye/sekmeye girince)
+  await page.keyboard.press("Escape");
+  await page.goto(projectUrl(`&file=${FILE}&sub=board`));
+  for (const key of ["board", "images", "prompts", "content", "notes", "palette"]) await page.locator(`[data-area-tab=${key}]`).waitFor();
 }, {
   items: (db) => {
     db.addItem(AREA_FILE, { id: NOTE(1), title: "Dolap notu", body: "mat beyaz", rev_state: "pending", created_by: U.bob.id });
@@ -246,7 +256,9 @@ await scenario("6. Düzenleyici: Yeni dosya yok, 'Ekle' menüsü var; taslak/de�
   await view.waitFor();
   assert.equal(await view.getAttribute("data-project-role"), "edit");
   assert.equal(await page.locator("[data-file-review-switch]").count(), 0, "anahtarı yalnız lider değiştirir");
-  await view.locator("[data-file-review-note]").getByText("Bu dosyada onay açık", { exact: false }).waitFor();
+  await openInfo(page);
+  await page.locator("[data-file-review-note]").getByText("Bu dosyada onay açık", { exact: false }).waitFor();
+  await page.keyboard.press("Escape");
   const panel = view.getByTestId("area-review-panel");
   await panel.waitFor();
   const draft = panel.locator(`[data-review-item="${NOTE(10)}"]`);
@@ -302,7 +314,7 @@ await scenario("8. Görüntüleyici: ekleme/onay paneli ve Yeni dosya yok; yaln�
   assert.equal(await page.locator("[data-project-review-link]").count(), 0);
   await page.goto(projectUrl(`&file=${FILE}`));
   await page.getByTestId("team-file-page").waitFor();
-  await page.locator("[data-area-tab=notes]").waitFor();
+  await page.getByTestId("area-folder-list").waitFor();
   assert.equal(await page.locator("[data-area-add], [data-testid=area-review-panel]").count(), 0);
 }, { projectRole: "view", spaceRole: "viewer" });
 
@@ -380,9 +392,13 @@ await scenario("13. Pano sayfası: proje geneli ve ek pano açılır; ek panoda 
   const view = page.getByTestId("team-board-page");
   await view.waitFor();
   await view.getByRole("heading", { name: "Müşteri toplantısı" }).waitFor();
-  await view.locator("[data-area-tab=images]").waitFor();
+  await view.getByTestId("area-folder-list").waitFor();
   await page.goto(projectUrl(`&board=${AREA_PROJECT}`));
-  await page.getByTestId("team-board-page").getByRole("heading", { name: "Proje geneli" }).waitFor();
+  const shared = page.getByTestId("team-board-page");
+  await shared.getByRole("heading", { name: "Ortak" }).waitFor();
+  await shared.locator("[data-area-row=board]").getByText("Müşteri toplantısı").waitFor();
+  await page.goto(projectUrl(`&board=${BOARD}&sub=images`));
+  await page.locator("[data-area-tab=images]").waitFor();
 });
 
 await scenario("14. Ekle menüsü: pano/görsel/prompt/workflow/ayar paketi/değişken/palet/not seçenekleri; Pano → pano penceresi; taslak notu", async ({ page, db }) => {
@@ -404,6 +420,7 @@ await scenario("14. Ekle menüsü: pano/görsel/prompt/workflow/ayar paketi/değ
 
 await scenario("15. Proje erişimi penceresi: lider düzenler → team_set_project_access (3 rol, ekip dışı eklenemez)", async ({ page, db }) => {
   await page.goto(projectUrl());
+  await openInfo(page);
   await page.locator("[data-project-edit-access]").click();
   const form = page.getByTestId("team-project-access-form");
   await form.waitFor();
@@ -422,10 +439,13 @@ await scenario("16. İngilizce: Projeler, proje sayfası, dosya sayfası ve kuyr
   await page.getByRole("heading", { name: "Projects", exact: true }).waitFor();
   await page.getByText("New project").first().waitFor();
   await page.goto(projectUrl());
+  await page.getByRole("button", { name: "New file" }).waitFor();
+  await openInfo(page);
   await page.getByText("Your role:").waitFor();
-  await page.getByText("Files", { exact: true }).waitFor();
   await page.getByText("People & roles").waitFor();
   await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByText("Main board").waitFor();
+  await openInfo(page);
   await page.getByText("Review in this file: On").waitFor();
   await page.goto(projectUrl("&review=1"));
   await page.getByRole("heading", { name: "Awaiting review" }).waitFor();
@@ -444,6 +464,69 @@ await scenario("17. Telefon: Projeler, proje, dosya ve kuyruk sayfaları yatay t
     assert.ok(await overflowFree(page), url);
   }
 }, { viewport: { width: 390, height: 800 } });
+
+
+await scenario("18. Gezgin: tek üst çubuk (yol çipleri), klasör listesi; dosyada ana pano + ek pano + öğeler satır satır, hiçbir şey açık gelmez", async ({ page }) => {
+  await page.goto(projectUrl());
+  await page.getByTestId("team-project-home").waitFor();
+  assert.equal(await page.locator("[data-project-crumbs]").count(), 1, "tek üst çubuk");
+  const chips = (await page.locator("[data-project-crumbs] nav").innerText()).replace(/\s+/g, " ");
+  assert.ok(chips.includes("Atölye Mor") && chips.includes("Villa Projesi"), chips);
+  await page.locator(`[data-file-card="${FILE}"]`).click();
+  const list = page.getByTestId("area-folder-list");
+  await list.waitFor();
+  assert.equal(await page.locator("[data-area-tab]").count(), 0, "sekmeler kendiliğinden açık gelmez");
+  assert.equal(await page.locator("[data-testid=space-board]").count(), 0, "tuval kendiliğinden açık gelmez");
+  const kinds = await list.locator("[data-area-row]").evaluateAll((els) => els.map((el) => el.getAttribute("data-area-row")));
+  assert.equal(kinds[0], "board", "ana pano ilk satır");
+  assert.ok(kinds.includes("note"), "not satırı");
+  await list.locator("[data-area-row=note]").getByText("Dolap notu").waitFor();
+  // Izgara görünümü
+  await list.locator("[data-area-view=grid]").click();
+  await list.locator("[data-area-row=note]").getByText("Dolap notu").waitFor();
+  // Bir satır o öğenin sekmesini açar; üst çubuğun geri oku listeye döner
+  await list.locator("[data-area-row=note]").click();
+  await page.locator("[data-area-tab=notes][aria-current=page]").waitFor();
+  await page.locator("[data-path-back]").click();
+  await page.getByTestId("area-folder-list").waitFor();
+}, {
+  items: (db) => { db.addItem(AREA_FILE, { id: NOTE(30), title: "Dolap notu", body: "mat beyaz", rev_state: "approved", created_by: U.bob.id }); },
+});
+
+await scenario("19. Ekle: Not → not sekmesi ve yeni not penceresi kendiliğinden açılır; boş dosyada 'Burası boş'", async ({ page }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("area-empty").getByText("Burası boş").waitFor();
+  await page.locator("[data-area-add]").click();
+  await page.locator("[data-area-add-option=note]").click();
+  await page.getByTestId("note-editor").waitFor();
+  await page.locator("[data-area-tab=notes][aria-current=page]").waitFor();
+}, { items: () => undefined });
+
+await scenario("20. Ekip alanında 'Space' kelimesi geçmez (liste, pano, görseller, promptlar, notlar, palet, workflow)", async ({ page }) => {
+  for (const sub of ["", "&sub=board", "&sub=images", "&sub=prompts", "&sub=notes", "&sub=palette", "&sub=content"]) {
+    await page.goto(projectUrl(`&file=${FILE}${sub}`));
+    await page.getByTestId("team-file-page").waitFor();
+    await page.waitForTimeout(250);
+    const text = await page.getByTestId("team-file-page").innerText();
+    assert.ok(!/Space/.test(text), `"Space" geçiyor (${sub || "liste"}): ${text.match(/.{0,30}Space.{0,30}/)?.[0]}`);
+  }
+}, { items: () => undefined });
+
+await scenario("21. Telefon: pano araç çubuğu gruplanır (Diğer pano araçları menüsü) ve ekrana sığar", async ({ page }) => {
+  await page.goto(projectUrl(`&file=${FILE}&sub=board`));
+  const toolbar = page.locator('[data-board-toolbar]');
+  await toolbar.waitFor();
+  assert.equal(await toolbar.getAttribute("data-board-toolbar"), "phone");
+  await page.getByRole("button", { name: "Diğer pano araçları" }).click();
+  for (const name of ["Yakınlaştır", "Uzaklaştır", "ara"]) await page.getByRole("menuitem", { name: new RegExp(name, "i") }).first().waitFor();
+  await page.keyboard.press("Escape");
+  const fits = await toolbar.evaluate((el) => {
+    const row = el.querySelector("[role=toolbar]") ?? el;
+    return row.scrollWidth <= row.clientWidth + 1;
+  });
+  assert.ok(fits, "araç çubuğu yatay kaymadan sığmalı");
+  assert.ok(await overflowFree(page));
+}, { viewport: { width: 390, height: 800 }, items: () => undefined });
 
 await browser.close();
 server.close();

@@ -39,7 +39,7 @@ interface Row {
  * promptları tek listede; kaynağa göre süzülür, başlığa/tarihe göre sıralanır. Özgün gönderi ile taslak AYRIDIR: taslak düzenlemek
  * gönderiyi değiştirmez ("Taslağa kopyala" bağımsız bir kopya açar, kaynağı yalnız gösterir).
  */
-export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => void }) {
+export function PromptsTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: string) => void; autoAdd?: boolean }) {
   const { t, language } = useTranslation();
   const { space, items, sources, readable, caps, addItems } = useSpaceContext();
   const itemTitle = useItemTitle();
@@ -48,7 +48,7 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
   const [source, setSource] = useState<Source>("all");
   const [sort, setSort] = useState<Sort>("newest");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [editing, setEditing] = useState<SpaceItem | null | "new">(null);
+  const [editing, setEditing] = useState<SpaceItem | null | "new">(autoAdd ? "new" : null);
   const [error, setError] = useState<string | null>(null);
 
   const rows = useMemo<Row[]>(() => {

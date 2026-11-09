@@ -127,3 +127,24 @@ export function useLanguage() {
 export function useTranslation() {
   return useLanguage();
 }
+
+/**
+ * Bir alt ağaçta çevrilmiş metni yeniden yazar (örn. ekip alanında "Space" → "alan", docs/history/363-*). Yeniden yazma HAM
+ * çeviriye uygulanır, `{{param}}` değerleri (kullanıcının yazdığı ad vb.) ona dokunmaz. Dil/anahtar mantığı `LanguageProvider`'ınkiyle aynıdır.
+ */
+export function LanguageTermScope({ rewrite, children }: { rewrite: (text: string, language: Language) => string; children: React.ReactNode }) {
+  const parent = useLanguage();
+  const { language } = parent;
+  const t = useCallback(
+    (key: TranslationKey, params?: TranslationParams) => {
+      const raw = translations[key]?.[language];
+      if (raw === undefined) return parent.t(key, params);
+      const text = rewrite(raw, language);
+      if (!params) return text;
+      return text.replace(/\{\{(\w+)\}\}/g, (match, token: string) => (token in params ? String(params[token]) : match));
+    },
+    [language, rewrite, parent],
+  );
+  const value = useMemo(() => ({ ...parent, t }), [parent, t]);
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+}

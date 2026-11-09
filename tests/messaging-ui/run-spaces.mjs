@@ -275,10 +275,11 @@ await scenario("11. dokunmatik: tek parmak boş alanda kaydırır, iki parmak k�
   const zoomAfter = Number(await page.locator("[data-board-zoom]").getAttribute("data-board-zoom"));
   assert.ok(zoomAfter > zoomBefore, `yakınlaştı: ${zoomBefore} → ${zoomAfter}`);
   // Kıstırma/kaydırma sonrası öğe tuvalin dışında kalabilir: önce sığdır, sonra dokun.
-  await page.getByRole("button", { name: "Ekrana sığdır" }).first().tap();
+  await page.locator("[data-board-zoom]").tap(); // telefonda yüzde düğmesi ekrana sığdırır (docs/history/363-*)
   await page.locator('[data-board-item="aaaaaaaa-0000-4000-8000-000000000002"]').tap();
   await page.locator('[data-board-selection="1"]').waitFor();
-  await page.getByRole("button", { name: "Tam ekran" }).click();
+  await page.getByRole("button", { name: "Diğer pano araçları" }).tap();
+  await page.getByRole("menuitem", { name: "Tam ekran" }).click();
   await page.locator('[data-testid="space-board"][data-fullscreen]').waitFor();
   const box = await page.getByTestId("space-board").boundingBox();
   assert.ok(box.width >= 389 && box.height >= 800, "tüm ekranı kaplar");
@@ -572,7 +573,7 @@ await scenario("28. profil: herkese açık Space varsa 'Spaces' sekmesi (yalnız
 await scenario("29. pano araç çubuğu: '+' menüsü kırpılmaz (görünür alanda, öğeler tıklanabilir); seçim çubuğunda 'Hizala' menüsü ekranın altına taşmaz, üste açılır", async ({ page }) => {
   await page.goto(`${BASE}/spaces/local?id=${SID(1)}&tab=board`);
   await page.locator('[data-board-item="aaaaaaaa-0000-4000-8000-000000000001"]').waitFor({ state: "attached" });
-  await page.getByRole("button", { name: "Ekrana sığdır" }).first().tap();
+  await page.locator("[data-board-zoom]").tap(); // telefonda yüzde düğmesi ekrana sığdırır (docs/history/363-*)
   await page.getByRole("button", { name: "Ekle", exact: true }).click();
   const menu = page.getByRole("menu");
   await menu.waitFor();
@@ -590,7 +591,7 @@ await scenario("29. pano araç çubuğu: '+' menüsü kırpılmaz (görünür al
   await page.getByRole("dialog").waitFor();
   await page.keyboard.press("Escape");
   // İki öğeyi seç → Hizala menüsü (seçim çubuğu ekranın altında): yukarı açılır, görünür kalır.
-  await page.getByRole("button", { name: "Ekrana sığdır" }).first().tap();
+  await page.locator("[data-board-zoom]").tap(); // telefonda yüzde düğmesi ekrana sığdırır (docs/history/363-*)
   await page.getByRole("button", { name: "Çoklu seçim" }).first().tap();
   await page.locator('[data-board-item="aaaaaaaa-0000-4000-8000-000000000001"]').tap();
   await page.locator('[data-board-item="aaaaaaaa-0000-4000-8000-000000000002"]').tap();

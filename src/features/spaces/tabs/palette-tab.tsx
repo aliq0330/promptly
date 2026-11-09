@@ -34,10 +34,10 @@ import { SpaceImage } from "../space-visuals";
  * baskın renkler çıkarılır; okunamayan/çözülemeyen görselde hata söylenir, sahte palet üretilmez. Renkler kullanıcı verisidir
  * (satır içi `style`), arayüz tokenları değildir.
  */
-export function PaletteTab() {
+export function PaletteTab({ autoAdd }: { autoAdd?: boolean } = {}) {
   const { t } = useTranslation();
   const { space, palettes, setPalettes, caps, userId } = useSpaceContext();
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(Boolean(autoAdd));
   const [extracting, setExtracting] = useState(false);
 
   return (

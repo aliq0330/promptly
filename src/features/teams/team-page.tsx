@@ -172,7 +172,7 @@ export function TeamPage() {
       {!chatFocus && !itemOpen && phoneRoot && (
         <TeamPhoneHome team={team} tabs={items} canInvite={can("manage_members") && !isGuest} onInvite={() => setInviteOpen(true)} />
       )}
-      {!chatFocus && !itemOpen && phoneSub && tab !== "admin" && (
+      {!chatFocus && !itemOpen && phoneSub && tab !== "admin" && !(tab === "projects" && params.get("project")) && (
         <div data-team-phone-bar>
           <PhoneSubBar parent={team.name} title={items.find((item) => item.key === tab)?.label ?? ""} backHref={teamLink(id)} />
         </div>
