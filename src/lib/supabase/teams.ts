@@ -1,6 +1,6 @@
 import { supabase } from "./client";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
-import type { TeamRole } from "@/lib/teams";
+import type { TeamRole, TeamSpaceLevel } from "@/lib/teams";
 
 /**
  * Ekipler veri katmanı (docs/history/353-*). Her çağrı tek bir SECURITY DEFINER/INVOKER RPC'dir; yetki kararı SUNUCUDADIR
@@ -23,6 +23,7 @@ const KNOWN_CODES = new Set([
   "member_not_found", "user_not_found", "already_member", "invitation_not_found", "invitation_expired", "link_not_found", "link_unavailable",
   "link_limit_reached", "invite_blocked", "owner_must_transfer", "item_not_approved", "item_deprecated", "pin_limit_reached", "message_not_found",
   "self_vote_not_allowed", "copy_required", "space_approval_forbidden", "space_variable_limit", "space_item_limit", "rate_limit",
+  "space_project_managed", "project_library_exists", "project_channel_exists",
 ]);
 
 function errorCodeOf(message: string | undefined): string | null {
@@ -55,7 +56,11 @@ async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T
   return camelize<T>(data);
 }
 
-const rows = async <T>(fn: string, args?: Record<string, unknown>): Promise<T[]> => (await rpc<T[] | null>(fn, args)) ?? [];
+/** Liste RPC'leri dizi döner; beklenmedik biçim (eski/eksik sunucu işlevi) boş liste sayılır, arayüz çökmez. */
+const rows = async <T>(fn: string, args?: Record<string, unknown>): Promise<T[]> => {
+  const data = await rpc<T[] | null>(fn, args);
+  return Array.isArray(data) ? data : [];
+};
 
 // ---------------------------------------------------------------------------------------------
 // Tipler
@@ -159,7 +164,7 @@ export interface TeamGroup {
   memberCount: number;
   memberIds: string[] | null;
   /** Grubun Space erişimi (`level`: edit | view). */
-  spaces: { spaceId: string; title: string; level: "edit" | "view" }[] | null;
+  spaces: { spaceId: string; title: string; level: TeamSpaceLevel }[] | null;
   /** Gruba bağlı Space klasörleri (`prompts` = klasördeki prompt sayısı). */
   folders: { spaceGroupId: string; name: string; prompts: number }[] | null;
 }
@@ -285,7 +290,8 @@ export interface TeamPendingInvite {
 export interface AccessEntry {
   type: "member" | "group";
   id: string;
-  level: "edit" | "view";
+  /** Space girişlerinde 4 seviye; kanal girişlerinde yalnız edit/view (sunucu kuralı). */
+  level: TeamSpaceLevel;
   /** Yalnız okuma: sunucu ad/alt metin/konuk bitişini ekler (yazarken gönderilmez). */
   name?: string;
   username?: string | null;
@@ -412,14 +418,32 @@ export async function listTeamSpaces(team: string, offset = 0): Promise<{ items:
   return { items: data.slice(0, PAGE), total: null, nextOffset: data.length > PAGE ? offset + PAGE : null };
 }
 
-export const createTeamSpace = (team: string, title: string, description: string, kind: string, groups: string[], mode: string) =>
-  rpc<string>("team_create_space", { p_team: team, p_title: title, p_description: description, p_kind: kind, p_groups: groups, p_mode: mode });
+/** `channel` verilirse projenin kanalı da açılır (yeni 7 argümanlı imza); verilmezse eski imza çağrılır (eski veritabanıyla uyumlu). */
+export const createTeamSpace = (team: string, title: string, description: string, kind: string, groups: string[], mode: string, channel?: boolean) =>
+  rpc<string>("team_create_space", {
+    p_team: team,
+    p_title: title,
+    p_description: description,
+    p_kind: kind,
+    p_groups: groups,
+    p_mode: mode,
+    ...(channel === undefined ? {} : { p_channel: channel }),
+  });
+
+/** Var olan proje için kanal aç (kart menüsü "Kanal aç"). */
+export const createProjectChannel = (space: string) => rpc<string>("team_create_project_channel", { p_space: space });
 
 export const fetchSpaceAccess = (space: string) => rpc<{ mode: string; isLibrary: boolean; entries: AccessEntry[] }>("team_space_access", { p_space: space });
 
 const entriesOut = (entries: AccessEntry[]) => entries.map((e) => ({ type: e.type, id: e.id, level: e.level }));
 
 export const setSpaceAccess = (space: string, mode: "all" | "selected" | "admins", entries: AccessEntry[]) => rpc<void>("team_set_space_access", { p_space: space, p_mode: mode, p_entries: entriesOut(entries) });
+
+/** Çağıranın ekibin okuyabildiği projelerindeki seviyesi (tek çağrı): `Map<space id, seviye>`. */
+export async function fetchMySpaceLevels(team: string): Promise<Map<string, TeamSpaceLevel>> {
+  const data = await rows<{ spaceId: string; level: TeamSpaceLevel }>("team_my_space_levels", { p_team: team });
+  return new Map(data.map((row) => [row.spaceId, row.level]));
+}
 
 export const fetchAccessOverview = (team: string) => rows<TeamAccessOverviewRow>("team_access_overview", { p_team: team });
 
@@ -517,12 +541,43 @@ export const moderateTeamMessage = (message: string) => rpc<void>("team_moderate
 // Kütüphane yönetişimi
 // ---------------------------------------------------------------------------------------------
 
-export async function listLibraryItems(team: string, status: string | null, search: string, offset = 0): Promise<{ items: TeamLibraryItem[]; total: null; nextOffset: number | null }> {
-  const data = await rows<TeamLibraryItem>("team_library_items", { p_team: team, p_status: status, p_search: search || null, p_limit: PAGE + 1, p_offset: offset });
+/** Okuyabildiğim kütüphaneler: ekip kütüphanesi + proje kütüphaneleri (docs/history/360-*). */
+export interface TeamLibraryRef {
+  id: string;
+  title: string;
+  projectId: string | null;
+  projectTitle: string | null;
+  isMain: boolean;
+  approvedCount: number;
+  pendingCount: number;
+  canApprove: boolean;
+  accessMode: string;
+  /** Etkin onay sayısı (proje değeri ya da ekip değeri) ve proje değerinin özel olup olmadığı. */
+  approvalsNeeded: number;
+  approvalsCustom: boolean;
+}
+
+export const listTeamLibraries = (team: string) => rows<TeamLibraryRef>("team_libraries", { p_team: team });
+
+/** Projenin kütüphanesini aç (projede `manage`); erişim projeden türer. */
+export const createProjectLibrary = (project: string) => rpc<string>("team_create_project_library", { p_project: project });
+
+/** Proje kütüphanesinin onay sayısı (1–3); `null` ekip değerine döner. */
+export const setProjectApprovals = (space: string, needed: number | null) => rpc<void>("space_set_project_approvals", { p_space: space, p_needed: needed });
+
+export async function listLibraryItems(team: string, status: string | null, search: string, offset = 0, space: string | null = null): Promise<{ items: TeamLibraryItem[]; total: null; nextOffset: number | null }> {
+  const data = await rows<TeamLibraryItem>("team_library_items", {
+    p_team: team,
+    p_status: status,
+    p_search: search || null,
+    p_limit: PAGE + 1,
+    p_offset: offset,
+    ...(space ? { p_space: space } : {}),
+  });
   return { items: data.slice(0, PAGE), total: null, nextOffset: data.length > PAGE ? offset + PAGE : null };
 }
 
-export const fetchLibraryCounts = (team: string) => rpc<TeamLibraryCounts>("team_library_counts", { p_team: team });
+export const fetchLibraryCounts = (team: string, space: string | null = null) => rpc<TeamLibraryCounts>("team_library_counts", { p_team: team, ...(space ? { p_space: space } : {}) });
 
 export const setReviewSample = (item: string, sample: string) => rpc<void>("space_set_review_sample", { p_item: item, p_sample: sample });
 

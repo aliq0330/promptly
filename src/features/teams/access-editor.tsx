@@ -5,6 +5,7 @@ import { Plus } from "@/components/icons/plus";
 import { X } from "@/components/icons/x";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { listTeamGroups, listTeamMembers, type AccessEntry, type TeamGroup, type TeamMember } from "@/lib/supabase/teams";
+import { SPACE_ELEVATION_LEVELS, TEAM_SPACE_LEVELS, roleCanHoldSpaceLevel, type TeamRole, type TeamSpaceLevel } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { PersonRow } from "./team-ui";
 
@@ -18,6 +19,7 @@ export function AccessEditor({
   onChange,
   levels = true,
   variant = "default",
+  elevateOnly = false,
 }: {
   teamId: string;
   entries: AccessEntry[];
@@ -26,6 +28,8 @@ export function AccessEditor({
   levels?: boolean;
   /** "space": Space erişimi penceresi (mockup 9 / P10) — "Erişimi olanlar · N" başlığı ve "+ Üye, grup veya konuk ekle…" satırı. */
   variant?: "default" | "space";
+  /** Space erişimi "tüm ekip" modunda: girişler yalnız tabanı YÜKSELTİR (onaylar / yönetir); düzenler-görür seçeneği yoktur (docs/history/360-*). */
+  elevateOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -43,12 +47,20 @@ export function AccessEditor({
   }, [teamId, query]);
 
   const spaceVariant = variant === "space";
+  const levelLabel = (level: TeamSpaceLevel) =>
+    t(level === "view" ? "tm.access.viewFull" : level === "edit" ? "tm.access.editFull" : level === "approve" ? "tm.access.approveFull" : "tm.access.manageFull");
+  /** Bu girişin seçebileceği seviyeler: yükseltme modunda yalnız onay/yönetim; konuk (kişi girişi) approve/manage alamaz. */
+  const levelChoices = (entry: AccessEntry): readonly TeamSpaceLevel[] => {
+    const pool = elevateOnly ? SPACE_ELEVATION_LEVELS : TEAM_SPACE_LEVELS;
+    return entry.type === "member" ? pool.filter((level) => roleCanHoldSpaceLevel(entry.sub as TeamRole | null, level)) : pool;
+  };
+  const defaultLevel: TeamSpaceLevel = elevateOnly ? "approve" : "edit";
   const has = (type: AccessEntry["type"], id: string) => entries.some((entry) => entry.type === type && entry.id === id);
   const add = (entry: AccessEntry) => {
     if (!has(entry.type, entry.id)) onChange([...entries, entry]);
   };
   const remove = (entry: AccessEntry) => onChange(entries.filter((item) => !(item.type === entry.type && item.id === entry.id)));
-  const setLevel = (entry: AccessEntry, level: AccessEntry["level"]) => onChange(entries.map((item) => (item.type === entry.type && item.id === entry.id ? { ...item, level } : item)));
+  const setLevel = (entry: AccessEntry, level: TeamSpaceLevel) => onChange(entries.map((item) => (item.type === entry.type && item.id === entry.id ? { ...item, level } : item)));
 
   // Space erişimi penceresinde (mockup 9) öneriler yalnız yazmaya başlayınca açılır.
   const showCandidates = !spaceVariant || query.trim().length > 0;
@@ -57,9 +69,14 @@ export function AccessEditor({
 
   return (
     <div className="space-y-3" data-testid="access-editor">
-      {spaceVariant && <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">{t("tm.access.listHeading", { count: entries.length })}</p>}
+      {spaceVariant && (
+        <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">
+          {t(elevateOnly ? "tm.access.elevate.heading" : "tm.access.listHeading", { count: entries.length })}
+        </p>
+      )}
+      {spaceVariant && elevateOnly && <p className="text-caption text-text-muted">{t("tm.access.elevate.hint")}</p>}
       <ul className={cn("divide-y divide-border-soft border border-border-soft", spaceVariant ? "overflow-hidden rounded-xl" : "rounded-lg")}>
-        {entries.length === 0 && <li className="px-3 py-3 text-small text-text-muted">{t("tm.access.none")}</li>}
+        {entries.length === 0 && <li className="px-3 py-3 text-small text-text-muted">{t(elevateOnly ? "tm.access.elevate.none" : "tm.access.none")}</li>}
         {entries.map((entry) => (
           <li key={`${entry.type}-${entry.id}`} className="px-3">
             <PersonRow
@@ -71,11 +88,14 @@ export function AccessEditor({
                   <select
                     aria-label={t("tm.access.level")}
                     value={entry.level}
-                    onChange={(event) => (event.target.value === "remove" ? remove(entry) : setLevel(entry, event.target.value as AccessEntry["level"]))}
+                    onChange={(event) => (event.target.value === "remove" ? remove(entry) : setLevel(entry, event.target.value as TeamSpaceLevel))}
                     className="h-8 rounded-full border border-border bg-background px-3 text-caption font-semibold"
                   >
-                    <option value="edit">{t("tm.access.editFull")}</option>
-                    <option value="view">{t("tm.access.viewFull")}</option>
+                    {levelChoices(entry).map((level) => (
+                      <option key={level} value={level}>
+                        {levelLabel(level)}
+                      </option>
+                    ))}
                     <option value="remove">{t("tm.access.remove")}</option>
                   </select>
                 ) : (
@@ -84,7 +104,7 @@ export function AccessEditor({
                       <select
                         aria-label={t("tm.access.level")}
                         value={entry.level}
-                        onChange={(event) => setLevel(entry, event.target.value as AccessEntry["level"])}
+                        onChange={(event) => setLevel(entry, event.target.value as TeamSpaceLevel)}
                         className="h-8 rounded-lg border border-border bg-background px-2 text-caption"
                       >
                         <option value="edit">{t("tm.access.edit")}</option>
@@ -119,7 +139,7 @@ export function AccessEditor({
                 right={
                   <button
                     type="button"
-                    onClick={() => add({ type: "group", id: group.id, level: "edit", name: group.name, sub: String(group.memberCount) })}
+                    onClick={() => add({ type: "group", id: group.id, level: defaultLevel, name: group.name, sub: String(group.memberCount) })}
                     className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
                   >
                     <Plus size={12} aria-hidden />
@@ -138,7 +158,7 @@ export function AccessEditor({
                 right={
                   <button
                     type="button"
-                    onClick={() => add({ type: "member", id: person.userId, level: "edit", name: person.displayName || person.username, username: person.username, sub: person.role })}
+                    onClick={() => add({ type: "member", id: person.userId, level: roleCanHoldSpaceLevel(person.role as TeamRole, defaultLevel) ? defaultLevel : "edit", name: person.displayName || person.username, username: person.username, sub: person.role })}
                     className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
                   >
                     <Plus size={12} aria-hidden />
@@ -150,6 +170,7 @@ export function AccessEditor({
           ))}
         </ul>
       </div>
+      {spaceVariant && <p className="text-caption leading-snug text-text-muted">{t("tm.access.levelHelp")}</p>}
     </div>
   );
 }

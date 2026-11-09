@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { DEFAULT_TEAM_ROLE_POLICY, TEAM_CAPABILITIES, TEAM_LIMITS, TEAM_ROLE_CAPS, TEAM_ROLES, teamRank, teamRoleCan, type TeamRole } from "./teams.ts";
+import { DEFAULT_TEAM_ROLE_POLICY, GUEST_MAX_SPACE_LEVEL, SPACE_ELEVATION_LEVELS, TEAM_CAPABILITIES, TEAM_SPACE_LEVELS, clampSpaceLevelForRole, roleCanHoldSpaceLevel, spaceLevelAtLeast, spaceLevelRank, TEAM_LIMITS, TEAM_ROLE_CAPS, TEAM_ROLES, teamRank, teamRoleCan, type TeamRole } from "./teams.ts";
 
 const ROOT = new URL("../../", import.meta.url).pathname;
 
@@ -89,4 +89,47 @@ test("sınırlar SQL ile aynı", () => {
   assert.equal(TEAM_LIMITS.spaces, 50);
   const roles: TeamRole[] = [...TEAM_ROLES];
   assert.equal(roles.length, 5);
+});
+
+function levelsSql(): string {
+  const dir = join(ROOT, "supabase", "migrations");
+  const file = readdirSync(dir).filter((name) => name.endsWith("_team_project_levels.sql")).sort().at(-1);
+  assert.ok(file, "team_project_levels migration bulunamadı");
+  return readFileSync(join(dir, file), "utf8");
+}
+
+test("proje seviyeleri: SQL kısıtındaki liste ve sıra TS ile aynı", () => {
+  const sql = levelsSql();
+  const check = sql.match(/add constraint team_access_level_check check \(level in \(([^)]*)\)\)/);
+  assert.ok(check);
+  assert.deepEqual(strings(check[1]), [...TEAM_SPACE_LEVELS]);
+  const rank = sql.slice(sql.indexOf("function public._team_space_level_rank"));
+  const body = rank.slice(0, rank.indexOf("$$;"));
+  TEAM_SPACE_LEVELS.forEach((level, index) => {
+    assert.match(body, new RegExp(`when '${level}' then ${index + 1}`));
+  });
+  assert.equal(spaceLevelRank(null), 0);
+  assert.equal(spaceLevelRank("view"), 1);
+  assert.equal(spaceLevelRank("manage"), 4);
+});
+
+test("proje seviyeleri: kapsama ve konuk tavanı", () => {
+  assert.ok(spaceLevelAtLeast("approve", "edit"));
+  assert.ok(spaceLevelAtLeast("manage", "approve"));
+  assert.ok(!spaceLevelAtLeast("edit", "approve"));
+  assert.ok(!spaceLevelAtLeast(null, "view"));
+  assert.equal(GUEST_MAX_SPACE_LEVEL, "edit");
+  assert.equal(clampSpaceLevelForRole("manage", "guest"), "edit");
+  assert.equal(clampSpaceLevelForRole("manage", "member"), "manage");
+  assert.ok(!roleCanHoldSpaceLevel("guest", "approve"));
+  assert.ok(roleCanHoldSpaceLevel("guest", "view"));
+  assert.ok(roleCanHoldSpaceLevel("member", "manage"));
+  assert.deepEqual([...SPACE_ELEVATION_LEVELS], ["approve", "manage"]);
+});
+
+test("SQL: konuk üst sınırı ve ekip yönetimi yetenekleri proje seviyesinden gelmez", () => {
+  const sql = levelsSql();
+  assert.match(sql, /if v_role = 'guest' then v_best := least\(v_best, 2\)/);
+  // Proje seviyesi yalnız Space içi işleri etkiler: ekip yeteneği (_team_can) hiçbir yerde seviyeye bağlanmaz.
+  assert.ok(!/_team_can\([^)]*_team_space_access_level/.test(sql));
 });

@@ -2,17 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BookOpen } from "@/components/icons/book-open";
 import { Briefcase } from "@/components/icons/briefcase";
+import { Lock } from "@/components/icons/lock";
 import { MessagesSquare } from "@/components/icons/messages-square";
 import { Share2 } from "@/components/icons/share-2";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { composeSpaceShareBody } from "@/features/messages/space-share-format";
 import { SpaceDialog } from "@/features/spaces/space-modals";
+import { SpaceAccessDialog } from "@/features/teams/team-spaces-section";
 import { TeamMark } from "@/features/teams/team-ui";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { sendMessage } from "@/lib/supabase/messages";
-import { fetchMyTeam, listTeamChannels, type TeamChannel, type TeamSummary } from "@/lib/supabase/teams";
+import { fetchMySpaceLevels, fetchMyTeam, fetchSpaceAccess, listTeamChannels, listTeamLibraries, type TeamChannel, type TeamLibraryRef, type TeamSummary } from "@/lib/supabase/teams";
+import { spaceHref } from "@/lib/spaces";
 import { teamLink } from "@/lib/teams";
 
 /**
@@ -23,6 +27,12 @@ export function TeamSpaceStrip({ teamId, space }: { teamId: string; space: { id:
   const { t } = useTranslation();
   const [team, setTeam] = useState<TeamSummary | null>(null);
   const [sendOpen, setSendOpen] = useState(false);
+  // Proje bağları (docs/history/360-*): bu Space bir proje kütüphanesiyse projesi; projeyse kütüphanesi ve kanalı. Okunamazsa şerit eskisi gibi çizilir.
+  const [libraries, setLibraries] = useState<TeamLibraryRef[]>([]);
+  const [channels, setChannels] = useState<TeamChannel[]>([]);
+  // Projede `manage` seviyesindeki kişi (ekip yöneticisi olmasa da) erişimi buradan düzenler; karar sunucudadır (`team_set_space_access`).
+  const [canManage, setCanManage] = useState(false);
+  const [access, setAccess] = useState<{ mode: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,12 +40,27 @@ export function TeamSpaceStrip({ teamId, space }: { teamId: string; space: { id:
       (found) => !cancelled && setTeam(found),
       () => undefined,
     );
+    void listTeamLibraries(teamId).then(
+      (rows) => !cancelled && setLibraries(rows),
+      () => undefined,
+    );
+    void listTeamChannels(teamId).then(
+      (rows) => !cancelled && setChannels(rows),
+      () => undefined,
+    );
+    void fetchMySpaceLevels(teamId).then(
+      (levels) => !cancelled && setCanManage(levels.get(space.id) === "manage"),
+      () => undefined,
+    );
     return () => {
       cancelled = true;
     };
-  }, [teamId]);
+  }, [teamId, space.id]);
 
   if (!team) return null;
+  const asLibrary = libraries.find((lib) => lib.id === space.id && !lib.isMain) ?? null;
+  const projectLibrary = libraries.find((lib) => lib.projectId === space.id) ?? null;
+  const projectChannel = channels.find((channel) => channel.spaceId === space.id && !channel.archivedAt) ?? null;
   return (
     <div data-testid="team-space-strip" className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-2">
       <TeamMark name={team.name} tone={team.tone} size={28} />
@@ -47,15 +72,48 @@ export function TeamSpaceStrip({ teamId, space }: { teamId: string; space: { id:
         <Briefcase size={14} aria-hidden />
         {t("tm.strip.teamPage")}
       </Link>
-      <Link href={teamLink(team.id, "chat")} data-team-open-chat className={buttonClassName({ size: "sm", variant: "outline" })}>
+      {asLibrary && asLibrary.projectId && (
+        <Link href={spaceHref(asLibrary.projectId)} data-team-project-link className={buttonClassName({ size: "sm", variant: "outline" })}>
+          <BookOpen size={14} aria-hidden />
+          {t("tm.strip.project", { name: asLibrary.projectTitle ?? "" })}
+        </Link>
+      )}
+      {projectLibrary && (
+        <Link href={teamLink(team.id, "library", { library: projectLibrary.id })} data-team-project-library className={buttonClassName({ size: "sm", variant: "outline" })}>
+          <BookOpen size={14} aria-hidden />
+          {t("tm.spaces.projectLibrary")}
+        </Link>
+      )}
+      <Link href={teamLink(team.id, "chat", { channel: projectChannel?.id })} data-team-open-chat className={buttonClassName({ size: "sm", variant: "outline" })}>
         <MessagesSquare size={14} aria-hidden />
         {t("tm.card.openChat")}
       </Link>
+      {canManage && !asLibrary && (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          data-team-space-access
+          onClick={() => void fetchSpaceAccess(space.id).then((data) => setAccess({ mode: data.mode }), () => undefined)}
+        >
+          <Lock size={14} aria-hidden />
+          {t("tm.spaces.access")}
+        </Button>
+      )}
       <Button type="button" size="sm" onClick={() => setSendOpen(true)} data-team-send-chat>
         <Share2 size={14} aria-hidden />
         {t("tm.strip.send")}
       </Button>
       {sendOpen && <SendToChannelDialog team={team} space={space} onClose={() => setSendOpen(false)} />}
+      {access && (
+        <SpaceAccessDialog
+          teamId={team.id}
+          space={{ id: space.id, title: space.title, accessMode: access.mode }}
+          memberCount={team.memberCount}
+          onClose={() => setAccess(null)}
+          onSaved={() => setAccess(null)}
+        />
+      )}
     </div>
   );
 }
