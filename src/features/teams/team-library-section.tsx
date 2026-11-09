@@ -25,7 +25,10 @@ import { restoreItemVersion } from "@/lib/supabase/spaces";
 import {
   fetchLibraryCounts,
   fetchLibraryItemBody,
+  fetchMySpaceLevels,
   listLibraryItems,
+  listTeamLibraries,
+  setProjectApprovals,
   recordItemUse,
   requestReview,
   setItemDeprecated,
@@ -33,6 +36,7 @@ import {
   type TeamActionError,
   type TeamLibraryCounts,
   type TeamLibraryItem,
+  type TeamLibraryRef,
 } from "@/lib/supabase/teams";
 import { teamLink } from "@/lib/teams";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -109,26 +113,46 @@ export function TeamLibrarySection({ ctx }: { ctx: TeamCtx }) {
   const [version, setVersion] = useState(0);
   const reviewId = params.get("review");
   const itemParam = params.get("item");
+  // Kütüphane seçici (docs/history/360-*): ekip kütüphanesi + okuyabildiğim proje kütüphaneleri. Seçim `?library=` ile adreste tutulur.
+  const libParam = params.get("library");
+  const [libraries, setLibraries] = useState<TeamLibraryRef[]>([]);
+  const [levelInfo, setLevelInfo] = useState<{ space: string; level: string | null } | null>(null);
+  const activeRef = libraries.find((lib) => lib.id === libParam) ?? null;
+  const libraryId = activeRef?.id ?? team.librarySpaceId;
+  const isProjectLibrary = Boolean(activeRef && !activeRef.isMain);
+  const spaceArg = isProjectLibrary ? activeRef!.id : null;
 
   useEffect(() => {
     const handle = window.setTimeout(() => setQuery(search.trim()), 250);
     return () => window.clearTimeout(handle);
   }, [search]);
   useEffect(() => {
-    void fetchLibraryCounts(team.id).then(setCounts, () => setCounts(null));
+    void listTeamLibraries(team.id).then(setLibraries, () => setLibraries([]));
   }, [team.id, version]);
+  useEffect(() => {
+    if (!spaceArg) return;
+    void fetchMySpaceLevels(team.id).then(
+      (levels) => setLevelInfo({ space: spaceArg, level: levels.get(spaceArg) ?? null }),
+      () => setLevelInfo({ space: spaceArg, level: null }),
+    );
+  }, [team.id, spaceArg]);
+  const myLevel = levelInfo && levelInfo.space === spaceArg ? levelInfo.level : null;
+  useEffect(() => {
+    void fetchLibraryCounts(team.id, spaceArg).then(setCounts, () => setCounts(null));
+  }, [team.id, spaceArg, version]);
 
-  const list = usePagedList<TeamLibraryItem>(`team-lib|${team.id}|${status}|${query}|${version}`, true, (offset) =>
-    listLibraryItems(team.id, status === "all" ? null : status, query, offset),
+  const list = usePagedList<TeamLibraryItem>(`team-lib|${team.id}|${spaceArg ?? "main"}|${status}|${query}|${version}`, true, (offset) =>
+    listLibraryItems(team.id, status === "all" ? null : status, query, offset, spaceArg),
   );
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
-  const open = (id: string | null) => router.replace(teamLink(team.id, "library", { item: id, status: status === "all" ? null : status }));
+  const open = (id: string | null) => router.replace(teamLink(team.id, "library", { item: id, status: status === "all" ? null : status, library: spaceArg }));
+  const switchLibrary = (id: string) => router.replace(teamLink(team.id, "library", { library: id === team.librarySpaceId ? null : id }));
 
   // Masaüstünde seçim yoksa ilk satır seçili görünür; telefonda ayrıntı yalnız `?item=` ile açılır.
   const selected = list.items.find((item) => item.id === itemParam) ?? null;
   const shown = selected ?? list.items[0] ?? null;
 
-  if (reviewId) return <TeamReviewPage ctx={ctx} itemId={reviewId} onDone={refresh} />;
+  if (reviewId) return <TeamReviewPage ctx={ctx} itemId={reviewId} onDone={refresh} libraryId={libraryId} libraryParam={spaceArg} />;
 
   const pendingBanner =
     counts && counts.pending > 0 ? (
@@ -149,7 +173,7 @@ export function TeamLibrarySection({ ctx }: { ctx: TeamCtx }) {
       {/* Telefonda ayrıntı sayfası (P4): kendi üst çubuğu + sabit alt düğmeler. */}
       {selected && (
         <div className="md:hidden" data-lib-phone-detail>
-          <LibraryDetail ctx={ctx} item={selected} onChanged={refresh} onBack={() => open(null)} phone />
+          <LibraryDetail ctx={ctx} item={selected} onChanged={refresh} onBack={() => open(null)} phone libraryId={libraryId} libraryParam={spaceArg} />
         </div>
       )}
 
@@ -159,12 +183,31 @@ export function TeamLibrarySection({ ctx }: { ctx: TeamCtx }) {
           <button type="button" onClick={() => setSearchOpen((o) => !o)} aria-label={t("header.searchAriaLabel")} aria-pressed={searchOpen} className="ml-auto grid h-11 w-11 place-items-center rounded-full bg-surface-soft text-text-secondary">
             <Search size={18} aria-hidden />
           </button>
-          {team.librarySpaceId && (
-            <Link href={spaceHref(team.librarySpaceId, "prompts")} aria-label={t("tm.lib.openSpace")} className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground">
+          {libraryId && (
+            <Link href={spaceHref(libraryId, "prompts")} aria-label={t("tm.lib.openSpace")} className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground">
               <Plus size={20} aria-hidden />
             </Link>
           )}
         </div>
+        {libraries.length > 1 && (
+          <PillChoice<string>
+            ariaLabel={t("tm.lib.switcher")}
+            value={libraryId ?? ""}
+            onChange={switchLibrary}
+            options={libraries.map((lib) => ({
+              key: lib.id,
+              label: `${lib.isMain ? t("tm.lib.main") : (lib.projectTitle ?? lib.title)}${lib.pendingCount > 0 ? ` · ${lib.pendingCount}` : ""}`,
+            }))}
+          />
+        )}
+        {isProjectLibrary && activeRef && (
+          <ProjectLibraryBar
+            library={activeRef}
+            canManage={myLevel === "manage"}
+            onChanged={refresh}
+            projectHref={activeRef.projectId ? spaceHref(activeRef.projectId) : null}
+          />
+        )}
         {pendingBanner}
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
           <div className="min-w-0 space-y-3">
@@ -187,7 +230,7 @@ export function TeamLibrarySection({ ctx }: { ctx: TeamCtx }) {
 
             <PagedListState list={list}>
               {list.items.length === 0 && !list.failed ? (
-                <EmptyState icon={BookOpen} title={t("tm.lib.empty.title")} description={t("tm.lib.empty.body")} action={team.librarySpaceId ? { label: t("tm.lib.openSpace"), href: spaceHref(team.librarySpaceId, "prompts") } : undefined} />
+                <EmptyState icon={BookOpen} title={t("tm.lib.empty.title")} description={t("tm.lib.empty.body")} action={libraryId ? { label: t("tm.lib.openSpace"), href: spaceHref(libraryId, "prompts") } : undefined} />
               ) : (
                 <div className="overflow-hidden rounded-2xl border border-border-soft bg-surface max-md:border-0 max-md:bg-transparent" data-testid="team-library-list">
                   <div className="grid grid-cols-[minmax(0,1fr)_8.5rem_3.5rem_5rem_6.5rem] gap-3 border-b border-border-soft px-4 py-2.5 text-caption font-bold uppercase tracking-[0.06em] text-text-muted max-md:hidden">
@@ -235,7 +278,7 @@ export function TeamLibrarySection({ ctx }: { ctx: TeamCtx }) {
             </PagedListState>
           </div>
           <aside className="sticky top-4 max-lg:hidden" data-lib-detail>
-            {shown ? <LibraryDetail ctx={ctx} item={shown} onChanged={refresh} /> : null}
+            {shown ? <LibraryDetail ctx={ctx} item={shown} onChanged={refresh} libraryId={libraryId} libraryParam={spaceArg} /> : null}
           </aside>
         </div>
       </div>
@@ -243,8 +286,78 @@ export function TeamLibrarySection({ ctx }: { ctx: TeamCtx }) {
   );
 }
 
+/** Proje kütüphanesi çubuğu: projeye bağlantı ve (projede `manage` ise) gereken onay sayısı. Karar sunucudadır (`space_set_project_approvals`). */
+function ProjectLibraryBar({ library, canManage, onChanged, projectHref }: { library: TeamLibraryRef; canManage: boolean; onChanged: () => void; projectHref: string | null }) {
+  const { t } = useTranslation();
+  const { node, show } = useToast();
+  const [busy, setBusy] = useState(false);
+  const value = library.approvalsCustom ? String(library.approvalsNeeded) : "team";
+  const change = async (next: string) => {
+    setBusy(true);
+    try {
+      await setProjectApprovals(library.id, next === "team" ? null : Number(next));
+      show(t("tm.lib.approvalsSaved"));
+      onChanged();
+    } catch (e) {
+      show((e as TeamActionError).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border-soft bg-surface px-3.5 py-2.5" data-project-library-bar>
+      <p className="min-w-0 flex-1 text-small text-text-secondary">
+        {t("tm.lib.projectNote")}
+        {projectHref && (
+          <>
+            {" "}
+            <Link href={projectHref} className="font-semibold text-primary hover:underline">
+              {library.projectTitle}
+            </Link>
+          </>
+        )}
+      </p>
+      <label className="flex items-center gap-2 text-small text-text-secondary">
+        {t("tm.lib.approvalsNeeded")}
+        <select
+          value={value}
+          disabled={!canManage || busy}
+          onChange={(event) => void change(event.target.value)}
+          aria-label={t("tm.lib.approvalsNeeded")}
+          data-project-approvals
+          className="h-8 rounded-lg border border-border bg-background px-2 text-caption disabled:opacity-60"
+        >
+          <option value="team">{t("tm.lib.approvalsTeamValue")}</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </label>
+      {node}
+    </div>
+  );
+}
+
 /** Seçili promptun ayrıntısı (sağ panel / telefonda tam sayfa): metin, ekip değişkenleri, kopyalama, sürümler, düzenleme ve onay işleri. */
-function LibraryDetail({ ctx, item, onChanged, onBack, phone = false }: { ctx: TeamCtx; item: TeamLibraryItem; onChanged: () => void; onBack?: () => void; phone?: boolean }) {
+function LibraryDetail({
+  ctx,
+  item,
+  onChanged,
+  onBack,
+  phone = false,
+  libraryId,
+  libraryParam,
+}: {
+  ctx: TeamCtx;
+  item: TeamLibraryItem;
+  onChanged: () => void;
+  onBack?: () => void;
+  phone?: boolean;
+  /** Seçili kütüphanenin Space kimliği (ekip kütüphanesi ya da proje kütüphanesi). */
+  libraryId: string | null;
+  /** `?library=` değeri: yalnız proje kütüphanesinde dolu. */
+  libraryParam: string | null;
+}) {
   const { t, language } = useTranslation();
   const { team, can } = ctx;
   const router = useRouter();
@@ -253,7 +366,7 @@ function LibraryDetail({ ctx, item, onChanged, onBack, phone = false }: { ctx: T
   const [entered, setEntered] = useState<Record<string, string>>({});
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [sampleFor, setSampleFor] = useState(false);
-  const library = useLibraryVariables(team.librarySpaceId ?? "", Boolean(team.librarySpaceId));
+  const library = useLibraryVariables(libraryId ?? "", Boolean(libraryId));
 
   // Telefonda ayrıntı tam ekran sayfadır: alt menü açıkken sabit düğmelerin üstünü örter (`html[data-fullscreen-detail]`, globals.css).
   useEffect(() => {
@@ -301,12 +414,12 @@ function LibraryDetail({ ctx, item, onChanged, onBack, phone = false }: { ctx: T
       : item.state === "pending"
         ? t("tm.lib.sub.pending", { name: shortName(item.updatedByName), time: formatRelativeTime(item.reviewRequestedAt ?? item.updatedAt, language) })
         : t("tm.lib.sub.other", { name: shortName(item.updatedByName), rev: item.contentRev, time: formatRelativeTime(item.updatedAt, language) });
-  const openSpace = team.librarySpaceId ? spaceHref(team.librarySpaceId, "prompts") : null;
+  const openSpace = libraryId ? spaceHref(libraryId, "prompts") : null;
 
   const actions = (
     <div className="space-y-2.5">
       {item.state === "pending" && (
-        <Link href={teamLink(team.id, "library", { review: item.id })} className={buttonClassName({ size: "lg", className: "w-full" })} data-review-open>
+        <Link href={teamLink(team.id, "library", { review: item.id, library: libraryParam })} className={buttonClassName({ size: "lg", className: "w-full" })} data-review-open>
           {t("tm.lib.review")}
         </Link>
       )}

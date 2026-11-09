@@ -47,7 +47,7 @@ function DiffText({ parts, show }: { parts: DiffWord[]; show: "del" | "add" }) {
  * Onay incelemesi, tam sayfa (mockup 11 / P12): solda iki sürümün kelime farkı + değişken özeti + örnek çıktı, sağda kontrol listesi, yorumlar, gerekçe ve
  * Onayla / Değişiklik iste. Karar `space_decide_item` ile sunucuda verilir (n onay, yazar kendi promptunu onaylayamaz).
  */
-export function TeamReviewPage({ ctx, itemId, onDone }: { ctx: TeamCtx; itemId: string; onDone: () => void }) {
+export function TeamReviewPage({ ctx, itemId, onDone, libraryId, libraryParam = null }: { ctx: TeamCtx; itemId: string; onDone: () => void; libraryId?: string | null; libraryParam?: string | null }) {
   const { t, language } = useTranslation();
   const { team } = ctx;
   const router = useRouter();
@@ -60,8 +60,9 @@ export function TeamReviewPage({ ctx, itemId, onDone }: { ctx: TeamCtx; itemId: 
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"changes" | "comments">("changes");
   const noteRef = useRef<HTMLTextAreaElement>(null);
-  const library = useLibraryVariables(team.librarySpaceId ?? "", Boolean(team.librarySpaceId));
-  const back = teamLink(team.id, "library");
+  const libSpace = libraryId ?? team.librarySpaceId;
+  const library = useLibraryVariables(libSpace ?? "", Boolean(libSpace));
+  const back = teamLink(team.id, "library", { library: libraryParam });
 
   // Telefonda sabit "Onayla" çubuğu var: alt menü örtmesin (globals.css `data-fullscreen-detail`).
   useEffect(() => {

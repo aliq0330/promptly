@@ -91,6 +91,42 @@ export function isTeamRole(value: unknown): value is TeamRole {
   return typeof value === "string" && (TEAM_ROLES as readonly string[]).includes(value);
 }
 
+/**
+ * Proje (Space) erişim seviyeleri (docs/history/360-*, 361-*): view < edit < approve < manage. Veritabanında `_team_space_access_level` /
+ * `_team_space_level_rank` ve `team_access_level_check` bunun aynasıdır (`teams.test.ts` karşılaştırır). Ekip sahibi/yöneticisi her projede `manage`;
+ * konuk en çok `edit`; ekip düzeyi yetenekler (manage_members, view_audit, export…) proje seviyesinden ASLA gelmez.
+ */
+export type TeamSpaceLevel = "view" | "edit" | "approve" | "manage";
+export const TEAM_SPACE_LEVELS: readonly TeamSpaceLevel[] = ["view", "edit", "approve", "manage"];
+/** Konuğun alabileceği en yüksek proje seviyesi. */
+export const GUEST_MAX_SPACE_LEVEL: TeamSpaceLevel = "edit";
+/** `all` modunda girişler yalnız tabanı yükseltir; yalnız bu seviyeler yazılabilir. */
+export const SPACE_ELEVATION_LEVELS: readonly TeamSpaceLevel[] = ["approve", "manage"];
+
+export function isTeamSpaceLevel(value: unknown): value is TeamSpaceLevel {
+  return typeof value === "string" && (TEAM_SPACE_LEVELS as readonly string[]).includes(value);
+}
+
+/** view=1 … manage=4; erişim yok = 0 (SQL `_team_space_level_rank`). */
+export function spaceLevelRank(level: TeamSpaceLevel | null | undefined): number {
+  return level ? TEAM_SPACE_LEVELS.indexOf(level) + 1 : 0;
+}
+
+/** `level`, `min` seviyesini kapsıyor mu (ör. `approve` seviyesi `edit` işlerini de yapar). */
+export function spaceLevelAtLeast(level: TeamSpaceLevel | null | undefined, min: TeamSpaceLevel): boolean {
+  return spaceLevelRank(level) >= spaceLevelRank(min);
+}
+
+/** Konuk için seviyeyi tavana indirir (sunucu aynı kuralı uygular; arayüz seçenekleri buna göre daraltır). */
+export function clampSpaceLevelForRole(level: TeamSpaceLevel, role: TeamRole | null | undefined): TeamSpaceLevel {
+  return role === "guest" && spaceLevelRank(level) > spaceLevelRank(GUEST_MAX_SPACE_LEVEL) ? GUEST_MAX_SPACE_LEVEL : level;
+}
+
+/** Bu rol bu seviyeyi alabilir mi (konuk approve/manage alamaz). */
+export function roleCanHoldSpaceLevel(role: TeamRole | null | undefined, level: TeamSpaceLevel): boolean {
+  return clampSpaceLevelForRole(level, role) === level;
+}
+
 /** Ekip sayfası sekmeleri (`/teams/local?id=&tab=`). */
 export type TeamTab = "spaces" | "library" | "chat" | "members" | "panel" | "admin";
 export const TEAM_TABS: readonly TeamTab[] = ["spaces", "library", "chat", "members", "panel", "admin"];

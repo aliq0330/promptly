@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BookOpen } from "@/components/icons/book-open";
 import type { IconComponent } from "@/components/icons/icon";
 import { Lock } from "@/components/icons/lock";
+import { MessagesSquare } from "@/components/icons/messages-square";
 import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
 import { Shapes } from "@/components/icons/shapes";
@@ -14,13 +16,31 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SectionMenu } from "@/features/content/section-menu";
 import { fieldLabelClassName } from "@/components/ui/field";
 import { usePagedList } from "@/features/content/use-paged-list";
+import { useToast } from "@/features/groups/use-toast";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { DescriptionField, FormError, KindField, SubmitButton, TemplateField, TitleField } from "@/features/spaces/space-forms";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SPACE_KIND_LABEL, SPACE_KINDS, SPACE_TEMPLATE_GROUPS, spaceHref, type SpaceKind } from "@/lib/spaces";
-import { createTeamSpace, fetchLibraryCounts, fetchSpaceAccess, listTeamSpaces, setSpaceAccess, type AccessEntry, type TeamActionError, type TeamLibraryCounts, type TeamSpaceRow } from "@/lib/supabase/teams";
-import { teamLink } from "@/lib/teams";
+import {
+  createProjectChannel,
+  createProjectLibrary,
+  createTeamSpace,
+  fetchLibraryCounts,
+  fetchMySpaceLevels,
+  fetchSpaceAccess,
+  listTeamChannels,
+  listTeamLibraries,
+  listTeamSpaces,
+  setSpaceAccess,
+  type AccessEntry,
+  type TeamActionError,
+  type TeamChannel,
+  type TeamLibraryCounts,
+  type TeamLibraryRef,
+  type TeamSpaceRow,
+} from "@/lib/supabase/teams";
+import { teamLink, type TeamSpaceLevel } from "@/lib/teams";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { AccessEditor } from "./access-editor";
 import type { TeamCtx } from "./team-page";
@@ -74,11 +94,38 @@ export function TeamSpacesSection({ ctx }: { ctx: TeamCtx }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [counts, setCounts] = useState<TeamLibraryCounts | null>(null);
+  // Proje başına kütüphane ve kanal (docs/history/360-*): kartın altındaki eylem satırı. Konuk kütüphane/kanal listesini taşımaz; yükleme sessizce boş kalır.
+  const [libraries, setLibraries] = useState<TeamLibraryRef[]>([]);
+  const [channels, setChannels] = useState<TeamChannel[]>([]);
+  const [levels, setLevels] = useState<Map<string, TeamSpaceLevel>>(new Map());
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const { node: toastNode, show } = useToast();
   const list = usePagedList<TeamSpaceRow>(`team-spaces|${team.id}|${version}`, true, (offset) => listTeamSpaces(team.id, offset));
   useEffect(() => {
     if (team.myRole === "guest") return;
     void fetchLibraryCounts(team.id).then(setCounts, () => setCounts(null));
   }, [team.id, team.myRole, version]);
+  useEffect(() => {
+    if (team.myRole === "guest") return;
+    void listTeamLibraries(team.id).then(setLibraries, () => setLibraries([]));
+    void listTeamChannels(team.id).then(setChannels, () => setChannels([]));
+    void fetchMySpaceLevels(team.id).then(setLevels, () => setLevels(new Map()));
+  }, [team.id, team.myRole, version]);
+
+  const libraryOf = (spaceId: string) => libraries.find((library) => library.projectId === spaceId) ?? null;
+  const channelOf = (spaceId: string) => channels.find((channel) => channel.spaceId === spaceId && !channel.archivedAt) ?? null;
+  const act = async (spaceId: string, run: () => Promise<unknown>, doneKey: "tm.spaces.libraryCreated" | "tm.spaces.channelCreated") => {
+    setBusyId(spaceId);
+    try {
+      await run();
+      show(t(doneKey));
+      setVersion((v) => v + 1);
+    } catch (e) {
+      show((e as TeamActionError).message);
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const needle = query.trim().toLocaleLowerCase();
   const visible = list.items
@@ -172,6 +219,19 @@ export function TeamSpacesSection({ ctx }: { ctx: TeamCtx }) {
                       </span>
                     </span>
                   </Link>
+                  {!space.isLibrary && (
+                    <ProjectActions
+                      teamId={team.id}
+                      space={space}
+                      library={libraryOf(space.id)}
+                      channel={channelOf(space.id)}
+                      canManage={levels.get(space.id) === "manage"}
+                      canChannel={can("manage_channels")}
+                      busy={busyId === space.id}
+                      onOpenLibrary={() => void act(space.id, () => createProjectLibrary(space.id), "tm.spaces.libraryCreated")}
+                      onOpenChannel={() => void act(space.id, () => createProjectChannel(space.id), "tm.spaces.channelCreated")}
+                    />
+                  )}
                 </li>
               );
             })}
@@ -179,6 +239,7 @@ export function TeamSpacesSection({ ctx }: { ctx: TeamCtx }) {
         )}
       </PagedListState>
 
+      {toastNode}
       {createOpen && (
         <CreateSpaceDialog
           teamId={team.id}
@@ -194,6 +255,64 @@ export function TeamSpacesSection({ ctx }: { ctx: TeamCtx }) {
   );
 }
 
+/** Projenin kütüphane ve kanal kısayolları; yoksa yetkisi olana "aç" düğmesi (kütüphane/kanal erişimi projeden türer, docs/history/360-*). */
+function ProjectActions({
+  teamId,
+  space,
+  library,
+  channel,
+  canManage,
+  canChannel,
+  busy,
+  onOpenLibrary,
+  onOpenChannel,
+}: {
+  teamId: string;
+  space: TeamSpaceRow;
+  library: TeamLibraryRef | null;
+  channel: TeamChannel | null;
+  canManage: boolean;
+  canChannel: boolean;
+  busy: boolean;
+  onOpenLibrary: () => void;
+  onOpenChannel: () => void;
+}) {
+  const { t } = useTranslation();
+  const mayOpenChannel = canManage || canChannel;
+  if (!library && !channel && !canManage && !mayOpenChannel) return null;
+  const pill = "inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full bg-surface-soft px-3 text-caption font-semibold text-text-secondary transition-colors hover:bg-primary-soft hover:text-primary disabled:opacity-60";
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-t border-border-soft px-2.5 py-2 md:px-4" data-space-actions={space.id}>
+      {library ? (
+        <Link href={teamLink(teamId, "library", { library: library.id })} className={pill} data-space-library-link>
+          <BookOpen size={14} aria-hidden />
+          {t("tm.spaces.projectLibrary")}
+          {library.pendingCount > 0 && <span className="rounded-full bg-warning/15 px-1.5 text-warning">{library.pendingCount}</span>}
+        </Link>
+      ) : (
+        canManage && (
+          <button type="button" onClick={onOpenLibrary} disabled={busy} className={pill} data-space-library-open>
+            <BookOpen size={14} aria-hidden />
+            {t("tm.spaces.libraryOpen")}
+          </button>
+        )
+      )}
+      {channel ? (
+        <Link href={teamLink(teamId, "chat", { channel: channel.id })} className={pill} data-space-channel-link>
+          <MessagesSquare size={14} aria-hidden />#{channel.name}
+        </Link>
+      ) : (
+        mayOpenChannel && (
+          <button type="button" onClick={onOpenChannel} disabled={busy} className={pill} data-space-channel-open>
+            <MessagesSquare size={14} aria-hidden />
+            {t("tm.spaces.channelOpen")}
+          </button>
+        )
+      )}
+    </div>
+  );
+}
+
 function CreateSpaceDialog({ teamId, onClose, onCreated }: { teamId: string; onClose: () => void; onCreated: () => void }) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
@@ -201,6 +320,7 @@ function CreateSpaceDialog({ teamId, onClose, onCreated }: { teamId: string; onC
   const [kind, setKind] = useState<SpaceKind>("moodboard");
   const [template, setTemplate] = useState<"empty" | "template">("template");
   const [mode, setMode] = useState<AccessMode>("all");
+  const [channel, setChannel] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -213,7 +333,7 @@ function CreateSpaceDialog({ teamId, onClose, onCreated }: { teamId: string; onC
     setBusy(true);
     setError(null);
     try {
-      await createTeamSpace(teamId, title.trim(), description.trim(), kind, template === "template" ? SPACE_TEMPLATE_GROUPS[kind].map((key) => t(key)) : [], mode);
+      await createTeamSpace(teamId, title.trim(), description.trim(), kind, template === "template" ? SPACE_TEMPLATE_GROUPS[kind].map((key) => t(key)) : [], mode, channel);
       onCreated();
     } catch (e) {
       setError((e as TeamActionError).message);
@@ -256,6 +376,13 @@ function CreateSpaceDialog({ teamId, onClose, onCreated }: { teamId: string; onC
           />
           <p className="mt-1.5 text-caption text-text-muted">{t("tm.spaces.whoSeesHint")}</p>
         </div>
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border-soft px-3.5 py-3" data-create-space-channel>
+          <input type="checkbox" checked={channel} onChange={(event) => setChannel(event.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
+          <span className="min-w-0">
+            <span className="block text-small font-bold text-text">{t("tm.spaces.channelToggle")}</span>
+            <span className="block text-caption text-text-secondary">{t("tm.spaces.channelToggleHint")}</span>
+          </span>
+        </label>
         <FormError message={error} />
       </div>
     </SpaceDialog>
@@ -266,7 +393,10 @@ function CreateSpaceDialog({ teamId, onClose, onCreated }: { teamId: string; onC
 export function SpaceAccessDialog({ teamId, space, memberCount, onClose, onSaved }: { teamId: string; space: Pick<TeamSpaceRow, "id" | "title" | "accessMode">; /** "Tüm ekip" satırındaki "48 üye" için; bilinmiyorsa gösterilmez. */ memberCount?: number; onClose: () => void; onSaved: () => void }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<AccessMode>(space.accessMode as AccessMode);
+  // "Seçilenler" modunda girişler erişimin kendisidir; "Tüm ekip" modunda girişler yalnız tabanı yükseltir (onaylar / yönetir) — iki liste ayrı tutulur.
   const [entries, setEntries] = useState<AccessEntry[]>([]);
+  const [elevations, setElevations] = useState<AccessEntry[]>([]);
+  const [isLibrary, setIsLibrary] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -276,7 +406,9 @@ export function SpaceAccessDialog({ teamId, space, memberCount, onClose, onSaved
     void fetchSpaceAccess(space.id).then(
       (data) => {
         if (cancelled) return;
-        setEntries(data.entries);
+        if (data.mode === "all") setElevations(data.entries);
+        else setEntries(data.entries);
+        setIsLibrary(Boolean(data.isLibrary));
         setLoaded(true);
       },
       (e: TeamActionError) => {
@@ -293,7 +425,7 @@ export function SpaceAccessDialog({ teamId, space, memberCount, onClose, onSaved
     setBusy(true);
     setError(null);
     try {
-      await setSpaceAccess(space.id, mode, mode === "selected" ? entries : []);
+      await setSpaceAccess(space.id, mode, mode === "selected" ? entries : mode === "all" && !isLibrary ? elevations : []);
       onSaved();
     } catch (e) {
       setError((e as TeamActionError).message);
@@ -350,6 +482,8 @@ export function SpaceAccessDialog({ teamId, space, memberCount, onClose, onSaved
           ))}
         </div>
         {mode === "selected" && loaded && <AccessEditor teamId={teamId} entries={entries} onChange={setEntries} variant="space" />}
+        {mode === "all" && loaded && !isLibrary && <AccessEditor teamId={teamId} entries={elevations} onChange={setElevations} variant="space" elevateOnly />}
+        {mode === "all" && loaded && isLibrary && <p className="text-caption text-text-muted">{t("tm.access.elevate.libraryLocked")}</p>}
         <p className="text-caption text-text-muted sm:hidden">{t("tm.spaces.accessNote")}</p>
         <FormError message={error} />
       </div>

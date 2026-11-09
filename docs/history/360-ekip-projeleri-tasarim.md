@@ -1,7 +1,7 @@
 # 360 — Ekip projeleri: proje başına rol, proje kütüphanesi, Space'e bağlı sohbet (TASARIM)
 
-**Durum: TASARIM — kod yazılmadı (2026-11-09).** Uygulama planı: [361](361-ekip-projeleri-uygulama-plani.md). Bu belge, `353-*` ile kurulan bağımsız Ekipler
-sisteminin üstüne üç genişletme önerir. Aşağıdaki "Kararlar" bölümü kullanıcı onayı bekler; onaylanmadan hiçbir migration yazılmaz.
+**Durum: UYGULANDI (2026-11-09) — D1–D5 kullanıcı tarafından önerildiği gibi onaylandı.** Uygulama planı ve kaydı: [361](361-ekip-projeleri-uygulama-plani.md). Bu belge, `353-*` ile kurulan bağımsız Ekipler
+sisteminin üstüne üç genişletmeyi tasarlar (proje başına rol, proje kütüphanesi, Space'e bağlı kanal).
 
 ## 1. İstek (kullanıcının sözleriyle özet)
 

@@ -95,7 +95,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     assert.deepEqual(errors, [], "no uncaught page errors");
     results.push(["PASS", name]);
   } catch (e) {
-    results.push(["FAIL", name + "\n      " + String(e.message).split("\n").slice(0, 8).join("\n      ")]);
+    results.push(["FAIL", name + "\n      " + String(e.message).split("\n").slice(0, 8).join("\n      ") + (errors.length ? "\n      sayfa hataları: " + errors.slice(0, 2).join(" | ").slice(0, 400) : "")]);
     try { await page.screenshot({ path: `${process.env.TMPDIR ?? "/tmp"}/team-hub-fail-${results.length}.png` }); } catch {}
   } finally {
     await context.close();
@@ -817,6 +817,221 @@ await scenario("42. Telefon /teams (docs/history/359-*): Senden bekleyenler + Ek
 }, { viewport: { width: 390, height: 800 }, setup: (db) => {
   db.rpc.my_team_todos = () => ({ body: [{ team_id: TEAM, team_name: "Atölye Mor", team_slug: "atolye-mor", kind: "approvals", n: 1, label: null, href: `/teams/local?id=${TEAM}&tab=library&status=pending`, at: "2026-11-08T08:00:00Z" }, { team_id: TEAM, team_name: "Atölye Mor", team_slug: "atolye-mor", kind: "review", n: 1, label: "Ürün tanıtım · Carol", href: `/teams/local?id=${TEAM}&tab=library&review=${ITEM}`, at: "2026-11-08T08:00:00Z" }] });
 } });
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// Ekip projeleri (docs/history/360-*, 361-*): proje başına rol, proje kütüphanesi, Space'e bağlı kanal. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ —
+// kurallar `supabase/tests/team-projects.sql` (127+ kontrol).
+// ---------------------------------------------------------------------------------------------------------------------------------------
+const B1 = "e1000000-0000-4000-8000-0000000000b1";
+const PROJECT_LIB = "e1000000-0000-4000-8000-0000000000d1";
+const PROJECT_CH = "e1000000-0000-4000-8000-0000000000a3";
+const record = (db, name, fn) => {
+  db.rpc[name] = (body) => {
+    db.teamCalls.push({ name, body });
+    return { body: fn(body) };
+  };
+};
+const mainLibRef = { id: LIB, title: "Ekip kütüphanesi", project_id: null, project_title: null, is_main: true, approved_count: 1, pending_count: 1, can_approve: true, access_mode: "all", approvals_needed: 1, approvals_custom: false };
+const projectLibRef = (extra = {}) => ({ id: PROJECT_LIB, title: "Kampanya panosu · Kütüphane", project_id: B1, project_title: "Kampanya panosu", is_main: false, approved_count: 2, pending_count: 2, can_approve: true, access_mode: "selected", approvals_needed: 1, approvals_custom: false, ...extra });
+
+await scenario("43. Space kartı: proje kütüphanesi ve kanalı varsa kısayol bağlantıları (library= / channel= parametreli)", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
+  const card = page.locator(`[data-space-card="${B1}"]`);
+  await card.waitFor();
+  const lib = card.locator("[data-space-library-link]");
+  await lib.waitFor();
+  assert.match((await lib.getAttribute("href")) ?? "", new RegExp(`library=${PROJECT_LIB}`));
+  assert.match(await lib.innerText(), /2/, "bekleyen sayısı rozeti");
+  const chan = card.locator("[data-space-channel-link]");
+  await chan.getByText("#kampanya").waitFor();
+  assert.match((await chan.getAttribute("href")) ?? "", new RegExp(`channel=${PROJECT_CH}`));
+}, {
+  setup: (db) => {
+    record(db, "team_libraries", () => [mainLibRef, projectLibRef()]);
+    record(db, "team_list_channels", () => [channel(CH_GENERAL, "genel", "open"), channel(PROJECT_CH, "kampanya", "space", { space_id: B1, space_title: "Kampanya panosu" })]);
+    record(db, "team_my_space_levels", () => [{ space_id: B1, level: "manage" }]);
+  },
+});
+
+await scenario("44. Projede manage: 'Kütüphane aç' → team_create_project_library, 'Kanal aç' → team_create_project_channel", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
+  const card = page.locator(`[data-space-card="${B1}"]`);
+  await card.locator("[data-space-library-open]").click();
+  await page.waitForFunction(() => true);
+  await card.locator("[data-space-channel-open]").click();
+  await page.waitForTimeout(300);
+  assert.equal(called(db, "team_create_project_library")[0].body.p_project, B1);
+  assert.equal(called(db, "team_create_project_channel")[0].body.p_space, B1);
+}, {
+  setup: (db) => {
+    record(db, "team_libraries", () => [mainLibRef]);
+    record(db, "team_my_space_levels", () => [{ space_id: B1, level: "manage" }]);
+    record(db, "team_create_project_library", () => PROJECT_LIB);
+    record(db, "team_create_project_channel", () => PROJECT_CH);
+  },
+});
+
+await scenario("45. Üye (projede view): kartta 'aç' eylemi yok", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
+  await page.locator(`[data-space-card="${B1}"]`).waitFor();
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator("[data-space-actions]").count(), 0);
+}, {
+  role: "member",
+  setup: (db) => {
+    record(db, "team_libraries", () => [mainLibRef]);
+    record(db, "team_my_space_levels", () => [{ space_id: B1, level: "view" }]);
+  },
+});
+
+await scenario("46. Yeni Space: 'Sohbet kanalı aç' varsayılan açık → p_channel=true; kapatınca false", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
+  await page.locator("[data-team-new-space]").click();
+  const form = page.getByTestId("team-create-space-form");
+  const toggle = form.locator("[data-create-space-channel] input");
+  assert.equal(await toggle.isChecked(), true);
+  await form.locator("input[type=text], input:not([type])").first().fill("Yeni proje");
+  await form.locator("button[type=submit]").click();
+  await page.waitForTimeout(300);
+  assert.equal(called(db, "team_create_space")[0].body.p_channel, true);
+  await page.locator("[data-team-new-space]").click();
+  const form2 = page.getByTestId("team-create-space-form");
+  await form2.locator("[data-create-space-channel] input").uncheck();
+  await form2.locator("input[type=text], input:not([type])").first().fill("Kanalsız proje");
+  await form2.locator("button[type=submit]").click();
+  await page.waitForTimeout(300);
+  assert.equal(called(db, "team_create_space")[1].body.p_channel, false);
+}, {
+  setup: (db) => {
+    record(db, "team_create_space", () => "e1000000-0000-4000-8000-0000000000b9");
+  },
+});
+
+await scenario("47. Kütüphane seçici: ekip ↔ proje kütüphanesi; liste/sayaç p_space ile; proje çubuğu ve onay sayısı (manage)", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=library`);
+  const group = page.getByRole("radiogroup", { name: "Kütüphane" });
+  await group.waitFor();
+  await group.getByRole("radio", { name: "Ekip kütüphanesi" }).waitFor();
+  await page.getByTestId("team-library-list").getByText("Ürün tanıtım").first().waitFor();
+  assert.equal(await page.locator("[data-project-library-bar]").count(), 0, "ekip kütüphanesinde proje çubuğu yok");
+  await group.getByRole("radio", { name: /Kampanya panosu/ }).click();
+  await page.getByTestId("team-library-list").getByText("Proje promptu").first().waitFor();
+  assert.match(page.url(), new RegExp(`library=${PROJECT_LIB}`));
+  assert.ok(called(db, "team_library_items").some((c) => c.body.p_space === PROJECT_LIB), "liste p_space ile istendi");
+  assert.ok(called(db, "team_library_counts").some((c) => c.body.p_space === PROJECT_LIB), "sayaç p_space ile istendi");
+  const bar = page.locator("[data-project-library-bar]");
+  await bar.waitFor();
+  const select = bar.locator("[data-project-approvals]");
+  await select.waitFor();
+  assert.equal(await select.isEnabled(), true, "manage seviyesinde onay sayısı seçilebilir");
+  await select.selectOption("2");
+  await page.waitForTimeout(300);
+  const call = called(db, "space_set_project_approvals")[0].body;
+  assert.equal(call.p_space, PROJECT_LIB);
+  assert.equal(call.p_needed, 2);
+  await group.getByRole("radio", { name: "Ekip kütüphanesi" }).click();
+  await page.getByTestId("team-library-list").getByText("Ürün tanıtım").first().waitFor();
+  assert.doesNotMatch(page.url(), /library=/);
+}, {
+  setup: (db) => {
+    const base = db.rpc.team_library_items;
+    record(db, "team_library_items", (body) =>
+      body.p_space === PROJECT_LIB
+        ? [{ id: "e1000000-0000-4000-8000-0000000000e1", title: "Proje promptu", group_id: null, group_name: null, state: "approved", content_rev: 1, use_count: 0, works_yes: 0, works_no: 0, approvals: 1, approvals_needed: 1, updated_at: "2026-11-06T00:00:00Z", updated_by: null, updated_by_name: "Dave", created_by: null, review_requested_at: null, approved_at: "2026-11-06T00:00:00Z", deprecated_at: null, locked: false }]
+        : base({}).body,
+    );
+    record(db, "team_library_counts", (body) => (body.p_space === PROJECT_LIB ? { total: 1, approved: 1, pending: 0, draft: 0, deprecated: 0, oldest_pending_at: null } : { total: 3, approved: 1, pending: 1, draft: 1, deprecated: 0, oldest_pending_at: "2026-11-05T00:00:00Z" }));
+    record(db, "team_libraries", () => [mainLibRef, projectLibRef()]);
+    record(db, "team_my_space_levels", () => [{ space_id: PROJECT_LIB, level: "manage" }, { space_id: B1, level: "manage" }]);
+    record(db, "space_set_project_approvals", () => null);
+  },
+});
+
+await scenario("48. Proje kütüphanesi: approve seviyesinde onay sayısı seçici kilitli", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=library&library=${PROJECT_LIB}`);
+  const select = page.locator("[data-project-library-bar] [data-project-approvals]");
+  await select.waitFor();
+  assert.equal(await select.isEnabled(), false);
+}, {
+  role: "member",
+  setup: (db) => {
+    record(db, "team_libraries", () => [mainLibRef, projectLibRef()]);
+    record(db, "team_my_space_levels", () => [{ space_id: PROJECT_LIB, level: "approve" }]);
+    record(db, "team_library_items", () => []);
+  },
+});
+
+await scenario("49. Space erişimi (Yönetim): 4 seviye, konukta yalnız görüntüle/düzenle; 'Tüm ekip' modunda yükseltme listesi; kayıt p_entries'e seviyeyi yazar", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=access`);
+  const overview = page.getByTestId("team-access-overview");
+  await overview.waitFor();
+  await overview.getByRole("button", { name: "Erişim", exact: true }).first().click();
+  const form = page.getByTestId("team-space-access-form");
+  await form.waitFor();
+  const selects = form.locator("[data-testid=access-editor] select");
+  await selects.nth(1).waitFor();
+  const guestOptions = await selects.nth(0).locator("option").allInnerTexts();
+  const memberOptions = await selects.nth(1).locator("option").allInnerTexts();
+  assert.deepEqual(guestOptions.map((o) => o.trim()), ["Yalnız görüntüle", "Düzenleyebilir", "Kaldır"]);
+  assert.deepEqual(memberOptions.map((o) => o.trim()), ["Yalnız görüntüle", "Düzenleyebilir", "Onaylayabilir", "Yönetebilir", "Kaldır"]);
+  await selects.nth(1).selectOption("manage");
+  await form.getByRole("button", { name: "Kaydet" }).click();
+  await page.waitForTimeout(300);
+  const saved = called(db, "team_set_space_access")[0].body;
+  assert.equal(saved.p_mode, "selected");
+  assert.deepEqual(saved.p_entries.map((e) => [e.id, e.level]), [["u-guest", "edit"], ["u-mert", "manage"]]);
+  // Tüm ekip modu: girişler yükseltmedir (yalnız approve/manage).
+  await overview.getByRole("button", { name: "Erişim", exact: true }).first().click();
+  const form2 = page.getByTestId("team-space-access-form");
+  await form2.locator("[data-access-mode=all]").click();
+  await form2.getByText("Ek yetkililer", { exact: false }).waitFor();
+  await form2.getByRole("button", { name: "Kaydet" }).click();
+  await page.waitForTimeout(300);
+  const saved2 = called(db, "team_set_space_access")[1].body;
+  assert.equal(saved2.p_mode, "all");
+  assert.deepEqual(saved2.p_entries, []);
+}, {
+  setup: (db) => {
+    record(db, "team_access_overview", () => [{ space_id: B1, title: "Kampanya panosu", kind: "free", is_library: false, mode: "selected", member_count: 3, guest_count: 1, entry_count: 2, creator_name: "Alice", updated_at: "2026-11-02T00:00:00Z", archived_at: null }]);
+    record(db, "team_space_access", () => ({
+      mode: "selected",
+      is_library: false,
+      entries: [
+        { type: "member", id: "u-guest", level: "edit", name: "Konuk Kişi", username: "konuk", sub: "guest" },
+        { type: "member", id: "u-mert", level: "approve", name: "Mert", username: "mert", sub: "member" },
+      ],
+    }));
+    record(db, "team_set_space_access", () => null);
+  },
+});
+
+await scenario("50. İngilizce: kütüphane seçici ve proje çubuğu metinleri", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=library&library=${PROJECT_LIB}`);
+  await page.getByRole("radiogroup", { name: "Library" }).getByRole("radio", { name: "Team library" }).waitFor();
+  const bar = page.locator("[data-project-library-bar]");
+  await bar.getByText("Project library", { exact: false }).waitFor();
+  await bar.getByText("Approvals needed").waitFor();
+}, {
+  lang: "en",
+  setup: (db) => {
+    record(db, "team_libraries", () => [mainLibRef, projectLibRef()]);
+    record(db, "team_my_space_levels", () => [{ space_id: PROJECT_LIB, level: "manage" }]);
+    record(db, "team_library_items", () => []);
+  },
+});
+
+await scenario("51. Telefon: kütüphane seçici ve proje çubuğu yatay taşmaz", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=library&library=${PROJECT_LIB}`);
+  await page.locator("[data-project-library-bar]").waitFor();
+  assert.ok(await overflowFree(page), "yatay taşma yok");
+}, {
+  viewport: { width: 390, height: 800 },
+  setup: (db) => {
+    record(db, "team_libraries", () => [mainLibRef, projectLibRef()]);
+    record(db, "team_my_space_levels", () => [{ space_id: PROJECT_LIB, level: "manage" }]);
+    record(db, "team_library_items", () => []);
+  },
+});
 
 await browser.close();
 server.close();

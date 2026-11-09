@@ -1,8 +1,7 @@
 # 361 — Ekip projeleri: tek seferde uygulama planı (PLAN — onay bekliyor)
 
-**Durum: PLAN — kod yazılmadı (2026-11-09).** Tasarım ve gerekçeler: [360](360-ekip-projeleri-tasarim.md). Bu plan 360'taki üç işi **tek PR'da,
-bağımlılık sırasıyla** yapar: (1) proje başına rol, (2) proje kütüphanesi, (3) Space'e bağlı kanal. Başlamadan önce 360 §9'daki beş karar (D1–D5) onaylanmalı;
-aşağıdaki plan **önerilen** cevaplara göre yazıldı, farklı cevap gelirse ilgili iş paketi değişir (her paket sonunda "D bağımlılığı" notu var).
+**Durum: UYGULANDI (2026-11-09).** D1–D5 önerildiği gibi onaylandı; plan aşağıda aynen durur, **uygulama kaydı en sonda**. Tasarım ve gerekçeler: [360](360-ekip-projeleri-tasarim.md). Bu plan 360'taki üç işi **tek PR'da,
+bağımlılık sırasıyla** yaptı: (1) proje başına rol, (2) proje kütüphanesi, (3) Space'e bağlı kanal.
 
 ## 0. Ön koşul ve sıra
 
@@ -120,3 +119,30 @@ Sürüm numaraları son mevcut migration'dan (`20261113110000`) sonra gelir; uyg
 ## Kapsam dışı
 
 360 §10 geçerli. Ayrıca bu PR'da: proje yeniden adlandırma/arşiv yetkisinin `manage`'e açılması (D2 hayır), grup kanalı kısayolu, `space` kanalı için ayrı bildirim düzeyi, mevcut projelere toplu kanal geri doldurma.
+
+
+## Uygulama kaydı (2026-11-09)
+
+**Sonuç:** üç iş tek PR'da; üç ekleyici migration (`20261114100000_team_project_levels`, `…110000_team_project_library`, `…120000_team_project_channel`).
+
+| Kontrol | Sonuç |
+|---|---|
+| Yerel PostgreSQL `supabase/tests/team-projects.sql` | 129 kontrol, 0 hata (WP0 hata yeniden üretimi dahil) |
+| Mevcut ekip/Space/API/sohbet SQL paketleri (`teams-core`, `team-*`, `space*`, `api-*`, `counter-protection`, `contract-cleanup`…) | hepsi temiz (`anon-hardening` #4 bu ortamda migration'sız da düşer — ortam kaynaklı) |
+| Birim testleri `npm test` | 1001/1001 (`teams.test.ts` proje seviyelerini migration metniyle karşılaştırır) |
+| Ağ taklitli `run-team-hub` | 55/55 (43–51 yeni) |
+| `tsc`, `lint` (0 hata), `build`, `apply-migrations --check` | temiz |
+
+**R1 doğrulandı (gerçek, mevcut hata):** `space` kanalı olan bir ekip Space'i silinemiyordu (`team_channels_space_shape` CHECK ihlali). Migration 3'teki `spaces_team_channels_cleanup` BEFORE DELETE tetikleyicisi düzeltti; canlıda da vardı.
+
+**Plandan sapmalar / eklemeler**
+
+- `_team_space_level` DEĞİŞMEDİ (edit/view/null sözleşmesi korundu): yeni 4 seviyeli `_team_space_access_level` eklendi, eski fonksiyon onun ince sarmalayıcısı oldu. Böylece yansıma/kanal motoru ve tüm eski testler olduğu gibi çalıştı.
+- Ek RPC'ler: `team_my_space_level(p_space)`, `team_my_space_levels(p_team)` (kartlardaki eylem yetkisi için tek çağrı), `team_create_project_channel`, `space_set_project_approvals`, `team_libraries` (+ `approvals_needed`, `approvals_custom`).
+- `team_space_access` (erişim listesini okuma) artık projede `manage` olana da açık; yoksa proje yöneticisi erişim penceresini dolduramazdı. Space sayfası şeridine "Erişim" düğmesi eklendi (yönetici olmayan proje yöneticisinin tek girişi).
+- API/MCP imzaları DEĞİŞMEDİ: `api_me_libraries` zaten `kind='team_library'` süzdüğü için proje kütüphaneleri kendiliğinden listelenir; proje adı kütüphane başlığındadır ("‹proje› · Kütüphane"). `project_title` sütunu eklenmedi → Edge Function `api`/`mcp` elle deploy GEREKMEZ.
+- `team_list_spaces`, `team_access_overview`, `_team_recount` kütüphane çocuklarını ayrı proje saymaz (50 Space sınırına da sayılmaz); `team_export` çocuk kütüphaneleri `projectLibraries` anahtarında yazar; `team_insights` ve `my_team_todos` tüm okunabilir ekip kütüphanelerini kapsar.
+- `lib/supabase/teams.ts` `rows()` yardımcısı dizi olmayan yanıtı boş liste sayar (eksik/eski sunucu işlevinde arayüz çökmesin).
+- `ci:allow-destructive` işareti gerekmedi: `drop constraint` yıkıcı sayılmıyor.
+
+**Yapılmayanlar / dürüst sınırlar:** gerçek Supabase, Realtime ve cihaz DENENMEDİ; Space sayfasındaki "Erişim" düğmesi için ağ taklitli senaryo yok; telefonda yalnız kütüphane seçici/proje çubuğu taşma denetimi yapıldı (390 px, ekran görüntüsü incelemesi yok); panelde (`team_insights`) kütüphane kırılımı arayüzde yok; var olan projelere kanal otomatik açılmaz.
