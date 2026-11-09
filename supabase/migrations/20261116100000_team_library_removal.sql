@@ -19,10 +19,14 @@
 do $$
 begin
   perform set_config('promptly.team_sync', '1', true);
+  -- ÖNCE FK boşaltılır: Space silinirken `spaces_team_counter` → `_team_recount` `teams` satırını günceller; satır hâlâ silinmiş kütüphane
+  -- Space'ine işaret ederse `teams_library_space_fk` ihlal olur (canlıda ilk denemede böyle düştü, işlem geri alındı).
+  update public.teams set library_space_id = null where library_space_id is not null;
   -- Proje kütüphaneleri `project_space_id` ile bağlıdır (ON DELETE CASCADE); ekip alanları ('team_area') hiçbir koşulda silinmez.
   delete from public.spaces where team_id is not null and kind <> 'team_area' and team_project_id is null;
-  update public.teams set library_space_id = null where library_space_id is not null;
   perform set_config('promptly.team_sync', '', true);
+  -- Silme sırasında sayaç satır satır güncellendi; sonuç tek seferde doğrulanır.
+  perform public._team_recount(t.id) from public.teams t;
 end $$;
 
 -- 1b) Kişisel "kütüphane" Space'leri (kind='team_library', ekibe bağlı değil) sıradan Space olur: kütüphane arayüzü, ekip değişkenleri ve onay
