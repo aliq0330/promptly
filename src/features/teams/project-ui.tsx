@@ -47,6 +47,12 @@ export function ReviewChip({ state, className }: { state: ReviewState; className
   );
 }
 
+/** Öğe rozeti: onaylı (ve kişisel Space) öğelerde HİÇ çizilmez; taslak / bekliyor / değişiklik istendi için çizilir. */
+export function ItemReviewBadge({ state, className }: { state: ReviewState | undefined; className?: string }) {
+  if (!state || state === "approved") return null;
+  return <ReviewChip state={state} className={className} />;
+}
+
 /** Başlıklı kart bölümü (proje/dosya sayfaları): sol başlık + isteğe bağlı sağ eylem. */
 export function ProjectSection({ title, hint, action, children, className, testId }: { title: string; hint?: string; action?: ReactNode; children: ReactNode; className?: string; testId?: string }) {
   return (

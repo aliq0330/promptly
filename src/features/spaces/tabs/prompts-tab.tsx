@@ -1,5 +1,6 @@
 "use client";
 
+import { ItemReviewBadge } from "@/features/teams/project-ui";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CircleCheck } from "@/components/icons/circle-check";
@@ -232,6 +233,7 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
                       {" · "}
                       {formatRelativeTime(item.createdAt, language)}
                     </p>
+                    <ItemReviewBadge state={item.revState} />
                     {approvalState !== "none" && (
                       <span className="flex flex-wrap items-center gap-1.5">
                         <ApprovalBadge state={approvalState} approvedAt={item.approvedAt} />

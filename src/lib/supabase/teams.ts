@@ -189,7 +189,7 @@ export interface TeamChannel {
   id: string;
   name: string;
   description: string | null;
-  mode: "open" | "private" | "space";
+  mode: "open" | "private" | "space" | "project";
   spaceId: string | null;
   spaceTitle: string | null;
   postingPolicy: "members" | "admins";

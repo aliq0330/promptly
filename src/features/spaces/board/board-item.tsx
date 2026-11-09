@@ -1,5 +1,6 @@
 "use client";
 
+import { ItemReviewBadge } from "@/features/teams/project-ui";
 import { Component, memo, type ReactNode } from "react";
 import { EyeOff } from "@/components/icons/eye-off";
 import { Lock } from "@/components/icons/lock";
@@ -71,6 +72,11 @@ export const BoardItem = memo(function BoardItem({
       <ItemBoundary>
         <ItemBody item={item} resolved={resolved} palette={palette} attachedTitle={attachedTitle} lowDetail={lowDetail} />
       </ItemBoundary>
+      {item.revState !== "approved" && !lowDetail && (
+        <span className="pointer-events-none absolute -top-2.5 left-1.5 z-10 shadow-sm" data-board-review={item.revState}>
+          <ItemReviewBadge state={item.revState} />
+        </span>
+      )}
       {item.locked && !lowDetail && (
         <span aria-hidden className="pointer-events-none absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface/90 text-text-secondary shadow-sm">
           <Lock size={11} strokeWidth={2} />

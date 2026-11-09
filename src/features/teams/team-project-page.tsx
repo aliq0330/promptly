@@ -29,6 +29,7 @@ import {
   ProjectSettingsDialog,
   RenameFileDialog,
   ReviewSwitchRow,
+  VariableDialog,
 } from "./project-dialogs";
 import { ProjectRoleChip, ProjectSection } from "./project-ui";
 import { ProjectVariablesPanel } from "./project-variables";
@@ -363,7 +364,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
   const lead = canReview(myRole);
   const tab = useAreaTab();
   const { node: toastNode, show } = useToast();
-  const [dialog, setDialog] = useState<null | "rename" | "delete" | "board">(null);
+  const [dialog, setDialog] = useState<null | "rename" | "delete" | "board" | "variable">(null);
   const [busy, setBusy] = useState(false);
   const fileBoards = detail.boards.filter((board) => board.fileId === file.id);
 
@@ -413,6 +414,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
               tab={tab}
               hrefFor={(next) => projectLink(team.id, project.id, { file: file.id, sub: next })}
               reviewHref={lead ? projectLink(team.id, project.id, { review: true }) : null}
+              add={{ reviewOn: file.reviewRequired, onNewBoard: () => setDialog("board"), onNewVariable: () => setDialog("variable") }}
             />
           ) : (
             <SectionError message={t("tp.area.missing")} />
@@ -470,6 +472,18 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
         />
       )}
       {dialog === "delete" && <DeleteFileDialog file={file} onClose={() => setDialog(null)} onDone={() => router.replace(projectLink(team.id, project.id))} />}
+      {dialog === "variable" && (
+        <VariableDialog
+          projectId={project.id}
+          fileId={file.id}
+          variable={null}
+          onClose={() => setDialog(null)}
+          onDone={() => {
+            setDialog(null);
+            onChanged();
+          }}
+        />
+      )}
       {dialog === "board" && (
         <NewBoardDialog
           projectId={project.id}
@@ -565,6 +579,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
         tab={tab}
         hrefFor={(next) => projectLink(team.id, project.id, { board: boardId, sub: next })}
         reviewHref={lead ? projectLink(team.id, project.id, { review: true }) : null}
+        add={{ reviewOn: detail.project.reviewDefault }}
       />
     </div>
   );

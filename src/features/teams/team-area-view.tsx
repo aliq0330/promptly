@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { ImageIcon } from "@/components/icons/image-icon";
+import { Braces } from "@/components/icons/braces";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
+import { Plus } from "@/components/icons/plus";
 import { Palette } from "@/components/icons/palette";
 import { Presentation } from "@/components/icons/presentation";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
@@ -24,10 +27,12 @@ import { PromptsTab } from "@/features/spaces/tabs/prompts-tab";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { fetchMyRole, fetchSpace, fetchSpaceConnections, fetchSpaceGroups, fetchSpaceItems, fetchSpacePalettes, type SpaceItem } from "@/lib/supabase/spaces";
-import { submitReview, withdrawReview } from "@/lib/supabase/team-projects";
+import { proposeChange, submitReview, withdrawReview } from "@/lib/supabase/team-projects";
 import type { TeamActionError } from "@/lib/supabase/teams";
-import { canAddToArea, canSubmitItem, canWithdrawItem, type ProjectRole } from "@/lib/team-projects";
+import { canAddToArea, canProposeChange, canSubmitItem, canWithdrawItem, type ProjectRole } from "@/lib/team-projects";
 import { cn, presetHref, requestHref, workflowHref } from "@/lib/utils";
+import { SpaceDialog } from "@/features/spaces/space-modals";
+import { FormError, SubmitButton } from "@/features/spaces/space-forms";
 import { ReviewChip } from "./project-ui";
 
 /**
@@ -56,7 +61,30 @@ const TAB_KEY: Record<AreaTab, TranslationKey> = {
 
 type LoadState = { status: "loading" } | { status: "missing" } | { status: "error" } | { status: "ready"; data: SpaceData };
 
-export function TeamAreaView({ spaceId, role, tab, hrefFor, reviewHref }: { spaceId: string; role: ProjectRole | null; tab: AreaTab; hrefFor: (tab: AreaTab) => string; reviewHref?: string | null }) {
+export interface AreaAddActions {
+  /** Pano ekle penceresini açar (yoksa seçenek gösterilmez). */
+  onNewBoard?: () => void;
+  /** Değişken ekle penceresini açar (yalnız proje/dosya kapsamında anlamlı). */
+  onNewVariable?: () => void;
+  /** Bu alanda onay açık mı: "eklediğin şey taslak başlar" notu için. */
+  reviewOn?: boolean;
+}
+
+export function TeamAreaView({
+  spaceId,
+  role,
+  tab,
+  hrefFor,
+  reviewHref,
+  add,
+}: {
+  spaceId: string;
+  role: ProjectRole | null;
+  tab: AreaTab;
+  hrefFor: (tab: AreaTab) => string;
+  reviewHref?: string | null;
+  add?: AreaAddActions;
+}) {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id ?? null;
@@ -108,14 +136,16 @@ export function TeamAreaView({ spaceId, role, tab, hrefFor, reviewHref }: { spac
   }
   return (
     <SpaceProvider key={`${state.data.space.id}-${version}`} initial={state.data} userId={userId}>
-      <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} />
+      <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} />
     </SpaceProvider>
   );
 }
 
-function AreaBody({ role, tab, hrefFor, reviewHref, onChanged }: { role: ProjectRole | null; tab: AreaTab; hrefFor: (tab: AreaTab) => string; reviewHref: string | null; onChanged: () => void }) {
+function AreaBody({ role, tab, hrefFor, reviewHref, onChanged, add }: { role: ProjectRole | null; tab: AreaTab; hrefFor: (tab: AreaTab) => string; reviewHref: string | null; onChanged: () => void; add?: AreaAddActions }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const { space, items, palettes, caps } = useSpaceContext();
+  const [addOpen, setAddOpen] = useState(false);
   const count: Partial<Record<AreaTab, number>> = {
     images: items.filter((i) => i.kind === "image").length,
     prompts: items.filter((i) => i.kind === "prompt").length,
@@ -125,6 +155,14 @@ function AreaBody({ role, tab, hrefFor, reviewHref, onChanged }: { role: Project
   };
   return (
     <div className="space-y-4" data-team-area={space.id} data-area-role={role ?? "none"} data-area-can-edit={caps.edit ? "1" : "0"}>
+      {caps.edit && (
+        <div className="flex justify-end">
+          <Button type="button" onClick={() => setAddOpen(true)} data-area-add>
+            <Plus size={16} aria-hidden />
+            {t("tp.add.button")}
+          </Button>
+        </div>
+      )}
       <AreaReviewPanel role={role} reviewHref={reviewHref} onChanged={onChanged} />
       <nav aria-label={t("tp.area.tabsAria")}>
         <ScrollRow className="gap-2">
@@ -160,7 +198,57 @@ function AreaBody({ role, tab, hrefFor, reviewHref, onChanged }: { role: Project
         {tab === "palette" && <PaletteTab />}
         {tab === "content" && <AreaContentList />}
       </div>
+      {addOpen && (
+        <AddMenuDialog
+          reviewOn={Boolean(add?.reviewOn)}
+          onClose={() => setAddOpen(false)}
+          onGo={(next) => {
+            setAddOpen(false);
+            router.replace(hrefFor(next), { scroll: false });
+          }}
+          onNewBoard={add?.onNewBoard ? () => { setAddOpen(false); add.onNewBoard?.(); } : undefined}
+          onNewVariable={add?.onNewVariable ? () => { setAddOpen(false); add.onNewVariable?.(); } : undefined}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * "Ekle" menüsü (mockup 4): ne eklemek istiyorsun? Görsel/prompt/not/palet ilgili sekmeye götürür (orada kendi ekleme düğmesi vardır);
+ * workflow ve ayar paketi panodaki "Promptly'den ekle" aracıyla gelir; pano ve değişken kendi pencereleriyle açılır.
+ */
+function AddMenuDialog({ reviewOn, onClose, onGo, onNewBoard, onNewVariable }: { reviewOn: boolean; onClose: () => void; onGo: (tab: AreaTab) => void; onNewBoard?: () => void; onNewVariable?: () => void }) {
+  const { t } = useTranslation();
+  const options: { key: string; icon: IconComponent; label: TranslationKey; hint: TranslationKey; run: () => void }[] = [
+    ...(onNewBoard ? [{ key: "board", icon: Presentation, label: "tp.add.board" as TranslationKey, hint: "tp.add.boardHint" as TranslationKey, run: onNewBoard }] : []),
+    { key: "image", icon: ImageIcon, label: "tp.add.image", hint: "tp.add.imageHint", run: () => onGo("images") },
+    { key: "prompt", icon: SquareTerminal, label: "tp.add.prompt", hint: "tp.add.promptHint", run: () => onGo("prompts") },
+    { key: "workflow", icon: WorkflowIcon, label: "tp.add.workflow", hint: "tp.add.workflowHint", run: () => onGo("board") },
+    { key: "preset", icon: SlidersHorizontal, label: "tp.add.preset", hint: "tp.add.presetHint", run: () => onGo("board") },
+    ...(onNewVariable ? [{ key: "variable", icon: Braces, label: "tp.add.variable" as TranslationKey, hint: "tp.add.variableHint" as TranslationKey, run: onNewVariable }] : []),
+    { key: "palette", icon: Palette, label: "tp.add.palette", hint: "tp.add.paletteHint", run: () => onGo("palette") },
+    { key: "note", icon: StickyNote, label: "tp.add.note", hint: "tp.add.noteHint", run: () => onGo("notes") },
+  ];
+  return (
+    <SpaceDialog title={t("tp.add.title")} onClose={onClose} formTestId="area-add-menu" footer={reviewOn ? <p className="mr-auto text-caption text-text-secondary">{t("tp.add.draftNote")}</p> : undefined}>
+      <ul className="grid grid-cols-2 gap-3" data-testid="area-add-options">
+        {options.map((option) => {
+          const Icon = option.icon;
+          return (
+            <li key={option.key}>
+              <button type="button" onClick={option.run} data-area-add-option={option.key} className="flex h-full w-full flex-col gap-2 rounded-2xl border border-border-soft bg-surface p-3.5 text-left transition-colors hover:bg-surface-soft">
+                <span aria-hidden className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
+                  <Icon size={20} />
+                </span>
+                <span className="text-small font-bold text-text">{t(option.label)}</span>
+                <span className="text-caption text-text-secondary">{t(option.hint)}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </SpaceDialog>
   );
 }
 
@@ -218,7 +306,9 @@ function AreaReviewPanel({ role, reviewHref, onChanged }: { role: ProjectRole | 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const open = items.filter((item) => item.revState !== "approved");
-  if (open.length === 0 || !canAddToArea(role)) return null;
+  const [proposing, setProposing] = useState<SpaceItem | null>(null);
+  const proposable = role === "edit" ? items.filter((item) => canProposeChange(role, { state: item.revState, createdBy: item.createdBy }) && item.kind !== "palette") : [];
+  if ((open.length === 0 && proposable.length === 0) || !canAddToArea(role)) return null;
 
   const subject = (item: SpaceItem) => ({ state: item.revState, createdBy: item.createdBy });
   const submittable = open.filter((item) => canSubmitItem(role, subject(item), userId));
@@ -272,11 +362,93 @@ function AreaReviewPanel({ role, reviewHref, onChanged }: { role: ProjectRole | 
           </li>
         ))}
       </ul>
+      {proposable.length > 0 && (
+        <details className="rounded-lg border border-border-soft px-3 py-2" data-area-propose>
+          <summary className="cursor-pointer text-small font-semibold text-text-secondary">{t("tp.review.proposeTitle", { count: proposable.length })}</summary>
+          <p className="mt-1 text-caption text-text-muted">{t("tp.review.proposeHint")}</p>
+          <ul className="mt-2 divide-y divide-border-soft">
+            {proposable.slice(0, 50).map((item) => (
+              <li key={item.id} className="flex items-center gap-2 py-1.5">
+                <span className="min-w-0 flex-1 truncate text-small text-text">{item.title || t(KIND_KEY[item.kind])}</span>
+                <span className="text-caption text-text-muted">{t(KIND_KEY[item.kind])}</span>
+                <Button type="button" size="sm" variant="outline" onClick={() => setProposing(item)} data-area-propose-item={item.id}>
+                  {t("tp.review.propose")}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       {error && (
         <p role="alert" className="text-caption text-danger">
           {error}
         </p>
       )}
+      {proposing && (
+        <ProposeChangeDialog
+          item={proposing}
+          onClose={() => setProposing(null)}
+          onDone={() => {
+            setProposing(null);
+            onChanged();
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+/** Onaylı öğe için değişiklik önerisi: öneri ayrı tabloda durur (öğe değişmez); lider onaylarsa uygulanır. */
+function ProposeChangeDialog({ item, onClose, onDone }: { item: SpaceItem; onClose: () => void; onDone: () => void }) {
+  const { t } = useTranslation();
+  const [title, setTitle] = useState(item.title);
+  const [body, setBody] = useState(item.body);
+  const [note, setNote] = useState(item.note);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await proposeChange(item.id, { title: title.trim(), body, note });
+      onDone();
+    } catch (e) {
+      setError((e as TeamActionError).message);
+      setBusy(false);
+    }
+  };
+  return (
+    <SpaceDialog
+      title={t("tp.review.proposeDialog")}
+      onClose={onClose}
+      busy={busy}
+      onSubmit={(event) => void submit(event)}
+      formTestId="area-propose-form"
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+            {t("common.cancel")}
+          </Button>
+          <SubmitButton busy={busy}>{t("tp.review.proposeSend")}</SubmitButton>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <label className="block">
+          <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.review.fieldTitle")}</span>
+          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} className="h-11 w-full rounded-xl border border-border bg-background px-3 text-small" />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.review.fieldBody")}</span>
+          <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={8000} rows={6} className="w-full rounded-xl border border-border bg-background px-3 py-2 font-mono text-small" />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.review.fieldNote")}</span>
+          <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} rows={3} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-small" />
+        </label>
+        <FormError message={error} />
+      </div>
+    </SpaceDialog>
   );
 }
