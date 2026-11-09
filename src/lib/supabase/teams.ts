@@ -24,6 +24,9 @@ const KNOWN_CODES = new Set([
   "link_limit_reached", "invite_blocked", "owner_must_transfer", "item_not_approved", "item_deprecated", "pin_limit_reached", "message_not_found",
   "self_vote_not_allowed", "copy_required", "space_approval_forbidden", "space_variable_limit", "space_item_limit", "rate_limit",
   "space_project_managed", "project_library_exists", "project_channel_exists",
+  // Ekip projeleri v2 (docs/history/362-*)
+  "project_not_found", "project_invalid", "project_archived", "project_lockout", "team_project_limit", "team_file_limit", "team_board_limit",
+  "team_variable_limit", "team_area_managed", "channel_project_managed", "review_protected", "review_content_locked", "review_delete_forbidden",
 ]);
 
 function errorCodeOf(message: string | undefined): string | null {
@@ -50,14 +53,14 @@ export function camelize<T>(value: unknown): T {
   return value as T;
 }
 
-async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
+export async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw toTeamError(error);
   return camelize<T>(data);
 }
 
 /** Liste RPC'leri dizi döner; beklenmedik biçim (eski/eksik sunucu işlevi) boş liste sayılır, arayüz çökmez. */
-const rows = async <T>(fn: string, args?: Record<string, unknown>): Promise<T[]> => {
+export const rows = async <T>(fn: string, args?: Record<string, unknown>): Promise<T[]> => {
   const data = await rpc<T[] | null>(fn, args);
   return Array.isArray(data) ? data : [];
 };

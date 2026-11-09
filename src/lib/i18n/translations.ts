@@ -20,6 +20,7 @@ import { communityTranslations } from "./translations-communities";
 import { storyTranslations } from "./translations-stories";
 import { spaceTranslations } from "./translations-spaces";
 import { teamLibraryTranslations } from "./translations-team-library";
+import { teamProjectsTranslations } from "./translations-team-projects";
 import { teamSpacesTranslations } from "./translations-team-spaces";
 import { teamsTranslations } from "./translations-teams";
 import { teamSystemTranslations } from "./translations-team-system";
@@ -3268,6 +3269,7 @@ export const translations = {
   ...communityTranslations,
   ...spaceTranslations,
   ...teamLibraryTranslations,
+  ...teamProjectsTranslations,
   ...teamSpacesTranslations,
   ...teamsTranslations,
   ...teamSystemTranslations,

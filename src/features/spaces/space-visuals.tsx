@@ -24,7 +24,7 @@ import { SPACE_VISIBILITY_LABEL, type SpaceColor, type SpaceKind, type SpaceVisi
 export const SpacesIcon: IconComponent = Shapes;
 
 /** Tür simgesi (oluşturma formu, "Yeni bir Space başlatın" karoları, kart) + yumuşak renk (hex yok, palet token'ları) — docs/history/231-*. */
-export const SPACE_KIND_ICON: Record<SpaceKind, IconComponent> = { moodboard: LayoutDashboard, character: UserRound, brand: BadgeCheck, game_world: Swords, interior: Sofa, free: Shapes, team_library: Library };
+export const SPACE_KIND_ICON: Record<SpaceKind, IconComponent> = { moodboard: LayoutDashboard, character: UserRound, brand: BadgeCheck, game_world: Swords, interior: Sofa, free: Shapes, team_library: Library, team_area: Shapes };
 export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
   moodboard: "bg-primary-soft text-primary",
   character: "bg-secondary/15 text-secondary",
@@ -33,6 +33,7 @@ export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
   interior: "bg-danger/10 text-danger",
   free: "bg-surface-soft text-text-secondary",
   team_library: "bg-surface-soft text-primary",
+  team_area: "bg-surface-soft text-primary",
 };
 
 export const VISIBILITY_ICON: Record<SpaceVisibility, IconComponent> = { private: Lock, link: Link2, public: Globe };

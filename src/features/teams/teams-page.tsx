@@ -29,18 +29,17 @@ import {
   listMyInvitations,
   listMyTeams,
   listMyTodos,
-  listTeamSpaces,
   respondInvitation,
   type TeamActionError,
   type TeamInvitation,
-  type TeamSpaceRow,
   type TeamSummary,
   type TeamTodo,
 } from "@/lib/supabase/teams";
+import { fetchProjectTodos, listProjects, projectTodoAsTeamTodo, type ProjectSummary, type ProjectTodo } from "@/lib/supabase/team-projects";
 import { teamLink } from "@/lib/teams";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
-import { TeamSpaceMini, todoLine } from "./team-phone-home";
+import { ProjectMini, todoLine } from "./team-phone-home";
 
 /**
  * `/teams`: Ekipler (docs/history/353-*). Ekip artık topluluktan bağımsız bir sistemdir: bu sayfa üyesi olduğum ekiplerin günlük kapısı —
@@ -59,30 +58,27 @@ export function TeamsPage() {
   const [invites, setInvites] = useState<TeamInvitation[]>([]);
   const [todos, setTodos] = useState<TeamTodo[]>([]);
   const phone = useMediaQuery("(max-width: 767.98px)");
-  const [recentSpaces, setRecentSpaces] = useState<{ space: TeamSpaceRow; teamName: string }[]>([]);
+  const [recentProjects, setRecentProjects] = useState<{ project: ProjectSummary; teamId: string; teamName: string }[]>([]);
 
   const loadSide = useCallback(() => {
     if (!user) return;
     void listMyInvitations().then(setInvites, () => setInvites([]));
-    void listMyTodos().then(setTodos, () => setTodos([]));
+    // Bekleyenler: proje onayları (yeni) + okunmamış sohbet / süresi dolan konuk (eski `my_team_todos`'tan yalnız bu iki tür).
+    void Promise.all([listMyTodos().catch(() => [] as TeamTodo[]), fetchProjectTodos().catch(() => [] as ProjectTodo[])]).then(([legacy, project]) =>
+      setTodos([...project.map(projectTodoAsTeamTodo), ...legacy.filter((todo) => todo.kind === "unread" || todo.kind === "guest_expiring")]),
+    );
   }, [user]);
   useEffect(loadSide, [loadSide]);
 
-  // Telefon "Son Space'ler" şeridi (docs/history/359-*): ilk üç ekibin Space'leri, en son güncellenen iki tanesi.
+  // Telefon "Son projeler" şeridi (docs/history/359-*, 362-*): ilk üç ekibin projeleri, en son açılan iki tanesi.
   const teamKey = list.items.slice(0, 3).map((team) => team.id).join(",");
   useEffect(() => {
     if (!phone || !teamKey) return;
     let cancelled = false;
     const teams = list.items.slice(0, 3).filter((team) => team.spaceCount > 0);
-    void Promise.all(teams.map((team) => listTeamSpaces(team.id).then((page) => page.items.map((space) => ({ space, teamName: team.name })), () => [] as { space: TeamSpaceRow; teamName: string }[]))).then((all) => {
+    void Promise.all(teams.map((team) => listProjects(team.id).then((all) => all.map((project) => ({ project, teamId: team.id, teamName: team.name })), () => [] as { project: ProjectSummary; teamId: string; teamName: string }[]))).then((all) => {
       if (cancelled) return;
-      setRecentSpaces(
-        all
-          .flat()
-          .filter(({ space }) => !space.isLibrary && !space.archivedAt)
-          .sort((a, b) => b.space.updatedAt.localeCompare(a.space.updatedAt))
-          .slice(0, 2),
-      );
+      setRecentProjects(all.flat().filter(({ project }) => !project.archivedAt).slice(-2).reverse());
     });
     return () => {
       cancelled = true;
@@ -90,13 +86,10 @@ export function TeamsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `list.items` her çizimde değişebilir; ekip kimlikleri `teamKey`'de.
   }, [phone, teamKey]);
 
-  const phoneTodos = useMemo(() => {
-    const withReview = new Set(todos.filter((todo) => todo.kind === "review").map((todo) => todo.teamId));
-    return todos.filter((todo) => !(todo.kind === "approvals" && withReview.has(todo.teamId))).slice(0, 5);
-  }, [todos]);
+  const phoneTodos = useMemo(() => todos.slice(0, 5), [todos]);
   const approvalsByTeam = useMemo(() => {
     const map = new Map<string, number>();
-    for (const todo of todos) if (todo.kind === "approvals") map.set(todo.teamId, todo.n);
+    for (const todo of todos) if (todo.kind === "project_review") map.set(todo.teamId, (map.get(todo.teamId) ?? 0) + todo.n);
     return map;
   }, [todos]);
 
@@ -254,11 +247,11 @@ export function TeamsPage() {
         )}
       </PagedListState>
 
-      {phone && recentSpaces.length > 0 && (
-        <PhoneHomeSection title={t("tm.home.recentSpaces")} testId="teams-phone-spaces">
+      {phone && recentProjects.length > 0 && (
+        <PhoneHomeSection title={t("tp.home.recent")} testId="teams-phone-projects">
           <ul className="grid grid-cols-2 gap-2">
-            {recentSpaces.map(({ space, teamName }) => (
-              <TeamSpaceMini key={space.id} space={space} sub={teamName} />
+            {recentProjects.map(({ project, teamId, teamName }) => (
+              <ProjectMini key={project.id} teamId={teamId} project={project} sub={teamName} />
             ))}
           </ul>
         </PhoneHomeSection>
@@ -294,8 +287,8 @@ function TodoList({ todos }: { todos: TeamTodo[] }) {
       <h2 className="mb-3 text-h3 font-bold">{t("tm.todos.title")}</h2>
       <ul className="space-y-2.5">
         {todos.map((todo, index) => {
-          const Icon = todo.kind === "unread" ? MessageCircle : todo.kind === "review" ? Eye : Check;
-          const tone = todo.kind === "unread" ? "bg-success/10 text-success" : todo.kind === "review" ? "bg-primary-soft text-primary" : "bg-warning/10 text-warning";
+          const Icon = todo.kind === "unread" ? MessageCircle : todo.kind === "project_review" ? Eye : Check;
+          const tone = todo.kind === "unread" ? "bg-success/10 text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary" : "bg-warning/10 text-warning";
           return (
             <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-2xl border border-border-soft bg-surface px-3.5 py-3">
               <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", tone)} aria-hidden>
@@ -317,6 +310,10 @@ function TodoList({ todos }: { todos: TeamTodo[] }) {
 
 function todoTitle(t: ReturnType<typeof useTranslation>["t"], todo: TeamTodo): string {
   switch (todo.kind) {
+    case "project_review":
+      return `${t("tp.todo.review", { count: todo.n })} · ${todo.label}`;
+    case "project_changes":
+      return `${t("tp.todo.changes", { count: todo.n })} · ${todo.label}`;
     case "approvals":
       return t("tm.todos.approvals", { count: todo.n });
     case "review":
@@ -382,12 +379,12 @@ function PhoneTeamCard({ team, approvals }: { team: TeamSummary; approvals: numb
             )}
           </span>
           <span className="mt-0.5 block text-small text-text-secondary">
-            {t(roleLabelKey(team.myRole))} · {t("tm.card.members", { count: team.memberCount })} · {t("tm.card.spaces", { count: team.spaceCount })}
+            {t(roleLabelKey(team.myRole))} · {t("tm.card.members", { count: team.memberCount })} · {t("tp.header.projects", { count: team.spaceCount })}
           </span>
         </Link>
         <div className="relative z-10 mt-2.5 flex items-center gap-2">
           {approvals > 0 && (
-            <Link href={`${teamLink(team.id, "library")}&status=pending`} className="inline-flex h-6 items-center rounded-full bg-secondary px-2.5 text-caption font-bold text-white" data-team-chip="approvals">
+            <Link href={teamLink(team.id, "projects")} className="inline-flex h-6 items-center rounded-full bg-secondary px-2.5 text-caption font-bold text-white" data-team-chip="approvals">
               {t("tm.home.pendingApprovals", { count: approvals })}
             </Link>
           )}
@@ -419,7 +416,7 @@ function TeamCard({ team }: { team: TeamSummary }) {
           <span className="min-w-0 flex-1 md:block">
             <span className="block truncate font-display text-[1.125rem] font-bold leading-tight text-text">{team.name}</span>
             <span className="mt-0.5 block text-small text-text-secondary">
-              {t("tm.card.members", { count: team.memberCount })} · {t("tm.card.spaces", { count: team.spaceCount })}
+              {t("tm.card.members", { count: team.memberCount })} · {t("tp.header.projects", { count: team.spaceCount })}
             </span>
             {team.recent && <span className="mt-1.5 line-clamp-3 block text-small text-text-muted">{recentLine(t, language, team.recent)}</span>}
           </span>

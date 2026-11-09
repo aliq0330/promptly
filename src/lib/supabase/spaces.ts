@@ -5,6 +5,7 @@ import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
 import { resizeImageToBlob } from "@/lib/utils";
+import { isReviewState, type ReviewState } from "@/lib/team-projects";
 import {
   extractSpaceErrorCode,
   SPACE_PAGE_SIZE,
@@ -153,6 +154,9 @@ export interface Space {
   activityVisibility: SpaceActivityVisibility;
   /** Ekibe bağlıysa ekip kimliği (docs/history/353-*); kişisel Space'te `null`. */
   teamId: string | null;
+  /** Ekip projesinin alanıysa proje/dosya kimliği (docs/history/362-*); kişisel Space'te `null`. */
+  teamProjectId: string | null;
+  teamFileId: string | null;
 }
 
 export interface SpaceItem {
@@ -200,6 +204,13 @@ export interface SpaceItem {
   /** "Onaya gönder" isteği (docs/history/349-*): bekleyen istek; onay/geri alma ya da geri çekme temizler. İstemci doğrudan yazamaz (`requestItemReview`). */
   reviewRequestedAt?: string | null;
   reviewRequestedBy?: string | null;
+  /** Ekip projesi onay durumu (docs/history/362-*): kişisel Space ve eski ekip Space'inde hep `approved`. Yalnız `team_review_*` RPC'leri değiştirir. */
+  revState: ReviewState;
+  revNote?: string | null;
+  revSubmittedAt?: string | null;
+  revDecidedAt?: string | null;
+  /** Birlikte karar verilen paket (aynı workflow'un nesneleri). */
+  revUnit?: string | null;
   createdBy: string | null;
   updatedBy: string | null;
   createdAt: string;
@@ -339,10 +350,12 @@ interface SpaceRow {
   comment_count: number | null;
   activity_visibility: SpaceActivityVisibility | null;
   team_id?: string | null;
+  team_project_id?: string | null;
+  team_file_id?: string | null;
 }
 
 const SPACE_COLS =
-  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, quote_count, rating_avg, rating_count, comment_count, activity_visibility, team_id";
+  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, quote_count, rating_avg, rating_count, comment_count, activity_visibility, team_id, team_project_id, team_file_id";
 
 function mapSpace(row: SpaceRow): Space {
   return {
@@ -364,6 +377,8 @@ function mapSpace(row: SpaceRow): Space {
     commentCount: row.comment_count ?? 0,
     activityVisibility: row.activity_visibility ?? "everyone",
     teamId: row.team_id ?? null,
+    teamProjectId: row.team_project_id ?? null,
+    teamFileId: row.team_file_id ?? null,
   };
 }
 
@@ -404,6 +419,11 @@ export interface SpaceItemRow {
   approved_by?: string | null;
   review_requested_at?: string | null;
   review_requested_by?: string | null;
+  rev_state?: string | null;
+  rev_note?: string | null;
+  rev_submitted_at?: string | null;
+  rev_decided_at?: string | null;
+  rev_unit?: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -412,7 +432,7 @@ export interface SpaceItemRow {
 
 // `flow_show_*` (docs/history/261-*) yoksa istek sütunsuz yeniden denenir (server-errors.ts OPTIONAL_COLUMNS) — Space'ler migration'dan önce de açılır.
 const ITEM_COLS =
-  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, approved_at, approved_by, review_requested_at, review_requested_by, created_by, updated_by, created_at, updated_at";
+  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, approved_at, approved_by, review_requested_at, review_requested_by, rev_state, rev_note, rev_submitted_at, rev_decided_at, rev_unit, created_by, updated_by, created_at, updated_at";
 
 export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
   return {
@@ -452,6 +472,11 @@ export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
     approvedBy: row.approved_by ?? null,
     reviewRequestedAt: row.review_requested_at ?? null,
     reviewRequestedBy: row.review_requested_by ?? null,
+    revState: isReviewState(row.rev_state) ? row.rev_state : "approved",
+    revNote: row.rev_note ?? null,
+    revSubmittedAt: row.rev_submitted_at ?? null,
+    revDecidedAt: row.rev_decided_at ?? null,
+    revUnit: row.rev_unit ?? null,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     createdAt: row.created_at,
@@ -1472,6 +1497,8 @@ export function spaceFromSummary(summary: SpaceSummary): Space {
     commentCount: 0,
     activityVisibility: "everyone",
     teamId: summary.teamId ?? null,
+    teamProjectId: null,
+    teamFileId: null,
   };
 }
 

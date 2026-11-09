@@ -7,7 +7,8 @@
  */
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-export type SpaceKind = "moodboard" | "character" | "brand" | "game_world" | "interior" | "free" | "team_library";
+/** `team_area`: ekip projesinin gizli içerik kabı (docs/history/362-*) — kişisel oluşturma/filtre listelerinde (`SPACE_KINDS`) YOKTUR. */
+export type SpaceKind = "moodboard" | "character" | "brand" | "game_world" | "interior" | "free" | "team_library" | "team_area";
 export type SpaceVisibility = "private" | "link" | "public";
 export type SpaceRole = "owner" | "editor" | "viewer";
 export type SpaceItemKind = "image" | "prompt" | "note" | "palette" | "content";
@@ -53,6 +54,7 @@ export const SPACE_KIND_LABEL: Record<SpaceKind, TranslationKey> = {
   interior: "spaces.kind.interior",
   free: "spaces.kind.free",
   team_library: "spaces.kind.team_library",
+  team_area: "spaces.kind.team_area",
 };
 
 export const SPACE_VISIBILITY_LABEL: Record<SpaceVisibility, TranslationKey> = {
@@ -92,6 +94,7 @@ export const SPACE_TEMPLATE_GROUPS: Record<SpaceKind, TranslationKey[]> = {
   free: ["spaces.group.references", "spaces.group.done"],
   // Konuya göre gruplar; "onaylı / onaysız" ayrımı grup değil ÖĞENİN onay işaretidir (grup adı onayla çelişebilirdi).
   team_library: ["spaces.group.general", "spaces.group.marketing", "spaces.group.support", "spaces.group.development"],
+  team_area: [],
 };
 
 export function isSpaceTab(value: string | null | undefined): value is SpaceTab {
