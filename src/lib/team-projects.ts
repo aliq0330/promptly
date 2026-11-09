@@ -95,7 +95,7 @@ export const REVIEW_STATE_TONE: Record<ReviewState, "neutral" | "warning" | "suc
 export function projectLink(
   teamId: string,
   projectId?: string | null,
-  extra: { file?: string | null; board?: string | null; review?: boolean; sub?: string | null } = {},
+  extra: { file?: string | null; board?: string | null; review?: boolean; sub?: string | null; add?: boolean } = {},
 ): string {
   return teamLink(teamId, "projects", {
     project: projectId ?? null,
@@ -103,6 +103,7 @@ export function projectLink(
     board: extra.board ?? null,
     review: extra.review ? "1" : null,
     sub: extra.sub ?? null,
+    add: extra.add ? "1" : null,
   });
 }
 

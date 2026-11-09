@@ -2855,7 +2855,7 @@ export const translations = {
   "groups.visibility.restricted": { tr: "Kapalı", en: "Private" },
   "groups.visibility.restrictedHelp": { tr: "Topluluk aramada bulunabilir; gönderileri yalnızca üyeler görebilir. Katılmak için istek gönderilir.", en: "The community can be found in search; only members can see its posts. People send a request to join." },
   "groups.visibility.publicHelp": { tr: "Herkes topluluğu keşfedebilir ve gönderileri okuyabilir. Katılım doğrudandır.", en: "Anyone can discover the community and read its posts. Joining is direct." },
-  "groups.visibility.privateHelp": { tr: "Topluluk gizlidir; erişim davetle sağlanır. Hiçbir listede, aramada ya da öneride görünmez. Ekip alanıdır: ortak Space'ler açabilirsiniz.", en: "The community is hidden; access is by invitation. It never appears in lists, search or suggestions. It is a team space: you can open shared Spaces." },
+  "groups.visibility.privateHelp": { tr: "Topluluk gizlidir; erişim davetle sağlanır. Hiçbir listede, aramada ya da öneride görünmez.", en: "The community is hidden; access is by invitation. It never appears in lists, search or suggestions." },
   "groups.page.eyebrow": { tr: "Topluluk", en: "Community" },
   "groups.page.title": { tr: "Topluluklar", en: "Communities" },
   "groups.page.description": { tr: "Herkese açık toplulukları keşfet, katıl ya da kendi topluluğunu kur. Kapalı topluluklara davetle girilir.", en: "Discover public communities, join them or start your own. Private communities are joined by invitation." },

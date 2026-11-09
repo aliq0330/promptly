@@ -28,13 +28,13 @@ type NoteFilter = "all" | "attached" | "private";
  * Notlar ve üretim kararları (docs/history/213-*): Space'e ya da bir öğeye bağlı notlar; oluşturan + tarih (üyelere ad, dışarıya
  * yalnız tarih), gizli notlar yalnız üyelere (sunucu da süzer). Düzenleyici oluşturur/düzenler/siler.
  */
-export function NotesTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => void }) {
+export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: string) => void; autoAdd?: boolean }) {
   const { t, language } = useTranslation();
   const { space, items, caps, removeItems, userId } = useSpaceContext();
   const itemTitle = useItemTitle();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<NoteFilter>("all");
-  const [editing, setEditing] = useState<SpaceItem | null | "new">(null);
+  const [editing, setEditing] = useState<SpaceItem | null | "new">(autoAdd ? "new" : null);
   const [deleting, setDeleting] = useState<SpaceItem | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

@@ -14,6 +14,7 @@ import { AlignVerticalDistributeCenter } from "@/components/icons/align-vertical
 import { BringToFront } from "@/components/icons/bring-to-front";
 import { Copy } from "@/components/icons/copy";
 import { Group } from "@/components/icons/group";
+import { Ellipsis } from "@/components/icons/ellipsis";
 import { Hand } from "@/components/icons/hand";
 import { ImagePlus } from "@/components/icons/image-plus";
 import { Keyboard } from "@/components/icons/keyboard";
@@ -52,6 +53,7 @@ import { ConnectionBar } from "./connection-bar";
 import { WorkflowSyncBar } from "./workflow-sync-bar";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 import { imageSourceProblem } from "@/lib/image-processing";
 import {
@@ -162,6 +164,8 @@ function toNewConnection(c: SpaceConnection) {
 
 export function SpaceBoard({ focusId }: { focusId: string | null }) {
   const { t } = useTranslation();
+  // Telefonda araç çubuğu gruplanır (docs/history/363-*): sık kullanılanlar görünür, gerisi "⋯" menüsünde.
+  const phoneBar = useMediaQuery("(max-width: 767.98px)");
   const { space, items, groups, palettes, sources, readable, caps, setItems, setGroups, queueLayout, layoutStatus, flushLayout, layoutNotice, dismissLayoutNotice, addItems, applyImport, removeItems, patchItem, userId, connections, addConnections, removeConnections, patchConnection } =
     useSpaceContext();
   const itemTitle = useItemTitle();
@@ -1043,6 +1047,18 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   const single = selectedItems.length === 1 ? selectedItems[0] : null;
   const selectionGrouped = selectedItems.some((item) => item.groupId);
   const boardPalettes = palettes.filter((palette) => !items.some((item) => item.kind === "palette" && item.paletteId === palette.id));
+  const addMenuItems = [
+    { key: "note", label: t("spaces.board.addNote"), icon: StickyNote, onSelect: () => setDialog({ kind: "note", near: viewCenter() }) },
+    { key: "draft", label: t("spaces.board.addDraft"), icon: SquareTerminal, onSelect: () => setDialog({ kind: "draft", near: viewCenter() }) },
+    { key: "image", label: t("spaces.board.addImage"), icon: ImagePlus, onSelect: () => fileRef.current?.click() },
+    { key: "workflow", label: t("wfSpace.import.menu"), icon: WorkflowIcon, onSelect: () => setDialog({ kind: "importWorkflow" }) },
+    ...boardPalettes.slice(0, 6).map((palette) => ({
+      key: `palette-${palette.id}`,
+      label: t("spaces.board.addPalette", { name: palette.name }),
+      icon: Palette,
+      onSelect: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]),
+    })),
+  ];
   const lowDetail = vp.zoom < LOW_DETAIL_ZOOM;
   const cursor = panning ? "cursor-grabbing" : tool === "pan" || spaceHeld ? "cursor-grab" : tool === "connect" ? "cursor-crosshair" : "cursor-default";
 
@@ -1057,49 +1073,64 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       )}
     >
       {/* Üst araç çubuğu */}
-      <ScrollRow role="toolbar" aria-label={t("spaces.board.toolbar")} wrapperClassName="z-20 shrink-0 border-b border-border-soft bg-surface" className="items-center gap-1 px-2 py-1.5">
-        {editable && (
-          <SpaceMenu
-            align="left"
-            label={t("spaces.board.add")}
-            trigger={<Plus size={18} aria-hidden />}
-            items={[
-              { key: "note", label: t("spaces.board.addNote"), icon: StickyNote, onSelect: () => setDialog({ kind: "note", near: viewCenter() }) },
-              { key: "draft", label: t("spaces.board.addDraft"), icon: SquareTerminal, onSelect: () => setDialog({ kind: "draft", near: viewCenter() }) },
-              { key: "image", label: t("spaces.board.addImage"), icon: ImagePlus, onSelect: () => fileRef.current?.click() },
-              { key: "workflow", label: t("wfSpace.import.menu"), icon: WorkflowIcon, onSelect: () => setDialog({ kind: "importWorkflow" }) },
-              ...boardPalettes.slice(0, 6).map((palette) => ({
-                key: `palette-${palette.id}`,
-                label: t("spaces.board.addPalette", { name: palette.name }),
-                icon: Palette,
-                onSelect: () => void addFromBoard([{ spaceId: space.id, kind: "palette", paletteId: palette.id }]),
-              })),
-            ]}
-          />
-        )}
-        <ToolButton icon={MousePointer2} label={t("spaces.board.toolSelect")} active={tool === "select" && !multiSelect} onClick={() => { setToolMode("select"); setMultiSelect(false); }} className="max-md:hidden" />
-        <ToolButton icon={Hand} label={t("spaces.board.toolPan")} active={tool === "pan"} onClick={() => setToolMode("pan")} className="max-md:hidden" />
-        <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
-        {editable && <ToolButton icon={Spline} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => setToolMode(tool === "connect" ? "select" : "connect")} />}
-        {editable && (
+      <ScrollRow role="toolbar" aria-label={t("spaces.board.toolbar")} wrapperClassName="z-20 shrink-0 border-b border-border-soft bg-surface" className="items-center gap-1 px-2 py-1.5" data-board-toolbar={phoneBar ? "phone" : "full"}>
+        {editable && <SpaceMenu align="left" label={t("spaces.board.add")} trigger={<Plus size={18} aria-hidden />} items={addMenuItems} />}
+        {phoneBar ? (
           <>
+            <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
+            {editable && <ToolButton icon={Spline} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => setToolMode(tool === "connect" ? "select" : "connect")} />}
+            {editable && (
+              <>
+                <Divider />
+                <ToolButton icon={Undo2} label={t("spaces.board.undo")} onClick={() => void undo()} disabled={history.past.length === 0} />
+                <ToolButton icon={Redo2} label={t("spaces.board.redo")} onClick={() => void redo()} disabled={history.future.length === 0} />
+              </>
+            )}
             <Divider />
-            <ToolButton icon={Undo2} label={t("spaces.board.undo")} onClick={() => void undo()} disabled={history.past.length === 0} />
-            <ToolButton icon={Redo2} label={t("spaces.board.redo")} onClick={() => void redo()} disabled={history.future.length === 0} />
-            <ToolButton icon={Layers} label={t("spaces.groups.manage")} onClick={() => setDialog({ kind: "groups" })} />
+            <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
+              {Math.round(vp.zoom * 100)}%
+            </button>
+            <SpaceMenu
+              label={t("spaces.board.moreTools")}
+              trigger={<Ellipsis size={18} aria-hidden />}
+              items={[
+                { key: "groups", label: t("spaces.groups.manage"), icon: Layers, onSelect: () => setDialog({ kind: "groups" }), hidden: !editable },
+                { key: "zoomIn", label: t("spaces.board.zoomIn"), icon: Plus, onSelect: () => zoomBy(1.2) },
+                { key: "zoomOut", label: t("spaces.board.zoomOut"), icon: Minus, onSelect: () => zoomBy(1 / 1.2) },
+                { key: "fit", label: t("spaces.board.fit"), icon: Maximize, onSelect: fit },
+                { key: "search", label: t("spaces.board.search"), icon: Search, onSelect: () => setSearchOpen((open) => !open) },
+                { key: "minimap", label: t("spaces.board.minimap"), icon: MapIcon, onSelect: toggleMinimap },
+                { key: "fullscreen", label: fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen"), icon: fullscreen ? Minimize2 : Maximize2, onSelect: () => setFullscreen((value) => !value) },
+              ]}
+            />
+          </>
+        ) : (
+          <>
+            <ToolButton icon={MousePointer2} label={t("spaces.board.toolSelect")} active={tool === "select" && !multiSelect} onClick={() => { setToolMode("select"); setMultiSelect(false); }} />
+            <ToolButton icon={Hand} label={t("spaces.board.toolPan")} active={tool === "pan"} onClick={() => setToolMode("pan")} />
+            <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
+            {editable && <ToolButton icon={Spline} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => setToolMode(tool === "connect" ? "select" : "connect")} />}
+            {editable && (
+              <>
+                <Divider />
+                <ToolButton icon={Undo2} label={t("spaces.board.undo")} onClick={() => void undo()} disabled={history.past.length === 0} />
+                <ToolButton icon={Redo2} label={t("spaces.board.redo")} onClick={() => void redo()} disabled={history.future.length === 0} />
+                <ToolButton icon={Layers} label={t("spaces.groups.manage")} onClick={() => setDialog({ kind: "groups" })} />
+              </>
+            )}
+            <Divider />
+            <ToolButton icon={Minus} label={t("spaces.board.zoomOut")} onClick={() => zoomBy(1 / 1.2)} />
+            <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
+              {Math.round(vp.zoom * 100)}%
+            </button>
+            <ToolButton icon={Plus} label={t("spaces.board.zoomIn")} onClick={() => zoomBy(1.2)} />
+            <ToolButton icon={Maximize} label={t("spaces.board.fit")} onClick={fit} />
+            <ToolButton icon={Search} label={t("spaces.board.search")} active={searchOpen} onClick={() => setSearchOpen((open) => !open)} />
+            <ToolButton icon={MapIcon} label={t("spaces.board.minimap")} active={minimapOn} onClick={toggleMinimap} className="max-sm:hidden" />
+            <ToolButton icon={Keyboard} label={t("spaces.board.shortcuts")} onClick={() => setDialog({ kind: "shortcuts" })} />
+            <ToolButton icon={fullscreen ? Minimize2 : Maximize2} label={fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen")} onClick={() => setFullscreen((value) => !value)} />
           </>
         )}
-        <Divider />
-        <ToolButton icon={Minus} label={t("spaces.board.zoomOut")} onClick={() => zoomBy(1 / 1.2)} />
-        <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
-          {Math.round(vp.zoom * 100)}%
-        </button>
-        <ToolButton icon={Plus} label={t("spaces.board.zoomIn")} onClick={() => zoomBy(1.2)} />
-        <ToolButton icon={Maximize} label={t("spaces.board.fit")} onClick={fit} />
-        <ToolButton icon={Search} label={t("spaces.board.search")} active={searchOpen} onClick={() => setSearchOpen((open) => !open)} />
-        <ToolButton icon={MapIcon} label={t("spaces.board.minimap")} active={minimapOn} onClick={toggleMinimap} className="max-sm:hidden" />
-        <ToolButton icon={Keyboard} label={t("spaces.board.shortcuts")} onClick={() => setDialog({ kind: "shortcuts" })} className="max-md:hidden" />
-        <ToolButton icon={fullscreen ? Minimize2 : Maximize2} label={fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen")} onClick={() => setFullscreen((value) => !value)} />
         <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">
           {uploading && <Loader2 size={16} className="animate-spin text-text-muted" aria-label={t("spaces.images.uploadingShort")} />}
           <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} className="ml-0" />

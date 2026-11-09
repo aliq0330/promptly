@@ -450,6 +450,7 @@ export const spaceTranslations = {
 
   // ---- Pano ----
   "spaces.board.toolbar": { tr: "Pano araçları", en: "Board tools" },
+  "spaces.board.moreTools": { tr: "Diğer pano araçları", en: "More board tools" },
   "spaces.board.add": { tr: "Ekle", en: "Add" },
   "spaces.board.addNote": { tr: "Not", en: "Note" },
   "spaces.board.addDraft": { tr: "Prompt taslağı", en: "Prompt draft" },

@@ -230,7 +230,8 @@ await scenario("5 İngilizce: çoğalt, mini harita, arama ve kısayol etiketler
 await scenario("6 telefon: mini harita gizli, arama çubuğu ve pano taşmaz", async ({ page }) => {
   await openBoard(page);
   assert.equal(await page.locator("[data-board-minimap]").isVisible(), false, "telefonda mini harita yok");
-  await page.getByRole("button", { name: /Panoda ara/ }).click();
+  await page.getByRole("button", { name: "Diğer pano araçları" }).tap(); // telefonda gruplanmış araç çubuğu (docs/history/363-*)
+  await page.getByRole("menuitem", { name: /Panoda ara/ }).click();
   await page.locator("[data-board-search]").waitFor();
   assert.ok(await overflowFree(page), "yatay taşma yok");
 }, { viewport: { width: 390, height: 800 }, touch: true, setup: (db) => board3(db) });

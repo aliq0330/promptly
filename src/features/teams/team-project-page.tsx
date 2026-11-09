@@ -2,20 +2,22 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft } from "@/components/icons/arrow-left";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { FolderOpen } from "@/components/icons/folder-open";
 import { MessageCircle } from "@/components/icons/message-circle";
 import { Pencil } from "@/components/icons/pencil";
+import { Pin } from "@/components/icons/pin";
 import { Plus } from "@/components/icons/plus";
 import { Presentation } from "@/components/icons/presentation";
 import { Settings } from "@/components/icons/settings";
 import { Trash2 } from "@/components/icons/trash-2";
 import { UsersRound } from "@/components/icons/users-round";
 import { Button, buttonClassName } from "@/components/ui/button";
+import { ChevronRight } from "@/components/icons/chevron-right";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/features/groups/use-toast";
+import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { deleteBoard, fetchProject, renameBoard, setFileReview, type ProjectDetail } from "@/lib/supabase/team-projects";
 import { teamLink } from "@/lib/teams";
@@ -31,17 +33,22 @@ import {
   ReviewSwitchRow,
   VariableDialog,
 } from "./project-dialogs";
-import { ProjectRoleChip, ProjectSection } from "./project-ui";
+import { ProjectPathBar, type PathCrumb } from "./project-path-bar";
+import { ProjectRoleChip } from "./project-ui";
 import { ProjectVariablesPanel } from "./project-variables";
-import { isAreaTab, TeamAreaView, type AreaTab } from "./team-area-view";
+import { isAreaTab, TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view";
 import { TeamReviewInbox } from "./team-review-inbox";
 import type { TeamCtx } from "./team-page";
 import { PersonRow, SectionError } from "./team-ui";
 import type { TeamActionError } from "@/lib/supabase/teams";
 
 /**
- * Proje sayfası (`/teams/local?id=&tab=projects&project=&file=&board=&review=&sub=`; docs/history/362-*). Aynı adres dört görünüm taşır:
- * proje ana ekranı · dosya · pano (proje geneli/ek pano) · lider onay kuyruğu. Rol yalnız proje başınadır (dosya başına rol yok).
+ * Proje sayfası (`/teams/local?id=&tab=projects&project=&file=&board=&review=&sub=&add=`; docs/history/362-*, 363-*). Aynı adres dört görünüm taşır:
+ * proje ana ekranı · dosya · alan (Ortak / ek pano) · lider onay kuyruğu. Rol yalnız proje başınadır (dosya başına rol yok).
+ *
+ * Gezgin düzeni (docs/history/363-*): tek üst çubuk (geri + yol çipleri + bilgi); proje ana ekranı klasör listesidir (Ortak + dosyalar);
+ * bir dosya/alan açılınca içindekiler satır satır görünür, hiçbir şey kendiliğinden açık gelmez, her şey "Ekle" ile eklenir.
+ * Kişiler, roller, değişkenler ve onay anahtarı bilgi (ⓘ) penceresindedir.
  */
 export function TeamProjectPage({ ctx }: { ctx: TeamCtx }) {
   const { t } = useTranslation();
@@ -97,36 +104,195 @@ export function TeamProjectPage({ ctx }: { ctx: TeamCtx }) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
-// Ortak: üst bant / geri bağlantısı
+// Ortak parçalar
 // ---------------------------------------------------------------------------------------------------------------------------------------
-function Crumbs({ teamId, detail, leaf }: { teamId: string; detail: ProjectDetail; leaf?: string }) {
-  const { t } = useTranslation();
+function useAreaTab(): AreaTab | null {
+  const params = useSearchParams();
+  const sub = params.get("sub");
+  return isAreaTab(sub) ? sub : null;
+}
+
+function useAutoAdd(): boolean {
+  return useSearchParams().get("add") === "1";
+}
+
+/** Başlık bloğu: büyük ad + tek satır özet; sağda isteğe bağlı eylemler. */
+function TitleBlock({ title, meta, actions, children }: { title: string; meta?: ReactNode; actions?: ReactNode; children?: ReactNode }) {
   return (
-    <nav aria-label={t("tp.page.crumbs")} className="flex flex-wrap items-center gap-1.5 text-small text-text-secondary" data-project-crumbs>
-      <Link href={projectLink(teamId)} className="inline-flex items-center gap-1 font-medium hover:text-text hover:underline">
-        <ArrowLeft size={14} aria-hidden />
-        {t("tp.list.title")}
-      </Link>
-      <span aria-hidden>/</span>
-      {leaf ? (
-        <Link href={projectLink(teamId, detail.project.id)} className="font-medium hover:text-text hover:underline">
-          {detail.project.title}
-        </Link>
-      ) : (
-        <span className="font-semibold text-text">{detail.project.title}</span>
-      )}
-      {leaf && (
-        <>
-          <span aria-hidden>/</span>
-          <span className="font-semibold text-text">{leaf}</span>
-        </>
-      )}
-    </nav>
+    <header className="flex flex-wrap items-end gap-x-3 gap-y-2 px-1">
+      <div className="min-w-0 flex-1">
+        <h1 className="break-words text-h1 font-display font-extrabold leading-tight text-text">{title}</h1>
+        {meta && <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-text-secondary">{meta}</div>}
+        {children}
+      </div>
+      {actions}
+    </header>
+  );
+}
+
+/** Sağ altta sabit tek ana eylem (telefonda alt menünün üstünde). */
+function FloatingAction({ onClick, label, attrs }: { onClick: () => void; label: string; attrs?: Record<string, string> }) {
+  return (
+    <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex justify-end pt-2 md:bottom-6">
+      <Button type="button" onClick={onClick} className="pointer-events-auto h-12 gap-2 rounded-full px-5 shadow-pop" {...attrs}>
+        <Plus size={18} aria-hidden />
+        {label}
+      </Button>
+    </div>
+  );
+}
+
+function boardRows(detail: ProjectDetail, teamId: string, fileId: string | null): AreaBoardRow[] {
+  return detail.boards
+    .filter((board) => board.fileId === fileId && board.id !== detail.mainAreaId)
+    .map((board) => ({ id: board.id, title: board.title, itemCount: board.itemCount, href: projectLink(teamId, detail.project.id, { board: board.id }) }));
+}
+
+function teamCrumb(ctx: TeamCtx): PathCrumb {
+  return { label: ctx.team.name, href: projectLink(ctx.team.id) };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// Bilgi pencereleri (kişiler, değişkenler, onay) — eskiden yan sütundu
+// ---------------------------------------------------------------------------------------------------------------------------------------
+function ProjectInfoSheet({
+  ctx,
+  detail,
+  onClose,
+  onChanged,
+  onAccess,
+  onSettings,
+}: {
+  ctx: TeamCtx;
+  detail: ProjectDetail;
+  onClose: () => void;
+  onChanged: () => void;
+  onAccess: () => void;
+  onSettings: () => void;
+}) {
+  const { t } = useTranslation();
+  const { team } = ctx;
+  const { project, myRole } = detail;
+  const lead = canReview(myRole);
+  return (
+    <SpaceDialog title={t("tp.info.projectTitle")} eyebrow={project.title} onClose={onClose} formTestId="project-info-sheet">
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center gap-2 text-small text-text-secondary">
+          {t("tp.page.yourRole")} <ProjectRoleChip role={myRole} />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {detail.channelId && (
+            <Link href={teamLink(team.id, "chat", { channel: detail.channelId })} className={buttonClassName({ variant: "outline", size: "sm", className: "gap-1.5" })} data-project-open-chat>
+              <MessageCircle size={15} aria-hidden />
+              {t("tp.page.openChat")}
+            </Link>
+          )}
+          {lead && (
+            <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={onSettings} data-project-settings>
+              <Settings size={15} aria-hidden />
+              {t("tp.settings.title")}
+            </Button>
+          )}
+        </div>
+        <section className="space-y-3" data-testid="project-people">
+          <div className="flex items-center gap-2">
+            <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.people.title")}</h3>
+            {lead && (
+              <button type="button" onClick={onAccess} className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary" data-project-edit-access>
+                <UsersRound size={13} aria-hidden />
+                {t("tp.people.edit")}
+              </button>
+            )}
+          </div>
+          <ul className="divide-y divide-border-soft">
+            {detail.people.map((person) => (
+              <li key={`${person.type}-${person.id}`}>
+                <PersonRow
+                  name={person.name}
+                  username={person.username}
+                  avatarUrl={person.avatarUrl}
+                  sub={person.type === "group" ? t("tm.access.groupSub", { count: person.memberCount ?? 0 }) : person.implicit ? t("tp.people.implicit") : undefined}
+                  right={<ProjectRoleChip role={person.role} />}
+                />
+              </li>
+            ))}
+          </ul>
+          <p className="text-caption text-text-muted">{t("tp.people.note")}</p>
+        </section>
+        <ProjectVariablesPanel projectId={project.id} fileId={null} variables={detail.variables} role={myRole} onChanged={onChanged} />
+      </div>
+    </SpaceDialog>
+  );
+}
+
+function FileInfoSheet({
+  detail,
+  file,
+  onClose,
+  onChanged,
+  onRename,
+  onDelete,
+}: {
+  detail: ProjectDetail;
+  file: ProjectDetail["files"][number];
+  onClose: () => void;
+  onChanged: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+}) {
+  const { t } = useTranslation();
+  const { project, myRole } = detail;
+  const lead = canReview(myRole);
+  const { node: toastNode, show } = useToast();
+  const [busy, setBusy] = useState(false);
+  const toggleReview = async (on: boolean) => {
+    setBusy(true);
+    try {
+      const left = await setFileReview(file.id, on);
+      if (!on && left > 0) show(t("tp.review.turnedOffLeft", { count: left }));
+      onChanged();
+    } catch (e) {
+      show((e as TeamActionError).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <SpaceDialog title={t("tp.info.fileTitle")} eyebrow={file.title} onClose={onClose} formTestId="file-info-sheet">
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center gap-2 text-small text-text-secondary">
+          {t("tp.page.yourRole")} <ProjectRoleChip role={myRole} />
+        </div>
+        {lead ? (
+          <div className={cn(busy && "pointer-events-none opacity-60")} data-file-review-switch>
+            <ReviewSwitchRow value={file.reviewRequired} onChange={(on) => void toggleReview(on)} />
+          </div>
+        ) : (
+          <p className="rounded-xl border border-border-soft bg-surface p-3.5 text-small text-text-secondary" data-file-review-note>
+            {t(file.reviewRequired ? "tp.review.noteOn" : "tp.review.noteOff")}
+          </p>
+        )}
+        <ProjectVariablesPanel projectId={project.id} fileId={file.id} variables={detail.variables} role={myRole} onChanged={onChanged} />
+        {lead && (
+          <div className="flex flex-wrap gap-2 border-t border-border-soft pt-4">
+            <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={onRename} data-file-rename>
+              <Pencil size={15} aria-hidden />
+              {t("tp.file.rename")}
+            </Button>
+            <Button type="button" size="sm" variant="outline" className="gap-1.5 text-danger" onClick={onDelete} data-file-delete>
+              <Trash2 size={15} aria-hidden />
+              {t("tp.file.deleteTitle")}
+            </Button>
+          </div>
+        )}
+      </div>
+      {toastNode}
+    </SpaceDialog>
   );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
-// Proje ana ekranı
+// Proje ana ekranı: klasör listesi
 // ---------------------------------------------------------------------------------------------------------------------------------------
 function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDetail; onChanged: () => void }) {
   const { t } = useTranslation();
@@ -134,51 +300,25 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
   const { team } = ctx;
   const { project, myRole } = detail;
   const lead = canReview(myRole);
-  const canAdd = canAddToArea(myRole);
-  const [dialog, setDialog] = useState<null | "file" | "board" | "access" | "settings">(null);
+  const [dialog, setDialog] = useState<null | "info" | "file" | "access" | "settings">(null);
   const archived = Boolean(project.archivedAt);
-  const projectBoards = detail.boards.filter((board) => board.fileId === null);
-  const projectVariables = detail.variables;
+  const sharedBoards = boardRows(detail, team.id, null).length;
 
   return (
-    <div className="space-y-6" data-testid="team-project-home" data-project-id={project.id} data-project-role={myRole}>
-      <Crumbs teamId={team.id} detail={detail} />
+    <div className="space-y-4" data-testid="team-project-home" data-project-id={project.id} data-project-role={myRole}>
+      <ProjectPathBar crumbs={[teamCrumb(ctx), { label: project.title }]} backHref={projectLink(team.id)} onInfo={() => setDialog("info")} />
 
-      <header className="flex flex-wrap items-start gap-4 rounded-2xl bg-primary-soft p-5">
-        <span aria-hidden className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-border-soft bg-surface text-primary">
-          <FolderOpen size={30} />
-        </span>
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-caption font-bold uppercase tracking-[0.1em] text-primary">{t("tp.page.kicker")}</p>
-          <h1 className="break-words text-h1 font-display font-extrabold text-text">{project.title}</h1>
-          {project.description && <p className="max-w-2xl whitespace-pre-wrap break-words text-small text-text-secondary">{project.description}</p>}
-          <p className="text-small text-text-secondary">{t("tp.card.counts", { files: detail.files.length, boards: detail.boards.length, people: detail.people.length })}</p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="inline-flex items-center gap-2 text-small text-text-secondary">
-            {t("tp.page.yourRole")} <ProjectRoleChip role={myRole} />
-          </span>
-          <div className="flex flex-wrap justify-end gap-2">
-            {detail.channelId && (
-              <Link href={teamLink(team.id, "chat", { channel: detail.channelId })} className={buttonClassName({ variant: "outline", size: "sm", className: "gap-1.5" })} data-project-open-chat>
-                <MessageCircle size={15} aria-hidden />
-                {t("tp.page.openChat")}
-              </Link>
-            )}
-            {lead && !archived && (
-              <Button type="button" size="sm" onClick={() => setDialog("file")} data-project-new-file>
-                <Plus size={15} aria-hidden />
-                {t("tp.file.new")}
-              </Button>
-            )}
-            {lead && (
-              <Button type="button" size="sm" variant="outline" onClick={() => setDialog("settings")} aria-label={t("tp.settings.title")} data-project-settings>
-                <Settings size={15} aria-hidden />
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
+      <TitleBlock
+        title={project.title}
+        meta={
+          <>
+            <ProjectRoleChip role={myRole} />
+            <span>{t("tp.card.counts", { files: detail.files.length, boards: detail.boards.length, people: detail.people.length })}</span>
+          </>
+        }
+      >
+        {project.description && <p className="mt-1 max-w-2xl whitespace-pre-wrap break-words text-small text-text-secondary">{project.description}</p>}
+      </TitleBlock>
 
       {archived && (
         <p role="status" className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-small text-text">
@@ -186,120 +326,59 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
         </p>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="min-w-0 space-y-7">
-          <ProjectSection title={t("tp.files.title")} hint={t("tp.files.hint")} testId="project-files">
-            {detail.files.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-border-soft p-5 text-small text-text-muted">{t(lead ? "tp.files.emptyLead" : "tp.files.empty")}</p>
-            ) : (
-              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {detail.files.map((file) => (
-                  <li key={file.id}>
-                    <Link
-                      href={projectLink(team.id, project.id, { file: file.id })}
-                      className="block h-full rounded-xl border border-border-soft bg-surface p-4 shadow-card transition-shadow hover:shadow-card-hover"
-                      data-file-card={file.id}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
-                          <FolderOpen size={20} />
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-body font-bold text-text">{file.title}</span>
-                      </div>
-                      <p className="mt-2 text-caption text-text-muted">{t("tp.file.counts", { items: file.itemCount, boards: file.boardCount ?? 0 })}</p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        <span className={cn("inline-flex h-6 items-center rounded-full px-2.5 text-caption font-semibold", file.reviewRequired ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary")}>
-                          {t(file.reviewRequired ? "tp.file.reviewOn" : "tp.file.reviewOff")}
-                        </span>
-                        {lead && (file.pendingCount ?? 0) > 0 && <span className="inline-flex h-6 items-center rounded-full bg-warning/10 px-2.5 text-caption font-semibold text-warning">{t("tp.card.pending", { count: file.pendingCount ?? 0 })}</span>}
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </ProjectSection>
+      {lead && (detail.pendingCount ?? 0) > 0 && (
+        <Link href={projectLink(team.id, project.id, { review: true })} className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 text-small hover:bg-warning/15" data-project-review-link>
+          <span className="grid h-9 min-w-9 place-items-center rounded-full bg-warning/20 px-2 font-bold text-warning">{detail.pendingCount}</span>
+          <span className="min-w-0 flex-1 font-semibold text-text">{t("tp.review.waitingForYou")}</span>
+        </Link>
+      )}
 
-          <ProjectSection
-            title={t("tp.boards.title")}
-            hint={t("tp.boards.hint")}
-            testId="project-boards"
-            action={
-              canAdd && !archived ? (
-                <button type="button" onClick={() => setDialog("board")} className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary" data-project-new-board>
-                  <Plus size={12} aria-hidden />
-                  {t("tp.board.new")}
-                </button>
-              ) : null
-            }
-          >
-            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {detail.mainAreaId && (
-                <li>
-                  <Link href={projectLink(team.id, project.id, { board: detail.mainAreaId })} className="flex h-full items-center gap-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card hover:shadow-card-hover" data-project-main-area>
-                    <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary/10 text-secondary">
-                      <Presentation size={20} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-body font-bold text-text">{t("tp.area.projectWide")}</span>
-                      <span className="block text-caption text-text-muted">{t("tp.area.projectWideHint", { items: detail.itemCount })}</span>
-                    </span>
-                  </Link>
-                </li>
-              )}
-              {projectBoards.map((board) => (
-                <li key={board.id}>
-                  <Link href={projectLink(team.id, project.id, { board: board.id })} className="flex h-full items-center gap-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card hover:shadow-card-hover" data-board-card={board.id}>
-                    <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface-soft text-text-secondary">
-                      <Presentation size={20} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-body font-bold text-text">{board.title}</span>
-                      <span className="block text-caption text-text-muted">{t("tp.board.items", { count: board.itemCount })}</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </ProjectSection>
-        </div>
-
-        <aside className="min-w-0 space-y-5">
-          {lead && (detail.pendingCount ?? 0) > 0 && (
-            <Link href={projectLink(team.id, project.id, { review: true })} className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 text-small hover:bg-warning/15" data-project-review-link>
-              <span className="grid h-9 min-w-9 place-items-center rounded-full bg-warning/20 px-2 font-bold text-warning">{detail.pendingCount}</span>
-              <span className="min-w-0 flex-1 font-semibold text-text">{t("tp.review.waitingForYou")}</span>
+      <ul className="space-y-2" data-testid="project-files">
+        {detail.mainAreaId && (
+          <li>
+            <Link href={projectLink(team.id, project.id, { board: detail.mainAreaId })} className="flex min-h-16 items-center gap-3 rounded-xl border border-border-soft bg-surface p-3 shadow-card hover:shadow-card-hover" data-project-main-area>
+              <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-secondary/10 text-secondary">
+                <Pin size={21} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-body font-bold text-text">{t("tp.area.projectWide")}</span>
+                <span className="block text-caption text-text-muted">
+                  {t("tp.home.sharedSub", { items: detail.itemCount })}
+                  {sharedBoards > 0 ? ` · ${t("tp.board.items", { count: sharedBoards })}` : ""}
+                </span>
+              </span>
+              <ChevronRight size={18} aria-hidden className="shrink-0 text-text-muted" />
             </Link>
-          )}
-          <section className="space-y-3 rounded-xl border border-border-soft bg-surface p-4" data-testid="project-people">
-            <div className="flex items-center gap-2">
-              <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.people.title")}</h3>
-              {lead && (
-                <button type="button" onClick={() => setDialog("access")} className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary" data-project-edit-access>
-                  <UsersRound size={13} aria-hidden />
-                  {t("tp.people.edit")}
-                </button>
-              )}
-            </div>
-            <ul className="divide-y divide-border-soft">
-              {detail.people.map((person) => (
-                <li key={`${person.type}-${person.id}`}>
-                  <PersonRow
-                    name={person.name}
-                    username={person.username}
-                    avatarUrl={person.avatarUrl}
-                    sub={person.type === "group" ? t("tm.access.groupSub", { count: person.memberCount ?? 0 }) : person.implicit ? t("tp.people.implicit") : undefined}
-                    right={<ProjectRoleChip role={person.role} />}
-                  />
-                </li>
-              ))}
-            </ul>
-            <p className="text-caption text-text-muted">{t("tp.people.note")}</p>
-          </section>
-          <ProjectVariablesPanel projectId={project.id} fileId={null} variables={projectVariables} role={myRole} onChanged={onChanged} />
-        </aside>
-      </div>
+          </li>
+        )}
+        {detail.files.map((file) => (
+          <li key={file.id}>
+            <Link href={projectLink(team.id, project.id, { file: file.id })} className="flex min-h-16 items-center gap-3 rounded-xl border border-border-soft bg-surface p-3 shadow-card hover:shadow-card-hover" data-file-card={file.id}>
+              <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+                <FolderOpen size={21} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-body font-bold text-text">{file.title}</span>
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-muted">
+                  {t("tp.file.counts", { items: file.itemCount, boards: file.boardCount ?? 0 })}
+                  <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-caption font-semibold", file.reviewRequired ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary")}>
+                    {t(file.reviewRequired ? "tp.file.reviewOn" : "tp.file.reviewOff")}
+                  </span>
+                  {lead && (file.pendingCount ?? 0) > 0 && <span className="inline-flex h-5 items-center rounded-full bg-warning/10 px-2 text-caption font-semibold text-warning">{t("tp.card.pending", { count: file.pendingCount ?? 0 })}</span>}
+                </span>
+              </span>
+              <ChevronRight size={18} aria-hidden className="shrink-0 text-text-muted" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {detail.files.length === 0 && <p className="rounded-xl border border-dashed border-border-soft p-5 text-small text-text-muted">{t(lead ? "tp.files.emptyLead" : "tp.files.empty")}</p>}
 
+      {lead && !archived && <FloatingAction onClick={() => setDialog("file")} label={t("tp.file.new")} attrs={{ "data-project-new-file": "" }} />}
+
+      {dialog === "info" && (
+        <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onChanged={onChanged} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />
+      )}
       {dialog === "file" && (
         <NewFileDialog
           project={detail}
@@ -307,17 +386,6 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           onDone={(id) => {
             setDialog(null);
             router.push(projectLink(team.id, project.id, { file: id }));
-          }}
-        />
-      )}
-      {dialog === "board" && (
-        <NewBoardDialog
-          projectId={project.id}
-          fileId={null}
-          onClose={() => setDialog(null)}
-          onDone={(id) => {
-            setDialog(null);
-            router.push(projectLink(team.id, project.id, { board: id }));
           }}
         />
       )}
@@ -350,117 +418,53 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // Dosya sayfası
 // ---------------------------------------------------------------------------------------------------------------------------------------
-function useAreaTab(): AreaTab {
-  const params = useSearchParams();
-  const sub = params.get("sub");
-  return isAreaTab(sub) ? sub : "board";
-}
-
 function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: ProjectDetail; file: ProjectDetail["files"][number]; onChanged: () => void }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { team } = ctx;
   const { project, myRole } = detail;
-  const lead = canReview(myRole);
   const tab = useAreaTab();
-  const { node: toastNode, show } = useToast();
-  const [dialog, setDialog] = useState<null | "rename" | "delete" | "board" | "variable">(null);
-  const [busy, setBusy] = useState(false);
-  const fileBoards = detail.boards.filter((board) => board.fileId === file.id);
-
-  const toggleReview = async (on: boolean) => {
-    setBusy(true);
-    try {
-      const left = await setFileReview(file.id, on);
-      if (!on && left > 0) show(t("tp.review.turnedOffLeft", { count: left }));
-      onChanged();
-    } catch (e) {
-      show((e as TeamActionError).message);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const autoAdd = useAutoAdd();
+  const [dialog, setDialog] = useState<null | "info" | "rename" | "delete" | "board" | "variable">(null);
+  const fileBoards = boardRows(detail, team.id, file.id);
+  const fileHref = projectLink(team.id, project.id, { file: file.id });
 
   return (
-    <div className="space-y-5" data-testid="team-file-page" data-file-id={file.id} data-project-role={myRole}>
-      <Crumbs teamId={team.id} detail={detail} leaf={file.title} />
-      <header className="flex flex-wrap items-center gap-3 rounded-2xl bg-primary-soft p-5">
-        <span aria-hidden className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-border-soft bg-surface text-primary">
-          <FolderOpen size={26} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-caption font-bold uppercase tracking-[0.1em] text-primary">{t("tp.file.kicker", { project: project.title })}</p>
-          <h1 className="break-words text-h1 font-display font-extrabold text-text">{file.title}</h1>
-        </div>
-        <ProjectRoleChip role={myRole} />
-        {lead && (
-          <div className="flex gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setDialog("rename")} aria-label={t("tp.file.rename")}>
-              <Pencil size={15} aria-hidden />
-            </Button>
-            <Button type="button" size="sm" variant="outline" className="text-danger" onClick={() => setDialog("delete")} aria-label={t("tp.file.deleteTitle")}>
-              <Trash2 size={15} aria-hidden />
-            </Button>
-          </div>
-        )}
-      </header>
+    <div className="space-y-4" data-testid="team-file-page" data-file-id={file.id} data-project-role={myRole}>
+      <ProjectPathBar
+        crumbs={[teamCrumb(ctx), { label: project.title, href: projectLink(team.id, project.id) }, { label: file.title }]}
+        backHref={tab ? fileHref : projectLink(team.id, project.id)}
+        onInfo={() => setDialog("info")}
+      />
+      <TitleBlock
+        title={file.title}
+        meta={
+          <>
+            <span>{t("tp.file.counts", { items: file.itemCount, boards: fileBoards.length })}</span>
+            <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-caption font-semibold", file.reviewRequired ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary")}>
+              {t(file.reviewRequired ? "tp.file.reviewOn" : "tp.file.reviewOff")}
+            </span>
+          </>
+        }
+      />
+      {file.mainAreaId ? (
+        <TeamAreaView
+          spaceId={file.mainAreaId}
+          role={myRole}
+          tab={tab}
+          autoAdd={autoAdd}
+          boards={fileBoards}
+          hrefFor={(next, extra) => projectLink(team.id, project.id, { file: file.id, sub: next, add: extra?.add })}
+          reviewHref={canReview(myRole) ? projectLink(team.id, project.id, { review: true }) : null}
+          add={{ reviewOn: file.reviewRequired, onNewBoard: () => setDialog("board"), onNewVariable: () => setDialog("variable") }}
+        />
+      ) : (
+        <SectionError message={t("tp.area.missing")} />
+      )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="min-w-0">
-          {file.mainAreaId ? (
-            <TeamAreaView
-              spaceId={file.mainAreaId}
-              role={myRole}
-              tab={tab}
-              hrefFor={(next) => projectLink(team.id, project.id, { file: file.id, sub: next })}
-              reviewHref={lead ? projectLink(team.id, project.id, { review: true }) : null}
-              add={{ reviewOn: file.reviewRequired, onNewBoard: () => setDialog("board"), onNewVariable: () => setDialog("variable") }}
-            />
-          ) : (
-            <SectionError message={t("tp.area.missing")} />
-          )}
-        </div>
-        <aside className="min-w-0 space-y-5">
-          {lead ? (
-            <div className={cn(busy && "pointer-events-none opacity-60")} data-file-review-switch>
-              <ReviewSwitchRow value={file.reviewRequired} onChange={(on) => void toggleReview(on)} />
-            </div>
-          ) : (
-            <p className="rounded-xl border border-border-soft bg-surface p-3.5 text-small text-text-secondary" data-file-review-note>
-              {t(file.reviewRequired ? "tp.review.noteOn" : "tp.review.noteOff")}
-            </p>
-          )}
-          <ProjectVariablesPanel projectId={project.id} fileId={file.id} variables={detail.variables} role={myRole} onChanged={onChanged} />
-          <section className="space-y-3 rounded-xl border border-border-soft bg-surface p-4" data-testid="file-boards">
-            <div className="flex items-center gap-2">
-              <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.boards.fileTitle")}</h3>
-              {canAddToArea(myRole) && (
-                <button type="button" onClick={() => setDialog("board")} className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary" data-file-new-board>
-                  <Plus size={12} aria-hidden />
-                  {t("tp.board.new")}
-                </button>
-              )}
-            </div>
-            {fileBoards.length === 0 ? (
-              <p className="text-small text-text-muted">{t("tp.boards.fileEmpty")}</p>
-            ) : (
-              <ul className="space-y-2">
-                {fileBoards.map((board) => (
-                  <li key={board.id}>
-                    <Link href={projectLink(team.id, project.id, { board: board.id })} className="flex items-center gap-2 rounded-lg bg-surface-soft px-3 py-2 text-small font-semibold text-text hover:bg-surface-soft/70" data-board-card={board.id}>
-                      <Presentation size={15} aria-hidden className="text-text-secondary" />
-                      <span className="min-w-0 flex-1 truncate">{board.title}</span>
-                      <span className="text-caption font-normal text-text-muted">{board.itemCount}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </aside>
-      </div>
-      {toastNode}
-
+      {dialog === "info" && (
+        <FileInfoSheet detail={detail} file={file} onClose={() => setDialog(null)} onChanged={onChanged} onRename={() => setDialog("rename")} onDelete={() => setDialog("delete")} />
+      )}
       {dialog === "rename" && (
         <RenameFileDialog
           file={file}
@@ -500,7 +504,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
-// Pano sayfası (proje geneli alanı ya da ek pano)
+// Alan sayfası: Ortak (proje geneli) ya da ek pano
 // ---------------------------------------------------------------------------------------------------------------------------------------
 function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: ProjectDetail; boardId: string; onChanged: () => void }) {
   const { t } = useTranslation();
@@ -508,16 +512,24 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
   const { team } = ctx;
   const { project, myRole } = detail;
   const tab = useAreaTab();
+  const autoAdd = useAutoAdd();
   const isMain = boardId === detail.mainAreaId;
   const board = detail.boards.find((item) => item.id === boardId);
   const [renaming, setRenaming] = useState(false);
   const [title, setTitle] = useState(board?.title ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<null | "info" | "board" | "variable" | "access" | "settings">(null);
   const known = isMain || Boolean(board);
 
   if (!known) return <EmptyState icon={Presentation} title={t("tp.board.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, project.id) }} />;
   const heading = isMain ? t("tp.area.projectWide") : (board?.title ?? "");
   const lead = canReview(myRole);
+  const fileOfBoard = board?.fileId ? detail.files.find((item) => item.id === board.fileId) : null;
+  const parentHref = fileOfBoard ? projectLink(team.id, project.id, { file: fileOfBoard.id }) : projectLink(team.id, project.id);
+  const selfHref = projectLink(team.id, project.id, { board: boardId });
+  const crumbs: PathCrumb[] = [teamCrumb(ctx), { label: project.title, href: projectLink(team.id, project.id) }];
+  if (fileOfBoard) crumbs.push({ label: fileOfBoard.title, href: parentHref });
+  crumbs.push({ label: heading });
 
   const rename = async () => {
     setError(null);
@@ -533,41 +545,46 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
     setError(null);
     try {
       await deleteBoard(boardId);
-      router.replace(projectLink(team.id, project.id));
+      router.replace(parentHref);
     } catch (e) {
       setError((e as TeamActionError).message);
     }
   };
 
   return (
-    <div className="space-y-5" data-testid="team-board-page" data-board-id={boardId} data-project-role={myRole}>
-      <Crumbs teamId={team.id} detail={detail} leaf={heading} />
-      <header className="flex flex-wrap items-center gap-3">
-        {renaming ? (
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} aria-label={t("tp.board.rename")} className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-body" />
-            <Button type="button" size="sm" onClick={() => void rename()}>
-              {t("common.save")}
-            </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => setRenaming(false)}>
-              {t("common.cancel")}
-            </Button>
-          </div>
-        ) : (
-          <h1 className="min-w-0 flex-1 break-words text-h1 font-display font-extrabold text-text">{heading}</h1>
-        )}
-        <ProjectRoleChip role={myRole} />
-        {!isMain && canAddToArea(myRole) && !renaming && (
-          <Button type="button" size="sm" variant="outline" onClick={() => setRenaming(true)} aria-label={t("tp.board.rename")}>
-            <Pencil size={15} aria-hidden />
+    <div className="space-y-4" data-testid="team-board-page" data-board-id={boardId} data-project-role={myRole}>
+      <ProjectPathBar crumbs={crumbs} backHref={tab ? selfHref : parentHref} onInfo={() => setDialog("info")} />
+      {renaming ? (
+        <div className="flex min-w-0 items-center gap-2 px-1">
+          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} aria-label={t("tp.board.rename")} className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-body" />
+          <Button type="button" size="sm" onClick={() => void rename()}>
+            {t("common.save")}
           </Button>
-        )}
-        {!isMain && lead && (
-          <Button type="button" size="sm" variant="outline" className="text-danger" onClick={() => void remove()} aria-label={t("tp.board.delete")}>
-            <Trash2 size={15} aria-hidden />
+          <Button type="button" size="sm" variant="ghost" onClick={() => setRenaming(false)}>
+            {t("common.cancel")}
           </Button>
-        )}
-      </header>
+        </div>
+      ) : (
+        <TitleBlock
+          title={heading}
+          actions={
+            !isMain && (canAddToArea(myRole) || lead) ? (
+              <div className="flex gap-2">
+                {canAddToArea(myRole) && (
+                  <Button type="button" size="sm" variant="outline" onClick={() => setRenaming(true)} aria-label={t("tp.board.rename")}>
+                    <Pencil size={15} aria-hidden />
+                  </Button>
+                )}
+                {lead && (
+                  <Button type="button" size="sm" variant="outline" className="text-danger" onClick={() => void remove()} aria-label={t("tp.board.delete")}>
+                    <Trash2 size={15} aria-hidden />
+                  </Button>
+                )}
+              </div>
+            ) : undefined
+          }
+        />
+      )}
       {error && (
         <p role="alert" className="text-small text-danger">
           {error}
@@ -577,10 +594,63 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
         spaceId={boardId}
         role={myRole}
         tab={tab}
-        hrefFor={(next) => projectLink(team.id, project.id, { board: boardId, sub: next })}
+        autoAdd={autoAdd}
+        boards={isMain ? boardRows(detail, team.id, null) : []}
+        hrefFor={(next, extra) => projectLink(team.id, project.id, { board: boardId, sub: next, add: extra?.add })}
         reviewHref={lead ? projectLink(team.id, project.id, { review: true }) : null}
-        add={{ reviewOn: detail.project.reviewDefault }}
+        add={{
+          reviewOn: detail.project.reviewDefault,
+          onNewBoard: isMain ? () => setDialog("board") : undefined,
+          onNewVariable: isMain ? () => setDialog("variable") : undefined,
+        }}
       />
+
+      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onChanged={onChanged} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />}
+      {dialog === "access" && (
+        <ProjectAccessDialog
+          project={detail}
+          onClose={() => setDialog(null)}
+          onDone={() => {
+            setDialog(null);
+            onChanged();
+          }}
+        />
+      )}
+      {dialog === "settings" && (
+        <ProjectSettingsDialog
+          project={detail}
+          canManage={lead}
+          onClose={() => setDialog(null)}
+          onDone={() => {
+            setDialog(null);
+            onChanged();
+          }}
+          onDeleted={() => router.replace(projectLink(team.id))}
+        />
+      )}
+      {dialog === "variable" && (
+        <VariableDialog
+          projectId={project.id}
+          fileId={null}
+          variable={null}
+          onClose={() => setDialog(null)}
+          onDone={() => {
+            setDialog(null);
+            onChanged();
+          }}
+        />
+      )}
+      {dialog === "board" && (
+        <NewBoardDialog
+          projectId={project.id}
+          fileId={null}
+          onClose={() => setDialog(null)}
+          onDone={(id) => {
+            setDialog(null);
+            router.push(projectLink(team.id, project.id, { board: id }));
+          }}
+        />
+      )}
     </div>
   );
 }
