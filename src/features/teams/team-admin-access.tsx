@@ -17,73 +17,21 @@ import {
   createTeamGroup,
   deleteTeamGroup,
   extendGuest,
-  fetchAccessOverview,
   listTeamGroups,
   listTeamGuests,
   listTeamMembers,
   pruneExpiredGuests,
   setGroupMembers,
   updateTeamGroup,
-  type TeamAccessOverviewRow,
   type TeamActionError,
   type TeamGroup,
   type TeamGuest,
   type TeamMember,
 } from "@/lib/supabase/teams";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { InviteDialog } from "./team-invites";
 import type { TeamCtx } from "./team-page";
-import { SpaceAccessDialog } from "./team-spaces-section";
-import { Panel, PersonRow, StatTile, Switch, TEAM_TONES, TeamMark } from "./team-ui";
-
-/** Yönetim → Space erişimi: ekibin tüm Space'lerinin erişim özeti; satırdan erişim penceresi açılır. */
-export function AdminAccessSection({ ctx }: { ctx: TeamCtx }) {
-  const { t, language } = useTranslation();
-  const [rows, setRows] = useState<TeamAccessOverviewRow[] | null>(null);
-  const [edit, setEdit] = useState<TeamAccessOverviewRow | null>(null);
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    void fetchAccessOverview(ctx.team.id).then(setRows, () => setRows([]));
-  }, [ctx.team.id, tick]);
-  return (
-    <Panel title={t("tm.admin.access")} hint={t("tm.admin.accessHint")}>
-      {rows && rows.length === 0 && <p className="text-small text-text-muted">{t("tm.spaces.empty.title")}</p>}
-      <ul className="divide-y divide-border-soft" data-testid="team-access-overview">
-        {(rows ?? []).map((row) => (
-          <li key={row.spaceId} className="flex flex-wrap items-center gap-3 py-2.5">
-            <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1.5 truncate text-small font-medium">
-                {row.mode !== "all" && <Lock size={12} aria-hidden />}
-                {row.isLibrary ? t("tm.spaces.library") : row.title}
-              </p>
-              <p className="truncate text-caption text-text-muted">
-                {t(row.mode === "all" ? "tm.access.mode.all" : row.mode === "admins" ? "tm.access.mode.admins" : "tm.access.mode.selected")} · {t("tm.spaces.people", { count: row.memberCount })}
-                {row.guestCount > 0 && ` · ${t("tm.spaces.guests", { count: row.guestCount })}`} · {formatRelativeTime(row.updatedAt, language)}
-              </p>
-            </div>
-            {!row.isLibrary && (
-              <Button type="button" size="sm" variant="outline" onClick={() => setEdit(row)}>
-                {t("tm.spaces.access")}
-              </Button>
-            )}
-          </li>
-        ))}
-      </ul>
-      {edit && (
-        <SpaceAccessDialog
-          teamId={ctx.team.id}
-          space={{ id: edit.spaceId, title: edit.title, accessMode: edit.mode }}
-          memberCount={ctx.team.memberCount}
-          onClose={() => setEdit(null)}
-          onSaved={() => {
-            setEdit(null);
-            setTick((n) => n + 1);
-          }}
-        />
-      )}
-    </Panel>
-  );
-}
+import { PersonRow, StatTile, TEAM_TONES, TeamMark } from "./team-ui";
 
 /** Yönetim → Gruplar: ekip grupları (tasarım, pazarlama…); grup erişim listelerinde tek satırdır ve lideri klasör onayı verebilir. */
 export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
@@ -104,8 +52,6 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
 
   const list = groups ?? [];
   const selected = list.find((g) => g.id === selectedId) ?? list[0] ?? null;
-  const toggleApprove = (group: TeamGroup, value: boolean) =>
-    void updateTeamGroup(group.id, { leads_approve: value }).then(load, (e: TeamActionError) => show(e.message));
 
   const card = "rounded-xl border border-border-soft bg-surface p-4";
   const detail = selected && (
@@ -145,30 +91,6 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
             ))}
           </ul>
         )}
-      </section>
-      <section className={card} data-group-library>
-        <h4 className="mb-2 text-small font-bold">{t("tm.admin.groups.library")}</h4>
-        {(selected.folders ?? []).length === 0 ? (
-          <p className="text-small text-text-muted">{t("tm.groups.noFolder")}</p>
-        ) : (
-          <ul className="space-y-1 text-small">
-            {(selected.folders ?? []).map((folder) => (
-              <li key={folder.spaceGroupId}>
-                <span className="font-bold">{t("tm.groups.folder", { name: folder.name })}</span>
-                <span className="block text-caption text-text-muted">{t("tm.groups.folderHint", { count: folder.prompts })}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="mt-3 flex items-center justify-between gap-4 border-t border-border-soft pt-3">
-          <span className="min-w-0">
-            <span className="block text-small font-bold">{t("tm.groups.leadsApprove")}</span>
-            <span className="block text-caption text-text-muted">{t("tm.groups.leadsApproveHint")}</span>
-          </span>
-          <span data-group-leads-approve>
-            <Switch checked={selected.leadsApprove} onChange={(value) => toggleApprove(selected, value)} label={t("tm.groups.leadsApprove")} />
-          </span>
-        </div>
       </section>
     </div>
   );
@@ -454,7 +376,7 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
       {t("tm.guests.invite")}
     </Button>
   );
-  const hidden = ["tm.guests.hide.chat", "tm.guests.hide.library", "tm.guests.hide.members", "tm.guests.hide.panel", "tm.guests.hide.admin", "tm.guests.hide.spaces"] as const;
+  const hidden = ["tm.guests.hide.chat", "tm.guests.hide.members", "tm.guests.hide.panel", "tm.guests.hide.admin", "tm.guests.hide.spaces"] as const;
 
   return (
     <div className="space-y-4" data-testid="team-guests-page">

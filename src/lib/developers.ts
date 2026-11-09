@@ -15,11 +15,6 @@ export interface DeveloperEndpoints {
 }
 
 /** `https://<ref>.supabase.co` → uç noktalar. Adres boşsa null (sayfa örnek göstermez, yalnız açıklama gösterir). */
-/** Ekip MCP adresi (`…/mcp/team/<kısa-ad>`, docs/history/353-*): kişisel adresin ekip kütüphanesine daraltılmış hâli. */
-export function teamMcpUrl(endpoints: DeveloperEndpoints, slug: string): string {
-  return `${endpoints.mcpUrl}/team/${slug}`;
-}
-
 export function developerEndpoints(supabaseUrl: string | undefined | null): DeveloperEndpoints | null {
   const base = (supabaseUrl ?? "").trim().replace(/\/+$/, "");
   if (!/^https:\/\/[^/\s]+$/.test(base)) return null;
@@ -48,7 +43,6 @@ export interface DeveloperSnippets {
   curlMeList: string;
   curlMeSave: string;
   curlMeListOther: string;
-  curlMeLibrary: string;
   curlMeUpdate: string;
   claudeCodeMe: string;
   cursorMeJson: string;
@@ -73,7 +67,6 @@ export function developerSnippets(endpoints: DeveloperEndpoints): DeveloperSnipp
     curlMe: `curl "${apiBase}/me" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY"`,
     curlMeList: `curl "${apiBase}/me/prompts?status=draft&limit=10" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY"`,
     curlMeListOther: `curl "${apiBase}/me/requests?status=draft&limit=10" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY"`,
-    curlMeLibrary: `curl "${apiBase}/me/libraries" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY"\n\n# LIBRARY_ID = the "id" returned above\ncurl "${apiBase}/me/libraries/LIBRARY_ID/prompts" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY"`,
     curlMeUpdate: `curl -X PATCH "${apiBase}/me/requests/DRAFT_ID" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"expectedUpdatedAt":"2026-11-02T10:00:00.123Z","changes":{"title":"New title"}}'`,
     curlMeSave: `curl -X POST "${apiBase}/me/prompts" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d @promptly-prompts.json`,
     claudeCodeMe: `claude mcp add --transport http promptly-me ${mcpMeUrl} \\\n  --header "Authorization: Bearer pmt_YOUR_KEY"`,

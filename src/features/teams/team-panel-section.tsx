@@ -140,7 +140,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
                       {alert.link && (
                         <>
                           {" "}
-                          <Link href={teamLink(team.id, "library", { status: "pending" })} className="font-bold text-primary hover:underline">
+                          <Link href={teamLink(team.id, "projects")} className="font-bold text-primary hover:underline">
                             {t("tm.panel.alert.review")}
                           </Link>
                         </>

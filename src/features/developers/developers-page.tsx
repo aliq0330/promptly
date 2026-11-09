@@ -163,9 +163,6 @@ export function DevelopersPage() {
             <Step title={t("dev.meListOther")}>
               <CodeBlock text={snippets.curlMeListOther} label={t("dev.meListOther")} />
             </Step>
-            <Step title={t("dev.meLibrary")} body={t("dev.meLibraryBody")}>
-              <CodeBlock text={snippets.curlMeLibrary} label={t("dev.meLibrary")} />
-            </Step>
             <Step title={t("dev.meSave")} body={t("dev.meSaveBody")}>
               <CodeBlock text={snippets.curlMeSave} label={t("dev.meSave")} />
             </Step>

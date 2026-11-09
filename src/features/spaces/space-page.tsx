@@ -65,7 +65,6 @@ import { CommentsTab, formatRating } from "./tabs/comments-tab";
 import { ActivityTab } from "./tabs/activity-tab";
 import { StarRatingDisplay } from "@/components/ui/star-rating";
 import { SpaceBoard } from "./board/space-board";
-import { TeamSpaceStrip } from "./team-space-strip";
 import { SaveIndicator } from "./save-indicator";
 
 type LoadState = { status: "loading" } | { status: "missing" } | { status: "error" } | { status: "ready"; data: SpaceData; owner: SpacePerson | null; favorite: boolean };
@@ -316,8 +315,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
             )}
           </BandActionRow>
         )}
-
-        {space.teamId && <TeamSpaceStrip teamId={space.teamId} space={{ id: space.id, title: space.title }} />}
 
         {space.archivedAt && (
           <div role="status" className="mt-4 flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-small text-text sm:flex-row sm:items-center sm:justify-between">

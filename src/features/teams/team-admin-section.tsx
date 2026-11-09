@@ -2,12 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Check } from "@/components/icons/check";
 import { Download } from "@/components/icons/download";
 import { History } from "@/components/icons/history";
 import { Info } from "@/components/icons/info";
-import { LayoutGrid } from "@/components/icons/layout-grid";
-import { Plug } from "@/components/icons/plug";
 import { ShieldCheck } from "@/components/icons/shield-check";
 import { TriangleAlert } from "@/components/icons/triangle-alert";
 import { UserPlus } from "@/components/icons/user-plus";
@@ -15,7 +12,6 @@ import { UserRound } from "@/components/icons/user-round";
 import { Users } from "@/components/icons/users";
 import { PhoneSectionList, PhoneSubBar, type PhoneSectionItem } from "@/features/content/phone-sections";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -30,27 +26,23 @@ import {
   deleteTeam,
   exportTeam,
   fetchAuditStats,
-  fetchIntegrations,
   listAudit,
   listTeamMembers,
-  setApiBlock,
   transferOwnership,
   updateTeam,
   type TeamActionError,
   type TeamAuditEntry,
-  type TeamIntegrations,
   type TeamMember,
   type TeamPolicy,
 } from "@/lib/supabase/teams";
-import { developerEndpoints, teamMcpUrl } from "@/lib/developers";
-import { teamLink, teamRoleCan, type TeamRole } from "@/lib/teams";
-import { absoluteUrl, cn, formatRelativeTime } from "@/lib/utils";
-import { AdminAccessSection, AdminGroupsSection, AdminGuestsSection } from "./team-admin-access";
+import { teamLink, type TeamRole } from "@/lib/teams";
+import { cn } from "@/lib/utils";
+import { AdminGroupsSection, AdminGuestsSection } from "./team-admin-access";
 import { InvitesPanel } from "./team-invites";
 import type { TeamCtx } from "./team-page";
-import { Panel, StatTile, Switch, TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
+import { Panel, StatTile, TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
 
-type Section = "general" | "policies" | "invites" | "access" | "groups" | "guests" | "integrations" | "audit" | "export" | "danger";
+type Section = "general" | "policies" | "invites" | "groups" | "guests" | "audit" | "export" | "danger";
 
 /** Yönetim sekmesi: yetenek başına görünen bölümler (gizlemek yalnız görünümdür, her işlem sunucuda yeniden denetlenir). */
 export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
@@ -62,10 +54,9 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
   const items: SectionMenuItem<Section>[] = useMemo(() => {
     const list: SectionMenuItem<Section>[] = [];
     if (can("manage_team")) list.push({ key: "general", label: t("tm.admin.general") }, { key: "policies", label: t("tm.admin.policies") });
-    if (can("manage_members")) list.push({ key: "invites", label: t("tm.admin.invites") }, { key: "access", label: t("tm.admin.access") });
+    if (can("manage_members")) list.push({ key: "invites", label: t("tm.admin.invites") });
     if (can("manage_groups")) list.push({ key: "groups", label: t("tm.admin.groups") });
     if (can("manage_members")) list.push({ key: "guests", label: t("tm.admin.guests") });
-    if (can("manage_team")) list.push({ key: "integrations", label: t("tm.admin.integrations") });
     if (can("view_audit")) list.push({ key: "audit", label: t("tm.admin.audit") });
     if (can("export")) list.push({ key: "export", label: t("tm.admin.export") });
     if (team.myRole === "owner") list.push({ key: "danger", label: t("tm.admin.danger"), dividerBefore: true });
@@ -82,14 +73,10 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
         return <PoliciesSection ctx={ctx} />;
       case "invites":
         return <InvitesPanel ctx={ctx} />;
-      case "access":
-        return <AdminAccessSection ctx={ctx} />;
       case "groups":
         return <AdminGroupsSection ctx={ctx} />;
       case "guests":
         return <AdminGuestsSection ctx={ctx} />;
-      case "integrations":
-        return <IntegrationsSection ctx={ctx} />;
       case "audit":
         return <AuditSection ctx={ctx} />;
       case "export":
@@ -108,10 +95,8 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
       general: Info,
       policies: ShieldCheck,
       invites: UserPlus,
-      access: LayoutGrid,
       groups: Users,
       guests: UserRound,
-      integrations: Plug,
       audit: History,
       export: Download,
       danger: TriangleAlert,
@@ -297,10 +282,8 @@ function PoliciesSection({ ctx }: { ctx: TeamCtx }) {
     if (ok) setDraft({});
     setBusy(false);
   };
-  const num = (key: "approvalsNeeded" | "versionKeep" | "inviteLinkTtlDays") => String(value(key));
+  const num = (key: "inviteLinkTtlDays") => String(value(key));
   const roleOptions = <R extends "owner" | "admin" | "editor">(keys: R[]) => keys.map((key) => ({ key, label: t(`tm.role.${key}` as "tm.role.owner") }));
-  const rolePolicy = { publish_external_role: value("publishExternalRole"), guest_invite_role: value("guestInviteRole"), export_role: value("exportRole") };
-  const approvers = (["owner", "admin", "editor"] as const).filter((role) => teamRoleCan(role, "approve_library", rolePolicy)).map((role) => t(`tm.role.${role}` as "tm.role.owner"));
   const card = "rounded-xl border border-border-soft bg-surface px-4 pb-1 pt-3";
   const cardTitle = "mb-1 border-b border-border-soft pb-2 text-body font-bold text-text";
   return (
@@ -316,25 +299,6 @@ function PoliciesSection({ ctx }: { ctx: TeamCtx }) {
       </div>
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         <div className="space-y-4">
-          <section className={card}>
-            <h3 className={cardTitle}>{t("tm.admin.policy.library")}</h3>
-            <div className="divide-y divide-border-soft">
-              <PolicyRow label={t("tm.admin.policy.requireApproval")} hint={t("tm.admin.policy.requireApprovalHint")}>
-                <Switch checked={value("requireApproval")} onChange={(v) => edit("requireApproval", v)} label={t("tm.admin.policy.requireApproval")} />
-              </PolicyRow>
-              <PolicyRow label={t("tm.admin.policy.approvalsNeeded")} hint={t("tm.admin.policy.approvalsNeededHint")}>
-                <PillSelect label={t("tm.admin.policy.approvalsNeeded")} value={num("approvalsNeeded") as "1" | "2" | "3"} options={(["1", "2", "3"] as const).map((k) => ({ key: k, label: t("tm.admin.policy.nApprovals", { count: Number(k) }) }))} onChange={(k) => edit("approvalsNeeded", Number(k))} />
-              </PolicyRow>
-              <PolicyRow label={t("tm.admin.policy.approvers")} hint={t("tm.admin.policy.approversHint")}>
-                <span className="inline-flex h-9 items-center rounded-full border border-border-soft bg-surface-soft px-3.5 text-caption font-bold text-text-secondary" data-policy-approvers>
-                  {approvers.join(" + ")}
-                </span>
-              </PolicyRow>
-              <PolicyRow label={t("tm.admin.policy.hideUnapproved")} hint={t("tm.admin.policy.hideUnapprovedHint")}>
-                <Switch checked={value("hideUnapproved")} onChange={(v) => edit("hideUnapproved", v)} label={t("tm.admin.policy.hideUnapproved")} />
-              </PolicyRow>
-            </div>
-          </section>
           <section className={card}>
             <h3 className={cardTitle}>{t("tm.admin.policy.sharing")}</h3>
             <div className="divide-y divide-border-soft">
@@ -360,9 +324,6 @@ function PoliciesSection({ ctx }: { ctx: TeamCtx }) {
               <PolicyRow label={t("tm.admin.policy.offboard")} hint={t("tm.admin.policy.offboardHint")}>
                 <PillSelect label={t("tm.admin.policy.offboard")} value={value("offboardDefault")} options={[{ key: "ask", label: t("tm.admin.policy.offboard.ask") }, { key: "team", label: t("tm.admin.policy.offboard.team") }, { key: "admin", label: t("tm.admin.policy.offboard.admin") }]} onChange={(k) => edit("offboardDefault", k)} />
               </PolicyRow>
-              <PolicyRow label={t("tm.admin.policy.versionKeep")} hint={t("tm.admin.policy.versionKeepHint")}>
-                <PillSelect label={t("tm.admin.policy.versionKeep")} value={num("versionKeep") as "10" | "25" | "50" | "100"} options={(["10", "25", "50", "100"] as const).map((k) => ({ key: k, label: t("tm.admin.policy.nVersions", { count: Number(k) }) }))} onChange={(k) => edit("versionKeep", Number(k))} />
-              </PolicyRow>
             </div>
           </section>
           <section className={card}>
@@ -383,186 +344,6 @@ function PoliciesSection({ ctx }: { ctx: TeamCtx }) {
   );
 }
 
-// ---------------------------------------------------------------------------------------------
-
-function IntegrationsSection({ ctx }: { ctx: TeamCtx }) {
-  const { t, language } = useTranslation();
-  const { node, save, show } = useSave(ctx);
-  const [data, setData] = useState<TeamIntegrations | null>(null);
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    void fetchIntegrations(ctx.team.id).then(setData, (e: TeamActionError) => show(e.message));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız ekip/yenileme değişince
-  }, [ctx.team.id, tick]);
-  const policy = ctx.policy;
-  const address = data ? absoluteUrl(`/developers`) : "";
-  const endpoints = developerEndpoints(process.env.NEXT_PUBLIC_SUPABASE_URL);
-  const mcpAddress = data && endpoints ? teamMcpUrl(endpoints, data.slug) : null;
-  const card = "rounded-xl border border-border-soft bg-surface p-4";
-  const copy = async () => {
-    if (!mcpAddress) return;
-    try {
-      await navigator.clipboard.writeText(mcpAddress);
-      show(t("tm.admin.int.copied"));
-    } catch {
-      show(t("tm.admin.int.copyFailed"));
-    }
-  };
-  const allowed = ["tm.admin.int.can.prompts", "tm.admin.int.can.variables", "tm.admin.int.can.versions"] as const;
-  const denied = ["tm.admin.int.cannot.drafts", "tm.admin.int.cannot.write", "tm.admin.int.cannot.chat"] as const;
-  const steps = ["tm.admin.int.step1", "tm.admin.int.step2", "tm.admin.int.step3"] as const;
-  const block = (app: TeamIntegrations["apps"][number]) => (
-    <button
-      type="button"
-      onClick={() => void setApiBlock(ctx.team.id, app.userId, app.tokenId, !app.blocked).then(() => setTick((n) => n + 1), (e: TeamActionError) => show(e.message))}
-      className={cn(
-        "h-8 rounded-full border px-3.5 text-caption font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-        app.blocked ? "border-border bg-surface text-text hover:bg-surface-soft" : "border-danger/40 bg-surface text-danger hover:bg-danger/10",
-      )}
-      data-int-block
-    >
-      {t(app.blocked ? "tm.admin.int.unblock" : "tm.admin.int.block")}
-    </button>
-  );
-  return (
-    <div className="space-y-4" data-testid="team-integrations">
-      <div className="max-md:hidden">
-        <h2 className="font-display text-h2 font-bold">{t("tm.admin.integrations")}</h2>
-        <p className="text-small text-text-secondary">{t("tm.admin.int.subtitle")}</p>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
-        <section className={card} data-int-connector>
-          <h3 className="mb-1 text-body font-bold">{t("tm.admin.int.connectorTitle")}</h3>
-          <p className="mb-3 text-small text-text-secondary md:hidden">{t("tm.admin.int.subtitleShort")}</p>
-          {mcpAddress ? (
-            <div className="flex items-center gap-2">
-              <input readOnly value={mcpAddress} onFocus={(e) => e.currentTarget.select()} aria-label={t("tm.admin.int.mcpAddress")} className="h-11 min-w-0 flex-1 rounded-lg border border-border bg-surface-soft px-3 font-mono text-caption text-text" data-int-address />
-              <Button type="button" onClick={() => void copy()} data-int-copy>
-                {t("tm.admin.int.copy")}
-              </Button>
-            </div>
-          ) : (
-            <p className="text-small text-text-muted">{data ? t("tm.admin.int.noAddress") : t("common.loading")}</p>
-          )}
-          <ol className="mt-4 space-y-3 text-small text-text-secondary">
-            {steps.map((key, index) => (
-              <li key={key} className="flex items-start gap-3">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-soft text-caption font-bold text-primary">{index + 1}</span>
-                <span className="pt-0.5">{t(key)}</span>
-              </li>
-            ))}
-          </ol>
-          {data && (
-            <p className="mt-3 text-caption text-text-muted">
-              {t("tm.admin.int.slug", { slug: data.slug })} · <a href={address} className="text-primary hover:underline">{t("tm.admin.int.docs")}</a>
-            </p>
-          )}
-        </section>
-        <section className={card} data-int-access>
-          <h3 className="mb-3 text-body font-bold">{t("tm.admin.int.whatAccess")}</h3>
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-2 text-small lg:grid-cols-1">
-            {allowed.map((key) => (
-              <li key={key} className="flex items-center gap-2">
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-success/10 text-success" aria-hidden>
-                  <Check size={12} />
-                </span>
-                {t(key)}
-              </li>
-            ))}
-            {denied.map((key) => (
-              <li key={key} className="flex items-center gap-2 text-text-secondary">
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-surface-soft text-text-muted" aria-hidden>
-                  <X size={12} />
-                </span>
-                {t(key)}
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <section className={card} data-int-audience>
-          <div className="flex items-center justify-between gap-3">
-            <span className="min-w-0">
-              <span className="block text-small font-bold">{t("tm.admin.int.audience")}</span>
-              <span className="block text-caption text-text-muted">{t("tm.admin.int.guestsNever")}</span>
-            </span>
-            {policy && (
-              <PillSelect
-                label={t("tm.admin.int.audience")}
-                value={policy.mcpAudience}
-                options={[{ key: "members", label: t("tm.admin.int.aud.members") }, { key: "editors", label: t("tm.admin.int.aud.editors") }, { key: "admins", label: t("tm.admin.int.aud.admins") }]}
-                onChange={(key) => void save({ mcp_audience: key })}
-              />
-            )}
-          </div>
-          {policy && (
-            <div className="mt-3 flex items-center justify-between gap-3 border-t border-border-soft pt-3">
-              <span className="min-w-0">
-                <span className="block text-small font-bold">{t("tm.admin.int.enabled")}</span>
-                <span className="block text-caption text-text-muted">{t("tm.admin.int.enabledHint")}</span>
-              </span>
-              <Switch checked={policy.mcpEnabled} onChange={(v) => void save({ mcp_enabled: v }).then(() => setTick((n) => n + 1))} label={t("tm.admin.int.enabled")} />
-            </div>
-          )}
-        </section>
-        <section className={card} data-int-reads>
-          <p className="text-caption text-text-muted">{t("tm.admin.int.monthTotal")}</p>
-          <p className="mt-1 font-display text-h2 font-bold tabular-nums">{data ? data.monthReads.toLocaleString(language === "en" ? "en-US" : "tr-TR") : "–"}</p>
-        </section>
-      </div>
-      <section className="rounded-xl border border-border-soft bg-surface" data-int-apps>
-        <div className="flex items-center justify-between gap-3 px-4 pt-4 md:hidden">
-          <h3 className="text-body font-bold">{t("tm.admin.int.appsShort")}</h3>
-          {data && <span className="text-caption text-text-muted">{t("tm.admin.int.monthReadsShort", { count: data.monthReads })}</span>}
-        </div>
-        {data && data.apps.length === 0 && <p className="px-4 py-4 text-small text-text-muted">{t("tm.admin.int.noApps")}</p>}
-        {data && data.apps.length > 0 && (
-          <>
-            <table className="hidden w-full text-small md:table">
-              <thead className="bg-surface-soft text-caption uppercase tracking-[0.06em] text-text-muted">
-                <tr className="text-left">
-                  <th className="rounded-tl-xl px-4 py-2.5 font-bold">{t("tm.admin.int.col.app")}</th>
-                  <th className="px-4 py-2.5 font-bold">{t("tm.admin.int.col.last")}</th>
-                  <th className="px-4 py-2.5 font-bold">{t("tm.admin.int.col.reads")}</th>
-                  <th className="rounded-tr-xl px-4 py-2.5" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-soft">
-                {data.apps.map((app) => (
-                  <tr key={`${app.userId}-${app.tokenId ?? app.via}`} data-int-app>
-                    <td className="px-4 py-3">
-                      <span className="font-bold text-text">{app.name}</span> <span className="text-caption text-text-muted">{app.userName}</span>
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary">{formatRelativeTime(app.lastDay, language)}</td>
-                    <td className="px-4 py-3 tabular-nums text-text-secondary">{app.reads}</td>
-                    <td className="px-4 py-3 text-right">{block(app)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <ul className="divide-y divide-border-soft px-4 pb-1 md:hidden">
-              {data.apps.map((app) => (
-                <li key={`${app.userId}-${app.tokenId ?? app.via}`} className="flex items-center gap-3 py-3" data-int-app>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-small font-bold">
-                      {app.name} <span className="text-caption font-normal text-text-muted">{app.userName}</span>
-                    </span>
-                    <span className="block text-caption text-text-muted">
-                      {formatRelativeTime(app.lastDay, language)} · {t("tm.admin.int.reads", { count: app.reads })}
-                    </span>
-                  </span>
-                  {block(app)}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </section>
-      {node}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------------------------
 
