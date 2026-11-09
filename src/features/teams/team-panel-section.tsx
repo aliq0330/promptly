@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchTeamInsights, type TeamActionError, type TeamInsightsData } from "@/lib/supabase/teams";
 import { teamLink } from "@/lib/teams";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { TeamCtx } from "./team-page";
 import { Panel, PillChoice, SectionError } from "./team-ui";
 
@@ -36,7 +36,7 @@ function Stat({ label, value, children }: { label: string; value: React.ReactNod
   );
 }
 
-/** Panel: son 7/30/90 günün kütüphane kullanımı, onay süresi, katkı verenler, uyarılar ve en çok kullanılan promptlar (`team_insights`). */
+/** Panel: son 7/30/90 günün PROJE etkinliği — eklenen içerik, onay süresi, katkı verenler, bekleyen onaylar ve en hareketli projeler (`team_insights`, docs/history/362-*). */
 export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
   const { t, language } = useTranslation();
   const { team } = ctx;
@@ -79,8 +79,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
   const alerts = data
     ? [
         { n: data.alerts.pending, tone: "bg-warning/10 text-warning", text: data.alerts.oldestPendingDays !== null && data.alerts.pending > 0 ? t("tm.panel.alertLine.pending", { days: data.alerts.oldestPendingDays }) : t("tm.panel.alertLine.pendingNoAge"), link: data.alerts.pending > 0 },
-        { n: data.alerts.stale, tone: "bg-primary-soft text-primary", text: t("tm.panel.alertLine.stale"), link: false },
-        { n: data.alerts.deprecatedUsed, tone: "bg-danger/10 text-danger", text: t("tm.panel.alertLine.deprecated"), link: false },
+        { n: data.alerts.changes, tone: "bg-danger/10 text-danger", text: t("tm.panel.alertLine.changes"), link: false },
       ]
     : [];
 
@@ -99,8 +98,8 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-panel-stats>
-            <Stat label={t("tm.panel.copies")} value={data.copies.toLocaleString(language === "en" ? "en-US" : "tr-TR")}>
-              <Delta text={delta(data.copies, data.copiesPrev)} tone={data.copies >= data.copiesPrev ? "good" : "bad"} />
+            <Stat label={t("tm.panel.added")} value={data.added.toLocaleString(language === "en" ? "en-US" : "tr-TR")}>
+              <Delta text={delta(data.added, data.addedPrev)} tone={data.added >= data.addedPrev ? "good" : "bad"} />
             </Stat>
             <Stat label={t("tm.panel.approvalTime")} value={data.approvalHours === null ? "–" : approvalText(data.approvalHours)}>
               {data.approvalHours !== null && data.approvalHoursPrev !== null && Math.abs(data.approvalHours - data.approvalHoursPrev) >= 0.5 && (
@@ -110,9 +109,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
             <Stat label={t("tm.panel.contributors")} value={`${data.contributors}/${data.members}`}>
               <Delta text={data.contributors !== data.contributorsPrev ? `${data.contributors > data.contributorsPrev ? "+" : "−"}${Math.abs(data.contributors - data.contributorsPrev)}` : undefined} tone={data.contributors >= data.contributorsPrev ? "good" : "bad"} />
             </Stat>
-            <Stat label={t("tm.panel.stale")} value={data.stale}>
-              {data.stale > 0 && <Delta text={t("tm.panel.staleShort")} tone="warn" />}
-            </Stat>
+            <Stat label={t("tm.panel.projects")} value={data.projects} />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -160,31 +157,23 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
               <table className="w-full text-small" data-panel-top>
                 <thead className="text-caption uppercase tracking-[0.06em] text-text-muted max-md:hidden">
                   <tr className="text-left">
-                    <th className="pb-2 font-bold">{t("tm.panel.col.prompt")}</th>
-                    <th className="pb-2 font-bold">{t("tm.panel.col.copies")}</th>
-                    <th className="pb-2 font-bold">{t("tm.panel.col.works")}</th>
-                    <th className="pb-2 font-bold">{t("tm.panel.col.updated")}</th>
+                    <th className="pb-2 font-bold">{t("tm.panel.col.project")}</th>
+                    <th className="pb-2 font-bold">{t("tm.panel.col.added")}</th>
+                    <th className="pb-2 font-bold">{t("tm.panel.col.pending")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-soft">
-                  {data.top.map((item) => {
-                    const votes = item.worksYes + item.worksNo;
-                    const works = votes > 0 ? `%${Math.round((item.worksYes / votes) * 100)}` : "–";
-                    return (
-                      <tr key={item.id} data-panel-top-row>
-                        <td className="py-2.5 pr-3 font-bold text-text">{item.title}</td>
-                        <td className="py-2.5 pr-3 tabular-nums text-text-secondary">{item.copies}</td>
-                        <td className="py-2.5 pr-3 text-text-secondary">
-                          <span className="font-bold text-text">{works}</span>
-                          {votes > 0 && <span className="max-md:hidden"> · {t("tm.lib.votes", { count: votes })}</span>}
-                        </td>
-                        <td className="py-2.5 text-text-secondary max-md:hidden">
-                          v{item.rev} · {formatRelativeTime(item.updatedAt, language)}
-                          {item.stale && <span className="ml-2 rounded-full bg-warning/10 px-2 py-0.5 text-caption font-bold text-warning">{t("tm.panel.staleTag")}</span>}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {data.top.map((project) => (
+                    <tr key={project.id} data-panel-top-row>
+                      <td className="py-2.5 pr-3 font-bold text-text">
+                        <Link href={teamLink(team.id, "projects", { project: project.id })} className="hover:underline">
+                          {project.title}
+                        </Link>
+                      </td>
+                      <td className="py-2.5 pr-3 tabular-nums text-text-secondary">{project.added}</td>
+                      <td className="py-2.5 tabular-nums text-text-secondary">{project.pending}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             )}

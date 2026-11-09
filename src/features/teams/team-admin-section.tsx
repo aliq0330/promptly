@@ -244,19 +244,13 @@ function PillSelect<K extends string>({ label, value, options, onChange }: { lab
 /** Kaydet tek düğmedir: değişiklikler yerelde birikir, "Kaydet" tek `team_update` çağrısıyla yazar (mockup; her dokunuşta kayıt yok). */
 type PolicyDraft = Partial<{ [K in keyof TeamPolicy]: TeamPolicy[K] }>;
 const POLICY_SNAKE: Record<keyof TeamPolicy, string> = {
-  requireApproval: "require_approval",
-  approvalsNeeded: "approvals_needed",
-  hideUnapproved: "hide_unapproved",
   contentOwner: "content_owner",
   offboardDefault: "offboard_default",
-  versionKeep: "version_keep",
   defaultMemberRole: "default_member_role",
   inviteLinkTtlDays: "invite_link_ttl_days",
   publishExternalRole: "publish_external_role",
   guestInviteRole: "guest_invite_role",
   exportRole: "export_role",
-  mcpEnabled: "mcp_enabled",
-  mcpAudience: "mcp_audience",
 };
 
 function PoliciesSection({ ctx }: { ctx: TeamCtx }) {

@@ -19,7 +19,6 @@
 import { communityTranslations } from "./translations-communities";
 import { storyTranslations } from "./translations-stories";
 import { spaceTranslations } from "./translations-spaces";
-import { teamLibraryTranslations } from "./translations-team-library";
 import { teamProjectsTranslations } from "./translations-team-projects";
 import { teamSpacesTranslations } from "./translations-team-spaces";
 import { teamsTranslations } from "./translations-teams";
@@ -3268,7 +3267,6 @@ export const translations = {
   "groups.owner.pinTitle": { tr: "Mesaj sabitleme", en: "Pinning messages" },
   ...communityTranslations,
   ...spaceTranslations,
-  ...teamLibraryTranslations,
   ...teamProjectsTranslations,
   ...teamSpacesTranslations,
   ...teamsTranslations,

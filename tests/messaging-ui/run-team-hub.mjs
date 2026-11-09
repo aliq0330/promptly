@@ -60,16 +60,6 @@ function seed(db, { role = "owner", invitations = [] } = {}) {
       cover_url: null, cover_item_id: null, cover_item_url: null, preview_urls: [], image_count: 4, prompt_count: 2, note_count: 0, member_count: 5, my_role: "owner", is_favorite: false, last_opened_at: null,
       created_at: "2026-11-01T00:00:00Z", updated_at: "2026-11-02T00:00:00Z", archived_at: null, access_mode: "selected", guest_count: 1, is_library: false },
   ]);
-  reply("team_library_counts", () => ({ total: 3, approved: 1, pending: 1, draft: 1, deprecated: 0, oldest_pending_at: "2026-11-05T00:00:00Z" }));
-  reply("team_library_items", () => [
-    { id: ITEM, title: "Ürün tanıtım", group_id: null, group_name: "Pazarlama", state: "pending", content_rev: 2, use_count: 0, works_yes: 0, works_no: 0, approvals: 0, approvals_needed: 1,
-      updated_at: "2026-11-05T00:00:00Z", updated_by: null, updated_by_name: "Carol", created_by: null, review_requested_at: "2026-11-05T00:00:00Z", approved_at: null, deprecated_at: null, locked: false },
-  ]);
-  reply("space_item_review", () => ({
-    item: { id: ITEM, title: "Ürün tanıtım", body: "Merhaba {marka}", rev: 2, state: "pending", review_requested_at: "2026-11-05T00:00:00Z", requested_by: null, created_by: null, updated_at: "2026-11-05T00:00:00Z" },
-    needed: 1, can_decide: true, base: null, approvals: [], comments: [],
-  }));
-  reply("space_decide_item", () => ({ state: "approved" }));
   reply("team_list_channels", () => [channel(CH_GENERAL, "genel", "open", { unread_count: 3 }), channel(CH_SECRET, "yonetim", "private")]);
   reply("team_channel_members", () => []);
   reply("team_set_channel_notify", () => null);
@@ -485,9 +475,9 @@ await scenario("29. Telefon: Üyeler satırında Roller ve yetkiler açılır, �
 } });
 
 // --- Faz 2: Yönetim (sol gezinme), Denetim, Panel, Politikalar, Gruplar, Konuklar, Entegrasyonlar (docs/history/356-*) ---
-const POLICY_ROW = { require_approval: true, approvals_needed: 1, hide_unapproved: true, content_owner: "team", offboard_default: "ask", version_keep: 50, default_member_role: "member", invite_link_ttl_days: 7, publish_external_role: "admin", guest_invite_role: "admin", export_role: "owner", mcp_enabled: true, mcp_audience: "members" };
+const POLICY_ROW = { content_owner: "team", offboard_default: "ask", default_member_role: "member", invite_link_ttl_days: 7, publish_external_role: "admin", guest_invite_role: "admin", export_role: "owner" };
 const withPolicy = async (page) => {
-  await page.route((url) => url.pathname.endsWith("/rest/v1/teams") && url.search.includes("require_approval"), (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(POLICY_ROW) }));
+  await page.route((url) => url.pathname.endsWith("/rest/v1/teams") && url.search.includes("content_owner"), (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(POLICY_ROW) }));
 };
 const auditRow = (id, category, action, extra = {}) => ({ id, created_at: new Date().toISOString(), category, action, target_label: null, details: null, actor_id: "u-elif", actor_username: "elifk", actor_name: "Elif Kaya", actor_avatar_url: null, ...extra });
 
@@ -533,20 +523,24 @@ await scenario("31. Denetim günlüğü: istatistik kartları, satır (zaman · 
   db.rpc.team_audit_stats = () => ({ body: { total: 214, role_access: 18, deletes: 3 } });
 } });
 
-await scenario("32. Panel: başlık, dönem hapları, dört kart (renkli değişim), günlük grafik, Dikkat gerekenler, en çok kullanılanlar tablosu (Çalıştı mı? %)", async ({ page }) => {
+await scenario("32. Panel (proje etkinliği): başlık, dönem hapları, dört kart (renkli değişim), günlük grafik, Dikkat gerekenler, en hareketli projeler tablosu", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=panel`);
-  await page.getByText("Ekip kütüphanesi nasıl kullanılıyor?").waitFor();
+  await page.getByText("Ekipte neler oluyor?").waitFor();
   await page.locator("[data-panel-stats]").waitFor();
   await page.locator("[data-panel-chart]").waitFor();
   await page.locator("[data-panel-alerts]").waitFor();
+  await page.getByText("içerik onay bekliyor; en eskisi 4 gündür.").waitFor();
+  await page.getByText("içerikte lider değişiklik istedi.").waitFor();
   const row = page.locator("[data-panel-top-row]").first();
-  await row.getByText("%92").waitFor();
-  await row.getByText("Ürün tanıtım metni").waitFor();
+  await row.getByText("Villa Projesi").waitFor();
+  assert.equal((await row.locator("td").nth(1).innerText()).trim(), "42");
+  assert.equal((await row.locator("td").nth(2).innerText()).trim(), "3");
+  assert.equal(await page.getByText("Kopyalama").count(), 0, "eski kütüphane kartları yok");
 }, { setup: (db) => {
-  db.rpc.team_insights = () => ({ body: { days: 30, copies: 1284, copies_prev: 1146, approval_hours: 3, approval_hours_prev: 4, contributors: 31, contributors_prev: 27, members: 48, stale: 9,
-    daily: Array.from({ length: 30 }, (_, i) => ({ day: `2026-10-${String((i % 28) + 1).padStart(2, "0")}`, n: 10 + ((i * 7) % 50) })),
-    alerts: { pending: 6, oldest_pending_days: 4, stale: 9, deprecated_used: 2 },
-    top: [{ id: "t1", title: "Ürün tanıtım metni", copies: 312, works_yes: 35, works_no: 3, rev: 4, updated_at: "2026-11-05T00:00:00Z", stale: false }] } });
+  db.rpc.team_insights = () => ({ body: { days: 30, added: 128, added_prev: 114, approval_hours: 3, approval_hours_prev: 4, contributors: 31, contributors_prev: 27, members: 48, projects: 9,
+    daily: Array.from({ length: 30 }, (_, i) => ({ day: `2026-10-${String((i % 28) + 1).padStart(2, "0")}`, n: 1 + ((i * 7) % 11) })),
+    alerts: { pending: 6, oldest_pending_days: 4, changes: 2 },
+    top: [{ id: "p1", title: "Villa Projesi", added: 42, pending: 3 }] } });
 } });
 
 await scenario("33. Gruplar: sol liste + sağ ayrıntı (üyeler, Space erişimi); gruba dokununca ayrıntı değişir; kütüphane klasörü bölümü yok", async ({ page, db }) => {
@@ -592,7 +586,7 @@ await scenario("36. Telefon: Yönetim bölümleri (Denetim, Panel, Politikalar, 
 }, { viewport: { width: 390, height: 800 }, setup: (db) => {
   db.rpc.team_audit_list = () => ({ body: [auditRow("a1", "approval", "item_approved", { target_label: "Lansman afişi" })] });
   db.rpc.team_audit_stats = () => ({ body: { total: 1, role_access: 0, deletes: 0 } });
-  db.rpc.team_insights = () => ({ body: { days: 30, copies: 10, copies_prev: 5, approval_hours: null, approval_hours_prev: null, contributors: 1, contributors_prev: 1, members: 6, stale: 0, daily: [{ day: "2026-11-01", n: 3 }, { day: "2026-11-02", n: 5 }], alerts: { pending: 0, oldest_pending_days: null, stale: 0, deprecated_used: 0 }, top: [] } });
+  db.rpc.team_insights = () => ({ body: { days: 30, added: 10, added_prev: 5, approval_hours: null, approval_hours_prev: null, contributors: 1, contributors_prev: 1, members: 6, projects: 2, daily: [{ day: "2026-11-01", n: 3 }, { day: "2026-11-02", n: 5 }], alerts: { pending: 0, oldest_pending_days: null, changes: 0 }, top: [] } });
   db.rpc.team_list_groups = () => ({ body: [{ id: "g1", name: "Tasarım", tone: "primary", lead_id: null, lead_name: null, leads_approve: false, member_count: 3, member_ids: [], spaces: [], folders: [] }] });
   db.rpc.team_list_guests = () => ({ body: [] });
   db.rpc.team_integrations = () => ({ body: { slug: "atolye-mor", enabled: true, audience: "members", month_reads: 0, apps: [] } });

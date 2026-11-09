@@ -47,7 +47,12 @@ select public._as_user(:alice);
 select public.team_create('Atölye Mor') as v \gset t_
 reset role;
 insert into public._ctx values ('T', :'t_v');
-insert into public._ctx select 'LIB', library_space_id::text from public.teams where id = public._g('T');
+-- 'LIB' = içeriğin yaşadığı ekip alanı (eski kütüphane Space'i kalktı, docs/history/362-*); sıradan bir ekip Space'i.
+select set_config('promptly.team_sync', '1', false);
+insert into public.spaces (owner_id, title, description, kind, visibility, team_id, team_creator_id, team_access_mode, updated_by)
+  values (:alice, 'Ortak Space', '', 'free', 'private', public._g('T'), :alice, 'all', :alice) returning id as v \gset lib_
+select set_config('promptly.team_sync', '', false);
+insert into public._ctx values ('LIB', :'lib_v');
 
 -- 1) Kullanıcı adıyla davet -----------------------------------------------------------------------------------------------------------------
 set role authenticated;
@@ -178,11 +183,10 @@ update public.team_members set role = 'guest', guest_until = now() + interval '2
 insert into public.space_items (space_id, kind, title, body, is_draft, created_by, updated_by) values
   (public._g('LIB'), 'prompt', 'Dave promptu 1', 'x', true, :dave, :dave), (public._g('LIB'), 'prompt', 'Dave promptu 2', 'y', true, :dave, :dave),
   (public._g('LIB'), 'note', 'Dave notu', '', false, :dave, :dave);
-insert into public.space_variables (space_id, name, value, created_by, updated_by) values (public._g('LIB'), 'marka', 'Mor', :dave, :dave);
 set role authenticated;
 select public._as_user(:bobby);
 select public.team_member_content_summary(public._g('T'), :dave)::text as v \gset sum_
-select public._check(34, 'içerik özeti: 2 prompt, 1 Space öğesi, 1 değişken', (:'sum_v'::jsonb ->> 'prompts')::int = 2 and (:'sum_v'::jsonb ->> 'items')::int = 1 and (:'sum_v'::jsonb ->> 'variables')::int = 1);
+select public._check(34, 'içerik özeti: 2 prompt, 1 Space öğesi, 0 değişken', (:'sum_v'::jsonb ->> 'prompts')::int = 2 and (:'sum_v'::jsonb ->> 'items')::int = 1 and (:'sum_v'::jsonb ->> 'variables')::int = 0);
 select public._as_user(:carol);
 select public._check(35, 'düzenleyici üyeyi çıkaramaz', public._try(format($$select public.team_remove_member(%L, %L)$$, public._g('T'), :dave)) like '%team_forbidden%');
 select public._as_user(:bobby);
@@ -193,7 +197,6 @@ reset role;
 select public._check(37, 'mod "member": içerik ekipte KALIR ve yazarlığı seçilen üyeye (frank) geçer; üyelik gider; çıkarılan bildirim alır',
   public._role(:dave) is null
   and (select count(*) from public.space_items where title like 'Dave promptu%' and created_by = :frank) = 2
-  and (select created_by = :frank from public.space_variables where space_id = public._g('LIB') and name = 'marka')
   and (select count(*) from public.notifications where recipient_id = :dave and message like '%ekibinden çıkarıldın%') = 1);
 select public._check(38, 'denetim günlüğü: çıkarma kaydı özet sayılarıyla', (select details ->> 'prompts' = '2' from public.team_audit where team_id = public._g('T') and action = 'member_removed' limit 1));
 insert into public.team_members (team_id, user_id, role) values (public._g('T'), :hank, 'member');
@@ -320,7 +323,7 @@ select public.team_create('Üçüncü Ekip') as v \gset t3_
 select public.team_create_space(:'t3_v', 'Silinecek Space') as v \gset s3_
 select public.team_delete(:'t3_v', 'üçüncü ekip', true);
 reset role;
-select public._check(66, '"Space’leri de sil" seçeneğiyle Space’ler de silinir (kütüphane dahil)', not exists (select 1 from public.spaces where id = :'s3_v') and not exists (select 1 from public.spaces where kind = 'team_library' and owner_id = :gina::uuid and team_id is not null));
+select public._check(66, '"Space’leri de sil" seçeneğiyle Space’ler de silinir', not exists (select 1 from public.spaces where id = :'s3_v'));
 
 -- Hesap silme: sahibin ekibi başka üyeye devredilir; kimse yoksa ekip silinir
 set role authenticated;

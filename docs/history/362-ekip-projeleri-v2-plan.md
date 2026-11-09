@@ -1,6 +1,6 @@
 # 362 — Ekip projeleri v2: proje → dosya → içerik, dosya başına onay, kütüphane YOK (PLAN)
 
-**Durum: PR-A (veritabanı; §11) ve PR-B (arayüz + eski kütüphane/ekip API-MCP kodunun kaldırılması; §12) KODLANDI — draft PR #477, MERGE EDİLMEDİ; PR-C (yıkıcı temizlik) bekliyor. Varsayımlar (§3) kullanıcı "Başla" dediği için bu hâliyle uygulandı.**
+**Durum: PR-A (veritabanı; §11), PR-B (arayüz + eski kütüphane/ekip API-MCP kodunun kaldırılması; §12) ve PR-C (yıkıcı temizlik; §13) KODLANDI, TEK PR'da (#477). Kullanıcı "PR-C'yi de yap, sonra hepsini komple merge et" dedi. Varsayımlar (§3) kullanıcı "Başla" dediği için bu hâliyle uygulandı.**
 `360-*`/`361-*` (proje başına 4 seviye + proje kütüphanesi) bu planla **geçersiz kalır**: ekip artık Space'e ve kütüphaneye dayanmaz.
 Mockup: kullanıcıya gösterilen 5 ekranlı tasarım (proje sayfası, dosya sayfası, düzenleyici telefon, "Ekle" menüsü, lider onay incelemesi).
 
@@ -272,3 +272,25 @@ Aynı dalda (draft PR #477) PR-A'nın üstüne. Veritabanı migration'ı EKLENME
 - `/spaces/local?id=<alan>` ekip alanını ekip sayfasına yönlendirir (`team_area_info`: dosyanın ana alanı → dosya, diğerleri → pano); Space'e özgü Paylaş/Yorum/Puan/Etkinlik özellikleri ekip alanında DB'de kapatılmadı (yalnız ekip arayüzünde yok; Etkinlik günlüğü DB'de okunamaz).
 - Çizim aracı yok (görsel olarak yüklenir); dosya arşivleme/yeniden sıralama yok; proje şablonu yok.
 - Gerçek Supabase / Realtime / cihaz DENENMEDİ; TR/EN metinler eklendi, hukuki metin (Gizlilik/Koşullar "Ekipler" bölümü) bu PR'da GÜNCELLENMEDİ (kütüphane/API cümleleri için ayrı karar).
+
+## 13. Uygulama kaydı — PR-C (yıkıcı temizlik)
+
+Aynı dalda (PR #477) PR-A + PR-B'nin üstüne. Kullanıcı sırayı değiştirdi ("PR-C'yi de yap, hepsini komple merge et"): PR-B'nin elle adımları (Edge Function `api`/`mcp` yeniden deploy, "Publish MCP package" 0.2.0) merge'den SONRA kalır; o arada canlı Edge v7 düşen `api_me_library*` RPC'lerini çağırır → yalnız **ekip kütüphanesi uçları** hata verir, kişisel uçlar (`/me/*`) etkilenmez.
+
+**Migration `20261116100000_team_library_removal.sql`** (`-- ci:allow-destructive`; yerel PostgreSQL'de eski şemadan seed'lenen kütüphane/ekip Space verisiyle denendi):
+
+| Adım | Ne |
+|---|---|
+| 1 | `team_id` dolu, `kind <> 'team_area'` olan Space'ler SİLİNİR (ekip kütüphanesi, proje kütüphaneleri, eski ekip Space'leri; ekip alanları dokunulmaz); `teams.library_space_id` boşaltılır |
+| 1b | Kişisel `kind='team_library'` Space'ler `free` olur; `spaces_kind_check` 'team_library'siz yeniden kurulur |
+| 2–3 | Politika `space_items_hide_unapproved` (kütüphane), tetikleyici `space_items_version_snapshot`/`spaces_team_before_delete`; tablolar `space_item_approvals/_review_comments/_review_samples/_versions/_uses/_works_votes`, `space_variables`, `team_api_blocks/_usage` |
+| 4 | Kütüphanesiz yeniden yazılanlar: `team_create` (kütüphane açmaz), `team_update` (ölü anahtarlar `team_invalid`), `_team_offboard`, `team_member_content_summary`, `team_export` (`promptly.team` v2: projeler/dosyalar/proje değişkenleri), `team_insights` (Panel: proje etkinliği — eklenen içerik, onay süresi, katkı verenler, bekleyen/değişiklik istenen, en hareketli projeler), `my_team_todos` (yalnız okunmamış sohbet + süresi dolan konuk; proje onayları `team_project_todos`'ta) |
+| 5 | 35 RPC/yardımcı düştü (`api_me_libraries/_team_libraries/_library_prompts/_library_variables`, `team_libraries/_library_items/_library_counts`, `team_create_project_library`, `team_integrations`, `team_set_api_block`, `space_set_item_approval/_request_review/_decide_item/_set_item_deprecated/_set_item_works/_set_review_sample/_set_variable/_delete_variable/_record_item_use/_can_approve/_restore_item_version/…`, `_team_item_hidden/_team_can_approve_item/_team_approvals_needed/_team_api_allowed/_team_api_log`) |
+
+**BİLEREK düşürülmeyenler** (ayrı, sonraki contract): `teams.library_space_id/require_approval/approvals_needed/hide_unapproved/version_keep/mcp_*`, `spaces.project_space_id/approvals_needed`, `space_items.approved_*/review_requested_*/deprecated_*/content_rev/use_count/works_*/review_started_at` ve ilgili korumacı tetikleyiciler: 30+ canlı fonksiyon adıyla anıyor, kimse yazmıyor/okumuyor; düşürmek paylaşılan Space RPC'lerinin yeniden yazımını ister. `fetchTeamPolicy` select'i ve `TeamPolicy` tipi bu sütunlardan temizlendi (istemci artık seçmez).
+
+**İstemci:** `teams.ts` kütüphane/onay/entegrasyon sarmalayıcıları ve tipleri, `spaces.ts` onay/sürüm/değişken sarmalayıcıları, `space-provider` onay/sürüm kolları, `prompts-tab` kütüphane kolu, `space-forms` görünürlük uyarısı, `SpaceKind`/`SPACE_KINDS`'tan `team_library`, `spaceCapabilities.approve`, etkinlik `item_approved/_unapproved` ve ~270 ölü çeviri anahtarı (`translations-team-library.ts` dosyası ve `tm.lib.*`/`tm.admin.int.*`/`tm.spaces.*`/`tm.access.*` ölü anahtarları; TR+EN birlikte) silindi; `library-parts.tsx`, `lib/space-library.ts(+test)` silindi. Panel (`team-panel-section.tsx`) proje etkinliğini çizer.
+
+**Testler:** yeni `supabase/tests/team-library-removal.sql` **19/19** (tablolar/RPC'ler yok, düşen nesneyi anan fonksiyon yok, ekip kütüphanesiz kurulur, `team_update` ölü anahtarları reddeder, `team_insights`/`team_export`/`my_team_todos`/özet/offboard çalışır, alanlar sağlam); uyarlananlar `teams-core` 57/57, `team-admin` 16/16, `team-membership` 69/69; silinenler `space-team-library`, `team-library-governance`, `team-review-samples`, `team-projects` (360 dönemi) ve `run-space-library.mjs`; mock'tan kütüphane RPC'leri çıktı. Tam SQL paketi: yalnız `anon-hardening` (1) ve `contract-cleanup` (3) kırmızı — ikisi PR'dan ÖNCE de kırmızıydı. Ağ taklitli: `run-team-projects` 17/17, `run-team-hub` 38/38 (Panel senaryosu yeni biçime çevrildi), `run-spaces` 34/34, `run-space-posts` 8/8, `run-space-comments` 10/10, `run-space-board-tools` 15/15, `run-space-connectors` 15/15, `run-workflow-space` 40/40. Birim 996, MCP 36, tsc/eslint(0 hata, 17 eski uyarı)/build temiz. `scripts/smoke-test.mjs`: düşen RPC/tablo satırları çıkarıldı.
+
+**Sınırlar:** gerçek Supabase/Realtime/cihaz DENENMEDİ; canlıdaki gerçek ekip Space verisi sayılmadı (demo olduğu kullanıcı kararıyla silinir); Gizlilik/Koşullar "Ekipler" bölümü güncellenmedi (kütüphane/API cümleleri için ayrı karar); İngilizce karşılıklar: yeni/değişen Panel metinleri TR+EN eklendi.

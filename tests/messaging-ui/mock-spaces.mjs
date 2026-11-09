@@ -40,8 +40,6 @@ export function setupSpaces(db) {
   db.spaceItems = [];
   db.spaceConnections = []; // docs/history/262-*: pano okları
   db.spaceGroups = [];
-  db.spaceItemVersions = []; // docs/history/349-*: { id, item_id, space_id, title, body, author_id, author_name, author_username, was_approved, created_at }
-  db.spaceVariables = []; // docs/history/348-*: ekip ortak değişkenleri { space_id, name, value, updated_at }
   db.spacePalettes = [];
   db.spaceInvites = [];
   db.spaceActivity = [];
@@ -290,69 +288,6 @@ export function setupSpaces(db) {
         for (const [i, name] of (body.p_groups ?? []).entries()) db.spaceGroups.push({ id: crypto.randomUUID(), space_id: row.id, name, position: i, created_by: uid, created_at: now() });
         return json(200, row.id);
       }) ??
-      // docs/history/348-*: ekip kütüphanesi (sunucu kurallarının sadeleştirilmiş kopyası; asıl doğrulama supabase/tests/space-team-library.sql)
-      rpcCall("space_set_item_approval", () => {
-        const item = db.spaceItems.find((i) => i.id === body.p_item);
-        if (!item || !canRead(item.space_id, uid)) return err("space_not_found");
-        const sp = space(item.space_id);
-        const mayApprove = sp?.community_id ? teamCan(sp.community_id, uid, "approve_library") && canEdit(item.space_id, uid) : roleOf(item.space_id, uid) === "owner";
-        if (!mayApprove || sp?.archived_at) return err("space_forbidden");
-        if (sp?.kind !== "team_library" || item.kind !== "prompt" || !item.is_draft) return err("space_invalid");
-        item.approved_at = body.p_approved ? now() : null;
-        item.approved_by = body.p_approved ? uid : null;
-        item.review_requested_at = null;
-        item.review_requested_by = null;
-        db.spaceActivity.push({ id: crypto.randomUUID(), space_id: item.space_id, actor_id: uid, action: body.p_approved ? "item_approved" : "item_unapproved", label: item.title || null, count: 1, details: null, author_note: null, comment_count: 0, created_at: now() });
-        return json(200, item.approved_at);
-      }) ??
-      rpcCall("space_can_approve", () => {
-        const sp = space(body.p_space);
-        if (!sp || !canRead(sp.id, uid) || sp.kind !== "team_library") return json(200, false);
-        return json(200, sp.community_id ? teamCan(sp.community_id, uid, "approve_library") && canEdit(sp.id, uid) : roleOf(sp.id, uid) === "owner");
-      }) ??
-      rpcCall("space_request_review", () => {
-        const item = db.spaceItems.find((i) => i.id === body.p_item && i.kind === "prompt" && i.is_draft);
-        if (!item || !canRead(item.space_id, uid)) return err("space_not_found");
-        if (!canEdit(item.space_id, uid)) return err("space_forbidden");
-        if (space(item.space_id)?.kind !== "team_library") return err("space_invalid");
-        if (body.p_withdraw) { item.review_requested_at = null; item.review_requested_by = null; return json(200, null); }
-        if (item.approved_at) return err("space_invalid");
-        if (!item.review_requested_at) { item.review_requested_at = now(); item.review_requested_by = uid; }
-        return json(200, item.review_requested_at);
-      }) ??
-      rpcCall("list_space_item_versions", () => {
-        const item = db.spaceItems.find((i) => i.id === body.p_item);
-        if (!item || !canRead(item.space_id, uid)) return json(200, []);
-        return json(200, db.spaceItemVersions.filter((v) => v.item_id === item.id).sort((a, b) => b.created_at.localeCompare(a.created_at)));
-      }) ??
-      rpcCall("space_restore_item_version", () => {
-        const v = db.spaceItemVersions.find((x) => x.id === body.p_version);
-        const item = v && db.spaceItems.find((i) => i.id === v.item_id);
-        if (!v || !item || !canRead(item.space_id, uid)) return err("space_not_found");
-        if (!canEdit(item.space_id, uid)) return err("space_forbidden");
-        if (item.locked) return err("space_item_locked");
-        db.spaceItemVersions.push({ id: crypto.randomUUID(), item_id: item.id, space_id: item.space_id, title: item.title, body: item.body, author_id: uid, author_name: "Alice", author_username: "alice", was_approved: Boolean(item.approved_at), created_at: now() });
-        Object.assign(item, { title: v.title, body: v.body, approved_at: null, approved_by: null });
-        return json(200, item.id);
-      }) ??
-      rpcCall("space_set_variable", () => {
-        if (!canRead(body.p_space, uid)) return err("space_not_found");
-        if (!canEdit(body.p_space, uid)) return err("space_forbidden");
-        if (space(body.p_space)?.kind !== "team_library") return err("space_invalid");
-        const name = String(body.p_name ?? "").trim();
-        if (!name || name.length > 40 || /[{}\s]/.test(name) || String(body.p_value ?? "").length > 500) return err("space_invalid");
-        const found = db.spaceVariables.find((v) => v.space_id === body.p_space && v.name === name);
-        if (!found && db.spaceVariables.filter((v) => v.space_id === body.p_space).length >= 50) return err("space_variable_limit");
-        if (found) Object.assign(found, { value: body.p_value ?? "", updated_at: now() });
-        else db.spaceVariables.push({ space_id: body.p_space, name, value: body.p_value ?? "", updated_at: now() });
-        return json(200, null);
-      }) ??
-      rpcCall("space_delete_variable", () => {
-        if (!canRead(body.p_space, uid)) return err("space_not_found");
-        if (!canEdit(body.p_space, uid)) return err("space_forbidden");
-        db.spaceVariables = db.spaceVariables.filter((v) => !(v.space_id === body.p_space && v.name === body.p_name));
-        return json(200, null);
-      }) ??
       rpcCall("invite_space_member", () => {
         if (roleOf(body.p_space_id, uid) !== "owner") return err("space_forbidden");
         const target = Object.values(U).find((u) => u.username === body.p_username);
@@ -437,11 +372,6 @@ export function setupSpaces(db) {
       const list = applyFilters(db.spaceMembers, q).filter((m) => m.user_id === uid || roleOf(m.space_id, uid));
       return rows(list.map((m) => ({ ...m, profile: person(m.user_id) })));
     }
-    if (table === "space_variables" && method === "GET") {
-      // RLS: değerleri yalnız ÜYE okur (herkese açık Space'te bile).
-      const list = applyFilters(db.spaceVariables, q).filter((v) => roleOf(v.space_id, uid));
-      return rows([...list].sort((a, b) => a.name.localeCompare(b.name)).map((v) => ({ name: v.name, value: v.value, updated_at: v.updated_at })));
-    }
     if (table === "space_invitations" && method === "GET") {
       return rows(applyFilters(db.spaceInvites, q).filter((i) => roleOf(i.space_id, uid) === "owner").map((i) => ({ ...i, invitee: person(i.invitee_id) })));
     }
@@ -490,9 +420,6 @@ export function setupSpaces(db) {
       if (method === "PATCH") {
         const targets = applyFilters(db[key], q).filter((r) => canEdit(r.space_id, uid));
         for (const r of targets) {
-          // Sunucu tetikleyicisi: onay sütunları doğrudan yazılamaz; başlık/metin değişince onay düşer.
-          if (name === "space_items" && ("approved_at" in body || "approved_by" in body)) return err("space_approval_forbidden");
-          if (name === "space_items" && r.approved_at && (("title" in body && body.title !== r.title) || ("body" in body && body.body !== r.body))) Object.assign(r, { approved_at: null, approved_by: null });
           Object.assign(r, body, { updated_at: now() });
         }
         return rows(targets);
