@@ -48,6 +48,8 @@ import {
   updateSpace,
   type SpacePerson,
 } from "@/lib/supabase/spaces";
+import { fetchAreaInfo } from "@/lib/supabase/team-projects";
+import { projectLink } from "@/lib/team-projects";
 import { isSpaceTab, SPACE_KIND_LABEL, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, type SpaceTab } from "@/lib/spaces";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
@@ -79,6 +81,7 @@ export function SpacePage() {
   const id = searchParams.get("id") ?? "";
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id ?? null;
+  const router = useRouter();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [reload, setReload] = useState(0);
 
@@ -119,7 +122,24 @@ export function SpacePage() {
     };
   }, [id, userId, authLoading, reload]);
 
-  if (state.status === "loading") return <DetailSkeleton />;
+  // Ekip projesinin alanı (docs/history/362-*) Space değildir: kendi sayfasına yönlenir (dosyanın ana alanı → dosya, diğerleri → pano).
+  const areaProject = state.status === "ready" ? state.data.space.teamProjectId : null;
+  const areaId = state.status === "ready" ? state.data.space.id : null;
+  useEffect(() => {
+    if (!areaProject || !areaId) return;
+    let alive = true;
+    void fetchAreaInfo(areaId).then(
+      (info) => {
+        if (alive && info) router.replace(projectLink(info.teamId, info.projectId, info.isMain && info.fileId ? { file: info.fileId } : { board: info.spaceId }));
+      },
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [areaProject, areaId, router]);
+
+  if (state.status === "loading" || areaProject) return <DetailSkeleton />;
   if (state.status === "missing") {
     return (
       <div className="mx-auto max-w-xl px-4 py-16">

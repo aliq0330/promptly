@@ -1,6 +1,6 @@
 # 362 — Ekip projeleri v2: proje → dosya → içerik, dosya başına onay, kütüphane YOK (PLAN)
 
-**Durum: PR-A KODLANDI (ekleyici veritabanı katmanı; §11) — PR-B (arayüz) ve PR-C (yıkıcı temizlik) bekliyor. Varsayımlar (§3) kullanıcı "Başla" dediği için bu hâliyle uygulandı.**
+**Durum: PR-A (veritabanı; §11) ve PR-B (arayüz + eski kütüphane/ekip API-MCP kodunun kaldırılması; §12) KODLANDI — draft PR #477, MERGE EDİLMEDİ; PR-C (yıkıcı temizlik) bekliyor. Varsayımlar (§3) kullanıcı "Başla" dediği için bu hâliyle uygulandı.**
 `360-*`/`361-*` (proje başına 4 seviye + proje kütüphanesi) bu planla **geçersiz kalır**: ekip artık Space'e ve kütüphaneye dayanmaz.
 Mockup: kullanıcıya gösterilen 5 ekranlı tasarım (proje sayfası, dosya sayfası, düzenleyici telefon, "Ekle" menüsü, lider onay incelemesi).
 
@@ -243,3 +243,32 @@ Dört migration (`20261115100000`…`20261115130000`), iki SQL testi, duman test
 - Dosya arşivleme yok (yalnız silme). Pano/dosya yeniden sıralama yok.
 - `space_comments` (Space yorumu/puanı) alanlarda DB'de kapatılmadı; arayüz ekip bağlamında göstermez (PR-B).
 - Realtime ve çoklu onay yok (kapsam dışı, A1).
+
+## 12. Uygulama kaydı — PR-B (arayüz)
+
+Aynı dalda (draft PR #477) PR-A'nın üstüne. Veritabanı migration'ı EKLENMEDİ; yalnız istemci, test ve açık API/MCP kaynakları.
+
+| Alan | Yapılan |
+|---|---|
+| Veri katmanı | `lib/supabase/team-projects.ts` (RPC sarmalayıcıları, `projectTodoAsTeamTodo`), `lib/team-projects.ts` (rol/onay/değişken aynası; `team-projects.test.ts` 9 test, SQL metniyle karşılaştırır), `Space.teamProjectId/teamFileId`, `SpaceItem.revState/revNote/…`, `SpaceKind='team_area'` (kişisel oluşturma listelerinde YOK), `OPTIONAL_COLUMNS` |
+| Ekranlar | Projeler sekmesi + oluşturma, proje ana ekranı, dosya sayfası, pano sayfası (proje geneli/ek pano), erişim penceresi (3 rol), ayarlar (arşiv/sil), proje/dosya değişkenleri, **alan görünümü** (`team-area-view.tsx`: mevcut `SpaceProvider` + Pano/Görseller/Promptlar/İçerik/Notlar/Palet sekmeleri, Ekle menüsü, onay paneli: onaya gönder/geri çek/toplu gönder, değişiklik önerisi), onay rozetleri (sekmeler + pano nesnesi), **lider onay kuyruğu** (paket tek satır, not zorunlu, hepsini onayla, öneri kararı) |
+| Sohbet | Sohbet sekmesinde "Projeler" grubu (proje başlığıyla), `project` kanalı bilgi/başlık metinleri, kanal oluşturmadan `space` seçeneği kalktı |
+| Ana ekranlar | Telefon ana ekranı ve `/teams`: proje sayacı, "Senden bekleyenler" proje onayları (`team_project_todos`), "Son projeler" |
+| Kaldırılan | `team-library-section`, `team-spaces-section`, `team-review-page`, `spaces/team-space-strip`; Yönetim'den Space erişimi + Entegrasyonlar + kütüphane politikaları + sürüm saklama; gruplarda klasör/liderler-onaylar; rol matrisinden onay/kütüphane satırları; açık API `/me/libraries*`, MCP `list_my_libraries`/`get_library_prompts`/`/mcp/team/<ad>`, `/developers` kütüphane adımı; `promptly-mcp` **0.2.0** (Edge kopyaları `sync-function-shared` ile eşitlendi) |
+| Metinler | `translations-team-projects.ts` (TR+EN, `tp.*` + yeni hata kodları `tm.error.*`); eski `tm.*` kütüphane metinleri PR-C'de temizlenir |
+| Testler | ağ taklitli `run-team-projects` **17/17** (liste/oluştur, proje sayfası, değişken, dosya sayfası + onay anahtarı, düzenleyici/görüntüleyici, öner, kuyruk, sohbet grubu, eski adresler, Ekle menüsü, erişim penceresi, EN, telefon taşma); `run-team-hub` kütüphane/Space/Entegrasyon senaryoları çıkarıldı, kalan **38/38**; birim 1005; MCP 36; tsc + eslint temiz; `npm run build` (sahte Supabase ortamıyla) temiz |
+
+### Elle yapılacaklar (PR merge edilirse)
+
+1. Deploy hattı migration'ları (4 dosya) uygular. 2. **Edge Function `api` ve `mcp` yeniden deploy** (CI deploy ETMEZ) ve **"Publish MCP package"** (0.2.0). 3. Yalnız ondan SONRA PR-C.
+
+### PR-C kapsamı (yıkıcı; ayrı PR)
+
+§5'teki envanter + `fetchTeamPolicy` select'inin ve `TeamPolicy` tipinin daraltılması + `team_create`'in kütüphane açmayı bırakması + `team_channels.space_id`/`mode='space'` + `spaces_kind_check`'ten `team_library` + `features/spaces/library-parts.tsx`/prompts-tab kütüphane kolu/`lib/space-library.ts`/`translations-team-library.ts` + eski `my_team_todos` kütüphane kolları + SQL testlerinden kütüphane paketleri (`space-team-library`, `team-library-governance`, `team-review-samples`, `team-projects`, `run-space-library`).
+
+### Bilinçli sınırlar (PR-B)
+
+- "Ekle" menüsü: görsel/prompt/palet/not için ilgili sekmeye götürür (orada kendi ekleme düğmesi var); workflow ve ayar paketi panodaki "Promptly'den ekle" aracıyla; pano ve değişken kendi pencereleriyle.
+- `/spaces/local?id=<alan>` ekip alanını ekip sayfasına yönlendirir (`team_area_info`: dosyanın ana alanı → dosya, diğerleri → pano); Space'e özgü Paylaş/Yorum/Puan/Etkinlik özellikleri ekip alanında DB'de kapatılmadı (yalnız ekip arayüzünde yok; Etkinlik günlüğü DB'de okunamaz).
+- Çizim aracı yok (görsel olarak yüklenir); dosya arşivleme/yeniden sıralama yok; proje şablonu yok.
+- Gerçek Supabase / Realtime / cihaz DENENMEDİ; TR/EN metinler eklendi, hukuki metin (Gizlilik/Koşullar "Ekipler" bölümü) bu PR'da GÜNCELLENMEDİ (kütüphane/API cümleleri için ayrı karar).

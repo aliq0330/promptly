@@ -381,3 +381,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-teams.mjs   
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-rooms.mjs   # 29/29 beklenir (port 4179)
 ```
 
+
+## Ekip projeleri v2 (`docs/history/362-*`)
+
+`run-team-projects.mjs`: Projeler sekmesi, proje/dosya/pano sayfaları, alan görünümü (mevcut Space sağlayıcısı + `mock-spaces.mjs`: `addSpace(…, { teamId, teamProjectId, teamFileId })`, `addItem(…, { rev_state, rev_note, created_by })`), onay paneli, değişiklik önerisi, lider onay kuyruğu, proje sohbeti grubu, İngilizce ve telefon. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/team-projects-v2.sql` ve `team-project-review.sql`.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium/chrome node tests/messaging-ui/run-team-projects.mjs   # 17/17 beklenir
+```

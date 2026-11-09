@@ -69,6 +69,9 @@ export function setupSpaces(db) {
       comment_count: over.comment_count ?? 0,
       activity_visibility: over.activity_visibility ?? "everyone",
       community_id: over.communityId ?? null, // docs/history/349-*: ekibe (tamamen kapalı topluluğa) bağlı Space
+      team_id: over.teamId ?? null,
+      team_project_id: over.teamProjectId ?? null, // docs/history/362-*: ekip projesinin alanı
+      team_file_id: over.teamFileId ?? null,
     };
     db.spaces.push(row);
     db.spaceMembers.push({ space_id: row.id, user_id: row.owner_id, role: "owner", created_at: row.created_at });
@@ -113,7 +116,9 @@ export function setupSpaces(db) {
       attached_item_id: null,
       is_private: over.is_private ?? false,
       approved_at: over.approved_at ?? null, approved_by: over.approved_by ?? null, review_requested_at: over.review_requested_at ?? null, review_requested_by: over.review_requested_by ?? null,
-      created_by: ME, updated_by: ME,
+      // docs/history/362-*: ekip projesi onay durumu (kişisel Space'te hep 'approved').
+      rev_state: over.rev_state ?? "approved", rev_note: over.rev_note ?? null, rev_submitted_at: over.rev_submitted_at ?? null, rev_decided_at: over.rev_decided_at ?? null, rev_unit: over.rev_unit ?? null,
+      created_by: over.created_by ?? ME, updated_by: ME,
       created_at: over.created_at ?? now(), updated_at: over.updated_at ?? now(),
     };
     db.spaceItems.push(row);
