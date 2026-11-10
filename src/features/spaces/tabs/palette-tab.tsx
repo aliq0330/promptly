@@ -77,7 +77,7 @@ export function PaletteTab({ autoAdd }: { autoAdd?: boolean } = {}) {
   );
 }
 
-function PaletteCard({ palette }: { palette: SpacePalette }) {
+export function PaletteCard({ palette }: { palette: SpacePalette }) {
   const { t, language } = useTranslation();
   const { space, setPalettes, setItems, caps, items, addItems } = useSpaceContext();
   const place = usePlaceNewItems();
@@ -317,6 +317,21 @@ function PaletteCard({ palette }: { palette: SpacePalette }) {
         />
       )}
     </li>
+  );
+}
+
+/** Yeni palet penceresi (ad + açıklama); ekip alanındaki "Ekle → Palet" (docs/history/365-*) ve Paletler sekmesi aynı pencereyi kullanır. */
+export function NewPaletteDialog({ onClose }: { onClose: () => void }) {
+  const { space, palettes, setPalettes, userId } = useSpaceContext();
+  if (!userId) return null;
+  return (
+    <PaletteFormModal
+      onClose={onClose}
+      onSubmit={async (name, description) => {
+        const created = await createSpacePalette(space.id, { name, description, colors: [] }, userId, palettes.length);
+        setPalettes((list) => [...list, created]);
+      }}
+    />
   );
 }
 

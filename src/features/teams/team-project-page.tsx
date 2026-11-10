@@ -36,7 +36,7 @@ import {
 import { ProjectPathBar, type PathCrumb } from "./project-path-bar";
 import { ProjectRoleChip } from "./project-ui";
 import { ProjectVariablesPanel } from "./project-variables";
-import { isAreaTab, TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view";
+import { TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view";
 import { TeamReviewInbox } from "./team-review-inbox";
 import type { TeamCtx } from "./team-page";
 import { PersonRow, SectionError } from "./team-ui";
@@ -106,14 +106,9 @@ export function TeamProjectPage({ ctx }: { ctx: TeamCtx }) {
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // Ortak parçalar
 // ---------------------------------------------------------------------------------------------------------------------------------------
+/** Alanın tek alt görünümü pano (`sub=board`); eski `sub=images|prompts|notes|palette|content` adresleri listeye düşer (docs/history/365-*). */
 function useAreaTab(): AreaTab | null {
-  const params = useSearchParams();
-  const sub = params.get("sub");
-  return isAreaTab(sub) ? sub : null;
-}
-
-function useAutoAdd(): boolean {
-  return useSearchParams().get("add") === "1";
+  return useSearchParams().get("sub") === "board" ? "board" : null;
 }
 
 /** `?item=` (öğe sayfası, docs/history/364-*) ve `?focus=` (panoda öğeye odaklan). */
@@ -430,7 +425,6 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
   const { team } = ctx;
   const { project, myRole } = detail;
   const tab = useAreaTab();
-  const autoAdd = useAutoAdd();
   const { item: itemParam, focus } = useItemParams();
   const [dialog, setDialog] = useState<null | "info" | "rename" | "delete" | "board" | "variable">(null);
   const fileBoards = boardRows(detail, team.id, file.id);
@@ -463,9 +457,8 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
           spaceId={file.mainAreaId}
           role={myRole}
           tab={tab}
-          autoAdd={autoAdd}
           boards={fileBoards}
-          hrefFor={(next, extra) => projectLink(team.id, project.id, { file: file.id, sub: next, add: extra?.add, focus: extra?.focus })}
+          hrefFor={(next, extra) => projectLink(team.id, project.id, { file: file.id, sub: next, focus: extra?.focus })}
           itemHref={(id) => projectLink(team.id, project.id, { file: file.id, item: id })}
           focusId={focus}
           item={
@@ -537,7 +530,6 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
   const { team } = ctx;
   const { project, myRole } = detail;
   const tab = useAreaTab();
-  const autoAdd = useAutoAdd();
   const { item: itemParam, focus } = useItemParams();
   const isMain = boardId === detail.mainAreaId;
   const board = detail.boards.find((item) => item.id === boardId);
@@ -620,9 +612,8 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
         spaceId={boardId}
         role={myRole}
         tab={tab}
-        autoAdd={autoAdd}
         boards={isMain ? boardRows(detail, team.id, null) : []}
-        hrefFor={(next, extra) => projectLink(team.id, project.id, { board: boardId, sub: next, add: extra?.add, focus: extra?.focus })}
+        hrefFor={(next, extra) => projectLink(team.id, project.id, { board: boardId, sub: next, focus: extra?.focus })}
         itemHref={(id) => projectLink(team.id, project.id, { board: boardId, item: id })}
         focusId={focus}
         item={

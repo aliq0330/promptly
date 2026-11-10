@@ -9,6 +9,7 @@ import { Copy } from "@/components/icons/copy";
 import { ImageIcon } from "@/components/icons/image-icon";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
 import { Maximize2 } from "@/components/icons/maximize-2";
+import { Pencil } from "@/components/icons/pencil";
 import { Palette } from "@/components/icons/palette";
 import { Presentation } from "@/components/icons/presentation";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
@@ -21,7 +22,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
-import { resolveSource, sourceReasonKey, useItemTitle } from "@/features/spaces/space-items";
+import { DraftEditorModal, ItemDetailModal, NoteEditorModal, resolveSource, sourceReasonKey, useItemTitle } from "@/features/spaces/space-items";
+import { PaletteCard } from "@/features/spaces/tabs/palette-tab";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useSpaceContext } from "@/features/spaces/space-provider";
 import { SpaceImage } from "@/features/spaces/space-visuals";
@@ -31,10 +33,11 @@ import { fetchProfilesByIds } from "@/lib/supabase/chat-groups";
 import { deleteSpacePalette, type SpaceItem, type SpacePalette } from "@/lib/supabase/spaces";
 import { decideReview, submitReview, withdrawReview, type ProjectVariable } from "@/lib/supabase/team-projects";
 import type { TeamActionError } from "@/lib/supabase/teams";
-import { canDeleteItem, canSubmitItem, canWithdrawItem, effectiveVariables, fillProjectVariables, type ProjectRole } from "@/lib/team-projects";
+import { canDeleteItem, canEditItemContent, canProposeChange, canSubmitItem, canWithdrawItem, effectiveVariables, fillProjectVariables, type ProjectRole } from "@/lib/team-projects";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { ProjectPathBar, type PathCrumb } from "./project-path-bar";
 import { ReviewChip } from "./project-ui";
+import { ProposeChangeDialog } from "./team-propose-dialog";
 import { paletteItemId, splitPromptTokens } from "@/lib/team-item-kit";
 
 /**
@@ -112,7 +115,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   const router = useRouter();
   const { sources, readable, userId, caps, removeItems, setPalettes, setItems } = useSpaceContext();
   const itemTitle = useItemTitle();
-  const [menu, setMenu] = useState<null | "menu" | "delete">(null);
+  const [menu, setMenu] = useState<null | "menu" | "delete" | "edit" | "propose">(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creator, setCreator] = useState<string | null>(null);
@@ -139,6 +142,9 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   const onBoard = Boolean(item && item.kind !== "content");
 
   const mayDelete = palette ? caps.edit : item ? canDeleteItem(role, { state: item.revState, createdBy: item.createdBy }, userId) : false;
+  // Düzenleme: palet düzenleyiciye açık; öğenin METNİ yalnız lider / kendi taslağını yazan (onaylıda "Değişiklik öner"). Görselin başlığı/notu da metindir.
+  const mayEdit = palette ? caps.edit : item ? item.kind !== "content" && canEditItemContent(role, { state: item.revState, createdBy: item.createdBy }, userId) : false;
+  const mayPropose = Boolean(item && item.kind !== "content" && item.kind !== "palette" && canProposeChange(role, { state: item.revState, createdBy: item.createdBy }));
 
   const remove = async () => {
     setBusy(true);
@@ -161,7 +167,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
 
   return (
     <div className="space-y-4" data-testid="area-item-detail" data-item-kind={kind} data-item-state={state}>
-      <ProjectPathBar crumbs={[...ctx.crumbs, { label: title }]} backHref={ctx.listHref} onMore={mayDelete || onBoard ? () => setMenu("menu") : undefined} />
+      <ProjectPathBar crumbs={[...ctx.crumbs, { label: title }]} backHref={ctx.listHref} onMore={mayDelete || mayEdit || mayPropose || onBoard ? () => setMenu("menu") : undefined} />
 
       <header className="space-y-1.5 px-1">
         <h1 className="break-words text-h1 font-display font-extrabold leading-tight text-text" data-item-title>
@@ -215,6 +221,22 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
                 </Link>
               </li>
             )}
+            {mayEdit && (
+              <li>
+                <button type="button" onClick={() => setMenu("edit")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-edit>
+                  <Pencil size={20} aria-hidden />
+                  {t("tp.item.edit")}
+                </button>
+              </li>
+            )}
+            {mayPropose && (
+              <li>
+                <button type="button" onClick={() => setMenu("propose")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-propose>
+                  <Pencil size={20} aria-hidden />
+                  {t("tp.review.propose")}
+                </button>
+              </li>
+            )}
             {mayDelete && (
               <li>
                 <button type="button" onClick={() => setMenu("delete")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-danger hover:bg-danger/10" data-item-delete>
@@ -225,6 +247,26 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             )}
           </ul>
         </SpaceDialog>
+      )}
+      {menu === "edit" && item?.kind === "note" && <NoteEditorModal note={item} onClose={() => setMenu(null)} />}
+      {menu === "edit" && item?.kind === "prompt" && item.isDraft && <DraftEditorModal draft={item} onClose={() => setMenu(null)} />}
+      {menu === "edit" && item && (item.kind === "image" || (item.kind === "prompt" && !item.isDraft)) && <ItemDetailModal itemId={item.id} onClose={() => setMenu(null)} />}
+      {menu === "edit" && palette && (
+        <SpaceDialog title={palette.name} onClose={() => setMenu(null)} formTestId="area-palette-edit">
+          <ul>
+            <PaletteCard palette={palette} />
+          </ul>
+        </SpaceDialog>
+      )}
+      {menu === "propose" && item && (
+        <ProposeChangeDialog
+          item={item}
+          onClose={() => setMenu(null)}
+          onDone={() => {
+            setMenu(null);
+            onChanged();
+          }}
+        />
       )}
       {menu === "delete" && (
         <ConfirmDialog

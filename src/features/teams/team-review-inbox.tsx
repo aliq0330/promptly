@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft } from "@/components/icons/arrow-left";
 import { Check } from "@/components/icons/check";
+import { ProjectPathBar } from "./project-path-bar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -113,14 +112,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
 
   return (
     <div className="space-y-5" data-testid="team-review-inbox" data-project-id={project.id}>
-      <nav className="flex flex-wrap items-center gap-1.5 text-small text-text-secondary">
-        <Link href={projectLink(team.id, project.id)} className="inline-flex items-center gap-1 font-medium hover:text-text hover:underline">
-          <ArrowLeft size={14} aria-hidden />
-          {project.title}
-        </Link>
-        <span aria-hidden>/</span>
-        <span className="font-semibold text-text">{t("tp.review.inboxTitle")}</span>
-      </nav>
+      <ProjectPathBar crumbs={[{ label: team.name, href: projectLink(team.id) }, { label: project.title, href: projectLink(team.id, project.id) }, { label: t("tp.review.inboxTitle") }]} backHref={projectLink(team.id, project.id)} />
       <header className="flex flex-wrap items-center gap-3">
         <h1 className="min-w-0 flex-1 text-h1 font-display font-extrabold text-text">{t("tp.review.inboxTitle")}</h1>
         {rows.length > 1 && (

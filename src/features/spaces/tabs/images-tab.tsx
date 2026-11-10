@@ -27,22 +27,59 @@ import { SPACE_SHOWCASE_MAX, SPACE_SHOWCASE_MIN, SpaceShowcase } from "../space-
 type GroupFilter = "all" | "none" | string;
 
 /**
+ * Görsel yükleme (Space'in özel klasörüne, küçültülerek; her dosya bir görsel öğesi olur). Görseller sekmesi ve ekip alanındaki
+ * "Ekle → Görsel" (docs/history/365-*) aynı kancayı kullanır; ikinci bir yükleme yolu yazma.
+ */
+export function useSpaceImageUpload() {
+  const { t } = useTranslation();
+  const { space, addItems } = useSpaceContext();
+  const place = usePlaceNewItems();
+  const [upload, setUpload] = useState<{ done: number; total: number } | null>(null);
+  const [uploadErrors, setUploadErrors] = useState<string[]>([]);
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const list = [...files];
+    const errors: string[] = [];
+    setUploadErrors([]);
+    setUpload({ done: 0, total: list.length });
+    for (const file of list) {
+      const problem = imageSourceProblem(file);
+      if (problem) {
+        errors.push(`${file.name}: ${problem}`);
+        setUpload((state) => state && { ...state, done: state.done + 1 });
+        continue;
+      }
+      try {
+        const uploaded = await uploadSpaceImage(space.id, file);
+        await addItems(place([{ spaceId: space.id, kind: "image", mediaUrl: uploaded.url, mediaWidth: uploaded.width, mediaHeight: uploaded.height, title: file.name.replace(/\.[^.]+$/, "").slice(0, 120) }]));
+      } catch (err) {
+        errors.push(`${file.name}: ${err instanceof Error ? err.message : t("spaces.error.upload")}`);
+      }
+      setUpload((state) => state && { ...state, done: state.done + 1 });
+    }
+    setUpload(null);
+    setUploadErrors(errors);
+  }
+
+  return { upload, uploadErrors, handleFiles };
+}
+
+/**
  * Görseller (docs/history/213-*): Space'e eklenen bütün görseller — arama (başlık, not, kaynak gönderi başlığı/metni), grup
  * süzgeci, ızgara/liste, ayrıntı penceresi. Düzenleyici kendi görsellerini yükleyebilir (Space'in özel klasörüne, küçültülerek) ve
  * grupları yönetebilir. Küçük önizlemeler yalnız görünür olunca istenir (`loading="lazy"`); büyük görsel yalnız ışık kutusunda.
  */
 export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: string) => void; focusId?: string | null }) {
   const { t, language } = useTranslation();
-  const { space, items, groups, sources, readable, caps, addItems } = useSpaceContext();
-  const place = usePlaceNewItems();
+  const { items, groups, sources, readable, caps } = useSpaceContext();
   const itemTitle = useItemTitle();
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<GroupFilter>("all");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [openId, setOpenId] = useState<string | null>(null);
   const [groupsOpen, setGroupsOpen] = useState(false);
-  const [upload, setUpload] = useState<{ done: number; total: number } | null>(null);
-  const [uploadErrors, setUploadErrors] = useState<string[]>([]);
+  const { upload, uploadErrors, handleFiles } = useSpaceImageUpload();
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Adresteki öğe ("focus") bir kez açılır; kapatıldıktan sonra öğeler değişse de yeniden açılmaz.
@@ -76,31 +113,6 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
       .filter((item) => item.mediaUrl && !sourceReasonKey(resolveSource(item, sources, readable).state))
       .slice(0, SPACE_SHOWCASE_MAX);
   }, [caps.member, query, group, images, sources, readable]);
-
-  async function handleFiles(files: FileList | null) {
-    if (!files || files.length === 0) return;
-    const list = [...files];
-    const errors: string[] = [];
-    setUploadErrors([]);
-    setUpload({ done: 0, total: list.length });
-    for (const file of list) {
-      const problem = imageSourceProblem(file);
-      if (problem) {
-        errors.push(`${file.name}: ${problem}`);
-        setUpload((state) => state && { ...state, done: state.done + 1 });
-        continue;
-      }
-      try {
-        const uploaded = await uploadSpaceImage(space.id, file);
-        await addItems(place([{ spaceId: space.id, kind: "image", mediaUrl: uploaded.url, mediaWidth: uploaded.width, mediaHeight: uploaded.height, title: file.name.replace(/\.[^.]+$/, "").slice(0, 120) }]));
-      } catch (err) {
-        errors.push(`${file.name}: ${err instanceof Error ? err.message : t("spaces.error.upload")}`);
-      }
-      setUpload((state) => state && { ...state, done: state.done + 1 });
-    }
-    setUpload(null);
-    setUploadErrors(errors);
-  }
 
   return (
     <div className="space-y-4" data-testid="space-images">

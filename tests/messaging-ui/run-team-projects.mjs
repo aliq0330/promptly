@@ -239,10 +239,13 @@ await scenario("5. Dosya sayfası (lider): onaysız öğeler rozetli, dosya değ
   await switchRow.getByRole("switch").click();
   await page.waitForFunction(() => document.body.innerText.includes("2 öğe hâlâ onaysız"));
   assert.equal(called(db, "team_file_set_review").at(-1)?.body.p_on, false);
-  // Alan görünümünün sekmeleri (liste kipinde değil, bir öğeye/sekmeye girince)
+  // docs/history/365-*: eski sekme şeridi YOK; tek alt görünüm pano, eski sekme adresleri listeye düşer
   await page.keyboard.press("Escape");
   await page.goto(projectUrl(`&file=${FILE}&sub=board`));
-  for (const key of ["board", "images", "prompts", "content", "notes", "palette"]) await page.locator(`[data-area-tab=${key}]`).waitFor();
+  await page.locator('[role=tabpanel]').waitFor();
+  assert.equal(await page.locator("[data-area-tab]").count(), 0, "sekme şeridi yok");
+  await page.goto(projectUrl(`&file=${FILE}&sub=prompts`));
+  await page.getByTestId("area-folder-list").waitFor();
 }, {
   items: (db) => {
     db.addItem(AREA_FILE, { id: NOTE(1), title: "Dolap notu", body: "mat beyaz", rev_state: "pending", created_by: U.bob.id });
@@ -398,7 +401,7 @@ await scenario("13. Pano sayfası: proje geneli ve ek pano açılır; ek panoda 
   await shared.getByRole("heading", { name: "Ortak" }).waitFor();
   await shared.locator("[data-area-row=board]").getByText("Müşteri toplantısı").waitFor();
   await page.goto(projectUrl(`&board=${BOARD}&sub=images`));
-  await page.locator("[data-area-tab=images]").waitFor();
+  await page.getByTestId("area-folder-list").waitFor();
 });
 
 await scenario("14. Ekle menüsü: pano/görsel/prompt/workflow/ayar paketi/değişken/palet/not seçenekleri; Pano → pano penceresi; taslak notu", async ({ page, db }) => {
@@ -494,13 +497,14 @@ await scenario("18. Gezgin: tek üst çubuk (yol çipleri), klasör listesi; dos
   items: (db) => { db.addItem(AREA_FILE, { id: NOTE(30), title: "Dolap notu", body: "mat beyaz", rev_state: "approved", created_by: U.bob.id }); },
 });
 
-await scenario("19. Ekle: Not → not sekmesi ve yeni not penceresi kendiliğinden açılır; boş dosyada 'Burası boş'", async ({ page }) => {
+await scenario("19. Ekle: Not → yeni not penceresi LİSTENİN üstünde açılır (sekmeye gitmez); boş dosyada 'Burası boş'", async ({ page }) => {
   await page.goto(projectUrl(`&file=${FILE}`));
   await page.getByTestId("area-empty").getByText("Burası boş").waitFor();
   await page.locator("[data-area-add]").click();
   await page.locator("[data-area-add-option=note]").click();
   await page.getByTestId("note-editor").waitFor();
-  await page.locator("[data-area-tab=notes][aria-current=page]").waitFor();
+  assert.ok(!page.url().includes("sub="), "sekme adresine gitmedi: " + page.url());
+  assert.equal(await page.locator("[data-area-tab]").count(), 0);
 }, { items: () => undefined });
 
 await scenario("20. Ekip alanında 'Space' kelimesi geçmez (liste, pano, görseller, promptlar, notlar, palet, workflow)", async ({ page }) => {
@@ -668,6 +672,82 @@ await scenario("30. İngilizce prompt detayı ve telefonda yatay taşma yok", as
   assert.ok(!/değişken|onayla/.test(text), "Türkçe kalıntı yok");
   assert.ok(await overflowFree(page));
 }, { lang: "en", viewport: { width: 390, height: 800 }, items: detailItems });
+
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// Ortak düz üst çubuk + eski sekmelerin yerini alan akışlar (docs/history/365-*)
+// ---------------------------------------------------------------------------------------------------------------------------------------
+await scenario("31. Üst çubuk: tüm proje sayfalarında düz çubuk (köşesiz, geri + üst konum + kalın başlık); öğe sayfasında ⋯", async ({ page }) => {
+  const check = async (title, parentPart, selector = "[data-project-crumbs]") => {
+    const bar = page.locator(selector).first();
+    await bar.waitFor();
+    const radius = await bar.locator("> div").evaluate((el) => getComputedStyle(el).borderRadius);
+    assert.ok(radius === "0px" || radius === "", `köşesiz çubuk (${title}): ${radius}`);
+    assert.equal((await bar.locator("[data-path-title]").innerText()).trim(), title);
+    if (parentPart) assert.ok((await bar.innerText()).includes(parentPart), `${title}: ${await bar.innerText()}`);
+    assert.equal(await bar.locator("[data-path-back]").count(), 1);
+  };
+  await page.goto(projectUrl());
+  await check("Villa Projesi", "Atölye Mor");
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await check("Mutfak", "Villa Projesi");
+  await page.goto(projectUrl(`&board=${BOARD}`));
+  await check("Müşteri toplantısı", "Villa Projesi");
+  await page.goto(projectUrl(`&file=${FILE}&item=${encodeURIComponent(NOTE(40))}`));
+  await check("Ölçüler", "Mutfak");
+  assert.equal(await page.locator("[data-path-more]").count(), 1);
+  await page.goto(projectUrl("&review=1"));
+  await check("Onay bekleyenler", "Villa Projesi");
+}, { viewport: { width: 390, height: 800 }, items: detailItems });
+
+await scenario("32. Ekle → Prompt/Palet/Görsel: sekmeye gitmeden pencere/dosya seçici; eski sekme adresleri listeye düşer", async ({ page }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("area-folder-list").waitFor();
+  await page.locator("[data-area-add]").click();
+  await page.locator("[data-area-add-option=prompt]").click();
+  await page.getByTestId("draft-editor").waitFor().catch(async () => { await page.getByRole("dialog").first().waitFor(); });
+  assert.ok(!page.url().includes("sub="));
+  await page.keyboard.press("Escape");
+  await page.locator("[data-area-add]").click();
+  await page.locator("[data-area-add-option=palette]").click();
+  await page.getByRole("dialog").first().waitFor();
+  await page.keyboard.press("Escape");
+  // Görsel: dosya seçici tarayıcıda açılır (gizli giriş), sekme yok
+  const chooser = page.waitForEvent("filechooser");
+  await page.locator("[data-area-add]").click();
+  await page.locator("[data-area-add-option=image]").click();
+  await chooser;
+  assert.equal(await page.locator("[data-area-tab]").count(), 0);
+}, { items: () => undefined });
+
+await scenario("33. Öğe sayfası ⋯ (lider): Düzenle → not düzenleyici penceresi", async ({ page }) => {
+  await page.goto(itemUrl(NOTE(40)));
+  await page.locator("[data-path-more]").click();
+  await page.locator("[data-item-edit]").click();
+  await page.getByTestId("note-editor").waitFor();
+}, { items: detailItems });
+
+await scenario("34. Öğe sayfası ⋯ (düzenleyici): onaylı öğeyi düzenleyemez, Değişiklik öner → team_review_propose; kendi taslağını düzenler", async ({ page, db }) => {
+  await page.goto(itemUrl(NOTE(41)));
+  await page.locator("[data-path-more]").click();
+  assert.equal(await page.locator("[data-item-edit]").count(), 0, "onaylı öğeyi düzenleyici düzenleyemez");
+  await page.locator("[data-item-propose]").click();
+  const form = page.getByTestId("area-propose-form");
+  await form.waitFor();
+  await form.getByRole("button", { name: "Öneriyi gönder" }).click();
+  await page.waitForFunction(() => !document.querySelector("[data-testid=area-propose-form]"));
+  assert.equal(called(db, "team_review_propose").at(-1)?.body.p_item, NOTE(41));
+  await page.goto(itemUrl(NOTE(42)));
+  await page.locator("[data-path-more]").click();
+  await page.locator("[data-item-edit]").click();
+  await page.getByTestId("note-editor").waitFor();
+}, {
+  projectRole: "edit",
+  items: (db) => {
+    db.addItem(AREA_FILE, { id: NOTE(41), title: "Onaylı not", body: "metin", rev_state: "approved", created_by: U.bob.id });
+    db.addItem(AREA_FILE, { id: NOTE(42), title: "Taslak notum", body: "x", rev_state: "draft", created_by: ME });
+  },
+});
 
 await browser.close();
 server.close();
