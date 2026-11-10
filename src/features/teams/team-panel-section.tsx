@@ -64,6 +64,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
 
   const max = Math.max(1, ...(data?.daily ?? []).map((d) => d.n));
   const peak = data ? Math.max(0, ...data.daily.map((d) => d.n)) : 0;
+  const maxTop = Math.max(1, ...(data?.top ?? []).map((project) => project.added));
   const shortDay = (day: string) => new Date(day).toLocaleDateString(language === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "short", timeZone: "UTC" });
   const approvalText = (hours: number) => (hours < 1 ? t("tm.panel.minutes", { count: Math.max(1, Math.round(hours * 60)) }) : t("tm.panel.hours", { count: Math.round(hours) }));
 
@@ -86,7 +87,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
   return (
     <section className="space-y-4" data-testid="team-panel">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="mr-auto font-display text-h2 font-bold max-md:hidden">{t("tm.panel.title")}</h2>
+        <h2 className="mr-auto font-display text-h2 font-bold">{t("tm.panel.title")}</h2>
         {range}
       </div>
       {!data ? (
@@ -96,11 +97,34 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
           ))}
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-panel-stats>
-            <Stat label={t("tm.panel.added")} value={data.added.toLocaleString(language === "en" ? "en-US" : "tr-TR")}>
+        <div className="grid gap-3.5 lg:grid-cols-4 lg:gap-4">
+          <Panel
+            className="rounded-[20px] lg:col-span-2"
+            title={t("tm.panel.added")}
+            action={peak > 0 ? <span className="text-caption text-text-muted">{t("tm.panel.peak", { count: peak })}</span> : undefined}
+          >
+            <div className="mb-3 flex flex-wrap items-end gap-x-3 gap-y-1">
+              <span className="font-display text-[2.25rem] font-extrabold leading-none tabular-nums text-text" data-panel-added>
+                {data.added.toLocaleString(language === "en" ? "en-US" : "tr-TR")}
+              </span>
               <Delta text={delta(data.added, data.addedPrev)} tone={data.added >= data.addedPrev ? "good" : "bad"} />
-            </Stat>
+              <span className="text-caption text-text-muted">{t("tc.panel.prev", { count: data.addedPrev })}</span>
+            </div>
+            <div className="flex h-32 items-end gap-0.5 border-b border-border md:h-36" role="img" aria-label={t("tm.panel.trend")} data-panel-chart>
+              {data.daily.map((point) => (
+                <span key={point.day} title={`${point.day}: ${point.n}`} className={cn("min-h-[2px] flex-1 rounded-t", point.n > 0 ? "bg-primary" : "bg-border-strong")} style={{ height: `${Math.max(2, (point.n / max) * 100)}%` }} />
+              ))}
+            </div>
+            {data.daily.length > 1 && (
+              <div className="mt-2 flex justify-between text-caption text-text-muted">
+                <span>{shortDay(data.daily[0].day)}</span>
+                <span className="max-md:hidden">{shortDay(data.daily[Math.floor(data.daily.length / 2)].day)}</span>
+                <span>{shortDay(data.daily[data.daily.length - 1].day)}</span>
+              </div>
+            )}
+          </Panel>
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:col-span-2 lg:grid-cols-2 lg:gap-3.5" data-panel-stats>
             <Stat label={t("tm.panel.approvalTime")} value={data.approvalHours === null ? "–" : approvalText(data.approvalHours)}>
               {data.approvalHours !== null && data.approvalHoursPrev !== null && Math.abs(data.approvalHours - data.approvalHoursPrev) >= 0.5 && (
                 <Delta text={`${data.approvalHours < data.approvalHoursPrev ? "−" : "+"}${approvalText(Math.abs(data.approvalHours - data.approvalHoursPrev))}`} tone={data.approvalHours < data.approvalHoursPrev ? "good" : "bad"} />
@@ -110,75 +134,53 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
               <Delta text={data.contributors !== data.contributorsPrev ? `${data.contributors > data.contributorsPrev ? "+" : "−"}${Math.abs(data.contributors - data.contributorsPrev)}` : undefined} tone={data.contributors >= data.contributorsPrev ? "good" : "bad"} />
             </Stat>
             <Stat label={t("tm.panel.projects")} value={data.projects} />
+            <Stat label={t("tc.panel.waiting")} value={data.alerts.pending}>
+              {data.alerts.oldestPendingDays !== null && data.alerts.pending > 0 && <Delta text={t("tc.panel.oldest", { days: data.alerts.oldestPendingDays })} tone="bad" />}
+            </Stat>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-            <Panel title={t("tm.panel.trend")} action={peak > 0 ? <span className="text-caption text-text-muted">{t("tm.panel.peak", { count: peak })}</span> : undefined}>
-              <div className="flex h-36 items-end gap-0.5" role="img" aria-label={t("tm.panel.trend")} data-panel-chart>
-                {data.daily.map((point) => (
-                  <span key={point.day} title={`${point.day}: ${point.n}`} className="min-h-[2px] flex-1 rounded-sm bg-primary" style={{ height: `${Math.max(2, (point.n / max) * 100)}%` }} />
-                ))}
-              </div>
-              {data.daily.length > 1 && (
-                <div className="mt-2 flex justify-between text-caption text-text-muted">
-                  <span>{shortDay(data.daily[0].day)}</span>
-                  <span className="max-md:hidden">{shortDay(data.daily[Math.floor(data.daily.length / 2)].day)}</span>
-                  <span>{shortDay(data.daily[data.daily.length - 1].day)}</span>
-                </div>
-              )}
-            </Panel>
-            <Panel title={t("tm.panel.alerts")}>
-              <ul className="space-y-3 text-small" data-panel-alerts>
-                {alerts.map((alert, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <span className={cn("grid h-7 min-w-7 shrink-0 place-items-center rounded-md px-1.5 text-small font-bold tabular-nums", alert.tone)}>{alert.n}</span>
-                    <span className="flex-1 pt-0.5 text-text-secondary">
-                      {alert.text}
-                      {alert.link && (
-                        <>
-                          {" "}
-                          <Link href={teamLink(team.id, "projects")} className="font-bold text-primary hover:underline">
-                            {t("tm.panel.alert.review")}
-                          </Link>
-                        </>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-          </div>
-
-          <section className="rounded-xl border border-border-soft bg-surface p-4" data-panel-top-card>
-            <h3 className="mb-2 text-body font-bold md:hidden">{t("tm.panel.top")}</h3>
+          <Panel className="rounded-[20px] lg:col-span-2" title={t("tm.panel.top")}>
             {data.top.length === 0 ? (
               <p className="text-small text-text-muted">{t("tm.panel.noTop")}</p>
             ) : (
-              <table className="w-full text-small" data-panel-top>
-                <thead className="text-caption uppercase tracking-[0.06em] text-text-muted max-md:hidden">
-                  <tr className="text-left">
-                    <th className="pb-2 font-bold">{t("tm.panel.col.project")}</th>
-                    <th className="pb-2 font-bold">{t("tm.panel.col.added")}</th>
-                    <th className="pb-2 font-bold">{t("tm.panel.col.pending")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-soft">
-                  {data.top.map((project) => (
-                    <tr key={project.id} data-panel-top-row>
-                      <td className="py-2.5 pr-3 font-bold text-text">
-                        <Link href={teamLink(team.id, "projects", { project: project.id })} className="hover:underline">
-                          {project.title}
-                        </Link>
-                      </td>
-                      <td className="py-2.5 pr-3 tabular-nums text-text-secondary">{project.added}</td>
-                      <td className="py-2.5 tabular-nums text-text-secondary">{project.pending}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ul className="space-y-1" data-panel-top>
+                {data.top.map((project) => (
+                  <li key={project.id} data-panel-top-row>
+                    <Link href={teamLink(team.id, "projects", { project: project.id })} className="flex min-h-11 items-center gap-3 text-small hover:text-primary">
+                      <b className="w-32 truncate font-bold text-text md:w-36">{project.title}</b>
+                      <span aria-hidden className="h-2.5 flex-1 overflow-hidden rounded-full bg-surface-soft">
+                        <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(4, (project.added / maxTop) * 100)}%` }} />
+                      </span>
+                      <span className="w-8 text-right font-bold tabular-nums text-text" title={t("tm.panel.col.added")}>
+                        {project.added}
+                      </span>
+                      {project.pending > 0 && <span className="rounded-full bg-warning/10 px-2 text-caption font-bold text-warning">{t("tp.card.pending", { count: project.pending })}</span>}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             )}
-          </section>
-        </>
+          </Panel>
+
+          <Panel className="rounded-[20px] lg:col-span-2" title={t("tm.panel.alerts")}>
+            <ul className="space-y-1 text-small" data-panel-alerts>
+              {alerts.filter((alert) => alert.n > 0).length === 0 && <li className="py-1 text-text-muted">{t("tc.panel.noAlerts")}</li>}
+              {alerts
+                .filter((alert) => alert.n > 0)
+                .map((alert, index) => (
+                  <li key={index} className="flex min-h-12 items-center gap-3 border-t border-border-soft first:border-t-0">
+                    <span className={cn("grid h-7 min-w-7 shrink-0 place-items-center rounded-md px-1.5 text-small font-bold tabular-nums", alert.tone)}>{alert.n}</span>
+                    <span className="flex-1 text-text-secondary">{alert.text}</span>
+                    {alert.link && (
+                      <Link href={teamLink(team.id, "approvals")} className="font-bold text-primary hover:underline">
+                        {t("tm.panel.alert.review")}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          </Panel>
+        </div>
       )}
     </section>
   );

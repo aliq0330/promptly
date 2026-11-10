@@ -13,6 +13,8 @@ import { useToast } from "@/features/groups/use-toast";
 import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { fetchMemberProjectRoles, type MemberProjectRoles } from "@/lib/supabase/team-center";
+import { memberRoleSummary } from "@/lib/team-center";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import {
   leaveTeam,
@@ -31,7 +33,7 @@ import {
 } from "@/lib/supabase/teams";
 import { teamRank, teamRoleCan, type TeamCapability, type TeamRole } from "@/lib/teams";
 import { cn } from "@/lib/utils";
-import { InviteDialog } from "./team-invites";
+import { InviteCard, InviteDialog } from "./team-invites";
 import type { TeamCtx } from "./team-page";
 import { PersonRow, formatShortDate, roleLabelKey } from "./team-ui";
 
@@ -122,6 +124,13 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
   const [pending, setPending] = useState<TeamPendingInvite[]>([]);
   const [guests, setGuests] = useState<TeamGuest[]>([]);
   const canManage = can("manage_members");
+  const [projectRoles, setProjectRoles] = useState<Map<string, MemberProjectRoles>>(new Map());
+  useEffect(() => {
+    void fetchMemberProjectRoles(team.id).then(
+      (list) => setProjectRoles(new Map(list.map((entry) => [entry.userId, entry]))),
+      () => setProjectRoles(new Map()),
+    );
+  }, [team.id, version]);
 
   useEffect(() => {
     const handle = window.setTimeout(() => setQuery(search.trim()), 250);
@@ -161,11 +170,6 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
         <button type="button" onClick={() => setSearchOpen((o) => !o)} aria-label={t("tm.members.search")} aria-pressed={searchOpen} data-members-search className="ml-auto grid h-11 w-11 place-items-center rounded-full bg-surface-soft text-text-secondary md:ml-0 md:order-last">
           <Search size={18} aria-hidden />
         </button>
-        {canManage && (
-          <Button type="button" onClick={() => setInviteOpen(true)} data-team-invite className="md:hidden">
-            {t("tm.invite.title")}
-          </Button>
-        )}
       </div>
       {searchOpen && <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("tm.members.search")} aria-label={t("tm.members.search")} autoFocus className="h-11 w-full rounded-full border border-border bg-surface px-4 text-small" />}
       <div className="-mt-1 flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" role="tablist" aria-label={t("tm.members.filter")}>
@@ -191,70 +195,56 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
         <div className="min-w-0">
           {view === "members" && (
             <PagedListState list={list}>
-              <div className="overflow-hidden rounded-2xl border border-border-soft bg-surface max-md:border-0 max-md:bg-transparent" data-testid="team-members-list">
-                <div className="grid grid-cols-[minmax(0,1.5fr)_8rem_minmax(0,1fr)_7rem_3.5rem] gap-3 border-b border-border-soft px-4 py-2.5 text-caption font-bold uppercase tracking-[0.06em] text-text-muted max-md:hidden">
-                  <span>{t("tm.members.col.member")}</span>
-                  <span>{t("tm.members.col.role")}</span>
-                  <span>{t("tm.members.col.group")}</span>
-                  <span>{t("tm.members.col.status")}</span>
-                  <span />
-                </div>
-                <ul>
-                  {list.items.map((member) => {
-                    const manageable = canManage && member.role !== "owner" && teamRank(member.role) < myRank;
-                    const name = member.displayName || member.username;
-                    const you = false;
-                    return (
-                      <li key={member.userId} data-member={member.username} className="md:grid md:grid-cols-[minmax(0,1.5fr)_8rem_minmax(0,1fr)_7rem_3.5rem] md:items-center md:gap-3 md:border-b md:border-border-soft md:px-4 md:py-2.5 md:last:border-b-0 max-md:flex max-md:items-center max-md:gap-3 max-md:py-2.5">
-                        <span className="flex min-w-0 flex-1 items-center gap-3">
-                          <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={name} size={38} />
-                          <span className="min-w-0">
-                            <span className="block truncate text-small font-bold text-text">
-                              {name}
-                              {you && ` (${t("tm.members.you")})`}
-                            </span>
-                            <span className="block truncate text-caption text-text-muted">
-                              @{member.username}
-                              <span className="md:hidden">{member.groupNames && member.groupNames.length > 0 ? ` · ${member.groupNames.join(", ")}` : ""}</span>
-                            </span>
-                          </span>
+              <ul className="grid gap-0 max-md:overflow-hidden max-md:rounded-2xl max-md:border max-md:border-border-soft max-md:bg-surface md:grid-cols-3 md:gap-3.5" data-testid="team-members-list">
+                {list.items.map((member) => {
+                  const manageable = canManage && member.role !== "owner" && teamRank(member.role) < myRank;
+                  const name = member.displayName || member.username;
+                  const summary = memberRoleSummary(projectRoles.get(member.userId));
+                  return (
+                    <li
+                      key={member.userId}
+                      data-member={member.username}
+                      className="flex items-center gap-3 border-b border-border-soft px-3.5 py-2.5 last:border-b-0 md:flex-col md:gap-1 md:rounded-[20px] md:border md:bg-surface md:px-4 md:py-[18px] md:text-center md:last:border-b"
+                    >
+                      <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={name} size={44} />
+                      <span className="min-w-0 flex-1 md:w-full md:flex-none">
+                        <span className="block truncate text-body font-bold text-text">{name}</span>
+                        <span className="block truncate text-caption text-text-muted">
+                          @{member.username} · <PresenceStatusText userId={member.userId} fallback="—" />
                         </span>
-                        <span>
-                          {manageable ? (
-                            <select
-                              aria-label={t("tm.members.changeRole")}
-                              value={member.role}
-                              onChange={(event) => void changeRole(member, event.target.value as TeamRole)}
-                              className={cn("h-7 appearance-none rounded-full border-0 px-3 text-caption font-bold", ROLE_CHIP_TONE[member.role])}
-                            >
-                              {(["admin", "editor", "member", "guest"] as TeamRole[])
-                                .filter((role) => teamRank(role) < myRank)
-                                .map((role) => (
-                                  <option key={role} value={role} disabled={role === "guest" && member.role !== "guest"}>
-                                    {t(roleLabelKey(role))}
-                                  </option>
-                                ))}
-                            </select>
-                          ) : (
-                            <span className={cn("inline-flex h-7 items-center rounded-full px-3 text-caption font-bold", ROLE_CHIP_TONE[member.role])}>{t(roleLabelKey(member.role))}</span>
-                          )}
-                        </span>
-                        <span className="truncate text-small text-text-secondary max-md:hidden">{member.groupNames?.join(", ") || (member.role === "guest" ? member.guestOrg : "") || ""}</span>
-                        <span className="text-small text-text-secondary max-md:hidden">
-                          <PresenceStatusText userId={member.userId} fallback="—" />
-                        </span>
-                        <span className="text-right">
-                          {manageable && (
-                            <button type="button" onClick={() => setRemoving(member)} data-member-remove className="text-caption font-medium text-text-muted hover:text-danger">
-                              {t("tm.members.remove")}
-                            </button>
-                          )}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
+                      </span>
+                      <span className="md:my-1">
+                        {manageable ? (
+                          <select
+                            aria-label={t("tm.members.changeRole")}
+                            value={member.role}
+                            onChange={(event) => void changeRole(member, event.target.value as TeamRole)}
+                            className={cn("h-8 appearance-none rounded-full border-0 px-3 text-caption font-bold", ROLE_CHIP_TONE[member.role])}
+                          >
+                            {(["admin", "editor", "member", "guest"] as TeamRole[])
+                              .filter((role) => teamRank(role) < myRank)
+                              .map((role) => (
+                                <option key={role} value={role} disabled={role === "guest" && member.role !== "guest"}>
+                                  {t(roleLabelKey(role))}
+                                </option>
+                              ))}
+                          </select>
+                        ) : (
+                          <span className={cn("inline-flex h-8 items-center rounded-full px-3 text-caption font-bold", ROLE_CHIP_TONE[member.role])}>{t(roleLabelKey(member.role))}</span>
+                        )}
+                      </span>
+                      <span className="hidden w-full border-t border-border-soft pt-2 text-caption text-text-secondary md:block" data-member-projects>
+                        {summary.length > 0 ? summary.map((entry) => t(`tc.members.in.${entry.role}` as "tc.members.in.lead", { count: entry.count })).join(" · ") : member.groupNames?.join(", ") || t("tc.members.noProject")}
+                      </span>
+                      {manageable && (
+                        <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden text-caption font-medium text-text-muted hover:text-danger md:block">
+                          {t("tm.members.remove")}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             </PagedListState>
           )}
           {view === "guests" && (
@@ -296,7 +286,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               </Button>
             </div>
           )}
-          <button type="button" onClick={() => setMatrixOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3.5 text-left md:hidden" data-roles-open>
+          <button type="button" onClick={() => setMatrixOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3.5 text-left lg:hidden" data-roles-open>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-bold text-text">{t("tm.matrix.title")}</span>
               <span className="block text-caption text-text-secondary">{t("tm.matrix.subtitle")}</span>
@@ -305,19 +295,35 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
           </button>
         </div>
 
-        <aside className="space-y-4 max-lg:hidden">
-          <section className="rounded-2xl border border-border-soft bg-surface p-4">
-            <h2 className="mb-2 text-h3 font-bold">{t("tm.matrix.title")}</h2>
-            <RolesMatrix ctx={ctx} />
-          </section>
+        <aside className="space-y-4 max-lg:hidden" data-testid="team-members-aside">
+          {canManage && <InviteCard ctx={ctx} onDone={refresh} />}
+          {canManage && pending.length > 0 && (
+            <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-members-pending">
+              <h3 className="mb-1 font-display text-body font-bold text-text">{t("tc.members.pending", { count: pending.length })}</h3>
+              <ul>
+                {pending.map((invite) => (
+                  <li key={invite.id} className="border-t border-border-soft py-2 text-small first:border-t-0">
+                    <b className="text-text">@{invite.inviteeUsername}</b> · {t(roleLabelKey(invite.role))}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          <button type="button" onClick={() => setMatrixOpen(true)} className="flex w-full items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3.5 text-left" data-roles-open-aside>
+            <span className="min-w-0 flex-1">
+              <span className="block text-small font-bold text-text">{t("tm.matrix.title")}</span>
+              <span className="block text-caption text-text-secondary">{t("tm.matrix.subtitle")}</span>
+            </span>
+            <ChevronRight size={18} className="text-text-muted" aria-hidden />
+          </button>
           {groups.length > 0 && (
             <section className="rounded-2xl border border-border-soft bg-surface p-4" data-members-groups-card>
-              <h2 className="mb-3 text-h3 font-bold">{t("tm.members.viewGroups")}</h2>
+              <h2 className="mb-3 font-display text-body font-bold">{t("tm.members.viewGroups")}</h2>
               <div className="flex flex-wrap gap-2">
-                {groups.map((g, index) => (
-                  <span key={g.id} className={cn("inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-caption font-bold", ["bg-primary-soft text-primary", "bg-warning/10 text-warning", "bg-success/10 text-success", "bg-text-secondary/10 text-text-secondary"][index % 4])}>
+                {groups.map((g) => (
+                  <span key={g.id} className="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-soft px-3 text-caption font-bold text-text">
                     {g.name}
-                    <span className="font-medium">{g.memberCount}</span>
+                    <span className="font-medium text-text-muted">{g.memberCount}</span>
                   </span>
                 ))}
               </div>
@@ -493,7 +499,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
   );
 }
 
-function LeaveDialog({ ctx, onClose }: { ctx: TeamCtx; onClose: () => void }) {
+export function LeaveDialog({ ctx, onClose }: { ctx: TeamCtx; onClose: () => void }) {
   const { t } = useTranslation();
   const router = useRouter();
   const [busy, setBusy] = useState(false);

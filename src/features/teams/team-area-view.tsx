@@ -8,8 +8,6 @@ import { ImageIcon } from "@/components/icons/image-icon";
 import { Braces } from "@/components/icons/braces";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
 import { Plus } from "@/components/icons/plus";
-import { LayoutGrid } from "@/components/icons/layout-grid";
-import { List } from "@/components/icons/list";
 import { Palette } from "@/components/icons/palette";
 import { Presentation } from "@/components/icons/presentation";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
@@ -21,6 +19,7 @@ import { DraftEditorModal, NoteEditorModal, useItemTitle } from "@/features/spac
 import { useSpaceImageUpload } from "@/features/spaces/tabs/images-tab";
 import { NewPaletteDialog } from "@/features/spaces/tabs/palette-tab";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StorageImg } from "@/components/ui/storage-media";
 import { useAuth } from "@/features/auth/auth-provider";
 import { SpaceBoard } from "@/features/spaces/board/space-board";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "@/features/spaces/space-provider";
@@ -33,7 +32,7 @@ import type { TeamActionError } from "@/lib/supabase/teams";
 import { canAddToArea, canProposeChange, canSubmitItem, canWithdrawItem, type ProjectRole } from "@/lib/team-projects";
 import { cn } from "@/lib/utils";
 import { SpaceDialog } from "@/features/spaces/space-modals";
-import { ItemReviewBadge, ReviewChip } from "./project-ui";
+import { ReviewChip } from "./project-ui";
 import { AreaItemDetail, type AreaItemContext } from "./team-item-detail";
 import { ProposeChangeDialog } from "./team-propose-dialog";
 import { paletteItemParam } from "@/lib/team-item-kit";
@@ -61,6 +60,11 @@ export interface AreaAddActions {
   onNewVariable?: () => void;
   /** Bu alanda onay açık mı: "eklediğin şey taslak başlar" notu için. */
   reviewOn?: boolean;
+  /** Dosya sayfasında lider için onay anahtarı (mockup B3): doğrudan açıp kapatır; diğer rollerde yok. */
+  reviewSwitch?: { busy: boolean; onChange: (on: boolean) => void } | null;
+  /** Dosya/proje değişken adları (çip satırı) ve onlara dokununca açılacak bilgi penceresi. */
+  variableNames?: string[];
+  onVariables?: () => void;
 }
 
 /** Liste kipinde (Gezgin) "ana pano"nun altında klasör gibi görünen ek pano. */
@@ -186,13 +190,14 @@ function AreaBody({
   const [adding, setAdding] = useState<null | "prompt" | "note" | "palette">(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { upload, uploadErrors, handleFiles } = useSpaceImageUpload();
-  if (item) return <AreaItemDetail ctx={item} role={role} onChanged={onChanged} />;
+  // Çekmece (mockup B4): liste yerinde kalır, öğe üstüne yandan/alttan açılır. `drawer` verilmemişse eski tam sayfa görünümü.
+  if (item && !item.drawer) return <AreaItemDetail ctx={item} role={role} onChanged={onChanged} />;
   const listMode = tab !== "board";
   return (
     <div className="space-y-4" data-team-area={space.id} data-area-role={role ?? "none"} data-area-can-edit={caps.edit ? "1" : "0"} data-area-mode={listMode ? "list" : "tab"}>
       {listMode && <AreaReviewPanel role={role} reviewHref={reviewHref} onChanged={onChanged} />}
       {listMode ? (
-        <AreaFolderList boards={boards} hrefFor={hrefFor} itemHref={itemHref} canAdd={caps.edit} onAdd={() => setAddOpen(true)} />
+        <AreaCardGrid boards={boards} hrefFor={hrefFor} itemHref={itemHref} canAdd={caps.edit} onAdd={() => setAddOpen(true)} add={add} reviewHref={reviewHref} role={role} />
       ) : (
         <div role="tabpanel" aria-label={t("tp.area.tab.board")}>
           <SpaceBoard focusId={focusId} />
@@ -225,6 +230,7 @@ function AreaBody({
           onNewVariable={add?.onNewVariable ? () => { setAddOpen(false); add.onNewVariable?.(); } : undefined}
         />
       )}
+      {item && item.drawer && <AreaItemDetail ctx={item} role={role} onChanged={onChanged} />}
       {adding === "prompt" && <DraftEditorModal draft={null} onClose={() => setAdding(null)} />}
       {adding === "note" && <NoteEditorModal note={null} onClose={() => setAdding(null)} />}
       {adding === "palette" && <NewPaletteDialog onClose={() => setAdding(null)} />}
@@ -234,16 +240,6 @@ function AreaBody({
 
 type RowKind = "board" | "image" | "prompt" | "note" | "palette" | "workflow" | "preset" | "request";
 const ROW_ICON: Record<RowKind, IconComponent> = { board: Presentation, image: ImageIcon, prompt: SquareTerminal, note: StickyNote, palette: Palette, workflow: WorkflowIcon, preset: SlidersHorizontal, request: LayoutDashboard };
-const ROW_TONE: Record<RowKind, string> = {
-  board: "bg-primary-soft text-primary",
-  image: "bg-success/10 text-success",
-  prompt: "bg-primary-soft text-primary",
-  note: "bg-warning/10 text-warning",
-  palette: "bg-secondary/10 text-secondary",
-  workflow: "bg-primary-soft text-primary",
-  preset: "bg-secondary/10 text-secondary",
-  request: "bg-surface-soft text-text-secondary",
-};
 const ROW_KIND_KEY: Record<RowKind, TranslationKey> = {
   board: "tp.add.board",
   image: "tp.kind.image",
@@ -262,17 +258,44 @@ interface AreaRow {
   title: string;
   href: string;
   state?: SpaceItem["revState"];
+  /** Kart sanatı: görsel adresi, metin/not gövdesi, palet renkleri. */
+  mediaUrl?: string | null;
+  body?: string;
+  colors?: string[];
+  note?: boolean;
 }
 
+type FilterKey = "all" | "prompt" | "image" | "palette" | "note" | "content" | "waiting";
+const FILTER_OF: Record<RowKind, FilterKey> = { board: "all", image: "image", prompt: "prompt", note: "note", palette: "palette", workflow: "content", preset: "content", request: "content" };
+const FILTER_LABEL: Record<Exclude<FilterKey, "all" | "waiting">, TranslationKey> = {
+  prompt: "tp.kind.prompt",
+  image: "tp.kind.image",
+  palette: "tp.kind.palette",
+  note: "tp.kind.note",
+  content: "tp.kind.content",
+};
+/** Kart yüksekliği türe göre değişir (mockup B3: görsel uzun, palet/pano kısa); `items-start` ızgarasında doğal bir ritim verir. */
+const CARD_HEIGHT: Record<RowKind, string> = {
+  board: "h-28",
+  image: "aspect-[4/5]",
+  prompt: "min-h-[11.5rem]",
+  note: "min-h-[8.5rem]",
+  palette: "h-32",
+  workflow: "h-32",
+  preset: "h-32",
+  request: "h-32",
+};
+
 /**
- * Gezgin liste kipi (mockup 1): alanın içindekiler dosya gibi satır satır — ana pano, ek panolar, görseller, promptlar, notlar, palet, workflow/ayar paketi.
- * Hiçbir şey açık gelmez; bir satıra dokununca o öğenin KENDİ sayfası açılır (`?item=`, docs/history/364-*; workflow/ayar paketi/istek satırı içerik sekmesine gider). "Ekle" sağ alttaki tek düğmedir.
+ * Dosya/alan içeriği: görsel kart ızgarası (docs/history/366-*, mockup B3). Onay çubuğu (lider anahtarı + ilerleme + sayılar), tür çipleri, dosya değişkenleri ve kartlar;
+ * karta dokununca öğe ÇEKMECESİ açılır (`?item=`; docs/history/364-*). Pano ayrı görünümdür (`sub=board`); workflow/ayar paketi/istek kartı da çekmeceyi açar.
+ * "Ekle" masaüstü/tablette başlıkta, telefonda sağ altta sabit düğmedir.
  */
-function AreaFolderList({ boards, hrefFor, itemHref, canAdd, onAdd }: { boards: AreaBoardRow[]; hrefFor: (tab: AreaTab) => string; itemHref?: (itemParam: string) => string; canAdd: boolean; onAdd: () => void }) {
+function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHref, role }: { boards: AreaBoardRow[]; hrefFor: (tab: AreaTab) => string; itemHref?: (itemParam: string) => string; canAdd: boolean; onAdd: () => void; add?: AreaAddActions; reviewHref: string | null; role: ProjectRole | null }) {
   const { t } = useTranslation();
   const { items, palettes } = useSpaceContext();
   const itemTitle = useItemTitle();
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [filter, setFilter] = useState<FilterKey>("all");
   const rows: AreaRow[] = [
     { key: "main", kind: "board", title: t("tp.area.list.mainBoard"), href: hrefFor("board") },
     ...boards.map((board) => ({ key: `board-${board.id}`, kind: "board" as const, title: board.title, href: board.href })),
@@ -280,89 +303,147 @@ function AreaFolderList({ boards, hrefFor, itemHref, canAdd, onAdd }: { boards: 
       .filter((item) => item.kind !== "palette")
       .map((item): AreaRow => {
         const kind: RowKind = item.kind === "content" ? (item.contentType === "workflow" ? "workflow" : item.contentType === "preset" ? "preset" : "request") : item.kind;
-        return { key: item.id, kind, title: itemTitle(item), href: itemHref ? itemHref(item.id) : hrefFor(ROW_TAB[kind]), state: item.revState };
+        return { key: item.id, kind, title: itemTitle(item), href: itemHref ? itemHref(item.id) : hrefFor(ROW_TAB[kind]), state: item.revState, mediaUrl: item.mediaUrl, body: item.body, note: item.kind === "note" };
       }),
-    ...palettes.map((palette): AreaRow => ({ key: `palette-${palette.id}`, kind: "palette", title: palette.name, href: itemHref ? itemHref(paletteItemParam(palette.id)) : hrefFor("palette") })),
+    ...palettes.map((palette): AreaRow => ({ key: `palette-${palette.id}`, kind: "palette", title: palette.name, href: itemHref ? itemHref(paletteItemParam(palette.id)) : hrefFor("palette"), colors: palette.colors })),
   ];
-  const nothingYet = items.filter((item) => item.kind !== "palette").length === 0 && palettes.length === 0;
+  const content = rows.filter((row) => row.kind !== "board");
+  const counts = (key: FilterKey) => (key === "all" ? content.length : key === "waiting" ? content.filter((row) => row.state && row.state !== "approved").length : content.filter((row) => FILTER_OF[row.kind] === key).length);
+  const chips: FilterKey[] = ["all", "prompt", "image", "palette", "note", "content"].filter((key) => key === "all" || counts(key as FilterKey) > 0) as FilterKey[];
+  const reviewOn = Boolean(add?.reviewOn);
+  const waiting = counts("waiting");
+  if (waiting > 0) chips.push("waiting");
+  const shown = rows.filter((row) => (filter === "all" ? true : row.kind !== "board" && (filter === "waiting" ? Boolean(row.state && row.state !== "approved") : FILTER_OF[row.kind] === filter)));
+  const approvedN = content.filter((row) => !row.state || row.state === "approved").length;
+  const pendingN = content.filter((row) => row.state === "pending").length;
+  const changesN = content.filter((row) => row.state === "changes").length;
+  const nothingYet = content.length === 0;
+  const total = Math.max(1, approvedN + pendingN + changesN);
+  const lead = role === "lead";
+
   return (
-    <div className="space-y-3" data-testid="area-folder-list">
-      <div className="flex items-center justify-end gap-2">
-        <div role="group" aria-label={t("tp.area.list.viewAria")} className="flex rounded-xl bg-surface-soft p-0.5">
-          {(["list", "grid"] as const).map((key) => {
-            const Icon = key === "list" ? List : LayoutGrid;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setView(key)}
-                aria-pressed={view === key}
-                aria-label={t(key === "list" ? "tp.area.list.viewList" : "tp.area.list.viewGrid")}
-                data-area-view={key}
-                className={cn("grid h-8 w-9 place-items-center rounded-[10px] transition-colors", view === key ? "bg-surface text-primary shadow-xs" : "text-text-secondary")}
-              >
-                <Icon size={16} aria-hidden />
-              </button>
-            );
-          })}
+    <div className="space-y-3.5" data-testid="area-folder-list">
+      {(reviewOn || pendingN > 0 || changesN > 0) && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border-soft bg-surface px-4 py-3" data-testid="area-review-summary">
+          {add?.reviewSwitch ? (
+            <label className="flex min-h-9 items-center gap-2 text-small font-semibold text-text" data-file-review-switch>
+              <input type="checkbox" checked={reviewOn} disabled={add.reviewSwitch.busy} onChange={(event) => add.reviewSwitch?.onChange(event.target.checked)} aria-label={t("tp.review.switchLabel")} className="h-5 w-5 accent-[var(--color-primary)]" />
+              {t(reviewOn ? "tc.file.reviewOn" : "tc.file.reviewOff")}
+            </label>
+          ) : (
+            <span className="text-small font-semibold text-text">{t(reviewOn ? "tc.file.reviewOn" : "tc.file.reviewOff")}</span>
+          )}
+          <span aria-hidden className="flex h-2 min-w-24 flex-1 gap-0.5 overflow-hidden rounded-full">
+            <span className="bg-success" style={{ flex: approvedN / total }} />
+            <span className="bg-warning" style={{ flex: pendingN / total }} />
+            <span className="bg-danger" style={{ flex: changesN / total }} />
+          </span>
+          <span className="text-small text-text-secondary" data-review-counts>
+            {t("tc.file.counts", { approved: approvedN, pending: pendingN, changes: changesN })}
+          </span>
+          {lead && pendingN > 0 && reviewHref && (
+            <Link href={reviewHref} className="inline-flex h-9 items-center rounded-full bg-primary-soft px-3.5 text-small font-semibold text-primary" data-review-open-queue>
+              {t("tc.file.review")}
+            </Link>
+          )}
         </div>
-      </div>
-      {view === "list" ? (
-        <ul className="divide-y divide-border-soft overflow-hidden rounded-xl border border-border-soft bg-surface" data-testid="area-rows">
-          {rows.map((row) => {
-            const Icon = ROW_ICON[row.kind];
-            return (
-              <li key={row.key}>
-                <Link href={row.href} className="flex min-h-[3.75rem] items-center gap-3 px-3.5 py-2 hover:bg-surface-soft" data-area-row={row.kind}>
-                  <span aria-hidden className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", ROW_TONE[row.kind])}>
-                    <Icon size={19} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body font-semibold text-text">{row.title}</span>
-                    <span className="block text-caption text-text-muted">{t(ROW_KIND_KEY[row.kind])}</span>
-                  </span>
-                  <ItemReviewBadge state={row.state} />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3" data-testid="area-rows">
-          {rows.map((row) => {
-            const Icon = ROW_ICON[row.kind];
-            return (
-              <li key={row.key}>
-                <Link href={row.href} className="block rounded-2xl border border-border-soft bg-surface p-2 hover:bg-surface-soft" data-area-row={row.kind}>
-                  <span aria-hidden className={cn("grid h-24 place-items-center rounded-xl", ROW_TONE[row.kind])}>
-                    <Icon size={32} />
-                  </span>
-                  <span className="mt-2 block truncate px-1 text-small font-semibold text-text">{row.title}</span>
-                  <span className="flex items-center gap-1.5 px-1 pb-1 text-caption text-text-muted">
-                    {t(ROW_KIND_KEY[row.kind])}
-                    <ItemReviewBadge state={row.state} />
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
       )}
-      {nothingYet && (
+
+      <div className="flex flex-wrap items-center gap-2" data-testid="area-filters">
+        <div role="group" aria-label={t("tp.area.list.viewAria")} className="flex min-w-0 flex-1 gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
+          {chips.map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFilter(key)}
+              aria-pressed={filter === key}
+              data-area-filter={key}
+              className={cn(
+                "h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-small font-semibold md:h-8 md:px-3.5",
+                filter === key ? "border-text bg-text text-background" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
+                key === "waiting" && filter !== key && "text-warning",
+              )}
+            >
+              {key === "all" ? t("common.all") : key === "waiting" ? t("tc.file.waiting") : t(FILTER_LABEL[key])} <span className="tabular-nums opacity-70">{counts(key)}</span>
+            </button>
+          ))}
+        </div>
+        {add?.variableNames && add.variableNames.length > 0 && (
+          <button type="button" onClick={add.onVariables} className="inline-flex items-center gap-1.5 text-small text-text-muted max-md:hidden" data-area-variables>
+            {t("tc.file.variables")}
+            {add.variableNames.slice(0, 3).map((name) => (
+              <code key={name} className="rounded-md bg-surface-soft px-1.5 font-mono text-caption text-secondary">
+                {`{${name}}`}
+              </code>
+            ))}
+          </button>
+        )}
+        {canAdd && (
+          <Button type="button" onClick={onAdd} className="h-11 gap-2 rounded-full px-5 max-md:hidden md:h-10" data-area-add>
+            <Plus size={16} aria-hidden />
+            {t("tp.add.button")}
+          </Button>
+        )}
+      </div>
+
+      <ul className="grid grid-cols-2 items-start gap-2.5 md:grid-cols-3 md:gap-3.5 xl:grid-cols-4" data-testid="area-rows">
+        {shown.map((row) => (
+          <li key={row.key}>
+            <AreaCard row={row} reviewOn={reviewOn} />
+          </li>
+        ))}
+      </ul>
+      {nothingYet && filter === "all" && (
         <div className="rounded-2xl border border-dashed border-border bg-surface-soft/40 px-5 py-7 text-center" data-testid="area-empty">
           <p className="text-body font-bold text-text">{t("tp.area.list.emptyTitle")}</p>
           <p className="mx-auto mt-1 max-w-xs text-small text-text-secondary">{t(canAdd ? "tp.area.list.emptyBody" : "tp.area.list.emptyViewer")}</p>
         </div>
       )}
       {canAdd && (
-        <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex justify-end pt-2 md:bottom-6">
-          <Button type="button" onClick={onAdd} className="pointer-events-auto h-12 gap-2 rounded-full px-5 shadow-pop" data-area-add>
+        <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex justify-end pt-2 md:hidden">
+          <Button type="button" onClick={onAdd} className="pointer-events-auto h-12 gap-2 rounded-full px-5 shadow-pop" data-area-add-phone>
             <Plus size={18} aria-hidden />
             {t("tp.add.button")}
           </Button>
         </div>
       )}
     </div>
+  );
+}
+
+/** Görsel kart (mockup B3): yuvarlak büyük sanat + altta türe/başlığa koyu degrade + sağ üstte durum çipi (onay açıkken ya da onaysızsa). */
+function AreaCard({ row, reviewOn }: { row: AreaRow; reviewOn: boolean }) {
+  const { t } = useTranslation();
+  const Icon = ROW_ICON[row.kind];
+  const showState = row.state && (reviewOn || row.state !== "approved");
+  return (
+    <Link href={row.href} className="block" data-area-row={row.kind} data-area-card>
+      <span className={cn("relative block overflow-hidden rounded-[18px] md:rounded-[20px]", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning/10 text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
+        {row.kind === "image" && row.mediaUrl && <StorageImg src={row.mediaUrl} alt={row.title} className="absolute inset-0 h-full w-full object-cover" />}
+        {(row.kind === "prompt" || row.kind === "note") && <span className={cn("block p-3.5 pb-14 text-caption leading-relaxed", row.kind === "prompt" && "font-mono")}>{(row.body || "").slice(0, 260)}</span>}
+        {row.kind === "palette" && (
+          <span className="absolute inset-0 flex">
+            {(row.colors ?? []).slice(0, 6).map((color, index) => (
+              <span key={`${color}-${index}`} className="h-full flex-1" style={{ background: color }} />
+            ))}
+          </span>
+        )}
+        {(row.kind === "board" || row.kind === "workflow" || row.kind === "preset" || row.kind === "request") && (
+          <span className="absolute inset-0 grid place-items-center opacity-70">
+            <Icon size={30} aria-hidden />
+          </span>
+        )}
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-3 pb-2.5 pt-7 text-white">
+          <span className="block text-[0.625rem] font-bold uppercase tracking-[0.06em] opacity-90">{t(ROW_KIND_KEY[row.kind])}</span>
+          <span className="block truncate text-small font-bold leading-snug">{row.title}</span>
+        </span>
+        {showState && row.state && (
+          <span className="absolute right-2 top-2 rounded-full bg-surface shadow-xs">
+            <ReviewChip state={row.state} />
+          </span>
+        )}
+      </span>
+    </Link>
   );
 }
 

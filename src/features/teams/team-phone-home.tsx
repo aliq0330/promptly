@@ -12,6 +12,7 @@ import { Settings } from "@/components/icons/settings";
 import { Shapes } from "@/components/icons/shapes";
 import { UserPlus } from "@/components/icons/user-plus";
 import { Users } from "@/components/icons/users";
+import { ListChecks } from "@/components/icons/list-checks";
 import { buttonClassName } from "@/components/ui/button";
 import { PHONE_HOME_BOTTOM_PAD, PHONE_HOME_PILL, PHONE_HOME_PILL_OUTLINE, PhoneHomeCard, PhoneHomeIdentity, PhoneHomeRow, PhoneHomeSection, PhoneTileGrid } from "@/features/content/phone-home";
 import type { PhoneSectionItem } from "@/features/content/phone-sections";
@@ -23,7 +24,7 @@ import { teamLink, type TeamTab } from "@/lib/teams";
 import { cn, formatUnread } from "@/lib/utils";
 import { TeamMark } from "./team-ui";
 
-const TAB_ICON: Record<TeamTab, PhoneSectionItem["icon"]> = { projects: FolderOpen, spaces: Shapes, library: BookOpen, chat: MessagesSquare, members: Users, panel: BarChart3, admin: Settings };
+const TAB_ICON: Record<TeamTab, PhoneSectionItem["icon"]> = { projects: FolderOpen, approvals: ListChecks, spaces: Shapes, library: BookOpen, chat: MessagesSquare, members: Users, panel: BarChart3, admin: Settings };
 
 /** Bir "senden bekleyen" satırının başlığı ve alt satırı (`my_team_todos` türleri). */
 export function todoLine(t: ReturnType<typeof useTranslation>["t"], todo: TeamTodo): { title: string; sub: string; action: "review" | "chat" } {

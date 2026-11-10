@@ -66,6 +66,9 @@ function seed(db, { role = "owner", projectRole = "lead" } = {}) {
   reply("my_team_invitations", () => []);
   reply("my_team_todos", () => []);
   reply("team_project_todos", () => []);
+  reply("team_review_board", () => ({ items: [], proposals: [] }));
+  reply("team_recent_activity", () => []);
+  reply("team_member_project_roles", () => []);
   reply("team_projects_list", () => [summary(projectRole)]);
   reply("team_project_get", () => detail(projectRole));
   reply("team_project_channels", () => [{ channel_id: CHANNEL, project_id: PROJECT, project_title: "Villa Projesi" }]);

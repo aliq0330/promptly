@@ -51,6 +51,9 @@ function seed(db, { role = "owner", invitations = [] } = {}) {
   reply("my_team_invitations", () => invitations);
   reply("my_team_todos", () => []);
   reply("team_project_todos", () => []);
+  reply("team_review_board", () => ({ items: [], proposals: [] }));
+  reply("team_recent_activity", () => []);
+  reply("team_member_project_roles", () => []);
   reply("team_projects_list", () => [projectSummary(role === "owner" || role === "admin" ? "lead" : "view")]);
   reply("team_project_channels", () => []);
   reply("team_create", () => TEAM);
