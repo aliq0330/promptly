@@ -161,7 +161,7 @@ export function TeamPage() {
   const itemOpen = false;
   if (reviewing) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-5 md:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
+      <div className="mx-auto w-full max-w-5xl px-3 pb-5 sm:px-5 md:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
         <div data-team-tab={tab}>{body}</div>
       </div>
     );

@@ -154,6 +154,7 @@ export const teamProjectsTranslations = {
   "tp.item.format": { tr: "Biçim", en: "Format" },
   "tp.item.addedByLabel": { tr: "Ekleyen", en: "Added by" },
   "tp.item.showOnBoard": { tr: "Panoda göster", en: "Show on the board" },
+  "tp.item.edit": { tr: "Düzenle", en: "Edit" },
   "tp.item.delete": { tr: "Sil", en: "Delete" },
   "tp.item.deleteTitle": { tr: "Silinsin mi?", en: "Delete this?" },
   "tp.item.deleteBody": { tr: "“{{title}}” bu alandan kalkar. Bu geri alınamaz.", en: "“{{title}}” will be removed from this area. This can't be undone." },

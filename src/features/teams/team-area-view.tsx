@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { ImageIcon } from "@/components/icons/image-icon";
 import { Braces } from "@/components/icons/braces";
@@ -17,28 +17,25 @@ import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Button } from "@/components/ui/button";
-import { ScrollRow } from "@/components/ui/scroll-row";
-import { useItemTitle } from "@/features/spaces/space-items";
+import { DraftEditorModal, NoteEditorModal, useItemTitle } from "@/features/spaces/space-items";
+import { useSpaceImageUpload } from "@/features/spaces/tabs/images-tab";
+import { NewPaletteDialog } from "@/features/spaces/tabs/palette-tab";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { SpaceBoard } from "@/features/spaces/board/space-board";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "@/features/spaces/space-provider";
-import { ImagesTab } from "@/features/spaces/tabs/images-tab";
-import { NotesTab } from "@/features/spaces/tabs/notes-tab";
-import { PaletteTab } from "@/features/spaces/tabs/palette-tab";
-import { PromptsTab } from "@/features/spaces/tabs/prompts-tab";
 import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
 import { rewriteAreaTerms } from "@/lib/team-area-terms";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { fetchMyRole, fetchSpace, fetchSpaceConnections, fetchSpaceGroups, fetchSpaceItems, fetchSpacePalettes, type SpaceItem } from "@/lib/supabase/spaces";
-import { proposeChange, submitReview, withdrawReview } from "@/lib/supabase/team-projects";
+import { submitReview, withdrawReview } from "@/lib/supabase/team-projects";
 import type { TeamActionError } from "@/lib/supabase/teams";
 import { canAddToArea, canProposeChange, canSubmitItem, canWithdrawItem, type ProjectRole } from "@/lib/team-projects";
-import { cn, presetHref, requestHref, workflowHref } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { SpaceDialog } from "@/features/spaces/space-modals";
-import { FormError, SubmitButton } from "@/features/spaces/space-forms";
 import { ItemReviewBadge, ReviewChip } from "./project-ui";
 import { AreaItemDetail, type AreaItemContext } from "./team-item-detail";
+import { ProposeChangeDialog } from "./team-propose-dialog";
 import { paletteItemParam } from "@/lib/team-item-kit";
 
 /**
@@ -54,16 +51,6 @@ export const AREA_TABS: readonly AreaTab[] = ["board", "images", "prompts", "con
 export function isAreaTab(value: unknown): value is AreaTab {
   return typeof value === "string" && (AREA_TABS as readonly string[]).includes(value);
 }
-
-const TAB_ICON: Record<AreaTab, IconComponent> = { board: Presentation, images: ImageIcon, prompts: SquareTerminal, content: WorkflowIcon, notes: StickyNote, palette: Palette };
-const TAB_KEY: Record<AreaTab, TranslationKey> = {
-  board: "tp.area.tab.board",
-  images: "tp.area.tab.images",
-  prompts: "tp.area.tab.prompts",
-  content: "tp.area.tab.content",
-  notes: "tp.area.tab.notes",
-  palette: "tp.area.tab.palette",
-};
 
 type LoadState = { status: "loading" } | { status: "missing" } | { status: "error" } | { status: "ready"; data: SpaceData };
 
@@ -92,21 +79,18 @@ export function TeamAreaView({
   reviewHref,
   add,
   boards,
-  autoAdd,
   item,
   itemHref,
   focusId,
 }: {
   spaceId: string;
   role: ProjectRole | null;
-  /** `null` = liste (Gezgin: öğeler satır satır); bir sekme = o sekmenin kendi görünümü. */
+  /** `null` = liste (Gezgin: öğeler satır satır); `"board"` = pano. Başka sekme YOKTUR (docs/history/365-*). */
   tab: AreaTab | null;
-  hrefFor: (tab: AreaTab, extra?: { add?: boolean; focus?: string }) => string;
+  hrefFor: (tab: AreaTab, extra?: { focus?: string }) => string;
   reviewHref?: string | null;
   add?: AreaAddActions;
   boards?: AreaBoardRow[];
-  /** Sekme açılırken ilgili "ekle" penceresi kendiliğinden açılsın (Ekle menüsünden gelince). */
-  autoAdd?: boolean;
   /** Bir öğenin kendi sayfası (`?item=`; docs/history/364-*): doluysa liste/sekmeler yerine o öğenin detayı çizilir. */
   item?: AreaItemContext | null;
   /** Liste satırından öğe sayfasının adresi (`?item=<öğe kimliği | palette:<palet>>`). */
@@ -166,7 +150,7 @@ export function TeamAreaView({
   return (
     <SpaceProvider key={`${state.data.space.id}-${version}`} initial={state.data} userId={userId}>
       <LanguageTermScope rewrite={rewriteAreaTerms}>
-        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} autoAdd={Boolean(autoAdd)} item={item ?? null} itemHref={itemHref} focusId={focusId ?? null} />
+        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} item={item ?? null} itemHref={itemHref} focusId={focusId ?? null} />
       </LanguageTermScope>
     </SpaceProvider>
   );
@@ -180,99 +164,70 @@ function AreaBody({
   onChanged,
   add,
   boards,
-  autoAdd,
   item,
   itemHref,
   focusId,
 }: {
   role: ProjectRole | null;
   tab: AreaTab | null;
-  hrefFor: (tab: AreaTab, extra?: { add?: boolean; focus?: string }) => string;
+  hrefFor: (tab: AreaTab, extra?: { focus?: string }) => string;
   reviewHref: string | null;
   onChanged: () => void;
   add?: AreaAddActions;
   boards: AreaBoardRow[];
-  autoAdd: boolean;
   item: AreaItemContext | null;
   itemHref?: (itemParam: string) => string;
   focusId: string | null;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { space, items, palettes, caps } = useSpaceContext();
+  const { space, caps } = useSpaceContext();
   const [addOpen, setAddOpen] = useState(false);
-  const count: Partial<Record<AreaTab, number>> = {
-    images: items.filter((i) => i.kind === "image").length,
-    prompts: items.filter((i) => i.kind === "prompt").length,
-    content: items.filter((i) => i.kind === "content").length,
-    notes: items.filter((i) => i.kind === "note").length,
-    palette: palettes.length,
-  };
-  const listMode = tab === null;
+  const [adding, setAdding] = useState<null | "prompt" | "note" | "palette">(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const { upload, uploadErrors, handleFiles } = useSpaceImageUpload();
   if (item) return <AreaItemDetail ctx={item} role={role} onChanged={onChanged} />;
+  const listMode = tab !== "board";
   return (
     <div className="space-y-4" data-team-area={space.id} data-area-role={role ?? "none"} data-area-can-edit={caps.edit ? "1" : "0"} data-area-mode={listMode ? "list" : "tab"}>
-      {caps.edit && !listMode && (
-        <div className="flex justify-end">
-          <Button type="button" onClick={() => setAddOpen(true)} data-area-add>
-            <Plus size={16} aria-hidden />
-            {t("tp.add.button")}
-          </Button>
-        </div>
-      )}
-      <AreaReviewPanel role={role} reviewHref={reviewHref} onChanged={onChanged} />
+      {listMode && <AreaReviewPanel role={role} reviewHref={reviewHref} onChanged={onChanged} />}
       {listMode ? (
         <AreaFolderList boards={boards} hrefFor={hrefFor} itemHref={itemHref} canAdd={caps.edit} onAdd={() => setAddOpen(true)} />
       ) : (
-        <>
-          <nav aria-label={t("tp.area.tabsAria")}>
-            <ScrollRow className="gap-2">
-              {AREA_TABS.map((key) => {
-                const Icon = TAB_ICON[key];
-                const active = tab === key;
-                return (
-                  <Link
-                    key={key}
-                    href={hrefFor(key)}
-                    replace
-                    scroll={false}
-                    aria-current={active ? "page" : undefined}
-                    data-area-tab={key}
-                    className={cn(
-                      "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-small transition-colors",
-                      active ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft",
-                    )}
-                  >
-                    <Icon size={15} aria-hidden />
-                    {t(TAB_KEY[key])}
-                    {count[key] !== undefined && <span className="text-caption text-text-muted">{count[key]}</span>}
-                  </Link>
-                );
-              })}
-            </ScrollRow>
-          </nav>
-          <div role="tabpanel" aria-label={t(TAB_KEY[tab])}>
-            {tab === "board" && <SpaceBoard focusId={focusId} />}
-            {tab === "images" && <ImagesTab focusId={null} onShowOnBoard={() => undefined} />}
-            {tab === "prompts" && <PromptsTab onShowOnBoard={() => undefined} autoAdd={autoAdd} />}
-            {tab === "notes" && <NotesTab onShowOnBoard={() => undefined} autoAdd={autoAdd} />}
-            {tab === "palette" && <PaletteTab autoAdd={autoAdd} />}
-            {tab === "content" && <AreaContentList />}
-          </div>
-        </>
+        <div role="tabpanel" aria-label={t("tp.area.tab.board")}>
+          <SpaceBoard focusId={focusId} />
+        </div>
       )}
+      {upload && (
+        <p role="status" className="rounded-xl bg-surface-soft px-3 py-2 text-small text-text-secondary" data-area-upload>
+          {t("spaces.images.uploading", { done: upload.done, total: upload.total })}
+        </p>
+      )}
+      {uploadErrors.length > 0 && (
+        <ul role="alert" className="space-y-1 rounded-xl bg-danger/10 px-3 py-2 text-small text-danger">
+          {uploadErrors.map((message) => (
+            <li key={message}>{message}</li>
+          ))}
+        </ul>
+      )}
+      <input ref={fileRef} type="file" accept="image/*" multiple hidden data-testid="area-upload-input" onChange={(event) => { void handleFiles(event.target.files); event.target.value = ""; }} />
       {addOpen && (
         <AddMenuDialog
           reviewOn={Boolean(add?.reviewOn)}
           onClose={() => setAddOpen(false)}
-          onGo={(next, withAdd) => {
+          onPick={(kind) => {
             setAddOpen(false);
-            router.replace(hrefFor(next, withAdd ? { add: true } : undefined), { scroll: false });
+            if (kind === "image") fileRef.current?.click();
+            else if (kind === "board") router.replace(hrefFor("board"), { scroll: false });
+            else setAdding(kind);
           }}
           onNewBoard={add?.onNewBoard ? () => { setAddOpen(false); add.onNewBoard?.(); } : undefined}
           onNewVariable={add?.onNewVariable ? () => { setAddOpen(false); add.onNewVariable?.(); } : undefined}
         />
       )}
+      {adding === "prompt" && <DraftEditorModal draft={null} onClose={() => setAdding(null)} />}
+      {adding === "note" && <NoteEditorModal note={null} onClose={() => setAdding(null)} />}
+      {adding === "palette" && <NewPaletteDialog onClose={() => setAdding(null)} />}
     </div>
   );
 }
@@ -325,8 +280,7 @@ function AreaFolderList({ boards, hrefFor, itemHref, canAdd, onAdd }: { boards: 
       .filter((item) => item.kind !== "palette")
       .map((item): AreaRow => {
         const kind: RowKind = item.kind === "content" ? (item.contentType === "workflow" ? "workflow" : item.contentType === "preset" ? "preset" : "request") : item.kind;
-        const own = itemHref && (kind === "prompt" || kind === "image" || kind === "note");
-        return { key: item.id, kind, title: itemTitle(item), href: own ? itemHref(item.id) : hrefFor(ROW_TAB[kind]), state: item.revState };
+        return { key: item.id, kind, title: itemTitle(item), href: itemHref ? itemHref(item.id) : hrefFor(ROW_TAB[kind]), state: item.revState };
       }),
     ...palettes.map((palette): AreaRow => ({ key: `palette-${palette.id}`, kind: "palette", title: palette.name, href: itemHref ? itemHref(paletteItemParam(palette.id)) : hrefFor("palette") })),
   ];
@@ -416,17 +370,17 @@ function AreaFolderList({ boards, hrefFor, itemHref, canAdd, onAdd }: { boards: 
  * "Ekle" menüsü (mockup 4): ne eklemek istiyorsun? Görsel/prompt/not/palet ilgili sekmeye götürür (orada kendi ekleme düğmesi vardır);
  * workflow ve ayar paketi panodaki "Promptly'den ekle" aracıyla gelir; pano ve değişken kendi pencereleriyle açılır.
  */
-function AddMenuDialog({ reviewOn, onClose, onGo, onNewBoard, onNewVariable }: { reviewOn: boolean; onClose: () => void; onGo: (tab: AreaTab, withAdd?: boolean) => void; onNewBoard?: () => void; onNewVariable?: () => void }) {
+function AddMenuDialog({ reviewOn, onClose, onPick, onNewBoard, onNewVariable }: { reviewOn: boolean; onClose: () => void; onPick: (kind: "image" | "prompt" | "note" | "palette" | "board") => void; onNewBoard?: () => void; onNewVariable?: () => void }) {
   const { t } = useTranslation();
   const options: { key: string; icon: IconComponent; label: TranslationKey; hint: TranslationKey; run: () => void }[] = [
     ...(onNewBoard ? [{ key: "board", icon: Presentation, label: "tp.add.board" as TranslationKey, hint: "tp.add.boardHint" as TranslationKey, run: onNewBoard }] : []),
-    { key: "image", icon: ImageIcon, label: "tp.add.image", hint: "tp.add.imageHint", run: () => onGo("images") },
-    { key: "prompt", icon: SquareTerminal, label: "tp.add.prompt", hint: "tp.add.promptHint", run: () => onGo("prompts", true) },
-    { key: "workflow", icon: WorkflowIcon, label: "tp.add.workflow", hint: "tp.add.workflowHint", run: () => onGo("board") },
-    { key: "preset", icon: SlidersHorizontal, label: "tp.add.preset", hint: "tp.add.presetHint", run: () => onGo("board") },
+    { key: "image", icon: ImageIcon, label: "tp.add.image", hint: "tp.add.imageHint", run: () => onPick("image") },
+    { key: "prompt", icon: SquareTerminal, label: "tp.add.prompt", hint: "tp.add.promptHint", run: () => onPick("prompt") },
+    { key: "workflow", icon: WorkflowIcon, label: "tp.add.workflow", hint: "tp.add.workflowHint", run: () => onPick("board") },
+    { key: "preset", icon: SlidersHorizontal, label: "tp.add.preset", hint: "tp.add.presetHint", run: () => onPick("board") },
     ...(onNewVariable ? [{ key: "variable", icon: Braces, label: "tp.add.variable" as TranslationKey, hint: "tp.add.variableHint" as TranslationKey, run: onNewVariable }] : []),
-    { key: "palette", icon: Palette, label: "tp.add.palette", hint: "tp.add.paletteHint", run: () => onGo("palette", true) },
-    { key: "note", icon: StickyNote, label: "tp.add.note", hint: "tp.add.noteHint", run: () => onGo("notes", true) },
+    { key: "palette", icon: Palette, label: "tp.add.palette", hint: "tp.add.paletteHint", run: () => onPick("palette") },
+    { key: "note", icon: StickyNote, label: "tp.add.note", hint: "tp.add.noteHint", run: () => onPick("note") },
   ];
   return (
     <SpaceDialog title={t("tp.add.title")} onClose={onClose} formTestId="area-add-menu" footer={reviewOn ? <p className="mr-auto text-caption text-text-secondary">{t("tp.add.draftNote")}</p> : undefined}>
@@ -447,42 +401,6 @@ function AddMenuDialog({ reviewOn, onClose, onGo, onNewBoard, onNewVariable }: {
         })}
       </ul>
     </SpaceDialog>
-  );
-}
-
-/** Workflow / ayar paketi / istek öğeleri (Space sekmelerinde ayrı liste yok; pano dışında burada görünür). */
-function AreaContentList() {
-  const { t } = useTranslation();
-  const { items, sources } = useSpaceContext();
-  const list = items.filter((item) => item.kind === "content");
-  if (list.length === 0) return <p className="rounded-xl border border-dashed border-border-soft p-6 text-center text-small text-text-muted">{t("tp.area.contentEmpty")}</p>;
-  return (
-    <ul className="grid gap-3 sm:grid-cols-2" data-testid="area-content-list">
-      {list.map((item) => {
-        const type = item.contentType;
-        const found = type === "workflow" ? sources.workflows.get(item.contentId ?? "") : type === "preset" ? sources.presets.get(item.contentId ?? "") : sources.requests.get(item.contentId ?? "");
-        const href = !found ? null : type === "workflow" ? workflowHref(found) : type === "preset" ? presetHref(found) : requestHref(found);
-        const Icon = type === "workflow" ? WorkflowIcon : type === "preset" ? SlidersHorizontal : LayoutDashboard;
-        return (
-          <li key={item.id} className="flex items-center gap-3 rounded-xl border border-border-soft bg-surface p-3" data-area-content-item={item.id}>
-            <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
-              <Icon size={18} />
-            </span>
-            <span className="min-w-0 flex-1">
-              {href ? (
-                <Link href={href} className="block truncate text-small font-semibold text-text hover:text-primary">
-                  {found?.title}
-                </Link>
-              ) : (
-                <span className="block truncate text-small text-text-muted">{t("tp.area.sourceUnavailable")}</span>
-              )}
-              <span className="block text-caption text-text-muted">{t(type === "workflow" ? "tp.kind.workflow" : type === "preset" ? "tp.kind.preset" : "tp.kind.request")}</span>
-            </span>
-            <ReviewChip state={item.revState} />
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 
@@ -593,60 +511,5 @@ function AreaReviewPanel({ role, reviewHref, onChanged }: { role: ProjectRole | 
         />
       )}
     </section>
-  );
-}
-
-/** Onaylı öğe için değişiklik önerisi: öneri ayrı tabloda durur (öğe değişmez); lider onaylarsa uygulanır. */
-function ProposeChangeDialog({ item, onClose, onDone }: { item: SpaceItem; onClose: () => void; onDone: () => void }) {
-  const { t } = useTranslation();
-  const [title, setTitle] = useState(item.title);
-  const [body, setBody] = useState(item.body);
-  const [note, setNote] = useState(item.note);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      await proposeChange(item.id, { title: title.trim(), body, note });
-      onDone();
-    } catch (e) {
-      setError((e as TeamActionError).message);
-      setBusy(false);
-    }
-  };
-  return (
-    <SpaceDialog
-      title={t("tp.review.proposeDialog")}
-      onClose={onClose}
-      busy={busy}
-      onSubmit={(event) => void submit(event)}
-      formTestId="area-propose-form"
-      footer={
-        <>
-          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
-            {t("common.cancel")}
-          </Button>
-          <SubmitButton busy={busy}>{t("tp.review.proposeSend")}</SubmitButton>
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <label className="block">
-          <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.review.fieldTitle")}</span>
-          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} className="h-11 w-full rounded-xl border border-border bg-background px-3 text-small" />
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.review.fieldBody")}</span>
-          <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={8000} rows={6} className="w-full rounded-xl border border-border bg-background px-3 py-2 font-mono text-small" />
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.review.fieldNote")}</span>
-          <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} rows={3} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-small" />
-        </label>
-        <FormError message={error} />
-      </div>
-    </SpaceDialog>
   );
 }
