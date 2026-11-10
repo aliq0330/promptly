@@ -341,7 +341,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           )}
 
           {lead && (detail.pendingCount ?? 0) > 0 && (
-            <Link href={projectLink(team.id, project.id, { review: true })} className="flex min-h-12 items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-small hover:shadow-card" data-project-review-banner>
+            <Link href={projectLink(team.id, project.id, { review: true })} className="flex min-h-12 items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-small hover:shadow-card" data-project-review-link>
               <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart" />
               <span className="min-w-0 flex-1 font-semibold text-text">{t("tc.proj.waitingBanner", { count: detail.pendingCount ?? 0 })}</span>
               <span className="font-semibold text-primary">{t("tc.over.open")}</span>
@@ -360,6 +360,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
                   title={t("tp.area.projectWide")}
                   meta={t("tp.home.sharedSub", { items: detail.itemCount })}
                   tone="plum"
+                  attrs={{ "data-project-main-area": "" }}
                   chip={t("tc.proj.projectWide")}
                   chipTone="primary"
                 />
@@ -370,6 +371,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
                 <FileCard
                   href={projectLink(team.id, project.id, { file: file.id })}
                   title={file.title}
+                  attrs={{ "data-file-card": file.id }}
                   meta={`${t("tp.file.counts", { items: file.itemCount, boards: file.boardCount ?? 0 })} · ${t(file.reviewRequired ? "tp.file.reviewOn" : "tp.file.reviewOff")}`}
                   tone={FILE_TONES[index % FILE_TONES.length]}
                   chip={lead && (file.pendingCount ?? 0) > 0 ? t("tc.proj.filePending", { count: file.pendingCount ?? 0 }) : file.reviewRequired ? undefined : t("tc.proj.directPublish")}
@@ -499,9 +501,9 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
 }
 
 /** Dosya kartı (mockup B2): üstte tonlu mini kolaj, altta ad · özet · durum çipi. */
-function FileCard({ href, title, meta, tone, chip, chipTone }: { href: string; title: string; meta: string; tone: string; chip?: string; chipTone: "primary" | "warning" | "neutral" }) {
+function FileCard({ href, title, meta, tone, chip, chipTone, attrs }: { href: string; title: string; meta: string; tone: string; chip?: string; chipTone: "primary" | "warning" | "neutral"; attrs?: Record<string, string> }) {
   return (
-    <Link href={href} className="block overflow-hidden rounded-2xl border border-border-soft bg-surface transition-shadow hover:shadow-card-hover" data-project-file-card>
+    <Link href={href} className="block overflow-hidden rounded-2xl border border-border-soft bg-surface transition-shadow hover:shadow-card-hover" data-project-file-card {...attrs}>
       <span aria-hidden className={cn("grid h-[4.5rem] grid-cols-3 gap-1.5 p-2.5 md:h-24", toneClass(tone))}>
         <span className="rounded-lg bg-current" />
         <span className="rounded-lg bg-surface" />

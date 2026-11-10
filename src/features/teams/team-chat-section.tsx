@@ -187,7 +187,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
         <>
         {/* Telefonda tek bölme: kanal seçilene kadar yalnız liste, seçilince yalnız sohbet (+ geri). Masaüstünde sohbet + yan sütun. */}
         <div className="min-w-0 max-md:hidden lg:col-start-1 lg:row-start-1">
-          <ChannelView key={active.id} channel={active} channels={visible} members={members} onSelect={select} onlineCount={onlineMembers.length} onNew={can("manage_channels") ? () => setNewOpen(true) : undefined} controls={controls} />
+          <ChannelView key={active.id} channel={active} channels={visible} members={members} onSelect={select} onlineCount={onlineMembers.length} onNew={can("manage_channels") ? () => setNewOpen(true) : undefined} controls={controls} labelOf={(c) => (c.mode === "project" ? (projectTitles.get(c.id) ?? c.name) : c.name)} />
         </div>
         <ChannelAside channel={active} members={members} online={online} controls={controls} archived={can("manage_channels") ? archived : []} onUnarchive={(id) => void archiveTeamChannel(id, false).then(load)} projectTitle={projectTitles.get(active.id) ?? null} />
         </>
@@ -300,9 +300,12 @@ function ChannelView({
   onlineCount,
   onNew,
   controls,
+  labelOf,
 }: {
   channel: TeamChannel;
   channels: TeamChannel[];
+  /** Çip etiketi: proje sohbeti projenin başlığıyla görünür (mockup B6). */
+  labelOf?: (channel: TeamChannel) => string;
   members: ChannelMember[];
   onSelect: (channel: TeamChannel) => void;
   onlineCount: number;
@@ -369,8 +372,8 @@ function ChannelView({
               c.id === channel.id ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary",
             )}
           >
-            {c.mode === "private" ? <Lock size={13} aria-hidden /> : <Hash size={13} aria-hidden />}
-            {c.name}
+            {c.mode === "private" ? <Lock size={13} aria-hidden /> : c.mode === "project" ? <span aria-hidden className="h-2.5 w-2.5 rounded-[3px] bg-primary" /> : <Hash size={13} aria-hidden />}
+            {labelOf ? labelOf(c) : c.name}
             {c.unreadCount > 0 && !c.muted && c.id !== channel.id && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(c.unreadCount)}</span>}
           </button>
         ))}

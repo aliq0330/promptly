@@ -326,7 +326,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
       {(reviewOn || pendingN > 0 || changesN > 0) && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border-soft bg-surface px-4 py-3" data-testid="area-review-summary">
           {add?.reviewSwitch ? (
-            <label className="flex min-h-9 items-center gap-2 text-small font-semibold text-text" data-file-review-switch>
+            <label className="flex min-h-9 items-center gap-2 text-small font-semibold text-text" data-area-review-switch>
               <input type="checkbox" checked={reviewOn} disabled={add.reviewSwitch.busy} onChange={(event) => add.reviewSwitch?.onChange(event.target.checked)} aria-label={t("tp.review.switchLabel")} className="h-5 w-5 accent-[var(--color-primary)]" />
               {t(reviewOn ? "tc.file.reviewOn" : "tc.file.reviewOff")}
             </label>
@@ -342,7 +342,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
             {t("tc.file.counts", { approved: approvedN, pending: pendingN, changes: changesN })}
           </span>
           {lead && pendingN > 0 && reviewHref && (
-            <Link href={reviewHref} className="inline-flex h-9 items-center rounded-full bg-primary-soft px-3.5 text-small font-semibold text-primary" data-review-open-queue>
+            <Link href={reviewHref} className="inline-flex h-9 items-center rounded-full bg-primary-soft px-3.5 text-small font-semibold text-primary" data-area-summary-review>
               {t("tc.file.review")}
             </Link>
           )}

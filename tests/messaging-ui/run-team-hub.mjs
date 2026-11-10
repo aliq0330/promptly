@@ -56,6 +56,14 @@ function seed(db, { role = "owner", invitations = [] } = {}) {
   reply("team_member_project_roles", () => []);
   reply("team_projects_list", () => [projectSummary(role === "owner" || role === "admin" ? "lead" : "view")]);
   reply("team_project_channels", () => []);
+  reply("team_project_get", () => {
+    const sum = projectSummary(role === "owner" || role === "admin" ? "lead" : "view");
+    return {
+      project: { id: sum.id, team_id: TEAM, title: sum.title, description: sum.description, tone: "primary", access_mode: "selected", base_role: "view", review_default: true, archived_at: null, created_at: "2026-11-01T00:00:00Z" },
+      my_role: sum.my_role, main_area_id: sum.main_area_id, channel_id: null, item_count: 9, pending_count: sum.pending_count,
+      files: sum.files.map((f) => ({ ...f, board_count: 0 })), boards: [], people: [], variables: [],
+    };
+  });
   reply("team_create", () => TEAM);
   reply("team_respond_invitation", () => ({ status: "accepted", team_id: TEAM, slug: "atolye-mor" }));
   reply("team_list_spaces", () => [
@@ -157,12 +165,12 @@ await scenario("4c. Konuk: yalnız Space'ler ve Sohbet; süre bandı", async ({ 
   assert.ok(!guest.some((t) => t.startsWith("Kütüphane")) && !guest.some((t) => t.startsWith("Üyeler")), `guest tabs: ${guest}`);
 }, { role: "guest" });
 
-await scenario("8. Sohbet: kanal listesi (özel kanalda kilit), okunmamış rozeti, kanal değişince başlık", async ({ page }) => {
+await scenario("8. Sohbet: kanal çipleri (özel kanalda kilit), okunmamış rozeti, kanal değişince başlık", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=chat`);
-  const list = page.getByTestId("team-channel-list");
+  const list = page.getByTestId("team-channel-chips");
   await list.waitFor();
-  await list.locator('[data-channel="genel"]').getByText("3").waitFor();
-  await list.locator('[data-channel="yonetim"]').click();
+  await list.locator('[data-channel-chip="yonetim"]').click();
+  await list.locator('[data-channel-chip="genel"]').getByText("3").waitFor();
   await page.getByTestId("team-channel-view").getByRole("heading", { name: /yonetim/ }).waitFor();
   assert.equal(await page.locator(`[data-channel-id="${CH_SECRET}"]`).count(), 1);
 });
@@ -211,8 +219,10 @@ await scenario("12. İngilizce: Ekipler başlığı, ekip sekmeleri ve rol", asy
   await page.locator(`[data-team-card="${TEAM}"]`).getByText("6 members").waitFor();
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=library`);
   // Eski kütüphane adresi Projeler'e yönlenir.
-  await page.getByRole("heading", { name: "Projects", exact: true }).waitFor();
+  await page.getByRole("heading", { name: /^Projects/ }).waitFor();
   await page.getByText("Villa Projesi").waitFor();
+  await page.locator("[data-team-tab-link=projects]").getByText("Overview").waitFor();
+  await page.locator("[data-team-tab-link=approvals]").getByText("Approvals").waitFor();
 }, { lang: "en" });
 
 const shot = (page, name) => (process.env.SHOT ? page.screenshot({ path: `${process.env.SHOT}/${name}.png` }).catch(() => undefined) : undefined);
@@ -227,7 +237,7 @@ await scenario("13. Telefon: Ekipler, ekip sayfası ve Yönetim yatay taşmaz", 
   assert.ok(await overflowFree(page), "team page");
   await shot(page, "m_projects");
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=members`);
-  await page.locator("[data-team-phone-bar]").waitFor();
+  await page.getByTestId("team-band").waitFor();
   await page.waitForTimeout(400);
   assert.ok(await overflowFree(page), "members");
   await shot(page, "m_members");
@@ -270,8 +280,11 @@ await scenario("17. Ekip sohbeti (gömülü): '+' menüsünde Kütüphaneden pay
 await scenario("15. Ekip başlığı (mockup): geri bağlantısı, Ekip rozeti, üye · Space · Yalnızca davetle satırı, Davet et; kenar çubuğunda Ekiplerim", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
   await page.getByTestId("team-page").waitFor();
-  await page.locator("[data-team-back-desktop]").waitFor();
-  await page.getByText("Yalnızca davetle").waitFor();
+  const band = page.getByTestId("team-band");
+  await band.getByText("EKİP").waitFor();
+  await band.getByRole("heading", { name: "Atölye Mor" }).waitFor();
+  await band.getByText("Yalnızca davetle").waitFor();
+  await page.getByTestId("team-tabs").waitFor();
   await page.locator("[data-team-invite-header]").waitFor();
   const sidebar = page.getByTestId("sidebar-teams");
   await sidebar.getByText("Atölye Mor").waitFor();
@@ -408,17 +421,19 @@ const withMembers = (db) => {
   db.rpc.team_channel_members = () => ({ body: [U.bob, U.carol, U.dave].map((u) => ({ user_id: u.id, username: u.username, display_name: u.display_name ?? u.username, avatar_url: null, team_role: "member" })) });
 };
 
-await scenario("24. Masaüstü sohbet = çalışma alanı: solda kanal kartı (rozet, alt satır 'çevrimiçi · üye'), sağda sohbet kartı (başlık, yüzler, Ara, bilgi); bilgi düğmesi kanal bilgisini açar", async ({ page }) => {
+await scenario("24. Masaüstü sohbet (Merkez): kartta kanal çipleri, sağda kanal bilgisi + çevrimiçi üyeler; Ara ve bilgi düğmeleri", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=chat&channel=genel`);
   const view = page.getByTestId("team-channel-view");
   await view.waitFor();
   const aside = page.getByTestId("team-channel-aside");
   assert.equal(await aside.isVisible(), true);
-  await aside.locator("[data-channel='genel']").getByText("3").waitFor();
-  await page.getByTestId("team-online").getByText(/çevrimiçi/).waitFor();
-  assert.match(await view.locator("h3").innerText(), /# genel/);
+  await aside.getByTestId("team-channel-info-card").waitFor();
+  await aside.getByTestId("team-online").getByText(/çevrimiçi/).waitFor();
+  assert.match(await view.locator("h3").first().innerText(), /# genel/);
   await view.locator("[data-channel-faces]").waitFor();
-  assert.equal(await view.getByTestId("team-channel-chips").isVisible(), false, "masaüstünde çip satırı yok (kanallar solda)");
+  const chips = view.getByTestId("team-channel-chips");
+  assert.equal(await chips.isVisible(), true, "kanal çipleri sohbet kartının içinde (Merkez düzeni)");
+  await chips.locator("[data-channel-chip='genel']").waitFor();
   await view.locator("[data-chat-search-toggle]").getByText("Ara…").waitFor();
   await view.locator("[data-chat-search-toggle]").click();
   await page.getByPlaceholder(/ara/i).first().waitFor();
@@ -469,7 +484,7 @@ await scenario("28. Üyeler: görünüm hapları, tablo, Roller ve yetkiler matr
 
 await scenario("29. Telefon: Üyeler satırında Roller ve yetkiler açılır, Çıkar penceresi taşmaz", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=members`);
-  await page.locator("[data-team-phone-bar]").waitFor();
+  await page.getByTestId("team-band").waitFor();
   await page.getByText("Roller ve yetkiler").first().click();
   await page.getByText("Hangi rol neyi yapabilir?").first().waitFor();
   assert.ok(await overflowFree(page));
@@ -536,8 +551,8 @@ await scenario("32. Panel (proje etkinliği): başlık, dönem hapları, dört k
   await page.getByText("içerikte lider değişiklik istedi.").waitFor();
   const row = page.locator("[data-panel-top-row]").first();
   await row.getByText("Villa Projesi").waitFor();
-  assert.equal((await row.locator("td").nth(1).innerText()).trim(), "42");
-  assert.equal((await row.locator("td").nth(2).innerText()).trim(), "3");
+  const rowText = (await row.innerText()).replace(/\s+/g, " ");
+  assert.ok(rowText.includes("42") && rowText.includes("3 onay bekliyor"), rowText);
   assert.equal(await page.getByText("Kopyalama").count(), 0, "eski kütüphane kartları yok");
 }, { setup: (db) => {
   db.rpc.team_insights = () => ({ body: { days: 30, added: 128, added_prev: 114, approval_hours: 3, approval_hours_prev: 4, contributors: 31, contributors_prev: 27, members: 48, projects: 9,
@@ -597,31 +612,35 @@ await scenario("36. Telefon: Yönetim bölümleri (Denetim, Panel, Politikalar, 
 
 await scenario("37. Telefon: Ekip sayfasında genel üst menü görünür; açık kanalda (tam ekran sohbet) gizlenir", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=projects`);
-  await page.locator("[data-team-phone-bar]").waitFor();
-  assert.equal(await page.locator("[data-app-header]").isVisible(), true, "Projeler: üst menü görünür");
+  await page.getByTestId("team-band").waitFor();
+  assert.equal(await page.locator("[data-app-header]").isVisible(), true, "Genel bakış: üst menü görünür");
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=members`);
-  await page.locator("[data-team-phone-bar]").waitFor();
+  await page.getByTestId("team-band").waitFor();
   assert.equal(await page.locator("[data-app-header]").isVisible(), true, "Üyeler: üst menü görünür");
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=chat&channel=genel`);
   await page.waitForFunction(() => document.documentElement.hasAttribute("data-team-focus"));
   assert.equal(await page.locator("[data-app-header]").isVisible(), false, "açık kanal: üst menü gizli");
 }, { viewport: { width: 390, height: 800 } });
 
-await scenario("38. Telefon (Yön C): Ekip kökü = kimlik + sohbet düğmesi + bölüm LİSTESİ; satır alt sayfa açar (geri çubuğu), hap/menü yok", async ({ page }) => {
+await scenario("38. Telefon (Merkez): bant (geri · im · ad · Davet et · ⋯) + kaydırılan sekme şeridi; sekme adresi değiştirir; proje açılınca bant yerine proje başlığı", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor`);
-  const root = page.getByTestId("team-phone-root");
-  await root.waitFor();
-  const list = root.locator("[data-phone-section-list]");
-  for (const key of ["projects", "chat", "members", "panel", "admin"]) await list.locator(`[data-phone-section=${key}]`).waitFor();
-  assert.equal(await page.locator("[data-team-tabs], [data-team-tab-link]").first().isVisible().catch(() => false), false, "sekme çubuğu telefonda yok");
-  await list.locator("[data-phone-section=projects]").click();
-  await page.waitForFunction(() => location.search.includes("tab=projects"));
-  const bar = page.locator("[data-phone-subbar]");
-  await bar.waitFor();
-  assert.match(await bar.innerText(), /Atölye Mor/);
-  assert.match(await bar.innerText(), /Projeler/);
-  await bar.locator("[data-phone-back]").click();
-  await page.getByTestId("team-phone-root").waitFor();
+  const band = page.getByTestId("team-band");
+  await band.waitFor();
+  await band.locator("[data-team-back-phone]").waitFor();
+  await band.locator("[data-team-invite-header]").waitFor();
+  await band.locator("[data-team-menu]").click();
+  await band.locator("[data-team-menu-list]").waitFor();
+  await page.keyboard.press("Escape");
+  const tabs = page.getByTestId("team-tabs");
+  for (const key of ["projects", "approvals", "chat", "members", "panel", "admin"]) await tabs.locator(`[data-team-tab-link=${key}]`).waitFor({ state: "attached" });
+  await tabs.locator("[data-team-tab-link=approvals]").click();
+  await page.waitForFunction(() => location.search.includes("tab=approvals"));
+  await page.getByTestId("team-approvals").waitFor();
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "yatay taşma yok");
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=projects`);
+  await page.locator("[data-project-card]").first().click();
+  await page.locator("[data-drill-header]").waitFor();
+  assert.equal(await page.getByTestId("team-band").count(), 0, "projede bant yerine proje başlığı");
 }, { viewport: { width: 390, height: 800 } });
 
 await scenario("39. Telefon (Yön C): Yönetim = liste → alt sayfa; alt sayfa 'Atölye Mor · Yönetim / Denetim günlüğü' çubuğu, geri Yönetim listesine döner", async ({ page }) => {
@@ -659,41 +678,6 @@ await scenario("40. Telefon: Ekipler listesi Topluluklar ile aynı iskelet — b
   await page.waitForFunction(() => document.querySelectorAll("[data-team-card]").length === 0);
 }, { viewport: { width: 390, height: 800 } });
 
-await scenario("41. Telefon ana ekranı (docs/history/358-*, mockup birebir): ortak kimlik bloğu + 2×3 karo (sayı + rozet) + Senden bekleyenler + Son Space'ler; alt menü kadar boşluk", async ({ page }) => {
-  await page.goto(`${BASE}/teams/local?id=atolye-mor`);
-  const root = page.getByTestId("team-phone-root");
-  await root.waitFor();
-  const identity = root.getByTestId("team-phone-identity");
-  await identity.locator("[data-phone-back]").waitFor();
-  assert.match(await identity.innerText(), /EKİP/);
-  assert.match(await identity.innerText(), /Atölye Mor/);
-  assert.match(await identity.innerText(), /6 üye · 2 proje/);
-  await identity.locator("[data-team-open-chat]").waitFor();
-  await identity.locator("[data-team-invite-phone]").waitFor();
-  const tiles = root.locator("[data-phone-tiles] [data-phone-section]");
-  assert.equal(await tiles.count(), 5, "beş bölüm karosu");
-  assert.match(await root.locator("[data-phone-section=chat]").innerText(), /\d+ kanal/);
-  await root.locator("[data-phone-section=projects]").getByText("2 proje").waitFor();
-  await root.locator("[data-phone-section=projects] [data-phone-badge]").waitFor();
-  const todos = root.getByTestId("team-phone-todos");
-  await todos.getByText("2 öğe onayını bekliyor").waitFor();
-  await todos.getByRole("link", { name: "İncele" }).waitFor();
-  const spaces = root.getByTestId("team-phone-projects");
-  await spaces.getByText("Villa Projesi").waitFor();
-  // Alt menünün altında hiçbir şey kalmasın: sona kaydır, son bölümün alt kenarı alt menünün üst kenarından yukarıda olmalı.
-  const gap = await page.evaluate(async () => {
-    const nav = document.querySelector("[data-app-nav]");
-    const last = document.querySelector("[data-testid=team-phone-projects]");
-    for (const el of [document.scrollingElement, ...document.querySelectorAll("main, [data-app-scroll]")]) el?.scrollTo?.(0, 1e6);
-    await new Promise((r) => setTimeout(r, 200));
-    return nav.getBoundingClientRect().top - last.getBoundingClientRect().bottom;
-  });
-  assert.ok(gap >= 8, `son bölüm alt menünün üstünde kalır (boşluk ${gap}px)`);
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "yatay taşma yok");
-}, { viewport: { width: 390, height: 800 }, setup: (db) => {
-  db.rpc.team_project_todos = () => ({ body: [{ team_id: TEAM, team_name: "Atölye Mor", team_slug: "atolye-mor", project_id: PROJECT, project_title: "Villa Projesi", kind: "review", n: 2, href: `/teams/local?id=${TEAM}&tab=projects&project=${PROJECT}&review=1`, at: "2026-11-08T08:00:00Z" }] });
-} });
-
 await scenario("42. Telefon /teams (docs/history/359-*): Senden bekleyenler + Ekiplerim (bantlı kart, rozetler, Aç) + Son Space'ler; alt menü kadar boşluk; masaüstü eski kart", async ({ page }) => {
   await page.goto(`${BASE}/teams`);
   const todos = page.getByTestId("team-phone-todos");
@@ -724,6 +708,97 @@ await scenario("42. Telefon /teams (docs/history/359-*): Senden bekleyenler + Ek
 // Ekip projeleri (docs/history/360-*, 361-*): proje başına rol, proje kütüphanesi, Space'e bağlı kanal. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ —
 // kurallar `supabase/tests/team-projects.sql` (127+ kontrol).
 // ---------------------------------------------------------------------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// Merkez düzeni (docs/history/366-*): Onaylar panosu, üye kartları + Davet et formu, Yönetim hap şeridi + Genel ızgarası
+// ---------------------------------------------------------------------------------------------------------------------------------------
+const boardItem = (id, state, over = {}) => ({
+  id, kind: "note", state, title: `Öğe ${id}`, body: "mat beyaz", note: null, media_url: null, content_type: null, color: "", space_id: "s1", project_id: PROJECT, project_title: "Villa Projesi",
+  file_id: "f1", file_title: "Mutfak", author_id: "u-b", author_name: "Bob", author_username: "bob", submitted_at: "2026-11-08T09:00:00Z", decided_at: state === "approved" ? "2026-11-10T08:00:00Z" : null,
+  unit: null, unit_count: 1, can_decide: true, mine: false, ...over,
+});
+const boardSetup = (items) => (db) => {
+  db.rpc.team_review_board = () => ({ body: { items, proposals: [] } });
+  db.rpc.team_review_decide = (b) => { db.teamCalls.push({ name: "team_review_decide", body: b }); return { body: (b.p_item_ids ?? []).length }; };
+};
+
+await scenario("43. Onaylar (masaüstü): üç sütun; Onayla → team_review_decide(approve); Değişiklik iste not zorunlu → changes + not", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=approvals`);
+  const board = page.getByTestId("team-approvals");
+  await board.waitFor();
+  await board.locator("[data-board-layout=columns]").waitFor();
+  assert.equal(await board.locator('[data-board-column="pending"] [data-board-card]').count(), 2);
+  assert.equal(await board.locator('[data-board-column="changes"] [data-board-card]').count(), 1);
+  assert.equal(await board.locator('[data-board-column="approved"] [data-board-card]').count(), 1);
+  await board.locator('[data-board-card="p1"] [data-board-approve]').click();
+  await page.waitForFunction(() => true);
+  await page.waitForTimeout(300);
+  const approve = db.teamCalls.filter((c) => c.name === "team_review_decide").at(-1)?.body;
+  assert.deepEqual([approve.p_item_ids, approve.p_decision], [["p1"], "approve"]);
+  await board.locator('[data-board-card="p2"] [data-board-changes]').click();
+  const form = page.getByTestId("board-changes-form");
+  await form.waitFor();
+  await form.getByRole("button", { name: "Gönder" }).click();
+  await form.getByText("Değişiklik isterken bir not yaz.").waitFor();
+  await form.getByRole("textbox").fill("Daha kısa yaz");
+  await form.getByRole("button", { name: "Gönder" }).click();
+  await page.waitForTimeout(300);
+  const changes = db.teamCalls.filter((c) => c.name === "team_review_decide").at(-1)?.body;
+  assert.deepEqual([changes.p_item_ids, changes.p_decision, changes.p_note], [["p2"], "changes", "Daha kısa yaz"]);
+  await board.getByText("Liderin notu: Ölçüleri yaz").waitFor();
+}, { setup: boardSetup([boardItem("p1", "pending"), boardItem("p2", "pending"), boardItem("c1", "changes", { note: "Ölçüleri yaz" }), boardItem("a1", "approved")]) });
+
+await scenario("44. Onaylar (tablet): segmentli tek liste; sekme sayacı bekleyen karar sayısı; kart öğe çekmecesine gider", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=approvals`);
+  await page.locator("[data-board-layout=segments]").waitFor();
+  await page.locator("[data-team-tab-link=approvals]").getByText("2").waitFor();
+  await page.locator("[data-board-segment=changes]").click();
+  await page.getByText("Liderin notu: Ölçüleri yaz").waitFor();
+  await page.locator("[data-board-segment=pending]").click();
+  const href = await page.locator('[data-board-card="p1"] [data-board-open]').getAttribute("href");
+  assert.ok(href.includes("project=") && href.includes("file=f1") && href.includes("item=p1"), href);
+  assert.ok(await overflowFree(page));
+}, { viewport: { width: 834, height: 1000 }, setup: boardSetup([boardItem("p1", "pending"), boardItem("p2", "pending"), boardItem("c1", "changes", { note: "Ölçüleri yaz" })]) });
+
+await scenario("45. Onaylar: üye yalnız kendi öğesini görür, karar düğmesi yok", async ({ page }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=approvals`);
+  await page.getByTestId("team-approvals").waitFor();
+  await page.getByText("Kararı projenin lideri verir.").first().waitFor();
+  assert.equal(await page.locator("[data-board-approve]").count(), 0);
+}, { role: "member", setup: boardSetup([boardItem("m1", "pending", { can_decide: false, mine: true })]) });
+
+await scenario("46. Üyeler (Merkez): kartlar (proje rol özeti), Davet et formu → team_invite_user, bekleyen davetler", async ({ page, db }) => {
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=members`);
+  const card = page.locator('[data-member="elifk"]');
+  await card.waitFor();
+  await card.locator("[data-member-projects]").getByText("2 projede lider").waitFor();
+  const invite = page.getByTestId("team-invite-card");
+  await invite.waitFor();
+  await invite.locator("#team-invite-card-username").fill("@mert");
+  await invite.locator("[data-invite-card-send]").click();
+  await invite.getByText("Davet gönderildi.").waitFor();
+  const body = called(db, "team_invite_user").at(-1)?.body;
+  assert.equal(body.p_username.replace("@", ""), "mert");
+  await page.getByTestId("team-members-pending").getByText("@zeynep").waitFor();
+}, { setup: (db) => {
+  db.rpc.team_list_members = () => ({ body: [member("u-aylin", "Aylin Demir", "aylin", "owner"), member("u-elif", "Elif Kaya", "elifk", "editor")] });
+  db.rpc.team_member_project_roles = () => ({ body: [{ user_id: "u-elif", lead_count: 2, edit_count: 0, view_count: 1 }] });
+  db.rpc.team_list_invitations = () => ({ body: [{ id: "i1", invitee_username: "zeynep", invitee_name: "Zeynep", invitee_avatar_url: null, role: "member", created_at: "2026-11-08T09:00:00Z" }] });
+} });
+
+await scenario("47. Yönetim (Merkez): hap şeridi, Genel = profil + politikalar + denetim özeti + tehlikeli bölge ızgarası; hap bölüm değiştirir", async ({ page }) => {
+  await withPolicy(page);
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin`);
+  const nav = page.locator("[data-admin-nav]");
+  await nav.locator("[data-admin-nav-item=overview]").waitFor();
+  assert.equal(await nav.locator("[data-admin-nav-item=overview]").getAttribute("aria-current"), "page");
+  await page.getByTestId("admin-overview").waitFor();
+  await page.getByTestId("admin-audit-preview").waitFor();
+  await nav.locator("[data-admin-nav-item=policies]").click();
+  await page.waitForFunction(() => location.search.includes("section=policies"));
+  await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=admin&section=general`);
+  await page.getByTestId("admin-overview").waitFor();
+}, { setup: (db) => { db.rpc.team_audit_list = () => ({ body: [auditRow("a1", "member", "invited"), auditRow("a2", "policy", "policy_changed")] }); } });
 
 await browser.close();
 server.close();

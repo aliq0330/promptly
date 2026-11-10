@@ -111,9 +111,6 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
     if (!chosen) {
       return (
         <section data-testid="team-admin" data-phone-admin-list>
-          <div data-team-phone-bar>
-            <PhoneSubBar parent={team.name} title={t("tm.tab.admin")} backHref={teamLink(team.id)} />
-          </div>
           <PhoneSectionList
             ariaLabel={t("tm.admin.aria")}
             items={items.map((item) => ({ key: item.key, label: item.label, href: teamLink(team.id, "admin", { section: item.key }), icon: ICONS[item.key], danger: item.key === "danger" }))}

@@ -66,17 +66,17 @@ export function DrillHeader({
   return (
     <header className={cn("-mx-3 px-2 pb-3 pt-1.5 sm:-mx-5 md:hidden", BAND_TONE[tone ?? "primary"] ?? BAND_TONE.primary)} data-drill-header>
       <div className="flex items-center">
-        <Link href={backHref} aria-label={t("tp.page.up")} className={iconButton} data-path-back>
+        <Link href={backHref} aria-label={t("tp.page.up")} className={iconButton} data-drill-back>
           <ArrowLeft size={22} aria-hidden />
         </Link>
         <span className="min-w-0 flex-1 truncate px-1 text-caption text-text-secondary">{markName ? parent : null}</span>
         {chatHref && (
-          <Link href={chatHref} aria-label={t("tp.page.openChat")} className={iconButton} data-project-open-chat>
+          <Link href={chatHref} aria-label={t("tp.page.openChat")} className={iconButton} data-drill-chat>
             <MessageCircle size={22} aria-hidden />
           </Link>
         )}
         {onInfo && (
-          <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} className={iconButton} data-path-info>
+          <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} className={iconButton} data-drill-info>
             <Info size={22} aria-hidden />
           </button>
         )}
@@ -85,7 +85,7 @@ export function DrillHeader({
         <div className="flex items-center gap-3 px-2">
           <TeamMark name={markName} tone={tone} solid size={52} className="rounded-[15px]" />
           <div className="min-w-0">
-            <h1 className="truncate font-display text-[1.375rem] font-extrabold leading-tight text-text" data-path-title>
+            <h1 className="truncate font-display text-[1.375rem] font-extrabold leading-tight text-text" data-drill-title>
               {title}
             </h1>
             {sub && <div className="text-caption font-bold text-primary">{sub}</div>}
@@ -94,7 +94,7 @@ export function DrillHeader({
       ) : (
         <div className="px-3">
           <p className="truncate text-caption text-text-secondary">{parent}</p>
-          <h1 className="truncate font-display text-h3 font-extrabold leading-tight text-text" data-path-title>
+          <h1 className="truncate font-display text-h3 font-extrabold leading-tight text-text" data-drill-title>
             {title}
           </h1>
         </div>
