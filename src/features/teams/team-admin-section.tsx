@@ -13,6 +13,9 @@ import { Users } from "@/components/icons/users";
 import { PhoneSectionList, PhoneSubBar, type PhoneSectionItem } from "@/features/content/phone-sections";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { Avatar } from "@/components/ui/avatar";
+import Link from "next/link";
+import { ScrollRow } from "@/components/ui/scroll-row";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
@@ -42,7 +45,7 @@ import { InvitesPanel } from "./team-invites";
 import type { TeamCtx } from "./team-page";
 import { Panel, StatTile, TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
 
-type Section = "general" | "policies" | "invites" | "groups" | "guests" | "audit" | "export" | "danger";
+type Section = "overview" | "policies" | "invites" | "groups" | "guests" | "audit" | "export" | "danger";
 
 /** Yönetim sekmesi: yetenek başına görünen bölümler (gizlemek yalnız görünümdür, her işlem sunucuda yeniden denetlenir). */
 export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
@@ -53,7 +56,8 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
 
   const items: SectionMenuItem<Section>[] = useMemo(() => {
     const list: SectionMenuItem<Section>[] = [];
-    if (can("manage_team")) list.push({ key: "general", label: t("tm.admin.general") }, { key: "policies", label: t("tm.admin.policies") });
+    if (can("manage_team") || can("view_audit") || team.myRole === "owner") list.push({ key: "overview", label: t("tc.admin.overview") });
+    if (can("manage_team")) list.push({ key: "policies", label: t("tm.admin.policies") });
     if (can("manage_members")) list.push({ key: "invites", label: t("tm.admin.invites") });
     if (can("manage_groups")) list.push({ key: "groups", label: t("tm.admin.groups") });
     if (can("manage_members")) list.push({ key: "guests", label: t("tm.admin.guests") });
@@ -63,12 +67,14 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
     return list;
   }, [can, t, team.myRole]);
 
-  const raw = params.get("section") as Section | null;
-  const active: Section = items.find((i) => i.key === raw)?.key ?? items[0]?.key ?? "general";
+  // Eski `section=general` adresi Genel'e yönlenir (docs/history/366-*).
+  const rawParam = params.get("section");
+  const raw = (rawParam === "general" ? "overview" : rawParam) as Section | null;
+  const active: Section = items.find((i) => i.key === raw)?.key ?? items[0]?.key ?? "overview";
   const body = (() => {
     switch (active) {
-      case "general":
-        return <GeneralSection ctx={ctx} />;
+      case "overview":
+        return <OverviewSection ctx={ctx} />;
       case "policies":
         return <PoliciesSection ctx={ctx} />;
       case "invites":
@@ -92,7 +98,7 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
   // Telefon (docs/history/357-*, Yön C): Yönetim bir bölüm LİSTESİDİR; satır alt sayfayı açar, alt sayfa kendi geri çubuğunu çizer.
   if (phone) {
     const ICONS: Record<Section, PhoneSectionItem["icon"]> = {
-      general: Info,
+      overview: Info,
       policies: ShieldCheck,
       invites: UserPlus,
       groups: Users,
@@ -105,9 +111,6 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
     if (!chosen) {
       return (
         <section data-testid="team-admin" data-phone-admin-list>
-          <div data-team-phone-bar>
-            <PhoneSubBar parent={team.name} title={t("tm.tab.admin")} backHref={teamLink(team.id)} />
-          </div>
           <PhoneSectionList
             ariaLabel={t("tm.admin.aria")}
             items={items.map((item) => ({ key: item.key, label: item.label, href: teamLink(team.id, "admin", { section: item.key }), icon: ICONS[item.key], danger: item.key === "danger" }))}
@@ -126,27 +129,81 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
   }
 
   return (
-    <section className="md:grid md:grid-cols-[13rem_minmax(0,1fr)] md:items-start md:gap-8" data-testid="team-admin">
-      <nav aria-label={t("tm.admin.aria")} className="sticky top-4 space-y-0.5 max-md:hidden" data-admin-nav>
-        {items.map((item) => (
-          <div key={item.key} className={cn(item.dividerBefore && "mt-2 border-t border-border-soft pt-2")}>
+    <section className="space-y-4" data-testid="team-admin">
+      <nav aria-label={t("tm.admin.aria")} data-admin-nav>
+        <ScrollRow className="gap-2 md:flex-wrap">
+          {items.map((item) => (
             <button
+              key={item.key}
               type="button"
               onClick={() => go(item.key)}
               aria-current={active === item.key ? "page" : undefined}
               data-admin-nav-item={item.key}
               className={cn(
-                "flex h-10 w-full items-center rounded-lg px-3 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                active === item.key ? "bg-primary-soft font-bold text-primary" : "text-text-secondary hover:bg-surface-soft hover:text-text",
+                "inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:h-9",
+                active === item.key
+                  ? "border-text bg-text text-background"
+                  : item.key === "danger"
+                    ? "border-border-soft bg-surface text-danger hover:bg-danger/10"
+                    : "border-border-soft bg-surface text-text hover:bg-surface-soft",
               )}
             >
               {item.label}
             </button>
-          </div>
-        ))}
+          ))}
+        </ScrollRow>
       </nav>
       <div className="min-w-0 space-y-4">{body}</div>
     </section>
+  );
+}
+
+/**
+ * Genel (mockup B9): ekip profili, politikalar, denetim özeti ve tehlikeli bölge tek ızgarada; kişi yalnız YETKİSİ OLDUĞU kartları görür
+ * (gizlemek yalnız görünümdür, her işlem sunucuda yeniden denetlenir).
+ */
+function OverviewSection({ ctx }: { ctx: TeamCtx }) {
+  const { can, team } = ctx;
+  return (
+    <div className="grid items-start gap-4 lg:grid-cols-2" data-testid="admin-overview">
+      {can("manage_team") && <GeneralSection ctx={ctx} />}
+      {can("manage_team") && <PoliciesSection ctx={ctx} />}
+      {can("view_audit") && <AuditPreview ctx={ctx} />}
+      {team.myRole === "owner" && <DangerSection ctx={ctx} />}
+    </div>
+  );
+}
+
+/** Denetim günlüğünün son kayıtları (4) + "Tümü" bağlantısı; tam liste/CSV Denetim günlüğü bölümündedir. */
+function AuditPreview({ ctx }: { ctx: TeamCtx }) {
+  const { t, language } = useTranslation();
+  const { team } = ctx;
+  const [entries, setEntries] = useState<TeamAuditEntry[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void listAudit(team.id, null, 30, null).then(
+      (list) => alive && setEntries(list.slice(0, 4)),
+      () => alive && setEntries([]),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [team.id]);
+  return (
+    <Panel title={t("tm.admin.audit")} action={<Link href={teamLink(team.id, "admin", { section: "audit" })} className="text-small font-semibold text-primary" data-audit-all>{t("tc.admin.auditAll")}</Link>} className="rounded-[20px]">
+      <div data-testid="admin-audit-preview">
+        {entries === null && <Skeleton className="h-20 w-full rounded-lg" />}
+        {entries !== null && entries.length === 0 && <p className="py-2 text-small text-text-muted">{t("tm.admin.audit.empty")}</p>}
+        <ul>
+          {(entries ?? []).map((entry) => (
+            <li key={entry.id} className="border-t border-border-soft py-2 text-small first:border-t-0">
+              <span className="font-semibold text-text">{entry.actorName ?? ""}</span> <span className="text-text">{auditSentence(t, entry)}</span>
+              <span className="block text-caption text-text-muted">{auditTime(t, language, entry.createdAt)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Panel>
   );
 }
 

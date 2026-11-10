@@ -58,6 +58,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   const [settingsFor, setSettingsFor] = useState<TeamChannel | null>(null);
   const wanted = params.get("channel");
   const [members, setMembers] = useState<ChannelMember[]>([]);
+  const controls = useRef<EmbeddedChatControls>(null);
 
   const load = useCallback(() => {
     void listTeamChannels(team.id).then(
@@ -137,13 +138,10 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   if (!channels) return <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>;
 
   return (
-    <section className="grid gap-4 lg:grid-cols-[15.5rem_minmax(0,1fr)]" data-testid="team-chat">
+    <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16.25rem]" data-testid="team-chat">
       {/* Masaüstü (Seçenek 1, "çalışma alanı"): solda kanal kartı, sağda sohbet kartı. Tablette kanallar sohbet kartının çip satırındadır; telefonda yalnız bu liste. */}
-      <aside
-        className="space-y-3 md:max-lg:hidden lg:flex lg:h-[calc(100dvh-20rem)] lg:min-h-[32rem] lg:flex-col lg:space-y-1 lg:rounded-[20px] lg:border lg:border-border-soft lg:bg-surface lg:px-2.5 lg:py-3.5"
-        data-testid="team-channel-aside"
-      >
-        <div className="flex items-center lg:px-2 lg:pb-1.5">
+      <aside className="space-y-3 md:hidden" data-testid="team-channel-list-phone">
+        <div className="flex items-center">
           <h2 className="flex-1 text-label font-semibold uppercase tracking-wide text-text-muted">{t("tm.chat.channels")}</h2>
           {can("manage_channels") && (
             <button type="button" onClick={() => setNewOpen(true)} aria-label={t("tm.chat.newChannel")} className="grid h-8 w-8 place-items-center rounded-lg bg-surface-soft text-text-secondary hover:text-text lg:h-[26px] lg:w-[26px]" data-channel-new>
@@ -180,16 +178,19 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
           </details>
         )}
         <div className="flex-1" />
-        <p data-testid="team-online" className="border-t border-border-soft px-2 pt-2.5 text-caption text-text-muted lg:mt-1">
+        <p data-testid="team-online-phone" className="border-t border-border-soft px-2 pt-2.5 text-caption text-text-muted">
           {t("tm.chat.onlineCount", { count: onlineMembers.length })} · {t("tm.chat.memberCount", { count: team.memberCount })}
         </p>
       </aside>
 
       {active ? (
-        // Telefonda tek bölme: kanal seçilene kadar yalnız liste, seçilince yalnız sohbet (+ geri). Masaüstünde ikisi yan yana.
-        <div className="min-w-0 max-md:hidden">
-          <ChannelView key={active.id} channel={active} channels={visible} members={members} onSelect={select} onlineCount={onlineMembers.length} onNew={can("manage_channels") ? () => setNewOpen(true) : undefined} />
+        <>
+        {/* Telefonda tek bölme: kanal seçilene kadar yalnız liste, seçilince yalnız sohbet (+ geri). Masaüstünde sohbet + yan sütun. */}
+        <div className="min-w-0 max-md:hidden lg:col-start-1 lg:row-start-1">
+          <ChannelView key={active.id} channel={active} channels={visible} members={members} onSelect={select} onlineCount={onlineMembers.length} onNew={can("manage_channels") ? () => setNewOpen(true) : undefined} controls={controls} labelOf={(c) => (c.mode === "project" ? (projectTitles.get(c.id) ?? c.name) : c.name)} />
         </div>
+        <ChannelAside channel={active} members={members} online={online} controls={controls} archived={can("manage_channels") ? archived : []} onUnarchive={(id) => void archiveTeamChannel(id, false).then(load)} projectTitle={projectTitles.get(active.id) ?? null} />
+        </>
       ) : (
         <EmptyState icon={Hash} title={t("tm.chat.empty.title")} description={t("tm.chat.empty.body")} />
       )}
@@ -227,6 +228,70 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   );
 }
 
+/** Kanal bilgisi yan sütunu (masaüstü, mockup B6): açıklama + bildirim/bilgi düğmesi, çevrimiçi üyeler, arşivlenenler (yönetim). */
+function ChannelAside({
+  channel,
+  members,
+  online,
+  controls,
+  archived,
+  onUnarchive,
+  projectTitle,
+}: {
+  channel: TeamChannel;
+  members: ChannelMember[];
+  online: ReadonlySet<string>;
+  controls: React.RefObject<EmbeddedChatControls | null>;
+  archived: TeamChannel[];
+  onUnarchive: (id: string) => void;
+  projectTitle: string | null;
+}) {
+  const { t } = useTranslation();
+  const onlineMembers = members.filter((member) => online.has(member.userId));
+  const shown = (onlineMembers.length > 0 ? onlineMembers : members).slice(0, 8);
+  return (
+    <aside className="hidden space-y-3.5 lg:row-start-1 lg:block lg:col-start-2" data-testid="team-channel-aside">
+      <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-channel-info-card">
+        <h3 className="font-display text-body font-bold text-text"># {projectTitle ?? channel.name}</h3>
+        <p className="mt-1 text-small text-text-secondary">
+          {channel.description || t(channel.mode === "private" ? "tm.chat.modePrivate" : channel.mode === "project" ? "tp.chat.modeProject" : channel.mode === "space" ? "tm.chat.modeSpace" : "tm.chat.modeOpen")}
+        </p>
+        <button type="button" onClick={() => controls.current?.openChannelInfo()} className="mt-3 h-9 rounded-full border border-border px-3.5 text-small font-semibold text-text hover:bg-surface-soft" data-channel-aside-info>
+          {t("tc.chat.notifyAndInfo")}
+        </button>
+      </section>
+      <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-online">
+        <h3 className="mb-2 font-display text-body font-bold text-text">
+          {t("tm.chat.onlineCount", { count: onlineMembers.length })} <span className="font-sans text-small font-normal text-text-muted">· {t("tm.chat.memberCount", { count: channel.memberCount })}</span>
+        </h3>
+        <ul>
+          {shown.map((member) => (
+            <li key={member.userId} className="flex items-center gap-2.5 py-1.5">
+              <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName || member.username} size={28} />
+              <span className="min-w-0 flex-1 truncate text-small text-text">{member.displayName || member.username}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      {archived.length > 0 && (
+        <details className="rounded-2xl border border-border-soft bg-surface p-4 text-caption text-text-muted">
+          <summary className="cursor-pointer font-semibold">{t("tm.chat.archived", { count: archived.length })}</summary>
+          <ul className="mt-2 space-y-1">
+            {archived.map((entry) => (
+              <li key={entry.id} className="flex items-center justify-between">
+                <span className="truncate">#{entry.name}</span>
+                <button type="button" className="text-primary hover:underline" onClick={() => onUnarchive(entry.id)}>
+                  {t("tm.chat.unarchive")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </aside>
+  );
+}
+
 function ChannelView({
   channel,
   channels,
@@ -234,16 +299,20 @@ function ChannelView({
   onSelect,
   onlineCount,
   onNew,
+  controls,
+  labelOf,
 }: {
   channel: TeamChannel;
   channels: TeamChannel[];
+  /** Çip etiketi: proje sohbeti projenin başlığıyla görünür (mockup B6). */
+  labelOf?: (channel: TeamChannel) => string;
   members: ChannelMember[];
   onSelect: (channel: TeamChannel) => void;
   onlineCount: number;
   onNew?: () => void;
+  controls: React.RefObject<EmbeddedChatControls | null>;
 }) {
   const { t } = useTranslation();
-  const controls = useRef<EmbeddedChatControls>(null);
   const faces = members.slice(0, 4);
   const more = Math.max(0, channel.memberCount - faces.length);
   const iconButton = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
@@ -290,7 +359,7 @@ function ChannelView({
           <Info size={18} aria-hidden />
         </button>
       </header>
-      <ScrollRow className="shrink-0 gap-2 border-b border-border-soft px-4 py-2 max-md:hidden lg:hidden" data-testid="team-channel-chips">
+      <ScrollRow className="shrink-0 gap-2 border-b border-border-soft px-4 py-2 max-md:hidden" data-testid="team-channel-chips">
         {channels.map((c) => (
           <button
             key={c.id}
@@ -303,8 +372,8 @@ function ChannelView({
               c.id === channel.id ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary",
             )}
           >
-            {c.mode === "private" ? <Lock size={13} aria-hidden /> : <Hash size={13} aria-hidden />}
-            {c.name}
+            {c.mode === "private" ? <Lock size={13} aria-hidden /> : c.mode === "project" ? <span aria-hidden className="h-2.5 w-2.5 rounded-[3px] bg-primary" /> : <Hash size={13} aria-hidden />}
+            {labelOf ? labelOf(c) : c.name}
             {c.unreadCount > 0 && !c.muted && c.id !== channel.id && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(c.unreadCount)}</span>}
           </button>
         ))}

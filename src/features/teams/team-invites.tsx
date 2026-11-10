@@ -184,6 +184,82 @@ export function InviteDialog({ ctx, onClose, onDone, initial = "user", initialRo
   );
 }
 
+/**
+ * "Davet et" kartı (Üyeler yan sütunu, mockup B7): kullanıcı adı + rol + "Davet gönder"; bağlantı için aynı davet penceresi açılır.
+ * Alan adı/e-posta ile katılma YOKTUR (kullanıcı kararı). Konuk rolü bu hızlı formda yoktur (süre/kurum alanları pencerededir).
+ */
+export function InviteCard({ ctx, onDone }: { ctx: TeamCtx; onDone: () => void }) {
+  const { t } = useTranslation();
+  const [username, setUsername] = useState("");
+  const [role, setRole] = useState<TeamRole>(ctx.policy?.defaultMemberRole === "editor" ? "editor" : "member");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const [dialog, setDialog] = useState(false);
+  const roles = inviteRoles(ctx).filter((r) => r !== "guest");
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (busy) return;
+    if (!username.trim()) {
+      setError(t("tm.invite.usernameRequired"));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setSent(false);
+    try {
+      await inviteUser(ctx.team.id, username, role, null, null);
+      setSent(true);
+      setUsername("");
+      onDone();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-invite-card">
+      <h3 className="font-display text-body font-bold text-text">{t("tm.invite.title")}</h3>
+      <p className="mb-3 text-small text-text-secondary">{t("tc.members.inviteHint")}</p>
+      <form onSubmit={(event) => void submit(event)} className="space-y-3">
+        <div>
+          <label htmlFor="team-invite-card-username" className={fieldLabelClassName}>
+            {t("tm.invite.username")}
+          </label>
+          <input id="team-invite-card-username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="@kullanici" className={fieldInputClassName} autoComplete="off" autoCapitalize="none" />
+        </div>
+        <div>
+          <label htmlFor="team-invite-card-role" className={fieldLabelClassName}>
+            {t("tm.invite.role")}
+          </label>
+          <select id="team-invite-card-role" value={role} onChange={(event) => setRole(event.target.value as TeamRole)} className={fieldInputClassName}>
+            {roles.map((key) => (
+              <option key={key} value={key}>
+                {t(roleLabelKey(key))}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-caption text-text-muted">{t(`tm.invite.roleHint.${role}` as "tm.invite.roleHint.member")}</p>
+        </div>
+        {sent && <p className="text-small text-success">{t("tm.invite.sent")}</p>}
+        {error && (
+          <p role="alert" className="text-small text-danger">
+            {error}
+          </p>
+        )}
+        <Button type="submit" disabled={busy} className="w-full" data-invite-card-send>
+          {t("tm.invite.send")}
+        </Button>
+        <Button type="button" variant="outline" className="w-full" onClick={() => setDialog(true)} data-invite-card-link>
+          {t("tm.invite.createLink")}
+        </Button>
+      </form>
+      {dialog && <InviteDialog ctx={ctx} initial="link" onClose={() => setDialog(false)} onDone={onDone} />}
+    </section>
+  );
+}
+
 /** Bekleyen kullanıcı davetleri + etkin davet bağlantıları (Yönetim → Davetler). */
 export function InvitesPanel({ ctx }: { ctx: TeamCtx }) {
   const { t, language } = useTranslation();

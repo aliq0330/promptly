@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useId, useState, type ReactNode } from "react";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Check } from "@/components/icons/check";
 import { Copy } from "@/components/icons/copy";
@@ -19,6 +19,10 @@ import { Trash2 } from "@/components/icons/trash-2";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import type { IconComponent } from "@/components/icons/icon";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { X } from "@/components/icons/x";
+import { MoreVertical } from "@/components/icons/more-vertical";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
@@ -56,7 +60,12 @@ export interface AreaItemContext {
   boardHref: (focusId: string) => string;
   variables: ProjectVariable[];
   fileId: string | null;
+  /** Çekmece (docs/history/366-*, mockup B4): liste yerinde kalır, öğe yandan (telefonda alttan) açılır; kapatmak `listHref`'e döner. */
+  drawer?: boolean;
 }
+
+/** Çekmece içinde mi: sabit eylem çubuğu sayfanın alt menüsüne değil çekmecenin altına yapışır. */
+const DrawerContext = createContext(false);
 
 type DetailKind = "prompt" | "image" | "note" | "palette" | "content";
 const KIND_ICON: Record<DetailKind | "workflow" | "preset" | "request", IconComponent> = {
@@ -100,14 +109,50 @@ export function AreaItemDetail({ ctx, role, onChanged }: { ctx: AreaItemContext;
   const palette = paletteId ? (palettes.find((entry) => entry.id === paletteId) ?? null) : item?.kind === "palette" ? (palettes.find((entry) => entry.id === item.paletteId) ?? null) : null;
 
   if (!item && !palette) {
-    return (
+    const missing = (
       <div className="space-y-4" data-testid="area-item-missing">
-        <ProjectPathBar crumbs={ctx.crumbs} backHref={ctx.listHref} />
+        {!ctx.drawer && <ProjectPathBar crumbs={ctx.crumbs} backHref={ctx.listHref} />}
         <EmptyState icon={LayoutDashboard} title={t("tp.item.missing")} description={t("tp.item.missingBody")} action={{ label: t("tp.item.backToList"), href: ctx.listHref }} />
       </div>
     );
+    return ctx.drawer ? <DrawerFrame ctx={ctx} title={t("tp.item.missing")}>{missing}</DrawerFrame> : missing;
   }
   return <ItemBody ctx={ctx} role={role} item={palette ? null : item} palette={palette} onChanged={onChanged} />;
+}
+
+/**
+ * Öğe çekmecesi çerçevesi: masaüstü/tablette sağa yapışık panel, telefonda alt sayfa (`Modal` `side`/`sheet`). Kapatmak adresten `item` parametresini kaldırır
+ * (liste yerinde kalır, Geri de aynı işi yapar). Başlık/eylemler `header` yuvasındadır; gövde kayar, sabit eylem çubuğu altta kalır.
+ */
+function DrawerFrame({ ctx, title, header, children }: { ctx: AreaItemContext; title: string; header?: ReactNode; children: ReactNode }) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const id = useId();
+  const wide = useMediaQuery("(min-width: 768px)");
+  const close = () => router.replace(ctx.listHref, { scroll: false });
+  return (
+    <Modal onClose={close} labelledBy={id} variant={wide ? "side" : "sheet"}>
+      <aside
+        className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-surface max-md:rounded-t-[22px] md:w-[35rem] md:max-w-full lg:w-[32.5rem]"
+        data-testid="item-drawer"
+      >
+        <div className="flex shrink-0 items-start gap-2 border-b border-border-soft px-5 pb-3.5 pt-4 md:pt-[18px]">
+          <div className="min-w-0 flex-1">
+            <h2 id={id} className="sr-only">
+              {title}
+            </h2>
+            {header}
+          </div>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4" data-drawer-body>
+          <DrawerContext.Provider value>{children}</DrawerContext.Provider>
+        </div>
+      </aside>
+      <button type="button" onClick={close} aria-label={t("common.close")} data-drawer-close className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full text-text-secondary hover:bg-surface-soft md:right-4 md:top-3.5">
+        <X size={20} aria-hidden />
+      </button>
+    </Modal>
+  );
 }
 
 function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContext; role: ProjectRole | null; item: SpaceItem | null; palette: SpacePalette | null; onChanged: () => void }) {
@@ -165,10 +210,34 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
     }
   };
 
-  return (
+  const drawer = Boolean(ctx.drawer);
+  const hasMenu = mayDelete || mayEdit || mayPropose || onBoard;
+  const drawerHeader = (
+    <div className="flex items-start gap-1 pr-11">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
+          {t(KIND_LABEL[kind])} · {ctx.crumbs.slice(-2).map((crumb) => crumb.label).join(" › ")}
+        </p>
+        <h3 className="mt-0.5 break-words font-display text-h2 font-extrabold leading-tight text-text" data-item-title>
+          {title}
+        </h3>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-small text-text-secondary">
+          {state !== "approved" && <ReviewChip state={state} />}
+          <span>{creator ? t("tp.item.addedBy", { name: creator, when }) : t("tp.item.added", { when })}</span>
+        </div>
+      </div>
+      {hasMenu && (
+        <button type="button" onClick={() => setMenu("menu")} aria-label={t("tp.item.moreAria")} data-path-more className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
+          <MoreVertical size={20} aria-hidden />
+        </button>
+      )}
+    </div>
+  );
+  const content = (
     <div className="space-y-4" data-testid="area-item-detail" data-item-kind={kind} data-item-state={state}>
-      <ProjectPathBar crumbs={[...ctx.crumbs, { label: title }]} backHref={ctx.listHref} onMore={mayDelete || mayEdit || mayPropose || onBoard ? () => setMenu("menu") : undefined} />
+      {!drawer && <ProjectPathBar crumbs={[...ctx.crumbs, { label: title }]} backHref={ctx.listHref} onMore={hasMenu ? () => setMenu("menu") : undefined} />}
 
+      {!drawer && (
       <header className="space-y-1.5 px-1">
         <h1 className="break-words text-h1 font-display font-extrabold leading-tight text-text" data-item-title>
           {title}
@@ -182,6 +251,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
           <span>{creator ? t("tp.item.addedBy", { name: creator, when }) : t("tp.item.added", { when })}</span>
         </div>
       </header>
+      )}
 
       {item?.revState === "changes" && item.revNote && (
         <div role="note" className="rounded-2xl border border-danger/30 bg-danger/10 p-3.5 text-small leading-relaxed text-danger" data-item-lead-note>
@@ -283,12 +353,20 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
       )}
     </div>
   );
+  return drawer ? (
+    <DrawerFrame ctx={ctx} title={title} header={drawerHeader}>
+      {content}
+    </DrawerFrame>
+  ) : (
+    content
+  );
 }
 
 /** Sağ altta sabit eylem çubuğu (telefonda alt menünün üstünde). */
 function StickyBar({ children, testId }: { children: ReactNode; testId: string }) {
+  const drawer = useContext(DrawerContext);
   return (
-    <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 space-y-2 rounded-2xl border border-border-soft bg-surface p-3 shadow-pop md:bottom-4" data-testid={testId}>
+    <div className={cn("sticky z-10 space-y-2 rounded-2xl border border-border-soft bg-surface p-3 shadow-pop", drawer ? "bottom-0" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-4")} data-testid={testId}>
       {children}
     </div>
   );

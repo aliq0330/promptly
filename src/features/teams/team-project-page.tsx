@@ -2,26 +2,28 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FolderOpen } from "@/components/icons/folder-open";
+import { Info } from "@/components/icons/info";
 import { MessageCircle } from "@/components/icons/message-circle";
 import { Pencil } from "@/components/icons/pencil";
-import { Pin } from "@/components/icons/pin";
 import { Plus } from "@/components/icons/plus";
 import { Presentation } from "@/components/icons/presentation";
 import { Settings } from "@/components/icons/settings";
 import { Trash2 } from "@/components/icons/trash-2";
 import { UsersRound } from "@/components/icons/users-round";
 import { Button, buttonClassName } from "@/components/ui/button";
-import { ChevronRight } from "@/components/icons/chevron-right";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/features/groups/use-toast";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { deleteBoard, fetchProject, renameBoard, setFileReview, type ProjectDetail } from "@/lib/supabase/team-projects";
+import { effectiveVariables } from "@/lib/team-projects";
 import { teamLink } from "@/lib/teams";
 import { canAddToArea, canReview, projectLink } from "@/lib/team-projects";
+import { Breadcrumbs, DrillHeader } from "./team-drill";
+import { BAND_TONE } from "./team-band";
 import { cn } from "@/lib/utils";
 import {
   DeleteFileDialog,
@@ -33,13 +35,13 @@ import {
   ReviewSwitchRow,
   VariableDialog,
 } from "./project-dialogs";
-import { ProjectPathBar, type PathCrumb } from "./project-path-bar";
-import { ProjectRoleChip } from "./project-ui";
+import type { PathCrumb } from "./project-path-bar";
+import { ProjectRoleChip, projectRoleLabelKey } from "./project-ui";
 import { ProjectVariablesPanel } from "./project-variables";
 import { TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view";
 import { TeamReviewInbox } from "./team-review-inbox";
 import type { TeamCtx } from "./team-page";
-import { PersonRow, SectionError } from "./team-ui";
+import { PersonRow, SectionError, TeamMark, toneClass } from "./team-ui";
 import type { TeamActionError } from "@/lib/supabase/teams";
 
 /**
@@ -118,18 +120,6 @@ function useItemParams(): { item: string | null; focus: string | null } {
 }
 
 /** Başlık bloğu: büyük ad + tek satır özet; sağda isteğe bağlı eylemler. */
-function TitleBlock({ title, meta, actions, children }: { title: string; meta?: ReactNode; actions?: ReactNode; children?: ReactNode }) {
-  return (
-    <header className="flex flex-wrap items-end gap-x-3 gap-y-2 px-1">
-      <div className="min-w-0 flex-1">
-        <h1 className="break-words text-h1 font-display font-extrabold leading-tight text-text">{title}</h1>
-        {meta && <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-text-secondary">{meta}</div>}
-        {children}
-      </div>
-      {actions}
-    </header>
-  );
-}
 
 /** Sağ altta sabit tek ana eylem (telefonda alt menünün üstünde). */
 function FloatingAction({ onClick, label, attrs }: { onClick: () => void; label: string; attrs?: Record<string, string> }) {
@@ -301,81 +291,164 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
   const { team } = ctx;
   const { project, myRole } = detail;
   const lead = canReview(myRole);
-  const [dialog, setDialog] = useState<null | "info" | "file" | "access" | "settings">(null);
+  const [dialog, setDialog] = useState<null | "info" | "file" | "access" | "settings" | "board" | "variable">(null);
   const archived = Boolean(project.archivedAt);
-  const sharedBoards = boardRows(detail, team.id, null).length;
+  const sharedBoards = boardRows(detail, team.id, null);
+  const overview = teamLink(team.id);
+  const chatHref = detail.channelId ? teamLink(team.id, "chat", { channel: detail.channelId }) : null;
+  const canAdd = canAddToArea(myRole) && !archived;
+  const reviewOnNames = detail.files.filter((file) => file.reviewRequired).map((file) => file.title);
+  const FILE_TONES = ["primary", "plum", "success", "warning"] as const;
 
   return (
     <div className="space-y-4" data-testid="team-project-home" data-project-id={project.id} data-project-role={myRole}>
-      <ProjectPathBar crumbs={[teamCrumb(ctx), { label: project.title }]} backHref={projectLink(team.id)} onInfo={() => setDialog("info")} />
+      <DrillHeader backHref={overview} parent={`${team.name} › ${t("tp.list.title")}`} title={project.title} sub={`${t("tp.page.yourRole")} ${t(projectRoleLabelKey(myRole))} · ${detail.people.length}`} tone={project.tone} markName={project.title} chatHref={chatHref} onInfo={() => setDialog("info")} />
+      <Breadcrumbs crumbs={[{ label: t("tc.tab.overview"), href: overview }, { label: t("tp.list.title"), href: overview }, { label: project.title }]} />
 
-      <TitleBlock
-        title={project.title}
-        meta={
-          <>
-            <ProjectRoleChip role={myRole} />
-            <span>{t("tp.card.counts", { files: detail.files.length, boards: detail.boards.length, people: detail.people.length })}</span>
-          </>
-        }
-      >
-        {project.description && <p className="mt-1 max-w-2xl whitespace-pre-wrap break-words text-small text-text-secondary">{project.description}</p>}
-      </TitleBlock>
+      <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_18.75rem] xl:items-start xl:gap-5">
+        <div className="min-w-0 space-y-4">
+          <header className={cn("hidden items-center gap-4 rounded-[20px] px-[18px] py-4 md:flex", BAND_TONE[project.tone] ?? BAND_TONE.primary)} data-project-header>
+            <TeamMark name={project.title} tone={project.tone} solid size={56} className="rounded-2xl" />
+            <div className="min-w-0 flex-1">
+              <p className="text-caption font-bold uppercase tracking-[0.08em] text-primary">
+                {t("tp.page.kicker")} · {t("tc.proj.yourRole")}: {t(projectRoleLabelKey(myRole)).toLocaleUpperCase()}
+              </p>
+              <h1 className="break-words font-display text-[1.625rem] font-extrabold leading-tight text-text" data-project-title>
+                {project.title}
+              </h1>
+            </div>
+            {chatHref && (
+              <Link href={chatHref} className={buttonClassName({ variant: "outline", className: "gap-2 bg-surface" })} data-project-open-chat>
+                <MessageCircle size={16} aria-hidden />
+                {t("tp.page.openChat")}
+              </Link>
+            )}
+            {lead && !archived && (
+              <Button type="button" onClick={() => setDialog("file")} data-project-new-file>
+                {t("tp.file.new")}
+              </Button>
+            )}
+            <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 place-items-center rounded-full bg-surface text-primary xl:hidden">
+              <Info size={20} aria-hidden />
+            </button>
+          </header>
+          {project.description && <p className="max-w-2xl whitespace-pre-wrap break-words px-1 text-small text-text-secondary">{project.description}</p>}
 
-      {archived && (
-        <p role="status" className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-small text-text">
-          {t("tp.page.archivedNotice")}
-        </p>
-      )}
+          {archived && (
+            <p role="status" className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-small text-text">
+              {t("tp.page.archivedNotice")}
+            </p>
+          )}
 
-      {lead && (detail.pendingCount ?? 0) > 0 && (
-        <Link href={projectLink(team.id, project.id, { review: true })} className="flex items-center gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 text-small hover:bg-warning/15" data-project-review-link>
-          <span className="grid h-9 min-w-9 place-items-center rounded-full bg-warning/20 px-2 font-bold text-warning">{detail.pendingCount}</span>
-          <span className="min-w-0 flex-1 font-semibold text-text">{t("tp.review.waitingForYou")}</span>
-        </Link>
-      )}
-
-      <ul className="space-y-2" data-testid="project-files">
-        {detail.mainAreaId && (
-          <li>
-            <Link href={projectLink(team.id, project.id, { board: detail.mainAreaId })} className="flex min-h-16 items-center gap-3 rounded-xl border border-border-soft bg-surface p-3 shadow-card hover:shadow-card-hover" data-project-main-area>
-              <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-secondary/10 text-secondary">
-                <Pin size={21} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-body font-bold text-text">{t("tp.area.projectWide")}</span>
-                <span className="block text-caption text-text-muted">
-                  {t("tp.home.sharedSub", { items: detail.itemCount })}
-                  {sharedBoards > 0 ? ` · ${t("tp.board.items", { count: sharedBoards })}` : ""}
-                </span>
-              </span>
-              <ChevronRight size={18} aria-hidden className="shrink-0 text-text-muted" />
+          {lead && (detail.pendingCount ?? 0) > 0 && (
+            <Link href={projectLink(team.id, project.id, { review: true })} className="flex min-h-12 items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-small hover:shadow-card" data-project-review-link>
+              <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart" />
+              <span className="min-w-0 flex-1 font-semibold text-text">{t("tc.proj.waitingBanner", { count: detail.pendingCount ?? 0 })}</span>
+              <span className="font-semibold text-primary">{t("tc.over.open")}</span>
             </Link>
-          </li>
-        )}
-        {detail.files.map((file) => (
-          <li key={file.id}>
-            <Link href={projectLink(team.id, project.id, { file: file.id })} className="flex min-h-16 items-center gap-3 rounded-xl border border-border-soft bg-surface p-3 shadow-card hover:shadow-card-hover" data-file-card={file.id}>
-              <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
-                <FolderOpen size={21} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-body font-bold text-text">{file.title}</span>
-                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-muted">
-                  {t("tp.file.counts", { items: file.itemCount, boards: file.boardCount ?? 0 })}
-                  <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-caption font-semibold", file.reviewRequired ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary")}>
-                    {t(file.reviewRequired ? "tp.file.reviewOn" : "tp.file.reviewOff")}
-                  </span>
-                  {lead && (file.pendingCount ?? 0) > 0 && <span className="inline-flex h-5 items-center rounded-full bg-warning/10 px-2 text-caption font-semibold text-warning">{t("tp.card.pending", { count: file.pendingCount ?? 0 })}</span>}
-                </span>
-              </span>
-              <ChevronRight size={18} aria-hidden className="shrink-0 text-text-muted" />
-            </Link>
-          </li>
-        ))}
-      </ul>
-      {detail.files.length === 0 && <p className="rounded-xl border border-dashed border-border-soft p-5 text-small text-text-muted">{t(lead ? "tp.files.emptyLead" : "tp.files.empty")}</p>}
+          )}
 
-      {lead && !archived && <FloatingAction onClick={() => setDialog("file")} label={t("tp.file.new")} attrs={{ "data-project-new-file": "" }} />}
+          <div className="flex items-center gap-3">
+            <h2 className="min-w-0 flex-1 font-display text-h3 font-bold text-text">{t("tp.files.title")}</h2>
+            {reviewOnNames.length > 0 && <span className="truncate text-small text-text-muted max-md:hidden">{t("tc.proj.reviewOn", { names: reviewOnNames.join(", ") })}</span>}
+          </div>
+          <ul className="grid grid-cols-2 gap-2.5 md:gap-3.5 xl:grid-cols-3" data-testid="project-files">
+            {detail.mainAreaId && (
+              <li>
+                <FileCard
+                  href={projectLink(team.id, project.id, { board: detail.mainAreaId })}
+                  title={t("tp.area.projectWide")}
+                  meta={t("tp.home.sharedSub", { items: detail.itemCount })}
+                  tone="plum"
+                  attrs={{ "data-project-main-area": "" }}
+                  chip={t("tc.proj.projectWide")}
+                  chipTone="primary"
+                />
+              </li>
+            )}
+            {detail.files.map((file, index) => (
+              <li key={file.id}>
+                <FileCard
+                  href={projectLink(team.id, project.id, { file: file.id })}
+                  title={file.title}
+                  attrs={{ "data-file-card": file.id }}
+                  meta={`${t("tp.file.counts", { items: file.itemCount, boards: file.boardCount ?? 0 })} · ${t(file.reviewRequired ? "tp.file.reviewOn" : "tp.file.reviewOff")}`}
+                  tone={FILE_TONES[index % FILE_TONES.length]}
+                  chip={lead && (file.pendingCount ?? 0) > 0 ? t("tc.proj.filePending", { count: file.pendingCount ?? 0 }) : file.reviewRequired ? undefined : t("tc.proj.directPublish")}
+                  chipTone={lead && (file.pendingCount ?? 0) > 0 ? "warning" : "neutral"}
+                />
+              </li>
+            ))}
+            {lead && !archived && (
+              <li className="max-md:hidden">
+                <button type="button" onClick={() => setDialog("file")} className="grid min-h-[11rem] w-full place-items-center rounded-2xl border border-dashed border-border text-small font-semibold text-text-muted hover:bg-surface-soft" data-project-new-file-card>
+                  + {t("tp.file.new")}
+                </button>
+              </li>
+            )}
+          </ul>
+          {detail.files.length === 0 && <p className="rounded-xl border border-dashed border-border-soft p-5 text-small text-text-muted">{t(lead ? "tp.files.emptyLead" : "tp.files.empty")}</p>}
+
+          {(sharedBoards.length > 0 || canAdd) && (
+            <>
+              <h2 className="font-display text-h3 font-bold text-text">{t("tc.proj.boards")}</h2>
+              <ul className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-3" data-testid="project-boards">
+                {sharedBoards.map((board) => (
+                  <li key={board.id}>
+                    <Link href={board.href} className="block rounded-2xl border border-border-soft bg-surface px-3.5 py-3 hover:shadow-card" data-project-board={board.id}>
+                      <span className="block truncate font-bold text-text">{board.title}</span>
+                      <span className="block text-caption text-text-muted">{t("tp.board.items", { count: board.itemCount })}</span>
+                    </Link>
+                  </li>
+                ))}
+                {canAdd && (
+                  <li className="max-md:hidden">
+                    <button type="button" onClick={() => setDialog("board")} className="grid h-full min-h-16 w-full place-items-center rounded-2xl border border-dashed border-border text-small font-semibold text-text-muted hover:bg-surface-soft" data-project-new-board>
+                      + {t("tp.board.new")}
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </>
+          )}
+        </div>
+
+        <aside className="mt-4 hidden gap-3 md:grid md:grid-cols-2 xl:mt-0 xl:block xl:space-y-4" data-testid="project-side">
+          <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="project-people">
+            <div className="mb-1 flex items-center gap-2">
+              <h3 className="min-w-0 flex-1 font-display text-body font-bold text-text">{t("tp.people.title")}</h3>
+              {lead && (
+                <button type="button" onClick={() => setDialog("access")} className="text-small font-semibold text-primary" data-project-edit-access>
+                  {t("tc.proj.edit")}
+                </button>
+              )}
+            </div>
+            <ul className="divide-y divide-border-soft">
+              {detail.people.map((person) => (
+                <li key={`${person.type}-${person.id}`}>
+                  <PersonRow
+                    name={person.name}
+                    username={person.username}
+                    avatarUrl={person.avatarUrl}
+                    sub={person.type === "group" ? t("tm.access.groupSub", { count: person.memberCount ?? 0 }) : person.implicit ? t("tp.people.implicit") : undefined}
+                    right={<ProjectRoleChip role={person.role} />}
+                  />
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-caption text-text-muted">{t("tp.people.note")}</p>
+          </section>
+          <section className="rounded-2xl border border-border-soft bg-surface p-4">
+            <ProjectVariablesPanel projectId={project.id} fileId={null} variables={detail.variables} role={myRole} onChanged={onChanged} />
+          </section>
+        </aside>
+      </div>
+
+      {lead && !archived && (
+        <div className="md:hidden">
+          <FloatingAction onClick={() => setDialog("file")} label={t("tp.file.new")} attrs={{ "data-project-new-file-phone": "" }} />
+        </div>
+      )}
 
       {dialog === "info" && (
         <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onChanged={onChanged} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />
@@ -387,6 +460,17 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           onDone={(id) => {
             setDialog(null);
             router.push(projectLink(team.id, project.id, { file: id }));
+          }}
+        />
+      )}
+      {dialog === "board" && (
+        <NewBoardDialog
+          projectId={project.id}
+          fileId={null}
+          onClose={() => setDialog(null)}
+          onDone={(id) => {
+            setDialog(null);
+            router.push(projectLink(team.id, project.id, { board: id }));
           }}
         />
       )}
@@ -416,6 +500,28 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
   );
 }
 
+/** Dosya kartı (mockup B2): üstte tonlu mini kolaj, altta ad · özet · durum çipi. */
+function FileCard({ href, title, meta, tone, chip, chipTone, attrs }: { href: string; title: string; meta: string; tone: string; chip?: string; chipTone: "primary" | "warning" | "neutral"; attrs?: Record<string, string> }) {
+  return (
+    <Link href={href} className="block overflow-hidden rounded-2xl border border-border-soft bg-surface transition-shadow hover:shadow-card-hover" data-project-file-card {...attrs}>
+      <span aria-hidden className={cn("grid h-[4.5rem] grid-cols-3 gap-1.5 p-2.5 md:h-24", toneClass(tone))}>
+        <span className="rounded-lg bg-current" />
+        <span className="rounded-lg bg-surface" />
+        <span className="rounded-lg bg-current opacity-45" />
+      </span>
+      <span className="block p-3 md:px-3.5 md:py-3">
+        <span className="block truncate text-body font-bold text-text">{title}</span>
+        <span className="block truncate text-small text-text-secondary">{meta}</span>
+        {chip && (
+          <span className={cn("mt-2 inline-flex h-6 items-center rounded-full px-2.5 text-caption font-bold", chipTone === "warning" ? "bg-warning/10 text-warning" : chipTone === "primary" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary")}>
+            {chip}
+          </span>
+        )}
+      </span>
+    </Link>
+  );
+}
+
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // Dosya sayfası
 // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -429,29 +535,37 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
   const [dialog, setDialog] = useState<null | "info" | "rename" | "delete" | "board" | "variable">(null);
   const fileBoards = boardRows(detail, team.id, file.id);
   const fileHref = projectLink(team.id, project.id, { file: file.id });
+  const overview = teamLink(team.id);
+  const lead = canReview(myRole);
+  const { node: toastNode, show } = useToast();
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const toggleReview = async (on: boolean) => {
+    setReviewBusy(true);
+    try {
+      const left = await setFileReview(file.id, on);
+      if (!on && left > 0) show(t("tp.review.turnedOffLeft", { count: left }));
+      onChanged();
+    } catch (e) {
+      show((e as TeamActionError).message);
+    } finally {
+      setReviewBusy(false);
+    }
+  };
+  const variableNames = effectiveVariables(detail.variables, file.id).map((variable) => variable.name);
+  const itemCrumbs = [teamCrumb(ctx), { label: project.title, href: projectLink(team.id, project.id) }, { label: file.title, href: fileHref }];
 
   return (
     <div className="space-y-4" data-testid="team-file-page" data-file-id={file.id} data-project-role={myRole}>
-      {!itemParam && (
-        <>
-          <ProjectPathBar
-            crumbs={[teamCrumb(ctx), { label: project.title, href: projectLink(team.id, project.id) }, { label: file.title }]}
-            backHref={tab ? fileHref : projectLink(team.id, project.id)}
-            onInfo={() => setDialog("info")}
-          />
-          <TitleBlock
-            title={file.title}
-            meta={
-              <>
-                <span>{t("tp.file.counts", { items: file.itemCount, boards: fileBoards.length })}</span>
-                <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-caption font-semibold", file.reviewRequired ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary")}>
-                  {t(file.reviewRequired ? "tp.file.reviewOn" : "tp.file.reviewOff")}
-                </span>
-              </>
-            }
-          />
-        </>
-      )}
+      <DrillHeader backHref={tab ? fileHref : projectLink(team.id, project.id)} parent={project.title} title={file.title} tone={project.tone} onInfo={() => setDialog("info")} />
+      <Breadcrumbs crumbs={[{ label: t("tc.tab.overview"), href: overview }, { label: project.title, href: projectLink(team.id, project.id) }, { label: file.title }]} />
+      <div className="hidden items-center gap-3 md:flex">
+        <h1 className="min-w-0 flex-1 break-words font-display text-[1.625rem] font-extrabold leading-tight text-text" data-file-title>
+          {file.title}
+        </h1>
+        <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-text-secondary hover:bg-surface-soft">
+          <Info size={18} aria-hidden />
+        </button>
+      </div>
       {file.mainAreaId ? (
         <TeamAreaView
           spaceId={file.mainAreaId}
@@ -465,20 +579,29 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
             itemParam
               ? {
                   itemId: itemParam,
-                  crumbs: [teamCrumb(ctx), { label: project.title, href: projectLink(team.id, project.id) }, { label: file.title, href: fileHref }],
+                  crumbs: itemCrumbs,
                   listHref: fileHref,
                   boardHref: (id) => projectLink(team.id, project.id, { file: file.id, sub: "board", focus: id }),
                   variables: detail.variables,
                   fileId: file.id,
+                  drawer: true,
                 }
               : null
           }
-          reviewHref={canReview(myRole) ? projectLink(team.id, project.id, { review: true }) : null}
-          add={{ reviewOn: file.reviewRequired, onNewBoard: () => setDialog("board"), onNewVariable: () => setDialog("variable") }}
+          reviewHref={lead ? projectLink(team.id, project.id, { review: true }) : null}
+          add={{
+            reviewOn: file.reviewRequired,
+            reviewSwitch: lead ? { busy: reviewBusy, onChange: (on) => void toggleReview(on) } : null,
+            variableNames,
+            onVariables: () => setDialog("info"),
+            onNewBoard: () => setDialog("board"),
+            onNewVariable: () => setDialog("variable"),
+          }}
         />
       ) : (
         <SectionError message={t("tp.area.missing")} />
       )}
+      {toastNode}
 
       {dialog === "info" && (
         <FileInfoSheet detail={detail} file={file} onClose={() => setDialog(null)} onChanged={onChanged} onRename={() => setDialog("rename")} onDelete={() => setDialog("delete")} />
@@ -569,10 +692,12 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
     }
   };
 
+  const overview = teamLink(team.id);
   return (
     <div className="space-y-4" data-testid="team-board-page" data-board-id={boardId} data-project-role={myRole}>
-      {!itemParam && <ProjectPathBar crumbs={crumbs} backHref={tab ? selfHref : parentHref} onInfo={() => setDialog("info")} />}
-      {itemParam ? null : renaming ? (
+      <DrillHeader backHref={tab ? selfHref : parentHref} parent={fileOfBoard ? `${project.title} › ${fileOfBoard.title}` : project.title} title={heading} tone={project.tone} onInfo={() => setDialog("info")} />
+      <Breadcrumbs crumbs={[{ label: t("tc.tab.overview"), href: overview }, { label: project.title, href: projectLink(team.id, project.id) }, ...(fileOfBoard ? [{ label: fileOfBoard.title, href: parentHref }] : []), { label: heading }]} />
+      {renaming ? (
         <div className="flex min-w-0 items-center gap-2 px-1">
           <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} aria-label={t("tp.board.rename")} className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-body" />
           <Button type="button" size="sm" onClick={() => void rename()}>
@@ -583,25 +708,24 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
           </Button>
         </div>
       ) : (
-        <TitleBlock
-          title={heading}
-          actions={
-            !isMain && (canAddToArea(myRole) || lead) ? (
-              <div className="flex gap-2">
-                {canAddToArea(myRole) && (
-                  <Button type="button" size="sm" variant="outline" onClick={() => setRenaming(true)} aria-label={t("tp.board.rename")}>
-                    <Pencil size={15} aria-hidden />
-                  </Button>
-                )}
-                {lead && (
-                  <Button type="button" size="sm" variant="outline" className="text-danger" onClick={() => void remove()} aria-label={t("tp.board.delete")}>
-                    <Trash2 size={15} aria-hidden />
-                  </Button>
-                )}
-              </div>
-            ) : undefined
-          }
-        />
+        <div className="hidden items-center gap-3 md:flex">
+          <h1 className="min-w-0 flex-1 break-words font-display text-[1.625rem] font-extrabold leading-tight text-text" data-board-title>
+            {heading}
+          </h1>
+          {!isMain && canAddToArea(myRole) && (
+            <Button type="button" size="sm" variant="outline" onClick={() => setRenaming(true)} aria-label={t("tp.board.rename")}>
+              <Pencil size={15} aria-hidden />
+            </Button>
+          )}
+          {!isMain && lead && (
+            <Button type="button" size="sm" variant="outline" className="text-danger" onClick={() => void remove()} aria-label={t("tp.board.delete")}>
+              <Trash2 size={15} aria-hidden />
+            </Button>
+          )}
+          <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-text-secondary hover:bg-surface-soft">
+            <Info size={18} aria-hidden />
+          </button>
+        </div>
       )}
       {error && (
         <p role="alert" className="text-small text-danger">
@@ -625,6 +749,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
                 boardHref: (id) => projectLink(team.id, project.id, { board: boardId, sub: "board", focus: id }),
                 variables: detail.variables,
                 fileId: board?.fileId ?? null,
+                drawer: true,
               }
             : null
         }

@@ -44,13 +44,16 @@ export function ImageLightbox({
   useEffect(() => {
     lockBodyScroll();
     function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-      else if (hasMultiple && event.key === "ArrowRight") setIndex((prev) => (prev + 1) % images.length);
+      // Escape yalnız büyütmeyi kapatır: altta açık bir pencere/çekmece (Modal) aynı tuşla birlikte kapanmasın (pencere dinleyicisi yakalama evresinde çalışır).
+      if (event.key === "Escape") {
+        event.stopImmediatePropagation();
+        onClose();
+      } else if (hasMultiple && event.key === "ArrowRight") setIndex((prev) => (prev + 1) % images.length);
       else if (hasMultiple && event.key === "ArrowLeft") setIndex((prev) => (prev - 1 + images.length) % images.length);
     }
-    document.addEventListener("keydown", handleKey);
+    window.addEventListener("keydown", handleKey, true);
     return () => {
-      document.removeEventListener("keydown", handleKey);
+      window.removeEventListener("keydown", handleKey, true);
       unlockBodyScroll();
     };
   }, [onClose, hasMultiple, images.length]);
