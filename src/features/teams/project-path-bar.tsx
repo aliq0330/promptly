@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { Info } from "@/components/icons/info";
+import { MoreVertical } from "@/components/icons/more-vertical";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
@@ -17,9 +18,10 @@ export interface PathCrumb {
 /**
  * Proje sayfalarının TEK üst çubuğu (docs/history/363-*, mockup 1 "Gezgin"): geri oku + yol çipleri (Ekip › Proje › Dosya) + bilgi.
  * Eskiden iki ayrı bileşen (telefonda alt sayfa çubuğu + yol kırıntısı) aynı bilgiyi iki kez veriyordu ve dar ekranda tuvalin yerini çalıyordu.
+ * Öğe detayında (docs/history/364-*) bilgi (ⓘ) yerine işlemler (⋯) çıkar: `onMore` verilirse o gösterilir.
  * Çipler hem "neredeyim" hem "oraya dön"dür; şu anki çip dokunulamaz ve kaydırmada hep görünür kalır.
  */
-export function ProjectPathBar({ crumbs, backHref, onInfo }: { crumbs: PathCrumb[]; backHref: string; onInfo?: () => void }) {
+export function ProjectPathBar({ crumbs, backHref, onInfo, onMore }: { crumbs: PathCrumb[]; backHref: string; onInfo?: () => void; onMore?: () => void }) {
   const { t } = useTranslation();
   const rowRef = useRef<HTMLElement>(null);
   const signature = crumbs.map((crumb) => crumb.label).join("/");
@@ -53,10 +55,16 @@ export function ProjectPathBar({ crumbs, backHref, onInfo }: { crumbs: PathCrumb
           })}
         </ScrollRow>
       </nav>
-      {onInfo && (
+      {onMore ? (
+        <button type="button" onClick={onMore} aria-label={t("tp.item.moreAria")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft" data-path-more>
+          <MoreVertical size={22} aria-hidden />
+        </button>
+      ) : (
+        onInfo && (
         <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-primary hover:bg-primary-soft" data-path-info>
           <Info size={21} aria-hidden />
         </button>
+        )
       )}
     </div>
   );

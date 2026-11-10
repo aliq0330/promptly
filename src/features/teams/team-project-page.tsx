@@ -116,6 +116,12 @@ function useAutoAdd(): boolean {
   return useSearchParams().get("add") === "1";
 }
 
+/** `?item=` (öğe sayfası, docs/history/364-*) ve `?focus=` (panoda öğeye odaklan). */
+function useItemParams(): { item: string | null; focus: string | null } {
+  const params = useSearchParams();
+  return { item: params.get("item") || null, focus: params.get("focus") || null };
+}
+
 /** Başlık bloğu: büyük ad + tek satır özet; sağda isteğe bağlı eylemler. */
 function TitleBlock({ title, meta, actions, children }: { title: string; meta?: ReactNode; actions?: ReactNode; children?: ReactNode }) {
   return (
@@ -425,28 +431,33 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
   const { project, myRole } = detail;
   const tab = useAreaTab();
   const autoAdd = useAutoAdd();
+  const { item: itemParam, focus } = useItemParams();
   const [dialog, setDialog] = useState<null | "info" | "rename" | "delete" | "board" | "variable">(null);
   const fileBoards = boardRows(detail, team.id, file.id);
   const fileHref = projectLink(team.id, project.id, { file: file.id });
 
   return (
     <div className="space-y-4" data-testid="team-file-page" data-file-id={file.id} data-project-role={myRole}>
-      <ProjectPathBar
-        crumbs={[teamCrumb(ctx), { label: project.title, href: projectLink(team.id, project.id) }, { label: file.title }]}
-        backHref={tab ? fileHref : projectLink(team.id, project.id)}
-        onInfo={() => setDialog("info")}
-      />
-      <TitleBlock
-        title={file.title}
-        meta={
-          <>
-            <span>{t("tp.file.counts", { items: file.itemCount, boards: fileBoards.length })}</span>
-            <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-caption font-semibold", file.reviewRequired ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary")}>
-              {t(file.reviewRequired ? "tp.file.reviewOn" : "tp.file.reviewOff")}
-            </span>
-          </>
-        }
-      />
+      {!itemParam && (
+        <>
+          <ProjectPathBar
+            crumbs={[teamCrumb(ctx), { label: project.title, href: projectLink(team.id, project.id) }, { label: file.title }]}
+            backHref={tab ? fileHref : projectLink(team.id, project.id)}
+            onInfo={() => setDialog("info")}
+          />
+          <TitleBlock
+            title={file.title}
+            meta={
+              <>
+                <span>{t("tp.file.counts", { items: file.itemCount, boards: fileBoards.length })}</span>
+                <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-caption font-semibold", file.reviewRequired ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary")}>
+                  {t(file.reviewRequired ? "tp.file.reviewOn" : "tp.file.reviewOff")}
+                </span>
+              </>
+            }
+          />
+        </>
+      )}
       {file.mainAreaId ? (
         <TeamAreaView
           spaceId={file.mainAreaId}
@@ -454,7 +465,21 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
           tab={tab}
           autoAdd={autoAdd}
           boards={fileBoards}
-          hrefFor={(next, extra) => projectLink(team.id, project.id, { file: file.id, sub: next, add: extra?.add })}
+          hrefFor={(next, extra) => projectLink(team.id, project.id, { file: file.id, sub: next, add: extra?.add, focus: extra?.focus })}
+          itemHref={(id) => projectLink(team.id, project.id, { file: file.id, item: id })}
+          focusId={focus}
+          item={
+            itemParam
+              ? {
+                  itemId: itemParam,
+                  crumbs: [teamCrumb(ctx), { label: project.title, href: projectLink(team.id, project.id) }, { label: file.title, href: fileHref }],
+                  listHref: fileHref,
+                  boardHref: (id) => projectLink(team.id, project.id, { file: file.id, sub: "board", focus: id }),
+                  variables: detail.variables,
+                  fileId: file.id,
+                }
+              : null
+          }
           reviewHref={canReview(myRole) ? projectLink(team.id, project.id, { review: true }) : null}
           add={{ reviewOn: file.reviewRequired, onNewBoard: () => setDialog("board"), onNewVariable: () => setDialog("variable") }}
         />
@@ -513,6 +538,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
   const { project, myRole } = detail;
   const tab = useAreaTab();
   const autoAdd = useAutoAdd();
+  const { item: itemParam, focus } = useItemParams();
   const isMain = boardId === detail.mainAreaId;
   const board = detail.boards.find((item) => item.id === boardId);
   const [renaming, setRenaming] = useState(false);
@@ -553,8 +579,8 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
 
   return (
     <div className="space-y-4" data-testid="team-board-page" data-board-id={boardId} data-project-role={myRole}>
-      <ProjectPathBar crumbs={crumbs} backHref={tab ? selfHref : parentHref} onInfo={() => setDialog("info")} />
-      {renaming ? (
+      {!itemParam && <ProjectPathBar crumbs={crumbs} backHref={tab ? selfHref : parentHref} onInfo={() => setDialog("info")} />}
+      {itemParam ? null : renaming ? (
         <div className="flex min-w-0 items-center gap-2 px-1">
           <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} aria-label={t("tp.board.rename")} className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-body" />
           <Button type="button" size="sm" onClick={() => void rename()}>
@@ -596,7 +622,21 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
         tab={tab}
         autoAdd={autoAdd}
         boards={isMain ? boardRows(detail, team.id, null) : []}
-        hrefFor={(next, extra) => projectLink(team.id, project.id, { board: boardId, sub: next, add: extra?.add })}
+        hrefFor={(next, extra) => projectLink(team.id, project.id, { board: boardId, sub: next, add: extra?.add, focus: extra?.focus })}
+        itemHref={(id) => projectLink(team.id, project.id, { board: boardId, item: id })}
+        focusId={focus}
+        item={
+          itemParam
+            ? {
+                itemId: itemParam,
+                crumbs: [...crumbs.slice(0, -1), { label: heading, href: selfHref }],
+                listHref: selfHref,
+                boardHref: (id) => projectLink(team.id, project.id, { board: boardId, sub: "board", focus: id }),
+                variables: detail.variables,
+                fileId: board?.fileId ?? null,
+              }
+            : null
+        }
         reviewHref={lead ? projectLink(team.id, project.id, { review: true }) : null}
         add={{
           reviewOn: detail.project.reviewDefault,
