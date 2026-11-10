@@ -1,6 +1,6 @@
 // Ekip projeleri v2 arayüzü (docs/history/362-*): Projeler sekmesi (kartlar, bekleyen bandı, oluşturma), proje sayfası (dosyalar, panolar,
 // kişiler ve roller, proje değişkenleri), dosya sayfası (alan görünümü: mevcut Space sağlayıcısı + sekmeler, onay rozetleri, onaya gönder,
-// Gezgin düzeni [docs/history/363-*]: tek üst çubuk, klasör listesi, satır satır alan listesi, Ekle, bilgi penceresi, telefonda gruplanmış pano araç çubuğu, "Space" metni yok,
+// Öğe detay sayfaları [docs/history/364-*] (senaryo 22–30), Gezgin düzeni [docs/history/363-*]: tek üst çubuk, klasör listesi, satır satır alan listesi, Ekle, bilgi penceresi, telefonda gruplanmış pano araç çubuğu, "Space" metni yok,
 // onay anahtarı, dosya değişkeni projeyi ezer), düzenleyici/görüntüleyici görünümü, değişiklik önerisi, lider onay kuyruğu (paket, not zorunlu,
 // hepsini onayla, öneri kararı), proje sohbeti grubu, eski adreslerin yönlenmesi, İngilizce ve telefon. Ağ taklitli (`db.rpc` geçersiz kılmaları +
 // `mock-spaces.mjs`); gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/team-projects-v2.sql` ve `team-project-review.sql`.
@@ -484,9 +484,10 @@ await scenario("18. Gezgin: tek üst çubuk (yol çipleri), klasör listesi; dos
   // Izgara görünümü
   await list.locator("[data-area-view=grid]").click();
   await list.locator("[data-area-row=note]").getByText("Dolap notu").waitFor();
-  // Bir satır o öğenin sekmesini açar; üst çubuğun geri oku listeye döner
+  // Bir satır o öğenin KENDİ sayfasını açar (docs/history/364-*); üst çubuğun geri oku listeye döner
   await list.locator("[data-area-row=note]").click();
-  await page.locator("[data-area-tab=notes][aria-current=page]").waitFor();
+  await page.getByTestId("area-item-detail").waitFor();
+  assert.equal(await page.locator("[data-area-tab]").count(), 0, "öğe sayfasında sekme şeridi yok");
   await page.locator("[data-path-back]").click();
   await page.getByTestId("area-folder-list").waitFor();
 }, {
@@ -527,6 +528,146 @@ await scenario("21. Telefon: pano araç çubuğu gruplanır (Diğer pano araçla
   assert.ok(fits, "araç çubuğu yatay kaymadan sığmalı");
   assert.ok(await overflowFree(page));
 }, { viewport: { width: 390, height: 800 }, items: () => undefined });
+
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// Öğe detay sayfaları (docs/history/364-*)
+// ---------------------------------------------------------------------------------------------------------------------------------------
+const PROMPT = (n) => `17e40000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+const IMAGE = (n) => `17e50000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+const PALETTE = "17e60000-0000-4000-8000-000000000001";
+const itemUrl = (id) => projectUrl(`&file=${FILE}&item=${encodeURIComponent(id)}`);
+const detailItems = (db) => {
+  db.addItem(AREA_FILE, { id: PROMPT(1), kind: "prompt", is_draft: true, title: "Salon — Japandi sahne", body: "{musteri} için {stil} üslubunda oturma odası, {tezgah} sehpa, {renk} tonlar", rev_state: "pending", created_by: U.bob.id });
+  db.addItem(AREA_FILE, { id: IMAGE(1), kind: "image", title: "Salon referansı", media_url: "https://x.supabase.co/storage/v1/object/public/space-media/u/ref.jpg", media_width: 1600, media_height: 1067, rev_state: "approved", created_by: U.bob.id });
+  db.addItem(AREA_FILE, { id: NOTE(40), title: "Ölçüler", body: "Salon 5,2 m × 3,8 m. Pencere güneye bakıyor.", rev_state: "changes", rev_note: "Ölçüleri metreyle yaz", created_by: U.bob.id });
+  db.spacePalettes.push({ id: PALETTE, space_id: AREA_FILE, name: "Doğal tonlar", description: "Salonun renkleri", colors: ["#E8DFD0", "#B79F84", "#6B7A5E"], source: "manual", source_item_id: null, position: 0, created_by: U.bob.id, created_at: "2026-11-01T00:00:00Z", updated_at: "2026-11-01T00:00:00Z" });
+};
+
+await scenario("22. Prompt detayı: değişkenler dosya > proje sırasıyla dolar, anahtar kapanınca jeton görünür; kopyalama metni anahtara uyar", async ({ page }) => {
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("area-folder-list").waitFor();
+  await page.locator("[data-area-row=prompt]").click();
+  const detailEl = page.getByTestId("area-item-detail");
+  await detailEl.waitFor();
+  assert.equal(await detailEl.getAttribute("data-item-kind"), "prompt");
+  const crumbs = (await page.locator("[data-project-crumbs] nav").innerText()).replace(/\s+/g, " ");
+  assert.ok(crumbs.includes("Mutfak") && crumbs.includes("Salon — Japandi sahne"), crumbs);
+  assert.equal(await page.locator("[data-path-more]").count(), 1, "ⓘ yerine ⋯ var");
+  const text = page.locator("[data-item-prompt-text]");
+  const filled = (await text.innerText()).replace(/\s+/g, " ");
+  assert.ok(filled.includes("Ahmet Bey için Skandinav üslubunda") && filled.includes("mermer sehpa"), filled);
+  assert.ok(filled.includes("{renk}"), "değeri olmayan jeton aynen kalır");
+  // Değişken listesi: kaynak rozetleri
+  const vars = page.locator("[data-item-variables]");
+  assert.ok((await vars.locator('[data-item-variable="stil"]').innerText()).includes("dosyadan"));
+  assert.ok((await vars.locator('[data-item-variable="musteri"]').innerText()).includes("projeden"));
+  assert.ok((await vars.locator('[data-item-variable="renk"]').innerText()).includes("değer yok"));
+  // Doldurarak kopyala
+  assert.equal((await page.locator("[data-item-copy]").innerText()).trim(), "Doldurarak kopyala");
+  await page.locator("[data-item-copy]").click();
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "Ahmet Bey için Skandinav üslubunda oturma odası, mermer sehpa, {renk} tonlar");
+  // Anahtarı kapat: ham jetonlar + "Olduğu gibi kopyala"
+  await page.locator("[data-item-fill-switch]").click();
+  assert.equal(await page.locator("[data-item-fill-switch]").getAttribute("aria-checked"), "false");
+  assert.ok((await text.innerText()).includes("{musteri} için {stil}"));
+  assert.equal((await page.locator("[data-item-copy]").innerText()).trim(), "Olduğu gibi kopyala");
+  await page.locator("[data-item-copy]").click();
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "{musteri} için {stil} üslubunda oturma odası, {tezgah} sehpa, {renk} tonlar");
+}, { items: detailItems });
+
+await scenario("23. Prompt detayı (lider, onay bekliyor): Onayla → team_review_decide(approve); Değişiklik iste not zorunlu → changes + not", async ({ page, db }) => {
+  await page.goto(itemUrl(PROMPT(1)));
+  await page.getByTestId("area-item-bar").waitFor();
+  await page.locator("[data-item-ask-changes]").click();
+  await page.locator("[data-item-send-changes]").click();
+  await page.getByText("Değişiklik isterken bir not yaz.").waitFor();
+  assert.equal(called(db, "team_review_decide").length, 0, "notsuz çağrı yok");
+  await page.locator("[data-item-change-note]").fill("Ölçüleri metreyle yaz");
+  await page.locator("[data-item-send-changes]").click();
+  await page.waitForFunction(() => true);
+  const changes = called(db, "team_review_decide").at(-1)?.body;
+  assert.deepEqual([changes.p_item_ids, changes.p_decision, changes.p_note], [[PROMPT(1)], "changes", "Ölçüleri metreyle yaz"]);
+  await page.goto(itemUrl(PROMPT(1)));
+  await page.locator("[data-item-approve]").click();
+  const approve = called(db, "team_review_decide").at(-1)?.body;
+  assert.deepEqual([approve.p_item_ids, approve.p_decision], [[PROMPT(1)], "approve"]);
+}, { items: detailItems });
+
+await scenario("24. Görsel detayı: büyütülebilir görsel, boyut/biçim bilgisi, Panoda göster → pano sekmesi o öğeye odaklı", async ({ page }) => {
+  await page.goto(itemUrl(IMAGE(1)));
+  await page.locator("[data-item-image]").waitFor();
+  const info = (await page.locator("dl").first().innerText()).replace(/\s+/g, " ");
+  assert.ok(info.includes("1600 × 1067") && info.includes("JPEG"), info);
+  await page.locator("[data-item-image]").click();
+  await page.getByRole("button", { name: "Kapat" }).first().waitFor();
+  await page.keyboard.press("Escape");
+  await page.locator("[data-item-show-on-board-button]").click();
+  await page.waitForURL(/sub=board/);
+  assert.ok(page.url().includes(`focus=${IMAGE(1)}`), page.url());
+}, { items: detailItems });
+
+await scenario("25. Not detayı: gövde, bağlı öğe/görünürlük satırları ve liderin notu (değişiklik istendi)", async ({ page }) => {
+  await page.goto(itemUrl(NOTE(40)));
+  await page.locator("[data-item-note]").waitFor();
+  assert.ok((await page.locator("[data-item-note]").innerText()).includes("Salon 5,2 m"));
+  const rows = (await page.locator("dl").first().innerText()).replace(/\s+/g, " ");
+  assert.ok(rows.includes("Yok (serbest not)") && rows.includes("Bu alana erişenlere"), rows);
+  const lead = await page.locator("[data-item-lead-note]").innerText();
+  assert.ok(lead.includes("Liderin notu") && lead.includes("Ölçüleri metreyle yaz"), lead);
+  assert.ok((await page.getByTestId("area-item-detail").innerText()).includes("Değişiklik istendi"));
+}, { items: detailItems });
+
+await scenario("26. Palet detayı: renkler satır satır, rengi kopyala; liste satırı palette: adresine gider", async ({ page }) => {
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("area-folder-list").waitFor();
+  await page.locator("[data-area-row=palette]").click();
+  await page.locator("[data-item-palette-colors]").waitFor();
+  assert.ok(page.url().includes("item=palette%3A") || page.url().includes("item=palette:"), page.url());
+  assert.equal(await page.locator("[data-item-color]").count(), 3);
+  await page.locator('[data-item-color="#B79F84"]').click();
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "#B79F84");
+  await page.locator('[data-item-color="#B79F84"]').getByText("Kopyalandı").waitFor();
+}, { items: detailItems });
+
+await scenario("27. ⋯ menüsü: Panoda göster · Sil; Sil onay ister, onaylayınca öğe silinir ve liste açılır", async ({ page, db }) => {
+  await page.goto(itemUrl(NOTE(40)));
+  await page.locator("[data-path-more]").click();
+  await page.locator("[data-item-show-on-board]").waitFor();
+  await page.locator("[data-item-delete]").click();
+  await page.getByText("Silinsin mi?").waitFor();
+  await page.getByRole("button", { name: "Sil" }).last().click();
+  await page.getByTestId("area-folder-list").waitFor();
+  assert.ok(!db.spaceItems.some((row) => row.id === NOTE(40)), "öğe silindi");
+  assert.equal(await page.locator("[data-area-row=note]").count(), 0);
+}, { items: detailItems });
+
+await scenario("28. Görüntüleyici: öğe detayını görür; silme ve onay çubuğu yok, Panoda göster var", async ({ page }) => {
+  await page.goto(itemUrl(IMAGE(1)));
+  await page.locator("[data-item-image]").waitFor();
+  assert.equal(await page.getByTestId("area-item-bar").count(), 0);
+  await page.locator("[data-path-more]").click();
+  await page.locator("[data-item-show-on-board]").waitFor();
+  assert.equal(await page.locator("[data-item-delete]").count(), 0);
+}, { projectRole: "view", spaceRole: "viewer", items: detailItems });
+
+await scenario("29. Olmayan öğe: 'Bu öğe bulunamadı' ve listeye dönüş", async ({ page }) => {
+  await page.goto(itemUrl("17e90000-0000-4000-8000-000000000099"));
+  await page.getByTestId("area-item-missing").waitFor();
+  await page.getByRole("link", { name: "Listeye dön" }).click();
+  await page.getByTestId("area-folder-list").waitFor();
+}, { items: detailItems });
+
+await scenario("30. İngilizce prompt detayı ve telefonda yatay taşma yok", async ({ page }) => {
+  await page.goto(itemUrl(PROMPT(1)));
+  await page.getByTestId("area-item-detail").waitFor();
+  const text = (await page.getByTestId("area-item-detail").innerText()).toLowerCase();
+  for (const word of ["Fill in the variables", "Variables", "Copy filled in", "Approve", "Request changes"]) assert.ok(text.includes(word.toLowerCase()), `${word}: ${text.slice(0, 300)}`);
+  assert.ok(!/değişken|onayla/.test(text), "Türkçe kalıntı yok");
+  assert.ok(await overflowFree(page));
+}, { lang: "en", viewport: { width: 390, height: 800 }, items: detailItems });
 
 await browser.close();
 server.close();

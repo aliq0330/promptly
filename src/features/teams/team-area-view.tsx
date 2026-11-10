@@ -38,6 +38,8 @@ import { cn, presetHref, requestHref, workflowHref } from "@/lib/utils";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { FormError, SubmitButton } from "@/features/spaces/space-forms";
 import { ItemReviewBadge, ReviewChip } from "./project-ui";
+import { AreaItemDetail, type AreaItemContext } from "./team-item-detail";
+import { paletteItemParam } from "@/lib/team-item-kit";
 
 /**
  * Alan görünümü (docs/history/362-*): ekip projesinin bir kabı (proje geneli, dosya ya da ek pano). Alan, Space motorunun gizli bir
@@ -91,17 +93,26 @@ export function TeamAreaView({
   add,
   boards,
   autoAdd,
+  item,
+  itemHref,
+  focusId,
 }: {
   spaceId: string;
   role: ProjectRole | null;
   /** `null` = liste (Gezgin: öğeler satır satır); bir sekme = o sekmenin kendi görünümü. */
   tab: AreaTab | null;
-  hrefFor: (tab: AreaTab, extra?: { add?: boolean }) => string;
+  hrefFor: (tab: AreaTab, extra?: { add?: boolean; focus?: string }) => string;
   reviewHref?: string | null;
   add?: AreaAddActions;
   boards?: AreaBoardRow[];
   /** Sekme açılırken ilgili "ekle" penceresi kendiliğinden açılsın (Ekle menüsünden gelince). */
   autoAdd?: boolean;
+  /** Bir öğenin kendi sayfası (`?item=`; docs/history/364-*): doluysa liste/sekmeler yerine o öğenin detayı çizilir. */
+  item?: AreaItemContext | null;
+  /** Liste satırından öğe sayfasının adresi (`?item=<öğe kimliği | palette:<palet>>`). */
+  itemHref?: (itemParam: string) => string;
+  /** Pano sekmesinde bu öğeye odaklan ("Panoda göster"). */
+  focusId?: string | null;
 }) {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
@@ -155,7 +166,7 @@ export function TeamAreaView({
   return (
     <SpaceProvider key={`${state.data.space.id}-${version}`} initial={state.data} userId={userId}>
       <LanguageTermScope rewrite={rewriteAreaTerms}>
-        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} autoAdd={Boolean(autoAdd)} />
+        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} autoAdd={Boolean(autoAdd)} item={item ?? null} itemHref={itemHref} focusId={focusId ?? null} />
       </LanguageTermScope>
     </SpaceProvider>
   );
@@ -170,15 +181,21 @@ function AreaBody({
   add,
   boards,
   autoAdd,
+  item,
+  itemHref,
+  focusId,
 }: {
   role: ProjectRole | null;
   tab: AreaTab | null;
-  hrefFor: (tab: AreaTab, extra?: { add?: boolean }) => string;
+  hrefFor: (tab: AreaTab, extra?: { add?: boolean; focus?: string }) => string;
   reviewHref: string | null;
   onChanged: () => void;
   add?: AreaAddActions;
   boards: AreaBoardRow[];
   autoAdd: boolean;
+  item: AreaItemContext | null;
+  itemHref?: (itemParam: string) => string;
+  focusId: string | null;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -192,6 +209,7 @@ function AreaBody({
     palette: palettes.length,
   };
   const listMode = tab === null;
+  if (item) return <AreaItemDetail ctx={item} role={role} onChanged={onChanged} />;
   return (
     <div className="space-y-4" data-team-area={space.id} data-area-role={role ?? "none"} data-area-can-edit={caps.edit ? "1" : "0"} data-area-mode={listMode ? "list" : "tab"}>
       {caps.edit && !listMode && (
@@ -204,7 +222,7 @@ function AreaBody({
       )}
       <AreaReviewPanel role={role} reviewHref={reviewHref} onChanged={onChanged} />
       {listMode ? (
-        <AreaFolderList boards={boards} hrefFor={hrefFor} canAdd={caps.edit} onAdd={() => setAddOpen(true)} />
+        <AreaFolderList boards={boards} hrefFor={hrefFor} itemHref={itemHref} canAdd={caps.edit} onAdd={() => setAddOpen(true)} />
       ) : (
         <>
           <nav aria-label={t("tp.area.tabsAria")}>
@@ -234,7 +252,7 @@ function AreaBody({
             </ScrollRow>
           </nav>
           <div role="tabpanel" aria-label={t(TAB_KEY[tab])}>
-            {tab === "board" && <SpaceBoard focusId={null} />}
+            {tab === "board" && <SpaceBoard focusId={focusId} />}
             {tab === "images" && <ImagesTab focusId={null} onShowOnBoard={() => undefined} />}
             {tab === "prompts" && <PromptsTab onShowOnBoard={() => undefined} autoAdd={autoAdd} />}
             {tab === "notes" && <NotesTab onShowOnBoard={() => undefined} autoAdd={autoAdd} />}
@@ -293,9 +311,9 @@ interface AreaRow {
 
 /**
  * Gezgin liste kipi (mockup 1): alanın içindekiler dosya gibi satır satır — ana pano, ek panolar, görseller, promptlar, notlar, palet, workflow/ayar paketi.
- * Hiçbir şey açık gelmez; bir satıra dokununca o öğenin sekmesi açılır. "Ekle" sağ alttaki tek düğmedir.
+ * Hiçbir şey açık gelmez; bir satıra dokununca o öğenin KENDİ sayfası açılır (`?item=`, docs/history/364-*; workflow/ayar paketi/istek satırı içerik sekmesine gider). "Ekle" sağ alttaki tek düğmedir.
  */
-function AreaFolderList({ boards, hrefFor, canAdd, onAdd }: { boards: AreaBoardRow[]; hrefFor: (tab: AreaTab) => string; canAdd: boolean; onAdd: () => void }) {
+function AreaFolderList({ boards, hrefFor, itemHref, canAdd, onAdd }: { boards: AreaBoardRow[]; hrefFor: (tab: AreaTab) => string; itemHref?: (itemParam: string) => string; canAdd: boolean; onAdd: () => void }) {
   const { t } = useTranslation();
   const { items, palettes } = useSpaceContext();
   const itemTitle = useItemTitle();
@@ -307,9 +325,10 @@ function AreaFolderList({ boards, hrefFor, canAdd, onAdd }: { boards: AreaBoardR
       .filter((item) => item.kind !== "palette")
       .map((item): AreaRow => {
         const kind: RowKind = item.kind === "content" ? (item.contentType === "workflow" ? "workflow" : item.contentType === "preset" ? "preset" : "request") : item.kind;
-        return { key: item.id, kind, title: itemTitle(item), href: hrefFor(ROW_TAB[kind]), state: item.revState };
+        const own = itemHref && (kind === "prompt" || kind === "image" || kind === "note");
+        return { key: item.id, kind, title: itemTitle(item), href: own ? itemHref(item.id) : hrefFor(ROW_TAB[kind]), state: item.revState };
       }),
-    ...palettes.map((palette): AreaRow => ({ key: `palette-${palette.id}`, kind: "palette", title: palette.name, href: hrefFor("palette") })),
+    ...palettes.map((palette): AreaRow => ({ key: `palette-${palette.id}`, kind: "palette", title: palette.name, href: itemHref ? itemHref(paletteItemParam(palette.id)) : hrefFor("palette") })),
   ];
   const nothingYet = items.filter((item) => item.kind !== "palette").length === 0 && palettes.length === 0;
   return (
