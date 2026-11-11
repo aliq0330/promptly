@@ -485,9 +485,16 @@ await scenario("28. Üyeler: görünüm hapları, tablo, Roller ve yetkiler matr
   db.rpc.team_remove_member = (body) => { db.teamCalls.push({ name: "team_remove_member", body }); return { body: {} }; };
 } });
 
-await scenario("29. Telefon: Üyeler satırında Roller ve yetkiler açılır, Çıkar penceresi taşmaz", async ({ page }) => {
+await scenario("29. Telefon: Üye satırında çıkarma simgesi var (pencere taşmaz); Roller ve yetkiler açılır", async ({ page }) => {
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=members`);
   await page.getByTestId("team-band").waitFor();
+  // Telefonda masaüstü "Çıkar" düğmesi gizlidir; satırda ayrı bir çıkarma simgesi vardır (docs/history/370-*).
+  assert.equal(await page.locator("[data-member-remove]:visible").count(), 0, "masaüstü düğmesi telefonda görünmez");
+  await page.locator("[data-member-remove-phone]").first().click();
+  await page.getByTestId("team-remove-form").waitFor();
+  assert.ok(await overflowFree(page));
+  await page.getByRole("button", { name: "Vazgeç" }).first().click();
+  await page.getByTestId("team-remove-form").waitFor({ state: "detached" });
   await page.getByText("Roller ve yetkiler").first().click();
   await page.getByText("Hangi rol neyi yapabilir?").first().waitFor();
   assert.ok(await overflowFree(page));

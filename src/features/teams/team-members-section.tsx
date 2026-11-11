@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Check } from "@/components/icons/check";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { Search } from "@/components/icons/search";
+import { UserMinus } from "@/components/icons/user-minus";
 import { Button } from "@/components/ui/button";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListState } from "@/features/feed/paged-list-state";
@@ -240,6 +241,11 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                       {manageable && (
                         <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden h-8 items-center rounded-full border border-border px-3 text-caption font-semibold text-text-secondary hover:border-danger/40 hover:bg-danger/10 hover:text-danger md:inline-flex">
                           {t("tm.members.remove")}
+                        </button>
+                      )}
+                      {manageable && (
+                        <button type="button" onClick={() => setRemoving(member)} data-member-remove-phone aria-label={t("tm.members.remove")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-danger/10 hover:text-danger md:hidden">
+                          <UserMinus size={20} aria-hidden />
                         </button>
                       )}
                     </li>

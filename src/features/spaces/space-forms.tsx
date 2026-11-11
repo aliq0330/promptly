@@ -34,13 +34,26 @@ const VISIBILITY_HELP: Record<SpaceVisibility, TranslationKey> = {
   public: "spaces.visibility.publicHelp",
 };
 
-export function TitleField({ value, onChange, autoFocus }: { value: string; onChange: (value: string) => void; autoFocus?: boolean }) {
+export function TitleField({
+  value,
+  onChange,
+  autoFocus,
+  label,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  autoFocus?: boolean;
+  /** Varsayılan "Space adı"; başka bağlamlar (ekip: proje/dosya/pano) kendi etiketini verir. */
+  label?: string;
+  placeholder?: string;
+}) {
   const { t } = useTranslation();
   const id = useId();
   return (
     <div>
       <label htmlFor={id} className={fieldLabelClassName}>
-        {t("spaces.form.title")}
+        {label ?? t("spaces.form.title")}
       </label>
       <input
         id={id}
@@ -50,7 +63,7 @@ export function TitleField({ value, onChange, autoFocus }: { value: string; onCh
         required
         // Dokunmatik cihazda pencere açılır açılmaz klavyeyi açma: klavye pencereyi ekranın dışına iter (docs/history/218-*).
         autoFocus={autoFocus && !(typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches)}
-        placeholder={t("spaces.form.titlePlaceholder")}
+        placeholder={placeholder ?? t("spaces.form.titlePlaceholder")}
         className={fieldInputClassName}
       />
     </div>
