@@ -43,6 +43,7 @@ export const teamCenterTranslations = {
   "tc.file.reviewOn": { tr: "Onay açık", en: "Review on" },
   "tc.file.reviewOff": { tr: "Onay kapalı", en: "Review off" },
   "tc.file.counts": { tr: "{{approved}} onaylı · {{pending}} bekliyor · {{changes}} değişiklik", en: "{{approved}} approved · {{pending}} waiting · {{changes}} changes" },
+  "tc.file.countsDraft": { tr: "{{approved}} onaylı · {{draft}} taslak · {{pending}} bekliyor · {{changes}} değişiklik", en: "{{approved}} approved · {{draft}} draft · {{pending}} waiting · {{changes}} changes" },
   "tc.file.review": { tr: "İncele", en: "Review" },
   "tc.file.waiting": { tr: "Onay bekleyen", en: "Waiting for review" },
   "tc.file.variables": { tr: "Değişkenler:", en: "Variables:" },

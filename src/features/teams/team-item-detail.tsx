@@ -386,9 +386,11 @@ function ReviewBar({ item, role, onChanged, extra }: { item: SpaceItem; role: Pr
   const [noteError, setNoteError] = useState(false);
   const subject = { state: item.revState, createdBy: item.createdBy };
   const decide = role === "lead" && item.revState === "pending";
+  // Lider, henüz onaya gönderilmemiş taslağı (ya da değişiklik istenmiş öğeyi) doğrudan onaylayabilir (docs/history/368-*).
+  const approveDirect = role === "lead" && (item.revState === "draft" || item.revState === "changes");
   const submit = canSubmitItem(role, subject, userId);
   const withdraw = canWithdrawItem(role, subject, userId);
-  if (!decide && !submit && !withdraw && !extra) return null;
+  if (!decide && !approveDirect && !submit && !withdraw && !extra) return null;
 
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
@@ -455,6 +457,16 @@ function ReviewBar({ item, role, onChanged, extra }: { item: SpaceItem; role: Pr
               {t("tp.review.approve")}
             </Button>
           </div>
+        </>
+      )}
+      {approveDirect && (
+        <>
+          <p className="text-center text-caption text-text-secondary" data-item-draft-hint>
+            {t(item.revState === "draft" ? "tp.item.draftLead" : "tp.item.changesLead")}
+          </p>
+          <Button type="button" className="h-12 w-full bg-success text-primary-foreground hover:bg-success/90" onClick={() => void run(() => decideReview([item.id], "approve"))} disabled={busy} data-item-approve>
+            {t("tp.review.approve")}
+          </Button>
         </>
       )}
       {!decide && (submit || withdraw) && (

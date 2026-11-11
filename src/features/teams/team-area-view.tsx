@@ -28,7 +28,7 @@ import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider"
 import { rewriteAreaTerms } from "@/lib/team-area-terms";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { fetchMyRole, fetchSpace, fetchSpaceConnections, fetchSpaceGroups, fetchSpaceItems, fetchSpacePalettes, type SpaceItem } from "@/lib/supabase/spaces";
-import { submitReview, withdrawReview } from "@/lib/supabase/team-projects";
+import { decideReview, submitReview, withdrawReview } from "@/lib/supabase/team-projects";
 import type { TeamActionError } from "@/lib/supabase/teams";
 import { canAddToArea, canProposeChange, canSubmitItem, canWithdrawItem, type ProjectRole } from "@/lib/team-projects";
 import { cn } from "@/lib/utils";
@@ -323,13 +323,14 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
   const approvedN = content.filter((row) => !row.state || row.state === "approved").length;
   const pendingN = content.filter((row) => row.state === "pending").length;
   const changesN = content.filter((row) => row.state === "changes").length;
+  const draftN = content.filter((row) => row.state === "draft").length;
   const nothingYet = content.length === 0;
-  const total = Math.max(1, approvedN + pendingN + changesN);
+  const total = Math.max(1, approvedN + pendingN + changesN + draftN);
   const lead = role === "lead";
 
   return (
     <div className="space-y-3.5" data-testid="area-folder-list">
-      {(reviewOn || pendingN > 0 || changesN > 0) && (
+      {(reviewOn || pendingN > 0 || changesN > 0 || draftN > 0) && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border-soft bg-surface px-4 py-3" data-testid="area-review-summary">
           {add?.reviewSwitch ? (
             <label className="flex min-h-9 items-center gap-2 text-small font-semibold text-text" data-area-review-switch>
@@ -343,9 +344,10 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
             <span className="bg-success" style={{ flex: approvedN / total }} />
             <span className="bg-warning" style={{ flex: pendingN / total }} />
             <span className="bg-danger" style={{ flex: changesN / total }} />
+            <span className="bg-border-strong" style={{ flex: draftN / total }} />
           </span>
           <span className="text-small text-text-secondary" data-review-counts>
-            {t("tc.file.counts", { approved: approvedN, pending: pendingN, changes: changesN })}
+            {t(draftN > 0 ? "tc.file.countsDraft" : "tc.file.counts", { approved: approvedN, pending: pendingN, changes: changesN, draft: draftN })}
           </span>
           {lead && pendingN > 0 && reviewHref && (
             <Link href={reviewHref} className="inline-flex h-9 items-center rounded-full bg-primary-soft px-3.5 text-small font-semibold text-primary" data-area-summary-review>
@@ -563,6 +565,11 @@ function AreaReviewPanel({ role, reviewHref, onChanged }: { role: ProjectRole | 
             {canWithdrawItem(role, subject(item), userId) && (
               <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => withdrawReview([item.id]))} data-review-withdraw>
                 {t("tp.review.withdraw")}
+              </Button>
+            )}
+            {role === "lead" && (
+              <Button type="button" size="sm" disabled={busy} onClick={() => void run(() => decideReview([item.id], "approve"))} data-area-review-approve>
+                {t("tp.review.approve")}
               </Button>
             )}
           </li>
