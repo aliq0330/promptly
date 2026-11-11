@@ -230,9 +230,9 @@ await scenario("6. Not: yalnız değişikliği yapan 'Not ekle' görür (RPC); b
 await scenario("7. 'Yalnız üyeler': üye olmayan Etkinlik sekmesini görmez; Yorumlar kalır", async ({ page }) => {
   await page.goto(`${BASE}/spaces/local?id=${SID(1)}&tab=comments`);
   await page.locator("[data-space-rating-summary]").waitFor();
-  await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name: /Yorumlar/ }).waitFor();
-  assert.equal(await page.getByRole("radio", { name: /Etkinlik/ }).count(), 0);
+  const tabs = page.getByRole("tablist", { name: "Space bölümleri" });
+  await tabs.getByRole("tab", { name: /Yorumlar/ }).waitFor();
+  assert.equal(await tabs.getByRole("tab", { name: /Etkinlik/ }).count(), 0);
 }, { setup: (db) => { world(db); db.spaces.find((s) => s.id === SID(1)).activity_visibility = "members"; } });
 
 await scenario("8. Ayar: sahibi 'Etkinlik geçmişini kim görsün?' seçer; kayıtla activity_visibility gider", async ({ page, db }) => {

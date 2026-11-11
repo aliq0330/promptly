@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
 import { fetchSpaceActivity, type SpaceActivity } from "@/lib/supabase/spaces";
-import { SPACE_VISIBILITY_LABEL, spaceHref, type SpaceTab, type SpaceVisibility } from "@/lib/spaces";
+import { SPACE_TAB_LABEL, SPACE_VISIBILITY_LABEL, spaceHref, type SpaceTab, type SpaceVisibility } from "@/lib/spaces";
 import { useSpaceContext } from "../space-provider";
 import { useActivityText } from "../activity-parts";
 import { resolveSource, sourceReasonKey, useItemTitle } from "../space-items";
@@ -86,6 +86,33 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
             <ArrowRight size={18} className="shrink-0 text-text-muted" aria-hidden />
           </button>
         )}
+
+        {/* Sayaç kartları (docs/history/371-*): dokununca ilgili sekmeye gider. */}
+        <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="space-overview-stats">
+          {([
+            { tab: "images", Icon: ImageIcon, count: images.length },
+            { tab: "prompts", Icon: SquareTerminal, count: prompts.length },
+            { tab: "notes", Icon: StickyNote, count: notes.length },
+            { tab: "palette", Icon: Palette, count: palettes.length },
+          ] as const).map(({ tab, Icon, count }) => (
+            <li key={tab}>
+              <button
+                type="button"
+                onClick={() => onNavigate(tab)}
+                data-overview-stat={tab}
+                className="flex w-full items-center gap-3 rounded-xl border border-border-soft bg-surface p-3.5 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+                  <Icon size={20} aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-display text-[1.4rem] font-extrabold leading-none tabular-nums text-text">{count}</span>
+                  <span className="block truncate text-caption text-text-muted">{t(SPACE_TAB_LABEL[tab])}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
 
         {images.length > 0 && (
           <OverviewSection title={t("spaces.overview.recentImages")} onMore={() => onNavigate("images")}>

@@ -200,7 +200,7 @@ export function PromptsTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: str
         </ul>
       )}
 
-      {openId && <ItemDetailModal itemId={openId} onClose={() => setOpenId(null)} onShowOnBoard={onShowOnBoard} />}
+      {openId && <ItemDetailModal drawer itemId={openId} onClose={() => setOpenId(null)} onShowOnBoard={onShowOnBoard} />}
       {editing && <DraftEditorModal draft={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
     </div>
   );

@@ -39,7 +39,8 @@ import {
 import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spaceHref, type SpaceFilter, type SpaceKind, type SpaceSort, type SpaceVisibility } from "@/lib/spaces";
 import { CreateSpaceModal } from "./space-modals";
 import { SpaceCard } from "./space-card";
-import { SectionMenu, type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
+import { type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
+import { Tabs } from "@/components/ui/tabs";
 import { SpacesFilterSheet, SpaceTemplates } from "./spaces-controls";
 import { SpaceCoverArt, SpacesIcon } from "./space-visuals";
 
@@ -223,7 +224,21 @@ export function SpacesHome() {
   const iconButton = CONTROL_ICON_BUTTON;
   return (
     <PageContainer className="space-y-5 pb-16 pt-3 sm:pt-5">
-      <h1 className="font-display text-[2.375rem] font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("spaces.home.title")}</h1>
+      {/* Merkez düzeni (docs/history/371-*): bant (simge + başlık + özet + "Yeni Space") ve altı çizgili bölüm sekmeleri; ekip sayfasıyla aynı dil. */}
+      <div className="flex items-center gap-4 rounded-2xl bg-primary-soft px-4 py-4 sm:px-6 sm:py-5" data-space-home-band="">
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-surface text-primary shadow-card sm:h-16 sm:w-16">
+          <SpacesIcon size={28} aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-[-0.03em] text-text sm:text-[2.25rem]">{t("spaces.home.title")}</h1>
+        </div>
+        <Button onClick={() => openCreate()} data-testid="create-space" title={t("spaces.home.create")} className="h-11 shrink-0 rounded-full px-3.5 sm:px-5">
+          <Plus size={20} aria-hidden />
+          <span className="max-sm:sr-only">{t("spaces.home.create")}</span>
+        </Button>
+      </div>
+
+      {user && <Tabs items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} />}
 
       {searchOpen || query ? (
         <form role="search" className="relative" onSubmit={(event) => event.preventDefault()}>
@@ -251,7 +266,6 @@ export function SpacesHome() {
         </form>
       ) : (
         <div className="flex items-center gap-1.5">
-          {user && <SectionMenu items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} title={t("spaces.home.title")} />}
           <span className="flex-1" />
           <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("spaces.home.searchOpen")} title={t("spaces.home.searchOpen")} className={iconButton}>
             <Search size={22} strokeWidth={1.75} aria-hidden />
@@ -280,10 +294,6 @@ export function SpacesHome() {
               </button>
             </>
           )}
-          <Button onClick={() => openCreate()} data-testid="create-space" title={t("spaces.home.create")} className="h-11 w-11 shrink-0 rounded-xl bg-surface-soft p-0 text-text shadow-none hover:bg-border-soft">
-            <Plus size={22} strokeWidth={1.75} aria-hidden />
-            <span className="sr-only">{t("spaces.home.create")}</span>
-          </Button>
         </div>
       )}
 

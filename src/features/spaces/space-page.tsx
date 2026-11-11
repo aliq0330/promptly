@@ -27,7 +27,9 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { StorageImg } from "@/components/ui/storage-media";
-import { ListControlRow } from "@/features/content/list-control-row";
+import { Tabs } from "@/components/ui/tabs";
+import { PhoneSubBar } from "@/features/content/phone-sections";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { BAND_PRIMARY_CLASS, BandActionRow, DetailBand } from "@/features/content/detail-parts";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
@@ -55,7 +57,7 @@ import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
 import { ShareModal } from "@/features/prompts/share-modal";
 import { ReportButton } from "@/features/moderation/report-button";
-import { SpaceMenu } from "./space-menu";
+import { SpaceMenu, type SpaceMenuItem } from "./space-menu";
 import { PaletteStrip, SpaceCoverArt, SpacesIcon, VisibilityBadge } from "./space-visuals";
 import { OverviewTab } from "./tabs/overview-tab";
 import { ImagesTab } from "./tabs/images-tab";
@@ -186,6 +188,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const router = useRouter();
   const searchParams = useSearchParams();
   const { space, setSpace, caps, items, palettes, userId, layoutStatus, flushLayout, role } = useSpaceContext();
+  const phone = useMediaQuery("(max-width: 767.98px)");
   const tabParam = searchParams.get("tab");
   const noteCount = items.filter((item) => item.kind === "note").length;
   // Üye çalışma alanını, üye olmayan VİTRİNİ görür (docs/history/214-*): genel bakış ve üyeler yok, not yoksa Notlar da yok.
@@ -243,9 +246,39 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
     }
   }
 
+  const menuItems: SpaceMenuItem[] = [
+    { key: "pin", label: favorite ? t("spaces.card.unfavorite") : t("spaces.card.favorite"), icon: favorite ? PinOff : Pin, onSelect: () => void toggleFavorite(), hidden: !userId },
+    { key: "share", label: t("spaces.card.share"), icon: Share2, onSelect: share, hidden: !canShare },
+    { key: "settings", label: t("spaces.page.settings"), icon: Settings, onSelect: () => setDialog("settings"), hidden: !caps.owner || Boolean(space.archivedAt) },
+    { key: "archive", label: space.archivedAt ? t("spaces.card.unarchive") : t("spaces.card.archive"), icon: space.archivedAt ? ArchiveRestore : Archive, onSelect: () => void toggleArchive(), hidden: !caps.archive },
+    { key: "leave", label: t("spaces.card.leave"), icon: LogOut, onSelect: () => setDialog("leave"), danger: true, hidden: !caps.leave },
+    { key: "delete", label: t("spaces.card.delete"), icon: Trash2, onSelect: () => setDialog("delete"), danger: true, hidden: !caps.delete },
+  ];
+  // Telefonda Genel bakış dışındaki sekmeler bandın yerine tek üst çubukla açılır (docs/history/371-*; ekip projesindeki iç sayfalarla aynı kalıp).
+  const compactPhone = phone && tab !== "overview" && tab !== "board";
+
   return (
     <div className="w-full pb-16 animate-rise-in" data-space-page={space.id} data-space-role={role ?? "none"}>
       {/* Albüm (docs/history/214-*): bant kapak kolajından renk alır; başlığın altında ilk paletin şeridi (dokununca HEX kopyalanır). */}
+      {compactPhone ? (
+        <PhoneSubBar
+          parent={t(SPACE_KIND_LABEL[space.kind])}
+          title={space.title}
+          backHref="/spaces"
+          className="mx-0 mb-0"
+          testId="space-phone-bar"
+          right={
+            <>
+              {canShare && (
+                <button type="button" onClick={share} aria-label={t("spaces.card.share")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  <Share2 size={20} aria-hidden />
+                </button>
+              )}
+              <SpaceMenu items={menuItems} />
+            </>
+          }
+        />
+      ) : (
       <DetailBand
         compact
         data-space-band=""
@@ -305,23 +338,13 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
             )}
           </div>
         }
-        menu={
-          <SpaceMenu
-            items={[
-              { key: "pin", label: favorite ? t("spaces.card.unfavorite") : t("spaces.card.favorite"), icon: favorite ? PinOff : Pin, onSelect: () => void toggleFavorite(), hidden: !userId },
-              { key: "share", label: t("spaces.card.share"), icon: Share2, onSelect: share, hidden: !canShare },
-              { key: "settings", label: t("spaces.page.settings"), icon: Settings, onSelect: () => setDialog("settings"), hidden: !caps.owner || Boolean(space.archivedAt) },
-              { key: "archive", label: space.archivedAt ? t("spaces.card.unarchive") : t("spaces.card.archive"), icon: space.archivedAt ? ArchiveRestore : Archive, onSelect: () => void toggleArchive(), hidden: !caps.archive },
-              { key: "leave", label: t("spaces.card.leave"), icon: LogOut, onSelect: () => setDialog("leave"), danger: true, hidden: !caps.leave },
-              { key: "delete", label: t("spaces.card.delete"), icon: Trash2, onSelect: () => setDialog("delete"), danger: true, hidden: !caps.delete },
-            ]}
-          />
-        }
+        menu={<SpaceMenu items={menuItems} />}
       />
+      )}
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
         {/* Panoda bu satır yok (pano kendi araç çubuğunu ve kayıt göstergesini taşır; yer panoya kalır) — Paylaş ⋮ menüsünde de var. */}
-        {tab !== "board" && (
+        {tab !== "board" && !compactPhone && (
           <BandActionRow label={t("spaces.page.actions")} data-space-actions="">
             <Button className={cn(BAND_PRIMARY_CLASS, "max-sm:flex-1")} onClick={() => goTo("board")}>
               {caps.edit ? <LayoutDashboard size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
@@ -353,21 +376,18 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           </p>
         )}
 
-        {/* Sade düzen (docs/history/235-*): yedi hap sekme yerine tek "Genel bakış ▾" menüsü (sayılarla). */}
-        <div className="mt-4">
-          <ListControlRow
-            menu={{
-              items: visibleTabs.map((key) => ({
-                key,
-                label: t(SPACE_TAB_LABEL[key]),
-                icon: SPACE_TAB_ICON[key],
-                meta: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : key === "comments" ? space.commentCount : undefined,
-              })),
-              active: tab,
-              onChange: (next) => goTo(next),
-              ariaLabel: t("spaces.page.tabsAria"),
-              title: space.title,
-            }}
+        {/* Altı çizgili sekmeler (docs/history/371-*; ekip projesiyle aynı kalıp): simge + ad + sayı, dar ekranda kaydırılır. */}
+        <div className="mt-4" data-space-tabs="">
+          <Tabs
+            ariaLabel={t("spaces.page.tabsAria")}
+            active={tab}
+            onChange={(next) => goTo(next)}
+            items={visibleTabs.map((key) => ({
+              key,
+              label: t(SPACE_TAB_LABEL[key]),
+              icon: SPACE_TAB_ICON[key],
+              count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : key === "comments" ? space.commentCount : undefined,
+            }))}
           />
         </div>
 

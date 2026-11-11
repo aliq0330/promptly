@@ -166,7 +166,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
       )}
 
       {editing && <NoteEditorModal note={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
-      {openId && <ItemDetailModal itemId={openId} onClose={() => setOpenId(null)} onShowOnBoard={onShowOnBoard} />}
+      {openId && <ItemDetailModal drawer itemId={openId} onClose={() => setOpenId(null)} onShowOnBoard={onShowOnBoard} />}
       {deleting && (
         <ConfirmDialog
           id="delete-note"

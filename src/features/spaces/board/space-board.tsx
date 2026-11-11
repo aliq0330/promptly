@@ -1982,7 +1982,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         />
       )}
 
-      {dialog?.kind === "detail" && <ItemDetailModal itemId={dialog.id} onClose={() => setDialog(null)} />}
+      {dialog?.kind === "detail" && <ItemDetailModal drawer itemId={dialog.id} onClose={() => setDialog(null)} />}
       {dialog?.kind === "note" && <NoteEditorModal note={dialog.item ?? null} attachTo={dialog.attachTo ?? null} near={dialog.near} onClose={() => setDialog(null)} />}
       {dialog?.kind === "draft" && <DraftEditorModal draft={dialog.item ?? null} near={dialog.near} onClose={() => setDialog(null)} />}
       {dialog?.kind === "groups" && <GroupsManagerModal onClose={() => setDialog(null)} />}
