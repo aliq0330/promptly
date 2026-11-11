@@ -1,5 +1,6 @@
 "use client";
 
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
@@ -29,10 +30,11 @@ export function DetailSkeleton() {
   );
 }
 
-/** Centered "not found" block for detail pages. */
+/** Centered "not found" block for detail pages, under the "Kayıp prompt" line-art scene (docs/history/373-*). */
 export function NotFoundBlock({ title, description }: { title: string; description: string }) {
   return (
-    <div className="mx-auto max-w-md px-4 py-16 text-center">
+    <div className="mx-auto max-w-md px-4 py-10 text-center sm:py-14">
+      <LineArtScene kind="lost" className="mb-6 aspect-[2/1] w-full rounded-xl border border-border-soft" />
       <h1 className="text-h2 text-text">{title}</h1>
       <p className="mt-2 text-small text-text-muted">{description}</p>
     </div>

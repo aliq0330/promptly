@@ -4,11 +4,13 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { BrandMark, BrandWordmark } from "@/components/layout/brand-mark";
 import { AuthShowcase } from "@/features/auth/auth-showcase";
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Auth pages: a calm split on desktop (a short statement of what Promptly
  * is with a coverflow of favourite prompts, beside the form) and a single centered form card on mobile.
+ * On a tall enough desktop window the panel ends in the "Meydan" line-art scene (docs/history/373-*), edge to edge.
  */
 export default function AuthGroupLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -26,7 +28,11 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
           </p>
           <AuthShowcase />
         </div>
-        <p className="text-caption text-text-muted">{t("nav.tagline")}</p>
+        <div>
+          <p className="text-caption text-text-muted">{t("nav.tagline")}</p>
+          {/* Only where it fits under the coverflow without squeezing it; hidden scenes are not drawn. */}
+          <LineArtScene kind="meydan" className="-mx-10 -mb-10 mt-6 hidden aspect-[2/1] border-t border-border-soft [@media(min-height:980px)]:block" />
+        </div>
       </aside>
 
       <main id="main-content" className="flex flex-1 flex-col items-center justify-center px-4 py-12">

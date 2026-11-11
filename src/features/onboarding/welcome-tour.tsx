@@ -7,6 +7,7 @@ import { Bookmark } from "@/components/icons/bookmark";
 import { Compass } from "@/components/icons/compass";
 import { Play } from "@/components/icons/play";
 import { Sparkles } from "@/components/icons/sparkles";
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -55,7 +56,7 @@ export function openWelcomeTour() {
  * First-visit tour: four short steps about the core loop (find, copy/run,
  * create, save). Auto-opens once, only on the home page and only after auth
  * has resolved, so it never covers a deep link someone followed. Skipping or
- * finishing both count as "seen". Reopenable from Settings.
+ * finishing both count as "seen". Reopenable from Settings. A line-art scene of two people sharing a prompt heads it.
  */
 export function WelcomeTour() {
   const { t } = useTranslation();
@@ -96,7 +97,9 @@ export function WelcomeTour() {
 
   return (
     <Modal onClose={close} labelledBy="tour-title">
-      <div className="w-full max-w-md rounded-xl border border-border-soft bg-surface p-5 shadow-pop sm:p-6" onClick={(event) => event.stopPropagation()}>
+      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border-soft bg-surface p-5 shadow-pop sm:p-6" onClick={(event) => event.stopPropagation()}>
+        {/* "Paylaşma anı" (docs/history/373-*): stays mounted across steps, so the story runs on while the reader pages. */}
+        <LineArtScene kind="share" className="-mx-5 -mt-5 mb-4 aspect-[2/1] border-b border-border-soft sm:-mx-6 sm:-mt-6" />
         <div className="flex items-center justify-between gap-3">
           <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
             {t("tour.progress", { current: step + 1, total: STEPS.length })}

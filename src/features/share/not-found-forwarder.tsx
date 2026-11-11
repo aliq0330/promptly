@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { buttonClassName } from "@/components/ui/button";
 import { absoluteUrl } from "@/lib/utils";
 import { detailHrefFor, parseSharePath } from "@/lib/share-link";
@@ -14,7 +15,7 @@ const subscribeNever = () => () => {};
  * which includes a share link (`/share/<kind>/<key>/`) copied for content that
  * was published after the last build and so has no static share page yet. Such
  * a link is forwarded to the real detail page instead of dead-ending; every
- * other unknown path just gets the "not found" message.
+ * other unknown path just gets the "not found" message, under the "Kayıp prompt" line-art scene (docs/history/373-*).
  */
 export function NotFoundForwarder() {
   const { t } = useTranslation();
@@ -41,6 +42,7 @@ export function NotFoundForwarder() {
         </p>
       ) : (
         <>
+          <LineArtScene kind="lost" className="mb-2 aspect-[2/1] w-full rounded-xl border border-border-soft" />
           <h1 className="text-h2 text-text">{t("common.notFound")}</h1>
           <p className="text-small text-text-muted">{t("notFound.description")}</p>
           <Link href="/" className={buttonClassName({ size: "md" })}>
