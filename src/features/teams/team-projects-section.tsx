@@ -165,7 +165,7 @@ function WaitingStrip({ ctx }: { ctx: TeamCtx }) {
   const target = teamLink(team.id, "approvals");
   return (
     <section data-testid="team-waiting" className="rounded-2xl border border-border-soft bg-surface p-3 md:flex md:items-stretch md:gap-3 md:border-0 md:bg-transparent md:p-0">
-      <Link href={target} className="flex min-h-12 items-center gap-2.5 md:block md:w-40 md:shrink-0 md:rounded-2xl md:border md:border-border-soft md:bg-surface md:p-3.5" data-waiting-open>
+      <Link href={target} className="flex min-h-12 items-center gap-2.5 md:block md:w-52 md:shrink-0 md:rounded-2xl md:border md:border-border-soft md:bg-surface md:p-3.5" data-waiting-open>
         <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart md:hidden" />
         <span className="min-w-0 flex-1 md:block">
           <span className="hidden items-center gap-2 font-display text-body font-bold text-text md:flex">

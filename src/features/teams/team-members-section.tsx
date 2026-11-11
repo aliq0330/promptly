@@ -210,7 +210,8 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                       <span className="min-w-0 flex-1 md:w-full md:flex-none">
                         <span className="block truncate text-body font-bold text-text">{name}</span>
                         <span className="block truncate text-caption text-text-muted">
-                          @{member.username} · <PresenceStatusText userId={member.userId} fallback="—" />
+                          @{member.username}{" "}
+                          <PresenceStatusText userId={member.userId} className="before:mr-1 before:content-['·']" />
                         </span>
                       </span>
                       <span className="md:my-1">
@@ -230,14 +231,14 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                               ))}
                           </select>
                         ) : (
-                          <span className={cn("inline-flex h-8 items-center rounded-full px-3 text-caption font-bold", ROLE_CHIP_TONE[member.role])}>{t(roleLabelKey(member.role))}</span>
+                          <span className={cn("inline-flex h-8 items-center rounded-full px-3 text-caption font-bold max-lg:text-[16px]", ROLE_CHIP_TONE[member.role])}>{t(roleLabelKey(member.role))}</span>
                         )}
                       </span>
                       <span className="hidden w-full border-t border-border-soft pt-2 text-caption text-text-secondary md:block" data-member-projects>
                         {summary.length > 0 ? summary.map((entry) => t(`tc.members.in.${entry.role}` as "tc.members.in.lead", { count: entry.count })).join(" · ") : member.groupNames?.join(", ") || t("tc.members.noProject")}
                       </span>
                       {manageable && (
-                        <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden text-caption font-medium text-text-muted hover:text-danger md:block">
+                        <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden h-8 items-center rounded-full border border-border px-3 text-caption font-semibold text-text-secondary hover:border-danger/40 hover:bg-danger/10 hover:text-danger md:inline-flex">
                           {t("tm.members.remove")}
                         </button>
                       )}
