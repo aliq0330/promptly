@@ -127,7 +127,7 @@ test("the roll-up opens the newest channel with unread messages and sums their c
   assert.equal(rolled[0].id, "tasarim");
   assert.equal(rolled[0].unreadCount, 5);
   assert.equal(rolled[0].lastMessageAt, "2026-03-01T00:00:00Z");
-  assert.deepEqual(rolled[0].teamRollup, { channelCount: 3, unreadChannelCount: 2, channelName: "tasarim" });
+  assert.deepEqual(rolled[0].teamRollup, { channelCount: 3, unreadChannelCount: 2, channelName: "tasarim", names: ["genel", "tasarim", "sunum"], extraNames: 0, projects: 0 });
 });
 
 test("a muted channel's unread messages do not count toward the team row", () => {
@@ -145,4 +145,28 @@ test("with nothing unread the row opens the newest channel; pinned teams sort fi
   assert.equal(rolled.find((c) => c.group?.team?.id === "t1")?.id, "yeni");
   const pinned = rollUpTeamChannels<TeamChannelFields & Record<string, unknown>>([channel("a", "t1", { pinnedAt: "2026-01-01T00:00:00Z", lastMessageAt: "2025-01-01T00:00:00Z" }), channel("b", "t2", { lastMessageAt: "2026-03-01T00:00:00Z" })]);
   assert.equal(pinned[0].group?.team?.id, "t1");
+});
+
+test("the roll-up lists team channel names, counts projects separately and ignores archived channels", () => {
+  const ch = (id: string, name: string, group: Record<string, unknown> = {}, extra: Record<string, unknown> = {}) =>
+    channel(name, "t1", { id, group: { team: { id: "t1", channelName: name, ...group } }, ...extra }) as ReturnType<typeof channel>;
+  const rolled = rollUpTeamChannels<TeamChannelFields & Record<string, unknown>>([
+    ch("1", "genel"),
+    ch("2", "duyurular"),
+    ch("3", "villa", { projectId: "p1", projectMain: true }),
+    ch("4", "villa-ana-sayfa", { projectId: "p1", fileId: "f1" }),
+    channel("eski", "t1", { id: "5", group: { closedAt: "2026-01-01T00:00:00Z", team: { id: "t1", channelName: "eski" } } }),
+  ]);
+  assert.equal(rolled.length, 1);
+  assert.deepEqual(rolled[0].teamRollup?.names, ["genel", "duyurular"]);
+  assert.equal(rolled[0].teamRollup?.projects, 1);
+  assert.equal(rolled[0].teamRollup?.channelCount, 4);
+});
+
+test("a team muted as a whole (or per project) shows muted and contributes no unread", () => {
+  const muted = (name: string, unread: number) =>
+    channel(name, "t1", { id: name, unreadCount: unread, mutedAt: "1970-01-01T00:00:00.000Z", group: { team: { id: "t1", channelName: name, muteScope: "team" } } });
+  const rolled = rollUpTeamChannels<TeamChannelFields & Record<string, unknown>>([muted("genel", 3), muted("duyurular", 2)]);
+  assert.equal(rolled[0].unreadCount, 0);
+  assert.ok(rolled[0].mutedAt);
 });

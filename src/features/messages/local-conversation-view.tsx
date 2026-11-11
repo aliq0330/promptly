@@ -84,7 +84,7 @@ import { useActiveRoom } from "./rooms/use-active-room";
 import { RoomFormModal } from "./rooms/room-form-modal";
 import { RoomInfoSheet } from "./rooms/room-info-sheet";
 import { ChannelChipsRow, type ChannelChip } from "./channel-chips-row";
-import { useChannelPresence, useTeamChannelList, useTeamSummary } from "@/features/teams/team-chat-data";
+import { useChannelPresence, useMyProjectRole, useTeamChannelList, useTeamMutes, useTeamSummary } from "@/features/teams/team-chat-data";
 import { TeamMark } from "@/features/teams/team-ui";
 import { TeamInfoModal } from "@/features/teams/team-info-modal";
 import { ChannelInfoSheet } from "@/features/teams/channel-info-sheet";
@@ -95,6 +95,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 import { communityHref } from "@/lib/communities";
 import { teamLink } from "@/lib/teams";
+import { channelBackHref, communityHubHref } from "@/lib/team-chat";
 import { fetchCommunityPostById } from "@/lib/supabase/communities";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
@@ -282,6 +283,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   const teamSummary = useTeamSummary(teamChannel?.id);
   const channelPresence = useChannelPresence(teamChannel ? id : null);
   const currentTeamChannel = teamChannelsState.channels.find((channel) => channel.id === id) ?? null;
+  // Sessize alma (docs/history/369-*): ekip anahtarı kendi satırını, kanalın etkin sessizliği ekip → proje → kanal birleşimini gösterir.
+  const teamMutes = useTeamMutes(teamChannel?.id, teamChannelsState.reload);
+  const currentProjectRole = useMyProjectRole(teamChannel?.projectId ?? currentTeamChannel?.projectId);
   const [teamInfoOpen, setTeamInfoOpen] = useState(false);
   const [channelInfoOpen, setChannelInfoOpen] = useState(false);
   const fromTeamPage = !dock && searchParams.get("from") === "team";
@@ -1084,6 +1088,15 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       router.push(teamLink(teamChannel.slug, "chat"));
       return;
     }
+    // Ekip kanalı / topluluk odası: geri, kanalların listelendiği sayfaya döner (proje kanalı → proje sayfası, ekip kanalı → ekip sayfası, oda → topluluk sayfası).
+    if (teamChannel) {
+      router.push(channelBackHref({ id: teamChannel.id, projectId: teamChannel.projectId ?? currentTeamChannel?.projectId }));
+      return;
+    }
+    if (communityId) {
+      router.push(communityHubHref(communityId));
+      return;
+    }
     // Tarayıcının kendi geri davranışıyla çakışmaması ve `/messages`'ın
     // scroll konumunu mümkün olduğunca korumak için (Aşama 7) `router.
     // back()` — düz bir `router.push("/messages")` her zaman sayfanın en
@@ -1534,7 +1547,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           type="button"
           onClick={handleBack}
           aria-label={t("messages.backToListAriaLabel")}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text md:hidden"
+          className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text", !teamChannel && !communityId && "md:hidden")}
         >
           <ArrowLeft size={20} />
         </button>
@@ -1578,7 +1591,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                       </span>
                     </>
                   )}
-                  {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
+                  {(conversation.mutedAt || currentTeamChannel?.muteScope) && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
                 </span>
               ) : activeRoom ? (
                 <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
@@ -1774,7 +1787,8 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       </div>
       )}
       {teamChannel && !dock?.embedded && teamSummary?.myRole === "guest" && <GuestBanner guestUntil={teamSummary.guestUntil} />}
-      {teamChannel && !dock?.embedded && teamChannelsState.channels.length > 0 && (
+      {/* Kanal çipleri YALNIZ Mesajlar dock'unda kalır; sayfada kanallar ekip/proje sayfasında listelenir (docs/history/369-*). */}
+      {teamChannel && dock && !dock.embedded && teamChannelsState.channels.length > 0 && (
         <ChannelChipsRow
           tone="team"
           ariaLabel={t("tm.chat.channelsAria")}
@@ -1783,7 +1797,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           onSelect={(item) => openTeamChannel(item.id)}
         />
       )}
-      {isGroup && !teamChannel && activeRoom && roomsState.rooms.filter((room) => !room.archivedAt).length > 1 && (
+      {isGroup && !teamChannel && dock && activeRoom && roomsState.rooms.filter((room) => !room.archivedAt).length > 1 && (
         <ChannelChipsRow
           tone="community"
           ariaLabel={t("rooms.chat.roomsAria")}
@@ -2071,9 +2085,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             setActionError(null);
             setConfirmKind(kind);
           }}
-          muted={Boolean(conversation.mutedAt)}
-          muteBusy={actionBusy}
-          onToggleMute={() => void toggleGroupMute()}
+          muted={teamMutes.teamMuted}
+          muteBusy={teamMutes.busy || !teamMutes.loaded}
+          onToggleMute={() => void teamMutes.setTeamMuted(!teamMutes.teamMuted)}
         />
       )}
       {libraryType && user && <ChatLibraryPicker userId={user.id} initialType={libraryType} onPick={attachLibraryItem} onClose={() => setLibraryType(null)} />}
@@ -2157,6 +2171,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           team={teamChannel}
           channel={currentTeamChannel}
           summary={teamSummary}
+          projectRole={currentProjectRole}
           onlineCount={channelPresence.onlineCount}
           pinnedCount={pinned.items.length}
           onShowPinned={() => {

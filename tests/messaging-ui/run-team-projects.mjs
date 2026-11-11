@@ -62,6 +62,8 @@ function seed(db, { role = "owner", projectRole = "lead" } = {}) {
       calls.push({ name, body });
       return { body: fn(body) };
     };
+    // Kanal listesi artık `team_channels_overview` (docs/history/369-*): eski adın yanıtı yeni adda da geçerlidir.
+    if (name === "team_list_channels") db.rpc.team_channels_overview = db.rpc[name];
   };
   reply("my_teams", () => [teamRow(role)]);
   reply("my_teams_preview", () => []);
@@ -92,7 +94,7 @@ function seed(db, { role = "owner", projectRole = "lead" } = {}) {
   reply("team_list_groups", () => []);
   reply("team_list_channels", () => [
     { id: "ch-general", name: "genel", description: null, mode: "open", space_id: null, space_title: null, posting_policy: "members", notify_default: "mentions", is_default: true, position: 0, archived_at: null, unread_count: 0, muted: false, notify_level: "mentions", last_message_at: null, member_count: 6, can_post: true },
-    { id: CHANNEL, name: "villa-projesi", description: null, mode: "project", space_id: null, space_title: null, posting_policy: "members", notify_default: "mentions", is_default: false, position: 1, archived_at: null, unread_count: 0, muted: false, notify_level: "mentions", last_message_at: null, member_count: 5, can_post: true },
+    { id: CHANNEL, name: "villa-projesi", description: null, mode: "project", space_id: null, space_title: null, posting_policy: "members", notify_default: "mentions", is_default: false, position: 1, archived_at: null, unread_count: 0, muted: false, notify_level: "mentions", last_message_at: null, member_count: 5, can_post: true, mute_scope: null, project_id: PROJECT, project_title: "Villa Projesi", file_id: null, file_title: null, project_main: true },
   ]);
   reply("team_channel_members", () => []);
 }

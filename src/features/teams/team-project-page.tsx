@@ -45,7 +45,9 @@ import { TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view"
 import { TeamReviewInbox } from "./team-review-inbox";
 import type { TeamCtx } from "./team-page";
 import { PersonRow, SectionError, TeamMark, toneClass } from "./team-ui";
-import type { TeamActionError } from "@/lib/supabase/teams";
+import { addProjectChannel, type TeamActionError } from "@/lib/supabase/teams";
+import { MuteCard, MuteChip } from "./mute-card";
+import { useTeamChannelList, useTeamMutes } from "./team-chat-data";
 
 /**
  * Proje sayfası (`/teams/local?id=&tab=projects&project=&file=&board=&review=&sub=&add=`; docs/history/362-*, 363-*). Aynı adres dört görünüm taşır:
@@ -194,12 +196,25 @@ function ProjectInfoSheet({
   const { team } = ctx;
   const { project, myRole } = detail;
   const lead = canReview(myRole);
+  // Proje sessize alma (docs/history/369-*): projenin TÜM kanallarını kapatır; ekip sessizse bunu söyler.
+  const mutes = useTeamMutes(team.id);
   return (
     <SpaceDialog title={t("tp.info.projectTitle")} eyebrow={project.title} onClose={onClose} formTestId="project-info-sheet">
       <div className="space-y-5">
         <div className="flex flex-wrap items-center gap-2 text-small text-text-secondary">
           {t("tp.page.yourRole")} <ProjectRoleChip role={myRole} />
         </div>
+        <section className="space-y-2" data-testid="project-notifications">
+          <h3 className="text-body font-bold text-text">{t("th.project.notifications")}</h3>
+          <MuteCard
+            scope="project"
+            muted={mutes.isProjectMuted(project.id)}
+            teamMuted={mutes.teamMuted}
+            busy={mutes.busy || !mutes.loaded}
+            error={mutes.error}
+            onToggle={(next) => void mutes.setProjectMuted(project.id, next)}
+          />
+        </section>
         <div className="flex flex-wrap gap-2">
           {detail.channelId && (
             <Link href={teamLink(team.id, "chat", { channel: detail.channelId })} className={buttonClassName({ variant: "outline", size: "sm", className: "gap-1.5" })} data-project-open-chat>
@@ -245,6 +260,7 @@ function ProjectInfoSheet({
 }
 
 function FileInfoSheet({
+  teamId,
   detail,
   file,
   onClose,
@@ -252,6 +268,7 @@ function FileInfoSheet({
   onRename,
   onDelete,
 }: {
+  teamId: string;
   detail: ProjectDetail;
   file: ProjectDetail["files"][number];
   onClose: () => void;
@@ -264,6 +281,20 @@ function FileInfoSheet({
   const lead = canReview(myRole);
   const { node: toastNode, show } = useToast();
   const [busy, setBusy] = useState(false);
+  // Dosya sohbeti (docs/history/369-*): kendiliğinden açılmaz; lider sonradan buradan açar. Sessizliği kanalın KENDİ ayarıdır (kanal bilgisinden), burada yalnız durumu görünür.
+  const channelsState = useTeamChannelList(teamId);
+  const fileChannel = channelsState.channels.find((channel) => channel.fileId === file.id) ?? null;
+  const createChat = async () => {
+    setBusy(true);
+    try {
+      await addProjectChannel(project.id, { file: file.id });
+      channelsState.reload();
+    } catch (e) {
+      show((e as TeamActionError).message);
+    } finally {
+      setBusy(false);
+    }
+  };
   const toggleReview = async (on: boolean) => {
     setBusy(true);
     try {
@@ -291,6 +322,30 @@ function FileInfoSheet({
             {t(file.reviewRequired ? "tp.review.noteOn" : "tp.review.noteOff")}
           </p>
         )}
+        <section className="space-y-2" data-testid="file-chat-section">
+          <h3 className="text-body font-bold text-text">{t("th.file.chatSection")}</h3>
+          {fileChannel ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Link href={teamLink(teamId, "chat", { channel: fileChannel.id })} className={buttonClassName({ variant: "outline", size: "sm", className: "gap-1.5" })} data-file-open-chat>
+                <MessageCircle size={15} aria-hidden />
+                {t("th.file.chatOpen")}
+              </Link>
+              <MuteChip scope={fileChannel.muteScope ?? (fileChannel.muted ? "channel" : null)} />
+            </div>
+          ) : lead ? (
+            <div className="space-y-2">
+              <p className="text-caption text-text-secondary">{t("th.file.chatNoneLead")}</p>
+              <Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={busy || !channelsState.loaded} onClick={() => void createChat()} data-file-create-chat>
+                <Plus size={15} aria-hidden />
+                {t("th.file.chatCreate")}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-caption text-text-secondary" data-file-chat-none>
+              {t("th.file.chatNone")}
+            </p>
+          )}
+        </section>
         <ProjectVariablesPanel projectId={project.id} fileId={file.id} variables={detail.variables} role={myRole} onChanged={onChanged} />
         {lead && (
           <div className="flex flex-wrap gap-2 border-t border-border-soft pt-4">
@@ -613,7 +668,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
       {toastNode}
 
       {dialog === "info" && (
-        <FileInfoSheet detail={detail} file={file} onClose={() => setDialog(null)} onChanged={onChanged} onRename={() => setDialog("rename")} onDelete={() => setDialog("delete")} />
+        <FileInfoSheet teamId={ctx.team.id} detail={detail} file={file} onClose={() => setDialog(null)} onChanged={onChanged} onRename={() => setDialog("rename")} onDelete={() => setDialog("delete")} />
       )}
       {dialog === "rename" && (
         <RenameFileDialog

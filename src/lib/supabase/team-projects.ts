@@ -212,6 +212,8 @@ const entriesOut = (entries: ProjectAccessEntry[]) => entries.map((e) => ({ type
 
 // --- Okuma ---------------------------------------------------------------------------------
 export const listProjects = (team: string) => rows<ProjectSummary>("team_projects_list", { p_team: team });
+/** Çağıranın bu projedeki rolü (`team_my_project_role`); proje yok / rol yok → null. */
+export const fetchMyProjectRole = (project: string) => rpc<ProjectRole | null>("team_my_project_role", { p_project: project });
 export const fetchProject = (project: string) => rpc<ProjectDetail>("team_project_get", { p_project: project });
 export const fetchProjectAccess = (project: string) => rpc<ProjectAccessSettings>("team_project_access", { p_project: project });
 export const fetchProjectVariables = (project: string) => rows<ProjectVariable>("team_variables_list", { p_project: project });

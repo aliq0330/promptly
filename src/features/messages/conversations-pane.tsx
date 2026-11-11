@@ -108,7 +108,9 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   const byKind = (list: Conversation[]) => (kindFilter === "all" ? list : list.filter((c) => kindOf(c) === kindFilter));
   // Bir ekibin kanalları listede TEK satırdır (Yön A, docs/history/353-*): aramada eşleşen kanallardan toplanır, açılan satır temsilci kanaldır.
   const accepted = byKind(rollUpTeamChannels(matches(buckets.inbox)));
-  const activeTeamId = activeId ? (conversations.find((c) => c.id === activeId)?.group?.team?.id ?? null) : null;
+  // Ekip sayfası (`?hub=team&team=`) açıkken o ekibin satırı seçili görünür; sohbet açıkken kanalın ekibi.
+  const hubTeamId = pathname.startsWith("/messages/local") && searchParams.get("hub") === "team" ? searchParams.get("team") : null;
+  const activeTeamId = hubTeamId ?? (activeId ? (conversations.find((c) => c.id === activeId)?.group?.team?.id ?? null) : null);
   const teamChannelIds = (teamId: string) => buckets.inbox.filter((c) => c.group?.team?.id === teamId).map((c) => c.id);
   const kindCount = accepted.length;
   const kindUnread = accepted.reduce((sum, c) => sum + (c.unreadCount > 0 && !c.mutedAt ? c.unreadCount : 0), 0);

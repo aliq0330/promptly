@@ -12,7 +12,8 @@ import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { SegmentedChoice } from "@/features/messages/segmented-choice";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { archiveTeamChannel, deleteTeamChannel, setChannelNotify, type TeamActionError, type TeamChannel, type TeamSummary } from "@/lib/supabase/teams";
+import { archiveTeamChannel, deleteTeamChannel, setChannelNotify, setTeamMute, type TeamActionError, type TeamChannel, type TeamSummary } from "@/lib/supabase/teams";
+import { channelParam } from "@/lib/team-chat";
 import { teamLink, teamRoleCan } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ export function ChannelInfoSheet({
   team,
   channel,
   summary,
+  projectRole,
   onlineCount,
   pinnedCount,
   onShowPinned,
@@ -38,6 +40,8 @@ export function ChannelInfoSheet({
   team: { id: string; slug: string; name: string };
   channel: TeamChannel;
   summary: TeamSummary | null;
+  /** Proje kanallarında çağıranın projedeki rolü: "lead" kanalı yönetir (ekip kanalında ekip yeteneği geçerlidir). */
+  projectRole?: string | null;
   onlineCount: number;
   pinnedCount: number;
   onShowPinned: () => void;
@@ -52,7 +56,10 @@ export function ChannelInfoSheet({
   const [confirm, setConfirm] = useState<"archive" | "delete" | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const canManage = teamRoleCan(summary?.myRole, "manage_channels");
+  // Proje kanalını proje lideri, ekip kanalını `manage_channels` yetkisi olan yönetir; sunucu her işlemde yeniden denetler.
+  const canManage = channel.projectId ? projectRole === "lead" : teamRoleCan(summary?.myRole, "manage_channels");
+  const locked = channel.isDefault || channel.projectMain === true;
+  const inherited = channel.muteScope === "team" || channel.muteScope === "project" ? channel.muteScope : null;
   const seesKey = channel.mode === "private" ? "tm.chan.seesPrivate" : channel.mode === "project" ? "tp.chat.seesProject" : channel.mode === "space" ? "tm.chan.seesSpace" : "tm.chan.seesAll";
 
   async function run(action: () => Promise<void>, after: () => void) {
@@ -71,14 +78,14 @@ export function ChannelInfoSheet({
 
   const facts: [string, string][] = [
     [t("tm.chan.whoSees"), t(seesKey)],
-    [t("tm.chan.whoPosts"), channel.postingPolicy === "admins" ? t("tm.chan.postsAdmins") : t("tm.chan.postsAll")],
+    [t("tm.chan.whoPosts"), channel.postingPolicy === "admins" ? t(channel.projectId ? "th.newChannel.postingLeads" : "tm.chan.postsAdmins") : t("tm.chan.postsAll")],
     [t("tm.chan.members"), t("tm.chat.memberCount", { count: channel.memberCount })],
     [t("tm.chan.online"), t("tm.chat.memberCount", { count: onlineCount })],
   ];
   const rows: { key: string; label: string; hint?: string; icon: React.ReactNode; onClick?: () => void; href?: string; disabled?: boolean; tone?: string }[] = [
     { key: "pinned", label: t("tm.chan.pinned"), hint: String(pinnedCount), icon: <Pin size={19} strokeWidth={1.75} />, onClick: pinnedCount > 0 ? onShowPinned : undefined, disabled: pinnedCount === 0 },
     { key: "search", label: t("tm.chan.search"), icon: <Search size={19} strokeWidth={1.75} />, onClick: onSearch },
-    { key: "team", label: t("tm.chan.openTeam"), icon: <ArrowUpRight size={19} strokeWidth={1.75} />, href: teamLink(team.slug, "chat", { channel: channel.name }), tone: "text-primary" },
+    { key: "team", label: t("tm.chan.openTeam"), icon: <ArrowUpRight size={19} strokeWidth={1.75} />, href: teamLink(team.slug, "chat", { channel: channelParam(channel) }), tone: "text-primary" },
   ];
 
   return (
@@ -112,11 +119,26 @@ export function ChannelInfoSheet({
               ))}
             </dl>
 
-            <div className="space-y-1.5">
-              <p className="text-caption font-bold text-text-muted">{t("tm.chan.notifyHeading")}</p>
+            <div className="space-y-1.5" data-channel-notify-block>
+              <p className="text-caption font-bold text-text-muted">{t("th.notify.heading")}</p>
+              {inherited && (
+                <div data-channel-inherited={inherited} className="space-y-1.5 rounded-xl border border-warning/40 bg-warning/5 px-3 py-2.5">
+                  <p className="text-small font-semibold text-text">{t(inherited === "team" ? "th.inherit.team" : "th.inherit.project")}</p>
+                  <p className="text-caption text-text-secondary">{t("th.inherit.note")}</p>
+                  <button
+                    type="button"
+                    data-channel-unmute-parent
+                    disabled={busy}
+                    onClick={() => void run(() => setTeamMute(team.id, inherited === "project" ? (channel.projectId ?? null) : null, false), onChanged)}
+                    className="text-small font-bold text-primary hover:underline disabled:opacity-50"
+                  >
+                    {t(inherited === "team" ? "th.inherit.unmuteTeam" : "th.inherit.unmuteProject")}
+                  </button>
+                </div>
+              )}
               <SegmentedChoice<NotifyLevel>
                 value={channel.notifyLevel}
-                ariaLabel={t("tm.chan.notifyHeading")}
+                ariaLabel={t("th.notify.heading")}
                 testId="channel-notify"
                 disabled={busy}
                 onChange={(next) => void run(() => setChannelNotify(channel.id, next), onChanged)}
@@ -126,6 +148,9 @@ export function ChannelInfoSheet({
                   { key: "none", label: t("tm.chat.notify.none") },
                 ]}
               />
+              <p data-channel-notify-hint className="text-caption text-text-secondary">
+                {t(`th.notify.${channel.notifyLevel}` as "th.notify.all")}
+              </p>
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-border-soft">
@@ -159,12 +184,12 @@ export function ChannelInfoSheet({
                   <Link href={teamLink(team.slug, "chat", { channel: channel.name, settings: "1" })} data-channel-edit className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-bold text-text hover:bg-surface-soft">
                     {t("tm.chan.edit")}
                   </Link>
-                  {!channel.isDefault && (
+                  {!locked && (
                     <button type="button" data-channel-archive onClick={() => setConfirm("archive")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-bold text-text hover:bg-surface-soft">
                       {t("tm.chan.archive")}
                     </button>
                   )}
-                  {!channel.isDefault && (
+                  {!locked && (
                     <button type="button" data-channel-delete onClick={() => setConfirm("delete")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-danger/40 text-small font-bold text-danger hover:bg-danger/10">
                       {t("tm.chan.delete")}
                     </button>
