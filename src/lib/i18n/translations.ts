@@ -410,6 +410,11 @@ export const translations = {
   "tour.skip": { tr: "Atla", en: "Skip" },
   "tour.back": { tr: "Geri", en: "Back" },
   "tour.next": { tr: "İleri", en: "Next" },
+  // Line-art scenes (docs/history/372-*)
+  "lineArt.meydanLabel": { tr: "Çizgi çizim: insanların prompt kartlarını panoya astığı bir meydan", en: "Line drawing: a town square where people pin prompt cards to a board" },
+  "lineArt.meydanHint": { tr: "Kişilere ya da güvercinlere dokun · imleci gezdir, rüzgâr essin", en: "Tap the people or the pigeons · move the pointer to make wind" },
+  "lineArt.lostLabel": { tr: "Çizgi çizim: rüzgârda uçan bir prompt kartını yakalamaya çalışan biri; kapı numarası 404", en: "Line drawing: someone chasing a prompt card the wind carries off; the house number is 404" },
+  "lineArt.shareLabel": { tr: "Çizgi çizim: parkta karşılaşan iki kişiden biri ötekine bir prompt kartı veriyor", en: "Line drawing: two people meet in a park and one hands the other a prompt card" },
   "tour.done": { tr: "Başlayalım", en: "Let's go" },
   "tour.step1Title": { tr: "İlham ver, bul", en: "Find what inspires you" },
   "tour.step1Body": { tr: "Ana Sayfa ve Keşfet'te topluluğun paylaştığı promptları, generatorları ve istekleri gez. Arama ve filtrelerle aradığına hızla ulaş.", en: "Browse prompts, requests and more shared by the community on Home and Discover. Search and filters get you to what you need fast." },

@@ -55,6 +55,12 @@
   --p-secondary: #b04e1c;
   --p-heart: #d86934;
   --p-shadow: 18 18 40;
+  /* Line-art scenes (docs/history/372-*): window/lamp light and muted clothes, so brand blue and heart stay the accents. */
+  --p-scene-glow: #f7c47c;
+  --p-scene-cloth-1: #8b9fd6;
+  --p-scene-cloth-2: #e6c79e;
+  --p-scene-cloth-3: #a8c3a2;
+  --p-scene-legs: #2a2b36;
 
   --p-success: #15803d;
   --p-warning: #b45309;
@@ -93,6 +99,11 @@
   --p-secondary: #f29051;
   --p-heart: #f29051;
   --p-shadow: 0 0 0;
+  --p-scene-glow: #f2a65a;
+  --p-scene-cloth-1: #3d4a86;
+  --p-scene-cloth-2: #7d6142;
+  --p-scene-cloth-3: #445c43;
+  --p-scene-legs: #33344a;
 
   --p-success: #4ade80;
   --p-warning: #fbbf24;
@@ -1152,5 +1163,41 @@
   textarea,
   select {
     font-size: 16px;
+  }
+}
+
+/*
+ * Line-art scenes (docs/history/372-*, components/line-art). The drawing reads `currentColor` for ink and `.pp` for paper, and
+ * its flat colours through the `--la-*` names below — all from this file's tokens, so a scene follows light / dark mode.
+ */
+.line-art {
+  --la-primary: var(--color-primary);
+  --la-heart: var(--color-heart);
+  --la-paper: var(--color-surface);
+  --la-glow: var(--p-scene-glow);
+  --la-cloth-1: var(--p-scene-cloth-1);
+  --la-cloth-2: var(--p-scene-cloth-2);
+  --la-cloth-3: var(--p-scene-cloth-3);
+  --la-legs: var(--p-scene-legs);
+  color: var(--color-text);
+  -webkit-tap-highlight-color: transparent;
+}
+.line-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.line-art svg .pp {
+  fill: var(--la-paper);
+}
+.line-art svg .hint,
+.line-art svg .plate {
+  font-family: var(--font-mono);
+}
+@media (max-width: 639px) {
+  .line-art svg .hint {
+    display: none;
   }
 }
