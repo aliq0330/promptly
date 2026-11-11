@@ -9,6 +9,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   archiveProject,
   createBoard,
+  createBoardInGroup,
   createFile,
   deleteFile,
   deleteProject,
@@ -127,7 +128,11 @@ export function RenameFileDialog({ file, onClose, onDone }: { file: { id: string
   );
 }
 
-export function NewBoardDialog({ projectId, fileId, onClose, onDone }: { projectId: string; fileId: string | null; onClose: () => void; onDone: (boardId: string) => void }) {
+/**
+ * Yeni pano. `fromBoard` verilirse (açık panodan "Yeni pano") yeni pano o panonun yanına eklenir ve ikisi bir PANO GRUBU olur;
+ * verilmezse dosyada BAĞIMSIZ bir pano açılır (docs/history/368-*).
+ */
+export function NewBoardDialog({ projectId, fileId, fromBoard, onClose, onDone }: { projectId: string; fileId: string | null; fromBoard?: string | null; onClose: () => void; onDone: (boardId: string) => void }) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
@@ -138,7 +143,7 @@ export function NewBoardDialog({ projectId, fileId, onClose, onDone }: { project
     setBusy(true);
     setError(null);
     try {
-      onDone(await createBoard(projectId, title.trim(), fileId));
+      onDone(fromBoard ? await createBoardInGroup(fromBoard, title.trim()) : await createBoard(projectId, title.trim(), fileId ?? ""));
     } catch (e) {
       setError(errorText(e));
       setBusy(false);

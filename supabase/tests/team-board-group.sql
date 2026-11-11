@@ -61,8 +61,9 @@ insert into public._ctx select 'AQ', id::text from public.spaces where team_proj
 set role authenticated;
 select public._as_user(:dave);
 select public.team_create_board(public._g('P'), 'Taslaklar', public._g('F1')) as v \gset b1_
-select public.team_create_board(public._g('P'), 'Sunum', public._g('F1')) as v \gset b2_
-select public.team_create_board(public._g('P'), 'Referans', public._g('F1')) as v \gset b3_
+-- (docs/history/368-*) Açık panonun yanına yeni pano = pano grubu: B1+B2+B3 tek grup.
+select public.team_create_board_in_group(:'b1_v'::uuid, 'Sunum') as v \gset b2_
+select public.team_create_board_in_group(:'b1_v'::uuid, 'Referans') as v \gset b3_
 reset role;
 insert into public._ctx values ('B1', :'b1_v'), ('B2', :'b2_v'), ('B3', :'b3_v');
 select public._check(1, 'yeni pano grubun sonuna sıralanır', (select array_agg(id order by team_board_position, created_at) from public.spaces where team_file_id = public._g('F1') and not team_area_main) = array[public._g('B1'), public._g('B2'), public._g('B3')]);
@@ -205,7 +206,7 @@ select public._as_user(:frank);
 select public._check(48, 'görüntüleyici taslak öğenin yorumunu GÖRMEZ', public._cnt(format($$select count(*) from public.space_pin_comments where id = %L$$, :'c3_v')) = 0);
 select public._check(49, 'görüntüleyici taslak öğeye yorum yazamaz', public._try(format($$select public.pin_comment_create(%L, 'x', 1, 1, %L, 0, 0)$$, public._g('A1'), :'dr_v')) like '%space_invalid%');
 select public._as_user(:carol);
-select public._check(50, 'lider taslak öğenin yorumunu görür', public._cnt(format($$select count(*) from public.space_pin_comments where id = %L$$, :'c3_v')) = 1);
+select public._check(50, 'lider taslak öğenin yorumunu GÖRMEZ (onaya gönderilene kadar)', public._cnt(format($$select count(*) from public.space_pin_comments where id = %L$$, :'c3_v')) = 0);
 reset role;
 select public._as_user(:frank);
 set role authenticated;
@@ -227,6 +228,39 @@ select public._as_user('');
 select public._check(55, 'anon pin_comment_create çalıştıramaz', public._try(format($$select public.pin_comment_create(%L, 'x', 1, 1)$$, public._g('A1'))) like '%permission denied%');
 select public._check(56, 'anon team_transfer_items çalıştıramaz', public._try(format($$select public.team_transfer_items(%L, %L, array[gen_random_uuid()])$$, public._g('A1'), public._g('B1'))) like '%permission denied%');
 reset role;
+
+
+-- ============================================================================================================================================
+-- 9) Pano grupları (docs/history/368-*)
+-- ============================================================================================================================================
+set role authenticated;
+select public._as_user(:dave);
+select public.team_create_board(public._g('P'), 'Bağımsız C', public._g('F1')) as v \gset gc_
+select public.team_create_board(public._g('P'), 'Tek', public._g('F1')) as v \gset gt_
+select public._check(300, 'proje geneli pano açılamaz (dosya şart)', public._try(format($$select public.team_create_board(%L, 'x')$$, public._g('P'))) like '%project_invalid%');
+reset role;
+select public._check(301, 'bağımsız pano grupsuzdur; B1+B2+B3 tek grup', (select team_board_group_id from public.spaces where id = :'gc_v'::uuid) is null
+  and (select count(distinct team_board_group_id) from public.spaces where id in (public._g('B1'), public._g('B2'), public._g('B3'))) = 1
+  and (select team_board_group_id from public.spaces where id = public._g('B1')) is not null);
+select public._check(302, 'grup adı ilk panonun adı', (select g.title from public.team_board_groups g join public.spaces s on s.team_board_group_id = g.id where s.id = public._g('B1')) = 'Taslaklar');
+set role authenticated;
+select public._as_user(:dave);
+select public.team_project_get(public._g('P')) as v \gset gp_
+select public._check(303, 'team_project_get: groups + areas.group_id', jsonb_array_length(:'gp_v'::jsonb -> 'groups') = 1 and (:'gp_v'::jsonb -> 'groups' -> 0 ->> 'board_count')::int = 3
+  and (select count(*) from jsonb_array_elements(:'gp_v'::jsonb -> 'areas') a where a ->> 'group_id' is not null) = 3);
+select public._check(304, 'grupsuz panoya grup kapsamında sıralama yapılamaz', public._try(format($$select public.team_reorder_boards(%L, %L, array[%L]::uuid[])$$, public._g('P'), public._g('F1'), :'gc_v')) like '%project_invalid%');
+select public._check(305, 'bağımsız pano ile grup panosu arasında aktarım reddedilir', public._try(format($$select public.team_transfer_items(%L, %L, array[gen_random_uuid()]::uuid[], true)$$, :'gc_v', public._g('B1'))) like '%project_invalid%');
+select public.team_create_board_in_group(:'gt_v'::uuid, 'Tek ikinci') as v \gset g2_
+select public._check(306, 'bağımsız panodan "Yeni pano" = yeni grup kurar', public._n('select count(*) from public.team_board_groups') = 2);
+select public.team_rename_board_group((select team_board_group_id from public.spaces where id = :'gt_v'::uuid), 'İkili') ;
+select public._check(307, 'grup yeniden adlandırılır', public._n($$select count(*) from public.team_board_groups where title = 'İkili'$$) = 1);
+select public._as_user(:frank);
+select public._check(308, 'görüntüleyici gruba pano ekleyemez', public._try(format($$select public.team_create_board_in_group(%L, 'x')$$, :'gt_v')) like '%team_forbidden%');
+select public._as_user(:carol);
+select public.team_delete_board(:'g2_v'::uuid);
+reset role;
+select public._check(309, 'grupta tek pano kalınca grup çözülür', (select team_board_group_id from public.spaces where id = :'gt_v'::uuid) is null and (select count(*) from public.team_board_groups where title = 'İkili') = 0);
+select public._check(310, 'dosya grup panoları dışarıdan ayrı: gc grupsuz kaldı', (select team_board_group_id from public.spaces where id = :'gc_v'::uuid) is null);
 
 select 'FAILED=' || count(*) from public._results where not ok;
 select n, name, detail from public._results where not ok order by n;

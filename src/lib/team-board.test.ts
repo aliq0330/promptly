@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   boardPageHref,
-  boardPagesOf,
+  boardGroupPagesOf,
+  fileBoardEntries,
   copyTitle,
   dragBox,
   exportGeometry,
@@ -24,26 +25,43 @@ import {
 const detail = {
   mainAreaId: "pm",
   areas: [
-    { id: "b2", title: "İkinci", fileId: null, isMain: false, position: 1, itemCount: 2 },
+    { id: "b2", title: "İkinci", fileId: "f1", isMain: false, position: 1, groupId: "g1", itemCount: 2 },
     { id: "pm", title: "Proje", fileId: null, isMain: true, position: 0, itemCount: 5, openComments: 2 },
-    { id: "b1", title: "Birinci", fileId: null, isMain: false, position: 0, itemCount: 1 },
+    { id: "b1", title: "Birinci", fileId: "f1", isMain: false, position: 0, groupId: "g1", itemCount: 1 },
     { id: "fm", title: "Mutfak", fileId: "f1", isMain: true, position: 0, itemCount: 3 },
-    { id: "fb", title: "Dolap", fileId: "f1", isMain: false, position: 0, itemCount: 0 },
+    { id: "fb", title: "Dolap", fileId: "f1", isMain: false, position: 2, groupId: null, itemCount: 0 },
   ],
-  boards: [],
+  groups: [{ id: "g1", title: "Taslaklar", fileId: "f1" }],
+  boards: [
+    { id: "b2", title: "İkinci", fileId: "f1", itemCount: 2, position: 1, groupId: "g1" },
+    { id: "b1", title: "Birinci", fileId: "f1", itemCount: 1, position: 0, groupId: "g1" },
+    { id: "fb", title: "Dolap", fileId: "f1", itemCount: 0, position: 2, groupId: null },
+  ],
   files: [{ id: "f1", title: "Mutfak", mainAreaId: "fm", itemCount: 3 }],
 };
 
-test("boardPagesOf: ana pano ilk, ek panolar sıraya göre; kapsam ayrı", () => {
-  assert.deepEqual(boardPagesOf(detail, null, "Ana pano").map((p) => [p.id, p.title]), [["pm", "Ana pano"], ["b1", "Birinci"], ["b2", "İkinci"]]);
-  assert.deepEqual(boardPagesOf(detail, "f1", "Ana pano").map((p) => p.id), ["fm", "fb"]);
-  assert.equal(boardPagesOf(detail, null, "Ana pano")[0].openComments, 2);
+test("boardGroupPagesOf: yalnız açık panonun grubu, sıralı; bağımsız pano ve ana alan tek sayfa", () => {
+  assert.deepEqual(boardGroupPagesOf(detail, "b2", "Ana").map((p) => p.id), ["b1", "b2"]);
+  assert.deepEqual(boardGroupPagesOf(detail, "b1", "Ana").map((p) => p.id), ["b1", "b2"]);
+  assert.deepEqual(boardGroupPagesOf(detail, "fb", "Ana").map((p) => p.id), ["fb"], "bağımsız pano grupsuz: öbür panolar listede çıkmaz");
+  assert.deepEqual(boardGroupPagesOf(detail, "fm", "Mutfak").map((p) => [p.id, p.title]), [["fm", "Mutfak"]]);
+  assert.equal(boardGroupPagesOf(detail, "pm", "Ana")[0].openComments, 2);
+  assert.deepEqual(boardGroupPagesOf(detail, "yok", "Ana"), []);
 });
 
-test("boardPagesOf: `areas` yoksa boards + ana alandan türetir", () => {
-  const old = { mainAreaId: "pm", boards: [{ id: "b1", title: "Bir", fileId: null, itemCount: 4 }, { id: "x", title: "Dosya panosu", fileId: "f1", itemCount: 1 }], files: [{ id: "f1", title: "M", mainAreaId: "fm", itemCount: 0 }] };
-  assert.deepEqual(boardPagesOf(old, null, "Ana").map((p) => p.id), ["pm", "b1"]);
-  assert.deepEqual(boardPagesOf(old, "f1", "Ana").map((p) => p.id), ["fm", "x"]);
+test("boardGroupPagesOf: `areas` yoksa boards + ana alandan türetir", () => {
+  const old = { mainAreaId: "pm", boards: detail.boards, groups: detail.groups, files: detail.files };
+  assert.deepEqual(boardGroupPagesOf(old, "b2", "Ana").map((p) => p.id), ["b1", "b2"]);
+  assert.deepEqual(boardGroupPagesOf(old, "fb", "Ana").map((p) => p.id), ["fb"]);
+});
+
+test("fileBoardEntries: grup tek satır (ilk pano açılır), bağımsız pano ayrı satır", () => {
+  const entries = fileBoardEntries(detail, "f1");
+  assert.deepEqual(entries.map((e) => [e.kind, e.id, e.title, e.boardCount, e.openBoardId, e.itemCount]), [
+    ["group", "g1", "Taslaklar", 2, "b1", 3],
+    ["board", "fb", "Dolap", 1, "fb", 0],
+  ]);
+  assert.deepEqual(fileBoardEntries(detail, "f2"), []);
 });
 
 test("boardPageHref: board + sub=board (+ yorum)", () => {

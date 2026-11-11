@@ -19,7 +19,7 @@ import { SpaceDialog } from "@/features/spaces/space-modals";
 import { SpaceMenu } from "@/features/spaces/space-menu";
 import { NewBoardDialog } from "@/features/teams/project-dialogs";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { deleteBoard, renameBoard } from "@/lib/supabase/team-projects";
+import { deleteBoard, renameBoard, renameBoardGroup } from "@/lib/supabase/team-projects";
 import { duplicateBoard, fetchBoardThumb, reorderBoards, type ThumbItem } from "@/lib/supabase/team-board";
 import { moveBoardId, type BoardPageInfo } from "@/lib/team-board";
 import { canAddToArea, canReview } from "@/lib/team-projects";
@@ -87,6 +87,9 @@ export function BoardThumb({ spaceId, className }: { spaceId: string; className?
 
 export interface PageActions {
   canEdit: boolean;
+  /** "Yeni pano" yalnız bir panonun yanına (ya da dosyada bağımsız) eklenir; eski ana alandan grup kurulmaz. */
+  canCreate: boolean;
+  renameGroup: () => void;
   canLead: boolean;
   busy: boolean;
   open: (id: string) => void;
@@ -100,11 +103,13 @@ export interface PageActions {
 export function usePageActions(team: TeamBoardConfig): { actions: PageActions; nodes: React.ReactNode } {
   const { t } = useTranslation();
   const { node: toastNode, show } = useToast();
-  const [dialog, setDialog] = useState<null | { kind: "create" } | { kind: "rename"; page: BoardPageInfo } | { kind: "delete"; page: BoardPageInfo }>(null);
+  const [dialog, setDialog] = useState<null | { kind: "create" } | { kind: "renameGroup" } | { kind: "rename"; page: BoardPageInfo } | { kind: "delete"; page: BoardPageInfo }>(null);
   const [busy, setBusy] = useState(false);
   const canEdit = canAddToArea(team.role) && !team.archived;
   const canLead = canReview(team.role) && !team.archived;
   const extras = team.pages.filter((page) => !page.isMain);
+  const currentPage = team.pages.find((page) => page.id === team.currentId);
+  const canCreate = canEdit && Boolean(currentPage) && (!currentPage?.isMain || team.fileId !== null);
 
   const guard = async (action: () => Promise<void>) => {
     setBusy(true);
@@ -119,6 +124,8 @@ export function usePageActions(team: TeamBoardConfig): { actions: PageActions; n
 
   const actions: PageActions = {
     canEdit,
+    canCreate,
+    renameGroup: () => setDialog({ kind: "renameGroup" }),
     canLead,
     busy,
     open: (id) => team.navigate(team.hrefOf(id), "replace"),
@@ -127,7 +134,7 @@ export function usePageActions(team: TeamBoardConfig): { actions: PageActions; n
     duplicate: (page) =>
       void guard(async () => {
         show(t("tb.pages.duplicating"));
-        const id = await duplicateBoard({ projectId: team.projectId, fileId: team.fileId, fromSpace: page.id, title: page.title, suffix: t("tb.pages.copySuffix") });
+        const id = await duplicateBoard({ projectId: team.projectId, fileId: team.fileId, fromSpace: page.id, title: page.title, suffix: t("tb.pages.copySuffix"), asBoard: !page.isMain });
         team.reload();
         team.navigate(team.hrefOf(id), "push");
       }),
@@ -146,6 +153,7 @@ export function usePageActions(team: TeamBoardConfig): { actions: PageActions; n
         <NewBoardDialog
           projectId={team.projectId}
           fileId={team.fileId}
+          fromBoard={currentPage && !currentPage.isMain ? currentPage.id : null}
           onClose={() => setDialog(null)}
           onDone={(id) => {
             setDialog(null);
@@ -153,6 +161,9 @@ export function usePageActions(team: TeamBoardConfig): { actions: PageActions; n
             team.navigate(team.hrefOf(id), "push");
           }}
         />
+      )}
+      {dialog?.kind === "renameGroup" && team.groupId && (
+        <RenameGroupDialog groupId={team.groupId} title={team.groupTitle ?? ""} onClose={() => setDialog(null)} onDone={() => { setDialog(null); team.reload(); }} />
       )}
       {dialog?.kind === "rename" && <RenamePageDialog page={dialog.page} onClose={() => setDialog(null)} onDone={() => { setDialog(null); team.reload(); }} />}
       {dialog?.kind === "delete" && (
@@ -170,6 +181,53 @@ export function usePageActions(team: TeamBoardConfig): { actions: PageActions; n
     </>
   );
   return { actions, nodes };
+}
+
+function RenameGroupDialog({ groupId, title: initial, onClose, onDone }: { groupId: string; title: string; onClose: () => void; onDone: () => void }) {
+  const { t } = useTranslation();
+  const [title, setTitle] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <SpaceDialog
+      title={t("tb.group.renameTitle")}
+      onClose={onClose}
+      busy={busy}
+      formTestId="board-group-rename"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        if (!title.trim()) return setError(t("tp.error.titleRequired"));
+        setBusy(true);
+        try {
+          await renameBoardGroup(groupId, title.trim());
+          onDone();
+        } catch (e) {
+          setError(e instanceof Error ? e.message : t("spaces.error.generic"));
+          setBusy(false);
+        }
+      }}
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+            {t("common.cancel")}
+          </Button>
+          <Button type="submit" disabled={busy}>
+            {t("common.save")}
+          </Button>
+        </>
+      }
+    >
+      <label className="block space-y-1.5">
+        <span className="text-small font-semibold text-text">{t("tb.group.name")}</span>
+        <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} className="h-11 w-full rounded-lg border border-border bg-background px-3 text-body" />
+      </label>
+      {error && (
+        <p role="alert" className="mt-2 text-small text-danger">
+          {error}
+        </p>
+      )}
+    </SpaceDialog>
+  );
 }
 
 function RenamePageDialog({ page, onClose, onDone }: { page: BoardPageInfo; onClose: () => void; onDone: () => void }) {
@@ -323,7 +381,7 @@ function PageFooterActions({ actions, onOverview, onClosed }: { actions: PageAct
   const { t } = useTranslation();
   return (
     <div className="mt-1 space-y-0.5 border-t border-border-soft pt-1.5">
-      {actions.canEdit && (
+      {actions.canCreate && (
         <button
           type="button"
           onClick={() => {
@@ -359,8 +417,13 @@ export function PagesPopover({ anchorRef, team, actions, onClose, onOverview }: 
   return (
     <BoardPopover anchorRef={anchorRef} onClose={onClose} width={348} label={t("tb.pages.title")}>
       <div className="flex items-center gap-2 px-2.5 pb-1.5 pt-1">
-        <span className="text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tb.pages.groupLabel", { name: team.fileTitle ?? team.projectTitle })}</span>
+        <span className="min-w-0 truncate text-caption font-bold uppercase tracking-[0.06em] text-text-muted" data-board-group-name="">{t("tb.pages.groupLabel", { name: team.groupTitle ?? team.fileTitle ?? team.projectTitle })}</span>
         <span className="rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold text-text-secondary">{team.pages.length}</span>
+        {team.groupId && actions.canEdit && (
+          <button type="button" onClick={() => { onClose(); actions.renameGroup(); }} aria-label={t("tb.group.rename")} data-board-group-rename="" className="ml-auto grid h-8 w-8 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
+            <Pencil size={15} aria-hidden />
+          </button>
+        )}
       </div>
       <PageRows team={team} actions={actions} onPicked={onClose} />
       <PageFooterActions actions={actions} onOverview={onOverview} onClosed={onClose} />
@@ -391,11 +454,18 @@ export function PagesDrawer({ team, actions, onClose, onOverview }: { team: Team
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
-          <p className="px-1 pb-1.5 text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tb.pages.groupLabel", { name: team.fileTitle ?? team.projectTitle })}</p>
+          <div className="flex items-center gap-2 px-1 pb-1.5">
+            <p className="min-w-0 flex-1 truncate text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tb.pages.groupLabel", { name: team.groupTitle ?? team.fileTitle ?? team.projectTitle })}</p>
+            {team.groupId && actions.canEdit && (
+              <button type="button" onClick={() => { onClose(); actions.renameGroup(); }} aria-label={t("tb.group.rename")} className="grid h-8 w-8 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
+                <Pencil size={15} aria-hidden />
+              </button>
+            )}
+          </div>
           <PageRows team={team} actions={actions} onPicked={onClose} thumbClass="h-16 w-24" />
         </div>
         <div className="space-y-2 border-t border-border-soft p-3">
-          {actions.canEdit && (
+          {actions.canCreate && (
             <Button type="button" onClick={() => { onClose(); actions.create(); }} className="h-11 w-full gap-2 rounded-full" data-board-page-new="">
               <Plus size={18} aria-hidden />
               {t("tb.pages.new")}
@@ -451,7 +521,7 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
           <ChevronLeft size={18} aria-hidden />
           {t("tb.overview.back")}
         </Button>
-        {actions.canEdit && (
+        {actions.canCreate && (
           <Button type="button" onClick={actions.create} className="h-11 gap-1.5 rounded-full" data-board-page-new="">
             <Plus size={18} aria-hidden />
             {t("tb.pages.new")}
@@ -478,7 +548,7 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
               </li>
             );
           })}
-          {actions.canEdit && (
+          {actions.canCreate && (
             <li>
               <button type="button" onClick={actions.create} className="flex h-full min-h-40 w-full flex-col items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed border-border text-small font-bold text-text-secondary hover:bg-surface-soft">
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary">

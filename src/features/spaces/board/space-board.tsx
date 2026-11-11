@@ -187,6 +187,8 @@ const DUMMY_TEAM: TeamBoardConfig = {
   pages: [],
   currentId: "",
   mainTitle: "",
+  groupId: null,
+  groupTitle: null,
   people: [],
   archived: true,
   accessMode: "selected",

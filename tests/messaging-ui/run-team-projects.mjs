@@ -34,9 +34,11 @@ const file = (id, title, over = {}) => ({ id, title, position: 0, review_require
 const person = (id, name, role, over = {}) => ({ type: "member", id, name, username: name.toLowerCase(), avatar_url: null, role, implicit: false, member_count: null, ...over });
 const detail = (role, over = {}) => ({
   project: { id: PROJECT, team_id: TEAM, title: "Villa Projesi", description: "Mimari proje", tone: "primary", access_mode: "selected", base_role: "view", review_default: true, archived_at: null, created_at: "2026-11-01T00:00:00Z" },
-  my_role: role, main_area_id: AREA_PROJECT, channel_id: CHANNEL, item_count: 4, pending_count: role === "lead" ? 2 : null,
+  // docs/history/368-*: proje BOŞ doğar (proje geneli alan yok); pano dosyanın içindedir. `variables` içindeki proje düzeyi satır ESKİ veriyi taklit eder: çözümlemede yok sayılır.
+  my_role: role, main_area_id: null, channel_id: CHANNEL, item_count: 4, pending_count: role === "lead" ? 2 : null,
   files: [file(FILE, "Mutfak", { pending_count: role === "lead" ? 2 : null }), file(FILE2, "Banyo", { review_required: false, item_count: 2, board_count: 0, pending_count: 0 })],
-  boards: [{ id: BOARD, title: "Müşteri toplantısı", file_id: null, item_count: 3 }],
+  boards: [{ id: BOARD, title: "Müşteri toplantısı", file_id: FILE, item_count: 3, position: 0, group_id: null }],
+  groups: [],
   people: [person("u-a", "Ayşe", "lead"), person("u-m", "Mert", "edit"), person("u-c", "Can", "view"), person("u-o", "Sahip", "lead", { implicit: true })],
   variables: [
     { id: "v1", file_id: null, name: "musteri", value: "Ahmet Bey" },
@@ -99,7 +101,7 @@ function seed(db, { role = "owner", projectRole = "lead" } = {}) {
 function areaSetup(db, { spaceRole = "editor", items = (d) => d } = {}) {
   const other = U.bob;
   for (const [n, id] of [[1, AREA_PROJECT], [2, AREA_FILE], [3, BOARD]]) {
-    const row = db.addSpace(n, { owner: other.id, title: n === 1 ? "Villa Projesi" : n === 2 ? "Mutfak" : "Müşteri toplantısı", kind: "team_area", teamId: TEAM, teamProjectId: PROJECT, teamFileId: n === 2 ? FILE : null, members: [[U.alice, spaceRole]] });
+    const row = db.addSpace(n, { owner: other.id, title: n === 1 ? "Villa Projesi" : n === 2 ? "Mutfak" : "Müşteri toplantısı", kind: "team_area", teamId: TEAM, teamProjectId: PROJECT, teamFileId: n === 2 || n === 3 ? FILE : null, members: [[U.alice, spaceRole]] });
     row.id = id;
     db.spaceMembers.forEach((m) => { if (m.space_id === SID(n)) m.space_id = id; });
   }
@@ -187,15 +189,14 @@ await scenario("3. Proje sayfası (lider): dosyalar, panolar, kişiler ve roller
   await home.locator(`[data-file-card="${FILE}"]`).getByText("Mutfak").waitFor();
   await home.locator(`[data-file-card="${FILE}"]`).getByText("Onay açık").waitFor();
   await home.locator(`[data-file-card="${FILE2}"]`).getByText("Onay kapalı").waitFor();
-  await home.locator("[data-project-main-area]").getByText("Ortak").waitFor();
+  assert.equal(await home.locator("[data-project-main-area]").count(), 0, "yeni modelde proje geneli 'Ortak' kartı yok");
   await home.locator("[data-project-review-link]").waitFor();
   await page.locator("[data-project-open-chat]").waitFor();
   const people = page.getByTestId("project-people");
   await people.getByText("Mert", { exact: true }).waitFor();
   await people.getByText("Sahip", { exact: true }).waitFor();
   await people.getByText("Ekip yöneticisi · her projede lider").waitFor();
-  const vars = page.locator('[data-variable-scope="project"]');
-  await vars.locator('[data-variable-row="musteri"]').getByText("Ahmet Bey").waitFor();
+  assert.equal(await page.locator('[data-variable-scope="project"]').count(), 0, "proje ortak değişkeni arayüzü kalktı");
   await home.locator("[data-project-new-file]").click();
   const form = page.getByTestId("team-new-file-form");
   await form.waitFor();
@@ -208,9 +209,11 @@ await scenario("3. Proje sayfası (lider): dosyalar, panolar, kişiler ve roller
   assert.equal(body.p_review, true);
 });
 
-await scenario("4. Proje değişkeni: Ekle → team_set_variable(proje kapsamı)", async ({ page, db }) => {
-  await page.goto(projectUrl());
-  await page.locator('[data-variable-scope="project"] [data-variable-add]').click();
+await scenario("4. Dosya değişkeni: Ekle → team_set_variable(dosya kapsamı); proje geneli değişken yok", async ({ page, db }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("team-file-page").waitFor();
+  await openInfo(page);
+  await page.locator('[data-variable-scope="file"] [data-variable-add]').click();
   const form = page.getByTestId("team-variable-form");
   await form.waitFor();
   await form.getByPlaceholder("musteri").fill("sehir");
@@ -218,10 +221,10 @@ await scenario("4. Proje değişkeni: Ekle → team_set_variable(proje kapsamı)
   await form.getByRole("button", { name: "Kaydet" }).click();
   await page.waitForFunction(() => !document.querySelector("[data-testid=team-variable-form]"));
   const body = called(db, "team_set_variable").at(-1)?.body;
-  assert.deepEqual({ n: body.p_name, v: body.p_value, f: body.p_file }, { n: "sehir", v: "İzmir", f: null });
+  assert.deepEqual({ n: body.p_name, v: body.p_value, f: body.p_file }, { n: "sehir", v: "İzmir", f: FILE });
 });
 
-await scenario("5. Dosya sayfası (lider): onaysız öğeler rozetli, dosya değişkeni projeyi ezer, onay anahtarı → team_file_set_review(false) + uyarı", async ({ page, db }) => {
+await scenario("5. Dosya sayfası (lider): onaysız öğeler rozetli, yalnız dosya değişkenleri, onay anahtarı → team_file_set_review(false) + uyarı", async ({ page, db }) => {
   await page.goto(projectUrl(`&file=${FILE}`));
   const view = page.getByTestId("team-file-page");
   await view.waitFor();
@@ -230,13 +233,12 @@ await scenario("5. Dosya sayfası (lider): onaysız öğeler rozetli, dosya değ
   await panel.waitFor();
   await panel.locator('[data-review-item][data-review-state="pending"]').getByText("Onay bekliyor").waitFor();
   await panel.locator("[data-review-open-queue]").waitFor();
-  // Değişkenler: dosyadaki stil=Skandinav projedeki Modern Akdeniz'i ezer; musteri projeden gelir.
+  // Değişkenler: yalnız dosyanın kendi değişkenleri; eski proje düzeyi (musteri) görünmez ve kullanılmaz.
   await openInfo(page);
   const vars = page.locator('[data-variable-scope="file"]');
   await vars.locator('[data-variable-row="stil"]').getByText("Skandinav").waitFor();
-  await vars.locator('[data-variable-row="stil"]').getByText("dosyadan").waitFor();
-  await vars.locator('[data-variable-row="musteri"]').getByText("projeden").waitFor();
-  await vars.getByText("dosyadaki değer geçerli", { exact: false }).waitFor();
+  await vars.locator('[data-variable-row="tezgah"]').getByText("mermer").waitFor();
+  assert.equal(await vars.locator('[data-variable-row="musteri"]').count(), 0, "proje düzeyi değişken gösterilmez");
   // Onay anahtarı
   const switchRow = page.locator("[data-file-review-switch]");
   await switchRow.getByText("Bu dosyada onay: Açık").waitFor();
@@ -393,26 +395,44 @@ await scenario("12. Eski adresler: tab=spaces ve tab=library → Projeler", asyn
   }
 });
 
-await scenario("13. Pano sayfası: proje geneli ve ek pano açılır; ek panoda adı düzenleme (düzenleyici+)", async ({ page }) => {
+await scenario("13. Dosyanın panosu doğrudan tuvalde açılır (eski liste adresi tuvale yönlenir); pano değiştirici yalnız bağımsız pano", async ({ page }) => {
   await page.goto(projectUrl(`&board=${BOARD}`));
-  const view = page.getByTestId("team-board-page");
-  await view.waitFor();
-  await view.getByRole("heading", { name: "Müşteri toplantısı" }).waitFor();
-  await view.getByTestId("area-folder-list").waitFor();
-  await page.goto(projectUrl(`&board=${AREA_PROJECT}`));
-  const shared = page.getByTestId("team-board-page");
-  await shared.getByRole("heading", { name: "Ortak" }).waitFor();
-  await shared.locator("[data-area-row=board]").getByText("Müşteri toplantısı").waitFor();
-  await page.goto(projectUrl(`&board=${BOARD}&sub=images`));
-  await page.getByTestId("area-folder-list").waitFor();
+  await page.getByTestId("team-board-mode").waitFor();
+  assert.ok(page.url().includes("sub=board"), page.url());
+  assert.equal(await page.locator("[data-board-pages-button]").count() > 0 ? await page.locator("[data-board-pages-button]").first().innerText().then((t) => t.includes("1")) : true, true, "bağımsız pano tek sayfadır");
 });
 
-await scenario("14. Ekle menüsü: pano/görsel/prompt/workflow/ayar paketi/değişken/palet/not seçenekleri; Pano → pano penceresi; taslak notu", async ({ page, db }) => {
+await scenario("13b. Eski proje geneli alan (canlıda kalan veri): kart 'Eski proje geneli', alan sayfası açılır, yeni pano/değişken eklenmez", async ({ page, db }) => {
+  await page.goto(projectUrl());
+  const home = page.getByTestId("team-project-home");
+  await home.locator("[data-project-main-area]").getByText("Eski proje geneli").waitFor();
+  await home.locator("[data-project-board]").getByText("Eski pano").waitFor();
+  assert.equal(await home.locator("[data-project-new-board]").count(), 0, "proje geneli pano ekleme yolu yok");
+  await page.goto(projectUrl(`&board=${AREA_PROJECT}`));
+  const view = page.getByTestId("team-board-page");
+  await view.getByRole("heading", { name: "Ortak" }).waitFor();
+  await page.locator("[data-area-add]").click();
+  const options = page.getByTestId("area-add-options");
+  await options.waitFor();
+  assert.equal(await options.locator("[data-area-add-option=board], [data-area-add-option=variable]").count(), 0);
+  void db;
+}, {
+  setup: (db) => {
+    const base = db.rpc.team_project_get;
+    db.rpc.team_project_get = (b) => {
+      const out = base(b);
+      return { body: { ...out.body, main_area_id: AREA_PROJECT, item_count: 4, boards: [...out.body.boards, { id: "e1000000-0000-4000-8000-0000000000f1", title: "Eski pano", file_id: null, item_count: 1, position: 0, group_id: null }] } };
+    };
+  },
+});
+
+await scenario("14. Ekle menüsü: pano/görsel/prompt/değişken/palet/not seçenekleri (workflow/ayar paketi yok); Pano → pano penceresi; taslak notu", async ({ page, db }) => {
   await page.goto(projectUrl(`&file=${FILE}`));
   await page.locator("[data-area-add]").click();
   const options = page.getByTestId("area-add-options");
   await options.waitFor();
-  for (const key of ["board", "image", "prompt", "workflow", "preset", "variable", "palette", "note"]) await options.locator(`[data-area-add-option=${key}]`).waitFor();
+  for (const key of ["board", "image", "prompt", "variable", "palette", "note"]) await options.locator(`[data-area-add-option=${key}]`).waitFor();
+  assert.equal(await options.locator("[data-area-add-option=workflow], [data-area-add-option=preset]").count(), 0, "dosyanın öğeleri not/prompt/görsel/palet; workflow/ayar paketi panoya eklenir");
   await page.getByText("eklediğin her şey taslak başlar", { exact: false }).waitFor();
   await options.locator("[data-area-add-option=board]").click();
   const form = page.getByTestId("team-new-board-form");
@@ -449,7 +469,8 @@ await scenario("16. İngilizce: Projeler, proje sayfası, dosya sayfası ve kuyr
   await page.locator("[data-project-header]").getByText("Your role", { exact: false }).waitFor();
   await page.getByText("People & roles").waitFor();
   await page.goto(projectUrl(`&file=${FILE}`));
-  await page.getByText("Main board").waitFor();
+  await page.getByTestId("area-boards").getByRole("heading", { name: "Boards" }).waitFor();
+  await page.getByText("File items").waitFor();
   await openInfo(page);
   await page.getByText("Review in this file: On").waitFor();
   await page.goto(projectUrl("&review=1"));
@@ -471,7 +492,7 @@ await scenario("17. Telefon: Projeler, proje, dosya ve kuyruk sayfaları yatay t
 }, { viewport: { width: 390, height: 800 } });
 
 
-await scenario("18. Yol satırı, dosya kartları; dosyada ana pano + ek pano + öğe kartları, hiçbir şey açık gelmez, kart çekmece açar", async ({ page }) => {
+await scenario("18. Yol satırı, dosya kartları; dosyada pano satırı + öğe kartları, hiçbir şey açık gelmez, kart çekmece açar", async ({ page }) => {
   await page.goto(projectUrl());
   await page.getByTestId("team-project-home").waitFor();
   assert.equal(await page.locator("[data-project-crumbs]").count(), 1, "tek üst çubuk");
@@ -483,7 +504,9 @@ await scenario("18. Yol satırı, dosya kartları; dosyada ana pano + ek pano + 
   assert.equal(await page.locator("[data-area-tab]").count(), 0, "sekmeler kendiliğinden açık gelmez");
   assert.equal(await page.locator("[data-testid=space-board]").count(), 0, "tuval kendiliğinden açık gelmez");
   const kinds = await list.locator("[data-area-row]").evaluateAll((els) => els.map((el) => el.getAttribute("data-area-row")));
-  assert.equal(kinds[0], "board", "ana pano ilk satır");
+  assert.equal(kinds[0], "board", "pano satırı ilk (panolar ayrı bölümde, öğelerden önce)");
+  assert.equal(await list.getByTestId("area-boards").count(), 1, "panolar ayrı bölüm");
+  assert.equal(await list.getByTestId("area-board-rows").locator("[data-area-row=board]").getByText("Ana pano").count(), 0, "dosyanın öğe kabı 'Ana pano' satırı DEĞİL");
   assert.ok(kinds.includes("note"), "not satırı");
   await list.locator("[data-area-row=note]").getByText("Dolap notu").waitFor();
   // Bir kart öğe ÇEKMECESİNİ açar (docs/history/366-*, liste yerinde kalır); ✕ çekmeceyi kapatır
@@ -507,7 +530,13 @@ await scenario("19. Ekle: Not → yeni not penceresi LİSTENİN üstünde açıl
   await page.getByTestId("note-editor").waitFor();
   assert.ok(!page.url().includes("sub="), "sekme adresine gitmedi: " + page.url());
   assert.equal(await page.locator("[data-area-tab]").count(), 0);
-}, { items: () => undefined });
+}, {
+  items: () => undefined,
+  setup: (db) => {
+    const base = db.rpc.team_project_get;
+    db.rpc.team_project_get = (b) => ({ body: { ...base(b).body, boards: [], groups: [] } });
+  },
+});
 
 await scenario("20. Ekip alanında 'Space' kelimesi geçmez (liste, pano, görseller, promptlar, notlar, palet, workflow)", async ({ page }) => {
   for (const sub of ["", "&sub=board", "&sub=images", "&sub=prompts", "&sub=notes", "&sub=palette", "&sub=content"]) {
@@ -545,7 +574,7 @@ const detailItems = (db) => {
   db.spacePalettes.push({ id: PALETTE, space_id: AREA_FILE, name: "Doğal tonlar", description: "Salonun renkleri", colors: ["#E8DFD0", "#B79F84", "#6B7A5E"], source: "manual", source_item_id: null, position: 0, created_by: U.bob.id, created_at: "2026-11-01T00:00:00Z", updated_at: "2026-11-01T00:00:00Z" });
 };
 
-await scenario("22. Prompt detayı: değişkenler dosya > proje sırasıyla dolar, anahtar kapanınca jeton görünür; kopyalama metni anahtara uyar", async ({ page }) => {
+await scenario("22. Prompt detayı: yalnız dosya değişkenleri dolar (proje düzeyi kullanılmaz), anahtar kapanınca jeton görünür; kopyalama metni anahtara uyar", async ({ page }) => {
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto(projectUrl(`&file=${FILE}`));
   await page.getByTestId("area-folder-list").waitFor();
@@ -558,17 +587,17 @@ await scenario("22. Prompt detayı: değişkenler dosya > proje sırasıyla dola
   assert.equal(await page.locator("[data-path-more]").count(), 1, "ⓘ yerine ⋯ var");
   const text = page.locator("[data-item-prompt-text]");
   const filled = (await text.innerText()).replace(/\s+/g, " ");
-  assert.ok(filled.includes("Ahmet Bey için Skandinav üslubunda") && filled.includes("mermer sehpa"), filled);
+  assert.ok(filled.includes("{musteri} için Skandinav üslubunda") && filled.includes("mermer sehpa"), filled + " (proje düzeyi değişken kullanılmaz)");
   assert.ok(filled.includes("{renk}"), "değeri olmayan jeton aynen kalır");
   // Değişken listesi: kaynak rozetleri
   const vars = page.locator("[data-item-variables]");
   assert.ok((await vars.locator('[data-item-variable="stil"]').innerText()).includes("dosyadan"));
-  assert.ok((await vars.locator('[data-item-variable="musteri"]').innerText()).includes("projeden"));
+  assert.ok((await vars.locator('[data-item-variable="musteri"]').innerText()).includes("değer yok"));
   assert.ok((await vars.locator('[data-item-variable="renk"]').innerText()).includes("değer yok"));
   // Doldurarak kopyala
   assert.equal((await page.locator("[data-item-copy]").innerText()).trim(), "Doldurarak kopyala");
   await page.locator("[data-item-copy]").click();
-  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "Ahmet Bey için Skandinav üslubunda oturma odası, mermer sehpa, {renk} tonlar");
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "{musteri} için Skandinav üslubunda oturma odası, mermer sehpa, {renk} tonlar");
   // Anahtarı kapat: ham jetonlar + "Olduğu gibi kopyala"
   await page.locator("[data-item-fill-switch]").click();
   assert.equal(await page.locator("[data-item-fill-switch]").getAttribute("aria-checked"), "false");
@@ -687,8 +716,6 @@ await scenario("31. Başlıklar: proje/dosya/pano sayfalarında telefon başlı�
   await checkDrill("Villa Projesi", "Atölye Mor");
   await page.goto(projectUrl(`&file=${FILE}`));
   await checkDrill("Mutfak", "Villa Projesi");
-  await page.goto(projectUrl(`&board=${BOARD}`));
-  await checkDrill("Müşteri toplantısı", "Villa Projesi");
   await page.goto(projectUrl(`&file=${FILE}&item=${encodeURIComponent(NOTE(40))}`));
   await page.getByTestId("item-drawer").waitFor();
   assert.equal((await page.locator("[data-item-title]").innerText()).trim(), "Ölçüler");
@@ -750,11 +777,107 @@ await scenario("34. Öğe sayfası ⋯ (düzenleyici): onaylı öğeyi düzenley
   },
 });
 
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// Dosya ↔ pano ayrımı, pano grupları, boş doğan dosya, taslak gizliliği (docs/history/368-*)
+// ---------------------------------------------------------------------------------------------------------------------------------------
+const GA = SID(4);
+const GB = SID(5);
+const GC = SID(6);
+const GROUP = "e1000000-0000-4000-8000-0000000000c1";
+const groupSetup = (db) => {
+  for (const [n, title] of [[4, "Taslaklar"], [5, "Sunum"], [6, "Referans"]]) db.addSpace(n, { owner: U.bob.id, title, kind: "team_area", teamId: TEAM, teamProjectId: PROJECT, teamFileId: FILE, members: [[U.alice, "editor"]] });
+  const base = db.rpc.team_project_get;
+  db.rpc.team_project_get = (b) => {
+    const out = base(b);
+    return { body: { ...out.body, boards: [
+      { id: GA, title: "Taslaklar", file_id: FILE, item_count: 2, position: 0, group_id: GROUP },
+      { id: GB, title: "Sunum", file_id: FILE, item_count: 1, position: 1, group_id: GROUP },
+      { id: GC, title: "Referans", file_id: FILE, item_count: 0, position: 2, group_id: null },
+    ], groups: [{ id: GROUP, title: "Mutfak panoları", file_id: FILE, board_count: 2 }],
+    areas: [
+      { id: AREA_FILE, title: "Mutfak", file_id: FILE, is_main: true, position: 0, group_id: null, item_count: 0, updated_at: null, pending_count: null, open_comments: 0 },
+      { id: GA, title: "Taslaklar", file_id: FILE, is_main: false, position: 0, group_id: GROUP, item_count: 2, updated_at: null, pending_count: null, open_comments: 0 },
+      { id: GB, title: "Sunum", file_id: FILE, is_main: false, position: 1, group_id: GROUP, item_count: 1, updated_at: null, pending_count: null, open_comments: 0 },
+      { id: GC, title: "Referans", file_id: FILE, is_main: false, position: 2, group_id: null, item_count: 0, updated_at: null, pending_count: null, open_comments: 0 },
+    ] } };
+  };
+  db.rpc.team_create_board_in_group = (b) => { db.teamCalls.push({ name: "team_create_board_in_group", body: b }); return { body: GC }; };
+};
+
+await scenario("35. Dosyada pano grubu tek satır, bağımsız pano ayrı satır; grup satırı ilk panonun tuvalini açar; değiştirici yalnız grubu gösterir", async ({ page }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  const boards = page.getByTestId("area-board-rows");
+  await boards.waitFor();
+  assert.equal(await boards.locator("[data-area-row]").count(), 2, "1 grup + 1 bağımsız pano");
+  await boards.getByText("Pano grubu · 2 pano").waitFor();
+  await boards.getByText("Mutfak panoları").waitFor();
+  await boards.getByText("Referans").waitFor();
+  await boards.getByText("Mutfak panoları").click();
+  await page.getByTestId("team-board-mode").waitFor();
+  assert.ok(page.url().includes(`board=${GA}`) && page.url().includes("sub=board"), page.url());
+  await page.locator("[data-board-pages-button]").first().click();
+  await page.locator("[data-board-page]").first().waitFor();
+  const ids = await page.locator("[data-board-page]").evaluateAll((els) => els.map((el) => el.getAttribute("data-board-page")));
+  assert.deepEqual(ids, [GA, GB], "bağımsız pano (Referans) grubun değiştiricisinde çıkmaz");
+}, { setup: groupSetup });
+
+await scenario("36. Bağımsız panoda 'Yeni pano' → team_create_board_in_group (açık pano + ad); değiştirici tek sayfa", async ({ page, db }) => {
+  await page.goto(projectUrl(`&board=${GC}&sub=board`));
+  await page.getByTestId("team-board-mode").waitFor();
+  await page.locator("[data-board-pages-button]").first().click();
+  assert.equal(await page.locator("[data-board-page]").count(), 1, "bağımsız pano tek sayfa");
+  await page.locator("[data-board-page-new]").first().click();
+  const form = page.getByTestId("team-new-board-form");
+  await form.waitFor();
+  await form.getByRole("textbox").first().fill("Yeni sayfa");
+  await form.getByRole("button", { name: "Panoyu aç" }).click();
+  await page.waitForTimeout(300);
+  const body = called(db, "team_create_board_in_group").at(-1)?.body;
+  assert.deepEqual({ from: body.p_from, title: body.p_title }, { from: GC, title: "Yeni sayfa" });
+  assert.equal(called(db, "team_create_board").length, 0, "grup kurulumu sunucuda: bağımsız pano RPC'si çağrılmaz");
+}, { setup: groupSetup });
+
+await scenario("37. Boş dosya hata değil boş durum: pano yok, öğe yok; panoya dair isteğe bağlı ipucu", async ({ page }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("team-file-page").waitFor();
+  await page.getByTestId("area-boards-empty").getByText("Pano eklemek isteğe bağlıdır", { exact: false }).waitFor();
+  await page.getByTestId("area-empty").waitFor();
+  assert.equal(await page.getByText("Dosya bulunamadı").count(), 0);
+}, {
+  items: () => undefined,
+  setup: (db) => {
+    const base = db.rpc.team_project_get;
+    db.rpc.team_project_get = (b) => ({ body: { ...base(b).body, boards: [], groups: [] } });
+  },
+});
+
+await scenario("38. Yeni açılan dosya bellekteki eski proje verisinde yoksa 'Dosya bulunamadı' DEĞİL: veri bir kez tazelenir", async ({ page, db }) => {
+  const NEW = "e1000000-0000-4000-8000-0000000000b9";
+  let reads = 0;
+  const base = db.rpc.team_project_get;
+  db.rpc.team_project_get = (b) => {
+    reads += 1;
+    const out = base(b);
+    // İlk okuma yeni dosyayı henüz içermez (eski önbellek); ikinci okuma içerir.
+    const files = reads >= 2 ? [...out.body.files, { id: NEW, title: "Yeni dosya", position: 3, review_required: true, main_area_id: AREA_FILE, item_count: 0, board_count: 0, pending_count: 0 }] : out.body.files;
+    return { body: { ...out.body, files } };
+  };
+  await page.goto(projectUrl(`&file=${NEW}`));
+  await page.getByTestId("team-file-page").waitFor();
+  assert.ok(reads >= 2, "veri tazelendi: " + reads);
+  assert.equal(await page.getByText("Dosya bulunamadı").count(), 0);
+});
+
+await scenario("39. Gerçekten olmayan dosya: bir kez tazelenir, sonra 'Dosya bulunamadı' gösterilir", async ({ page }) => {
+  await page.goto(projectUrl("&file=e1000000-0000-4000-8000-0000000000ff"));
+  await page.getByText("Dosya bulunamadı").waitFor();
+});
+
 // SURVEY=<klasör>: proje/dosya/pano/onay kuyruğu/öğe çekmecesi ekranlarının üç boyutta ekran görüntüsü (görsel inceleme).
 if (process.env.SURVEY) {
   const VIEWS = { phone: { width: 390, height: 844 }, tablet: { width: 834, height: 1112 }, desktop: { width: 1440, height: 900 } };
   const URLS = {
-    project: projectUrl(), file: projectUrl(`&file=${FILE}`), area: projectUrl(`&board=${AREA_PROJECT}`), board: projectUrl(`&board=${BOARD}`), review: projectUrl("&review=1"),
+    project: projectUrl(), file: projectUrl(`&file=${FILE}`), board: projectUrl(`&board=${BOARD}&sub=board`), review: projectUrl("&review=1"),
     item_prompt: itemUrl(PROMPT(1)), item_image: itemUrl(IMAGE(1)), item_note: itemUrl(NOTE(40)), item_palette: itemUrl(`palette:${PALETTE}`),
   };
   for (const [vname, viewport] of Object.entries(VIEWS)) {

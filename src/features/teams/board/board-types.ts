@@ -14,10 +14,13 @@ export interface TeamBoardConfig {
   fileId: string | null;
   fileTitle: string | null;
   role: ProjectRole | null;
-  /** Bu kapsamın (proje geneli ya da dosya) sayfaları; ana pano ilk. */
+  /** Açık panonun GRUBUNUN sayfaları (bağımsız pano tek sayfadır). */
   pages: BoardPageInfo[];
   currentId: string;
   mainTitle: string;
+  /** Açık panonun grubu (docs/history/368-*); bağımsız panoda `null`. */
+  groupId: string | null;
+  groupTitle: string | null;
   people: ProjectPerson[];
   archived: boolean;
   accessMode: "selected" | "all";

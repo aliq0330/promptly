@@ -80,9 +80,9 @@ set role authenticated;
 select public._as_user(:dave);
 select public._check(5, 'ekleyen kendi taslağını görür', (select count(*) from public.space_items where id = :'n1_v'::uuid) = 1);
 select public._as_user(:carol);
-select public._check(6, 'lider taslağı görür', (select count(*) from public.space_items where id = :'n1_v'::uuid) = 1);
+select public._check(6, 'lider başkasının taslağını GÖRMEZ (onaya gönderilene kadar)', (select count(*) from public.space_items where id = :'n1_v'::uuid) = 0);
 select public._as_user(:alice);
-select public._check(7, 'ekip sahibi (örtük lider) taslağı görür', (select count(*) from public.space_items where id = :'n1_v'::uuid) = 1);
+select public._check(7, 'ekip sahibi (örtük lider) de taslağı GÖRMEZ', (select count(*) from public.space_items where id = :'n1_v'::uuid) = 0);
 select public._as_user(:gina);
 select public._check(8, 'başka düzenleyici taslağı GÖRMEZ, onaylıyı görür', (select count(*) from public.space_items where id = :'n1_v'::uuid) = 0
   and (select count(*) from public.space_items where id = :'n4_v'::uuid) = 1);
@@ -106,16 +106,19 @@ select public._check(13, 'taslak satırı değişmedi', (select x from public.sp
 
 -- Oklar ve sayımlar
 set role authenticated;
-select public._as_user(:carol);
-insert into public.space_connections (space_id, from_item_id, to_item_id, created_by) values (public._g('A1'), :'n4_v'::uuid, :'n1_v'::uuid, :carol::uuid);
+select public._as_user(:dave);
+insert into public.space_connections (space_id, from_item_id, to_item_id, created_by) values (public._g('A1'), :'n4_v'::uuid, :'n1_v'::uuid, :dave::uuid);
 select public._as_user(:gina);
 select public._check(14, 'taslağa değen ok görünmez', (select count(*) from public.space_connections where space_id = public._g('A1')) = 0);
+select public._as_user(:dave);
+select public._as_user(:carol);
+select public._check(202, 'lider taslağa değen oku görmez', (select count(*) from public.space_connections where space_id = public._g('A1')) = 0);
 select public._as_user(:dave);
 select public._check(15, 'ekleyen okunu görür', (select count(*) from public.space_connections where space_id = public._g('A1')) = 1);
 select public._as_user(:gina);
 select public._check(16, 'sayım: gina için dosya öğe sayısı taslağı içermez', (select (e ->> 'item_count')::int from jsonb_array_elements(public.team_project_get(public._g('P')) -> 'files') e where e ->> 'title' = 'Mutfak') = 1);
 select public._as_user(:carol);
-select public._check(17, 'sayım: lider taslağı da sayar, bekleyen yok', (select (e ->> 'item_count')::int from jsonb_array_elements(public.team_project_get(public._g('P')) -> 'files') e where e ->> 'title' = 'Mutfak') = 3);
+select public._check(17, 'sayım: lider taslağı SAYMAZ (gina ile aynı)', (select (e ->> 'item_count')::int from jsonb_array_elements(public.team_project_get(public._g('P')) -> 'files') e where e ->> 'title' = 'Mutfak') = 1);
 reset role;
 
 -- Etkinlik günlüğü alanlarda okunamaz
@@ -264,7 +267,7 @@ select public.team_file_set_review(public._g('F1'), false) as v \gset off_
 select public._as_user(:dave);
 insert into public.space_items (space_id, kind, title, body, created_by) values (public._g('A1'), 'note', 'Kapandıktan sonra', '', :dave::uuid) returning id as v \gset ks_
 reset role;
-select public._check(66, 'onay kapanınca: eski taslak KENDİLİĞİNDEN onaylanmaz (sayı döner), yeni öğe doğrudan onaylı', :'off_v'::int = 2 and public._state(:'ko_v'::uuid) = 'draft' and public._state(:'ks_v'::uuid) = 'approved');
+select public._check(66, 'onay kapanınca: eski taslak KENDİLİĞİNDEN onaylanmaz (sayı yalnız lidere görünenleri sayar), yeni öğe doğrudan onaylı', :'off_v'::int = 0 and public._state(:'ko_v'::uuid) = 'draft' and public._state(:'ks_v'::uuid) = 'approved');
 select public._check(67, 'denetim: file_review_toggled', public._aud('file_review_toggled') = 1);
 set role authenticated;
 select public._as_user(:carol);
@@ -288,7 +291,7 @@ select public._as_user(:dave);
 insert into public.space_items (space_id, kind, title, body, created_by, media_url) values (public._g('A1'), 'image', 'Dolap görseli', '', :dave::uuid, :'url_v') returning id as v \gset img_
 select public._check(69, 'taslak görsel: ekleyen dosyayı okur', (select count(*) from storage.objects where bucket_id = 'space-media' and name = :'obj_v') = 1);
 select public._as_user(:carol);
-select public._check(70, 'taslak görsel: lider dosyayı okur', (select count(*) from storage.objects where bucket_id = 'space-media' and name = :'obj_v') = 1);
+select public._check(70, 'taslak görsel: lider dosyayı OKUYAMAZ (onaya gönderilene kadar)', (select count(*) from storage.objects where bucket_id = 'space-media' and name = :'obj_v') = 0);
 select public._as_user(:gina);
 select public._check(71, 'taslak görsel: başka düzenleyici dosyayı OKUYAMAZ', (select count(*) from storage.objects where bucket_id = 'space-media' and name = :'obj_v') = 0);
 select public._as_user(:frank);

@@ -209,6 +209,17 @@ export const teamBoardTranslations = {
   "tb.share.exportRoles": { tr: "Dışa aktarma yalnız lider ve düzenleyiciye açıktır.", en: "Only leads and editors can export." },
   "tb.share.emptyBoard": { tr: "Dışa aktarılacak öğe yok.", en: "There is nothing to export." },
 
+  // --- Pano grupları ve dosya ekranı (docs/history/368-*) ---
+  "tb.group.label": { tr: "Pano grubu", en: "Board group" },
+  "tb.group.boards": { tr: "{{count}} pano", en: "{{count}} boards" },
+  "tb.group.rename": { tr: "Grubu yeniden adlandır", en: "Rename group" },
+  "tb.group.renameTitle": { tr: "Pano grubunu yeniden adlandır", en: "Rename board group" },
+  "tb.group.name": { tr: "Grup adı", en: "Group name" },
+  "tb.file.boardsTitle": { tr: "Panolar", en: "Boards" },
+  "tb.file.itemsTitle": { tr: "Dosyanın öğeleri", en: "File items" },
+  "tb.file.boardsEmpty": { tr: "Pano eklemek isteğe bağlıdır; panosuz da not, prompt, görsel ve palet ekleyerek çalışabilirsin.", en: "Boards are optional; you can work without one by adding notes, prompts, images and palettes." },
+  "tb.file.legacyTitle": { tr: "Eski proje geneli", en: "Former project-wide area" },
+  "tb.file.legacyBody": { tr: "Önceki sürümden kalan ortak alan. Yeni proje geneli içerik eklenmez.", en: "A shared area left from an earlier version. New project-wide content can't be added." },
   // --- Bildirim cümleleri (SQL `pin_comment_create` yazar; Türkçe kalıp `notification-message.ts` PIN_TEMPLATES) ---
   "notifMsg.teamPinMention": { tr: "{{actor}} panoda bir yorumda sizden bahsetti: “{{preview}}”", en: "{{actor}} mentioned you in a board comment: “{{preview}}”" },
   "notifMsg.teamPinReply": { tr: "{{actor}} panodaki yorumunuzu yanıtladı: “{{preview}}”", en: "{{actor}} replied to your board comment: “{{preview}}”" },

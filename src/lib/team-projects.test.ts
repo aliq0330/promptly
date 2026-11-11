@@ -88,37 +88,34 @@ test("adres: proje/dosya/pano/onay/sekme parametreleri", () => {
   assert.equal(projectLink("t1", "p1", { review: true }), "/teams/local?id=t1&tab=projects&project=p1&review=1");
 });
 
-test("değişkenler: dosya projeyi ezer, ad büyük/küçük harf duyarsız", () => {
+test("değişkenler: yalnız dosya kapsamı; proje düzeyi satırlar yok sayılır, ad büyük/küçük harf duyarsız", () => {
   const all = [
     { fileId: null, name: "musteri", value: "Ahmet Bey" },
-    { fileId: null, name: "stil", value: "Modern Akdeniz" },
     { fileId: "f1", name: "Stil", value: "Skandinav" },
     { fileId: "f1", name: "tezgah", value: "mermer" },
     { fileId: "f2", name: "tezgah", value: "granit" },
   ];
-  const eff = effectiveVariables(all, "f1");
   assert.deepEqual(
-    eff.map((v) => [v.name, v.value, v.scope, v.overrides]),
+    effectiveVariables(all, "f1").map((v) => [v.name, v.value, v.scope]),
     [
-      ["musteri", "Ahmet Bey", "project", false],
-      ["Stil", "Skandinav", "file", true],
-      ["tezgah", "mermer", "file", false],
+      ["Stil", "Skandinav", "file"],
+      ["tezgah", "mermer", "file"],
     ],
   );
-  assert.deepEqual(effectiveVariables(all, null).map((v) => v.name), ["musteri", "stil"]);
+  assert.deepEqual(effectiveVariables(all, null), []);
 });
 
-test("doldurma: kullanıcı > dosya > proje; değeri olmayan jeton AYNEN kalır", () => {
+test("doldurma: kullanıcı > dosya; proje düzeyi değer kullanılmaz; değeri olmayan jeton AYNEN kalır", () => {
   const all = [
     { fileId: null, name: "musteri", value: "Ahmet Bey" },
     { fileId: "f1", name: "tezgah", value: "mermer" },
   ];
-  assert.equal(fillProjectVariables("{musteri} için {tezgah} {renk}", all, "f1"), "Ahmet Bey için mermer {renk}");
-  assert.equal(fillProjectVariables("{musteri} için {tezgah}", all, "f1", { tezgah: "granit" }), "Ahmet Bey için granit");
-  assert.equal(fillProjectVariables("{MUSTERI}", all, "f1"), "Ahmet Bey");
+  assert.equal(fillProjectVariables("{musteri} için {tezgah} {renk}", all, "f1"), "{musteri} için mermer {renk}");
+  assert.equal(fillProjectVariables("{tezgah}", all, "f1", { tezgah: "granit" }), "granit");
+  assert.equal(fillProjectVariables("{TEZGAH}", all, "f1"), "mermer");
   assert.equal(fillProjectVariables("{tezgah}", all, null), "{tezgah}", "dosya değişkeni projede yok");
   assert.equal(fillProjectVariables("{1x} {a-b}", all, null), "{1x} {a-b}", "geçersiz jeton dokunulmaz");
-  assert.equal(fillProjectVariables("{musteri}", all, "f1", { musteri: "" }), "Ahmet Bey", "boş kullanıcı değeri ezmez");
+  assert.equal(fillProjectVariables("{tezgah}", all, "f1", { tezgah: "" }), "mermer", "boş kullanıcı değeri ezmez");
 });
 
 test("SQL aynası: onay durumları ve proje rolleri migration metniyle uyumlu", () => {

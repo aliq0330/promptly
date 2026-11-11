@@ -560,15 +560,14 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
                     <li key={name} className="flex items-center gap-2.5 border-t border-border-soft px-3.5 py-2.5 text-small" data-item-variable={name}>
                       <span className="prompt-text text-secondary">{`{${found?.name ?? name}}`}</span>
                       <span className={cn("min-w-0 flex-1 truncate font-semibold", found ? "text-text" : "text-text-muted")}>{found ? found.value : "—"}</span>
-                      <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-semibold", !found ? "bg-warning/10 text-warning" : found.scope === "file" ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary")}>
-                        {t(!found ? "tp.item.varMissing" : found.scope === "file" ? "tp.item.varFile" : "tp.item.varProject")}
+                      <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-semibold", found ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+                        {t(found ? "tp.item.varFile" : "tp.item.varMissing")}
                       </span>
                     </li>
                   );
                 })}
               </ul>
             )}
-            <p className="border-t border-border-soft px-3.5 py-2.5 text-caption leading-snug text-text-secondary">{t("tp.item.varOverride")}</p>
           </section>
         </>
       ) : (

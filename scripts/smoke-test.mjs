@@ -123,6 +123,8 @@ const CHECKS = [
   { name: "rpc pin_comment_create ziyaretçiye KAPALI olmalı (ekip panosu yorumu, docs/history/367-*)", rpc: "pin_comment_create", body: { p_space: "00000000-0000-4000-8000-000000000000", p_body: "x", p_x: 0, p_y: 0 }, mustBeDenied: true },
   { name: "rpc team_transfer_items ziyaretçiye KAPALI olmalı (panoya taşı/kopyala, docs/history/367-*)", rpc: "team_transfer_items", body: { p_from: "00000000-0000-4000-8000-000000000000", p_to: "00000000-0000-4000-8000-000000000000", p_ids: [], p_copy: false }, mustBeDenied: true },
   { name: "rpc team_reorder_boards ziyaretçiye KAPALI olmalı (pano sırası, docs/history/367-*)", rpc: "team_reorder_boards", body: { p_project: "00000000-0000-4000-8000-000000000000", p_file: null, p_ids: [] }, mustBeDenied: true },
+  { name: "rpc team_create_board_in_group ziyaretçiye KAPALI olmalı (pano grubu, docs/history/368-*)", rpc: "team_create_board_in_group", body: { p_from: "00000000-0000-4000-8000-000000000000", p_title: "x" }, mustBeDenied: true },
+  { name: "rpc team_rename_board_group ziyaretçiye KAPALI olmalı (pano grubu, docs/history/368-*)", rpc: "team_rename_board_group", body: { p_group: "00000000-0000-4000-8000-000000000000", p_title: "x" }, mustBeDenied: true },
   { name: "space_items.data (çizim öğeleri, docs/history/367-*)", get: () => `space_items?select=${encodeURIComponent("id,data")}&limit=1` },
   { name: "rpc team_project_get ziyaretçiye KAPALI olmalı (docs/history/362-*)", rpc: "team_project_get", body: { p_project: "00000000-0000-4000-8000-000000000000" }, mustBeDenied: true },
   { name: "rpc team_create_project ziyaretçiye KAPALI olmalı (docs/history/362-*)", rpc: "team_create_project", body: { p_team: "00000000-0000-4000-8000-000000000000", p_title: "x" }, mustBeDenied: true },

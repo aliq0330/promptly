@@ -16,7 +16,7 @@ import { Undo2 } from "@/components/icons/undo-2";
 import { Crosshair } from "@/components/icons/crosshair";
 import { Modal } from "@/components/ui/modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { createBoard } from "@/lib/supabase/team-projects";
+import { createBoard, createBoardInGroup } from "@/lib/supabase/team-projects";
 import { cn } from "@/lib/utils";
 import { BoardThumb } from "./board-pages";
 import { BoardPopover, PopoverRow } from "./board-popover";
@@ -198,6 +198,8 @@ export function MovePopover({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const targets = team.pages.filter((page) => page.id !== team.currentId);
+  const currentPage = team.pages.find((page) => page.id === team.currentId);
+  const canNew = Boolean(currentPage) && (!currentPage?.isMain || team.fileId !== null);
   const run = async (resolve: () => Promise<string>) => {
     setBusy(true);
     setError(null);
@@ -228,17 +230,21 @@ export function MovePopover({
           </span>
         </button>
       ))}
+      {canNew && (
+        <>
       <div className="my-1 h-px bg-border-soft" />
       <button
         type="button"
         disabled={busy}
         data-board-move-new=""
-        onClick={() => void run(() => createBoard(team.projectId, t("tb.pages.newDefaultName"), team.fileId).then((id) => { team.reload(); return id; }))}
+        onClick={() => void run(() => (currentPage && !currentPage.isMain ? createBoardInGroup(team.currentId, t("tb.pages.newDefaultName")) : createBoard(team.projectId, t("tb.pages.newDefaultName"), team.fileId ?? "")).then((id) => { team.reload(); return id; }))}
         className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 text-small font-bold text-primary hover:bg-surface-soft disabled:opacity-50"
       >
         <Plus size={19} strokeWidth={2.4} aria-hidden />
         {t("tb.move.new")}
       </button>
+        </>
+      )}
       <div role="radiogroup" aria-label={t("tb.move.mode")} className="mx-1 mt-1 flex gap-1 rounded-xl bg-surface-soft p-1">
         {[false, true].map((isCopy) => (
           <button

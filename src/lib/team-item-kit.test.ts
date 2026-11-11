@@ -24,9 +24,9 @@ test("splitPromptTokens: jetonsuz ve boş metin", () => {
 });
 
 test("jeton biçimi fillProjectVariables ile aynı: dolduruken yalnız ayrılan jetonlar değişir", () => {
-  const vars = [{ fileId: null, name: "stil", value: "Skandinav" }];
+  const vars = [{ fileId: "f1", name: "stil", value: "Skandinav" }];
   const text = "{stil} ve {yok}";
-  const filled = fillProjectVariables(text, vars, null);
+  const filled = fillProjectVariables(text, vars, "f1");
   assert.equal(filled, "Skandinav ve {yok}");
   assert.deepEqual(
     splitPromptTokens(text).filter((p) => p.variable).map((p) => p.variable),

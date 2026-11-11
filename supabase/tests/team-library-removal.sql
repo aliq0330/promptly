@@ -82,7 +82,8 @@ select public.team_create_project(public._g('T'), 'Villa', '', 'all', 'edit') as
 select public.team_create_file(:'p_v'::uuid, 'Mutfak') as v \gset f_
 reset role;
 insert into public._ctx values ('P', :'p_v'), ('F', :'f_v');
-select s.id as v from public.spaces s where s.team_project_id = :'p_v'::uuid and s.team_area_main and s.team_file_id is null \gset a_
+-- (docs/history/368-*) proje geneli alan artık otomatik açılmaz: öğeler dosya alanındadır.
+select s.id as v from public.spaces s where s.team_file_id = :'f_v'::uuid and s.team_area_main \gset a_
 select s.id as v from public.spaces s where s.team_file_id = :'f_v'::uuid and s.team_area_main \gset fa_
 set role authenticated;
 select public._as_user(:dave);
