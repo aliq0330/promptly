@@ -1,4 +1,4 @@
-# 369 — Space alanı: "Merkez" düzeni (ekip projesiyle aynı dil)
+# 371 — Space alanı: "Merkez" düzeni (ekip projesiyle aynı dil)
 
 **Durum: KODLANDI (yalnız istemci; veritabanı değişikliği YOK). Ağ taklitli Playwright `run-spaces` 34/34 ve ilgili Space/ekip paketleri; gerçek Supabase/cihazda DENENMEDİ.**
 Kullanıcı Space alanının PC / tablet / telefon tasarımının ekip projesi gibi olmasını istedi; 18 panoluk mockup (özet, masaüstü 6, tablet 4, telefon 7) onaylandı ve uygulandı.

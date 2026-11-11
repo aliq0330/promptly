@@ -58,6 +58,11 @@ export interface AreaItemContext {
   listHref: string;
   /** "Panoda göster": panoyu bu öğeye odaklı açan adres. */
   boardHref: (focusId: string) => string;
+  /**
+   * Öğe GERÇEK bir panoda mı? Dosyanın (ve eski proje geneli alanın) öğeleri görünmez kapta durur, pano DEĞİLDİR (docs/history/368-*):
+   * orada "Panoda göster" kabı tuval olarak açar ve tuvalde silmek öğeyi siler. Yalnız gerçek panodaki öğede gösterilir.
+   */
+  onBoard: boolean;
   variables: ProjectVariable[];
   fileId: string | null;
   /** Çekmece (docs/history/366-*, mockup B4): liste yerinde kalır, öğe yandan (telefonda alttan) açılır; kapatmak `listHref`'e döner. */
@@ -185,7 +190,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   const createdAt = (item ?? palette)!.createdAt;
   const when = formatRelativeTime(createdAt, language);
   const state = item?.revState ?? "approved";
-  const onBoard = Boolean(item && item.kind !== "content");
+  const onBoard = ctx.onBoard && Boolean(item && item.kind !== "content");
 
   const mayDelete = palette ? caps.edit : item ? canDeleteItem(role, { state: item.revState, createdBy: item.createdBy }, userId) : false;
   // Düzenleme: palet düzenleyiciye açık; öğenin METNİ yalnız lider / kendi taslağını yazan (onaylıda "Değişiklik öner"). Görselin başlığı/notu da metindir.
@@ -649,10 +654,12 @@ function ImageSection({ ctx, item, title, creator }: { ctx: AreaItemContext; ite
         </dl>
       )}
       {item.note && <p className="break-words rounded-xl bg-surface-soft px-3 py-2 text-small text-text-secondary">{item.note}</p>}
-      <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-surface text-small font-semibold text-text hover:bg-surface-soft" data-item-show-on-board-button>
-        <Presentation size={18} aria-hidden />
-        {t("tp.item.showOnBoard")}
-      </Link>
+      {ctx.onBoard && (
+        <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-surface text-small font-semibold text-text hover:bg-surface-soft" data-item-show-on-board-button>
+          <Presentation size={18} aria-hidden />
+          {t("tp.item.showOnBoard")}
+        </Link>
+      )}
       {open && item.mediaUrl && <ImageLightbox images={[{ url: item.mediaUrl, alt: title }]} onClose={() => setOpen(false)} />}
     </>
   );

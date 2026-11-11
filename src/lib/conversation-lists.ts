@@ -7,6 +7,7 @@
  */
 
 import { comparePinnedFirst } from "./community-rooms.ts";
+import { summarizeTeamRow } from "./team-chat.ts";
 
 export interface ConversationListFields {
   /** Kişisel sohbet sabitleme (docs/history/352-*): doluysa gelen kutusunun başında durur. */
@@ -79,8 +80,11 @@ export function filterConversationsByQuery<
 export interface TeamChannelFields extends ConversationListFields {
   id: string;
   lastMessage: string;
-  group?: { team?: { id: string; channelName: string } | null } | null;
-  teamRollup?: { channelCount: number; unreadChannelCount: number; channelName: string };
+  group?: {
+    closedAt?: string | null;
+    team?: { id: string; channelName: string; projectId?: string | null; projectTitle?: string | null; fileId?: string | null; projectMain?: boolean; muteScope?: "team" | "project" | null } | null;
+  } | null;
+  teamRollup?: { channelCount: number; unreadChannelCount: number; channelName: string; names: string[]; extraNames: number; projects: number };
 }
 
 /**
@@ -102,8 +106,25 @@ export function rollUpTeamChannels<T extends TeamChannelFields>(conversations: r
     byTeam.set(team.id, list);
   }
   const rolled: T[] = [];
-  for (const channels of byTeam.values()) {
+  for (const all of byTeam.values()) {
+    // Arşivlenmiş kanal satırı/adı oluşturmaz (hepsi arşivliyse ekip yine tek satır kalır).
+    const live = all.filter((channel) => !channel.group?.closedAt);
+    const channels = live.length > 0 ? live : all;
     const ordered = [...channels].sort(byNewest);
+    const summary = summarizeTeamRow(
+      channels.map((channel) => ({
+        id: channel.id,
+        name: channel.group?.team?.channelName ?? "",
+        mode: "",
+        archivedAt: null,
+        unreadCount: channel.unreadCount,
+        lastMessageAt: channel.lastMessageAt ?? null,
+        muteScope: channel.group?.team?.muteScope ?? null,
+        projectId: channel.group?.team?.projectId ?? null,
+        projectMain: channel.group?.team?.projectMain,
+        fileId: channel.group?.team?.fileId ?? null,
+      })),
+    );
     const representative = ordered.find((channel) => channel.unreadCount > 0 && !channel.mutedAt) ?? ordered[0];
     const unread = channels.filter((channel) => channel.unreadCount > 0 && !channel.mutedAt);
     rolled.push({
@@ -112,7 +133,14 @@ export function rollUpTeamChannels<T extends TeamChannelFields>(conversations: r
       lastMessageAt: ordered[0].lastMessageAt,
       pinnedAt: channels.map((channel) => channel.pinnedAt ?? null).filter(Boolean).sort().at(-1) ?? null,
       mutedAt: channels.every((channel) => Boolean(channel.mutedAt)) ? (representative.mutedAt ?? null) : null,
-      teamRollup: { channelCount: channels.length, unreadChannelCount: unread.length, channelName: representative.group?.team?.channelName ?? "" },
+      teamRollup: {
+        channelCount: channels.length,
+        unreadChannelCount: unread.length,
+        channelName: representative.group?.team?.channelName ?? "",
+        names: summary.names,
+        extraNames: summary.extra,
+        projects: summary.projects,
+      },
     });
   }
   return [...rest, ...rolled].sort(comparePinnedFirst);

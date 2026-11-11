@@ -54,7 +54,7 @@ const dlg = (page) => page.getByRole("dialog").last();
 const chip = (page, name) => page.locator("[data-channel-chip]", { hasText: name }).first();
 const infoRoom = (page, name) => page.locator("[data-info-room]", { hasText: name }).first();
 const openInfo = async (page) => { await page.goto(`${BASE}/messages/local?id=${G}&panel=about`); await page.locator("[data-info-rooms]").waitFor(); await page.locator("[data-info-room]").first().waitFor(); };
-const openChat = async (page, room) => { await page.goto(`${BASE}/messages/local?id=${G}${room ? `&room=${room.id}` : ""}`); await page.locator("[data-channel-chips]").waitFor(); await page.waitForTimeout(300); };
+const openChat = async (page, room) => { await page.goto(`${BASE}/messages/local?id=${G}${room ? `&room=${room.id}` : ""}`); await page.locator("[data-chat-scroll]").waitFor(); await page.waitForTimeout(300); };
 const messageTexts = async (page) => page.locator("[data-chat-scroll]").innerText();
 
 // 1
@@ -94,6 +94,17 @@ await scenario("2. Topluluk satırı: '# oda' etiketi + son mesaj; oda merkezine
   assert.match(await row.locator("[data-row-meta]").innerText(), /üye/);
 }, { setup: (db) => seed(db) });
 
+await scenario("2c. Topluluk satırı (docs/history/369-*): yığılmış simge + ›; dokununca topluluk sayfası (odalar) açılır", async ({ page }) => {
+  await page.goto(`${BASE}/messages`);
+  const row = page.locator("[data-conversation-row]:visible", { hasText: "Tasarım Atölyesi" }).first();
+  await row.waitFor();
+  await row.locator("[data-stacked-mark]").waitFor();
+  assert.match(await row.getAttribute("href"), /hub=community/);
+  await row.click();
+  await page.locator('[data-hub="community"]').waitFor();
+  await page.locator('[data-hub-row="Genel"]').waitFor();
+}, { setup: (db) => { seedResult = seed(db); } });
+
 await scenario("2b. Eski oda merkezi bağlantısı (?view=rooms) topluluk bilgi sayfasına yönlenir", async ({ page }) => {
   await page.goto(`${BASE}/messages/local?id=${G}&view=rooms`);
   await page.locator("[data-community-info]").waitFor();
@@ -128,7 +139,8 @@ await scenario("3c. Bilgi sayfası kısayolları: topluluk sayfası bağlantıs�
 await scenario("4. Sohbet: oda çipi seçili + başlık alt satırı '# oda'; yalnız açık odanın mesajları; başlığa dokunmak bilgi sayfasını açar", async ({ page }) => {
   const { prompt } = seedResult;
   await openChat(page, prompt);
-  assert.equal(await chip(page, "Prompt Paylaşımı").getAttribute("aria-selected"), "true");
+  // docs/history/369-*: oda çipleri sohbet ekranından kalktı; odalar topluluk sayfasında listelenir.
+  assert.equal(await page.locator("[data-channel-chips]").count(), 0, "çip satırı yok");
   assert.match(await page.locator("[data-room-header]").innerText(), /# Prompt Paylaşımı/);
   const text = await messageTexts(page);
   assert.ok(text.includes("prompt odası bir") && text.includes("prompt odası iki"), "odanın mesajları");
@@ -139,13 +151,19 @@ await scenario("4. Sohbet: oda çipi seçili + başlık alt satırı '# oda'; ya
 }, { setup: (db) => { seedResult = seed(db); } });
 
 // 5
-await scenario("5. Oda çipleri: tüm etkin odalar (özel oda yöneticide), seçince oda ve adres değişir", async ({ page }) => {
-  await openChat(page, seedResult.prompt);
-  assert.equal(await page.locator("[data-channel-chip]").count(), 6);
-  await chip(page, "Duyurular").click();
+await scenario("5. Topluluk sayfası (docs/history/369-*): tüm etkin odalar listelenir (özel oda yöneticide), satır odayı açar; geri sayfaya döner", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?hub=community&id=${G}`);
+  await page.locator('[data-hub="community"]').waitFor();
+  await page.locator("[data-hub-row]").first().waitFor();
+  assert.equal(await page.locator("[data-hub-row]").count(), 6);
+  await page.locator('[data-hub-row="Duyurular"]').click();
   await page.waitForFunction((id) => location.search.includes(`room=${id}`), seedResult.ann.id);
   await page.waitForFunction(() => document.querySelector("[data-chat-scroll]")?.innerText.includes("resmî duyuru"));
   assert.ok(!(await messageTexts(page)).includes("prompt odası bir"));
+  assert.equal(await page.locator("[data-channel-chips]").count(), 0, "odada çip satırı yok");
+  await page.getByRole("button", { name: /Mesaj listesine dön|Back to message list/i }).first().click();
+  await page.waitForFunction(() => location.search.includes("hub=community"));
+  await page.locator('[data-hub-row="Prompt Paylaşımı"]').waitFor();
 }, { setup: (db) => { seedResult = seed(db); } });
 
 await scenario("5b. Bilgi sayfasından oda seçilir; oda bilgisi (T4) açılır; Oda ekle yalnız yetkiliye", async ({ page }) => {
@@ -184,7 +202,7 @@ await scenario("6. Gönderme: serbest odada room_id gider, Genel'de gitmez", asy
   const sent = db.calls.filter((c) => c.table === "messages" && c.method === "POST").pop();
   assert.equal(sent.body.room_id, seedResult.prompt.id);
   await page.goto(`${BASE}/messages/local?id=${G}&room=${seedResult.general.id}`);
-  await page.locator("[data-channel-chips]").waitFor();
+  await page.locator("[data-chat-scroll]").waitFor();
   await page.getByRole("textbox").last().fill("genele merhaba");
   await page.getByRole("button", { name: "Mesaj gönder" }).last().click();
   await page.waitForFunction(() => document.querySelector("[data-chat-scroll]")?.innerText.includes("genele merhaba"));
@@ -202,20 +220,19 @@ await scenario("7. Salt okunur oda: üyenin yazma alanı kapalı + açıklama; y
 
 await scenario("7b. Yönetici duyuru odasına yazabilir (kapalı değil, uyarı yok)", async ({ page }) => {
   await openChat(page, seedResult.ann);
-  await page.locator("[data-channel-chips]").waitFor();
   assert.equal(await page.locator("[data-room-readonly-notice]").count(), 0);
   assert.equal(await page.getByRole("textbox").last().isDisabled(), false);
 }, { setup: (db) => { seedResult = seed(db, { role: "admin" }); } });
 
 // 8
-await scenario("8. Okundu: odayı açınca mark_room_read_up_to çağrılır ve çipteki rozet kalkar", async ({ page, db }) => {
+await scenario("8. Okundu: odayı açınca mark_room_read_up_to çağrılır ve topluluk sayfasındaki rozet kalkar", async ({ page, db }) => {
   await openChat(page, seedResult.prompt);
   await page.waitForFunction(() => document.querySelector("[data-chat-scroll]")?.innerText.includes("prompt odası iki"));
   await page.waitForTimeout(600);
   assert.ok(db.roomCalls.some((c) => c.fn === "read" && c.body.p_room_id === seedResult.prompt.id), "oda okundu imleci yazıldı");
-  await chip(page, "Duyurular").click();
-  await page.waitForFunction(() => document.querySelector("[data-chat-scroll]")?.innerText.includes("resmî duyuru"));
-  assert.doesNotMatch(await chip(page, "Prompt Paylaşımı").innerText(), /\d/, "okunan odanın rozeti kalktı");
+  await page.goto(`${BASE}/messages/local?hub=community&id=${G}`);
+  await page.locator('[data-hub-row="Prompt Paylaşımı"]').waitFor();
+  assert.equal(await page.locator('[data-hub-row="Prompt Paylaşımı"] [data-hub-unread]').count(), 0, "okunan odanın rozeti kalktı");
 }, { setup: (db) => { seedResult = seed(db); } });
 
 // 9
@@ -339,7 +356,7 @@ await scenario("11d. Düzenle: yeni ad update RPC'sine gider; Bölüme taşı ya
 
 await scenario("11e. 20 etkin oda sınırı: Oda ekle kapanır", async ({ page }) => {
   await page.goto(`${BASE}/communities/local?id=${G}&tab=manage&section=rooms`);
-  await page.locator("[data-rooms-count]").waitFor();
+  await page.locator("[data-rooms-count]").getByText("20 / 20").waitFor();
   assert.match((await page.locator("[data-rooms-count]").innerText()).trim(), /^20 \/ 20$/);
   assert.ok(await page.locator("[data-manage-add-room]").isDisabled());
 }, { setup: (db) => { seed(db); for (let i = 0; i < 14; i += 1) db.addRoom(G, { name: `Oda ${i}` }); } });

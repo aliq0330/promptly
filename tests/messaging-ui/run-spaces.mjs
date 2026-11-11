@@ -57,7 +57,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 860 }, lan
 const pickSection = async (page, name) => {
   await page.getByRole("tablist", { name: "Space süzgeci" }).getByRole("tab", { name }).click();
 };
-/** Space sayfası bölümleri altı çizgili sekmelerdir (docs/history/369-*): sekme adlarını verir / birini seçer. */
+/** Space sayfası bölümleri altı çizgili sekmelerdir (docs/history/371-*): sekme adlarını verir / birini seçer. */
 const spaceTabs = (page) => page.getByRole("tablist", { name: "Space bölümleri" });
 const spaceTabNames = async (page) => (await spaceTabs(page).getByRole("tab").allInnerTexts()).map((x) => x.split("\n")[0].replace(/\d+$/, "").trim());
 const pickSpaceTab = async (page, name) => { await spaceTabs(page).getByRole("tab", { name }).click(); };
@@ -636,7 +636,7 @@ await scenario("30. Yeni Space penceresi (iOS klavyesi): dokunmatikte başlık k
   assert.ok(restored.height >= 800, `katman tam ekrana döndü: ${restored.height}`);
 }, { viewport: { width: 390, height: 844 }, touch: true });
 
-await scenario("31. ana sayfa (docs/history/231-*, 369-*): bant + altı çizgili sekmeler (davet sayaçlı) + simgeler; tür karosu Yeni Space'i o türle açar; filtre sayfası sıralama/tür/görünürlük; görünüm anahtarı; hiçbir özellik eksik değil", async ({ page, db }) => {
+await scenario("31. ana sayfa (docs/history/231-*, 371-*): bant + altı çizgili sekmeler (davet sayaçlı) + simgeler; tür karosu Yeni Space'i o türle açar; filtre sayfası sıralama/tür/görünürlük; görünüm anahtarı; hiçbir özellik eksik değil", async ({ page, db }) => {
   await page.goto(`${BASE}/spaces`);
   await page.getByRole("heading", { level: 1, name: "Spaces" }).waitFor();
   await page.getByTestId("spaces-list").waitFor();

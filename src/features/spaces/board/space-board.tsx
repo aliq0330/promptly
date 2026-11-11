@@ -1466,12 +1466,17 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   const lowDetail = vp.zoom < LOW_DETAIL_ZOOM;
   const cursor = panning ? "cursor-grabbing" : tool === "pan" || spaceHeld ? "cursor-grab" : tool === "connect" || (teamMode && tool !== "select") ? "cursor-crosshair" : "cursor-default";
 
+  const overviewOpen = Boolean(team && pagesUi.overview);
   const rootClass = cn(
     "relative flex scroll-mt-3 flex-col overflow-hidden rounded-xl border border-border-soft bg-surface-soft",
     fullscreen
       ? "fixed inset-0 z-[45] rounded-none border-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
       : teamMode
-        ? "h-[calc(100dvh-10rem-env(safe-area-inset-bottom))] min-h-[26rem] md:h-[calc(100dvh-8.5rem)]"
+        ? overviewOpen
+          ? // Genel bakış sayfa uzunluğuna göre uzar, iç kaydırma yok: sayfa kendisi kayar (docs/history/370-*).
+            "h-auto min-h-[calc(100dvh-10rem)]"
+          : // Tuval: telefonda üst menü ile alt menü arasını tam doldurur (dvh hesabı Safari'de boşluk bırakıyordu), masaüstünde sabit yükseklik.
+            "max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom))] max-md:top-16 max-md:z-20 max-md:rounded-none max-md:border-x-0 md:h-[calc(100dvh-8.5rem)]"
         : "h-[72dvh] min-h-[420px] md:h-[calc(100dvh-12rem)]",
   );
   const commentMode = teamMode && tool === "comment";
@@ -1603,7 +1608,8 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
           onInfo={team.onInfo}
         />
       )}
-      <div className="flex min-h-0 flex-1">
+      {team && overviewOpen && <PagesOverview team={team} actions={pageActions.actions} onClose={() => pagesUi.setOverview(false)} />}
+      <div className={cn("flex min-h-0 flex-1", overviewOpen && "hidden")}>
       <div className="relative flex min-w-0 flex-1 flex-col">
       {!teamMode && (
         <ScrollRow role="toolbar" aria-label={t("spaces.board.toolbar")} wrapperClassName="z-20 shrink-0 border-b border-border-soft bg-surface" className="items-center gap-1 px-2 py-1.5" data-board-toolbar={phoneBar ? "phone" : "full"}>
@@ -2064,7 +2070,6 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
           />
         </div>
       )}
-      {team && pagesUi.overview && <PagesOverview team={team} actions={pageActions.actions} onClose={() => pagesUi.setOverview(false)} />}
       {team && pagesUi.menuOpen && pagesUi.drawer && <PagesDrawer team={team} actions={pageActions.actions} onClose={() => pagesUi.setMenuOpen(false)} onOverview={() => pagesUi.setOverview(true)} />}
       {team && pagesUi.menuOpen && !pagesUi.drawer && <PagesPopover anchorRef={pagesUi.buttonRef} team={team} actions={pageActions.actions} onClose={() => pagesUi.setMenuOpen(false)} onOverview={() => pagesUi.setOverview(true)} />}
       {team && moveOpen && selectedItems.length > 0 && <MovePopover anchorRef={moveRef} team={team} count={selectedItems.length} canMove={canMoveSelection} onClose={() => setMoveOpen(false)} onRun={runTransfer} />}

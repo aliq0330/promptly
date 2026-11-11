@@ -86,6 +86,8 @@ const TEAM_TEMPLATES: [re: RegExp, key: string][] = [
   [/^"([\s\S]*)" promptunda değişiklik istedi\.$/, "notifMsg.teamChangesRequested"],
   [/^([\s\S]*?) seni #([^\s]*) kanalında andı: "([\s\S]*)"$/, "notifMsg.teamMentioned"],
   [/^([\s\S]*?) #([^\s]*) kanalında bir mesajı bildirdi\.$/, "notifMsg.teamMessageReported"],
+  // "Tüm mesajlar" düzeyi (docs/history/369-*): okunmamış dönem başına tek bildirim.
+  [/^([\s\S]*?) #([^\s]*) kanalına yazdı: "([\s\S]*)"$/, "notifMsg.teamChannelPosted"],
 ];
 
 /** Ekip panosu konumlu yorumları (docs/history/367-*): ilk alıntı → `actor`, ikinci → `preview`. */

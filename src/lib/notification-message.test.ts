@@ -74,6 +74,7 @@ test("ekip bildirimleri (docs/history/353-*) adlar çevrilmeden doğru anahtara 
   assert.deepEqual(JSON.parse(run('"Atölye Mor" ekibinden çıkarıldın.')).key, "notifMsg.teamRemoved");
   assert.deepEqual(JSON.parse(run('"Afiş" promptunda değişiklik istedi.')).key, "notifMsg.teamChangesRequested");
   assert.deepEqual(JSON.parse(run('Elif seni #genel kanalında andı: "bakar mısın @ali"')), { key: "notifMsg.teamMentioned", params: { name: "Elif", channel: "genel", preview: "bakar mısın @ali" } });
+  assert.deepEqual(JSON.parse(run('Elif #duyurular kanalına yazdı: "toplantı 15:00"')), { key: "notifMsg.teamChannelPosted", params: { name: "Elif", channel: "duyurular", preview: "toplantı 15:00" } });
   assert.deepEqual(JSON.parse(run("Elif #gizli kanalında bir mesajı bildirdi.")), { key: "notifMsg.teamMessageReported", params: { name: "Elif", channel: "gizli", preview: "" } });
   assert.equal(JSON.parse(run("ekipteki rolünü değiştirdi.")).key, "notifMsg.teamRoleChanged");
 });

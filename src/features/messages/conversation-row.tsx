@@ -15,6 +15,7 @@ import { VisibilityLabel } from "@/features/communities/visibility-label";
 import { memberCountText } from "@/lib/group-labels";
 import { RoomTree } from "./rooms/room-tree";
 import { cn, formatRelativeTime, formatUnread, messageHref } from "@/lib/utils";
+import { communityHubHref, teamHubHref } from "@/lib/team-chat";
 import { roomSlug } from "@/lib/community-rooms";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -65,6 +66,11 @@ export function ConversationRow({
   const unread = conversation.unreadCount > 0;
   const pinned = Boolean(conversation.pinnedAt);
   const lastRoom = group ? conversation.lastRoom : null;
+  // Ekip (kanallar toplanmış) ve topluluk satırı bir SAYFAYA açılır (docs/history/369-*): kanallar/odalar orada listelenir. Paylaşım modunda (`shareQuery`) doğrudan sohbet açılır.
+  const rollup = team ? conversation.teamRollup : undefined;
+  const opensHub = !shareQuery && !onOpen && ((team && Boolean(rollup)) || (group && !team));
+  const hubHref = opensHub ? (team ? teamHubHref(team.id) : communityHubHref(group!.id)) : null;
+  const names = rollup ? [...rollup.names, ...(rollup.extraNames > 0 ? [t("th.row.moreNames", { count: rollup.extraNames })] : [])].join(", ") : "";
 
   const content = (
     <>
@@ -80,7 +86,16 @@ export function ConversationRow({
         </span>
       </span>
       <span className="py-2.5 pr-3">
-        {team ? (
+        {opensHub ? (
+          // Üst üste binen iki soluk katman: "birden çok sohbet tek satırda" (WhatsApp Toplulukları).
+          <span data-stacked-mark className="relative ml-2 inline-block" style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}>
+            <span aria-hidden className="absolute inset-y-1 -left-2 w-full rounded-[18px] bg-border-strong/40" />
+            <span aria-hidden className="absolute inset-y-0.5 -left-1 w-full rounded-[18px] bg-border-strong/70" />
+            <span className="relative block">
+              {team ? <TeamMark name={team.name} tone={team.tone} size={AVATAR_SIZE} className="rounded-[18px]" /> : <GroupAvatar name={group!.name} avatarUrl={group!.avatarUrl} size={AVATAR_SIZE} badge />}
+            </span>
+          </span>
+        ) : team ? (
           <TeamMark name={team.name} tone={team.tone} size={AVATAR_SIZE} className="rounded-[18px]" />
         ) : group ? (
           <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={AVATAR_SIZE} badge />
@@ -108,6 +123,13 @@ export function ConversationRow({
           </span>
         </span>
         <span className="flex items-start justify-between gap-2">
+          {rollup ? (
+            // Ekip satırının ikinci satırı kanal adlarıdır ("genel, duyurular, mimari · 2 proje"); son mesaj üçüncü satırda.
+            <span data-team-names className={cn("line-clamp-2 min-w-0 flex-1 break-words text-small", unread ? "font-medium text-text" : "text-text-muted")}>
+              {names}
+              {rollup.projects > 0 && ` · ${t("th.row.projects", { count: rollup.projects })}`}
+            </span>
+          ) : (
           <span className={cn("line-clamp-2 min-w-0 flex-1 break-words text-small", unread ? "font-medium text-text" : "text-text-muted")}>
             {team && (
               <span data-team-channel className="font-bold text-primary">
@@ -117,6 +139,7 @@ export function ConversationRow({
             {lastRoom && <span data-last-room className="font-bold text-primary"># {roomSlug(lastRoom.name)} </span>}
             {conversation.lastMessage}
           </span>
+          )}
           {pinned && !unread && <Pin size={14} className="mt-1 shrink-0 text-text-muted" aria-label={t("rooms.list.pinned")} />}
           {unread && (
             <span
@@ -128,16 +151,25 @@ export function ConversationRow({
               {formatUnread(conversation.unreadCount)}
             </span>
           )}
+          {opensHub && !selecting && <ChevronRight size={16} className="mt-1 shrink-0 text-text-muted" aria-hidden />}
         </span>
         {group && (
           <span data-row-meta className="truncate text-caption text-text-muted">
             {team ? (
               <>
-                {conversation.teamRollup && conversation.teamRollup.unreadChannelCount > 0
-                  ? t("tm.list.rollup", { count: conversation.teamRollup.unreadChannelCount })
-                  : t("tm.list.noNew")}
-                {" · "}
-                {memberCountText(t, group.memberCount)}
+                {rollup ? (
+                  <span data-team-last>
+                    <span data-team-channel className="font-bold text-primary"># {team.channelName}</span> · {conversation.lastMessage}
+                  </span>
+                ) : (
+                  <>
+                    {conversation.teamRollup && conversation.teamRollup.unreadChannelCount > 0
+                      ? t("tm.list.rollup", { count: conversation.teamRollup.unreadChannelCount })
+                      : t("tm.list.noNew")}
+                    {" · "}
+                    {memberCountText(t, group.memberCount)}
+                  </>
+                )}
               </>
             ) : (
               <span className="inline-flex items-center gap-1">
@@ -171,7 +203,7 @@ export function ConversationRow({
         </button>
       ) : (
         <Link
-          href={shareQuery ? `${messageHref(conversation)}&${shareQuery}` : messageHref(conversation)}
+          href={hubHref ?? (shareQuery ? `${messageHref(conversation)}&${shareQuery}` : messageHref(conversation))}
           aria-current={isActive ? "page" : undefined}
           data-conversation-row
           className={cn(rowClass, "min-w-0 flex-1")}

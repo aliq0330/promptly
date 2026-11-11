@@ -87,7 +87,7 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
           </button>
         )}
 
-        {/* Sayaç kartları (docs/history/369-*): dokununca ilgili sekmeye gider. */}
+        {/* Sayaç kartları (docs/history/371-*): dokununca ilgili sekmeye gider. */}
         <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="space-overview-stats">
           {([
             { tab: "images", Icon: ImageIcon, count: images.length },

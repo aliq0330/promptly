@@ -71,6 +71,10 @@ interface TeamChannelInfoRow {
   posting_policy: "members" | "admins";
   archived_at: string | null;
   team_id: string;
+  /** Proje/dosya kanalları (docs/history/369-*): boşsa ekip kanalı. */
+  project_id: string | null;
+  file_id: string | null;
+  project_main: boolean;
   teams: { id: string; slug: string; name: string; tone: string; member_count: number; created_at: string } | { id: string; slug: string; name: string; tone: string; member_count: number; created_at: string }[] | null;
 }
 
@@ -81,7 +85,7 @@ async function fetchTeamChannelInfos(ids: string[]): Promise<Map<string, TeamCha
   for (const part of chunk(ids, ID_CHUNK)) {
     const { data } = await supabase
       .from("team_channels")
-      .select("id, name, description, mode, posting_policy, archived_at, team_id, teams(id, slug, name, tone, member_count, created_at)")
+      .select("id, name, description, mode, posting_policy, archived_at, team_id, project_id, file_id, project_main, teams(id, slug, name, tone, member_count, created_at)")
       .in("id", part);
     for (const row of (data ?? []) as unknown as TeamChannelInfoRow[]) map.set(row.id, row);
   }
@@ -92,7 +96,7 @@ async function fetchTeamChannelInfos(ids: string[]): Promise<Map<string, TeamCha
  * Ekip kanalı → sohbet ekranının beklediği grup şekli. Kanal bir topluluk DEĞİLDİR: topluluk alanları nötrdür, `team` doludur ve topluluk işleri
  * (oda, yönetim, katılma istekleri) bu grupta çizilmez. Yazma ilkesi kanalınkidir (`admins` → ekip yönetimi dışındakiler yazamaz).
  */
-function groupFromTeamChannel(row: MembershipRow, info: TeamChannelInfoRow | undefined) {
+function groupFromTeamChannel(row: MembershipRow, info: TeamChannelInfoRow | undefined, mutes: TeamMuteSet) {
   if (!info) return null;
   const team = Array.isArray(info.teams) ? info.teams[0] : info.teams;
   if (!team) return null;
@@ -122,8 +126,33 @@ function groupFromTeamChannel(row: MembershipRow, info: TeamChannelInfoRow | und
     closedAt: info.archived_at,
     postCount: 0,
     origin: "native" as const,
-    team: { id: team.id, slug: team.slug, name: team.name, tone: team.tone, channelName: info.name },
+    team: {
+      id: team.id,
+      slug: team.slug,
+      name: team.name,
+      tone: team.tone,
+      channelName: info.name,
+      projectId: info.project_id ?? null,
+      fileId: info.file_id ?? null,
+      projectMain: info.project_main === true,
+      muteScope: mutes.scopeOf(team.id, info.project_id ?? null),
+    },
   };
+}
+
+/** Çağıranın ekip/proje sessizlikleri (`team_my_mutes`): Mesajlar listesi satırı kanalın kendi sessizliğine EK olarak bunlardan da sessiz sayılır. */
+interface TeamMuteSet {
+  scopeOf: (teamId: string, projectId: string | null) => "team" | "project" | null;
+}
+const NO_MUTES: TeamMuteSet = { scopeOf: () => null };
+
+async function fetchTeamMutes(): Promise<TeamMuteSet> {
+  const { data, error } = await supabase.rpc("team_my_mutes");
+  if (error || !Array.isArray(data)) return NO_MUTES; // eski sunucu / hata → yalnız kanal sessizliği
+  const teams = new Set<string>();
+  const projects = new Set<string>();
+  for (const row of data as { team_id: string; project_id: string | null }[]) (row.project_id ? projects : teams).add(row.project_id ?? row.team_id);
+  return { scopeOf: (teamId, projectId) => (teams.has(teamId) ? "team" : projectId && projects.has(projectId) ? "project" : null) };
 }
 
 export const MESSAGE_SELECT =
@@ -207,7 +236,8 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
     const rows = memberships as unknown as MembershipRow[];
     const conversationIds = rows.map((m) => m.conversation_id);
     const directIds = rows.filter((m) => !isGroupKind(m.conversations?.kind)).map((m) => m.conversation_id);
-    const teamInfos = await fetchTeamChannelInfos(rows.filter((m) => m.conversations?.kind === "team_channel").map((m) => m.conversation_id));
+    const teamIds = rows.filter((m) => m.conversations?.kind === "team_channel").map((m) => m.conversation_id);
+    const [teamInfos, teamMutes] = await Promise.all([fetchTeamChannelInfos(teamIds), teamIds.length > 0 ? fetchTeamMutes() : Promise.resolve(NO_MUTES)]);
 
     // Birebir sohbetlerin karşı tarafı. Gruplarda üye listesi bu yoldan ASLA çekilmez (RLS yalnız kendi satırımı verir; liste `chat_group_members` RPC'sinde).
     // Kimlikler adrese yazıldığı için parça parça (yüzlerce birebir sohbette tek `in(...)` adres sınırını aşar ve liste hiç gelmezdi).
@@ -258,10 +288,13 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
           pinnedAt: m.pinned_at ?? null,
         };
         if (isGroupKind(m.conversations?.kind)) {
-          const group = m.conversations?.kind === "team_channel" ? groupFromTeamChannel(m, teamInfos.get(m.conversation_id)) : groupFromMembership(m);
+          const group = m.conversations?.kind === "team_channel" ? groupFromTeamChannel(m, teamInfos.get(m.conversation_id), teamMutes) : groupFromMembership(m);
           if (!group) return null; // grup satırı okunamadı — listede göstermek yerine atla
+          // Ekip/proje düzeyinde sessiz kanal listede de sessizdir (rozet/nokta/üst sayaç kanalın kendi sessizliğiyle aynı kuralı izler).
+          const broadMuted = "team" in group && group.team?.muteScope ? new Date(0).toISOString() : null;
           return {
             ...base,
+            mutedAt: base.mutedAt ?? broadMuted,
             kind: "group",
             group,
             participants: [],
@@ -351,6 +384,19 @@ function groupPreview(last: LastMessageRow | undefined, senderName: string | nul
 }
 
 /**
+ * Ekip kanalı / topluluk odası listesi için "Ayşe: merhaba" önizlemeleri (docs/history/369-*): kanal başına son görünür mesaj + zamanı.
+ * `fetchConversationsForUser` ile AYNI yol (`conversation_last_messages` + gönderen adı); hata → boş harita (satır "henüz mesaj yok" der).
+ */
+export async function fetchChannelPreviews(conversationIds: string[], viewerId: string): Promise<Map<string, { text: string; at: string }>> {
+  const result = new Map<string, { text: string; at: string }>();
+  if (conversationIds.length === 0) return result;
+  const last = await fetchLastMessages(conversationIds);
+  const names = await fetchSenderNames([...last.values()].map((row) => row.sender_id), viewerId);
+  for (const [id, row] of last) result.set(id, { text: groupPreview(row, row.sender_id === viewerId ? null : names.get(row.sender_id)), at: row.created_at });
+  return result;
+}
+
+/**
  * A single real conversation, from this member's point of view — for a
  * direct link that fell outside the recent-conversations batch above.
  * Returns null both when the conversation doesn't exist and when this user
@@ -399,11 +445,12 @@ export async function fetchConversationForUser(conversationId: string, userId: s
 
     if (isGroup) {
       const isTeamChannel = row.conversations?.kind === "team_channel";
-      const group = isTeamChannel ? groupFromTeamChannel(row, (await fetchTeamChannelInfos([conversationId])).get(conversationId)) : groupFromMembership(row);
+      const group = isTeamChannel ? groupFromTeamChannel(row, (await fetchTeamChannelInfos([conversationId])).get(conversationId), await fetchTeamMutes()) : groupFromMembership(row);
       if (!group) return null;
       const names = await fetchSenderNames([last?.sender_id], userId);
       const lastRoom = isTeamChannel ? null : ((await fetchLastRooms([conversationId])).get(conversationId) ?? null);
-      return { ...base, kind: "group", group, participants: [], lastMessage: groupPreview(last, last?.sender_id === userId ? null : names.get(last?.sender_id ?? "")), lastRoom };
+      const broadMuted = "team" in group && group.team?.muteScope ? new Date(0).toISOString() : null;
+      return { ...base, mutedAt: base.mutedAt ?? broadMuted, kind: "group", group, participants: [], lastMessage: groupPreview(last, last?.sender_id === userId ? null : names.get(last?.sender_id ?? "")), lastRoom };
     }
     return { ...base, kind: "direct", group: null, participants: [mapProfileRow(otherProfile as ProfileRow)], lastMessage: previewTextFor(last) };
   } catch (err) {

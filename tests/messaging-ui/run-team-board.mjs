@@ -68,6 +68,8 @@ function seed(db, { role = "owner", projectRole = "lead" } = {}) {
       calls.push({ name, body });
       return { body: fn(body) };
     };
+    // Kanal listesi artık `team_channels_overview` (docs/history/369-*): eski adın yanıtı yeni adda da geçerlidir.
+    if (name === "team_list_channels") db.rpc.team_channels_overview = db.rpc[name];
   };
   reply("my_teams", () => [teamRow(role)]);
   reply("my_teams_preview", () => []);
@@ -250,6 +252,33 @@ await scenario("3. Tüm panolara bak: genel bakış kartları; karta dokununca p
   await page.getByRole("button", { name: "Müşteri toplantısı panosunu aç" }).click();
   await page.waitForFunction((id) => location.search.includes(`board=${id}`), BOARD);
 });
+
+await scenario("3b. Telefon: tuval üst ve alt menü arasını doldurur; genel bakış sayfa uzunluğuna göre uzar (iç kaydırma yok)", async ({ page }) => {
+  await page.goto(boardUrl());
+  const root = page.getByTestId("space-board");
+  await root.waitFor();
+  const frame = await root.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return { top: r.top, bottom: r.bottom, height: innerHeight };
+  });
+  assert.ok(Math.abs(frame.top - 64) <= 2, `tuval üst menünün hemen altında: ${frame.top}`);
+  assert.ok(Math.abs(frame.height - 64 - frame.bottom) <= 2, `tuval alt menünün hemen üstünde: ${frame.bottom} / ${frame.height}`);
+  await page.locator("[data-board-pages-button]").click();
+  await page.locator("[data-board-overview-open]").click();
+  const overview = page.getByTestId("board-overview");
+  await overview.waitFor();
+  const flow = await overview.evaluate((el) => {
+    const style = getComputedStyle(el);
+    const list = el.querySelector("ul");
+    const last = list.lastElementChild.getBoundingClientRect();
+    const rootRect = document.querySelector("[data-testid=space-board]").getBoundingClientRect();
+    return { position: style.position, overflowY: style.overflowY, clipped: el.scrollHeight > el.clientHeight + 1, lastInsideRoot: last.bottom <= rootRect.bottom + 1 };
+  });
+  assert.notEqual(flow.position, "absolute", "genel bakış akışta");
+  assert.equal(flow.clipped, false, "iç kaydırma yok");
+  assert.ok(flow.lastInsideRoot, "son kart çerçevenin içinde (kırpılmıyor)");
+  assert.ok(await overflowFree(page));
+}, { viewport: { width: 390, height: 520 } });
 
 await scenario("4. Yeni pano / yeniden adlandır / çoğalt / kaldır → team_create_board_in_group, team_rename_board, team_transfer_items, team_delete_board", async ({ page, db }) => {
   await page.goto(boardUrl(BOARD));

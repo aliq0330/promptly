@@ -9,7 +9,8 @@ import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 import { InviteDialog } from "./team-invites";
 import { useAuth } from "@/features/auth/auth-provider";
-import { useTranslation } from "@/lib/i18n/language-provider";
+import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
+import { rewriteAreaTerms } from "@/lib/team-area-terms";
 import { fetchMyTeam, fetchTeamPolicy, type TeamPolicy, type TeamSummary } from "@/lib/supabase/teams";
 import { fetchReviewBoard, type ReviewBoard } from "@/lib/supabase/team-center";
 import { approvalBadge } from "@/lib/team-center";
@@ -43,7 +44,7 @@ export interface TeamCtx {
  * Telefonda üst düzey ekranlar bant + kaydırılan sekme şeridi taşır; bir proje/dosya/öğe açılınca bant yerine o sayfanın kendi başlığı gelir.
  * Ekibe üye olmayan kimlik (ya da var olmayan ekip) "bulunamadı" görür: varlığı sızmaz.
  */
-export function TeamPage() {
+function TeamPageInner() {
   const { t } = useTranslation();
   const params = useSearchParams();
   const { user } = useAuth();
@@ -207,5 +208,14 @@ export function TeamPage() {
       {inviteOpen && <InviteDialog ctx={ctx} onClose={() => setInviteOpen(false)} onDone={() => undefined} />}
       {leaveOpen && <LeaveDialog ctx={ctx} onClose={() => setLeaveOpen(false)} />}
     </div>
+  );
+}
+
+/** Ekipte "Space" kavramı yoktur: Space motorundan gelen ortak metinler (formlar, hatalar) "alan" der (docs/history/370-*). */
+export function TeamPage() {
+  return (
+    <LanguageTermScope rewrite={rewriteAreaTerms}>
+      <TeamPageInner />
+    </LanguageTermScope>
   );
 }

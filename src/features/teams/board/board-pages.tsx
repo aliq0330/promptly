@@ -510,25 +510,26 @@ export function PagesButton({ buttonRef, team, open, onClick, compact }: { butto
 export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfig; actions: PageActions; onClose: () => void }) {
   const { t, language } = useTranslation();
   const extrasCount = team.pages.filter((page) => !page.isMain).length;
+  // Akışta çizilir (iç kaydırma yok): içerik kadar uzar, sayfa kayar. Alt menü boşluğunu sayfanın kendi alt dolgusu verir (docs/history/370-*).
   return (
-    <div className="absolute inset-0 z-40 flex flex-col bg-background" data-testid="board-overview">
+    <div className="flex flex-col bg-background pb-6" data-testid="board-overview">
       <header className="flex shrink-0 flex-wrap items-center gap-2.5 px-4 pb-3 pt-4 md:px-6">
-        <div className="min-w-0 flex-1">
+        <div className="w-full min-w-0 md:w-auto md:flex-1">
           <h2 className="font-display text-h2 font-extrabold text-text">{t("tb.overview.title")}</h2>
           <p className="text-small text-text-secondary">{t("tb.overview.sub", { count: team.pages.length })}</p>
         </div>
-        <Button type="button" variant="outline" onClick={onClose} className="h-11 gap-1.5 rounded-full" data-board-overview-close="">
+        <Button type="button" variant="outline" onClick={onClose} className="h-11 gap-1.5 rounded-full max-md:flex-1" data-board-overview-close="">
           <ChevronLeft size={18} aria-hidden />
           {t("tb.overview.back")}
         </Button>
         {actions.canCreate && (
-          <Button type="button" onClick={actions.create} className="h-11 gap-1.5 rounded-full" data-board-page-new="">
+          <Button type="button" onClick={actions.create} className="h-11 gap-1.5 rounded-full max-md:flex-1" data-board-page-new="">
             <Plus size={18} aria-hidden />
             {t("tb.pages.new")}
           </Button>
         )}
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 md:px-6">
+      <div className="px-4 md:px-6">
         <ul className="grid grid-cols-2 gap-2.5 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
           {team.pages.map((page, index) => {
             const current = page.id === team.currentId;

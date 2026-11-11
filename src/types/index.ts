@@ -459,7 +459,7 @@ export interface ChatGroup {
   /** 'legacy_group' = topluluk sistemine geçmeden önce oluşturulmuş eski grup sohbeti. */
   origin: "native" | "legacy_group";
   /** Ekip kanalıysa ekibi (docs/history/353-*): sohbet ekranı topluluk işlerini (oda, yönetim, katılım) çizmez, ekip sayfasına bağlanır. */
-  team?: { id: string; slug: string; name: string; tone: string; channelName: string } | null;
+  team?: { id: string; slug: string; name: string; tone: string; channelName: string; projectId?: string | null; projectTitle?: string | null; fileId?: string | null; projectMain?: boolean; muteScope?: "team" | "project" | null } | null;
 }
 
 export interface Conversation {
@@ -485,7 +485,7 @@ export interface Conversation {
   /** Topluluk sohbetinde son görünür mesajın odası ("# oda" önizleme etiketi); birebir sohbette yok. */
   lastRoom?: { id: string; name: string } | null;
   /** Mesajlar listesinde bir ekibin kanalları TEK satıra toplanır (docs/history/353-*, Yön A): satır temsilci kanalı gösterir, bu alan toplamı taşır. */
-  teamRollup?: { channelCount: number; unreadChannelCount: number; channelName: string };
+  teamRollup?: { channelCount: number; unreadChannelCount: number; channelName: string; names: string[]; extraNames: number; projects: number };
 }
 
 /** Topluluk sohbet odasının simge anahtarı (DB CHECK ile aynı liste; `lib/community-rooms.ts` simge bileşenine çevirir). */

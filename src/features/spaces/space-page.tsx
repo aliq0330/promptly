@@ -254,7 +254,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
     { key: "leave", label: t("spaces.card.leave"), icon: LogOut, onSelect: () => setDialog("leave"), danger: true, hidden: !caps.leave },
     { key: "delete", label: t("spaces.card.delete"), icon: Trash2, onSelect: () => setDialog("delete"), danger: true, hidden: !caps.delete },
   ];
-  // Telefonda Genel bakış dışındaki sekmeler bandın yerine tek üst çubukla açılır (docs/history/369-*; ekip projesindeki iç sayfalarla aynı kalıp).
+  // Telefonda Genel bakış dışındaki sekmeler bandın yerine tek üst çubukla açılır (docs/history/371-*; ekip projesindeki iç sayfalarla aynı kalıp).
   const compactPhone = phone && tab !== "overview" && tab !== "board";
 
   return (
@@ -376,7 +376,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           </p>
         )}
 
-        {/* Altı çizgili sekmeler (docs/history/369-*; ekip projesiyle aynı kalıp): simge + ad + sayı, dar ekranda kaydırılır. */}
+        {/* Altı çizgili sekmeler (docs/history/371-*; ekip projesiyle aynı kalıp): simge + ad + sayı, dar ekranda kaydırılır. */}
         <div className="mt-4" data-space-tabs="">
           <Tabs
             ariaLabel={t("spaces.page.tabsAria")}

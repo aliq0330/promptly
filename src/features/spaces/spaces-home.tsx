@@ -224,7 +224,7 @@ export function SpacesHome() {
   const iconButton = CONTROL_ICON_BUTTON;
   return (
     <PageContainer className="space-y-5 pb-16 pt-3 sm:pt-5">
-      {/* Merkez düzeni (docs/history/369-*): bant (simge + başlık + özet + "Yeni Space") ve altı çizgili bölüm sekmeleri; ekip sayfasıyla aynı dil. */}
+      {/* Merkez düzeni (docs/history/371-*): bant (simge + başlık + özet + "Yeni Space") ve altı çizgili bölüm sekmeleri; ekip sayfasıyla aynı dil. */}
       <div className="flex items-center gap-4 rounded-2xl bg-primary-soft px-4 py-4 sm:px-6 sm:py-5" data-space-home-band="">
         <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-surface text-primary shadow-card sm:h-16 sm:w-16">
           <SpacesIcon size={28} aria-hidden />

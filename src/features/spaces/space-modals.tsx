@@ -53,7 +53,7 @@ export function SpaceDialog({
   drawer,
 }: {
   title: string;
-  /** Öğe çekmecesi (docs/history/369-*): md+ sağa yapışık tam yükseklikte panel, telefonda alt sayfa — ekip projesindeki öğe çekmecesiyle aynı kalıp. */
+  /** Öğe çekmecesi (docs/history/371-*): md+ sağa yapışık tam yükseklikte panel, telefonda alt sayfa — ekip projesindeki öğe çekmecesiyle aynı kalıp. */
   drawer?: boolean;
   /** Başlığın üstünde küçük büyük harfli etiket (ör. "ERİŞİM"). */
   eyebrow?: string;
