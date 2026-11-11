@@ -330,6 +330,8 @@ await scenario("9. Lider kuyruğu: paket tek satır, not zorunlu, Değişiklik i
   const inbox = page.getByTestId("team-review-inbox");
   await inbox.waitFor();
   const rows = inbox.getByTestId("review-list").locator("[data-review-row]");
+  await rows.first().waitFor();
+  await page.waitForFunction(() => document.querySelectorAll("[data-review-row]").length >= 2).catch(() => undefined);
   assert.equal(await rows.count(), 2, "paket tek satır + tek öğe");
   await inbox.getByText("Paket · 2 öğe").waitFor();
   await inbox.locator("[data-review-detail]").getByText("Dolap görseli").first().waitFor();
@@ -747,6 +749,29 @@ await scenario("34. Öğe sayfası ⋯ (düzenleyici): onaylı öğeyi düzenley
   items: (db) => {
     db.addItem(AREA_FILE, { id: NOTE(41), title: "Onaylı not", body: "metin", rev_state: "approved", created_by: U.bob.id });
     db.addItem(AREA_FILE, { id: NOTE(42), title: "Taslak notum", body: "x", rev_state: "draft", created_by: ME });
+  },
+});
+
+await scenario("35. Lider, gönderilmemiş TASLAĞI doğrudan onaylar (docs/history/368-*): özet satırı taslağı sayar, panel satırında + öğe sayfasında Onayla → team_review_decide(approve)", async ({ page, db }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  const summary = page.getByTestId("area-review-summary");
+  await summary.waitFor();
+  await summary.getByText(/2 taslak/).waitFor();
+  const row = page.locator(`[data-review-item="${NOTE(51)}"][data-review-state="draft"]`);
+  await row.locator("[data-area-review-approve]").click();
+  await page.waitForTimeout(300);
+  const first = called(db, "team_review_decide").at(-1)?.body;
+  assert.deepEqual([first.p_item_ids, first.p_decision], [[NOTE(51)], "approve"]);
+  await page.goto(itemUrl(NOTE(52)));
+  await page.locator("[data-item-draft-hint]").waitFor();
+  await page.locator("[data-item-approve]").click();
+  await page.waitForTimeout(300);
+  const second = called(db, "team_review_decide").at(-1)?.body;
+  assert.deepEqual([second.p_item_ids, second.p_decision], [[NOTE(52)], "approve"]);
+}, {
+  items: (db) => {
+    db.addItem(AREA_FILE, { id: NOTE(51), title: "Gönderilmemiş taslak", body: "x", rev_state: "draft", created_by: U.bob.id });
+    db.addItem(AREA_FILE, { id: NOTE(52), title: "İkinci taslak", body: "y", rev_state: "draft", created_by: U.bob.id });
   },
 });
 

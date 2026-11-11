@@ -333,6 +333,19 @@ select public._check(78, 'iç yardımcılar istemciye kapalı', public._try($$se
   and public._try($$select public._team_notify_leads(gen_random_uuid(), null, 'x', 'y', 'z')$$) like '%permission denied%');
 reset role;
 
+-- 79-82) Lider, henüz gönderilmemiş TASLAĞI doğrudan onaylar (docs/history/368-*)
+set role authenticated;
+select public._as_user(:dave);
+insert into public.space_items (space_id, kind, title, body, created_by) values (public._g('A1'), 'note', 'Gönderilmemiş taslak', '', :dave::uuid) returning id as v \gset dd_
+select public._check(79, 'düzenleyici karar veremez (taslak)', public._try(format($$select public.team_review_decide(array[%L]::uuid[], 'approve')$$, :'dd_v')) like '%team_forbidden%');
+select public._as_user(:carol);
+select public._check(80, 'lider taslakta "değişiklik iste" uygulayamaz (yalnız bekleyen)', public.team_review_decide(array[:'dd_v'::uuid], 'changes', 'not') = 0 and public._state(:'dd_v'::uuid) = 'draft');
+select public.team_review_decide(array[:'dd_v'::uuid], 'approve') as v \gset da_
+select public._check(81, 'lider taslağı doğrudan onaylar', :'da_v'::int = 1 and public._state(:'dd_v'::uuid) = 'approved');
+reset role;
+select public._check(82, 'onay kararı kaydı + ekleyene bildirim', (select rev_decided_by from public.space_items where id = :'dd_v'::uuid) = :carol::uuid
+  and exists (select 1 from public.notifications where recipient_id = :dave::uuid and dedupe_key like 'revdec:%'));
+
 select n, name, ok, detail from public._results where not ok order by n;
 select 'FAILED=' || count(*) from public._results where not ok;
 select 'PASSED=' || count(*) from public._results where ok;

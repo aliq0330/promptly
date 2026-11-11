@@ -165,6 +165,8 @@ export const teamProjectsTranslations = {
   "tp.item.noteVisPrivate": { tr: "Gizli not (yalnız üyeler)", en: "Private note (members only)" },
   "tp.item.colors": { tr: "{{count}} renk", en: "{{count}} colors" },
   "tp.item.copyColor": { tr: "{{hex}} rengini kopyala", en: "Copy {{hex}}" },
+  "tp.item.draftLead": { tr: "Henüz onaya gönderilmedi · lider olarak doğrudan onaylayabilirsin", en: "Not sent for review yet · as a lead you can approve it directly" },
+  "tp.item.changesLead": { tr: "Değişiklik istendi, ekleyen henüz göndermedi · lider olarak doğrudan onaylayabilirsin", en: "Changes were requested and the author hasn't resent it · as a lead you can approve it directly" },
   "tp.item.pendingLead": { tr: "Onaya gönderildi · yalnız lider karar verir", en: "Sent for review · only a lead decides" },
   "tp.item.askWhat": { tr: "Ne değişsin? (zorunlu)", en: "What should change? (required)" },
   "tp.item.askPlaceholder": { tr: "Örn. Ölçüleri metreyle yaz", en: "e.g. Write the measurements in metres" },
