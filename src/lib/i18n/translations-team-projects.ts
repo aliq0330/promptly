@@ -90,6 +90,13 @@ export const teamProjectsTranslations = {
   "tp.page.archivedNotice": { tr: "Bu proje arşivde: salt okunur. Lider arşivden çıkarabilir.", en: "This project is archived and read-only. A lead can restore it." },
   "tp.error.load": { tr: "Yüklenemedi", en: "Couldn't load" },
   "tp.error.titleRequired": { tr: "Bir ad yaz.", en: "Enter a name." },
+  // Ad alanı etiketleri: ekipte "Space adı" yazmaz (docs/history/370-*)
+  "tp.name.project": { tr: "Proje adı", en: "Project name" },
+  "tp.name.projectPlaceholder": { tr: "ör. Mutfak yenileme", en: "e.g. Kitchen renovation" },
+  "tp.name.file": { tr: "Dosya adı", en: "File name" },
+  "tp.name.filePlaceholder": { tr: "ör. Mimar", en: "e.g. Architect" },
+  "tp.name.board": { tr: "Pano adı", en: "Board name" },
+  "tp.name.boardPlaceholder": { tr: "ör. Fikirler", en: "e.g. Ideas" },
 
   // --- Dosyalar ---
   "tp.files.title": { tr: "Dosyalar", en: "Files" },
@@ -210,6 +217,10 @@ export const teamProjectsTranslations = {
 
   // --- Kişiler ---
   "tp.people.title": { tr: "Kişiler ve roller", en: "People & roles" },
+  "tp.people.removeAria": { tr: "{{name}} kişisini projeden çıkar", en: "Remove {{name}} from the project" },
+  "tp.people.removeTitle": { tr: "{{name}} projeden çıkarılsın mı?", en: "Remove {{name}} from the project?" },
+  "tp.people.removeBody": { tr: "{{name}} bu projeye ve dosyalarına erişemez; ekipte kalır. Eklediği içerik projede durur.", en: "{{name}} will lose access to this project and its files but stays in the team. What they added stays in the project." },
+  "tp.people.allModeNote": { tr: "Bu proje \"Tüm ekip\" modunda: ekipteki herkes erişir. Birini çıkarmak için Erişimi düzenle'den \"Yalnız seçilenler\" moduna geç.", en: "This project is in \"Whole team\" mode, so the whole team has access. To remove someone, switch to \"Selected people only\" in Edit access." },
   "tp.people.edit": { tr: "Erişimi düzenle", en: "Edit access" },
   "tp.people.implicit": { tr: "Ekip yöneticisi · her projede lider", en: "Team admin · lead in every project" },
   "tp.people.note": { tr: "Roller proje başınadır ve tüm dosyalarda geçerlidir.", en: "Roles are per project and apply to every file." },

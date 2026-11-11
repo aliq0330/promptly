@@ -350,7 +350,7 @@ function CreateProjectDialog({ teamId, onClose, onCreated }: { teamId: string; o
       }
     >
       <div className="space-y-4">
-        <TitleField value={title} onChange={setTitle} autoFocus />
+        <TitleField value={title} onChange={setTitle} autoFocus label={t("tp.name.project")} placeholder={t("tp.name.projectPlaceholder")} />
         <DescriptionField value={description} onChange={setDescription} />
         <div>
           <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.create.whoSees")}</span>

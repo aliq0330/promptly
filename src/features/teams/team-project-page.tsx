@@ -39,12 +39,13 @@ import type { PathCrumb } from "./project-path-bar";
 import { InviteDialog } from "./team-invites";
 import type { TeamBoardConfig } from "./board/board-types";
 import { boardGroupPagesOf, boardPageHref, fileBoardEntries } from "@/lib/team-board";
+import { ProjectPeopleList } from "./project-people";
 import { ProjectRoleChip, projectRoleLabelKey } from "./project-ui";
 import { ProjectVariablesPanel } from "./project-variables";
 import { TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view";
 import { TeamReviewInbox } from "./team-review-inbox";
 import type { TeamCtx } from "./team-page";
-import { PersonRow, SectionError, TeamMark, toneClass } from "./team-ui";
+import { SectionError, TeamMark, toneClass } from "./team-ui";
 import { addProjectChannel, type TeamActionError } from "@/lib/supabase/teams";
 import { MuteCard, MuteChip } from "./mute-card";
 import { useTeamChannelList, useTeamMutes } from "./team-chat-data";
@@ -185,12 +186,14 @@ function ProjectInfoSheet({
   onClose,
   onAccess,
   onSettings,
+  onChanged,
 }: {
   ctx: TeamCtx;
   detail: ProjectDetail;
   onClose: () => void;
   onAccess: () => void;
   onSettings: () => void;
+  onChanged: () => void;
 }) {
   const { t } = useTranslation();
   const { team } = ctx;
@@ -239,20 +242,7 @@ function ProjectInfoSheet({
               </button>
             )}
           </div>
-          <ul className="divide-y divide-border-soft">
-            {detail.people.map((person) => (
-              <li key={`${person.type}-${person.id}`}>
-                <PersonRow
-                  name={person.name}
-                  username={person.username}
-                  avatarUrl={person.avatarUrl}
-                  sub={person.type === "group" ? t("tm.access.groupSub", { count: person.memberCount ?? 0 }) : person.implicit ? t("tp.people.implicit") : undefined}
-                  right={<ProjectRoleChip role={person.role} />}
-                />
-              </li>
-            ))}
-          </ul>
-          <p className="text-caption text-text-muted">{t("tp.people.note")}</p>
+          <ProjectPeopleList detail={detail} lead={lead} onChanged={onChanged} />
         </section>
       </div>
     </SpaceDialog>
@@ -500,20 +490,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
                 </button>
               )}
             </div>
-            <ul className="divide-y divide-border-soft">
-              {detail.people.map((person) => (
-                <li key={`${person.type}-${person.id}`}>
-                  <PersonRow
-                    name={person.name}
-                    username={person.username}
-                    avatarUrl={person.avatarUrl}
-                    sub={person.type === "group" ? t("tm.access.groupSub", { count: person.memberCount ?? 0 }) : person.implicit ? t("tp.people.implicit") : undefined}
-                    right={<ProjectRoleChip role={person.role} />}
-                  />
-                </li>
-              ))}
-            </ul>
-            <p className="mt-2 text-caption text-text-muted">{t("tp.people.note")}</p>
+            <ProjectPeopleList detail={detail} lead={lead} onChanged={onChanged} />
           </section>
         </aside>
       </div>
@@ -525,7 +502,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
       )}
 
       {dialog === "info" && (
-        <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />
+        <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} onChanged={onChanged} />
       )}
       {dialog === "file" && (
         <NewFileDialog
@@ -646,6 +623,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
                   crumbs: itemCrumbs,
                   listHref: fileHref,
                   boardHref: (id) => projectLink(team.id, project.id, { file: file.id, sub: "board", focus: id }),
+                  onBoard: false,
                   variables: detail.variables,
                   fileId: file.id,
                   drawer: true,
@@ -820,6 +798,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
                 crumbs: [...crumbs.slice(0, -1), { label: heading, href: selfHref }],
                 listHref: selfHref,
                 boardHref: (id) => projectLink(team.id, project.id, { board: boardId, sub: "board", focus: id }),
+                onBoard: !isMain,
                 variables: detail.variables,
                 fileId: board?.fileId ?? null,
                 drawer: true,
@@ -832,7 +811,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
         }}
       />
 
-      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />}
+      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} onChanged={onChanged} />}
       {dialog === "access" && (
         <ProjectAccessDialog
           project={detail}
@@ -928,7 +907,7 @@ function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDe
   return (
     <div data-testid="team-board-mode" data-board-id={areaId} data-project-role={myRole}>
       <TeamAreaView key={areaId} spaceId={areaId} role={myRole} tab="board" hrefFor={(_next, extra) => boardPageHref(team.id, project.id, areaId) + (extra?.focus ? `&focus=${extra.focus}` : "")} focusId={focus} team={config} />
-      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />}
+      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} onChanged={onChanged} />}
       {dialog === "access" && (
         <ProjectAccessDialog
           project={detail}

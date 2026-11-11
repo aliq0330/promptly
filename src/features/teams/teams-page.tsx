@@ -23,7 +23,8 @@ import { useToast } from "@/features/groups/use-toast";
 import { PHONE_HOME_BOTTOM_PAD, PHONE_HOME_PILL, PHONE_HOME_PILL_OUTLINE, PhoneHomeCard, PhoneHomeRow, PhoneHomeSection } from "@/features/content/phone-home";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { useTranslation } from "@/lib/i18n/language-provider";
+import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
+import { rewriteAreaTerms } from "@/lib/team-area-terms";
 import {
   createTeam,
   listMyInvitations,
@@ -45,7 +46,7 @@ import { ProjectMini, todoLine } from "./team-phone-home";
  * `/teams`: Ekipler (docs/history/353-*). Ekip artık topluluktan bağımsız bir sistemdir: bu sayfa üyesi olduğum ekiplerin günlük kapısı —
  * bekleyen davetler, "senden bekleyenler" (onaylar, okunmamış kanallar), ekip kartları ve "Ekip oluştur".
  */
-export function TeamsPage() {
+function TeamsPageInner() {
   const { t, language } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
@@ -524,5 +525,14 @@ export function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; o
         )}
       </div>
     </SpaceDialog>
+  );
+}
+
+/** Ekipte "Space" kavramı yoktur: Space motorundan gelen ortak metinler (formlar, hatalar) "alan" der (docs/history/370-*). */
+export function TeamsPage() {
+  return (
+    <LanguageTermScope rewrite={rewriteAreaTerms}>
+      <TeamsPageInner />
+    </LanguageTermScope>
   );
 }

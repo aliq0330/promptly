@@ -85,7 +85,7 @@ export function NewFileDialog({ project, onClose, onDone }: { project: ProjectDe
       }
     >
       <div className="space-y-4">
-        <TitleField value={title} onChange={setTitle} autoFocus />
+        <TitleField value={title} onChange={setTitle} label={t("tp.name.file")} placeholder={t("tp.name.filePlaceholder")} autoFocus />
         <ReviewSwitchRow value={review} onChange={setReview} />
         <div data-new-file-chat className="flex items-start gap-3 rounded-xl border border-border-soft bg-surface p-3.5">
           <div className="min-w-0 flex-1">
@@ -149,7 +149,7 @@ export function RenameFileDialog({ file, onClose, onDone }: { file: { id: string
       }
     >
       <div className="space-y-4">
-        <TitleField value={title} onChange={setTitle} autoFocus />
+        <TitleField value={title} onChange={setTitle} label={t("tp.name.file")} placeholder={t("tp.name.filePlaceholder")} autoFocus />
         <FormError message={error} />
       </div>
     </SpaceDialog>
@@ -194,7 +194,7 @@ export function NewBoardDialog({ projectId, fileId, fromBoard, onClose, onDone }
       }
     >
       <div className="space-y-4">
-        <TitleField value={title} onChange={setTitle} autoFocus />
+        <TitleField value={title} onChange={setTitle} label={t("tp.name.board")} placeholder={t("tp.name.boardPlaceholder")} autoFocus />
         <p className="text-caption text-text-muted">{t(fileId ? "tp.board.hintFile" : "tp.board.hintProject")}</p>
         <FormError message={error} />
       </div>
@@ -350,7 +350,7 @@ export function ProjectSettingsDialog({ project, canManage, onClose, onDone, onD
       }
     >
       <div className="space-y-4">
-        <TitleField value={title} onChange={setTitle} />
+        <TitleField value={title} onChange={setTitle} label={t("tp.name.project")} placeholder={t("tp.name.projectPlaceholder")} />
         <DescriptionField value={description} onChange={setDescription} />
         <ReviewSwitchRow value={review} onChange={setReview} />
         {canManage && (

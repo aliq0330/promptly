@@ -635,10 +635,17 @@ await scenario("24. Görsel detayı: büyütülebilir görsel, boyut/biçim bilg
   await page.locator("[data-item-image]").click();
   await page.getByRole("button", { name: "Kapat" }).first().waitFor();
   await page.keyboard.press("Escape");
+  // Dosyanın öğesi pano DEĞİL, görünmez kapta durur: "Panoda göster" yoktur (docs/history/370-*).
+  assert.equal(await page.locator("[data-item-show-on-board-button]").count(), 0, "dosya öğesinde Panoda göster yok");
+}, { items: detailItems });
+
+await scenario("24b. Gerçek panodaki görsel: Panoda göster → o panonun tuvali o öğeye odaklı açılır", async ({ page }) => {
+  await page.goto(projectUrl(`&board=${BOARD}&item=${encodeURIComponent(IMAGE(2))}`));
+  await page.locator("[data-item-image]").waitFor();
   await page.locator("[data-item-show-on-board-button]").click();
   await page.waitForURL(/sub=board/);
-  assert.ok(page.url().includes(`focus=${IMAGE(1)}`), page.url());
-}, { items: detailItems });
+  assert.ok(page.url().includes(`focus=${IMAGE(2)}`) && page.url().includes(`board=${BOARD}`), page.url());
+}, { items: (db) => { detailItems(db); db.addItem(BOARD, { id: IMAGE(2), kind: "image", title: "Pano görseli", media_url: "https://x.supabase.co/storage/v1/object/public/space-media/u/ref2.jpg", media_width: 800, media_height: 600, rev_state: "approved", created_by: U.bob.id }); } });
 
 await scenario("25. Not detayı: gövde, bağlı öğe/görünürlük satırları ve liderin notu (değişiklik istendi)", async ({ page }) => {
   await page.goto(itemUrl(NOTE(40)));
@@ -664,10 +671,11 @@ await scenario("26. Palet detayı: renkler satır satır, rengi kopyala; liste s
   await page.locator('[data-item-color="#B79F84"]').getByText("Kopyalandı").waitFor();
 }, { items: detailItems });
 
-await scenario("27. ⋯ menüsü: Panoda göster · Sil; Sil onay ister, onaylayınca öğe silinir ve liste açılır", async ({ page, db }) => {
+await scenario("27. ⋯ menüsü: Sil (dosya öğesinde Panoda göster yok); Sil onay ister, onaylayınca öğe silinir ve liste açılır", async ({ page, db }) => {
   await page.goto(itemUrl(NOTE(40)));
   await page.locator("[data-path-more]").click();
-  await page.locator("[data-item-show-on-board]").waitFor();
+  await page.locator("[data-item-delete]").waitFor();
+  assert.equal(await page.locator("[data-item-show-on-board]").count(), 0, "dosya öğesinde Panoda göster yok");
   await page.locator("[data-item-delete]").click();
   await page.getByText("Silinsin mi?").waitFor();
   await page.getByRole("button", { name: "Sil" }).last().click();
@@ -677,12 +685,12 @@ await scenario("27. ⋯ menüsü: Panoda göster · Sil; Sil onay ister, onaylay
   assert.equal(await page.locator("[data-area-row=note]").count(), 0);
 }, { items: detailItems });
 
-await scenario("28. Görüntüleyici: öğe detayını görür; silme ve onay çubuğu yok, Panoda göster var", async ({ page }) => {
+await scenario("28. Görüntüleyici: öğe detayını görür; silme, ⋯ menüsü ve onay çubuğu yok", async ({ page }) => {
   await page.goto(itemUrl(IMAGE(1)));
   await page.locator("[data-item-image]").waitFor();
   assert.equal(await page.getByTestId("area-item-bar").count(), 0);
-  await page.locator("[data-path-more]").click();
-  await page.locator("[data-item-show-on-board]").waitFor();
+  // Görüntüleyicinin dosya öğesinde ⋯ menüsünde yapacağı bir şey kalmadı (Panoda göster yok, silme yok).
+  assert.equal(await page.locator("[data-path-more]").count(), 0);
   assert.equal(await page.locator("[data-item-delete]").count(), 0);
 }, { projectRole: "view", spaceRole: "viewer", items: detailItems });
 
@@ -873,6 +881,53 @@ await scenario("38. Yeni açılan dosya bellekteki eski proje verisinde yoksa 'D
 await scenario("39. Gerçekten olmayan dosya: bir kez tazelenir, sonra 'Dosya bulunamadı' gösterilir", async ({ page }) => {
   await page.goto(projectUrl("&file=e1000000-0000-4000-8000-0000000000ff"));
   await page.getByText("Dosya bulunamadı").waitFor();
+});
+
+await scenario("40. Proje kişileri: lider açık girişi tek dokunuşla çıkarır (onay → team_set_project_access, kişi listede yok); örtük lider ve kendin çıkarılamaz; 'Tüm ekip' modunda çıkarma yok", async ({ page, db }) => {
+  const entries = [
+    { type: "member", id: "u-a", role: "lead", name: "Ayşe", username: "ayse", sub: "editor" },
+    { type: "member", id: "u-m", role: "edit", name: "Mert", username: "mert", sub: "member" },
+  ];
+  db.rpc.team_project_access = () => ({ body: { mode: "selected", base_role: "view", entries } });
+  await page.goto(projectUrl());
+  await openInfo(page);
+  const people = page.getByTestId("project-people");
+  await people.waitFor();
+  assert.equal(await people.locator("[data-project-person-remove]").count(), 3, "Sahip (örtük lider) hariç üç kişide çıkarma simgesi");
+  await people.getByRole("button", { name: "Mert kişisini projeden çıkar" }).click();
+  await page.getByText("Mert projeden çıkarılsın mı?").waitFor();
+  await page.getByRole("button", { name: "Erişimi kaldır" }).last().click();
+  await page.waitForTimeout(300);
+  const body = called(db, "team_set_project_access").at(-1)?.body;
+  assert.ok(body, "team_set_project_access çağrıldı");
+  assert.deepEqual(body.p_entries.map((entry) => entry.id), ["u-a"], "yalnız Mert çıkarıldı");
+  assert.equal(body.p_mode, "selected");
+});
+
+await scenario("41. 'Tüm ekip' modundaki projede kişi listesinde çıkarma simgesi yok, açıklama var", async ({ page, db }) => {
+  db.rpc.team_project_get = () => ({ body: detail("lead", { project: { ...detail("lead").project, access_mode: "all" } }) });
+  await page.goto(projectUrl());
+  await openInfo(page);
+  const people = page.getByTestId("project-people");
+  await people.waitFor();
+  assert.equal(await people.locator("[data-project-person-remove]").count(), 0);
+  await people.locator("[data-project-all-note]").waitFor();
+});
+
+await scenario("42. Yeni dosya / pano / proje pencerelerinde 'Space' kelimesi geçmez (Dosya adı · Pano adı · Proje adı)", async ({ page }) => {
+  await page.goto(projectUrl());
+  await page.getByRole("button", { name: "Yeni dosya" }).first().click();
+  const form = page.getByTestId("team-new-file-form");
+  await form.waitFor();
+  await form.getByLabel("Dosya adı").waitFor();
+  assert.ok(!(await form.innerText()).includes("Space"), "yeni dosya penceresi");
+  await form.getByRole("button", { name: "Vazgeç" }).click();
+  await page.goto(`${BASE}/teams/local?id=atolye-mor`);
+  await page.getByRole("button", { name: /Yeni proje/ }).first().click();
+  const project = page.getByTestId("team-create-project-form");
+  await project.waitFor();
+  await project.getByLabel("Proje adı").waitFor();
+  assert.ok(!(await project.innerText()).includes("Space"), "yeni proje penceresi");
 });
 
 // SURVEY=<klasör>: proje/dosya/pano/onay kuyruğu/öğe çekmecesi ekranlarının üç boyutta ekran görüntüsü (görsel inceleme).
