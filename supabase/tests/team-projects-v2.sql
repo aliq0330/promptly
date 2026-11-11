@@ -90,10 +90,13 @@ select public.team_create_project(public._g('T'), 'Villa Projesi', 'mimari', 'se
   jsonb_build_array(jsonb_build_object('type','member','id',:dave,'role','edit'), jsonb_build_object('type','group','id',public._g('H'),'role','view'))) as v \gset p1_
 reset role;
 insert into public._ctx values ('P1', :'p1_v');
-insert into public._ctx select 'P1A', id::text from public.spaces where team_project_id = public._g('P1') and team_file_id is null and team_area_main;
 insert into public._ctx select 'P1C', id::text from public.team_channels where project_id = public._g('P1');
+-- (docs/history/368-*) Yeni proje BOŞ doğar: otomatik "Ortak" alan yok. Eski (canlıda kalan) proje ana alanı bir fixture olarak elle kurulur.
+select public._check(200, 'yeni proje boş doğar: proje geneli alan yok, kanal var', not exists (select 1 from public.spaces where team_project_id = public._g('P1')) and public._g('P1C') is not null);
+select public._team_area_make(public._g('P1'), null, 'Villa Projesi', true, :carol);
+insert into public._ctx select 'P1A', id::text from public.spaces where team_project_id = public._g('P1') and team_file_id is null and team_area_main;
 
-select public._check(2, 'proje: ana alan + proje kanalı kendiliğinden açıldı', public._g('P1A') is not null and public._g('P1C') is not null
+select public._check(2, 'eski proje ana alanı (fixture) + proje kanalı', public._g('P1A') is not null and public._g('P1C') is not null
   and (select mode from public.team_channels where id = public._g('P1C')) = 'project'
   and (select kind from public.spaces where id = public._g('P1A')) = 'team_area' and (select visibility from public.spaces where id = public._g('P1A')) = 'private');
 select public._check(3, 'rol: sahip/yönetici örtük lider; oluşturan otomatik lider; düzenleyici/görüntüleyici girişten',
@@ -171,11 +174,12 @@ select public._check(24, 'DEĞİŞMEZ: pano silindikten sonra', public._inv() an
 -- ============================================================================================================================================
 set role authenticated;
 select public._as_user(:dave);
-select public.team_set_variable(public._g('P1'), 'musteri', 'Ahmet Bey') as v \gset v1_
+select public.team_set_variable(public._g('P1'), 'musteri', 'Ahmet Bey', public._g('F1')) as v \gset v1_
 select public.team_set_variable(public._g('P1'), 'tezgah', 'mermer', public._g('F1')) as v \gset v2_
 select public._check(25, 'düzenleyici proje + dosya değişkeni yazar', :'v1_v' is not null and :'v2_v' is not null);
 select public._check(26, 'aynı ad (büyük/küçük harf farkı) günceller, ikinci satır açmaz',
-  public.team_set_variable(public._g('P1'), 'MUSTERI', 'Ayşe Hanım') = :'v1_v'::uuid and (select count(*) from jsonb_array_elements(public.team_variables_list(public._g('P1'))) e where lower(e ->> 'name') = 'musteri') = 1);
+  public.team_set_variable(public._g('P1'), 'MUSTERI', 'Ayşe Hanım', public._g('F1')) = :'v1_v'::uuid and (select count(*) from jsonb_array_elements(public.team_variables_list(public._g('P1'))) e where lower(e ->> 'name') = 'musteri') = 1);
+select public._check(201, 'proje geneli değişken yazılamaz (dosya kapsamı şart)', public._try(format($$select public.team_set_variable(%L, 'x', 'y')$$, public._g('P1'))) like '%project_invalid%');
 select public._check(27, 'geçersiz ad reddedilir', public._try(format($$select public.team_set_variable(%L, '1abc', 'x')$$, public._g('P1'))) like '%project_invalid%'
   and public._try(format($$select public.team_set_variable(%L, 'a b', 'x')$$, public._g('P1'))) like '%project_invalid%');
 select public._as_user(:frank);
@@ -273,7 +277,7 @@ select public._check(53, 'arşiv: alanlar + kanal arşivlenir, düzenleme kapan�
   and (select archived_at from public.team_channels where id = public._g('P1C')) is not null and (select space_count from public.teams where id = public._g('T')) = (select count(*) from public.spaces where team_id = public._g('T') and team_project_id is null and archived_at is null));
 set role authenticated;
 select public._as_user(:dave);
-select public._check(54, 'arşivli projede düzenleyici düzenleyemez', not public.can_edit_space(public._g('P1A')) and public._try(format($$select public.team_create_board(%L, 'x')$$, public._g('P1'))) like '%project_archived%');
+select public._check(54, 'arşivli projede düzenleyici düzenleyemez', not public.can_edit_space(public._g('P1A')) and public._try(format($$select public.team_create_board(%L, 'x', %L)$$, public._g('P1'), public._g('F1'))) like '%project_archived%');
 select public._as_user(:alice);
 select public.team_archive_project(public._g('P1'), false);
 reset role;

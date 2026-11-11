@@ -20,6 +20,7 @@ const FILE2 = "e1000000-0000-4000-8000-0000000000b5";
 const AREA_PROJECT = SID(1);
 const AREA_FILE = SID(2);
 const BOARD = SID(3);
+const GROUP = "e1000000-0000-4000-8000-0000000000c1";
 const CHANNEL = "e1000000-0000-4000-8000-0000000000a3";
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 
@@ -31,12 +32,17 @@ const file = (id, title, over = {}) => ({ id, title, position: 0, review_require
 const person = (id, name, role, over = {}) => ({ type: "member", id, name, username: name.toLowerCase(), avatar_url: null, role, implicit: false, member_count: null, ...over });
 const detail = (role, over = {}) => ({
   project: { id: PROJECT, team_id: TEAM, title: "Villa Projesi", description: "Mimari proje", tone: "primary", access_mode: "selected", base_role: "view", review_default: true, archived_at: null, created_at: "2026-11-01T00:00:00Z" },
-  my_role: role, main_area_id: AREA_PROJECT, channel_id: CHANNEL, item_count: 4, pending_count: role === "lead" ? 2 : null,
+  my_role: role, main_area_id: null, channel_id: CHANNEL, item_count: 4, pending_count: role === "lead" ? 2 : null,
   files: [file(FILE, "Mutfak", { pending_count: role === "lead" ? 2 : null }), file(FILE2, "Banyo", { review_required: false, item_count: 2, board_count: 0, pending_count: 0 })],
-  boards: [{ id: BOARD, title: "Müşteri toplantısı", file_id: null, item_count: 3 }],
+  // docs/history/368-*: pano dosyanın içindedir; "Ortak" + "Müşteri toplantısı" tek PANO GRUBUDUR (dosya ana alanı pano değil, öğe kabıdır).
+  boards: [
+    { id: AREA_PROJECT, title: "Ortak", file_id: FILE, item_count: 4, position: 0, group_id: GROUP },
+    { id: BOARD, title: "Müşteri toplantısı", file_id: FILE, item_count: 3, position: 1, group_id: GROUP },
+  ],
+  groups: [{ id: GROUP, title: "Ortak", file_id: FILE, board_count: 2 }],
   areas: [
-    { id: AREA_PROJECT, title: "Villa Projesi", file_id: null, is_main: true, position: 0, item_count: 4, updated_at: "2026-11-10T09:00:00Z", pending_count: role === "lead" ? 1 : null, open_comments: 1 },
-    { id: BOARD, title: "Müşteri toplantısı", file_id: null, is_main: false, position: 1, item_count: 3, updated_at: "2026-11-09T09:00:00Z", pending_count: role === "lead" ? 0 : null, open_comments: 0 },
+    { id: AREA_PROJECT, title: "Ortak", file_id: FILE, is_main: false, position: 0, group_id: GROUP, item_count: 4, updated_at: "2026-11-10T09:00:00Z", pending_count: role === "lead" ? 1 : null, open_comments: 1 },
+    { id: BOARD, title: "Müşteri toplantısı", file_id: FILE, is_main: false, position: 1, group_id: GROUP, item_count: 3, updated_at: "2026-11-09T09:00:00Z", pending_count: role === "lead" ? 0 : null, open_comments: 0 },
     { id: AREA_FILE, title: "Mutfak", file_id: FILE, is_main: true, position: 0, item_count: 6, updated_at: "2026-11-08T09:00:00Z", pending_count: role === "lead" ? 2 : null, open_comments: 0 },
   ],
   people: [person("u-a", "Ayşe", "lead"), person("u-m", "Mert", "edit"), person("u-c", "Can", "view"), person("u-o", "Sahip", "lead", { implicit: true })],
@@ -101,7 +107,7 @@ function seed(db, { role = "owner", projectRole = "lead" } = {}) {
 function areaSetup(db, { spaceRole = "editor", items = (d) => d } = {}) {
   const other = U.bob;
   for (const [n, id] of [[1, AREA_PROJECT], [2, AREA_FILE], [3, BOARD]]) {
-    const row = db.addSpace(n, { owner: other.id, title: n === 1 ? "Villa Projesi" : n === 2 ? "Mutfak" : "Müşteri toplantısı", kind: "team_area", teamId: TEAM, teamProjectId: PROJECT, teamFileId: n === 2 ? FILE : null, members: [[U.alice, spaceRole]] });
+    const row = db.addSpace(n, { owner: other.id, title: n === 1 ? "Ortak" : n === 2 ? "Mutfak" : "Müşteri toplantısı", kind: "team_area", teamId: TEAM, teamProjectId: PROJECT, teamFileId: FILE, members: [[U.alice, spaceRole]] });
     row.id = id;
     db.spaceMembers.forEach((m) => { if (m.space_id === SID(n)) m.space_id = id; });
   }
@@ -163,6 +169,8 @@ function pinsSetup(db) {
   db.rpc.pin_comment_set_resolved = (b) => rec("pin_comment_set_resolved", b, (x) => { const r = db.pins.find((p) => p.id === x.p_id); if (r) r.resolved_at = x.p_resolved ? new Date().toISOString() : null; });
   db.rpc.pin_comment_delete = (b) => rec("pin_comment_delete", b, (x) => { db.pins = db.pins.filter((p) => p.id !== x.p_id && p.parent_id !== x.p_id); });
   db.rpc.team_create_board = (b) => rec("team_create_board", b, () => SID(9));
+  db.rpc.team_create_board_in_group = (b) => rec("team_create_board_in_group", b, () => SID(9));
+  db.rpc.team_rename_board_group = (b) => rec("team_rename_board_group", b, () => null);
   db.rpc.team_rename_board = (b) => rec("team_rename_board", b, () => null);
   db.rpc.team_delete_board = (b) => rec("team_delete_board", b, () => null);
   db.rpc.team_reorder_boards = (b) => rec("team_reorder_boards", b, () => null);
@@ -205,7 +213,7 @@ await scenario("1. Masaüstü: tam tuval, yol çubuğu, yüzen araç çubukları
   await board(page).waitFor();
   assert.equal(await page.locator("[data-team-chrome]").count(), 0, "bant/sekmeler gizli");
   await page.getByRole("navigation", { name: /Ana gezinme|Primary/i }).first().waitFor();
-  await page.getByRole("heading", { name: "Villa Projesi" }).first().waitFor();
+  await page.getByRole("heading", { name: "Mutfak" }).first().waitFor();
   await page.getByRole("button", { name: "Paylaş" }).first().waitFor();
   await page.locator("[data-board-pages-button]").waitFor();
   assert.match(await page.locator("[data-board-page-name]").innerText(), /Ortak/);
@@ -243,7 +251,7 @@ await scenario("3. Tüm panolara bak: genel bakış kartları; karta dokununca p
   await page.waitForFunction((id) => location.search.includes(`board=${id}`), BOARD);
 });
 
-await scenario("4. Yeni pano / yeniden adlandır / çoğalt / kaldır → team_create_board, team_rename_board, team_transfer_items, team_delete_board", async ({ page, db }) => {
+await scenario("4. Yeni pano / yeniden adlandır / çoğalt / kaldır → team_create_board_in_group, team_rename_board, team_transfer_items, team_delete_board", async ({ page, db }) => {
   await page.goto(boardUrl(BOARD));
   await page.locator("[data-board-pages-button]").click();
   await page.locator("[data-board-popover] [data-board-page-new]").click();
@@ -251,8 +259,10 @@ await scenario("4. Yeni pano / yeniden adlandır / çoğalt / kaldır → team_c
   await form.getByRole("textbox").fill("Cephe fikirleri");
   await form.getByRole("button", { name: "Panoyu aç" }).click();
   await page.waitForFunction(() => !document.querySelector("[data-testid=team-new-board-form]"));
-  const create = called(db, "team_create_board").at(-1)?.body;
-  assert.deepEqual({ p: create.p_project, t: create.p_title, f: create.p_file }, { p: PROJECT, t: "Cephe fikirleri", f: null });
+  // docs/history/368-*: açık panonun yanına yeni pano = pano grubuna ekleme (sunucu grubu kurar/büyütür)
+  const create = called(db, "team_create_board_in_group").at(-1)?.body;
+  assert.deepEqual({ from: create.p_from, t: create.p_title }, { from: BOARD, t: "Cephe fikirleri" });
+  assert.equal(called(db, "team_create_board").length, 0, "bağımsız pano RPC'si çağrılmaz");
   // ⋯ menüsü: ek panoda yeniden adlandır
   await page.goto(boardUrl(BOARD));
   await page.locator("[data-board-pages-button]").click();
@@ -271,7 +281,7 @@ await scenario("4. Yeni pano / yeniden adlandır / çoğalt / kaldır → team_c
   await row.getByRole("button", { name: "Pano seçenekleri" }).click();
   await page.getByRole("menuitem", { name: "Panoyu çoğalt" }).click();
   await page.waitForTimeout(500);
-  assert.equal(called(db, "team_create_board").at(-1)?.body.p_title.includes("(kopya)"), true);
+  assert.equal(called(db, "team_create_board_in_group").at(-1)?.body.p_title.includes("(kopya)"), true, "kopya aynı gruba girer");
   assert.equal(called(db, "team_transfer_items").at(-1)?.body.p_copy, true);
   // kaldır
   await page.goto(boardUrl(BOARD));
@@ -293,6 +303,19 @@ await scenario("5. Ekle menüsü: Promptly içeriği + Çiz ve düzenle satırla
   for (const label of ["Prompt", "Görsel", "Not", "Palet", "Workflow", "Ayar paketi", "İstek", "Metin", "Çerçeve", "Kalem", "Şekil"]) await pop.getByText(label, { exact: true }).first().waitFor();
   await pop.getByText("Not", { exact: true }).first().click();
   await page.getByRole("dialog").last().waitFor();
+});
+
+await scenario("4b. Grubu yeniden adlandır: değiştirici başlığında kalem → team_rename_board_group; grup adı başlıkta", async ({ page, db }) => {
+  await page.goto(boardUrl(BOARD));
+  await page.locator("[data-board-pages-button]").click();
+  await page.locator("[data-board-group-name]").getByText("Panolar · Ortak").waitFor();
+  await page.locator("[data-board-group-rename]").click();
+  const form = page.getByTestId("board-group-rename");
+  await form.getByRole("textbox").fill("Müşteri panoları");
+  await form.getByRole("button", { name: "Kaydet" }).click();
+  await page.waitForFunction(() => !document.querySelector("[data-testid=board-group-rename]"));
+  const body = called(db, "team_rename_board_group").at(-1)?.body;
+  assert.deepEqual({ g: body.p_group, t: body.p_title }, { g: GROUP, t: "Müşteri panoları" });
 });
 
 await scenario("6. Panoya taşı: öğe seç → Panoya taşı → team_transfer_items(taşı); kopyala kipi p_copy=true", async ({ page, db }) => {

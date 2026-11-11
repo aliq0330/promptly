@@ -7,6 +7,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { ImageIcon } from "@/components/icons/image-icon";
 import { Braces } from "@/components/icons/braces";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
+import { LayoutGrid } from "@/components/icons/layout-grid";
 import { Plus } from "@/components/icons/plus";
 import { Palette } from "@/components/icons/palette";
 import { Presentation } from "@/components/icons/presentation";
@@ -74,6 +75,9 @@ export interface AreaBoardRow {
   title: string;
   itemCount: number;
   href: string;
+  /** `group` = pano grubu (birden çok pano tek satır; docs/history/368-*). */
+  kind?: "board" | "group";
+  boardCount?: number;
 }
 
 export function TeamAreaView({
@@ -88,6 +92,7 @@ export function TeamAreaView({
   itemHref,
   focusId,
   team,
+  mainBoardRow,
 }: {
   spaceId: string;
   role: ProjectRole | null;
@@ -105,6 +110,8 @@ export function TeamAreaView({
   focusId?: string | null;
   /** Ekip panosu kipi (docs/history/367-*): doluysa pano yüzen araç çubukları, pano grubu, yorumlar ve Paylaş ile çizilir. */
   team?: TeamBoardConfig;
+  /** Liste başında alanın KENDİ tuvalini "Ana pano" satırı olarak göster (yalnız eski proje geneli alan; dosyanın öğe kabı pano değildir). */
+  mainBoardRow?: boolean;
 }) {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
@@ -158,7 +165,7 @@ export function TeamAreaView({
   return (
     <SpaceProvider key={`${state.data.space.id}-${version}`} initial={state.data} userId={userId}>
       <LanguageTermScope rewrite={rewriteAreaTerms}>
-        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} item={item ?? null} itemHref={itemHref} focusId={focusId ?? null} team={team} />
+        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} item={item ?? null} itemHref={itemHref} focusId={focusId ?? null} team={team} mainBoardRow={Boolean(mainBoardRow)} />
       </LanguageTermScope>
     </SpaceProvider>
   );
@@ -176,6 +183,7 @@ function AreaBody({
   itemHref,
   focusId,
   team,
+  mainBoardRow,
 }: {
   role: ProjectRole | null;
   tab: AreaTab | null;
@@ -188,6 +196,7 @@ function AreaBody({
   itemHref?: (itemParam: string) => string;
   focusId: string | null;
   team?: TeamBoardConfig;
+  mainBoardRow: boolean;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -203,7 +212,7 @@ function AreaBody({
     <div className="space-y-4" data-team-area={space.id} data-area-role={role ?? "none"} data-area-can-edit={caps.edit ? "1" : "0"} data-area-mode={listMode ? "list" : "tab"}>
       {listMode && <AreaReviewPanel role={role} reviewHref={reviewHref} onChanged={onChanged} />}
       {listMode ? (
-        <AreaCardGrid boards={boards} hrefFor={hrefFor} itemHref={itemHref} canAdd={caps.edit} onAdd={() => setAddOpen(true)} add={add} reviewHref={reviewHref} role={role} />
+        <AreaCardGrid boards={boards} hrefFor={hrefFor} itemHref={itemHref} canAdd={caps.edit} onAdd={() => setAddOpen(true)} add={add} reviewHref={reviewHref} role={role} mainBoardRow={mainBoardRow} />
       ) : (
         <div role="tabpanel" aria-label={t("tp.area.tab.board")}>
           <SpaceBoard focusId={focusId} team={team} />
@@ -244,10 +253,11 @@ function AreaBody({
   );
 }
 
-type RowKind = "board" | "image" | "prompt" | "note" | "palette" | "workflow" | "preset" | "request";
-const ROW_ICON: Record<RowKind, IconComponent> = { board: Presentation, image: ImageIcon, prompt: SquareTerminal, note: StickyNote, palette: Palette, workflow: WorkflowIcon, preset: SlidersHorizontal, request: LayoutDashboard };
+type RowKind = "board" | "group" | "image" | "prompt" | "note" | "palette" | "workflow" | "preset" | "request";
+const ROW_ICON: Record<RowKind, IconComponent> = { board: Presentation, group: LayoutGrid, image: ImageIcon, prompt: SquareTerminal, note: StickyNote, palette: Palette, workflow: WorkflowIcon, preset: SlidersHorizontal, request: LayoutDashboard };
 const ROW_KIND_KEY: Record<RowKind, TranslationKey> = {
   board: "tp.add.board",
+  group: "tb.group.label",
   image: "tp.kind.image",
   prompt: "tp.kind.prompt",
   note: "tp.kind.note",
@@ -256,7 +266,7 @@ const ROW_KIND_KEY: Record<RowKind, TranslationKey> = {
   preset: "tp.kind.preset",
   request: "tp.kind.request",
 };
-const ROW_TAB: Record<RowKind, AreaTab> = { board: "board", image: "images", prompt: "prompts", note: "notes", palette: "palette", workflow: "content", preset: "content", request: "content" };
+const ROW_TAB: Record<RowKind, AreaTab> = { board: "board", group: "board", image: "images", prompt: "prompts", note: "notes", palette: "palette", workflow: "content", preset: "content", request: "content" };
 
 interface AreaRow {
   key: string;
@@ -264,6 +274,8 @@ interface AreaRow {
   title: string;
   href: string;
   state?: SpaceItem["revState"];
+  /** Tür etiketinin yanında kısa bilgi (grupta "N pano"). */
+  sub?: string;
   /** Kart sanatı: görsel adresi, metin/not gövdesi, palet renkleri. */
   mediaUrl?: string | null;
   body?: string;
@@ -272,7 +284,7 @@ interface AreaRow {
 }
 
 type FilterKey = "all" | "prompt" | "image" | "palette" | "note" | "content" | "waiting";
-const FILTER_OF: Record<RowKind, FilterKey> = { board: "all", image: "image", prompt: "prompt", note: "note", palette: "palette", workflow: "content", preset: "content", request: "content" };
+const FILTER_OF: Record<RowKind, FilterKey> = { board: "all", group: "all", image: "image", prompt: "prompt", note: "note", palette: "palette", workflow: "content", preset: "content", request: "content" };
 const FILTER_LABEL: Record<Exclude<FilterKey, "all" | "waiting">, TranslationKey> = {
   prompt: "tp.kind.prompt",
   image: "tp.kind.image",
@@ -283,6 +295,7 @@ const FILTER_LABEL: Record<Exclude<FilterKey, "all" | "waiting">, TranslationKey
 /** Kart yüksekliği türe göre değişir (mockup B3: görsel uzun, palet/pano kısa); `items-start` ızgarasında doğal bir ritim verir. */
 const CARD_HEIGHT: Record<RowKind, string> = {
   board: "h-28",
+  group: "h-28",
   image: "aspect-[4/5]",
   prompt: "min-h-[11.5rem]",
   note: "min-h-[8.5rem]",
@@ -297,14 +310,17 @@ const CARD_HEIGHT: Record<RowKind, string> = {
  * karta dokununca öğe ÇEKMECESİ açılır (`?item=`; docs/history/364-*). Pano ayrı görünümdür (`sub=board`); workflow/ayar paketi/istek kartı da çekmeceyi açar.
  * "Ekle" masaüstü/tablette başlıkta, telefonda sağ altta sabit düğmedir.
  */
-function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHref, role }: { boards: AreaBoardRow[]; hrefFor: (tab: AreaTab) => string; itemHref?: (itemParam: string) => string; canAdd: boolean; onAdd: () => void; add?: AreaAddActions; reviewHref: string | null; role: ProjectRole | null }) {
+function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHref, role, mainBoardRow }: { mainBoardRow: boolean; boards: AreaBoardRow[]; hrefFor: (tab: AreaTab) => string; itemHref?: (itemParam: string) => string; canAdd: boolean; onAdd: () => void; add?: AreaAddActions; reviewHref: string | null; role: ProjectRole | null }) {
   const { t } = useTranslation();
   const { items, palettes } = useSpaceContext();
   const itemTitle = useItemTitle();
   const [filter, setFilter] = useState<FilterKey>("all");
+  // Panolar ve öğeler AYRI bölümlerdir (docs/history/368-*): pano satırları (bağımsız pano / pano grubu) üstte, dosyanın öğeleri altta.
+  const boardCards: AreaRow[] = [
+    ...(mainBoardRow ? [{ key: "main", kind: "board" as const, title: t("tp.area.list.mainBoard"), href: hrefFor("board") }] : []),
+    ...boards.map((board): AreaRow => ({ key: `board-${board.id}`, kind: board.kind === "group" ? "group" : "board", title: board.title, href: board.href, sub: board.kind === "group" ? t("tb.group.boards", { count: board.boardCount ?? 0 }) : undefined })),
+  ];
   const rows: AreaRow[] = [
-    { key: "main", kind: "board", title: t("tp.area.list.mainBoard"), href: hrefFor("board") },
-    ...boards.map((board) => ({ key: `board-${board.id}`, kind: "board" as const, title: board.title, href: board.href })),
     ...items
       .filter((item) => item.kind !== "palette" && item.kind !== "frame" && item.kind !== "text" && item.kind !== "shape")
       .map((item): AreaRow => {
@@ -313,17 +329,17 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
       }),
     ...palettes.map((palette): AreaRow => ({ key: `palette-${palette.id}`, kind: "palette", title: palette.name, href: itemHref ? itemHref(paletteItemParam(palette.id)) : hrefFor("palette"), colors: palette.colors })),
   ];
-  const content = rows.filter((row) => row.kind !== "board");
+  const content = rows;
   const counts = (key: FilterKey) => (key === "all" ? content.length : key === "waiting" ? content.filter((row) => row.state && row.state !== "approved").length : content.filter((row) => FILTER_OF[row.kind] === key).length);
   const chips: FilterKey[] = ["all", "prompt", "image", "palette", "note", "content"].filter((key) => key === "all" || counts(key as FilterKey) > 0) as FilterKey[];
   const reviewOn = Boolean(add?.reviewOn);
   const waiting = counts("waiting");
   if (waiting > 0) chips.push("waiting");
-  const shown = rows.filter((row) => (filter === "all" ? true : row.kind !== "board" && (filter === "waiting" ? Boolean(row.state && row.state !== "approved") : FILTER_OF[row.kind] === filter)));
+  const shown = rows.filter((row) => (filter === "all" ? true : filter === "waiting" ? Boolean(row.state && row.state !== "approved") : FILTER_OF[row.kind] === filter));
   const approvedN = content.filter((row) => !row.state || row.state === "approved").length;
   const pendingN = content.filter((row) => row.state === "pending").length;
   const changesN = content.filter((row) => row.state === "changes").length;
-  const nothingYet = content.length === 0;
+  const nothingYet = content.length === 0 && boardCards.length === 0;
   const total = Math.max(1, approvedN + pendingN + changesN);
   const lead = role === "lead";
 
@@ -355,6 +371,26 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
         </div>
       )}
 
+      {(boardCards.length > 0 || (canAdd && add?.onNewBoard)) && (
+        <section className="space-y-2" data-testid="area-boards">
+          <h3 className="font-display text-body font-bold text-text">{t("tb.file.boardsTitle")}</h3>
+          {boardCards.length > 0 ? (
+            <ul className="grid grid-cols-2 items-start gap-2.5 md:grid-cols-3 md:gap-3.5 xl:grid-cols-4" data-testid="area-board-rows">
+              {boardCards.map((row) => (
+                <li key={row.key}>
+                  <AreaCard row={row} reviewOn={reviewOn} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="rounded-xl border border-dashed border-border-soft px-3.5 py-3 text-small text-text-secondary" data-testid="area-boards-empty">
+              {t("tb.file.boardsEmpty")}
+            </p>
+          )}
+        </section>
+      )}
+
+      {boardCards.length > 0 && <h3 className="font-display text-body font-bold text-text">{t("tb.file.itemsTitle")}</h3>}
       <div className="flex flex-wrap items-center gap-2" data-testid="area-filters">
         <div role="group" aria-label={t("tp.area.list.viewAria")} className="flex min-w-0 flex-1 gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
           {chips.map((key) => (
@@ -424,7 +460,7 @@ function AreaCard({ row, reviewOn }: { row: AreaRow; reviewOn: boolean }) {
   const showState = row.state && (reviewOn || row.state !== "approved");
   return (
     <Link href={row.href} className="block" data-area-row={row.kind} data-area-card>
-      <span className={cn("relative block overflow-hidden rounded-[18px] md:rounded-[20px]", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning/10 text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
+      <span className={cn("relative block overflow-hidden rounded-[18px] md:rounded-[20px]", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning/10 text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" || row.kind === "group" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
         {row.kind === "image" && row.mediaUrl && <StorageImg src={row.mediaUrl} alt={row.title} className="absolute inset-0 h-full w-full object-cover" />}
         {(row.kind === "prompt" || row.kind === "note") && <span className={cn("block p-3.5 pb-14 text-caption leading-relaxed", row.kind === "prompt" && "font-mono")}>{(row.body || "").slice(0, 260)}</span>}
         {row.kind === "palette" && (
@@ -434,13 +470,13 @@ function AreaCard({ row, reviewOn }: { row: AreaRow; reviewOn: boolean }) {
             ))}
           </span>
         )}
-        {(row.kind === "board" || row.kind === "workflow" || row.kind === "preset" || row.kind === "request") && (
+        {(row.kind === "board" || row.kind === "group" || row.kind === "workflow" || row.kind === "preset" || row.kind === "request") && (
           <span className="absolute inset-0 grid place-items-center opacity-70">
             <Icon size={30} aria-hidden />
           </span>
         )}
         <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-3 pb-2.5 pt-7 text-white">
-          <span className="block text-[0.625rem] font-bold uppercase tracking-[0.06em] opacity-90">{t(ROW_KIND_KEY[row.kind])}</span>
+          <span className="block text-[0.625rem] font-bold uppercase tracking-[0.06em] opacity-90">{t(ROW_KIND_KEY[row.kind])}{row.sub ? ` · ${row.sub}` : ""}</span>
           <span className="block truncate text-small font-bold leading-snug">{row.title}</span>
         </span>
         {showState && row.state && (
@@ -455,7 +491,7 @@ function AreaCard({ row, reviewOn }: { row: AreaRow; reviewOn: boolean }) {
 
 /**
  * "Ekle" menüsü (mockup 4): ne eklemek istiyorsun? Görsel/prompt/not/palet ilgili sekmeye götürür (orada kendi ekleme düğmesi vardır);
- * workflow ve ayar paketi panodaki "Promptly'den ekle" aracıyla gelir; pano ve değişken kendi pencereleriyle açılır.
+ * dosyanın öğeleri not, prompt, görsel ve paletten oluşur; workflow/ayar paketi panodaki "Promptly'den ekle" aracıyla panoya gelir; pano ve değişken kendi pencereleriyle açılır.
  */
 function AddMenuDialog({ reviewOn, onClose, onPick, onNewBoard, onNewVariable }: { reviewOn: boolean; onClose: () => void; onPick: (kind: "image" | "prompt" | "note" | "palette" | "board") => void; onNewBoard?: () => void; onNewVariable?: () => void }) {
   const { t } = useTranslation();
@@ -463,8 +499,6 @@ function AddMenuDialog({ reviewOn, onClose, onPick, onNewBoard, onNewVariable }:
     ...(onNewBoard ? [{ key: "board", icon: Presentation, label: "tp.add.board" as TranslationKey, hint: "tp.add.boardHint" as TranslationKey, run: onNewBoard }] : []),
     { key: "image", icon: ImageIcon, label: "tp.add.image", hint: "tp.add.imageHint", run: () => onPick("image") },
     { key: "prompt", icon: SquareTerminal, label: "tp.add.prompt", hint: "tp.add.promptHint", run: () => onPick("prompt") },
-    { key: "workflow", icon: WorkflowIcon, label: "tp.add.workflow", hint: "tp.add.workflowHint", run: () => onPick("board") },
-    { key: "preset", icon: SlidersHorizontal, label: "tp.add.preset", hint: "tp.add.presetHint", run: () => onPick("board") },
     ...(onNewVariable ? [{ key: "variable", icon: Braces, label: "tp.add.variable" as TranslationKey, hint: "tp.add.variableHint" as TranslationKey, run: onNewVariable }] : []),
     { key: "palette", icon: Palette, label: "tp.add.palette", hint: "tp.add.paletteHint", run: () => onPick("palette") },
     { key: "note", icon: StickyNote, label: "tp.add.note", hint: "tp.add.noteHint", run: () => onPick("note") },

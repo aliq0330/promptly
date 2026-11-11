@@ -8,7 +8,7 @@ import { projectLink } from "./team-projects.ts";
 // Pano grubu
 // ---------------------------------------------------------------------------------------------
 
-/** Bir pano grubunun sayfası: ana alan + ek panolar (sunucudaki `areas`). */
+/** Bir pano grubunun sayfası (docs/history/368-*: yalnız AYNI GRUPTAKİ panolar; bağımsız pano tek sayfadır). */
 export interface BoardPageInfo {
   id: string;
   title: string;
@@ -17,6 +17,7 @@ export interface BoardPageInfo {
   updatedAt: string | null;
   pendingCount: number | null;
   openComments: number;
+  groupId: string | null;
 }
 
 interface AreaLike {
@@ -25,43 +26,87 @@ interface AreaLike {
   fileId: string | null;
   isMain?: boolean;
   position?: number;
+  groupId?: string | null;
   itemCount: number;
   updatedAt?: string | null;
   pendingCount?: number | null;
   openComments?: number;
 }
 
+interface GroupLike {
+  id: string;
+  title: string;
+  fileId: string | null;
+}
+
 interface DetailLike {
   mainAreaId: string | null;
   areas?: AreaLike[];
-  boards: { id: string; title: string; fileId: string | null; itemCount: number }[];
+  groups?: GroupLike[];
+  boards: { id: string; title: string; fileId: string | null; itemCount: number; position?: number; groupId?: string | null }[];
   files: { id: string; title: string; mainAreaId: string | null; itemCount: number }[];
 }
 
+function toPage(area: AreaLike, title: string): BoardPageInfo {
+  return {
+    id: area.id,
+    title,
+    isMain: Boolean(area.isMain),
+    itemCount: area.itemCount,
+    updatedAt: area.updatedAt ?? null,
+    pendingCount: area.pendingCount ?? null,
+    openComments: area.openComments ?? 0,
+    groupId: area.groupId ?? null,
+  };
+}
+
 /**
- * Bir kapsamın (proje geneli `fileId = null`, ya da dosya) sayfaları, sıralı: ana pano ilk, sonra ek panolar `position`'a göre.
- * Eski sunucu (`areas` yok) için `boards` + ana alan kimliklerinden türetilir.
+ * Açık panonun sayfaları = ONUN GRUBUNUN panoları (sıralı). Pano bir grupta değilse (bağımsız pano) tek sayfadır; eski ana alan (dosyanın öğe kabı)
+ * de tek sayfadır. `areas` yoksa (eski sunucu) `boards`'tan türetilir.
  */
-export function boardPagesOf(detail: DetailLike, fileId: string | null, mainTitle: string): BoardPageInfo[] {
-  const fromAreas = detail.areas?.filter((area) => area.fileId === fileId);
-  if (fromAreas && fromAreas.length > 0) {
-    const main = fromAreas.filter((area) => area.isMain);
-    const extras = fromAreas.filter((area) => !area.isMain).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-    return [...main, ...extras].map((area) => ({
-      id: area.id,
-      title: area.isMain ? mainTitle : area.title,
-      isMain: Boolean(area.isMain),
-      itemCount: area.itemCount,
-      updatedAt: area.updatedAt ?? null,
-      pendingCount: area.pendingCount ?? null,
-      openComments: area.openComments ?? 0,
-    }));
+export function boardGroupPagesOf(detail: DetailLike, areaId: string, mainTitle: string): BoardPageInfo[] {
+  const areas: AreaLike[] = detail.areas ?? [
+    ...(detail.mainAreaId ? [{ id: detail.mainAreaId, title: mainTitle, fileId: null, isMain: true, itemCount: 0 }] : []),
+    ...detail.files.filter((file) => file.mainAreaId).map((file) => ({ id: file.mainAreaId as string, title: file.title, fileId: file.id, isMain: true, itemCount: file.itemCount })),
+    ...detail.boards.map((board) => ({ id: board.id, title: board.title, fileId: board.fileId, isMain: false, position: board.position, groupId: board.groupId ?? null, itemCount: board.itemCount })),
+  ];
+  const current = areas.find((area) => area.id === areaId);
+  if (!current) return [];
+  if (current.isMain || !current.groupId) return [toPage(current, current.isMain ? mainTitle : current.title)];
+  return areas
+    .filter((area) => !area.isMain && area.groupId === current.groupId)
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    .map((area) => toPage(area, area.title));
+}
+
+/** Dosya ekranındaki pano satırı: bağımsız pano ya da bir pano GRUBU (grup tek satırdır; açınca ilk panoya gider). */
+export interface FileBoardEntry {
+  kind: "board" | "group";
+  /** Pano kimliği ya da grup kimliği. */
+  id: string;
+  title: string;
+  itemCount: number;
+  boardCount: number;
+  /** Satıra dokununca açılacak pano (grupta sıradaki ilk pano). */
+  openBoardId: string;
+}
+
+export function fileBoardEntries(detail: Pick<DetailLike, "boards" | "groups">, fileId: string): FileBoardEntry[] {
+  const boards = detail.boards.filter((board) => board.fileId === fileId).slice().sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  const entries: FileBoardEntry[] = [];
+  const seen = new Set<string>();
+  for (const board of boards) {
+    if (!board.groupId) {
+      entries.push({ kind: "board", id: board.id, title: board.title, itemCount: board.itemCount, boardCount: 1, openBoardId: board.id });
+      continue;
+    }
+    if (seen.has(board.groupId)) continue;
+    seen.add(board.groupId);
+    const members = boards.filter((other) => other.groupId === board.groupId);
+    const title = detail.groups?.find((group) => group.id === board.groupId)?.title ?? board.title;
+    entries.push({ kind: "group", id: board.groupId, title, itemCount: members.reduce((sum, member) => sum + member.itemCount, 0), boardCount: members.length, openBoardId: members[0].id });
   }
-  const mainId = fileId ? (detail.files.find((file) => file.id === fileId)?.mainAreaId ?? null) : detail.mainAreaId;
-  const pages: BoardPageInfo[] = [];
-  if (mainId) pages.push({ id: mainId, title: mainTitle, isMain: true, itemCount: 0, updatedAt: null, pendingCount: null, openComments: 0 });
-  for (const board of detail.boards) if (board.fileId === fileId && board.id !== mainId) pages.push({ id: board.id, title: board.title, isMain: false, itemCount: board.itemCount, updatedAt: null, pendingCount: null, openComments: 0 });
-  return pages;
+  return entries;
 }
 
 /** Bir panonun adresi: her pano (dosya ana alanı dahil) `?board=<alan>&sub=board` ile açılır. */

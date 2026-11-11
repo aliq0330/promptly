@@ -38,7 +38,7 @@ import {
 import type { PathCrumb } from "./project-path-bar";
 import { InviteDialog } from "./team-invites";
 import type { TeamBoardConfig } from "./board/board-types";
-import { boardPageHref, boardPagesOf } from "@/lib/team-board";
+import { boardGroupPagesOf, boardPageHref, fileBoardEntries } from "@/lib/team-board";
 import { ProjectRoleChip, projectRoleLabelKey } from "./project-ui";
 import { ProjectVariablesPanel } from "./project-variables";
 import { TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view";
@@ -66,6 +66,8 @@ export function TeamProjectPage({ ctx }: { ctx: TeamCtx }) {
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "missing" | "failed">("loading");
   const [version, setVersion] = useState(0);
+  const [loadedVersion, setLoadedVersion] = useState(-1);
+  const [retried, setRetried] = useState<string | null>(null);
   const reload = useCallback(() => setVersion((v) => v + 1), []);
 
   useEffect(() => {
@@ -75,6 +77,7 @@ export function TeamProjectPage({ ctx }: { ctx: TeamCtx }) {
       (data) => {
         if (!alive) return;
         setDetail(data);
+        setLoadedVersion(version);
         setState("ready");
       },
       (e: TeamActionError) => {
@@ -86,7 +89,28 @@ export function TeamProjectPage({ ctx }: { ctx: TeamCtx }) {
     };
   }, [projectId, version]);
 
+  // Yeni açılan dosya/pano bellekteki eski proje verisinde yoktur ("Dosya bulunamadı" yalancısı): bulunamayınca veri BİR KEZ tazelenir, o sırada iskelet gösterilir.
+  const stale = loadedVersion < version;
+  const missingKey =
+    state === "ready" && detail
+      ? fileId
+        ? detail.files.some((item) => item.id === fileId)
+          ? null
+          : `file:${fileId}`
+        : boardId && boardId !== detail.mainAreaId && !detail.boards.some((item) => item.id === boardId) && !detail.areas?.some((item) => item.id === boardId)
+          ? `board:${boardId}`
+          : null
+      : null;
+  useEffect(() => {
+    if (missingKey && retried !== missingKey && !stale) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- tek seferlik veri tazeleme: yeni açılan dosya/pano eski bellekte yok
+      setRetried(missingKey);
+      reload();
+    }
+  }, [missingKey, retried, stale, reload]);
+
   if (state === "loading") return <Skeleton className="h-72 w-full rounded-xl" />;
+  if (missingKey && (stale || retried !== missingKey)) return <Skeleton className="h-72 w-full rounded-xl" />;
   if (state !== "ready" || !detail) {
     return (
       <EmptyState
@@ -138,10 +162,12 @@ function FloatingAction({ onClick, label, attrs }: { onClick: () => void; label:
   );
 }
 
+/** Dosya ekranındaki pano satırları: bağımsız pano ve PANO GRUBU (grup tek satırdır, dokununca ilk panonun tuvaline gider). `fileId = null` = eski proje geneli panolar (salt okunur kalıntı). */
 function boardRows(detail: ProjectDetail, teamId: string, fileId: string | null): AreaBoardRow[] {
-  return detail.boards
-    .filter((board) => board.fileId === fileId && board.id !== detail.mainAreaId)
-    .map((board) => ({ id: board.id, title: board.title, itemCount: board.itemCount, href: projectLink(teamId, detail.project.id, { board: board.id }) }));
+  const entries = fileId
+    ? fileBoardEntries(detail, fileId)
+    : detail.boards.filter((board) => board.fileId === null).map((board) => ({ kind: "board" as const, id: board.id, title: board.title, itemCount: board.itemCount, boardCount: 1, openBoardId: board.id }));
+  return entries.map((entry) => ({ id: entry.id, title: entry.title, itemCount: entry.itemCount, kind: entry.kind, boardCount: entry.boardCount, href: boardPageHref(teamId, detail.project.id, entry.openBoardId) }));
 }
 
 function teamCrumb(ctx: TeamCtx): PathCrumb {
@@ -155,14 +181,12 @@ function ProjectInfoSheet({
   ctx,
   detail,
   onClose,
-  onChanged,
   onAccess,
   onSettings,
 }: {
   ctx: TeamCtx;
   detail: ProjectDetail;
   onClose: () => void;
-  onChanged: () => void;
   onAccess: () => void;
   onSettings: () => void;
 }) {
@@ -215,7 +239,6 @@ function ProjectInfoSheet({
           </ul>
           <p className="text-caption text-text-muted">{t("tp.people.note")}</p>
         </section>
-        <ProjectVariablesPanel projectId={project.id} fileId={null} variables={detail.variables} role={myRole} onChanged={onChanged} />
       </div>
     </SpaceDialog>
   );
@@ -296,12 +319,13 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
   const { team } = ctx;
   const { project, myRole } = detail;
   const lead = canReview(myRole);
-  const [dialog, setDialog] = useState<null | "info" | "file" | "access" | "settings" | "board" | "variable">(null);
+  const [dialog, setDialog] = useState<null | "info" | "file" | "access" | "settings">(null);
   const archived = Boolean(project.archivedAt);
+  // Proje BOŞ doğar (docs/history/368-*): proje geneli alan/pano açılmaz. Önceki sürümden kalan veri varsa yalnız OKUNUR/açılır, silinmez.
   const sharedBoards = boardRows(detail, team.id, null);
+  const legacyShared = Boolean(detail.mainAreaId) && (detail.itemCount > 0 || sharedBoards.length > 0);
   const overview = teamLink(team.id);
   const chatHref = detail.channelId ? teamLink(team.id, "chat", { channel: detail.channelId }) : null;
-  const canAdd = canAddToArea(myRole) && !archived;
   const reviewOnNames = detail.files.filter((file) => file.reviewRequired).map((file) => file.title);
   const FILE_TONES = ["primary", "plum", "success", "warning"] as const;
 
@@ -358,11 +382,11 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
             {reviewOnNames.length > 0 && <span className="truncate text-small text-text-muted max-md:hidden">{t("tc.proj.reviewOn", { names: reviewOnNames.join(", ") })}</span>}
           </div>
           <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:gap-3.5 xl:grid-cols-3" data-testid="project-files">
-            {detail.mainAreaId && (
+            {legacyShared && detail.mainAreaId && (
               <li>
                 <FileCard
                   href={projectLink(team.id, project.id, { board: detail.mainAreaId })}
-                  title={t("tp.area.projectWide")}
+                  title={t("tb.file.legacyTitle")}
                   meta={t("tp.home.sharedSub", { items: detail.itemCount })}
                   tone="plum"
                   attrs={{ "data-project-main-area": "" }}
@@ -394,10 +418,10 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           </ul>
           {detail.files.length === 0 && <p className="rounded-xl border border-dashed border-border-soft p-5 text-small text-text-muted">{t(lead ? "tp.files.emptyLead" : "tp.files.empty")}</p>}
 
-          {(sharedBoards.length > 0 || canAdd) && (
+          {legacyShared && sharedBoards.length > 0 && (
             <>
-              <h2 className={cn("font-display text-h3 font-bold text-text", sharedBoards.length === 0 && "max-md:hidden")}>{t("tc.proj.boards")}</h2>
-              <ul className={cn("grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 md:gap-3", sharedBoards.length === 0 && "max-md:hidden")} data-testid="project-boards">
+              <h2 className="font-display text-h3 font-bold text-text">{t("tc.proj.boards")}</h2>
+              <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 md:gap-3" data-testid="project-boards">
                 {sharedBoards.map((board) => (
                   <li key={board.id}>
                     <Link href={board.href} className="block rounded-2xl border border-border-soft bg-surface px-3.5 py-3 hover:shadow-card" data-project-board={board.id}>
@@ -406,13 +430,6 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
                     </Link>
                   </li>
                 ))}
-                {canAdd && (
-                  <li className="max-md:hidden">
-                    <button type="button" onClick={() => setDialog("board")} className="grid h-full min-h-16 w-full place-items-center rounded-2xl border border-dashed border-border text-small font-semibold text-text-muted hover:bg-surface-soft" data-project-new-board>
-                      + {t("tp.board.new")}
-                    </button>
-                  </li>
-                )}
               </ul>
             </>
           )}
@@ -443,7 +460,6 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
             </ul>
             <p className="mt-2 text-caption text-text-muted">{t("tp.people.note")}</p>
           </section>
-          <ProjectVariablesPanel projectId={project.id} fileId={null} variables={detail.variables} role={myRole} onChanged={onChanged} />
         </aside>
       </div>
 
@@ -454,7 +470,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
       )}
 
       {dialog === "info" && (
-        <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onChanged={onChanged} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />
+        <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />
       )}
       {dialog === "file" && (
         <NewFileDialog
@@ -463,17 +479,6 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           onDone={(id) => {
             setDialog(null);
             router.push(projectLink(team.id, project.id, { file: id }));
-          }}
-        />
-      )}
-      {dialog === "board" && (
-        <NewBoardDialog
-          projectId={project.id}
-          fileId={null}
-          onClose={() => setDialog(null)}
-          onDone={(id) => {
-            setDialog(null);
-            router.push(projectLink(team.id, project.id, { board: id }));
           }}
         />
       )}
@@ -637,10 +642,12 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
         <NewBoardDialog
           projectId={project.id}
           fileId={file.id}
+          fromBoard={null}
           onClose={() => setDialog(null)}
           onDone={(id) => {
             setDialog(null);
-            router.push(projectLink(team.id, project.id, { board: id }));
+            onChanged();
+            router.push(boardPageHref(team.id, project.id, id));
           }}
         />
       )}
@@ -663,8 +670,14 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
   const [renaming, setRenaming] = useState(false);
   const [title, setTitle] = useState(board?.title ?? "");
   const [error, setError] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<null | "info" | "board" | "variable" | "access" | "settings">(null);
+  const [dialog, setDialog] = useState<null | "info" | "access" | "settings">(null);
   const known = isMain || Boolean(board);
+  // Dosyanın bir panosu artık doğrudan tuvalde açılır (öğeler dosyanın listesindedir); eski liste adresleri tuvale yönlenir.
+  const redirectToCanvas = Boolean(board) && !isMain && !tab && !itemParam;
+  useEffect(() => {
+    if (redirectToCanvas) router.replace(boardPageHref(team.id, project.id, boardId), { scroll: false });
+  }, [redirectToCanvas, router, team.id, project.id, boardId]);
+  if (redirectToCanvas) return <Skeleton className="h-72 w-full rounded-xl" />;
 
   if (!known) return <EmptyState icon={Presentation} title={t("tp.board.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, project.id) }} />;
   const heading = isMain ? t("tp.area.projectWide") : (board?.title ?? "");
@@ -741,6 +754,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
         role={myRole}
         tab={tab}
         boards={isMain ? boardRows(detail, team.id, null) : []}
+        mainBoardRow
         hrefFor={(next, extra) => projectLink(team.id, project.id, { board: boardId, sub: next, focus: extra?.focus })}
         itemHref={(id) => projectLink(team.id, project.id, { board: boardId, item: id })}
         focusId={focus}
@@ -760,12 +774,10 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
         reviewHref={lead ? projectLink(team.id, project.id, { review: true }) : null}
         add={{
           reviewOn: detail.project.reviewDefault,
-          onNewBoard: isMain ? () => setDialog("board") : undefined,
-          onNewVariable: isMain ? () => setDialog("variable") : undefined,
         }}
       />
 
-      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onChanged={onChanged} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />}
+      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />}
       {dialog === "access" && (
         <ProjectAccessDialog
           project={detail}
@@ -786,29 +798,6 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
             onChanged();
           }}
           onDeleted={() => router.replace(projectLink(team.id))}
-        />
-      )}
-      {dialog === "variable" && (
-        <VariableDialog
-          projectId={project.id}
-          fileId={null}
-          variable={null}
-          onClose={() => setDialog(null)}
-          onDone={() => {
-            setDialog(null);
-            onChanged();
-          }}
-        />
-      )}
-      {dialog === "board" && (
-        <NewBoardDialog
-          projectId={project.id}
-          fileId={null}
-          onClose={() => setDialog(null)}
-          onDone={(id) => {
-            setDialog(null);
-            router.push(projectLink(team.id, project.id, { board: id }));
-          }}
         />
       )}
     </div>
@@ -837,8 +826,11 @@ function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDe
   const scopeFile = area ? (area.fileId ? (detail.files.find((file) => file.id === area.fileId) ?? null) : null) : (detail.files.find((file) => file.mainAreaId === areaId) ?? fileOfParam ?? null);
   const scopeFileId = scopeFile?.id ?? null;
   const mainTitle = scopeFile?.title ?? t("tp.area.projectWide");
-  const pages = boardPagesOf(detail, scopeFileId, mainTitle);
+  // Pano değiştirici YALNIZ açık panonun grubunu gösterir (docs/history/368-*); bağımsız pano tek sayfadır.
+  const pages = areaId ? boardGroupPagesOf(detail, areaId, mainTitle) : [];
   const current = pages.find((page) => page.id === areaId);
+  const groupId = current?.groupId ?? null;
+  const groupTitle = groupId ? (detail.groups?.find((group) => group.id === groupId)?.title ?? null) : null;
   const backHref = scopeFile ? projectLink(team.id, project.id, { file: scopeFile.id }) : projectLink(team.id, project.id);
   const lead = canReview(myRole);
 
@@ -855,6 +847,8 @@ function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDe
       pages,
       currentId: areaId,
       mainTitle,
+      groupId,
+      groupTitle,
       people: detail.people,
       archived: Boolean(project.archivedAt),
       accessMode: project.accessMode === "all" ? "all" : "selected",
@@ -870,7 +864,7 @@ function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDe
       reload: onChanged,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yapılandırma yalnız bu girdilerle yeniden kurulur; ctx.can/router kararlıdır
-  }, [current, areaId, team.id, team.name, team.myRole, project, scopeFileId, scopeFile?.title, myRole, pages, mainTitle, detail.people, comment, backHref, lead, onChanged]);
+  }, [current, areaId, team.id, team.name, team.myRole, project, scopeFileId, scopeFile?.title, myRole, pages, mainTitle, groupId, groupTitle, detail.people, comment, backHref, lead, onChanged]);
 
   if (!areaId || !current || !config) {
     return <EmptyState icon={Presentation} title={t("tp.board.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, project.id) }} />;
@@ -879,7 +873,7 @@ function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDe
   return (
     <div data-testid="team-board-mode" data-board-id={areaId} data-project-role={myRole}>
       <TeamAreaView key={areaId} spaceId={areaId} role={myRole} tab="board" hrefFor={(_next, extra) => boardPageHref(team.id, project.id, areaId) + (extra?.focus ? `&focus=${extra.focus}` : "")} focusId={focus} team={config} />
-      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onChanged={onChanged} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />}
+      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />}
       {dialog === "access" && (
         <ProjectAccessDialog
           project={detail}

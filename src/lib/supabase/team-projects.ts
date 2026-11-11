@@ -46,6 +46,16 @@ export interface ProjectBoard {
   fileId: string | null;
   itemCount: number;
   position?: number;
+  /** Pano grubu (docs/history/368-*); bağımsız panoda `null`. */
+  groupId?: string | null;
+}
+
+/** Pano grubu: birden çok panonun bir arada olduğu küme (`team_board_groups`). */
+export interface ProjectBoardGroup {
+  id: string;
+  title: string;
+  fileId: string | null;
+  boardCount: number;
 }
 
 /** Pano grubunun bir sayfası (docs/history/367-*): proje geneli ve her dosya için ana alan + ek panolar. Eski sunucuda yoktur. */
@@ -55,6 +65,7 @@ export interface ProjectArea {
   fileId: string | null;
   isMain: boolean;
   position: number;
+  groupId?: string | null;
   itemCount: number;
   updatedAt: string | null;
   /** Yalnız lider için dolu. */
@@ -104,6 +115,7 @@ export interface ProjectDetail {
   files: ProjectFileSummary[];
   boards: ProjectBoard[];
   areas?: ProjectArea[];
+  groups?: ProjectBoardGroup[];
   people: ProjectPerson[];
   variables: ProjectVariable[];
 }
@@ -258,8 +270,12 @@ export const renameFile = (file: string, title: string) => rpc<void>("team_renam
 /** Onay anahtarı; dönen sayı = onaysız kalan öğe (kapatınca kendiliğinden onaylanmaz). */
 export const setFileReview = (file: string, on: boolean) => rpc<number>("team_file_set_review", { p_file: file, p_on: on });
 export const deleteFile = (file: string) => rpc<void>("team_delete_file", { p_file: file });
-export const createBoard = (project: string, title: string, file: string | null = null) =>
+/** Dosya içinde BAĞIMSIZ pano (proje geneli pano yok; `file` şarttır). */
+export const createBoard = (project: string, title: string, file: string) =>
   rpc<string>("team_create_board", { p_project: project, p_title: title, p_file: file });
+/** Açık panonun yanına yeni pano: ikisi bir pano grubu olur (grup yoksa kurulur, varsa pano gruba eklenir). */
+export const createBoardInGroup = (fromBoard: string, title: string) => rpc<string>("team_create_board_in_group", { p_from: fromBoard, p_title: title });
+export const renameBoardGroup = (group: string, title: string) => rpc<void>("team_rename_board_group", { p_group: group, p_title: title });
 export const renameBoard = (space: string, title: string) => rpc<void>("team_rename_board", { p_space: space, p_title: title });
 export const deleteBoard = (space: string) => rpc<void>("team_delete_board", { p_space: space });
 

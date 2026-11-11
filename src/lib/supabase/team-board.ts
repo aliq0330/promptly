@@ -2,7 +2,7 @@ import { supabase } from "./client";
 import { SPACE_MEDIA_BUCKET, SpaceError, fetchSpaceItems, toSpaceError, type SpaceItem } from "./spaces";
 import { parseProtectedMediaUrl } from "./media-url";
 import { rpc as teamRpc } from "./teams";
-import { createBoard } from "./team-projects";
+import { createBoard, createBoardInGroup } from "./team-projects";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { copyTitle } from "@/lib/team-board";
 
@@ -174,10 +174,14 @@ export async function transferItems(args: { fromSpace: string; toSpace: string; 
   return { done: data.done, skipped: data.skipped, oldIds: data.old_ids ?? [], newIds: data.new_ids ?? [] };
 }
 
-/** Panoyu çoğaltır: yeni pano + tüm öğelerin (ve aralarındaki okların) kopyası. Onay açıksa düzenleyicinin kopyası taslak başlar. */
-export async function duplicateBoard(args: { projectId: string; fileId: string | null; fromSpace: string; title: string; suffix: string }): Promise<string> {
+/**
+ * Panoyu çoğaltır: yeni pano + tüm öğelerin (ve aralarındaki okların) kopyası. Kopya aynı GRUBA girer (panonun bir grubu varsa ya da `grouped` ise);
+ * dosyanın eski ana alanı (pano değil) çoğaltılırsa kopya bağımsız pano olur. Onay açıksa düzenleyicinin kopyası taslak başlar.
+ */
+export async function duplicateBoard(args: { projectId: string; fileId: string | null; fromSpace: string; title: string; suffix: string; asBoard: boolean }): Promise<string> {
   const items = await fetchSpaceItems(args.fromSpace);
-  const id = await createBoard(args.projectId, copyTitle(args.title, args.suffix), args.fileId);
+  const title = copyTitle(args.title, args.suffix);
+  const id = args.asBoard ? await createBoardInGroup(args.fromSpace, title) : await createBoard(args.projectId, title, args.fileId ?? "");
   // 200'lük parçalar: sunucu tek çağrıda en çok 200 öğe alır.
   for (let i = 0; i < items.length; i += 200) await transferItems({ fromSpace: args.fromSpace, toSpace: id, items: items.slice(i, i + 200), copy: true });
   return id;

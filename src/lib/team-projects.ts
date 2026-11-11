@@ -110,29 +110,23 @@ export function projectLink(
   });
 }
 
-/** Değişken değeri çözümü: kullanıcı yazdığı > dosya değişkeni > proje değişkeni (SQL/arayüz aynı sıra; adlar büyük/küçük harf duyarsız). */
+/** Değişken değeri çözümü: kullanıcı yazdığı > dosya değişkeni (proje ortak değişkeni YOK; adlar büyük/küçük harf duyarsız). */
 export interface ProjectVariableLike {
   fileId: string | null;
   name: string;
   value: string;
 }
 
-export function effectiveVariables(all: readonly ProjectVariableLike[], fileId: string | null): { name: string; value: string; scope: "file" | "project"; overrides: boolean }[] {
-  const project = new Map<string, ProjectVariableLike>();
+export function effectiveVariables(all: readonly ProjectVariableLike[], fileId: string | null): { name: string; value: string; scope: "file"; overrides: false }[] {
+  // Proje ortak değişkenleri kalktı (docs/history/368-*): yalnız dosyanın kendi değişkenleri çözülür; eski proje düzeyi değerler veritabanında durur ama kullanılmaz.
+  if (fileId === null) return [];
   const file = new Map<string, ProjectVariableLike>();
-  for (const variable of all) {
-    const key = variable.name.toLowerCase();
-    if (variable.fileId === null) project.set(key, variable);
-    else if (variable.fileId === fileId) file.set(key, variable);
-  }
-  const out: { name: string; value: string; scope: "file" | "project"; overrides: boolean }[] = [];
-  for (const [key, variable] of file) out.push({ name: variable.name, value: variable.value, scope: "file", overrides: project.has(key) });
-  for (const [key, variable] of project) if (!file.has(key)) out.push({ name: variable.name, value: variable.value, scope: "project", overrides: false });
-  return out.sort((a, b) => a.name.localeCompare(b.name));
+  for (const variable of all) if (variable.fileId === fileId) file.set(variable.name.toLowerCase(), variable);
+  return [...file.values()].map((variable) => ({ name: variable.name, value: variable.value, scope: "file" as const, overrides: false as const })).sort((x, y) => x.name.localeCompare(y.name));
 }
 
 /**
- * Metindeki `{ad}` jetonlarını doldur: `user` > dosya > proje; değeri olmayan jeton AYNEN kalır (kopyada eksik değer sessizce silinmesin).
+ * Metindeki `{ad}` jetonlarını doldur: `user` > dosya; değeri olmayan jeton AYNEN kalır (kopyada eksik değer sessizce silinmesin).
  * Jeton biçimi prompt değişkenleriyle aynıdır: `{ad}` (harf/rakam/alt çizgi, harf ya da alt çizgiyle başlar).
  */
 export function fillProjectVariables(text: string, all: readonly ProjectVariableLike[], fileId: string | null, user: Readonly<Record<string, string>> = {}): string {
