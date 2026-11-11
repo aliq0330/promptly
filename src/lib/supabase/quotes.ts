@@ -4,7 +4,8 @@ import { fetchRequestsByIds } from "./requests";
 import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
 import { fetchSpaceFeedCards } from "./spaces";
-import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import type { CommunityPostContent, CommunityPostType } from "./communities";
 import type { UserProfile } from "@/types";
 

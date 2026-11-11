@@ -5,7 +5,7 @@ import { withoutBlocked } from "./blocked-users";
 import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { PagedResult } from "./paged";
 import { resolveMediaInputs, type MediaInput } from "./media-input";

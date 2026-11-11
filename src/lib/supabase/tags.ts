@@ -1,7 +1,7 @@
 import { sanitizeSearchText } from "./taxonomy-query";
 import { supabase } from "./client";
 import { fetchAllRows, type PagedResult } from "./paged";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import type { Prompt, PromptRequest, Tag, Workflow } from "@/types";

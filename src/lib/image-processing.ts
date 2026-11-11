@@ -1,4 +1,4 @@
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { computeCrop, dimensionSteps } from "@/lib/image-geometry";
 
 /**

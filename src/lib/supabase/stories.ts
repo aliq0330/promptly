@@ -1,7 +1,8 @@
 import type { PagedResult } from "./paged";
 import { supabase } from "./client";
 import { sniffImageMime } from "./message-images";
-import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { IMAGE_BYTE_BUDGETS, IMAGE_SOURCE_MAX_BYTES, shrinkImage } from "@/lib/image-processing";
 import { STORY_LIMITS, parseDraftPayload, parseStoryLayout, sniffVideoMime, videoExtension, type StoryVideoMime } from "@/lib/stories";
 import type {

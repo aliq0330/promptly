@@ -22,7 +22,7 @@ import { fetchVersionsForPrompt } from "./prompt-versions";
 import { fetchAuthorPromptsPage, fetchPromptById, mapPromptRow, searchPrompts, PROMPT_SELECT, type PromptRow } from "./prompts";
 import { fetchWorkflowById, fetchWorkflowsByCreator, mapWorkflowRow, searchWorkflows, WORKFLOW_SELECT, type WorkflowRow } from "./workflows";
 import { fetchRequestById, fetchRequestsByAuthor, mapRequestRow, searchRequests, REQUEST_SELECT, type RequestRow } from "./requests";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { analyzePromptDna } from "@/lib/prompt-dna/analyzer";
 import { itemsToContent } from "@/lib/prompt-dna/merge";
 import { DNA_SECTION_TYPES, type DnaSectionType } from "@/lib/prompt-dna/types";

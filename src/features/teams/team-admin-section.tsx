@@ -24,7 +24,7 @@ import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useToast } from "@/features/groups/use-toast";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { teamSystemTranslations } from "@/lib/i18n/translations-team-system";
+import { lookupTranslation } from "@/lib/i18n/dictionary";
 import {
   deleteTeam,
   exportTeam,
@@ -440,7 +440,7 @@ function auditSentence(t: ReturnType<typeof useTranslation>["t"], entry: TeamAud
   return entry.targetLabel ? `${text} · ${entry.targetLabel}` : text;
 }
 
-const auditKeyKnown = (key: string) => key in teamSystemTranslations;
+const auditKeyKnown = (key: string) => lookupTranslation(key, "tr") !== undefined;
 
 function csvEscape(value: string): string {
   const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;

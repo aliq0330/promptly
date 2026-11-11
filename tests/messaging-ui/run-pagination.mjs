@@ -248,7 +248,7 @@ await scenario("3. Profil süzgeçleri sunucuda: sıralama (En eski), tür (Meti
   assert.ok(await filter.count(), "Filtre simgesi yerinde");
 });
 
-await scenario("4. Profilde arama sorguya gider: başlık/açıklama eşleşmesi tek 'or' grubunda (görünürlük kuralıyla VE); yazarken her tuşta değil, bekleyip tek istek", async ({ page, db }) => {
+await scenario("4. Profilde arama sorguya gider: başlık/açıklama/prompt metni eşleşmesi tek 'or' grubunda (görünürlük kuralıyla VE); yazarken her tuşta değil, bekleyip tek istek", async ({ page, db }) => {
   withLibrary(db, U.bob, { total: 200 });
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
   await titleLinks(page).first().waitFor();
@@ -263,7 +263,7 @@ await scenario("4. Profilde arama sorguya gider: başlık/açıklama eşleşmesi
   });
   const searched = db.promptQueries.slice(before);
   assert.ok(searched.length <= 2, `tuş başına değil, bekleyerek (${searched.length} istek)`);
-  assert.match(searched.at(-1).or, /^\(and\(or\(origin_type\.eq\.original,show_on_profile\.is\.true\),or\(title\.ilike\.%Prompt 15%,description\.ilike\.%Prompt 15%\)\)\)$/);
+  assert.match(searched.at(-1).or, /^\(and\(or\(origin_type\.eq\.original,show_on_profile\.is\.true\),or\(title\.ilike\.%Prompt 15%,description\.ilike\.%Prompt 15%,prompt_text\.ilike\.%Prompt 15%\)\)\)$/);
 }, {});
 
 await scenario("5. Kendi profilim → Beğeniler: 24'erli sayfalar (offset 0, 24); sayı ilk sayfayla gelir", async ({ page, db }) => {

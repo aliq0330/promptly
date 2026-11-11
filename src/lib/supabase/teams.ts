@@ -1,5 +1,6 @@
 import { supabase } from "./client";
-import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import type { TeamRole, TeamSpaceLevel } from "@/lib/teams";
 
 /**

@@ -7,7 +7,7 @@ import { mapProfileRow, type ProfileRow } from "./mappers";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { sanitizeSearchText, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { type PresetField, type PresetFieldConfig, type PresetFieldType, type PresetOption, type PresetSelection } from "@/lib/preset-fields";
 import type { Preset, PromptContentType, Tag } from "@/types";
 

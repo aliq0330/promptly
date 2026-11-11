@@ -1,6 +1,6 @@
 import { removeStorageObjectsByUrl } from "./storage-cleanup";
 import { supabase } from "./client";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { audioPlaceholderCover, captureVideoPosterBlob, detectMediaTypeFromFile, prepareImageResultUploads } from "@/lib/prompt-result-media";
 import type { PagedResult } from "./paged";

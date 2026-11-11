@@ -26,7 +26,7 @@ import {
 import { applyWorkflowPlan } from "@/lib/supabase/spaces";
 import type { ImportPayload } from "@/lib/supabase/workflow-board";
 import { spaceCapabilities, type SpaceCapabilities, type SpaceRole } from "@/lib/spaces";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 
 /**
  * Bir Space sayfasının ortak durumu (docs/history/213-*): Space satırı, rol, öğeler, gruplar, paletler, kaynak içerik ve pano
