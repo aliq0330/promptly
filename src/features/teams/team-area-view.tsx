@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useAuth } from "@/features/auth/auth-provider";
 import { SpaceBoard } from "@/features/spaces/board/space-board";
+import type { TeamBoardConfig } from "@/features/teams/board/board-types";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "@/features/spaces/space-provider";
 import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
 import { rewriteAreaTerms } from "@/lib/team-area-terms";
@@ -86,6 +87,7 @@ export function TeamAreaView({
   item,
   itemHref,
   focusId,
+  team,
 }: {
   spaceId: string;
   role: ProjectRole | null;
@@ -101,6 +103,8 @@ export function TeamAreaView({
   itemHref?: (itemParam: string) => string;
   /** Pano sekmesinde bu öğeye odaklan ("Panoda göster"). */
   focusId?: string | null;
+  /** Ekip panosu kipi (docs/history/367-*): doluysa pano yüzen araç çubukları, pano grubu, yorumlar ve Paylaş ile çizilir. */
+  team?: TeamBoardConfig;
 }) {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
@@ -154,7 +158,7 @@ export function TeamAreaView({
   return (
     <SpaceProvider key={`${state.data.space.id}-${version}`} initial={state.data} userId={userId}>
       <LanguageTermScope rewrite={rewriteAreaTerms}>
-        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} item={item ?? null} itemHref={itemHref} focusId={focusId ?? null} />
+        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} item={item ?? null} itemHref={itemHref} focusId={focusId ?? null} team={team} />
       </LanguageTermScope>
     </SpaceProvider>
   );
@@ -171,6 +175,7 @@ function AreaBody({
   item,
   itemHref,
   focusId,
+  team,
 }: {
   role: ProjectRole | null;
   tab: AreaTab | null;
@@ -182,6 +187,7 @@ function AreaBody({
   item: AreaItemContext | null;
   itemHref?: (itemParam: string) => string;
   focusId: string | null;
+  team?: TeamBoardConfig;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -200,7 +206,7 @@ function AreaBody({
         <AreaCardGrid boards={boards} hrefFor={hrefFor} itemHref={itemHref} canAdd={caps.edit} onAdd={() => setAddOpen(true)} add={add} reviewHref={reviewHref} role={role} />
       ) : (
         <div role="tabpanel" aria-label={t("tp.area.tab.board")}>
-          <SpaceBoard focusId={focusId} />
+          <SpaceBoard focusId={focusId} team={team} />
         </div>
       )}
       {upload && (
@@ -300,9 +306,9 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
     { key: "main", kind: "board", title: t("tp.area.list.mainBoard"), href: hrefFor("board") },
     ...boards.map((board) => ({ key: `board-${board.id}`, kind: "board" as const, title: board.title, href: board.href })),
     ...items
-      .filter((item) => item.kind !== "palette")
+      .filter((item) => item.kind !== "palette" && item.kind !== "frame" && item.kind !== "text" && item.kind !== "shape")
       .map((item): AreaRow => {
-        const kind: RowKind = item.kind === "content" ? (item.contentType === "workflow" ? "workflow" : item.contentType === "preset" ? "preset" : "request") : item.kind;
+        const kind: RowKind = item.kind === "content" ? (item.contentType === "workflow" ? "workflow" : item.contentType === "preset" ? "preset" : "request") : (item.kind as Exclude<SpaceItem["kind"], "content" | "frame" | "text" | "shape" | "palette">);
         return { key: item.id, kind, title: itemTitle(item), href: itemHref ? itemHref(item.id) : hrefFor(ROW_TAB[kind]), state: item.revState, mediaUrl: item.mediaUrl, body: item.body, note: item.kind === "note" };
       }),
     ...palettes.map((palette): AreaRow => ({ key: `palette-${palette.id}`, kind: "palette", title: palette.name, href: itemHref ? itemHref(paletteItemParam(palette.id)) : hrefFor("palette"), colors: palette.colors })),
@@ -491,6 +497,9 @@ const KIND_KEY: Record<SpaceItem["kind"], TranslationKey> = {
   note: "tp.kind.note",
   palette: "tp.kind.palette",
   content: "tp.kind.content",
+  frame: "tb.kind.frame",
+  text: "tb.kind.text",
+  shape: "tb.kind.shape",
 };
 
 /**

@@ -88,6 +88,13 @@ const TEAM_TEMPLATES: [re: RegExp, key: string][] = [
   [/^([\s\S]*?) #([^\s]*) kanalında bir mesajı bildirdi\.$/, "notifMsg.teamMessageReported"],
 ];
 
+/** Ekip panosu konumlu yorumları (docs/history/367-*): ilk alıntı → `actor`, ikinci → `preview`. */
+const PIN_TEMPLATES: [re: RegExp, key: string][] = [
+  [/^([\s\S]*?) panoda bir yorumda sizden bahsetti: "([\s\S]*)"$/, "notifMsg.teamPinMention"],
+  [/^([\s\S]*?) panodaki yorumunuzu yanıtladı: "([\s\S]*)"$/, "notifMsg.teamPinReply"],
+  [/^([\s\S]*?) panoda öğenize yorum yaptı: "([\s\S]*)"$/, "notifMsg.teamPinItem"],
+];
+
 const WEEKLY_PART_KEYS: Record<string, TranslationKey> = {
   kopyalama: "notifMsg.weeklyCopies",
   tepki: "notifMsg.weeklyReactions",
@@ -183,6 +190,10 @@ export function localizeNotificationMessage(rawMessage: string, language: "tr" |
   for (const [re, key] of TEAM_TEMPLATES) {
     const m = re.exec(message);
     if (m) return t(key as TranslationKey, { name: m[1] ?? "", channel: m[2] ?? "", preview: m[3] ?? "" });
+  }
+  for (const [re, key] of PIN_TEMPLATES) {
+    const m = re.exec(message);
+    if (m) return t(key as TranslationKey, { actor: m[1] ?? "", preview: m[2] ?? "" });
   }
   const TEAM_FIXED: Record<string, string> = {
     "ekip davetini kabul etti.": "notifMsg.teamInviteAccepted",

@@ -97,6 +97,9 @@ export const ITEM_KIND_LABEL: Record<SpaceItemKind, TranslationKey> = {
   note: "spaces.item.note",
   palette: "spaces.item.palette",
   content: "spaces.item.content",
+  frame: "tb.kind.frame",
+  text: "tb.kind.text",
+  shape: "tb.kind.shape",
 };
 
 /**

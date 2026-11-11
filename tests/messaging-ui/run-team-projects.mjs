@@ -512,26 +512,21 @@ await scenario("19. Ekle: Not → yeni not penceresi LİSTENİN üstünde açıl
 await scenario("20. Ekip alanında 'Space' kelimesi geçmez (liste, pano, görseller, promptlar, notlar, palet, workflow)", async ({ page }) => {
   for (const sub of ["", "&sub=board", "&sub=images", "&sub=prompts", "&sub=notes", "&sub=palette", "&sub=content"]) {
     await page.goto(projectUrl(`&file=${FILE}${sub}`));
-    await page.getByTestId("team-file-page").waitFor();
+    // docs/history/367-*: `sub=board` pano kipidir (tam tuval, kendi yol çubuğu); diğerleri dosya sayfasıdır.
+    const root = page.getByTestId(sub === "&sub=board" ? "team-board-mode" : "team-file-page");
+    await root.waitFor();
     await page.waitForTimeout(250);
-    const text = await page.getByTestId("team-file-page").innerText();
+    const text = await root.innerText();
     assert.ok(!/Space/.test(text), `"Space" geçiyor (${sub || "liste"}): ${text.match(/.{0,30}Space.{0,30}/)?.[0]}`);
   }
 }, { items: () => undefined });
 
-await scenario("21. Telefon: pano araç çubuğu gruplanır (Diğer pano araçları menüsü) ve ekrana sığar", async ({ page }) => {
+await scenario("21. Telefon: pano kipi (docs/history/367-*): alt menü yerinde, araç çubuğu ekrana sığar, yatay taşma yok", async ({ page }) => {
   await page.goto(projectUrl(`&file=${FILE}&sub=board`));
-  const toolbar = page.locator('[data-board-toolbar]');
-  await toolbar.waitFor();
-  assert.equal(await toolbar.getAttribute("data-board-toolbar"), "phone");
-  await page.getByRole("button", { name: "Diğer pano araçları" }).click();
-  for (const name of ["Yakınlaştır", "Uzaklaştır", "ara"]) await page.getByRole("menuitem", { name: new RegExp(name, "i") }).first().waitFor();
-  await page.keyboard.press("Escape");
-  const fits = await toolbar.evaluate((el) => {
-    const row = el.querySelector("[role=toolbar]") ?? el;
-    return row.scrollWidth <= row.clientWidth + 1;
-  });
-  assert.ok(fits, "araç çubuğu yatay kaymadan sığmalı");
+  const toolbar = page.locator("[data-board-toolbar-size=phone]");
+  await toolbar.first().waitFor();
+  assert.ok(await page.locator("nav[data-app-nav]").isVisible(), "alt menü görünür kalmalı");
+  for (const name of ["Ekle", "Panolar", "Yakınlaştırma"]) await page.getByRole("button", { name }).first().waitFor();
   assert.ok(await overflowFree(page));
 }, { viewport: { width: 390, height: 800 }, items: () => undefined });
 

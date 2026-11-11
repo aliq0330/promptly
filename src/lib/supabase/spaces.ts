@@ -191,6 +191,8 @@ export interface SpaceItem {
   sourceStepNo: number | null;
   /** Kilitli nesne taşınamaz, boyutlanamaz, düzenlenemez, silinemez (docs/history/307-*; sunucu tetikleyicisi de uygular). */
   locked?: boolean;
+  /** Çizim öğelerinin (çerçeve/metin/şekil) ayrıntısı (docs/history/367-*): şekil türü, noktalar, kalınlık, metin boyutu. Diğer türlerde boş. */
+  data?: Record<string, unknown>;
   /** Ekip projesi onay durumu (docs/history/362-*): kişisel Space ve eski ekip Space'inde hep `approved`. Yalnız `team_review_*` RPC'leri değiştirir. */
   revState: ReviewState;
   revNote?: string | null;
@@ -401,6 +403,7 @@ export interface SpaceItemRow {
   source_role?: "step" | "prompt" | "image" | null;
   source_step_no?: number | null;
   locked?: boolean;
+  data?: Record<string, unknown> | null;
   approved_at?: string | null;
   approved_by?: string | null;
   review_requested_at?: string | null;
@@ -418,7 +421,7 @@ export interface SpaceItemRow {
 
 // `flow_show_*` (docs/history/261-*) yoksa istek sütunsuz yeniden denenir (server-errors.ts OPTIONAL_COLUMNS) — Space'ler migration'dan önce de açılır.
 const ITEM_COLS =
-  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, approved_at, approved_by, review_requested_at, review_requested_by, rev_state, rev_note, rev_submitted_at, rev_decided_at, rev_unit, created_by, updated_by, created_at, updated_at";
+  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, data, approved_at, approved_by, review_requested_at, review_requested_by, rev_state, rev_note, rev_submitted_at, rev_decided_at, rev_unit, created_by, updated_by, created_at, updated_at";
 
 export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
   return {
@@ -454,6 +457,7 @@ export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
     sourceRole: row.source_role ?? null,
     sourceStepNo: row.source_step_no ?? null,
     locked: Boolean(row.locked),
+    data: row.data && typeof row.data === "object" ? row.data : {},
     revState: isReviewState(row.rev_state) ? row.rev_state : "approved",
     revNote: row.rev_note ?? null,
     revSubmittedAt: row.rev_submitted_at ?? null,
@@ -805,6 +809,8 @@ export interface NewSpaceItem {
   sourceStepId?: string | null;
   sourceRole?: "step" | "prompt" | "image" | null;
   sourceStepNo?: number | null;
+  /** Çizim öğeleri için (docs/history/367-*); verilmezse sütun hiç gönderilmez. */
+  data?: Record<string, unknown>;
 }
 
 function itemInsertRow(item: NewSpaceItem, userId: string): Record<string, unknown> {
@@ -837,6 +843,7 @@ function itemInsertRow(item: NewSpaceItem, userId: string): Record<string, unkno
     ...(item.flowShowIo === undefined ? {} : { flow_show_io: item.flowShowIo }),
     ...(item.flowShowLinks === undefined ? {} : { flow_show_links: item.flowShowLinks }),
     ...(item.flowShowRelations === undefined ? {} : { flow_show_relations: item.flowShowRelations }),
+    ...(item.data ? { data: item.data } : {}),
     ...(item.sourceWorkflowId ? { source_workflow_id: item.sourceWorkflowId, source_step_id: item.sourceStepId ?? null, source_role: item.sourceRole ?? null, source_step_no: item.sourceStepNo ?? null } : {}),
     created_by: userId,
   };
@@ -855,7 +862,7 @@ export async function restoreSpaceItems(items: SpaceItem[], userId: string): Pro
   return addSpaceItems(items, userId);
 }
 
-export type SpaceItemPatch = Partial<Pick<SpaceItem, "title" | "body" | "note" | "color" | "isPrivate" | "attachedItemId" | "groupId" | "flowShowIo" | "flowShowLinks" | "flowShowRelations" | "locked">>;
+export type SpaceItemPatch = Partial<Pick<SpaceItem, "title" | "body" | "note" | "color" | "isPrivate" | "attachedItemId" | "groupId" | "flowShowIo" | "flowShowLinks" | "flowShowRelations" | "locked" | "data">>;
 
 export async function updateSpaceItem(id: string, patch: SpaceItemPatch): Promise<SpaceItem> {
   const body: Record<string, unknown> = {};
@@ -870,6 +877,7 @@ export async function updateSpaceItem(id: string, patch: SpaceItemPatch): Promis
   if (patch.flowShowLinks !== undefined) body.flow_show_links = patch.flowShowLinks;
   if (patch.flowShowRelations !== undefined) body.flow_show_relations = patch.flowShowRelations;
   if (patch.locked !== undefined) body.locked = patch.locked;
+  if (patch.data !== undefined) body.data = patch.data;
   const { data, error } = await supabase.from("space_items").update(body).eq("id", id).select(ITEM_COLS).maybeSingle();
   if (error) throw toSpaceError(error);
   if (!data) throw new SpaceError("space_forbidden", translateForRuntime("spaces.error.forbidden"));

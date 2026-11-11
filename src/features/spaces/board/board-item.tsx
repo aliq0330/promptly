@@ -19,6 +19,7 @@ import { sourceReasonKey } from "../space-items";
 import { SPACE_COLOR_CLASS, SpaceImage } from "../space-visuals";
 import { WorkflowFlowDiagram, useWorkflowFlow } from "@/features/workflows/workflow-flow-diagram";
 import { parseStepBody } from "@/lib/workflow-board-plan";
+import { DrawingBody } from "@/features/teams/board/board-draw";
 
 /**
  * Panodaki tek öğe (docs/history/213-*). Konum/boyut DÜNYA birimindedir; pano dönüşümü (kaydırma + yakınlaştırma) üst katmandadır.
@@ -65,6 +66,8 @@ export const BoardItem = memo(function BoardItem({
       aria-label={resolved.title || item.kind}
       className={cn(
         "absolute select-none touch-none rounded-lg",
+        // Çerçevenin iç alanı olayları geçirir (içinde seçim kutusu çizilebilsin); başlık/kenar şeritleri `pointer-events-auto` ile taşır (docs/history/367-*).
+        item.kind === "frame" && "pointer-events-none",
         selected ? "outline outline-2 outline-offset-2 outline-primary" : "hover:outline hover:outline-1 hover:outline-offset-1 hover:outline-border-strong",
       )}
       style={{ left: x, top: y, width: w, height: h, zIndex: z + 10 }}
@@ -86,7 +89,7 @@ export const BoardItem = memo(function BoardItem({
         <span
           data-resize-handle={item.id}
           aria-hidden
-          className="absolute -bottom-3 -right-3 flex h-7 w-7 cursor-nwse-resize items-center justify-center touch-none"
+          className="pointer-events-auto absolute -bottom-3 -right-3 flex h-7 w-7 cursor-nwse-resize items-center justify-center touch-none"
         >
           <span className="h-3.5 w-3.5 rounded-sm border-2 border-primary bg-surface shadow-sm" />
         </span>
@@ -98,6 +101,8 @@ export const BoardItem = memo(function BoardItem({
 function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item: SpaceItem; resolved: ResolvedSource; palette: SpacePalette | null; attachedTitle: string | null; lowDetail: boolean }) {
   const { t } = useTranslation();
   const reason = sourceReasonKey(resolved.state);
+
+  if (item.kind === "frame" || item.kind === "text" || item.kind === "shape") return <DrawingBody item={item} lowDetail={lowDetail} />;
 
   if (item.kind === "image") {
     return (

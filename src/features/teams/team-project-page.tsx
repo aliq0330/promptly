@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FolderOpen } from "@/components/icons/folder-open";
 import { Info } from "@/components/icons/info";
 import { MessageCircle } from "@/components/icons/message-circle";
@@ -36,6 +36,9 @@ import {
   VariableDialog,
 } from "./project-dialogs";
 import type { PathCrumb } from "./project-path-bar";
+import { InviteDialog } from "./team-invites";
+import type { TeamBoardConfig } from "./board/board-types";
+import { boardPageHref, boardPagesOf } from "@/lib/team-board";
 import { ProjectRoleChip, projectRoleLabelKey } from "./project-ui";
 import { ProjectVariablesPanel } from "./project-variables";
 import { TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view";
@@ -96,6 +99,8 @@ export function TeamProjectPage({ ctx }: { ctx: TeamCtx }) {
   }
 
   if (reviewing) return <TeamReviewInbox ctx={ctx} detail={detail} onChanged={reload} />;
+  // Pano kipi (docs/history/367-*): `sub=board` her alanı (proje geneli, dosya ana alanı, ek pano) tam tuval olarak açar; `?item=` çekmecesi liste görünümündedir.
+  if (params.get("sub") === "board" && !params.get("item")) return <BoardMode ctx={ctx} detail={detail} onChanged={reload} />;
   if (fileId) {
     const file = detail.files.find((item) => item.id === fileId);
     if (!file) return <EmptyState icon={FolderOpen} title={t("tp.file.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, detail.project.id) }} />;
@@ -806,6 +811,98 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
           }}
         />
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// Pano kipi (docs/history/367-*): tam tuval + yüzen araç çubukları; üst bant/sekmeler gizlenir, telefonda alt menü yerinde kalır
+// ---------------------------------------------------------------------------------------------------------------------------------------
+function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDetail; onChanged: () => void }) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const params = useSearchParams();
+  const { team } = ctx;
+  const { project, myRole } = detail;
+  const [dialog, setDialog] = useState<null | "info" | "access" | "settings" | "invite">(null);
+  const fileParam = params.get("file");
+  const boardParam = params.get("board");
+  const focus = params.get("focus") || null;
+  const comment = params.get("comment") || null;
+
+  // Açılacak alan: `board=` (her alan) › dosyanın ana alanı › projenin ana alanı.
+  const fileOfParam = fileParam ? detail.files.find((file) => file.id === fileParam) : null;
+  const areaId = boardParam ?? fileOfParam?.mainAreaId ?? detail.mainAreaId;
+  const area = detail.areas?.find((item) => item.id === areaId);
+  const scopeFile = area ? (area.fileId ? (detail.files.find((file) => file.id === area.fileId) ?? null) : null) : (detail.files.find((file) => file.mainAreaId === areaId) ?? fileOfParam ?? null);
+  const scopeFileId = scopeFile?.id ?? null;
+  const mainTitle = scopeFile?.title ?? t("tp.area.projectWide");
+  const pages = boardPagesOf(detail, scopeFileId, mainTitle);
+  const current = pages.find((page) => page.id === areaId);
+  const backHref = scopeFile ? projectLink(team.id, project.id, { file: scopeFile.id }) : projectLink(team.id, project.id);
+  const lead = canReview(myRole);
+
+  const config = useMemo<TeamBoardConfig | null>(() => {
+    if (!current || !areaId) return null;
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      projectId: project.id,
+      projectTitle: project.title,
+      fileId: scopeFileId,
+      fileTitle: scopeFile?.title ?? null,
+      role: myRole,
+      pages,
+      currentId: areaId,
+      mainTitle,
+      people: detail.people,
+      archived: Boolean(project.archivedAt),
+      accessMode: project.accessMode === "all" ? "all" : "selected",
+      canInvite: ctx.can("manage_members") && team.myRole !== "guest",
+      onInvite: () => setDialog("invite"),
+      canEditAccess: lead,
+      onEditAccess: () => setDialog("access"),
+      onInfo: () => setDialog("info"),
+      openComment: comment,
+      backHref,
+      hrefOf: (id: string) => boardPageHref(team.id, project.id, id),
+      navigate: (href: string, mode = "push") => (mode === "replace" ? router.replace(href, { scroll: false }) : router.push(href, { scroll: false })),
+      reload: onChanged,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yapılandırma yalnız bu girdilerle yeniden kurulur; ctx.can/router kararlıdır
+  }, [current, areaId, team.id, team.name, team.myRole, project, scopeFileId, scopeFile?.title, myRole, pages, mainTitle, detail.people, comment, backHref, lead, onChanged]);
+
+  if (!areaId || !current || !config) {
+    return <EmptyState icon={Presentation} title={t("tp.board.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, project.id) }} />;
+  }
+
+  return (
+    <div data-testid="team-board-mode" data-board-id={areaId} data-project-role={myRole}>
+      <TeamAreaView key={areaId} spaceId={areaId} role={myRole} tab="board" hrefFor={(_next, extra) => boardPageHref(team.id, project.id, areaId) + (extra?.focus ? `&focus=${extra.focus}` : "")} focusId={focus} team={config} />
+      {dialog === "info" && <ProjectInfoSheet ctx={ctx} detail={detail} onClose={() => setDialog(null)} onChanged={onChanged} onAccess={() => setDialog("access")} onSettings={() => setDialog("settings")} />}
+      {dialog === "access" && (
+        <ProjectAccessDialog
+          project={detail}
+          onClose={() => setDialog(null)}
+          onDone={() => {
+            setDialog(null);
+            onChanged();
+          }}
+        />
+      )}
+      {dialog === "settings" && (
+        <ProjectSettingsDialog
+          project={detail}
+          canManage={lead}
+          onClose={() => setDialog(null)}
+          onDone={() => {
+            setDialog(null);
+            onChanged();
+          }}
+          onDeleted={() => router.replace(projectLink(team.id))}
+        />
+      )}
+      {dialog === "invite" && <InviteDialog ctx={ctx} onClose={() => setDialog(null)} onDone={() => undefined} />}
     </div>
   );
 }

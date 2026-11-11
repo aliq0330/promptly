@@ -21,6 +21,7 @@ import { storyTranslations } from "./translations-stories";
 import { spaceTranslations } from "./translations-spaces";
 import { teamProjectsTranslations } from "./translations-team-projects";
 import { teamCenterTranslations } from "./translations-team-center";
+import { teamBoardTranslations } from "./translations-team-board";
 import { teamSpacesTranslations } from "./translations-team-spaces";
 import { teamsTranslations } from "./translations-teams";
 import { teamSystemTranslations } from "./translations-team-system";
@@ -3270,6 +3271,7 @@ export const translations = {
   ...spaceTranslations,
   ...teamProjectsTranslations,
   ...teamCenterTranslations,
+  ...teamBoardTranslations,
   ...teamSpacesTranslations,
   ...teamsTranslations,
   ...teamSystemTranslations,

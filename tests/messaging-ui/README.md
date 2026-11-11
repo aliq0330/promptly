@@ -382,3 +382,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium/chrome node tests/messaging-ui/run-team-projects.mjs   # 17/17 beklenir
 ```
+
+## Ekip panosu (`docs/history/367-*`)
+
+`run-team-board.mjs` (19 senaryo): tam tuval düzeni (bant/sekme yok, sol menü yerinde), pano değiştirici (öğeler karışmaz), genel bakış, yeni/yeniden adlandır/çoğalt/kaldır, Ekle menüsü, panoya taşı/kopyala, konumlu yorum paneli (Açık/Çözüldü, yer göster, çözüldü, yanıt, yazma, `?comment=`), Paylaş + JSON dışa aktarma, çerçeve/metin/şekil/kalem, sunum, görüntüleyici, telefon (alt menü görünür), tablet, İngilizce. `SHOTS=<klasör> ONLY="s-" node tests/messaging-ui/run-team-board.mjs` üç ekran boyutunda görüntü alır. Ağ taklidi: `db.rpc` geçersiz kılmaları + `db.extraRoutes` ile `space_pin_comments`. Gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/team-board-group.sql`.
+
+```bash
+node tests/messaging-ui/run-team-board.mjs   # 19/19 beklenir
+```

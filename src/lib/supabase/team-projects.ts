@@ -45,6 +45,21 @@ export interface ProjectBoard {
   title: string;
   fileId: string | null;
   itemCount: number;
+  position?: number;
+}
+
+/** Pano grubunun bir sayfası (docs/history/367-*): proje geneli ve her dosya için ana alan + ek panolar. Eski sunucuda yoktur. */
+export interface ProjectArea {
+  id: string;
+  title: string;
+  fileId: string | null;
+  isMain: boolean;
+  position: number;
+  itemCount: number;
+  updatedAt: string | null;
+  /** Yalnız lider için dolu. */
+  pendingCount: number | null;
+  openComments: number;
 }
 
 export interface ProjectPerson {
@@ -88,6 +103,7 @@ export interface ProjectDetail {
   pendingCount: number | null;
   files: ProjectFileSummary[];
   boards: ProjectBoard[];
+  areas?: ProjectArea[];
   people: ProjectPerson[];
   variables: ProjectVariable[];
 }
