@@ -28,8 +28,9 @@ test("only known files write `kind: \"content\"` space items, and none of them c
     .filter((file) => /kind:\s*"content"/.test(readFileSync(file, "utf8")))
     .map((file) => file.slice(ROOT.length))
     .sort();
-  // add-to-space-modal: request/preset references; workflow-board-plan: legacy request-step reference. Anything new must be reviewed.
-  assert.deepEqual(writers, ["features/spaces/add-to-space-modal.tsx", "lib/workflow-board-plan.ts"]);
+  // add-to-space-modal: request/preset references; space-board: the team board's "Add → Preset/Request" picker (type is only preset|request, docs/history/367-*);
+  // workflow-board-plan: legacy request-step reference. Anything new must be reviewed.
+  assert.deepEqual(writers, ["features/spaces/add-to-space-modal.tsx", "features/spaces/board/space-board.tsx", "lib/workflow-board-plan.ts"]);
 });
 
 test("\"Add to Space\" sends a workflow through the object import before any generic content draft", () => {

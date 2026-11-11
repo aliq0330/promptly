@@ -68,6 +68,7 @@ export interface AreaItemContext {
 const DrawerContext = createContext(false);
 
 type DetailKind = "prompt" | "image" | "note" | "palette" | "content";
+/** Çizim öğeleri (çerçeve/metin/şekil) liste/çekmecede yer almaz; yine de tip bütünlüğü için tek bir türe indirgenir. */
 const KIND_ICON: Record<DetailKind | "workflow" | "preset" | "request", IconComponent> = {
   prompt: SquareTerminal,
   image: ImageIcon,
@@ -178,7 +179,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   }, [createdBy]);
 
   const resolved = item ? resolveSource(item, sources, readable) : null;
-  const kind: DetailKind | "workflow" | "preset" | "request" = palette ? "palette" : item!.kind === "content" ? (item!.contentType === "workflow" ? "workflow" : item!.contentType === "preset" ? "preset" : "request") : item!.kind;
+  const kind: DetailKind | "workflow" | "preset" | "request" = palette ? "palette" : item!.kind === "content" ? (item!.contentType === "workflow" ? "workflow" : item!.contentType === "preset" ? "preset" : "request") : (item!.kind as DetailKind);
   const title = palette ? palette.name : itemTitle(item!);
   const Icon = KIND_ICON[kind];
   const createdAt = (item ?? palette)!.createdAt;

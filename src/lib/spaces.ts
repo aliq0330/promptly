@@ -11,7 +11,8 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 export type SpaceKind = "moodboard" | "character" | "brand" | "game_world" | "interior" | "free" | "team_area";
 export type SpaceVisibility = "private" | "link" | "public";
 export type SpaceRole = "owner" | "editor" | "viewer";
-export type SpaceItemKind = "image" | "prompt" | "note" | "palette" | "content";
+/** `frame`/`text`/`shape`: ekip panosunun çizim öğeleri (docs/history/367-*) — kaynak başvurusu yoktur, onaya tabi değildir. */
+export type SpaceItemKind = "image" | "prompt" | "note" | "palette" | "content" | "frame" | "text" | "shape";
 export type SpaceContentType = "request" | "workflow" | "preset";
 /** Not/grup rengi: palet token'ına eşlenir (hex DEĞİL — tema ve paletle birlikte değişir). */
 export type SpaceColor = "primary" | "secondary" | "success" | "warning" | "danger" | "neutral";
@@ -156,6 +157,9 @@ export function defaultItemSize(kind: SpaceItemKind, media?: { width: number | n
   if (kind === "prompt") return { w: 280, h: 200 };
   if (kind === "note") return { w: 220, h: 180 };
   if (kind === "palette") return { w: 280, h: 150 };
+  if (kind === "frame") return { w: 480, h: 360 };
+  if (kind === "text") return { w: 240, h: 64 };
+  if (kind === "shape") return { w: 200, h: 140 };
   return { w: 260, h: 160 };
 }
 
@@ -172,7 +176,7 @@ export function sourceStateOf(
   item: { kind: SpaceItemKind; promptId: string | null; mediaUrl: string | null; isDraft: boolean; contentId: string | null },
   readable: (id: string) => boolean,
 ): SourceState {
-  if (item.kind === "note" || item.kind === "palette") return "own";
+  if (item.kind === "note" || item.kind === "palette" || item.kind === "frame" || item.kind === "text" || item.kind === "shape") return "own";
   if (item.kind === "prompt" && item.isDraft) return "own";
   if (item.kind === "image" && !item.promptId) return item.mediaUrl?.includes("/space-media/") ? "own" : "deleted";
   if (item.kind === "content") return item.contentId && readable(item.contentId) ? "ok" : "unavailable";

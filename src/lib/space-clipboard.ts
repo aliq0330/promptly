@@ -7,7 +7,7 @@ import type { NewSpaceConnection, NewSpaceItem, SpaceConnection, SpaceItem } fro
  * (kopya "Güncelle"nin yönettiği nesne olmaz); kopya gruba girmez, en üste konur.
  */
 export function isDuplicable(item: SpaceItem): boolean {
-  return item.kind === "note" || (item.kind === "prompt" && item.isDraft);
+  return item.kind === "note" || item.kind === "frame" || item.kind === "text" || item.kind === "shape" || (item.kind === "prompt" && item.isDraft);
 }
 
 export interface DuplicatePlan {
@@ -46,6 +46,7 @@ export function planDuplicate(
       color: item.color,
       attachedItemId: item.attachedItemId && idMap.has(item.attachedItemId) ? idMap.get(item.attachedItemId)! : null,
       isPrivate: item.isPrivate,
+      ...(item.data && Object.keys(item.data).length > 0 ? { data: item.data } : {}),
     }));
   const arrows: NewSpaceConnection[] = connections
     .filter((c) => idMap.has(c.fromItemId) && idMap.has(c.toItemId))

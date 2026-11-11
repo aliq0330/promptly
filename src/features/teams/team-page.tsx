@@ -132,7 +132,9 @@ export function TeamPage() {
   // Telefonda proje/dosya/pano/öğe/onay kuyruğu ve Yönetim alt sayfaları kendi başlığını çizer (geri · yol · bilgi); bant ve sekmeler üst düzey ekranlarda kalır.
   const drilled = tab === "projects" && Boolean(params.get("project"));
   const adminSub = tab === "admin" && Boolean(params.get("section"));
-  const hideChrome = phone && (chatFocus || drilled || adminSub);
+  // Pano kipi (docs/history/367-*): `sub=board` tuvalı tam genişlikte açar; bant/sekmeler gizlenir (sol menü ve telefon alt menüsü uygulamanındır, dokunulmaz).
+  const boardMode = drilled && params.get("sub") === "board" && !params.get("item") && !params.get("review");
+  const hideChrome = boardMode || (phone && (chatFocus || drilled || adminSub));
   const [inviteOpen, setInviteOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   // Açık kanal tam ekran sohbettir: telefonda genel üst menü yalnız o durumda gizlenir (globals.css `data-team-focus`); alt menüye dokunulmaz.
@@ -188,7 +190,7 @@ export function TeamPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-6xl pb-5 sm:px-5 md:space-y-3 md:py-6 lg:px-8 lg:py-8" data-testid="team-page" data-team-id={team.id}>
+    <div className={boardMode ? "mx-auto w-full max-w-none" : "mx-auto w-full max-w-6xl pb-5 sm:px-5 md:space-y-3 md:py-6 lg:px-8 lg:py-8"} data-testid="team-page" data-team-id={team.id} data-board-mode={boardMode ? "" : undefined}>
       {!hideChrome && (
         <div className="max-sm:-mx-0 md:space-y-1" data-team-chrome>
           <TeamBand team={team} canInvite={can("manage_members") && !isGuest} onInvite={() => setInviteOpen(true)} onLeave={team.myRole !== "owner" ? () => setLeaveOpen(true) : undefined} menuItems={menuItems} />
@@ -198,7 +200,7 @@ export function TeamPage() {
       {isGuest && team.guestUntil && !hideChrome && (
         <p className="mx-3 rounded-lg bg-warning/10 px-3 py-2 text-small text-warning sm:mx-0">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>
       )}
-      <div className="px-3 sm:px-0" data-team-tab={tab}>
+      <div className={boardMode ? "" : "px-3 sm:px-0"} data-team-tab={tab}>
         {body}
       </div>
       {inviteOpen && <InviteDialog ctx={ctx} onClose={() => setInviteOpen(false)} onDone={() => undefined} />}

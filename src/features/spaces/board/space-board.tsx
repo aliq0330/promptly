@@ -77,6 +77,7 @@ import {
   tidyItems,
   topZ,
   undoHistory,
+  worldToScreen,
   zoomAt,
   type AlignMode,
   type BoardGeom,
@@ -88,9 +89,33 @@ import { isDuplicable, planDuplicate } from "@/lib/space-clipboard";
 import { chainPairs, connectionExists } from "@/lib/space-connectors";
 import { smartSnap, type Guide } from "@/lib/space-guides";
 import { legacyFramesOf, loadPlanInput, runImport, type PlanIO } from "@/lib/supabase/workflow-board";
-import { createSpaceGroup, uploadSpaceImage, type LayoutEntry, type SpaceConnection, type SpaceConnectionPatch, type SpaceItem } from "@/lib/supabase/spaces";
+import { createSpaceGroup, uploadSpaceImage, type LayoutEntry, type NewSpaceItem, type SpaceConnection, type SpaceConnectionPatch, type SpaceItem } from "@/lib/supabase/spaces";
+import { boardPageHref, dragBox, frameMemberIds, initialsOf, isDrawingKind, lineShape, normalizePoints, pinWorldPosition, presentationFrames, type StrokeWidth } from "@/lib/team-board";
+import { transferItems } from "@/lib/supabase/team-board";
+import { BoardToolbar, type BoardTool, type PillShape } from "@/features/teams/board/board-toolbar";
+import { TeamBoardBar } from "@/features/teams/board/board-bar";
+import { PagesButton, PagesDrawer, PagesOverview, PagesPopover, usePageActions, usePagesUi } from "@/features/teams/board/board-pages";
+import { CommentInput, CommentPeek, CommentsPanel, CommentTargetChip, PinMarker, usePinComments, type PanelThread } from "@/features/teams/board/board-comments";
+import { MovePopover, BoardSheet, type AddRow } from "@/features/teams/board/board-menus";
+import { FrameDialog, StyleControls, TextItemDialog, ShapeSvg } from "@/features/teams/board/board-draw";
+import { ShareDialog } from "@/features/teams/board/board-share";
+import { PresentBar } from "@/features/teams/board/board-present";
+import { ContentPickerDialog } from "@/features/teams/board/board-content-picker";
+import { NewPaletteDialog } from "../tabs/palette-tab";
+import type { TeamBoardConfig } from "@/features/teams/board/board-types";
+import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { fetchPinComments } from "@/lib/supabase/team-board";
+import { canAddToArea, canReview } from "@/lib/team-projects";
+import { Frame } from "@/components/icons/frame";
+import { Type } from "@/components/icons/type";
+import { Pencil } from "@/components/icons/pencil";
+import { Square } from "@/components/icons/square";
+import { Minus as MinusLine } from "@/components/icons/minus";
+import { Palette as PaletteIcon } from "@/components/icons/palette";
+import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
+import { Sparkles } from "@/components/icons/sparkles";
 import { useSpaceContext } from "../space-provider";
-import { DraftEditorModal, GroupsManagerModal, ItemDetailModal, NoteEditorModal, resolveSource, usePlaceNewItems, useItemTitle, type ResolvedSource } from "../space-items";
+import { DraftEditorModal, GroupsManagerModal, ITEM_KIND_LABEL, ItemDetailModal, NoteEditorModal, resolveSource, usePlaceNewItems, useItemTitle, type ResolvedSource } from "../space-items";
 import { SaveIndicator } from "../save-indicator";
 import { SpaceDialog } from "../space-modals";
 import { SpaceMenu } from "../space-menu";
@@ -125,7 +150,7 @@ type Entry =
   | { type: "import"; items: SpaceItem[]; connections: SpaceConnection[] };
 
 interface Interaction {
-  kind: "move" | "resize" | "pan" | "marquee";
+  kind: "move" | "resize" | "pan" | "marquee" | "tap" | "draw" | "pencil";
   pointerId: number;
   startX: number;
   startY: number;
@@ -150,6 +175,33 @@ const MOVE_THRESHOLD = 4;
 const MIN_START_ZOOM = 0.5;
 const LOW_DETAIL_ZOOM = 0.4;
 
+/** `usePageActions` koşulsuz çağrılır (kanca kuralı); kişisel Space panosunda bu boş yapılandırma kullanılır ve hiçbir şey çizilmez. */
+const DUMMY_TEAM: TeamBoardConfig = {
+  teamId: "",
+  teamName: "",
+  projectId: "",
+  projectTitle: "",
+  fileId: null,
+  fileTitle: null,
+  role: null,
+  pages: [],
+  currentId: "",
+  mainTitle: "",
+  people: [],
+  archived: true,
+  accessMode: "selected",
+  canInvite: false,
+  onInvite: () => undefined,
+  canEditAccess: false,
+  onEditAccess: () => undefined,
+  onInfo: () => undefined,
+  openComment: null,
+  backHref: "",
+  hrefOf: () => "",
+  navigate: () => undefined,
+  reload: () => undefined,
+};
+
 function geomOf(item: SpaceItem): Geom {
   return { x: item.x, y: item.y, w: item.w, h: item.h, z: item.z, groupId: item.groupId };
 }
@@ -162,11 +214,11 @@ function toNewConnection(c: SpaceConnection) {
   return { id: c.id, spaceId: c.spaceId, fromItemId: c.fromItemId, toItemId: c.toItemId, label: c.label, lineStyle: c.lineStyle, arrow: c.arrow, route: c.route, color: c.color, sourceWorkflowId: c.sourceWorkflowId, sourceRole: c.sourceRole };
 }
 
-export function SpaceBoard({ focusId }: { focusId: string | null }) {
+export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: TeamBoardConfig }) {
   const { t } = useTranslation();
   // Telefonda araç çubuğu gruplanır (docs/history/363-*): sık kullanılanlar görünür, gerisi "⋯" menüsünde.
   const phoneBar = useMediaQuery("(max-width: 767.98px)");
-  const { space, items, groups, palettes, sources, readable, caps, setItems, setGroups, queueLayout, layoutStatus, flushLayout, layoutNotice, dismissLayoutNotice, addItems, applyImport, removeItems, patchItem, userId, connections, addConnections, removeConnections, patchConnection } =
+  const { space, items, groups, palettes, sources, readable, caps, setItems, setGroups, queueLayout, layoutStatus, flushLayout, layoutNotice, dismissLayoutNotice, addItems, applyImport, removeItems, patchItem, userId, connections, setConnections, addConnections, removeConnections, patchConnection } =
     useSpaceContext();
   const itemTitle = useItemTitle();
   const place = usePlaceNewItems();
@@ -178,7 +230,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   const [panning, setPanning] = useState(false);
   const [live, setLive] = useState<Record<string, Geom> | null>(null);
   const [marquee, setMarquee] = useState<Rect | null>(null);
-  const [tool, setTool] = useState<"select" | "pan" | "connect">("select");
+  const [tool, setTool] = useState<BoardTool>("select");
   const [selectedConnId, setSelectedConnId] = useState<string | null>(null);
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
   const [draftPoint, setDraftPoint] = useState<{ x: number; y: number } | null>(null);
@@ -199,6 +251,10 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     | { kind: "groups" }
     | { kind: "shortcuts" }
     | { kind: "importWorkflow" }
+    | { kind: "text"; item?: SpaceItem | null; near?: { x: number; y: number } }
+    | { kind: "frame"; item: SpaceItem }
+    | { kind: "content"; type: "preset" | "request" }
+    | { kind: "palette" }
   >(null);
   const [error, setError] = useState<string | null>(null);
   const [undoNotice, setUndoNotice] = useState<string | null>(null);
@@ -244,6 +300,38 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     });
   }, []);
 
+  // ---- ekip modu (docs/history/367-*): pano grubu, çizim araçları, yorumlar, Paylaş, sunum ----
+  const teamMode = Boolean(team);
+  const { profile: ownProfile } = useOwnProfile();
+  const tabletBar = useMediaQuery("(min-width: 768px) and (max-width: 1023.98px)");
+  const size: "desktop" | "tablet" | "phone" = phoneBar ? "phone" : tabletBar ? "tablet" : "desktop";
+  const canDraw = teamMode && caps.edit && !team?.archived;
+  const [shape, setShape] = useState<PillShape>("rect");
+  const [pencilWidth, setPencilWidth] = useState<StrokeWidth>(4);
+  const [guidesOn, setGuidesOn] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [allScope, setAllScope] = useState(false);
+  const [scopeThreads, setScopeThreads] = useState<PanelThread[] | null>(null);
+  const [activeComment, setActiveComment] = useState<string | null>(null);
+  const [draftPin, setDraftPin] = useState<{ x: number; y: number; itemId: string | null; offX: number | null; offY: number | null } | null>(null);
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [presenting, setPresenting] = useState<number | null>(null);
+  const [drawPreview, setDrawPreview] = useState<{ tool: BoardTool; ax: number; ay: number; bx: number; by: number } | null>(null);
+  const [pencilPoints, setPencilPoints] = useState<[number, number][]>([]);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [peek, setPeek] = useState(false);
+  const moveRef = useRef<HTMLButtonElement>(null);
+  const drawStart = useRef<{ x: number; y: number } | null>(null);
+  const pencilRef = useRef<[number, number][]>([]);
+  const toolRef = useRef(tool);
+  useEffect(() => {
+    toolRef.current = tool;
+  }, [tool]);
+  const pagesUi = usePagesUi(phoneBar, tabletBar);
+  const pageActions = usePageActions(team ?? DUMMY_TEAM);
+  const pins = usePinComments(space.id, teamMode);
+
   // ---- türetilmiş veri ----
   const geoms = useMemo(() => {
     const out: Record<string, Geom> = {};
@@ -265,6 +353,10 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     return next.length === rawSelection.length ? rawSelection : next;
   }, [rawSelection, items]);
   const selectedSet = useMemo(() => new Set(selection), [selection]);
+  const selectedItemsRef = useRef<SpaceItem[]>([]);
+  useEffect(() => {
+    selectedItemsRef.current = items.filter((entry) => selectedSet.has(entry.id));
+  }, [items, selectedSet]);
   // Kilitli nesneler (docs/history/307-*): taşınmaz, boyutlanmaz, silinmez. Sunucu tetikleyicisi de aynısını uygular; burası yalnız beklenen davranışı sessiz tutar.
   const lockedSet = useMemo(() => new Set(items.filter((item) => item.locked).map((item) => item.id)), [items]);
   const selectedConn = useMemo(() => connections.find((c) => c.id === selectedConnId) ?? null, [connections, selectedConnId]);
@@ -505,7 +597,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   }, [history, runEntry]);
 
   // ---- oklar (docs/history/262-*) ----
-  const setToolMode = useCallback((next: "select" | "pan" | "connect") => {
+  const setToolMode = useCallback((next: BoardTool) => {
     setTool(next);
     if (next !== "connect") {
       setConnectFrom(null);
@@ -616,11 +708,16 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     (id: string) => {
       const item = items.find((entry) => entry.id === id);
       if (!item) return;
-      if (item.kind === "note") setDialog(editable ? { kind: "note", item } : { kind: "detail", id });
+      if (item.kind === "text") {
+        if (canDraw) setDialog({ kind: "text", item });
+      } else if (item.kind === "frame") {
+        if (canDraw) setDialog({ kind: "frame", item });
+      } else if (item.kind === "shape") return;
+      else if (item.kind === "note") setDialog(editable ? { kind: "note", item } : { kind: "detail", id });
       else if (item.kind === "prompt" && item.isDraft && editable) setDialog({ kind: "draft", item });
       else if (item.kind !== "palette") setDialog({ kind: "detail", id });
     },
-    [items, editable],
+    [items, editable, canDraw],
   );
 
   // ---- ekleme (panodan): görünümün ortasına; geri alınabilir ----
@@ -659,6 +756,233 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     if (drafts.length) await addFromBoard(drafts);
     setUploading(false);
   }
+
+  // ---- ekip modu işlemleri (docs/history/367-*) ----
+  const myRole = team?.role ?? null;
+  const canResolveComments = canAddToArea(myRole);
+  const canModerateComments = canReview(myRole);
+  const itemPositions = useMemo(() => new Map(items.map((item) => [item.id, { x: geoms[item.id].x, y: geoms[item.id].y }])), [items, geoms]);
+
+  /** Çizim öğesi ekler (geri alınabilir). Çerçeve en alta konur ki içindeki öğeler üstte kalsın. */
+  const createDrawItem = useCallback(
+    async (draft: Omit<NewSpaceItem, "spaceId" | "z">, behind = false): Promise<SpaceItem | null> => {
+      if (!canDraw) return null;
+      setError(null);
+      const z = behind ? Math.min(0, ...items.map((entry) => entry.z)) - 1 : topZ(items) + 1;
+      try {
+        const created = await addItems([{ ...draft, spaceId: space.id, z }]);
+        setHistory((h) => pushHistory(h, { type: "add", items: created }));
+        setSelection(created.map((entry) => entry.id));
+        return created[0] ?? null;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+        return null;
+      }
+    },
+    [canDraw, items, addItems, space.id, t],
+  );
+
+  const finishDraw = useCallback(
+    async (kind: BoardTool, a: { x: number; y: number }, b: { x: number; y: number }) => {
+      const dragged = Math.hypot(b.x - a.x, b.y - a.y) >= 6 / Math.max(vpRef.current.zoom, 0.1);
+      if (kind === "frame") {
+        const box = dragged ? dragBox(a.x, a.y, b.x, b.y) : { x: Math.round(a.x - 240), y: Math.round(a.y - 180), w: 480, h: 360 };
+        const n = items.filter((entry) => entry.kind === "frame").length + 1;
+        await createDrawItem({ kind: "frame", ...box, title: t("tb.frame.defaultName", { n }), color: "neutral", data: {} }, true);
+      } else if (kind === "rect" || kind === "oval") {
+        const box = dragged ? dragBox(a.x, a.y, b.x, b.y) : { x: Math.round(a.x - 100), y: Math.round(a.y - 70), w: 200, h: 140 };
+        await createDrawItem({ kind: "shape", ...box, color: "primary", data: { shape: kind, fill: false, sw: 4, points: [] } });
+      } else if ((kind === "line" || kind === "arrow") && dragged) {
+        const line = lineShape(a.x, a.y, b.x, b.y);
+        await createDrawItem({ kind: "shape", ...line.box, color: "primary", data: { shape: kind, fill: false, sw: 4, points: line.points } });
+      } else if (kind === "line" || kind === "arrow") return;
+      setToolMode("select");
+    },
+    [items, createDrawItem, setToolMode, t],
+  );
+
+  const finishPencil = useCallback(
+    async (points: [number, number][]) => {
+      if (points.length < 2) return;
+      const out = normalizePoints(points, pencilWidth);
+      await createDrawItem({ kind: "shape", ...out.box, color: "primary", data: { shape: "draw", fill: false, sw: pencilWidth, points: out.points } });
+    },
+    [createDrawItem, pencilWidth],
+  );
+
+  const saveText = useCallback(
+    async (values: { body: string; color: SpaceItem["color"]; data: { size: string; bold: boolean } }, existing: SpaceItem | null, near?: { x: number; y: number }) => {
+      if (existing) {
+        await patchItem(existing.id, { body: values.body, color: values.color, data: values.data });
+        return;
+      }
+      const px = { sm: 14, md: 20, lg: 32, xl: 52 }[values.data.size] ?? 20;
+      const longest = Math.max(...values.body.split("\n").map((line) => line.length), 1);
+      const w = Math.min(640, Math.max(80, Math.round(longest * px * 0.6) + 16));
+      const lines = Math.max(1, values.body.split("\n").length);
+      const h = Math.max(40, Math.round(lines * px * 1.35) + 12);
+      const at = near ?? viewCenter();
+      await createDrawItem({ kind: "text", x: Math.round(at.x - w / 2), y: Math.round(at.y - h / 2), w, h, body: values.body, color: values.color, data: values.data });
+      setToolMode("select");
+    },
+    [patchItem, createDrawItem, viewCenter, setToolMode],
+  );
+
+  const restyle = useCallback(
+    async (patch: (item: SpaceItem) => { color?: SpaceItem["color"]; data?: Record<string, unknown> }) => {
+      setError(null);
+      try {
+        await Promise.all(
+          items
+            .filter((entry) => selectedSet.has(entry.id) && (entry.kind === "shape" || entry.kind === "text" || entry.kind === "frame"))
+            .map((entry) => {
+              const next = patch(entry);
+              return next.color || next.data ? patchItem(entry.id, { ...(next.color ? { color: next.color } : {}), ...(next.data ? { data: next.data } : {}) }) : Promise.resolve(entry);
+            }),
+        );
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+      }
+    },
+    [items, selectedSet, patchItem, t],
+  );
+
+  // Yorumlar
+  const boardThreads = useMemo<PanelThread[]>(() => pins.threads.map((thread) => ({ ...thread, boardTitle: null, boardId: space.id })), [pins.threads, space.id]);
+  useEffect(() => {
+    if (!team || !allScope || !panelOpen) return;
+    let alive = true;
+    void (async () => {
+      const lists = await Promise.all(team.pages.filter((page) => page.id !== space.id).map(async (page) => ({ page, comments: await fetchPinComments(page.id).catch(() => []) })));
+      const { groupThreads } = await import("@/lib/team-board");
+      if (!alive) return;
+      setScopeThreads(lists.flatMap(({ page, comments }) => groupThreads(comments).map((thread) => ({ ...thread, boardTitle: page.title, boardId: page.id }))));
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [team, allScope, panelOpen, space.id]);
+  const panelThreads = useMemo(() => (allScope ? [...boardThreads, ...(scopeThreads ?? [])] : boardThreads), [allScope, boardThreads, scopeThreads]);
+  const activeThread = panelThreads.find((thread) => thread.root.id === activeComment) ?? null;
+  const openBoardThreads = boardThreads.filter((thread) => !thread.root.resolvedAt);
+  const hlItemId = activeThread?.boardId === space.id ? (activeThread.root.itemId ?? null) : null;
+
+  const locate = useCallback(
+    (thread: PanelThread) => {
+      if (!team) return;
+      if (thread.boardId !== space.id) {
+        team.navigate(boardPageHref(team.teamId, team.projectId, thread.boardId, { comment: thread.root.id }), "replace");
+        return;
+      }
+      const pos = pinWorldPosition(thread.root, itemPositions);
+      if (!pos) return;
+      const { w, h } = viewSize();
+      const zoom = Math.max(vpRef.current.zoom, 0.6);
+      setVp({ zoom, x: w / 2 - pos.x * zoom, y: h / 2 - pos.y * zoom });
+      setActiveComment(thread.root.id);
+      setSelection([]);
+      if (phoneBar) {
+        setPanelOpen(false);
+        setPeek(true);
+      }
+    },
+    [team, space.id, itemPositions, viewSize, phoneBar, setPanelOpen],
+  );
+
+  // Bildirimden gelen `?comment=`: yorumlar yüklenince bir kez yer gösterilir.
+  const openedComment = useRef<string | null>(null);
+  useEffect(() => {
+    const wanted = team?.openComment;
+    if (!wanted || openedComment.current === wanted || pins.status !== "ready" || !ready) return;
+    const thread = boardThreads.find((entry) => entry.root.id === wanted);
+    openedComment.current = wanted;
+    if (!thread) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- adres parametresi bir kez uygulanır
+    if (!phoneBar) setPanelOpen(true);
+    locate(thread);
+  }, [team?.openComment, pins.status, ready, boardThreads, locate, phoneBar]);
+
+  const startComment = useCallback(
+    (point: { x: number; y: number }, targetId: string | null) => {
+      const world = screenToWorld(vpRef.current, point.x, point.y);
+      const target = targetId ? items.find((entry) => entry.id === targetId) : null;
+      const geom = target ? geoms[target.id] : null;
+      setDraftPin({ x: world.x, y: world.y, itemId: target?.id ?? null, offX: geom ? world.x - geom.x : null, offY: geom ? world.y - geom.y : null });
+      setActiveComment(null);
+      setPeek(false);
+    },
+    [items, geoms],
+  );
+
+  const submitDraft = useCallback(
+    async (body: string) => {
+      if (!draftPin) return;
+      await pins.add({ body, ...draftPin });
+      setDraftPin(null);
+      setToolMode("select");
+      setPanelOpen(true);
+    },
+    [draftPin, pins, setToolMode, setPanelOpen],
+  );
+
+  // Taşı / kopyala
+  const runTransfer = useCallback(
+    async (targetId: string, copy: boolean) => {
+      const result = await transferItems({ fromSpace: space.id, toSpace: targetId, items: selectedItemsRef.current, copy });
+      if (result.done === 0) throw new Error(t("tb.move.none"));
+      if (!copy) {
+        const gone = new Set(result.oldIds);
+        setItems((list) => list.filter((entry) => !gone.has(entry.id)));
+        setConnections((list) => list.filter((entry) => !gone.has(entry.fromItemId) && !gone.has(entry.toItemId)));
+        setSelection([]);
+        setHistory(emptyHistory);
+      }
+      team?.reload();
+      setUndoNotice(t(result.skipped ? "tb.move.doneSkipped" : "tb.move.done", { count: result.done, skipped: result.skipped }));
+    },
+    [space.id, setItems, setConnections, team, t],
+  );
+
+  // Sunum
+  const frameList = useMemo(() => presentationFrames(items), [items]);
+  const frameListRef = useRef(frameList);
+  useEffect(() => {
+    frameListRef.current = frameList;
+  }, [frameList]);
+  const startPresent = useCallback(() => {
+    if (frameListRef.current.length === 0) {
+      setError(t("tb.present.noFrames"));
+      return;
+    }
+    setSelection([]);
+    setPresenting(0);
+    setFullscreen(true);
+  }, [t, setPresenting]);
+  const exitPresent = useCallback(() => {
+    setPresenting(null);
+    setFullscreen(false);
+  }, [setPresenting]);
+  useEffect(() => {
+    if (presenting === null) return;
+    const frame = frameListRef.current[Math.min(presenting, frameListRef.current.length - 1)];
+    if (!frame) return;
+    setVp(fitViewport([frame], view.w, view.h, 40));
+  }, [presenting, view.w, view.h]);
+  useEffect(() => {
+    if (presenting === null) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") exitPresent();
+      else if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+        event.preventDefault();
+        setPresenting((n) => (n === null ? n : Math.min(frameListRef.current.length - 1, n + 1)));
+      } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+        event.preventDefault();
+        setPresenting((n) => (n === null ? n : Math.max(0, n - 1)));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [presenting, exitPresent]);
 
   // ---- işaretçi olayları ----
   const localPoint = (event: { clientX: number; clientY: number }) => {
@@ -711,6 +1035,27 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     const wantsPan = tool === "pan" || spaceHeld || event.button === 1;
     const connectorId = target.closest<HTMLElement>("[data-board-connector]")?.dataset.boardConnector ?? null;
 
+    // Ekip araçları (docs/history/367-*): yorum / metin = dokunuşla yerleştir (sürüklenirse kaydırır); çerçeve/şekil/çizgi = sürükle; kalem = serbest çizim.
+    if (teamMode && !wantsPan) {
+      const world = screenToWorld(vpRef.current, point.x, point.y);
+      if (tool === "comment" || tool === "text") {
+        interaction.current = { ...base, kind: "tap", targetId: tool === "comment" ? itemId : null };
+        return;
+      }
+      if (canDraw && (tool === "frame" || tool === "rect" || tool === "oval" || tool === "line" || tool === "arrow")) {
+        drawStart.current = world;
+        interaction.current = { ...base, kind: "draw" };
+        setDrawPreview({ tool, ax: world.x, ay: world.y, bx: world.x, by: world.y });
+        return;
+      }
+      if (canDraw && tool === "pencil") {
+        pencilRef.current = [[world.x, world.y]];
+        setPencilPoints([[world.x, world.y]]);
+        interaction.current = { ...base, kind: "pencil" };
+        return;
+      }
+    }
+
     // Ok seçme: öğenin üstünde değilse okun üzerine (ya da etiketine) dokunmak oku seçer.
     if (connectorId && !itemId && !wantsPan) {
       setSelectedConnId(connectorId);
@@ -748,9 +1093,16 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       setSelection(next);
       // Kilitli nesneler sürüklemeye katılmaz; seçimdeki hepsi kilitliyse sürükleme boş alanda olduğu gibi seçim kutusu / kaydırma olur.
       const movable = next.filter((id) => !lockedSet.has(id));
+      // Çerçeve taşınınca içindeki öğeler de gelir (docs/history/367-*).
+      const moving = new Set(movable);
+      for (const id of movable) {
+        if (items.find((entry) => entry.id === id)?.kind !== "frame") continue;
+        const boxes = items.map((entry) => ({ id: entry.id, kind: entry.kind, ...geoms[entry.id], locked: entry.locked }));
+        for (const member of frameMemberIds({ id, kind: "frame", ...geoms[id] }, boxes)) moving.add(member);
+      }
       interaction.current =
         editable && movable.length > 0
-          ? { ...base, kind: "move", origin: Object.fromEntries(movable.map((id) => [id, geoms[id]]).filter(([, geom]) => geom)) }
+          ? { ...base, kind: "move", origin: Object.fromEntries([...moving].map((id) => [id, geoms[id]]).filter(([, geom]) => geom)) }
           : { ...base, kind: event.pointerType === "mouse" ? "marquee" : "pan" };
       return;
     }
@@ -761,6 +1113,10 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (teamMode && tool === "comment" && event.pointerType === "mouse") {
+      const hovered = (event.target as HTMLElement).closest<HTMLElement>("[data-board-item]")?.dataset.boardItem ?? null;
+      setHoverId((current) => (current === hovered ? current : hovered));
+    }
     // Ok çizerken başlangıç nesnesinden imlece önizleme çizgisi (fare/kalem; dokunmada imleç yok).
     if (activeFrom && event.pointerType !== "touch") {
       const at = localPoint(event);
@@ -789,8 +1145,18 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     current.moved = true;
     const zoom = current.vpStart.zoom;
 
-    if (current.kind === "pan") {
+    if (current.kind === "pan" || current.kind === "tap") {
       setVp({ ...current.vpStart, x: current.vpStart.x + dx, y: current.vpStart.y + dy });
+    } else if (current.kind === "draw" && drawStart.current) {
+      const world = screenToWorld(current.vpStart, point.x, point.y);
+      setDrawPreview((preview) => (preview ? { ...preview, bx: world.x, by: world.y } : preview));
+    } else if (current.kind === "pencil") {
+      const world = screenToWorld(current.vpStart, point.x, point.y);
+      const last = pencilRef.current[pencilRef.current.length - 1];
+      if (!last || Math.hypot(world.x - last[0], world.y - last[1]) >= 2 / zoom) {
+        pencilRef.current.push([world.x, world.y]);
+        setPencilPoints([...pencilRef.current]);
+      }
     } else if (current.kind === "move") {
       const next: Record<string, Geom> = {};
       for (const [id, origin] of Object.entries(current.origin)) {
@@ -800,7 +1166,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       }
       // Akıllı kılavuzlar: taşınanların birleşik kutusu diğer nesnelerin kenar/ortasına yaklaşınca oraya yakalanır (Alt: kapalı).
       let found: Guide[] = [];
-      if (!event.altKey) {
+      if (!event.altKey && guidesOn) {
         const movingIds = new Set(Object.keys(next));
         const box = boundsOf(Object.values(next));
         if (box) {
@@ -836,6 +1202,29 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     if (!current || current.pointerId !== event.pointerId) return;
     interaction.current = null;
     setPanning(false);
+    if (current.kind === "draw") {
+      const start = drawStart.current;
+      drawStart.current = null;
+      setDrawPreview(null);
+      if (start) {
+        const at = localPoint(event);
+        void finishDraw(toolRef.current, start, screenToWorld(current.vpStart, at.x, at.y));
+      }
+      return;
+    }
+    if (current.kind === "pencil") {
+      const points = pencilRef.current;
+      pencilRef.current = [];
+      setPencilPoints([]);
+      void finishPencil(points);
+      return;
+    }
+    if (current.kind === "tap" && !current.moved) {
+      const at = localPoint(event);
+      if (toolRef.current === "comment") startComment(at, current.targetId);
+      else if (toolRef.current === "text") setDialog({ kind: "text", near: screenToWorld(vpRef.current, at.x, at.y) });
+      return;
+    }
     if ((current.kind === "move" || current.kind === "resize") && current.moved && live) {
       commitLayout(live);
     } else if (!current.moved) {
@@ -860,6 +1249,10 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
 
   function onPointerCancel(event: React.PointerEvent<HTMLDivElement>) {
     pointers.current.delete(event.pointerId);
+    drawStart.current = null;
+    pencilRef.current = [];
+    setDrawPreview(null);
+    setPencilPoints([]);
     pinch.current = null;
     interaction.current = null;
     setPanning(false);
@@ -947,11 +1340,20 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       return;
     }
     if (event.key === "Escape") {
+      if (draftPin) {
+        setDraftPin(null);
+        return;
+      }
+      if (peek || activeComment) {
+        setPeek(false);
+        setActiveComment(null);
+        return;
+      }
       if (activeFrom) {
         setConnectFrom(null);
         setDraftPoint(null);
       } else if (selectedConnId) setSelectedConnId(null);
-      else if (tool === "connect" && selection.length === 0) setToolMode("select");
+      else if (tool !== "select" && selection.length === 0) setToolMode("select");
       else setSelection([]);
       return;
     }
@@ -1060,83 +1462,244 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     })),
   ];
   const lowDetail = vp.zoom < LOW_DETAIL_ZOOM;
-  const cursor = panning ? "cursor-grabbing" : tool === "pan" || spaceHeld ? "cursor-grab" : tool === "connect" ? "cursor-crosshair" : "cursor-default";
+  const cursor = panning ? "cursor-grabbing" : tool === "pan" || spaceHeld ? "cursor-grab" : tool === "connect" || (teamMode && tool !== "select") ? "cursor-crosshair" : "cursor-default";
+
+  const rootClass = cn(
+    "relative flex scroll-mt-3 flex-col overflow-hidden rounded-xl border border-border-soft bg-surface-soft",
+    fullscreen
+      ? "fixed inset-0 z-[45] rounded-none border-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
+      : teamMode
+        ? "h-[calc(100dvh-10rem-env(safe-area-inset-bottom))] min-h-[26rem] md:h-[calc(100dvh-8.5rem)]"
+        : "h-[72dvh] min-h-[420px] md:h-[calc(100dvh-12rem)]",
+  );
+  const commentMode = teamMode && tool === "comment";
+  const openCommentCount = boardThreads.filter((thread) => !thread.root.resolvedAt).length;
+  const selBox = (() => {
+    if (!teamMode || selectedItems.length === 0) return null;
+    const b = boundsOf(selectedItems.map((entry) => geoms[entry.id]));
+    if (!b) return null;
+    const tl = worldToScreen(vp, b.x, b.y);
+    const br = worldToScreen(vp, b.x + b.w, b.y + b.h);
+    return { cx: (tl.x + br.x) / 2, top: tl.y, bottom: br.y };
+  })();
+  const canMoveSelection = canReview(myRole) || selectedItems.every((entry) => isDrawingKind(entry.kind) || (entry.createdBy === userId && (entry.revState === "draft" || entry.revState === "changes")));
+  const itemKindName = (item: SpaceItem) => t(ITEM_KIND_LABEL[item.kind]);
+
+  const promptlyRows: AddRow[] = [
+    { key: "draft", icon: <SquareTerminal size={19} aria-hidden />, label: t("tb.add.prompt"), hint: t("tb.add.promptHint"), run: () => setDialog({ kind: "draft", near: viewCenter() }) },
+    { key: "image", icon: <ImagePlus size={19} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
+    { key: "note", icon: <StickyNote size={19} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
+    { key: "palette", icon: <PaletteIcon size={19} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
+    ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={19} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
+    { key: "workflow", icon: <WorkflowIcon size={19} aria-hidden />, label: t("tb.add.workflow"), hint: t("tb.add.workflowHint"), run: () => setDialog({ kind: "importWorkflow" }) },
+    { key: "preset", icon: <SlidersHorizontal size={19} aria-hidden />, label: t("tb.add.preset"), hint: t("tb.add.presetHint"), run: () => setDialog({ kind: "content", type: "preset" }) },
+    { key: "request", icon: <Sparkles size={19} aria-hidden />, label: t("tb.add.request"), hint: t("tb.add.requestHint"), run: () => setDialog({ kind: "content", type: "request" }) },
+  ];
+  const drawingRows: AddRow[] = [
+    { key: "text", icon: <Type size={19} aria-hidden />, label: t("tb.kind.text"), hint: t("tb.add.textHint"), tag: t("tb.add.new"), run: () => setToolMode("text"), hidden: !canDraw },
+    { key: "frame", icon: <Frame size={19} aria-hidden />, label: t("tb.kind.frame"), hint: t("tb.add.frameHint"), tag: t("tb.add.new"), run: () => setToolMode("frame"), hidden: !canDraw },
+    { key: "pencil", icon: <Pencil size={19} aria-hidden />, label: t("tb.tool.pencil"), hint: t("tb.add.pencilHint"), tag: t("tb.add.new"), run: () => setToolMode("pencil"), hidden: !canDraw },
+    { key: "shape", icon: <Square size={19} aria-hidden />, label: t("tb.tool.shape"), hint: t("tb.add.shapeHint"), tag: t("tb.add.new"), run: () => { setShape("rect"); setToolMode("rect"); }, hidden: !canDraw },
+    { key: "arrow", icon: <MinusLine size={19} className="-rotate-45" aria-hidden />, label: t("tb.add.lineArrow"), hint: t("tb.add.lineHint"), tag: t("tb.add.new"), run: () => { setShape("arrow"); setToolMode("arrow"); }, hidden: !canDraw },
+    { key: "connect", icon: <Spline size={19} aria-hidden />, label: t("tb.add.connect"), hint: t("tb.add.connectHint"), run: () => setToolMode("connect") },
+  ];
+  const zoomProps = {
+    zoom: vp.zoom,
+    editable,
+    hasSelection: selection.length > 0,
+    guides: guidesOn,
+    minimap: minimapOn,
+    fullscreen,
+    canUndo: history.past.length > 0,
+    canRedo: history.future.length > 0,
+    onZoomIn: () => zoomBy(1.2),
+    onZoomOut: () => zoomBy(1 / 1.2),
+    onFit: () => {
+      const { w, h } = viewSize();
+      setVp(fitViewport(items, w, h));
+    },
+    onFitSelection: fit,
+    onPreset: (zoom: number) => {
+      const { w, h } = viewSize();
+      setVp((current) => zoomAt(current, zoom, w / 2, h / 2));
+    },
+    onGuides: () => setGuidesOn((on) => !on),
+    onMinimap: toggleMinimap,
+    onSearch: () => setSearchOpen((open) => !open),
+    onShortcuts: () => setDialog({ kind: "shortcuts" }),
+    onFullscreen: () => setFullscreen((value) => !value),
+    onUndo: () => void undo(),
+    onRedo: () => void redo(),
+  };
+  const shareData = {
+    title: team?.fileTitle ?? team?.projectTitle ?? space.title,
+    items,
+    connections,
+    palettes,
+    describe: (item: SpaceItem) => {
+      const resolved = resolvedMap.get(item.id);
+      return { title: itemTitle(item), body: item.kind === "prompt" ? (item.isDraft ? item.body : (resolved?.prompt?.promptText ?? "")) : item.body };
+    },
+  };
+  const composerBody = draftPin && (
+    <div className="space-y-3" data-testid="board-comment-composer">
+      <div className="flex items-center gap-2.5">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-[0.6875rem] font-bold text-primary-foreground">{initialsOf(ownProfile?.displayName || ownProfile?.username || "?")}</span>
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <p className="text-small font-bold leading-none text-text">{t("tb.comments.newTitle")}</p>
+          <CommentTargetChip item={draftPin.itemId ? (items.find((entry) => entry.id === draftPin.itemId) ?? null) : null} itemTitle={itemTitle} />
+        </div>
+        <button type="button" onClick={() => setDraftPin(null)} aria-label={t("common.cancel")} className="grid h-9 w-9 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
+          <X size={18} aria-hidden />
+        </button>
+      </div>
+      <CommentInput people={team?.people ?? []} placeholder={t("tb.comments.placeholder")} submitLabel={t("tb.comments.send")} autoFocus={!phoneBar} onSubmit={submitDraft} onCancel={() => setDraftPin(null)} />
+    </div>
+  );
+  const commentsPanel = (className?: string) => (
+    <CommentsPanel
+      className={className}
+      threads={panelThreads}
+      allScope={allScope}
+      onScope={(all) => {
+        setAllScope(all);
+        if (!all) setScopeThreads(null);
+      }}
+      scopeLoading={allScope && scopeThreads === null}
+      activeId={activeComment}
+      items={items}
+      itemTitle={itemTitle}
+      people={team?.people ?? []}
+      myId={userId}
+      canModerate={canModerateComments}
+      canResolve={canResolveComments}
+      onLocate={locate}
+      onNew={() => {
+        setToolMode("comment");
+        if (phoneBar || tabletBar) setPanelOpen(false);
+      }}
+      onClose={() => setPanelOpen(false)}
+      api={pins}
+    />
+  );
 
   return (
     <div
       ref={rootRef}
       data-testid="space-board"
       data-fullscreen={fullscreen ? "" : undefined}
-      className={cn(
-        "relative flex scroll-mt-3 flex-col overflow-hidden rounded-xl border border-border-soft bg-surface-soft",
-        fullscreen ? "fixed inset-0 z-[45] rounded-none border-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]" : "h-[72dvh] min-h-[420px] md:h-[calc(100dvh-12rem)]",
-      )}
+      data-board-team={teamMode ? "" : undefined}
+      className={rootClass}
     >
-      {/* Üst araç çubuğu */}
-      <ScrollRow role="toolbar" aria-label={t("spaces.board.toolbar")} wrapperClassName="z-20 shrink-0 border-b border-border-soft bg-surface" className="items-center gap-1 px-2 py-1.5" data-board-toolbar={phoneBar ? "phone" : "full"}>
-        {editable && <SpaceMenu align="left" label={t("spaces.board.add")} trigger={<Plus size={18} aria-hidden />} items={addMenuItems} />}
-        {phoneBar ? (
-          <>
-            <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
-            {editable && <ToolButton icon={Spline} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => setToolMode(tool === "connect" ? "select" : "connect")} />}
-            {editable && (
-              <>
-                <Divider />
-                <ToolButton icon={Undo2} label={t("spaces.board.undo")} onClick={() => void undo()} disabled={history.past.length === 0} />
-                <ToolButton icon={Redo2} label={t("spaces.board.redo")} onClick={() => void redo()} disabled={history.future.length === 0} />
-              </>
-            )}
-            <Divider />
-            <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
-              {Math.round(vp.zoom * 100)}%
-            </button>
-            <SpaceMenu
-              label={t("spaces.board.moreTools")}
-              trigger={<Ellipsis size={18} aria-hidden />}
-              items={[
-                { key: "groups", label: t("spaces.groups.manage"), icon: Layers, onSelect: () => setDialog({ kind: "groups" }), hidden: !editable },
-                { key: "zoomIn", label: t("spaces.board.zoomIn"), icon: Plus, onSelect: () => zoomBy(1.2) },
-                { key: "zoomOut", label: t("spaces.board.zoomOut"), icon: Minus, onSelect: () => zoomBy(1 / 1.2) },
-                { key: "fit", label: t("spaces.board.fit"), icon: Maximize, onSelect: fit },
-                { key: "search", label: t("spaces.board.search"), icon: Search, onSelect: () => setSearchOpen((open) => !open) },
-                { key: "minimap", label: t("spaces.board.minimap"), icon: MapIcon, onSelect: toggleMinimap },
-                { key: "fullscreen", label: fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen"), icon: fullscreen ? Minimize2 : Maximize2, onSelect: () => setFullscreen((value) => !value) },
-              ]}
-            />
-          </>
-        ) : (
-          <>
-            <ToolButton icon={MousePointer2} label={t("spaces.board.toolSelect")} active={tool === "select" && !multiSelect} onClick={() => { setToolMode("select"); setMultiSelect(false); }} />
-            <ToolButton icon={Hand} label={t("spaces.board.toolPan")} active={tool === "pan"} onClick={() => setToolMode("pan")} />
-            <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
-            {editable && <ToolButton icon={Spline} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => setToolMode(tool === "connect" ? "select" : "connect")} />}
-            {editable && (
-              <>
-                <Divider />
-                <ToolButton icon={Undo2} label={t("spaces.board.undo")} onClick={() => void undo()} disabled={history.past.length === 0} />
-                <ToolButton icon={Redo2} label={t("spaces.board.redo")} onClick={() => void redo()} disabled={history.future.length === 0} />
-                <ToolButton icon={Layers} label={t("spaces.groups.manage")} onClick={() => setDialog({ kind: "groups" })} />
-              </>
-            )}
-            <Divider />
-            <ToolButton icon={Minus} label={t("spaces.board.zoomOut")} onClick={() => zoomBy(1 / 1.2)} />
-            <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
-              {Math.round(vp.zoom * 100)}%
-            </button>
-            <ToolButton icon={Plus} label={t("spaces.board.zoomIn")} onClick={() => zoomBy(1.2)} />
-            <ToolButton icon={Maximize} label={t("spaces.board.fit")} onClick={fit} />
-            <ToolButton icon={Search} label={t("spaces.board.search")} active={searchOpen} onClick={() => setSearchOpen((open) => !open)} />
-            <ToolButton icon={MapIcon} label={t("spaces.board.minimap")} active={minimapOn} onClick={toggleMinimap} className="max-sm:hidden" />
-            <ToolButton icon={Keyboard} label={t("spaces.board.shortcuts")} onClick={() => setDialog({ kind: "shortcuts" })} />
-            <ToolButton icon={fullscreen ? Minimize2 : Maximize2} label={fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen")} onClick={() => setFullscreen((value) => !value)} />
-          </>
-        )}
-        <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">
-          {uploading && <Loader2 size={16} className="animate-spin text-text-muted" aria-label={t("spaces.images.uploadingShort")} />}
-          <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} className="ml-0" />
+      {team && presenting === null && (
+        <TeamBoardBar
+          team={team}
+          commentCount={openCommentCount}
+          commentsActive={panelOpen || commentMode}
+          onComments={() => setPanelOpen((open) => !open)}
+          onShare={() => setShareOpen(true)}
+          onInfo={team.onInfo}
+        />
+      )}
+      <div className="flex min-h-0 flex-1">
+      <div className="relative flex min-w-0 flex-1 flex-col">
+      {!teamMode && (
+        <ScrollRow role="toolbar" aria-label={t("spaces.board.toolbar")} wrapperClassName="z-20 shrink-0 border-b border-border-soft bg-surface" className="items-center gap-1 px-2 py-1.5" data-board-toolbar={phoneBar ? "phone" : "full"}>
+          {editable && <SpaceMenu align="left" label={t("spaces.board.add")} trigger={<Plus size={18} aria-hidden />} items={addMenuItems} />}
+          {phoneBar ? (
+            <>
+              <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
+              {editable && <ToolButton icon={Spline} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => setToolMode(tool === "connect" ? "select" : "connect")} />}
+              {editable && (
+                <>
+                  <Divider />
+                  <ToolButton icon={Undo2} label={t("spaces.board.undo")} onClick={() => void undo()} disabled={history.past.length === 0} />
+                  <ToolButton icon={Redo2} label={t("spaces.board.redo")} onClick={() => void redo()} disabled={history.future.length === 0} />
+                </>
+              )}
+              <Divider />
+              <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
+                {Math.round(vp.zoom * 100)}%
+              </button>
+              <SpaceMenu
+                label={t("spaces.board.moreTools")}
+                trigger={<Ellipsis size={18} aria-hidden />}
+                items={[
+                  { key: "groups", label: t("spaces.groups.manage"), icon: Layers, onSelect: () => setDialog({ kind: "groups" }), hidden: !editable },
+                  { key: "zoomIn", label: t("spaces.board.zoomIn"), icon: Plus, onSelect: () => zoomBy(1.2) },
+                  { key: "zoomOut", label: t("spaces.board.zoomOut"), icon: Minus, onSelect: () => zoomBy(1 / 1.2) },
+                  { key: "fit", label: t("spaces.board.fit"), icon: Maximize, onSelect: fit },
+                  { key: "search", label: t("spaces.board.search"), icon: Search, onSelect: () => setSearchOpen((open) => !open) },
+                  { key: "minimap", label: t("spaces.board.minimap"), icon: MapIcon, onSelect: toggleMinimap },
+                  { key: "fullscreen", label: fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen"), icon: fullscreen ? Minimize2 : Maximize2, onSelect: () => setFullscreen((value) => !value) },
+                ]}
+              />
+            </>
+          ) : (
+            <>
+              <ToolButton icon={MousePointer2} label={t("spaces.board.toolSelect")} active={tool === "select" && !multiSelect} onClick={() => { setToolMode("select"); setMultiSelect(false); }} />
+              <ToolButton icon={Hand} label={t("spaces.board.toolPan")} active={tool === "pan"} onClick={() => setToolMode("pan")} />
+              <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
+              {editable && <ToolButton icon={Spline} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => setToolMode(tool === "connect" ? "select" : "connect")} />}
+              {editable && (
+                <>
+                  <Divider />
+                  <ToolButton icon={Undo2} label={t("spaces.board.undo")} onClick={() => void undo()} disabled={history.past.length === 0} />
+                  <ToolButton icon={Redo2} label={t("spaces.board.redo")} onClick={() => void redo()} disabled={history.future.length === 0} />
+                  <ToolButton icon={Layers} label={t("spaces.groups.manage")} onClick={() => setDialog({ kind: "groups" })} />
+                </>
+              )}
+              <Divider />
+              <ToolButton icon={Minus} label={t("spaces.board.zoomOut")} onClick={() => zoomBy(1 / 1.2)} />
+              <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
+                {Math.round(vp.zoom * 100)}%
+              </button>
+              <ToolButton icon={Plus} label={t("spaces.board.zoomIn")} onClick={() => zoomBy(1.2)} />
+              <ToolButton icon={Maximize} label={t("spaces.board.fit")} onClick={fit} />
+              <ToolButton icon={Search} label={t("spaces.board.search")} active={searchOpen} onClick={() => setSearchOpen((open) => !open)} />
+              <ToolButton icon={MapIcon} label={t("spaces.board.minimap")} active={minimapOn} onClick={toggleMinimap} className="max-sm:hidden" />
+              <ToolButton icon={Keyboard} label={t("spaces.board.shortcuts")} onClick={() => setDialog({ kind: "shortcuts" })} />
+              <ToolButton icon={fullscreen ? Minimize2 : Maximize2} label={fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen")} onClick={() => setFullscreen((value) => !value)} />
+            </>
+          )}
+          <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">
+            {uploading && <Loader2 size={16} className="animate-spin text-text-muted" aria-label={t("spaces.images.uploadingShort")} />}
+            <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} className="ml-0" />
+          </div>
+          <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" tabIndex={-1} onChange={(event) => { void uploadFiles(event.target.files); event.target.value = ""; }} />
+        </ScrollRow>
+      )}
+      {team && presenting === null && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-2.5 pt-2.5">
+          <BoardToolbar
+            size={size}
+            editable={editable}
+            canDraw={canDraw}
+            tool={tool}
+            onTool={setToolMode}
+            multiSelect={multiSelect}
+            onMultiSelect={() => setMultiSelect((value) => !value)}
+            shape={shape}
+            onShape={setShape}
+            pencilWidth={pencilWidth}
+            onPencilWidth={setPencilWidth}
+            pagesSlot={<PagesButton buttonRef={pagesUi.buttonRef} team={team} open={pagesUi.menuOpen} onClick={() => pagesUi.setMenuOpen((open) => !open)} compact={size === "phone"} />}
+            zoomPercent={Math.round(vp.zoom * 100)}
+            zoomProps={zoomProps}
+            promptlyRows={promptlyRows}
+            drawingRows={drawingRows}
+            onAddNote={() => setDialog({ kind: "note", near: viewCenter() })}
+            onPresent={startPresent}
+            canPresent={frameList.length > 0}
+            onGroups={() => setDialog({ kind: "groups" })}
+            onComments={() => setPanelOpen(true)}
+            onShortcuts={() => setDialog({ kind: "shortcuts" })}
+          />
         </div>
-        <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" tabIndex={-1} onChange={(event) => { void uploadFiles(event.target.files); event.target.value = ""; }} />
-      </ScrollRow>
+      )}
+      {teamMode && <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" tabIndex={-1} onChange={(event) => { void uploadFiles(event.target.files); event.target.value = ""; }} />}
+
+
 
       {/* Tuval */}
       <div
@@ -1217,7 +1780,52 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
               />
             );
           })}
+          {teamMode && commentMode && hoverId && geoms[hoverId] && (
+            <div aria-hidden data-board-hover={hoverId} className="pointer-events-none absolute rounded-lg border-2 border-dashed border-primary bg-primary/5" style={{ left: geoms[hoverId].x - 4, top: geoms[hoverId].y - 4, width: geoms[hoverId].w + 8, height: geoms[hoverId].h + 8, zIndex: 8000 }}>
+              <span className="absolute -top-7 left-0 inline-flex h-6 items-center whitespace-nowrap rounded-md bg-primary px-2 text-caption font-bold text-primary-foreground" style={{ transform: `scale(${1 / vp.zoom})`, transformOrigin: "left bottom" }}>
+                {(() => {
+                  const target = items.find((entry) => entry.id === hoverId);
+                  return target ? `${itemKindName(target)} · ${itemTitle(target)}` : "";
+                })()}
+              </span>
+            </div>
+          )}
+          {teamMode && hlItemId && geoms[hlItemId] && (
+            <div aria-hidden data-board-highlight={hlItemId} className="pointer-events-none absolute rounded-lg border-2 border-primary bg-primary/10" style={{ left: geoms[hlItemId].x - 4, top: geoms[hlItemId].y - 4, width: geoms[hlItemId].w + 8, height: geoms[hlItemId].h + 8, zIndex: 8000 }} />
+          )}
+          {drawPreview && (() => {
+            const box = dragBox(drawPreview.ax, drawPreview.ay, drawPreview.bx, drawPreview.by);
+            if (drawPreview.tool === "line" || drawPreview.tool === "arrow") {
+              const line = lineShape(drawPreview.ax, drawPreview.ay, drawPreview.bx, drawPreview.by);
+              return (
+                <div aria-hidden className="pointer-events-none absolute" style={{ left: line.box.x, top: line.box.y, zIndex: 8000 }}>
+                  <ShapeSvg w={line.box.w} h={line.box.h} data={{ shape: drawPreview.tool, fill: false, sw: 4, points: line.points }} color="primary" />
+                </div>
+              );
+            }
+            return <div aria-hidden data-board-draw-preview="" className={cn("pointer-events-none absolute border-2 border-dashed border-primary bg-primary/5", drawPreview.tool === "oval" ? "rounded-[50%]" : "rounded-md")} style={{ left: box.x, top: box.y, width: box.w, height: box.h, zIndex: 8000 }} />;
+          })()}
+          {pencilPoints.length > 1 && (
+            <svg aria-hidden className="pointer-events-none absolute left-0 top-0 overflow-visible" width={1} height={1} style={{ zIndex: 8000 }}>
+              <path d={pencilPoints.map(([x, y], index) => `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ")} fill="none" stroke="var(--color-primary)" strokeWidth={pencilWidth} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
         </div>
+        {teamMode && presenting === null && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden" data-board-pins="">
+            {pins.threads.map((thread) => {
+              const pos = pinWorldPosition(thread.root, itemPositions);
+              if (!pos) return null;
+              const at = worldToScreen(vp, pos.x, pos.y);
+              if (at.x < -40 || at.y < -40 || at.x > view.w + 40 || at.y > view.h + 80) return null;
+              return <PinMarker key={thread.root.id} comment={thread.root} x={at.x} y={at.y} active={activeComment === thread.root.id} replies={thread.replies.length} onSelect={() => { setActiveComment(thread.root.id); if (!phoneBar) setPanelOpen(true); else setPeek(true); }} />;
+            })}
+            {draftPin && (() => {
+              const at = worldToScreen(vp, draftPin.x, draftPin.y);
+              return <PinMarker comment={null} draft x={at.x} y={at.y} active />;
+            })()}
+          </div>
+        )}
         {minimapOn && <BoardMinimap geoms={boardGeoms} vp={vp} view={view} onNavigate={(wx, wy) => setVp((current) => ({ ...current, x: view.w / 2 - wx * current.zoom, y: view.h / 2 - wy * current.zoom }))} />}
         {searchOpen && (
           <BoardSearch
@@ -1290,11 +1898,18 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
 
       {/* Seçim çubuğu (her ekranda; dokunmada bağlam menüsünün yerine) */}
       {selectedItems.length > 0 && !selectedConn && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center px-3">
+        <div
+          className={cn("pointer-events-none absolute z-30 flex justify-center", teamMode && size !== "phone" && selBox ? "" : "inset-x-0 bottom-3 px-3")}
+          style={
+            teamMode && size !== "phone" && selBox
+              ? { left: Math.min(Math.max(selBox.cx, Math.min(300, view.w / 2)), view.w - Math.min(300, view.w / 2)), top: selBox.top - 56 >= 64 ? selBox.top - 56 : Math.min(selBox.bottom + 12, view.h - 60), transform: "translateX(-50%)", maxWidth: "calc(100% - 1rem)" }
+              : undefined
+          }
+        >
           <div role="toolbar" aria-label={t("spaces.board.selectionToolbar")} data-board-selection={selectedItems.length} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full border border-border-soft bg-surface px-1.5 py-1 shadow-pop">
             <span className="shrink-0 px-2 text-caption font-semibold text-text-secondary">{t("spaces.board.selected", { count: selectedItems.length })}</span>
-            {single && single.kind !== "palette" && <ToolButton icon={ArrowUpRight} label={t("spaces.board.open")} onClick={() => openItem(single.id)} />}
-            {editable && single && single.kind !== "note" && single.kind !== "palette" && <ToolButton icon={StickyNote} label={t("spaces.board.attachNote")} onClick={() => setDialog({ kind: "note", attachTo: single.id })} />}
+            {single && single.kind !== "palette" && single.kind !== "shape" && <ToolButton icon={ArrowUpRight} label={t("spaces.board.open")} onClick={() => openItem(single.id)} />}
+            {editable && single && single.kind !== "note" && single.kind !== "palette" && !isDrawingKind(single.kind) && <ToolButton icon={StickyNote} label={t("spaces.board.attachNote")} onClick={() => setDialog({ kind: "note", attachTo: single.id })} />}
             {editable && (
               <>
                 {selectedItems.some(isDuplicable) && <ToolButton icon={Copy} label={t("spaces.board.duplicate")} onClick={() => void duplicate(selection, 1)} />}
@@ -1325,6 +1940,20 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
                       { key: "tidy", label: t("spaces.board.tidy"), icon: LayoutGrid, onSelect: () => align("tidy") },
                     ]}
                   />
+                )}
+                {teamMode && canDraw && selectedItems.every((entry) => entry.kind === "shape" || entry.kind === "text" || entry.kind === "frame") && <StyleControls items={selectedItems} onPatch={(patch) => void restyle(patch)} />}
+                {team && team.pages.length > 1 && !team.archived && (
+                  <button
+                    ref={moveRef}
+                    type="button"
+                    onClick={() => setMoveOpen((open) => !open)}
+                    aria-haspopup="dialog"
+                    aria-expanded={moveOpen}
+                    data-board-move-button=""
+                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-caption font-bold text-primary"
+                  >
+                    {t(size === "desktop" ? "tb.move.button" : "tb.move.buttonShort")}
+                  </button>
                 )}
                 <ToolButton icon={Trash2} label={t("spaces.board.remove")} onClick={() => void deleteSelection()} danger />
               </>
@@ -1371,6 +2000,109 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
         />
       )}
       {dialog?.kind === "shortcuts" && <ShortcutsDialog onClose={() => setDialog(null)} />}
+      {dialog?.kind === "text" && <TextItemDialog item={dialog.item ?? null} onClose={() => setDialog(null)} onSave={(values) => saveText(values, dialog.item ?? null, dialog.near)} />}
+      {dialog?.kind === "frame" && <FrameDialog item={dialog.item} onClose={() => setDialog(null)} onSave={async (values) => { await patchItem(dialog.item.id, { title: values.title, color: values.color }); }} />}
+      {dialog?.kind === "content" && (
+        <ContentPickerDialog
+          type={dialog.type}
+          onClose={() => setDialog(null)}
+          onPick={async (row) => {
+            const created = await addItems(place([{ spaceId: space.id, kind: "content", contentType: dialog.type, contentId: row.id, title: row.title }], viewCenter()));
+            setHistory((h) => pushHistory(h, { type: "add", items: created }));
+            setSelection(created.map((entry) => entry.id));
+          }}
+        />
+      )}
+      {dialog?.kind === "palette" && <NewPaletteDialog onClose={() => setDialog(null)} />}
+
+      {/* Ekip modu katmanları (docs/history/367-*) */}
+      {commentMode && !draftPin && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center px-3">
+          <div role="status" data-board-comment-hint="" className="pointer-events-auto flex max-w-md items-center gap-3 rounded-full bg-text py-2 pl-5 pr-2 text-small text-background shadow-pop">
+            <span className="min-w-0 flex-1">{t("tb.comments.hint")}</span>
+            <button type="button" onClick={() => setToolMode("select")} aria-label={t("tb.comments.exitMode")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-background/15">
+              <X size={18} aria-hidden />
+            </button>
+          </div>
+        </div>
+      )}
+      {draftPin && composerBody && (() => {
+        if (size === "phone") return <BoardSheet onClose={() => setDraftPin(null)}>{composerBody}</BoardSheet>;
+        const at = worldToScreen(vp, draftPin.x, draftPin.y);
+        const left = Math.max(8, Math.min(at.x + 20, view.w - 344));
+        const top = Math.max(8, Math.min(at.y - 44, view.h - 270));
+        return (
+          <div className="absolute z-40 w-[21rem] rounded-2xl border border-border-soft bg-surface p-3.5 shadow-pop animate-pop-in" style={{ left, top }}>
+            {composerBody}
+          </div>
+        );
+      })()}
+      {peek && activeThread && phoneBar && (
+        <div className="pointer-events-none absolute inset-x-3 bottom-3 z-30">
+          <CommentPeek
+            thread={activeThread}
+            index={Math.max(0, openBoardThreads.findIndex((entry) => entry.root.id === activeThread.root.id))}
+            total={openBoardThreads.length}
+            items={items}
+            itemTitle={itemTitle}
+            onPrev={() => {
+              const index = openBoardThreads.findIndex((entry) => entry.root.id === activeThread.root.id);
+              const next = openBoardThreads[(index - 1 + openBoardThreads.length) % openBoardThreads.length];
+              if (next) locate(next);
+            }}
+            onNext={() => {
+              const index = openBoardThreads.findIndex((entry) => entry.root.id === activeThread.root.id);
+              const next = openBoardThreads[(index + 1) % openBoardThreads.length];
+              if (next) locate(next);
+            }}
+            onList={() => {
+              setPeek(false);
+              setPanelOpen(true);
+            }}
+          />
+        </div>
+      )}
+      {team && pagesUi.overview && <PagesOverview team={team} actions={pageActions.actions} onClose={() => pagesUi.setOverview(false)} />}
+      {team && pagesUi.menuOpen && pagesUi.drawer && <PagesDrawer team={team} actions={pageActions.actions} onClose={() => pagesUi.setMenuOpen(false)} onOverview={() => pagesUi.setOverview(true)} />}
+      {team && pagesUi.menuOpen && !pagesUi.drawer && <PagesPopover anchorRef={pagesUi.buttonRef} team={team} actions={pageActions.actions} onClose={() => pagesUi.setMenuOpen(false)} onOverview={() => pagesUi.setOverview(true)} />}
+      {team && moveOpen && selectedItems.length > 0 && <MovePopover anchorRef={moveRef} team={team} count={selectedItems.length} canMove={canMoveSelection} onClose={() => setMoveOpen(false)} onRun={runTransfer} />}
+      {team && panelOpen && size === "tablet" && (
+        <div className="absolute inset-y-0 right-0 z-30 flex w-[21rem] max-w-[92%] border-l border-border-soft bg-surface shadow-pop animate-fade-in">{commentsPanel("w-full")}</div>
+      )}
+      {team && panelOpen && size === "phone" && (
+        <BoardSheet onClose={() => setPanelOpen(false)}>
+          <div className="h-[min(62dvh,34rem)]">{commentsPanel("h-full")}</div>
+        </BoardSheet>
+      )}
+      {presenting !== null && frameList.length > 0 && (
+        <PresentBar index={Math.min(presenting, frameList.length - 1)} total={frameList.length} title={frameList[Math.min(presenting, frameList.length - 1)]?.title ?? ""} onPrev={() => setPresenting((n) => Math.max(0, (n ?? 0) - 1))} onNext={() => setPresenting((n) => Math.min(frameList.length - 1, (n ?? 0) + 1))} onExit={exitPresent} />
+      )}
+      </div>
+      {team && panelOpen && size === "desktop" && presenting === null && (
+        <aside className="flex w-[23.75rem] shrink-0 border-l border-border-soft bg-surface" data-testid="board-comments-aside">
+          {commentsPanel("w-full")}
+        </aside>
+      )}
+      </div>
+      {team && shareOpen && (
+        <ShareDialog
+          team={team}
+          data={shareData}
+          canInvite={team.canInvite}
+          canExport={canAddToArea(myRole)}
+          canEditAccess={team.canEditAccess}
+          onInvite={() => {
+            setShareOpen(false);
+            team.onInvite();
+          }}
+          onEditAccess={() => {
+            setShareOpen(false);
+            team.onEditAccess();
+          }}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
+      {pageActions.nodes}
     </div>
   );
 }

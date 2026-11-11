@@ -168,6 +168,7 @@ await scenario("4b Delete tuşu seçili oku siler", async ({ page, db }) => {
   await page.locator("[data-board-canvas]").focus();
   await page.keyboard.press("Delete");
   await waitFor(() => calls(db, "DELETE", "space_connections").length === 1);
+  await page.waitForFunction(() => document.querySelectorAll("[data-connector]").length === 0).catch(() => undefined);
   assert.equal(await connectors(page).count(), 0);
 }, { setup: (db) => { board3(db); db.addConnection(SID(1), NOTE(1), NOTE(2), { label: "x" }); } });
 
