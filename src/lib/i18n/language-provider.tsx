@@ -83,13 +83,24 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Sözlük sonradan inince (İngilizce ayrı parçadır, docs/history/372-*) `t` yeniden hesaplansın diye artar.
   const [dictionaryVersion, setDictionaryVersion] = useState(0);
 
-  // Seçim (radyo, `language`) ANINDA değişir; metinler sözlük inince güncellenir (o ana dek Türkçe metin — anahtar
-  // ya da boş metin asla görünmez). Yükleme başarısızsa bir sonraki dil seçiminde yeniden denenir.
-  const applyLanguage = useCallback((next: Language) => {
-    setLanguageState(next);
-    if (isDictionaryLoaded(next)) return;
+  // Kullanıcı dil SEÇİNCE (radyo) seçim anında değişir; metinler sözlük inince güncellenir (o ana dek Türkçe metin — anahtar
+  // ya da boş metin asla görünmez). Açılıştaki dil belirlemede ise durum sözlük inene kadar Türkçe kalır: böylece `t`
+  // eskisi gibi YALNIZ BİR KEZ değişir (t'ye bağlı effect'ler fazladan çalışmaz). Yükleme başarısızsa sayfa Türkçe kalır.
+  const applyLanguage = useCallback((next: Language, waitForDictionary: boolean) => {
+    if (isDictionaryLoaded(next)) {
+      setLanguageState(next);
+      return;
+    }
+    if (!waitForDictionary) setLanguageState(next);
     loadDictionary(next).then(
-      () => setDictionaryVersion((v) => v + 1),
+      () => {
+        if (waitForDictionary) {
+          // Bu arada kullanıcı başka bir dil seçtiyse onu ezme.
+          if (document.documentElement.lang === next) setLanguageState(next);
+        } else {
+          setDictionaryVersion((v) => v + 1);
+        }
+      },
       () => {
         // Ağ hatası: sayfa Türkçe metinle çalışmaya devam eder.
       },
@@ -104,13 +115,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const lang = detectLanguage();
     document.documentElement.lang = lang;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- tek seferlik: ilk boyamadan önce belirlenen dili React'e taşır (eskisiyle aynı)
-    applyLanguage(lang);
+    applyLanguage(lang, true);
   }, [applyLanguage]);
 
   const setLanguage = useCallback(
     (next: Language) => {
-      applyLanguage(next);
       document.documentElement.lang = next;
+      applyLanguage(next, false);
       try {
         localStorage.setItem(STORAGE_KEY, next);
       } catch {

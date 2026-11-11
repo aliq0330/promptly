@@ -40,8 +40,10 @@ yalnız ölçülen/yeniden üretilen sorunlar düzeltildi.
 - Çalışma zamanı: `lib/i18n/dictionary.ts` (Türkçe statik; İngilizce `import()` ile ayrı parça; İngilizce ziyaretçide modül
   yüklenir yüklenmez paralel iner) + `lib/i18n/runtime.ts` (`translateForRuntime`, `getRuntimeLanguage` buraya TAŞINDI — 44
   dosyanın içe aktarması güncellendi). `translations.ts` artık yalnız kaynak + tiptir.
-- `LanguageProvider`: dil seçimi (radyo, `language`) anında değişir; metinler sözlük inince güncellenir (o ana dek Türkçe metin —
-  anahtar asla görünmez). `LanguageTermScope` aynı sözlükten okur.
+- `LanguageProvider`: kullanıcı dil SEÇİNCE radyo anında değişir, metinler sözlük inince güncellenir (o ana dek Türkçe metin —
+  anahtar asla görünmez). Açılışta İngilizce belirlenen ziyaretçide durum sözlük inene kadar Türkçe kalır; böylece `t` eskisi
+  gibi yalnız BİR kez değişir (`t`'ye bağlı effect'ler fazladan çalışmaz). `t` kimliğini sabitlemek bilerek seçilmedi:
+  `useMemo(…, [t])` ile önbelleğe alınmış metinler eski dilde kalırdı. `LanguageTermScope` aynı sözlükten okur.
 - `src/lib/i18n-dictionary.test.ts`: üretilen dosyalar kaynakla birebir mi, her anahtarın iki dili dolu mu, ve **hiçbir kaynak
   dosya `translations*.ts`'ten değer içe aktarmıyor mu** (aktarırsa iki dil yeniden pakete girer; deneme dosyasıyla kırmızı olduğu görüldü).
 - Ölçüm (`next build`, aynı ayarlar): Türkçe kritik parça **195 → 121 KB gzip (−38 %)**; İngilizce sözlük ayrı **103 KB gzip**,
