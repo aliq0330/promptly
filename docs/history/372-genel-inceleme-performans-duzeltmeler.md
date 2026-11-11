@@ -65,6 +65,14 @@ bölüm şeridinin "Sonraki bölüm" düğmesini örtüyordu (gerçek hata — d
 Test `TERMS_VERSION`'ı sabit `2026-11-02` yazıyordu; koşullar 2026-11-08'e güncellenince kırmızı oldu. Test sürüm ve yürürlük
 anını artık `legal-content.ts`'ten okur. Uygulama kodu değişmedi. 14/14.
 
+### 5b. Eskimiş diğer arayüz testleri (uygulama kodu DEĞİŞMEDİ)
+Tam koşuda `main`'de de kırmızı olan dört senaryo, davranış sonradan değiştiği hâlde güncellenmemiş testlerdi:
+- `run-discover` 7 — kenar çubuğuna "Ekipler" (350) ve "Yaratıcı paneli" (294) eklenmişti; beklenen liste 10 girişe güncellendi.
+- `run-focus-feed` 9 — Kaydet artık tek dokunuşla kaydeder, pencere açmaz (336); test bunu doğrular.
+- `run-pagination` 4 — profil araması prompt metnini de (`prompt_text`) kapsar (sitedeki aramayla aynı); beklenen sorgu güncellendi.
+- `run-topic-pages` 1 — konu sayfası bölümleri tek "Tümü ▾" menüsünde; test menüyü açıp "Promptlar"ı arar.
+- `run-stories` 13 — `getByText("Gizli")` "Gizlilik Politikası" bağlantısına da eşleşiyordu → `exact: true` (347'deki "Önce" hatasıyla aynı tür).
+
 ### 6. Mesajlaşma bileşeninden iki kanca ayrıldı (davranış aynı)
 `LocalConversationView` 2239 → 2080 satır:
 - `use-pending-share.ts` — paylaşım bağlantısından (`?share<Tür>Id=`) gelen bekleyen paylaşım (6 durum + effect + türetme).
@@ -84,6 +92,11 @@ durumları paylaşıyor; ayrı, kademeli bir iş olarak ele alınmalı.
 ## Testler
 - `npx tsc --noEmit`, `npm run lint` (0 hata), `npm test` (1044), `npm run build` temiz.
 - Yerel PostgreSQL: 90 SQL test dosyası (yeni `rls-initplan.sql` dahil), her biri ayrı veritabanında, hepsi `FAILED=0`.
-- Ağ taklitli Playwright: aşağıdaki tablo (son derlemeyle).
+- Ağ taklitli Playwright: **69 paketin tamamı** son derlemeyle yeşil (CI ile aynı ortam değişkenleri:
+  `NEXT_PUBLIC_GIPHY_API_KEY=test-key`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=PromptlyTestBot` — ikincisi verilmezse `run-telegram-settings`
+  1/10 düşer, ortam farkıdır). Paralel koşuda düşen senaryolar ayrıca yüksüz, yeni derleme ve `main` derlemesinde yan yana koşturuldu:
+  yük oynaklığı (`community-posts` 17, `exchange` 42, `quotes`, `result-stats`, `save-collections`) yüksüzde iki tarafta da geçti;
+  `team-projects` 9 `main`'de de aralıklı düşüyor (3'te 1) — regresyon yok. Paketler ayrı port aralıklarında paralel koşturulabilir
+  (çoğu paket sabit port kullanır ve bazıları aynı portu paylaşır; aynı anda iki kopya koşmaz).
 - İngilizce karşılıklar: yeni görünür metin YOK (yalnız yorum/belge); mevcut İngilizce senaryolar (`run-chat` 16, `run-settings` 5,
   `run-developers` 22, `run-legal-notice` 7) yeşil.
