@@ -212,13 +212,14 @@ await scenario("6. masaüstü: taşma yok, aynı sıra", async ({ page }) => {
   await shot(page, "6-desktop");
 }, { viewport: { width: 1280, height: 900 } });
 
-await scenario("7. masaüstü: yan menü 8 giriş (Promptlar/Workflow'lar/Ayar Paketleri/İstekler/Etiketler/Odak yok), Odak üst çubukta; gönderiler yüksekte başlar", async ({ page }) => {
+await scenario("7. masaüstü: yan menü 10 giriş (Promptlar/Workflow'lar/Ayar Paketleri/İstekler/Etiketler/Odak yok), Odak üst çubukta; gönderiler yüksekte başlar", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await page.locator("main article:has(a[data-card-link])").first().waitFor();
   const nav = page.locator("aside[aria-label] nav");
   assert.deepEqual(
     (await nav.getByRole("link").allTextContents()).map((x) => x.trim()),
-    ["Ana Sayfa", "Keşfet", "Topluluklar", "Spaces", "Studio", "Kaydedilenler", "Takip ettiğim kişiler", "Profil"],
+    // Ekipler (docs/history/350-*) ve Yaratıcı paneli (294-*) sonradan eklendi.
+    ["Ana Sayfa", "Keşfet", "Topluluklar", "Spaces", "Studio", "Kaydedilenler", "Ekipler", "Takip ettiğim kişiler", "Yaratıcı paneli", "Profil"],
   );
   assert.equal(await nav.locator("a[aria-current='page']").textContent(), "Keşfet");
   assert.equal(await page.locator("header[data-app-header] a[href*='/focus']").count(), 1, "Odak üst çubukta");

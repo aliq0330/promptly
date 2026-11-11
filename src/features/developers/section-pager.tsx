@@ -100,7 +100,9 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
       ref={rootRef}
       aria-label={t("devNav.label")}
       data-dev-pager=""
-      className="fixed right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 md:right-6 md:bottom-6"
+      // Sağ alttaki "Mesajlar" hapı (lg+, oturumlu; docs/history/328-*) sayfadayken şerit onun ÜSTÜNE çıkar — aksi hâlde hap
+      // "Sonraki bölüm" düğmesini örter ve basılamaz (docs/history/372-*). Hap yoksa konum aynı.
+      className="fixed right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 md:right-6 md:bottom-6 [html:has([data-message-dock-pill])_&]:bottom-[4.75rem]"
     >
       {open && (
         <ul data-dev-pager-list="" className="absolute bottom-full right-0 mb-2 w-72 max-w-[calc(100vw-1.5rem)] animate-pop-in space-y-0.5 rounded-xl border border-border-soft bg-surface p-1.5 shadow-pop">

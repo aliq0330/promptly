@@ -342,14 +342,13 @@ await scenario("8. Beğeni gerçek istekle, hata olursa geri alınır", async ({
   assert.match(await slides(page).nth(1).getByRole("button", { name: /Beğen|Tepki/ }).textContent(), /12/, "rolled back");
 });
 
-await scenario("9. Kaydet / Paylaş pencereleri (Esc yalnız pencereyi kapatır), Yorum → #comments, Promptu incele + Kopyala", async ({ page, db }) => {
+await scenario("9. Kaydet tek dokunuş (pencere yok, docs/history/336-*), Paylaş penceresi (Esc yalnız pencereyi kapatır), Yorum → #comments, Promptu incele + Kopyala", async ({ page, db }) => {
   await openFocus(page);
   const s0 = slides(page).nth(0);
   await s0.getByRole("button", { name: /Kaydet|koleksiyon/i }).click();
-  await page.locator("[aria-modal='true']").waitFor();
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(400);
-  assert.equal(await stage(page).count(), 1, "Escape closed the dialog, not Odak");
+  await page.locator("[data-save-toast]").waitFor();
+  assert.equal(await page.locator("[aria-modal='true']").count(), 0, "Kaydet pencere açmaz — koleksiyona eklemek ayrı adım");
+  assert.equal(await stage(page).count(), 1, "Odak açık kalır");
   await s0.getByRole("button", { name: "Paylaş" }).click();
   await page.locator("[aria-modal='true']").waitFor();
   await page.keyboard.press("Escape");

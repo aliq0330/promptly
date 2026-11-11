@@ -98,7 +98,7 @@ export function WelcomeTour() {
   return (
     <Modal onClose={close} labelledBy="tour-title">
       <div className="w-full max-w-md overflow-hidden rounded-xl border border-border-soft bg-surface p-5 shadow-pop sm:p-6" onClick={(event) => event.stopPropagation()}>
-        {/* "Paylaşma anı" (docs/history/372-*): stays mounted across steps, so the story runs on while the reader pages. */}
+        {/* "Paylaşma anı" (docs/history/373-*): stays mounted across steps, so the story runs on while the reader pages. */}
         <LineArtScene kind="share" className="-mx-5 -mt-5 mb-4 aspect-[2/1] border-b border-border-soft sm:-mx-6 sm:-mt-6" />
         <div className="flex items-center justify-between gap-3">
           <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">

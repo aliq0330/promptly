@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 
 /** A tag the viewer follows (`public.tag_follows`, migration 20260919860000). */
 export interface FollowedTag {

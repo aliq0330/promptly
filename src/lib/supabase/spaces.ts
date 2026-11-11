@@ -3,7 +3,8 @@ import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { fetchRequestsByIds } from "./requests";
 import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
-import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { resizeImageToBlob } from "@/lib/utils";
 import { isReviewState, type ReviewState } from "@/lib/team-projects";
 import {

@@ -17,7 +17,7 @@ import {
 } from "@/lib/supabase/messages";
 import { markConversationReadUpTo } from "@/lib/supabase/chat-features";
 import { supabase } from "@/lib/supabase/client";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import type { Conversation, UserProfile } from "@/types";
 
 interface RealMessagesContextValue {

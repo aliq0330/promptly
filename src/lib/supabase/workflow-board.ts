@@ -1,5 +1,5 @@
 import { findFreeSpot, topZ } from "@/lib/space-board";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { RELATION_TYPES } from "@/lib/relations/types";
 import {
   MAX_ITEMS,

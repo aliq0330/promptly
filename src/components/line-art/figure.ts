@@ -1,4 +1,4 @@
-// A Promptly figure (docs/history/372-*): the walker from line-art-animation (MIT), generalised.
+// A Promptly figure (docs/history/373-*): the walker from line-art-animation (MIT), generalised.
 // Drawn in figure space (feet on y 120, facing +x, standing on x 40) and placed with place().
 // Colours are CSS custom properties so the figure follows the page theme.
 import { el, pen, shape, blot, paint, limb, shoe, place, f, pt, PEN, PAPER, type Vec, type Limb } from '@/lib/line-art/ink';

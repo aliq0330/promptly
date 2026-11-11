@@ -13,7 +13,7 @@ const LABELS: Record<LineArtKind, { label: TranslationKey; hint?: TranslationKey
 };
 
 /**
- * An animated line-art scene (docs/history/372-*): ink on paper, drawn live in SVG. Ink is the text colour and paper the
+ * An animated line-art scene (docs/history/373-*): ink on paper, drawn live in SVG. Ink is the text colour and paper the
  * surface colour, so it follows light / dark mode — dark mode turns the scene to night. Decoration only: people and birds
  * react to a tap, the pointer is wind, nothing navigates. The drawing code is loaded on demand; with reduced motion it is a
  * single still frame. Size it with the className (an aspect ratio and a width); the scene fills and crops to it.

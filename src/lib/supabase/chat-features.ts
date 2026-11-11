@@ -1,5 +1,6 @@
 import { supabase } from "./client";
-import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { extractChatFeatureError, type ChatFeatureErrorCode } from "@/lib/chat-features";
 import { mapMessageRow, MESSAGE_SELECT, type MessageRow } from "./messages";
 import type { ConversationSearchHit, Message, MessageReceipt, PinnedMessage, StarredMessage } from "@/types";

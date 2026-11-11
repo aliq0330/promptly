@@ -1,4 +1,4 @@
-// Vendored from github.com/JDhruv14/line-art-animation (MIT, © 2026 JDhruv14 — see ./LICENSE). docs/history/372-*
+// Vendored from github.com/JDhruv14/line-art-animation (MIT, © 2026 JDhruv14 — see ./LICENSE). docs/history/373-*
 // gait.ts — walk and run solvers for a figure drawn in ink.ts figure space
 // (feet on y = 120, facing +x, hip above x = 40).
 //

@@ -2,7 +2,7 @@ import type { PagedResult } from "./paged";
 import { sanitizeSearchText } from "./taxonomy-query";
 import { supabase } from "./client";
 import { resizeImageToSquareBlob } from "@/lib/utils";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import type { UserProfile } from "@/types";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 

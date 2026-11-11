@@ -410,7 +410,7 @@ export const translations = {
   "tour.skip": { tr: "Atla", en: "Skip" },
   "tour.back": { tr: "Geri", en: "Back" },
   "tour.next": { tr: "İleri", en: "Next" },
-  // Line-art scenes (docs/history/372-*)
+  // Line-art scenes (docs/history/373-*)
   "lineArt.meydanLabel": { tr: "Çizgi çizim: insanların prompt kartlarını panoya astığı bir meydan", en: "Line drawing: a town square where people pin prompt cards to a board" },
   "lineArt.meydanHint": { tr: "Kişilere ya da güvercinlere dokun · imleci gezdir, rüzgâr essin", en: "Tap the people or the pigeons · move the pointer to make wind" },
   "lineArt.lostLabel": { tr: "Çizgi çizim: rüzgârda uçan bir prompt kartını yakalamaya çalışan biri; kapı numarası 404", en: "Line drawing: someone chasing a prompt card the wind carries off; the house number is 404" },
@@ -3369,23 +3369,5 @@ export const translations = {
 export type TranslationKey = keyof typeof translations;
 export type Language = "tr" | "en";
 
-/**
- * Reads the current language directly off `<html lang>` — for the handful
- * of plain (non-component) `src/lib/*.ts` helpers that throw a real,
- * user-facing `Error` message (shown via `err.message` in a catch block)
- * from outside any React tree, so they have no `useTranslation()` to call.
- * `<html lang>` is always kept correct by `languageInitScript`/
- * `LanguageProvider`, so this reads the same source of truth every
- * component does — just without the hook.
- */
-export function getRuntimeLanguage(): Language {
-  if (typeof document === "undefined") return "tr";
-  return document.documentElement.lang === "en" ? "en" : "tr";
-}
-
-/** Same as `useTranslation().t(key, params)`, for a plain (non-component) helper — see `getRuntimeLanguage`. */
-export function translateForRuntime(key: TranslationKey, params?: Record<string, string | number>): string {
-  const raw = translations[key][getRuntimeLanguage()];
-  if (!params) return raw;
-  return raw.replace(/\{\{(\w+)\}\}/g, (match, token: string) => (token in params ? String(params[token]) : match));
-}
+// Çalışma zamanı erişimi `./dictionary` ve `./runtime`'dadır (docs/history/372-*). Bu dosya yalnız KAYNAK + tiptir:
+// buradan bir DEĞER içe aktarmak (tip değil) iki dilin tam sözlüğünü pakete sokar.

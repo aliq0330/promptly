@@ -55,7 +55,7 @@
   --p-secondary: #b04e1c;
   --p-heart: #d86934;
   --p-shadow: 18 18 40;
-  /* Line-art scenes (docs/history/372-*): window/lamp light and muted clothes, so brand blue and heart stay the accents. */
+  /* Line-art scenes (docs/history/373-*): window/lamp light and muted clothes, so brand blue and heart stay the accents. */
   --p-scene-glow: #f7c47c;
   --p-scene-cloth-1: #8b9fd6;
   --p-scene-cloth-2: #e6c79e;
@@ -1167,7 +1167,7 @@
 }
 
 /*
- * Line-art scenes (docs/history/372-*, components/line-art). The drawing reads `currentColor` for ink and `.pp` for paper, and
+ * Line-art scenes (docs/history/373-*, components/line-art). The drawing reads `currentColor` for ink and `.pp` for paper, and
  * its flat colours through the `--la-*` names below — all from this file's tokens, so a scene follows light / dark mode.
  */
 .line-art {

@@ -366,7 +366,7 @@ await scenario("13. /stories?id=: görülemeyen (takipçiye özel) → 'artık m
   const open = db.addStory(U.carol, { text: "Açık" });
   await page.goto(`${BASE}/stories?id=${hidden.id}`);
   await page.getByText("Bu hikâye artık mevcut değil").waitFor();
-  assert.equal(await page.getByText("Gizli").count(), 0);
+  assert.equal(await page.getByText("Gizli", { exact: true }).count(), 0); // exact: "Gizlilik Politikası" bağlantısıyla çakışmasın
   await page.goto(`${BASE}/stories?id=${open.id}`);
   await viewer(page).waitFor();
   assert.equal(await shown(page), "Açık");

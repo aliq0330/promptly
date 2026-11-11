@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { announceNotice } from "@/lib/app-notice";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { guardAuthRefresh } from "./auth-refresh-guard";
 import { createResilientStorage, describeStorageUsage } from "./resilient-storage";
 import { friendlyServerErrors, tolerateMissingOptionalColumns } from "./server-errors";

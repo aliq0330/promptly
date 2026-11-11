@@ -3,7 +3,7 @@ import { SPACE_MEDIA_BUCKET, SpaceError, fetchSpaceItems, toSpaceError, type Spa
 import { parseProtectedMediaUrl } from "./media-url";
 import { rpc as teamRpc } from "./teams";
 import { createBoard, createBoardInGroup } from "./team-projects";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { copyTitle } from "@/lib/team-board";
 
 /**

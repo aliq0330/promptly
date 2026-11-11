@@ -1,4 +1,4 @@
-// Two-bone arm helpers for Promptly's line-art figures (docs/history/372-*). Pure, so they are unit-tested.
+// Two-bone arm helpers for Promptly's line-art figures (docs/history/373-*). Pure, so they are unit-tested.
 import type { Vec } from "./ink.ts";
 
 const clamp = (x: number, a: number, b: number) => Math.max(a, Math.min(b, x));

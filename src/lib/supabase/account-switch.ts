@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import type { UserProfile } from "@/types";
 import { fetchOwnProfile } from "./profiles";
 

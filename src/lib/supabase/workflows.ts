@@ -11,7 +11,7 @@ import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { sanitizeSearchText, type ContentSearchFilters } from "./taxonomy-query";
 import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import { promptHref, requestHref } from "@/lib/utils";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import type { MultiImageItem } from "./media-input";
 import type { ContentVisibility, Prompt, PromptContentType, PromptMedia, Tag, PromptRequest, Workflow, WorkflowContentRef, WorkflowInput, WorkflowIO, WorkflowStep, WorkflowStepType } from "@/types";
 

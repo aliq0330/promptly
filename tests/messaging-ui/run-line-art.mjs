@@ -1,4 +1,4 @@
-// Çizgi sahneler (docs/history/372-*): giriş panelindeki "Meydan", bulunamadı ekranlarındaki "Kayıp prompt", karşılama turundaki
+// Çizgi sahneler (docs/history/373-*): giriş panelindeki "Meydan", bulunamadı ekranlarındaki "Kayıp prompt", karşılama turundaki
 // "Paylaşma anı". Sahne yalnız gerektiği yerde yüklenir, iki dilde etiketlenir, koyu modda geceye döner (pencereler yanar),
 // hareketi azalt açıkken tek dinlenme karesidir, dokunuşlar hata vermez ve telefonda taşmaz. Ağ taklitli; gerçek cihazda DENENMEDİ.
 import { chromium } from "playwright";

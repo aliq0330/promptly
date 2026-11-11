@@ -8,7 +8,7 @@ import {
   sniffImageMime,
   type PreparedMessageImage,
 } from "@/lib/supabase/message-images";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 
 /** A photo the user has picked but not sent yet. `preparing` while it is validated/shrunk, `ready` once `prepared` is set. */
 export interface ComposerImage {

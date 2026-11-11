@@ -10,7 +10,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 /**
  * Auth pages: a calm split on desktop (a short statement of what Promptly
  * is with a coverflow of favourite prompts, beside the form) and a single centered form card on mobile.
- * On a tall enough desktop window the panel ends in the "Meydan" line-art scene (docs/history/372-*), edge to edge.
+ * On a tall enough desktop window the panel ends in the "Meydan" line-art scene (docs/history/373-*), edge to edge.
  */
 export default function AuthGroupLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation();

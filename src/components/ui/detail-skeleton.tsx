@@ -30,7 +30,7 @@ export function DetailSkeleton() {
   );
 }
 
-/** Centered "not found" block for detail pages, under the "Kayıp prompt" line-art scene (docs/history/372-*). */
+/** Centered "not found" block for detail pages, under the "Kayıp prompt" line-art scene (docs/history/373-*). */
 export function NotFoundBlock({ title, description }: { title: string; description: string }) {
   return (
     <div className="mx-auto max-w-md px-4 py-10 text-center sm:py-14">

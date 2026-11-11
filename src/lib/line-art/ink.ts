@@ -1,4 +1,4 @@
-// Vendored from github.com/JDhruv14/line-art-animation (MIT, © 2026 JDhruv14 — see ./LICENSE). docs/history/372-*
+// Vendored from github.com/JDhruv14/line-art-animation (MIT, © 2026 JDhruv14 — see ./LICENSE). docs/history/373-*
 // ink.ts — pen, paper and the drawing primitives every line-art figure shares.
 //
 // Conventions

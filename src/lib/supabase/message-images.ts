@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { IMAGE_BYTE_BUDGETS, IMAGE_SOURCE_MAX_BYTES, shrinkImage } from "@/lib/image-processing";
 import { gifIdFromPath, gifPath, type GifItem } from "@/lib/giphy";
 import type { MessageAttachment } from "@/types";

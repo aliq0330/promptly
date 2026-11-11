@@ -1,4 +1,4 @@
-# 372 — Çizgi sahneler (line-art): Meydan · Kayıp prompt · Paylaşma anı
+# 373 — Çizgi sahneler (line-art): Meydan · Kayıp prompt · Paylaşma anı
 
 **Durum: KODLANDI (yalnız istemci; veritabanı değişikliği YOK). Birim `src/lib/line-art/line-art.test.ts` 4/4, ağ taklitli `run-line-art` (10 senaryo); gerçek cihazda/performans ölçümüyle DENENMEDİ.**
 

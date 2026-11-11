@@ -25,7 +25,7 @@ import { ALLOWED_IMAGE_MIME, MessageImageError, prepareMessageImage, sniffImageM
 import type { CommunityPostType } from "@/lib/supabase/communities";
 import { giphyUrl, type GifItem } from "@/lib/giphy";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { CommentAttachment, CommentAttachmentType, CommentMedia } from "@/types";

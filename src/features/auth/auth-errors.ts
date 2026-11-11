@@ -1,4 +1,4 @@
-import { getRuntimeLanguage } from "@/lib/i18n/translations";
+import { getRuntimeLanguage } from "@/lib/i18n/runtime";
 
 /**
  * Supabase's AuthError messages come back in English — translated here into

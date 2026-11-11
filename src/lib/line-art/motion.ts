@@ -1,4 +1,4 @@
-// Vendored from github.com/JDhruv14/line-art-animation (MIT, © 2026 JDhruv14 — see ./LICENSE). docs/history/372-*
+// Vendored from github.com/JDhruv14/line-art-animation (MIT, © 2026 JDhruv14 — see ./LICENSE). docs/history/373-*
 // motion.ts — the small physics that make things feel alive without looking procedural.
 
 export const clamp = (x: number, a: number, b: number): number => Math.max(a, Math.min(b, x));

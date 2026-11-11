@@ -1,4 +1,4 @@
-// One animation loop for every line-art scene on the page (docs/history/372-*).
+// One animation loop for every line-art scene on the page (docs/history/373-*).
 //  - Night follows the app's mode: a scene inside `.dark` (the user's dark mode, or any dark subtree) eases to night.
 //  - A scene that is off screen is not drawn; the loop stops when no scene is mounted.
 //  - prefers-reduced-motion: one still frame per scene, redrawn when the mode changes — time never moves.

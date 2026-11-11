@@ -15,7 +15,7 @@ const subscribeNever = () => () => {};
  * which includes a share link (`/share/<kind>/<key>/`) copied for content that
  * was published after the last build and so has no static share page yet. Such
  * a link is forwarded to the real detail page instead of dead-ending; every
- * other unknown path just gets the "not found" message, under the "Kayıp prompt" line-art scene (docs/history/372-*).
+ * other unknown path just gets the "not found" message, under the "Kayıp prompt" line-art scene (docs/history/373-*).
  */
 export function NotFoundForwarder() {
   const { t } = useTranslation();

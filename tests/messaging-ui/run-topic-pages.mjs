@@ -134,8 +134,12 @@ await scenario("1. etiket sayfası: kompakt bant (kolaj başlığın yanında), 
   const art = await page.locator("[data-topic-band] [aria-hidden].grid, [data-topic-band] span[aria-hidden]").first().boundingBox();
   const h1 = await page.getByRole("heading", { level: 1 }).boundingBox();
   assert.ok(art.x + art.width <= h1.x + 2 && Math.abs(art.y + art.height / 2 - (h1.y + h1.height / 2)) < 60, "kolaj başlığın yanında");
-  // Eski sekme/çip satırları yok: bölüm balonları + tek kontrol satırı.
-  await page.getByRole("button", { name: "Promptlar" }).first().waitFor();
+  // Eski sekme/çip satırları yok: bölümler tek "Tümü ▾" menüsünde (SectionNav variant="menu") + tek kontrol satırı.
+  const menu = page.locator("[data-section-menu]").first();
+  assert.match(await menu.textContent(), /Tümü/);
+  await menu.click();
+  await page.getByRole("radio", { name: /Promptlar/ }).first().waitFor();
+  await page.keyboard.press("Escape");
   assert.equal(await page.getByRole("tab", { name: "Prompt İstekleri" }).count(), 0);
   assert.deepEqual(await cardTitles(page), ["Prompt 1", "Prompt 2", "Prompt 3"]);
   assert.ok(state.feedCalls.some((b) => b.p_tag === "karakter-tasarimi" && b.p_tool === null));
