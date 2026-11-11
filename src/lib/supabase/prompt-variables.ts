@@ -1,6 +1,6 @@
 import { supabase } from "./client";
 import { fetchAllRows } from "./paged";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { normalizeVariable, parseStoredConfig, parseStoredOptions, parseStoredType } from "@/lib/prompt-variable-types";
 import type { PromptVariable, PromptVariableSpec } from "@/types";
 

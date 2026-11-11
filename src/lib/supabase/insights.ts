@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { isReactionKey } from "@/lib/reactions";
 import type { InsightApiUses, InsightDay, InsightPromptSummary, InsightReactionRow, InsightSummary, InsightTopItem } from "@/lib/insights";
 import { reactionRows } from "@/lib/insights";

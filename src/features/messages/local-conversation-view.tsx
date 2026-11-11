@@ -44,8 +44,10 @@ import { ConversationSearchPanel } from "./conversation-search-panel";
 import { MessageInfoModal } from "./message-info-modal";
 import { usePinnedMessages } from "./use-pinned-messages";
 import { useTyping } from "./use-typing";
+import { readShareParams, usePendingShare } from "./use-pending-share";
+import { useMessageReactions } from "./use-message-reactions";
 import { useRealMessages } from "./real-messages-provider";
-import { MessageBubble, type DeleteMode, type MessageReactionEntry } from "./message-bubble";
+import { MessageBubble, type DeleteMode } from "./message-bubble";
 import { MessageComposer, useImageDrop } from "./message-composer";
 import { PendingMessageBubble, type PendingSend } from "./pending-message-bubble";
 import { DaySeparator } from "./day-separator";
@@ -65,16 +67,13 @@ import {
   type MessageRoomScope,
   type MessageRow,
 } from "@/lib/supabase/messages";
-import { fetchReactionsForConversation, reactionRowFromDb, removeMessageReaction, setMessageReaction, type MessageReactionRow, type RawReactionRow } from "@/lib/supabase/message-reactions";
-import type { ReactionKey } from "@/lib/reactions";
-import { mergeIncomingMessage, applyMessageUpdate, removeReactionRow, upsertReaction } from "./realtime-helpers";
+import { fetchReactionsForConversation } from "@/lib/supabase/message-reactions";
+import { mergeIncomingMessage, applyMessageUpdate } from "./realtime-helpers";
 import { useFitPanelToKeyboard } from "./viewport-helpers";
 import { ComposerReplyBar } from "./reply-quote";
 import { DockHeader, DOCK_ICON_BUTTON } from "./dock-header";
 import type { DockHandlers } from "./message-dock-provider";
 import { supabase } from "@/lib/supabase/client";
-import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
-import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn } from "@/lib/utils";
 import { messageRoomId, pickRoom, readLastRoomId, roomSlug, totalRoomUnread } from "@/lib/community-rooms";
@@ -96,9 +95,8 @@ import { memberCountText } from "@/lib/group-labels";
 import { communityHref } from "@/lib/communities";
 import { teamLink } from "@/lib/teams";
 import { channelBackHref, communityHubHref } from "@/lib/team-chat";
-import { fetchCommunityPostById } from "@/lib/supabase/communities";
-import { summarizeContent } from "@/features/communities/content-summary";
-import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { composeWorkflowShareBody } from "./workflow-share-format";
 import { composePresetShareBody } from "./preset-share-format";
 import { composeSpaceShareBody } from "./space-share-format";
@@ -106,12 +104,7 @@ import { ChatLibraryPicker } from "./chat-attach";
 import { ContactInfoPanel } from "./contact-info-panel";
 import { ImportPromptsModal } from "@/features/exchange/import-prompts-modal";
 import type { CommunityPostType, ShareableContent } from "@/lib/supabase/communities";
-import { fetchSpace } from "@/lib/supabase/spaces";
 import { composeCommunityPostShareBody } from "./community-post-share-format";
-import { fetchPresetById } from "@/lib/supabase/presets";
-import { useRealPresets } from "@/features/presets/real-presets-provider";
-import { fetchWorkflowById } from "@/lib/supabase/workflows";
-import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
 import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
 
 /** Used only to give `useBlockState` a stable, always-defined target before the real conversation/participant has loaded — hooks must run unconditionally, and `canBlock` inside it is false until a real user session exists anyway, so this placeholder never actually reaches a query with a meaningful id. */
@@ -164,12 +157,6 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   // Mesajlar dock'unda (docs/history/328-*) sohbet adres çubuğundan değil panelden gelir: `id` prop'tur, sayfanın `?share…=`/`?hl=`/`?panel=` parametreleri bu sohbete AİT DEĞİLDİR.
   const id = dock ? dock.conversationId : searchParams.get("id");
   const shareParams = dock ? null : searchParams;
-  const shareParamPromptId = shareParams?.get("sharePromptId") ?? null;
-  const shareParamRequestId = shareParams?.get("shareRequestId") ?? null;
-  const shareParamWorkflowId = shareParams?.get("shareWorkflowId") ?? null;
-  const shareParamPresetId = shareParams?.get("sharePresetId") ?? null;
-  const shareParamPostId = shareParams?.get("sharePostId") ?? null;
-  const shareParamSpaceId = shareParams?.get("shareSpaceId") ?? null;
   const isDock = Boolean(dock);
   const { user } = useAuth();
   const {
@@ -186,10 +173,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     patchConversation,
     removeConversation,
   } = useRealMessages();
-  const { getCached: getCachedPrompt, fetchById: fetchPromptById } = useRealPrompts();
-  const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
-  const { getCached: getCachedWorkflow } = useRealWorkflows();
-  const { getCached: getCachedPreset } = useRealPresets();
+  const { pendingShare, dismissShare } = usePendingShare(readShareParams(shareParams));
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -210,12 +194,6 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   const [pendingSends, setPendingSends] = useState<PendingSend[]>([]);
   const pendingRef = useRef<PendingSend[]>([]);
 
-  const [fetchedShareTitle, setFetchedShareTitle] = useState<string | null>(null);
-  const [fetchedShareWorkflowTitle, setFetchedShareWorkflowTitle] = useState<string | null>(null);
-  const [fetchedSharePresetTitle, setFetchedSharePresetTitle] = useState<string | null>(null);
-  const [fetchedSharePostTitle, setFetchedSharePostTitle] = useState<string | null>(null);
-  const [fetchedShareSpaceTitle, setFetchedShareSpaceTitle] = useState<string | null>(null);
-  const [dismissedShare, setDismissedShare] = useState(false);
   // "+" menüsü (docs/history/268-*): kütüphaneden paylaş seçicisi (hangi türle açıldı) ve prompt içe aktarma penceresi.
   const [libraryType, setLibraryType] = useState<CommunityPostType | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -248,7 +226,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   // loaded once with the thread and kept live via the Realtime subscription
   // below — one flat list, not per-message state, so a single query/
   // subscription covers the whole open conversation.
-  const [reactionRows, setReactionRows] = useState<MessageReactionRow[]>([]);
+  const { setReactionRows, reactionsByMessage, handleReact } = useMessageReactions(id, user?.id);
   // docs/history/174-*: birebirde karşı tarafın okundu imleci, yıldızlı mesaj kimlikleri, sohbet içi arama, mesaj bilgisi penceresi ve
   // "mesaja atla" durumu (hedef pencere yüklendiyse `hasNewer`: ötesinde daha yeni mesaj var, canlı mesajlar listeye eklenmez).
   const [partnerReadAt, setPartnerReadAt] = useState<string | null>(null);
@@ -573,49 +551,6 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     };
   }, [id, user]);
 
-  // Aynı Realtime deseni, tepkiler için (Aşama 2/6 — "tepki ekleme,
-  // değiştirme ve kaldırma gerçek zamanlı olarak karşı tarafa
-  // yansıtılmalı"). Ekleme/değiştirme aynı satırın UPSERT'i olduğundan
-  // (aynı birincil anahtar `(message_id, user_id)`) ikisi de tek bir
-  // INSERT-veya-UPDATE olayı üretiyor; DELETE, `REPLICA IDENTITY FULL`
-  // sayesinde (migration'daki not) `conversation_id` filtresini gerçekten
-  // değerlendirebiliyor.
-  useEffect(() => {
-    if (!id || !user) return;
-
-    const channel = supabase
-      .channel(`message_reactions:${id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "message_reactions", filter: `conversation_id=eq.${id}` },
-        (payload) => {
-          const row = reactionRowFromDb(payload.new as RawReactionRow);
-          if (row) setReactionRows((prev) => upsertReaction(prev, row));
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "message_reactions", filter: `conversation_id=eq.${id}` },
-        (payload) => {
-          const row = reactionRowFromDb(payload.new as RawReactionRow);
-          if (row) setReactionRows((prev) => upsertReaction(prev, row));
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "message_reactions", filter: `conversation_id=eq.${id}` },
-        (payload) => {
-          const row = payload.old as { message_id: string; user_id: string };
-          setReactionRows((prev) => removeReactionRow(prev, row.message_id, row.user_id));
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [id, user]);
-
   // Okundu imleci (docs/history/174-*): yalnız mesajlar GERÇEKTEN görüntülenirken (sekme görünür, listenin sonundayım, atlama penceresinde
   // değilim, istek kabul edilmiş) başkalarının en yeni mesajına kadar ilerletilir. Aynı mesaj için ikinci yazma yapılmaz
   // (`nextReadAck` son bildirilenden ileri değilse null verir); sunucu da imleç/sayaç değişmediyse yazmaz.
@@ -674,7 +609,14 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     if (!jumpTarget) return;
     const el = panelRef.current?.querySelector<HTMLElement>(`[data-message-id="${jumpTarget.id}"]`);
     if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Yakın hedef yumuşak kayar; uzak hedef (yeni yüklenen pencere, binlerce piksel) anında konur — aksi hâlde liste
+    // bir saniye boyunca "uçar" ve bu sırada hiçbir düğmeye basılamaz. Hareketi azaltta hep anında.
+    const scroller = el.closest<HTMLElement>("[data-chat-scroll]");
+    const far = scroller
+      ? Math.abs(el.getBoundingClientRect().top - scroller.getBoundingClientRect().top - scroller.clientHeight / 2) > scroller.clientHeight * 1.5
+      : true;
+    const reduce = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: far || reduce ? "auto" : "smooth", block: "center" });
     setFlashedMessageId(jumpTarget.id);
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     flashTimerRef.current = setTimeout(() => setFlashedMessageId(null), HIGHLIGHT_DURATION_MS);
@@ -746,86 +688,6 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     else if (panel === "about") setGroupInfoFocus("overview");
   }, [checked, isGroup, id, searchParams, router, isDock]);
 
-  // Resolves a `?sharePromptId=`/`?shareRequestId=`deep link into a real title for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting state for a new share deep link, not reacting to an external system
-    setFetchedShareTitle(null);
-    setFetchedShareWorkflowTitle(null);
-    setFetchedSharePresetTitle(null);
-    setFetchedSharePostTitle(null);
-    setFetchedShareSpaceTitle(null);
-    setDismissedShare(false);
-    if (shareParamPromptId && !getCachedPrompt(shareParamPromptId)) {
-      fetchPromptById(shareParamPromptId).then((result) => {
-        if (result) setFetchedShareTitle(result.title);
-      });
-    } else if (shareParamRequestId && !getCachedRequest(shareParamRequestId)) {
-      fetchRequestById(shareParamRequestId).then((result) => {
-        if (result) setFetchedShareTitle(result.title);
-      });
-    } else if (shareParamWorkflowId && !getCachedWorkflow(shareParamWorkflowId)) {
-      fetchWorkflowById(shareParamWorkflowId).then((result) => {
-        if (result) setFetchedShareWorkflowTitle(result.workflow.title);
-      });
-    } else if (shareParamPresetId && !getCachedPreset(shareParamPresetId)) {
-      fetchPresetById(shareParamPresetId).then((result) => {
-        if (result) setFetchedSharePresetTitle(result.title);
-      });
-    } else if (shareParamSpaceId) {
-      // Space: başlık okunabilen Space'ten gelir; okunamıyorsa başlık gelmez ve gönderilemez.
-      fetchSpace(shareParamSpaceId)
-        .then((result) => {
-          if (result) setFetchedShareSpaceTitle(result.title);
-        })
-        .catch(() => undefined);
-    } else if (shareParamPostId) {
-      // Topluluk başvuru gönderisi: başlık gönderinin başvurduğu içeriktendir; okunamıyorsa (topluluğa erişim yok) başlık gelmez ve gönderilemez.
-      fetchCommunityPostById(shareParamPostId)
-        .then((result) => {
-          const title = result?.content ? summarizeContent(result.content).title : null;
-          if (title) setFetchedSharePostTitle(title);
-        })
-        .catch(() => undefined);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shareParamPromptId, shareParamRequestId, shareParamWorkflowId, shareParamPresetId, shareParamPostId, shareParamSpaceId]);
-
-  const pendingShare = dismissedShare
-    ? null
-    : shareParamPromptId
-      ? { type: "prompt" as const, id: shareParamPromptId, title: getCachedPrompt(shareParamPromptId)?.title ?? fetchedShareTitle ?? t("common.loading") }
-      : shareParamRequestId
-        ? { type: "request" as const, id: shareParamRequestId, title: getCachedRequest(shareParamRequestId)?.title ?? fetchedShareTitle ?? t("common.loading") }
-        : shareParamWorkflowId
-            ? {
-                type: "workflow" as const,
-                id: shareParamWorkflowId,
-                title: getCachedWorkflow(shareParamWorkflowId)?.title ?? fetchedShareWorkflowTitle ?? t("common.loading"),
-                resolved: Boolean(getCachedWorkflow(shareParamWorkflowId) ?? fetchedShareWorkflowTitle),
-              }
-            : shareParamPresetId
-              ? {
-                  type: "preset" as const,
-                  id: shareParamPresetId,
-                  title: getCachedPreset(shareParamPresetId)?.title ?? fetchedSharePresetTitle ?? t("common.loading"),
-                  resolved: Boolean(getCachedPreset(shareParamPresetId) ?? fetchedSharePresetTitle),
-                }
-              : shareParamSpaceId
-                ? {
-                    type: "space" as const,
-                    id: shareParamSpaceId,
-                    title: fetchedShareSpaceTitle ?? t("common.loading"),
-                    resolved: Boolean(fetchedShareSpaceTitle),
-                  }
-                : shareParamPostId
-                ? {
-                    type: "community_post" as const,
-                    id: shareParamPostId,
-                    title: fetchedSharePostTitle ?? t("common.loading"),
-                    resolved: Boolean(fetchedSharePostTitle),
-                  }
-                : null;
-
   // Yeni bir mesaj geldiğinde yalnızca kullanıcı zaten en alttaysa (ya da
   // yeni mesajı kendisi gönderdiyse) en alta kaydır — eski mesajları
   // incelerken gelen bir mesaj scroll konumunu zorla değiştirmesin.
@@ -847,43 +709,6 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   useFitPanelToKeyboard(panelEl, !isDock, () => {
     if (isNearBottomRef.current) requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: "end" }));
   });
-
-  const reactionsByMessage = useMemo(() => {
-    const map = new Map<string, MessageReactionEntry[]>();
-    for (const row of reactionRows) {
-      const entries = map.get(row.messageId) ?? [];
-      entries.push({ userId: row.userId, reaction: row.reaction });
-      map.set(row.messageId, entries);
-    }
-    return map;
-  }, [reactionRows]);
-
-  // Aşama 2's "tek tepki" kuralı (tepkiler gönderidekiyle aynı altı tepki, docs/history/330-*): aynı tepkiye tekrar basmak tepkiyi
-  // kaldırır, farklı bir tepki seçmek eskisinin yerini alır — ikisi de
-  // optimistik olarak uygulanıp başarısızlıkta geri alınıyor (Follow/
-  // Like/Save provider'larından beri bu projenin standart deseni).
-  async function handleReact(messageId: string, reaction: ReactionKey) {
-    if (!user || !id) return;
-    const mine = reactionRows.find((r) => r.messageId === messageId && r.userId === user.id);
-    if (mine && mine.reaction === reaction) {
-      setReactionRows((prev) => removeReactionRow(prev, messageId, user.id));
-      try {
-        await removeMessageReaction(messageId, user.id);
-      } catch (err) {
-        console.error("removeMessageReaction", err);
-        setReactionRows((prev) => upsertReaction(prev, mine));
-      }
-      return;
-    }
-    const previous = mine;
-    setReactionRows((prev) => upsertReaction(prev, { messageId, userId: user.id, reaction }));
-    try {
-      await setMessageReaction(messageId, id, user.id, reaction);
-    } catch (err) {
-      console.error("setMessageReaction", err);
-      setReactionRows((prev) => (previous ? upsertReaction(prev, previous) : removeReactionRow(prev, messageId, user.id)));
-    }
-  }
 
   /** Seçiciden gelen içerik, derin bağlantıyla gelen paylaşımla AYNI yoldan mesaja eklenir (`?share<Tür>Id=`): başlık çözülür, not yazılır, gönderilir. */
   function attachLibraryItem(item: ShareableContent) {
@@ -1027,7 +852,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       setReplyingTo(null);
       setSendError(null);
       if (pendingShare) {
-        setDismissedShare(true);
+        dismissShare();
         clearShareParams();
       }
       void runPendingSend(pending);
@@ -1047,7 +872,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       setDraft("");
       setReplyingTo(null);
       if (pendingShare) {
-        setDismissedShare(true);
+        dismissShare();
         clearShareParams();
       }
       afterSuccessfulSend();
@@ -2046,7 +1871,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         <button
           type="button"
           onClick={() => {
-            setDismissedShare(true);
+            dismissShare();
             clearShareParams();
           }}
           aria-label={t("messages.cancelShareAriaLabel")}

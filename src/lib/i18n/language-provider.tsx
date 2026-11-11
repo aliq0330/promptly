@@ -8,7 +8,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import { translations, type Language, type TranslationKey } from "./translations";
+import type { Language, TranslationKey } from "./translations";
+import { fillParams, isDictionaryLoaded, loadDictionary, lookupTranslation } from "./dictionary";
 
 /** Values substituted into a `{{token}}` placeholder inside a translation string. */
 type TranslationParams = Record<string, string | number>;
@@ -79,6 +80,21 @@ function detectLanguage(): Language {
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>("tr");
+  // Sözlük sonradan inince (İngilizce ayrı parçadır, docs/history/372-*) `t` yeniden hesaplansın diye artar.
+  const [dictionaryVersion, setDictionaryVersion] = useState(0);
+
+  // Seçim (radyo, `language`) ANINDA değişir; metinler sözlük inince güncellenir (o ana dek Türkçe metin — anahtar
+  // ya da boş metin asla görünmez). Yükleme başarısızsa bir sonraki dil seçiminde yeniden denenir.
+  const applyLanguage = useCallback((next: Language) => {
+    setLanguageState(next);
+    if (isDictionaryLoaded(next)) return;
+    loadDictionary(next).then(
+      () => setDictionaryVersion((v) => v + 1),
+      () => {
+        // Ağ hatası: sayfa Türkçe metinle çalışmaya devam eder.
+      },
+    );
+  }, []);
 
   // The real value is applied to <html lang> synchronously by
   // languageInitScript before hydration; this effect re-derives it into React
@@ -87,29 +103,27 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const lang = detectLanguage();
     document.documentElement.lang = lang;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLanguageState(lang);
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- tek seferlik: ilk boyamadan önce belirlenen dili React'e taşır (eskisiyle aynı)
+    applyLanguage(lang);
+  }, [applyLanguage]);
 
-  const setLanguage = useCallback((next: Language) => {
-    setLanguageState(next);
-    document.documentElement.lang = next;
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      // localStorage may be unavailable (private mode); preference just won't persist.
-    }
-  }, []);
+  const setLanguage = useCallback(
+    (next: Language) => {
+      applyLanguage(next);
+      document.documentElement.lang = next;
+      try {
+        localStorage.setItem(STORAGE_KEY, next);
+      } catch {
+        // localStorage may be unavailable (private mode); preference just won't persist.
+      }
+    },
+    [applyLanguage],
+  );
 
   const t = useCallback(
-    (key: TranslationKey, params?: TranslationParams) => {
-      const raw = translations[key]?.[language] ?? key;
-      if (!params) return raw;
-      return raw.replace(/\{\{(\w+)\}\}/g, (match, token: string) =>
-        token in params ? String(params[token]) : match,
-      );
-    },
-    [language],
+    (key: TranslationKey, params?: TranslationParams) => fillParams(lookupTranslation(key, language) ?? key, params),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dictionaryVersion: sözlük indikçe yeni bir `t` kimliği (tüketenler yeniden çizilsin)
+    [language, dictionaryVersion],
   );
 
   const value = useMemo(() => ({ language, setLanguage, t }), [language, setLanguage, t]);
@@ -137,11 +151,9 @@ export function LanguageTermScope({ rewrite, children }: { rewrite: (text: strin
   const { language } = parent;
   const t = useCallback(
     (key: TranslationKey, params?: TranslationParams) => {
-      const raw = translations[key]?.[language];
+      const raw = lookupTranslation(key, language);
       if (raw === undefined) return parent.t(key, params);
-      const text = rewrite(raw, language);
-      if (!params) return text;
-      return text.replace(/\{\{(\w+)\}\}/g, (match, token: string) => (token in params ? String(params[token]) : match));
+      return fillParams(rewrite(raw, language), params);
     },
     [language, rewrite, parent],
   );

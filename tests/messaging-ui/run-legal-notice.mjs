@@ -5,6 +5,7 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
+import { readFileSync } from "node:fs";
 import { createDb, installMock, U } from "./mock.mjs";
 
 const PORT = 4202;
@@ -15,7 +16,11 @@ const results = [];
 const ONLY = process.env.ONLY ?? "";
 const ORIGINAL_CREATED_AT = U.alice.created_at;
 const KEY = "promptly-terms-notice";
-const VERSION = "2026-11-02";
+// Sürüm ve yürürlük anı kaynaktan okunur — koşullar her güncellendiğinde test eskimesin.
+const LEGAL_SRC = readFileSync(new URL("../../src/features/legal/legal-content.ts", import.meta.url), "utf8");
+const VERSION = LEGAL_SRC.match(/export const TERMS_VERSION = "([^"]+)"/)[1];
+const EFFECTIVE_AT = LEGAL_SRC.match(/export const TERMS_EFFECTIVE_AT = "([^"]+)"/)[1];
+const AFTER_EFFECTIVE = new Date(Date.parse(EFFECTIVE_AT) + 3600_000).toISOString();
 const DELAY = 3600; // bant 2,5 sn gecikmeyle çıkar
 // Bağlantılar basePath ve sondaki eğik çizgiyle çözülür (/promptly/terms/).
 const TERMS_HREF = /\/terms\/?$/;
@@ -107,7 +112,7 @@ await scenario("5 an account created after the terms took effect never sees the 
   await page.goto(BASE + "/settings/");
   await page.getByRole("heading", { name: "Ayarlar" }).first().waitFor();
   await expectNoNotice(page);
-}, { createdAt: "2026-11-02T13:00:00Z" });
+}, { createdAt: AFTER_EFFECTIVE });
 
 await scenario("6 a visitor (no account) never sees the notice", async ({ page }) => {
   await page.goto(BASE + "/login/");

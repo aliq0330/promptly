@@ -1,5 +1,6 @@
 import { supabase } from "./client";
-import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { fetchAllRows, type PagedResult } from "./paged";
 import { resizeImageToCoverBlob, resizeImageToSquareBlob } from "@/lib/utils";

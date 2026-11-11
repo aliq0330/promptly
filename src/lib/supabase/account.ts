@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 
 /** Error codes the `delete-account` Edge Function answers with. */
 const ERROR_MESSAGE_KEYS = {

@@ -1,5 +1,6 @@
 import { announceNotice } from "@/lib/app-notice";
-import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 
 /**
  * Veritabanının bilerek fırlattığı kısa kodlar (`raise exception 'rate_limit'` vb., docs/history/224-*) kullanıcıya ham kod olarak

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
-import { translateForRuntime, type Language } from "@/lib/i18n/translations";
+import type { Language } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { assertImageSourceSize, IMAGE_BYTE_BUDGETS, shrinkImage } from "@/lib/image-processing";
 import type { Collection, Conversation, Prompt, PromptRequest, PromptResultSummary, Tag, UserProfile } from "@/types";
 

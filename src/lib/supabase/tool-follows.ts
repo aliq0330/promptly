@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 
 /** Most AI tools one person can follow — enforced by the database (`tool_follow_limit`, migration 20260921110000). */
 export const MAX_FOLLOWED_TOOLS = 100;

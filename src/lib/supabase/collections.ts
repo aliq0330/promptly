@@ -1,7 +1,7 @@
 import { supabase } from "./client";
 import type { PagedResult } from "./paged";
 import { batcherRegistry } from "./batched-lookup";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";

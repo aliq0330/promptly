@@ -1,6 +1,7 @@
 import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
-import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import type { PromptResultMediaType } from "@/types";
 
 /** Translation key for a result's media type — shared by the card, the share preview badge, and the detail page. Look up with `useTranslation().t()` at each render site. */

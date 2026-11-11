@@ -1,7 +1,7 @@
 import { supabase } from "./client";
 import { chunk, fetchAllRows } from "./paged";
 import { withoutBlocked } from "./blocked-users";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { extrasColumns, extrasUpdateColumns, mapCommentAttachment, mapCommentMedia, type CommentExtrasInput } from "@/lib/comment-extras-model";
 import type { PromptComment } from "@/types";

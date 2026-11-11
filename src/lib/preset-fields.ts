@@ -20,7 +20,7 @@
  * is already a valid selection: platform option `value`s ARE the old ids.
  */
 import type { Language } from "@/lib/i18n/translations";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import { assemblePromptParts, joinPromptParts, type PromptPart } from "@/lib/prompt-parts";
 
 export type PresetFieldType = "single_select" | "multi_select" | "dropdown" | "text" | "number" | "slider" | "toggle" | "color";

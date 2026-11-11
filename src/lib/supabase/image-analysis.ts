@@ -16,7 +16,7 @@ import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from "@s
 import { supabase } from "./client";
 import { readBlobAsBase64, resizeImageToBlob } from "@/lib/utils";
 import { IMAGE_SOURCE_MAX_BYTES } from "@/lib/image-processing";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime } from "@/lib/i18n/runtime";
 import type {
   GeneratorBuilderContext,
   GeneratorBuilderResult,
