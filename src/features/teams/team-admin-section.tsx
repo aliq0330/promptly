@@ -166,10 +166,14 @@ function OverviewSection({ ctx }: { ctx: TeamCtx }) {
   const { can, team } = ctx;
   return (
     <div className="grid items-start gap-4 lg:grid-cols-2" data-testid="admin-overview">
-      {can("manage_team") && <GeneralSection ctx={ctx} />}
-      {can("manage_team") && <PoliciesSection ctx={ctx} />}
-      {can("view_audit") && <AuditPreview ctx={ctx} />}
-      {team.myRole === "owner" && <DangerSection ctx={ctx} />}
+      <div className="min-w-0 space-y-4">
+        {can("manage_team") && <GeneralSection ctx={ctx} />}
+        {can("view_audit") && <AuditPreview ctx={ctx} />}
+      </div>
+      <div className="min-w-0 space-y-4">
+        {can("manage_team") && <PoliciesSection ctx={ctx} stacked />}
+        {team.myRole === "owner" && <DangerSection ctx={ctx} />}
+      </div>
     </div>
   );
 }
@@ -310,7 +314,7 @@ const POLICY_SNAKE: Record<keyof TeamPolicy, string> = {
   exportRole: "export_role",
 };
 
-function PoliciesSection({ ctx }: { ctx: TeamCtx }) {
+function PoliciesSection({ ctx, stacked = false }: { ctx: TeamCtx; stacked?: boolean }) {
   const { t } = useTranslation();
   const { node, save } = useSave(ctx);
   const policy = ctx.policy;
@@ -348,7 +352,7 @@ function PoliciesSection({ ctx }: { ctx: TeamCtx }) {
           {t("common.save")}
         </Button>
       </div>
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+      <div className={cn("grid gap-4", !stacked && "lg:grid-cols-2 lg:items-start")}>
         <div className="space-y-4">
           <section className={card}>
             <h3 className={cardTitle}>{t("tm.admin.policy.sharing")}</h3>

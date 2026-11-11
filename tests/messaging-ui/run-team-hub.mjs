@@ -800,6 +800,40 @@ await scenario("47. Yönetim (Merkez): hap şeridi, Genel = profil + politikalar
   await page.getByTestId("admin-overview").waitFor();
 }, { setup: (db) => { db.rpc.team_audit_list = () => ({ body: [auditRow("a1", "member", "invited"), auditRow("a2", "policy", "policy_changed")] }); } });
 
+// SURVEY=<klasör>: tüm ekip ekranlarının üç boyutta ekran görüntüsü (görsel inceleme; test sonucunu etkilemez).
+if (process.env.SURVEY) {
+  const VIEWS = { phone: { width: 390, height: 844 }, tablet: { width: 834, height: 1112 }, desktop: { width: 1440, height: 900 } };
+  const URLS = {
+    teams: "/teams", overview: "/teams/local?id=atolye-mor", approvals: "/teams/local?id=atolye-mor&tab=approvals", chat: "/teams/local?id=atolye-mor&tab=chat",
+    members: "/teams/local?id=atolye-mor&tab=members", panel: "/teams/local?id=atolye-mor&tab=panel", admin: "/teams/local?id=atolye-mor&tab=admin",
+    admin_policies: "/teams/local?id=atolye-mor&tab=admin&section=policies", admin_invites: "/teams/local?id=atolye-mor&tab=admin&section=invites", admin_groups: "/teams/local?id=atolye-mor&tab=admin&section=groups",
+    admin_guests: "/teams/local?id=atolye-mor&tab=admin&section=guests", admin_audit: "/teams/local?id=atolye-mor&tab=admin&section=audit",
+  };
+  for (const [vname, viewport] of Object.entries(VIEWS)) {
+    await scenario(`S. ${vname}`, async ({ page }) => {
+      await withPolicy(page);
+      for (const [key, url] of Object.entries(URLS)) {
+        await page.goto(`${BASE}${url}`);
+        await page.waitForTimeout(900);
+        await page.screenshot({ path: `${process.env.SURVEY}/hub_${vname}_${key}.png`, fullPage: true });
+      }
+    }, { viewport, setup: (db) => {
+      boardSetup([boardItem("p1", "pending"), boardItem("p2", "pending"), boardItem("c1", "changes", { note: "Ölçüleri yaz" }), boardItem("a1", "approved")])(db);
+      withMembers(db);
+      db.addTeamChannel(CH_GENERAL, { name: "genel", members: [[U.bob, "member"]], texts: [[U.bob, "Merhaba ekip, yeni kampanya panosunu inceledim."], [U.carol, "Harika, onaya gönderiyorum."]] });
+      db.rpc.team_list_members = () => ({ body: [member("u-aylin", "Aylin Demir", "aylin", "owner"), member("u-elif", "Elif Kaya", "elifk", "editor", { guest_org: null }), member("u-can", "Can Yılmaz", "canyil", "member")] });
+      db.rpc.team_member_project_roles = () => ({ body: [{ user_id: "u-elif", lead_count: 2, edit_count: 0, view_count: 1 }, { user_id: "u-can", lead_count: 0, edit_count: 1, view_count: 0 }] });
+      db.rpc.team_list_groups = () => ({ body: [{ id: "g1", name: "Tasarım", tone: "primary", lead_id: null, lead_name: "Elif Kaya", leads_approve: false, member_count: 14, member_ids: [], spaces: [], folders: [] }] });
+      db.rpc.team_list_guests = () => ({ body: [{ user_id: "gu1", username: "okans", display_name: "Okan Sel", avatar_url: null, guest_org: "Kuzey Kafe", guest_until: new Date(Date.now() + 12 * 86_400_000).toISOString(), joined_at: "2026-10-01T00:00:00Z", expired: false, spaces: [{ space_id: "s1", title: "Müşteri: Kuzey Kafe", role: "viewer" }], channels: [] }] });
+      db.rpc.team_audit_list = () => ({ body: [auditRow("a1", "approval", "item_approved", { target_label: "Lansman afişi" }), auditRow("a2", "member", "invited"), auditRow("a3", "policy", "policy_changed")] });
+      db.rpc.team_audit_stats = () => ({ body: { total: 3, role_access: 1, deletes: 0 } });
+      db.rpc.team_recent_activity = () => ({ body: [{ id: "x1", kind: "added", item_kind: "note", actor_name: "Bob", title: "Mat beyaz", project_title: "Villa Projesi", at: new Date().toISOString() }, { id: "x2", kind: "approved", item_kind: "prompt", actor_name: "Aylin Demir", title: "Salon sahnesi", project_title: "Villa Projesi", at: new Date().toISOString() }] });
+      db.rpc.team_insights = () => ({ body: { days: 30, added: 128, added_prev: 114, approval_hours: 3, approval_hours_prev: 4, contributors: 31, contributors_prev: 27, members: 48, projects: 9,
+        daily: Array.from({ length: 30 }, (_, i) => ({ day: `2026-10-${String((i % 28) + 1).padStart(2, "0")}`, n: 1 + ((i * 7) % 11) })), alerts: { pending: 6, oldest_pending_days: 4, changes: 2 }, top: [{ id: "p1", title: "Villa Projesi", added: 42, pending: 3 }] } });
+    } });
+  }
+}
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => r[0] === "FAIL");
