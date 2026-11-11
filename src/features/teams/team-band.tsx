@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "@/components/icons/arrow-left";
+import { UserPlus } from "@/components/icons/user-plus";
 import { LogOut } from "@/components/icons/log-out";
 import { MoreVertical } from "@/components/icons/more-vertical";
 import { Avatar } from "@/components/ui/avatar";
@@ -100,7 +101,7 @@ export function TeamBand({
           <h1 className="truncate font-display text-[1.3rem] font-extrabold leading-tight text-text md:text-[2rem]" data-team-name>
             {team.name}
           </h1>
-          <p className="truncate text-caption text-text-secondary md:text-small" data-team-meta>
+          <p className="line-clamp-2 text-caption text-text-secondary md:truncate md:text-small" data-team-meta>
             {meta.join(" · ")}
             {onlineCount > 0 && (
               <>
@@ -115,11 +116,11 @@ export function TeamBand({
         {shown.length > 0 && (
           <div className="hidden items-center lg:flex" data-team-avatars>
             {shown.map((member, index) => (
-              <span key={member.userId} className={cn("rounded-full ring-2 ring-surface", index > 0 && "-ml-2.5")}>
+              <span key={member.userId} className={cn("rounded-full ring-2 ring-surface", index > 0 && "-ml-1.5")}>
                 <Avatar src={member.avatarUrl} alt={member.displayName || member.username} size={32} />
               </span>
             ))}
-            {more > 0 && <span className="-ml-2.5 grid h-8 min-w-8 place-items-center rounded-full bg-surface px-1.5 text-caption font-bold text-text ring-2 ring-surface">+{more}</span>}
+            {more > 0 && <span className="-ml-1.5 grid h-8 min-w-8 place-items-center rounded-full bg-surface px-1.5 text-caption font-bold text-text ring-2 ring-surface">+{more}</span>}
           </div>
         )}
         {canInvite && (
@@ -127,9 +128,11 @@ export function TeamBand({
             type="button"
             onClick={onInvite}
             data-team-invite-header
-            className="inline-flex h-11 shrink-0 items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover md:h-10 md:px-5"
+            aria-label={t("tm.invite.title")}
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center gap-0 rounded-full bg-primary text-small font-semibold text-primary-foreground hover:bg-primary-hover sm:w-auto sm:px-4 md:h-10 md:px-5"
           >
-            {t("tm.invite.title")}
+            <UserPlus size={20} aria-hidden className="sm:hidden" />
+            <span className="max-sm:hidden">{t("tm.invite.title")}</span>
           </button>
         )}
         <div className="relative shrink-0" ref={menuRef}>

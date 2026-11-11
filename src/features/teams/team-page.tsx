@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Briefcase } from "@/components/icons/briefcase";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { cn } from "@/lib/utils";
 import { InviteDialog } from "./team-invites";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -198,7 +199,7 @@ export function TeamPage() {
       {isGuest && team.guestUntil && !hideChrome && (
         <p className="mx-3 rounded-lg bg-warning/10 px-3 py-2 text-small text-warning sm:mx-0">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>
       )}
-      <div className="px-3 sm:px-0" data-team-tab={tab}>
+      <div className={cn("px-3 sm:px-0", !hideChrome && "max-md:pt-3")} data-team-tab={tab}>
         {body}
       </div>
       {inviteOpen && <InviteDialog ctx={ctx} onClose={() => setInviteOpen(false)} onDone={() => undefined} />}
