@@ -307,7 +307,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
 
   return (
     <div className="space-y-4" data-testid="team-project-home" data-project-id={project.id} data-project-role={myRole}>
-      <DrillHeader backHref={overview} parent={`${team.name} › ${t("tp.list.title")}`} title={project.title} sub={`${t("tp.page.yourRole")} ${t(projectRoleLabelKey(myRole))} · ${detail.people.length}`} tone={project.tone} markName={project.title} chatHref={chatHref} onInfo={() => setDialog("info")} />
+      <DrillHeader backHref={overview} parent={`${team.name} › ${t("tp.list.title")}`} title={project.title} sub={`${t("tp.page.yourRole")} ${t(projectRoleLabelKey(myRole))}`} tone={project.tone} markName={project.title} chatHref={chatHref} onInfo={() => setDialog("info")} />
       <Breadcrumbs crumbs={[{ label: t("tc.tab.overview"), href: overview }, { label: t("tp.list.title"), href: overview }, { label: project.title }]} />
 
       <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_18.75rem] xl:items-start xl:gap-5">
@@ -357,7 +357,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
             <h2 className="min-w-0 flex-1 font-display text-h3 font-bold text-text">{t("tp.files.title")}</h2>
             {reviewOnNames.length > 0 && <span className="truncate text-small text-text-muted max-md:hidden">{t("tc.proj.reviewOn", { names: reviewOnNames.join(", ") })}</span>}
           </div>
-          <ul className="grid grid-cols-2 gap-2.5 md:gap-3.5 xl:grid-cols-3" data-testid="project-files">
+          <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:gap-3.5 xl:grid-cols-3" data-testid="project-files">
             {detail.mainAreaId && (
               <li>
                 <FileCard
@@ -396,8 +396,8 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
 
           {(sharedBoards.length > 0 || canAdd) && (
             <>
-              <h2 className="font-display text-h3 font-bold text-text">{t("tc.proj.boards")}</h2>
-              <ul className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-3" data-testid="project-boards">
+              <h2 className={cn("font-display text-h3 font-bold text-text", sharedBoards.length === 0 && "max-md:hidden")}>{t("tc.proj.boards")}</h2>
+              <ul className={cn("grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 md:gap-3", sharedBoards.length === 0 && "max-md:hidden")} data-testid="project-boards">
                 {sharedBoards.map((board) => (
                   <li key={board.id}>
                     <Link href={board.href} className="block rounded-2xl border border-border-soft bg-surface px-3.5 py-3 hover:shadow-card" data-project-board={board.id}>
@@ -443,9 +443,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
             </ul>
             <p className="mt-2 text-caption text-text-muted">{t("tp.people.note")}</p>
           </section>
-          <section className="rounded-2xl border border-border-soft bg-surface p-4">
-            <ProjectVariablesPanel projectId={project.id} fileId={null} variables={detail.variables} role={myRole} onChanged={onChanged} />
-          </section>
+          <ProjectVariablesPanel projectId={project.id} fileId={null} variables={detail.variables} role={myRole} onChanged={onChanged} />
         </aside>
       </div>
 
@@ -508,15 +506,16 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
 /** Dosya kartı (mockup B2): üstte tonlu mini kolaj, altta ad · özet · durum çipi. */
 function FileCard({ href, title, meta, tone, chip, chipTone, attrs }: { href: string; title: string; meta: string; tone: string; chip?: string; chipTone: "primary" | "warning" | "neutral"; attrs?: Record<string, string> }) {
   return (
-    <Link href={href} className="block overflow-hidden rounded-2xl border border-border-soft bg-surface transition-shadow hover:shadow-card-hover" data-project-file-card {...attrs}>
-      <span aria-hidden className={cn("grid h-[4.5rem] grid-cols-3 gap-1.5 p-2.5 md:h-24", toneClass(tone))}>
+    <Link href={href} className="flex overflow-hidden rounded-2xl border border-border-soft bg-surface transition-shadow hover:shadow-card-hover max-sm:flex-row sm:flex-col" data-project-file-card {...attrs}>
+      <span aria-hidden className={cn("grid shrink-0 grid-cols-2 gap-1.5 p-2.5 max-sm:w-24 sm:h-[4.5rem] sm:grid-cols-3 md:h-24", toneClass(tone))}>
         <span className="rounded-lg bg-current" />
         <span className="rounded-lg bg-surface" />
         <span className="rounded-lg bg-current opacity-45" />
+        <span className="rounded-lg bg-surface/60 sm:hidden" />
       </span>
-      <span className="block p-3 md:px-3.5 md:py-3">
+      <span className="block min-w-0 flex-1 p-3 md:px-3.5 md:py-3">
         <span className="block truncate text-body font-bold text-text">{title}</span>
-        <span className="block truncate text-small text-text-secondary">{meta}</span>
+        <span className="block text-small text-text-secondary max-sm:line-clamp-2 sm:truncate">{meta}</span>
         {chip && (
           <span className={cn("mt-2 inline-flex h-6 items-center rounded-full px-2.5 text-caption font-bold", chipTone === "warning" ? "bg-warning/10 text-warning" : chipTone === "primary" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary")}>
             {chip}

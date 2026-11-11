@@ -750,6 +750,24 @@ await scenario("34. Öğe sayfası ⋯ (düzenleyici): onaylı öğeyi düzenley
   },
 });
 
+// SURVEY=<klasör>: proje/dosya/pano/onay kuyruğu/öğe çekmecesi ekranlarının üç boyutta ekran görüntüsü (görsel inceleme).
+if (process.env.SURVEY) {
+  const VIEWS = { phone: { width: 390, height: 844 }, tablet: { width: 834, height: 1112 }, desktop: { width: 1440, height: 900 } };
+  const URLS = {
+    project: projectUrl(), file: projectUrl(`&file=${FILE}`), area: projectUrl(`&board=${AREA_PROJECT}`), board: projectUrl(`&board=${BOARD}`), review: projectUrl("&review=1"),
+    item_prompt: itemUrl(PROMPT(1)), item_image: itemUrl(IMAGE(1)), item_note: itemUrl(NOTE(40)), item_palette: itemUrl(`palette:${PALETTE}`),
+  };
+  for (const [vname, viewport] of Object.entries(VIEWS)) {
+    await scenario(`S. ${vname}`, async ({ page }) => {
+      for (const [key, url] of Object.entries(URLS)) {
+        await page.goto(url);
+        await page.waitForTimeout(900);
+        await page.screenshot({ path: `${process.env.SURVEY}/tp_${vname}_${key}.png`, fullPage: true });
+      }
+    }, { viewport, setup: detailItems });
+  }
+}
+
 await browser.close();
 server.close();
 const failed = results.filter((r) => r[0] === "FAIL");
