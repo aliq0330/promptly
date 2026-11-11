@@ -55,13 +55,12 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 860 }, lan
 
 /** "Tümü ▾" bölüm menüsünden bir bölüm seç (docs/history/231-*; telefonda alt sayfa, masaüstünde açılır kutu). */
 const pickSection = async (page, name) => {
-  await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name }).click();
+  await page.getByRole("tablist", { name: "Space süzgeci" }).getByRole("tab", { name }).click();
 };
-/** Space sayfası bölümleri TEK menüde (docs/history/235-*): menüyü açar, satır adlarını verir / birini seçer. */
-const spaceMenu = (page) => page.locator("[data-section-menu]").first();
-const spaceTabNames = async (page) => { await spaceMenu(page).click(); const names = (await page.getByRole("radio").allInnerTexts()).map((x) => x.split("\n")[0].replace(/\d+$/, "").trim()); await page.keyboard.press("Escape"); await page.mouse.click(5, 5); return names; };
-const pickSpaceTab = async (page, name) => { await spaceMenu(page).click(); await page.getByRole("radio", { name }).click(); };
+/** Space sayfası bölümleri altı çizgili sekmelerdir (docs/history/369-*): sekme adlarını verir / birini seçer. */
+const spaceTabs = (page) => page.getByRole("tablist", { name: "Space bölümleri" });
+const spaceTabNames = async (page) => (await spaceTabs(page).getByRole("tab").allInnerTexts()).map((x) => x.split("\n")[0].replace(/\d+$/, "").trim());
+const pickSpaceTab = async (page, name) => { await spaceTabs(page).getByRole("tab", { name }).click(); };
 const calls = (db, method, table) => db.calls.filter((c) => c.method === method && c.table === table);
 const waitFor = async (check, ms = 4000) => {
   const end = Date.now() + ms;
@@ -452,7 +451,7 @@ await scenario("25. ziyaretçi Space'i vitrin olarak görür: Görseller açıl�
   await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();
   const visitorNames = await spaceTabNames(page);
   assert.ok(!visitorNames.includes("Genel bakış"), "ziyaretçiye genel bakış yok");
-  assert.match(await spaceMenu(page).innerText(), /^Görseller/, "vitrin Görseller ile açılır");
+  assert.match(await spaceTabs(page).getByRole("tab", { selected: true }).innerText(), /^Görseller/, "vitrin Görseller ile açılır");
   assert.ok(!visitorNames.includes("Notlar"), "notu olmayan Space'te Notlar bölümü yok");
   await page.getByRole("button", { name: "Panoyu gez" }).waitFor();
   const strip = page.locator("[data-space-band-palette]");
@@ -509,7 +508,7 @@ await scenario("25c. üç görselden azında coverflow yok (ızgara kalır)", as
 await scenario("26. sahip: bant paleti + ⋮ → Sabitle (set_space_favorite); ana sayfa kartı Albüm bandı + palet çizgisi + Sabitli", async ({ page, db }) => {
   await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
   await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();
-  await page.locator("[data-section-menu]").filter({ hasText: /Genel bakış/ }).waitFor();
+  await spaceTabs(page).getByRole("tab", { name: /Genel bakış/ }).waitFor();
   await page.locator("[data-space-band-palette]").waitFor();
   await page.locator("[data-detail-menu]").getByRole("button").click();
   await page.getByRole("menuitem", { name: "Sabitle" }).click();
@@ -637,17 +636,17 @@ await scenario("30. Yeni Space penceresi (iOS klavyesi): dokunmatikte başlık k
   assert.ok(restored.height >= 800, `katman tam ekrana döndü: ${restored.height}`);
 }, { viewport: { width: 390, height: 844 }, touch: true });
 
-await scenario("31. sade ana sayfa (docs/history/231-*): başlık + tek 'Tümü ▾' menüsü (davet noktası + sayaç) + simgeler; tür karosu Yeni Space'i o türle açar; filtre sayfası sıralama/tür/görünürlük; görünüm anahtarı; hiçbir özellik eksik değil", async ({ page, db }) => {
+await scenario("31. ana sayfa (docs/history/231-*, 369-*): bant + altı çizgili sekmeler (davet sayaçlı) + simgeler; tür karosu Yeni Space'i o türle açar; filtre sayfası sıralama/tür/görünürlük; görünüm anahtarı; hiçbir özellik eksik değil", async ({ page, db }) => {
   await page.goto(`${BASE}/spaces`);
   await page.getByRole("heading", { level: 1, name: "Spaces" }).waitFor();
   await page.getByTestId("spaces-list").waitFor();
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/spaces-new-desktop.png` });
-  await page.locator("[data-section-dot]").waitFor();
+  await page.getByRole("tab", { name: /Davetler/ }).waitFor();
   await page.getByTestId("space-invites-banner").waitFor();
   // Menü: yedi seçenek, davet sayaçlı.
-  await page.locator("[data-section-menu]").click();
-  assert.equal(await page.getByRole("radio").count(), 7);
-  assert.match(await page.locator('[data-section-option="invites"]').textContent(), /Davetler\s*1/);
+  const sectionTabs = page.getByRole("tablist", { name: "Space süzgeci" });
+  assert.equal(await sectionTabs.getByRole("tab").count(), 7);
+  assert.match(await sectionTabs.getByRole("tab", { name: /Davetler/ }).textContent(), /Davetler\s*1/);
   await page.keyboard.press("Escape");
   // Tür karosu → Yeni Space penceresi o türle.
   const tile = page.locator('[data-space-template="brand"]');
@@ -688,16 +687,15 @@ await scenario("31. sade ana sayfa (docs/history/231-*): başlık + tek 'Tümü 
   },
 });
 
-await scenario("32. telefon 390px: bölüm menüsü alt sayfa, filtre sayfası ve arama taşmaz", async ({ page }) => {
+await scenario("32. telefon 390px: kaydırmalı bölüm sekmeleri, filtre sayfası ve arama taşmaz", async ({ page }) => {
   await page.goto(`${BASE}/spaces`);
   await page.getByTestId("spaces-list").waitFor();
   assert.ok(await overflowFree(page));
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/spaces-new-mobile.png` });
-  await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name: "Herkese açık" }).waitFor();
+  await page.getByRole("tab", { name: "Herkese açık" }).waitFor();
   assert.ok(await overflowFree(page));
   if (process.env.SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: `${process.env.SHOTS}/spaces-new-menu-mobile.png` }); }
-  await page.getByRole("radio", { name: "Herkese açık" }).click();
+  await page.getByRole("tab", { name: "Herkese açık" }).click();
   await waitFor(() => true);
   await page.locator("[data-filter-button]").click();
   await page.getByRole("dialog").getByRole("button", { name: "Bitti" }).waitFor();
@@ -710,14 +708,13 @@ await scenario("32. telefon 390px: bölüm menüsü alt sayfa, filtre sayfası v
 
 await scenario("21. İngilizce: ana sayfa, sekmeler ve pano araçları İngilizce", async ({ page }) => {
   await page.goto(`${BASE}/spaces`);
-  await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name: "Mine" }).waitFor();
-  await page.getByRole("radio", { name: "Shared" }).waitFor();
+  await page.getByRole("tab", { name: "Mine" }).waitFor();
+  await page.getByRole("tab", { name: "Shared" }).waitFor();
   await page.keyboard.press("Escape");
   await page.getByTestId("create-space").getByText("New Space").waitFor();
   await page.getByText("Start a new Space").waitFor();
   await page.goto(`${BASE}/spaces/local?id=${SID(1)}&tab=board`);
-  await page.locator("[data-section-menu]").filter({ hasText: /Board/ }).waitFor();
+  await page.getByRole("tablist", { name: "Space sections" }).getByRole("tab", { name: /Board/ }).waitFor();
   await page.getByRole("button", { name: "Fit to screen" }).first().waitFor();
 }, { lang: "en", setup: (db) => boardWith(db, 1) });
 

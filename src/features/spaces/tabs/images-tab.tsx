@@ -275,7 +275,7 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
 
       {caps.edit && total > 0 && <p className="text-caption text-text-muted">{t("spaces.overview.fromPromptlyHint")}</p>}
 
-      {openId && <ItemDetailModal itemId={openId} onClose={() => setOpenId(null)} onShowOnBoard={onShowOnBoard} />}
+      {openId && <ItemDetailModal drawer itemId={openId} onClose={() => setOpenId(null)} onShowOnBoard={onShowOnBoard} />}
       {groupsOpen && <GroupsManagerModal onClose={() => setGroupsOpen(false)} />}
     </div>
   );

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { absoluteUrl, cn, formatRelativeTime } from "@/lib/utils";
 import {
   createSpace,
@@ -49,8 +50,11 @@ export function SpaceDialog({
   overLayers,
   eyebrow,
   leading,
+  drawer,
 }: {
   title: string;
+  /** Öğe çekmecesi (docs/history/369-*): md+ sağa yapışık tam yükseklikte panel, telefonda alt sayfa — ekip projesindeki öğe çekmecesiyle aynı kalıp. */
+  drawer?: boolean;
   /** Başlığın üstünde küçük büyük harfli etiket (ör. "ERİŞİM"). */
   eyebrow?: string;
   /** Başlığın solunda küçük görsel (ör. kişinin baş harfleri). */
@@ -66,6 +70,7 @@ export function SpaceDialog({
 }) {
   const { t } = useTranslation();
   const id = useId();
+  const wideScreen = useMediaQuery("(min-width: 768px)");
   const content = (
     <>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 has-[[data-dialog-footer]]:pb-0">{children}</div>
@@ -73,9 +78,14 @@ export function SpaceDialog({
     </>
   );
   return (
-    <Modal onClose={busy ? () => undefined : onClose} labelledBy={id} overLayers={overLayers}>
+    <Modal onClose={busy ? () => undefined : onClose} labelledBy={id} overLayers={overLayers} variant={drawer ? (wideScreen ? "side" : "sheet") : "dialog"}>
       <div
-        className={cn("flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg", wide ? "max-w-xl" : "max-w-md")}
+        data-space-drawer={drawer ? "" : undefined}
+        className={
+          drawer
+            ? "flex h-full min-h-0 w-full flex-col overflow-hidden bg-surface max-md:rounded-t-[22px] md:w-[32.5rem] md:max-w-full md:border-l md:border-border"
+            : cn("flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg", wide ? "max-w-xl" : "max-w-md")
+        }
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-soft px-5 py-3.5">

@@ -169,7 +169,7 @@ function GroupSelect({ value, onChange, disabled, id }: { value: string | null; 
  * Görsel / prompt / içerik öğesinin ayrıntısı: büyük önizleme (görselde ışık kutusu), kaynak gönderi, üretici, prompt metni,
  * paylaşılmayan alanlar ("paylaşılmamış" — uydurulmaz), araç/model, proje notu, grup; düzenleyiciye "Panoda göster" ve "Kaldır".
  */
-export function ItemDetailModal({ itemId, onClose, onShowOnBoard }: { itemId: string; onClose: () => void; onShowOnBoard?: (id: string) => void }) {
+export function ItemDetailModal({ itemId, onClose, onShowOnBoard, drawer }: { itemId: string; onClose: () => void; onShowOnBoard?: (id: string) => void; drawer?: boolean }) {
   const { t, language } = useTranslation();
   const { items, sources, readable, caps, patchItem, removeItems, addItems, groups } = useSpaceContext();
   const place = usePlaceNewItems();
@@ -224,7 +224,7 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard }: { itemId: st
   }
 
   return (
-    <SpaceDialog title={source.title || t(ITEM_KIND_LABEL[item.kind])} onClose={onClose} wide busy={busy}>
+    <SpaceDialog title={source.title || t(ITEM_KIND_LABEL[item.kind])} onClose={onClose} wide busy={busy} drawer={drawer}>
       <div className="space-y-5" data-testid="item-detail" data-item-id={item.id}>
         {item.kind === "image" && (
           <button
