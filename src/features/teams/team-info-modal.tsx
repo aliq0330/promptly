@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
-import { Bell } from "@/components/icons/bell";
-import { BellOff } from "@/components/icons/bell-off";
 import { Hash } from "@/components/icons/hash";
 import { Info } from "@/components/icons/info";
 import { Lock } from "@/components/icons/lock";
@@ -13,7 +11,9 @@ import { InfoCard, InfoIdentity, InfoPanelShell, InfoTile, InfoTiles } from "@/f
 import { SegmentedChoice } from "@/features/messages/segmented-choice";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { setChannelNotify, type TeamChannel, type TeamSummary } from "@/lib/supabase/teams";
+import { channelLabel } from "@/lib/team-chat";
 import { teamLink, teamRoleCan } from "@/lib/teams";
+import { MuteCard, MuteChip } from "./mute-card";
 import { cn, formatUnread } from "@/lib/utils";
 import { RoleChip, TeamMark } from "./team-ui";
 
@@ -93,15 +93,11 @@ export function TeamInfoModal({
       <InfoTiles>
         <InfoTile icon={<ArrowUpRight size={22} strokeWidth={1.75} />} label={t("tm.info.teamPage")} href={teamLink(team.slug, "chat", { channel: team.channelName })} testId="team-page" attrs={{ "data-info-team-link": "" }} />
         <InfoTile icon={<Search size={22} strokeWidth={1.75} />} label={t("tm.chan.search")} onClick={onSearch} testId="search" />
-        <InfoTile
-          icon={muted ? <Bell size={22} strokeWidth={1.75} /> : <BellOff size={22} strokeWidth={1.75} />}
-          label={muted ? t("messages.contact.unmute") : t("messages.contact.mute")}
-          onClick={onToggleMute}
-          pressed={muted}
-          disabled={muteBusy}
-          testId="mute"
-        />
       </InfoTiles>
+
+      <div className="px-4">
+        <MuteCard scope="team" muted={muted} busy={muteBusy} error={null} onToggle={() => onToggleMute()} />
+      </div>
 
       <InfoCard aria-labelledby="team-info-channels">
         <div className="flex items-center px-4 pb-1 pt-3.5">
@@ -140,7 +136,10 @@ export function TeamInfoModal({
                     {channel.mode === "private" ? <Lock size={16} /> : <Hash size={17} strokeWidth={2.2} />}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className={cn("block truncate text-body", current || unread ? "font-bold text-text" : "font-semibold text-text")}>{channel.name}</span>
+                    <span className={cn("flex items-center gap-1.5 text-body", current || unread ? "font-bold text-text" : "font-semibold text-text")}>
+                      <span className="truncate">{channelLabel(channel)}</span>
+                      <MuteChip scope={channel.muteScope ?? (channel.muted ? "channel" : null)} />
+                    </span>
                     {sub && <span className={cn("block truncate text-caption", current ? "font-semibold text-primary" : "text-text-muted")}>{sub}</span>}
                   </span>
                   {unread && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(channel.unreadCount)}</span>}

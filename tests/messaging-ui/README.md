@@ -390,3 +390,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium/chrome node tests/messaging-ui/run-team-
 ```bash
 node tests/messaging-ui/run-team-board.mjs   # 19/19 beklenir
 ```
+
+## Ekip/topluluk sohbet sayfaları ve hiyerarşik sessize alma (`docs/history/369-*`)
+
+`run-team-chat-hub.mjs` (12 senaryo): Mesajlar'da ekip tek satır (yığılmış simge, kanal adları, ›) → ekip sayfası → proje sayfası → sohbet (çip satırı yok, geri sayfaya döner), ekibi/projeyi sessize alma (`team_set_mute`, satırlarda kaynak etiketi, okunmamış rozeti kalkar), kanal bilgisinde miras bandı + "sesini aç", lider/düzenleyici yetkisi, projeye kanal ekleme, "Sohbeti olmayan dosyalar" + "Sohbet oluştur", yeni dosya sohbet sorusu (varsayılan kapalı), İngilizce. Ağ taklidi `seed()` içindeki `st` nesnesidir (sessizlik durumu). Gerçek Supabase'e KARŞI DENENMEDİ — kurallar `supabase/tests/team-chat-hierarchy.sql`'dedir.
+
+```bash
+CHROMIUM_PATH=... node tests/messaging-ui/run-team-chat-hub.mjs   # 12/12 beklenir
+```

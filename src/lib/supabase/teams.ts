@@ -27,6 +27,8 @@ const KNOWN_CODES = new Set([
   // Ekip projeleri v2 (docs/history/362-*)
   "project_not_found", "project_invalid", "project_archived", "project_lockout", "team_project_limit", "team_file_limit", "team_board_limit",
   "team_variable_limit", "team_area_managed", "channel_project_managed", "review_protected", "review_content_locked", "review_delete_forbidden",
+  // Proje/dosya kanalları (docs/history/369-*)
+  "channel_exists", "project_channel_limit",
 ]);
 
 function errorCodeOf(message: string | undefined): string | null {
@@ -203,6 +205,17 @@ export interface TeamChannel {
   lastMessageAt: string | null;
   memberCount: number;
   canPost: boolean;
+  /**
+   * Etkin sessizliğin KAYNAĞI (docs/history/369-*): "team" ekibin tamamı, "project" projenin tüm kanalları, "channel" yalnız bu kanal; null = sessiz değil.
+   * `muted` = `muteScope !== null` (eski sunucu: yalnız kanal sessizliği). Ekip/proje sessizken kanalın kendi `notifyLevel` değeri saklıdır ama etkisizdir.
+   */
+  muteScope?: "team" | "project" | "channel" | null;
+  /** Proje kanalları (mode = "project"): ana kanal (`projectMain`), dosya kanalı (`fileId`) ya da adlı ek kanal. Ekip kanallarında hepsi boş. */
+  projectId?: string | null;
+  projectTitle?: string | null;
+  fileId?: string | null;
+  fileTitle?: string | null;
+  projectMain?: boolean;
 }
 
 export interface TeamPolicy {
@@ -461,7 +474,28 @@ export const pruneExpiredGuests = (team: string) => rpc<number>("team_prune_expi
 // Kanallar
 // ---------------------------------------------------------------------------------------------
 
-export const listTeamChannels = (team: string) => rows<TeamChannel>("team_list_channels", { p_team: team });
+/** Ekibin TÜM kanalları — ekip kanalları + proje/dosya/ek kanallar — etkin sessizlik kaynağıyla (`team_channels_overview`, docs/history/369-*). */
+export const listTeamChannels = (team: string) => rows<TeamChannel>("team_channels_overview", { p_team: team });
+
+/**
+ * Projeye ana kanal DIŞINDA bir kanal ekler: `file` verilirse o dosyanın sohbet kanalı (dosya başına en çok bir; ad dosyadan), verilmezse adlı ek kanal
+ * ("duyurular" gibi). Yalnız proje lideri; dosya kanalı kendiliğinden açılmaz, dosya oluştururken sorulur ya da sonradan eklenir.
+ */
+export const addProjectChannel = (project: string, input: { name?: string | null; description?: string; file?: string | null; posting?: "members" | "admins"; notify?: "all" | "mentions" | "none" }) =>
+  rpc<string>("team_add_project_channel", {
+    p_project: project,
+    p_name: input.name ?? null,
+    p_description: input.description ?? "",
+    p_file: input.file ?? null,
+    p_posting: input.posting ?? "members",
+    p_notify: input.notify ?? "mentions",
+  });
+
+/** Ekibin tamamını (`project` boş) ya da bir projeyi sessize al / sesini aç. Etkin sessizlik ekip → proje → kanal birleşimidir. */
+export const setTeamMute = (team: string, project: string | null, muted: boolean) => rpc<void>("team_set_mute", { p_team: team, p_project: project, p_muted: muted });
+
+/** Çağıranın sessize aldığı ekipler ve projeler (satır = sessiz; `projectId` boş = ekibin tamamı). */
+export const listMyTeamMutes = () => rows<{ teamId: string; projectId: string | null }>("team_my_mutes");
 
 export const createTeamChannel = (team: string, input: { name: string; description: string; mode: string; space: string | null; posting: string; notify: string; entries: AccessEntry[] }) =>
   rpc<string>("team_create_channel", { p_team: team, p_name: input.name, p_description: input.description, p_mode: input.mode, p_space: input.space, p_posting: input.posting, p_notify: input.notify, p_entries: entriesOut(input.entries) });

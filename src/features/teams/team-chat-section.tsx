@@ -35,10 +35,12 @@ import {
   type TeamChannel,
   type TeamSpaceRow,
 } from "@/lib/supabase/teams";
-import { fetchProjectChannels } from "@/lib/supabase/team-projects";
+import { channelLabel, channelParam } from "@/lib/team-chat";
 import { teamLink } from "@/lib/teams";
 import { cn, formatUnread } from "@/lib/utils";
 import { AccessEditor } from "./access-editor";
+import { MuteCard, MuteChip } from "./mute-card";
+import { useTeamMutes } from "./team-chat-data";
 import type { TeamCtx } from "./team-page";
 import { PillChoice } from "./team-ui";
 
@@ -70,18 +72,12 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
     );
   }, [team.id]);
   useEffect(load, [load]);
-  // Proje sohbetleri (docs/history/362-*): kanal adı proje başlığından üretilmiş kısa addır; listede projenin kendi başlığı görünür.
-  const [projectTitles, setProjectTitles] = useState<Map<string, string>>(new Map());
-  useEffect(() => {
-    void fetchProjectChannels(team.id).then(
-      (list) => setProjectTitles(new Map(list.map((ref) => [ref.channelId, ref.projectTitle]))),
-      () => setProjectTitles(new Map()),
-    );
-  }, [team.id]);
-
+  // Ekibi sessize al (docs/history/369-*): ekibin tüm kanallarını ve projelerini kapatır; kanal/proje ayarları kendi sayfalarındadır.
+  const mutes = useTeamMutes(team.id, load);
   const visible = useMemo(() => (channels ?? []).filter((c) => !c.archivedAt), [channels]);
   const archived = useMemo(() => (channels ?? []).filter((c) => c.archivedAt), [channels]);
-  const active = visible.find((c) => c.id === wanted || c.name === wanted) ?? visible[0] ?? null;
+  // Proje kanallarında ad yalnız projesinde tektir: adres kimlikle gelir; ad ekip kanalları içinde aranır (docs/history/369-*).
+  const active = visible.find((c) => c.id === wanted) ?? visible.find((c) => !c.projectId && c.name === wanted) ?? visible[0] ?? null;
   const activeId = active?.id ?? null;
   useEffect(() => {
     if (!activeId) return;
@@ -101,7 +97,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
   const phone = !useMediaQuery("(min-width: 768px)");
   const select = (channel: TeamChannel) => {
     if (phone) router.push(`/messages/local?id=${channel.id}&from=team`);
-    else router.replace(teamLink(team.id, "chat", { channel: channel.name }));
+    else router.replace(teamLink(team.id, "chat", { channel: channelParam(channel) }));
   };
   // `?new=1` (bilgi sayfasındaki "Kanal ekle") ve `?settings=1` (kanal bilgisindeki "Düzenle") ilgili pencereyi adresten açar; kapanınca adresten kalkar.
   const manage = can("manage_channels");
@@ -127,7 +123,8 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
           )}
         >
           {channel.mode === "private" ? <Lock size={14} aria-hidden /> : isProject ? <FolderOpen size={14} aria-hidden /> : <Hash size={14} aria-hidden />}
-          <span className="min-w-0 flex-1 truncate">{isProject ? (projectTitles.get(channel.id) ?? channel.name) : channel.name}</span>
+          <span className="min-w-0 flex-1 truncate">{channelLabel(channel)}</span>
+          <MuteChip scope={channel.muteScope ?? (channel.muted ? "channel" : null)} />
           {unread && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(channel.unreadCount)}</span>}
         </button>
       </li>
@@ -141,6 +138,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
     <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16.25rem]" data-testid="team-chat">
       {/* Masaüstü (Seçenek 1, "çalışma alanı"): solda kanal kartı, sağda sohbet kartı. Tablette kanallar sohbet kartının çip satırındadır; telefonda yalnız bu liste. */}
       <aside className="space-y-3 md:hidden" data-testid="team-channel-list-phone">
+        <MuteCard scope="team" muted={mutes.teamMuted} busy={mutes.busy || !mutes.loaded} error={mutes.error} onToggle={(next) => void mutes.setTeamMuted(next)} />
         <div className="flex items-center">
           <h2 className="flex-1 text-label font-semibold uppercase tracking-wide text-text-muted">{t("tm.chat.channels")}</h2>
           {can("manage_channels") && (
@@ -187,9 +185,9 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
         <>
         {/* Telefonda tek bölme: kanal seçilene kadar yalnız liste, seçilince yalnız sohbet (+ geri). Masaüstünde sohbet + yan sütun. */}
         <div className="min-w-0 max-md:hidden lg:col-start-1 lg:row-start-1">
-          <ChannelView key={active.id} channel={active} channels={visible} members={members} onSelect={select} onlineCount={onlineMembers.length} onNew={can("manage_channels") ? () => setNewOpen(true) : undefined} controls={controls} labelOf={(c) => (c.mode === "project" ? (projectTitles.get(c.id) ?? c.name) : c.name)} />
+          <ChannelView key={active.id} channel={active} channels={visible} members={members} onSelect={select} onlineCount={onlineMembers.length} onNew={can("manage_channels") ? () => setNewOpen(true) : undefined} controls={controls} labelOf={channelLabel} />
         </div>
-        <ChannelAside channel={active} members={members} online={online} controls={controls} archived={can("manage_channels") ? archived : []} onUnarchive={(id) => void archiveTeamChannel(id, false).then(load)} projectTitle={projectTitles.get(active.id) ?? null} />
+        <ChannelAside muteCard={<MuteCard scope="team" muted={mutes.teamMuted} busy={mutes.busy || !mutes.loaded} error={mutes.error} onToggle={(next) => void mutes.setTeamMuted(next)} />} channel={active} members={members} online={online} controls={controls} archived={can("manage_channels") ? archived : []} onUnarchive={(id) => void archiveTeamChannel(id, false).then(load)} projectTitle={active.mode === "project" ? channelLabel(active) : null} />
         </>
       ) : (
         <EmptyState icon={Hash} title={t("tm.chat.empty.title")} description={t("tm.chat.empty.body")} />
@@ -230,6 +228,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
 
 /** Kanal bilgisi yan sütunu (masaüstü, mockup B6): açıklama + bildirim/bilgi düğmesi, çevrimiçi üyeler, arşivlenenler (yönetim). */
 function ChannelAside({
+  muteCard,
   channel,
   members,
   online,
@@ -238,6 +237,7 @@ function ChannelAside({
   onUnarchive,
   projectTitle,
 }: {
+  muteCard: React.ReactNode;
   channel: TeamChannel;
   members: ChannelMember[];
   online: ReadonlySet<string>;
@@ -251,6 +251,7 @@ function ChannelAside({
   const shown = (onlineMembers.length > 0 ? onlineMembers : members).slice(0, 8);
   return (
     <aside className="hidden space-y-3.5 lg:row-start-1 lg:block lg:col-start-2" data-testid="team-channel-aside">
+      {muteCard}
       <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-channel-info-card">
         <h3 className="font-display text-body font-bold text-text"># {projectTitle ?? channel.name}</h3>
         <p className="mt-1 text-small text-text-secondary">

@@ -6,6 +6,7 @@ import { DescriptionField, FormError, SubmitButton, TitleField } from "@/feature
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { cn } from "@/lib/utils";
 import {
   archiveProject,
   createBoard,
@@ -23,7 +24,7 @@ import {
   type ProjectDetail,
   type ProjectVariable,
 } from "@/lib/supabase/team-projects";
-import type { TeamActionError } from "@/lib/supabase/teams";
+import { addProjectChannel, type TeamActionError } from "@/lib/supabase/teams";
 import { ProjectAccessEditor } from "./project-access-editor";
 import { PillChoice, Switch } from "./team-ui";
 
@@ -35,19 +36,37 @@ export function NewFileDialog({ project, onClose, onDone }: { project: ProjectDe
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [review, setReview] = useState(project.project.reviewDefault);
+  // Dosya sohbeti KENDİLİĞİNDEN açılmaz (docs/history/369-*): bilerek sorulur, varsayılan kapalı; sonradan dosya bilgisinden ya da proje sohbet sayfasından da açılabilir.
+  const [withChat, setWithChat] = useState(false);
+  const [created, setCreated] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    // Dosya oluştu ama sohbet açılamadıysa ikinci basış yeniden dosya açmaz, dosyaya götürür.
+    if (created) return onDone(created);
     if (!title.trim()) return setError(t("tp.error.titleRequired"));
     setBusy(true);
     setError(null);
+    let fileId: string;
     try {
-      onDone(await createFile(project.project.id, title.trim(), review));
+      fileId = await createFile(project.project.id, title.trim(), review);
     } catch (e) {
       setError(errorText(e));
       setBusy(false);
+      return;
     }
+    if (withChat) {
+      try {
+        await addProjectChannel(project.project.id, { file: fileId });
+      } catch {
+        setCreated(fileId);
+        setError(t("th.newFile.chatFailed"));
+        setBusy(false);
+        return;
+      }
+    }
+    onDone(fileId);
   };
   return (
     <SpaceDialog
@@ -61,13 +80,22 @@ export function NewFileDialog({ project, onClose, onDone }: { project: ProjectDe
           <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
             {t("common.cancel")}
           </Button>
-          <SubmitButton busy={busy}>{t("tp.file.create")}</SubmitButton>
+          <SubmitButton busy={busy}>{created ? t("th.newFile.goToFile") : t("tp.file.create")}</SubmitButton>
         </>
       }
     >
       <div className="space-y-4">
         <TitleField value={title} onChange={setTitle} autoFocus />
         <ReviewSwitchRow value={review} onChange={setReview} />
+        <div data-new-file-chat className="flex items-start gap-3 rounded-xl border border-border-soft bg-surface p-3.5">
+          <div className="min-w-0 flex-1">
+            <p className="text-small font-bold text-text">{t("th.newFile.chatTitle")}</p>
+            <p className="text-caption text-text-secondary">{t("th.newFile.chatHint")}</p>
+          </div>
+          <span className={cn(created && "pointer-events-none opacity-60")}>
+            <Switch checked={withChat} onChange={setWithChat} label={t("th.newFile.chatSwitch")} />
+          </span>
+        </div>
         <FormError message={error} />
       </div>
     </SpaceDialog>

@@ -68,6 +68,8 @@ function seed(db, { role = "owner", projectRole = "lead" } = {}) {
       calls.push({ name, body });
       return { body: fn(body) };
     };
+    // Kanal listesi artık `team_channels_overview` (docs/history/369-*): eski adın yanıtı yeni adda da geçerlidir.
+    if (name === "team_list_channels") db.rpc.team_channels_overview = db.rpc[name];
   };
   reply("my_teams", () => [teamRow(role)]);
   reply("my_teams_preview", () => []);

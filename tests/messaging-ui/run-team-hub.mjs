@@ -45,6 +45,8 @@ function seed(db, { role = "owner", invitations = [] } = {}) {
       calls.push({ name, body });
       return { body: fn(body) };
     };
+    // Kanal listesi artık `team_channels_overview` (docs/history/369-*): eski adın yanıtı yeni adda da geçerlidir.
+    if (name === "team_list_channels") db.rpc.team_channels_overview = db.rpc[name];
   };
   reply("my_teams", () => [teamRow(role)]);
   reply("my_teams_preview", () => [{ team_id: TEAM, members_preview: [{ user_id: "u1", username: "aylin", display_name: "Aylin Demir", avatar_url: null }, { user_id: "u2", username: "elifk", display_name: "Elif Kaya", avatar_url: null }], recent: { action: "member_joined", actor_name: "Elif Kaya", label: null, at: "2026-11-08T08:00:00Z" } }]);
@@ -256,8 +258,8 @@ await scenario("14. Telefon: ekip sayfasında Sohbet = kanal listesi; kanala dok
   await page.locator("[data-team-header]").waitFor();
   assert.match(await page.locator("[data-team-header]").innerText(), /Atölye Mor/);
   await page.locator("[data-team-header-sub]").waitFor();
-  await page.locator("[data-channel-chips]").waitFor();
-  assert.ok((await page.locator("[data-channel-chip]").count()) >= 1, "kanal çipleri");
+  // docs/history/369-*: kanal çipleri sohbet ekranından kalktı; kanallar ekip sayfasında listelenir.
+  assert.equal(await page.locator("[data-channel-chips]").count(), 0, "sohbet ekranında çip satırı yok");
   assert.ok(await overflowFree(page));
   await shot(page, "m_chat");
   await page.getByRole("button", { name: /Mesaj listesine dön|Back to message list/i }).first().click();
@@ -331,17 +333,18 @@ await scenario("18. Mesajlar: ekibin iki kanalı TEK satırdır (ekip adı + eti
   assert.ok(await overflowFree(page));
 }, { setup: twoChannels() });
 
-await scenario("19. Ekip sohbeti başlığı: ekip adı + '# kanal · N üye'; kanal çipleri; çip kanalı değiştirir", async ({ page }) => {
+await scenario("19. Ekip sohbeti başlığı: ekip adı + '# kanal · N üye'; çip satırı YOK; geri ekip sayfasına (kanal listesi) döner, satır kanalı değiştirir", async ({ page }) => {
   await page.goto(`${BASE}/messages/local?id=${CH_GENERAL}`);
   const header = page.locator("[data-team-header]");
   await header.waitFor();
   assert.match(await header.innerText(), /Atölye Mor/);
   assert.match(await page.locator("[data-team-header-sub]").innerText(), /# genel/);
-  const chips = page.locator("[data-channel-chips] [data-channel-chip]");
-  await chips.first().waitFor();
-  assert.equal(await chips.count(), 2);
-  assert.equal(await page.locator("[data-channel-chip='genel']").getAttribute("aria-selected"), "true");
-  await page.locator("[data-channel-chip='yonetim']").click();
+  assert.equal(await page.locator("[data-channel-chips]").count(), 0, "çip satırı yok");
+  await page.getByRole("button", { name: /Mesaj listesine dön|Back to message list/i }).first().click();
+  await page.waitForFunction(() => location.search.includes("hub=team"));
+  await page.locator('[data-hub="team"]').waitFor();
+  await page.locator('[data-hub-row="genel"]').waitFor();
+  await page.locator('[data-hub-row="yonetim"]').click();
   await page.waitForFunction((id) => location.search.includes(`id=${id}`), CH_SECRET);
   await page.locator("[data-chat-scroll]").getByText("bütçe toplantısı").waitFor();
 }, { setup: twoChannels() });
