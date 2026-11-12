@@ -214,6 +214,14 @@ export const SPACE_ERROR_CODES = [
   "space_item_locked",
   "space_team_managed",
   "team_space_limit",
+  // Ekip projesi / dosya ⇄ pano (docs/history/376-*): pano eylemlerinde çıkan sunucu kodları
+  "review_content_locked",
+  "review_delete_forbidden",
+  "project_archived",
+  "project_invalid",
+  "project_not_found",
+  "team_forbidden",
+  "team_content_not_shareable",
 ] as const;
 export type SpaceErrorCode = (typeof SPACE_ERROR_CODES)[number];
 

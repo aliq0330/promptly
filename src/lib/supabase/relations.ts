@@ -455,6 +455,7 @@ async function structuralCandidateIds(prompt: Prompt): Promise<string[]> {
       .select("id")
       .eq("status", "published")
       .is("community_id", null)
+      .is("team_file_id", null)
       .eq("content_type", prompt.contentType)
       .eq("category", prompt.category)
       .neq("id", prompt.id)

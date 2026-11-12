@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { PromptDetailView } from "./prompt-detail-view";
 import { useRealPrompts } from "./real-prompts-provider";
 import { handedOffPrompt } from "@/lib/detail-handoff";
+import { useTeamContentRedirect } from "@/features/teams/team-return";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt } from "@/types";
 
@@ -52,8 +53,10 @@ export function LocalPromptView() {
   }, [id, Boolean(cachedPrompt)]);
 
   const prompt = cachedPrompt ?? fetchedPrompt ?? undefined;
+  // Ekibe özgü içeriğin kendi sayfası yok: ekip dosyasındaki öğeye yönlenir (docs/history/376-*).
+  const teamRedirecting = useTeamContentRedirect("prompt", prompt?.teamFileId ? prompt.id : null);
 
-  if (!prompt && !checkedRemote) {
+  if ((!prompt && !checkedRemote) || teamRedirecting) {
     return <DetailSkeleton />;
   }
 

@@ -10,6 +10,7 @@ import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { buttonClassName } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
+import { useTeamContentRedirect } from "@/features/teams/team-return";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
@@ -88,8 +89,11 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
     };
   }, [id]);
 
+  // Ekibe özgü içeriğin kendi sayfası yok: ekip dosyasındaki öğeye yönlenir (docs/history/376-*).
+  const teamRedirecting = useTeamContentRedirect("preset", preset?.teamFileId ? preset.id : null);
+
   if (!id) return <NotFoundBlock title={t("preset.notFoundTitle")} description={t("common.brokenLinkHint")} />;
-  if (preset === undefined) return <DetailSkeleton />;
+  if (preset === undefined || teamRedirecting) return <DetailSkeleton />;
   if (!preset) return <NotFoundBlock title={t("preset.notFoundTitle")} description={t("preset.notFoundBody")} />;
 
   const entries = presetParameterEntries(preset, language);

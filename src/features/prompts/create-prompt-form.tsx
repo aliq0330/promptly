@@ -1,6 +1,7 @@
 "use client";
 import { announcePublished } from "@/lib/publish-celebration";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
+import { useTeamCreateContext, useTeamReturn } from "@/features/teams/team-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -112,7 +113,11 @@ export function CreatePromptForm() {
   const { getCached: getCachedPrompt, fetchById: fetchPromptById, addPrompt, updatePrompt } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
   const returnToCommunity = useCommunityReturn();
-  const { communityId, name: communityName } = useCommunityContext();
+  const team = useTeamCreateContext();
+  const returnToTeam = useTeamReturn(team);
+  const { communityId: communityIdFromUrl, name: communityName } = useCommunityContext();
+  // Ekip dosyasından oluşturuluyorsa içerik ekibe özgüdür (topluluk bağlamı yok sayılır, docs/history/376-*).
+  const communityId = team ? null : communityIdFromUrl;
 
   const editId = searchParams.get("edit");
   const isEditMode = Boolean(editId);
@@ -511,6 +516,7 @@ export function CreatePromptForm() {
           requiresReferenceVideo: effectiveReferences.video,
           requiresReferenceAudio: effectiveReferences.audio,
           visibility: showsVisibilityChoice ? undefined : visibility,
+          teamFileId: team?.fileId,
           isDraft: true,
         },
         ownProfile,
@@ -602,6 +608,7 @@ export function CreatePromptForm() {
           requiresReferenceAudio: effectiveReferences.audio,
           visibility: showsVisibilityChoice ? undefined : visibility,
           communityId,
+          teamFileId: team?.fileId,
         },
         ownProfile,
       );
@@ -616,7 +623,7 @@ export function CreatePromptForm() {
         return;
       }
       announcePublished();
-      router.push((await returnToCommunity("prompt", published.id)) ?? promptHref(published));
+      router.push((await returnToTeam("prompt", published.id)) ?? (await returnToCommunity("prompt", published.id)) ?? promptHref(published));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("prompt.publishFailed"));
       setIsSubmitting(false);
@@ -975,8 +982,9 @@ export function CreatePromptForm() {
               problem.onFix?.();
             }}
             busy={isSubmitting}
-            confirmLabel={publishLabel}
+            confirmLabel={team && !isEditMode ? t("tf.create.confirm") : publishLabel}
             hideDestination={isEditMode}
+            team={team}
             visibility={showsVisibilityChoice ? undefined : visibility}
             onVisibilityChange={showsVisibilityChoice ? undefined : setVisibility}
             problems={problems}

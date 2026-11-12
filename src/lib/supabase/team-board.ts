@@ -5,6 +5,8 @@ import { rpc as teamRpc } from "./teams";
 import { createBoard, createBoardInGroup } from "./team-projects";
 import { translateForRuntime } from "@/lib/i18n/runtime";
 import { copyTitle } from "@/lib/team-board";
+import { chunk } from "./paged";
+import type { TeamCreateKind } from "@/lib/team-create";
 
 /**
  * Ekip panosu veri katmanı (docs/history/367-*): konumlu yorumlar, panolar arası taşıma/kopyalama, sıralama, çoğaltma.
@@ -215,4 +217,85 @@ export async function fetchBoardThumb(spaceId: string, force = false): Promise<T
 
 export function clearBoardThumbs(): void {
   thumbCache.clear();
+}
+
+// ---------------------------------------------------------------------------------------------
+// Dosya asıl, pano yansıma (docs/history/376-*)
+// ---------------------------------------------------------------------------------------------
+
+export interface PlaceResult {
+  placed: number;
+  skipped: number;
+  /** Panoda açılan yansıma satırlarının kimlikleri. */
+  ids: string[];
+}
+
+/** Dosyadaki öğeleri panoya yerleştirir (yansıma kurar; aynı öğe aynı panoda zaten varsa atlanır). Yansıma kimliği verilse bile asıl öğe yerleştirilir. */
+export async function placeItems(boardId: string, itemIds: readonly string[], at?: { x: number; y: number }): Promise<PlaceResult> {
+  const out: PlaceResult = { placed: 0, skipped: 0, ids: [] };
+  // Sunucu tek çağrıda en çok 200 öğe alır.
+  for (const part of chunk([...itemIds], 200)) {
+    const data = await call<{ placed: number; skipped: number; ids: string[] }>("team_board_place_items", {
+      p_board: boardId,
+      p_items: part,
+      p_x: at?.x ?? null,
+      p_y: at?.y ?? null,
+    });
+    out.placed += data.placed;
+    out.skipped += data.skipped;
+    out.ids.push(...(data.ids ?? []));
+  }
+  return out;
+}
+
+/** Dosyadan sil: asıl öğe ve bütün yansımaları gider (panodan kaldırmak değil — o, yansıma satırını düz silmektir). Yansıma kimliği de verilebilir. */
+export async function deleteFileItem(itemId: string): Promise<void> {
+  await call<void>("team_item_delete", { p_item: itemId });
+}
+
+export interface AttachResult {
+  itemId: string;
+  boardItemId: string | null;
+  /** Aynı içerik dosyada zaten vardı; yeni asıl öğe açılmadı. */
+  existing: boolean;
+}
+
+/** Yayınlanmış içeriği (herkese açık başvuru ya da bu dosyaya özgü içerik) dosyaya, istenirse panoya da ekler. */
+export async function attachContent(args: { fileId: string; type: TeamCreateKind; id: string; boardId?: string | null }): Promise<AttachResult> {
+  const data = await call<{ item_id: string; board_item_id: string | null; existing: boolean }>("team_attach_content", {
+    p_file: args.fileId,
+    p_type: args.type,
+    p_id: args.id,
+    p_board: args.boardId ?? null,
+  });
+  return { itemId: data.item_id, boardItemId: data.board_item_id ?? null, existing: Boolean(data.existing) };
+}
+
+/** Asıl öğe → öğenin gösterildiği panoların kimlikleri (RLS: görünmeyen taslak yansıması çıkmaz). */
+export async function fetchPlacements(itemIds: readonly string[]): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>();
+  for (const part of chunk([...new Set(itemIds)], 100)) {
+    const { data, error } = await supabase.from("space_items").select("file_item_id, space_id").in("file_item_id", part).limit(1000);
+    if (error) throw toSpaceError(error);
+    for (const row of (data ?? []) as { file_item_id: string | null; space_id: string }[]) {
+      if (!row.file_item_id) continue;
+      out.set(row.file_item_id, [...(out.get(row.file_item_id) ?? []), row.space_id]);
+    }
+  }
+  return out;
+}
+
+export interface ContentLocation {
+  teamId: string;
+  projectId: string;
+  fileId: string;
+  itemId: string | null;
+}
+
+/** Ekibe özgü içeriğin yeri (içerik sayfası dosyadaki öğeye yönlenir). Ekibe özgü değilse ya da erişim yoksa null. */
+export async function fetchContentLocation(type: TeamCreateKind, id: string): Promise<ContentLocation | null> {
+  const { data, error } = await supabase.rpc("team_content_location", { p_type: type, p_id: id });
+  if (error || !data) return null;
+  const row = data as { team_id: string; project_id: string; file_id: string; item_id: string | null };
+  return { teamId: row.team_id, projectId: row.project_id, fileId: row.file_id, itemId: row.item_id ?? null };
 }

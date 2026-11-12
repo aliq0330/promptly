@@ -398,3 +398,13 @@ node tests/messaging-ui/run-team-board.mjs   # 19/19 beklenir
 ```bash
 CHROMIUM_PATH=... node tests/messaging-ui/run-team-chat-hub.mjs   # 12/12 beklenir
 ```
+
+## Ekip dosyası asıl / pano yansıma (`docs/history/376-*`)
+
+`run-team-projects.mjs` (52 senaryo): Ekle menüsü (Oluştur · Seç satırları), 32b oluşturma ekranı ekip bağlamı + hedef kartı, 32c iki sekmeli içerik seçici (`search_content` yazar-hariç imzası, `team_attach_content`), 32d panodaki yansımada "Panodan kaldır" / "Dosyadan sil", 43–44b çok panolu "Panoya ekle" (`team_board_place_items`); `run-team-board.mjs` 5/5b panoda aynı satırlar + seçici (`p_board`). `mock-spaces.mjs` `file_item_id` taşır; seçici/yerleşim okumaları için senaryolar `db.extraRoutes` zincirler. Veritabanı tarafı: `supabase/tests/team-file-items.sql`, `team-content-isolation.sql`.
+
+```bash
+npm i --no-save playwright
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npx next build --webpack
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-team-projects.mjs   # 52/52 beklenir
+```

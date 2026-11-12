@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
+import { useTeamCreateContext, useTeamReturn } from "@/features/teams/team-return";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
 import { TriangleAlert } from "@/components/icons/triangle-alert";
@@ -58,7 +59,11 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const { t, language } = useTranslation();
   const router = useRouter();
   const returnToCommunity = useCommunityReturn();
-  const { communityId, name: communityName } = useCommunityContext();
+  const team = useTeamCreateContext();
+  const returnToTeam = useTeamReturn(team);
+  const { communityId: communityIdFromUrl, name: communityName } = useCommunityContext();
+  // Ekip dosyasından oluşturuluyorsa içerik ekibe özgüdür (topluluk bağlamı yok sayılır, docs/history/376-*).
+  const communityId = team ? null : communityIdFromUrl;
   const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
   const [rootRef, mode] = useLayoutMode();
@@ -244,7 +249,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       const contentTypes = Array.from(new Set([meta.contentType, ...steps.map((step) => step.content?.contentType).filter((type): type is NonNullable<typeof type> => Boolean(type))]));
       const { contentType: _mainType, ...rest } = meta;
       void _mainType;
-      const id = await saveWorkflow({ id: workflowId, ...rest, contentTypes, tags: tagPicker.accepted.map((entry) => entry.tag), status: target, visibility, communityId, steps }, user.id);
+      const id = await saveWorkflow({ id: workflowId, ...rest, contentTypes, tags: tagPicker.accepted.map((entry) => entry.tag), status: target, visibility, communityId, teamFileId: team?.fileId, steps }, user.id);
       setWorkflowId(id);
       setStatus(target);
       setDirty(false);
@@ -262,7 +267,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         }
       }
       if (target === "published" && !editId) announcePublished();
-      if (target === "published") router.push((await returnToCommunity("workflow", id)) ?? `/workflows/local?id=${id}`);
+      if (target === "published") router.push((await returnToTeam("workflow", id)) ?? (await returnToCommunity("workflow", id)) ?? `/workflows/local?id=${id}`);
       return true;
     } catch {
       setSaveState("error");
@@ -528,17 +533,20 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           <TagPicker picker={tagPicker} />
         </FormDisclosure>
         <SuggestedTagsRow picker={tagPicker} />
-        <WorkflowSpaceField
-          choice={spaceChoice.choice}
-          onChange={(next) => {
-            spaceChoice.update(next);
-            touch();
-          }}
-          spaces={spaceChoice.spaces}
-          failed={spaceChoice.failed}
-          workflowVisibility={visibility}
-          isDraft={status !== "published"}
-        />
+        {/* Ekibe özgü workflow kişisel Space'e eklenemez (sunucu da reddeder), seçenek hiç sunulmaz. */}
+        {!team && (
+          <WorkflowSpaceField
+            choice={spaceChoice.choice}
+            onChange={(next) => {
+              spaceChoice.update(next);
+              touch();
+            }}
+            spaces={spaceChoice.spaces}
+            failed={spaceChoice.failed}
+            workflowVisibility={visibility}
+            isDraft={status !== "published"}
+          />
+        )}
       </ComposeSection>
 
       <ComposeSection title={t("publish.whoSees")} id="compose-publish">
@@ -551,8 +559,9 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
             problem.onFix?.();
           }}
           busy={saveState === "saving"}
-          confirmLabel={saveState === "saving" ? t("workflow.saving") : isSaveMode ? t("common.save") : t("common.share")}
+          confirmLabel={saveState === "saving" ? t("workflow.saving") : team && !isSaveMode ? t("tf.create.confirm") : isSaveMode ? t("common.save") : t("common.share")}
           hideDestination={Boolean(editId)}
+          team={team}
           visibility={visibility}
           onVisibilityChange={(next) => {
             setVisibility(next);

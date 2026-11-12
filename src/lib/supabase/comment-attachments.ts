@@ -139,7 +139,8 @@ export async function fetchSavedPickableWindow(
     .eq("collections.is_default", true)
     .eq(`${table}.visibility`, "public")
     .eq(`${table}.status`, "published")
-    .is(`${table}.community_id`, null);
+    .is(`${table}.community_id`, null)
+    .is(`${table}.team_file_id`, null);
   if (type === "prompt") query = query.is("prompts.deleted_at", null);
   if (text) query = query.ilike(`${table}.title`, `%${text}%`);
   const { data, error } = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);

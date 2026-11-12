@@ -7,6 +7,8 @@ export interface ContentSearchFilters {
   authorId?: string;
   /** Advanced search (chips). Same-kind chips are OR (users, media types, tools); tags are AND. */
   authorIds?: string[];
+  /** Authors whose content is left out (the team file picker's "others' shares" tab, docs/history/376-*). Browse mode: it alone makes an empty text a real search. */
+  excludeAuthorIds?: string[];
   contentTypes?: ContentTypeId[];
   tagSlugs?: string[];
   /** Catalog tool refs ("toolId" / "toolId:modelId") — matches when any is in the row's `tools`. */
@@ -17,7 +19,7 @@ export interface ContentSearchFilters {
 /** True when any filter narrows the search (so an empty text query is still a real search). */
 export function hasSearchFilter(f: ContentSearchFilters): boolean {
   return Boolean(
-    f.authorId || f.taxonomy?.contentType || f.authorIds?.length || f.contentTypes?.length || f.tagSlugs?.length || f.toolRefs?.length,
+    f.authorId || f.taxonomy?.contentType || f.authorIds?.length || f.excludeAuthorIds?.length || f.contentTypes?.length || f.tagSlugs?.length || f.toolRefs?.length,
   );
 }
 

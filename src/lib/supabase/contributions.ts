@@ -30,6 +30,7 @@ export async function fetchContributionCounts(userId: string, since: Date): Prom
           .select("created_at")
           .eq(source.ownerColumn, userId)
           .eq(source.filter[0], source.filter[1])
+          .is("team_file_id", null)
           .gte("created_at", sinceIso)
           .limit(2000);
         if (error) {

@@ -28,6 +28,7 @@ export interface WorkflowRow {
   status: "draft" | "published";
   visibility: "public" | "private" | null;
   community_id?: string | null;
+  team_file_id?: string | null;
   like_count: number | null;
   quote_count?: number | null;
   save_count: number | null;
@@ -41,7 +42,7 @@ export interface WorkflowRow {
 }
 
 export const WORKFLOW_SELECT = `
-  id, creator_id, title, description, cover_url, content_types, category, subcategory, tools, status, visibility, community_id, like_count, save_count, comment_count, quote_count, created_at, updated_at,
+  id, creator_id, title, description, cover_url, content_types, category, subcategory, tools, status, visibility, community_id, team_file_id, like_count, save_count, comment_count, quote_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   workflow_steps ( count ),
   workflow_tags ( tags ( slug, label ) ),
@@ -72,6 +73,7 @@ export function mapWorkflowRow(row: WorkflowRow): Workflow {
     status: row.status,
     visibility: row.visibility === "private" ? "private" : "public",
     communityId: row.community_id ?? null,
+    teamFileId: row.team_file_id ?? null,
     stepCount: row.workflow_steps?.[0]?.count ?? 0,
     likeCount: row.like_count ?? 0,
     quoteCount: row.quote_count ?? 0,
@@ -114,6 +116,7 @@ export async function fetchRecentWorkflows(limit = 24, cursor?: KeysetCursor): P
         .select(WORKFLOW_SELECT)
         .eq("status", "published")
         .is("community_id", null)
+        .is("team_file_id", null)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(limit),
@@ -181,6 +184,7 @@ export async function fetchWorkflowsByCreatorPage(creatorId: string, filter: Own
     .select(WORKFLOW_SELECT, offset === 0 ? { count: "exact" } : undefined)
     .eq("creator_id", creatorId)
     .is("community_id", null)
+    .is("team_file_id", null)
     .eq("status", "published");
   if (filter.visibility && filter.visibility !== "all") request = request.eq("visibility", filter.visibility);
   if (text) request = request.or(`title.ilike.%${text}%,description.ilike.%${text}%`);
@@ -201,6 +205,7 @@ export async function fetchWorkflowsByCreator(creatorId: string): Promise<Workfl
         .select(WORKFLOW_SELECT)
         .eq("creator_id", creatorId)
         .is("community_id", null)
+        .is("team_file_id", null)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .range(from, to),
@@ -320,6 +325,8 @@ export interface SaveWorkflowInput {
   visibility?: ContentVisibility;
   /** Topluluğa özgü içerik: yalnız YENİ kayıtta gönderilir (`?community=`); sunucu görünürlüğü private'a zorlar, taslağa ve sonradan değiştirmeye izin vermez. */
   communityId?: string | null;
+  /** Ekibe özgü içerik: yalnız YENİ kayıtta gönderilir (`?teamFile=`); sunucu görünürlüğü private'a zorlar ve sonradan değiştirmeye izin vermez (`docs/history/376-*`). */
+  teamFileId?: string | null;
   steps: WorkflowStep[];
 }
 
@@ -373,7 +380,7 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
     if (error) throw new Error(error.message);
     if (!data) throw new Error(translateForRuntime("workflow.errorSave"));
   } else {
-    const { data, error } = await supabase.from("workflows").insert({ ...columns, title, description, creator_id: creatorId, community_id: input.communityId ?? null }).select("id").single();
+    const { data, error } = await supabase.from("workflows").insert({ ...columns, title, description, creator_id: creatorId, community_id: input.communityId ?? null, team_file_id: input.teamFileId ?? null }).select("id").single();
     if (error) throw new Error(error.message);
     id = data.id as string;
   }

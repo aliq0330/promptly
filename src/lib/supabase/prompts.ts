@@ -48,6 +48,7 @@ export interface PromptRow {
   requires_reference_audio: boolean;
   visibility: "public" | "private";
   community_id?: string | null;
+  team_file_id?: string | null;
   deleted_at: string | null;
   profiles: ProfileRow;
   prompt_media: {
@@ -67,7 +68,7 @@ export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, tools, content_type, category, subcategory, status,
   origin_type, request_id,
   like_count, save_count, comment_count, copy_count, quote_count, created_at, show_on_profile, requires_reference_image, requires_reference_video, requires_reference_audio, visibility,
-  deleted_at, community_id,
+  deleted_at, community_id, team_file_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt, position, dominant_color, placeholder ),
   prompt_tags ( tags ( slug, label ) )
@@ -151,6 +152,7 @@ export function mapPromptRow(row: PromptRow): Prompt {
     requiresReferenceAudio: row.requires_reference_audio ?? false,
     visibility: row.visibility ?? "public",
     communityId: row.community_id ?? null,
+    teamFileId: row.team_file_id ?? null,
     deletedAt: row.deleted_at,
     // Whether *this viewer* liked/saved it is still decided entirely by the
     // localStorage LikeProvider/SaveProvider (CLAUDE.md Bölüm 14) — real
@@ -186,6 +188,7 @@ export async function fetchRecentPublishedPrompts(limit = 24, cursor?: KeysetCur
         .select(PROMPT_SELECT)
         .eq("status", "published")
         .is("community_id", null)
+        .is("team_file_id", null)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(limit),
@@ -257,6 +260,7 @@ export async function fetchAuthorPromptsPage(query: AuthorPromptsQuery, offset =
     .eq("author_id", query.authorId)
     .eq("status", "published")
     .is("community_id", null)
+    .is("team_file_id", null)
     .is("deleted_at", null)
     .or(textMatch ? `and(${profileVisible},${textMatch})` : profileVisible.slice(3, -1));
   if (query.contentType) request = request.eq("content_type", query.contentType);
@@ -321,6 +325,7 @@ export async function fetchTopPrompts({ since, limit = 12 }: { since?: string; l
       .eq("status", "published")
       .eq("visibility", "public")
       .is("community_id", null)
+      .is("team_file_id", null)
       .is("deleted_at", null);
     if (since) query = query.gte("created_at", since);
     const { data, error } = await query.order("like_count", { ascending: false }).order("id").limit(limit);
@@ -459,6 +464,8 @@ export async function fetchLikedPromptsPage(userId: string, offset = 0, limit = 
 export interface CreateRealPromptInput {
   /** Topluluğa özgü içerik: yalnız YENİ kayıtta gönderilir (`?community=`); sunucu görünürlüğü private'a zorlar, taslağa ve sonradan değiştirmeye izin vermez. */
   communityId?: string | null;
+  /** Ekibe özgü içerik: yalnız YENİ kayıtta gönderilir (`?teamFile=`); sunucu görünürlüğü private'a zorlar ve sonradan değiştirmeye izin vermez (`docs/history/376-*`). */
+  teamFileId?: string | null;
   title: string;
   description: string;
   promptText: string;
@@ -528,6 +535,7 @@ export async function createRealPrompt(
       requires_reference_audio: input.requiresReferenceAudio ?? false,
       visibility: input.visibility ?? "public",
       community_id: input.communityId ?? null,
+      team_file_id: input.teamFileId ?? null,
     })
     .select("id, created_at")
     .single();

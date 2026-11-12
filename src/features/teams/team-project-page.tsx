@@ -647,6 +647,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
             onVariables: () => setDialog("info"),
             onNewBoard: () => setDialog("board"),
             onNewVariable: () => setDialog("variable"),
+            content: { projectId: project.id, fileId: file.id },
           }}
         />
       ) : (
@@ -818,6 +819,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
         reviewHref={lead ? projectLink(team.id, project.id, { review: true }) : null}
         add={{
           reviewOn: detail.project.reviewDefault,
+          content: board?.fileId ? { projectId: project.id, fileId: board.fileId, boardId } : undefined,
         }}
       />
 

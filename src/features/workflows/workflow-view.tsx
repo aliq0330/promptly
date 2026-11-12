@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
+import { useTeamContentRedirect } from "@/features/teams/team-return";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { FollowButton } from "@/features/profile/follow-button";
@@ -87,6 +88,9 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
     };
   }, [id]);
 
+  // Ekibe özgü içeriğin kendi sayfası yok: ekip dosyasındaki öğeye yönlenir (docs/history/376-*).
+  const teamRedirecting = useTeamContentRedirect("workflow", data?.workflow.teamFileId ? data.workflow.id : null);
+
   if (!id)
     return (
       <NotFoundBlock
@@ -94,7 +98,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
         description={t("common.brokenLinkHint")}
       />
     );
-  if (data === undefined) return <DetailSkeleton />;
+  if (data === undefined || teamRedirecting) return <DetailSkeleton />;
   if (!data)
     return (
       <NotFoundBlock

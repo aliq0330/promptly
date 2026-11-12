@@ -17,6 +17,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { ContentVisibility } from "@/types";
 import { DestinationPicker, useDestinationBlock } from "./share-destination-field";
+import { useTeamDestinationLabel, type TeamCreateInfo } from "@/features/teams/team-return";
 
 export type Audience = "public" | "private" | "community";
 
@@ -56,6 +57,8 @@ export const PublishPanel = forwardRef<
     onVisibilityChange?: (next: ContentVisibility) => void;
     /** Yayındaki içeriği düzenleme: yeri değişmez (topluluk seçeneği ve duyuru yok). */
     hideDestination?: boolean;
+    /** Ekip dosyasından oluşturma (docs/history/376-*): hedef kilitli "Proje → Dosya"dır; görünürlük seçimi, topluluk ve duyuru yoktur, içerik akışa düşmez. */
+    team?: TeamCreateInfo | null;
     extra?: ReactNode;
     preview?: ReactNode;
     problems?: PublishProblem[];
@@ -63,27 +66,30 @@ export const PublishPanel = forwardRef<
     children?: ReactNode;
   }
 >(function PublishPanel(
-  { onConfirm, onSaveDraft, onBlocked, busy = false, confirmLabel, visibility, onVisibilityChange, hideDestination = false, extra, preview, problems = [], showProblems = false, children },
+  { onConfirm, onSaveDraft, onBlocked, busy = false, confirmLabel, visibility, onVisibilityChange, hideDestination = false, team = null, extra, preview, problems = [], showProblems = false, children },
   ref,
 ) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const community = useCommunityContext();
-  const inCommunity = community.communityId !== null;
-  const blockedReason = useDestinationBlock(hideDestination ? null : community.communityId);
+  const inTeam = team !== null && !hideDestination;
+  const teamLabel = useTeamDestinationLabel(inTeam ? team : null);
+  const inCommunity = community.communityId !== null && !inTeam;
+  const blockedReason = useDestinationBlock(hideDestination || inTeam ? null : community.communityId);
   const canChooseVisibility = visibility !== undefined && onVisibilityChange !== undefined;
   const audience: Audience = inCommunity ? "community" : visibility === "private" ? "private" : "public";
   const allowCommunity = !hideDestination;
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const canAnnounce = Boolean(user) && !hideDestination && audience === "public";
+  const canAnnounce = Boolean(user) && !hideDestination && !inTeam && audience === "public";
   const [selection, setSelection] = useAnnounceSelection();
   const communities = useAnnounceCommunities(canAnnounce);
   const names = new Map(communities.list.map((item) => [item.id, item.name]));
   const announceCount = canAnnounce ? selection.communityIds.length : 0;
 
-  const summary =
-    audience === "community"
+  const summary = inTeam
+    ? t("tf.create.summary", { path: teamLabel ?? "…" })
+    : audience === "community"
       ? t("publish.summary.community", { name: community.name ?? "…" })
       : audience === "private"
         ? t("publish.summary.private")
@@ -128,7 +134,22 @@ export const PublishPanel = forwardRef<
     <div data-publish-panel="" className="space-y-4">
       {preview && <div className="lg:hidden">{preview}</div>}
 
-      {options.length > 1 && (
+      {inTeam && (
+        <section className="space-y-2" data-team-destination={team?.fileId ?? ""}>
+          <div className="flex min-h-14 items-center gap-3 rounded-xl border border-primary bg-primary-soft px-3.5">
+            <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+              <Users size={17} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-label font-semibold text-text">{t("tf.create.destination")}</span>
+              <span className="block truncate text-small text-text-secondary">{teamLabel ?? t("common.loading")}</span>
+            </span>
+          </div>
+          <p className="text-caption text-text-muted">{t("tf.create.hint")}</p>
+        </section>
+      )}
+
+      {options.length > 1 && !inTeam && (
         <section className="space-y-2" data-audience-field={audience}>
           <div className="grid gap-2" role="radiogroup" aria-label={t("publish.whoSees")}>
             {options.map((option) => {

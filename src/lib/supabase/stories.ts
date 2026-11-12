@@ -642,10 +642,10 @@ export async function fetchLinkableContent(ownerId: string, query: string): Prom
   const q = query.trim().replace(/[%_,()]/g, " ").trim();
   const mine = !q;
   const limit = 12;
-  const prompts = supabase.from("prompts").select("id, title, description").eq("status", "published").eq("visibility", "public").is("community_id", null).is("deleted_at", null);
-  const requests = supabase.from("prompt_requests").select("id, title, description").eq("is_draft", false).eq("visibility", "public").is("community_id", null).is("deleted_at", null);
-  const workflows = supabase.from("workflows").select("id, title, description").eq("status", "published").eq("visibility", "public").is("community_id", null);
-  const presets = supabase.from("presets").select("id, title, description").eq("status", "published").eq("visibility", "public").is("community_id", null);
+  const prompts = supabase.from("prompts").select("id, title, description").eq("status", "published").eq("visibility", "public").is("community_id", null).is("team_file_id", null).is("deleted_at", null);
+  const requests = supabase.from("prompt_requests").select("id, title, description").eq("is_draft", false).eq("visibility", "public").is("community_id", null).is("team_file_id", null).is("deleted_at", null);
+  const workflows = supabase.from("workflows").select("id, title, description").eq("status", "published").eq("visibility", "public").is("community_id", null).is("team_file_id", null);
+  const presets = supabase.from("presets").select("id, title, description").eq("status", "published").eq("visibility", "public").is("community_id", null).is("team_file_id", null);
   const scoped = <T extends { eq: (c: string, v: string) => T; ilike: (c: string, v: string) => T }>(builder: T, ownerColumn: string) =>
     mine ? builder.eq(ownerColumn, ownerId) : builder.ilike("title", `%${q}%`);
   const [p, r, w, s] = await Promise.all([

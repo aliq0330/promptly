@@ -24,6 +24,9 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   invalid_expiry: "error.apiTokenExpiry",
   // Telegram botu (docs/history/323-*)
   link_limit: "error.telegramLinkLimit",
+  // Ekibe özgü içerik (docs/history/376-*)
+  team_content_not_shareable: "error.teamContentNotShareable",
+  team_content_immutable: "error.teamContentImmutable",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
@@ -63,7 +66,7 @@ export function friendlyServerErrors(baseFetch: typeof fetch): typeof fetch {
  * zorunlu bir sütunu listeye ekleme, sessizce `undefined` döner. Yeni bir isteğe bağlı sütun eklenince buraya da ekle.
  */
 const OPTIONAL_COLUMNS = [
-  "is_demo", "flow_show_io", "flow_show_links", "flow_show_relations", "source_workflow_id", "source_step_id", "source_role", "source_step_no", "locked", "data", "reaction", "approved_at", "approved_by", "review_requested_at", "review_requested_by", "community_id", "team_id", "team_project_id", "team_file_id", "rev_state", "rev_note", "rev_submitted_at", "rev_decided_at", "rev_unit",
+  "is_demo", "flow_show_io", "flow_show_links", "flow_show_relations", "source_workflow_id", "source_step_id", "source_role", "source_step_no", "locked", "data", "reaction", "approved_at", "approved_by", "review_requested_at", "review_requested_by", "community_id", "team_id", "team_project_id", "team_file_id", "rev_state", "rev_note", "rev_submitted_at", "rev_decided_at", "rev_unit", "file_item_id",
   // Yorum medyası/eki (docs/history/308-*): sütunlar yoksa yorumlar yine açılır, yalnız ek görünmez.
   "media_kind", "media_ref", "media_width", "media_height", "attach_type", "attach_id",
 ] as const;

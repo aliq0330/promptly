@@ -51,7 +51,7 @@ export const SHARE_SOURCES: readonly ShareSource[] = [
     keyColumn: "id",
     titleColumn: "title",
     descriptionColumn: "description",
-    filters: ["status=eq.published", "visibility=eq.public", "community_id=is.null", "deleted_at=is.null", "or=(origin_type.eq.original,show_on_profile.is.true)"],
+    filters: ["status=eq.published", "visibility=eq.public", "community_id=is.null", "team_file_id=is.null", "deleted_at=is.null", "or=(origin_type.eq.original,show_on_profile.is.true)"],
   },
   {
     kind: "request",
@@ -59,7 +59,7 @@ export const SHARE_SOURCES: readonly ShareSource[] = [
     keyColumn: "id",
     titleColumn: "title",
     descriptionColumn: "description",
-    filters: ["is_draft=eq.false", "visibility=eq.public", "community_id=is.null", "deleted_at=is.null"],
+    filters: ["is_draft=eq.false", "visibility=eq.public", "community_id=is.null", "team_file_id=is.null", "deleted_at=is.null"],
   },
   {
     kind: "workflow",
@@ -67,7 +67,7 @@ export const SHARE_SOURCES: readonly ShareSource[] = [
     keyColumn: "id",
     titleColumn: "title",
     descriptionColumn: "description",
-    filters: ["status=eq.published", "visibility=eq.public", "community_id=is.null"],
+    filters: ["status=eq.published", "visibility=eq.public", "community_id=is.null", "team_file_id=is.null"],
   },
   {
     kind: "preset",
@@ -75,7 +75,7 @@ export const SHARE_SOURCES: readonly ShareSource[] = [
     keyColumn: "id",
     titleColumn: "title",
     descriptionColumn: "description",
-    filters: ["status=eq.published", "visibility=eq.public", "community_id=is.null"],
+    filters: ["status=eq.published", "visibility=eq.public", "community_id=is.null", "team_file_id=is.null"],
   },
   {
     kind: "space",

@@ -28,6 +28,7 @@ export async function fetchOwnTaxonomyRows(userId: string): Promise<{ rows: Taxo
       .select("id, title, content_type, category, subcategory")
       .eq("author_id", userId)
       .is("community_id", null)
+      .is("team_file_id", null)
       .is("deleted_at", null)
       .eq("origin_type", "original")
       .order("created_at", { ascending: false })

@@ -428,13 +428,13 @@ await scenario("13b. Eski proje geneli alan (canlıda kalan veri): kart 'Eski pr
   },
 });
 
-await scenario("14. Ekle menüsü: pano/görsel/prompt/değişken/palet/not seçenekleri (workflow/ayar paketi yok); Pano → pano penceresi; taslak notu", async ({ page, db }) => {
+await scenario("14. Ekle menüsü (docs/history/376-*): pano/görsel/değişken/palet/not + Prompt/İstek/Workflow/Ayar paketi için Oluştur · Seç; prompt artık dosyada yazılmaz; Pano → pano penceresi; taslak notu", async ({ page, db }) => {
   await page.goto(projectUrl(`&file=${FILE}`));
   await page.locator("[data-area-add]").click();
   const options = page.getByTestId("area-add-options");
   await options.waitFor();
-  for (const key of ["board", "image", "prompt", "variable", "palette", "note"]) await options.locator(`[data-area-add-option=${key}]`).waitFor();
-  assert.equal(await options.locator("[data-area-add-option=workflow], [data-area-add-option=preset]").count(), 0, "dosyanın öğeleri not/prompt/görsel/palet; workflow/ayar paketi panoya eklenir");
+  for (const key of ["board", "image", "variable", "palette", "note", "create-prompt", "pick-prompt", "create-request", "pick-request", "create-workflow", "pick-workflow", "create-preset", "pick-preset"]) await options.locator(`[data-area-add-option=${key}]`).waitFor();
+  assert.equal(await options.locator("[data-area-add-option=prompt]").count(), 0, "prompt dosyada yazılmaz: Oluştur (oluşturma ekranı) ya da Seç");
   await page.getByText("eklediğin her şey taslak başlar", { exact: false }).waitFor();
   await options.locator("[data-area-add-option=board]").click();
   const form = page.getByTestId("team-new-board-form");
@@ -738,14 +738,9 @@ await scenario("31. Başlıklar: proje/dosya/pano sayfalarında telefon başlı�
   assert.ok((await bar.innerText()).includes("Villa Projesi"));
 }, { viewport: { width: 390, height: 800 }, items: detailItems });
 
-await scenario("32. Ekle → Prompt/Palet/Görsel: sekmeye gitmeden pencere/dosya seçici; eski sekme adresleri listeye düşer", async ({ page }) => {
+await scenario("32. Ekle → Palet/Görsel: sekmeye gitmeden pencere/dosya seçici; eski sekme adresleri listeye düşer", async ({ page }) => {
   await page.goto(projectUrl(`&file=${FILE}`));
   await page.getByTestId("area-folder-list").waitFor();
-  await page.locator("[data-area-add]").click();
-  await page.locator("[data-area-add-option=prompt]").click();
-  await page.getByTestId("draft-editor").waitFor().catch(async () => { await page.getByRole("dialog").first().waitFor(); });
-  assert.ok(!page.url().includes("sub="));
-  await page.keyboard.press("Escape");
   await page.locator("[data-area-add]").click();
   await page.locator("[data-area-add-option=palette]").click();
   await page.getByRole("dialog").first().waitFor();
@@ -757,6 +752,95 @@ await scenario("32. Ekle → Prompt/Palet/Görsel: sekmeye gitmeden pencere/dosy
   await chooser;
   assert.equal(await page.locator("[data-area-tab]").count(), 0);
 }, { items: () => undefined });
+
+const BOARD2 = SID(4);
+const PICK_P1 = "a1c00000-0000-4000-8000-000000000001";
+const PICK_P2 = "a1c00000-0000-4000-8000-000000000002";
+const pickAuthor = (u) => ({ id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 0, following_count: 0, created_at: "2026-01-01T00:00:00Z", interests: [] });
+const pickPrompt = (id, title, by) => ({
+  id, title, description: "d", prompt_text: "metin", tool: null, tools: [], content_type: "text", category: null, subcategory: null, status: "published", origin_type: "original",
+  request_id: null, like_count: 0, save_count: 0, comment_count: 0, copy_count: 0, created_at: "2026-10-20T12:00:00Z", show_on_profile: true, requires_reference_image: false,
+  requires_reference_video: false, requires_reference_audio: false, visibility: "public", deleted_at: null, community_id: null, team_file_id: null, profiles: pickAuthor(by), prompt_media: [], prompt_tags: [],
+});
+const pickerSetup = (db) => {
+  const mine = pickPrompt(PICK_P1, "Benim promptum", { id: ME, username: "alice", display_name: "Alice" });
+  const others = pickPrompt(PICK_P2, "Bobun promptu", U.bob);
+  db.rpc.search_content = (body) => {
+    db.teamCalls.push({ name: "search_content", body });
+    const list = body.p_exclude_author_ids ? [others] : [mine];
+    return { body: list.map((r) => ({ id: r.id, created_at: r.created_at, sort_rank: 0 })) };
+  };
+  const previous = db.extraRoutes;
+  db.extraRoutes = async (ctx) => {
+    if (ctx.table === "prompts" && ctx.method === "GET") {
+      const ids = (ctx.q.get("id") ?? "").match(/[0-9a-f-]{36}/g) ?? [];
+      ctx.json(200, [mine, others].filter((r) => ids.includes(r.id)));
+      return true;
+    }
+    return previous?.(ctx);
+  };
+  db.rpc.team_attach_content = (body) => { db.teamCalls.push({ name: "team_attach_content", body }); return { body: { item_id: "17e70000-0000-4000-8000-0000000000aa", board_item_id: null, existing: false } }; };
+};
+
+await scenario("32b. Ekle → Oluştur: gerçek oluşturma ekranı ekip bağlamıyla açılır (formda yazılmaz); hedef kartı 'Proje → Dosya', görünürlük/duyuru seçeneği yok, buton 'Dosyaya ekle'", async ({ page }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("area-folder-list").waitFor();
+  await page.locator("[data-area-add]").click();
+  await page.locator("[data-area-add-option=create-prompt]").click();
+  await page.waitForURL(new RegExp(`/create/?\\?mode=prompt&teamProject=${PROJECT}&teamFile=${FILE}`));
+  const card = page.locator("[data-team-destination]");
+  await card.waitFor();
+  await card.getByText("Villa Projesi → Mutfak").waitFor();
+  assert.equal(await page.locator("[data-audience-field]").count(), 0, "görünürlük seçimi yok");
+  assert.equal(await page.locator("[data-announce-picker]").count(), 0, "topluluklarda duyuru yok");
+  assert.equal((await page.locator("[data-action=publish]").innerText()).trim(), "Dosyaya ekle");
+  assert.equal(await page.locator("[data-action=save-draft]").count(), 1, "taslak kaydı var");
+});
+
+await scenario("32c. Ekle → Seç: iki sekme (Paylaştıklarım / Başkalarının paylaştıkları), gelişmiş arama + Filtre; Ekle → team_attach_content (başvuru, dosya)", async ({ page, db }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("area-folder-list").waitFor();
+  await page.locator("[data-area-add]").click();
+  await page.locator("[data-area-add-option=pick-prompt]").click();
+  const picker = page.locator("[data-team-content-picker=prompt]");
+  await picker.waitFor();
+  await picker.locator(`[data-picker-row="${PICK_P1}"]`).getByText("Benim promptum").waitFor();
+  const first = called(db, "search_content").at(-1).body;
+  assert.deepEqual(first.p_author_ids, [ME], "Paylaştıklarım: yalnız kendi içeriğim");
+  assert.equal(first.p_exclude_author_ids, undefined, "eski imza");
+  await picker.locator(`[data-picker-add="${PICK_P1}"]`).click();
+  await picker.locator(`[data-picker-added="${PICK_P1}"]`).waitFor();
+  const [attach] = called(db, "team_attach_content");
+  assert.deepEqual({ f: attach.body.p_file, t: attach.body.p_type, i: attach.body.p_id, b: attach.body.p_board }, { f: FILE, t: "prompt", i: PICK_P1, b: null });
+  await page.getByRole("tab", { name: "Başkalarının paylaştıkları" }).click();
+  await picker.locator(`[data-picker-row="${PICK_P2}"]`).getByText("Bobun promptu").waitFor();
+  await picker.getByText("@bob").waitFor();
+  const second = called(db, "search_content").at(-1).body;
+  assert.deepEqual(second.p_exclude_author_ids, [ME], "Başkaları: kendim hariç");
+  await picker.locator("[data-picker-filter]").click();
+  await picker.locator("[data-picker-filter-panel]").waitFor();
+  assert.equal(await picker.getByRole("searchbox").count() + await picker.getByRole("combobox").count() > 0, true, "gelişmiş arama kutusu");
+  await picker.getByRole("tab", { name: "Paylaştıklarım" }).click().catch(() => page.getByRole("tab", { name: "Paylaştıklarım" }).click());
+}, { setup: pickerSetup });
+
+await scenario("32d. Panodaki yansıma: 'Panodan kaldır' yalnız yerleşimi siler (onay metni dosyada kalacağını söyler); 'Dosyadan sil' asıl öğeyi siler → team_item_delete", async ({ page, db }) => {
+  db.rpc.team_item_delete = (body) => { db.teamCalls.push({ name: "team_item_delete", body }); return { body: null }; };
+  const mirror = "17e60000-0000-4000-8000-000000000001";
+  await page.goto(projectUrl(`&board=${BOARD}&item=${mirror}`));
+  await page.getByTestId("item-drawer").waitFor();
+  await page.locator("[data-path-more]").click();
+  await page.locator("[data-item-remove-from-board]").waitFor();
+  await page.locator("[data-item-remove-from-board]").click();
+  await page.getByText("yalnız bu panodan kalkar", { exact: false }).waitFor();
+  await page.keyboard.press("Escape");
+  await page.locator("[data-path-more]").click();
+  await page.locator("[data-item-delete]").click();
+  await page.getByText("tüm panolardan silinecek", { exact: false }).waitFor();
+  await page.getByRole("button", { name: "Dosyadan sil" }).last().click();
+  await page.waitForTimeout(300);
+  assert.equal(called(db, "team_item_delete").at(-1)?.body.p_item, mirror);
+}, { items: (db) => { detailItems(db); db.addItem(BOARD, { id: "17e60000-0000-4000-8000-000000000001", kind: "note", title: "Yansıma notu", body: "x", rev_state: "approved", file_item_id: NOTE(40), created_by: ME }); } });
+
 
 await scenario("33. Öğe sayfası ⋯ (lider): Düzenle → not düzenleyici penceresi", async ({ page }) => {
   await page.goto(itemUrl(NOTE(40)));
@@ -932,14 +1016,14 @@ await scenario("42. Yeni dosya / pano / proje pencerelerinde 'Space' kelimesi ge
 
 // 43–45 (docs/history/375-*): Panoya ekle (mevcut pano / pano yoksa Pano ekle) ve öğe düzenlemede "+ Yeni grup…"
 const NEW_ITEM_ID = "17e70000-0000-4000-8000-000000000001";
-const transferReply = (db) => {
-  db.rpc.team_transfer_items = (body) => {
-    db.teamCalls.push({ name: "team_transfer_items", body });
-    return { body: { done: 1, skipped: 0, old_ids: body.p_ids, new_ids: [NEW_ITEM_ID] } };
+const placeReply = (db) => {
+  db.rpc.team_board_place_items = (body) => {
+    db.teamCalls.push({ name: "team_board_place_items", body });
+    return { body: { placed: (body.p_items ?? []).length, skipped: 0, ids: [NEW_ITEM_ID] } };
   };
 };
-await scenario("43. Dosya öğesi: 'Panoya ekle' görünür düğme + ⋯ menüsünde; pencere projedeki panoyu listeler; seçince team_transfer_items (taşı) ve panoya odaklı gidilir", async ({ page, db }) => {
-  transferReply(db);
+await scenario("43. Dosya öğesi: 'Panoya ekle' (docs/history/376-*): pencere AYNI dosyanın panolarını listeler, taşı/kopyala seçeneği YOK; seçince team_board_place_items ve panoya odaklı gidilir", async ({ page, db }) => {
+  placeReply(db);
   await page.goto(itemUrl(NOTE(40)));
   const button = page.locator("[data-item-add-to-board-button]");
   await button.waitFor();
@@ -951,32 +1035,53 @@ await scenario("43. Dosya öğesi: 'Panoya ekle' görünür düğme + ⋯ menüs
   const form = page.getByTestId("add-to-board-form");
   await form.waitFor();
   await form.locator(`[data-add-to-board="${BOARD}"]`).waitFor();
+  await form.locator("[data-add-to-board-note]").waitFor();
+  assert.equal(await form.locator("[data-add-to-board-keep]").count(), 0, "taşı/kopyala yok: öğe dosyada kalır, pano gösterir");
   assert.equal(await form.locator("[data-add-to-board-empty]").count(), 0, "pano varken boş durum metni yok");
   assert.equal(await form.getByRole("button", { name: "Panoya ekle" }).isDisabled(), true, "pano seçilmeden gönderilemez");
   await form.locator(`[data-add-to-board="${BOARD}"]`).click();
   await form.getByRole("button", { name: "Panoya ekle" }).click();
   await page.waitForURL(new RegExp(`board=${BOARD}.*sub=board|sub=board.*board=${BOARD}`));
   assert.match(page.url(), new RegExp(`focus=${NEW_ITEM_ID}`));
-  const [call] = called(db, "team_transfer_items");
-  assert.equal(call.body.p_to, BOARD);
-  assert.deepEqual(call.body.p_ids, [NOTE(40)]);
-  assert.equal(call.body.p_copy, false, "varsayılan taşıma");
+  const [call] = called(db, "team_board_place_items");
+  assert.equal(call.body.p_board, BOARD);
+  assert.deepEqual(call.body.p_items, [NOTE(40)]);
 }, { items: detailItems });
 
-await scenario("43b. 'Dosyada da kalsın' = kopyala (p_copy)", async ({ page, db }) => {
-  transferReply(db);
+await scenario("43b. Birden çok panoya ekle: iki pano seçilir → her biri için team_board_place_items; sayfada kalınır, 'Panolarda' rozetleri görünür", async ({ page, db }) => {
+  placeReply(db);
+  const base = db.rpc.team_project_get;
+  db.rpc.team_project_get = (b) => {
+    const out = base(b);
+    return { body: { ...out.body, boards: [...out.body.boards, { id: BOARD2, title: "Sunum panosu", file_id: FILE, item_count: 1, position: 1, group_id: null }] } };
+  };
   await page.goto(itemUrl(NOTE(40)));
   await page.locator("[data-item-add-to-board-button]").click();
   const form = page.getByTestId("add-to-board-form");
   await form.locator(`[data-add-to-board="${BOARD}"]`).click();
-  await form.locator("[data-add-to-board-keep]").check();
+  await form.locator(`[data-add-to-board="${BOARD2}"]`).click();
   await form.getByRole("button", { name: "Panoya ekle" }).click();
-  await page.waitForURL(/sub=board/);
-  assert.equal(called(db, "team_transfer_items")[0].body.p_copy, true);
-}, { items: detailItems });
+  await page.locator(`[data-item-board="${BOARD}"]`).waitFor();
+  await page.locator(`[data-item-board="${BOARD2}"]`).waitFor();
+  assert.ok(!page.url().includes("sub=board"), "birden çok panoda sayfada kalınır");
+  assert.deepEqual(called(db, "team_board_place_items").map((c) => c.body.p_board).sort(), [BOARD, BOARD2].sort());
+}, {
+  items: detailItems,
+  // Yerleşim okuması (`space_items?file_item_id=in.(…)`): sunucu yerleştirilen panoları döndürür.
+  setup: (db) => {
+    const previous = db.extraRoutes;
+    db.extraRoutes = async (ctx) => {
+      if (ctx.table === "space_items" && ctx.method === "GET" && ctx.q.get("file_item_id")) {
+        ctx.json(200, called(db, "team_board_place_items").map((c) => ({ file_item_id: NOTE(40), space_id: c.body.p_board })));
+        return true;
+      }
+      return previous?.(ctx);
+    };
+  },
+});
 
-await scenario("44. Projede hiç pano yoksa pencerede 'Pano ekle' seçeneği: ad yazılır → team_create_board(dosya) sonra team_transfer_items", async ({ page, db }) => {
-  transferReply(db);
+await scenario("44. Dosyada hiç pano yoksa pencerede 'Pano ekle' açık gelir: ad yazılır → team_create_board(dosya) sonra team_board_place_items", async ({ page, db }) => {
+  placeReply(db);
   const NEW_BOARD = "17e80000-0000-4000-8000-000000000001";
   db.rpc.team_project_get = (body) => { db.teamCalls.push({ name: "team_project_get", body }); return { body: detail("lead", { boards: [] }) }; };
   db.rpc.team_create_board = (body) => { db.teamCalls.push({ name: "team_create_board", body }); return { body: NEW_BOARD }; };
@@ -992,18 +1097,18 @@ await scenario("44. Projede hiç pano yoksa pencerede 'Pano ekle' seçeneği: ad
   const [create] = called(db, "team_create_board");
   assert.equal(create.body.p_title, "Fikirler");
   assert.equal(create.body.p_file, FILE);
-  assert.equal(called(db, "team_transfer_items")[0].body.p_to, NEW_BOARD);
+  assert.equal(called(db, "team_board_place_items")[0].body.p_board, NEW_BOARD);
 }, { items: detailItems });
 
 await scenario("44b. Pano adı boşsa 'Bir ad yaz.' görünür ve hiçbir şey çağrılmaz", async ({ page, db }) => {
-  transferReply(db);
+  placeReply(db);
   db.rpc.team_project_get = (body) => { db.teamCalls.push({ name: "team_project_get", body }); return { body: detail("lead", { boards: [] }) }; };
   await page.goto(itemUrl(NOTE(40)));
   await page.locator("[data-item-add-to-board-button]").click();
   const form = page.getByTestId("add-to-board-form");
   await form.getByRole("button", { name: "Panoya ekle" }).click();
   await form.getByText("Bir ad yaz.").waitFor();
-  assert.equal(called(db, "team_transfer_items").length, 0);
+  assert.equal(called(db, "team_board_place_items").length, 0);
 }, { items: detailItems });
 
 await scenario("45. Öğe düzenleme: Grup seçicide '+ Yeni grup…' ile grup açılır, öğe o gruba girer; dosya listesinde grup süzgeci ve kartta grup adı", async ({ page, db }) => {

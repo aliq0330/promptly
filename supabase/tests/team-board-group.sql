@@ -118,19 +118,19 @@ select public.team_transfer_items(public._g('A1'), public._g('B1'), array[:'ln_v
 reset role;
 select public._check(16, 'düzenleyici KOPYALAYABİLİR (kaynakta kalır, hedefte yeni öğe)', (:'cp_v'::jsonb ->> 'done')::int = 2 and public._n(format($$select count(*) from public.space_items where space_id = %L and title in ('Lider notu','İkinci')$$, public._g('A1'))) = 2 and public._n(format($$select count(*) from public.space_items where space_id = %L and title in ('Lider notu','İkinci')$$, public._g('B1'))) = 2);
 select public._check(17, 'kopyada uçları aktarılan ok da gelir', public._n(format($$select count(*) from public.space_connections where space_id = %L$$, public._g('B1'))) = 1);
-select public._check(18, 'hedefte onay açık: düzenleyicinin kopyası taslak başlar', public._n(format($$select count(*) from public.space_items where space_id = %L and rev_state = 'draft'$$, public._g('B1'))) = 2);
+select public._check(18, 'yerleştirilen öğeler asıl öğenin onay durumunu taşır (lider eklediği için onaylı)', public._n(format($$select count(*) from public.space_items where space_id = %L and rev_state = 'approved' and file_item_id is not null$$, public._g('B1'))) = 2);
 set role authenticated;
 select public._as_user(:dave);
 select public.team_transfer_items(public._g('A1'), public._g('B2'), array[:'ln_v'::uuid, :'n1_v'::uuid, :'fr_v'::uuid]) as v \gset mv_
 reset role;
-select public._check(19, 'düzenleyici TAŞIMADA yalnız kendi taslağını ve çizim öğesini taşır (onaylı lider notu atlanır)', (:'mv_v'::jsonb ->> 'done')::int = 2 and (:'mv_v'::jsonb ->> 'skipped')::int = 1);
-select public._check(20, 'taşınan öğe kaynaktan silinir', public._n(format($$select count(*) from public.space_items where id in (%L, %L)$$, :'n1_v', :'fr_v')) = 0 and public._n(format($$select count(*) from public.space_items where id = %L$$, :'ln_v')) = 1);
+select public._check(19, 'düzenleyici dosyadaki öğeleri panoya yerleştirir (onay kuralı yerleşimi bağlamaz), çizim nesnesini taşır', (:'mv_v'::jsonb ->> 'done')::int = 3 and (:'mv_v'::jsonb ->> 'skipped')::int = 0);
+select public._check(20, 'dosyanın asıl öğeleri taşınmaz (yerinde kalır); yalnız çizim nesnesi taşınır', public._n(format($$select count(*) from public.space_items where id = %L$$, :'n1_v')) = 1 and public._n(format($$select count(*) from public.space_items where id = %L$$, :'fr_v')) = 0 and public._n(format($$select count(*) from public.space_items where id = %L$$, :'ln_v')) = 1);
 set role authenticated;
 select public._as_user(:carol);
 select public.team_transfer_items(public._g('A1'), public._g('B3'), array[:'ln_v'::uuid, :'ln2_v'::uuid]) as v \gset mv2_
 reset role;
 select public._check(21, 'lider onaylı öğeleri taşır; hedefte onaylı kalır', (:'mv2_v'::jsonb ->> 'done')::int = 2 and public._n(format($$select count(*) from public.space_items where space_id = %L and rev_state = 'approved'$$, public._g('B3'))) = 2);
-select public._check(22, 'taşımada ok da gider', public._n(format($$select count(*) from public.space_connections where space_id = %L$$, public._g('B3'))) = 1 and public._n(format($$select count(*) from public.space_connections where space_id = %L$$, public._g('A1'))) = 0);
+select public._check(22, 'yerleştirmede ok da gelir, dosyadaki ok yerinde kalır', public._n(format($$select count(*) from public.space_connections where space_id = %L$$, public._g('B3'))) = 1 and public._n(format($$select count(*) from public.space_connections where space_id = %L$$, public._g('A1'))) = 1);
 set role authenticated;
 select public._as_user(:carol);
 select public._check(23, 'başka projenin alanına aktarım reddedilir', public._try(format($$select public.team_transfer_items(%L, %L, array[%L]::uuid[], true)$$, public._g('B3'), public._g('AQ'), (select id from public.space_items where space_id = public._g('B3') limit 1))) like '%project_invalid%');
@@ -140,15 +140,15 @@ select public._check(25, 'görüntüleyici aktaramaz', public._try(format($$sele
 select public._as_user(:hank);
 select public._check(26, 'projeye girişsiz kişi aktaramaz', public._try(format($$select public.team_transfer_items(%L, %L, array[%L]::uuid[], true)$$, public._g('B3'), public._g('B1'), gen_random_uuid())) like '%project_not_found%');
 reset role;
--- Görsel: hedef klasöre ait yeni URL şart.
+-- Görsel: yerleşimde dosya kopyalanmaz, asıl öğe aynı görsele başvurur (eşleme gerekmez).
+select public._as_user(:carol);
 insert into public.space_items (space_id, kind, title, created_by, media_url) values (public._g('B3'), 'image', 'Foto', :carol::uuid, 'https://x.supabase.co/storage/v1/object/public/space-media/' || public._g('B3') || '/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg') returning id as v \gset img_
 set role authenticated;
 select public._as_user(:carol);
-select public._check(27, 'görsel eşlemesiz aktarılamaz', public._try(format($$select public.team_transfer_items(%L, %L, array[%L]::uuid[], true)$$, public._g('B3'), public._g('B1'), :'img_v')) like '%space_invalid%');
-select public._check(28, 'görsel yanlış klasöre eşlenirse reddedilir', public._try(format($$select public.team_transfer_items(%L, %L, array[%L]::uuid[], true, %L::jsonb)$$, public._g('B3'), public._g('B1'), :'img_v',
-  json_build_object('https://x.supabase.co/storage/v1/object/public/space-media/' || public._g('B3') || '/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg', 'https://x.supabase.co/storage/v1/object/public/space-media/' || public._g('B3') || '/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.jpg')::text)) like '%space_invalid%');
-select public._check(29, 'görsel hedef klasöre eşlenince aktarılır', public._try(format($$select public.team_transfer_items(%L, %L, array[%L]::uuid[], true, %L::jsonb)$$, public._g('B3'), public._g('B1'), :'img_v',
-  json_build_object('https://x.supabase.co/storage/v1/object/public/space-media/' || public._g('B3') || '/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg', 'https://x.supabase.co/storage/v1/object/public/space-media/' || public._g('B1') || '/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.jpg')::text)) = 'ok');
+select public.team_transfer_items(public._g('B3'), public._g('B1'), array[:'img_v'::uuid], true) as v \gset imt_
+select public._check(27, 'görsel eşlemesiz yerleştirilir (görsel kopyalanmaz)', (:'imt_v'::jsonb ->> 'done')::int = 1);
+select public._check(28, 'görselin asıl öğesi tek kalır', public._n(format($$select count(*) from public.space_items where kind = 'image' and file_item_id is null and media_url like '%%aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg'$$)) = 1);
+select public._check(29, 'yerleştirilen görsel aynı dosyaya başvurur', public._n(format($$select count(*) from public.space_items where kind = 'image' and file_item_id is not null and media_url like '%%aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg'$$)) = 2);
 reset role;
 
 -- ============================================================================================================================================
@@ -249,7 +249,7 @@ select public.team_project_get(public._g('P')) as v \gset gp_
 select public._check(303, 'team_project_get: groups + areas.group_id', jsonb_array_length(:'gp_v'::jsonb -> 'groups') = 1 and (:'gp_v'::jsonb -> 'groups' -> 0 ->> 'board_count')::int = 3
   and (select count(*) from jsonb_array_elements(:'gp_v'::jsonb -> 'areas') a where a ->> 'group_id' is not null) = 3);
 select public._check(304, 'grupsuz panoya grup kapsamında sıralama yapılamaz', public._try(format($$select public.team_reorder_boards(%L, %L, array[%L]::uuid[])$$, public._g('P'), public._g('F1'), :'gc_v')) like '%project_invalid%');
-select public._check(305, 'bağımsız pano ile grup panosu arasında aktarım reddedilir', public._try(format($$select public.team_transfer_items(%L, %L, array[gen_random_uuid()]::uuid[], true)$$, :'gc_v', public._g('B1'))) like '%project_invalid%');
+select public._check(305, 'aktarım artık aynı dosyanın her panosu arasında serbest (dosya asıl; pano grubu yalnız düzen aracıdır)', public._try(format($$select public.team_transfer_items(%L, %L, array[gen_random_uuid()]::uuid[], true)$$, :'gc_v', public._g('B1'))) = 'ok');
 select public.team_create_board_in_group(:'gt_v'::uuid, 'Tek ikinci') as v \gset g2_
 select public._check(306, 'bağımsız panodan "Yeni pano" = yeni grup kurar', public._n('select count(*) from public.team_board_groups') = 2);
 select public.team_rename_board_group((select team_board_group_id from public.spaces where id = :'gt_v'::uuid), 'İkili') ;

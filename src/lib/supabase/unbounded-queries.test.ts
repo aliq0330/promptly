@@ -50,7 +50,6 @@ const BOUNDED_BY_DESIGN: Record<string, string> = {
   "spaces.ts:fetchSpaceStats": "aggregate over ONE Space's items",
   "spaces.ts:fetchSpaceRatingDistribution": "five buckets",
   "spaces.ts:fetchSpaceGroups": "groups of ONE Space",
-  "spaces.ts:fetchSpacePalettes": "palettes of ONE Space",
   "spaces.ts:fetchSpaceMembers": "members of ONE Space",
   "spaces.ts:fetchPendingSpaceInvitations": "the viewer's own invitations",
   "spaces.ts:fetchSpaceSources": "the sources of ONE Space",
