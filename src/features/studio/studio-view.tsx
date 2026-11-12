@@ -1,5 +1,6 @@
 "use client";
 
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download } from "@/components/icons/download";
@@ -845,9 +846,16 @@ export function StudioView() {
                       </p>
                     )}
                     {slot.status === "loading" && (
-                      <div className={`${slotsAreImages ? "aspect-square" : "h-32"} skeleton-shimmer`} aria-busy="true">
-                        <span className="sr-only">{t("generate.running")}</span>
-                      </div>
+                      slotsAreImages ? (
+                        <div className="flex aspect-square items-center justify-center bg-surface-soft p-2" aria-busy="true" data-studio-waiting="">
+                          <LineArtScene kind="studio" className="w-full rounded-lg border border-border-soft" />
+                          <span className="sr-only">{t("generate.running")}</span>
+                        </div>
+                      ) : (
+                        <div className="h-32 skeleton-shimmer" aria-busy="true">
+                          <span className="sr-only">{t("generate.running")}</span>
+                        </div>
+                      )
                     )}
                     {slot.status === "error" && (
                       <div className="space-y-2 p-4">

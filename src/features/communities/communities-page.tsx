@@ -357,6 +357,7 @@ export function DiscoverView({
       ) : current.items.length === 0 ? (
         <EmptyState
           icon={Compass}
+          scene={searching || category ? "search" : "community"}
           title={searching || category ? t("groups.page.noResults") : t("communities.discover.empty")}
           description={searching || category ? t("groups.page.noResultsHelp") : t("communities.discover.emptyHelp")}
         />
@@ -449,6 +450,7 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
     return (
       <EmptyState
         icon={scope === "managed" ? ShieldCheck : Users}
+        scene="community"
         title={t(`communities.empty.${emptyKey}` as "communities.empty.mine")}
         description={t(`communities.empty.${emptyKey}Help` as "communities.empty.mineHelp")}
         action={scope === "member" ? { label: t("communities.tab.discover"), href: "/communities" } : undefined}

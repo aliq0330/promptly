@@ -214,7 +214,7 @@ function TeamsPageInner() {
         }
       >
         {list.items.length === 0 && !list.failed ? (
-          <EmptyState icon={Briefcase} title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: () => setCreateOpen(true) }} />
+          <EmptyState icon={Briefcase} scene="team" title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: () => setCreateOpen(true) }} />
         ) : (
           phone ? (
             <PhoneHomeSection title={t("tm.home.myTeams")}>

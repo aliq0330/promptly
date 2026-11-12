@@ -1,5 +1,6 @@
 "use client";
 
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
@@ -512,6 +513,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
             {!scope && textOnly && normalized.length >= 2 && <SearchQuotes query={normalized} onCount={setQuoteHits} />}
             {(tab === "posts" ? noPosts : nothingFound) && (
               <div className="space-y-3 py-6 text-center">
+                <LineArtScene kind="search" className="mx-auto w-full max-w-[16rem] rounded-xl border border-border-soft" />
                 <p className="text-sm text-text-muted">{hasTokens ? t("search.noMatchingFilters") : t("common.noResults")}</p>
                 {hasTokens && (
                   // docs/history/269-*: a dead end names its way out — one tap drops the chip that may have emptied the list.

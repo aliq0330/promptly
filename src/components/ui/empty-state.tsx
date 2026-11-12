@@ -1,11 +1,14 @@
 import Link from "next/link";
 import type { IconComponent } from "@/components/icons/icon";
+import { LineArtScene } from "@/components/line-art/line-art-scene";
+import type { LineArtKind } from "@/components/line-art/kinds";
 import { buttonClassName } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * The one empty-state layout for the whole app: a small icon tile (no large
- * illustrations), a title, one line of explanation, an optional action.
+ * The one empty-state layout for the whole app: a small icon tile, a title, one line of explanation, an optional action.
+ * `scene` (docs/history/374-*) swaps the icon tile for a small animated line-art scene of the same story — used on the empty
+ * states of the app's main places (lists, inbox, library), not on every in-panel "nothing here" line, which keep the tile.
  */
 export function EmptyState({
   icon: Icon,
@@ -14,6 +17,7 @@ export function EmptyState({
   action,
   className,
   compact,
+  scene,
 }: {
   icon: IconComponent;
   title: string;
@@ -21,16 +25,21 @@ export function EmptyState({
   action?: { label: string; href: string } | { label: string; onClick: () => void; variant?: "primary" | "outline" };
   className?: string;
   compact?: boolean;
+  scene?: LineArtKind;
 }) {
   return (
     <div
       className={cn(
-        "flex animate-fade-in flex-col items-center gap-3 rounded-lg border border-dashed border-border px-6 text-center",
-        compact ? "py-8" : "py-14",
+        "flex animate-fade-in flex-col items-center gap-3 rounded-lg px-6 text-center",
+        scene ? "border-0" : "border border-dashed border-border",
+        scene ? (compact ? "py-4" : "py-8") : compact ? "py-8" : "py-14",
         className,
       )}
     >
-      {/* İlk karşılaşmada ikon karosu yaylanarak gelir, üç pırıltı sırayla belirir (bir kez; docs/history/335-*). */}
+      {scene ? (
+        <LineArtScene kind={scene} className={cn("w-full rounded-xl border border-border-soft", compact ? "max-w-[16rem]" : "max-w-sm")} />
+      ) : (
+      /* İlk karşılaşmada ikon karosu yaylanarak gelir, üç pırıltı sırayla belirir (bir kez; docs/history/335-*). */
       <div className="relative">
         <div className="mi-empty-tile flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary">
           <Icon size={20} strokeWidth={1.75} />
@@ -39,6 +48,7 @@ export function EmptyState({
         <span aria-hidden className="mi-empty-spark bottom-[-3px] right-[-10px] h-1 w-1" style={{ ["--i" as string]: 1 }} />
         <span aria-hidden className="mi-empty-spark right-[-6px] top-[-9px] h-[5px] w-[5px]" style={{ ["--i" as string]: 2 }} />
       </div>
+      )}
       <div className="space-y-1">
         <p className="text-h3 font-semibold text-text">{title}</p>
         {description && <p className="mx-auto max-w-sm text-small text-text-muted">{description}</p>}

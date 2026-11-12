@@ -81,6 +81,7 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
       {collections.length === 0 && (
         <EmptyState
           icon={FolderPlus}
+          scene="collection"
           title={t("collection.emptyTitle")}
           description={t("collection.emptyDescription")}
           className="border-0"

@@ -1,5 +1,6 @@
 "use client";
 
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
@@ -33,7 +34,8 @@ export function PagedListState({
   if (list.loading) return <>{skeleton ?? <PagedListSkeleton />}</>;
   if (list.failed && list.items.length === 0) {
     return (
-      <div className="space-y-3 py-8 text-center" role="alert">
+      <div className="flex flex-col items-center space-y-3 py-6 text-center" role="alert">
+        <LineArtScene kind="offline" className="w-full max-w-[16rem] rounded-xl border border-border-soft" />
         <p className="text-small text-danger">{t("feed.loadFailed")}</p>
         <Button variant="outline" onClick={list.retry}>
           {t("common.retry")}

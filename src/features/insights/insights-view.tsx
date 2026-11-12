@@ -1,5 +1,6 @@
 "use client";
 
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { useMemo, useState } from "react";
 import { BarChart3 } from "@/components/icons/bar-chart-3";
 import { Bookmark } from "@/components/icons/bookmark";
@@ -88,6 +89,7 @@ export function InsightsView() {
       {state.status === "ready" && hasNoActivity(state.data.summary, state.data.days, state.data.top) && (
         <EmptyState
           icon={BarChart3}
+          scene="insights"
           title={t("insights.empty.title")}
           description={t("insights.empty.description")}
           action={{ label: t("insights.empty.action"), href: "/create" }}
@@ -107,6 +109,16 @@ function ReadyBody({ data, period }: { data: CreatorInsights; period: InsightPer
   const api = totalApiUses(summary);
   return (
     <div className="flex flex-col gap-5">
+      {summary.copies >= 100 && (
+        // docs/history/374-*: a round number of copies gets a small celebration; the number on the board is the real one.
+        <div className="grid items-center gap-4 rounded-xl border border-border-soft bg-surface p-3 sm:grid-cols-[minmax(0,17rem)_1fr] sm:p-4" data-insights-milestone="">
+          <LineArtScene kind="milestone" value={String(summary.copies)} className="w-full rounded-lg border border-border-soft" />
+          <div className="space-y-1">
+            <p className="text-h3 font-semibold text-text">{t("insights.milestone.title", { count: summary.copies.toLocaleString() })}</p>
+            <p className="text-small text-text-muted">{t("insights.milestone.body", { days: period })}</p>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <InsightStatTile className="col-span-2 lg:col-span-1" icon={Copy} label={t("insights.tile.copies")} current={summary.copies} previous={summary.prevCopies} days={period} />
         <InsightStatTile icon={Plug} label={t("insights.tile.api")} current={api.current} previous={api.previous} days={period} detail={t("insights.tile.apiDetail", { api: summary.apiUses, mcp: summary.mcpUses })} />

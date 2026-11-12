@@ -19,6 +19,7 @@ export function WorkflowsListView() {
       icon={WorkflowIcon}
       title={t("workflow.pageTitle")}
       description={t("workflow.pageDescription")}
+      emptyScene="workflow"
       createHref="/workflows/create"
       createLabel={t("workflow.create")}
       steps={[

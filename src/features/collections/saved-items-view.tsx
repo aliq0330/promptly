@@ -93,6 +93,7 @@ export function SavedItemsView() {
         <CollectionEntryList
           items={items}
           searchPlaceholderKey="saved.searchPlaceholder"
+          emptyScene="saved"
           emptyTitleKey="saved.emptyTitle"
           emptyDescriptionKey="saved.emptyDescription"
           dropWhenUnsaved

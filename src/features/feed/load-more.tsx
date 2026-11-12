@@ -1,5 +1,6 @@
 "use client";
 
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { useEffect, useRef } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -62,6 +63,7 @@ export function LoadMoreButton({
   return (
     <div ref={anchor} className={cn(wrapperClassName)}>
       <Button type="button" variant={variant} size={size} onClick={onLoadMore} disabled={loading || disabled} className={className} data-testid="load-more">
+        {loading && <LineArtScene kind="loader" className="w-16 bg-transparent" />}
         {loading ? t("common.loadingMore") : error ? t("common.retry") : (label ?? t("common.loadMore"))}
       </Button>
     </div>

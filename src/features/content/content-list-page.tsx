@@ -1,5 +1,6 @@
 "use client";
 
+import type { LineArtKind } from "@/components/line-art/kinds";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import type { IconComponent } from "@/components/icons/icon";
@@ -58,6 +59,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   renderItems,
   emptyTitle,
   emptyBody,
+  emptyScene,
   hasMore = false,
   loadingMore = false,
   onLoadMore,
@@ -84,6 +86,8 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   renderItems: (items: T[]) => ReactNode;
   emptyTitle: string;
   emptyBody: string;
+  /** The line-art scene of the empty list (docs/history/374-*); "no match for the filters" always shows the search scene. */
+  emptyScene?: LineArtKind;
   /** Whether a further real page of `baseItems` exists beyond what's already loaded (CLAUDE.md's keyset-paginated "Daha fazla yükle" — only meaningful in browse mode, never while actively searching/filtering). */
   hasMore?: boolean;
   loadingMore?: boolean;
@@ -239,6 +243,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
         <>
           <EmptyState
             icon={icon}
+            scene={active || hasMore ? "search" : emptyScene}
             title={active || hasMore ? t("search.noMatchingFilters") : emptyTitle}
             description={active ? t("list.tryDifferentSearch") : hasMore ? t("search.noMatchingFiltersOnPage") : emptyBody}
             action={active || hasMore ? undefined : { label: createLabel, href: createHref }}

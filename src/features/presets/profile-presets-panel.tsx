@@ -68,6 +68,7 @@ export function ProfilePresetsPanel({ ownerId, isOwn }: { ownerId: string; isOwn
           {created.length === 0 ? (
             <EmptyState
               icon={SlidersHorizontal}
+              scene="preset"
               title={t("preset.noneYetTitle")}
               description={isOwn ? t("preset.noneYetBody") : t("preset.noneYetOtherBody")}
               action={isOwn ? { label: t("preset.create"), href: "/presets/create" } : undefined}

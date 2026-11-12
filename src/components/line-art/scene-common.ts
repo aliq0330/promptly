@@ -4,7 +4,7 @@ import { smooth, minJerk, clamp } from '@/lib/line-art/motion';
 import { tint } from './figure';
 
 /** Visible text a scene needs, already translated by the caller. */
-export interface SceneLabels { label: string; hint?: string }
+export interface SceneLabels { label: string; hint?: string; /** a real number shown in the drawing (the milestone's scoreboard, the 404 plate) */ value?: string }
 
 export interface Stage { svg: SVGSVGElement; scene: SVGGElement; glow: SVGGElement; glowFill: string }
 

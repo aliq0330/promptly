@@ -158,6 +158,7 @@ export function CollectionDetailView() {
           <CollectionEntryList
             items={items}
             searchPlaceholderKey="collection.searchPlaceholder"
+            emptyScene="collection"
             emptyTitleKey="collection.emptyItemsTitle"
             emptyDescriptionKey="collection.emptyItemsDescription"
             removalFor={isOwner ? (entry) => ({ onRemove: () => handleRemoveItem(entry.data.id, entry.type) }) : undefined}

@@ -144,7 +144,7 @@ await scenario("1. Beş RPC 30 günle çağrılır; kartlar tr biçimiyle (1.284
 await scenario("2. Grafik: zirve günü balonla ve erişilebilir adla söylenir; iki çizgi çizilir", async ({ page }) => {
   await page.goto(`${BASE}/insights/`);
   await ready(page);
-  const svg = page.locator("svg[role='img']").first();
+  const svg = page.locator("svg[role='img']:not(.ink-scene)").first();
   const label = (await svg.getAttribute("aria-label")) ?? "";
   assert.match(label, /Son 30 günün günlük kopyalama ve tepki sayısı\. En yüksek gün .+: 78 kopyalama\./);
   assert.equal(await svg.locator("polyline").count(), 2);
@@ -186,14 +186,14 @@ await scenario("5. Dönem menüsü: 7 güne geçince beş RPC p_days=7 ile yenil
   await trigger.click();
   await page.getByRole("menuitemradio", { name: "Son 7 gün" }).or(page.getByRole("menuitem", { name: "Son 7 gün" })).or(page.getByText("Son 7 gün", { exact: true })).first().click();
   await page.locator("button[aria-haspopup]", { hasText: "Son 7 gün" }).waitFor();
-  await page.waitForFunction(() => document.querySelector("svg[role='img']")?.getAttribute("aria-label")?.includes("Son 7 günün"));
+  await page.waitForFunction(() => document.querySelector("svg[role='img']:not(.ink-scene)")?.getAttribute("aria-label")?.includes("Son 7 günün"));
   assert.deepEqual(state.calls.summary.map((c) => c.p_days), [30, 7]);
   assert.deepEqual(state.calls.api.map((c) => c.p_days), [30, 7], "API / MCP RPC'si de dönemle yenilenir");
   assert.match(await tile(page, "Kopyalama").innerText(), /önceki 7 güne göre/);
   await page.locator("button[aria-haspopup]", { hasText: "Son 7 gün" }).click();
   await page.getByText("Son 30 gün", { exact: true }).first().click();
   await page.locator("button[aria-haspopup]", { hasText: "Son 30 gün" }).waitFor();
-  await page.waitForFunction(() => document.querySelector("svg[role='img']")?.getAttribute("aria-label")?.includes("Son 30 günün"));
+  await page.waitForFunction(() => document.querySelector("svg[role='img']:not(.ink-scene)")?.getAttribute("aria-label")?.includes("Son 30 günün"));
   assert.deepEqual(state.calls.summary.map((c) => c.p_days), [30, 7], "30 gün önbellekten döndü");
 });
 
@@ -204,7 +204,7 @@ await scenario("6. Hiç etkileşim yok: tek boş durum (Prompt oluştur → /cre
   const link = page.getByRole("link", { name: "Prompt oluştur" });
   assert.match((await link.getAttribute("href")) ?? "", /\/create\/?$/);
   assert.equal(await page.getByRole("heading", { name: "Günlük trend" }).count(), 0);
-  assert.equal(await page.locator("svg[role='img']").count(), 0);
+  assert.equal(await page.locator("svg[role='img']:not(.ink-scene)").count(), 0);
 });
 
 await scenario("7. Hata: RPC 500 → uyarı + 'Tekrar dene'; tekrar deneyince veri gelir (0 yazan sahte sayı yok)", async ({ page, state }) => {
@@ -233,8 +233,8 @@ await scenario("8. İngilizce: başlık, kartlar, yüzde biçimi (▲ 24%), balo
   await page.getByText(/API \/ MCP is a prompt being read or filled/).waitFor();
   await page.getByRole("heading", { name: "Reaction mix" }).waitFor();
   await page.getByText("How are these numbers counted?").waitFor();
-  assert.match((await page.locator("svg[role='img']").first().getAttribute("aria-label")) ?? "", /Daily copies and reactions over the last 30 days/);
-  await page.locator("svg[role='img']").first().getByText("78 copies").waitFor();
+  assert.match((await page.locator("svg[role='img']:not(.ink-scene)").first().getAttribute("aria-label")) ?? "", /Daily copies and reactions over the last 30 days/);
+  await page.locator("svg[role='img']:not(.ink-scene)").first().getByText("78 copies").waitFor();
 }, { lang: "en" });
 
 await scenario("9. Telefon: yatay taşma yok; kopyalama kartı tam genişlik; liste satırında tepki meta satırında; grafik yazıları okunur boyda", async ({ page }) => {
@@ -245,9 +245,9 @@ await scenario("9. Telefon: yatay taşma yok; kopyalama kartı tam genişlik; li
   const b = await tile(page, "Tepki").boundingBox();
   assert.ok(a.width > b.width * 1.8, `Kopyalama kartı tam genişlik (${a.width} vs ${b.width})`);
   assert.match(await page.locator("ol > li").first().innerText(), /189 tepki/);
-  const fontPx = await page.locator("svg[role='img'] text").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  const fontPx = await page.locator("svg[role='img']:not(.ink-scene) text").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
   assert.ok(fontPx >= 11, `eksen yazısı ≥ 11px (${fontPx})`);
-  const svgW = (await page.locator("svg[role='img']").first().boundingBox()).width;
+  const svgW = (await page.locator("svg[role='img']:not(.ink-scene)").first().boundingBox()).width;
   assert.ok(svgW <= 390, `grafik ekrana sığar (${svgW})`);
   await shot(page, "insights-mobile");
 }, { viewport: { width: 390, height: 844 } });
@@ -288,7 +288,7 @@ await scenario("13. Prompt ayrıntısı: üç RPC prompt kimliği + 30 günle; b
   assert.match(await tile(page, "Sonuç").innerText(), /28[\s\S]*— Değişmedi/);
   assert.match(await tile(page, "Kaydedilme").innerText(), /77[\s\S]*● Yeni/);
   assert.match(await tile(page, "Yorum").innerText(), /31[\s\S]*▼ %23/);
-  assert.equal(await page.locator("svg[role='img']").count(), 1);
+  assert.equal(await page.locator("svg[role='img']:not(.ink-scene)").count(), 1);
   await page.getByRole("heading", { name: "Tepki dağılımı" }).waitFor();
   assert.match((await page.getByRole("link", { name: "Promptu aç" }).getAttribute("href")) ?? "", /\/prompts\/local\/?\?id=b1000000-0000-4000-8000-000000000001$/);
   assert.match((await page.getByRole("link", { name: "Yaratıcı paneli" }).first().getAttribute("href")) ?? "", /\/insights\/?$/);
@@ -304,7 +304,7 @@ await scenario("14. Genel panelden satıra basınca ayrıntı sayfası açılır
   await ready(page);
   await page.locator("button[aria-haspopup]", { hasText: "Son 30 gün" }).click();
   await page.getByText("Son 7 gün", { exact: true }).first().click();
-  await page.waitForFunction(() => document.querySelector("svg[role='img']")?.getAttribute("aria-label")?.includes("Son 7 günün"));
+  await page.waitForFunction(() => document.querySelector("svg[role='img']:not(.ink-scene)")?.getAttribute("aria-label")?.includes("Son 7 günün"));
   assert.deepEqual(state.calls.prompt.map((c) => c.p_days), [30, 7]);
   assert.match(await tile(page, "Kopyalama").innerText(), /önceki 7 güne göre/);
 });
@@ -330,7 +330,7 @@ await scenario("17. Dönemde hiç etkileşim yoksa: kartlar sıfır, grafik yeri
   state.promptEmpty = true;
   await page.goto(DETAIL);
   await page.getByText("Bu dönemde bu prompta hiç etkileşim olmadı.").waitFor();
-  assert.equal(await page.locator("svg[role='img']").count(), 0);
+  assert.equal(await page.locator("svg[role='img']:not(.ink-scene)").count(), 0);
   assert.equal(await tile(page, "Kopyalama").count(), 1);
 });
 

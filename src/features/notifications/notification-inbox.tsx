@@ -1,5 +1,6 @@
 "use client";
 
+import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { ExitMotion } from "@/components/ui/exit-motion";
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { Suspense, useMemo, useRef, useState } from "react";
@@ -116,7 +117,12 @@ function Inbox() {
           <button type="button" onClick={() => void list.reload()} className="mt-2 h-11 rounded-full px-4 text-small font-semibold text-primary hover:bg-primary-soft">{t("nc.retry")}</button>
         </div>
       )}
-      {list.status === "ready" && list.cards.length === 0 && <p className="py-12 text-center text-small text-text-muted" data-notification-empty="">{view === "all" ? t("notifications.noneYet") : t("notifications.noneInCategory")}</p>}
+      {list.status === "ready" && list.cards.length === 0 && (
+        <div className="flex flex-col items-center gap-3 py-10 text-center" data-notification-empty="">
+          {view === "all" && <LineArtScene kind="inbox" className="w-full max-w-xs rounded-xl border border-border-soft" />}
+          <p className="text-small text-text-muted">{view === "all" ? t("notifications.noneYet") : t("notifications.noneInCategory")}</p>
+        </div>
+      )}
     </>
   );
 

@@ -1,5 +1,6 @@
 "use client";
 
+import type { LineArtKind } from "@/components/line-art/kinds";
 import { Fragment, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { Inbox } from "@/components/icons/inbox";
@@ -29,6 +30,7 @@ import { chunk } from "@/lib/supabase/paged";
 export function FeedGrid({
   items,
   emptyIcon = Inbox,
+  emptyScene,
   emptyTitle,
   emptyDescription,
   emptyAction,
@@ -50,6 +52,8 @@ export function FeedGrid({
   /** "home" = Ana Sayfa's column next to its right rail (two columns at most); "grid" = the full-width lists (up to three). */
   layout?: "grid" | "home";
   emptyIcon?: IconComponent;
+  /** The line-art scene of the empty list (docs/history/374-*). */
+  emptyScene?: LineArtKind;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: React.ComponentProps<typeof EmptyState>["action"];
@@ -61,6 +65,7 @@ export function FeedGrid({
     return (
       <EmptyState
         icon={emptyIcon}
+        scene={emptyScene}
         title={emptyTitle ?? t("feed.emptyDefault")}
         description={emptyDescription}
         action={emptyAction}

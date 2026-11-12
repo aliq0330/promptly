@@ -62,6 +62,8 @@ export const insightsTranslations = {
     en: "A copy counts once per signed-in user per prompt per day; guests and your own copies are not counted. Reactions, comments, saves and follows are dated by when they first happened, and ones that were undone drop out of the past too. Days are UTC. Results are the results others shared under your prompts. API / MCP is a prompt being read or filled through the public API or the online MCP (searches and lists don't count); with no accounts involved it is kept apart from copies: the same connection (IP) counts a prompt once a day, your own use can't be told apart, and the npx promptly-mcp you run on your computer isn't counted. Only your published public prompts are counted; community-only prompts are not included.",
   },
 
+  "insights.milestone.title": { tr: "{{count}} kopyalama", en: "{{count}} copies" },
+  "insights.milestone.body": { tr: "Son {{days}} günde promptların bu kadar kez kopyalandı. Teşekkürler!", en: "Your prompts were copied this many times in the last {{days}} days. Thank you!" },
   "insights.empty.title": { tr: "Henüz gösterilecek veri yok", en: "Nothing to show yet" },
   "insights.empty.description": {
     tr: "Herkese açık bir prompt paylaştığında kopyalama, tepki ve yorumlar burada görünür.",
