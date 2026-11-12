@@ -35,7 +35,7 @@ export function CommunityReadingColumn({ children, className }: { children: Reac
  * kartlar); yanında xl'de yardımcı sütun durduğu için en çok iki sütun.
  */
 export const FEED_GRID_COLUMNS = "sm:columns-2";
-/** Ana sayfa akışları (Gönderiler · Keşfet): yan sütun yok, geniş masaüstünde (xl) üç sütun — kart ızgarasıyla aynı sütun sayısı (docs/history/378-*). */
+/** Ana sayfa akışları (Gönderiler · Keşfet): yan sütun yok, geniş masaüstünde (xl) üç sütun — kart ızgarasıyla aynı sütun sayısı (docs/history/379-*). */
 export const HOME_FEED_GRID_COLUMNS = "sm:columns-2 xl:columns-3";
 /**
  * Gönderinin üstündeki bağlam satırı (topluluk adı, "Sabit"): telefonda satırın içinde kartın iç boşluğuna hizalı, `sm`+ kutunun hemen

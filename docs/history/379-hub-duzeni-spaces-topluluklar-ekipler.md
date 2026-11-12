@@ -1,4 +1,4 @@
-# 378 — Hub düzeni: Spaces, Topluluklar ve Ekipler tek iskelette
+# 379 — Hub düzeni: Spaces, Topluluklar ve Ekipler tek iskelette
 
 **Karar (kullanıcı):** Spaces, Topluluklar ve Ekipler'in ana sayfaları ile iç sayfaları aynı düzeni ve aynı kart ölçüsünü kullanır; masaüstü, tablet ve telefon için ayrı tasarım. Mockup onaylandı, hiçbir özellik çıkarılmadı. Yalnız istemci; migration YOK.
 

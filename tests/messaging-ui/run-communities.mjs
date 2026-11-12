@@ -705,7 +705,7 @@ for (const [label, viewport, theme] of [["mobil 390x800", { width: 390, height: 
     assert.ok(await overflowFree(page), "communities home overflows horizontally");
     await open(page, C1);
     assert.ok(await overflowFree(page), "detail overflows horizontally");
-    // Hub düzeni (docs/history/378-*): telefonda da aynı sekme çubuğu (kaydırmalı).
+    // Hub düzeni (docs/history/379-*): telefonda da aynı sekme çubuğu (kaydırmalı).
     await pickTab(page, "Akış");
     await page.getByText("Normal içerik").first().waitFor();
     assert.ok(await overflowFree(page), "feed overflows horizontally");
@@ -1153,7 +1153,7 @@ await scenario("34. Sade kontrol satırı (docs/history/232-*): Topluluklar ana 
   assert.equal(await page.getByRole("searchbox").count(), 0);
   assert.equal(await page.locator("[data-view-toggle]").count(), 0, "Kart/Izgara düğmesi kaldırıldı");
   await open(page, C1);
-  // Hub düzeni (docs/history/378-*): sekme çubuğu + hemen altında sekmenin eylem yuvası ("Gönderi oluştur" simgesi).
+  // Hub düzeni (docs/history/379-*): sekme çubuğu + hemen altında sekmenin eylem yuvası ("Gönderi oluştur" simgesi).
   await page.getByRole("tablist").first().waitFor();
   const slot = page.locator("[data-community-actions-slot]");
   assert.equal(await slot.locator("[data-view-toggle]").count(), 0, "yuvada görünüm düğmesi yok");

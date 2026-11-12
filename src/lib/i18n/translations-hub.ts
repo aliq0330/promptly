@@ -1,4 +1,4 @@
-/** Hub düzeni (docs/history/378-*): Spaces, Topluluklar ve Ekipler'in ortak ana sayfa/iç sayfa metinleri. */
+/** Hub düzeni (docs/history/379-*): Spaces, Topluluklar ve Ekipler'in ortak ana sayfa/iç sayfa metinleri. */
 export const hubTranslations = {
   "hub.spaces.intro": { tr: "Görsel, prompt, not ve palet topladığın yaratıcı projeler", en: "Creative projects where you collect images, prompts, notes and palettes" },
   "hub.spaces.createShort": { tr: "Yeni", en: "New" },

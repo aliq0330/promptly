@@ -18,7 +18,7 @@ export function isInvitesSection(value: unknown): value is InvitesSection {
 }
 
 /**
- * Görünüm = sekme (docs/history/378-*): Hub düzeninde ilk sekme "Topluluklarım"dır (üye olduğum topluluklar kart ızgarasında); Gönderiler akışı ikinci sekmedir.
+ * Görünüm = sekme (docs/history/379-*): Hub düzeninde ilk sekme "Topluluklarım"dır (üye olduğum topluluklar kart ızgarasında); Gönderiler akışı ikinci sekmedir.
  */
 export type HomeView = HomeTab;
 

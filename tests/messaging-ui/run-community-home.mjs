@@ -71,7 +71,7 @@ const world = (db) => {
 };
 
 // 1
-await scenario("1. Varsayılan sekme Topluluklarım (docs/history/378-*); sekmeler: Topluluklarım, Gönderiler, Keşfet, Davet ve başvurular (yönetilen topluluk yoksa Yönettiklerim YOK)", async ({ page }) => {
+await scenario("1. Varsayılan sekme Topluluklarım (docs/history/379-*); sekmeler: Topluluklarım, Gönderiler, Keşfet, Davet ve başvurular (yönetilen topluluk yoksa Yönettiklerim YOK)", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
   await page.locator("[data-community-card]").first().waitFor();
   assert.deepEqual(await tabNames(page), ["Topluluklarım", "Gönderiler", "Keşfet", "Davet ve başvurular"]);
@@ -549,7 +549,7 @@ await scenario("27b. Masaüstünde (≥640px) ortalanmış pencere sürükleninc
   assert.equal(await dialog.count(), 1, "centered dialog is not swipe-dismissed");
 }, { viewport: { width: 1000, height: 800 }, hasTouch: true, setup: world });
 
-// 28 — Telefon (Hub düzeni, docs/history/378-*): masaüstüyle aynı iskelet — bant (kapak, ad, Sohbeti aç + üyelik) + kaydırmalı sekmeler; Yönetim → liste → alt sayfa
+// 28 — Telefon (Hub düzeni, docs/history/379-*): masaüstüyle aynı iskelet — bant (kapak, ad, Sohbeti aç + üyelik) + kaydırmalı sekmeler; Yönetim → liste → alt sayfa
 await scenario("28. Telefon: bant + kaydırmalı sekmeler; 'Akış' gönderileri; Yönetim → liste → alt sayfa; taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/communities/local?id=${id(1)}`);
   const head = page.getByTestId("community-header");

@@ -675,7 +675,7 @@ await scenario("39. Telefon (Yön C): Yönetim = liste → alt sayfa; alt sayfa 
   db.rpc.team_audit_stats = () => ({ body: { total: 0, role_access: 0, deletes: 0 } });
 } });
 
-await scenario("40. Telefon: Ekipler listesi (Hub düzeni, docs/history/378-*) — bant (başlık + kısa '+ Oluştur') + süzgeç + ara; kartlar tek sütun", async ({ page }) => {
+await scenario("40. Telefon: Ekipler listesi (Hub düzeni, docs/history/379-*) — bant (başlık + kısa '+ Oluştur') + süzgeç + ara; kartlar tek sütun", async ({ page }) => {
   await page.goto(`${BASE}/teams`);
   const band = page.locator("[data-hub-band]");
   await band.waitFor();

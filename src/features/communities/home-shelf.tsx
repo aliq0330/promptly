@@ -7,7 +7,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { GroupInvitation } from "@/lib/supabase/chat-groups";
 
 /**
- * Bekleyen davet tek satırlık dikkat şeridi olarak (Hub düzeni, docs/history/378-*): topluluk, davet eden ve "Gör" → davetler bölümü,
+ * Bekleyen davet tek satırlık dikkat şeridi olarak (Hub düzeni, docs/history/379-*): topluluk, davet eden ve "Gör" → davetler bölümü,
  * kabul mevcut akışla (kural onayı dahil) orada yapılır. Birden çok davette en yenisi, sayıyla.
  * ("Topluluklarım" rafı ve sağ yardımcı sütun artık yok: üye olunan topluluklar ilk sekmenin kart ızgarasındadır, sayılar sekme sayaçlarındadır.)
  */

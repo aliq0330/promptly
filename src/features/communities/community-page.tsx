@@ -166,7 +166,7 @@ function CommunityPageInner() {
   );
 
   const body = (
-    // Hub düzeni (docs/history/378-*): bant (kapak · etiketler · başlık · üyeler · eylemler) → altı çizgili sekmeler → içerik + sağ "Hakkında" sütunu.
+    // Hub düzeni (docs/history/379-*): bant (kapak · etiketler · başlık · üyeler · eylemler) → altı çizgili sekmeler → içerik + sağ "Hakkında" sütunu.
     <div className={HUB_PAGE_CLASS}>
       <HubDetailBand
         data-testid="community-header"

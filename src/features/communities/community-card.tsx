@@ -19,7 +19,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityReason, CommunitySummary } from "@/lib/supabase/communities";
 
 /**
- * Topluluk kartı (Hub düzeni, docs/history/378-*): üç alanda aynı `HubCard` — 16:9 kapak (topluluğun görseli, renkleri bulanık arka plan),
+ * Topluluk kartı (Hub düzeni, docs/history/379-*): üç alanda aynı `HubCard` — 16:9 kapak (topluluğun görseli, renkleri bulanık arka plan),
  * sol üstte kategori, kapağın altında "N yeni" rozeti; gövdede ad, üye sayısı · aktif · gönderi · etkinlik · okunmamış özeti, alt satırda
  * görünürlük/rol/kapalı rozetleri ve TEK üyelik düğmesi (Katıl · İstek gönder · İstek gönderildi ▼ · Katıldın ▼ → ayrıl). Kart tamamı tıklanabilir bir
  * bağlantıdır; düğme ayrı bir hedeftir. Kapalı topluluğun kartında içerik istatistiği yoktur (üye olmayana sunucu vermez) ve "içerik yalnızca

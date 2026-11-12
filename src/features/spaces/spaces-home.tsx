@@ -223,7 +223,7 @@ export function SpacesHome() {
   const iconButton = CONTROL_ICON_BUTTON;
   return (
     <div className={cn(HUB_PAGE_CLASS, "space-y-4")}>
-      {/* Hub düzeni (docs/history/378-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
+      {/* Hub düzeni (docs/history/379-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
       <HubBand
         icon={SpacesIcon}
         title={t("spaces.home.title")}

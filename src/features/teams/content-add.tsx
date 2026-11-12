@@ -13,7 +13,7 @@ import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { useSpaceContext } from "@/features/spaces/space-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { fetchSpaceItems, fetchSpacePalettes } from "@/lib/supabase/spaces";
+import { fetchSpaceItems, fetchSpacePalettes, updateSpaceItem } from "@/lib/supabase/spaces";
 import { attachContent } from "@/lib/supabase/team-board";
 import { teamCreateHref, type TeamCreateKind } from "@/lib/team-create";
 import { ContentPickerDialog } from "./content-picker";
@@ -90,6 +90,8 @@ export interface ContentAddTarget {
   fileId: string;
   /** Panodan eklenirse o pano (yansıma da kurulur); dosyadan eklenirse null. */
   boardId: string | null;
+  /** Klasörün (grup) içinden eklenirse o grup (docs/history/378-*): oluşturma dönüşünde ve "Seç"te içerik bu gruba girer. */
+  groupId?: string | null;
 }
 
 /**
@@ -148,7 +150,8 @@ export function useContentAdd(target: ContentAddTarget | null): { run: (row: Con
         alreadyIds={already}
         onClose={() => setPicking(null)}
         onPick={async (picked) => {
-          await attachContent({ fileId: target.fileId, type: picking, id: picked.id, boardId: target.boardId });
+          const attached = await attachContent({ fileId: target.fileId, type: picking, id: picked.id, boardId: target.boardId });
+          if (target.groupId) await updateSpaceItem(attached.itemId, { groupId: target.groupId }).catch(() => undefined);
           await refresh();
         }}
       />

@@ -259,7 +259,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
 
   return (
     <div className={cn(HUB_PAGE_CLASS, "animate-rise-in")} data-space-page={space.id} data-space-role={role ?? "none"}>
-      {/* Hub düzeni (docs/history/378-*): bant kapak kolajından renk alır; eylemler (panoyu aç · kayıt durumu · paylaş) ve ⋮ bandın içindedir. */}
+      {/* Hub düzeni (docs/history/379-*): bant kapak kolajından renk alır; eylemler (panoyu aç · kayıt durumu · paylaş) ve ⋮ bandın içindedir. */}
       {compactPhone ? (
         <PhoneSubBar
           parent={t(SPACE_KIND_LABEL[space.kind])}

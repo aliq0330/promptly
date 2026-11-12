@@ -212,7 +212,7 @@ export function SpaceCard({
     );
   }
 
-  // Hub kartı (docs/history/378-*): üç alanda aynı `HubCard` — 16:9 kapak (yüklenen › seçilen › kolaj), sol üstte tür etiketi, sağ üstte Sabitle ve ⋮,
+  // Hub kartı (docs/history/379-*): üç alanda aynı `HubCard` — 16:9 kapak (yüklenen › seçilen › kolaj), sol üstte tür etiketi, sağ üstte Sabitle ve ⋮,
   // kapağın altında ilk paletin çizgisi; gövdede ad, sahip · son düzenleme, sayılar ve görünürlük rozeti.
   return (
     <HubCard

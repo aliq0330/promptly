@@ -107,7 +107,7 @@ function TeamsPageInner() {
   const needle = query.trim().toLocaleLowerCase();
   const visibleTeams = list.items.filter((team) => (filter === "all" || team.myRole === "owner" || team.myRole === "admin") && (!needle || team.name.toLocaleLowerCase().includes(needle)));
 
-  // Hub düzeni (docs/history/378-*): sekmeler Ekiplerim · Senden bekleyenler · Davetler (son ikisi yalnız bekleyen varken); dikkat şeridi sekmeye götürür.
+  // Hub düzeni (docs/history/379-*): sekmeler Ekiplerim · Senden bekleyenler · Davetler (son ikisi yalnız bekleyen varken); dikkat şeridi sekmeye götürür.
   // Bekleyen iş sayısı: her kalemin kendi sayısı (ör. "2 öğe onayını bekliyor") toplanır.
   const todoTotal = todos.reduce((sum, todo) => sum + Math.max(1, todo.n), 0);
   const [tab, setTab] = useState<"teams" | "todos">("teams");
@@ -332,7 +332,7 @@ function recentLine(t: ReturnType<typeof useTranslation>["t"], language: string,
   return t("tm.card.recent.joined", { name: who, time: when });
 }
 
-/** Ekip kartı (Hub düzeni, docs/history/378-*): üç alanda aynı `HubCard` — ekip renginde kapak + büyük im, gövdede ad · üye/proje sayısı, üye yüzleri, bekleyen onay/okunmamış sohbet/rol rozetleri. */
+/** Ekip kartı (Hub düzeni, docs/history/379-*): üç alanda aynı `HubCard` — ekip renginde kapak + büyük im, gövdede ad · üye/proje sayısı, üye yüzleri, bekleyen onay/okunmamış sohbet/rol rozetleri. */
 function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number }) {
   const { t, language } = useTranslation();
   const preview = team.membersPreview ?? [];

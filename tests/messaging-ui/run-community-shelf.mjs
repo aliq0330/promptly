@@ -1,4 +1,4 @@
-// Topluluklar ana sayfası Hub düzeni (docs/history/378-*; "Topluluklarım" rafı 212-*): bant + sekmeler; Topluluklarım kartları ("N yeni" rozeti, yeni olan önce);
+// Topluluklar ana sayfası Hub düzeni (docs/history/379-*; "Topluluklarım" rafı 212-*): bant + sekmeler; Topluluklarım kartları ("N yeni" rozeti, yeni olan önce);
 // davet tek satırlık dikkat şeridi; arama "Tüm topluluklar"a sorguyla gider. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ (sayaç kuralı: community-unseen.sql).
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
@@ -56,7 +56,7 @@ const hasTab = async (page, name) => (await page.getByRole("tab", { name: optMat
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
-await scenario("1. telefon (Hub düzeni, docs/history/378-*): bant (başlık + kısa '+ Oluştur') → sekmeler → kontrol satırı → kart ızgarası; taşma yok", async ({ page }) => {
+await scenario("1. telefon (Hub düzeni, docs/history/379-*): bant (başlık + kısa '+ Oluştur') → sekmeler → kontrol satırı → kart ızgarası; taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
   const h1 = await page.getByRole("heading", { level: 1, name: "Topluluklar" }).boundingBox();
   assert.ok(h1 && h1.height > 20, "başlık görünür");

@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 /**
- * Hub düzeni (docs/history/378-*): Spaces, Topluluklar ve Ekipler'in ana sayfaları ile iç sayfaları TEK iskeleti paylaşır.
+ * Hub düzeni (docs/history/379-*): Spaces, Topluluklar ve Ekipler'in ana sayfaları ile iç sayfaları TEK iskeleti paylaşır.
  *
  * Ana sayfa: `HubBand` (simge karosu · başlık · açıklama · tek birincil düğme) → altı çizgili `Tabs` → `HubControlRow` (sayı + arama/filtre/
  * görünüm simgeleri) → `HubAttentionStrip` (davet/bekleyen iş, tek satır) → `HubGrid` içinde `HubCard`'lar.
