@@ -17,7 +17,7 @@ import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Button } from "@/components/ui/button";
-import { DraftEditorModal, GroupsManagerModal, NoteEditorModal, useItemTitle } from "@/features/spaces/space-items";
+import { GroupsManagerModal, NoteEditorModal, useItemTitle } from "@/features/spaces/space-items";
 import { useSpaceImageUpload } from "@/features/spaces/tabs/images-tab";
 import { NewPaletteDialog } from "@/features/spaces/tabs/palette-tab";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +25,7 @@ import { StorageImg } from "@/components/ui/storage-media";
 import { useAuth } from "@/features/auth/auth-provider";
 import { SpaceBoard } from "@/features/spaces/board/space-board";
 import type { TeamBoardConfig } from "@/features/teams/board/board-types";
+import { CONTENT_ADD_ROWS, useContentAdd, type ContentAddRow } from "@/features/teams/content-add";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "@/features/spaces/space-provider";
 import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
 import { rewriteAreaTerms } from "@/lib/team-area-terms";
@@ -68,6 +69,8 @@ export interface AreaAddActions {
   /** Dosya/proje değişken adları (çip satırı) ve onlara dokununca açılacak bilgi penceresi. */
   variableNames?: string[];
   onVariables?: () => void;
+  /** Dosya sayfasında içerik ekleme hedefi (docs/history/376-*): Prompt/İstek/Workflow/Ayar paketi Oluştur · Seç. Eski proje geneli alanda yok. */
+  content?: { projectId: string; fileId: string; boardId?: string | null };
 }
 
 /** Liste kipinde (Gezgin) "ana pano"nun altında klasör gibi görünen ek pano. */
@@ -137,7 +140,7 @@ export function TeamAreaView({
           fetchMyRole(spaceId, userId),
           fetchSpaceItems(spaceId),
           fetchSpaceGroups(spaceId),
-          fetchSpacePalettes(spaceId),
+          fetchSpacePalettes(spaceId, true),
           fetchSpaceConnections(spaceId),
         ]);
         if (alive) setState({ status: "ready", data: { space, role: spaceRole, items, groups, palettes, connections } });
@@ -203,7 +206,8 @@ function AreaBody({
   const router = useRouter();
   const { space, caps } = useSpaceContext();
   const [addOpen, setAddOpen] = useState(false);
-  const [adding, setAdding] = useState<null | "prompt" | "note" | "palette">(null);
+  const [adding, setAdding] = useState<null | "note" | "palette">(null);
+  const contentAdd = useContentAdd(add?.content ? { projectId: add.content.projectId, fileId: add.content.fileId, boardId: add.content.boardId ?? null } : null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { upload, uploadErrors, handleFiles } = useSpaceImageUpload();
   // Çekmece (mockup B4): liste yerinde kalır, öğe üstüne yandan/alttan açılır. `drawer` verilmemişse eski tam sayfa görünümü.
@@ -236,6 +240,7 @@ function AreaBody({
         <AddMenuDialog
           reviewOn={Boolean(add?.reviewOn)}
           onClose={() => setAddOpen(false)}
+          onContent={add?.content ? (row) => { setAddOpen(false); contentAdd.run(row); } : undefined}
           onPick={(kind) => {
             setAddOpen(false);
             if (kind === "image") fileRef.current?.click();
@@ -247,7 +252,7 @@ function AreaBody({
         />
       )}
       {item && item.drawer && <AreaItemDetail ctx={item} role={role} onChanged={onChanged} />}
-      {adding === "prompt" && <DraftEditorModal draft={null} onClose={() => setAdding(null)} />}
+      {contentAdd.dialog}
       {adding === "note" && <NoteEditorModal note={null} onClose={() => setAdding(null)} />}
       {adding === "palette" && <NewPaletteDialog onClose={() => setAdding(null)} />}
     </div>
@@ -537,12 +542,12 @@ function AreaCard({ row, reviewOn, groupName }: { row: AreaRow; reviewOn: boolea
  * "Ekle" menüsü (mockup 4): ne eklemek istiyorsun? Görsel/prompt/not/palet ilgili sekmeye götürür (orada kendi ekleme düğmesi vardır);
  * dosyanın öğeleri not, prompt, görsel ve paletten oluşur; workflow/ayar paketi panodaki "Promptly'den ekle" aracıyla panoya gelir; pano ve değişken kendi pencereleriyle açılır.
  */
-function AddMenuDialog({ reviewOn, onClose, onPick, onNewBoard, onNewVariable }: { reviewOn: boolean; onClose: () => void; onPick: (kind: "image" | "prompt" | "note" | "palette" | "board") => void; onNewBoard?: () => void; onNewVariable?: () => void }) {
+function AddMenuDialog({ reviewOn, onClose, onPick, onNewBoard, onNewVariable, onContent }: { reviewOn: boolean; onClose: () => void; onPick: (kind: "image" | "note" | "palette" | "board") => void; onNewBoard?: () => void; onNewVariable?: () => void; onContent?: (row: ContentAddRow) => void }) {
   const { t } = useTranslation();
   const options: { key: string; icon: IconComponent; label: TranslationKey; hint: TranslationKey; run: () => void }[] = [
     ...(onNewBoard ? [{ key: "board", icon: Presentation, label: "tp.add.board" as TranslationKey, hint: "tp.add.boardHint" as TranslationKey, run: onNewBoard }] : []),
     { key: "image", icon: ImageIcon, label: "tp.add.image", hint: "tp.add.imageHint", run: () => onPick("image") },
-    { key: "prompt", icon: SquareTerminal, label: "tp.add.prompt", hint: "tp.add.promptHint", run: () => onPick("prompt") },
+    ...(onContent ? CONTENT_ADD_ROWS.map((row) => ({ key: row.key, icon: row.icon, label: row.label, hint: row.hint, run: () => onContent(row) })) : []),
     ...(onNewVariable ? [{ key: "variable", icon: Braces, label: "tp.add.variable" as TranslationKey, hint: "tp.add.variableHint" as TranslationKey, run: onNewVariable }] : []),
     { key: "palette", icon: Palette, label: "tp.add.palette", hint: "tp.add.paletteHint", run: () => onPick("palette") },
     { key: "note", icon: StickyNote, label: "tp.add.note", hint: "tp.add.noteHint", run: () => onPick("note") },

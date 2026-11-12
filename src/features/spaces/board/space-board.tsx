@@ -91,7 +91,9 @@ import { smartSnap, type Guide } from "@/lib/space-guides";
 import { legacyFramesOf, loadPlanInput, runImport, type PlanIO } from "@/lib/supabase/workflow-board";
 import { createSpaceGroup, uploadSpaceImage, type LayoutEntry, type NewSpaceItem, type SpaceConnection, type SpaceConnectionPatch, type SpaceItem } from "@/lib/supabase/spaces";
 import { boardPageHref, dragBox, frameMemberIds, initialsOf, isDrawingKind, lineShape, normalizePoints, pinWorldPosition, presentationFrames, type StrokeWidth } from "@/lib/team-board";
-import { transferItems } from "@/lib/supabase/team-board";
+import { deleteFileItem, transferItems } from "@/lib/supabase/team-board";
+import { CONTENT_ADD_ROWS, useContentAdd } from "@/features/teams/content-add";
+import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { BoardToolbar, type BoardTool, type PillShape } from "@/features/teams/board/board-toolbar";
 import { TeamBoardBar } from "@/features/teams/board/board-bar";
 import { PagesButton, PagesDrawer, PagesOverview, PagesPopover, usePageActions, usePagesUi } from "@/features/teams/board/board-pages";
@@ -467,6 +469,11 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
     [items, selection, commitLayout],
   );
 
+  // Ekip panosunda içerik ekleme dosyadakiyle AYNI satırlardır (docs/history/376-*): Prompt/İstek/Workflow/Ayar paketi Oluştur · Seç.
+  const contentAdd = useContentAdd(team?.fileId ? { projectId: team.projectId, fileId: team.fileId, boardId: team.currentId } : null);
+  const [confirmFileDelete, setConfirmFileDelete] = useState(false);
+  const [fileDeleteBusy, setFileDeleteBusy] = useState(false);
+
   const deleteSelection = useCallback(async () => {
     if (!editable || selection.length === 0) return;
     setError(null);
@@ -491,6 +498,26 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       setError(err instanceof Error ? err.message : t("spaces.error.generic"));
     }
   }, [editable, selection, lockedSet, connections, removeItems, t]);
+
+  // Dosyadan sil (docs/history/376-*): seçili içerik öğelerinin ASIL öğesi (ve bütün panolardaki yansımaları) silinir; çizim nesneleri dosyada yoktur, atlanır.
+  const fileBacked = useMemo(() => selection.map((id) => items.find((item) => item.id === id)).filter((item): item is SpaceItem => Boolean(item && item.fileItemId)), [selection, items]);
+  const deleteFromFile = useCallback(async () => {
+    if (fileBacked.length === 0) return;
+    setFileDeleteBusy(true);
+    setError(null);
+    try {
+      for (const item of fileBacked) await deleteFileItem(item.id);
+      const gone = new Set(fileBacked.map((item) => item.id));
+      setItems((current) => current.filter((item) => !gone.has(item.id)));
+      setSelection((current) => current.filter((id) => !gone.has(id)));
+      setUndoNotice(t("tf.board.fileDeleted", { count: fileBacked.length }));
+      setConfirmFileDelete(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+    } finally {
+      setFileDeleteBusy(false);
+    }
+  }, [fileBacked, setItems, t]);
 
   // Seçili nesneleri kilitle / kilidi aç (hepsi kilitliyse aç, değilse hepsini kilitle). Sunucu yazar; hata sessiz yutulmaz.
   const toggleLock = useCallback(async () => {
@@ -1452,6 +1479,25 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
 
   const selectedItems = items.filter((item) => selectedSet.has(item.id));
   const single = selectedItems.length === 1 ? selectedItems[0] : null;
+  // Ekip panosunda workflow dosyaya TEK referans kartı olarak girer; "Adımlara aç" onu mevcut planlayıcıyla ayrı nesnelere (adım kartı, prompt, görsel, oklar)
+  // çevirir (docs/history/376-*). Kart yerinde kalır; aynı workflow bu panoda zaten açıldıysa planlayıcı yinelemez.
+  const expandWorkflow = async (card: SpaceItem) => {
+    if (card.kind !== "content" || card.contentType !== "workflow" || !card.contentId) return;
+    setError(null);
+    try {
+      const input = await loadPlanInput(card.contentId, { fresh: true });
+      if (!input) throw new Error(t("wfSpace.import.loadFailed"));
+      const title = resolveSource(card, sources, readable).title;
+      const result = await runImport({ io: boardIO, spaceId: space.id, workflowId: card.contentId, workflowTitle: title, input, options: { io: true, prompts: true, images: true, relations: true }, existingItems: items, near: { x: card.x, y: card.y + card.h + 40 } });
+      setHistory((h) => pushHistory(h, { type: "import", items: result.items, connections: result.connections }));
+      setSelection(result.items.map((item) => item.id));
+      const { w, h } = viewSize();
+      setVp(fitViewport(result.items, w, h));
+      if (result.degraded) setUndoNotice(t("wfSpace.objects.degraded"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+    }
+  };
   const selectionGrouped = selectedItems.some((item) => item.groupId);
   const boardPalettes = palettes.filter((palette) => !items.some((item) => item.kind === "palette" && item.paletteId === palette.id));
   const addMenuItems = [
@@ -1496,16 +1542,25 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   const canMoveSelection = canReview(myRole) || selectedItems.every((entry) => isDrawingKind(entry.kind) || (entry.createdBy === userId && (entry.revState === "draft" || entry.revState === "changes")));
   const itemKindName = (item: SpaceItem) => t(ITEM_KIND_LABEL[item.kind]);
 
-  const promptlyRows: AddRow[] = [
-    { key: "draft", icon: <SquareTerminal size={19} aria-hidden />, label: t("tb.add.prompt"), hint: t("tb.add.promptHint"), run: () => setDialog({ kind: "draft", near: viewCenter() }) },
-    { key: "image", icon: <ImagePlus size={19} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
-    { key: "note", icon: <StickyNote size={19} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
-    { key: "palette", icon: <PaletteIcon size={19} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
-    ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={19} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
-    { key: "workflow", icon: <WorkflowIcon size={19} aria-hidden />, label: t("tb.add.workflow"), hint: t("tb.add.workflowHint"), run: () => setDialog({ kind: "importWorkflow" }) },
-    { key: "preset", icon: <SlidersHorizontal size={19} aria-hidden />, label: t("tb.add.preset"), hint: t("tb.add.presetHint"), run: () => setDialog({ kind: "content", type: "preset" }) },
-    { key: "request", icon: <Sparkles size={19} aria-hidden />, label: t("tb.add.request"), hint: t("tb.add.requestHint"), run: () => setDialog({ kind: "content", type: "request" }) },
-  ];
+  const teamContentRows: AddRow[] = CONTENT_ADD_ROWS.map((row) => ({ key: row.key, icon: <row.icon size={19} aria-hidden />, label: t(row.label), hint: t(row.hint), run: () => contentAdd.run(row) }));
+  const promptlyRows: AddRow[] = teamMode
+    ? [
+        ...teamContentRows,
+        { key: "image", icon: <ImagePlus size={19} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
+        { key: "note", icon: <StickyNote size={19} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
+        { key: "palette", icon: <PaletteIcon size={19} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
+        ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={19} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
+      ]
+    : [
+      { key: "draft", icon: <SquareTerminal size={19} aria-hidden />, label: t("tb.add.prompt"), hint: t("tb.add.promptHint"), run: () => setDialog({ kind: "draft", near: viewCenter() }) },
+      { key: "image", icon: <ImagePlus size={19} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
+      { key: "note", icon: <StickyNote size={19} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
+      { key: "palette", icon: <PaletteIcon size={19} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
+      ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={19} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
+      { key: "workflow", icon: <WorkflowIcon size={19} aria-hidden />, label: t("tb.add.workflow"), hint: t("tb.add.workflowHint"), run: () => setDialog({ kind: "importWorkflow" }) },
+      { key: "preset", icon: <SlidersHorizontal size={19} aria-hidden />, label: t("tb.add.preset"), hint: t("tb.add.presetHint"), run: () => setDialog({ kind: "content", type: "preset" }) },
+      { key: "request", icon: <Sparkles size={19} aria-hidden />, label: t("tb.add.request"), hint: t("tb.add.requestHint"), run: () => setDialog({ kind: "content", type: "request" }) },
+    ];
   const drawingRows: AddRow[] = [
     { key: "text", icon: <Type size={19} aria-hidden />, label: t("tb.kind.text"), hint: t("tb.add.textHint"), tag: t("tb.add.new"), run: () => setToolMode("text"), hidden: !canDraw },
     { key: "frame", icon: <Frame size={19} aria-hidden />, label: t("tb.kind.frame"), hint: t("tb.add.frameHint"), tag: t("tb.add.new"), run: () => setToolMode("frame"), hidden: !canDraw },
@@ -1924,6 +1979,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
           <div role="toolbar" aria-label={t("spaces.board.selectionToolbar")} data-board-selection={selectedItems.length} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full border border-border-soft bg-surface px-1.5 py-1 shadow-pop">
             <span className="shrink-0 px-2 text-caption font-semibold text-text-secondary">{t("spaces.board.selected", { count: selectedItems.length })}</span>
             {single && single.kind !== "palette" && single.kind !== "shape" && <ToolButton icon={ArrowUpRight} label={t("spaces.board.open")} onClick={() => openItem(single.id)} />}
+            {teamMode && editable && single && single.kind === "content" && single.contentType === "workflow" && <ToolButton icon={WorkflowIcon} label={t("tf.board.expandWorkflow")} onClick={() => void expandWorkflow(single)} />}
             {editable && single && single.kind !== "note" && single.kind !== "palette" && !isDrawingKind(single.kind) && <ToolButton icon={StickyNote} label={t("spaces.board.attachNote")} onClick={() => setDialog({ kind: "note", attachTo: single.id })} />}
             {editable && (
               <>
@@ -1970,7 +2026,8 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
                     {t(size === "desktop" ? "tb.move.button" : "tb.move.buttonShort")}
                   </button>
                 )}
-                <ToolButton icon={Trash2} label={t("spaces.board.remove")} onClick={() => void deleteSelection()} danger />
+                <ToolButton icon={Trash2} label={t(teamMode ? "tf.board.removeFromBoard" : "spaces.board.remove")} onClick={() => void deleteSelection()} danger />
+                {teamMode && fileBacked.length > 0 && !team?.archived && <ToolButton icon={Trash2} label={t("tf.board.deleteFromFile")} onClick={() => setConfirmFileDelete(true)} danger />}
               </>
             )}
             <ToolButton icon={X} label={t("spaces.board.clearSelection")} onClick={() => setSelection([])} />
@@ -2012,6 +2069,21 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
             setVp(fitViewport(result.items, w, h));
             if (result.degraded) setUndoNotice(t("wfSpace.objects.degraded"));
           }}
+        />
+      )}
+      {contentAdd.dialog}
+      {confirmFileDelete && (
+        <ConfirmDialog
+          id="board-file-delete-title"
+          title={t("tf.board.deleteFromFileTitle", { count: fileBacked.length })}
+          body={t("tf.board.deleteFromFileBody")}
+          confirmLabel={t("tf.board.deleteFromFile")}
+          danger
+          busy={fileDeleteBusy}
+          error={null}
+          overLayers
+          onCancel={() => setConfirmFileDelete(false)}
+          onConfirm={() => void deleteFromFile()}
         />
       )}
       {dialog?.kind === "shortcuts" && <ShortcutsDialog onClose={() => setDialog(null)} />}

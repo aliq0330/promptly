@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
+import { useTeamCreateContext, useTeamReturn, useTeamLeaveHref } from "@/features/teams/team-return";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
@@ -45,7 +46,12 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   const { t, language } = useTranslation();
   const router = useRouter();
   const returnToCommunity = useCommunityReturn();
-  const { communityId, name: communityName } = useCommunityContext();
+  const team = useTeamCreateContext();
+  const returnToTeam = useTeamReturn(team);
+  const teamLeaveHref = useTeamLeaveHref(team);
+  const { communityId: communityIdFromUrl, name: communityName } = useCommunityContext();
+  // Ekip dosyasından oluşturuluyorsa içerik ekibe özgüdür (topluluk bağlamı yok sayılır, docs/history/376-*).
+  const communityId = team ? null : communityIdFromUrl;
   const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
   const { catalog } = useTagCatalog();
@@ -147,12 +153,13 @@ export function PresetEditor({ editId }: { editId: string | null }) {
           status: asDraft ? "draft" : "published",
           visibility,
           communityId,
+          teamFileId: team?.fileId,
         },
         user.id,
       );
       if (asDraft && leaving) return true;
       if (!asDraft && !editId) announcePublished();
-      router.push(asDraft ? "/presets" : ((await returnToCommunity("preset", id)) ?? presetHref({ id })));
+      router.push(asDraft ? (teamLeaveHref ?? "/presets") : ((await returnToTeam("preset", id)) ?? (await returnToCommunity("preset", id)) ?? presetHref({ id })));
       return true;
     } catch (err) {
       console.error("savePreset", err);
@@ -351,8 +358,9 @@ export function PresetEditor({ editId }: { editId: string | null }) {
               problem.onFix?.();
             }}
             busy={isSaving}
-            confirmLabel={isSaving ? t("common.saving") : editId ? t("common.save") : t("common.share")}
+            confirmLabel={isSaving ? t("common.saving") : editId ? t("common.save") : team ? t("tf.create.confirm") : t("common.share")}
             hideDestination={Boolean(editId)}
+            team={team}
             visibility={visibility}
             onVisibilityChange={setVisibility}
             problems={problems}

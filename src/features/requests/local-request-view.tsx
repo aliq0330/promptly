@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { RequestDetailView } from "./request-detail-view";
 import { useRealRequests } from "./real-requests-provider";
+import { useTeamContentRedirect } from "@/features/teams/team-return";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptRequest } from "@/types";
 
@@ -50,8 +51,10 @@ export function LocalRequestView() {
   }, [id, Boolean(cachedRequest)]);
 
   const request = cachedRequest ?? fetchedRequest ?? undefined;
+  // Ekibe özgü içeriğin kendi sayfası yok: ekip dosyasındaki öğeye yönlenir (docs/history/376-*).
+  const teamRedirecting = useTeamContentRedirect("request", request?.teamFileId ? request.id : null);
 
-  if (!request && !checkedRemote) {
+  if ((!request && !checkedRemote) || teamRedirecting) {
     return <DetailSkeleton />;
   }
 

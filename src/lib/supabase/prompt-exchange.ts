@@ -46,6 +46,7 @@ export async function fetchOwnPromptsForExport(userId: string): Promise<Exchange
       .select(PROMPT_SELECT)
       .eq("author_id", userId)
       .is("community_id", null)
+      .is("team_file_id", null)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
@@ -134,6 +135,7 @@ export async function fetchOwnRequestsForExport(userId: string): Promise<Exchang
       .select(REQUEST_SELECT)
       .eq("author_id", userId)
       .is("community_id", null)
+      .is("team_file_id", null)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
@@ -150,6 +152,7 @@ export async function fetchOwnPresetsForExport(userId: string): Promise<Exchange
       .select(PRESET_SELECT)
       .eq("creator_id", userId)
       .is("community_id", null)
+      .is("team_file_id", null)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(from, to),
@@ -197,6 +200,7 @@ export async function fetchOwnWorkflowsForExport(userId: string): Promise<Exchan
       .select(WORKFLOW_SELECT)
       .eq("creator_id", userId)
       .is("community_id", null)
+      .is("team_file_id", null)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(from, to),
@@ -230,6 +234,7 @@ export async function fetchOwnWorkflowsForExport(userId: string): Promise<Exchan
       .eq("status", "published")
       .eq("visibility", "public")
       .is("community_id", null)
+      .is("team_file_id", null)
       .is("deleted_at", null);
     if (error) throw new Error(error.message);
     for (const row of (data ?? []) as { id: string; title: string }[]) publicPrompts.set(row.id, row.title);

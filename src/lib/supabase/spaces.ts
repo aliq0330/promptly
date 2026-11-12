@@ -61,6 +61,13 @@ const SPACE_ERROR_KEYS: Record<SpaceErrorCode, TranslationKey> = {
   space_item_locked: "spaces.error.itemLocked",
   space_team_managed: "spaces.error.teamManaged",
   team_space_limit: "spaces.error.teamSpaceLimit",
+  review_content_locked: "tm.error.review_content_locked",
+  review_delete_forbidden: "tm.error.review_delete_forbidden",
+  project_archived: "tm.error.project_archived",
+  project_invalid: "tm.error.project_invalid",
+  project_not_found: "tm.error.project_not_found",
+  team_forbidden: "tm.error.team_forbidden",
+  team_content_not_shareable: "error.teamContentNotShareable",
 };
 
 export class SpaceError extends Error {
@@ -201,6 +208,8 @@ export interface SpaceItem {
   revDecidedAt?: string | null;
   /** Birlikte karar verilen paket (aynı workflow'un nesneleri). */
   revUnit?: string | null;
+  /** Ekip panosundaki YANSIMA: dosyadaki asıl öğenin kimliği (docs/history/376-*). Asıl öğede / çizim nesnesinde / kişisel Space'te null. */
+  fileItemId?: string | null;
   createdBy: string | null;
   updatedBy: string | null;
   createdAt: string;
@@ -414,6 +423,7 @@ export interface SpaceItemRow {
   rev_submitted_at?: string | null;
   rev_decided_at?: string | null;
   rev_unit?: string | null;
+  file_item_id?: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -422,7 +432,7 @@ export interface SpaceItemRow {
 
 // `flow_show_*` (docs/history/261-*) yoksa istek sütunsuz yeniden denenir (server-errors.ts OPTIONAL_COLUMNS) — Space'ler migration'dan önce de açılır.
 const ITEM_COLS =
-  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, data, approved_at, approved_by, review_requested_at, review_requested_by, rev_state, rev_note, rev_submitted_at, rev_decided_at, rev_unit, created_by, updated_by, created_at, updated_at";
+  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, locked, data, approved_at, approved_by, review_requested_at, review_requested_by, rev_state, rev_note, rev_submitted_at, rev_decided_at, rev_unit, file_item_id, created_by, updated_by, created_at, updated_at";
 
 export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
   return {
@@ -464,6 +474,7 @@ export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
     revSubmittedAt: row.rev_submitted_at ?? null,
     revDecidedAt: row.rev_decided_at ?? null,
     revUnit: row.rev_unit ?? null,
+    fileItemId: row.file_item_id ?? null,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     createdAt: row.created_at,
@@ -732,10 +743,19 @@ export async function fetchSpaceGroups(spaceId: string): Promise<SpaceGroup[]> {
   return (data ?? []).map((row) => mapGroup(row as GroupRow));
 }
 
-export async function fetchSpacePalettes(spaceId: string): Promise<SpacePalette[]> {
-  const { data, error } = await supabase.from("space_palettes").select(PALETTE_COLS).eq("space_id", spaceId).order("position").order("created_at");
+export async function fetchSpacePalettes(spaceId: string, teamArea = false): Promise<SpacePalette[]> {
+  // Ekip panosunda paletler dosyanın ANA ALANINDA yaşar (docs/history/376-*): panodaki palet öğeleri ona başvurur, bu yüzden pano açılırken
+  // ana alanın paletleri de gelir (`teamArea`: çağıran bunun bir ekip alanı olduğunu bilir; kişisel Space için ek sorgu yoktur).
+  const ids = [spaceId];
+  const { data: area } = teamArea ? await supabase.from("spaces").select("team_file_id, team_area_main").eq("id", spaceId).maybeSingle() : { data: null };
+  const row = area as { team_file_id: string | null; team_area_main: boolean | null } | null;
+  if (row?.team_file_id && !row.team_area_main) {
+    const { data: main } = await supabase.from("spaces").select("id").eq("team_file_id", row.team_file_id).eq("team_area_main", true).maybeSingle();
+    if (main) ids.push((main as { id: string }).id);
+  }
+  const { data, error } = await supabase.from("space_palettes").select(PALETTE_COLS).in("space_id", ids).order("position").order("created_at");
   if (error) throw toSpaceError(error);
-  return (data ?? []).map((row) => mapPalette(row as PaletteRow));
+  return (data ?? []).map((item) => mapPalette(item as PaletteRow));
 }
 
 export type SpacePatch = Partial<Pick<Space, "title" | "description" | "kind" | "visibility" | "coverUrl" | "coverItemId" | "archivedAt" | "activityVisibility">>;

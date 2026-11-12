@@ -125,6 +125,8 @@ export interface Prompt {
   deletedAt: string | null;
   /** Topluluğa özgü içerik: doluysa içerik yalnız o topluluğun okuyucularına görünür; profilde/aramada/koleksiyonda yer almaz (`docs/history/179-*`). */
   communityId?: string | null;
+  /** Ekibe özgü içerik: doluysa içerik yalnız o ekip dosyasının projesini görebilenlere görünür; ekip dosyasında yaşar, akışta/aramada/profilde/koleksiyonda yer almaz (`docs/history/376-*`). */
+  teamFileId?: string | null;
 }
 
 /**
@@ -293,6 +295,8 @@ export interface PromptRequest {
   visibility?: ContentVisibility;
   /** Topluluğa özgü içerik: doluysa içerik yalnız o topluluğun okuyucularına görünür; profilde/aramada/koleksiyonda yer almaz (`docs/history/179-*`). */
   communityId?: string | null;
+  /** Ekibe özgü içerik: doluysa içerik yalnız o ekip dosyasının projesini görebilenlere görünür; ekip dosyasında yaşar, akışta/aramada/profilde/koleksiyonda yer almaz (`docs/history/376-*`). */
+  teamFileId?: string | null;
 }
 
 export type NotificationType =
@@ -972,6 +976,8 @@ export interface Workflow {
   updatedAt: string;
   /** Topluluğa özgü içerik: doluysa içerik yalnız o topluluğun okuyucularına görünür; profilde/aramada/koleksiyonda yer almaz (`docs/history/179-*`). */
   communityId?: string | null;
+  /** Ekibe özgü içerik: doluysa içerik yalnız o ekip dosyasının projesini görebilenlere görünür; ekip dosyasında yaşar, akışta/aramada/profilde/koleksiyonda yer almaz (`docs/history/376-*`). */
+  teamFileId?: string | null;
 }
 
 /**
@@ -1015,6 +1021,8 @@ export interface Preset {
   updatedAt: string;
   /** Topluluğa özgü içerik: doluysa içerik yalnız o topluluğun okuyucularına görünür; profilde/aramada/koleksiyonda yer almaz (`docs/history/179-*`). */
   communityId?: string | null;
+  /** Ekibe özgü içerik: doluysa içerik yalnız o ekip dosyasının projesini görebilenlere görünür; ekip dosyasında yaşar, akışta/aramada/profilde/koleksiyonda yer almaz (`docs/history/376-*`). */
+  teamFileId?: string | null;
 }
 
 /* ---------------------------------------------------------------------- */

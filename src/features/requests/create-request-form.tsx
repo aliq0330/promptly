@@ -1,6 +1,7 @@
 "use client";
 import { announcePublished } from "@/lib/publish-celebration";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
+import { useTeamCreateContext, useTeamReturn } from "@/features/teams/team-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useRef, useState } from "react";
@@ -48,7 +49,11 @@ export function CreateRequestForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnToCommunity = useCommunityReturn();
-  const { communityId, name: communityName } = useCommunityContext();
+  const team = useTeamCreateContext();
+  const returnToTeam = useTeamReturn(team);
+  const { communityId: communityIdFromUrl, name: communityName } = useCommunityContext();
+  // Ekip dosyasından oluşturuluyorsa içerik ekibe özgüdür (topluluk bağlamı yok sayılır, docs/history/376-*).
+  const communityId = team ? null : communityIdFromUrl;
   const { addRequest, updateRequest, getCached, fetchById } = useRealRequests();
   const [draftNotice, setDraftNotice] = useState(false);
   const { user } = useAuth();
@@ -204,6 +209,7 @@ export function CreateRequestForm() {
           ...tagsInput,
           images: toDeferredMediaInputs(images),
           visibility,
+          teamFileId: team?.fileId,
           isDraft: true,
         },
         ownProfile,
@@ -260,11 +266,12 @@ export function CreateRequestForm() {
           images: toDeferredMediaInputs(images),
           visibility,
           communityId,
+          teamFileId: team?.fileId,
         },
         ownProfile,
       );
       announcePublished();
-      router.push((await returnToCommunity("request", request.id)) ?? requestHref(request));
+      router.push((await returnToTeam("request", request.id)) ?? (await returnToCommunity("request", request.id)) ?? requestHref(request));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("request.publishFailed"));
       setIsSubmitting(false);
@@ -508,8 +515,9 @@ export function CreateRequestForm() {
               problem.onFix?.();
             }}
             busy={isSubmitting}
-            confirmLabel={publishLabel}
+            confirmLabel={team && !isEditMode ? t("tf.create.confirm") : publishLabel}
             hideDestination={isEditMode}
+            team={team}
             visibility={visibility}
             onVisibilityChange={setVisibility}
             problems={problems}

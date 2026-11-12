@@ -115,7 +115,7 @@ export function setupSpaces(db) {
       is_private: over.is_private ?? false,
       approved_at: over.approved_at ?? null, approved_by: over.approved_by ?? null, review_requested_at: over.review_requested_at ?? null, review_requested_by: over.review_requested_by ?? null,
       // docs/history/362-*: ekip projesi onay durumu (kişisel Space'te hep 'approved').
-      rev_state: over.rev_state ?? "approved", rev_note: over.rev_note ?? null, rev_submitted_at: over.rev_submitted_at ?? null, rev_decided_at: over.rev_decided_at ?? null, rev_unit: over.rev_unit ?? null,
+      rev_state: over.rev_state ?? "approved", rev_note: over.rev_note ?? null, rev_submitted_at: over.rev_submitted_at ?? null, rev_decided_at: over.rev_decided_at ?? null, file_item_id: over.file_item_id ?? null, rev_unit: over.rev_unit ?? null,
       created_by: over.created_by ?? ME, updated_by: ME,
       created_at: over.created_at ?? now(), updated_at: over.updated_at ?? now(),
     };

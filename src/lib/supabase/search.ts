@@ -49,7 +49,8 @@ export async function searchContentIds(
 
   const authorIds = [...(filters.authorIds ?? []), ...(filters.authorId ? [filters.authorId] : [])];
   const orNull = <T,>(list: T[] | undefined) => (list && list.length > 0 ? list : null);
-  const { data, error } = await supabase.rpc("search_content", {
+  const exclude = orNull(filters.excludeAuthorIds);
+  const args: Record<string, unknown> = {
     p_kind: kind,
     p_query: text || null,
     p_sort: filters.sort ?? "relevant",
@@ -64,7 +65,10 @@ export async function searchContentIds(
     p_after_rank: cursor ? cursor.rank : null,
     p_after_created_at: cursor ? cursor.createdAt : null,
     p_after_id: cursor ? cursor.id : null,
-  });
+  };
+  // Yeni imza (yazar hariç) yalnız gerektiğinde çağrılır: argüman KÜMESİ işlev biçimini seçer, eski çağrılar kırılmaz (docs/history/376-*).
+  if (exclude) args.p_exclude_author_ids = exclude;
+  const { data, error } = await supabase.rpc("search_content", args);
   if (error) throw new Error(error.message);
 
   const rows = (data ?? []) as SearchRow[];

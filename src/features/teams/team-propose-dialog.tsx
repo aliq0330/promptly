@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormError, SubmitButton } from "@/features/spaces/space-forms";
 import { SpaceDialog } from "@/features/spaces/space-modals";
+import { useSpaceContext } from "@/features/spaces/space-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { SpaceItem } from "@/lib/supabase/spaces";
 import { proposeChange } from "@/lib/supabase/team-projects";
@@ -12,8 +13,11 @@ import type { TeamActionError } from "@/lib/supabase/teams";
 /** Onaylı öğe için değişiklik önerisi: öneri ayrı tabloda durur (öğe değişmez); lider onaylarsa uygulanır. */
 export function ProposeChangeDialog({ item, onClose, onDone }: { item: SpaceItem; onClose: () => void; onDone: () => void }) {
   const { t } = useTranslation();
-  const [title, setTitle] = useState(item.title);
-  const [body, setBody] = useState(item.body);
+  // Ekibe özgü prompt öğesi başvurudur (başlık/metin öğede değil prompt satırındadır): öneri formu oradan dolar (docs/history/376-*).
+  const { sources } = useSpaceContext();
+  const teamPrompt = item.kind === "prompt" && !item.isDraft && item.promptId ? (sources.prompts.get(item.promptId) ?? null) : null;
+  const [title, setTitle] = useState(item.title || teamPrompt?.title || "");
+  const [body, setBody] = useState(item.body || teamPrompt?.promptText || "");
   const [note, setNote] = useState(item.note);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

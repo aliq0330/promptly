@@ -329,9 +329,36 @@ await scenario("5. Ekle menüsü: Promptly içeriği + Çiz ve düzenle satırla
   await page.getByRole("button", { name: "Ekle" }).first().click();
   const pop = page.locator("[data-board-popover], [data-board-sheet]").last();
   await pop.waitFor();
-  for (const label of ["Prompt", "Görsel", "Not", "Palet", "Workflow", "Ayar paketi", "İstek", "Metin", "Çerçeve", "Kalem", "Şekil"]) await pop.getByText(label, { exact: true }).first().waitFor();
+  // docs/history/376-*: dosyadakiyle AYNI satırlar — her içerik türü için Oluştur · Seç; prompt panoda yazılmaz.
+  for (const label of ["Prompt oluştur", "Prompt seç", "İstek oluştur", "İstek seç", "Workflow oluştur", "Workflow seç", "Ayar paketi oluştur", "Ayar paketi seç", "Görsel", "Not", "Palet", "Metin", "Çerçeve", "Kalem", "Şekil"]) await pop.getByText(label, { exact: true }).first().waitFor();
   await pop.getByText("Not", { exact: true }).first().click();
   await page.getByRole("dialog").last().waitFor();
+});
+
+await scenario("5b. Panodan Prompt seç: iki sekmeli seçici; Ekle → team_attach_content(dosya + BU pano) — panoya eklenen içerik dosyaya da girer", async ({ page, db }) => {
+  await page.goto(boardUrl(BOARD));
+  await page.getByRole("button", { name: "Ekle" }).first().click();
+  const pop = page.locator("[data-board-popover], [data-board-sheet]").last();
+  await pop.getByText("Prompt seç", { exact: true }).first().click();
+  const picker = page.locator("[data-team-content-picker=prompt]");
+  await picker.waitFor();
+  await picker.getByRole("tab", { name: "Paylaştıklarım" }).waitFor();
+  await picker.getByRole("tab", { name: "Başkalarının paylaştıkları" }).waitFor();
+  await picker.locator("[data-picker-add]").first().click();
+  await picker.locator("[data-picker-added]").first().waitFor();
+  const [attach] = called(db, "team_attach_content");
+  assert.deepEqual({ f: attach.body.p_file, t: attach.body.p_type, b: attach.body.p_board }, { f: FILE, t: "prompt", b: BOARD });
+}, {
+  setup: (db) => {
+    const row = { id: "a1c00000-0000-4000-8000-000000000001", title: "Benim promptum", description: "d", prompt_text: "metin", tool: null, tools: [], content_type: "text", category: null, subcategory: null, status: "published", origin_type: "original", request_id: null, like_count: 0, save_count: 0, comment_count: 0, copy_count: 0, created_at: "2026-10-20T12:00:00Z", show_on_profile: true, requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: "public", deleted_at: null, community_id: null, team_file_id: null, profiles: { id: ME, username: "alice", display_name: "Alice", avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 0, following_count: 0, created_at: "2026-01-01T00:00:00Z", interests: [] }, prompt_media: [], prompt_tags: [] };
+    db.rpc.search_content = () => ({ body: [{ id: row.id, created_at: row.created_at, sort_rank: 0 }] });
+    db.rpc.team_attach_content = (body) => { db.teamCalls.push({ name: "team_attach_content", body }); return { body: { item_id: "17e70000-0000-4000-8000-0000000000aa", board_item_id: "17e70000-0000-4000-8000-0000000000ab", existing: false } }; };
+    const previous = db.extraRoutes;
+    db.extraRoutes = async (ctx) => {
+      if (ctx.table === "prompts" && ctx.method === "GET") { ctx.json(200, [row]); return true; }
+      return previous?.(ctx);
+    };
+  },
 });
 
 await scenario("4b. Grubu yeniden adlandır: değiştirici başlığında kalem → team_rename_board_group; grup adı başlıkta", async ({ page, db }) => {

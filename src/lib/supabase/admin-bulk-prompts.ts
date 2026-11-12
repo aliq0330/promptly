@@ -55,6 +55,7 @@ export async function fetchOwnPromptsForManage(userId: string, tagLabel: string)
       .select(slug ? `${columns}, prompt_tags!inner(tag_slug)` : columns)
       .eq("author_id", userId)
       .is("community_id", null)
+      .is("team_file_id", null)
       .is("deleted_at", null)
       .eq("origin_type", "original");
     if (slug) query = query.eq("prompt_tags.tag_slug", slug);

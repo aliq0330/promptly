@@ -43,6 +43,7 @@ import { ProjectPathBar, type PathCrumb } from "./project-path-bar";
 import { ReviewChip } from "./project-ui";
 import { ProposeChangeDialog } from "./team-propose-dialog";
 import { AddToBoardDialog, type BoardChoice } from "./team-add-to-board";
+import { deleteFileItem, fetchPlacements } from "@/lib/supabase/team-board";
 import { paletteItemId, splitPromptTokens } from "@/lib/team-item-kit";
 
 /**
@@ -172,7 +173,8 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   const router = useRouter();
   const { sources, readable, userId, caps, removeItems, setPalettes, setItems, items, groups } = useSpaceContext();
   const itemTitle = useItemTitle();
-  const [menu, setMenu] = useState<null | "menu" | "delete" | "edit" | "propose" | "board">(null);
+  const [menu, setMenu] = useState<null | "menu" | "delete" | "deleteFile" | "edit" | "propose" | "board">(null);
+  const [boardIds, setBoardIds] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creator, setCreator] = useState<string | null>(null);
@@ -222,9 +224,42 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
     }
   };
 
+  // Dosyadan sil: asıl öğe ve tüm panolardaki yansımaları gider (yansımada da asıl öğe silinir).
+  const removeFromFile = async () => {
+    if (!item) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteFileItem(item.id);
+      setItems((list) => list.filter((entry) => entry.id !== item.id && entry.fileItemId !== item.id));
+      router.replace(ctx.listHref);
+    } catch (e) {
+      setError((e as Error).message || t("spaces.error.generic"));
+      setBusy(false);
+      setMenu(null);
+    }
+  };
+
   // Panoya ekle: öğe henüz bir panoda değilse (dosyanın görünmez kabında) projedeki bir panoya aktarılır. Paletin aktarılan satırı paletin öğe satırıdır.
   const transferable = item ?? (palette ? (items.find((entry) => entry.kind === "palette" && entry.paletteId === palette.id) ?? null) : null);
-  const place = ctx.placement && !ctx.onBoard && transferable && canAddToArea(role) ? ctx.placement : null;
+  const place = ctx.placement && ctx.placement.fileId && transferable && canAddToArea(role) ? ctx.placement : null;
+  const isMirror = Boolean(item?.fileItemId);
+  // Panodaki yansıma: "Panodan kaldır" yalnız yerleşimi siler (dosyada kalır); "Dosyadan sil" asıl öğeyi ve bütün yansımaları siler.
+  const mayRemoveFromBoard = isMirror && canAddToArea(role);
+  const canonicalId = item ? (item.fileItemId ?? item.id) : transferable ? (transferable.fileItemId ?? transferable.id) : null;
+  const hasPlacement = Boolean(ctx.placement);
+  useEffect(() => {
+    if (!hasPlacement || !canonicalId) return;
+    let alive = true;
+    fetchPlacements([canonicalId]).then(
+      // Yerel yerleştirmeler (az önce eklenen) sunucu okumasıyla birleşir: gecikmiş bir okuma onları silmez.
+      (map) => alive && setBoardIds((current) => [...new Set([...(current ?? []), ...(map.get(canonicalId) ?? [])])]),
+      () => alive && setBoardIds((current) => current ?? []),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [hasPlacement, canonicalId]);
   const itemGroupId = (item ?? transferable)?.groupId ?? null;
   const groupLabel = itemGroupId ? (groups.find((group) => group.id === itemGroupId)?.name ?? null) : null;
   const groupChip = groupLabel ? (
@@ -234,7 +269,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   ) : null;
 
   const drawer = Boolean(ctx.drawer);
-  const hasMenu = mayDelete || mayEdit || mayPropose || onBoard || Boolean(place);
+  const hasMenu = mayDelete || mayEdit || mayPropose || onBoard || Boolean(place) || mayRemoveFromBoard;
   const drawerHeader = (
     <div className="flex items-start gap-1 pr-11">
       <div className="min-w-0 flex-1">
@@ -305,6 +340,26 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
 
       {item && item.kind !== "prompt" && <ReviewBar item={item} role={role} onChanged={onChanged} />}
 
+      {ctx.placement && canonicalId && boardIds !== null && (
+        <div className="flex flex-wrap items-center gap-1.5" data-item-boards>
+          <span className="text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tf.item.boards")}</span>
+          {boardIds.length === 0 ? (
+            <span className="text-small text-text-secondary" data-item-boards-empty>
+              {t("tf.item.noBoards")}
+            </span>
+          ) : (
+            boardIds.map((id) => {
+              const board = ctx.placement?.boards.find((entry) => entry.id === id);
+              return board ? (
+                <Link key={id} href={ctx.placement!.boardHref(id, null)} className="rounded-full bg-primary-soft px-2.5 py-1 text-caption font-semibold text-primary" data-item-board={id}>
+                  {board.title}
+                </Link>
+              ) : null;
+            })
+          )}
+        </div>
+      )}
+
       {place && (
         <Button type="button" variant="outline" onClick={() => setMenu("board")} className="h-11 w-full gap-2 rounded-full" data-item-add-to-board-button>
           <Presentation size={18} aria-hidden />
@@ -347,28 +402,38 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
                 </button>
               </li>
             )}
+            {mayRemoveFromBoard && (
+              <li>
+                <button type="button" onClick={() => setMenu("delete")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-remove-from-board>
+                  <Trash2 size={20} aria-hidden />
+                  {t("tf.board.removeFromBoard")}
+                </button>
+              </li>
+            )}
             {mayDelete && (
               <li>
-                <button type="button" onClick={() => setMenu("delete")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-danger hover:bg-danger/10" data-item-delete>
+                <button type="button" onClick={() => setMenu(isMirror ? "deleteFile" : "delete")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-danger hover:bg-danger/10" data-item-delete>
                   <Trash2 size={20} aria-hidden />
-                  {t("tp.item.delete")}
+                  {t(isMirror || ctx.placement ? "tf.board.deleteFromFile" : "tp.item.delete")}
                 </button>
               </li>
             )}
           </ul>
         </SpaceDialog>
       )}
-      {menu === "board" && place && transferable && (
+      {menu === "board" && place && place.fileId && transferable && (
         <AddToBoardDialog
           item={transferable}
           projectId={place.projectId}
           fileId={place.fileId}
           boards={place.boards}
           onClose={() => setMenu(null)}
-          onDone={(boardId, newItemId) => {
+          onDone={(placedBoards, firstItemId) => {
             setMenu(null);
             onChanged();
-            router.push(place.boardHref(boardId, newItemId));
+            setBoardIds((current) => [...new Set([...(current ?? []), ...placedBoards])]);
+            // Tek panoya eklendiyse o panoya (eklenen öğeye odaklı) gidilir; birden çoksa bu sayfada kalınır, rozetler güncellenir.
+            if (placedBoards.length === 1) router.push(place.boardHref(placedBoards[0], firstItemId));
           }}
         />
       )}
@@ -395,13 +460,26 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
       {menu === "delete" && (
         <ConfirmDialog
           id="area-item-delete"
-          title={t("tp.item.deleteTitle")}
-          body={t("tp.item.deleteBody", { title })}
-          confirmLabel={t("tp.item.delete")}
-          danger
+          title={t(isMirror ? "tf.item.removeTitle" : "tp.item.deleteTitle")}
+          body={t(isMirror ? "tf.item.removeBody" : ctx.placement ? "tf.item.deleteBodyFile" : "tp.item.deleteBody", { title })}
+          confirmLabel={t(isMirror ? "tf.board.removeFromBoard" : ctx.placement ? "tf.board.deleteFromFile" : "tp.item.delete")}
+          danger={!isMirror}
           busy={busy}
           error={error}
           onConfirm={() => void remove()}
+          onCancel={() => setMenu(null)}
+        />
+      )}
+      {menu === "deleteFile" && (
+        <ConfirmDialog
+          id="area-item-delete-file"
+          title={t("tp.item.deleteTitle")}
+          body={t("tf.item.deleteBodyFile", { title })}
+          confirmLabel={t("tf.board.deleteFromFile")}
+          danger
+          busy={busy}
+          error={error}
+          onConfirm={() => void removeFromFile()}
           onCancel={() => setMenu(null)}
         />
       )}

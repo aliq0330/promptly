@@ -25,6 +25,7 @@ export interface PresetRow {
   status: "draft" | "published";
   visibility: "public" | "private";
   community_id?: string | null;
+  team_file_id?: string | null;
   like_count: number | null;
   quote_count?: number | null;
   comment_count: number | null;
@@ -36,7 +37,7 @@ export interface PresetRow {
 }
 
 export const PRESET_SELECT = `
-  id, creator_id, title, description, cover_url, content_type, category, subcategory, tools, selection, status, visibility, community_id,
+  id, creator_id, title, description, cover_url, content_type, category, subcategory, tools, selection, status, visibility, community_id, team_file_id,
   like_count, comment_count, save_count, quote_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   preset_tags ( tags ( slug, label ) )
@@ -58,6 +59,7 @@ export function mapPresetRow(row: PresetRow): Preset {
     status: row.status,
     visibility: row.visibility,
     communityId: row.community_id ?? null,
+    teamFileId: row.team_file_id ?? null,
     likeCount: row.like_count ?? 0,
     quoteCount: row.quote_count ?? 0,
     commentCount: row.comment_count ?? 0,
@@ -167,6 +169,7 @@ export async function fetchRecentPresets(limit = 24, cursor?: KeysetCursor): Pro
         .eq("status", "published")
         .eq("visibility", "public")
         .is("community_id", null)
+        .is("team_file_id", null)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(limit),
@@ -242,6 +245,7 @@ export async function fetchPresetsByCreatorPage(creatorId: string, filter: Owned
     .select(PRESET_SELECT, offset === 0 ? { count: "exact" } : undefined)
     .eq("creator_id", creatorId)
     .is("community_id", null)
+    .is("team_file_id", null)
     .eq("status", "published");
   if (filter.visibility && filter.visibility !== "all") request = request.eq("visibility", filter.visibility);
   if (text) request = request.or(`title.ilike.%${text}%,description.ilike.%${text}%`);
@@ -262,6 +266,7 @@ export async function fetchPresetsByCreator(creatorId: string): Promise<Preset[]
         .select(PRESET_SELECT)
         .eq("creator_id", creatorId)
         .is("community_id", null)
+        .is("team_file_id", null)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .range(from, to),
@@ -363,6 +368,8 @@ export interface SavePresetInput {
   visibility: "public" | "private";
   /** Topluluğa özgü içerik: yalnız YENİ kayıtta gönderilir (`?community=`); sunucu görünürlüğü private'a zorlar, taslağa ve sonradan değiştirmeye izin vermez. */
   communityId?: string | null;
+  /** Ekibe özgü içerik: yalnız YENİ kayıtta gönderilir (`?teamFile=`); sunucu görünürlüğü private'a zorlar ve sonradan değiştirmeye izin vermez (`docs/history/376-*`). */
+  teamFileId?: string | null;
 }
 
 /**
@@ -404,7 +411,7 @@ export async function savePreset(input: SavePresetInput, creatorId: string): Pro
   } else {
     const { data, error } = await supabase
       .from("presets")
-      .insert({ ...columns, title, description, selection: input.selection, creator_id: creatorId, community_id: input.communityId ?? null })
+      .insert({ ...columns, title, description, selection: input.selection, creator_id: creatorId, community_id: input.communityId ?? null, team_file_id: input.teamFileId ?? null })
       .select("id")
       .single();
     if (error) throw new Error(error.message);

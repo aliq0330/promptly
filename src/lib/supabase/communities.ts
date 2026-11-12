@@ -824,7 +824,7 @@ export async function fetchOwnShareableContentWindow(userId: string, type: Commu
   } else {
     const table = type === "prompt" ? "prompts" : type === "request" ? "prompt_requests" : type === "workflow" ? "workflows" : "presets";
     const ownerColumn = type === "workflow" || type === "preset" ? "creator_id" : "author_id";
-    let query = supabase.from(table).select("id, title").eq(ownerColumn, userId).eq("visibility", "public").is("community_id", null);
+    let query = supabase.from(table).select("id, title").eq(ownerColumn, userId).eq("visibility", "public").is("community_id", null).is("team_file_id", null);
     if (type === "prompt") query = query.eq("status", "published").is("deleted_at", null);
     else if (type === "request") query = query.eq("is_draft", false).is("deleted_at", null);
     else query = query.eq("status", "published");
