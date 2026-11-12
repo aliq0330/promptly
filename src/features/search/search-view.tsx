@@ -44,6 +44,7 @@ import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { CommunityCard } from "@/features/communities/community-card";
+import { HUB_GRID_CLASS } from "@/features/hub/hub-kit";
 import { applyJoinState, ErrorBox } from "@/features/communities/home-shared";
 import { useToast } from "@/features/groups/use-toast";
 import { searchCommunities, type CommunitySummary } from "@/lib/supabase/communities";
@@ -313,7 +314,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   );
 
   const communityList = (items: CommunitySummary[]) => (
-    <ul className="grid gap-3 md:grid-cols-2" data-search-communities>
+    <ul className={HUB_GRID_CLASS} data-search-communities>
       {items.map((community) => (
         <CommunityCard
           key={community.id}

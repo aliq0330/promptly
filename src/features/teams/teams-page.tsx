@@ -13,14 +13,14 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePagedList } from "@/features/content/use-paged-list";
-import { SadeTitle } from "@/features/content/list-control-row";
-import { CONTROL_ICON_BUTTON, SectionMenu } from "@/features/content/section-menu";
+import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
+import { HUB_CARD_CHIP_CLASS, HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBadge, HubBand, HubCard, HubCardSkeleton, HubControlRow, HubCreateButton, HubFaces, HubGrid } from "@/features/hub/hub-kit";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { useToast } from "@/features/groups/use-toast";
-import { PHONE_HOME_BOTTOM_PAD, PHONE_HOME_PILL, PHONE_HOME_PILL_OUTLINE, PhoneHomeCard, PhoneHomeRow, PhoneHomeSection } from "@/features/content/phone-home";
+import { PHONE_HOME_BOTTOM_PAD, PhoneHomeSection } from "@/features/content/phone-home";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
@@ -40,7 +40,7 @@ import { fetchProjectTodos, listProjects, projectTodoAsTeamTodo, type ProjectSum
 import { teamLink } from "@/lib/teams";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
-import { ProjectMini, todoLine } from "./team-phone-home";
+import { ProjectMini } from "./team-phone-home";
 
 /**
  * `/teams`: Ekipler (docs/history/353-*). Ekip artık topluluktan bağımsız bir sistemdir: bu sayfa üyesi olduğum ekiplerin günlük kapısı —
@@ -87,7 +87,6 @@ function TeamsPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `list.items` her çizimde değişebilir; ekip kimlikleri `teamKey`'de.
   }, [phone, teamKey]);
 
-  const phoneTodos = useMemo(() => todos.slice(0, 5), [todos]);
   const approvalsByTeam = useMemo(() => {
     const map = new Map<string, number>();
     for (const todo of todos) if (todo.kind === "project_review") map.set(todo.teamId, (map.get(todo.teamId) ?? 0) + todo.n);
@@ -108,54 +107,68 @@ function TeamsPageInner() {
   const needle = query.trim().toLocaleLowerCase();
   const visibleTeams = list.items.filter((team) => (filter === "all" || team.myRole === "owner" || team.myRole === "admin") && (!needle || team.name.toLocaleLowerCase().includes(needle)));
 
-  return (
-    <div className={cn("mx-auto w-full max-w-5xl px-3 pb-6 sm:px-5 md:space-y-5 md:py-6 lg:px-8 lg:py-8", PHONE_HOME_BOTTOM_PAD, "md:pb-6")} data-testid="teams-page">
-      {/* Telefon (docs/history/357-*): Topluluklar ile AYNI iskelet — büyük başlık + tek denetim satırı (süzgeç hapı · ara · "+"). */}
-      <div className="mb-3 space-y-3 pt-2 md:hidden" data-teams-phone-bar>
-        <SadeTitle>{t("tm.title")}</SadeTitle>
-        <div className="flex items-center gap-1.5">
-          <SectionMenu
-            items={[
-              { key: "all", label: t("tm.filter.all") },
-              { key: "managed", label: t("tm.filter.managed") },
-            ]}
-            active={filter}
-            onChange={setFilter}
-            ariaLabel={t("tm.filter.aria")}
-            title={t("tm.title")}
-          />
-          <span className="flex-1" />
-          <button type="button" onClick={() => setSearchOpen((open) => !open)} aria-label={t("header.searchAriaLabel")} aria-pressed={searchOpen} data-teams-search className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft")}>
-            <Search size={18} aria-hidden />
-          </button>
-          <button type="button" onClick={() => setCreateOpen(true)} aria-label={t("tm.create")} data-team-create-phone className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft")}>
-            <Plus size={20} aria-hidden />
-          </button>
-        </div>
-        {searchOpen && (
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("tm.filter.search")}
-            aria-label={t("tm.filter.search")}
-            className={fieldInputClassName}
-          />
-        )}
-      </div>
-      <div className="flex flex-wrap items-end justify-between gap-3 max-md:hidden">
-        <div className="min-w-0 space-y-1.5">
-          <SadeTitle>{t("tm.title")}</SadeTitle>
-          <p className="max-w-xl text-small text-text-secondary">{t("tm.intro")}</p>
-        </div>
-        <Button type="button" size="lg" onClick={() => setCreateOpen(true)} data-team-create>
-          <Plus size={16} aria-hidden />
-          {t("tm.create")}
-        </Button>
-      </div>
+  // Hub düzeni (docs/history/378-*): sekmeler Ekiplerim · Senden bekleyenler · Davetler (son ikisi yalnız bekleyen varken); dikkat şeridi sekmeye götürür.
+  // Bekleyen iş sayısı: her kalemin kendi sayısı (ör. "2 öğe onayını bekliyor") toplanır.
+  const todoTotal = todos.reduce((sum, todo) => sum + Math.max(1, todo.n), 0);
+  const [tab, setTab] = useState<"teams" | "todos">("teams");
+  const activeTab = tab === "todos" && todos.length === 0 ? "teams" : tab;
+  const tabItems: TabItem<"teams" | "todos">[] = [
+    { key: "teams", label: t("tm.home.myTeams"), count: list.items.length > 0 ? list.items.length : undefined },
+    ...(todos.length > 0 ? [{ key: "todos" as const, label: t("tm.todos.title"), count: todoTotal }] : []),
+  ];
 
-      {invites.length > 0 && (
-        <ul className="space-y-2 max-md:mb-3" data-testid="team-invites">
+  return (
+    <div className={cn(HUB_PAGE_CLASS, "space-y-4", PHONE_HOME_BOTTOM_PAD, "md:pb-16")} data-testid="teams-page">
+      <HubBand
+        icon={Briefcase}
+        title={t("tm.title")}
+        description={t("hub.teams.intro")}
+        action={<HubCreateButton label={t("tm.create")} shortLabel={t("hub.teams.createShort")} onClick={() => setCreateOpen(true)} attr={{ "data-team-create": true, "data-team-create-phone": true }} />}
+      />
+
+      {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setTab} ariaLabel={t("tm.filter.aria")} />}
+
+      {activeTab === "teams" && (
+        <>
+          <HubControlRow
+            count={
+              <Tabs
+                variant="segmented"
+                ariaLabel={t("tm.filter.aria")}
+                active={filter}
+                onChange={setFilter}
+                items={[
+                  { key: "all", label: t("tm.filter.all") },
+                  { key: "managed", label: t("tm.filter.managed") },
+                ]}
+              />
+            }
+          >
+            <button type="button" onClick={() => setSearchOpen((open) => !open)} aria-label={t("header.searchAriaLabel")} aria-pressed={searchOpen} data-teams-search className={cn(CONTROL_ICON_BUTTON, searchOpen && "bg-surface-soft")}>
+              <Search size={22} strokeWidth={1.75} aria-hidden />
+            </button>
+          </HubControlRow>
+          {searchOpen && (
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("tm.filter.search")}
+              aria-label={t("tm.filter.search")}
+              className={fieldInputClassName}
+            />
+          )}
+          {todos.length > 0 && (
+            <HubAttentionStrip icon={Check} actionLabel={t("tm.home.open")} onAction={() => setTab("todos")} testId="team-todos-strip">
+              {t("hub.teams.attn", { count: todoTotal })}
+            </HubAttentionStrip>
+          )}
+        </>
+      )}
+
+      {/* Bekleyen davetler satır satır (kabul/reddet doğrudan burada): dikkat gerektiren tek yer, sekme arkasına saklanmaz. */}
+      {activeTab === "teams" && invites.length > 0 && (
+        <ul className="space-y-2" data-testid="team-invites">
           {invites.map((invite) => (
             <li key={invite.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-soft bg-surface p-3.5 max-md:p-3">
               <TeamMark name={invite.teamName} tone={invite.teamTone} size={40} className="rounded-xl" />
@@ -180,75 +193,50 @@ function TeamsPageInner() {
         </ul>
       )}
 
-      {phone && phoneTodos.length > 0 && (
-        <PhoneHomeSection title={t("tm.home.waiting", { count: phoneTodos.length })} testId="team-phone-todos">
-          <PhoneHomeCard>
-            {phoneTodos.map((todo, index) => {
-              const line = todoLine(t, todo);
-              return (
-                <PhoneHomeRow
-                  key={`${todo.teamId}-${todo.kind}-${index}`}
-                  thumb={line.action === "chat" ? <MessageCircle size={20} aria-hidden /> : <Check size={20} aria-hidden />}
-                  title={line.title}
-                  sub={`${line.sub} · ${todo.teamName}`}
-                  href={todo.href}
-                  action={
-                    <Link href={todo.href} className={line.action === "chat" ? PHONE_HOME_PILL_OUTLINE : PHONE_HOME_PILL}>
-                      {t(line.action === "chat" ? "tm.home.open" : "tm.todos.review.action")}
-                    </Link>
-                  }
-                />
-              );
-            })}
-          </PhoneHomeCard>
-        </PhoneHomeSection>
+      {activeTab === "todos" && todos.length > 0 && <TodoList todos={todos} />}
+
+      {activeTab === "teams" && (
+        <PagedListState
+          list={list}
+          skeleton={
+            <ul className={HUB_GRID_CLASS}>
+              {Array.from({ length: 3 }, (_, index) => (
+                <HubCardSkeleton key={index} />
+              ))}
+            </ul>
+          }
+        >
+          {list.items.length === 0 && !list.failed ? (
+            <EmptyState icon={Briefcase} scene="team" title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: () => setCreateOpen(true) }} />
+          ) : (
+            <HubGrid data-testid="teams-list">
+              {visibleTeams.map((team) => (
+                <TeamCard key={team.id} team={team} approvals={approvalsByTeam.get(team.id) ?? 0} />
+              ))}
+              <li className="max-md:hidden">
+                <button
+                  type="button"
+                  onClick={() => setCreateOpen(true)}
+                  data-team-new-card
+                  className="flex h-full w-full flex-col rounded-lg border-2 border-dashed border-border text-center transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <span className="grid aspect-video w-full place-items-center">
+                    <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary">
+                      <Plus size={20} aria-hidden />
+                    </span>
+                  </span>
+                  <span className="flex h-[6.5rem] flex-col items-center justify-start gap-0.5 px-5">
+                    <span className="text-body font-bold text-text">{t("tm.card.new")}</span>
+                    <span className="text-small text-text-secondary">{t("tm.card.newHint")}</span>
+                  </span>
+                </button>
+              </li>
+            </HubGrid>
+          )}
+        </PagedListState>
       )}
 
-      <PagedListState
-        list={list}
-        skeleton={
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Skeleton className="h-44 w-full rounded-xl" />
-            <Skeleton className="hidden h-44 w-full rounded-xl sm:block" />
-          </div>
-        }
-      >
-        {list.items.length === 0 && !list.failed ? (
-          <EmptyState icon={Briefcase} scene="team" title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.create"), onClick: () => setCreateOpen(true) }} />
-        ) : (
-          phone ? (
-            <PhoneHomeSection title={t("tm.home.myTeams")}>
-              <ul className="space-y-3" data-testid="teams-list">
-                {visibleTeams.map((team) => (
-                  <PhoneTeamCard key={team.id} team={team} approvals={approvalsByTeam.get(team.id) ?? 0} />
-                ))}
-              </ul>
-            </PhoneHomeSection>
-          ) : (
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4" data-testid="teams-list">
-            {visibleTeams.map((team) => (
-              <TeamCard key={team.id} team={team} />
-            ))}
-            <li className="max-md:hidden">
-              <button
-                type="button"
-                onClick={() => setCreateOpen(true)}
-                data-team-new-card
-                className="flex h-full min-h-[15rem] w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border px-5 text-center transition-colors hover:bg-surface-soft"
-              >
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary">
-                  <Plus size={20} aria-hidden />
-                </span>
-                <span className="text-body font-bold text-text">{t("tm.card.new")}</span>
-                <span className="text-small text-text-secondary">{t("tm.card.newHint")}</span>
-              </button>
-            </li>
-          </ul>
-          )
-        )}
-      </PagedListState>
-
-      {phone && recentProjects.length > 0 && (
+      {phone && activeTab === "teams" && recentProjects.length > 0 && (
         <PhoneHomeSection title={t("tp.home.recent")} testId="teams-phone-projects">
           <ul className="grid grid-cols-2 gap-2">
             {recentProjects.map(({ project, teamId, teamName }) => (
@@ -257,8 +245,6 @@ function TeamsPageInner() {
           </ul>
         </PhoneHomeSection>
       )}
-
-      {!phone && todos.length > 0 && <TodoList todos={todos} />}
 
       {toastNode}
       {createOpen && (
@@ -284,7 +270,7 @@ function richParts(template: string, inviter: string, team: string): React.React
 function TodoList({ todos }: { todos: TeamTodo[] }) {
   const { t } = useTranslation();
   return (
-    <section aria-label={t("tm.todos.title")} className="max-md:mt-4" data-testid="team-todos">
+    <section aria-label={t("tm.todos.title")} data-testid="team-todos">
       <h2 className="mb-3 text-h3 font-bold">{t("tm.todos.title")}</h2>
       <ul className="space-y-2.5">
         {todos.map((todo, index) => {
@@ -346,101 +332,56 @@ function recentLine(t: ReturnType<typeof useTranslation>["t"], language: string,
   return t("tm.card.recent.joined", { name: who, time: when });
 }
 
-const BAND_GRADIENT: Record<string, string> = {
-  primary: "from-primary/60 to-primary",
-  secondary: "from-secondary/60 to-secondary",
-  success: "from-success/60 to-success",
-  warning: "from-warning/60 to-warning",
-  plum: "from-text-secondary/60 to-text-secondary",
-  sky: "from-primary/50 to-primary",
-};
-
-/** Telefon ekip kartı (docs/history/359-*): renkli bant + taşan karo + üye yığını + rol/sayılar + bekleyen iş rozetleri + "Aç". */
-function PhoneTeamCard({ team, approvals }: { team: TeamSummary; approvals: number }) {
-  const { t } = useTranslation();
-  const preview = team.membersPreview ?? [];
-  const more = Math.max(0, team.memberCount - preview.length);
-  return (
-    <li data-team-card={team.id} data-team-phone-card className="relative overflow-hidden rounded-2xl border border-border-soft bg-surface">
-      <div className={cn("relative h-12 bg-gradient-to-br", BAND_GRADIENT[team.tone] ?? BAND_GRADIENT.primary)} aria-hidden />
-      <TeamMark name={team.name} tone={team.tone} size={44} className="absolute left-3 top-[1.625rem] rounded-xl bg-surface ring-2 ring-surface" />
-      <div className="px-3.5 pb-3 pt-6">
-        <Link href={teamLink(team.id)} className="block after:absolute after:inset-0" data-team-open-spaces>
-          <span className="flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate font-display text-h3 font-bold leading-tight text-text">{team.name}</span>
-            {preview.length > 0 && (
-              <span className="flex shrink-0 items-center" data-team-avatars>
-                {preview.map((person) => (
-                  <span key={person.userId} className="-ml-1.5 rounded-full ring-2 ring-surface first:ml-0">
-                    <Avatar src={person.avatarUrl} alt={person.displayName || person.username} size={24} />
-                  </span>
-                ))}
-                {more > 0 && <span className="ml-1.5 text-caption font-bold text-text-muted">+{more}</span>}
-              </span>
-            )}
-          </span>
-          <span className="mt-0.5 block text-small text-text-secondary">
-            {t(roleLabelKey(team.myRole))} · {t("tm.card.members", { count: team.memberCount })} · {t("tp.header.projects", { count: team.spaceCount })}
-          </span>
-        </Link>
-        <div className="relative z-10 mt-2.5 flex items-center gap-2">
-          {approvals > 0 && (
-            <Link href={teamLink(team.id, "projects")} className="inline-flex h-6 items-center rounded-full bg-secondary px-2.5 text-caption font-bold text-white" data-team-chip="approvals">
-              {t("tm.home.pendingApprovals", { count: approvals })}
-            </Link>
-          )}
-          {team.unreadCount > 0 && (
-            <Link href={teamLink(team.id, "chat")} className="inline-flex h-6 items-center rounded-full bg-secondary px-2.5 text-caption font-bold text-white" data-team-open-chat data-team-chip="unread">
-              {t("tm.home.unreadMessages", { count: team.unreadCount })}
-            </Link>
-          )}
-          <span className="flex-1" />
-          <Link href={teamLink(team.id)} className={team.unreadCount > 0 || approvals > 0 ? PHONE_HOME_PILL : PHONE_HOME_PILL_OUTLINE}>
-            {t("tm.home.open")}
-          </Link>
-        </div>
-      </div>
-    </li>
-  );
-}
-
-function TeamCard({ team }: { team: TeamSummary }) {
+/** Ekip kartı (Hub düzeni, docs/history/378-*): üç alanda aynı `HubCard` — ekip renginde kapak + büyük im, gövdede ad · üye/proje sayısı, üye yüzleri, bekleyen onay/okunmamış sohbet/rol rozetleri. */
+function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number }) {
   const { t, language } = useTranslation();
   const preview = team.membersPreview ?? [];
   const more = Math.max(0, team.memberCount - preview.length);
   return (
-    <li data-team-card={team.id} className="relative overflow-hidden rounded-2xl border border-border-soft bg-surface transition-colors duration-200 ease-soft hover:border-border-strong">
-      <div className={cn("h-16 max-md:hidden", CARD_BAND[team.tone] ?? CARD_BAND.primary)} aria-hidden />
-      <div className="flex items-center gap-3 p-3 md:block md:p-4 md:pt-0">
-        <Link href={teamLink(team.id)} className="flex min-w-0 flex-1 items-center gap-3 after:absolute after:inset-0 md:block md:flex-none" data-team-open-spaces>
-          <TeamMark name={team.name} tone={team.tone} size={48} solid className="rounded-xl ring-2 ring-surface md:-mt-6 md:mb-2 max-md:!h-[52px] max-md:!w-[52px]" />
-          <span className="min-w-0 flex-1 md:block">
-            <span className="block truncate font-display text-[1.125rem] font-bold leading-tight text-text">{team.name}</span>
-            <span className="mt-0.5 block text-small text-text-secondary">
-              {t("tm.card.members", { count: team.memberCount })} · {t("tp.header.projects", { count: team.spaceCount })}
-            </span>
-            {team.recent && <span className="mt-1.5 line-clamp-3 block text-small text-text-muted">{recentLine(t, language, team.recent)}</span>}
-          </span>
-        </Link>
-        <div className="relative z-10 flex items-center gap-2 md:mt-3">
-          {preview.length > 0 && (
-            <span className="flex items-center max-md:hidden" data-team-avatars>
+    <HubCard
+      data-team-card={team.id}
+      href={teamLink(team.id)}
+      title={<span data-team-open-spaces>{team.name}</span>}
+      meta={`${t(roleLabelKey(team.myRole))} · ${t("tm.card.members", { count: team.memberCount })} · ${t("tp.header.projects", { count: team.spaceCount })}`}
+      cover={
+        <span aria-hidden className={cn("absolute inset-0 grid place-items-center", CARD_BAND[team.tone] ?? CARD_BAND.primary)}>
+          <TeamMark name={team.name} tone={team.tone} size={64} solid className="rounded-2xl ring-2 ring-surface" />
+        </span>
+      }
+      chip={<span className={HUB_CARD_CHIP_CLASS}>{t("tc.band.kicker")}</span>}
+      coverOverlay={team.recent ? <span className="max-w-full truncate rounded-full bg-surface/90 px-2.5 py-0.5 text-caption text-text-secondary shadow-xs">{recentLine(t, language, team.recent)}</span> : undefined}
+      footerStart={
+        preview.length > 0 ? (
+          <span data-team-avatars className="flex min-w-0">
+            <HubFaces more={more}>
               {preview.map((person) => (
-                <span key={person.userId} className="-ml-1.5 rounded-full ring-2 ring-surface first:ml-0">
-                  <Avatar src={person.avatarUrl} alt={person.displayName || person.username} size={26} />
-                </span>
+                <Avatar key={person.userId} src={person.avatarUrl} alt={person.displayName || person.username} size={24} />
               ))}
-              {more > 0 && <span className="ml-2 text-small text-text-muted">+{more}</span>}
-            </span>
+            </HubFaces>
+          </span>
+        ) : undefined
+      }
+      footerEnd={
+        <>
+          {approvals > 0 && (
+            <Link href={teamLink(team.id, "projects")} className="inline-flex h-6 items-center rounded-full bg-warning/10 px-2.5 text-caption font-semibold text-warning" data-team-chip="approvals">
+              {t("tm.home.pendingApprovals", { count: approvals })}
+            </Link>
           )}
-          <span className="flex-1" />
-          <Link href={teamLink(team.id, "chat")} data-team-open-chat aria-label={t("tm.card.openChat")} className="inline-flex items-center gap-1.5 rounded-full p-1.5 text-text-secondary hover:bg-surface-soft">
-            <MessageCircle size={17} aria-hidden className="max-md:hidden" />
+          <Link
+            href={teamLink(team.id, "chat")}
+            data-team-open-chat
+            data-team-chip={team.unreadCount > 0 ? "unread" : undefined}
+            aria-label={t("tm.card.openChat")}
+            className="inline-flex items-center gap-1.5 rounded-full p-1.5 text-text-secondary hover:bg-surface-soft"
+          >
+            <MessageCircle size={17} aria-hidden />
             {team.unreadCount > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{team.unreadCount}</span>}
           </Link>
-        </div>
-      </div>
-    </li>
+          {approvals === 0 && team.unreadCount === 0 && <HubBadge tone={team.myRole === "owner" || team.myRole === "admin" ? "success" : "neutral"}>{t(roleLabelKey(team.myRole))}</HubBadge>}
+        </>
+      }
+    />
   );
 }
 

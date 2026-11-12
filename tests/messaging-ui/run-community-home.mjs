@@ -33,16 +33,13 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, set
 // Bölüm menüsü (docs/history/231-*, 232-*): sekmeler artık tek "Akış ▾ / Gönderiler ▾" menüsünün seçenekleridir.
 const SECTION_OPTION = "[data-section-option]";
 const optMatcher = (name) => (name instanceof RegExp ? name : new RegExp("^" + String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-const menuIsOpen = async (page) => (await page.locator(SECTION_OPTION).count()) > 0;
-const menuOpen = async (page) => { if (!(await menuIsOpen(page))) { await page.locator("[data-section-menu]").first().click(); await page.locator(SECTION_OPTION).first().waitFor(); } };
-const menuClose = async (page) => { if (await menuIsOpen(page)) { await page.keyboard.press("Escape"); await page.locator(SECTION_OPTION).first().waitFor({ state: "detached" }).catch(() => undefined); } };
-const menuOption = (page, name) => page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).first();
-const pickTab = async (page, name) => { await menuOpen(page); await menuOption(page, name).click(); };
-const hasTab = async (page, name) => { if ((await page.locator("[data-section-menu]").count()) === 0) return false; await menuOpen(page); const found = (await page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).count()) > 0; await menuClose(page); return found; };
-const waitTab = async (page, name) => { for (let i = 0; i < 40; i += 1) { if (await hasTab(page, name)) return; await page.waitForTimeout(150); } assert.fail(`section "${name}" never appeared`); };
-const optionText = async (page, name) => { await menuOpen(page); const text = await menuOption(page, name).innerText(); await menuClose(page); return text; };
-const tabIsActive = async (page, name) => { await menuOpen(page); const active = (await menuOption(page, name).getAttribute("aria-checked")) === "true"; await menuClose(page); return active; };
-const tabNames = async (page) => { if ((await page.locator("[data-section-menu]").count()) === 0) return []; await menuOpen(page); const names = (await page.locator(SECTION_OPTION).allInnerTexts()).map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()); await menuClose(page); return names; };
+const tabEl = (page, name) => page.getByRole("tab", { name: optMatcher(name) }).first();
+const pickTab = async (page, name) => { await tabEl(page, name).click(); };
+const hasTab = async (page, name) => (await page.getByRole("tab", { name: optMatcher(name) }).count()) > 0;
+const waitTab = async (page, name) => { for (let i = 0; i < 40; i += 1) { if (await hasTab(page, name)) return; await page.waitForTimeout(150); } assert.fail(`tab "${name}" never appeared`); };
+const optionText = async (page, name) => tabEl(page, name).innerText();
+const tabIsActive = async (page, name) => (await tabEl(page, name).getAttribute("aria-selected")) === "true";
+const tabNames = async (page) => (await page.getByRole("tablist").first().getByRole("tab").allInnerTexts()).map((t) => t.split("\n")[0].replace(/\d+$/, "").trim());
 
 const calls = (db, name) => db.calls.filter((c) => c.table === name);
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
@@ -74,16 +71,19 @@ const world = (db) => {
 };
 
 // 1
-await scenario("1. Varsayılan sekme Gönderiler; sekmeler: Gönderiler, Keşfet, Davet ve başvurular (yönetilen topluluk yoksa Yönettiklerim YOK)", async ({ page }) => {
+await scenario("1. Varsayılan sekme Topluluklarım (docs/history/378-*); sekmeler: Topluluklarım, Gönderiler, Keşfet, Davet ve başvurular (yönetilen topluluk yoksa Yönettiklerim YOK)", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
+  await page.locator("[data-community-card]").first().waitFor();
+  assert.deepEqual(await tabNames(page), ["Topluluklarım", "Gönderiler", "Keşfet", "Davet ve başvurular"]);
+  assert.equal(await tabIsActive(page, "Topluluklarım"), true);
+  await pickTab(page, "Gönderiler");
   await page.getByRole("heading", { name: "Topluluklarından gönderiler" }).waitFor();
-  assert.deepEqual(await tabNames(page), ["Gönderiler", "Keşfet", "Davet ve başvurular"]);
   assert.equal(await tabIsActive(page, "Gönderiler"), true);
 }, { setup: world });
 
 // 2
 await scenario("2. Gönderiler: üye olunan açık + kapalı topluluk gönderileri var; tamamen kapalı (üye olunsa da) ve üye olunmayan topluluk gönderileri YOK", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByText("Açık üye gönderisi").waitFor();
   await page.getByText("Kapalı üye gönderisi").waitFor();
   assert.equal(await page.getByText("Gizli üye gönderisi").count(), 0, "fully private community posts never enter the general feed");
@@ -95,18 +95,18 @@ await scenario("2. Gönderiler: üye olunan açık + kapalı topluluk gönderile
 
 // 3
 await scenario("3. Gönderiler: boş durumlar — hiç üye değil / üye ama gönderi yok", async ({ page }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByText("Henüz bir topluluğa üye değilsin").waitFor();
   await page.getByRole("link", { name: "Keşfet" }).last().waitFor();
 }, { setup: (db) => db.addCommunity(id(4), { name: "Dış Açık", myRole: "none", members: [[U.bob, "owner"]] }) });
 await scenario("3b. Gönderiler: üye ama gönderi yok → 'Henüz gönderi yok'", async ({ page }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByText("Henüz gönderi yok").waitFor();
 }, { setup: (db) => db.addCommunity(id(1), { name: "Boş Topluluk", myRole: "member", members: [[U.bob, "owner"]] }) });
 
 // 4
 await scenario("4. Gönderiler: keyset sayfalama ('Daha fazla'), kopya yok, yeniden eskiye", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.locator("[data-home-post]").first().waitFor();
   assert.equal((await postIds(page)).length, 12);
   await loadUntil(page, "[data-home-post]", 20);
@@ -126,7 +126,7 @@ await scenario("4. Gönderiler: keyset sayfalama ('Daha fazla'), kopya yok, yeni
 await scenario("5. Gönderiler: yükleme hatası → Tekrar dene ile toparlanır", async ({ page, db }) => {
   let fail = true;
   db.rpc.member_feed_page = () => (fail ? { status: 500, body: { message: "boom" } } : null);
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByText("Gönderiler yüklenemedi.").waitFor();
   fail = false;
   delete db.rpc.member_feed_page;
@@ -348,10 +348,10 @@ await scenario("19. Tüm topluluklar: kapalı topluluğa kartın düğmesiyle is
 
 // 20
 await scenario("20. Yönettiklerim yalnız yönettiği topluluğu olana görünür; Davet ve başvurular: Davetler · Başvurularım · Gelen başvurular (yöneticiye) sayaçlı", async ({ page }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await waitTab(page, "Yönettiklerim");
   const names = await tabNames(page);
-  assert.deepEqual(names, ["Gönderiler", "Keşfet", "Yönettiklerim", "Davet ve başvurular"]);
+  assert.deepEqual(names, ["Topluluklarım", "Gönderiler", "Keşfet", "Yönettiklerim", "Davet ve başvurular"]);
   assert.match(await optionText(page, /Davet ve başvurular/), /3/, "badge counts the incoming requests");
   await pickTab(page, /Davet ve başvurular/);
   await page.getByRole("tab", { name: "Gelen başvurular" }).click();
@@ -362,7 +362,7 @@ await scenario("20. Yönettiklerim yalnız yönettiği topluluğu olana görün�
 }, { setup: (db) => { db.addCommunity(id(1), { name: "Yönetilen", myRole: "admin", pending: 3, members: [[U.bob, "owner"]] }); } });
 
 // 21
-await scenario("21. Eski adresler: ?tab=invites, ?tab=requests (Başvurularım bölümü), ?tab=mine (Topluluklarım listesi), ?tab=managed çalışır", async ({ page }) => {
+await scenario("21. Eski adresler: ?tab=invites, ?tab=requests (Başvurularım bölümü), ?tab=mine (Topluluklarım), ?tab=managed çalışır", async ({ page }) => {
   await page.goto(`${BASE}/communities?tab=requests`);
   await page.getByText("Bekleyen başvurun yok").waitFor();
   assert.equal(await page.getByRole("tab", { name: "Başvurularım" }).getAttribute("aria-selected"), "true");
@@ -370,15 +370,14 @@ await scenario("21. Eski adresler: ?tab=invites, ?tab=requests (Başvurularım b
   await page.getByText(/Davetin yok|davet/i).first().waitFor();
   await page.goto(`${BASE}/communities?tab=mine`);
   await page.getByRole("heading", { name: "Üye Olduğum" }).waitFor();
-  await page.getByRole("link", { name: /← Gönderiler/ }).click();
-  await page.getByRole("heading", { name: "Topluluklarından gönderiler" }).waitFor();
+  assert.equal(await page.getByRole("tab", { name: "Topluluklarım" }).getAttribute("aria-selected"), "true");
   await page.goto(`${BASE}/communities?tab=managed`);
-  await page.getByRole("heading", { name: "Topluluklarından gönderiler" }).waitFor(); // yönetilen yok → Gönderiler'e düşer
+  await page.getByRole("heading", { name: "Üye Olduğum" }).waitFor(); // yönetilen yok → Topluluklarım'a düşer
 }, { setup: (db) => db.addCommunity(id(1), { name: "Üye Olduğum", myRole: "member", members: [[U.bob, "owner"]] }) });
 
 // 22
 await scenario("22. Üyelikten ayrılınca topluluğun gönderileri Gönderiler akışından kalkar (yenilemede)", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByText("Açık üye gönderisi").waitFor();
   db.members = db.members.filter((m) => !(m.conversation_id === id(1) && m.user_id === ME));
   await page.reload();
@@ -388,7 +387,7 @@ await scenario("22. Üyelikten ayrılınca topluluğun gönderileri Gönderiler 
 
 // 23
 await scenario("23. Ziyaretçi (oturumsuz): yalnız Keşfet — herkese açık topluluk listesi; akış/öneri/görüldü çağrısı YOK", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("heading", { name: "Dış Açık" }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Dış Kapalı" }).count(), 0, "visitors only browse public communities");
   assert.equal(await hasTab(page, "Gönderiler"), false);
@@ -399,9 +398,9 @@ await scenario("23. Ziyaretçi (oturumsuz): yalnız Keşfet — herkese açık t
 
 // 24
 await scenario("24. İngilizce: sekmeler, şerit, düğme, akış ve Tüm topluluklar çevrilmiş", async ({ page }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("heading", { name: "Posts from your communities" }).waitFor();
-  assert.deepEqual(await tabNames(page), ["Posts", "Discover", "Invitations & requests"]);
+  assert.deepEqual(await tabNames(page), ["My communities", "Posts", "Discover", "Invitations & requests"]);
   await pickTab(page, "Discover");
   await page.getByRole("heading", { name: "Communities for you" }).waitFor();
   await page.getByTestId("all-communities-button").getByText("All communities").waitFor();
@@ -431,9 +430,9 @@ for (const [label, viewport, theme] of [["mobil", { width: 390, height: 800 }, u
 const CARD_MAX = 460;
 const cardBox = (page) => page.locator("[data-home-post]").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { left: Math.round(r.left), width: Math.round(r.width) }; }));
 const layoutWorld = (db) => { world(db); for (let i = 1; i <= 6; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` }); };
-for (const [label, width, aside, columns] of [["1440", 1440, true, 2], ["1280", 1280, true, 2], ["1024", 1024, false, 2], ["820", 820, false, 2], ["768", 768, false, 2], ["390", 390, false, 1]]) {
+for (const [label, width, aside, columns] of [["1440", 1440, false, 3], ["1280", 1280, false, 3], ["1024", 1024, false, 2], ["820", 820, false, 2], ["768", 768, false, 2], ["390", 390, false, 1]]) {
   await scenario(`26. Yerleşim (${label}px): kart ≤ ${CARD_MAX}px, ${columns} sütun, sağ sütun ${aside ? "görünür" : "yok"}, yatay taşma yok`, async ({ page }) => {
-    await page.goto(`${BASE}/communities`);
+    await page.goto(`${BASE}/communities?tab=posts`);
     await page.locator("[data-home-post]").first().waitFor();
     await page.waitForTimeout(300);
     const boxes = await cardBox(page);
@@ -441,17 +440,12 @@ for (const [label, width, aside, columns] of [["1440", 1440, true, 2], ["1280", 
     assert.equal(new Set(boxes.map((b) => b.left)).size, columns, `expected ${columns} column(s)`);
     assert.equal(await page.getByTestId("community-aside").isVisible(), aside, "aside visibility");
     assert.equal(await overflowFree(page), true, "no horizontal overflow");
-    if (aside) {
-      const stats = await page.locator("[data-aside-stat]").evaluateAll((els) => els.map((e) => e.getAttribute("data-aside-stat")));
-      assert.deepEqual(stats, ["joined", "managed", "pending"]);
-    }
   }, { viewport: { width, height: 900 }, setup: layoutWorld });
 }
 await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ xl'de Hakkında/Kurallar/Yöneticiler sütunu), Yönetim ayarları kartlara bölünür; taşma yok", async ({ page }) => {
   for (const [w, cols] of [[1440, 2], [820, 2], [390, 1]]) {
     await page.setViewportSize({ width: w, height: 900 });
-    // Telefonda kök bölüm listesidir (docs/history/357-*); akış alt sayfadır.
-    await page.goto(`${BASE}/communities/local?id=${id(1)}${w < 500 ? "&tab=feed" : ""}`);
+    await page.goto(`${BASE}/communities/local?id=${id(1)}`);
     await page.locator("[data-community-post]").first().waitFor();
     await page.waitForTimeout(300);
     const posts = await page.locator("[data-community-post]").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { left: Math.round(r.left), width: Math.round(r.width) }; }));
@@ -463,13 +457,8 @@ await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ x
     assert.equal(new Set(posts.map((b) => b.left)).size, Math.min(cols, posts.length), `${w}: columns`);
     // Albüm (docs/history/203-*): the band + the actions row are taller on purpose (big art, big title, one big action); together
     // they must still leave the tabs and the start of the feed in the first screen (900px tall).
-    if (w >= 500) {
-      const header = await page.locator("[data-community-actions]").evaluate((el) => el.getBoundingClientRect().bottom + window.scrollY);
-      assert.ok(header <= 520, `${w}: header too tall (${header})`);
-    } else {
-      const bar = await page.locator("[data-phone-subbar]").evaluate((el) => el.getBoundingClientRect().bottom + window.scrollY);
-      assert.ok(bar <= 140, `${w}: sub-bar should sit at the top (${bar})`);
-    }
+    const header = await page.locator("[data-community-actions]").evaluate((el) => el.getBoundingClientRect().bottom + window.scrollY);
+    assert.ok(header <= 520, `${w}: header too tall (${header})`);
     assert.equal(await overflowFree(page), true, `${w}: overflow`);
   }
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -489,7 +478,7 @@ const touchDrag = async (context, page, { x = 200, from, to, steps = 8 }) => {
   return { release: () => send("touchEnd", to) };
 };
 await scenario("27. Mobil bottom sheet: kısa sürükleme geri yaylanır, uzun sürükleme animasyonla kapatır", async ({ page, context }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const dialog = page.getByRole("dialog");
   await dialog.waitFor();
@@ -516,7 +505,7 @@ await scenario("27. Mobil bottom sheet: kısa sürükleme geri yaylanır, uzun s
   void sheet;
 }, { viewport: { width: 390, height: 800 }, hasTouch: true, setup: world });
 await scenario("27a. Mobil bottom sheet basamakları (docs/history/375-*): %75 → yukarı = %90 → aşağı = %75 → aşağı = kapanır", async ({ page, context }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const dialog = page.getByRole("dialog");
   await dialog.waitFor();
@@ -549,7 +538,7 @@ await scenario("27a. Mobil bottom sheet basamakları (docs/history/375-*): %75 �
   assert.equal(await dialog.count(), 0, "second down-drag closes");
 }, { viewport: { width: 390, height: 800 }, hasTouch: true, setup: world });
 await scenario("27b. Masaüstünde (≥640px) ortalanmış pencere sürüklenince kapanmaz; tutamaç yok", async ({ page, context }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const dialog = page.getByRole("dialog");
   await dialog.waitFor();
@@ -560,67 +549,23 @@ await scenario("27b. Masaüstünde (≥640px) ortalanmış pencere sürükleninc
   assert.equal(await dialog.count(), 1, "centered dialog is not swipe-dismissed");
 }, { viewport: { width: 1000, height: 800 }, hasTouch: true, setup: world });
 
-// 28 — Telefon (docs/history/357-*, Yön C): topluluk kökü = kompakt kapak + eylemler + bölüm LİSTESİ; satır alt sayfa açar; Yönetim de liste → alt sayfa
-await scenario("28. Telefon (Yön C): topluluk kökü kompakt kapak + bölüm listesi; 'Akış' alt sayfa (geri çubuğu); Yönetim → liste → alt sayfa; hap/menü yok", async ({ page }) => {
+// 28 — Telefon (Hub düzeni, docs/history/378-*): masaüstüyle aynı iskelet — bant (kapak, ad, Sohbeti aç + üyelik) + kaydırmalı sekmeler; Yönetim → liste → alt sayfa
+await scenario("28. Telefon: bant + kaydırmalı sekmeler; 'Akış' gönderileri; Yönetim → liste → alt sayfa; taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/communities/local?id=${id(1)}`);
-  const head = page.getByTestId("community-header-compact");
+  const head = page.getByTestId("community-header");
   await head.waitFor();
-  assert.equal(await page.getByTestId("community-header").count(), 0, "dev kapak bandı telefonda yok");
-  const list = page.locator("[data-phone-section-list]");
-  for (const key of ["feed", "events", "members", "about", "manage"]) await list.locator(`[data-phone-section=${key}]`).waitFor();
-  assert.equal(await page.locator("[data-section-menu]").count(), 0, "telefonda bölüm hapı yok");
-  assert.ok(await overflowFree(page));
-  await list.locator("[data-phone-section=feed]").click();
-  const bar = page.locator("[data-phone-subbar]");
-  await bar.waitFor();
-  assert.match(await bar.innerText(), /Sahibi Olduğum/);
-  assert.match(await bar.innerText(), /Akış/);
+  assert.match(await head.innerText(), /Sahibi Olduğum/);
+  await head.locator("[data-open-chat]").waitFor();
+  assert.deepEqual(await page.getByRole("tablist").first().getByRole("tab").allInnerTexts().then((names) => names.map((n) => n.split("\n")[0].replace(/\d+$/, "").trim())), ["Akış", "Etkinlikler", "Üyeler", "Hakkında ve kurallar", "Yönetim"]);
   await page.locator("[data-community-post]").first().waitFor();
-  await bar.locator("[data-phone-back]").click();
-  await page.getByTestId("community-header-compact").waitFor();
-  await page.locator("[data-phone-section=manage]").click();
+  assert.ok(await overflowFree(page));
+  await page.getByRole("tab", { name: "Yönetim" }).click();
   await page.getByTestId("community-manage-list").waitFor();
   await page.locator("[data-phone-section=settings]").click();
   await page.waitForFunction(() => location.search.includes("section=settings"));
-  const bar2 = page.locator("[data-phone-subbar]");
-  assert.match(await bar2.innerText(), /Yönetim/);
-  assert.match(await bar2.innerText(), /Ayarlar/);
   await page.getByRole("heading", { name: "Topluluk ayarları" }).waitFor();
-  await bar2.locator("[data-phone-back]").click();
-  await page.getByTestId("community-manage-list").waitFor();
   assert.ok(await overflowFree(page));
 }, { viewport: { width: 390, height: 800 }, setup: (db) => { db.addCommunity(id(1), { name: "Sahibi Olduğum", myRole: "owner", members: [[U.bob, "owner"]], rules: "1. Saygılı ol" }); for (let i = 1; i <= 3; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` }); } });
-
-// 29 — Telefon ana ekranı (docs/history/358-*): ekiple aynı kimlik bloğu + karolar + yaklaşan etkinlik + son gönderiler; alt menü kadar boşluk
-await scenario("29. Telefon ana ekranı (mockup birebir): kimlik bloğu (geri, etiket, ad, özet, Sohbeti aç + üyelik) + karolar (sayı) + Yaklaşan etkinlik + Son gönderiler", async ({ page }) => {
-  await page.goto(`${BASE}/communities/local?id=${id(1)}`);
-  const head = page.getByTestId("community-header-compact");
-  await head.waitFor();
-  const identity = head.locator("[data-phone-home-identity]");
-  await identity.locator("[data-phone-back]").waitFor();
-  assert.match(await identity.innerText(), /Sahibi Olduğum/);
-  await identity.locator("[data-open-chat]").waitFor();
-  const tiles = head.locator("[data-phone-tiles] [data-phone-section]");
-  assert.ok((await tiles.count()) >= 5, "bölüm karoları");
-  await head.locator("[data-phone-section=feed]").getByText("3 gönderi").waitFor();
-  await head.getByTestId("community-phone-event").getByText("Yaklaşan Etkinlik", { exact: true }).waitFor();
-  await head.getByTestId("community-phone-event").locator("[data-event-join]").click();
-  await head.getByTestId("community-phone-event").locator("[data-event-going]").waitFor();
-  await head.getByTestId("community-phone-posts").getByText("Düzen gönderisi").first().waitFor();
-  const gap = await page.evaluate(async () => {
-    const nav = document.querySelector("[data-app-nav]");
-    const last = document.querySelector("[data-testid=community-phone-posts]");
-    for (const el of [document.scrollingElement, ...document.querySelectorAll("main, [data-app-scroll]")]) el?.scrollTo?.(0, 1e6);
-    await new Promise((r) => setTimeout(r, 200));
-    return nav.getBoundingClientRect().top - last.getBoundingClientRect().bottom;
-  });
-  assert.ok(gap >= 8, `son bölüm alt menünün üstünde kalır (boşluk ${gap}px)`);
-  assert.ok(await overflowFree(page));
-}, { viewport: { width: 390, height: 800 }, setup: (db) => {
-  db.addCommunity(id(1), { name: "Sahibi Olduğum", myRole: "owner", members: [[U.bob, "owner"]], rules: "1. Saygılı ol" });
-  for (let i = 1; i <= 3; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` });
-  db.events.push({ id: "22222222-aaaa-4000-8000-000000000001", community_id: id(1), title: "Yaklaşan Etkinlik", description: null, starts_at: new Date(Date.now() + 5 * 86400000).toISOString(), ends_at: null, timezone: "Europe/Istanbul", location: null, online_url: null, status: "scheduled", going_count: 0, maybe_count: 0, rsvps: {} });
-} });
 
 await browser.close(); server.close();
 let failed = 0;

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
-import { FEED_GRID_COLUMNS } from "./community-layout";
+import { HOME_FEED_GRID_COLUMNS } from "./community-layout";
 import { ErrorBox } from "./home-shared";
 import { HomeFeedItem, useSeenTracker } from "./home-feed";
 import type { useHomeFeed } from "./use-home-feed";
@@ -24,7 +24,7 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   if (feed.status === "loading") {
     return (
-      <ContentGrid as="ul" columns={FEED_GRID_COLUMNS} aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="home-feed-loading">
+      <ContentGrid as="ul" columns={HOME_FEED_GRID_COLUMNS} aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="home-feed-loading">
         {[0, 1].map((i) => (
           <li key={i} className={CONTENT_GRID_ITEM_CLASS}>
             <PromptCardSkeleton />
@@ -38,7 +38,7 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   return (
     <div className="space-y-4">
-      <ContentGrid as="ul" columns={FEED_GRID_COLUMNS} data-testid="home-feed">
+      <ContentGrid as="ul" columns={HOME_FEED_GRID_COLUMNS} data-testid="home-feed">
         {feed.entries.map((entry) => {
           const card = feed.cards.get(entry.post.communityId);
           const mode: EngageMode = card?.closedAt ? "closed" : viewerIsMember(entry.source) ? "open" : "join";

@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Briefcase } from "@/components/icons/briefcase";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
+import { HUB_PAGE_CLASS } from "@/features/hub/hub-kit";
 import { InviteDialog } from "./team-invites";
 import { useAuth } from "@/features/auth/auth-provider";
 import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
@@ -192,17 +193,17 @@ function TeamPageInner() {
   ];
 
   return (
-    <div className={boardMode ? "mx-auto w-full max-w-none" : "mx-auto w-full max-w-6xl pb-5 sm:px-5 md:space-y-3 md:py-6 lg:px-8 lg:py-8"} data-testid="team-page" data-team-id={team.id} data-board-mode={boardMode ? "" : undefined}>
+    <div className={boardMode ? "mx-auto w-full max-w-none" : cn(HUB_PAGE_CLASS, "space-y-4")} data-testid="team-page" data-team-id={team.id} data-board-mode={boardMode ? "" : undefined}>
       {!hideChrome && (
-        <div className="max-sm:-mx-0 md:space-y-1" data-team-chrome>
+        <div className="space-y-4" data-team-chrome>
           <TeamBand team={team} canInvite={can("manage_members") && !isGuest} onInvite={() => setInviteOpen(true)} onLeave={team.myRole !== "owner" ? () => setLeaveOpen(true) : undefined} menuItems={menuItems} />
           <TeamTabs teamId={team.id} items={items} active={tab} ariaLabel={t("tm.tab.aria")} />
         </div>
       )}
       {isGuest && team.guestUntil && !hideChrome && (
-        <p className="mx-3 rounded-lg bg-warning/10 px-3 py-2 text-small text-warning sm:mx-0">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>
+        <p className="rounded-lg bg-warning/10 px-3 py-2 text-small text-warning">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>
       )}
-      <div className={boardMode ? "" : cn("px-3 sm:px-0", !hideChrome && "max-md:pt-3")} data-team-tab={tab}>
+      <div data-team-tab={tab}>
         {body}
       </div>
       {inviteOpen && <InviteDialog ctx={ctx} onClose={() => setInviteOpen(false)} onDone={() => undefined} />}

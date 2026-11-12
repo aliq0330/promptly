@@ -19,9 +19,7 @@ import { Filter } from "@/components/icons/filter";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageContainer } from "@/components/ui/page-header";
 import { ScrollRow } from "@/components/ui/scroll-row";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -40,6 +38,7 @@ import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spa
 import { CreateSpaceModal } from "./space-modals";
 import { SpaceCard } from "./space-card";
 import { type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
+import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBand, HubCardSkeleton, HubControlRow, HubCreateButton } from "@/features/hub/hub-kit";
 import { Tabs } from "@/components/ui/tabs";
 import { SpacesFilterSheet, SpaceTemplates } from "./spaces-controls";
 import { SpaceCoverArt, SpacesIcon } from "./space-visuals";
@@ -223,20 +222,15 @@ export function SpacesHome() {
 
   const iconButton = CONTROL_ICON_BUTTON;
   return (
-    <PageContainer className="space-y-5 pb-16 pt-3 sm:pt-5">
-      {/* Merkez düzeni (docs/history/371-*): bant (simge + başlık + özet + "Yeni Space") ve altı çizgili bölüm sekmeleri; ekip sayfasıyla aynı dil. */}
-      <div className="flex items-center gap-4 rounded-2xl bg-primary-soft px-4 py-4 sm:px-6 sm:py-5" data-space-home-band="">
-        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-surface text-primary shadow-card sm:h-16 sm:w-16">
-          <SpacesIcon size={28} aria-hidden />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h1 className="font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-[-0.03em] text-text sm:text-[2.25rem]">{t("spaces.home.title")}</h1>
-        </div>
-        <Button onClick={() => openCreate()} data-testid="create-space" title={t("spaces.home.create")} className="h-11 shrink-0 rounded-full px-3.5 sm:px-5">
-          <Plus size={20} aria-hidden />
-          <span className="max-sm:sr-only">{t("spaces.home.create")}</span>
-        </Button>
-      </div>
+    <div className={cn(HUB_PAGE_CLASS, "space-y-4")}>
+      {/* Hub düzeni (docs/history/378-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
+      <HubBand
+        icon={SpacesIcon}
+        title={t("spaces.home.title")}
+        description={t("hub.spaces.intro")}
+        data-space-home-band=""
+        action={<HubCreateButton label={t("spaces.home.create")} shortLabel={t("hub.spaces.createShort")} onClick={() => openCreate()} testId="create-space" />}
+      />
 
       {user && <Tabs items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} />}
 
@@ -265,8 +259,7 @@ export function SpacesHome() {
           </button>
         </form>
       ) : (
-        <div className="flex items-center gap-1.5">
-          <span className="flex-1" />
+        <HubControlRow count={items ? t("hub.count.spaces", { count: `${shown?.length ?? items.length}${hasMore ? "+" : ""}` }) : undefined}>
           <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("spaces.home.searchOpen")} title={t("spaces.home.searchOpen")} className={iconButton}>
             <Search size={22} strokeWidth={1.75} aria-hidden />
           </button>
@@ -294,23 +287,14 @@ export function SpacesHome() {
               </button>
             </>
           )}
-        </div>
+        </HubControlRow>
       )}
 
       {/* Bekleyen davet: tek satırlık kart (Topluluklar'daki gibi); dokununca "Davetler" bölümü açılır. */}
       {user && invites.length > 0 && !showInvites && (
-        <button
-          type="button"
-          onClick={() => setSection("invites")}
-          data-testid="space-invites-banner"
-          className="flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
-            <Mail size={17} aria-hidden />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("spaces.invites.banner", { count: invites.length })}</span>
-          <span className="shrink-0 text-small font-semibold text-primary">{t("spaces.invites.open")}</span>
-        </button>
+        <HubAttentionStrip icon={Mail} actionLabel={t("spaces.invites.open")} onAction={() => setSection("invites")} testId="space-invites-banner">
+          {t("spaces.invites.banner", { count: invites.length })}
+        </HubAttentionStrip>
       )}
 
       {showTemplates && <SpaceTemplates onPick={(kind) => openCreate(kind)} />}
@@ -362,12 +346,8 @@ export function SpacesHome() {
           {error ? (
             <EmptyState icon={SpacesIcon} scene="offline" title={t("spaces.home.loadError")} action={{ label: t("common.retry"), onClick: () => setReloadKey((k) => k + 1) }} compact />
           ) : items === null ? (
-            <ul className={view === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"}>
-              {Array.from({ length: 6 }, (_, index) => (
-                <li key={index}>
-                  <Skeleton className={view === "grid" ? "aspect-[4/5] w-full rounded-xl" : "h-20 w-full rounded-lg"} />
-                </li>
-              ))}
+            <ul className={view === "grid" ? HUB_GRID_CLASS : "space-y-2"}>
+              {Array.from({ length: 6 }, (_, index) => (view === "grid" ? <HubCardSkeleton key={index} /> : <li key={index} className="h-20 animate-pulse rounded-lg bg-surface-soft" />))}
             </ul>
           ) : isEmptyLibrary && user ? (
             <FirstSpaceEmpty onCreate={() => openCreate()} />
@@ -381,7 +361,7 @@ export function SpacesHome() {
             />
           ) : (
             <>
-              <ul data-testid="spaces-list" data-view={view} className={view === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"}>
+              <ul data-testid="spaces-list" data-view={view} className={view === "grid" ? HUB_GRID_CLASS : "space-y-2"}>
                 {shown.map((space) => (
                   <SpaceCard key={space.id} space={space} layout={view} userId={user?.id ?? null} palette={palettes.get(space.id)} onChange={updateOne} onRemove={removeOne} />
                 ))}
@@ -412,7 +392,7 @@ export function SpacesHome() {
           onClose={() => setFilterOpen(false)}
         />
       )}
-    </PageContainer>
+    </div>
   );
 }
 

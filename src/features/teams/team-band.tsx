@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft } from "@/components/icons/arrow-left";
 import { UserPlus } from "@/components/icons/user-plus";
 import { LogOut } from "@/components/icons/log-out";
 import { MoreVertical } from "@/components/icons/more-vertical";
 import { Avatar } from "@/components/ui/avatar";
-import { ScrollRow } from "@/components/ui/scroll-row";
+import { Tabs } from "@/components/ui/tabs";
+import { HubDetailBand } from "@/features/hub/hub-kit";
 import { useOnlineIds } from "@/features/presence/use-presence";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { listTeamMembers, type TeamMember, type TeamSummary } from "@/lib/supabase/teams";
@@ -84,125 +84,119 @@ export function TeamBand({
     };
   }, [menuOpen]);
 
-  const shown = faces.slice(0, 3);
-  const more = Math.max(0, team.memberCount - shown.length);
   const meta = [t("tm.card.members", { count: team.memberCount }), t("tp.header.projects", { count: team.spaceCount }), t("tm.header.inviteOnly")];
 
   return (
-    <div className={cn("rounded-none px-3 py-3 sm:px-5 md:rounded-2xl md:px-8 md:py-5", BAND_TONE[team.tone] ?? BAND_TONE.primary)} data-team-band data-testid="team-band">
-      <div className="flex items-center gap-2.5 md:gap-4">
-        <Link href="/teams" aria-label={t("tm.page.backToTeams")} className="-ml-1 grid h-11 w-11 shrink-0 place-items-center rounded-full text-text hover:bg-surface/60 md:hidden" data-team-back-phone>
-          <ArrowLeft size={22} aria-hidden />
-        </Link>
-        <TeamMark name={team.name} tone={team.tone} solid size={52} className="rounded-[15px] md:hidden" />
-        <TeamMark name={team.name} tone={team.tone} solid size={76} className="hidden rounded-[22px] md:inline-grid" />
-        <div className="min-w-0 flex-1" data-team-header-block>
-          <p className="hidden text-caption font-bold uppercase tracking-[0.08em] text-primary md:block">{t("tc.band.kicker")}</p>
-          <h1 className="truncate font-display text-[1.3rem] font-extrabold leading-tight text-text md:text-[2rem]" data-team-name>
-            {team.name}
-          </h1>
-          <p className="line-clamp-2 text-caption text-text-secondary md:truncate md:text-small" data-team-meta>
-            {meta.join(" · ")}
-            {onlineCount > 0 && (
-              <>
-                {" · "}
-                <span className="font-semibold text-success" data-team-online-count>
-                  {t("tm.chat.onlineCount", { count: onlineCount })}
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-        {shown.length > 0 && (
-          <div className="hidden items-center lg:flex" data-team-avatars>
-            {shown.map((member, index) => (
-              <span key={member.userId} className={cn("rounded-full ring-2 ring-surface", index > 0 && "-ml-1.5")}>
-                <Avatar src={member.avatarUrl} alt={member.displayName || member.username} size={32} />
+    <HubDetailBand
+      data-testid="team-band"
+      data-team-band=""
+      className={BAND_TONE[team.tone] ?? BAND_TONE.primary}
+      backHref="/teams"
+      backLabel={t("tm.page.backToTeams")}
+      backAttrs={{ "data-team-back-phone": "" }}
+      art={
+        <span aria-hidden className={cn("absolute inset-0 grid place-items-center", BAND_TONE[team.tone] ?? BAND_TONE.primary)}>
+          <TeamMark name={team.name} tone={team.tone} solid size={52} className="rounded-[15px]" />
+        </span>
+      }
+      kicker={<span className="rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">{t("tc.band.kicker")}</span>}
+      title={<h1 data-team-name="">{team.name}</h1>}
+      byline={
+        <p className="min-w-0 truncate text-small text-text-secondary" data-team-meta data-team-header-block>
+          {meta.join(" · ")}
+          {onlineCount > 0 && (
+            <>
+              {" · "}
+              <span className="font-semibold text-success" data-team-online-count>
+                {t("tm.chat.onlineCount", { count: onlineCount })}
               </span>
-            ))}
-            {more > 0 && <span className="-ml-1.5 grid h-8 min-w-8 place-items-center rounded-full bg-surface px-1.5 text-caption font-bold text-text ring-2 ring-surface">+{more}</span>}
-          </div>
-        )}
-        {canInvite && (
-          <button
-            type="button"
-            onClick={onInvite}
-            data-team-invite-header
-            aria-label={t("tm.invite.title")}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center gap-0 rounded-full bg-primary text-small font-semibold text-primary-foreground hover:bg-primary-hover sm:w-auto sm:px-4 md:h-10 md:px-5"
-          >
-            <UserPlus size={20} aria-hidden className="sm:hidden" />
-            <span className="max-sm:hidden">{t("tm.invite.title")}</span>
-          </button>
-        )}
-        <div className="relative shrink-0" ref={menuRef}>
-          <button
-            type="button"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-label={t("tc.band.menu")}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            data-team-menu
-            className="grid h-11 w-11 place-items-center rounded-full text-text hover:bg-surface/60 md:h-10 md:w-10 md:border md:border-border md:bg-surface"
-          >
-            <MoreVertical size={20} aria-hidden />
-          </button>
-          {menuOpen && (
-            <ul role="menu" className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-border-soft bg-surface p-1.5 shadow-pop" data-team-menu-list>
-              {menuItems.map((item) => (
-                <li key={item.key} role="none">
-                  <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center rounded-lg px-3 text-small font-medium text-text hover:bg-surface-soft">
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-              {onLeave && (
-                <li role="none">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onLeave();
-                    }}
-                    data-team-menu-leave
-                    className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-small font-medium text-danger hover:bg-danger/10"
-                  >
-                    <LogOut size={16} aria-hidden />
-                    {t("tm.members.leave")}
-                  </button>
-                </li>
-              )}
-            </ul>
+            </>
           )}
-        </div>
-      </div>
-    </div>
+        </p>
+      }
+      actions={
+        <>
+          {faces.length > 0 && (
+            <div className="hidden items-center lg:flex" data-team-avatars>
+              {faces.slice(0, 3).map((member, index) => (
+                <span key={member.userId} className={cn("rounded-full ring-2 ring-surface", index > 0 && "-ml-1.5")}>
+                  <Avatar src={member.avatarUrl} alt={member.displayName || member.username} size={32} />
+                </span>
+              ))}
+              {Math.max(0, team.memberCount - Math.min(3, faces.length)) > 0 && (
+                <span className="-ml-1.5 grid h-8 min-w-8 place-items-center rounded-full bg-surface px-1.5 text-caption font-bold text-text ring-2 ring-surface">+{Math.max(0, team.memberCount - Math.min(3, faces.length))}</span>
+              )}
+            </div>
+          )}
+          {canInvite && (
+            <button
+              type="button"
+              onClick={onInvite}
+              data-team-invite-header
+              aria-label={t("tm.invite.title")}
+              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover md:px-5"
+            >
+              <UserPlus size={18} aria-hidden />
+              <span>{t("tm.invite.title")}</span>
+            </button>
+          )}
+          <div className="relative shrink-0" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label={t("tc.band.menu")}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              data-team-menu
+              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/80 text-text hover:bg-surface"
+            >
+              <MoreVertical size={20} aria-hidden />
+            </button>
+            {menuOpen && (
+              <ul role="menu" className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-border-soft bg-surface p-1.5 shadow-pop" data-team-menu-list>
+                {menuItems.map((item) => (
+                  <li key={item.key} role="none">
+                    <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center rounded-lg px-3 text-small font-medium text-text hover:bg-surface-soft">
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+                {onLeave && (
+                  <li role="none">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onLeave();
+                      }}
+                      data-team-menu-leave
+                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-small font-medium text-danger hover:bg-danger/10"
+                    >
+                      <LogOut size={16} aria-hidden />
+                      {t("tm.members.leave")}
+                    </button>
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
+        </>
+      }
+    />
   );
 }
 
-/** Alt çizgili sekmeler: masaüstünde bantla aynı kolon, telefonda kaydırılır. Sayaçlar turuncudur ("senin olan"). */
+/** Alt çizgili sekmeler (ortak `Tabs`, link sekmeleri): Genel bakış · Onaylar · Sohbet · Üyeler · Panel · Yönetim; dar ekranda kaydırılır. */
 export function TeamTabs({ teamId, items, active, ariaLabel }: { teamId: string; items: TeamTabItem[]; active: TeamTab; ariaLabel: string }) {
   return (
-    <nav aria-label={ariaLabel} className="border-b border-border-soft bg-surface md:rounded-b-none md:bg-transparent" data-testid="team-tabs">
-      <ScrollRow className="gap-1 px-1 md:px-3">
-        {items.map((item) => (
-          <Link
-            key={item.key}
-            href={teamLink(teamId, item.key)}
-            replace
-            aria-current={active === item.key ? "page" : undefined}
-            data-team-tab-link={item.key}
-            className={cn(
-              "-mb-px inline-flex h-12 shrink-0 items-center gap-1.5 border-b-2 px-3 text-body transition-colors md:px-4",
-              active === item.key ? "border-primary font-bold text-primary" : "border-transparent font-medium text-text-secondary hover:text-text",
-            )}
-          >
-            {item.label}
-            {item.count !== undefined && item.count > 0 && <span className="text-small font-bold tabular-nums text-secondary">{item.count}</span>}
-          </Link>
-        ))}
-      </ScrollRow>
-    </nav>
+    <div data-testid="team-tabs">
+      <Tabs
+        ariaLabel={ariaLabel}
+        active={active}
+        onChange={() => undefined}
+        items={items.map((item) => ({ key: item.key, label: item.label, count: item.count && item.count > 0 ? item.count : undefined, href: teamLink(teamId, item.key), attrs: { "data-team-tab-link": item.key } }))}
+      />
+    </div>
   );
 }

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  */
 export function CommunityLayout({ children, aside, asideLabel, className }: { children: ReactNode; aside?: ReactNode; asideLabel?: string; className?: string }) {
   return (
-    <div className={cn("mx-auto w-full max-w-[1120px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8", className)}>
+    <div className={cn("mx-auto w-full max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8", className)}>
       <div className={cn(aside && "xl:grid xl:grid-cols-[minmax(0,1fr)_16.5rem] xl:items-start xl:gap-6")}>
         <div className="min-w-0 space-y-4 sm:space-y-5">{children}</div>
         {aside && (
@@ -35,6 +35,8 @@ export function CommunityReadingColumn({ children, className }: { children: Reac
  * kartlar); yanında xl'de yardımcı sütun durduğu için en çok iki sütun.
  */
 export const FEED_GRID_COLUMNS = "sm:columns-2";
+/** Ana sayfa akışları (Gönderiler · Keşfet): yan sütun yok, geniş masaüstünde (xl) üç sütun — kart ızgarasıyla aynı sütun sayısı (docs/history/378-*). */
+export const HOME_FEED_GRID_COLUMNS = "sm:columns-2 xl:columns-3";
 /**
  * Gönderinin üstündeki bağlam satırı (topluluk adı, "Sabit"): telefonda satırın içinde kartın iç boşluğuna hizalı, `sm`+ kutunun hemen
  * üstünde. Öğe (`li`) `CONTENT_GRID_ITEM_CLASS` taşır, böylece satır ve kart aynı sütunda birlikte kalır.

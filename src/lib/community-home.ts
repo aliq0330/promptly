@@ -4,9 +4,9 @@
  * burada yalnız sekme çözümleme, öneri tekrar azaltma, görüldü kuyruğu ve tekrarsız birleştirme vardır.
  */
 
-export type HomeTab = "posts" | "discover" | "managed" | "invites";
+export type HomeTab = "mine" | "posts" | "discover" | "managed" | "invites";
 
-export const HOME_TABS: readonly HomeTab[] = ["posts", "discover", "managed", "invites"];
+export const HOME_TABS: readonly HomeTab[] = ["mine", "posts", "discover", "managed", "invites"];
 
 /** "Davet ve başvurular" alt bölümleri: bana gelen davetler · benim gönderdiğim başvurular · yönettiğim topluluklara gelen başvurular. */
 export type InvitesSection = "invites" | "mine" | "incoming";
@@ -17,12 +17,15 @@ export function isInvitesSection(value: unknown): value is InvitesSection {
   return typeof value === "string" && (INVITES_SECTIONS as readonly string[]).includes(value);
 }
 
-/** `mine` bir sekme değil, Gönderiler'deki "Topluluklarım" bağlantısının açtığı liste görünümüdür (eski `?tab=mine` adresi çalışır). */
-export type HomeView = HomeTab | "mine";
+/**
+ * Görünüm = sekme (docs/history/378-*): Hub düzeninde ilk sekme "Topluluklarım"dır (üye olduğum topluluklar kart ızgarasında); Gönderiler akışı ikinci sekmedir.
+ */
+export type HomeView = HomeTab;
 
 /**
- * Adres parametresinden görünüm. Oturumsuz ziyaretçi her zaman Keşfet'tedir. Eski adresler korunur: `requests` → Davet ve başvurular
- * (Başvurularım bölümü), `invites` → Davet ve başvurular. Yönetilen topluluğu olmayan kullanıcı `managed` isterse Gönderiler'e düşer.
+ * Adres parametresinden görünüm. Oturumsuz ziyaretçi her zaman Keşfet'tedir. Varsayılan Topluluklarım'dır (`?tab=mine` aynı sayfa); Gönderiler `?tab=posts`.
+ * Eski adresler korunur: `requests` → Davet ve başvurular (Başvurularım bölümü), `invites` → Davet ve başvurular. Yönetilen topluluğu olmayan
+ * kullanıcı `managed` isterse Topluluklarım'a düşer.
  */
 export function resolveHomeView(
   tabParam: string | null,
@@ -30,24 +33,24 @@ export function resolveHomeView(
 ): { view: HomeView; section: InvitesSection } {
   if (!state.signedIn) return { view: "discover", section: "invites" };
   switch (tabParam) {
+    case "posts":
+      return { view: "posts", section: "invites" };
     case "discover":
       return { view: "discover", section: "invites" };
-    case "mine":
-      return { view: "mine", section: "invites" };
     case "managed":
-      return { view: state.managesAny ? "managed" : "posts", section: "invites" };
+      return { view: state.managesAny ? "managed" : "mine", section: "invites" };
     case "invites":
       return { view: "invites", section: "invites" };
     case "requests":
       return { view: "invites", section: "mine" };
     default:
-      return { view: "posts", section: "invites" };
+      return { view: "mine", section: "invites" };
   }
 }
 
-/** Sekme adresi: Gönderiler (varsayılan) sade adres; diğerleri `?tab=`; Davet ve başvurular bölümü `section=` ile. */
+/** Sekme adresi: Topluluklarım (varsayılan) sade adres; diğerleri `?tab=`; Davet ve başvurular bölümü `section=` ile. */
 export function homeHref(view: HomeView, section?: InvitesSection): string {
-  if (view === "posts") return "/communities";
+  if (view === "mine") return "/communities";
   const base = `/communities?tab=${view}`;
   return view === "invites" && section && section !== "invites" ? `${base}&section=${section}` : base;
 }
