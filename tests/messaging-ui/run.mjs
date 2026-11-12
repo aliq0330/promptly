@@ -359,7 +359,7 @@ for (const [label, viewport] of [["mobil 390x800", { width: 390, height: 800 }],
     await page.waitForTimeout(500);
     const box = await d.locator("div.flex.max-h-\\[85vh\\]").boundingBox();
     assert.ok(box.x >= 0 && box.x + box.width <= viewport.width + 1 && box.y >= 0 && box.y + box.height <= viewport.height + 1, `panel inside viewport ${JSON.stringify(box)}`);
-    if (viewport.width < 640) assert.ok(Math.abs(box.y + box.height - viewport.height) < 2, "docked as a bottom sheet on phones");
+    if (viewport.width < 640) assert.ok(Math.abs(viewport.height - (box.y + box.height) - viewport.height * 0.05) < 4, "floats 5% above the bottom edge on phones (docs/history/380-*)");
     await d.getByPlaceholder("Kullanıcı adı veya isimle ara").fill("am");
     await d.locator("section[aria-label='Arama sonuçları'] li", { hasText: "Amy" }).click();
     await page.waitForURL(new RegExp(`messages/local/?\\?to=${U.amy.id}`));

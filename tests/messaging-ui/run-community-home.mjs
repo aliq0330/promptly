@@ -515,6 +515,17 @@ await scenario("27a. Mobil bottom sheet basamakları (docs/history/375-*): %75 �
   const vh = 800;
   const h0 = await height();
   assert.ok(Math.abs(h0 - vh * 0.75) <= 4, `opens at 75% (${h0})`);
+  // Kart yerden kopuk (docs/history/380-*): altta %5, üstte %20 boşluk; yanlardan 10 px, dört köşe yuvarlak.
+  const gaps = async () => {
+    const b = await card.locator("> *").last().boundingBox();
+    const r = await card.locator("> *").last().evaluate((el) => getComputedStyle(el).borderBottomLeftRadius);
+    return { top: Math.round(b.y), bottom: Math.round(vh - (b.y + b.height)), left: Math.round(b.x), right: Math.round(390 - (b.x + b.width)), radius: parseFloat(r) };
+  };
+  const g0 = await gaps();
+  assert.ok(Math.abs(g0.bottom - vh * 0.05) <= 4, `bottom gap 5% (${g0.bottom})`);
+  assert.ok(Math.abs(g0.top - vh * 0.2) <= 4, `top gap 20% (${g0.top})`);
+  assert.ok(g0.left >= 8 && g0.left <= 12 && g0.right >= 8 && g0.right <= 12, `10px side inset (${g0.left}/${g0.right})`);
+  assert.ok(g0.radius >= 16, `bottom corners rounded (${g0.radius})`);
   // yukarı sürükle: kart sırasında büyür, bırakınca %90'a oturur
   // Başlık satırından sürüklenir (alanlar — textarea — sürükleme sayılmaz).
   const up = await touchDrag(context, page, { from: 240, to: 40, steps: 10 });
@@ -523,6 +534,8 @@ await scenario("27a. Mobil bottom sheet basamakları (docs/history/375-*): %75 �
   await page.waitForTimeout(500);
   const h1 = await height();
   assert.ok(Math.abs(h1 - vh * 0.9) <= 4, `expands to 90% (${h1})`);
+  const g1 = await gaps();
+  assert.ok(Math.abs(g1.top - vh * 0.05) <= 4 && Math.abs(g1.bottom - vh * 0.05) <= 4, `90%: 5% top and bottom (${g1.top}/${g1.bottom})`);
   assert.equal(await dialog.count(), 1, "still open");
   // aşağı sürükle (kısa): %75'e iner, kapanmaz
   const down = await touchDrag(context, page, { from: 110, to: 290, steps: 10 });

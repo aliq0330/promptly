@@ -46,6 +46,7 @@ export function unlockBodyScroll() {
  * aşağı kayarak kapanır ve `onClose` çağrılır, aksi hâlde yaylanarak yerine döner. Textarea/select/aralık kaydırıcısı ve `data-no-sheet-drag`
  * üzerinden başlayan hareket sürükleme sayılmaz (metin seçimi/değer ayarı bozulmasın).
  *
+ * Kart telefonda yerden kopuk durur (altta %5 boşluk, `Modal` içinde `floatWrap`): %75'te üstte %20, %90'da üstte %5 boşluk kalır.
  * Üç basamak: kart %75 yükseklikte açılır; içeriği buna sığmayıp kırpılıyorsa yukarı sürükleyince %90'a genişler (`--sheet-snap`), %90'dayken
  * aşağı sürükleyince %75'e iner, %75'teyken aşağı sürükleyince kapanır. %75'te yukarı hareket önce kartı genişletir, içerik kaydırması
  * genişleyince başlar.
@@ -212,7 +213,8 @@ function useSheetDismiss(mode: "dialog" | "sheet" | "side", onCloseRef: React.Mu
       if (dy > Math.min(140, height * 0.3) || velocity > 0.6) {
         closing = true;
         sheet.style.transition = "transform 220ms cubic-bezier(0.4, 0, 1, 1)";
-        sheet.style.transform = `translateY(${height + 40}px)`;
+        // Kart yerden kopuk durur (alttan %5 boşluk): tam çıkması için o boşluğu da aşmalı.
+        sheet.style.transform = `translateY(${height + 40 + Math.round(window.innerHeight * 0.1)}px)`;
         overlay.style.transition = "background-color 220ms";
         overlay.style.backgroundColor = "transparent";
         window.setTimeout(() => onCloseRef.current(), 210);
@@ -309,6 +311,11 @@ export function Modal({
   // yüksekliği/köşesi/kenarlığı kalkar); başlık üstte, düğmeler klavyenin hemen üstünde, gövde kayar.
   const cover = keyboard && variant !== "side" ? "max-sm:h-full max-sm:*:!h-full max-sm:*:!max-w-none max-sm:*:!rounded-none max-sm:*:!border-0 max-sm:*:!shadow-none" : "";
   const coverOverlay = keyboard && variant !== "side" ? "max-sm:!bg-surface " : "";
+  // Telefonda alttan açılan kart ekranın dibine YAPIŞMAZ (docs/history/380-*): altta %5 boşluk (alt güvenli alandan az olamaz), yanlardan 10 px, dört köşesi
+  // yuvarlak. Toplam yükseklik %75 (üstte %20), yukarı sürüklenince %90 (üstte %5). Klavye açıkken boşluklar kalkar (`cover` kartı görünür alana yayar).
+  // Sarmalayıcı dokunmayı geçirir ki kartın yanındaki/altındaki boşluğa dokunmak (arka plan gibi) pencereyi kapatsın.
+  const floatWrap = keyboard ? "" : "max-sm:mb-[max(5dvh,env(safe-area-inset-bottom))] max-sm:pointer-events-none ";
+  const floatCard = keyboard ? "" : "max-sm:*:pointer-events-auto max-sm:*:!w-[calc(100%-1.25rem)] max-sm:*:!rounded-xl ";
   const keyboardHeight = keyboard?.height ?? 0;
   useEffect(() => {
     if (!keyboardHeight) return;
@@ -364,7 +371,7 @@ export function Modal({
         >
           <div
             ref={sheetRef}
-            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up *:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))] " + cover}
+            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up *:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))] " + floatWrap + floatCard + cover}
             onClick={(event) => event.stopPropagation()}
           >
             {!isSide && <SheetGrabber always />}
@@ -409,13 +416,13 @@ export function Modal({
         <div
           ref={sheetRef}
           className={
-            "relative mt-auto flex w-full justify-center animate-sheet-up sm:mb-auto sm:animate-pop-in " + cover + " " +
-            "*:shadow-pop max-sm:*:max-w-none max-sm:*:rounded-b-none max-sm:*:border-x-0 max-sm:*:border-b-0 " +
-            // Alttan açılan kart en çok ekranın %75'i: üstteki çeyrek hep görünür (docs/history/242-*). Başlık/düğme satırı sabit, ortası kayar:
+            "relative mt-auto flex w-full justify-center animate-sheet-up sm:mb-auto sm:animate-pop-in " + floatWrap + cover + " " +
+            "*:shadow-pop max-sm:*:max-w-none " + floatCard +
+            // Alttan açılan kart en çok ekranın %75'i (alttan %5 boşlukla: üstte %20, docs/history/242-*, 380-*). Başlık/düğme satırı sabit, ortası kayar:
             // kartın kendisi `flex flex-col` + kaydırılan gövde (`SheetFrame`) olmalı.
             "max-sm:*:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))] " +
-            // Klavye açıkken alt güvenli alan yoktur: kartın altı klavyeye yapışır (altta bulanık/boş şerit kalmaz).
-            (keyboard ? "max-sm:*:pb-2" : "max-sm:*:pb-[max(1.25rem,env(safe-area-inset-bottom))]")
+            // Klavye açıkken alt güvenli alan yoktur: kartın altı klavyeye yapışır (altta bulanık/boş şerit kalmaz). Kart yüzerken alt güvenli alanı boşluk karşılar.
+            (keyboard ? "max-sm:*:pb-2" : "max-sm:*:pb-5")
           }
         >
           <SheetGrabber always={false} />
