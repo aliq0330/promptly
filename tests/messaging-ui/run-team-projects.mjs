@@ -433,8 +433,20 @@ await scenario("14. Ekle menüsü (docs/history/376-*): pano/görsel/değişken/
   await page.locator("[data-area-add]").click();
   const options = page.getByTestId("area-add-options");
   await options.waitFor();
-  for (const key of ["board", "image", "variable", "palette", "note", "create-prompt", "pick-prompt", "create-request", "pick-request", "create-workflow", "pick-workflow", "create-preset", "pick-preset"]) await options.locator(`[data-area-add-option=${key}]`).waitFor();
-  assert.equal(await options.locator("[data-area-add-option=prompt]").count(), 0, "prompt dosyada yazılmaz: Oluştur (oluşturma ekranı) ya da Seç");
+  for (const key of ["board", "image", "variable", "palette", "note", "prompt", "request", "workflow", "preset"]) await options.locator(`[data-area-add-option=${key}]`).waitFor();
+  // Tür satırına dokununca ekranın ORTASINDA "Oluştur / Seç" seçimi açılır (prompt dosyada yazılmaz).
+  await options.locator("[data-area-add-option=prompt]").click();
+  const choice = page.locator("[data-content-add-choice=prompt]");
+  await choice.waitFor();
+  await choice.locator("[data-add-choice=create]").waitFor();
+  await choice.locator("[data-add-choice=pick]").waitFor();
+  const box = await choice.boundingBox();
+  const view = page.viewportSize();
+  assert.ok(Math.abs(box.y + box.height / 2 - view.height / 2) < view.height * 0.2, "seçim penceresi ekranın ortasında");
+  await page.keyboard.press("Escape");
+  await choice.waitFor({ state: "detached" });
+  await page.locator("[data-area-add]").click();
+  await options.waitFor();
   await page.getByText("eklediğin her şey taslak başlar", { exact: false }).waitFor();
   await options.locator("[data-area-add-option=board]").click();
   const form = page.getByTestId("team-new-board-form");
@@ -786,7 +798,8 @@ await scenario("32b. Ekle → Oluştur: gerçek oluşturma ekranı ekip bağlam�
   await page.goto(projectUrl(`&file=${FILE}`));
   await page.getByTestId("area-folder-list").waitFor();
   await page.locator("[data-area-add]").click();
-  await page.locator("[data-area-add-option=create-prompt]").click();
+  await page.locator("[data-area-add-option=prompt]").click();
+  await page.locator("[data-add-choice=create]").click();
   await page.waitForURL(new RegExp(`/create/?\\?mode=prompt&teamProject=${PROJECT}&teamFile=${FILE}`));
   const card = page.locator("[data-team-destination]");
   await card.waitFor();
@@ -801,7 +814,8 @@ await scenario("32c. Ekle → Seç: iki sekme (Paylaştıklarım / Başkaların�
   await page.goto(projectUrl(`&file=${FILE}`));
   await page.getByTestId("area-folder-list").waitFor();
   await page.locator("[data-area-add]").click();
-  await page.locator("[data-area-add-option=pick-prompt]").click();
+  await page.locator("[data-area-add-option=prompt]").click();
+  await page.locator("[data-add-choice=pick]").click();
   const picker = page.locator("[data-team-content-picker=prompt]");
   await picker.waitFor();
   await picker.locator(`[data-picker-row="${PICK_P1}"]`).getByText("Benim promptum").waitFor();
@@ -822,6 +836,31 @@ await scenario("32c. Ekle → Seç: iki sekme (Paylaştıklarım / Başkaların�
   assert.equal(await picker.getByRole("searchbox").count() + await picker.getByRole("combobox").count() > 0, true, "gelişmiş arama kutusu");
   await picker.getByRole("tab", { name: "Paylaştıklarım" }).click().catch(() => page.getByRole("tab", { name: "Paylaştıklarım" }).click());
 }, { setup: pickerSetup });
+
+await scenario("32e. Seçilen içerik dosyaya girince kaynağı HEMEN yüklenir (docs/history/377-*): kart 'Kaynak artık erişilemiyor' DEĞİL içeriğin başlığını gösterir, sayfa yenilemek gerekmez", async ({ page, db }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("area-folder-list").waitFor();
+  await page.locator("[data-area-add]").click();
+  await page.locator("[data-area-add-option=prompt]").click();
+  await page.locator("[data-add-choice=pick]").click();
+  const picker = page.locator("[data-team-content-picker=prompt]");
+  await picker.waitFor();
+  await picker.locator(`[data-picker-add="${PICK_P1}"]`).click();
+  await picker.locator(`[data-picker-added="${PICK_P1}"]`).waitFor();
+  await page.locator("[data-picker-done]").click();
+  await page.getByTestId("area-rows").getByText("Benim promptum").waitFor();
+  assert.equal(await page.getByText("Kaynak artık erişilemiyor").count(), 0, "kaynak yüklendi, erişilemiyor yazmaz");
+}, {
+  setup: (db) => {
+    pickerSetup(db);
+    db.rpc.team_attach_content = (body) => {
+      db.teamCalls.push({ name: "team_attach_content", body });
+      const id = "17e70000-0000-4000-8000-0000000000aa";
+      db.addItem(AREA_FILE, { id, kind: "prompt", is_draft: false, prompt_id: body.p_id, title: "", rev_state: "approved", created_by: ME });
+      return { body: { item_id: id, board_item_id: null, existing: false } };
+    };
+  },
+});
 
 await scenario("32d. Panodaki yansıma: 'Panodan kaldır' yalnız yerleşimi siler (onay metni dosyada kalacağını söyler); 'Dosyadan sil' asıl öğeyi siler → team_item_delete", async ({ page, db }) => {
   db.rpc.team_item_delete = (body) => { db.teamCalls.push({ name: "team_item_delete", body }); return { body: null }; };
@@ -1127,6 +1166,62 @@ await scenario("45. Öğe düzenleme: Grup seçicide '+ Yeni grup…' ile grup a
   const group = db.spaceGroups.find((g) => g.name === "Salon");
   await page.waitForTimeout(400);
   assert.equal(db.spaceItems.find((row) => row.id === IMAGE(1)).group_id, group.id, "öğe gruba girdi");
+}, { items: detailItems });
+
+await scenario("45b. Çoklu seçim (docs/history/377-*): 'Seç' → kartlara dokun → alt çubukta sayı + 'Gruba ekle'; karo penceresinde yeni grup aç → seçilen öğeler o gruba girer, seçim kapanır, grup süzgeci çıkar", async ({ page, db }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  const rows = page.getByTestId("area-rows");
+  await rows.waitFor();
+  assert.equal(await page.locator("[data-area-groups-manage-phone]").count(), 0, "eski 'Grupları yönet' düğmesi yok");
+  await page.locator("[data-area-select]").click();
+  await page.getByTestId("area-select-bar").waitFor();
+  assert.equal(await page.locator("[data-select-assign]").isDisabled(), true, "seçim yokken Gruba ekle kapalı");
+  const cards = rows.locator("[data-area-card]");
+  await cards.nth(0).click();
+  await cards.nth(1).click();
+  assert.equal(page.url().includes("item="), false, "seçim kipinde karta dokunmak çekmeceyi açmaz");
+  await page.locator("[data-select-count]").getByText("2 seçili").waitFor();
+  await page.locator("[data-select-assign]").click();
+  const form = page.getByTestId("group-assign-form");
+  await form.waitFor();
+  assert.deepEqual(await form.locator("[data-group-tile]").evaluateAll((els) => els.map((el) => el.getAttribute("data-group-tile"))), ["none", "new"], "grup yok: yalnız Grupsuz + Yeni grup karoları");
+  await form.locator("[data-group-tile=new]").click();
+  await form.locator("[data-group-new-name]").fill("Mutfak");
+  await form.locator("[data-group-new-create]").click();
+  const group = await (async () => {
+    for (let i = 0; i < 30; i += 1) {
+      const found = db.spaceGroups.find((g) => g.name === "Mutfak");
+      if (found) return found;
+      await page.waitForTimeout(100);
+    }
+    return null;
+  })();
+  assert.ok(group, "grup yazıldı");
+  await form.locator(`[data-group-tile="${group.id}"][aria-checked=true]`).waitFor();
+  await form.getByRole("button", { name: "Mutfak grubuna ekle" }).click();
+  await page.getByTestId("area-select-bar").waitFor({ state: "detached" });
+  await page.waitForTimeout(400);
+  assert.equal(db.spaceItems.filter((row) => row.group_id === group.id).length, 2, "iki öğe gruba girdi");
+  await page.locator(`[data-area-group-filter="${group.id}"]`).waitFor();
+}, { items: detailItems });
+
+await scenario("45c. Öğe çekmecesi ⋯ → 'Gruba ekle': aynı karo penceresi tek öğe için açılır; grup seçilince öğe o gruba girer", async ({ page, db }) => {
+  await page.goto(itemUrl(IMAGE(1)));
+  await page.locator("[data-path-more]").click();
+  await page.locator("[data-item-group-add]").click();
+  const form = page.getByTestId("group-assign-form");
+  await form.waitFor();
+  await form.getByText("Gruba ekle").first().waitFor();
+  await form.locator("[data-group-tile=new]").click();
+  await form.locator("[data-group-new-name]").fill("Salon");
+  await form.locator("[data-group-new-create]").click();
+  await form.locator("[data-group-tile][aria-checked=true]").waitFor();
+  await form.getByRole("button", { name: "Salon grubuna ekle" }).click();
+  await form.waitFor({ state: "detached" });
+  await page.waitForTimeout(400);
+  const group = db.spaceGroups.find((g) => g.name === "Salon");
+  assert.equal(db.spaceItems.find((row) => row.id === IMAGE(1)).group_id, group.id, "öğe gruba girdi");
+  await page.locator("[data-item-group]").getByText("Salon").waitFor();
 }, { items: detailItems });
 
 // SURVEY=<klasör>: proje/dosya/pano/onay kuyruğu/öğe çekmecesi ekranlarının üç boyutta ekran görüntüsü (görsel inceleme).

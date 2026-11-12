@@ -329,8 +329,8 @@ await scenario("5. Ekle menüsü: Promptly içeriği + Çiz ve düzenle satırla
   await page.getByRole("button", { name: "Ekle" }).first().click();
   const pop = page.locator("[data-board-popover], [data-board-sheet]").last();
   await pop.waitFor();
-  // docs/history/376-*: dosyadakiyle AYNI satırlar — her içerik türü için Oluştur · Seç; prompt panoda yazılmaz.
-  for (const label of ["Prompt oluştur", "Prompt seç", "İstek oluştur", "İstek seç", "Workflow oluştur", "Workflow seç", "Ayar paketi oluştur", "Ayar paketi seç", "Görsel", "Not", "Palet", "Metin", "Çerçeve", "Kalem", "Şekil"]) await pop.getByText(label, { exact: true }).first().waitFor();
+  // docs/history/376-*, 377-*: dosyadakiyle AYNI satırlar — her içerik türü TEK satır (dokununca ortada Oluştur · Seç); prompt panoda yazılmaz.
+  for (const label of ["Prompt", "İstek", "Workflow", "Ayar paketi", "Görsel", "Not", "Palet", "Metin", "Çerçeve", "Kalem", "Şekil"]) await pop.getByText(label, { exact: true }).first().waitFor();
   await pop.getByText("Not", { exact: true }).first().click();
   await page.getByRole("dialog").last().waitFor();
 });
@@ -339,7 +339,8 @@ await scenario("5b. Panodan Prompt seç: iki sekmeli seçici; Ekle → team_atta
   await page.goto(boardUrl(BOARD));
   await page.getByRole("button", { name: "Ekle" }).first().click();
   const pop = page.locator("[data-board-popover], [data-board-sheet]").last();
-  await pop.getByText("Prompt seç", { exact: true }).first().click();
+  await pop.getByText("Prompt", { exact: true }).first().click();
+  await page.locator("[data-add-choice=pick]").click();
   const picker = page.locator("[data-team-content-picker=prompt]");
   await picker.waitFor();
   await picker.getByRole("tab", { name: "Paylaştıklarım" }).waitFor();

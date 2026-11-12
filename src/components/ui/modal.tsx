@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { TEXT_ENTRY_SELECTOR } from "@/lib/keyboard-open";
 import { useKeyboardViewport } from "@/lib/use-keyboard-viewport";
 import { Portal } from "./portal";
 
@@ -269,6 +270,7 @@ export function Modal({
   children,
   variant = "dialog",
   overLayers = false,
+  centered = false,
 }: {
   onClose: () => void;
   labelledBy: string;
@@ -282,6 +284,11 @@ export function Modal({
    * `side`: sağa yapışık, tam yükseklikte panel (masaüstü/yatay tablet).
    */
   variant?: "dialog" | "sheet" | "side";
+  /**
+   * Küçük seçim/onay pencereleri: telefonda da ekranın ORTASINDA açılır (alt sayfa değil), sürükleyerek kapanmaz. Yalnız `dialog`
+   * varyantında anlamlıdır.
+   */
+  centered?: boolean;
 }) {
   // Registered once per mount (not per `onClose` identity) so a parent
   // re-rendering never re-orders the stack and steals Escape from its child.
@@ -289,7 +296,7 @@ export function Modal({
   useEffect(() => {
     onCloseRef.current = onClose;
   });
-  const { overlayRef, sheetRef } = useSheetDismiss(variant, onCloseRef);
+  const { overlayRef, sheetRef } = useSheetDismiss(centered && variant === "dialog" ? "side" : variant, onCloseRef);
   // Ekran klavyesi açıkken (iOS Safari) katman görünür alana oturur: alt sayfa klavyenin ÜSTÜNDE kalır, başlığı ekranın dışına kaçmaz.
   const keyboard = useKeyboardViewport();
   // `--sheet-max-h`: klavye açıkken kartın en çok yüksekliği görünür alanı (klavyenin üstünü) aşmaz; kapalıyken %75 sınırı geçerlidir.
@@ -297,6 +304,16 @@ export function Modal({
     keyboard && variant !== "side"
       ? ({ top: keyboard.top, height: keyboard.height, bottom: "auto", "--sheet-max-h": `${Math.max(240, keyboard.height - 12)}px` } as React.CSSProperties)
       : undefined;
+  // Klavye açılınca odaktaki yazma alanı kartın kaydırılan gövdesinde görünür kalır (klavye alanı örtmesin).
+  const keyboardHeight = keyboard?.height ?? 0;
+  useEffect(() => {
+    if (!keyboardHeight) return;
+    const timer = window.setTimeout(() => {
+      const active = document.activeElement as HTMLElement | null;
+      if (active && active !== document.body && active.matches(TEXT_ENTRY_SELECTOR) && active.closest("[role=dialog]")) active.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [keyboardHeight]);
   useEffect(() => {
     lockBodyScroll();
     const id = Symbol("modal");
@@ -329,7 +346,8 @@ export function Modal({
         <div
           ref={overlayRef}
           className={
-            "fixed inset-0 flex animate-fade-in bg-[rgb(10_8_20/0.45)] backdrop-blur-[2px] " +
+            "fixed inset-0 flex animate-fade-in bg-[rgb(10_8_20/0.45)] " +
+            (keyboard ? "" : "backdrop-blur-[2px] ") +
             (overLayers ? "z-[70] " : "z-50 ") +
             (isSide ? "justify-end" : "flex-col justify-end")
           }
@@ -352,11 +370,31 @@ export function Modal({
     );
   }
 
+  if (centered) {
+    return (
+      <Portal>
+        <div
+          ref={overlayRef}
+          className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] p-4 animate-fade-in " + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-[70]" : "z-50")}
+          style={overlayStyle}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={labelledBy}
+          onClick={onClose}
+        >
+          <div ref={sheetRef} className="relative my-auto flex w-full justify-center animate-pop-in *:shadow-pop" onClick={(event) => event.stopPropagation()}>
+            {children}
+          </div>
+        </div>
+      </Portal>
+    );
+  }
+
   return (
     <Portal>
       <div
         ref={overlayRef}
-        className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] animate-fade-in backdrop-blur-[2px] sm:p-4 " + (overLayers ? "z-[70]" : "z-50")}
+        className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] animate-fade-in sm:p-4 " + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-[70]" : "z-50")}
         style={overlayStyle}
         role="dialog"
         aria-modal="true"
@@ -371,7 +409,8 @@ export function Modal({
             // Alttan açılan kart en çok ekranın %75'i: üstteki çeyrek hep görünür (docs/history/242-*). Başlık/düğme satırı sabit, ortası kayar:
             // kartın kendisi `flex flex-col` + kaydırılan gövde (`SheetFrame`) olmalı.
             "max-sm:*:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))] " +
-            "max-sm:*:pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+            // Klavye açıkken alt güvenli alan yoktur: kartın altı klavyeye yapışır (altta bulanık/boş şerit kalmaz).
+            (keyboard ? "max-sm:*:pb-2" : "max-sm:*:pb-[max(1.25rem,env(safe-area-inset-bottom))]")
           }
         >
           <SheetGrabber always={false} />

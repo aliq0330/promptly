@@ -513,6 +513,17 @@
     }
   }
 
+  /* Ekran klavyesi açık (docs/history/377-*, `KeyboardState`): klavyenin yanında/üstünde asılı kalan sabit öğeler gizlenir — alt menü, Mesajlar hapı,
+   * ayrıntı sayfasının eylem satırı ve `data-keyboard-hide` taşıyan her şey (sabit "Ekle" düğmesi, alt işlem çubukları). Yazma alanını örtmez,
+   * alt sayfanın altında bulanık bir şerit olarak görünmez. `!important`: bu öğelerin kendi `flex` yardımcıları sonraki katmandadır. */
+  @media (max-width: 1023.98px) {
+    html[data-keyboard-open] [data-app-nav],
+    html[data-keyboard-open] [data-detail-dock],
+    html[data-keyboard-open] [data-keyboard-hide] {
+      display: none !important;
+    }
+  }
+
   /* Scrolling down hides the header (below `lg`; the desktop sidebar never moves); the bottom nav stays as it is — scrolling up
    * brings the header back (`useChromeAutoHide`); a focused control keeps its bar. */
   [data-app-header],
@@ -701,17 +712,8 @@
  * Hareketli ikonlar ve çıkış animasyonları (docs/history/335-*; `components/ui/motion-icons.tsx`, `exit-motion.tsx`).
  * Hepsi bir kez oynar; son kare dinlenme karesidir, bu yüzden aşağıdaki hareketi-azalt kuralı (süre ≈ 0) ikonu doğru yerde bırakır.
  */
-/* Icons (src/components/icons, docs/history/343-*): Solar Bold Duotone draws its second tone at opacity .5;
- * `fill` on an icon (e.g. a playing ▶) or `icon-solid` turns that tone fully opaque — the "solid / active" look. */
-.icon-solid * {
-  opacity: 1;
-}
-/* Etkin ikon (docs/history/345-*): ikinci ton turuncu (`heart` = "senin olan": seçili sekme, kaydedilmiş). Yalnız etkin durumda;
- * normal ikon aynı rengin yarı saydamıdır. Katmanı opacity=".5" özniteliği işaretler (Solar duotone + bizim çizimlerimiz). */
-.icon-accent [opacity] {
-  fill: var(--color-heart);
-  opacity: 1;
-}
+/* Icons (src/components/icons, docs/history/377-*): Phosphor Regular — one weight, one tone. An active / "yours" look is a colour
+ * (`text-primary` for what you can do or the selected tab, `text-heart` for "yours"), never a second tone or a heavier weight. */
 
 :root {
   --mi-ease: cubic-bezier(0.2, 0.7, 0.2, 1);

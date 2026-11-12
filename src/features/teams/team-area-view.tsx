@@ -10,7 +10,12 @@ import { LayoutDashboard } from "@/components/icons/layout-dashboard";
 import { LayoutGrid } from "@/components/icons/layout-grid";
 import { Plus } from "@/components/icons/plus";
 import { Palette } from "@/components/icons/palette";
-import { Layers } from "@/components/icons/layers";
+import { Check } from "@/components/icons/check";
+import { FolderPlus } from "@/components/icons/folder-plus";
+import { ListChecks } from "@/components/icons/list-checks";
+import { X } from "@/components/icons/x";
+import { useLongPress } from "@/features/messages/use-long-press";
+import { GroupAssignDialog } from "./group-assign";
 import { Presentation } from "@/components/icons/presentation";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { SquareTerminal } from "@/components/icons/square-terminal";
@@ -289,6 +294,8 @@ interface AreaRow {
   note?: boolean;
   /** Projedeki nesne grubu (Space grupları motoru): kartta ad, listede süzgeç. */
   groupId?: string | null;
+  /** Çoklu seçimde grup atanacak öğe satırının kimliği (pano/pano grubu satırlarında yok). */
+  itemId?: string | null;
 }
 
 type FilterKey = "all" | "prompt" | "image" | "palette" | "note" | "content" | "waiting";
@@ -326,6 +333,10 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
   // Nesne grupları (docs/history/376-*): proje nesnelerini (görsel, prompt, not, palet…) gruplara ayırır; süzgeç yalnız görünümdür.
   const [groupFilter, setGroupFilter] = useState<"all" | "none" | string>("all");
   const [groupsOpen, setGroupsOpen] = useState(false);
+  // Çoklu seçim (docs/history/377-*, mockup C): "Seç" ya da karta uzun basma seçim kipini açar; alt çubuktan "Gruba ekle".
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [assigning, setAssigning] = useState(false);
   const activeGroup = groupFilter !== "all" && groupFilter !== "none" && !groups.some((group) => group.id === groupFilter) ? "all" : groupFilter;
   // Panolar ve öğeler AYRI bölümlerdir (docs/history/368-*): pano satırları (bağımsız pano / pano grubu) üstte, dosyanın öğeleri altta.
   const boardCards: AreaRow[] = [
@@ -337,9 +348,9 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
       .filter((item) => item.kind !== "palette" && item.kind !== "frame" && item.kind !== "text" && item.kind !== "shape")
       .map((item): AreaRow => {
         const kind: RowKind = item.kind === "content" ? (item.contentType === "workflow" ? "workflow" : item.contentType === "preset" ? "preset" : "request") : (item.kind as Exclude<SpaceItem["kind"], "content" | "frame" | "text" | "shape" | "palette">);
-        return { key: item.id, kind, title: itemTitle(item), href: itemHref ? itemHref(item.id) : hrefFor(ROW_TAB[kind]), state: item.revState, mediaUrl: item.mediaUrl, body: item.body, note: item.kind === "note", groupId: item.groupId };
+        return { key: item.id, kind, title: itemTitle(item), href: itemHref ? itemHref(item.id) : hrefFor(ROW_TAB[kind]), state: item.revState, mediaUrl: item.mediaUrl, body: item.body, note: item.kind === "note", groupId: item.groupId, itemId: item.id };
       }),
-    ...palettes.map((palette): AreaRow => ({ key: `palette-${palette.id}`, kind: "palette", title: palette.name, href: itemHref ? itemHref(paletteItemParam(palette.id)) : hrefFor("palette"), colors: palette.colors, groupId: items.find((entry) => entry.kind === "palette" && entry.paletteId === palette.id)?.groupId ?? null })),
+    ...palettes.map((palette): AreaRow => ({ key: `palette-${palette.id}`, kind: "palette", title: palette.name, href: itemHref ? itemHref(paletteItemParam(palette.id)) : hrefFor("palette"), colors: palette.colors, groupId: items.find((entry) => entry.kind === "palette" && entry.paletteId === palette.id)?.groupId ?? null, itemId: items.find((entry) => entry.kind === "palette" && entry.paletteId === palette.id)?.id ?? null })),
   ];
   const groupName = (id: string | null | undefined) => groups.find((group) => group.id === id)?.name ?? null;
   const content = rows;
@@ -351,6 +362,13 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
   const shown = rows
     .filter((row) => (filter === "all" ? true : filter === "waiting" ? Boolean(row.state && row.state !== "approved") : FILTER_OF[row.kind] === filter))
     .filter((row) => (activeGroup === "all" ? true : activeGroup === "none" ? !row.groupId : row.groupId === activeGroup));
+  const selectable = rows.filter((row) => row.itemId);
+  const exitSelecting = () => {
+    setSelecting(false);
+    setSelected([]);
+  };
+  const toggleRow = (itemId: string) => setSelected((list) => (list.includes(itemId) ? list.filter((id) => id !== itemId) : [...list, itemId]));
+  const allShownSelected = shown.filter((row) => row.itemId).length > 0 && shown.filter((row) => row.itemId).every((row) => row.itemId && selected.includes(row.itemId));
   const approvedN = content.filter((row) => !row.state || row.state === "approved").length;
   const pendingN = content.filter((row) => row.state === "pending").length;
   const changesN = content.filter((row) => row.state === "changes").length;
@@ -435,10 +453,10 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
             ))}
           </button>
         )}
-        {canAdd && (
-          <Button type="button" variant="outline" onClick={() => setGroupsOpen(true)} className="h-11 gap-2 rounded-full px-4 max-md:hidden md:h-10" data-area-groups-manage>
-            <Layers size={16} aria-hidden />
-            {t(groups.length > 0 ? "spaces.groups.manage" : "tp.groups.create")}
+        {canAdd && selectable.length > 0 && (
+          <Button type="button" variant="outline" onClick={() => (selecting ? exitSelecting() : setSelecting(true))} aria-pressed={selecting} className="h-11 gap-2 rounded-full px-4 md:h-10" data-area-select>
+            <ListChecks size={16} aria-hidden />
+            {t(selecting ? "tf.select.done" : "tf.select.start")}
           </Button>
         )}
         {canAdd && (
@@ -451,9 +469,9 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
 
       {(groups.length > 0 || canAdd) && (
         <div className="flex flex-wrap items-center gap-2" data-testid="area-group-filters">
-          {groups.length > 0 && (
+          {(
             <div role="group" aria-label={t("spaces.groups.filter")} className="flex min-w-0 flex-1 gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
-              {[{ key: "all", label: t("spaces.groups.all"), count: content.length }, ...groups.map((group) => ({ key: group.id, label: group.name, count: content.filter((row) => row.groupId === group.id).length })), { key: "none", label: t("spaces.groups.none"), count: content.filter((row) => !row.groupId).length }].map((entry) => (
+              {(groups.length > 0 ? [{ key: "all", label: t("spaces.groups.all"), count: content.length }, ...groups.map((group) => ({ key: group.id, label: group.name, count: content.filter((row) => row.groupId === group.id).length })), { key: "none", label: t("spaces.groups.none"), count: content.filter((row) => !row.groupId).length }] : []).map((entry) => (
                 <button
                   key={entry.key}
                   type="button"
@@ -465,13 +483,13 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
                   {entry.label} <span className="tabular-nums opacity-70">{entry.count}</span>
                 </button>
               ))}
+              {canAdd && (
+                <button type="button" onClick={() => setGroupsOpen(true)} data-area-groups-manage className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-dashed border-border px-3.5 text-small font-semibold text-primary hover:bg-surface-soft md:h-8">
+                  <Plus size={14} aria-hidden />
+                  {t("tf.group.chip")}
+                </button>
+              )}
             </div>
-          )}
-          {canAdd && (
-            <Button type="button" variant="outline" size="sm" onClick={() => setGroupsOpen(true)} className="gap-1.5 rounded-full md:hidden" data-area-groups-manage-phone>
-              <Layers size={14} aria-hidden />
-              {t(groups.length > 0 ? "spaces.groups.manage" : "tp.groups.create")}
-            </Button>
           )}
         </div>
       )}
@@ -479,18 +497,43 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
       <ul className="grid grid-cols-2 items-start gap-2.5 md:grid-cols-3 md:gap-3.5 xl:grid-cols-4" data-testid="area-rows">
         {shown.map((row) => (
           <li key={row.key}>
-            <AreaCard row={row} reviewOn={reviewOn} groupName={groupName(row.groupId)} />
+            <AreaCard
+              row={row}
+              reviewOn={reviewOn}
+              groupName={groupName(row.groupId)}
+              select={canAdd && row.itemId ? { on: selecting, checked: selected.includes(row.itemId), toggle: () => toggleRow(row.itemId as string), start: () => { setSelecting(true); setSelected((list) => (list.includes(row.itemId as string) ? list : [...list, row.itemId as string])); } } : undefined}
+            />
           </li>
         ))}
       </ul>
       {groupsOpen && <GroupsManagerModal onClose={() => setGroupsOpen(false)} />}
+      {assigning && selected.length > 0 && <GroupAssignDialog itemIds={selected} onClose={() => setAssigning(false)} onDone={exitSelecting} />}
       {nothingYet && filter === "all" && (
         <div className="rounded-2xl border border-dashed border-border bg-surface-soft/40 px-5 py-7 text-center" data-testid="area-empty">
           <p className="text-body font-bold text-text">{t("tp.area.list.emptyTitle")}</p>
           <p className="mx-auto mt-1 max-w-xs text-small text-text-secondary">{t(canAdd ? "tp.area.list.emptyBody" : "tp.area.list.emptyViewer")}</p>
         </div>
       )}
-      {canAdd && (
+      {selecting && (
+        <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 pt-2 md:bottom-4" data-testid="area-select-bar" data-keyboard-hide>
+          <div className="mx-auto flex max-w-xl items-center gap-2 rounded-2xl border border-border-soft bg-surface p-2 shadow-pop">
+            <button type="button" onClick={exitSelecting} aria-label={t("tf.select.close")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft" data-select-close>
+              <X size={20} aria-hidden />
+            </button>
+            <span className="min-w-0 flex-1 truncate text-small font-bold text-text" data-select-count aria-live="polite">
+              {t("tf.select.count", { count: selected.length })}
+            </span>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setSelected(allShownSelected ? [] : [...new Set([...selected, ...shown.flatMap((row) => (row.itemId ? [row.itemId] : []))])])} data-select-all>
+              {t(allShownSelected ? "tf.select.none" : "tf.select.all")}
+            </Button>
+            <Button type="button" className="h-11 gap-2 rounded-full px-4" disabled={selected.length === 0} onClick={() => setAssigning(true)} data-select-assign>
+              <FolderPlus size={17} aria-hidden />
+              {t("tf.group.add")}
+            </Button>
+          </div>
+        </div>
+      )}
+      {canAdd && !selecting && (
         <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex justify-end pt-2 md:hidden">
           <Button type="button" onClick={onAdd} className="pointer-events-auto h-12 gap-2 rounded-full px-5 shadow-pop" data-area-add-phone>
             <Plus size={18} aria-hidden />
@@ -503,13 +546,33 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
 }
 
 /** Görsel kart (mockup B3): yuvarlak büyük sanat + altta türe/başlığa koyu degrade + sağ üstte durum çipi (onay açıkken ya da onaysızsa). */
-function AreaCard({ row, reviewOn, groupName }: { row: AreaRow; reviewOn: boolean; groupName?: string | null }) {
+function AreaCard({ row, reviewOn, groupName, select }: { row: AreaRow; reviewOn: boolean; groupName?: string | null; select?: { on: boolean; checked: boolean; toggle: () => void; start: () => void } }) {
   const { t } = useTranslation();
   const Icon = ROW_ICON[row.kind];
   const showState = row.state && (reviewOn || row.state !== "approved");
+  // Uzun basma seçim kipini açar (dokunmatik/kalem; fare sağ tıkla). Seçim kipindeyken kart bağlantı değil seçim anahtarıdır.
+  const longPress = useLongPress({ onLongPress: () => select?.start(), enabled: Boolean(select) && !select?.on });
   return (
-    <Link href={row.href} className="block" data-area-row={row.kind} data-area-card>
-      <span className={cn("relative block overflow-hidden rounded-[18px] md:rounded-[20px]", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning/10 text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" || row.kind === "group" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
+    <Link
+      href={row.href}
+      className={cn("relative block", select?.on && "[&_*]:pointer-events-none")}
+      data-area-row={row.kind}
+      data-area-card
+      data-area-selected={select?.on ? (select.checked ? "true" : "false") : undefined}
+      aria-pressed={select?.on ? select.checked : undefined}
+      {...(select ? longPress.handlers : {})}
+      onClick={(event) => {
+        if (!select?.on) return;
+        event.preventDefault();
+        select.toggle();
+      }}
+    >
+      {select?.on && (
+        <span aria-hidden className={cn("pointer-events-none absolute left-2.5 top-2.5 z-10 grid h-6 w-6 place-items-center rounded-full border-2 shadow-xs", select.checked ? "border-primary bg-primary text-primary-foreground" : "border-white bg-black/30 text-transparent")}>
+          <Check size={14} />
+        </span>
+      )}
+      <span className={cn("relative block overflow-hidden rounded-[18px] md:rounded-[20px]", select?.checked && "ring-[3px] ring-primary ring-offset-2 ring-offset-background", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning/10 text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" || row.kind === "group" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
         {row.kind === "image" && row.mediaUrl && <StorageImg src={row.mediaUrl} alt={row.title} className="absolute inset-0 h-full w-full object-cover" />}
         {(row.kind === "prompt" || row.kind === "note") && <span className={cn("block p-3.5 pb-14 text-caption leading-relaxed", row.kind === "prompt" && "font-mono")}>{(row.body || "").slice(0, 260)}</span>}
         {row.kind === "palette" && (

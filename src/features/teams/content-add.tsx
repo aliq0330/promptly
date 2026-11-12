@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { Plus } from "@/components/icons/plus";
+import { Search } from "@/components/icons/search";
 import type { IconComponent } from "@/components/icons/icon";
+import { Modal } from "@/components/ui/modal";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
@@ -25,7 +29,6 @@ import { ContentPickerDialog } from "./content-picker";
 export interface ContentAddRow {
   key: string;
   kind: TeamCreateKind;
-  mode: "create" | "pick";
   icon: IconComponent;
   label: TranslationKey;
   hint: TranslationKey;
@@ -38,10 +41,49 @@ const KINDS: { kind: TeamCreateKind; icon: IconComponent }[] = [
   { kind: "preset", icon: SlidersHorizontal },
 ];
 
-export const CONTENT_ADD_ROWS: ContentAddRow[] = KINDS.flatMap(({ kind, icon }) => [
-  { key: `create-${kind}`, kind, mode: "create" as const, icon, label: `tf.add.create.${kind}` as TranslationKey, hint: `tf.add.createHint.${kind}` as TranslationKey },
-  { key: `pick-${kind}`, kind, mode: "pick" as const, icon, label: `tf.add.pick.${kind}` as TranslationKey, hint: `tf.add.pickHint.${kind}` as TranslationKey },
-]);
+/** Tür başına TEK satır ("Prompt"): dokununca ekranın ortasında "Oluştur" / "Seç" seçimi açılır (`ContentAddChoice`). */
+export const CONTENT_ADD_ROWS: ContentAddRow[] = KINDS.map(({ kind, icon }) => ({
+  key: kind,
+  kind,
+  icon,
+  label: `tf.add.kind.${kind}` as TranslationKey,
+  hint: `tf.add.kindHint.${kind}` as TranslationKey,
+}));
+
+/** Ekranın ortasında açılan küçük pencere: bu türden yeni bir içerik oluştur ya da paylaşılmış olanı seç. */
+function ContentAddChoice({ kind, onCreate, onPick, onClose }: { kind: TeamCreateKind; onCreate: () => void; onPick: () => void; onClose: () => void }) {
+  const { t } = useTranslation();
+  const titleId = `content-add-choice-${kind}`;
+  return (
+    <Modal onClose={onClose} labelledBy={titleId} overLayers centered>
+      <div className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-surface p-5" data-content-add-choice={kind}>
+        <h2 id={titleId} className="text-h3 font-bold text-text">
+          {t(`tf.add.choiceTitle.${kind}` as TranslationKey)}
+        </h2>
+        <div className="grid gap-3">
+          <button type="button" onClick={onCreate} data-add-choice="create" className="flex items-center gap-3 rounded-2xl border border-border-soft bg-surface p-3.5 text-left transition-colors hover:bg-surface-soft">
+            <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+              <Plus size={20} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-small font-bold text-text">{t("tf.add.choice.create")}</span>
+              <span className="block text-caption text-text-secondary">{t(`tf.add.createHint.${kind}` as TranslationKey)}</span>
+            </span>
+          </button>
+          <button type="button" onClick={onPick} data-add-choice="pick" className="flex items-center gap-3 rounded-2xl border border-border-soft bg-surface p-3.5 text-left transition-colors hover:bg-surface-soft">
+            <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+              <Search size={20} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-small font-bold text-text">{t("tf.add.choice.pick")}</span>
+              <span className="block text-caption text-text-secondary">{t(`tf.add.pickHint.${kind}` as TranslationKey)}</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
 
 export interface ContentAddTarget {
   projectId: string;
@@ -57,6 +99,7 @@ export interface ContentAddTarget {
 export function useContentAdd(target: ContentAddTarget | null): { run: (row: ContentAddRow) => void; dialog: ReactNode } {
   const router = useRouter();
   const { space, items, setItems, setPalettes, flushLayout } = useSpaceContext();
+  const [choosing, setChoosing] = useState<TeamCreateKind | null>(null);
   const [picking, setPicking] = useState<TeamCreateKind | null>(null);
 
   const refresh = useCallback(async () => {
@@ -77,12 +120,26 @@ export function useContentAdd(target: ContentAddTarget | null): { run: (row: Con
 
   const run = useCallback(
     (row: ContentAddRow) => {
-      if (!target) return;
-      if (row.mode === "create") router.push(teamCreateHref(row.kind, target));
-      else setPicking(row.kind);
+      if (target) setChoosing(row.kind);
     },
-    [router, target],
+    [target],
   );
+
+  const choice =
+    choosing && target ? (
+      <ContentAddChoice
+        kind={choosing}
+        onClose={() => setChoosing(null)}
+        onCreate={() => {
+          setChoosing(null);
+          router.push(teamCreateHref(choosing, target));
+        }}
+        onPick={() => {
+          setChoosing(null);
+          setPicking(choosing);
+        }}
+      />
+    ) : null;
 
   const dialog =
     picking && target ? (
@@ -97,5 +154,13 @@ export function useContentAdd(target: ContentAddTarget | null): { run: (row: Con
       />
     ) : null;
 
-  return { run, dialog };
+  return {
+    run,
+    dialog: (
+      <>
+        {choice}
+        {dialog}
+      </>
+    ),
+  };
 }

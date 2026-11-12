@@ -7,10 +7,23 @@ import { cn } from "@/lib/utils";
  * Promptly'nin kendi hareketli ikonları (docs/history/335-*). Tepki emojileriyle aynı ilke: dış kütüphane yok, sayfa açılışında hiçbir şey
  * oynamaz — ikon yalnızca bir kullanıcı eylemi ya da durum değişimi `seq`'i artırınca bir kez oynar (svg `key` ile yeniden kurulur).
  * Animasyonlar `globals.css`'teki `.mi-*` kurallarıdır; hareketi azalt açıkken tüm süreler 0'a iner, ikon dinlenme karesinde kalır.
- * Şekiller sitenin ikon diliyle aynıdır (docs/history/343-*): "şey" ikonları Solar Bold Duotone (tek renk, yarı saydam ikinci ton —
- * Solar Icon Set, 480 Design, CC BY 4.0), kontrol işaretleri (tik, ok, +) çizgidir. Opaklığı canlandırılan parçalar bir `<g>` içindedir ki
- * yarı saydam ton animasyondan sonra da yarı saydam kalsın.
+ * Şekiller sitenin ikon diliyle aynıdır (docs/history/377-*): Phosphor Regular (Phosphor Icons, MIT) — tek kalınlık, tek ton. Phosphor'un
+ * 256'lık ızgarasındaki şekiller 24'lük `viewBox` içinde `<g transform="scale(.09375)">` ile çizilir; böylece `globals.css`'teki `.mi-*`
+ * hareketleri (24 birimlik kaynak noktaları/öteleme) değişmeden çalışır. Çizgi parçalarında kalınlık 16/256 (= Phosphor Regular).
  */
+
+/** Phosphor 256 ızgarası → 24 birimlik `viewBox`. */
+const PH = "scale(0.09375)";
+/** Phosphor Regular kontur kalınlığı (256 ızgarasında). */
+const PH_STROKE = 16;
+
+function Ph({ children, line = false }: { children: React.ReactNode; line?: boolean }) {
+  return (
+    <g transform={PH} {...(line ? { strokeWidth: PH_STROKE } : {})}>
+      {children}
+    </g>
+  );
+}
 
 export interface MotionIconProps {
   size?: number;
@@ -23,7 +36,7 @@ export interface MotionIconProps {
 
 function Svg({
   size = 24,
-  strokeWidth = 1.75,
+  strokeWidth = 1.5,
   className,
   seq,
   kind,
@@ -51,14 +64,19 @@ function Svg({
 /** Çöp kutusu: üzerine gelince kapak hafifçe kalkar; `seq` artınca kapak açılır, içindekiler düşer, kapak kapanır (0,9 sn). */
 export function TrashIcon(props: MotionIconProps) {
   return (
-    <Svg {...props} kind="trash">
+    <Svg {...props} kind="trash" line>
       <g className="mi-lid">
-        <path d="M13.74 2C13.96 2 14.16 2 14.34 2.03C15.06 2.16 15.69 2.68 16.03 3.42C16.11 3.6 16.17 3.81 16.24 4.05L16.36 4.44L16.39 4.54C16.57 5.11 17.13 5.49 17.66 5.51H20.23C20.65 5.51 21 5.9 21 6.39C21 6.87 20.65 7.26 20.23 7.26H3.77C3.35 7.26 3 6.87 3 6.39C3 5.9 3.35 5.51 3.77 5.51H6.44C6.96 5.49 7.43 5.11 7.61 4.54L7.64 4.44L7.76 4.05C7.83 3.81 7.89 3.6 7.97 3.42C8.31 2.68 8.94 2.16 9.66 2.03C9.84 2 10.04 2 10.26 2H13.74Z" />
+        <Ph line>
+          <path d="M216,64H40" />
+          <path d="M96,64V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8V64" />
+        </Ph>
       </g>
       <g className="mi-bin">
-        <path opacity=".5" d="M11.6 22H12.4C15.19 22 16.58 22 17.48 21.11C18.39 20.23 18.48 18.78 18.67 15.87L18.93 11.68C19.03 10.1 19.08 9.32 18.63 8.82C18.18 8.32 17.41 8.32 15.88 8.32H8.12C6.59 8.32 5.82 8.32 5.37 8.82C4.92 9.32 4.97 10.1 5.07 11.68L5.33 15.87C5.52 18.78 5.61 20.23 6.52 21.11C7.42 22 8.81 22 11.6 22Z" />
-        <path className="mi-l1" d="M9.43 11.48C9.84 11.44 10.2 11.75 10.25 12.19L10.75 17.45C10.79 17.89 10.49 18.27 10.07 18.32C9.66 18.36 9.3 18.04 9.25 17.61L8.75 12.35C8.71 11.91 9.01 11.52 9.43 11.48Z" />
-        <path className="mi-l2" d="M14.57 11.48C14.99 11.52 15.29 11.91 15.25 12.35L14.75 17.61C14.7 18.04 14.34 18.36 13.93 18.32C13.51 18.27 13.21 17.89 13.25 17.45L13.75 12.19C13.8 11.75 14.16 11.44 14.57 11.48Z" />
+        <Ph line>
+          <path d="M200,64V208a8,8,0,0,1-8,8H64a8,8,0,0,1-8-8V64" />
+          <path className="mi-l1" d="M104,104v64" />
+          <path className="mi-l2" d="M152,104v64" />
+        </Ph>
       </g>
     </Svg>
   );
@@ -73,9 +91,9 @@ export function CheckDrawIcon({ drawn = true, ...props }: MotionIconProps & { dr
   );
 }
 
-const BOOKMARK_BODY =
-  "M21 11.1V16.09C21 19.19 21 20.74 20.27 21.41C19.92 21.73 19.47 21.94 19 21.99C18.02 22.1 16.86 21.08 14.56 19.05C13.54 18.14 13.03 17.69 12.44 17.58C12.15 17.52 11.85 17.52 11.56 17.58C10.97 17.69 10.46 18.14 9.44 19.05C7.14 21.08 5.98 22.1 5 21.99C4.53 21.94 4.08 21.73 3.73 21.41C3 20.74 3 19.19 3 16.09V11.1C3 6.81 3 4.66 4.32 3.33C5.64 2 7.76 2 12 2C16.24 2 18.36 2 19.68 3.33C21 4.66 21 6.81 21 11.1Z";
-const BOOKMARK_LINE = "M9 5.25C8.59 5.25 8.25 5.59 8.25 6C8.25 6.41 8.59 6.75 9 6.75H15C15.41 6.75 15.75 6.41 15.75 6C15.75 5.59 15.41 5.25 15 5.25H9Z";
+const BOOKMARK_REGULAR =
+  "M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z";
+const BOOKMARK_FILL = "M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Z";
 
 /** Yer imi: `filled` olunca alttan yukarı dolar; `popSeq` artınca (yalnız kaydedilirken) sıçrar ve beş kıvılcım çıkar. */
 export function BookmarkIcon({ filled, popSeq = 0, size = 24, className }: Omit<MotionIconProps, "seq"> & { filled: boolean; popSeq?: number }) {
@@ -83,13 +101,12 @@ export function BookmarkIcon({ filled, popSeq = 0, size = 24, className }: Omit<
   return (
     // Kök <span> DEĞİL <i>: kartlardaki `CARD_SAVE_CLASS = "[&>span]:hidden"` düğmenin doğrudan <span> çocuklarını (sayıyı) gizler; kök <span> olursa ikonun kendisi de gizlenirdi.
     <i key={popSeq} data-filled={filled} className={cn("mi-bm relative inline-block shrink-0 not-italic", popSeq > 0 && filled && "mi-bm-pop", className)} style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden focusable="false" className="absolute inset-0">
-        <path opacity=".5" d={BOOKMARK_BODY} />
-        <path d={BOOKMARK_LINE} />
+      <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" aria-hidden focusable="false" className="absolute inset-0">
+        <path d={BOOKMARK_REGULAR} />
       </svg>
-      {/* Dolu hâl: ton katmanı tam opak (kaydedildi) — alttan yukarı dolar. */}
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden focusable="false" className="mi-bm-fill absolute inset-0">
-        <path d={BOOKMARK_BODY} />
+      {/* Dolu hâl (kaydedildi): Phosphor Fill gövdesi alttan yukarı dolar. */}
+      <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" aria-hidden focusable="false" className="mi-bm-fill absolute inset-0">
+        <path d={BOOKMARK_FILL} />
       </svg>
       {popSeq > 0 && filled && (
         <span aria-hidden className="mi-sparks">
@@ -112,10 +129,13 @@ export function PinIcon({ pinned, size = 24, className }: Omit<MotionIconProps, 
   }
   return (
     <i data-pinned={pinned} data-drop={dropped && pinned} className={cn("mi-pin relative inline-flex shrink-0 items-center justify-center not-italic", className)} style={{ width: size, height: size }}>
-      {/* Solar raptiye zaten çapraz durur; sabitlenince ton katmanı tam opak olur (`icon-solid`). */}
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden focusable="false" className={cn("mi mi-pin-svg", pinned && "icon-solid")}>
-        <path opacity=".5" fillRule="evenodd" clipRule="evenodd" d="M16.22 4.84L19.18 7.81C21.2 9.82 22.2 10.83 21.97 11.91C21.73 13 20.4 13.5 17.74 14.5L15.89 15.19C15.18 15.46 14.82 15.59 14.55 15.83C14.43 15.94 14.32 16.05 14.23 16.18C14.01 16.48 13.91 16.85 13.71 17.58C13.25 19.26 13.02 20.09 12.47 20.4C12.24 20.54 11.98 20.6 11.71 20.6C11.08 20.6 10.47 19.99 9.24 18.76L7.78 17.3L6.7 16.22L5.28 14.8C4.07 13.58 3.46 12.97 3.45 12.34C3.45 12.07 3.52 11.81 3.66 11.57C3.97 11.03 4.8 10.8 6.46 10.34C7.2 10.14 7.57 10.04 7.86 9.82C8 9.73 8.12 9.62 8.22 9.49C8.46 9.22 8.59 8.86 8.85 8.14L9.52 6.32C10.51 3.62 11 2.27 12.09 2.03C13.18 1.79 14.19 2.81 16.22 4.84Z" />
-        <path d="M3.3 21.78L7.78 17.3L6.7 16.22L2.22 20.7C1.93 20.99 1.93 21.48 2.22 21.78C2.52 22.07 3 22.07 3.3 21.78Z" />
+      {/* Phosphor raptiyesi zaten çapraz durur; sabitlenince Fill gövdesine geçer. */}
+      <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" aria-hidden focusable="false" className="mi mi-pin-svg">
+        {pinned ? (
+          <path d="m235.33 104l-53.47 53.65c4.56 12.67 6.45 33.89-13.19 60A15.93 15.93 0 0 1 157 224h-1.13a16 16 0 0 1-11.32-4.69L96.29 171l-42.63 42.66a8 8 0 0 1-11.32-11.32L85 159.71l-48.3-48.3A16 16 0 0 1 38 87.63c25.42-20.51 49.75-16.48 60.4-13.14L152 20.7a16 16 0 0 1 22.63 0l60.69 60.68a16 16 0 0 1 .01 22.62" />
+        ) : (
+          <path d="m235.32 81.37l-60.69-60.68a16 16 0 0 0-22.63 0l-53.63 53.8c-10.66-3.34-35-7.37-60.4 13.14a16 16 0 0 0-1.29 23.78L85 159.71l-42.66 42.63a8 8 0 0 0 11.32 11.32L96.29 171l48.29 48.29A16 16 0 0 0 155.9 224h1.13a15.93 15.93 0 0 0 11.64-6.33c19.64-26.1 17.75-47.32 13.19-60L235.33 104a16 16 0 0 0-.01-22.63M224 92.69l-57.27 57.46a8 8 0 0 0-1.49 9.22c9.46 18.93-1.8 38.59-9.34 48.62L48 100.08c12.08-9.74 23.64-12.31 32.48-12.31A40.1 40.1 0 0 1 96.81 91a8 8 0 0 0 9.25-1.51L163.32 32L224 92.68Z" />
+        )}
       </svg>
     </i>
   );
@@ -124,9 +144,17 @@ export function PinIcon({ pinned, size = 24, className }: Omit<MotionIconProps, 
 /** Zil: `seq` artınca (yeni bildirim) bir kez sallanır; çan dili ters yöne gecikmeyle oynar. */
 export function BellIcon(props: MotionIconProps) {
   return (
-    <Svg {...props} kind="bell">
-      <path className="mi-bb" opacity=".5" d="M18.75 9V9.7C18.75 10.55 18.99 11.38 19.44 12.08L20.55 13.8C21.56 15.37 20.79 17.51 19.03 18.01C14.43 19.31 9.57 19.31 4.97 18.01C3.21 17.51 2.44 15.37 3.45 13.8L4.56 12.08C5.01 11.38 5.25 10.55 5.25 9.7V9C5.25 5.13 8.27 2 12 2C15.73 2 18.75 5.13 18.75 9Z" />
-      <path className="mi-clap" d="M7.24 18.55C7.89 20.55 9.78 22 12 22C14.22 22 16.11 20.55 16.76 18.55C13.61 19.14 10.39 19.14 7.24 18.55Z" />
+    <Svg {...props} kind="bell" line>
+      <g className="mi-bb">
+        <Ph line>
+          <path d="M208,192H48a8,8,0,0,1-6.88-12C47.63,168.91,56,144.2,56,104a72,72,0,0,1,144,0c0,40.2,8.37,64.91,14.88,76A8,8,0,0,1,208,192Z" />
+        </Ph>
+      </g>
+      <g className="mi-clap">
+        <Ph line>
+          <path d="M96,192a32,32,0,0,0,64,0" />
+        </Ph>
+      </g>
     </Svg>
   );
 }
@@ -135,8 +163,9 @@ export function BellIcon(props: MotionIconProps) {
 export function SendIcon(props: MotionIconProps) {
   return (
     <Svg {...props} kind="send">
-      <path fillRule="evenodd" clipRule="evenodd" d="m16.245 7.76l5.172-5.171l-.003-.003c-1.187-1.187-3.436-.438-7.935 1.062L8.33 5.364C4.7 6.574 2.885 7.18 2.37 8.067a2.72 2.72 0 0 0 0 2.73c.515.888 2.33 1.493 5.96 2.704c.45.15.957.042 1.294-.291l5.506-5.455a.79.79 0 0 1 1.116.005" />
-      <path opacity=".5" d="m18.635 15.67l1.717-5.15c1.498-4.495 2.248-6.744 1.064-7.932l-5.172 5.171a.79.79 0 0 1-.005 1.117l-5.416 5.367a1.4 1.4 0 0 0-.324 1.426c1.21 3.631 1.815 5.446 2.703 5.962a2.71 2.71 0 0 0 2.73 0c.888-.516 1.493-2.33 2.703-5.962" />
+      <Ph>
+        <path d="M227.32,28.68a16,16,0,0,0-15.66-4.08l-.15,0L19.57,82.84a16,16,0,0,0-2.49,29.8L102,154l41.3,84.87A15.86,15.86,0,0,0,157.74,248q.69,0,1.38-.06a15.88,15.88,0,0,0,14-11.51l58.2-191.94c0-.05,0-.1,0-.15A16,16,0,0,0,227.32,28.68ZM157.83,231.85l-.05.14,0-.07-40.06-82.3,48-48a8,8,0,0,0-11.31-11.31l-48,48L24.08,98.25l-.07,0,.14,0L216,40Z" />
+      </Ph>
     </Svg>
   );
 }
@@ -170,11 +199,18 @@ export function FollowIcon({ done, size = 16, strokeWidth = 1.9, className }: Om
 /** Ana Sayfa: çatı yukarıdan oturur, kapı alttan açılır. */
 export function HomeIcon(props: MotionIconProps) {
   return (
-    <Svg {...props} kind="home">
+    <Svg {...props} kind="home" line>
       <g className="mi-roof">
-        <path opacity=".5" d="M2 12.2C2 9.92 2 8.77 2.52 7.82C3.04 6.87 3.99 6.29 5.88 5.11L7.88 3.87C9.89 2.62 10.89 2 12 2C13.11 2 14.11 2.62 16.12 3.87L18.12 5.11C20.01 6.29 20.96 6.87 21.48 7.82C22 8.77 22 9.92 22 12.2V13.72C22 17.63 22 19.58 20.83 20.79C19.66 22 17.77 22 14 22H10C6.23 22 4.34 22 3.17 20.79C2 19.58 2 17.63 2 13.72V12.2Z" />
+        <Ph line>
+          <path d="M216,216V120a8,8,0,0,0-2.34-5.66l-80-80a8,8,0,0,0-11.32,0l-80,80A8,8,0,0,0,40,120V216" />
+          <path d="M24,216H232" />
+        </Ph>
       </g>
-      <path className="mi-door" d="M9.45 15.4C9.11 15.15 8.64 15.22 8.4 15.55C8.15 15.89 8.22 16.36 8.55 16.6C9.53 17.32 10.72 17.75 12 17.75C13.29 17.75 14.47 17.32 15.45 16.6C15.78 16.36 15.85 15.89 15.6 15.55C15.36 15.22 14.89 15.15 14.55 15.4C13.83 15.94 12.95 16.25 12 16.25C11.05 16.25 10.18 15.94 9.45 15.4Z" />
+      <g className="mi-door">
+        <Ph line>
+          <path d="M96,216V160a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v56" />
+        </Ph>
+      </g>
     </Svg>
   );
 }
@@ -183,28 +219,33 @@ export function HomeIcon(props: MotionIconProps) {
 export function CompassIcon(props: MotionIconProps) {
   return (
     <Svg {...props} kind="compass">
-      <path opacity=".5" d="M12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22Z" />
-      <path className="mi-needle" d="M13.02 14.56C13.52 14.36 13.76 14.26 13.96 14.1C14.01 14.05 14.05 14.01 14.1 13.96C14.26 13.76 14.36 13.52 14.56 13.02C15.48 10.71 15.95 9.56 15.5 8.9C15.39 8.74 15.26 8.61 15.1 8.5C14.44 8.05 13.29 8.52 10.98 9.44C10.48 9.64 10.24 9.74 10.04 9.9C9.99 9.95 9.95 9.99 9.9 10.04C9.74 10.24 9.64 10.48 9.44 10.98C8.52 13.29 8.05 14.44 8.5 15.1C8.61 15.26 8.74 15.39 8.9 15.5C9.56 15.95 10.71 15.48 13.02 14.56Z" />
+      <Ph>
+        <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z" />
+      </Ph>
+      <g className="mi-needle">
+        <Ph>
+          <path d="M172.42,72.84l-64,32a8.05,8.05,0,0,0-3.58,3.58l-32,64A8,8,0,0,0,80,184a8.1,8.1,0,0,0,3.58-.84l64-32a8.05,8.05,0,0,0,3.58-3.58l32-64a8,8,0,0,0-10.74-10.74ZM138,138,97.89,158.11,118,118l40.15-20.07Z" />
+        </Ph>
+      </g>
     </Svg>
   );
 }
 
 /** Topluluklar: iki kişi birbirine doğru eğilir. */
 export function CommunityIcon(props: MotionIconProps) {
-  // Topluluk = Users (üç kişi), filtrelerdeki/aramadaki topluluk ikonuyla AYNI şekil (docs/history/345-*).
+  // Topluluk = Users (üç kişi), filtrelerdeki/aramadaki topluluk ikonuyla AYNI şekil (docs/history/345-*, 377-*): Phosphor `users-three`.
   return (
     <Svg {...props} kind="community">
       <g className="mi-pb">
-        <g opacity=".5">
-          <path d="M6 14C8.209 14 10 15.119 10 16.5C10 17.881 8.209 19 6 19C3.791 19 2 17.881 2 16.5C2 15.119 3.791 14 6 14Z" />
-          <path d="M18 14C20.209 14 22 15.119 22 16.5C22 17.881 20.209 19 18 19C15.791 19 14 17.881 14 16.5C14 15.119 15.791 14 18 14Z" />
-          <path d="M7 5C8.381 5 9.5 6.119 9.5 7.5C9.5 8.881 8.381 10 7 10C5.619 10 4.5 8.881 4.5 7.5C4.5 6.119 5.619 5 7 5Z" />
-          <path d="M17 5C18.381 5 19.5 6.119 19.5 7.5C19.5 8.881 18.381 10 17 10C15.619 10 14.5 8.881 14.5 7.5C14.5 6.119 15.619 5 17 5Z" />
-        </g>
+        <Ph>
+          <path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1-7.37-4.89,8,8,0,0,1,0-6.22A8,8,0,0,1,192,112a24,24,0,1,0-23.24-30,8,8,0,1,1-15.5-4A40,40,0,1,1,219,117.51a67.94,67.94,0,0,1,27.43,21.68A8,8,0,0,1,244.8,150.4Z" />
+          <path d="M72,120a8,8,0,0,0-8-8A24,24,0,1,1,87.24,82a8,8,0,1,0,15.5-4A40,40,0,1,0,37,117.51,67.94,67.94,0,0,0,9.6,139.19a8,8,0,1,0,12.8,9.61A51.6,51.6,0,0,1,64,128,8,8,0,0,0,72,120Z" />
+        </Ph>
       </g>
       <g className="mi-pa">
-        <path d="M12 13C15.314 13 18 14.567 18 16.5C18 18.433 15.314 20 12 20C8.686 20 6 18.433 6 16.5C6 14.567 8.686 13 12 13Z" />
-        <path d="M12 4C13.933 4 15.5 5.567 15.5 7.5C15.5 9.433 13.933 11 12 11C10.067 11 8.5 9.433 8.5 7.5C8.5 5.567 10.067 4 12 4Z" />
+        <Ph>
+          <path d="M190.92,212a8,8,0,1,1-13.84,8,57,57,0,0,0-98.16,0,8,8,0,1,1-13.84-8,72.06,72.06,0,0,1,33.74-29.92,48,48,0,1,1,58.36,0A72.06,72.06,0,0,1,190.92,212ZM128,176a32,32,0,1,0-32-32A32,32,0,0,0,128,176Z" />
+        </Ph>
       </g>
     </Svg>
   );
@@ -212,17 +253,23 @@ export function CommunityIcon(props: MotionIconProps) {
 
 /** Odak: kart yukarı kayar, üst ve alt çizgiler yerine oturur. */
 export function FocusIcon(props: MotionIconProps) {
-  // Odak = yatay kaydırmalı akış: ortada uzun kart, yanlarda soluk komşular (Solar slider-vertical şekli).
+  // Odak = yatay kaydırmalı akış: ortada uzun kart, yanlarda komşu kartlar (Phosphor çizgi diliyle çizildi).
   return (
-    <Svg {...props} kind="focus">
+    <Svg {...props} kind="focus" line>
       <g className="mi-ftop">
-        <path opacity=".5" d="M6.14114 4.5C6 5.34287 6 6.46249 6 8V16C6 17.5375 6 18.6571 6.14114 19.5H6C4.59987 19.5 3.8998 19.5 3.36502 19.2275C2.89462 18.9878 2.51217 18.6054 2.27248 18.135C2 17.6002 2 16.9001 2 15.5V8.5C2 7.09987 2 6.3998 2.27248 5.86502C2.51217 5.39462 2.89462 5.01217 3.36502 4.77248C3.8998 4.5 4.59987 4.5 6 4.5H6.14114Z" />
+        <Ph line>
+          <path d="M32,72V184" />
+        </Ph>
       </g>
       <g className="mi-fbot">
-        <path opacity=".5" d="M17.8589 4.5C18 5.34287 18 6.46248 18 7.99998V16C18 17.5375 18 18.6571 17.8589 19.5H18C19.4001 19.5 20.1002 19.5 20.635 19.2275C21.1054 18.9878 21.4878 18.6054 21.7275 18.135C22 17.6002 22 16.9001 22 15.5V8.5C22 7.09987 22 6.3998 21.7275 5.86502C21.4878 5.39462 21.1054 5.01217 20.635 4.77248C20.1002 4.5 19.4001 4.5 18 4.5H17.8589Z" />
+        <Ph line>
+          <path d="M224,72V184" />
+        </Ph>
       </g>
       <g className="mi-fmid">
-        <path d="M6 8C6 5.17157 6 3.75736 6.87868 2.87868C7.75736 2 9.17157 2 12 2C14.8284 2 16.2426 2 17.1213 2.87868C18 3.75736 18 5.17157 18 8V16C18 18.8284 18 20.2426 17.1213 21.1213C16.2426 22 14.8284 22 12 22C9.17157 22 7.75736 22 6.87868 21.1213C6 20.2426 6 18.8284 6 16L6 8Z" />
+        <Ph line>
+          <rect x="72" y="40" width="112" height="176" rx="16" />
+        </Ph>
       </g>
     </Svg>
   );
