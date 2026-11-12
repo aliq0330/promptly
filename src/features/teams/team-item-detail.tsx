@@ -9,6 +9,7 @@ import { Copy } from "@/components/icons/copy";
 import { ImageIcon } from "@/components/icons/image-icon";
 import { LayoutDashboard } from "@/components/icons/layout-dashboard";
 import { Maximize2 } from "@/components/icons/maximize-2";
+import { FolderPlus } from "@/components/icons/folder-plus";
 import { Pencil } from "@/components/icons/pencil";
 import { Palette } from "@/components/icons/palette";
 import { Presentation } from "@/components/icons/presentation";
@@ -43,6 +44,7 @@ import { ProjectPathBar, type PathCrumb } from "./project-path-bar";
 import { ReviewChip } from "./project-ui";
 import { ProposeChangeDialog } from "./team-propose-dialog";
 import { AddToBoardDialog, type BoardChoice } from "./team-add-to-board";
+import { GroupAssignDialog } from "./group-assign";
 import { deleteFileItem, fetchPlacements } from "@/lib/supabase/team-board";
 import { paletteItemId, splitPromptTokens } from "@/lib/team-item-kit";
 
@@ -173,7 +175,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   const router = useRouter();
   const { sources, readable, userId, caps, removeItems, setPalettes, setItems, items, groups } = useSpaceContext();
   const itemTitle = useItemTitle();
-  const [menu, setMenu] = useState<null | "menu" | "delete" | "deleteFile" | "edit" | "propose" | "board">(null);
+  const [menu, setMenu] = useState<null | "menu" | "delete" | "deleteFile" | "edit" | "propose" | "board" | "group">(null);
   const [boardIds, setBoardIds] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -269,7 +271,9 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   ) : null;
 
   const drawer = Boolean(ctx.drawer);
-  const hasMenu = mayDelete || mayEdit || mayPropose || onBoard || Boolean(place) || mayRemoveFromBoard;
+  const groupTargetId = transferable?.id ?? null;
+  const mayGroup = caps.edit && groupTargetId !== null;
+  const hasMenu = mayGroup || mayDelete || mayEdit || mayPropose || onBoard || Boolean(place) || mayRemoveFromBoard;
   const drawerHeader = (
     <div className="flex items-start gap-1 pr-11">
       <div className="min-w-0 flex-1">
@@ -386,6 +390,14 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
                 </button>
               </li>
             )}
+            {mayGroup && (
+              <li>
+                <button type="button" onClick={() => setMenu("group")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-group-add>
+                  <FolderPlus size={20} aria-hidden />
+                  {t("tf.group.add")}
+                </button>
+              </li>
+            )}
             {mayEdit && (
               <li>
                 <button type="button" onClick={() => setMenu("edit")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-edit>
@@ -457,6 +469,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
           }}
         />
       )}
+      {menu === "group" && groupTargetId && <GroupAssignDialog itemIds={[groupTargetId]} onClose={() => setMenu(null)} />}
       {menu === "delete" && (
         <ConfirmDialog
           id="area-item-delete"

@@ -6,6 +6,7 @@ import { LanguageProvider, languageInitScript } from "@/lib/i18n/language-provid
 import { AuthProvider } from "@/features/auth/auth-provider";
 import { AuthPromptProvider } from "@/features/auth/auth-prompt-provider";
 import { PreferencesSync } from "@/features/auth/preferences-sync";
+import { KeyboardState } from "@/components/layout/keyboard-state";
 import { PageTitle } from "@/components/layout/page-title";
 import { TaxonomyHydrator } from "@/features/content/taxonomy-hydrator";
 import "./globals.css";
@@ -88,6 +89,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <PreferencesSync />
               <TaxonomyHydrator />
               <PageTitle />
+              <KeyboardState />
               <AuthPromptProvider>{children}</AuthPromptProvider>
             </AuthProvider>
           </LanguageProvider>

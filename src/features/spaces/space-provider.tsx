@@ -148,6 +148,12 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
     };
   }, [initial.items, loadSources]);
 
+  // `setItems` dışarıdan (ekip dosyasına içerik eklendikten sonra yeniden okuma, aktarım…) da öğe getirir: kaynağı henüz yüklenmemiş
+  // yeni başvurular "Kaynak artık erişilemiyor" görünmesin diye her öğe değişiminde eksikler tamamlanır (yüklenenler `loadedRefs` ile atlanır).
+  useEffect(() => {
+    void loadSources(items);
+  }, [items, loadSources]);
+
   const readable = useCallback(
     (id: string) => sources.prompts.has(id) || sources.requests.has(id) || sources.workflows.has(id) || sources.presets.has(id),
     [sources],
