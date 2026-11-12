@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { ImageIcon } from "@/components/icons/image-icon";
@@ -13,7 +13,8 @@ import { Palette } from "@/components/icons/palette";
 import { Check } from "@/components/icons/check";
 import { FolderPlus } from "@/components/icons/folder-plus";
 import { ListChecks } from "@/components/icons/list-checks";
-import { X } from "@/components/icons/x";
+import { FolderMinus } from "@/components/icons/folder-minus";
+import { Trash2 } from "@/components/icons/trash-2";
 import { useLongPress } from "@/features/messages/use-long-press";
 import { GroupAssignDialog } from "./group-assign";
 import { Presentation } from "@/components/icons/presentation";
@@ -22,7 +23,10 @@ import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { Button } from "@/components/ui/button";
-import { GroupsManagerModal, NoteEditorModal, useItemTitle } from "@/features/spaces/space-items";
+import { NoteEditorModal, useItemTitle } from "@/features/spaces/space-items";
+import { SPACE_COLOR_CLASS } from "@/features/spaces/space-visuals";
+import { AddToBoardDialog, type BoardChoice } from "./team-add-to-board";
+import { BulkDeleteDialog, EmptyFolder, FolderGrid, FolderHeader, GroupMenuDialog, NewGroupDialog, NO_GROUP, SelectionBar, useValidFolder, ViewSegment, type FolderPreview, type GroupNav } from "./team-area-groups";
 import { useSpaceImageUpload } from "@/features/spaces/tabs/images-tab";
 import { NewPaletteDialog } from "@/features/spaces/tabs/palette-tab";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,10 +39,11 @@ import { SpaceProvider, useSpaceContext, type SpaceData } from "@/features/space
 import { LanguageTermScope, useTranslation } from "@/lib/i18n/language-provider";
 import { rewriteAreaTerms } from "@/lib/team-area-terms";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { fetchMyRole, fetchSpace, fetchSpaceConnections, fetchSpaceGroups, fetchSpaceItems, fetchSpacePalettes, type SpaceItem } from "@/lib/supabase/spaces";
+import { deleteSpacePalette, fetchMyRole, fetchSpace, fetchSpaceConnections, fetchSpaceGroups, fetchSpaceItems, fetchSpacePalettes, type SpaceItem } from "@/lib/supabase/spaces";
+import { deleteFileItem } from "@/lib/supabase/team-board";
 import { submitReview, withdrawReview } from "@/lib/supabase/team-projects";
 import type { TeamActionError } from "@/lib/supabase/teams";
-import { canAddToArea, canProposeChange, canSubmitItem, canWithdrawItem, type ProjectRole } from "@/lib/team-projects";
+import { canAddToArea, canDeleteItem, canProposeChange, canSubmitItem, canWithdrawItem, type ProjectRole } from "@/lib/team-projects";
 import { cn } from "@/lib/utils";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { ReviewChip } from "./project-ui";
@@ -76,6 +81,8 @@ export interface AreaAddActions {
   onVariables?: () => void;
   /** Dosya sayfasında içerik ekleme hedefi (docs/history/376-*): Prompt/İstek/Workflow/Ayar paketi Oluştur · Seç. Eski proje geneli alanda yok. */
   content?: { projectId: string; fileId: string; boardId?: string | null };
+  /** Seçilen öğeleri toplu "Panoya ekle" için projenin panoları (docs/history/378-*); yoksa o eylem sunulmaz. */
+  placement?: { projectId: string; fileId: string | null; boards: BoardChoice[] } | null;
 }
 
 /** Liste kipinde (Gezgin) "ana pano"nun altında klasör gibi görünen ek pano. */
@@ -128,6 +135,10 @@ export function TeamAreaView({
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [version, setVersion] = useState(0);
   const reload = useCallback(() => setVersion((v) => v + 1), []);
+  // Gruplar sekmesi / klasör (docs/history/378-*) yenilemede (`version`) kaybolmasın diye sağlayıcının DIŞINDA tutulur; adres `?group=<grup>` klasörü açar (oluşturma dönüşü).
+  const params = useSearchParams();
+  const initialGroup = params.get("group");
+  const [nav, setNav] = useState<GroupNav>(() => (initialGroup ? { view: "groups", folder: initialGroup } : { view: "items", folder: null }));
 
   useEffect(() => {
     if (authLoading) return;
@@ -174,10 +185,33 @@ export function TeamAreaView({
   return (
     <SpaceProvider key={`${state.data.space.id}-${version}`} initial={state.data} userId={userId}>
       <LanguageTermScope rewrite={rewriteAreaTerms}>
-        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} item={item ?? null} itemHref={itemHref} focusId={focusId ?? null} team={team} mainBoardRow={Boolean(mainBoardRow)} />
+        <AreaBody role={role} tab={tab} hrefFor={hrefFor} reviewHref={reviewHref ?? null} onChanged={reload} add={add} boards={boards ?? []} item={item ?? null} itemHref={itemHref} focusId={focusId ?? null} team={team} mainBoardRow={Boolean(mainBoardRow)} nav={nav} setNav={setNav} />
       </LanguageTermScope>
     </SpaceProvider>
   );
+}
+
+/**
+ * Bir klasörün (grup) içindeyken eklenen yeni öğe doğrudan o gruba girer (docs/history/378-*). Ekle yolları (not, görsel, palet, "Seç", oluşturma dönüşü)
+ * öğeyi sağlayıcıya yeni kimlikle getirir; klasör açıkken kimlikleri izler, gruba bağlı olmayan YENİLERİ gruba yazar. Klasöre girerken var olan öğeler
+ * dokunulmaz (anlık görüntü).
+ */
+function useAddIntoFolder(groupId: string | null) {
+  const { items, patchItem, userId } = useSpaceContext();
+  const seen = useRef<{ groupId: string | null; ids: Set<string> }>({ groupId: null, ids: new Set() });
+  useEffect(() => {
+    if (seen.current.groupId !== groupId) {
+      seen.current = { groupId, ids: new Set(items.map((item) => item.id)) };
+      return;
+    }
+    if (!groupId) return;
+    const fresh = items.filter((item) => !seen.current.ids.has(item.id));
+    for (const item of fresh) seen.current.ids.add(item.id);
+    for (const item of fresh) {
+      if (item.groupId || item.fileItemId || (userId && item.createdBy && item.createdBy !== userId)) continue;
+      void patchItem(item.id, { groupId }).catch(() => undefined);
+    }
+  }, [items, groupId, patchItem, userId]);
 }
 
 function AreaBody({
@@ -193,7 +227,11 @@ function AreaBody({
   focusId,
   team,
   mainBoardRow,
+  nav,
+  setNav,
 }: {
+  nav: GroupNav;
+  setNav: (nav: GroupNav) => void;
   role: ProjectRole | null;
   tab: AreaTab | null;
   hrefFor: (tab: AreaTab, extra?: { focus?: string }) => string;
@@ -212,7 +250,9 @@ function AreaBody({
   const { space, caps } = useSpaceContext();
   const [addOpen, setAddOpen] = useState(false);
   const [adding, setAdding] = useState<null | "note" | "palette">(null);
-  const contentAdd = useContentAdd(add?.content ? { projectId: add.content.projectId, fileId: add.content.fileId, boardId: add.content.boardId ?? null } : null);
+  const folderGroupId = nav.view === "groups" && nav.folder && nav.folder !== NO_GROUP ? nav.folder : null;
+  useAddIntoFolder(folderGroupId);
+  const contentAdd = useContentAdd(add?.content ? { projectId: add.content.projectId, fileId: add.content.fileId, boardId: add.content.boardId ?? null, groupId: folderGroupId } : null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { upload, uploadErrors, handleFiles } = useSpaceImageUpload();
   // Çekmece (mockup B4): liste yerinde kalır, öğe üstüne yandan/alttan açılır. `drawer` verilmemişse eski tam sayfa görünümü.
@@ -222,7 +262,7 @@ function AreaBody({
     <div className="space-y-4" data-team-area={space.id} data-area-role={role ?? "none"} data-area-can-edit={caps.edit ? "1" : "0"} data-area-mode={listMode ? "list" : "tab"}>
       {listMode && <AreaReviewPanel role={role} reviewHref={reviewHref} onChanged={onChanged} />}
       {listMode ? (
-        <AreaCardGrid boards={boards} hrefFor={hrefFor} itemHref={itemHref} canAdd={caps.edit} onAdd={() => setAddOpen(true)} add={add} reviewHref={reviewHref} role={role} mainBoardRow={mainBoardRow} />
+        <AreaCardGrid boards={boards} hrefFor={hrefFor} itemHref={itemHref} canAdd={caps.edit} onAdd={() => setAddOpen(true)} add={add} reviewHref={reviewHref} role={role} mainBoardRow={mainBoardRow} nav={nav} onNav={setNav} />
       ) : (
         <div role="tabpanel" aria-label={t("tp.area.tab.board")}>
           <SpaceBoard focusId={focusId} team={team} />
@@ -325,19 +365,25 @@ const CARD_HEIGHT: Record<RowKind, string> = {
  * karta dokununca öğe ÇEKMECESİ açılır (`?item=`; docs/history/364-*). Pano ayrı görünümdür (`sub=board`); workflow/ayar paketi/istek kartı da çekmeceyi açar.
  * "Ekle" masaüstü/tablette başlıkta, telefonda sağ altta sabit düğmedir.
  */
-function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHref, role, mainBoardRow }: { mainBoardRow: boolean; boards: AreaBoardRow[]; hrefFor: (tab: AreaTab) => string; itemHref?: (itemParam: string) => string; canAdd: boolean; onAdd: () => void; add?: AreaAddActions; reviewHref: string | null; role: ProjectRole | null }) {
+function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHref, role, mainBoardRow, nav, onNav }: { mainBoardRow: boolean; boards: AreaBoardRow[]; hrefFor: (tab: AreaTab) => string; itemHref?: (itemParam: string) => string; canAdd: boolean; onAdd: () => void; add?: AreaAddActions; reviewHref: string | null; role: ProjectRole | null; nav: GroupNav; onNav: (nav: GroupNav) => void }) {
   const { t } = useTranslation();
-  const { items, palettes, groups } = useSpaceContext();
+  const { items, palettes, groups, userId, patchItem, setItems, setPalettes } = useSpaceContext();
   const itemTitle = useItemTitle();
   const [filter, setFilter] = useState<FilterKey>("all");
-  // Nesne grupları (docs/history/376-*): proje nesnelerini (görsel, prompt, not, palet…) gruplara ayırır; süzgeç yalnız görünümdür.
-  const [groupFilter, setGroupFilter] = useState<"all" | "none" | string>("all");
-  const [groupsOpen, setGroupsOpen] = useState(false);
-  // Çoklu seçim (docs/history/377-*, mockup C): "Seç" ya da karta uzun basma seçim kipini açar; alt çubuktan "Gruba ekle".
+  // Gruplar (docs/history/378-*): "Öğeler | Gruplar" sekmeleri; klasörün içinde yalnız o grubun öğeleri. Grup çipi / ikinci satır YOK.
+  const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  // Çoklu seçim (docs/history/377-*, 378-*): "Seç" ya da karta uzun basma seçim kipini açar; alt çubuk eylemleri.
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
-  const activeGroup = groupFilter !== "all" && groupFilter !== "none" && !groups.some((group) => group.id === groupFilter) ? "all" : groupFilter;
+  const [boardFor, setBoardFor] = useState<string[] | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  useValidFolder(nav, groups, onNav);
+  const folderGroup = nav.view === "groups" && nav.folder && nav.folder !== NO_GROUP ? (groups.find((group) => group.id === nav.folder) ?? null) : null;
+  const inFolder = nav.view === "groups" && nav.folder !== null;
   // Panolar ve öğeler AYRI bölümlerdir (docs/history/368-*): pano satırları (bağımsız pano / pano grubu) üstte, dosyanın öğeleri altta.
   const boardCards: AreaRow[] = [
     ...(mainBoardRow ? [{ key: "main", kind: "board" as const, title: t("tp.area.list.mainBoard"), href: hrefFor("board") }] : []),
@@ -354,14 +400,15 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
   ];
   const groupName = (id: string | null | undefined) => groups.find((group) => group.id === id)?.name ?? null;
   const content = rows;
-  const counts = (key: FilterKey) => (key === "all" ? content.length : key === "waiting" ? content.filter((row) => row.state && row.state !== "approved").length : content.filter((row) => FILTER_OF[row.kind] === key).length);
+  // Klasörün içindeyken sayılar ve çipler yalnız o grubun öğelerinindir.
+  const scope = inFolder ? rows.filter((row) => (nav.folder === NO_GROUP ? !row.groupId : row.groupId === nav.folder)) : rows;
+  const counts = (key: FilterKey) => (key === "all" ? scope.length : key === "waiting" ? scope.filter((row) => row.state && row.state !== "approved").length : scope.filter((row) => FILTER_OF[row.kind] === key).length);
   const chips: FilterKey[] = ["all", "prompt", "image", "palette", "note", "content"].filter((key) => key === "all" || counts(key as FilterKey) > 0) as FilterKey[];
   const reviewOn = Boolean(add?.reviewOn);
   const waiting = counts("waiting");
   if (waiting > 0) chips.push("waiting");
-  const shown = rows
-    .filter((row) => (filter === "all" ? true : filter === "waiting" ? Boolean(row.state && row.state !== "approved") : FILTER_OF[row.kind] === filter))
-    .filter((row) => (activeGroup === "all" ? true : activeGroup === "none" ? !row.groupId : row.groupId === activeGroup));
+  const effectiveFilter = filter !== "all" && !chips.includes(filter) ? "all" : filter;
+  const shown = scope.filter((row) => (effectiveFilter === "all" ? true : effectiveFilter === "waiting" ? Boolean(row.state && row.state !== "approved") : FILTER_OF[row.kind] === effectiveFilter));
   const selectable = rows.filter((row) => row.itemId);
   const exitSelecting = () => {
     setSelecting(false);
@@ -369,6 +416,63 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
   };
   const toggleRow = (itemId: string) => setSelected((list) => (list.includes(itemId) ? list.filter((id) => id !== itemId) : [...list, itemId]));
   const allShownSelected = shown.filter((row) => row.itemId).length > 0 && shown.filter((row) => row.itemId).every((row) => row.itemId && selected.includes(row.itemId));
+  const go = (next: GroupNav) => {
+    setFilter("all");
+    exitSelecting();
+    onNav(next);
+  };
+  const groupCounts = new Map<string, number>();
+  const groupPreviews = new Map<string, FolderPreview[]>();
+  for (const row of rows) {
+    const key = row.groupId ?? NO_GROUP;
+    groupCounts.set(key, (groupCounts.get(key) ?? 0) + 1);
+    const list = groupPreviews.get(key) ?? [];
+    if (list.length < 3) list.push({ kind: row.kind === "image" ? "image" : row.kind === "prompt" ? "prompt" : row.kind === "note" ? "note" : row.kind === "palette" ? "palette" : "other", mediaUrl: row.mediaUrl, color: row.colors?.[0] ?? null });
+    groupPreviews.set(key, list);
+  }
+  const itemById = (id: string) => items.find((entry) => entry.id === id);
+  const canonicalOf = (id: string) => {
+    const entry = itemById(id);
+    return entry ? (entry.fileItemId ?? entry.id) : id;
+  };
+  const placement = add?.placement ?? null;
+  const mayBoard = Boolean(placement && placement.fileId && canAdd);
+  const mayDeleteAll = canAdd && selected.length > 0 && selected.every((id) => {
+    const entry = itemById(id);
+    return entry ? canDeleteItem(role, { state: entry.revState, createdBy: entry.createdBy }, userId) : false;
+  });
+  const removeFromGroup = async () => {
+    try {
+      await Promise.all(selected.map((id) => patchItem(id, { groupId: null })));
+      exitSelecting();
+    } catch {
+      /* hata satırı yok: değişmeyen öğeler seçili kalır, kullanıcı yeniden dener */
+    }
+  };
+  const deleteSelected = async () => {
+    setDeleteBusy(true);
+    setDeleteError(null);
+    try {
+      for (const id of selected) {
+        const entry = itemById(id);
+        if (!entry) continue;
+        if (entry.kind === "palette" && entry.paletteId) {
+          await deleteSpacePalette(entry.paletteId);
+          setPalettes((list) => list.filter((palette) => palette.id !== entry.paletteId));
+          setItems((list) => list.filter((candidate) => candidate.paletteId !== entry.paletteId));
+        } else {
+          await deleteFileItem(id);
+          setItems((list) => list.filter((candidate) => candidate.id !== id && candidate.fileItemId !== id));
+        }
+      }
+      setDeleting(false);
+      exitSelecting();
+    } catch (e) {
+      setDeleteError((e as Error).message || t("spaces.error.generic"));
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
   const approvedN = content.filter((row) => !row.state || row.state === "approved").length;
   const pendingN = content.filter((row) => row.state === "pending").length;
   const changesN = content.filter((row) => row.state === "changes").length;
@@ -424,120 +528,147 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
       )}
 
       {boardCards.length > 0 && <h3 className="font-display text-body font-bold text-text">{t("tb.file.itemsTitle")}</h3>}
-      <div className="flex flex-wrap items-center gap-2" data-testid="area-filters">
-        <div role="group" aria-label={t("tp.area.list.viewAria")} className="flex min-w-0 flex-1 gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
-          {chips.map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setFilter(key)}
-              aria-pressed={filter === key}
-              data-area-filter={key}
-              className={cn(
-                "h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-small font-semibold md:h-8 md:px-3.5",
-                filter === key ? "border-text bg-text text-background" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
-                key === "waiting" && filter !== key && "text-warning",
-              )}
-            >
-              {key === "all" ? t("common.all") : key === "waiting" ? t("tc.file.waiting") : t(FILTER_LABEL[key])} <span className="tabular-nums opacity-70">{counts(key)}</span>
-            </button>
-          ))}
-        </div>
-        {add?.variableNames && add.variableNames.length > 0 && (
-          <button type="button" onClick={add.onVariables} className="inline-flex items-center gap-1.5 text-small text-text-muted max-md:hidden" data-area-variables>
-            {t("tc.file.variables")}
-            {add.variableNames.slice(0, 3).map((name) => (
-              <code key={name} className="rounded-md bg-surface-soft px-1.5 font-mono text-caption text-secondary">
-                {`{${name}}`}
-              </code>
-            ))}
-          </button>
-        )}
-        {canAdd && selectable.length > 0 && (
-          <Button type="button" variant="outline" onClick={() => (selecting ? exitSelecting() : setSelecting(true))} aria-pressed={selecting} className="h-11 gap-2 rounded-full px-4 md:h-10" data-area-select>
-            <ListChecks size={16} aria-hidden />
-            {t(selecting ? "tf.select.done" : "tf.select.start")}
-          </Button>
-        )}
+      <div className="flex flex-wrap items-center gap-2" data-testid="area-view-row">
+        {(rows.length > 0 || groups.length > 0) && <ViewSegment view={nav.view} onView={(view) => go({ view, folder: null })} itemCount={rows.length} groupCount={groups.length} />}
         {canAdd && (
-          <Button type="button" onClick={onAdd} className="h-11 gap-2 rounded-full px-5 max-md:hidden md:h-10" data-area-add>
+          <Button type="button" onClick={onAdd} className="ml-auto h-11 gap-2 rounded-full px-5 max-md:hidden md:h-10" data-area-add>
             <Plus size={16} aria-hidden />
-            {t("tp.add.button")}
+            {folderGroup ? t("tf.group.addHere", { name: folderGroup.name }) : t("tp.add.button")}
           </Button>
         )}
       </div>
 
-      {(groups.length > 0 || canAdd) && (
-        <div className="flex flex-wrap items-center gap-2" data-testid="area-group-filters">
-          {(
-            <div role="group" aria-label={t("spaces.groups.filter")} className="flex min-w-0 flex-1 gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
-              {(groups.length > 0 ? [{ key: "all", label: t("spaces.groups.all"), count: content.length }, ...groups.map((group) => ({ key: group.id, label: group.name, count: content.filter((row) => row.groupId === group.id).length })), { key: "none", label: t("spaces.groups.none"), count: content.filter((row) => !row.groupId).length }] : []).map((entry) => (
-                <button
-                  key={entry.key}
-                  type="button"
-                  onClick={() => setGroupFilter(entry.key)}
-                  aria-pressed={activeGroup === entry.key}
-                  data-area-group-filter={entry.key}
-                  className={cn("h-9 shrink-0 whitespace-nowrap rounded-full border px-3.5 text-small font-semibold md:h-8", activeGroup === entry.key ? "border-primary bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
-                >
-                  {entry.label} <span className="tabular-nums opacity-70">{entry.count}</span>
-                </button>
+      {nav.view === "groups" && nav.folder === null && (
+        <div className="space-y-3" data-testid="area-groups-view">
+          {groups.length === 0 && <p className="rounded-xl border border-dashed border-border-soft px-3.5 py-3 text-small text-text-secondary">{t("tf.folder.noGroups")}</p>}
+          <FolderGrid groups={groups} counts={groupCounts} previews={groupPreviews} canAdd={canAdd} onOpen={(folder) => go({ view: "groups", folder })} onNew={() => setNewGroupOpen(true)} />
+        </div>
+      )}
+
+      {inFolder && (
+        <FolderHeader
+          title={folderGroup?.name ?? t("spaces.groups.none")}
+          dot={folderGroup ? SPACE_COLOR_CLASS[folderGroup.color].dot : "bg-border-strong"}
+          onBack={() => go({ view: "groups", folder: null })}
+          onMenu={folderGroup ? () => setMenuOpen(true) : undefined}
+        />
+      )}
+
+      {(nav.view === "items" || inFolder) && scope.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2" data-testid="area-filters">
+          <div role="group" aria-label={t("tp.area.list.viewAria")} className="flex min-w-0 flex-1 gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
+            {chips.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFilter(key)}
+                aria-pressed={effectiveFilter === key}
+                data-area-filter={key}
+                className={cn(
+                  "h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-small font-semibold md:h-8 md:px-3.5",
+                  effectiveFilter === key ? "border-text bg-text text-background" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
+                  key === "waiting" && effectiveFilter !== key && "text-warning",
+                )}
+              >
+                {key === "all" ? t("common.all") : key === "waiting" ? t("tc.file.waiting") : t(FILTER_LABEL[key])} <span className="tabular-nums opacity-70">{counts(key)}</span>
+              </button>
+            ))}
+          </div>
+          {add?.variableNames && add.variableNames.length > 0 && !inFolder && (
+            <button type="button" onClick={add.onVariables} className="inline-flex items-center gap-1.5 text-small text-text-muted max-md:hidden" data-area-variables>
+              {t("tc.file.variables")}
+              {add.variableNames.slice(0, 3).map((name) => (
+                <code key={name} className="rounded-md bg-surface-soft px-1.5 font-mono text-caption text-secondary">
+                  {`{${name}}`}
+                </code>
               ))}
-              {canAdd && (
-                <button type="button" onClick={() => setGroupsOpen(true)} data-area-groups-manage className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-dashed border-border px-3.5 text-small font-semibold text-primary hover:bg-surface-soft md:h-8">
-                  <Plus size={14} aria-hidden />
-                  {t("tf.group.chip")}
-                </button>
-              )}
-            </div>
+            </button>
+          )}
+          {canAdd && selectable.length > 0 && (
+            <Button type="button" variant="outline" onClick={() => (selecting ? exitSelecting() : setSelecting(true))} aria-pressed={selecting} className="h-11 shrink-0 gap-2 rounded-full px-4 md:h-10" data-area-select>
+              <ListChecks size={16} aria-hidden />
+              {t(selecting ? "tf.select.done" : "tf.select.start")}
+            </Button>
           )}
         </div>
       )}
 
-      <ul className="grid grid-cols-2 items-start gap-2.5 md:grid-cols-3 md:gap-3.5 xl:grid-cols-4" data-testid="area-rows">
-        {shown.map((row) => (
-          <li key={row.key}>
-            <AreaCard
-              row={row}
-              reviewOn={reviewOn}
-              groupName={groupName(row.groupId)}
-              select={canAdd && row.itemId ? { on: selecting, checked: selected.includes(row.itemId), toggle: () => toggleRow(row.itemId as string), start: () => { setSelecting(true); setSelected((list) => (list.includes(row.itemId as string) ? list : [...list, row.itemId as string])); } } : undefined}
-            />
-          </li>
-        ))}
-      </ul>
-      {groupsOpen && <GroupsManagerModal onClose={() => setGroupsOpen(false)} />}
+      {(nav.view === "items" || inFolder) && shown.length > 0 && (
+        <ul className="grid grid-cols-2 items-start gap-2.5 md:grid-cols-3 md:gap-3.5 xl:grid-cols-4" data-testid="area-rows">
+          {shown.map((row) => (
+            <li key={row.key}>
+              <AreaCard
+                row={row}
+                reviewOn={reviewOn}
+                groupName={inFolder ? null : groupName(row.groupId)}
+                select={canAdd && row.itemId ? { on: selecting, checked: selected.includes(row.itemId), toggle: () => toggleRow(row.itemId as string), start: () => { setSelecting(true); setSelected((list) => (list.includes(row.itemId as string) ? list : [...list, row.itemId as string])); } } : undefined}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {inFolder && scope.length === 0 && <EmptyFolder name={folderGroup?.name ?? t("spaces.groups.none")} canAdd={canAdd} onAdd={onAdd} onPick={() => go({ view: "items", folder: null })} />}
+
+      {newGroupOpen && <NewGroupDialog onClose={() => setNewGroupOpen(false)} onCreated={(group) => go({ view: "groups", folder: group.id })} />}
+      {menuOpen && folderGroup && (
+        <GroupMenuDialog
+          group={folderGroup}
+          count={scope.length}
+          onClose={() => setMenuOpen(false)}
+          onSelect={() => {
+            setMenuOpen(false);
+            setSelecting(true);
+          }}
+          onToBoard={mayBoard ? () => { setMenuOpen(false); setBoardFor(scope.flatMap((row) => (row.itemId ? [canonicalOf(row.itemId)] : []))); } : undefined}
+          onDeleted={() => {
+            setMenuOpen(false);
+            go({ view: "groups", folder: null });
+          }}
+        />
+      )}
       {assigning && selected.length > 0 && <GroupAssignDialog itemIds={selected} onClose={() => setAssigning(false)} onDone={exitSelecting} />}
-      {nothingYet && filter === "all" && (
+      {boardFor && placement && placement.fileId && (
+        <AddToBoardDialog
+          itemIds={boardFor}
+          projectId={placement.projectId}
+          fileId={placement.fileId}
+          boards={placement.boards}
+          onClose={() => setBoardFor(null)}
+          onDone={() => {
+            setBoardFor(null);
+            exitSelecting();
+          }}
+        />
+      )}
+      {deleting && <BulkDeleteDialog count={selected.length} busy={deleteBusy} error={deleteError} onConfirm={() => void deleteSelected()} onCancel={() => setDeleting(false)} />}
+      {nothingYet && effectiveFilter === "all" && nav.view === "items" && (
         <div className="rounded-2xl border border-dashed border-border bg-surface-soft/40 px-5 py-7 text-center" data-testid="area-empty">
           <p className="text-body font-bold text-text">{t("tp.area.list.emptyTitle")}</p>
           <p className="mx-auto mt-1 max-w-xs text-small text-text-secondary">{t(canAdd ? "tp.area.list.emptyBody" : "tp.area.list.emptyViewer")}</p>
         </div>
       )}
       {selecting && (
-        <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 pt-2 md:bottom-4" data-testid="area-select-bar" data-keyboard-hide>
-          <div className="mx-auto flex max-w-xl items-center gap-2 rounded-2xl border border-border-soft bg-surface p-2 shadow-pop">
-            <button type="button" onClick={exitSelecting} aria-label={t("tf.select.close")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft" data-select-close>
-              <X size={20} aria-hidden />
-            </button>
-            <span className="min-w-0 flex-1 truncate text-small font-bold text-text" data-select-count aria-live="polite">
-              {t("tf.select.count", { count: selected.length })}
-            </span>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setSelected(allShownSelected ? [] : [...new Set([...selected, ...shown.flatMap((row) => (row.itemId ? [row.itemId] : []))])])} data-select-all>
-              {t(allShownSelected ? "tf.select.none" : "tf.select.all")}
-            </Button>
-            <Button type="button" className="h-11 gap-2 rounded-full px-4" disabled={selected.length === 0} onClick={() => setAssigning(true)} data-select-assign>
-              <FolderPlus size={17} aria-hidden />
-              {t("tf.group.add")}
-            </Button>
-          </div>
-        </div>
+        <SelectionBar
+          count={selected.length}
+          allSelected={allShownSelected}
+          onAll={() => setSelected(allShownSelected ? [] : [...new Set([...selected, ...shown.flatMap((row) => (row.itemId ? [row.itemId] : []))])])}
+          onClose={exitSelecting}
+          actions={[
+            folderGroup
+              ? { key: "move", label: t("tf.bulk.move"), icon: <FolderPlus size={22} />, tone: "primary", disabled: selected.length === 0, onClick: () => setAssigning(true) }
+              : { key: "group", label: t("tf.group.add"), icon: <FolderPlus size={22} />, tone: "primary", disabled: selected.length === 0, onClick: () => setAssigning(true) },
+            ...(folderGroup ? [{ key: "ungroup", label: t("tf.group.removeFrom"), icon: <FolderMinus size={22} />, disabled: selected.length === 0, onClick: () => void removeFromGroup() }] : []),
+            ...(mayBoard ? [{ key: "board", label: t("tf.bulk.toBoard"), icon: <Presentation size={22} />, disabled: selected.length === 0, onClick: () => setBoardFor(selected.map(canonicalOf)) }] : []),
+            ...(canAdd ? [{ key: "delete", label: t("tf.bulk.delete"), icon: <Trash2 size={22} />, tone: "danger" as const, disabled: !mayDeleteAll, onClick: () => { setDeleteError(null); setDeleting(true); } }] : []),
+          ]}
+        />
       )}
       {canAdd && !selecting && (
-        <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex justify-end pt-2 md:hidden">
+        <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex justify-end pt-2 md:hidden" data-keyboard-hide="">
           <Button type="button" onClick={onAdd} className="pointer-events-auto h-12 gap-2 rounded-full px-5 shadow-pop" data-area-add-phone>
             <Plus size={18} aria-hidden />
-            {t("tp.add.button")}
+            {folderGroup ? t("tf.group.addHere", { name: folderGroup.name }) : t("tp.add.button")}
           </Button>
         </div>
       )}

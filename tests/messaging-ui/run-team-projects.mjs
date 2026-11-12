@@ -766,6 +766,7 @@ await scenario("32. Ekle → Palet/Görsel: sekmeye gitmeden pencere/dosya seçi
 }, { items: () => undefined });
 
 const BOARD2 = SID(4);
+const GROUP1 = "6c000000-0000-4000-8000-000000000001";
 const PICK_P1 = "a1c00000-0000-4000-8000-000000000001";
 const PICK_P2 = "a1c00000-0000-4000-8000-000000000002";
 const pickAuthor = (u) => ({ id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 0, following_count: 0, created_at: "2026-01-01T00:00:00Z", interests: [] });
@@ -1168,20 +1169,23 @@ await scenario("45. Öğe düzenleme: Grup seçicide '+ Yeni grup…' ile grup a
   assert.equal(db.spaceItems.find((row) => row.id === IMAGE(1)).group_id, group.id, "öğe gruba girdi");
 }, { items: detailItems });
 
-await scenario("45b. Çoklu seçim (docs/history/377-*): 'Seç' → kartlara dokun → alt çubukta sayı + 'Gruba ekle'; karo penceresinde yeni grup aç → seçilen öğeler o gruba girer, seçim kapanır, grup süzgeci çıkar", async ({ page, db }) => {
+await scenario("45b. Öğeler sekmesi (docs/history/378-*): grup çipi/ikinci satır YOK; 'Seç' → kartlara dokun → alt çubukta Gruba ekle · Panoya ekle · Sil; karo penceresinde yeni grup aç → seçilen öğeler o gruba girer, seçim kapanır", async ({ page, db }) => {
   await page.goto(projectUrl(`&file=${FILE}`));
   const rows = page.getByTestId("area-rows");
   await rows.waitFor();
-  assert.equal(await page.locator("[data-area-groups-manage-phone]").count(), 0, "eski 'Grupları yönet' düğmesi yok");
+  assert.equal(await page.locator("[data-area-group-filter]").count(), 0, "ikinci satırdaki grup çipleri yok");
+  assert.equal(await page.locator("[data-area-groups-manage]").count(), 0, "'Grupları yönet' düğmesi yok");
+  assert.equal(await page.locator("[data-area-view=items][aria-selected=true]").count(), 1, "Öğeler sekmesi açık");
   await page.locator("[data-area-select]").click();
   await page.getByTestId("area-select-bar").waitFor();
-  assert.equal(await page.locator("[data-select-assign]").isDisabled(), true, "seçim yokken Gruba ekle kapalı");
+  assert.equal(await page.locator("[data-select-action=group]").isDisabled(), true, "seçim yokken Gruba ekle kapalı");
+  assert.deepEqual(await page.locator("[data-select-action]").evaluateAll((els) => els.map((el) => el.getAttribute("data-select-action"))), ["group", "board", "delete"], "üç eylem");
   const cards = rows.locator("[data-area-card]");
   await cards.nth(0).click();
   await cards.nth(1).click();
   assert.equal(page.url().includes("item="), false, "seçim kipinde karta dokunmak çekmeceyi açmaz");
   await page.locator("[data-select-count]").getByText("2 seçili").waitFor();
-  await page.locator("[data-select-assign]").click();
+  await page.locator("[data-select-action=group]").click();
   const form = page.getByTestId("group-assign-form");
   await form.waitFor();
   assert.deepEqual(await form.locator("[data-group-tile]").evaluateAll((els) => els.map((el) => el.getAttribute("data-group-tile"))), ["none", "new"], "grup yok: yalnız Grupsuz + Yeni grup karoları");
@@ -1202,7 +1206,114 @@ await scenario("45b. Çoklu seçim (docs/history/377-*): 'Seç' → kartlara dok
   await page.getByTestId("area-select-bar").waitFor({ state: "detached" });
   await page.waitForTimeout(400);
   assert.equal(db.spaceItems.filter((row) => row.group_id === group.id).length, 2, "iki öğe gruba girdi");
-  await page.locator(`[data-area-group-filter="${group.id}"]`).waitFor();
+  assert.equal(await page.locator("[data-area-group-filter]").count(), 0, "grup oluşunca da çip satırı çıkmaz");
+  await page.locator("[data-area-card]", { hasText: "Mutfak" }).first().waitFor();
+}, { items: detailItems });
+
+await scenario("45d. Gruplar sekmesi: klasör kartları (grup + Grupsuz + Yeni grup); klasöre girince yalnız o grubun öğeleri, başlık + geri; tür çipleri klasörün kapsamında", async ({ page, db }) => {
+  db.spaceGroups.push({ id: GROUP1, space_id: AREA_FILE, name: "Cephe", color: "primary", position: 0, created_by: ME, created_at: "2026-11-01T00:00:00Z" });
+  db.spaceItems.find((row) => row.id === IMAGE(1)).group_id = GROUP1;
+  db.spaceItems.find((row) => row.id === NOTE(40)).group_id = GROUP1;
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("area-view-segment").waitFor();
+  assert.equal(await page.locator("[data-area-folder]").count(), 0, "Öğeler sekmesinde klasör yok");
+  await page.locator("[data-area-view=groups]").click();
+  await page.getByTestId("area-folders").waitFor();
+  assert.deepEqual(await page.locator("[data-area-folder]").evaluateAll((els) => els.map((el) => el.getAttribute("data-area-folder"))), [GROUP1, "none"], "Cephe + Grupsuz");
+  assert.equal(await page.locator("[data-area-folder-new]").count(), 1, "Yeni grup kartı");
+  assert.equal(await page.getByTestId("area-filters").count(), 0, "klasör listesinde tür çipi yok");
+  await page.locator(`[data-area-folder="${GROUP1}"]`).click();
+  await page.getByTestId("area-folder-header").getByText("Cephe").waitFor();
+  assert.equal(await page.getByTestId("area-rows").locator("[data-area-card]").count(), 2, "yalnız Cephe'nin iki öğesi");
+  await page.locator("[data-area-filter=image]").click();
+  assert.equal(await page.getByTestId("area-rows").locator("[data-area-card]").count(), 1, "tür çipi klasör kapsamında");
+  await page.locator("[data-area-folder-back]").click();
+  await page.getByTestId("area-folders").waitFor();
+  await page.locator('[data-area-folder="none"]').click();
+  assert.equal(await page.getByTestId("area-rows").locator("[data-area-card]").count(), 2, "Grupsuz: prompt + palet");
+  assert.equal(await page.locator("[data-area-folder-menu]").count(), 0, "Grupsuz'da ⋮ menü yok");
+}, { items: detailItems });
+
+await scenario("45e. Klasör ⋮ menüsü: yeniden adlandır, renk, öğeleri seç (seçim kipi: Taşı · Gruptan çıkar · Panoya · Sil), grubu sil (öğeler Grupsuz kalır)", async ({ page, db }) => {
+  placeReply(db);
+  db.spaceGroups.push({ id: GROUP1, space_id: AREA_FILE, name: "Cephe", color: "primary", position: 0, created_by: ME, created_at: "2026-11-01T00:00:00Z" });
+  db.spaceItems.find((row) => row.id === IMAGE(1)).group_id = GROUP1;
+  db.spaceItems.find((row) => row.id === NOTE(40)).group_id = GROUP1;
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.locator("[data-area-view=groups]").click();
+  await page.locator(`[data-area-folder="${GROUP1}"]`).click();
+  await page.locator("[data-area-folder-menu]").click();
+  await page.getByTestId("group-menu-body").waitFor();
+  await page.locator("[data-group-menu-item=rename]").click();
+  await page.locator("[data-group-rename-input]").fill("Cephe giydirme");
+  await page.getByRole("button", { name: "Kaydet" }).click();
+  await page.getByTestId("area-folder-header").getByText("Cephe giydirme").waitFor();
+  assert.equal(db.spaceGroups.find((g) => g.id === GROUP1).name, "Cephe giydirme", "ad yazıldı");
+  await page.locator('[data-group-color="success"]').click();
+  await page.waitForTimeout(300);
+  assert.equal(db.spaceGroups.find((g) => g.id === GROUP1).color, "success", "renk yazıldı");
+  await page.locator("[data-group-menu-item=select]").click();
+  await page.getByTestId("area-select-bar").waitFor();
+  assert.deepEqual(await page.locator("[data-select-action]").evaluateAll((els) => els.map((el) => el.getAttribute("data-select-action"))), ["move", "ungroup", "board", "delete"], "klasör içinde dört eylem");
+  await page.locator("[data-select-all]").click();
+  await page.locator("[data-select-action=ungroup]").click();
+  await page.waitForTimeout(400);
+  assert.equal(db.spaceItems.filter((row) => row.group_id === GROUP1).length, 0, "Gruptan çıkar: öğeler Grupsuz");
+  await page.getByTestId("area-folder-empty").waitFor();
+}, { items: detailItems });
+
+await scenario("45f. Boş klasör + Yeni grup penceresi (ortada) + grubu sil: boş durum 'Bu grupta henüz öğe yok'; menüden sil → öğeler silinmez, Gruplar'a dönülür", async ({ page, db }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.locator("[data-area-view=groups]").click();
+  await page.locator("[data-area-folder-new]").click();
+  const dialog = page.getByTestId("new-group-form");
+  await dialog.waitFor();
+  const box = await dialog.boundingBox();
+  const view = page.viewportSize();
+  assert.ok(Math.abs(box.y + box.height / 2 - view.height / 2) < view.height * 0.25, "pencere ekranın ortasında");
+  assert.equal(await dialog.getByRole("button", { name: "Grubu oluştur" }).isDisabled(), true, "ad yokken kapalı");
+  await dialog.locator("[data-new-group-name]").fill("Müşteri");
+  await dialog.locator('[data-group-color="success"]').click();
+  await dialog.getByRole("button", { name: "Grubu oluştur" }).click();
+  await page.getByTestId("area-folder-empty").waitFor();
+  const group = db.spaceGroups.find((g) => g.name === "Müşteri");
+  assert.ok(group && group.color === "success", "grup rengiyle yazıldı");
+  await page.getByText("Bu grupta henüz öğe yok").waitFor();
+  await page.locator("[data-folder-empty-add]").waitFor();
+  await page.locator("[data-area-folder-menu]").click();
+  await page.locator("[data-group-menu-item=delete]").click();
+  await page.getByRole("button", { name: "Grubu sil" }).click();
+  await page.getByTestId("area-folders").waitFor();
+  assert.equal(db.spaceGroups.some((g) => g.name === "Müşteri"), false, "grup silindi");
+  assert.ok(db.spaceItems.length > 0, "öğeler silinmedi");
+}, { items: detailItems });
+
+await scenario("45g. Toplu eylemler: seçilenleri panoya ekle (team_board_place_items, dosyanın panoları) ve sil (onay → team_item_delete)", async ({ page, db }) => {
+  placeReply(db);
+  const deleted = [];
+  db.rpc.team_item_delete = (body) => { deleted.push(body.p_item); db.teamCalls.push({ name: "team_item_delete", body }); return { body: null }; };
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.getByTestId("area-rows").waitFor();
+  await page.locator("[data-area-select]").click();
+  await page.getByTestId("area-rows").locator("[data-area-card]").nth(0).click();
+  await page.getByTestId("area-rows").locator("[data-area-card]").nth(1).click();
+  await page.locator("[data-select-action=board]").click();
+  const form = page.getByTestId("add-to-board-form");
+  await form.waitFor();
+  await form.locator(`[data-add-to-board="${BOARD}"]`).click();
+  await form.getByRole("button", { name: "Panoya ekle" }).click();
+  await form.waitFor({ state: "detached" });
+  const place = called(db, "team_board_place_items").at(-1);
+  assert.equal(place.body.p_board, BOARD);
+  assert.equal(place.body.p_items.length, 2, "iki öğe tek çağrıda");
+  assert.equal(await page.getByTestId("area-select-bar").count(), 0, "eklenince seçim kapanır");
+  await page.locator("[data-area-select]").click();
+  await page.getByTestId("area-rows").locator("[data-area-card]").nth(0).click();
+  await page.locator("[data-select-action=delete]").click();
+  await page.getByText("öğe dosyadan silinsin mi?").waitFor();
+  await page.getByRole("button", { name: "Sil", exact: true }).last().click();
+  await page.waitForTimeout(500);
+  assert.equal(deleted.length, 1, "silme çağrısı");
 }, { items: detailItems });
 
 await scenario("45c. Öğe çekmecesi ⋯ → 'Gruba ekle': aynı karo penceresi tek öğe için açılır; grup seçilince öğe o gruba girer", async ({ page, db }) => {
@@ -1223,6 +1334,56 @@ await scenario("45c. Öğe çekmecesi ⋯ → 'Gruba ekle': aynı karo penceresi
   assert.equal(db.spaceItems.find((row) => row.id === IMAGE(1)).group_id, group.id, "öğe gruba girdi");
   await page.locator("[data-item-group]").getByText("Salon").waitFor();
 }, { items: detailItems });
+
+await scenario("45h. Klasörün içinden Ekle → Not: yeni not doğrudan o gruba girer ('X grubuna ekle' etiketi), var olan öğelere dokunulmaz", async ({ page, db }) => {
+  db.spaceGroups.push({ id: GROUP1, space_id: AREA_FILE, name: "Cephe", color: "primary", position: 0, created_by: ME, created_at: "2026-11-01T00:00:00Z" });
+  db.spaceItems.find((row) => row.id === IMAGE(1)).group_id = GROUP1;
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.locator("[data-area-view=groups]").click();
+  await page.locator(`[data-area-folder="${GROUP1}"]`).click();
+  await page.locator("[data-area-add]").getByText("Cephe grubuna ekle").waitFor();
+  await page.locator("[data-area-add]").click();
+  await page.locator("[data-area-add-option=note]").click();
+  await page.getByTestId("note-editor").waitFor();
+  await page.getByLabel("Başlık").fill("Cephe notu");
+  await page.getByTestId("note-editor").getByRole("button", { name: "Kaydet" }).click();
+  await page.getByTestId("area-rows").getByText("Cephe notu").waitFor();
+  for (let i = 0; i < 30 && !db.spaceItems.find((row) => row.title === "Cephe notu")?.group_id; i += 1) await page.waitForTimeout(100);
+  assert.equal(db.spaceItems.find((row) => row.title === "Cephe notu").group_id, GROUP1, "yeni not Cephe grubuna girdi");
+  assert.equal(db.spaceItems.find((row) => row.id === IMAGE(1)).group_id, GROUP1, "var olan öğeye dokunulmadı");
+}, { items: detailItems });
+
+await scenario("45i. Klavye açıkken (docs/history/378-*, mockup K4): Yeni grup penceresi görünür alanı TAM kaplar (arkada sayfa görünmez), alt menü ve sabit Ekle gizli; klavye kapanınca ortadaki küçük pencereye döner", async ({ page }) => {
+  await page.goto(projectUrl(`&file=${FILE}`));
+  await page.locator("[data-area-view=groups]").click();
+  await page.locator("[data-area-folder-new]").click();
+  const form = page.getByTestId("new-group-form");
+  await form.waitFor();
+  await page.locator("[data-new-group-name]").focus();
+  const frame = { height: 480, offsetTop: 0 };
+  await page.evaluate((f) => {
+    const vv = window.visualViewport;
+    Object.defineProperty(vv, "height", { configurable: true, get: () => (f ? f.height : window.innerHeight) });
+    Object.defineProperty(vv, "offsetTop", { configurable: true, get: () => (f ? f.offsetTop : 0) });
+    vv.dispatchEvent(new Event("resize"));
+  }, frame);
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-keyboard-open")), true, "klavye açık işareti");
+  const box = await form.boundingBox();
+  assert.ok(Math.abs(box.y) <= 2 && Math.abs(box.height - frame.height) <= 4, `pencere görünür alanı kaplar: ${JSON.stringify(box)}`);
+  const overlayBg = await page.getByRole("dialog").last().evaluate((el) => getComputedStyle(el).backgroundColor);
+  assert.ok(!/0\.45/.test(overlayBg) && !/rgba\(10, 8, 20/.test(overlayBg), "zemin opak: " + overlayBg);
+  assert.equal(await page.locator("[data-app-nav]").evaluate((el) => getComputedStyle(el).display), "none", "alt menü gizli");
+  await page.evaluate(() => {
+    const vv = window.visualViewport;
+    Object.defineProperty(vv, "height", { configurable: true, get: () => window.innerHeight });
+    Object.defineProperty(vv, "offsetTop", { configurable: true, get: () => 0 });
+    vv.dispatchEvent(new Event("resize"));
+  });
+  await page.waitForTimeout(250);
+  const after = await form.boundingBox();
+  assert.ok(after.height < 700, "klavye kapanınca küçük pencere");
+}, { items: detailItems, viewport: { width: 390, height: 844 } });
 
 // SURVEY=<klasör>: proje/dosya/pano/onay kuyruğu/öğe çekmecesi ekranlarının üç boyutta ekran görüntüsü (görsel inceleme).
 if (process.env.SURVEY) {
