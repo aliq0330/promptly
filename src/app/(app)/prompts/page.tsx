@@ -30,6 +30,7 @@ export default function PromptsPage() {
       search={searchPromptsPage}
       renderItems={(items) => <PromptGrid prompts={items} />}
       searchPlaceholder={t("search.placeholder")}
+      emptyScene="drafts"
       emptyTitle={t("prompts.emptyTitle")}
       emptyBody={t("prompts.emptyBody")}
       hasMore={hasMore}

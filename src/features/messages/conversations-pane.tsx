@@ -375,6 +375,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         ) : nothingAtAll ? (
           <EmptyState
             icon={MessagesSquare}
+            scene="chat"
             title={t("messages.emptyTitle")}
             description={t("messages.emptyDescription")}
             action={{ label: t("messages.startChat"), onClick: () => setNewChatOpen(true), variant: "primary" }}

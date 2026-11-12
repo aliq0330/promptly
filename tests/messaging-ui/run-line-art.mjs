@@ -1,6 +1,6 @@
-// Çizgi sahneler (docs/history/373-*): giriş panelindeki "Meydan", bulunamadı ekranlarındaki "Kayıp prompt", karşılama turundaki
+// Çizgi sahneler (docs/history/373-*, 374-*): giriş panelindeki "Meydan", bulunamadı ekranlarındaki "Kayıp prompt", karşılama turundaki
 // "Paylaşma anı". Sahne yalnız gerektiği yerde yüklenir, iki dilde etiketlenir, koyu modda geceye döner (pencereler yanar),
-// hareketi azalt açıkken tek dinlenme karesidir, dokunuşlar hata vermez ve telefonda taşmaz. Ağ taklitli; gerçek cihazda DENENMEDİ.
+// hareketi azalt açıkken tek dinlenme karesidir, dokunuşlar hata vermez ve telefonda taşmaz; boş durumlar kendi sahnelerini gösterir (374). Ağ taklitli; gerçek cihazda DENENMEDİ.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
@@ -150,6 +150,51 @@ await scenario("10 phone: the 404 scene fits, no horizontal scroll, the hint sta
   assert.ok(await overflowFree(page));
   await shot(page, "line-art-404-phone");
 }, { viewport: { width: 375, height: 760 } });
+
+// 374: the empty states of the main places show their own scene (the mock database is empty, so these lists really are empty)
+const PLACES = [
+  ["/prompts/", "drafts"], ["/workflows/", "workflow"], ["/presets/", "preset"], ["/requests/", "requests"],
+  ["/saved/", "saved"], ["/insights/", "insights"], ["/teams/", "team"], ["/messages/", "chat"],
+  ["/discover/?q=zzzzzzqq", "search"], ["/spaces/", "offline"],
+];
+await scenario("11 empty lists and states show their own line-art scene (ten places), each labelled and sized", async ({ page }) => {
+  for (const [path, kind] of PLACES) {
+    await page.goto(BASE + path);
+    const svg = svgOf(page, kind).first();
+    await svg.waitFor({ timeout: 9000 }).catch(() => { throw new Error(`${path}: no ${kind} scene`); });
+    assert.ok((await svg.getAttribute("aria-label"))?.length > 20, `${path}: the scene has a description`);
+    const box = await scene(page, kind).first().boundingBox();
+    assert.ok(box.width > 150 && box.height > 70, `${path}: the scene has a real size (${box.width}×${box.height})`);
+    assert.ok(Math.abs(box.width / box.height - 2) < 0.05, `${path}: it keeps its 2:1 drawing ratio`);
+  }
+}, { guest: false });
+
+await scenario("12 the same places in English carry English descriptions", async ({ page }) => {
+  await page.goto(BASE + "/saved/");
+  await svgOf(page, "saved").first().waitFor();
+  assert.match(await svgOf(page, "saved").first().getAttribute("aria-label"), /chest|ribbon/i);
+  await page.goto(BASE + "/workflows/");
+  await svgOf(page, "workflow").first().waitFor();
+  assert.match(await svgOf(page, "workflow").first().getAttribute("aria-label"), /hand a prompt card/i);
+}, { guest: false, lang: "en" });
+
+await scenario("13 empty-state scenes fit a phone and turn to night in dark mode", async ({ page }) => {
+  await page.goto(BASE + "/saved/");
+  await svgOf(page, "saved").first().waitFor();
+  assert.ok(await overflowFree(page), "no horizontal scroll");
+  await page.waitForTimeout(500);
+  assert.ok((await glowLevel(page, "saved")) > 0.5, "the lamp is lit at night");
+  await shot(page, "line-art-empty-phone-dark");
+}, { guest: false, viewport: { width: 375, height: 760 }, theme: "dark" });
+
+await scenario("14 every scene survives a tap on its figures (no errors)", async ({ page }) => {
+  await page.goto(BASE + "/saved/");
+  await svgOf(page, "saved").first().waitFor();
+  await page.waitForTimeout(400);
+  const figs = svgOf(page, "saved").first().locator("g.figure");
+  for (let i = 0; i < (await figs.count()); i++) await figs.nth(i).dispatchEvent("pointerdown");
+  await page.waitForTimeout(800);
+}, { guest: false });
 
 await browser.close();
 server.close();

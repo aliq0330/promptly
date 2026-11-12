@@ -2,28 +2,22 @@
 
 import { useEffect, useRef } from "react";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
-import type { LineArtKind } from "./scenes";
-
-const LABELS: Record<LineArtKind, { label: TranslationKey; hint?: TranslationKey }> = {
-  meydan: { label: "lineArt.meydanLabel", hint: "lineArt.meydanHint" },
-  lost: { label: "lineArt.lostLabel" },
-  share: { label: "lineArt.shareLabel" },
-};
+import { LINE_ART, type LineArtKind } from "./kinds";
 
 /**
- * An animated line-art scene (docs/history/373-*): ink on paper, drawn live in SVG. Ink is the text colour and paper the
- * surface colour, so it follows light / dark mode — dark mode turns the scene to night. Decoration only: people and birds
- * react to a tap, the pointer is wind, nothing navigates. The drawing code is loaded on demand; with reduced motion it is a
- * single still frame. Size it with the className (an aspect ratio and a width); the scene fills and crops to it.
+ * An animated line-art scene (docs/history/373-*, 374-*): ink on paper, drawn live in SVG. Ink is the text colour and paper the
+ * surface colour, so it follows light / dark mode — dark mode turns the scene to night. Decoration only: people and animals react to
+ * a tap, the pointer is wind, nothing navigates. The drawing code is loaded on demand; with reduced motion it is a single still
+ * frame. The box takes the drawing's own ratio (no jump when it loads); give it a width and rounding with `className`.
+ * `value` is a real number a few scenes draw (the milestone's scoreboard).
  */
-export function LineArtScene({ kind, className }: { kind: LineArtKind; className?: string }) {
+export function LineArtScene({ kind, className, value }: { kind: LineArtKind; className?: string; value?: string }) {
   const { t, language } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
-  const labels = LABELS[kind];
-  const label = t(labels.label);
-  const hint = labels.hint ? t(labels.hint) : undefined;
+  const meta = LINE_ART[kind];
+  const label = t(meta.label);
+  const hint = "hint" in meta && meta.hint ? t(meta.hint) : undefined;
 
   useEffect(() => {
     const host = ref.current;
@@ -32,14 +26,14 @@ export function LineArtScene({ kind, className }: { kind: LineArtKind; className
     let stop: (() => void) | undefined;
     import("./scenes")
       .then(({ mountLineArt }) => {
-        if (alive) stop = mountLineArt(kind, host, { label, hint });
+        if (alive) stop = mountLineArt(kind, host, { label, hint, value });
       })
       .catch((err) => console.error("line-art scene", err));
     return () => {
       alive = false;
       stop?.();
     };
-  }, [kind, label, hint, language]);
+  }, [kind, label, hint, value, language]);
 
-  return <div ref={ref} data-line-art={kind} className={cn("line-art overflow-hidden bg-surface", className)} />;
+  return <div ref={ref} data-line-art={kind} style={{ aspectRatio: meta.ratio }} className={cn("line-art overflow-hidden bg-surface", className)} />;
 }

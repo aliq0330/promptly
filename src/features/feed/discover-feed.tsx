@@ -255,6 +255,7 @@ export function DiscoverFeed() {
             <FeedGrid
               items={feed.items}
               interest={interest}
+              emptyScene="search"
               emptyTitle={t("discover.noMatchTitle")}
               emptyDescription={t("discover.noMatchDescription")}
               emptyAction={activeCount > 0 ? { label: t("feed.clearFilters"), onClick: clearFilters } : undefined}

@@ -1201,3 +1201,10 @@
     display: none;
   }
 }
+
+/* The loader scene is ~30 px tall: keep its ink at a constant 1 px (a figure-scaled line would vanish). */
+.line-art[data-line-art="loader"] svg path,
+.line-art[data-line-art="loader"] svg ellipse {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1px;
+}

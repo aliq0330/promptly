@@ -14,6 +14,7 @@ export function RequestList({ requests }: { requests: PromptRequest[] }) {
     return (
       <EmptyState
         icon={Sparkles}
+        scene="requests"
         title={t("request.emptyListTitle")}
         description={t("request.emptyListBody")}
         action={{ label: t("create.requestTitle"), href: "/requests/new" }}

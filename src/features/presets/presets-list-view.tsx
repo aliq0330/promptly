@@ -19,6 +19,7 @@ export function PresetsListView() {
       icon={SlidersHorizontal}
       title={t("preset.pageTitle")}
       description={t("preset.pageDescription")}
+      emptyScene="preset"
       createHref="/presets/create"
       createLabel={t("preset.create")}
       steps={[

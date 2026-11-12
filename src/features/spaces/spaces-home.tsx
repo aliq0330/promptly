@@ -360,7 +360,7 @@ export function SpacesHome() {
       ) : (
         <section aria-label={t(FILTER_LABEL[effectiveFilter])} aria-busy={items === null}>
           {error ? (
-            <EmptyState icon={SpacesIcon} title={t("spaces.home.loadError")} action={{ label: t("common.retry"), onClick: () => setReloadKey((k) => k + 1) }} compact />
+            <EmptyState icon={SpacesIcon} scene="offline" title={t("spaces.home.loadError")} action={{ label: t("common.retry"), onClick: () => setReloadKey((k) => k + 1) }} compact />
           ) : items === null ? (
             <ul className={view === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"}>
               {Array.from({ length: 6 }, (_, index) => (
@@ -374,6 +374,7 @@ export function SpacesHome() {
           ) : shown === null || shown.length === 0 ? (
             <EmptyState
               icon={debounced || filtersActive ? Search : SpacesIcon}
+              scene={debounced || filtersActive || (items && items.length > 0) ? "search" : "spaces"}
               title={debounced || (items && items.length > 0) ? t("spaces.home.noResults") : t(`spaces.empty.${effectiveFilter}` as TranslationKey)}
               description={debounced || (items && items.length > 0) ? t("spaces.home.noResultsHelp") : undefined}
               compact

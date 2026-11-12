@@ -124,7 +124,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
       />
 
       {visible.length === 0 ? (
-        <EmptyState icon={FileText} title={t("draft.empty")} className="border-0" />
+        <EmptyState icon={FileText} scene="drafts" title={t("draft.empty")} className="border-0" />
       ) : (
         <ul>
           {visible.slice(0, shown).map((row) => {

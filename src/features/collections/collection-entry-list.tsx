@@ -1,5 +1,6 @@
 "use client";
 
+import type { LineArtKind } from "@/components/line-art/kinds";
 import { useMemo, useState, type ReactNode } from "react";
 import { FolderOpen } from "@/components/icons/folder-open";
 import { LayoutGrid } from "@/components/icons/layout-grid";
@@ -46,6 +47,7 @@ export function CollectionEntryList({
   searchPlaceholderKey,
   emptyTitleKey,
   emptyDescriptionKey,
+  emptyScene,
   removalFor,
   dropWhenUnsaved = false,
   totalCount,
@@ -55,6 +57,8 @@ export function CollectionEntryList({
   searchPlaceholderKey: TranslationKey;
   emptyTitleKey: TranslationKey;
   emptyDescriptionKey: TranslationKey;
+  /** The line-art scene of the empty list (docs/history/374-*). */
+  emptyScene?: LineArtKind;
   removalFor?: (entry: CollectionEntry) => EntryRemoval;
   dropWhenUnsaved?: boolean;
   /** The list holds only the pages loaded so far: the real size (counted by the database), when known, for the "Tümü" count. */
@@ -135,7 +139,7 @@ export function CollectionEntryList({
           action={{ label: t("common.clear"), onClick: () => setQuery("") }}
         />
       ) : items.length === 0 ? (
-        <EmptyState icon={FolderOpen} title={t(emptyTitleKey)} description={t(emptyDescriptionKey)} action={{ label: t("feed.goToDiscover"), href: "/discover" }} />
+        <EmptyState icon={FolderOpen} scene={emptyScene} title={t(emptyTitleKey)} description={t(emptyDescriptionKey)} action={{ label: t("feed.goToDiscover"), href: "/discover" }} />
       ) : (
         <ContentGrid>
           {visibleItems.map((entry) => (

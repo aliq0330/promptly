@@ -261,6 +261,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
             // "Sana özel": every card says why it is here, and a re-ranking (new interests) glides the cards into place.
             itemNote={isForYou ? (item) => <ForYouReasonNote item={item} reason={forYou.reasons[`${item.kind}-${item.data.id}`]} /> : undefined}
             flip={isForYou}
+            emptyScene={narrowedEmpty ? "search" : isForYou ? "search" : "community"}
             emptyTitle={
               narrowedEmpty ? t("feed.filteredEmptyTitle") : isForYou ? t("feed.emptyForYouTitle") : t("feed.emptyFollowingNoPosts")
             }
