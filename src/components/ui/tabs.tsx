@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -10,6 +11,10 @@ export interface TabItem<K extends string> {
   label: string;
   count?: number;
   icon?: IconComponent;
+  /** Link sekmesi (ekip sayfası): verilirse sekme bir `<Link>` olur (aynı görünüm; `onChange` çağrılmaz). */
+  href?: string;
+  /** Sekmenin kök öğesine eklenen veri öznitelikleri (testler ve işaretleme için). */
+  attrs?: Record<`data-${string}`, string>;
 }
 
 /**
@@ -106,14 +111,7 @@ export function Tabs<K extends string>({
       {items.map((item) => {
         const selected = item.key === active;
         const Icon = item.icon;
-        return (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            onClick={() => onChange(item.key)}
-            className={cn(
+        const tabClassName = cn(
               "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-label font-medium transition-[color,background-color,border-color,box-shadow] duration-200 ease-soft",
               variant === "underline"
                 ? cn(
@@ -132,8 +130,9 @@ export function Tabs<K extends string>({
                       ? cn("text-text", !indicator && "bg-surface shadow-sm ring-1 ring-border-soft")
                       : "text-text-muted hover:text-text",
                   ),
-            )}
-          >
+        );
+        const content = (
+          <>
             {Icon && <Icon size={15} className={selected ? "text-primary" : undefined} />}
             {item.label}
             {item.count !== undefined && (
@@ -152,6 +151,18 @@ export function Tabs<K extends string>({
                 {item.count}
               </span>
             )}
+          </>
+        );
+        if (item.href) {
+          return (
+            <Link key={item.key} href={item.href} replace role="tab" aria-selected={selected} aria-current={selected ? "page" : undefined} className={tabClassName} {...item.attrs}>
+              {content}
+            </Link>
+          );
+        }
+        return (
+          <button key={item.key} type="button" role="tab" aria-selected={selected} onClick={() => onChange(item.key)} className={tabClassName} {...item.attrs}>
+            {content}
           </button>
         );
       })}

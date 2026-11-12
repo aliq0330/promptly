@@ -18,17 +18,16 @@ import { Trash2 } from "@/components/icons/trash-2";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { UsersRound } from "@/components/icons/users-round";
 import { Avatar } from "@/components/ui/avatar";
-import { StorageImg } from "@/components/ui/storage-media";
-import { CardBandBackdrop } from "@/features/content/content-card";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatCount, formatRelativeTime } from "@/lib/utils";
-import { removeSpaceMember, setSpaceFavorite, spaceFromSummary, summaryArt, summaryCover, updateSpace, type Space, type SpaceSummary } from "@/lib/supabase/spaces";
+import { removeSpaceMember, setSpaceFavorite, spaceFromSummary, summaryArt, updateSpace, type Space, type SpaceSummary } from "@/lib/supabase/spaces";
 import { SPACE_KIND_LABEL, spaceCapabilities, spaceHref } from "@/lib/spaces";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
 import { ShareModal } from "@/features/prompts/share-modal";
 import { SpaceMenu } from "./space-menu";
-import { PaletteStrip, SPACE_KIND_ICON, SPACE_KIND_TINT, SpaceCoverArt, VisibilityBadge } from "./space-visuals";
+import { HUB_CARD_CHIP_CLASS, HubCard } from "@/features/hub/hub-kit";
+import { PaletteStrip, SpaceCoverArt, VisibilityBadge } from "./space-visuals";
 
 /**
  * Space kartı (ızgara: Albüm kartı) ve satırı (liste): kapak (yüklenen › seçilen › kolaj), ad, sahip, görünürlük,
@@ -58,7 +57,6 @@ export function SpaceCard({
   const [dialog, setDialog] = useState<null | "settings" | "share" | "delete" | "leave">(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cover = summaryCover(space);
   const art = summaryArt(space);
   const href = spaceHref(space.id);
 
@@ -152,6 +150,8 @@ export function SpaceCard({
       className={cn(
         "relative z-10 inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-full text-caption font-semibold transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         space.isFavorite ? "px-2.5 text-primary" : "w-9 text-text-muted hover:text-text",
+        layout === "grid" && "h-8 bg-surface/90 shadow-xs",
+        layout === "grid" && !space.isFavorite && "w-8",
       )}
     >
       <PinIcon pinned={space.isFavorite} size={15} strokeWidth={space.isFavorite ? 2.25 : 1.75} />
@@ -212,53 +212,31 @@ export function SpaceCard({
     );
   }
 
-  // Albüm kartı (docs/history/214-*, sade düzen docs/history/231-*): kapaktan renk alan bant + büyük kapak, Sabitle ve ⋮ kapağın sağ üst
-  // köşesinde yüzer; altında tür karosu + ad, tür/görünürlük/son düzenleme, sahip ve sayılar. Ad bağlantısı kartın tamamını kaplar
-  // (`after:inset-0`), denetimler `relative z-10` ile üstünde; kart yığın bağlamı kurmaz (⋮ menüsü sonraki kartın üstüne açılır).
-  const KindIcon = SPACE_KIND_ICON[space.kind];
+  // Hub kartı (docs/history/379-*): üç alanda aynı `HubCard` — 16:9 kapak (yüklenen › seçilen › kolaj), sol üstte tür etiketi, sağ üstte Sabitle ve ⋮,
+  // kapağın altında ilk paletin çizgisi; gövdede ad, sahip · son düzenleme, sayılar ve görünürlük rozeti.
   return (
-    <li
+    <HubCard
       data-space-card={space.id}
-      className="group relative flex min-w-0 flex-col rounded-xl border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 ease-soft hover:border-border hover:shadow-card-hover"
-    >
-      <div className="relative rounded-t-xl p-2.5 pb-3">
-        <CardBandBackdrop backdrop={cover ? <StorageImg src={cover} alt="" className="h-full w-full object-cover" /> : undefined} />
-        <div className="relative space-y-2">
-          <div className="relative">
-            <SpaceCoverArt urls={art} className="aspect-[16/10] w-full overflow-hidden rounded-lg shadow-pop" iconSize={40} />
-            <div className="absolute right-2 top-2 z-10 flex items-center gap-1.5 [&_button]:bg-surface/90 [&_button]:shadow-xs">
-              {pinned}
-              {menu}
-            </div>
-          </div>
-          {palette && palette.length > 0 && <PaletteStrip colors={palette} className="h-1.5 px-1" />}
-        </div>
-      </div>
-      <div className="space-y-2 px-3.5 py-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span aria-hidden className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-lg", SPACE_KIND_TINT[space.kind])}>
-            <KindIcon size={20} strokeWidth={1.75} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h3 className="min-w-0">
-              <Link
-                href={href}
-                className="block truncate font-display text-[1.1875rem] font-extrabold leading-tight tracking-[-0.02em] text-text after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary"
-              >
-                {space.title}
-              </Link>
-            </h3>
-            <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-text-muted">
-              <span className="font-semibold text-text-secondary">{t(SPACE_KIND_LABEL[space.kind])}</span>
-              <VisibilityBadge visibility={space.visibility} />
-            </p>
-          </div>
-        </div>
-        {owner}
-        {counts}
-      </div>
-      {error && <p role="alert" className="px-3.5 pb-2 text-caption text-danger">{error}</p>}
-      {dialogs}
-    </li>
+      href={href}
+      title={space.title}
+      cover={<SpaceCoverArt urls={art} className="absolute inset-0 h-full w-full" iconSize={40} />}
+      chip={<span className={HUB_CARD_CHIP_CLASS}>{t(SPACE_KIND_LABEL[space.kind])}</span>}
+      corner={
+        <span className="flex items-center gap-1.5 [&_button]:bg-surface/90 [&_button]:shadow-xs">
+          {pinned}
+          {menu}
+        </span>
+      }
+      coverOverlay={palette && palette.length > 0 ? <PaletteStrip colors={palette} className="h-1.5 flex-1 px-1" /> : undefined}
+      meta={owner}
+      footerStart={counts}
+      footerEnd={<VisibilityBadge visibility={space.visibility} />}
+      extra={
+        <>
+          {error && <p role="alert" className="px-3.5 pb-2 text-caption text-danger">{error}</p>}
+          {dialogs}
+        </>
+      }
+    />
   );
 }

@@ -675,31 +675,29 @@ await scenario("39. Telefon (Yön C): Yönetim = liste → alt sayfa; alt sayfa 
   db.rpc.team_audit_stats = () => ({ body: { total: 0, role_access: 0, deletes: 0 } });
 } });
 
-await scenario("40. Telefon: Ekipler listesi Topluluklar ile aynı iskelet — büyük başlık + süzgeç hapı + ara + '+'; masaüstü eski düzen", async ({ page }) => {
+await scenario("40. Telefon: Ekipler listesi (Hub düzeni, docs/history/379-*) — bant (başlık + kısa '+ Oluştur') + süzgeç + ara; kartlar tek sütun", async ({ page }) => {
   await page.goto(`${BASE}/teams`);
-  const bar = page.locator("[data-teams-phone-bar]");
-  await bar.waitFor();
-  await bar.getByRole("heading", { name: "Ekipler" }).waitFor();
-  await bar.locator("[data-teams-search]").waitFor();
-  await bar.locator("[data-team-create-phone]").waitFor();
+  const band = page.locator("[data-hub-band]");
+  await band.waitFor();
+  await band.getByRole("heading", { name: "Ekipler" }).waitFor();
+  await band.locator("[data-team-create-phone]").waitFor();
+  await page.locator("[data-teams-search]").waitFor();
   await page.getByTestId("teams-list").locator(`[data-team-card="${TEAM}"]`).waitFor();
-  await bar.locator("[data-teams-search]").click();
-  await bar.getByPlaceholder("Ekip ara…").fill("zzz");
+  await page.locator("[data-teams-search]").click();
+  await page.getByPlaceholder("Ekip ara…").fill("zzz");
   await page.waitForFunction(() => document.querySelectorAll("[data-team-card]").length === 0);
 }, { viewport: { width: 390, height: 800 } });
 
-await scenario("42. Telefon /teams (docs/history/359-*): Senden bekleyenler + Ekiplerim (bantlı kart, rozetler, Aç) + Son Space'ler; alt menü kadar boşluk; masaüstü eski kart", async ({ page }) => {
+await scenario("42. Telefon /teams (docs/history/359-*, 378-*): dikkat şeridi + Ekiplerim (Hub kartı, rozetler) + Son projeler; alt menü kadar boşluk", async ({ page }) => {
   await page.goto(`${BASE}/teams`);
-  const todos = page.getByTestId("team-phone-todos");
-  await todos.getByText("2 öğe onayını bekliyor").waitFor();
-  await todos.getByRole("link", { name: "İncele" }).waitFor();
-  const card = page.locator(`[data-team-phone-card][data-team-card="${TEAM}"]`);
+  const strip = page.getByTestId("team-todos-strip");
+  await strip.getByText("Senden bekleyen 2 iş var").waitFor();
+  const card = page.locator(`[data-team-card="${TEAM}"]`);
   await card.waitFor();
   assert.match(await card.innerText(), /Atölye Mor/);
   assert.match(await card.innerText(), /6 üye · 2 proje/);
   await card.locator("[data-team-chip=unread]").waitFor();
   await card.locator("[data-team-chip=approvals]").waitFor();
-  await card.getByRole("link", { name: "Aç" }).waitFor();
   await page.getByTestId("teams-phone-projects").getByText("Villa Projesi").waitFor();
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "yatay taşma yok");
   const gap = await page.evaluate(async () => {

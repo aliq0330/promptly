@@ -36,19 +36,17 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, set
 // Bölüm menüsü (docs/history/231-*, 232-*): sekmeler artık tek "Akış ▾ / Gönderiler ▾" menüsünün seçenekleridir.
 const SECTION_OPTION = "[data-section-option]";
 const optMatcher = (name) => (name instanceof RegExp ? name : new RegExp("^" + String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-const menuIsOpen = async (page) => (await page.locator(SECTION_OPTION).count()) > 0;
-const menuOpen = async (page) => { if (!(await menuIsOpen(page))) { await page.locator("[data-section-menu]").first().click(); await page.locator(SECTION_OPTION).first().waitFor(); } };
-const menuClose = async (page) => { if (await menuIsOpen(page)) { await page.keyboard.press("Escape"); await page.locator(SECTION_OPTION).first().waitFor({ state: "detached" }).catch(() => undefined); } };
-const menuOption = (page, name) => page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).first();
-const pickTab = async (page, name) => { await menuOpen(page); await menuOption(page, name).click(); };
-const hasTab = async (page, name) => { if ((await page.locator("[data-section-menu]").count()) === 0) return false; await menuOpen(page); const found = (await page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).count()) > 0; await menuClose(page); return found; };
-const waitTab = async (page, name) => { for (let i = 0; i < 40; i += 1) { if (await hasTab(page, name)) return; await page.waitForTimeout(150); } assert.fail(`section "${name}" never appeared`); };
-const waitNoTab = async (page, name) => { for (let i = 0; i < 40; i += 1) { if (!(await hasTab(page, name))) return; await page.waitForTimeout(150); } assert.fail(`section "${name}" never went away`); };
-const tabIsActive = async (page, name) => { await menuOpen(page); const active = (await menuOption(page, name).getAttribute("aria-checked")) === "true"; await menuClose(page); return active; };
-const tabNames = async (page) => { if ((await page.locator("[data-section-menu]").count()) === 0) return []; await menuOpen(page); const names = (await page.locator(SECTION_OPTION).allInnerTexts()).map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()); await menuClose(page); return names; };
+const tabEl = (page, name) => page.getByRole("tab", { name: optMatcher(name) }).first();
+const pickTab = async (page, name) => { await tabEl(page, name).click(); };
+const hasTab = async (page, name) => (await page.getByRole("tab", { name: optMatcher(name) }).count()) > 0;
+const waitTab = async (page, name) => { for (let i = 0; i < 40; i += 1) { if (await hasTab(page, name)) return; await page.waitForTimeout(150); } assert.fail(`tab "${name}" never appeared`); };
+const waitNoTab = async (page, name) => { for (let i = 0; i < 40; i += 1) { if (!(await hasTab(page, name))) return; await page.waitForTimeout(150); } assert.fail(`tab "${name}" never went away`); };
+const optionText = async (page, name) => tabEl(page, name).innerText();
+const tabIsActive = async (page, name) => (await tabEl(page, name).getAttribute("aria-selected")) === "true";
+const tabNames = async (page) => (await page.getByRole("tablist").first().getByRole("tab").allInnerTexts()).map((t) => t.split("\n")[0].replace(/\d+$/, "").trim());
 
 // Yönetim bölümleri (Özet · Ayarlar · Duyurular · Moderasyon · İşlem geçmişi) topluluk menüsünün ALTINDAKİ ikinci menüdür (docs/history/235-*).
-const manageMenu = (page) => page.locator("[data-section-menu]").nth(1);
+const manageMenu = (page) => page.locator("[data-section-menu]").first();
 const pickManage = async (page, name) => { await manageMenu(page).click(); await page.getByRole("radio", { name: new RegExp("^" + String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) }).click(); };
 const manageNames = async (page) => { await manageMenu(page).click(); const names = (await page.getByRole("radiogroup", { name: /Yönetim bölümleri|Management sections/ }).getByRole("radio").allInnerTexts()).map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()); await page.keyboard.press("Escape"); await page.mouse.click(5, 5); return names; };
 const dlg = (page) => page.getByRole("dialog").last();
@@ -67,9 +65,9 @@ await scenario("1. Tüm topluluklar: tamamen kapalı topluluk listelenmez; kartt
   await card.getByText("Görsel", { exact: true }).waitFor();
   await card.getByText("Herkese açık").waitFor();
   await card.getByText("4 üye").waitFor();
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("heading", { name: "Topluluklar", level: 1 }).waitFor();
-  assert.deepEqual(await tabNames(page), ["Gönderiler", "Keşfet", "Davet ve başvurular"]);
+  assert.deepEqual(await tabNames(page), ["Topluluklarım", "Gönderiler", "Keşfet", "Davet ve başvurular"]);
   assert.equal(await page.getByRole("tab", { name: "Kaydedilenler" }).count(), 0, "the save feature is gone");
 }, { setup: (db) => { db.addCommunity(C2, { name: "Prompt Atölyesi", myRole: "none", members: [[U.bob, "owner"], [U.carol, "member"], [U.dave, "member"], [U.amy, "member"]] }); db.addCommunity(C3, { name: "Gizli Kulüp", visibility: "private", myRole: "none", members: [[U.bob, "owner"]] }); } });
 
@@ -183,7 +181,7 @@ await scenario("7. Üyesi olduklarım · Yönettiklerim: kapsamlar ayrı; kartta
 
 // 8
 await scenario("8. Topluluk oluştur: boş ad → hata ve istek yok; geçerli → tek istek (çift tık) tüm alanlarla, topluluk sayfasına gider", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const d = dlg(page);
   await d.getByRole("heading", { name: "Topluluk oluştur" }).waitFor();
@@ -210,7 +208,7 @@ await scenario("8. Topluluk oluştur: boş ad → hata ve istek yok; geçerli �
 });
 
 await scenario("8b. Kurallar kabul zorunluyken kural metni boşsa oluşturulamaz", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const d = dlg(page);
   await d.getByLabel("Topluluk adı").fill("X Topluluk");
@@ -254,7 +252,7 @@ await scenario("10b. Moderatör: Yönet yalnız yetkisi olan bölüm (moderasyon
   assert.equal(await page.getByRole("tab", { name: /Katılım istekleri/ }).count(), 0, "requests are not under Manage any more");
   await pickTab(page, /Üyeler/);
   await page.getByRole("tab", { name: /Katılım istekleri/ }).waitFor();
-  const sub = await page.getByRole("tablist").first().getByRole("tab").allInnerTexts();
+  const sub = await page.getByRole("tablist").last().getByRole("tab").allInnerTexts();
   assert.deepEqual(sub.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()), ["Üyeler", "Katılım istekleri"]);
 }, { setup: (db) => seed(db, { myRole: "moderator" }) });
 
@@ -292,7 +290,7 @@ await scenario("11. Üye olmayan, açık topluluk: salt-okunur sekmeler (Üyeler
 
 await scenario("11b. Kapalı topluluk, yalnız davetli: içerik/sohbet/üye listesi yok, yalnız davet kartı; kabul edince açılır", async ({ page, db }) => {
   await open(page, C1);
-  assert.equal(await page.locator("[data-section-menu]").count(), 0, "no content tabs for a non-member of a private community");
+  assert.equal(await page.getByRole("tab").count(), 0, "no content tabs for a non-member of a private community");
   // Tamamen kapalı düzey ve ekip yönlendirmesi kalktı (docs/history/353-*): davetli, topluluk sayfasında davet kartını görür.
   await page.getByText("Bob seni bu topluluğa davet etti").waitFor();
   await page.getByRole("button", { name: "Kabul et" }).click();
@@ -681,9 +679,9 @@ await scenario("21. Birebir sohbet etkilenmez: profil menüsü, engelle/şikayet
 
 // 22 — i18n / görünüm
 await scenario("22. İngilizce: Topluluklar sayfası, detay sekmeleri, rapor/duyuru/etkinlik metinleri çevrilmiş", async ({ page }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("heading", { name: "Communities", level: 1 }).waitFor();
-  assert.deepEqual(await tabNames(page), ["Posts", "Discover", "Managed", "Invitations & requests"]); // seed: owner → Managed tab visible
+  assert.deepEqual(await tabNames(page), ["My communities", "Posts", "Discover", "Managed", "Invitations & requests"]); // seed: owner → Managed tab visible
   await page.goto(`${BASE}/communities/all`);
   await page.getByPlaceholder("Search communities, topics or tags…").waitFor();
   await open(page, C1);
@@ -702,14 +700,13 @@ await scenario("22. İngilizce: Topluluklar sayfası, detay sekmeleri, rapor/duy
 
 for (const [label, viewport, theme] of [["mobil 390x800", { width: 390, height: 800 }, undefined], ["mobil koyu tema", { width: 390, height: 800 }, "dark"], ["tablet 820x1100", { width: 820, height: 1100 }, undefined]]) {
   await scenario(`23. Düzen (${label}): liste, detay ve akış yatay taşmaz; sekme çubuğu kaydırılabilir; temel düğmeler ≥ 36px`, async ({ page }) => {
-    await page.goto(`${BASE}/communities`);
+    await page.goto(`${BASE}/communities?tab=posts`);
     await page.getByText("Normal içerik").first().waitFor();
     assert.ok(await overflowFree(page), "communities home overflows horizontally");
     await open(page, C1);
     assert.ok(await overflowFree(page), "detail overflows horizontally");
-    // Telefon (docs/history/357-*, Yön C): kökte bölüm LİSTESİ var; "Akış" satırı alt sayfayı açar.
-    if (page.viewportSize().width < 768) await page.locator("[data-phone-section=feed]").click();
-    else await pickTab(page, "Akış");
+    // Hub düzeni (docs/history/379-*): telefonda da aynı sekme çubuğu (kaydırmalı).
+    await pickTab(page, "Akış");
     await page.getByText("Normal içerik").first().waitFor();
     assert.ok(await overflowFree(page), "feed overflows horizontally");
     const heights = await page.locator("button:visible, a[class*='h-']:visible").evaluateAll((els) => els.slice(0, 40).map((el) => Math.round(el.getBoundingClientRect().height)));
@@ -813,13 +810,13 @@ await scenario("25c. Kapalı + kurallı topluluk: kural metni okunur, onay kutus
 
 await scenario("25d. Kapalı topluluk sayfası (üye değil): sekme yok, içerik yok, 'bu topluluk kapalı' açıklaması + başlıkta 'İstek gönder'; istek sonrası bekliyor durumu", async ({ page }) => {
   await open(page, C2);
-  assert.equal(await page.locator("[data-section-menu]").count(), 0, "no content tabs before membership");
+  assert.equal(await page.getByRole("tab").count(), 0, "no content tabs before membership");
   await page.getByText("Bu topluluk kapalı", { exact: true }).waitFor();
   await page.locator("header, [data-community-actions]").getByText("Kapalı", { exact: true }).waitFor();
   await requestBtn(page.locator("header, [data-community-actions]")).click();
   await page.getByText("Katılma isteğin değerlendiriliyor").waitFor();
   await page.locator("header, [data-community-actions]").getByRole("button", { name: /İstek gönderildi/ }).waitFor();
-  assert.equal(await page.locator("[data-section-menu]").count(), 0, "a pending request still gives no content access");
+  assert.equal(await page.getByRole("tab").count(), 0, "a pending request still gives no content access");
 }, { setup: visibilitySetup });
 
 await scenario("25e. Tamamen kapalı topluluk: davetsiz kişi için sayfa 'bulunamadı' der; ad, katılma/istek düğmesi ya da ipucu görünmez", async ({ page }) => {
@@ -857,7 +854,7 @@ await scenario("26. Öneriler (Keşfet şeridi): ortak kategori önce, kapalı t
 });
 
 await scenario("27. Oluştur: iki görünürlük seçeneği (Herkese açık · Kapalı; 'Tamamen kapalı' artık EKİP, docs/history/350-*); varsayılan Kapalı, p_visibility=restricted gönderir", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const d = dlg(page);
   await d.getByRole("radio", { name: /^Kapalı/ }).waitFor();
@@ -923,7 +920,7 @@ const guestSetup = (db) => {
 };
 
 await scenario("29. Ziyaretçi (oturumsuz) · Topluluklar: yalnız Keşfet (herkese açık), öneri ve kişisel sekme yok; arama kapalıyı da bulur; katıl/istek/oluştur giriş diyaloğu açar ve HİÇBİR istek göndermez", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("heading", { name: "Topluluklar", level: 1 }).waitFor();
   await page.getByRole("heading", { name: "Açık Atölye" }).waitFor();
   // docs/history/212-*: a visitor gets no section row at all (the page is Keşfet) — and never the personal sections.
@@ -959,7 +956,7 @@ await scenario("29b. Ziyaretçi · topluluk sayfası: herkese açıkta salt-okun
   await page.getByText(LOGIN_TEXT).waitFor();
   await page.keyboard.press("Escape");
   await open(page, C2);
-  assert.equal(await page.locator("[data-section-menu]").count(), 0, "a visitor sees no tabs of a private (closed) community");
+  assert.equal(await page.getByRole("tab").count(), 0, "a visitor sees no tabs of a private (closed) community");
   await page.getByText("Bu topluluk kapalı", { exact: true }).waitFor();
   assert.equal(await page.getByText("Kapalı gönderi").count(), 0);
   await requestBtn(page.locator("header, [data-community-actions]")).click();
@@ -994,7 +991,7 @@ await scenario("30. Topluluk görseli özel bucket'ta: arayüz ortak /object/pub
 });
 
 await scenario("31. Görünürlük seçici (oluştur): seçili düzey vurgulanır ('Seçili'), her düzeyin gizlilik sonuçları seçimden önce görünür; masaüstünde karşılaştırma tablosu, klavyeyle seçilir", async ({ page }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
   const d = dlg(page);
   const radios = d.getByRole("radio", { name: /^(Herkese açık|Kapalı|Tamamen kapalı)/ });
@@ -1014,7 +1011,7 @@ await scenario("31. Görünürlük seçici (oluştur): seçili düzey vurgulanı
 
 for (const [label, viewport] of [["mobil 390x800", { width: 390, height: 800 }], ["tablet 820x1100", { width: 820, height: 1100 }]]) {
   await scenario(`31b. Görünürlük seçici (${label}): yatay taşma yok; ${label.startsWith("mobil") ? "tablo gizli, her kartta kompakt olgu listesi" : "karşılaştırma tablosu görünür"}`, async ({ page }) => {
-    await page.goto(`${BASE}/communities`);
+    await page.goto(`${BASE}/communities?tab=posts`);
     await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
     const d = dlg(page);
     await d.getByRole("radio", { name: /^Herkese açık/ }).waitFor();
@@ -1146,8 +1143,8 @@ await scenario("33d. Kapak · üye olmayan / ziyaretçi: kapak, kart kapağı RP
   assert.ok(calls(db, "rpc/community_card_covers").length >= 1);
 }, { guest: true, setup: (db) => { seed(db, { myRole: "none" }); db.groups.find((x) => x.id === C1).cover_color = "#7048e8"; } });
 
-await scenario("34. Sade kontrol satırı (docs/history/232-*): Topluluklar ana sayfasında arama simgesi alanı açar ✕ kapatır, Kart/Izgara düğmesi YOK; topluluk sayfasında 'Akış ▾' menüsü + aynı satırda 'Gönderi oluştur' simgesi", async ({ page }) => {
-  await page.goto(`${BASE}/communities`);
+await scenario("34. Sade kontrol satırı (docs/history/232-*): Topluluklar ana sayfasında arama simgesi alanı açar ✕ kapatır, Kart/Izgara düğmesi YOK; topluluk sayfasında sekme çubuğu + 'Gönderi oluştur' simgesi yuvası", async ({ page }) => {
+  await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("heading", { name: "Topluluklar", level: 1 }).waitFor();
   assert.equal(await page.getByRole("searchbox").count(), 0, "arama alanı simgeyle açılır");
   await page.getByRole("button", { name: "Ara", exact: true }).click();
@@ -1156,11 +1153,11 @@ await scenario("34. Sade kontrol satırı (docs/history/232-*): Topluluklar ana 
   assert.equal(await page.getByRole("searchbox").count(), 0);
   assert.equal(await page.locator("[data-view-toggle]").count(), 0, "Kart/Izgara düğmesi kaldırıldı");
   await open(page, C1);
-  const menu = await page.locator("[data-section-menu]").boundingBox();
+  // Hub düzeni (docs/history/379-*): sekme çubuğu + hemen altında sekmenin eylem yuvası ("Gönderi oluştur" simgesi).
+  await page.getByRole("tablist").first().waitFor();
   const slot = page.locator("[data-community-actions-slot]");
   assert.equal(await slot.locator("[data-view-toggle]").count(), 0, "yuvada görünüm düğmesi yok");
-  const create = await slot.locator("[data-create-post]").boundingBox();
-  assert.ok(Math.abs(menu.y + menu.height / 2 - (create.y + create.height / 2)) < 6, "menü ve '+' aynı satırda");
+  await slot.locator("[data-create-post]").waitFor();
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
 let failed = 0;

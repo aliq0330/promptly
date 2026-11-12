@@ -16,9 +16,10 @@ import {
 
 const signedIn = { signedIn: true, managesAny: true };
 
-test("resolveHomeView: varsayılan Gönderiler; ziyaretçi her zaman Keşfet", () => {
-  assert.deepEqual(resolveHomeView(null, signedIn).view, "posts");
-  assert.deepEqual(resolveHomeView("bilinmeyen", signedIn).view, "posts");
+test("resolveHomeView: varsayılan Topluluklarım; ziyaretçi her zaman Keşfet", () => {
+  assert.deepEqual(resolveHomeView(null, signedIn).view, "mine");
+  assert.deepEqual(resolveHomeView("bilinmeyen", signedIn).view, "mine");
+  assert.equal(resolveHomeView("posts", signedIn).view, "posts");
   assert.equal(resolveHomeView(null, { signedIn: false, managesAny: false }).view, "discover");
   assert.equal(resolveHomeView("invites", { signedIn: false, managesAny: false }).view, "discover");
 });
@@ -32,11 +33,12 @@ test("resolveHomeView: eski adresler korunur (mine, invites, requests → Başvu
 });
 
 test("resolveHomeView: yönetilen topluluğu olmayan Yönettiklerim'e giremez", () => {
-  assert.equal(resolveHomeView("managed", { signedIn: true, managesAny: false }).view, "posts");
+  assert.equal(resolveHomeView("managed", { signedIn: true, managesAny: false }).view, "mine");
 });
 
-test("homeHref: Gönderiler sade adres, bölüm yalnız Davet ve başvurular'da", () => {
-  assert.equal(homeHref("posts"), "/communities");
+test("homeHref: Topluluklarım sade adres, bölüm yalnız Davet ve başvurular'da", () => {
+  assert.equal(homeHref("mine"), "/communities");
+  assert.equal(homeHref("posts"), "/communities?tab=posts");
   assert.equal(homeHref("discover"), "/communities?tab=discover");
   assert.equal(homeHref("invites"), "/communities?tab=invites");
   assert.equal(homeHref("invites", "incoming"), "/communities?tab=invites&section=incoming");

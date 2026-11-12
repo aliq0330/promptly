@@ -6,24 +6,22 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Compass } from "@/components/icons/compass";
 import { Loader2 } from "@/components/icons/loader-2";
-import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
 import { ShieldCheck } from "@/components/icons/shield-check";
 import { Users } from "@/components/icons/users";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Tabs } from "@/components/ui/tabs";
-import { CONTROL_ICON_BUTTON, SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
+import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubBand, HubControlRow, HubCreateButton } from "@/features/hub/hub-kit";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useToast } from "@/features/groups/use-toast";
 import { CommunityCard } from "./community-card";
-import { CommunityLayout } from "./community-layout";
-import { HomeInviteNotice, MyCommunitiesShelf } from "./home-shelf";
-import { HomeAside } from "./home-aside";
+import { HomeInviteNotice } from "./home-shelf";
 import type { JoinState } from "./community-join-button";
 import { CreateCommunityModal } from "./create-community-modal";
 import { HomeDiscoverTab } from "./home-discover-tab";
@@ -34,6 +32,7 @@ import { useManagedCommunities } from "./use-managed-communities";
 import { fetchMyInvitations, toGroupError, type GroupInvitation } from "@/lib/supabase/chat-groups";
 import {
   discoverCommunities,
+  fetchMyUnseenCounts,
   listMyCommunities,
   searchCommunities,
   type CommunitySort,
@@ -42,6 +41,7 @@ import {
 import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, communityHref } from "@/lib/communities";
 import { homeHref, isInvitesSection, resolveHomeView, type HomeTab, type InvitesSection } from "@/lib/community-home";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { cn } from "@/lib/utils";
 import type { CommunityCategory } from "@/types";
 
 const SORTS: CommunitySort[] = ["popular", "newest", "active"];
@@ -83,19 +83,20 @@ export function CommunitiesPage() {
   const incomingTotal = managed.reduce((sum, c) => sum + c.pendingRequestCount, 0);
   const actionCount = (inviteCount ?? 0) + incomingTotal;
 
-  const tabKeys: HomeTab[] = ["posts", "discover", ...(managedReady && managed.length > 0 ? (["managed"] as const) : []), "invites"];
+  const tabKeys: HomeTab[] = ["mine", "posts", "discover", ...(managedReady && managed.length > 0 ? (["managed"] as const) : []), "invites"];
   const tabLabel: Record<HomeTab, string> = {
+    mine: t("communities.home.myCommunities"),
     posts: t("communities.tab.posts"),
     discover: t("communities.tab.discover"),
     managed: t("communities.tab.managed"),
     invites: t("communities.tab.invitesAndRequests"),
   };
-  const tabs: SectionMenuItem<HomeTab>[] = tabKeys.map((key) => ({
+  const tabs: TabItem<HomeTab>[] = tabKeys.map((key) => ({
     key,
     label: tabLabel[key],
-    count: key === "invites" && actionCount > 0 ? actionCount : undefined,
+    count: key === "invites" ? (actionCount > 0 ? actionCount : undefined) : key === "managed" ? managed.length : undefined,
   }));
-  const activeTab: HomeTab = view === "mine" ? "posts" : view;
+  const activeTab: HomeTab = view;
 
   const goTab = (next: HomeTab) => router.replace(homeHref(next));
   const goSection = (next: InvitesSection) => router.replace(homeHref("invites", next));
@@ -129,14 +130,21 @@ export function CommunitiesPage() {
     router.push(q ? `/communities/all?q=${encodeURIComponent(q)}` : "/communities/all");
   };
 
-  return (
-    <CommunityLayout
-      aside={user ? <HomeAside managedCount={managed.length} actionCount={actionCount} /> : undefined}
-      asideLabel={t("communities.aside.label")}
-    >
-      <h1 className="font-display text-[2.375rem] font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("communities.page.title")}</h1>
+  const inviteStrip = user && (view === "mine" || view === "posts") && invitations && invitations.length > 0 ? <HomeInviteNotice invitations={invitations} /> : null;
 
-      {/* Tek kontrol satırı (docs/history/232-*, Spaces ile aynı kalıp): bölüm menüsü · arama · "+". */}
+  return (
+    <div className={cn(HUB_PAGE_CLASS, "space-y-4")}>
+      {/* Hub düzeni (docs/history/379-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
+      <HubBand
+        icon={Users}
+        title={t("communities.page.title")}
+        description={t("hub.communities.intro")}
+        action={<HubCreateButton label={t("communities.page.create")} shortLabel={t("hub.communities.createShort")} onClick={() => requireAuth("create") && setCreateOpen(true)} attr={{ "data-create-community": true }} />}
+      />
+
+      {user && <Tabs items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} />}
+
+      {/* Tek kontrol satırı: arama (Tüm topluluklar'da açılır) · "Tüm topluluklar" bağlantısı. */}
       {user && searchOpen ? (
         <form role="search" onSubmit={search} className="relative">
           <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
@@ -163,51 +171,30 @@ export function CommunitiesPage() {
           </button>
         </form>
       ) : (
-        <div className="flex items-center gap-1.5">
-          {user && <SectionMenu items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} title={t("communities.page.title")} />}
-          <span className="flex-1" />
-          {user && (
+        user && (
+          <HubControlRow>
             <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("communities.page.searchOpen")} title={t("communities.page.searchOpen")} className={CONTROL_ICON_BUTTON}>
               <Search size={22} strokeWidth={1.75} aria-hidden />
             </button>
-          )}
-          {user ? (
-            <Button
-              type="button"
-              onClick={() => requireAuth("create") && setCreateOpen(true)}
-              title={t("communities.page.create")}
-              data-create-community
-              className="h-11 w-11 shrink-0 rounded-xl bg-surface-soft p-0 text-text shadow-none hover:bg-border-soft"
-            >
-              <Plus size={22} strokeWidth={1.75} aria-hidden />
-              <span className="sr-only">{t("communities.page.create")}</span>
-            </Button>
-          ) : (
-            <Button type="button" size="sm" onClick={() => requireAuth("create") && setCreateOpen(true)} className="h-11">
-              <Plus size={16} /> {t("communities.page.create")}
-            </Button>
-          )}
-        </div>
+            <Link href="/communities/all" aria-label={t("communities.all.button")} title={t("communities.all.button")} className={CONTROL_ICON_BUTTON} data-testid="communities-all-link">
+              <Compass size={22} strokeWidth={1.75} aria-hidden />
+            </Link>
+          </HubControlRow>
+        )
       )}
 
-      {user && view === "posts" && invitations && invitations.length > 0 && <HomeInviteNotice invitations={invitations} />}
-      {user && <MyCommunitiesShelf />}
+      {inviteStrip}
 
       {authLoading ? (
         <LoadingRows />
       ) : !user ? (
         <DiscoverView onToast={show} onGoInvites={() => goTab("invites")} />
+      ) : view === "mine" ? (
+        <MyCommunitiesView scope="member" onToast={show} />
       ) : view === "posts" ? (
         <HomePostsTab onToast={show} />
       ) : view === "discover" ? (
         <HomeDiscoverTab onToast={show} onGoInvites={() => goTab("invites")} />
-      ) : view === "mine" ? (
-        <div className="space-y-3">
-          <Link href={homeHref("posts")} className="text-small text-text-secondary hover:underline">
-            ← {t("communities.tab.posts")}
-          </Link>
-          <MyCommunitiesView scope="member" onToast={show} />
-        </div>
       ) : view === "managed" ? (
         <MyCommunitiesView scope="managed" onToast={show} />
       ) : (
@@ -232,7 +219,7 @@ export function CommunitiesPage() {
         />
       )}
       {toastNode}
-    </CommunityLayout>
+    </div>
   );
 }
 
@@ -363,7 +350,7 @@ export function DiscoverView({
         />
       ) : (
         <>
-          <ul className="space-y-3">
+          <ul className={HUB_GRID_CLASS}>
             {current.items.map((community) => (
               <CommunityCard
                 key={community.id}
@@ -392,7 +379,19 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
   const [state, setState] = useState<ListState | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [unseen, setUnseen] = useState<Map<string, number>>(() => new Map());
   const action = useAsyncAction();
+
+  // "N yeni" rozeti (docs/history/212-*): görmediğim gönderi sayısı; okunamazsa yalnız rozetler gizlenir.
+  useEffect(() => {
+    let cancelled = false;
+    fetchMyUnseenCounts()
+      .then((counts) => !cancelled && setUnseen(counts))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
   const key = `${scope}|${reloadKey}`;
   useEffect(() => {
@@ -443,6 +442,11 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
   }
 
   const emptyKey = scope === "member" ? "mine" : "managed";
+  // Yeni gönderisi olan topluluk önce, sonra en son etkinlik (Topluluklarım'ın eski rafıyla aynı sıra); Yönettiklerim sunucu sırasında kalır.
+  const sortedItems =
+    scope === "member" && current
+      ? [...current.items].sort((a, b) => (unseen.get(b.id) ?? 0) - (unseen.get(a.id) ?? 0) || (Date.parse(b.lastActivityAt ?? b.createdAt) || 0) - (Date.parse(a.lastActivityAt ?? a.createdAt) || 0))
+      : (current?.items ?? []);
 
   if (!current) return <LoadingRows />;
   if (current.error) return <ErrorBox message={t("communities.page.loadError")} onRetry={() => setReloadKey((k) => k + 1)} />;
@@ -465,8 +469,8 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
           {action.error}
         </p>
       )}
-      <ul className="space-y-3">
-        {current.items.map((community) => {
+      <ul className={HUB_GRID_CLASS}>
+        {sortedItems.map((community) => {
           const conversation = conversations.find((c) => c.id === community.id);
           const hiddenInInbox = Boolean(conversation && (conversation.deletedAt || conversation.archivedAt));
           return (
@@ -476,6 +480,7 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
               onStatusChange={(next) => changeStatus(community.id, next)}
               onToast={onToast}
               footerNote={hiddenInInbox ? t("communities.card.hiddenInInbox") : undefined}
+              unseen={unseen.get(community.id) ?? 0}
             />
           );
         })}

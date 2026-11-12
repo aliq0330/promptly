@@ -30,7 +30,7 @@ import { StorageImg } from "@/components/ui/storage-media";
 import { Tabs } from "@/components/ui/tabs";
 import { PhoneSubBar } from "@/features/content/phone-sections";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { BAND_PRIMARY_CLASS, BandActionRow, DetailBand } from "@/features/content/detail-parts";
+import { HUB_PAGE_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -258,8 +258,8 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const compactPhone = phone && tab !== "overview" && tab !== "board";
 
   return (
-    <div className="w-full pb-16 animate-rise-in" data-space-page={space.id} data-space-role={role ?? "none"}>
-      {/* Albüm (docs/history/214-*): bant kapak kolajından renk alır; başlığın altında ilk paletin şeridi (dokununca HEX kopyalanır). */}
+    <div className={cn(HUB_PAGE_CLASS, "animate-rise-in")} data-space-page={space.id} data-space-role={role ?? "none"}>
+      {/* Hub düzeni (docs/history/379-*): bant kapak kolajından renk alır; eylemler (panoyu aç · kayıt durumu · paylaş) ve ⋮ bandın içindedir. */}
       {compactPhone ? (
         <PhoneSubBar
           parent={t(SPACE_KIND_LABEL[space.kind])}
@@ -279,86 +279,88 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           }
         />
       ) : (
-      <DetailBand
-        compact
-        data-space-band=""
-        backdrop={coverUrls[0] ? <StorageImg src={coverUrls[0]} alt="" className="h-full w-full object-cover" /> : undefined}
-        art={
-          <SpaceCoverArt
-            urls={coverUrls}
-            className="h-24 w-24 overflow-hidden rounded-[18px] border-[3px] border-surface shadow-pop lg:h-[200px] lg:w-[200px] lg:rounded-[22px] lg:border-4"
-            iconSize={40}
-          />
-        }
-        kicker={
-          <p className="flex flex-wrap items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-primary">
-            <span className="inline-flex items-center gap-1.5">
-              <SpacesIcon size={13} strokeWidth={2.25} aria-hidden />
-              Space · {t(SPACE_KIND_LABEL[space.kind])}
-            </span>
-            <VisibilityBadge visibility={space.visibility} className="normal-case tracking-normal" />
-            {space.archivedAt && <span className="rounded-full bg-warning/12 px-2 py-0.5 normal-case tracking-normal text-warning">{t("spaces.page.archivedBadge")}</span>}
-          </p>
-        }
-        title={<h1 className="break-words font-display text-[clamp(1.6rem,4vw,2.75rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-text">{space.title}</h1>}
-        byline={
-          <div className="space-y-2">
-            {space.description && <p className="max-w-2xl whitespace-pre-wrap break-words text-small text-text-secondary">{space.description}</p>}
-            {owner && (
-              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
-                <Link href={profileHref(owner)} className="inline-flex items-center gap-1.5 font-semibold text-text hover:text-primary">
-                  <Avatar src={owner.avatarUrl} alt="" size={22} />
-                  {owner.displayName}
-                </Link>
-                <span aria-hidden>·</span>
-                <span>{t("spaces.card.edited", { time: formatRelativeTime(space.updatedAt, language) })}</span>
-              </p>
-            )}
-            {space.ratingCount > 0 && (
-              <button
-                type="button"
-                onClick={() => goTo("comments")}
-                aria-label={t("spaces.rating.chipAria", { avg: formatRating(space.ratingAvg, language), count: space.ratingCount })}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface px-3 py-1 text-caption font-semibold tabular-nums text-text hover:border-border-strong max-lg:-ml-28"
-                data-space-rating-chip=""
-              >
-                <StarRatingDisplay value={space.ratingAvg} size={14} />
-                {formatRating(space.ratingAvg, language)}
-                <span className="font-normal text-text-muted">· {t("spaces.rating.count", { count: space.ratingCount })}</span>
-              </button>
-            )}
-            {leadPalette && (
-              <div className="flex max-w-xl items-center gap-3 pt-1 max-lg:-ml-28 max-lg:pt-3" data-space-band-palette="">
-                <span className="inline-flex min-w-0 max-w-[40%] shrink-0 items-center gap-1.5 text-caption font-semibold text-text-secondary">
-                  <Palette size={14} aria-hidden />
-                  <span className="truncate">{leadPalette.name || t("spaces.tab.palette")}</span>
+        <HubDetailBand
+          data-space-band=""
+          backdrop={coverUrls[0] ? <StorageImg src={coverUrls[0]} alt="" className="h-full w-full object-cover" /> : undefined}
+          backHref="/spaces"
+          backLabel={t("hub.back")}
+          art={<SpaceCoverArt urls={coverUrls} className="absolute inset-0 h-full w-full" iconSize={40} />}
+          kicker={
+            <>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">
+                <SpacesIcon size={13} strokeWidth={2.25} aria-hidden />
+                Space · {t(SPACE_KIND_LABEL[space.kind])}
+              </span>
+              <VisibilityBadge visibility={space.visibility} />
+              {space.archivedAt && <span className="rounded-full bg-warning/12 px-2 py-0.5 text-warning">{t("spaces.page.archivedBadge")}</span>}
+            </>
+          }
+          title={<h1>{space.title}</h1>}
+          description={space.description || undefined}
+          byline={
+            <div className="space-y-2">
+              {owner && (
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
+                  <Link href={profileHref(owner)} className="inline-flex items-center gap-1.5 font-semibold text-text hover:text-primary">
+                    <Avatar src={owner.avatarUrl} alt="" size={22} />
+                    {owner.displayName}
+                  </Link>
+                  <span aria-hidden>·</span>
+                  <span>{t("spaces.card.edited", { time: formatRelativeTime(space.updatedAt, language) })}</span>
+                </p>
+              )}
+              {space.ratingCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => goTo("comments")}
+                  aria-label={t("spaces.rating.chipAria", { avg: formatRating(space.ratingAvg, language), count: space.ratingCount })}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface px-3 py-1 text-caption font-semibold tabular-nums text-text hover:border-border-strong"
+                  data-space-rating-chip=""
+                >
+                  <StarRatingDisplay value={space.ratingAvg} size={14} />
+                  {formatRating(space.ratingAvg, language)}
+                  <span className="font-normal text-text-muted">· {t("spaces.rating.count", { count: space.ratingCount })}</span>
+                </button>
+              )}
+              {leadPalette && (
+                <div className="flex max-w-xl items-center gap-3 pt-1" data-space-band-palette="">
+                  <span className="inline-flex min-w-0 max-w-[40%] shrink-0 items-center gap-1.5 text-caption font-semibold text-text-secondary">
+                    <Palette size={14} aria-hidden />
+                    <span className="truncate">{leadPalette.name || t("spaces.tab.palette")}</span>
+                  </span>
+                  <PaletteStrip colors={leadPalette.colors} copyable className="min-w-0 flex-1" />
+                </div>
+              )}
+            </div>
+          }
+          actions={
+            // Panoda bu satır yok (pano kendi araç çubuğunu ve kayıt göstergesini taşır; yer panoya kalır) — Paylaş ⋮ menüsünde de var.
+            tab !== "board" ? (
+              <div className="flex w-full flex-wrap items-center gap-2" data-space-actions="">
+                <Button className="max-sm:flex-1" onClick={() => goTo("board")}>
+                  {caps.edit ? <LayoutDashboard size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+                  {caps.edit ? t("spaces.page.openBoard") : t("spaces.page.viewBoard")}
+                </Button>
+                <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} />
+                {canShare && (
+                  <Button variant="outline" className="h-10 w-10 rounded-full bg-surface/80 p-0" onClick={share} aria-label={t("spaces.card.share")} title={t("spaces.card.share")}>
+                    <Share2 size={18} aria-hidden />
+                  </Button>
+                )}
+                <span data-detail-menu="">
+                  <SpaceMenu items={menuItems} />
                 </span>
-                <PaletteStrip colors={leadPalette.colors} copyable className="min-w-0 flex-1" />
               </div>
-            )}
-          </div>
-        }
-        menu={<SpaceMenu items={menuItems} />}
-      />
+            ) : (
+              <span data-detail-menu="">
+                <SpaceMenu items={menuItems} />
+              </span>
+            )
+          }
+        />
       )}
 
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
-        {/* Panoda bu satır yok (pano kendi araç çubuğunu ve kayıt göstergesini taşır; yer panoya kalır) — Paylaş ⋮ menüsünde de var. */}
-        {tab !== "board" && !compactPhone && (
-          <BandActionRow label={t("spaces.page.actions")} data-space-actions="">
-            <Button className={cn(BAND_PRIMARY_CLASS, "max-sm:flex-1")} onClick={() => goTo("board")}>
-              {caps.edit ? <LayoutDashboard size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
-              {caps.edit ? t("spaces.page.openBoard") : t("spaces.page.viewBoard")}
-            </Button>
-            <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} />
-            {canShare && (
-              <Button variant="outline" className="ml-auto h-12 w-12 rounded-full p-0" onClick={share} aria-label={t("spaces.card.share")} title={t("spaces.card.share")}>
-                <Share2 size={18} aria-hidden />
-              </Button>
-            )}
-          </BandActionRow>
-        )}
-
+      <div className="w-full">
         {space.archivedAt && (
           <div role="status" className="mt-4 flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-small text-text sm:flex-row sm:items-center sm:justify-between">
             <span>{t("spaces.page.archivedNotice")}</span>

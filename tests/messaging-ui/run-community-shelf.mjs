@@ -1,6 +1,5 @@
-// Topluluklar ana sayfası Albüm düzeni (docs/history/212-*): görünür başlık yok, üstte arama + "+"; "Topluluklarım"
-// rafı (kare kapaklar, "N yeni" rozeti, yeni olan önce); bölüm balonları (davet sayacı balonda); Gönderiler'de tek satırlık davet
-// kartı; arama "Tüm topluluklar"a sorguyla gider. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ (sayaç kuralı: community-unseen.sql).
+// Topluluklar ana sayfası Hub düzeni (docs/history/379-*; "Topluluklarım" rafı 212-*): bant + sekmeler; Topluluklarım kartları ("N yeni" rozeti, yeni olan önce);
+// davet tek satırlık dikkat şeridi; arama "Tüm topluluklar"a sorguyla gider. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ (sayaç kuralı: community-unseen.sql).
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
@@ -48,72 +47,62 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
   }
 }
 
-const shelf = (page) => page.getByTestId("my-communities-shelf");
-const shelfNames = (page) => shelf(page).locator("[data-shelf-community]").evaluateAll((els) => els.map((el) => el.querySelector("span.truncate")?.textContent ?? ""));
-// Bölüm menüsü (docs/history/231-*, 232-*): sekmeler artık tek "Akış ▾ / Gönderiler ▾" menüsünün seçenekleridir.
-const SECTION_OPTION = "[data-section-option]";
+const cardsOf = (page) => page.locator("[data-community-card]");
+const cardNames = (page) => cardsOf(page).evaluateAll((els) => els.map((el) => el.querySelector("h3")?.textContent ?? ""));
 const optMatcher = (name) => (name instanceof RegExp ? name : new RegExp("^" + String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-const menuIsOpen = async (page) => (await page.locator(SECTION_OPTION).count()) > 0;
-const menuOpen = async (page) => { if (!(await menuIsOpen(page))) { await page.locator("[data-section-menu]").first().click(); await page.locator(SECTION_OPTION).first().waitFor(); } };
-const menuClose = async (page) => { if (await menuIsOpen(page)) { await page.keyboard.press("Escape"); await page.locator(SECTION_OPTION).first().waitFor({ state: "detached" }).catch(() => undefined); } };
-const menuOption = (page, name) => page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).first();
-const hasTab = async (page, name) => { if ((await page.locator("[data-section-menu]").count()) === 0) return false; await menuOpen(page); const found = (await page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).count()) > 0; await menuClose(page); return found; };
-const optionText = async (page, name) => { await menuOpen(page); const text = await menuOption(page, name).innerText(); await menuClose(page); return text; };
+const tabEl = (page, name) => page.getByRole("tab", { name: optMatcher(name) }).first();
+const hasTab = async (page, name) => (await page.getByRole("tab", { name: optMatcher(name) }).count()) > 0;
 
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
-await scenario("1. telefon: büyük görünür başlık; menü + simgeler + '+' tek kontrol satırı; raf, gönderiler sırayla (docs/history/232-*)", async ({ page }) => {
+await scenario("1. telefon (Hub düzeni, docs/history/379-*): bant (başlık + kısa '+ Oluştur') → sekmeler → kontrol satırı → kart ızgarası; taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
   const h1 = await page.getByRole("heading", { level: 1, name: "Topluluklar" }).boundingBox();
-  assert.ok(h1 && h1.height > 30, "başlık görünür ve büyük");
-  const menu = await page.locator("[data-section-menu]").boundingBox();
-  const search = await page.getByRole("button", { name: "Ara", exact: true }).boundingBox();
-  const create = await page.getByRole("button", { name: "Topluluk oluştur" }).boundingBox();
-  assert.ok(Math.abs(menu.y + menu.height / 2 - (create.y + create.height / 2)) < 6, "menü ve '+' aynı satırda");
-  assert.ok(Math.abs(search.y + search.height / 2 - (create.y + create.height / 2)) < 6, "arama simgesi de aynı satırda");
-  await shelf(page).waitFor();
-  await page.locator("[data-home-post]").first().waitFor();
-  const shelfY = (await shelf(page).boundingBox()).y;
-  const postY = (await page.locator("[data-home-post]").first().boundingBox()).y;
-  assert.ok(menu.y < shelfY && shelfY < postY, "sıra: kontrol satırı → raf → gönderiler");
+  assert.ok(h1 && h1.height > 20, "başlık görünür");
+  const create = await page.locator("[data-create-community]").boundingBox();
+  assert.ok(Math.abs(h1.y + h1.height / 2 - (create.y + create.height / 2)) < 30, "birincil düğme bantla aynı satırda");
+  await cardsOf(page).first().waitFor();
+  const tabsY = (await page.getByRole("tablist").first().boundingBox()).y;
+  const cardY = (await cardsOf(page).first().boundingBox()).y;
+  assert.ok(h1.y < tabsY && tabsY < cardY, "sıra: bant → sekmeler → kartlar");
+  assert.equal(await tabEl(page, "Topluluklarım").getAttribute("aria-selected"), "true", "ilk sekme Topluluklarım varsayılan");
   assert.ok(await overflowFree(page), "yatay taşma yok");
   await shot(page, "1-phone");
 });
 
-await scenario("2. raf: 4:3 kapaklar, yeni olan önce; 'N yeni' rozeti (99+ kesilir); topluluğa bağlanır; üye olunmayan topluluk YOK", async ({ page }) => {
+await scenario("2. Topluluklarım: kartlar, yeni olan önce; 'N yeni' rozeti (99+ kesilir); topluluğa bağlanır; üye olunmayan topluluk YOK", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  await shelf(page).waitFor();
-  const names = await shelfNames(page);
+  await cardsOf(page).first().waitFor();
+  const names = await cardNames(page);
   assert.deepEqual(names.slice(0, 2), ["Lo-fi Stüdyo", "Kod Promptları"], `yeni gönderisi çok olan önce: ${names}`);
-  assert.ok(!names.includes("Anime Çizim"), "üye olunmayan topluluk rafta yok");
-  assert.equal(await shelf(page).locator(`[data-shelf-community="${id(2)}"]`).getByText("4 yeni").count(), 1);
-  assert.equal(await shelf(page).locator(`[data-shelf-community="${id(3)}"]`).getByText("99+ yeni").count(), 1);
-  assert.equal(await shelf(page).locator(`[data-shelf-community="${id(1)}"] [data-shelf-unseen]`).count(), 0, "yeni yoksa rozet yok");
-  const cover = await shelf(page).locator(`[data-shelf-community="${id(1)}"]`).locator("xpath=./span[1]").boundingBox();
-  assert.ok(Math.abs(cover.width / cover.height - 4 / 3) < 0.05, "kapak 4:3");
-  assert.match(await shelf(page).locator(`[data-shelf-community="${id(2)}"]`).getAttribute("href"), new RegExp(`/communities/local/?\\?id=${id(2)}`));
-  await shelf(page).getByRole("link", { name: "Tümünü gör" }).click();
-  await page.waitForURL(/tab=mine/);
+  assert.ok(!names.includes("Anime Çizim"), "üye olunmayan topluluk listede yok");
+  assert.equal(await page.locator(`[data-community-card="${id(2)}"]`).getByText("4 yeni").count(), 1);
+  assert.equal(await page.locator(`[data-community-card="${id(3)}"]`).getByText("99+ yeni").count(), 1);
+  assert.equal(await page.locator(`[data-community-card="${id(1)}"] [data-shelf-unseen]`).count(), 0, "yeni yoksa rozet yok");
+  const cover = await page.locator(`[data-community-card="${id(1)}"] .aspect-video`).first().boundingBox();
+  assert.ok(Math.abs(cover.width / cover.height - 16 / 9) < 0.05, "kapak 16:9");
+  assert.match(await page.locator(`[data-community-card="${id(2)}"] h3 a`).getAttribute("href"), new RegExp(`/communities/local/?\\?id=${id(2)}`));
+  await tabEl(page, "Gönderiler").click();
+  await page.waitForURL(/tab=posts/);
 });
 
-await scenario("3. sayaç alınamazsa raf rozetsiz çizilir (hata kutusu yok)", async ({ page }) => {
+await scenario("3. sayaç alınamazsa kartlar rozetsiz çizilir (hata kutusu yok)", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  await shelf(page).waitFor();
-  assert.equal(await shelf(page).locator("[data-shelf-unseen]").count(), 0);
+  await cardsOf(page).first().waitFor();
+  assert.equal(await page.locator("[data-shelf-unseen]").count(), 0);
   assert.equal(await page.getByText("Topluluklar yüklenemedi.").count(), 0);
 }, { unseen: false });
 
-await scenario("4. davet: menüde sayaç + nokta; Gönderiler'de tek satırlık kart → 'Gör' Davetler bölümünü açar; Davetler'de kart yok", async ({ page }) => {
+await scenario("4. davet: sekmede sayaç; tek satırlık dikkat şeridi → 'Gör' Davetler bölümünü açar; Davetler'de şerit yok", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  await page.locator("[data-section-dot]").waitFor();
-  assert.match(await optionText(page, /Davet ve başvurular/), /2/);
   const notice = page.getByTestId("home-invite-notice");
   await notice.waitFor();
+  assert.match(await tabEl(page, /Davet ve başvurular/).innerText(), /2/);
   assert.match(await notice.textContent(), /2 davetin var.*Anime Çizim/s);
   await notice.getByRole("link", { name: "Gör" }).click();
   await page.waitForURL(/tab=invites/);
-  assert.equal(await page.getByTestId("home-invite-notice").count(), 0, "Davetler bölümünde kart tekrar edilmez");
+  assert.equal(await page.getByTestId("home-invite-notice").count(), 0, "Davetler bölümünde şerit tekrar edilmez");
   await shot(page, "4-invites");
 }, { invites: 2 });
 
@@ -126,10 +115,9 @@ await scenario("5. arama 'Tüm topluluklar'a sorguyla gider ve sorgu kutuda haz�
   await page.waitForFunction(() => [...document.querySelectorAll("input")].some((input) => input.value === "anime"));
 });
 
-await scenario("6. ziyaretçi: arama/raf/balon yok, Keşfet listesi + 'Topluluk oluştur' giriş penceresi", async ({ page }) => {
+await scenario("6. ziyaretçi: arama/sekme yok, Keşfet listesi + 'Topluluk oluştur' giriş penceresi", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).waitFor();
-  assert.equal(await shelf(page).count(), 0);
   assert.equal(await hasTab(page, /Gönderiler/), false);
   await page.getByRole("button", { name: "Topluluk oluştur" }).click();
   await page.getByRole("dialog").waitFor();
@@ -137,8 +125,8 @@ await scenario("6. ziyaretçi: arama/raf/balon yok, Keşfet listesi + 'Topluluk 
 
 await scenario("7. İngilizce + masaüstü: metinler çevrili, taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  await shelf(page).getByRole("heading", { name: "My communities" }).waitFor();
-  await shelf(page).getByText("4 new").waitFor();
+  await tabEl(page, "My communities").waitFor();
+  await page.getByText("4 new").first().waitFor();
   await page.getByTestId("home-invite-notice").getByText("You're invited").waitFor();
   await page.getByTestId("home-invite-notice").getByRole("link", { name: "View" }).waitFor();
   assert.ok(await overflowFree(page));

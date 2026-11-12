@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { CalendarDays } from "@/components/icons/calendar-days";
 import { SquareStack } from "@/components/icons/square-stack";
 import { MessagesSquare } from "@/components/icons/messages-square";
@@ -9,8 +8,7 @@ import { GroupAvatar } from "@/features/groups/group-avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { CommunityJoinButton, type JoinState } from "./community-join-button";
 import { CommunityCover } from "./community-cover";
-import { CardBandBackdrop } from "@/features/content/content-card";
-import { Eyebrow } from "@/features/content/detail-parts";
+import { HUB_CARD_CHIP_CLASS, HubCard } from "@/features/hub/hub-kit";
 import { VisibilityLabel } from "./visibility-label";
 import { useCommunityPresenceCount } from "@/features/presence/community-presence";
 import { OnlineCountText } from "@/features/presence/presence-ui";
@@ -21,9 +19,11 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityReason, CommunitySummary } from "@/lib/supabase/communities";
 
 /**
- * Topluluk kartı: görsel, ad, açıklama, üye sayısı, görünürlük ve içerik/etkinlik özeti. Bandın altında TEK üyelik düğmesi
- * (Katıl · İstek gönder · İstek gönderildi ▼ · Katıldın ▼ → ayrıl). Kart tamamı tıklanabilir bir bağlantıdır; düğme ayrı bir hedeftir.
- * Kapalı topluluğun kartında içerik istatistiği yoktur (üye olmayana sunucu vermez) ve "içerik yalnızca üyelere" notu görünür.
+ * Topluluk kartı (Hub düzeni, docs/history/379-*): üç alanda aynı `HubCard` — 16:9 kapak (topluluğun görseli, renkleri bulanık arka plan),
+ * sol üstte kategori, kapağın altında "N yeni" rozeti; gövdede ad, üye sayısı · aktif · gönderi · etkinlik · okunmamış özeti, alt satırda
+ * görünürlük/rol/kapalı rozetleri ve TEK üyelik düğmesi (Katıl · İstek gönder · İstek gönderildi ▼ · Katıldın ▼ → ayrıl). Kart tamamı tıklanabilir bir
+ * bağlantıdır; düğme ayrı bir hedeftir. Kapalı topluluğun kartında içerik istatistiği yoktur (üye olmayana sunucu vermez) ve "içerik yalnızca
+ * üyelere" notu görünür; açıklama kartta yerine ad bağlantısının ipucundadır.
  */
 export function CommunityCard({
   community,
@@ -32,6 +32,7 @@ export function CommunityCard({
   onInvited,
   footerNote,
   reason,
+  unseen = 0,
 }: {
   community: CommunitySummary;
   onStatusChange: (next: JoinState) => void;
@@ -40,6 +41,8 @@ export function CommunityCard({
   footerNote?: string;
   /** Öneri listesinde: bu topluluk neden önerildi. */
   reason?: CommunityReason;
+  /** Görmediğim gönderi sayısı (`my_community_unseen_counts`); kapağın altında "N yeni" rozeti olur. */
+  unseen?: number;
 }) {
   const { t } = useTranslation();
   const full = community.memberCount >= community.memberLimit;
@@ -47,82 +50,86 @@ export function CommunityCard({
   const showContentStats = community.visibility === "public" || isMember;
   // Aktif üye sayısı (docs/history/329-*): kartlar tek çağrıda toplanır; okuyamadığın (kapalı, üye değilsin) toplulukta sunucu sayı vermez.
   const activeCount = useCommunityPresenceCount(community.id);
+  const note = footerNote ?? (reason ? t(REASON_LABEL_KEYS[reason]) : community.visibility === "restricted" && !isMember ? t("communities.search.restrictedNote") : null);
+
+  const meta = note ? (
+    note
+  ) : (
+    <span className="inline-flex min-w-0 items-center gap-x-2.5 whitespace-nowrap">
+      <span className="truncate">
+        {memberCountText(t, community.memberCount)}
+        {full && ` · ${t("groups.page.full")}`}
+      </span>
+      <OnlineCountText count={activeCount} variant="active" className="text-success" />
+      {showContentStats && (
+        <span className="inline-flex items-center gap-1" title={t("communities.card.postsTitle")}>
+          <SquareStack size={12} aria-hidden /> {community.postCount}
+        </span>
+      )}
+      {showContentStats && community.upcomingEventCount > 0 && (
+        <span className="inline-flex items-center gap-1">
+          <CalendarDays size={12} aria-hidden /> {t("communities.card.upcomingEvents", { count: community.upcomingEventCount })}
+        </span>
+      )}
+      {community.unreadCount > 0 && (
+        <span className="inline-flex items-center gap-1 text-primary">
+          <MessagesSquare size={12} aria-hidden /> {t("communities.card.unread", { count: formatUnread(community.unreadCount) })}
+        </span>
+      )}
+      {community.pendingRequestCount > 0 && <span className="text-primary">{t("communities.card.pendingRequests", { count: community.pendingRequestCount })}</span>}
+    </span>
+  );
 
   return (
-    // Albüm kartı (docs/history/203-*): the band takes the community picture's colours (`CommunityCover`'s automatic mode),
-    // big square picture + category kicker + name inside it; the one membership button and the counts under it.
-    <li className="relative flex flex-col rounded-xl border border-border-soft bg-surface shadow-card transition-colors duration-200 ease-soft hover:border-border-strong">
-      <div className="relative rounded-t-xl px-4 pb-4 pt-4">
-        <CardBandBackdrop backdrop={<CommunityCover coverUrl={null} coverColor={null} avatarUrl={community.avatarUrl} className="h-full sm:h-full" />} />
-        <div className="relative space-y-3">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex shrink-0 rounded-[1.15rem] border-[3px] border-surface bg-surface shadow-pop">
-              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={56} className="[&>span:first-child]:rounded-[0.95rem]" />
+    <HubCard
+      href={communityHref(community.id)}
+      title={<span title={community.description || undefined}>{community.name}</span>}
+      meta={meta}
+      data-community-card={community.id}
+      cover={
+        <>
+          <CommunityCover coverUrl={null} coverColor={null} avatarUrl={community.avatarUrl} className="h-full sm:h-full" />
+          <span className="absolute inset-0 grid place-items-center">
+            <span className="inline-flex rounded-[1.15rem] border-[3px] border-surface bg-surface shadow-pop">
+              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={64} className="[&>span:first-child]:rounded-[0.95rem]" />
             </span>
-            <div className="min-w-0 flex-1 space-y-1">
-              <Eyebrow tone="primary">{t(CATEGORY_LABEL_KEYS[community.category])}</Eyebrow>
-              <h2 className="break-words font-display text-[1.25rem] font-extrabold leading-tight tracking-[-0.02em] text-text">
-                <Link href={communityHref(community.id)} className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
-                  {community.name}
-                </Link>
-              </h2>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <VisibilityLabel visibility={community.visibility} />
-            {community.myRole && <RoleBadge role={community.myRole} />}
-            {community.closed && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
-          </div>
-          {community.description && <p className="line-clamp-2 break-words text-small text-text-secondary">{community.description}</p>}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-        <div className="relative z-10 shrink-0">
-          <CommunityJoinButton
-            target={{
-              id: community.id,
-              name: community.name,
-              visibility: community.visibility,
-              rulesRequired: community.rulesRequired,
-              memberCount: community.memberCount,
-              memberLimit: community.memberLimit,
-              closed: community.closed,
-            }}
-            status={community.myStatus}
-            role={community.myRole}
-            onChange={onStatusChange}
-            onToast={onToast}
-            onInvited={onInvited}
-            size="md"
-          />
-        </div>
-        <p className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-caption text-text-muted">
-          <span>{memberCountText(t, community.memberCount)}{full && ` · ${t("groups.page.full")}`}</span>
-          <OnlineCountText count={activeCount} variant="active" className="text-success" />
-          {showContentStats && (
-            <span className="flex items-center gap-1" title={t("communities.card.postsTitle")}>
-              <SquareStack size={12} aria-hidden /> {community.postCount}
-            </span>
-          )}
-          {showContentStats && community.upcomingEventCount > 0 && (
-            <span className="flex items-center gap-1">
-              <CalendarDays size={12} aria-hidden /> {t("communities.card.upcomingEvents", { count: community.upcomingEventCount })}
-            </span>
-          )}
-          {community.unreadCount > 0 && (
-            <span className="flex items-center gap-1 text-primary">
-              <MessagesSquare size={12} aria-hidden /> {t("communities.card.unread", { count: formatUnread(community.unreadCount) })}
-            </span>
-          )}
-          {community.pendingRequestCount > 0 && <span className="text-primary">{t("communities.card.pendingRequests", { count: community.pendingRequestCount })}</span>}
-        </p>
-        {(footerNote || reason || (community.visibility === "restricted" && !isMember)) && (
-          <span className="w-full text-caption text-text-muted">
-            {footerNote ?? (reason ? t(REASON_LABEL_KEYS[reason]) : t("communities.search.restrictedNote"))}
           </span>
-        )}
-      </div>
-    </li>
+        </>
+      }
+      chip={<span className={HUB_CARD_CHIP_CLASS}>{t(CATEGORY_LABEL_KEYS[community.category])}</span>}
+      coverOverlay={
+        unseen > 0 ? (
+          <span data-shelf-unseen={unseen} className="ml-auto rounded-full bg-primary px-2 py-0.5 text-caption font-bold text-primary-foreground shadow-xs">
+            {t("communities.shelf.unseen", { count: unseen >= 99 ? "99+" : unseen })}
+          </span>
+        ) : undefined
+      }
+      footerStart={
+        <span className="flex min-w-0 flex-wrap items-center gap-1">
+          <VisibilityLabel visibility={community.visibility} />
+          {community.myRole && <RoleBadge role={community.myRole} />}
+          {community.closed && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
+        </span>
+      }
+      footerEnd={
+        <CommunityJoinButton
+          target={{
+            id: community.id,
+            name: community.name,
+            visibility: community.visibility,
+            rulesRequired: community.rulesRequired,
+            memberCount: community.memberCount,
+            memberLimit: community.memberLimit,
+            closed: community.closed,
+          }}
+          status={community.myStatus}
+          role={community.myRole}
+          onChange={onStatusChange}
+          onToast={onToast}
+          onInvited={onInvited}
+          size="sm"
+        />
+      }
+    />
   );
 }

@@ -12,6 +12,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useToast } from "@/features/groups/use-toast";
 import { CommunityCard } from "./community-card";
+import { HUB_GRID_CLASS } from "@/features/hub/hub-kit";
 import { CommunityLayout } from "./community-layout";
 import type { JoinState } from "./community-join-button";
 import { DiscoverView } from "./communities-page";
@@ -170,7 +171,7 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
         />
       ) : (
         <>
-          <ul className="grid gap-3 md:grid-cols-2" data-testid="all-communities-list">
+          <ul className={HUB_GRID_CLASS} data-testid="all-communities-list">
             {current.items.map((community) => (
               <CommunityCard
                 key={community.id}

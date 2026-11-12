@@ -44,6 +44,7 @@ import { quoteTranslations } from "./translations-quotes";
 import { filterTranslations } from "./translations-filters";
 import { exchangeTranslations } from "./translations-exchange";
 import { notificationCenterTranslations } from "./translations-notification-center";
+import { hubTranslations } from "./translations-hub";
 import { messageDockTranslations } from "./translations-message-dock";
 import { presenceTranslations } from "./translations-presence";
 
@@ -3320,6 +3321,7 @@ export const translations = {
   ...filterTranslations,
   ...exchangeTranslations,
   ...notificationCenterTranslations,
+  ...hubTranslations,
   ...messageDockTranslations,
   ...presenceTranslations,
   "report.modal.title": { tr: "İçeriği şikâyet et", en: "Report content" },
