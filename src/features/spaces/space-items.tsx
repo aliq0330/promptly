@@ -144,24 +144,84 @@ export function CopyTextButton({ text, label, className, size = "sm" }: { text: 
   );
 }
 
-function GroupSelect({ value, onChange, disabled, id }: { value: string | null; onChange: (value: string | null) => void; disabled?: boolean; id?: string }) {
+const NEW_GROUP = "__new__";
+
+/**
+ * Öğenin grubu: var olan gruplardan seç, "Yeni grup…" ile oradan grup aç (öğe hemen o gruba girer) ya da "Grupları yönet"i aç.
+ * Ekip projelerinde sekme olmadığı için (docs/history/365-*) grupları açmanın tek yeri budur ve alan listesindeki grup süzgeciyle birlikte çalışır.
+ */
+function GroupPicker({ value, onChange, canManage, id }: { value: string | null; onChange: (value: string | null) => void; canManage: boolean; id?: string }) {
   const { t } = useTranslation();
-  const { groups } = useSpaceContext();
+  const { space, groups, setGroups, userId } = useSpaceContext();
+  const [creating, setCreating] = useState(false);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [manage, setManage] = useState(false);
+
+  async function create(event: React.FormEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!name.trim() || !userId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const group = await createSpaceGroup(space.id, name, userId, groups.length);
+      setGroups((list) => [...list, group]);
+      onChange(group.id);
+      setName("");
+      setCreating(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <select
-      id={id}
-      value={value ?? ""}
-      disabled={disabled}
-      onChange={(event) => onChange(event.target.value || null)}
-      className={cn(fieldInputClassName, "h-10")}
-    >
-      <option value="">{t("spaces.groups.none")}</option>
-      {groups.map((group) => (
-        <option key={group.id} value={group.id}>
-          {group.name}
-        </option>
-      ))}
-    </select>
+    <div className="space-y-2" data-testid="group-picker">
+      <select
+        id={id}
+        value={creating ? NEW_GROUP : (value ?? "")}
+        onChange={(event) => {
+          if (event.target.value === NEW_GROUP) {
+            setCreating(true);
+            return;
+          }
+          setCreating(false);
+          onChange(event.target.value || null);
+        }}
+        className={cn(fieldInputClassName, "h-10")}
+      >
+        <option value="">{t("spaces.groups.none")}</option>
+        {groups.map((group) => (
+          <option key={group.id} value={group.id}>
+            {group.name}
+          </option>
+        ))}
+        {canManage && <option value={NEW_GROUP}>{t("spaces.groups.newOption")}</option>}
+      </select>
+      {creating && (
+        <form onSubmit={(event) => void create(event)} className="flex gap-2" data-testid="group-picker-new">
+          <input value={name} onChange={(event) => setName(event.target.value)} maxLength={SPACE_GROUP_NAME_MAX} aria-label={t("spaces.groups.nameLabel")} placeholder={t("spaces.groups.newPlaceholder")} className={cn(fieldInputClassName, "h-10 min-w-0 flex-1")} />
+          <Button type="submit" size="sm" className="h-10" disabled={busy || !name.trim()}>
+            {busy ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <Plus size={14} aria-hidden />}
+            {t("spaces.groups.add")}
+          </Button>
+          <Button type="button" size="sm" variant="ghost" className="h-10" onClick={() => { setCreating(false); setName(""); setError(null); }} disabled={busy}>
+            {t("common.cancel")}
+          </Button>
+        </form>
+      )}
+      <FormError message={error} />
+      {canManage && groups.length > 0 && (
+        <button type="button" onClick={() => setManage(true)} className="inline-flex items-center gap-1 text-caption font-semibold text-primary hover:underline" data-group-manage>
+          <Layers size={13} aria-hidden />
+          {t("spaces.groups.manage")}
+        </button>
+      )}
+      {manage && <GroupsManagerModal onClose={() => setManage(false)} />}
+    </div>
   );
 }
 
@@ -332,9 +392,10 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard, drawer }: { it
                 <label htmlFor={groupId} className={fieldLabelClassName}>
                   {t("spaces.groups.label")}
                 </label>
-                <GroupSelect
+                <GroupPicker
                   id={groupId}
                   value={item.groupId}
+                  canManage={caps.edit}
                   onChange={(next) => {
                     setError(null);
                     patchItem(item.id, { groupId: next }).catch((err) => setError(err instanceof Error ? err.message : t("spaces.error.generic")));

@@ -43,6 +43,8 @@ import { ProjectPeopleList } from "./project-people";
 import { ProjectRoleChip, projectRoleLabelKey } from "./project-ui";
 import { ProjectVariablesPanel } from "./project-variables";
 import { TeamAreaView, type AreaBoardRow, type AreaTab } from "./team-area-view";
+import type { AreaItemContext } from "./team-item-detail";
+import type { BoardChoice } from "./team-add-to-board";
 import { TeamReviewInbox } from "./team-review-inbox";
 import type { TeamCtx } from "./team-page";
 import { SectionError, TeamMark, toneClass } from "./team-ui";
@@ -171,6 +173,12 @@ function boardRows(detail: ProjectDetail, teamId: string, fileId: string | null)
     ? fileBoardEntries(detail, fileId)
     : detail.boards.filter((board) => board.fileId === null).map((board) => ({ kind: "board" as const, id: board.id, title: board.title, itemCount: board.itemCount, boardCount: 1, openBoardId: board.id }));
   return entries.map((entry) => ({ id: entry.id, title: entry.title, itemCount: entry.itemCount, kind: entry.kind, boardCount: entry.boardCount, href: boardPageHref(teamId, detail.project.id, entry.openBoardId) }));
+}
+
+/** "Panoya ekle" için projenin tüm panoları (aynı dosyanınkiler pencerede öne alınır). */
+function placementOf(detail: ProjectDetail, teamId: string, fileId: string | null): NonNullable<AreaItemContext["placement"]> {
+  const boards: BoardChoice[] = detail.boards.map((board) => ({ id: board.id, title: board.title, fileId: board.fileId, fileTitle: detail.files.find((file) => file.id === board.fileId)?.title ?? null, itemCount: board.itemCount }));
+  return { projectId: detail.project.id, fileId, boards, boardHref: (boardId, focusId) => projectLink(teamId, detail.project.id, { board: boardId, sub: "board", focus: focusId }) };
 }
 
 function teamCrumb(ctx: TeamCtx): PathCrumb {
@@ -627,6 +635,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
                   variables: detail.variables,
                   fileId: file.id,
                   drawer: true,
+                  placement: placementOf(detail, team.id, file.id),
                 }
               : null
           }
@@ -802,6 +811,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
                 variables: detail.variables,
                 fileId: board?.fileId ?? null,
                 drawer: true,
+                placement: placementOf(detail, team.id, null),
               }
             : null
         }

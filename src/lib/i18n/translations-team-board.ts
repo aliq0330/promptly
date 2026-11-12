@@ -141,6 +141,7 @@ export const teamBoardTranslations = {
   "tb.comments.newTitle": { tr: "Yeni yorum", en: "New comment" },
   "tb.comments.hint": { tr: "Yorum yapmak için tuvalde bir yere ya da öğeye dokun", en: "Tap a spot or an item on the board to comment" },
   "tb.comments.exitMode": { tr: "Yorum modundan çık", en: "Leave comment mode" },
+  "tb.comments.hidePins": { tr: "Panodaki yorum yerlerini gizle", en: "Hide comment markers on the board" },
   "tb.comments.scope": { tr: "Kapsam", en: "Scope" },
   "tb.comments.scopeBoard": { tr: "Bu pano", en: "This board" },
   "tb.comments.scopeAll": { tr: "Tüm panolar", en: "All boards" },

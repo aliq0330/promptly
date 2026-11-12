@@ -44,11 +44,20 @@ export function unlockBodyScroll() {
  * `scrollTop > 0` ise kaydırma kazanır) ve aşağı yönde başlar; kart parmağı izler, arka plan solar. Eşik (yükseklik/hız) aşılırsa kart
  * aşağı kayarak kapanır ve `onClose` çağrılır, aksi hâlde yaylanarak yerine döner. Textarea/select/aralık kaydırıcısı ve `data-no-sheet-drag`
  * üzerinden başlayan hareket sürükleme sayılmaz (metin seçimi/değer ayarı bozulmasın).
+ *
+ * Üç basamak: kart %75 yükseklikte açılır; içeriği buna sığmayıp kırpılıyorsa yukarı sürükleyince %90'a genişler (`--sheet-snap`), %90'dayken
+ * aşağı sürükleyince %75'e iner, %75'teyken aşağı sürükleyince kapanır. %75'te yukarı hareket önce kartı genişletir, içerik kaydırması
+ * genişleyince başlar.
  */
+const SHEET_BASE = 0.75;
+const SHEET_TALL = 0.9;
+
 function useSheetDismiss(mode: "dialog" | "sheet" | "side", onCloseRef: React.MutableRefObject<() => void>) {
   // Portal içeriği ilk işlemeden SONRA bağlandığı için ref değil state: öğeler gelince etki yeniden çalışır.
   const [overlay, setOverlay] = useState<HTMLDivElement | null>(null);
   const [sheet, setSheet] = useState<HTMLDivElement | null>(null);
+  // 0 = ilk yükseklik (%75), 1 = genişletilmiş (%90). Etki yeniden kurulsa da korunur.
+  const levelRef = useRef<0 | 1>(0);
 
   useEffect(() => {
     if (mode === "side" || !overlay || !sheet) return;
@@ -61,6 +70,42 @@ function useSheetDismiss(mode: "dialog" | "sheet" | "side", onCloseRef: React.Mu
     let lastT = 0;
     let velocity = 0;
     let height = 1;
+    // Üç hareket: `dismiss` (ilk yükseklikte aşağı → kapanır), `expand` (ilk yükseklikte yukarı → %90), `shrink` (%90'dayken aşağı → ilk yükseklik).
+    let gesture: "dismiss" | "expand" | "shrink" | null = null;
+    let expandable = false;
+    let startHeight = 0;
+    let animating = false;
+    let raf = 0;
+
+    const snapPx = (fraction: number) => {
+      const reserved = parseFloat(getComputedStyle(overlay).getPropertyValue("--sheet-max-h"));
+      const cap = Number.isFinite(reserved) ? reserved : Infinity;
+      return Math.round(Math.min(fraction * window.innerHeight, cap));
+    };
+    const setSnap = (px: number) => sheet.style.setProperty("--sheet-snap", `${px}px`);
+    const commitLevel = (level: 0 | 1) => {
+      levelRef.current = level;
+      if (level === 1) sheet.style.setProperty("--sheet-snap", `${SHEET_TALL * 100}dvh`);
+      else sheet.style.removeProperty("--sheet-snap");
+    };
+    const animateSnap = (from: number, to: number, level: 0 | 1) => {
+      if (from === to || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        commitLevel(level);
+        return;
+      }
+      animating = true;
+      const t0 = performance.now();
+      const step = (now: number) => {
+        const p = Math.min(1, (now - t0) / 220);
+        setSnap(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) raf = requestAnimationFrame(step);
+        else {
+          animating = false;
+          commitLevel(level);
+        }
+      };
+      raf = requestAnimationFrame(step);
+    };
 
     const enabled = () => mode === "sheet" || window.matchMedia("(max-width: 639px)").matches;
     const blocked = (target: EventTarget | null) => {
@@ -93,27 +138,34 @@ function useSheetDismiss(mode: "dialog" | "sheet" | "side", onCloseRef: React.Mu
 
     let skipDrag = false;
     const onStart = (event: TouchEvent) => {
-      if (closing || event.touches.length !== 1 || !enabled()) {
+      if (closing || animating || event.touches.length !== 1 || !enabled()) {
         tracking = false;
         return;
       }
       tracking = true;
       dragging = false;
+      gesture = null;
       skipDrag = blocked(event.target);
       startY = lastY = event.touches[0].clientY;
       lastT = event.timeStamp;
       velocity = 0;
       height = sheet.getBoundingClientRect().height || 1;
+      startHeight = height;
+      // Yalnız içeriği ilk yüksekliğe sığmayıp kırpılan kart genişleyebilir (kısa bir onay penceresi boşuna uzamaz).
+      expandable = levelRef.current === 0 && height >= snapPx(SHEET_BASE) - 3;
     };
     const onMove = (event: TouchEvent) => {
       if (!tracking || skipDrag) return;
       const y = event.touches[0].clientY;
       if (!dragging) {
-        if (y - startY < -4) {
+        const delta = y - startY;
+        const level = levelRef.current;
+        if (delta < -4 && !expandable) {
           tracking = false;
           return;
         }
-        if (y - startY <= 8) return;
+        if (Math.abs(delta) <= 8) return;
+        gesture = delta > 0 ? (level === 1 ? "shrink" : "dismiss") : "expand";
         dragging = true;
         startY = y;
         sheet.style.animation = "none";
@@ -121,11 +173,19 @@ function useSheetDismiss(mode: "dialog" | "sheet" | "side", onCloseRef: React.Mu
         overlay.style.transition = "none";
       }
       event.preventDefault();
-      const dy = Math.max(0, y - startY);
       const dt = event.timeStamp - lastT;
       if (dt > 0) velocity = (y - lastY) / dt;
       lastY = y;
       lastT = event.timeStamp;
+      if (gesture === "expand") {
+        setSnap(Math.min(snapPx(SHEET_TALL), Math.max(snapPx(SHEET_BASE), startHeight + (startY - y))));
+        return;
+      }
+      if (gesture === "shrink") {
+        setSnap(Math.min(snapPx(SHEET_TALL), Math.max(snapPx(SHEET_BASE), startHeight - (y - startY))));
+        return;
+      }
+      const dy = Math.max(0, y - startY);
       sheet.style.transform = `translateY(${dy}px)`;
       dim(dy / height);
     };
@@ -136,6 +196,17 @@ function useSheetDismiss(mode: "dialog" | "sheet" | "side", onCloseRef: React.Mu
       }
       tracking = false;
       dragging = false;
+      if (gesture === "expand") {
+        const open = startY - lastY > 40 || velocity < -0.4;
+        animateSnap(Math.round(sheet.getBoundingClientRect().height), open ? snapPx(SHEET_TALL) : snapPx(SHEET_BASE), open ? 1 : 0);
+        return;
+      }
+      if (gesture === "shrink") {
+        const range = Math.max(0, startHeight - snapPx(SHEET_BASE));
+        const down = lastY - startY > Math.min(60, range * 0.4) || velocity > 0.5;
+        animateSnap(Math.round(sheet.getBoundingClientRect().height), down ? snapPx(SHEET_BASE) : snapPx(SHEET_TALL), down ? 0 : 1);
+        return;
+      }
       const dy = Math.max(0, lastY - startY);
       if (dy > Math.min(140, height * 0.3) || velocity > 0.6) {
         closing = true;
@@ -160,6 +231,7 @@ function useSheetDismiss(mode: "dialog" | "sheet" | "side", onCloseRef: React.Mu
     sheet.addEventListener("touchend", onEnd);
     sheet.addEventListener("touchcancel", onEnd);
     return () => {
+      cancelAnimationFrame(raf);
       sheet.removeEventListener("touchstart", onStart);
       sheet.removeEventListener("touchmove", onMove);
       sheet.removeEventListener("touchend", onEnd);
@@ -269,7 +341,7 @@ export function Modal({
         >
           <div
             ref={sheetRef}
-            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up *:!max-h-[min(75dvh,var(--sheet-max-h,100dvh))]"}
+            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up *:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))]"}
             onClick={(event) => event.stopPropagation()}
           >
             {!isSide && <SheetGrabber always />}
@@ -298,7 +370,7 @@ export function Modal({
             "*:shadow-pop max-sm:*:max-w-none max-sm:*:rounded-b-none max-sm:*:border-x-0 max-sm:*:border-b-0 " +
             // Alttan açılan kart en çok ekranın %75'i: üstteki çeyrek hep görünür (docs/history/242-*). Başlık/düğme satırı sabit, ortası kayar:
             // kartın kendisi `flex flex-col` + kaydırılan gövde (`SheetFrame`) olmalı.
-            "max-sm:*:!max-h-[min(75dvh,var(--sheet-max-h,100dvh))] " +
+            "max-sm:*:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))] " +
             "max-sm:*:pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           }
         >

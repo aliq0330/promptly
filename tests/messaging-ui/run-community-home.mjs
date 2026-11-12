@@ -515,6 +515,39 @@ await scenario("27. Mobil bottom sheet: kısa sürükleme geri yaylanır, uzun s
   assert.equal(await dialog.count(), 0, "long drag closes the sheet");
   void sheet;
 }, { viewport: { width: 390, height: 800 }, hasTouch: true, setup: world });
+await scenario("27a. Mobil bottom sheet basamakları (docs/history/375-*): %75 → yukarı = %90 → aşağı = %75 → aşağı = kapanır", async ({ page, context }) => {
+  await page.goto(`${BASE}/communities`);
+  await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
+  const dialog = page.getByRole("dialog");
+  await dialog.waitFor();
+  await page.waitForTimeout(500);
+  const card = dialog.locator("div.relative").first();
+  const height = async () => Math.round((await card.boundingBox()).height);
+  const vh = 800;
+  const h0 = await height();
+  assert.ok(Math.abs(h0 - vh * 0.75) <= 4, `opens at 75% (${h0})`);
+  // yukarı sürükle: kart sırasında büyür, bırakınca %90'a oturur
+  // Başlık satırından sürüklenir (alanlar — textarea — sürükleme sayılmaz).
+  const up = await touchDrag(context, page, { from: 240, to: 40, steps: 10 });
+  assert.ok((await height()) > h0 + 40, "sheet grows with the finger");
+  await up.release();
+  await page.waitForTimeout(500);
+  const h1 = await height();
+  assert.ok(Math.abs(h1 - vh * 0.9) <= 4, `expands to 90% (${h1})`);
+  assert.equal(await dialog.count(), 1, "still open");
+  // aşağı sürükle (kısa): %75'e iner, kapanmaz
+  const down = await touchDrag(context, page, { from: 110, to: 290, steps: 10 });
+  await down.release();
+  await page.waitForTimeout(500);
+  const h2 = await height();
+  assert.ok(Math.abs(h2 - vh * 0.75) <= 4, `back to 75% (${h2})`);
+  assert.equal(await dialog.count(), 1, "first down-drag only shrinks");
+  // ikinci aşağı sürükleme kapatır
+  const close = await touchDrag(context, page, { from: 240, to: 640, steps: 12 });
+  await close.release();
+  await page.waitForTimeout(700);
+  assert.equal(await dialog.count(), 0, "second down-drag closes");
+}, { viewport: { width: 390, height: 800 }, hasTouch: true, setup: world });
 await scenario("27b. Masaüstünde (≥640px) ortalanmış pencere sürüklenince kapanmaz; tutamaç yok", async ({ page, context }) => {
   await page.goto(`${BASE}/communities`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();

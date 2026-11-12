@@ -312,6 +312,8 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   const [pencilWidth, setPencilWidth] = useState<StrokeWidth>(4);
   const [guidesOn, setGuidesOn] = useState(true);
   const [panelOpen, setPanelOpen] = useState(false);
+  // Tuvaldeki yorum işaretlerini gizle (yalnız görünüm; yorumlar listede durur). Yeni yorum başlatılınca işaretler geri gelir.
+  const [pinsHidden, setPinsHidden] = useState(false);
   const [allScope, setAllScope] = useState(false);
   const [scopeThreads, setScopeThreads] = useState<PanelThread[] | null>(null);
   const [activeComment, setActiveComment] = useState<string | null>(null);
@@ -909,6 +911,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       const world = screenToWorld(vpRef.current, point.x, point.y);
       const target = targetId ? items.find((entry) => entry.id === targetId) : null;
       const geom = target ? geoms[target.id] : null;
+      setPinsHidden(false);
       setDraftPin({ x: world.x, y: world.y, itemId: target?.id ?? null, offX: geom ? world.x - geom.x : null, offY: geom ? world.y - geom.y : null });
       setActiveComment(null);
       setPeek(false);
@@ -1474,7 +1477,8 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       : teamMode
         ? overviewOpen
           ? // Genel bakış sayfa uzunluğuna göre uzar, iç kaydırma yok: sayfa kendisi kayar (docs/history/370-*).
-            "h-auto min-h-[calc(100dvh-10rem)]"
+            // Üst köşeler köşesizdir (üstündeki ekip başlığıyla düz birleşir).
+            "h-auto min-h-[calc(100dvh-10rem)] rounded-t-none border-t-0"
           : // Tuval: telefonda üst menü ile alt menü arasını tam doldurur (dvh hesabı Safari'de boşluk bırakıyordu), masaüstünde sabit yükseklik.
             "max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom))] max-md:top-16 max-md:z-20 max-md:rounded-none max-md:border-x-0 md:h-[calc(100dvh-8.5rem)]"
         : "h-[72dvh] min-h-[420px] md:h-[calc(100dvh-12rem)]",
@@ -1581,7 +1585,10 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       canModerate={canModerateComments}
       canResolve={canResolveComments}
       onLocate={locate}
+      pinsHidden={pinsHidden}
+      onTogglePins={setPinsHidden}
       onNew={() => {
+        setPinsHidden(false);
         setToolMode("comment");
         if (phoneBar || tabletBar) setPanelOpen(false);
       }}
@@ -1821,7 +1828,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         </div>
         {teamMode && presenting === null && (
           <div className="pointer-events-none absolute inset-0 overflow-hidden" data-board-pins="">
-            {pins.threads.map((thread) => {
+            {!pinsHidden && pins.threads.map((thread) => {
               const pos = pinWorldPosition(thread.root, itemPositions);
               if (!pos) return null;
               const at = worldToScreen(vp, pos.x, pos.y);

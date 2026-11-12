@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Check } from "@/components/icons/check";
+import { EyeOff } from "@/components/icons/eye-off";
+import { Eye } from "@/components/icons/eye";
 import { CircleCheck } from "@/components/icons/circle-check";
 import { ImageIcon } from "@/components/icons/image-icon";
 import { MapPin } from "@/components/icons/map-pin";
@@ -350,6 +352,8 @@ export function CommentsPanel({
   onClose,
   api,
   className,
+  pinsHidden,
+  onTogglePins,
 }: {
   threads: PanelThread[];
   allScope: boolean;
@@ -369,6 +373,9 @@ export function CommentsPanel({
   onClose: () => void;
   api: CommentsApi;
   className?: string;
+  /** Tuvaldeki yorum işaretleri gizli mi (yorum listesi etkilenmez); verilmezse anahtar çizilmez. */
+  pinsHidden?: boolean;
+  onTogglePins?: (hidden: boolean) => void;
 }) {
   const { t, language } = useTranslation();
   const [filter, setFilter] = useState<CommentFilter>("open");
@@ -432,6 +439,22 @@ export function CommentsPanel({
             </button>
           ))}
         </div>
+        {onTogglePins && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={Boolean(pinsHidden)}
+            onClick={() => onTogglePins(!pinsHidden)}
+            data-comment-hide-pins=""
+            className="flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-border-soft px-3 text-left text-small font-semibold text-text hover:bg-surface-soft"
+          >
+            {pinsHidden ? <EyeOff size={18} className="shrink-0 text-text-secondary" aria-hidden /> : <Eye size={18} className="shrink-0 text-text-secondary" aria-hidden />}
+            <span className="min-w-0 flex-1">{t("tb.comments.hidePins")}</span>
+            <span aria-hidden className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", pinsHidden ? "bg-primary" : "bg-border-strong")}>
+              <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-surface shadow-xs transition-[left]", pinsHidden ? "left-[1.125rem]" : "left-0.5")} />
+            </span>
+          </button>
+        )}
       </div>
       {error && (
         <p role="alert" className="mx-4 mb-2 rounded-lg bg-danger/10 px-3 py-2 text-small text-danger">

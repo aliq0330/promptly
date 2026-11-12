@@ -930,6 +930,100 @@ await scenario("42. Yeni dosya / pano / proje pencerelerinde 'Space' kelimesi ge
   assert.ok(!(await project.innerText()).includes("Space"), "yeni proje penceresi");
 });
 
+// 43–45 (docs/history/375-*): Panoya ekle (mevcut pano / pano yoksa Pano ekle) ve öğe düzenlemede "+ Yeni grup…"
+const NEW_ITEM_ID = "17e70000-0000-4000-8000-000000000001";
+const transferReply = (db) => {
+  db.rpc.team_transfer_items = (body) => {
+    db.teamCalls.push({ name: "team_transfer_items", body });
+    return { body: { done: 1, skipped: 0, old_ids: body.p_ids, new_ids: [NEW_ITEM_ID] } };
+  };
+};
+await scenario("43. Dosya öğesi: 'Panoya ekle' görünür düğme + ⋯ menüsünde; pencere projedeki panoyu listeler; seçince team_transfer_items (taşı) ve panoya odaklı gidilir", async ({ page, db }) => {
+  transferReply(db);
+  await page.goto(itemUrl(NOTE(40)));
+  const button = page.locator("[data-item-add-to-board-button]");
+  await button.waitFor();
+  assert.equal((await button.innerText()).trim(), "Panoya ekle");
+  await page.locator("[data-path-more]").click();
+  await page.locator("[data-item-add-to-board]").waitFor();
+  await page.keyboard.press("Escape");
+  await button.click();
+  const form = page.getByTestId("add-to-board-form");
+  await form.waitFor();
+  await form.locator(`[data-add-to-board="${BOARD}"]`).waitFor();
+  assert.equal(await form.locator("[data-add-to-board-empty]").count(), 0, "pano varken boş durum metni yok");
+  assert.equal(await form.getByRole("button", { name: "Panoya ekle" }).isDisabled(), true, "pano seçilmeden gönderilemez");
+  await form.locator(`[data-add-to-board="${BOARD}"]`).click();
+  await form.getByRole("button", { name: "Panoya ekle" }).click();
+  await page.waitForURL(new RegExp(`board=${BOARD}.*sub=board|sub=board.*board=${BOARD}`));
+  assert.match(page.url(), new RegExp(`focus=${NEW_ITEM_ID}`));
+  const [call] = called(db, "team_transfer_items");
+  assert.equal(call.body.p_to, BOARD);
+  assert.deepEqual(call.body.p_ids, [NOTE(40)]);
+  assert.equal(call.body.p_copy, false, "varsayılan taşıma");
+}, { items: detailItems });
+
+await scenario("43b. 'Dosyada da kalsın' = kopyala (p_copy)", async ({ page, db }) => {
+  transferReply(db);
+  await page.goto(itemUrl(NOTE(40)));
+  await page.locator("[data-item-add-to-board-button]").click();
+  const form = page.getByTestId("add-to-board-form");
+  await form.locator(`[data-add-to-board="${BOARD}"]`).click();
+  await form.locator("[data-add-to-board-keep]").check();
+  await form.getByRole("button", { name: "Panoya ekle" }).click();
+  await page.waitForURL(/sub=board/);
+  assert.equal(called(db, "team_transfer_items")[0].body.p_copy, true);
+}, { items: detailItems });
+
+await scenario("44. Projede hiç pano yoksa pencerede 'Pano ekle' seçeneği: ad yazılır → team_create_board(dosya) sonra team_transfer_items", async ({ page, db }) => {
+  transferReply(db);
+  const NEW_BOARD = "17e80000-0000-4000-8000-000000000001";
+  db.rpc.team_project_get = (body) => { db.teamCalls.push({ name: "team_project_get", body }); return { body: detail("lead", { boards: [] }) }; };
+  db.rpc.team_create_board = (body) => { db.teamCalls.push({ name: "team_create_board", body }); return { body: NEW_BOARD }; };
+  await page.goto(itemUrl(NOTE(40)));
+  await page.locator("[data-item-add-to-board-button]").click();
+  const form = page.getByTestId("add-to-board-form");
+  await form.locator("[data-add-to-board-empty]").waitFor();
+  assert.equal(await form.locator("[data-add-to-board]").count(), 0, "listelenecek pano yok");
+  await form.locator("[data-add-to-board-new]").waitFor();
+  await form.locator("[data-add-to-board-title]").fill("Fikirler");
+  await form.getByRole("button", { name: "Panoya ekle" }).click();
+  await page.waitForURL(new RegExp(`board=${NEW_BOARD}`));
+  const [create] = called(db, "team_create_board");
+  assert.equal(create.body.p_title, "Fikirler");
+  assert.equal(create.body.p_file, FILE);
+  assert.equal(called(db, "team_transfer_items")[0].body.p_to, NEW_BOARD);
+}, { items: detailItems });
+
+await scenario("44b. Pano adı boşsa 'Bir ad yaz.' görünür ve hiçbir şey çağrılmaz", async ({ page, db }) => {
+  transferReply(db);
+  db.rpc.team_project_get = (body) => { db.teamCalls.push({ name: "team_project_get", body }); return { body: detail("lead", { boards: [] }) }; };
+  await page.goto(itemUrl(NOTE(40)));
+  await page.locator("[data-item-add-to-board-button]").click();
+  const form = page.getByTestId("add-to-board-form");
+  await form.getByRole("button", { name: "Panoya ekle" }).click();
+  await form.getByText("Bir ad yaz.").waitFor();
+  assert.equal(called(db, "team_transfer_items").length, 0);
+}, { items: detailItems });
+
+await scenario("45. Öğe düzenleme: Grup seçicide '+ Yeni grup…' ile grup açılır, öğe o gruba girer; dosya listesinde grup süzgeci ve kartta grup adı", async ({ page, db }) => {
+  await page.goto(itemUrl(IMAGE(1)));
+  await page.locator("[data-path-more]").click();
+  await page.locator("[data-item-edit]").click();
+  const picker = page.getByTestId("group-picker");
+  await picker.waitFor();
+  assert.deepEqual(await picker.locator("option").allInnerTexts(), ["Grupsuz", "+ Yeni grup…"]);
+  await picker.locator("select").selectOption({ label: "+ Yeni grup…" });
+  const form = page.getByTestId("group-picker-new");
+  await form.getByLabel("Grup adı").fill("Salon");
+  await form.getByRole("button", { name: "Ekle" }).click();
+  await picker.locator("select option", { hasText: "Salon" }).waitFor({ state: "attached" });
+  assert.ok(db.spaceGroups.some((g) => g.name === "Salon"), "grup yazıldı");
+  const group = db.spaceGroups.find((g) => g.name === "Salon");
+  await page.waitForTimeout(400);
+  assert.equal(db.spaceItems.find((row) => row.id === IMAGE(1)).group_id, group.id, "öğe gruba girdi");
+}, { items: detailItems });
+
 // SURVEY=<klasör>: proje/dosya/pano/onay kuyruğu/öğe çekmecesi ekranlarının üç boyutta ekran görüntüsü (görsel inceleme).
 if (process.env.SURVEY) {
   const VIEWS = { phone: { width: 390, height: 844 }, tablet: { width: 834, height: 1112 }, desktop: { width: 1440, height: 900 } };
