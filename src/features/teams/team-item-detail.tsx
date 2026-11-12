@@ -435,7 +435,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
       )}
       {menu === "board" && place && place.fileId && transferable && (
         <AddToBoardDialog
-          item={transferable}
+          itemIds={[transferable.fileItemId ?? transferable.id]}
           projectId={place.projectId}
           fileId={place.fileId}
           boards={place.boards}

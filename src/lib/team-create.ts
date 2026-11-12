@@ -14,6 +14,8 @@ export interface TeamCreateContext {
   fileId: string;
   /** Panodan gelindiyse o pano; yalnız dosyadan gelindiyse null. */
   boardId: string | null;
+  /** Gruplar sekmesinde bir klasörün içinden gelindiyse o grup (docs/history/378-*): içerik yayınlanınca bu gruba girer, dönüş klasöre olur. */
+  groupId?: string | null;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -30,6 +32,7 @@ export function teamCreateHref(kind: TeamCreateKind, ctx: TeamCreateContext): st
   const base = TEAM_CREATE_PATH[kind];
   const params = new URLSearchParams({ teamProject: ctx.projectId, teamFile: ctx.fileId });
   if (ctx.boardId) params.set("teamBoard", ctx.boardId);
+  if (ctx.groupId) params.set("teamGroup", ctx.groupId);
   return `${base}${base.includes("?") ? "&" : "?"}${params.toString()}`;
 }
 
@@ -39,15 +42,18 @@ export function parseTeamCreateContext(search: string | URLSearchParams): TeamCr
   const projectId = params.get("teamProject");
   const fileId = params.get("teamFile");
   const boardId = params.get("teamBoard");
+  const groupId = params.get("teamGroup");
   if (!projectId || !fileId || !UUID.test(projectId) || !UUID.test(fileId)) return null;
-  return { projectId, fileId, boardId: boardId && UUID.test(boardId) ? boardId : null };
+  const out: TeamCreateContext = { projectId, fileId, boardId: boardId && UUID.test(boardId) ? boardId : null };
+  if (groupId && UUID.test(groupId)) out.groupId = groupId;
+  return out;
 }
 
 /** Yayından / vazgeçmekten sonra dönülecek sayfa: panodan gelindiyse pano tuvali, değilse dosya. */
 export function teamCreateReturnHref(teamId: string, ctx: TeamCreateContext): string {
   return ctx.boardId
     ? projectLink(teamId, ctx.projectId, { file: ctx.fileId, board: ctx.boardId, sub: "board" })
-    : projectLink(teamId, ctx.projectId, { file: ctx.fileId });
+    : projectLink(teamId, ctx.projectId, { file: ctx.fileId, group: ctx.groupId ?? null });
 }
 
 /** Bir ekip içeriğinin (asıl öğe) açıldığı adres: dosya sayfası + öğe çekmecesi. */

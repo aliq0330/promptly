@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchProject } from "@/lib/supabase/team-projects";
+import { updateSpaceItem } from "@/lib/supabase/spaces";
 import { attachContent, fetchContentLocation } from "@/lib/supabase/team-board";
 import { parseTeamCreateContext, teamCreateReturnHref, teamItemHref, type TeamCreateContext, type TeamCreateKind } from "@/lib/team-create";
 
@@ -67,7 +68,9 @@ export function useTeamReturn(team: TeamCreateInfo | null): (type: TeamCreateKin
   return useCallback(
     async (type, contentId) => {
       if (!team) return null;
-      await attachContent({ fileId: team.fileId, type, id: contentId, boardId: team.boardId });
+      const attached = await attachContent({ fileId: team.fileId, type, id: contentId, boardId: team.boardId });
+      // Gruplar sekmesinde bir klasörden gelindiyse (docs/history/378-*) asıl öğe o gruba girer; grup yazılamazsa içerik dosyada kalır (hata yutulur).
+      if (team.groupId) await updateSpaceItem(attached.itemId, { groupId: team.groupId }).catch(() => undefined);
       let teamId = team.teamId;
       if (!teamId) teamId = (await fetchProject(team.projectId)).project.teamId;
       return teamCreateReturnHref(teamId, team);
@@ -83,10 +86,11 @@ export function useTeamLeaveHref(team: TeamCreateInfo | null): string | null {
   const fileId = team?.fileId ?? null;
   const projectId = team?.projectId ?? null;
   const boardId = team?.boardId ?? null;
+  const groupId = team?.groupId ?? null;
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- adres, başlıklar gelince bir kez kurulur
-    setHref(teamId && fileId && projectId ? teamCreateReturnHref(teamId, { projectId, fileId, boardId }) : null);
-  }, [teamId, fileId, projectId, boardId]);
+    setHref(teamId && fileId && projectId ? teamCreateReturnHref(teamId, { projectId, fileId, boardId, groupId }) : null);
+  }, [teamId, fileId, projectId, boardId, groupId]);
   return href;
 }
 

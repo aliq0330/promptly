@@ -302,9 +302,13 @@ export function Modal({
   // `--sheet-max-h`: klavye açıkken kartın en çok yüksekliği görünür alanı (klavyenin üstünü) aşmaz; kapalıyken %75 sınırı geçerlidir.
   const overlayStyle =
     keyboard && variant !== "side"
-      ? ({ top: keyboard.top, height: keyboard.height, bottom: "auto", "--sheet-max-h": `${Math.max(240, keyboard.height - 12)}px` } as React.CSSProperties)
+      ? ({ top: keyboard.top, height: keyboard.height, bottom: "auto", "--sheet-max-h": `${keyboard.height}px`, "--sheet-snap": `${keyboard.height}px` } as React.CSSProperties)
       : undefined;
   // Klavye açılınca odaktaki yazma alanı kartın kaydırılan gövdesinde görünür kalır (klavye alanı örtmesin).
+  // Yazarken arka yer görünmesin (docs/history/378-*, mockup K4): telefonda klavye açıkken pencere görünür alanın TAMAMINI kaplar (opak zemin, kartın
+  // yüksekliği/köşesi/kenarlığı kalkar); başlık üstte, düğmeler klavyenin hemen üstünde, gövde kayar.
+  const cover = keyboard && variant !== "side" ? "max-sm:h-full max-sm:*:!h-full max-sm:*:!max-w-none max-sm:*:!rounded-none max-sm:*:!border-0 max-sm:*:!shadow-none" : "";
+  const coverOverlay = keyboard && variant !== "side" ? "max-sm:!bg-surface " : "";
   const keyboardHeight = keyboard?.height ?? 0;
   useEffect(() => {
     if (!keyboardHeight) return;
@@ -347,6 +351,7 @@ export function Modal({
           ref={overlayRef}
           className={
             "fixed inset-0 flex animate-fade-in bg-[rgb(10_8_20/0.45)] " +
+            coverOverlay +
             (keyboard ? "" : "backdrop-blur-[2px] ") +
             (overLayers ? "z-[70] " : "z-50 ") +
             (isSide ? "justify-end" : "flex-col justify-end")
@@ -359,7 +364,7 @@ export function Modal({
         >
           <div
             ref={sheetRef}
-            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up *:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))]"}
+            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up *:!max-h-[min(var(--sheet-snap,75dvh),var(--sheet-max-h,100dvh))] " + cover}
             onClick={(event) => event.stopPropagation()}
           >
             {!isSide && <SheetGrabber always />}
@@ -375,14 +380,14 @@ export function Modal({
       <Portal>
         <div
           ref={overlayRef}
-          className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] p-4 animate-fade-in " + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-[70]" : "z-50")}
+          className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] p-4 animate-fade-in " + coverOverlay + (keyboard ? "max-sm:!p-0 " : "") + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-[70]" : "z-50")}
           style={overlayStyle}
           role="dialog"
           aria-modal="true"
           aria-labelledby={labelledBy}
           onClick={onClose}
         >
-          <div ref={sheetRef} className="relative my-auto flex w-full justify-center animate-pop-in *:shadow-pop" onClick={(event) => event.stopPropagation()}>
+          <div ref={sheetRef} className={"relative my-auto flex w-full justify-center animate-pop-in *:shadow-pop " + (keyboard ? "max-sm:my-0 max-sm:h-full " : "") + cover} onClick={(event) => event.stopPropagation()}>
             {children}
           </div>
         </div>
@@ -394,7 +399,7 @@ export function Modal({
     <Portal>
       <div
         ref={overlayRef}
-        className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] animate-fade-in sm:p-4 " + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-[70]" : "z-50")}
+        className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] animate-fade-in sm:p-4 " + coverOverlay + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-[70]" : "z-50")}
         style={overlayStyle}
         role="dialog"
         aria-modal="true"
@@ -404,7 +409,7 @@ export function Modal({
         <div
           ref={sheetRef}
           className={
-            "relative mt-auto flex w-full justify-center animate-sheet-up sm:mb-auto sm:animate-pop-in " +
+            "relative mt-auto flex w-full justify-center animate-sheet-up sm:mb-auto sm:animate-pop-in " + cover + " " +
             "*:shadow-pop max-sm:*:max-w-none max-sm:*:rounded-b-none max-sm:*:border-x-0 max-sm:*:border-b-0 " +
             // Alttan açılan kart en çok ekranın %75'i: üstteki çeyrek hep görünür (docs/history/242-*). Başlık/düğme satırı sabit, ortası kayar:
             // kartın kendisi `flex flex-col` + kaydırılan gövde (`SheetFrame`) olmalı.

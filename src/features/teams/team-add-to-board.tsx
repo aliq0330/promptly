@@ -9,7 +9,6 @@ import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field"
 import { FormError, SubmitButton } from "@/features/spaces/space-forms";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { SpaceItem } from "@/lib/supabase/spaces";
 import { fetchPlacements, placeItems } from "@/lib/supabase/team-board";
 import { createBoard } from "@/lib/supabase/team-projects";
 import { cn } from "@/lib/utils";
@@ -31,14 +30,15 @@ export interface BoardChoice {
 }
 
 export function AddToBoardDialog({
-  item,
+  itemIds,
   projectId,
   fileId,
   boards,
   onClose,
   onDone,
 }: {
-  item: SpaceItem;
+  /** Yerleştirilecek öğelerin kimlikleri (docs/history/378-*: birden çok öğe toplu eklenir; yansıma kimliği de verilebilir, sunucu asıl öğeyi yerleştirir). */
+  itemIds: string[];
   projectId: string;
   /** Yeni pano bu dosyada açılır; yerleştirme yalnız bu dosyanın panolarına yapılır. */
   fileId: string;
@@ -56,17 +56,24 @@ export function AddToBoardDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canonicalId = item.fileItemId ?? item.id;
+  // Tek öğede zaten gösterildiği panolar işaretli ve seçilemez; toplu eklemede panonun hepsi seçilebilir (sunucu görünmeyeni/zaten olanı atlar ve sayar).
+  const idsKey = itemIds.join(",");
+  const single = itemIds.length === 1 ? itemIds[0] : null;
   useEffect(() => {
+    if (!single) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- toplu eklemede yerleşim okunmaz
+      setPlaced(new Set());
+      return;
+    }
     let alive = true;
-    fetchPlacements([canonicalId]).then(
-      (map) => alive && setPlaced(new Set(map.get(canonicalId) ?? [])),
+    fetchPlacements([single]).then(
+      (map) => alive && setPlaced(new Set(map.get(single) ?? [])),
       () => alive && setPlaced(new Set()),
     );
     return () => {
       alive = false;
     };
-  }, [canonicalId]);
+  }, [single, idsKey]);
 
   const toggle = (id: string) =>
     setSelected((current) => {
@@ -91,7 +98,7 @@ export function AddToBoardDialog({
       let done = 0;
       const boardIds: string[] = [];
       for (const board of targets) {
-        const result = await placeItems(board, [canonicalId]);
+        const result = await placeItems(board, itemIds);
         if (result.placed > 0) {
           done += result.placed;
           boardIds.push(board);

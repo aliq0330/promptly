@@ -37,3 +37,13 @@ test("teamItemHref: öğe çekmecesi", () => {
   assert.ok(href.includes("item=item-1") && href.includes(`file=${F}`));
   assert.ok(!teamItemHref(T, P, F, null).includes("item="));
 });
+
+test("teamGroup: klasörün (grup) içinden gelindiyse bağlam grubu taşır ve dönüş klasörü açar (docs/history/378-*)", () => {
+  const G = "55555555-5555-4555-8555-555555555555";
+  const href = teamCreateHref("prompt", { projectId: P, fileId: F, boardId: null, groupId: G });
+  assert.ok(href.includes(`teamGroup=${G}`));
+  assert.deepEqual(parseTeamCreateContext(href.split("?")[1]), { projectId: P, fileId: F, boardId: null, groupId: G });
+  assert.deepEqual(parseTeamCreateContext(`teamProject=${P}&teamFile=${F}&teamGroup=bozuk`), { projectId: P, fileId: F, boardId: null });
+  assert.ok(teamCreateReturnHref(T, { projectId: P, fileId: F, boardId: null, groupId: G }).includes(`group=${G}`));
+  assert.ok(!teamCreateReturnHref(T, { projectId: P, fileId: F, boardId: null }).includes("group="));
+});

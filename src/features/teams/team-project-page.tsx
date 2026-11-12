@@ -648,6 +648,7 @@ function FilePage({ ctx, detail, file, onChanged }: { ctx: TeamCtx; detail: Proj
             onNewBoard: () => setDialog("board"),
             onNewVariable: () => setDialog("variable"),
             content: { projectId: project.id, fileId: file.id },
+            placement: placementOf(detail, team.id, file.id),
           }}
         />
       ) : (
