@@ -96,9 +96,9 @@ await scenario("3. sayaç alınamazsa kartlar rozetsiz çizilir (hata kutusu yok
 
 await scenario("4. davet: sekmede sayaç; tek satırlık dikkat şeridi → 'Gör' Davetler bölümünü açar; Davetler'de şerit yok", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  assert.match(await tabEl(page, /Davet ve başvurular/).innerText(), /2/);
   const notice = page.getByTestId("home-invite-notice");
   await notice.waitFor();
+  assert.match(await tabEl(page, /Davet ve başvurular/).innerText(), /2/);
   assert.match(await notice.textContent(), /2 davetin var.*Anime Çizim/s);
   await notice.getByRole("link", { name: "Gör" }).click();
   await page.waitForURL(/tab=invites/);
