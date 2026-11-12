@@ -391,6 +391,30 @@ await scenario("7. Yorum paneli: Açık/Çözüldü, yanıtlar, yer simgesi tuva
   assert.deepEqual({ id: called(db, "pin_comment_set_resolved").at(-1)?.body.p_id, r: called(db, "pin_comment_set_resolved").at(-1)?.body.p_resolved }, { id: PIN(1), r: true });
 });
 
+await scenario("7b. Yorum panelinde 'Panodaki yorum yerlerini gizle': pinler tuvalden kalkar, yorumlar listede durur; kapatınca geri gelir; Yeni yorum işaretleri geri getirir (docs/history/375-*)", async ({ page }) => {
+  await page.goto(boardUrl());
+  await page.getByRole("button", { name: "Yorumlar" }).first().click();
+  const panel = page.getByTestId("board-comments-panel");
+  await panel.waitFor();
+  const pins = page.locator("[data-board-pins] [data-board-pin]");
+  await pins.first().waitFor();
+  const before = await pins.count();
+  assert.ok(before >= 1, "pin görünür");
+  const toggle = panel.locator("[data-comment-hide-pins]");
+  assert.equal(await toggle.getAttribute("aria-checked"), "false");
+  await toggle.click();
+  assert.equal(await toggle.getAttribute("aria-checked"), "true");
+  assert.equal(await pins.count(), 0, "pinler gizlendi");
+  assert.equal(await panel.locator("[data-comment-thread]").count(), 1, "yorum listesi etkilenmez");
+  await toggle.click();
+  assert.equal(await pins.count(), before, "pinler geri geldi");
+  await toggle.click();
+  assert.equal(await pins.count(), 0);
+  await panel.locator("[data-comment-new]").click();
+  await pins.first().waitFor();
+  assert.equal(await pins.count(), before, "Yeni yorum işaretleri geri getirir");
+});
+
 await scenario("8. Yorum yaz: Yorumlar → Yeni → tuvalde boş bir yere dokun → pin_comment_create(x,y); öğeye dokun → p_item", async ({ page, db }) => {
   await page.goto(boardUrl());
   await page.getByRole("button", { name: "Yorumlar" }).first().click();

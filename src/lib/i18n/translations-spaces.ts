@@ -325,6 +325,7 @@ export const spaceTranslations = {
   "spaces.groups.filter": { tr: "Gruba göre süz", en: "Filter by group" },
   "spaces.groups.all": { tr: "Tümü", en: "All" },
   "spaces.groups.none": { tr: "Grupsuz", en: "No group" },
+  "spaces.groups.newOption": { tr: "+ Yeni grup…", en: "+ New group…" },
   "spaces.groups.manage": { tr: "Grupları yönet", en: "Manage groups" },
   "spaces.groups.empty": { tr: "Henüz grup yok.", en: "No groups yet." },
   "spaces.groups.count": { tr: "{{count}} öğe", en: "{{count}} items" },

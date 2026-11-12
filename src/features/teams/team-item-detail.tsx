@@ -37,11 +37,12 @@ import { fetchProfilesByIds } from "@/lib/supabase/chat-groups";
 import { deleteSpacePalette, type SpaceItem, type SpacePalette } from "@/lib/supabase/spaces";
 import { decideReview, submitReview, withdrawReview, type ProjectVariable } from "@/lib/supabase/team-projects";
 import type { TeamActionError } from "@/lib/supabase/teams";
-import { canDeleteItem, canEditItemContent, canProposeChange, canSubmitItem, canWithdrawItem, effectiveVariables, fillProjectVariables, type ProjectRole } from "@/lib/team-projects";
+import { canAddToArea, canDeleteItem, canEditItemContent, canProposeChange, canSubmitItem, canWithdrawItem, effectiveVariables, fillProjectVariables, type ProjectRole } from "@/lib/team-projects";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { ProjectPathBar, type PathCrumb } from "./project-path-bar";
 import { ReviewChip } from "./project-ui";
 import { ProposeChangeDialog } from "./team-propose-dialog";
+import { AddToBoardDialog, type BoardChoice } from "./team-add-to-board";
 import { paletteItemId, splitPromptTokens } from "@/lib/team-item-kit";
 
 /**
@@ -67,6 +68,11 @@ export interface AreaItemContext {
   fileId: string | null;
   /** Çekmece (docs/history/366-*, mockup B4): liste yerinde kalır, öğe yandan (telefonda alttan) açılır; kapatmak `listHref`'e döner. */
   drawer?: boolean;
+  /**
+   * "Panoya ekle" (docs/history/376-*): öğenin aktarılabileceği proje panoları. Yalnız GERÇEK panoda olmayan öğede (`onBoard` false) kullanılır;
+   * `fileId` yeni panonun açılacağı dosyadır (`null` = eski proje geneli alan, "Pano ekle" sunulmaz). `boardHref` aktarılan öğeye odaklı pano adresidir.
+   */
+  placement?: { projectId: string; fileId: string | null; boards: BoardChoice[]; boardHref: (boardId: string, focusId: string | null) => string };
 }
 
 /** Çekmece içinde mi: sabit eylem çubuğu sayfanın alt menüsüne değil çekmecenin altına yapışır. */
@@ -164,9 +170,9 @@ function DrawerFrame({ ctx, title, header, children }: { ctx: AreaItemContext; t
 function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContext; role: ProjectRole | null; item: SpaceItem | null; palette: SpacePalette | null; onChanged: () => void }) {
   const { t, language } = useTranslation();
   const router = useRouter();
-  const { sources, readable, userId, caps, removeItems, setPalettes, setItems } = useSpaceContext();
+  const { sources, readable, userId, caps, removeItems, setPalettes, setItems, items, groups } = useSpaceContext();
   const itemTitle = useItemTitle();
-  const [menu, setMenu] = useState<null | "menu" | "delete" | "edit" | "propose">(null);
+  const [menu, setMenu] = useState<null | "menu" | "delete" | "edit" | "propose" | "board">(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creator, setCreator] = useState<string | null>(null);
@@ -216,8 +222,19 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
     }
   };
 
+  // Panoya ekle: öğe henüz bir panoda değilse (dosyanın görünmez kabında) projedeki bir panoya aktarılır. Paletin aktarılan satırı paletin öğe satırıdır.
+  const transferable = item ?? (palette ? (items.find((entry) => entry.kind === "palette" && entry.paletteId === palette.id) ?? null) : null);
+  const place = ctx.placement && !ctx.onBoard && transferable && canAddToArea(role) ? ctx.placement : null;
+  const itemGroupId = (item ?? transferable)?.groupId ?? null;
+  const groupLabel = itemGroupId ? (groups.find((group) => group.id === itemGroupId)?.name ?? null) : null;
+  const groupChip = groupLabel ? (
+    <span className="rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-secondary" data-item-group>
+      {groupLabel}
+    </span>
+  ) : null;
+
   const drawer = Boolean(ctx.drawer);
-  const hasMenu = mayDelete || mayEdit || mayPropose || onBoard;
+  const hasMenu = mayDelete || mayEdit || mayPropose || onBoard || Boolean(place);
   const drawerHeader = (
     <div className="flex items-start gap-1 pr-11">
       <div className="min-w-0 flex-1">
@@ -229,6 +246,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
         </h3>
         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-small text-text-secondary">
           {state !== "approved" && <ReviewChip state={state} />}
+          {groupChip}
           <span>{creator ? t("tp.item.addedBy", { name: creator, when }) : t("tp.item.added", { when })}</span>
         </div>
       </div>
@@ -254,6 +272,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             {t(KIND_LABEL[kind])}
           </span>
           {state !== "approved" && <ReviewChip state={state} />}
+          {groupChip}
           <span>{creator ? t("tp.item.addedBy", { name: creator, when }) : t("tp.item.added", { when })}</span>
         </div>
       </header>
@@ -286,6 +305,13 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
 
       {item && item.kind !== "prompt" && <ReviewBar item={item} role={role} onChanged={onChanged} />}
 
+      {place && (
+        <Button type="button" variant="outline" onClick={() => setMenu("board")} className="h-11 w-full gap-2 rounded-full" data-item-add-to-board-button>
+          <Presentation size={18} aria-hidden />
+          {t("tp.item.addToBoard")}
+        </Button>
+      )}
+
       {menu === "menu" && (
         <SpaceDialog title={title} onClose={() => setMenu(null)} formTestId="area-item-menu">
           <ul className="-mx-1 space-y-0.5">
@@ -295,6 +321,14 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
                   <Presentation size={20} aria-hidden />
                   {t("tp.item.showOnBoard")}
                 </Link>
+              </li>
+            )}
+            {place && (
+              <li>
+                <button type="button" onClick={() => setMenu("board")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-text hover:bg-surface-soft" data-item-add-to-board>
+                  <Presentation size={20} aria-hidden />
+                  {t("tp.item.addToBoard")}
+                </button>
               </li>
             )}
             {mayEdit && (
@@ -323,6 +357,20 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             )}
           </ul>
         </SpaceDialog>
+      )}
+      {menu === "board" && place && transferable && (
+        <AddToBoardDialog
+          item={transferable}
+          projectId={place.projectId}
+          fileId={place.fileId}
+          boards={place.boards}
+          onClose={() => setMenu(null)}
+          onDone={(boardId, newItemId) => {
+            setMenu(null);
+            onChanged();
+            router.push(place.boardHref(boardId, newItemId));
+          }}
+        />
       )}
       {menu === "edit" && item?.kind === "note" && <NoteEditorModal note={item} onClose={() => setMenu(null)} />}
       {menu === "edit" && item?.kind === "prompt" && item.isDraft && <DraftEditorModal draft={item} onClose={() => setMenu(null)} />}
