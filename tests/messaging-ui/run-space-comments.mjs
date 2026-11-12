@@ -237,7 +237,7 @@ await scenario("7. 'Yalnız üyeler': üye olmayan Etkinlik sekmesini görmez; Y
 
 await scenario("8. Ayar: sahibi 'Etkinlik geçmişini kim görsün?' seçer; kayıtla activity_visibility gider", async ({ page, db }) => {
   await page.goto(`${BASE}/spaces/local?id=${SID(2)}`);
-  await page.locator("[data-detail-band]").waitFor();
+  await page.locator("[data-hub-detail-band]").waitFor();
   await page.getByRole("button", { name: "Daha fazla işlem" }).click();
   await page.getByRole("menuitem", { name: /Ayarlar/ }).click();
   const fieldset = page.locator("[data-space-activity-visibility]");
@@ -250,7 +250,7 @@ await scenario("8. Ayar: sahibi 'Etkinlik geçmişini kim görsün?' seçer; kay
 
 await scenario("9. Telefon: alttan açılan 'Space ayarları' — başlık ve Vazgeç/Kaydet sabit, ortası kayar, yükseklik en çok %75", async ({ page }) => {
   await page.goto(`${BASE}/spaces/local?id=${SID(2)}`);
-  await page.locator("[data-detail-band]").waitFor();
+  await page.locator("[data-hub-detail-band]").waitFor();
   await page.getByRole("button", { name: "Daha fazla işlem" }).click();
   await page.getByRole("menuitem", { name: /Ayarlar/ }).click();
   const form = page.getByTestId("space-settings-form");
@@ -261,7 +261,7 @@ await scenario("9. Telefon: alttan açılan 'Space ayarları' — başlık ve Va
   const vh = page.viewportSize().height;
   const box = await panel.boundingBox();
   assert.ok(box.height <= vh * 0.75 + 2, `kart yüksekliği ≤ %75 (${Math.round(box.height)} / ${vh})`);
-  assert.ok(box.y >= vh * 0.25 - 2, "ekranın üst çeyreği boş kalır");
+  assert.ok(box.y >= vh * 0.2 - 4 && Math.abs(vh - (box.y + box.height) - vh * 0.05) <= 4, "üstte %20, altta %5 boşluk (docs/history/380-*)");
   const header = page.getByRole("heading", { name: "Space ayarları" });
   const save = form.getByRole("button", { name: "Kaydet" });
   const h0 = await header.boundingBox();

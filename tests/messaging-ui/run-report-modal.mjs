@@ -238,11 +238,12 @@ await scenario("9. Yorum şikâyeti: Yorum önizlemesi (yorum metni), 8 neden, p
   assert.equal(state.reports[0].p_target_id, db.comments[0].id);
 });
 
-await scenario("10. Telefon: pencere alttan açılan sayfa (tam genişlik, en çok %75 yükseklik), alt düğmeler sabit ve görünür, yatay taşma yok", async ({ page }) => {
+await scenario("10. Telefon: pencere alttan açılan, yerden kopuk sayfa (yanlardan 10 px içeride, en çok %75 yükseklik), alt düğmeler sabit ve görünür, yatay taşma yok", async ({ page }) => {
   await openPromptReport(page);
+  await page.waitForTimeout(500); // alttan kayma animasyonu bitsin
   const frame = await modal(page).boundingBox();
-  assert.ok(frame.width >= 388 && frame.x <= 1, `tam genişlik (${frame.width})`);
-  assert.ok(frame.y + frame.height >= 798, "ekranın altına yapışık");
+  assert.ok(frame.width >= 366 && frame.x >= 8 && frame.x <= 12, `neredeyse tam genişlik, yanlardan 10 px içeride (${frame.width})`);
+  assert.ok(Math.abs(800 - (frame.y + frame.height) - 40) <= 4, `alttan %5 yukarıda, yerden kopuk (${800 - (frame.y + frame.height)})`);
   assert.ok(frame.height <= 800 * 0.75 + 2, `yükseklik %75'i aşmaz (${frame.height})`);
   await modal(page).locator("[data-report-reason='spam']").click();
   const submit = await submitBtn(page).boundingBox();
