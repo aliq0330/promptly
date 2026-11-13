@@ -1372,7 +1372,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           type="button"
           onClick={handleBack}
           aria-label={t("messages.backToListAriaLabel")}
-          className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text", !teamChannel && !communityId && "md:hidden")}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text md:hidden"
         >
           <ArrowLeft size={20} />
         </button>

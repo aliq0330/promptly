@@ -119,5 +119,15 @@ export function setupRooms(db) {
     s.muted_at = body.p_muted ? db.stamp() : null;
     return ok();
   };
+  // Oda sabitleme (docs/history/381-*): kişisel sabit `community_room_state.pinned_at`'tedir; okuma yalnız çağıranın sabitleridir.
+  db.rpc.set_room_pinned = (body) => {
+    db.roomCalls.push({ fn: "pin", body });
+    let s = stateOf(body.p_room_id);
+    if (!s) { s = { user_id: ME, room_id: body.p_room_id, last_read_at: null, muted_at: null }; db.roomState.push(s); }
+    s.pinned_at = body.p_pinned ? db.stamp() : null;
+    return ok();
+  };
+  db.rpc.my_room_pins = (body) =>
+    ok(db.roomState.filter((s) => s.user_id === ME && s.pinned_at && db.rooms.some((r) => r.id === s.room_id && r.community_id === body.p_community_id)).map((s) => ({ room_id: s.room_id, pinned_at: s.pinned_at })));
   return db;
 }

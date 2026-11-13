@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { ArchiveRestore } from "@/components/icons/archive-restore";
 import { BellOff } from "@/components/icons/bell-off";
 import { Check } from "@/components/icons/check";
-import { ChevronDown } from "@/components/icons/chevron-down";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { Pin } from "@/components/icons/pin";
 import { GroupAvatar } from "@/features/groups/group-avatar";
@@ -13,11 +11,9 @@ import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { TeamMark } from "@/features/teams/team-ui";
 import { VisibilityLabel } from "@/features/communities/visibility-label";
 import { memberCountText } from "@/lib/group-labels";
-import { RoomTree } from "./rooms/room-tree";
 import { cn, formatRelativeTime, formatUnread, messageHref } from "@/lib/utils";
 import { communityHubHref, teamHubHref } from "@/lib/team-chat";
 import { roomSlug } from "@/lib/community-rooms";
-import { useMediaQuery } from "@/lib/use-media-query";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation } from "@/types";
 
@@ -31,7 +27,6 @@ export function ConversationRow({
   unarchiveBusy,
   selection,
   onOpen,
-  expandable = false,
   showKindTag = false,
 }: {
   conversation: Conversation;
@@ -47,7 +42,6 @@ export function ConversationRow({
   /** Mesajlar dock'u (docs/history/328-*): satır sayfaya götüren bir bağlantı değil, sohbeti panelde açan bir düğme olur. */
   onOpen?: (conversation: Conversation) => void;
   /** İki bölmeli masaüstü paneli (docs/history/352-*): topluluk satırının altında oda ağacı açılır; ok, oda listesi bağlantısı yerine ağacı açıp kapatır. */
-  expandable?: boolean;
   /** "Tümü" görünümünde ekip/topluluk satırının adının yanında EKİP / TOPLULUK etiketi (Yön A, docs/history/353-*). */
   showKindTag?: boolean;
 }) {
@@ -60,9 +54,6 @@ export function ConversationRow({
   const muted = Boolean(conversation.mutedAt);
   const selecting = selection !== undefined;
   const selected = selection?.selected === true;
-  const [treeOpen, setTreeOpen] = useState<boolean | null>(null);
-  // Sol panel telefonda gizlidir (`hidden md:flex`) ama bağlıdır: oda ağacı yalnız görünür olduğunda yüklenir/çizilir.
-  const paneVisible = useMediaQuery("(min-width: 768px)");
   const unread = conversation.unreadCount > 0;
   const pinned = Boolean(conversation.pinnedAt);
   const lastRoom = group ? conversation.lastRoom : null;
@@ -211,18 +202,6 @@ export function ConversationRow({
           {content}
         </Link>
       )}
-      {group && !team && expandable && !onOpen && !selecting && !onUnarchive && (
-        <button
-          type="button"
-          onClick={() => setTreeOpen(!(treeOpen ?? Boolean(isActive)))}
-          aria-expanded={treeOpen ?? Boolean(isActive)}
-          aria-label={(treeOpen ?? Boolean(isActive)) ? t("rooms.tree.collapse") : t("rooms.tree.expand")}
-          data-toggle-rooms
-          className="flex w-11 shrink-0 items-center justify-center text-text-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-        >
-          {(treeOpen ?? Boolean(isActive)) ? <ChevronDown size={22} aria-hidden /> : <ChevronRight size={22} aria-hidden />}
-        </button>
-      )}
       {onUnarchive && !selecting && (
         <button
           type="button"
@@ -236,7 +215,6 @@ export function ConversationRow({
         </button>
       )}
     </div>
-    {group && !team && expandable && paneVisible && !selecting && !onOpen && (treeOpen ?? Boolean(isActive)) && <RoomTree communityId={group.id} isActiveConversation={Boolean(isActive)} />}
     </div>
   );
 }

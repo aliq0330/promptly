@@ -362,13 +362,17 @@ await scenario("11e. 20 etkin oda sınırı: Oda ekle kapanır", async ({ page }
 }, { setup: (db) => { seed(db); for (let i = 0; i < 14; i += 1) db.addRoom(G, { name: `Oda ${i}` }); } });
 
 // 12
-await scenario("12. Masaüstü: sol panelde oda ağacı (açık topluluk), ağaçtan odaya geçiş, sağda 'Bu oda' paneli ve gizle/göster", async ({ page }) => {
+await scenario("12. Masaüstü: sol sütun topluluğun oda listesidir (sohbet listesinin yerinde, docs/history/381-*); satır odaya geçirir, açık oda vurgulu; sağda 'Bu oda' paneli ve gizle/göster", async ({ page }) => {
   await openChat(page, seedResult.prompt);
-  const tree = page.locator("[data-room-tree]");
-  await tree.waitFor();
-  assert.ok((await tree.locator("[data-room-row]").count()) >= 5, "oda ağacı");
-  await tree.locator("[data-room-row]").filter({ hasText: "Duyurular" }).click();
+  const aside = page.locator("aside");
+  await aside.locator('[data-hub="community"]').waitFor();
+  await aside.locator("[data-hub-row]").first().waitFor();
+  assert.ok((await aside.locator("[data-hub-row]").count()) >= 5, "oda listesi");
+  assert.equal(await aside.locator("[data-conversation-row]").count(), 0, "sohbet listesi sütunun yerinde değil");
+  await aside.locator('[data-hub-row="Prompt Paylaşımı"][aria-current="true"]').waitFor();
+  await aside.locator('[data-hub-row="Duyurular"]').click();
   await page.waitForFunction((id) => location.search.includes(`room=${id}`), seedResult.ann.id);
+  await aside.locator('[data-hub-row="Duyurular"][aria-current="true"]').waitFor();
   const panel = page.locator("[data-room-panel]");
   await panel.waitFor();
   await panel.getByRole("heading", { name: "Bu oda" }).waitFor();
@@ -379,14 +383,86 @@ await scenario("12. Masaüstü: sol panelde oda ağacı (açık topluluk), ağa�
   await panel.locator("[data-room-panel-settings]").waitFor();
 }, { viewport: DESKTOP, setup: (db) => { seedResult = seed(db); } });
 
-await scenario("12b. Masaüstü: ağaç oku topluluk satırının odalarını daraltır/açar", async ({ page }) => {
-  await openChat(page, seedResult.prompt);
-  await page.locator("[data-room-tree]").waitFor();
-  await page.locator("[data-toggle-rooms]").first().click();
-  await page.locator("[data-room-tree]").waitFor({ state: "detached" });
-  await page.locator("[data-toggle-rooms]").first().click();
-  await page.locator("[data-room-tree]").waitFor();
+await scenario("12b. Masaüstü: topluluk satırı sol sütunu oda listesine çevirir, sağda varsayılan oda açılır; satırda ağaç oku yok; geri sohbet listesine döner", async ({ page }) => {
+  await page.goto(`${BASE}/messages`);
+  const aside = page.locator("aside");
+  const row = aside.locator("[data-conversation-row]:visible", { hasText: "Tasarım Atölyesi" }).first();
+  await row.waitFor();
+  assert.equal(await page.locator("[data-toggle-rooms]").count(), 0, "satırda ağaç oku yok");
+  await row.click();
+  await aside.locator('[data-hub="community"]').waitFor();
+  await page.locator("[data-chat-scroll]").waitFor();
+  assert.equal(await page.locator("[data-room-tree]").count(), 0);
+  await aside.locator("[data-hub-back]").click();
+  await aside.locator("[data-conversation-row]").first().waitFor();
+  assert.equal(await aside.locator('[data-hub="community"]').count(), 0);
 }, { viewport: DESKTOP, setup: (db) => { seedResult = seed(db); } });
+
+const hubRoom = (page, name) => page.locator(`[data-hub-row="${name}"]`);
+const startRoomSelecting = async (page) => {
+  await page.locator("[data-conversations-more]").click();
+  await page.locator("[data-conversations-select]").click();
+  await page.locator("[data-selection-header]").waitFor();
+};
+
+await scenario("12c. Oda listesinde seçim modu (telefon): ⋮ → Oda seç; 'N oda seçildi'; Sabitle set_room_pinned yazar, oda başa çıkar ve raptiye alır; Sessize al set_room_muted; Okundu mark_room_read_up_to", async ({ page, db }) => {
+  await page.goto(`${BASE}/messages/local?hub=community&id=${G}`);
+  await hubRoom(page, "Yardım ve Sorular").waitFor();
+  await startRoomSelecting(page);
+  assert.match(await page.locator("[data-selection-header]").innerText(), /Oda seç/);
+  await hubRoom(page, "Yardım ve Sorular").click();
+  await hubRoom(page, "Görsel Çıktılar").click();
+  assert.match(await page.locator("[data-selection-header]").innerText(), /2 oda seçildi/);
+  await page.locator("[data-selection-pin]").click();
+  await page.waitForFunction(() => !document.querySelector("[data-selection-bar]"));
+  const pins = db.roomCalls.filter((c) => c.fn === "pin").map((c) => c.body);
+  assert.deepEqual(pins.map((c) => c.p_room_id).sort(), [seedResult.help.id, seedResult.image.id].sort());
+  assert.ok(pins.every((c) => c.p_pinned === true));
+  await page.locator('[data-hub-row="Yardım ve Sorular"] [data-hub-pinned]').waitFor();
+  const first = await page.locator('[data-testid="hub-rooms"] [data-hub-row]').first().getAttribute("data-hub-row");
+  assert.ok(["Yardım ve Sorular", "Görsel Çıktılar"].includes(first), "sabitlenenler listenin başında");
+  await startRoomSelecting(page);
+  await hubRoom(page, "Duyurular").click();
+  await page.locator("[data-selection-mute]").click();
+  await page.waitForFunction(() => !document.querySelector("[data-selection-bar]"));
+  assert.equal(db.roomCalls.find((c) => c.fn === "mute").body.p_room_id, seedResult.ann.id);
+  await page.locator('[data-hub-row="Duyurular"] [data-mute-chip="channel"]').waitFor();
+  await startRoomSelecting(page);
+  await hubRoom(page, "Prompt Paylaşımı").click();
+  await page.locator("[data-selection-read]").click();
+  await page.waitForFunction(() => !document.querySelector("[data-selection-bar]"));
+  assert.ok(db.roomCalls.some((c) => c.fn === "read" && c.body.p_room_id === seedResult.prompt.id), "oda okundu imleci yazıldı");
+  assert.equal(await page.locator('[data-hub-row="Prompt Paylaşımı"] [data-hub-unread]').count(), 0, "rozet kalktı");
+}, { setup: (db) => { seedResult = seed(db); } });
+
+await scenario("12d. Oda listesi: sahip Sil ile odayı siler (onaydan sonra delete_community_room); Genel silinemez (Sil soluk); yönetici (sahip değil) Sil görmez", async ({ page, db }) => {
+  await page.goto(`${BASE}/messages/local?hub=community&id=${G}`);
+  await hubRoom(page, "Yardım ve Sorular").waitFor();
+  await startRoomSelecting(page);
+  await hubRoom(page, "Genel").click();
+  assert.equal(await page.locator("[data-selection-delete]").isDisabled(), true, "Genel silinemez");
+  await hubRoom(page, "Genel").click();
+  await hubRoom(page, "Yardım ve Sorular").click();
+  assert.equal(await page.locator("[data-selection-delete]").isDisabled(), false);
+  await page.locator("[data-selection-delete]").click();
+  await page.locator("[data-hub-delete-confirm]").click();
+  await hubRoom(page, "Yardım ve Sorular").waitFor({ state: "detached" });
+  assert.equal(db.roomCalls.find((c) => c.fn === "delete").body.p_room_id, seedResult.help.id);
+}, { setup: (db) => { seedResult = seed(db); } });
+
+await scenario("12e. Yönetici (sahip değil): oda seçiminde Sil düğmesi çizilmez; arama odaları daraltır", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?hub=community&id=${G}`);
+  await hubRoom(page, "Yardım ve Sorular").waitFor();
+  await page.locator("[data-list-search]").click();
+  await page.locator("[data-hub-search]").fill("yardım");
+  await hubRoom(page, "Genel").waitFor({ state: "detached" });
+  await hubRoom(page, "Yardım ve Sorular").waitFor();
+  await page.locator("[data-list-search]").click();
+  await startRoomSelecting(page);
+  await hubRoom(page, "Yardım ve Sorular").click();
+  await page.locator("[data-selection-pin]").waitFor();
+  assert.equal(await page.locator("[data-selection-delete]").count(), 0);
+}, { setup: (db) => { seedResult = seed(db, { role: "admin" }); } });
 
 // 13
 await scenario("13. Sohbet sabitleme: seçim modu → Sabitle; satır başa çıkar, iğne görünür, sunucuya pinned_at yazılır; tekrar Sabitlemeyi kaldır", async ({ page, db }) => {

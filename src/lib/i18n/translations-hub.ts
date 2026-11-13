@@ -13,4 +13,5 @@ export const hubTranslations = {
   "hub.teams.attn": { tr: "Senden bekleyen {{count}} iş var", en: "{{count}} items are waiting for you" },
   "hub.back": { tr: "Geri", en: "Back" },
   "hub.about": { tr: "Hakkında", en: "About" },
+  "hub.backTo": { tr: "{{name}} listesine dön", en: "Back to {{name}}" },
 } as const;

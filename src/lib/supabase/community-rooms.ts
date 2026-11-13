@@ -106,3 +106,22 @@ export async function markRoomReadUpTo(roomId: string, upTo: string): Promise<bo
 export async function setRoomMuted(roomId: string, muted: boolean): Promise<void> {
   await callRpc<null>("set_room_muted", { p_room_id: roomId, p_muted: muted });
 }
+
+/** Odayı kendim için sabitle / sabitlemeyi kaldır (docs/history/381-*). */
+export async function setRoomPinned(roomId: string, pinned: boolean): Promise<void> {
+  await callRpc<null>("set_room_pinned", { p_room_id: roomId, p_pinned: pinned });
+}
+
+/**
+ * Bir topluluktaki sabitlediğim odalar (oda kimliği → sabitleme zamanı). Eski veritabanında fonksiyon yoksa (migration henüz uygulanmadıysa)
+ * sabit yokmuş gibi boş döner: liste sabitsiz çizilir, hiçbir şey kırılmaz.
+ */
+export async function fetchMyRoomPins(communityId: string): Promise<Map<string, string>> {
+  const { data, error } = await supabase.rpc("my_room_pins", { p_community_id: communityId });
+  if (error) {
+    console.error("fetchMyRoomPins", error);
+    return new Map();
+  }
+  const list = Array.isArray(data) ? (data as { room_id: string; pinned_at: string }[]) : [];
+  return new Map(list.map((row) => [row.room_id, row.pinned_at]));
+}
