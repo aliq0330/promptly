@@ -40,6 +40,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatUnread } from "@/lib/utils";
 import type { CommunityRoom, Conversation } from "@/types";
 import { RoomIconTile } from "@/features/messages/rooms/room-icon";
+import { CountBadge } from "@/components/ui/badge";
 
 /** Pencerenin hangi bölümü açık başlayacağı (bildirimden `?panel=` ile gelince). */
 export type GroupInfoFocus = "overview" | "members" | "settings";
@@ -176,10 +177,10 @@ export function GroupInfoModal({
       />
 
       <InfoTiles>
-        <InfoTile icon={<ArrowUpRight size={22} strokeWidth={1.75} />} label={t("groups.info.communityPageTile")} href={communityHref(group.id)} badge={pendingRequests} testId="community" attrs={{ "data-info-community-link": "" }} />
-        <InfoTile icon={<Search size={22} strokeWidth={1.75} />} label={t("messages.contact.search")} onClick={onSearch} testId="search" />
+        <InfoTile icon={<ArrowUpRight size={24} />} label={t("groups.info.communityPageTile")} href={communityHref(group.id)} badge={pendingRequests} testId="community" attrs={{ "data-info-community-link": "" }} />
+        <InfoTile icon={<Search size={24} />} label={t("messages.contact.search")} onClick={onSearch} testId="search" />
         <InfoTile
-          icon={mute.muted ? <Bell size={22} strokeWidth={1.75} /> : <BellOff size={22} strokeWidth={1.75} />}
+          icon={mute.muted ? <Bell size={24} /> : <BellOff size={24} />}
           label={mute.muted ? t("messages.contact.unmute") : t("messages.contact.mute")}
           onClick={() => void mute.toggle()}
           pressed={mute.muted}
@@ -197,7 +198,7 @@ export function GroupInfoModal({
         <Link
           href={communityHref(group.id, "members", "requests")}
           data-info-requests-link
-          className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-[22px] bg-primary-soft px-4 py-3 text-sm text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 text-small text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <UserCog size={18} className="shrink-0 text-primary" aria-hidden />
           <span className="min-w-0 flex-1">
@@ -248,8 +249,8 @@ export function GroupInfoModal({
                         <span className={cn("block truncate text-body", current || unread ? "font-bold text-text" : "font-semibold text-text")}>{room.name}</span>
                         {sub && <span className={cn("block truncate text-caption", current ? "font-semibold text-success" : "text-text-muted")}>{sub}</span>}
                       </span>
-                      {room.readPolicy === "staff" && <Lock size={15} className="shrink-0 text-text-muted" aria-hidden />}
-                      {unread && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(room.unreadCount)}</span>}
+                      {room.readPolicy === "staff" && <Lock size={16} className="shrink-0 text-text-muted" aria-hidden />}
+                      {unread && <CountBadge>{formatUnread(room.unreadCount)}</CountBadge>}
                     </button>
                     <button
                       type="button"
@@ -258,7 +259,7 @@ export function GroupInfoModal({
                       data-info-room-info={room.name}
                       className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
-                      <Info size={17} aria-hidden />
+                      <Info size={16} aria-hidden />
                     </button>
                   </div>
                 );
@@ -282,7 +283,7 @@ export function GroupInfoModal({
             ) : (
               stack.map((member) => (
                 <span key={member.userId} className="-ml-2 rounded-full ring-2 ring-surface">
-                  <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={36} />
+                  <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={40} />
                 </span>
               ))
             )}
@@ -293,7 +294,7 @@ export function GroupInfoModal({
           <span className="ml-auto flex items-center gap-1.5 text-body font-medium text-text">
             <span id="info-members-title">{t("groups.tab.members")}</span>
             <span className="text-small font-normal text-text-muted">{group.memberCount}</span>
-            <ChevronDown size={17} aria-hidden className={cn("text-text-muted transition-transform", membersOpen && "rotate-180")} />
+            <ChevronDown size={16} aria-hidden className={cn("text-text-muted transition-transform", membersOpen && "rotate-180")} />
           </span>
         </button>
         <Collapsible open={membersOpen} id="info-members-panel">
@@ -323,13 +324,13 @@ export function GroupInfoModal({
       <InfoSharedRows conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
 
       <InfoCard>
-        <InfoRow icon={<Pin size={18} strokeWidth={1.75} />} onClick={pinnedCount > 0 ? onShowPinned : undefined} value={pinnedCount > 0 ? pinnedCount : t("messages.contact.none")} testId="pinned">
+        <InfoRow icon={<Pin size={18} />} onClick={pinnedCount > 0 ? onShowPinned : undefined} value={pinnedCount > 0 ? pinnedCount : t("messages.contact.none")} testId="pinned">
           {t("messages.contact.pinned")}
         </InfoRow>
-        <InfoRow icon={<Star size={18} strokeWidth={1.75} />} href="/messages/starred" value={starredCount > 0 ? starredCount : t("messages.contact.none")} testId="starred">
+        <InfoRow icon={<Star size={18} />} href="/messages/starred" value={starredCount > 0 ? starredCount : t("messages.contact.none")} testId="starred">
           {t("messages.contact.starred")}
         </InfoRow>
-        <InfoRow icon={<Bell size={18} strokeWidth={1.75} />} href={communityHref(group.id, "about")} value={t("groups.info.communityNotifyValue")} testId="notify">
+        <InfoRow icon={<Bell size={18} />} href={communityHref(group.id, "about")} value={t("groups.info.communityNotifyValue")} testId="notify">
           {t("groups.about.notifications")}
         </InfoRow>
       </InfoCard>
@@ -352,12 +353,12 @@ export function GroupInfoModal({
               className="flex h-14 w-full items-center gap-3.5 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary" aria-hidden>
-                <Settings size={18} strokeWidth={1.75} />
+                <Settings size={18} />
               </span>
               <span id="info-settings-title" className="min-w-0 flex-1">
                 {t("groups.info.chatSettings")}
               </span>
-              <ChevronDown size={17} aria-hidden className={cn("shrink-0 text-text-muted transition-transform", settingsOpen && "rotate-180")} />
+              <ChevronDown size={16} aria-hidden className={cn("shrink-0 text-text-muted transition-transform", settingsOpen && "rotate-180")} />
             </button>
             <Collapsible open={settingsOpen} id="info-settings-panel">
               <div className="px-4 pb-4 pt-2">

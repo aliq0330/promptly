@@ -247,7 +247,7 @@ export function AddToSpaceModal({
             )}
             <label className="flex items-center gap-2 text-small text-text">
               <input type="checkbox" checked={includePrompt} onChange={(event) => setIncludePrompt(event.target.checked)} className="accent-primary" />
-              <SquareTerminal size={15} className="text-primary" aria-hidden />
+              <SquareTerminal size={16} className="text-primary" aria-hidden />
               {t("spaces.add.promptCard")}
             </label>
             <p className="text-caption text-text-muted">{t("spaces.add.referenceNote")}</p>
@@ -256,7 +256,7 @@ export function AddToSpaceModal({
 
         <div className="space-y-2">
           <div className="relative">
-            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("spaces.add.search")} aria-label={t("spaces.add.search")} className={cn(fieldInputClassName, "h-10 pl-9")} />
           </div>
           {spaces === null ? (
@@ -308,7 +308,7 @@ export function AddToSpaceModal({
           </form>
         ) : (
           <button type="button" onClick={() => setCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border py-2.5 text-small font-medium text-text hover:bg-surface-soft">
-            <Plus size={15} aria-hidden />
+            <Plus size={16} aria-hidden />
             {t("spaces.add.newSpace")}
           </button>
         )}

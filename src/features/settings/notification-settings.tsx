@@ -109,10 +109,10 @@ export function NotificationSettings() {
                   disabled={busyKey === key}
                   onClick={() => void toggle(key)}
                   data-pref={key}
-                  className="flex min-h-14 w-full items-center gap-3 rounded-lg border border-border-soft px-3 py-2.5 text-left transition-colors hover:border-border-strong hover:bg-surface-soft disabled:opacity-60"
+                  className="flex min-h-14 w-full items-center gap-3 rounded-lg border border-border-soft px-3 py-2.5 text-left transition-colors hover:border-border-strong hover:bg-surface-soft disabled:opacity-50"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium text-text">{t(`nc.pref.${key}.title` as const)}</span>
+                    <span className="block text-small font-medium text-text">{t(`nc.pref.${key}.title` as const)}</span>
                     <span className="block text-caption text-text-muted">{t(`nc.pref.${key}.hint` as const)}</span>
                   </span>
                   <span aria-hidden className={cn("relative h-6 w-11 shrink-0 rounded-full transition-colors", on ? "bg-primary" : "bg-border-strong")}>

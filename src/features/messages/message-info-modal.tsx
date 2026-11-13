@@ -11,6 +11,8 @@ import { formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { messagePreviewText } from "./message-preview";
 import type { Message, MessageReceipt } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /**
  * "Mesaj bilgisi" (docs/history/174-*): grup sohbetinde KENDİ mesajımı kimlerin okuduğunu ve okumadığını gösterir. Veri sunucu
@@ -43,10 +45,10 @@ export function MessageInfoModal({ message, onClose }: { message: Message; onClo
 
   return (
     <Modal onClose={onClose} labelledBy="message-info-title">
-      <div className="flex max-h-[85vh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-start justify-between gap-3 px-5 pb-2 pt-5">
           <div className="min-w-0">
-            <h2 id="message-info-title" className="text-base font-semibold text-text">
+            <h2 id="message-info-title" className="text-body font-semibold text-text">
               {t("chat.msgInfo.title")}
             </h2>
             <p className="mt-1 line-clamp-2 break-words text-small text-text-muted">{messagePreviewText(message, t)}</p>
@@ -61,13 +63,13 @@ export function MessageInfoModal({ message, onClose }: { message: Message; onClo
           </button>
         </div>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5 pt-2" data-message-info>
-          {state.status === "loading" && <p className="py-4 text-center text-sm text-text-muted">{t("common.loading")}</p>}
+          {state.status === "loading" && <p className="py-4 text-center text-small text-text-muted">{t("common.loading")}</p>}
           {state.status === "error" && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert>
               {state.message || t("chat.msgInfo.loadFailed")}
-            </p>
+            </InlineAlert>
           )}
-          {state.status === "ready" && state.receipts.length === 0 && <p className="py-4 text-center text-sm text-text-muted">{t("chat.msgInfo.empty")}</p>}
+          {state.status === "ready" && state.receipts.length === 0 && <p className="py-4 text-center text-small text-text-muted">{t("chat.msgInfo.empty")}</p>}
           {readers.length > 0 && (
             <section aria-labelledby="receipts-read">
               <h3 id="receipts-read" className="mb-1.5 flex items-center gap-1.5 text-label font-semibold text-text">
@@ -78,7 +80,7 @@ export function MessageInfoModal({ message, onClose }: { message: Message; onClo
                   <li key={r.userId} data-receipt-read className="flex items-center gap-3 rounded-md px-1 py-1.5">
                     <Avatar src={r.avatarUrl} alt={r.displayName} size={32} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-text">{r.displayName}</span>
+                      <span className="block truncate text-small font-medium text-text">{r.displayName}</span>
                       {r.readAt && <span className="block text-caption text-text-muted">{t("chat.msgInfo.readAt", { time: formatRelativeTime(r.readAt, language) })}</span>}
                     </span>
                   </li>
@@ -95,7 +97,7 @@ export function MessageInfoModal({ message, onClose }: { message: Message; onClo
                 {pending.map((r) => (
                   <li key={r.userId} data-receipt-unread className="flex items-center gap-3 rounded-md px-1 py-1.5">
                     <Avatar src={r.avatarUrl} alt={r.displayName} size={32} />
-                    <span className="min-w-0 flex-1 truncate text-sm text-text-secondary">{r.displayName}</span>
+                    <span className="min-w-0 flex-1 truncate text-small text-text-secondary">{r.displayName}</span>
                   </li>
                 ))}
               </ul>
@@ -103,7 +105,7 @@ export function MessageInfoModal({ message, onClose }: { message: Message; onClo
           )}
           {state.status === "ready" && state.receipts.length > 0 && <p className="text-caption text-text-muted">{t("chat.msgInfo.note")}</p>}
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

@@ -34,7 +34,7 @@ export function RelatedCards({ items }: { items: RelatedCardItem[] }) {
                 <StorageImage src={item.image.url} alt={item.image.alt} fill sizes="(min-width: 1024px) 140px, 45vw" className="object-cover" />
               ) : (
                 <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary">
-                  <item.icon size={18} strokeWidth={1.75} />
+                  <item.icon size={18} />
                 </span>
               )}
             </span>

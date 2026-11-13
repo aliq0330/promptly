@@ -25,7 +25,7 @@ export function RelationMapLink({ kind, id, size = 18 }: { kind: RelatableKind; 
       data-relation-map-link
       className={contentActionClassName(false)}
     >
-      <Network size={size} strokeWidth={1.75} />
+      <Network size={size} />
     </Link>
   );
 }
@@ -39,7 +39,7 @@ export function RelationMapRow({ kind, id }: { kind: RelatableKind; id: string }
       data-relation-map-link
       className="flex min-h-11 basis-full items-center gap-2.5 border-t border-border-soft pt-2 text-label font-semibold text-text transition-colors hover:text-primary"
     >
-      <Network size={18} strokeWidth={1.75} aria-hidden />
+      <Network size={18} aria-hidden />
       {t("relations.open")}
     </Link>
   );

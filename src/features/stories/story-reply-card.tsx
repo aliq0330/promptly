@@ -52,7 +52,7 @@ export function StoryReplyCard({ storyId, isMe }: { storyId: string | null; isMe
           <CircleSlash size={16} aria-hidden />
         </span>
       ) : (
-        <span className="h-[100px] w-14 shrink-0 animate-pulse rounded-md bg-surface-soft" />
+        <span className="h-[100px] w-14 shrink-0 skeleton-shimmer rounded-md" />
       )}
       <span className="text-caption text-text-muted">
         {label}

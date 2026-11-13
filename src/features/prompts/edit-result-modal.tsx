@@ -76,7 +76,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
-          <h2 id="edit-result-modal-title" className="text-base font-semibold text-text">
+          <h2 id="edit-result-modal-title" className="text-body font-semibold text-text">
             {t("result.modalEditTitle")}
           </h2>
           <button
@@ -92,7 +92,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
           {isTextLike ? (
             <div>
-              <label htmlFor="edit-result-text" className="mb-1.5 block text-sm font-medium text-text">
+              <label htmlFor="edit-result-text" className="mb-1.5 block text-small font-medium text-text">
                 {t("result.sharedText")}
               </label>
               <textarea
@@ -100,17 +100,17 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                 rows={4}
                 value={textContent}
                 onChange={(event) => setTextContent(event.target.value)}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
             </div>
           ) : (
-            <p className="rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-xs text-text-muted">
+            <p className="rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-caption text-text-muted">
               {t(RESULT_MEDIA_TYPE_LABELS[result.mediaType])} {t("result.mediaFileLocked")}
             </p>
           )}
 
           <div>
-            <label htmlFor="edit-result-tool" className="mb-1.5 block text-sm font-medium text-text">
+            <label htmlFor="edit-result-tool" className="mb-1.5 block text-small font-medium text-text">
               {t("result.toolFieldLabel")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <input
@@ -120,7 +120,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
               value={tool}
               onChange={(event) => setTool(event.target.value)}
               placeholder={t("result.toolFieldPlaceholder")}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             <datalist id="edit-result-tool-suggestions">
               {TOOL_SUGGESTIONS.map((suggestion) => (
@@ -132,14 +132,14 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
           {isPromptOrigin && (
             <>
               <div>
-                <p className="mb-1.5 text-sm font-medium text-text">{t("result.didYouModifyPrompt")}</p>
+                <p className="mb-1.5 text-small font-medium text-text">{t("result.didYouModifyPrompt")}</p>
                 <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
                   {([false, true] as const).map((value) => (
                     <button
                       key={String(value)}
                       type="button"
                       onClick={() => setHasModification(value)}
-                      className={`flex-1 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors ${
+                      className={`flex-1 rounded-sm px-2 py-1.5 text-small font-medium transition-colors ${
                         hasModification === value ? "bg-surface text-text shadow-card" : "text-text-muted hover:text-text"
                       }`}
                     >
@@ -152,7 +152,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
               {hasModification && (
                 <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3">
                   <div>
-                    <label htmlFor="edit-result-mod-summary" className="mb-1.5 block text-sm font-medium text-text">
+                    <label htmlFor="edit-result-mod-summary" className="mb-1.5 block text-small font-medium text-text">
                       {t("result.modificationSummaryLabel")} <span className="text-text-muted">({t("result.modificationSummaryShort")})</span>
                     </label>
                     <input
@@ -161,19 +161,19 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                       value={modificationSummary}
                       onChange={(event) => setModificationSummary(event.target.value)}
                       placeholder={t("result.modificationSummaryPlaceholder")}
-                      className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                   {result.originalPrompt && (
                     <div>
-                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("result.originalPromptText")}</p>
-                      <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-background px-3 py-2 font-mono text-xs text-text-muted">
+                      <p className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("result.originalPromptText")}</p>
+                      <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-background px-3 py-2 font-mono text-caption text-text-muted">
                         {result.originalPrompt.promptText}
                       </p>
                     </div>
                   )}
                   <div>
-                    <label htmlFor="edit-result-mod-text" className="mb-1.5 block text-sm font-medium text-text">
+                    <label htmlFor="edit-result-mod-text" className="mb-1.5 block text-small font-medium text-text">
                       {t("result.fullModifiedTextLabel")} <span className="text-text-muted">({t("common.optional")})</span>
                     </label>
                     <textarea
@@ -181,7 +181,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                       rows={4}
                       value={modifiedPromptText}
                       onChange={(event) => setModifiedPromptText(event.target.value)}
-                      className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                 </div>
@@ -189,7 +189,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
             </>
           )}
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="text-small text-danger">{error}</p>}
 
           </div>
 

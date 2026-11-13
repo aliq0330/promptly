@@ -170,18 +170,18 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   }
 
   if (authLoading || loadState === "loading") {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>;
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>;
   }
   if (!user) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("preset.loginRequiredBody")}</p>
+        <p className="mb-4 text-small text-text-muted">{t("preset.loginRequiredBody")}</p>
         <div className="flex justify-center gap-2">
-          <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
+          <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover">
             {t("header.login")}
           </Link>
-          <Link href="/signup" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface">
+          <Link href="/signup" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
             {t("auth.createAccount")}
           </Link>
         </div>
@@ -192,8 +192,8 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{loadState === "forbidden" ? t("preset.noEditPermissionTitle") : t("preset.notFoundTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{loadState === "forbidden" ? t("preset.noEditPermissionBody") : t("preset.notFoundBody")}</p>
-        <Link href="/presets" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface">
+        <p className="mb-4 text-small text-text-muted">{loadState === "forbidden" ? t("preset.noEditPermissionBody") : t("preset.notFoundBody")}</p>
+        <Link href="/presets" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
           {t("preset.backToPresets")}
         </Link>
       </div>
@@ -263,7 +263,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       onSaveDraft={communityId ? undefined : () => void save(true)}
       aside={
         <>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
+          <p className="mb-2 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <PresetCard preset={previewPreset} />
           </div>
@@ -376,7 +376,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
             }
           >
             {error && (
-              <p role="alert" className="text-sm text-danger">
+              <p role="alert" className="text-small text-danger">
                 {error}
               </p>
             )}

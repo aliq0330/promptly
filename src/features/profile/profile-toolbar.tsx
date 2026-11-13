@@ -63,9 +63,9 @@ export function ProfileFilterControl({
         data-profile-filter
         className={cn(CONTROL_ICON_BUTTON, "relative")}
       >
-        <Filter size={22} strokeWidth={1.75} aria-hidden />
+        <Filter size={24} aria-hidden />
         {activeCount > 0 && (
-          <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold tabular-nums text-primary-foreground">
+          <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold tabular-nums text-primary-foreground">
             {activeCount}
           </span>
         )}

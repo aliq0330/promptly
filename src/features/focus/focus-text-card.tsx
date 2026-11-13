@@ -59,7 +59,7 @@ export function FocusTextCard({ prompt }: { prompt: Prompt }) {
             </div>
           ) : prompt.contentType === "video" ? (
             <div aria-hidden className="mb-2 flex h-10 items-center gap-2 text-primary/70">
-              <Video size={18} strokeWidth={1.75} />
+              <Video size={18} />
               <span className="h-px flex-1 bg-primary/25" />
               <span className="h-2.5 w-2.5 rounded-xs bg-primary/25" />
               <span className="h-2.5 w-2.5 rounded-xs bg-primary/25" />

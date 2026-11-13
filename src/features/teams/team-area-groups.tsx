@@ -101,7 +101,7 @@ export function FolderGrid({
         type="button"
         onClick={() => onOpen(key)}
         data-area-folder={key}
-        className={cn("flex h-full min-h-[9.5rem] w-full flex-col gap-3 rounded-[20px] border border-border-soft p-3 text-left transition-colors hover:bg-surface-soft", muted ? "bg-background" : "bg-surface")}
+        className={cn("flex h-full min-h-[9.5rem] w-full flex-col gap-3 rounded-xl border border-border-soft p-3 text-left transition-colors hover:bg-surface-soft", muted ? "bg-background" : "bg-surface")}
       >
         <span aria-hidden className="relative block h-[4.5rem] w-full">
           {stack.slice(0, 3).map((preview, index) => (
@@ -130,7 +130,7 @@ export function FolderGrid({
       {(counts.get(NO_GROUP) ?? 0) > 0 && card(NO_GROUP, t("spaces.groups.none"), "bg-border-strong", counts.get(NO_GROUP) ?? 0, previews.get(NO_GROUP) ?? [], true)}
       {canAdd && (
         <li>
-          <button type="button" onClick={onNew} data-area-folder-new="" className="flex h-full min-h-[9.5rem] w-full flex-col items-center justify-center gap-2 rounded-[20px] border border-dashed border-border bg-surface-soft/50 text-small font-bold text-primary transition-colors hover:bg-surface-soft">
+          <button type="button" onClick={onNew} data-area-folder-new="" className="flex h-full min-h-[9.5rem] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface-soft/50 text-small font-bold text-primary transition-colors hover:bg-surface-soft">
             <FolderPlus size={24} aria-hidden />
             {t("tf.group.newTile")}
           </button>
@@ -146,7 +146,7 @@ export function FolderHeader({ title, dot, onBack, onMenu }: { title: string; do
   return (
     <div className="flex items-center gap-1" data-testid="area-folder-header">
       <button type="button" onClick={onBack} aria-label={t("tf.folder.back")} data-area-folder-back="" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text hover:bg-surface-soft">
-        <ChevronLeft size={22} aria-hidden />
+        <ChevronLeft size={24} aria-hidden />
       </button>
       <h3 className="flex min-w-0 flex-1 items-center gap-2 font-display text-h3 font-bold text-text">
         <span aria-hidden className={cn("h-3 w-3 shrink-0 rounded-full", dot)} />
@@ -168,7 +168,7 @@ export function EmptyFolder({ name, canAdd, onAdd, onPick }: { name: string; can
   const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-sm space-y-4 px-2 py-10 text-center" data-testid="area-folder-empty">
-      <span aria-hidden className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-primary-soft text-primary">
+      <span aria-hidden className="mx-auto grid h-20 w-20 place-items-center rounded-xl bg-primary-soft text-primary">
         <FolderPlus size={38} />
       </span>
       <div className="space-y-1.5">
@@ -236,7 +236,7 @@ export function NewGroupDialog({ onClose, onCreated }: { onClose: () => void; on
   };
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy="new-group-title" overLayers centered>
-      <form onSubmit={(event) => void submit(event)} className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-surface p-5" data-testid="new-group-form">
+      <form onSubmit={(event) => void submit(event)} className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5" data-testid="new-group-form">
         <div className="space-y-1">
           <h2 id="new-group-title" className="font-display text-h3 font-bold text-text">
             {t("tf.new.title")}
@@ -327,7 +327,7 @@ export function GroupMenuDialog({
 
   const row = (key: string, icon: ReactNode, label: string, hint: string | null, onClick: () => void, danger = false) => (
     <li key={key}>
-      <button type="button" onClick={onClick} disabled={busy} data-group-menu-item={key} className={cn("flex min-h-14 w-full items-center gap-3.5 rounded-xl px-2 text-left text-body font-semibold hover:bg-surface-soft disabled:opacity-60", danger ? "text-danger hover:bg-danger/10" : "text-text")}>
+      <button type="button" onClick={onClick} disabled={busy} data-group-menu-item={key} className={cn("flex min-h-14 w-full items-center gap-3.5 rounded-xl px-2 text-left text-body font-semibold hover:bg-surface-soft disabled:opacity-50", danger ? "text-danger hover:bg-danger/10" : "text-text")}>
         <span aria-hidden className="shrink-0">
           {icon}
         </span>
@@ -368,20 +368,20 @@ export function GroupMenuDialog({
           </form>
         ) : (
           <ul className="-mx-1">
-            {caps.edit && row("rename", <Pencil size={22} />, t("tf.folder.rename"), null, () => setRenaming(true))}
+            {caps.edit && row("rename", <Pencil size={24} />, t("tf.folder.rename"), null, () => setRenaming(true))}
             {caps.edit && (
               <li className="flex items-start gap-3.5 px-2 py-3" data-group-menu-item="color">
-                <Palette size={22} aria-hidden className="mt-0.5 shrink-0 text-text" />
+                <Palette size={24} aria-hidden className="mt-0.5 shrink-0 text-text" />
                 <div className="min-w-0 space-y-2.5">
                   <span className="block text-body font-semibold text-text">{t("spaces.notes.color")}</span>
                   <ColorPicker value={group.color} onChange={recolor} disabled={busy} />
                 </div>
               </li>
             )}
-            {row("select", <ListChecks size={22} />, t("tf.folder.select"), null, onSelect)}
-            {onToBoard && count > 0 && row("board", <Presentation size={22} />, t("tf.folder.toBoard"), t("tf.folder.toBoardHint", { count }), onToBoard)}
+            {row("select", <ListChecks size={24} />, t("tf.folder.select"), null, onSelect)}
+            {onToBoard && count > 0 && row("board", <Presentation size={24} />, t("tf.folder.toBoard"), t("tf.folder.toBoardHint", { count }), onToBoard)}
             {caps.edit && <li aria-hidden className="my-1 h-px bg-border-soft" />}
-            {caps.edit && row("delete", <Trash2 size={22} />, t("tf.folder.delete"), t("tf.folder.deleteHint"), () => setConfirmDelete(true), true)}
+            {caps.edit && row("delete", <Trash2 size={24} />, t("tf.folder.delete"), t("tf.folder.deleteHint"), () => setConfirmDelete(true), true)}
           </ul>
         )}
         <FormError message={error} />
@@ -404,7 +404,7 @@ export function SelectionBar({ count, allSelected, onAll, onClose, actions }: { 
   const { t } = useTranslation();
   return (
     <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 pt-2 md:bottom-4" data-testid="area-select-bar" data-keyboard-hide="">
-      <div className="mx-auto max-w-xl space-y-2 rounded-2xl border border-border-soft bg-surface p-2.5 shadow-pop">
+      <div className="mx-auto max-w-xl space-y-2 rounded-lg border border-border-soft bg-surface p-2.5 shadow-pop">
         <div className="flex items-center gap-1.5">
           <button type="button" onClick={onClose} aria-label={t("tf.select.close")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft" data-select-close="">
             <span aria-hidden className="text-h3 leading-none">
@@ -427,7 +427,7 @@ export function SelectionBar({ count, allSelected, onAll, onClose, actions }: { 
               disabled={action.disabled}
               data-select-action={action.key}
               className={cn(
-                "flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl border px-1 text-caption font-bold transition-colors disabled:opacity-45",
+                "flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg border px-1 text-caption font-bold transition-colors disabled:opacity-50",
                 action.tone === "primary" ? "border-primary bg-primary text-primary-foreground" : action.tone === "danger" ? "border-border-soft bg-surface text-danger hover:bg-danger/10" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
               )}
             >

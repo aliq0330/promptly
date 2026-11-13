@@ -57,21 +57,21 @@ export function ListControlRow<K extends string>({
       <span className="flex-1" />
       {search && (
         <button type="button" onClick={search.onToggle} aria-label={search.label} title={search.label} aria-pressed={search.open} data-list-search className={cn(CONTROL_ICON_BUTTON, search.open && "bg-surface-soft")}>
-          {search.open ? <X size={22} strokeWidth={1.75} aria-hidden /> : <Search size={22} strokeWidth={1.75} aria-hidden />}
+          {search.open ? <X size={24} aria-hidden /> : <Search size={24} aria-hidden />}
         </button>
       )}
       {filter && (
         <button type="button" onClick={() => setSheetOpen(true)} aria-haspopup="dialog" aria-label={filterLabel} title={t("toolbar.filter")} data-list-filter className={cn(CONTROL_ICON_BUTTON, "relative")}>
-          <Filter size={22} strokeWidth={1.75} aria-hidden />
+          <Filter size={24} aria-hidden />
           {active > 0 && (
-            <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold tabular-nums text-primary-foreground">{active}</span>
+            <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold tabular-nums text-primary-foreground">{active}</span>
           )}
         </button>
       )}
       {trailing}
       {create && (
         <Link href={create.href} aria-label={create.label} title={create.label} data-list-create className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft")}>
-          <Plus size={22} strokeWidth={1.75} aria-hidden />
+          <Plus size={24} aria-hidden />
         </Link>
       )}
       {filter && sheetOpen && (

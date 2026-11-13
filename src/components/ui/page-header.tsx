@@ -28,7 +28,7 @@ export function PageHeader({
       <div className="min-w-0 space-y-1.5">
         {eyebrow && (
           <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
-            {Icon && <Icon size={13} strokeWidth={2.25} />}
+            {Icon && <Icon size={12} />}
             {eyebrow}
           </p>
         )}
@@ -75,6 +75,14 @@ export function SectionHeader({
   );
 }
 
+/**
+ * The one page gutter (12 / 24 / 32 px) and vertical rhythm. Every page shell — `PageContainer`, the Hub pages, settings, the
+ * compose form — uses these, so a tablet is 24 px everywhere (audit G12). Pages outside `PageContainer` import the class names.
+ */
+export const PAGE_GUTTER_CLASS = "px-3 sm:px-6 lg:px-8";
+export const PAGE_PADDING_Y_CLASS = "py-5 sm:py-6 lg:py-8";
+export const PAGE_WIDTH_CLASS = { wide: "max-w-[1400px]", hub: "max-w-6xl", reading: "max-w-3xl", narrow: "max-w-xl" } as const;
+
 /** Standard page gutter. Tight on mobile so cards use the screen width. */
 export function PageContainer({
   className,
@@ -83,15 +91,15 @@ export function PageContainer({
 }: {
   className?: string;
   children: React.ReactNode;
-  width?: "wide" | "reading" | "narrow";
+  width?: "wide" | "hub" | "reading" | "narrow";
 }) {
   return (
     <div
       className={cn(
-        "mx-auto w-full px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8",
-        width === "wide" && "max-w-[1400px]",
-        width === "reading" && "max-w-3xl",
-        width === "narrow" && "max-w-xl",
+        "mx-auto w-full",
+        PAGE_GUTTER_CLASS,
+        PAGE_PADDING_Y_CLASS,
+        PAGE_WIDTH_CLASS[width],
         className,
       )}
     >

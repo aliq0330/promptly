@@ -83,7 +83,7 @@ export function DockListView({ kind, onExpand }: { kind: "list" | "requests"; on
             className="mx-3 mb-2 flex w-[calc(100%-1.5rem)] items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
-              <Inbox size={17} aria-hidden />
+              <Inbox size={16} aria-hidden />
             </span>
             <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("messages.requestsBanner", { count: buckets.requests.length })}</span>
             <span className="shrink-0 text-small font-semibold text-primary">{t("messages.requestsOpen")}</span>
@@ -100,7 +100,7 @@ export function DockListView({ kind, onExpand }: { kind: "list" | "requests"; on
             compact
           />
         ) : searching && shown.length === 0 ? (
-          <p className="py-10 text-center text-sm text-text-muted">{t("messages.noConversationMatches")}</p>
+          <p className="py-10 text-center text-small text-text-muted">{t("messages.noConversationMatches")}</p>
         ) : (
           <ConversationList
             conversations={shown}

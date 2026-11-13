@@ -29,6 +29,8 @@ import { Eyebrow } from "@/features/content/detail-parts";
 import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
 import { CONTROL_ICON_BUTTON, type SectionMenuItem } from "@/features/content/section-menu";
 import type { Conversation } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 type KindFilter = "all" | "personal" | "community" | "team";
 
@@ -270,7 +272,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                   aria-haspopup="dialog"
                   className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft")}
                 >
-                  <Plus size={22} strokeWidth={1.75} aria-hidden />
+                  <Plus size={24} aria-hidden />
                 </button>
               </>
             }
@@ -313,7 +315,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("messages.searchConversations")}
               autoFocus
-              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
         )}
@@ -325,24 +327,24 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             className="mb-3 flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
-              <Inbox size={17} aria-hidden />
+              <Inbox size={16} aria-hidden />
             </span>
             <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("messages.requestsBanner", { count: buckets.requests.length })}</span>
             <span className="shrink-0 text-small font-semibold text-primary">{t("messages.requestsOpen")}</span>
           </button>
         )}
         {bulkError && (
-          <p role="alert" className="mb-3 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+          <InlineAlert className="mb-3">
             {bulkError}
-          </p>
+          </InlineAlert>
         )}
         {actionError && (
-          <p role="alert" className="mb-3 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+          <InlineAlert className="mb-3">
             {t("messages.stateUpdateFailed")}
-          </p>
+          </InlineAlert>
         )}
         {isSharing && (
-          <p className="mb-3 rounded-lg border border-primary/20 bg-primary-soft/50 px-3 py-2 text-sm text-text">
+          <p className="mb-3 rounded-lg border border-primary/20 bg-primary-soft/50 px-3 py-2 text-small text-text">
             {t("messages.pickAConversationBody")}
           </p>
         )}
@@ -353,9 +355,9 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             <TeamChannelsInbox />
           </div>
         ) : noMatches ? (
-          <p className="py-10 text-center text-sm text-text-muted">{t("messages.noConversationMatches")}</p>
+          <p className="py-10 text-center text-small text-text-muted">{t("messages.noConversationMatches")}</p>
         ) : kindEmpty ? (
-          <p data-kind-empty className="py-10 text-center text-sm text-text-muted">{t("rooms.filter.empty")}</p>
+          <p data-kind-empty className="py-10 text-center text-small text-text-muted">{t("rooms.filter.empty")}</p>
         ) : inArchive ? (
           <ConversationList
             conversations={archived}
@@ -369,7 +371,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           />
         ) : inRequests ? (
           <>
-            <p className={cn("mb-2 text-xs text-text-muted", embedded ? "px-4" : "px-1")}>{t("messages.messageRequestsHint")}</p>
+            <p className={cn("mb-2 text-caption text-text-muted", embedded ? "px-4" : "px-1")}>{t("messages.messageRequestsHint")}</p>
             <ConversationList conversations={pending} shareQuery={shareQuery} activeId={activeId} flush={embedded} emptyLabel={t("messages.requestsEmpty")} />
           </>
         ) : nothingAtAll ? (
@@ -414,7 +416,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                   href={kindFilter === "team" ? "/teams" : "/communities/all"}
                   data-kind-cta={kindFilter}
                   className={cn(
-                    "mt-3 flex h-14 items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed text-small font-bold transition-colors",
+                    "mt-3 flex h-14 items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed text-small font-bold transition-colors",
                     embedded && "mx-4",
                     kindFilter === "team" ? "border-primary/30 text-primary hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success/10",
                   )}
@@ -456,8 +458,8 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
       )}
       {confirmDelete && selectedList.length > 0 && (
         <Modal onClose={bulkBusy ? () => undefined : () => setConfirmDelete(false)} labelledBy="bulk-delete-title">
-          <div className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
-            <h2 id="bulk-delete-title" className="text-base font-semibold text-text">
+          <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+            <h2 id="bulk-delete-title" className="text-body font-semibold text-text">
               {t("messages.bulkDeleteTitle", { count: selectedList.length })}
             </h2>
             {selectedList.some((c) => c.kind !== "group") && <p className="text-small text-text-secondary">{t("messages.deleteChatConfirm")}</p>}
@@ -470,7 +472,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                 {bulkBusy ? t("common.loading") : t("common.delete")}
               </Button>
             </div>
-          </div>
+          </DialogShell>
         </Modal>
       )}
       {toastNode}

@@ -34,3 +34,22 @@ export function Badge({ className, variant = "default", ...props }: BadgeProps) 
     />
   );
 }
+
+const COUNT_TONES = {
+  secondary: "bg-secondary text-secondary-foreground",
+  primary: "bg-primary text-primary-foreground",
+  danger: "bg-danger text-danger-foreground",
+} as const;
+
+/**
+ * The one count bubble (unread, pending, section totals): 20 px minimum, `micro` bold digits, text colour from the matching
+ * `*-foreground` token so it is readable in both modes (audit G1). Position / ring are passed in `className`.
+ */
+export function CountBadge({ tone = "secondary", className, ...props }: HTMLAttributes<HTMLSpanElement> & { tone?: keyof typeof COUNT_TONES }) {
+  return (
+    <span
+      className={cn("inline-grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-micro font-bold leading-none tabular-nums", COUNT_TONES[tone], className)}
+      {...props}
+    />
+  );
+}

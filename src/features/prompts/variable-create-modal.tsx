@@ -96,7 +96,7 @@ export function VariableCreateModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
-          <h2 id="variable-create-title" className="text-base font-semibold text-text">
+          <h2 id="variable-create-title" className="text-body font-semibold text-text">
             {selectedText ? t("variable.convertTitle") : t("variable.createTitle")}
           </h2>
           <button
@@ -110,14 +110,14 @@ export function VariableCreateModal({
         </div>
 
         {selectedText && (
-          <p className="mx-5 mt-3 rounded-md bg-surface-soft px-3 py-2 text-sm text-text-secondary">
+          <p className="mx-5 mt-3 rounded-md bg-surface-soft px-3 py-2 text-small text-text-secondary">
             {t("variable.selectedTextLabel")} <span className="font-medium text-text">“{selectedText}”</span>
           </p>
         )}
 
         <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
           <div>
-            <label htmlFor="variable-create-name" className="mb-1.5 block text-sm font-medium text-text">
+            <label htmlFor="variable-create-name" className="mb-1.5 block text-small font-medium text-text">
               {t("variable.nameLabel")}
             </label>
             <input
@@ -128,24 +128,24 @@ export function VariableCreateModal({
               onChange={(event) => setName(event.target.value)}
               placeholder={t("variable.createNamePlaceholder")}
               aria-invalid={Boolean(error)}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
-            {normalizedName && <p className="mt-1.5 font-mono text-xs text-primary">{`{${normalizedName}}`}</p>}
+            {normalizedName && <p className="mt-1.5 font-mono text-caption text-primary">{`{${normalizedName}}`}</p>}
             {error && (
-              <p role="alert" className="mt-1.5 text-xs text-danger">
+              <p role="alert" className="mt-1.5 text-caption text-danger">
                 {error}
               </p>
             )}
           </div>
 
           {existing ? (
-            <div className="space-y-1.5 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
+            <div className="space-y-1.5 rounded-md border border-primary/30 bg-primary/5 p-3 text-small">
               <p className="font-medium text-primary">{t("variable.alreadyExistsTitle")}</p>
-              <p className="text-xs text-text-muted">
+              <p className="text-caption text-text-muted">
                 {t("variable.willLinkPrefix")} <span className="font-mono">{`{${existing.name}}`}</span> {t("variable.willLinkSuffix")}
               </p>
               {existing.defaultValue && (
-                <p className="text-xs text-text-muted">
+                <p className="text-caption text-text-muted">
                   {t("variable.existingDefaultValue")} <span className="text-text">{existing.defaultValue}</span>
                 </p>
               )}
@@ -163,7 +163,7 @@ export function VariableCreateModal({
                 error={specError}
               />
               <div>
-                <label htmlFor="variable-create-description" className="mb-1.5 block text-sm font-medium text-text">
+                <label htmlFor="variable-create-description" className="mb-1.5 block text-small font-medium text-text">
                   {t("variable.descriptionLabel")} <span className="text-text-muted">({t("common.optional")})</span>
                 </label>
                 <textarea
@@ -172,7 +172,7 @@ export function VariableCreateModal({
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   placeholder={t("variable.descriptionPlaceholder")}
-                  className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                  className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                 />
               </div>
             </>
@@ -192,7 +192,7 @@ export function VariableCreateModal({
           )}
 
           {selectedText && occurrenceCount > 1 && (
-            <label className="flex cursor-pointer items-start gap-2 text-sm text-text">
+            <label className="flex cursor-pointer items-start gap-2 text-small text-text">
               <input type="checkbox" checked={replaceAll} onChange={(event) => setReplaceAll(event.target.checked)} className="mt-0.5" />
               <span>{t("variable.replaceAllOccurrences", { text: selectedText, count: occurrenceCount })}</span>
             </label>

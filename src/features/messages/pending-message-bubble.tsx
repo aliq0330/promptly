@@ -56,7 +56,7 @@ export function PendingMessageBubble({
         {displayBody && (
           <div
             className={cn(
-              "w-fit self-end rounded-[20px] rounded-br-md bg-primary px-3.5 py-2 text-[15px] leading-[1.4] text-primary-foreground",
+              "w-fit self-end rounded-xl rounded-br-md bg-primary px-3.5 py-2 text-[15px] leading-[1.4] text-primary-foreground",
               pending.status === "sending" && "opacity-70",
             )}
           >
@@ -64,7 +64,7 @@ export function PendingMessageBubble({
           </div>
         )}
       </div>
-      <div className="mt-1 flex flex-wrap items-center justify-end gap-2 px-1 text-[11px] text-text-muted">
+      <div className="mt-1 flex flex-wrap items-center justify-end gap-2 px-1 text-micro text-text-muted">
         {pending.status === "sending" ? (
           <span>{t("messages.sendingEllipsis")}</span>
         ) : (
@@ -78,7 +78,7 @@ export function PendingMessageBubble({
               onClick={() => onRetry(pending.id)}
               className="inline-flex items-center gap-1 font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
             >
-              <RefreshCw size={11} aria-hidden />
+              <RefreshCw size={12} aria-hidden />
               {t("common.retry")}
             </button>
             <button
@@ -87,7 +87,7 @@ export function PendingMessageBubble({
               aria-label={t("messages.discardUnsent")}
               className="inline-flex items-center gap-1 hover:text-text focus-visible:outline-2 focus-visible:outline-primary"
             >
-              <X size={11} aria-hidden />
+              <X size={12} aria-hidden />
               {t("common.delete")}
             </button>
           </>

@@ -261,7 +261,7 @@ export function SpacesHome() {
       ) : (
         <HubControlRow count={items ? t("hub.count.spaces", { count: `${shown?.length ?? items.length}${hasMore ? "+" : ""}` }) : undefined}>
           <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("spaces.home.searchOpen")} title={t("spaces.home.searchOpen")} className={iconButton}>
-            <Search size={22} strokeWidth={1.75} aria-hidden />
+            <Search size={24} aria-hidden />
           </button>
           {!showInvites && (
             <>
@@ -273,7 +273,7 @@ export function SpacesHome() {
                 data-filter-button
                 className={cn(iconButton, "relative", filtersActive && "bg-surface-soft")}
               >
-                <Filter size={22} strokeWidth={1.75} aria-hidden />
+                <Filter size={24} aria-hidden />
                 {filtersActive && <span aria-hidden className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />}
               </button>
               <button
@@ -283,7 +283,7 @@ export function SpacesHome() {
                 title={t(view === "grid" ? "spaces.home.viewList" : "spaces.home.viewGrid")}
                 className={iconButton}
               >
-                {view === "grid" ? <List size={22} strokeWidth={1.75} aria-hidden /> : <Grid2x2 size={22} strokeWidth={1.75} aria-hidden />}
+                {view === "grid" ? <List size={24} aria-hidden /> : <Grid2x2 size={24} aria-hidden />}
               </button>
             </>
           )}
@@ -347,7 +347,7 @@ export function SpacesHome() {
             <EmptyState icon={SpacesIcon} scene="offline" title={t("spaces.home.loadError")} action={{ label: t("common.retry"), onClick: () => setReloadKey((k) => k + 1) }} compact />
           ) : items === null ? (
             <ul className={view === "grid" ? HUB_GRID_CLASS : "space-y-2"}>
-              {Array.from({ length: 6 }, (_, index) => (view === "grid" ? <HubCardSkeleton key={index} /> : <li key={index} className="h-20 animate-pulse rounded-lg bg-surface-soft" />))}
+              {Array.from({ length: 6 }, (_, index) => (view === "grid" ? <HubCardSkeleton key={index} /> : <li key={index} className="h-20 skeleton-shimmer rounded-lg" />))}
             </ul>
           ) : isEmptyLibrary && user ? (
             <FirstSpaceEmpty onCreate={() => openCreate()} />
@@ -423,7 +423,7 @@ function InvitationList({ invites, onAnswered }: { invites: MySpaceInvitation[];
         {invites.map((invite) => (
           <li key={invite.id} className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary-soft/40 p-3 sm:flex-row sm:items-center">
             <div className="flex min-w-0 flex-1 items-center gap-3">
-              {invite.inviter && <Avatar src={invite.inviter.avatarUrl} alt="" size={36} />}
+              {invite.inviter && <Avatar src={invite.inviter.avatarUrl} alt="" size={40} />}
               <div className="min-w-0">
                 <p className="truncate text-small font-semibold text-text">{invite.spaceTitle}</p>
                 <p className="text-caption text-text-secondary">

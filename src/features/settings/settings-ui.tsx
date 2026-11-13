@@ -19,8 +19,8 @@ export function SettingsSubpage({ title, description, children }: { title: strin
   const { t } = useTranslation();
   usePageTitle(title);
   return (
-    <div className="mx-auto w-full max-w-2xl animate-rise-in space-y-6 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
-      <Link href="/settings" className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text" data-settings-back="">
+    <div className="mx-auto w-full max-w-2xl animate-rise-in space-y-6 px-3 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-10">
+      <Link href="/settings" className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text" data-settings-back="">
         <ArrowLeft size={14} />
         {t("settings.backToSettings")}
       </Link>
@@ -61,10 +61,10 @@ export function SettingsCard({
 }) {
   const Tag = as;
   return (
-    <Tag onSubmit={onSubmit} className="space-y-4 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
+    <Tag onSubmit={onSubmit} className="space-y-4 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5">
       <div className="space-y-1">
         <h3 className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">{title}</h3>
-        {hint && <p className="text-xs leading-relaxed text-text-muted">{hint}</p>}
+        {hint && <p className="text-caption leading-relaxed text-text-muted">{hint}</p>}
       </div>
       {children}
     </Tag>
@@ -76,12 +76,12 @@ export function SettingsLinkRow({ href, icon, title, hint }: { href: string; ico
   return (
     <Link
       href={href}
-      className="group flex items-center gap-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:px-5"
+      className="group flex items-center gap-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:px-5"
     >
       {icon}
       <span className="min-w-0 flex-1">
         <span className="block text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">{title}</span>
-        {hint && <span className="block text-xs text-text-muted">{hint}</span>}
+        {hint && <span className="block text-caption text-text-muted">{hint}</span>}
       </span>
       <ChevronRight size={16} className="shrink-0 text-text-muted transition-transform duration-200 ease-soft group-hover:translate-x-0.5" />
     </Link>

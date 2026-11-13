@@ -47,7 +47,7 @@ export function FocusTypeBadge({ icon: Icon, label, onImage = false, className }
         className,
       )}
     >
-      <Icon size={12} strokeWidth={2.25} aria-hidden className="shrink-0" />
+      <Icon size={12} aria-hidden className="shrink-0" />
       <span className="truncate">{label}</span>
     </span>
   );
@@ -105,7 +105,7 @@ export function FocusActions({ item }: { item: PostFeedItem }) {
             title={t("request.replies")}
             aria-label={`${t("request.replies")} (${formatCount(item.data.responseCount)})`}
           >
-            <Reply size={16} strokeWidth={1.75} />
+            <Reply size={16} />
             <span aria-hidden>{formatCount(item.data.responseCount)}</span>
           </Link>
         </>

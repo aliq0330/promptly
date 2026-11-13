@@ -26,6 +26,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 const ignoreCount = () => undefined;
 
@@ -96,7 +97,7 @@ export function HomeInvitesTab({
             }}
             placeholder={t("groups.page.linkPlaceholder")}
             aria-invalid={linkError}
-            className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted hover:border-border-strong focus:border-primary/60"
+            className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted hover:border-border-strong focus:border-primary/60"
           />
           <Button type="submit" size="sm" variant="outline" disabled={!linkInput.trim()}>
             {t("groups.page.openLink")}
@@ -145,7 +146,7 @@ function IncomingRequestsView({ managed }: { managed: CommunitySummary[] }) {
         <li key={community.id} className="flex items-center gap-3 px-4 py-3">
           <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={40} />
           <span className="min-w-0 flex-1 leading-tight">
-            <span className="block truncate text-sm font-semibold text-text">{community.name}</span>
+            <span className="block truncate text-small font-semibold text-text">{community.name}</span>
             <span className="block text-caption text-text-muted">
               {t("communities.card.pendingRequests", { count: community.pendingRequestCount })} · {memberCountText(t, community.memberCount)}
             </span>
@@ -245,17 +246,17 @@ export function InvitesView({
   return (
     <div className="space-y-3">
       {action.error && !rulesFor && (
-        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert>
           {action.error}
-        </p>
+        </InlineAlert>
       )}
       <ul className="space-y-3">
         {current.invitations.map((invitation) => (
-          <li key={invitation.id} className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card">
+          <li key={invitation.id} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card">
             <div className="flex items-start gap-3">
               <GroupAvatar name={invitation.group?.name ?? ""} avatarUrl={invitation.group?.avatarUrl ?? null} size={48} badge />
               <div className="min-w-0 flex-1 space-y-0.5">
-                <h3 className="break-words text-sm font-semibold text-text">{invitation.group?.name}</h3>
+                <h3 className="break-words text-small font-semibold text-text">{invitation.group?.name}</h3>
                 {invitation.group?.description && <p className="line-clamp-2 break-words text-small text-text-secondary">{invitation.group.description}</p>}
                 <p className="flex flex-wrap items-center gap-1.5 text-caption text-text-muted">
                   {invitation.inviter && (
@@ -359,16 +360,16 @@ export function RequestsView({ userId, onCount, onToast }: { userId: string; onC
   return (
     <div className="space-y-3">
       {action.error && (
-        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert>
           {action.error}
-        </p>
+        </InlineAlert>
       )}
       <ul className="divide-y divide-border-soft rounded-xl border border-border-soft bg-surface">
         {current.requests.map((request) => (
           <li key={request.id} className="flex items-center gap-3 px-4 py-3">
             <GroupAvatar name={request.groupName} avatarUrl={request.groupAvatarUrl} size={40} />
             <span className="min-w-0 flex-1 leading-tight">
-              <span className="block truncate text-sm font-semibold text-text">{request.groupName}</span>
+              <span className="block truncate text-small font-semibold text-text">{request.groupName}</span>
               <span className="block text-caption text-text-muted">
                 {t("groups.invites.requestPending")} · {formatRelativeTime(request.createdAt, language)}
               </span>

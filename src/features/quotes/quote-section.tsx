@@ -24,6 +24,7 @@ import { quoteHref } from "@/lib/quotes";
 import { createQuote } from "@/lib/supabase/quotes";
 import type { CommunityPostType } from "@/lib/supabase/communities";
 import { cn } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 type FeedResult = { ok: true; quoteId: string } | { ok: false; message: string } | null;
 
@@ -184,8 +185,8 @@ export function QuoteSection({
               <QuoteIcon size={18} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-text">{t("quotes.section.title")}</span>
-              <span className={cn("block text-xs", blockedReason ? "text-warning" : "text-text-muted")}>{blockedReason ?? t("quotes.section.hint")}</span>
+              <span className="block text-small font-semibold text-text">{t("quotes.section.title")}</span>
+              <span className={cn("block text-caption", blockedReason ? "text-warning" : "text-text-muted")}>{blockedReason ?? t("quotes.section.hint")}</span>
             </span>
             {popup && !blockedReason && <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />}
           </button>
@@ -199,10 +200,10 @@ export function QuoteSection({
       )}
       {popup && open && !blockedReason && (
         <Modal onClose={busy ? () => undefined : () => setOpen(false)} labelledBy={titleId} overLayers>
-          <div data-quote-popup="" className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+          <DialogShell data-quote-popup="" className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
             <div className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-5">
               <div className="min-w-0">
-                <h2 id={titleId} className="text-base font-semibold text-text">
+                <h2 id={titleId} className="text-body font-semibold text-text">
                   {t("quotes.section.title")}
                 </h2>
                 {contextTitle && <p className="truncate text-small text-text-muted">{contextTitle}</p>}
@@ -218,7 +219,7 @@ export function QuoteSection({
             <div data-dialog-footer="" className="flex shrink-0 items-center justify-end gap-2 border-t border-border-soft px-5 py-3">
               {actions}
             </div>
-          </div>
+          </DialogShell>
         </Modal>
       )}
     </>

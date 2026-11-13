@@ -1222,7 +1222,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
 
   // Hata/boş ekranlardaki "Mesajlara dön": sayfada bağlantı, dock'ta paneli listeye döndüren düğme.
   const backToMessagesClass =
-    "inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong";
+    "inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
   const backToMessages = dock ? (
     <button type="button" onClick={dock.onBack} className={backToMessagesClass}>
       {t("messages.backToMessages")}
@@ -1237,12 +1237,12 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 text-text">{t("auth.loginRequiredTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">
+        <p className="mb-4 text-small text-text-muted">
           {t("messages.loginRequiredToViewBody")}
         </p>
         <Link
           href="/login"
-          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong"
+          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong"
         >
           {t("common.login")}
         </Link>
@@ -1252,7 +1252,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
 
   if (!checked) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>
+      <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>
     );
   }
 
@@ -1260,7 +1260,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 text-text">{t("messages.conversationNotFoundTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">
+        <p className="mb-4 text-small text-text-muted">
           {t("messages.conversationNotFoundBody")}
         </p>
         {backToMessages}
@@ -1271,7 +1271,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   if (removedFromList) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p role="status" className="mb-4 text-sm text-text-secondary">
+        <p role="status" className="mb-4 text-small text-text-secondary">
           {t("messages.deletedChatToast")}
         </p>
         {backToMessages}
@@ -1285,7 +1285,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         <h1 className="mb-2 text-h2 text-text">
           {leftGroup === "left" ? t("groups.chat.leftTitle") : leftGroup === "deleted" ? t("groups.chat.deletedTitle") : t("groups.chat.removedTitle")}
         </h1>
-        <p className="mb-4 text-sm text-text-muted">
+        <p className="mb-4 text-small text-text-muted">
           {leftGroup === "left" ? t("groups.chat.leftBody") : leftGroup === "deleted" ? t("groups.chat.deletedBody") : t("groups.chat.removedBody")}
         </p>
         {backToMessages}
@@ -1383,7 +1383,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             aria-label={teamChannel ? t("tm.chat.openInfoAria", { name: teamChannel.name }) : t("groups.chat.openInfoAria", { name: group.name })}
             data-room-header
             {...(teamChannel ? { "data-team-header": "" } : {})}
-            className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
+            className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
           >
             <span className="relative shrink-0">
               {teamChannel ? <TeamMark name={teamChannel.name} tone={teamChannel.tone} size={42} className="rounded-[14px]" /> : <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={42} badge />}
@@ -1391,7 +1391,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                 <span
                   data-community-link-badge
                   aria-label={t("groups.info.pendingRequests", { count: pendingRequestsForMe })}
-                  className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground ring-2 ring-background"
+                  className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold leading-none text-primary-foreground ring-2 ring-background"
                 >
                   {pendingRequestsForMe > 9 ? "9+" : pendingRequestsForMe}
                 </span>
@@ -1415,7 +1415,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                       </span>
                     </>
                   )}
-                  {(conversation.mutedAt || currentTeamChannel?.muteScope) && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
+                  {(conversation.mutedAt || currentTeamChannel?.muteScope) && <BellOff size={12} aria-label={t("groups.about.muteLabel")} />}
                 </span>
               ) : activeRoom ? (
                 <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
@@ -1423,14 +1423,14 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   <span aria-hidden>·</span>
                   {memberCountText(t, group.memberCount)}
                   {groupOnline ? <OnlineCountText count={groupOnline} className="before:mr-0.5 before:content-['·']" /> : null}
-                  {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
+                  {conversation.mutedAt && <BellOff size={12} aria-label={t("groups.about.muteLabel")} />}
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
-                  <UsersRound size={11} aria-hidden /> {memberCountText(t, group.memberCount)}
+                  <UsersRound size={12} aria-hidden /> {memberCountText(t, group.memberCount)}
                   {/* Çevrimiçi üye sayısı (docs/history/329-*): sunucuda, son görülme penceresinden toplu; yalnız üyeye. */}
                   {groupOnline ? <OnlineCountText count={groupOnline} className="before:mr-0.5 before:content-['·']" /> : null}
-                  {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
+                  {conversation.mutedAt && <BellOff size={12} aria-label={t("groups.about.muteLabel")} />}
                 </span>
               )}
             </span>
@@ -1442,7 +1442,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             aria-haspopup="dialog"
             aria-label={t("messages.contact.openAria", { name: participant.displayName })}
             data-contact-open
-            className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
+            className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
           >
             <PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={42} />
             <span className="min-w-0 leading-tight">
@@ -1496,7 +1496,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                     close();
                     openGroupInfo("overview");
                   }}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft"
                 >
                   <Info size={14} /> {teamChannel ? t("tm.info.title") : t("groups.chat.info")}
                 </button>
@@ -1509,7 +1509,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                       close();
                       setChannelInfoOpen(true);
                     }}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft"
                   >
                     <Hash size={14} /> {t("tm.info.channelInfo")}
                   </button>
@@ -1522,7 +1522,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                     close();
                     void toggleGroupMute();
                   }}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft disabled:opacity-50"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft disabled:opacity-50"
                 >
                   {conversation.mutedAt ? <Bell size={14} /> : <BellOff size={14} />}
                   {conversation.mutedAt ? t("groups.chat.unmute") : t("groups.chat.mute")}
@@ -1536,7 +1536,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                       close();
                       setRoomInfoId(activeRoom.id);
                     }}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft"
                   >
                     <Info size={14} /> {t("rooms.info.roomInfoMenu")}
                   </button>
@@ -1550,7 +1550,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                       close();
                       void toggleRoomMute();
                     }}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft"
                   >
                     {activeRoom.muted ? <Bell size={14} /> : <BellOff size={14} />}
                     {activeRoom.muted ? t("rooms.chat.unmute") : t("rooms.chat.mute")}
@@ -1578,7 +1578,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                     if (group && leaveOutcome(group.myRole, group.memberCount) === "must_transfer") openGroupInfo("overview");
                     else setLeaveOpen(true);
                   }}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-danger hover:bg-surface-soft"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-danger hover:bg-surface-soft"
                 >
                   <LogOut size={14} /> {t("groups.about.leave")}
                 </button>
@@ -1629,10 +1629,10 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       />
       {conversation.myStatus === "pending" && (
         <div className="flex items-center justify-between gap-3 border-b border-primary/15 bg-primary-soft/50 px-4 py-2.5 lg:px-6">
-          <p className="text-xs text-text">
+          <p className="text-caption text-text">
             {t("messages.pendingRequestNotice", { name: participant?.displayName ?? "" })}
           </p>
-          <div className="flex shrink-0 items-center gap-3 text-xs font-medium">
+          <div className="flex shrink-0 items-center gap-3 text-caption font-medium">
             <button type="button" onClick={handleAcceptRequest} className="text-primary hover:underline">
               {t("messages.acceptAction")}
             </button>
@@ -1674,12 +1674,12 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           />
         )}
         {messageHighlightNotFound && (
-          <p className="mx-auto w-fit max-w-full rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-center text-xs text-text-muted shadow-xs">
+          <p className="mx-auto w-fit max-w-full rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-center text-caption text-text-muted shadow-xs">
             {t("messages.messageNotViewable")}
           </p>
         )}
         {messages.length === 0 && visiblePending.length === 0 ? (
-          <p className="py-10 text-center text-sm text-text-muted">
+          <p className="py-10 text-center text-small text-text-muted">
             {t("messages.noMessagesYet")}
           </p>
         ) : (
@@ -1739,7 +1739,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             <button
               type="button"
               onClick={() => void returnToLatest()}
-              className="rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-xs font-medium text-primary shadow-xs transition-colors hover:border-border-strong"
+              className="rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-caption font-medium text-primary shadow-xs transition-colors hover:border-border-strong"
             >
               {t("chat.jump.latest")}
             </button>
@@ -1776,7 +1776,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         <Portal>
           <div
             role="status"
-            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-6"
+            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-(--z-popover) flex justify-center px-4 md:bottom-6"
           >
             <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">{toast}</div>
           </div>
@@ -1815,12 +1815,12 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         banners={
           <>
     {isGroup && !canPost && (
-      <div role="status" data-room-readonly-notice className="mb-2 rounded-lg bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
+      <div role="status" data-room-readonly-notice className="mb-2 rounded-lg bg-surface-soft px-3 py-1.5 text-caption text-text-muted">
         {activeRoom?.archivedAt ? t("rooms.chat.archivedNotice") : group?.closedAt ? t("rooms.chat.closedNotice") : activeRoom && !activeRoom.isDefault ? t("rooms.chat.readOnlyNotice") : t("groups.chat.adminsOnly")}
       </div>
     )}
     {blockState.isBlocked && (
-      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-danger/10 px-3 py-1.5 text-xs text-danger">
+      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-danger/10 px-3 py-1.5 text-caption text-danger">
         <span>{t("messages.youBlockedCantSend")}</span>
         <button type="button" onClick={() => blockState.toggle()} className="font-medium hover:underline">
           {t("profile.unblock")}
@@ -1836,7 +1836,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       />
     )}
     {pendingShare && (
-      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
+      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-caption text-text-muted">
         <span className="truncate">
           {t("messages.sharingPrefix")} {pendingShare.title} — {t("messages.sharingSuffix")}
         </span>

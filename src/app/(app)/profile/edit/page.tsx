@@ -115,7 +115,7 @@ export default function EditProfilePage() {
 
   if (authLoading || (user && ownProfileLoading)) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>
+      <div className="mx-auto max-w-xl px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>
     );
   }
 
@@ -123,10 +123,10 @@ export default function EditProfilePage() {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("profile.loginRequiredToEditBody")}</p>
+        <p className="mb-4 text-small text-text-muted">{t("profile.loginRequiredToEditBody")}</p>
         <Link
           href="/login"
-          className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
+          className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-dark"
         >
           {t("common.login")}
         </Link>
@@ -135,21 +135,21 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+    <div className="mx-auto max-w-xl px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
       <h1 className="mb-1 text-h1 font-semibold text-text">{t("profile.editProfileHeading")}</h1>
-      <p className="mb-6 text-sm text-text-muted">
+      <p className="mb-6 text-small text-text-muted">
         {t("profile.editProfileHint")}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex items-center gap-4">
-          <Avatar src={avatarUrl} alt={displayName || t("profile.you")} size={72} />
+          <Avatar src={avatarUrl} alt={displayName || t("profile.you")} size={80} />
           <div className="space-y-1.5">
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-transparent px-3 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
+                className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-transparent px-3 text-small font-medium text-text transition-colors hover:bg-accent-surface"
               >
                 <Camera size={14} />
                 {t("profile.changePhoto")}
@@ -161,7 +161,7 @@ export default function EditProfilePage() {
                     setAvatarUrl(null);
                     setAvatarFile(null);
                   }}
-                  className="flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-text-muted transition-colors hover:text-text"
+                  className="flex h-9 items-center gap-1.5 rounded-md px-2 text-small font-medium text-text-muted transition-colors hover:text-text"
                 >
                   <X size={14} />
                   {t("common.remove")}
@@ -175,12 +175,12 @@ export default function EditProfilePage() {
               onChange={handleAvatarChange}
               className="hidden"
             />
-            {avatarError && <p className="text-xs text-danger">{avatarError}</p>}
+            {avatarError && <p className="text-caption text-danger">{avatarError}</p>}
           </div>
         </div>
 
         <div>
-          <label htmlFor="edit-username" className="mb-1.5 block text-sm font-medium text-text">
+          <label htmlFor="edit-username" className="mb-1.5 block text-small font-medium text-text">
             {t("profile.usernameLabel")}
           </label>
           <input
@@ -188,9 +188,9 @@ export default function EditProfilePage() {
             type="text"
             value={`@${ownProfile?.username ?? ""}`}
             disabled
-            className="h-10 w-full rounded-md border border-border bg-accent-surface/40 px-3 text-sm text-text-muted"
+            className="h-10 w-full rounded-md border border-border bg-accent-surface/40 px-3 text-small text-text-muted"
           />
-          <p className="mt-1 text-xs text-text-muted">
+          <p className="mt-1 text-caption text-text-muted">
             <Link href="/settings" className="underline decoration-border-strong underline-offset-2 hover:text-text">
               {t("profile.usernameInSettings")}
             </Link>
@@ -198,7 +198,7 @@ export default function EditProfilePage() {
         </div>
 
         <div>
-          <label htmlFor="edit-display-name" className="mb-1.5 block text-sm font-medium text-text">
+          <label htmlFor="edit-display-name" className="mb-1.5 block text-small font-medium text-text">
             {t("profile.displayNameLabel")}
           </label>
           <input
@@ -209,17 +209,17 @@ export default function EditProfilePage() {
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
             className={cn(
-              "h-10 w-full rounded-md border bg-background px-3 text-sm text-text",
+              "h-10 w-full rounded-md border bg-background px-3 text-small text-text",
               nameError ? "border-danger" : "border-border",
             )}
           />
-          {nameError && <p className="mt-1 text-xs text-danger">{nameError}</p>}
+          {nameError && <p className="mt-1 text-caption text-danger">{nameError}</p>}
         </div>
 
         <div>
-          <label htmlFor="edit-bio" className="mb-1.5 flex items-center justify-between text-sm font-medium text-text">
+          <label htmlFor="edit-bio" className="mb-1.5 flex items-center justify-between text-small font-medium text-text">
             {t("profile.bioLabel")}
-            <span className="text-xs font-normal text-text-muted">
+            <span className="text-caption font-normal text-text-muted">
               {bio.length}/{BIO_MAX_LENGTH}
             </span>
           </label>
@@ -230,12 +230,12 @@ export default function EditProfilePage() {
             value={bio}
             onChange={(event) => setBio(event.target.value)}
             placeholder={t("profile.bioPlaceholder")}
-            className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
 
         <div>
-          <label htmlFor="edit-website" className="mb-1.5 block text-sm font-medium text-text">
+          <label htmlFor="edit-website" className="mb-1.5 block text-small font-medium text-text">
             {t("profile.websiteLabel")} <span className="text-text-muted">({t("common.optional")})</span>
           </label>
           <input
@@ -244,12 +244,12 @@ export default function EditProfilePage() {
             value={website}
             onChange={(event) => setWebsite(event.target.value)}
             placeholder={t("profile.websitePlaceholder")}
-            className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-text">{t("profile.creativeInterests")}</label>
+          <label className="mb-2 block text-small font-medium text-text">{t("profile.creativeInterests")}</label>
           <div className="flex flex-wrap gap-1.5">
             {INTEREST_OPTIONS.map((interest) => {
               const active = interests.includes(interest);
@@ -259,7 +259,7 @@ export default function EditProfilePage() {
                   type="button"
                   onClick={() => toggleInterest(interest)}
                   className={cn(
-                    "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                    "rounded-full border px-2.5 py-1 text-caption font-medium transition-colors",
                     active
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-surface text-text-muted hover:text-text",
@@ -272,7 +272,7 @@ export default function EditProfilePage() {
           </div>
         </div>
 
-        {saveError && <p className="text-sm text-danger">{saveError}</p>}
+        {saveError && <p className="text-small text-danger">{saveError}</p>}
 
         <div className="flex gap-2 pt-2">
           <Button type="submit" disabled={isSaving}>

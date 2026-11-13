@@ -306,7 +306,7 @@ export function VariableSpecEditor({
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChosen} />
           {partialVisual && <p className="text-caption text-text-muted">{t("variable.optionVisualPartialHint")}</p>}
           {uploadError && (
-            <p role="alert" className="text-xs text-danger">
+            <p role="alert" className="text-caption text-danger">
               {uploadError}
             </p>
           )}
@@ -401,7 +401,7 @@ export function VariableSpecEditor({
       )}
 
       {error && (
-        <p role="alert" className="text-xs text-danger">
+        <p role="alert" className="text-caption text-danger">
           {t(ERROR_KEYS[error])}
         </p>
       )}
@@ -457,7 +457,7 @@ function OptionMedia({
           aria-label={t("variable.optionColorAria", { n })}
           className="h-10 w-12 cursor-pointer rounded-md border border-border bg-background p-1"
         />
-        <span className="font-mono text-xs text-text-muted">{option.color}</span>
+        <span className="font-mono text-caption text-text-muted">{option.color}</span>
         <button type="button" onClick={onClear} className="text-label font-medium text-text-muted hover:text-danger hover:underline">
           {t("variable.optionRemoveColor")}
         </button>
@@ -470,7 +470,7 @@ function OptionMedia({
       <button type="button" onClick={onPickImage} disabled={busy} className={linkButton}>
         <ImagePlus size={14} /> {t("variable.optionAddImage")}
       </button>
-      <button type="button" onClick={() => onColor("#888888")} className={linkButton}>
+      <button type="button" onClick={() => onColor("#868899")} className={linkButton}>
         <Palette size={14} /> {t("variable.optionAddColor")}
       </button>
     </div>

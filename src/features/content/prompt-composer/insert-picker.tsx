@@ -94,7 +94,7 @@ export function InsertPicker({
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
       <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-3">
-        <h2 id="insert-picker-title" className="text-sm font-semibold text-text">
+        <h2 id="insert-picker-title" className="text-small font-semibold text-text">
           {title}
         </h2>
         {onClose && (
@@ -111,7 +111,7 @@ export function InsertPicker({
 
       <div className="px-4 pb-2">
         <div className="relative">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
           <input
             type="search"
             value={query}
@@ -129,7 +129,7 @@ export function InsertPicker({
                 onPick(visible[0]);
               }
             }}
-            className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
       </div>
@@ -159,7 +159,7 @@ export function InsertPicker({
         }}
       >
         {visible.length === 0 && (
-          <li className="px-3 py-6 text-center text-sm text-text-muted">{items.length === 0 ? emptyText : t("composer.noResults")}</li>
+          <li className="px-3 py-6 text-center text-small text-text-muted">{items.length === 0 ? emptyText : t("composer.noResults")}</li>
         )}
         {visible.map((item) => (
           <li key={item.id}>
@@ -180,7 +180,7 @@ export function InsertPicker({
             >
               {draggable && <GripVertical size={14} className="shrink-0 text-text-muted" aria-hidden />}
               <span className="min-w-0 flex-1">
-                <span className={cn("inline-block max-w-full truncate rounded-[5px] px-1.5 py-0.5 font-mono text-xs font-medium", pillClass)}>
+                <span className={cn("inline-block max-w-full truncate rounded-[5px] px-1.5 py-0.5 font-mono text-caption font-medium", pillClass)}>
                   {item.label}
                 </span>
                 {item.description && <span className="mt-0.5 block truncate text-caption text-text-muted">{item.description}</span>}
@@ -201,7 +201,7 @@ export function InsertPicker({
           <button
             type="button"
             onClick={onCreate}
-            className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary-soft"
+            className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-small font-medium text-primary transition-colors hover:bg-primary-soft"
           >
             <Plus size={16} /> {createLabel}
           </button>

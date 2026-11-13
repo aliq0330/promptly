@@ -17,6 +17,7 @@ import type { ChatGroup, CommunityRoom } from "@/types";
 import { RoomFormModal } from "./room-form-modal";
 import { RoomIconTile } from "./room-icon";
 import { refreshCommunityRooms, useCommunityRooms } from "./use-community-rooms";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 /** Satırın ikinci satırı: kim yazar / kim görür (mockup 6). */
 function useManageSubtitle() {
@@ -231,10 +232,10 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
         </span>
       </div>
 
-      {actionError && <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-small text-danger">{actionError}</p>}
+      {actionError && <InlineAlert>{actionError}</InlineAlert>}
 
       {loading && rooms.length === 0 ? (
-        <div className="space-y-2" aria-hidden>{[0, 1, 2].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-surface-soft" />)}</div>
+        <div className="space-y-2" aria-hidden>{[0, 1, 2].map((i) => <div key={i} className="h-16 skeleton-shimmer rounded-xl" />)}</div>
       ) : error && rooms.length === 0 ? (
         <div role="alert" className="flex flex-col items-start gap-2 rounded-lg bg-danger/10 px-3 py-3 text-small text-danger">
           {t("rooms.hub.loadFailed")}
@@ -272,7 +273,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
 
       <div className="sticky bottom-3 z-10 pt-2">
         <Button type="button" size="lg" className="w-full" disabled={busy || active.length >= ROOM_LIMIT} onClick={() => setFormRoom("new")} data-manage-add-room>
-          <Plus size={20} strokeWidth={2.4} aria-hidden /> {t("rooms.switcher.addRoom")}
+          <Plus size={20} aria-hidden /> {t("rooms.switcher.addRoom")}
         </Button>
       </div>
 

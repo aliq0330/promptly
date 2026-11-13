@@ -123,7 +123,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
             onClick={() => void run(() => decideReview(rows.map((row) => row.id), "approve"), "tp.review.approvedToast")}
             data-review-approve-all
           >
-            <Check size={15} aria-hidden />
+            <Check size={16} aria-hidden />
             {t("tp.review.approveAll", { count: rows.length })}
           </Button>
         )}

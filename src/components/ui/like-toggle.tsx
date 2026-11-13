@@ -157,7 +157,6 @@ export function LikeToggle({
         >
           <Heart
             size={size}
-            strokeWidth={1.75}
             className={cn("transition-[fill,color] duration-200 ease-soft", liked ? "fill-current text-danger" : "fill-transparent")}
           />
         </span>

@@ -43,21 +43,21 @@ export default function PrivacySettingsPage() {
     <SettingsSubpage title={t("settings.privacyTitle")} description={t("settings.hub.privacyDesc")}>
       <SettingsCard title={t("settings.messagePrivacyTitle")} hint={t("settings.messagePrivacyQuestion")}>
         {messagePrivacy === null ? (
-          <p className="text-xs text-text-muted">{t("settings.loadingEllipsis")}</p>
+          <p className="text-caption text-text-muted">{t("settings.loadingEllipsis")}</p>
         ) : (
           <div className="space-y-2">
             <ChoiceCard>
               <input type="radio" name="message-privacy" checked={messagePrivacy === "everyone"} onChange={() => handlePrivacyChange("everyone")} className="mt-0.5" />
               <span>
                 <span className="font-medium">{t("settings.everyone")}</span>
-                <span className="block text-xs text-text-muted">{t("settings.everyoneHint")}</span>
+                <span className="block text-caption text-text-muted">{t("settings.everyoneHint")}</span>
               </span>
             </ChoiceCard>
             <ChoiceCard>
               <input type="radio" name="message-privacy" checked={messagePrivacy === "followers_only"} onChange={() => handlePrivacyChange("followers_only")} className="mt-0.5" />
               <span>
                 <span className="font-medium">{t("settings.followersOnly")}</span>
-                <span className="block text-xs text-text-muted">{t("settings.followersOnlyHint")}</span>
+                <span className="block text-caption text-text-muted">{t("settings.followersOnlyHint")}</span>
               </span>
             </ChoiceCard>
           </div>

@@ -14,6 +14,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { dedupeGifs, fetchGifs, GIF_TOPICS, GiphyError, isGiphyConfigured, splitColumns, type GifItem } from "@/lib/giphy";
 import { cn, publicAssetUrl } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 type Failure = "not_configured" | "rate_limited" | "failed" | null;
 
@@ -89,7 +90,7 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
 
   return (
     <Modal onClose={onClose} labelledBy="gif-picker-title">
-      <div data-gif-picker className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell data-gif-picker className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex shrink-0 items-center justify-between gap-2 px-5 pb-1 pt-4">
           <h2 id="gif-picker-title" className="font-display text-h3 font-bold text-text">
             {t("gif.title")}
@@ -119,7 +120,7 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
                 aria-label={t("gif.clearSearch")}
                 className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
               >
-                <X size={15} aria-hidden />
+                <X size={16} aria-hidden />
               </button>
             )}
           </label>
@@ -198,7 +199,7 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
           </span>
           {/* eslint-enable @next/next/no-img-element */}
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

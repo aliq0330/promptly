@@ -100,7 +100,7 @@ export function FocusSheetFrame({
       <div
         className={cn(
           "flex h-full flex-col rounded-t-[28px] border-t border-border-soft bg-surface text-text shadow-pop",
-          "animate-sheet-up motion-reduce:animate-none md:animate-panel-in md:rounded-none md:rounded-l-3xl md:border-l md:border-t-0",
+          "animate-sheet-up motion-reduce:animate-none md:animate-panel-in md:rounded-none md:rounded-l-xl md:border-l md:border-t-0",
         )}
       >
         {/* Handle + title: the drag area. */}

@@ -15,7 +15,7 @@ export function StarRatingDisplay({ value, size = 14, className }: { value: numb
   return (
     <span role="img" aria-label={t("spaces.rating.starAria", { count: filled })} className={cn("inline-flex items-center gap-px align-middle", className)} data-star-rating={filled}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <Star key={n} size={size} strokeWidth={1.75} className={n <= filled ? STAR_ON : STAR_OFF} aria-hidden />
+        <Star key={n} size={size} className={n <= filled ? STAR_ON : STAR_OFF} aria-hidden />
       ))}
     </span>
   );
@@ -59,7 +59,7 @@ export function StarRatingInput({
           onClick={() => onChange(allowClear && n === value ? 0 : n)}
           className="rounded-md p-0.5 transition-transform hover:scale-110 disabled:cursor-default disabled:hover:scale-100"
         >
-          <Star size={size} strokeWidth={1.75} className={cn("transition-colors", n <= shown ? STAR_ON : STAR_OFF)} aria-hidden />
+          <Star size={size} className={cn("transition-colors", n <= shown ? STAR_ON : STAR_OFF)} aria-hidden />
         </button>
       ))}
     </div>

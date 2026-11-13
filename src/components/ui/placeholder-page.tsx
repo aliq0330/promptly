@@ -18,13 +18,13 @@ interface PlaceholderPageProps {
 export function PlaceholderPage({ icon: Icon, title, description }: PlaceholderPageProps) {
   const { t } = useTranslation();
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-6 text-center">
+    <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-3 px-6 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-surface text-primary">
         <Icon size={28} />
       </div>
       <h1 className="text-h1 font-semibold text-text">{title}</h1>
-      <p className="max-w-sm text-sm text-text-muted">{description}</p>
-      <span className="mt-2 rounded-sm bg-accent-surface px-2 py-1 text-xs font-medium text-primary">
+      <p className="max-w-sm text-small text-text-muted">{description}</p>
+      <span className="mt-2 rounded-sm bg-accent-surface px-2 py-1 text-caption font-medium text-primary">
         {t("common.comingSoon")}
       </span>
     </div>

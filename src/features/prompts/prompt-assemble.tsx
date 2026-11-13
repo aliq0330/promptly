@@ -109,7 +109,7 @@ export function AssembleStatus({ filled, total, complete }: { filled: number; to
       <p role="status" aria-live="polite" className={cn("inline-flex items-center gap-1 text-caption font-medium tabular-nums", complete ? "text-primary" : "text-text-muted")}>
         {complete ? (
           <>
-            <Check size={12} strokeWidth={2.4} className="animate-check-pop" aria-hidden />
+            <Check size={12} className="animate-check-pop" aria-hidden />
             {t("assemble.ready")}
           </>
         ) : (

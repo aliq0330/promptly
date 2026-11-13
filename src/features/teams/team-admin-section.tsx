@@ -194,7 +194,7 @@ function AuditPreview({ ctx }: { ctx: TeamCtx }) {
     };
   }, [team.id]);
   return (
-    <Panel title={t("tm.admin.audit")} action={<Link href={teamLink(team.id, "admin", { section: "audit" })} className="text-small font-semibold text-primary" data-audit-all>{t("tc.admin.auditAll")}</Link>} className="rounded-[20px]">
+    <Panel title={t("tm.admin.audit")} action={<Link href={teamLink(team.id, "admin", { section: "audit" })} className="text-small font-semibold text-primary" data-audit-all>{t("tc.admin.auditAll")}</Link>} className="rounded-xl">
       <div data-testid="admin-audit-preview">
         {entries === null && <Skeleton className="h-20 w-full rounded-lg" />}
         {entries !== null && entries.length === 0 && <p className="py-2 text-small text-text-muted">{t("tm.admin.audit.empty")}</p>}
@@ -538,7 +538,7 @@ function AuditSection({ ctx }: { ctx: TeamCtx }) {
           return (
             <li key={entry.id} data-audit-row className="flex items-start gap-3 px-4 py-3 text-small md:items-center max-md:rounded-lg max-md:border max-md:border-border-soft max-md:bg-surface">
               <span className="w-24 shrink-0 text-caption text-text-muted max-md:hidden">{time}</span>
-              <Avatar src={entry.actorAvatarUrl} alt={name} size={28} />
+              <Avatar src={entry.actorAvatarUrl} alt={name} size={32} />
               <span className="min-w-0 flex-1">
                 <span className="font-bold text-text">{name}</span> <span className="text-text-secondary">{auditSentence(t, entry)}</span>
                 <span className="mt-1.5 flex items-center gap-2 md:hidden">

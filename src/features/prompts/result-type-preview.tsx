@@ -63,7 +63,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
           preload="metadata"
           poster={result.thumbnailUrl ?? undefined}
           src={result.mediaUrl}
-          className="mx-auto max-h-[70vh] w-full rounded-lg bg-black"
+          className="mx-auto max-h-[70dvh] w-full rounded-lg bg-black"
         />
       );
     }
@@ -110,7 +110,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
       <p
         className={cn(
           "prompt-text whitespace-pre-wrap break-words text-text-secondary",
-          size === "card" ? "line-clamp-5 text-[0.7rem]" : "max-h-[60vh] overflow-y-auto text-sm text-text",
+          size === "card" ? "line-clamp-5 text-micro" : "max-h-[60dvh] overflow-y-auto text-small text-text",
         )}
       >
         {result.textContent}

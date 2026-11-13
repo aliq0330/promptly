@@ -113,7 +113,7 @@ export function WorkflowSyncBar({
   return (
     <div className="pointer-events-none absolute left-3 top-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-col gap-2 sm:max-w-md" data-workflow-sync="" onPointerDown={(event) => event.stopPropagation()}>
       {pending.map(({ id, title, plan }) => (
-        <div key={id} role="status" className="pointer-events-auto rounded-2xl border border-primary/40 bg-surface p-3 shadow-pop">
+        <div key={id} role="status" className="pointer-events-auto rounded-lg border border-primary/40 bg-surface p-3 shadow-pop">
           <p className="flex items-center gap-2 text-small font-semibold text-text">
             <RefreshCw size={14} className="shrink-0 text-primary" aria-hidden />
             <span className="min-w-0 break-words">{t("wfSpace.sync.changed", { title })}</span>
@@ -125,7 +125,7 @@ export function WorkflowSyncBar({
               type="button"
               disabled={busy !== null}
               onClick={() => void apply(id, plan)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-3.5 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-3.5 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
             >
               {busy === id && <Loader2 size={13} className="animate-spin" aria-hidden />}
               {busy === id ? t("wfSpace.sync.updating") : t("wfSpace.sync.update")}
@@ -137,7 +137,7 @@ export function WorkflowSyncBar({
         </div>
       ))}
       {convertible.map(({ id, frame, title, input }) => (
-        <div key={`legacy:${id}`} role="status" data-workflow-legacy="" className="pointer-events-auto rounded-2xl border border-primary/40 bg-surface p-3 shadow-pop">
+        <div key={`legacy:${id}`} role="status" data-workflow-legacy="" className="pointer-events-auto rounded-lg border border-primary/40 bg-surface p-3 shadow-pop">
           <p className="flex items-center gap-2 text-small font-semibold text-text">
             <Workflow size={14} className="shrink-0 text-primary" aria-hidden />
             <span className="min-w-0 break-words">{t("wfSpace.legacy.title", { title })}</span>
@@ -148,7 +148,7 @@ export function WorkflowSyncBar({
               type="button"
               disabled={busy !== null}
               onClick={() => void convert(id, frame, title, input)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-3.5 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-3.5 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
             >
               {busy === `legacy:${id}` && <Loader2 size={13} className="animate-spin" aria-hidden />}
               {busy === `legacy:${id}` ? t("wfSpace.legacy.converting") : t("wfSpace.legacy.convert")}

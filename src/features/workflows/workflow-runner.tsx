@@ -38,9 +38,9 @@ import { CardBandBackdrop } from "@/features/content/content-card";
 import type { Prompt, PromptVariable, WorkflowStep } from "@/types";
 import { STEP_TYPE_META } from "./step-meta";
 import { WorkflowAutoRun } from "./workflow-auto-run";
+import { fieldControlClassName } from "@/components/ui/field";
 
-const FIELD_CLASS =
-  "w-full resize-y rounded-md border border-border-soft bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+const FIELD_CLASS = cn(fieldControlClassName, "resize-y py-2");
 const BLOCK_CLASS = "prompt-text max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-border-soft bg-surface-soft p-3 text-text";
 
 function loadSavedRun(workflowId: string, steps: WorkflowStep[]): WorkflowRunState {
@@ -174,15 +174,15 @@ export function WorkflowRunner({ workflowId, steps }: { workflowId: string; step
       {!showSummary && (
         <div className="flex items-center justify-between gap-2">
           <Button variant="outline" size="lg" onClick={() => go(index - 1)} disabled={index === 0}>
-            <ArrowLeft size={15} aria-hidden /> {t("workflow.run.prev")}
+            <ArrowLeft size={16} aria-hidden /> {t("workflow.run.prev")}
           </Button>
           {isLast ? (
             <Button size="lg" className="shadow-pop" onClick={() => setShowSummary(true)}>
-              <ListChecks size={15} aria-hidden /> {t("workflow.run.finish")}
+              <ListChecks size={16} aria-hidden /> {t("workflow.run.finish")}
             </Button>
           ) : (
             <Button size="lg" className="shadow-pop" onClick={() => go(index + 1)}>
-              {t("workflow.run.next")} <ArrowRight size={15} aria-hidden />
+              {t("workflow.run.next")} <ArrowRight size={16} aria-hidden />
             </Button>
           )}
         </div>
@@ -293,13 +293,13 @@ function StepPanel({
   const inputs = resolveInputs(steps, index, state);
 
   return (
-    <section aria-labelledby={`run-step-${step.id}`} className="space-y-4 rounded-xl border border-border-soft bg-surface pb-4 shadow-card sm:pb-5">
+    <section aria-labelledby={`run-step-${step.id}`} className="space-y-4 rounded-lg border border-border-soft bg-surface pb-4 shadow-card sm:pb-5">
       {/* Albüm (docs/history/203-*): the step opens with a small band — its type as the art, "Adım 2 / 3", the big title. */}
       <header data-run-step-band className="relative rounded-t-xl px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
         <CardBandBackdrop />
         <div className="relative flex items-start gap-3.5">
-          <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-surface text-primary shadow-pop">
-            <Icon size={22} strokeWidth={1.6} />
+          <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface text-primary shadow-pop">
+            <Icon size={24} />
           </span>
           <div className="min-w-0 flex-1 space-y-1">
             <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
@@ -429,7 +429,7 @@ function RunSummary({ steps, state, onBack }: { steps: WorkflowStep[]; state: Wo
         </ul>
       )}
       <Button variant="outline" onClick={onBack}>
-        <ArrowLeft size={15} aria-hidden /> {t("workflow.run.backToSteps")}
+        <ArrowLeft size={16} aria-hidden /> {t("workflow.run.backToSteps")}
       </Button>
     </section>
   );

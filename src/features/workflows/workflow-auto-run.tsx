@@ -38,9 +38,9 @@ import {
 import type { WorkflowRunState } from "@/lib/workflow-run";
 import { cn } from "@/lib/utils";
 import type { WorkflowStep } from "@/types";
+import { fieldControlClassName } from "@/components/ui/field";
 
-const FIELD_CLASS =
-  "w-full rounded-md border border-border-soft bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+const FIELD_CLASS = cn(fieldControlClassName, "py-2");
 
 const BLOCK_KEY: Record<StepRunBlock, TranslationKey> = {
   no_content: "workflow.auto.block.no_content",
@@ -218,7 +218,7 @@ export function WorkflowAutoRun({
   if (runnableCount === 0 && plan.stopsAt === null) return null;
 
   return (
-    <section data-auto-run className="rounded-xl border border-border-soft bg-surface shadow-card">
+    <section data-auto-run className="rounded-lg border border-border-soft bg-surface shadow-card">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -227,7 +227,7 @@ export function WorkflowAutoRun({
         className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
-          <WandSparkles size={18} strokeWidth={1.75} />
+          <WandSparkles size={18} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-small font-semibold text-text">{t("workflow.auto.title")}</span>
@@ -281,7 +281,7 @@ export function WorkflowAutoRun({
                 className={FIELD_CLASS}
               />
               <Button variant="outline" size="sm" onClick={() => setShowKey((value) => !value)} aria-label={showKey ? t("generate.hideKey") : t("generate.showKey")}>
-                {showKey ? <EyeOff size={15} aria-hidden /> : <Eye size={15} aria-hidden />}
+                {showKey ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
               </Button>
             </div>
             <p className="text-caption text-text-muted">{t("generate.apiKeyPrivacy")}</p>
@@ -338,7 +338,7 @@ export function WorkflowAutoRun({
                 return (
                   <li key={step.id} data-status={status.kind} className="flex items-start gap-2 text-small">
                     <span className="mt-0.5 shrink-0 text-text-muted" aria-hidden>
-                      {status.kind === "running" ? <Loader2 size={15} className="animate-spin" /> : status.kind === "done" || status.kind === "kept" ? <Check size={15} className="text-success" /> : status.kind === "blocked" ? <CircleDashed size={15} /> : <AlertCircle size={15} className="text-danger" />}
+                      {status.kind === "running" ? <Loader2 size={15} className="animate-spin" /> : status.kind === "done" || status.kind === "kept" ? <Check size={16} className="text-success" /> : status.kind === "blocked" ? <CircleDashed size={16} /> : <AlertCircle size={16} className="text-danger" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="font-medium text-text">{t("workflow.stepN", { n: String(index + 1) })}</span>

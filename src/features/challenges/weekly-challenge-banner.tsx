@@ -27,8 +27,8 @@ export function WeeklyChallengeBanner() {
     <section aria-label={t("challenge.eyebrow")} data-challenge-band className="relative rounded-xl">
       <CardBandBackdrop className="rounded-xl" />
       <div className="relative flex flex-wrap items-start gap-x-4 gap-y-3 p-4 sm:p-5">
-        <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-surface text-primary shadow-pop">
-          <Trophy size={26} strokeWidth={1.6} />
+        <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface text-primary shadow-pop">
+          <Trophy size={26} />
         </span>
         <div className="min-w-0 flex-1 basis-40 space-y-1">
           <Eyebrow tone="primary">{t("challenge.eyebrow")}</Eyebrow>

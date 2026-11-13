@@ -64,10 +64,10 @@ function StructureShell({
           <div className="flex items-center gap-2">
             {/* Icon tile on roomier cards; on a two-column phone layout the icon sits inline so the label has the room. */}
             <span className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary sm:flex">
-              <Icon size={15} strokeWidth={1.9} aria-hidden />
+              <Icon size={16} aria-hidden />
             </span>
             <span className="flex min-w-0 items-center gap-1 text-caption font-semibold uppercase tracking-[0.04em] text-text-muted sm:tracking-[0.08em]">
-              <Icon size={12} strokeWidth={2.25} aria-hidden className="shrink-0 text-primary sm:hidden" />
+              <Icon size={12} aria-hidden className="shrink-0 text-primary sm:hidden" />
               <span className="truncate">{badge}</span>
               {detail && (
                 <>
@@ -146,7 +146,7 @@ export function FocusWorkflowCard({ workflow }: { workflow: Workflow }) {
             return (
               <li key={step.id}>
                 <Row as="div">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-[0.625rem] font-semibold leading-none text-primary-foreground">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-micro font-semibold leading-none text-primary-foreground">
                     {index + 1}
                   </span>
                   <StepIcon size={12} aria-hidden className="shrink-0 text-text-muted" />
@@ -154,7 +154,7 @@ export function FocusWorkflowCard({ workflow }: { workflow: Workflow }) {
                 </Row>
                 {index < listed.length - 1 && (
                   <span aria-hidden className="flex h-3.5 items-center pl-3 text-text-muted">
-                    <ArrowDown size={11} />
+                    <ArrowDown size={12} />
                   </span>
                 )}
               </li>

@@ -107,16 +107,16 @@ export function RequestVisionAssist({
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
         aria-controls="request-vision-assist-body"
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-text"
+        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-small font-medium text-text"
       >
         <WandSparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
         <span className="flex-1">{t("vision.requestTitle")}</span>
-        <span className="text-xs font-normal text-text-muted">{expanded ? t("vision.hide") : t("vision.show")}</span>
+        <span className="text-caption font-normal text-text-muted">{expanded ? t("vision.hide") : t("vision.show")}</span>
       </button>
 
       {expanded && (
         <div id="request-vision-assist-body" className="space-y-3 border-t border-border/60 px-3 pb-3 pt-3">
-          <p className="text-xs text-text-muted">
+          <p className="text-caption text-text-muted">
             {t("vision.requestIntro")}
           </p>
 
@@ -124,7 +124,7 @@ export function RequestVisionAssist({
             <div className="flex items-center gap-3 rounded-md border border-border bg-surface p-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={previewUrl} alt="" className="h-14 w-14 shrink-0 rounded object-cover" />
-              <div className="min-w-0 flex-1 text-xs text-text-muted">
+              <div className="min-w-0 flex-1 text-caption text-text-muted">
                 <p className="truncate font-medium text-text">{file?.name}</p>
                 <p>{file ? `${(file.size / 1024).toFixed(0)} KB` : null}</p>
               </div>
@@ -151,7 +151,7 @@ export function RequestVisionAssist({
               )}
             >
               <ImagePlus className="h-6 w-6 text-text-muted" aria-hidden="true" />
-              <p className="text-xs text-text-muted">{t("vision.dropHint")}</p>
+              <p className="text-caption text-text-muted">{t("vision.dropHint")}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
                   <Camera className="h-4 w-4" aria-hidden="true" />
@@ -175,14 +175,14 @@ export function RequestVisionAssist({
               {status === "loading" ? t("vision.analyzing") : t("vision.analyze")}
             </Button>
             {status === "loading" && (
-              <span role="status" className="text-xs text-text-muted">
+              <span role="status" className="text-caption text-text-muted">
                 {t("vision.mayTakeSeconds")}
               </span>
             )}
           </div>
 
           {status === "error" && errorMessage && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-xs text-danger">
+            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-caption text-danger">
               {errorMessage}
             </p>
           )}
@@ -191,8 +191,8 @@ export function RequestVisionAssist({
             <div className="space-y-3 rounded-md border border-border bg-surface p-3">
               {analysisEntries.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.imageAnalysis")}</p>
-                  <dl className="space-y-0.5 text-sm text-text">
+                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.imageAnalysis")}</p>
+                  <dl className="space-y-0.5 text-small text-text">
                     {analysisEntries.map(([key, value]) => (
                       <div key={key} className="flex gap-1.5">
                         <dt className="shrink-0 font-medium">{key}:</dt>
@@ -205,8 +205,8 @@ export function RequestVisionAssist({
 
               {fieldsLine && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.suggestedDirection")}</p>
-                  <p className="rounded-md bg-accent-surface/40 p-2.5 text-sm text-text">{fieldsLine}</p>
+                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.suggestedDirection")}</p>
+                  <p className="rounded-md bg-accent-surface/40 p-2.5 text-small text-text">{fieldsLine}</p>
                   <Button type="button" size="sm" variant="outline" onClick={() => onApplyCreativeDirection(fieldsLine)}>
                     {t("vision.addToCreativeDirection")}
                   </Button>
@@ -215,8 +215,8 @@ export function RequestVisionAssist({
 
               {result.suggestedDescription && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.suggestedDescription")}</p>
-                  <p className="whitespace-pre-wrap rounded-md bg-accent-surface/40 p-2.5 text-sm text-text">
+                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.suggestedDescription")}</p>
+                  <p className="whitespace-pre-wrap rounded-md bg-accent-surface/40 p-2.5 text-small text-text">
                     {result.suggestedDescription}
                   </p>
                   <div className="flex flex-wrap gap-2">

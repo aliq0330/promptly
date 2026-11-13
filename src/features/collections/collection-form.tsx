@@ -55,7 +55,7 @@ export function CollectionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
-        <label htmlFor="collection-name" className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+        <label htmlFor="collection-name" className="text-caption font-semibold uppercase tracking-wide text-text-muted">
           {t("collection.nameLabel")}
         </label>
         <input
@@ -65,15 +65,15 @@ export function CollectionForm({
           maxLength={NAME_MAX}
           placeholder={t("collection.namePlaceholder")}
           autoFocus
-          className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
-        <p className="text-right text-xs text-text-muted">
+        <p className="text-right text-caption text-text-muted">
           {trimmed.length}/{NAME_MAX}
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("collection.privacyLabel")}</p>
+        <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("collection.privacyLabel")}</p>
         <div className="space-y-2">
           <VisibilityOption
             icon={Globe}
@@ -92,7 +92,7 @@ export function CollectionForm({
         </div>
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-small text-danger">{error}</p>}
 
       <div className="flex items-center justify-end gap-2 pt-1">
         {onCancel && (
@@ -141,11 +141,11 @@ function VisibilityOption({
         {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
       </span>
       <span className="flex-1">
-        <span className="flex items-center gap-1.5 text-sm font-medium text-text">
+        <span className="flex items-center gap-1.5 text-small font-medium text-text">
           <Icon size={14} />
           {title}
         </span>
-        <span className="mt-0.5 block text-xs text-text-muted">{description}</span>
+        <span className="mt-0.5 block text-caption text-text-muted">{description}</span>
       </span>
     </button>
   );

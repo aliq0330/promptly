@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
         <FormIconBadge>
-          <CircleCheck size={22} />
+          <CircleCheck size={24} />
         </FormIconBadge>
         <h1 className="text-h2 text-text">{t("auth.passwordUpdatedTitle")}</h1>
         <Button className="w-full" onClick={() => router.push("/")}>
@@ -113,7 +113,7 @@ export default function ResetPasswordPage() {
     return (
       <form onSubmit={handleUpdatePassword} className="flex flex-col items-center gap-4 py-4 text-center">
         <FormIconBadge>
-          <KeyRound size={22} />
+          <KeyRound size={24} />
         </FormIconBadge>
         <h1 className="text-h2 text-text">{t("auth.setNewPasswordTitle")}</h1>
 
@@ -148,7 +148,7 @@ export default function ResetPasswordPage() {
           </div>
         </div>
 
-        {error && <p className="text-sm text-danger">{error}</p>}
+        {error && <p className="text-small text-danger">{error}</p>}
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? t("settings.updating") : t("settings.updatePassword")}
@@ -161,13 +161,13 @@ export default function ResetPasswordPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
         <FormIconBadge>
-          <CircleCheck size={22} />
+          <CircleCheck size={24} />
         </FormIconBadge>
         <h1 className="text-h2 text-text">{t("auth.linkSentTitle")}</h1>
-        <p className="text-sm text-text-muted">
+        <p className="text-small text-text-muted">
           <strong className="text-text">{email}</strong> {t("auth.resetLinkSentBodySuffix")}
         </p>
-        <Link href="/login" className="text-sm font-medium text-primary underline underline-offset-2 hover:no-underline">
+        <Link href="/login" className="text-small font-medium text-primary underline underline-offset-2 hover:no-underline">
           {t("auth.backToLogin")}
         </Link>
       </div>
@@ -177,10 +177,10 @@ export default function ResetPasswordPage() {
   return (
     <form onSubmit={handleRequestLink} className="flex flex-col items-center gap-4 py-4 text-center">
       <FormIconBadge>
-        <KeyRound size={22} />
+        <KeyRound size={24} />
       </FormIconBadge>
       <h1 className="text-h2 text-text">{t("auth.resetPasswordTitle")}</h1>
-      <p className="text-sm text-text-muted">
+      <p className="text-small text-text-muted">
         {t("auth.resetInstructions")}
       </p>
 
@@ -199,12 +199,12 @@ export default function ResetPasswordPage() {
         />
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-small text-danger">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? t("messages.sendingEllipsis") : t("auth.sendResetLink")}
       </Button>
-      <Link href="/login" className="text-xs text-primary underline underline-offset-2 hover:no-underline">
+      <Link href="/login" className="text-caption text-primary underline underline-offset-2 hover:no-underline">
         {t("auth.backToLogin")}
       </Link>
     </form>

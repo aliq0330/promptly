@@ -65,7 +65,7 @@ export function WorkflowCard({
                   const Icon = CONTENT_TYPE_META[type].icon;
                   return (
                     <span key={type} className="inline-flex items-center gap-1.5">
-                      {index > 0 && <ArrowRight size={13} aria-hidden className="opacity-60" />}
+                      {index > 0 && <ArrowRight size={12} aria-hidden className="opacity-60" />}
                       <span className="inline-flex h-7 items-center gap-1 rounded-full bg-current/10 px-2.5 text-caption font-semibold">
                         <Icon size={12} aria-hidden />
                         {t(CONTENT_TYPE_META[type].labelKey)}

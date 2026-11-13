@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import type { IconComponent } from "@/components/icons/icon";
 import { Plus } from "@/components/icons/plus";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClassName } from "@/components/ui/button";
+import { CARD_SURFACE_CLASS } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -40,11 +41,11 @@ export function HubBand({
 }) {
   return (
     <div className="flex items-center gap-3 sm:gap-4" data-hub-band="" data-testid={testId} {...rest}>
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary">
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
         <Icon size={24} aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <h1 className="truncate font-display text-[1.5rem] font-extrabold leading-[1.1] tracking-[-0.02em] text-text md:text-[1.75rem] xl:text-[2rem]">{title}</h1>
+        <h1 className="truncate text-h2 font-extrabold text-text md:text-h1">{title}</h1>
         {description && <p className="truncate text-small text-text-muted">{description}</p>}
       </div>
       {action}
@@ -102,7 +103,7 @@ export function HubAttentionStrip({
   onAction?: () => void;
   testId?: string;
 }) {
-  const action = "inline-flex h-8 shrink-0 items-center rounded-full border border-border bg-surface px-3.5 text-small font-semibold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const action = buttonClassName({ variant: "outline", size: "sm", className: "shrink-0" });
   return (
     <div
       className={cn("flex h-[3.75rem] items-center gap-3 rounded-lg border border-border-soft bg-surface pl-3.5 pr-3 shadow-card", onAction && "cursor-pointer")}
@@ -188,7 +189,8 @@ export function HubCard({
   return (
     <li
       className={cn(
-        "group relative flex min-w-0 flex-col rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 ease-soft hover:border-border hover:shadow-card-hover",
+        "group relative flex min-w-0 flex-col transition-[border-color,box-shadow] duration-200 ease-soft hover:border-border hover:shadow-card-hover",
+        CARD_SURFACE_CLASS,
         className,
       )}
       data-hub-card=""
@@ -293,9 +295,9 @@ export function HubDetailBand({
   [data: `data-${string}`]: string | undefined;
 }) {
   return (
-    <header className={cn("relative isolate rounded-2xl border border-border-soft bg-primary-soft", className)} data-hub-detail-band="" {...rest}>
+    <header className={cn("relative isolate rounded-lg border border-border-soft bg-primary-soft", className)} data-hub-detail-band="" {...rest}>
       {backdrop && (
-        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden rounded-2xl">
+        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden rounded-lg">
           <div className="absolute inset-0 scale-150 opacity-70 blur-3xl saturate-150">{backdrop}</div>
           <div className="absolute inset-0 bg-background/55" />
         </div>
@@ -315,7 +317,7 @@ export function HubDetailBand({
               {kicker}
             </div>
           )}
-          <div className="min-w-0 [&>h1]:break-words [&>h1]:font-display [&>h1]:text-[1.5rem] [&>h1]:font-extrabold [&>h1]:leading-[1.1] [&>h1]:tracking-[-0.02em] [&>h1]:text-text md:[&>h1]:text-[1.875rem] xl:[&>h1]:text-[2.125rem]">{title}</div>
+          <div className="min-w-0 [&>h1]:break-words [&>h1]:font-display [&>h1]:text-h2 [&>h1]:font-extrabold [&>h1]:text-text md:[&>h1]:text-h1">{title}</div>
           {byline && <div className="min-w-0 text-small text-text-secondary">{byline}</div>}
           {description && <div className="line-clamp-2 min-w-0 max-w-3xl whitespace-pre-line break-words text-small text-text-secondary">{description}</div>}
         </div>

@@ -26,7 +26,7 @@ export function NotificationListRow({ card, list, selected, onSelect }: { card: 
       data-notification-row={card.key}
       data-unread={unread ? "true" : "false"}
       className={cn(
-        "flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         selected ? "border-primary/40 bg-primary-soft" : "border-transparent hover:bg-surface-soft",
       )}
     >

@@ -6,6 +6,8 @@ import { ScrollText } from "@/components/icons/scroll-text";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Topluluk kuralları metni (kaydırılabilir) + "okudum, kabul ediyorum" onay kutusu. Kabul yalnızca `accepted` ile bildirilir. */
 export function RulesAcceptBox({ rules, accepted, onChange, disabled }: { rules: string; accepted: boolean; onChange: (accepted: boolean) => void; disabled?: boolean }) {
@@ -48,18 +50,18 @@ export function RulesAcceptModal({
   const [accepted, setAccepted] = useState(false);
   return (
     <Modal onClose={onClose} labelledBy="rules-accept-title">
-      <div className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="w-full max-w-md space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
         <div className="space-y-1">
-          <h2 id="rules-accept-title" className="break-words text-base font-semibold text-text">
+          <h2 id="rules-accept-title" className="break-words text-body font-semibold text-text">
             {t("communities.rules.modalTitle", { name })}
           </h2>
           <p className="text-small text-text-muted">{t("communities.rules.modalHelp")}</p>
         </div>
         <RulesAcceptBox rules={rules} accepted={accepted} onChange={setAccepted} disabled={busy} />
         {error && (
-          <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+          <InlineAlert>
             {error}
-          </p>
+          </InlineAlert>
         )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={busy}>
@@ -70,7 +72,7 @@ export function RulesAcceptModal({
             {confirmLabel}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

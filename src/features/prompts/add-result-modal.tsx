@@ -186,7 +186,7 @@ export function AddResultModal({
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
           <h2
             id="add-result-modal-title"
-            className="text-base font-semibold text-text"
+            className="text-body font-semibold text-text"
           >
             {t("result.modalAddTitle")}
           </h2>
@@ -199,7 +199,7 @@ export function AddResultModal({
             <X size={18} />
           </button>
         </div>
-        <p className="px-5 pt-3 text-sm text-text-muted">{t("result.sharePromptHint")}</p>
+        <p className="px-5 pt-3 text-small text-text-muted">{t("result.sharePromptHint")}</p>
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
           <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
@@ -208,7 +208,7 @@ export function AddResultModal({
                 key={option}
                 type="button"
                 onClick={() => setMode(option)}
-                className={`flex-1 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors ${
+                className={`flex-1 rounded-sm px-2 py-1.5 text-small font-medium transition-colors ${
                   mode === option
                     ? "bg-surface text-text shadow-card"
                     : "text-text-muted hover:text-text"
@@ -225,7 +225,7 @@ export function AddResultModal({
             <div>
               <label
                 htmlFor="result-file"
-                className="mb-1.5 block text-sm font-medium text-text"
+                className="mb-1.5 block text-small font-medium text-text"
               >
                 {t("result.fileFieldLabel")}
               </label>
@@ -234,10 +234,10 @@ export function AddResultModal({
                 type="file"
                 accept="image/*,video/*,audio/*"
                 onChange={handleFileChange}
-                className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-text hover:file:bg-accent-surface/80"
+                className="block w-full text-small text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-1.5 file:text-small file:font-medium file:text-text hover:file:bg-accent-surface/80"
               />
               {detectedType && (
-                <p className="mt-1.5 text-xs text-text-muted">
+                <p className="mt-1.5 text-caption text-text-muted">
                   {t("result.detectedType")}{" "}
                   <span className="font-medium text-text">
                     {t(RESULT_MEDIA_TYPE_LABELS[detectedType])}
@@ -245,14 +245,14 @@ export function AddResultModal({
                 </p>
               )}
               {fileError && (
-                <p className="mt-1.5 text-xs text-danger">{fileError}</p>
+                <p className="mt-1.5 text-caption text-danger">{fileError}</p>
               )}
             </div>
           ) : (
             <div>
               <label
                 htmlFor="result-text"
-                className="mb-1.5 block text-sm font-medium text-text"
+                className="mb-1.5 block text-small font-medium text-text"
               >
                 {t("result.textFieldLabel")}
               </label>
@@ -262,7 +262,7 @@ export function AddResultModal({
                 value={textContent}
                 onChange={(event) => setTextContent(event.target.value)}
                 placeholder={t("result.textFieldPlaceholder")}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
             </div>
           )}
@@ -270,7 +270,7 @@ export function AddResultModal({
           <div>
             <label
               htmlFor="result-tool"
-              className="mb-1.5 block text-sm font-medium text-text"
+              className="mb-1.5 block text-small font-medium text-text"
             >
               {t("result.toolFieldLabel")}{" "}
               <span className="text-text-muted">({t("common.optional")})</span>
@@ -282,7 +282,7 @@ export function AddResultModal({
               value={tool}
               onChange={(event) => setTool(event.target.value)}
               placeholder={t("result.toolFieldPlaceholder")}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             <datalist id="result-tool-suggestions">
               {TOOL_SUGGESTIONS.map((suggestion) => (
@@ -297,7 +297,7 @@ export function AddResultModal({
           {
             <>
               <div>
-                <p className="mb-1.5 text-sm font-medium text-text">
+                <p className="mb-1.5 text-small font-medium text-text">
                   {t("result.didYouModifyPrompt")}
                 </p>
                 <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
@@ -306,7 +306,7 @@ export function AddResultModal({
                       key={String(value)}
                       type="button"
                       onClick={() => setHasModification(value)}
-                      className={`flex-1 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors ${
+                      className={`flex-1 rounded-sm px-2 py-1.5 text-small font-medium transition-colors ${
                         hasModification === value
                           ? "bg-surface text-text shadow-card"
                           : "text-text-muted hover:text-text"
@@ -323,7 +323,7 @@ export function AddResultModal({
                   <div>
                     <label
                       htmlFor="result-mod-summary"
-                      className="mb-1.5 block text-sm font-medium text-text"
+                      className="mb-1.5 block text-small font-medium text-text"
                     >
                       {t("result.modificationSummaryLabel")}{" "}
                       <span className="text-text-muted">
@@ -338,21 +338,21 @@ export function AddResultModal({
                         setModificationSummary(event.target.value)
                       }
                       placeholder={t("result.modificationSummaryPlaceholder")}
-                      className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                   <div>
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    <p className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-text-muted">
                       {t("result.originalPromptText")}
                     </p>
-                    <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-background px-3 py-2 font-mono text-xs text-text-muted">
+                    <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-background px-3 py-2 font-mono text-caption text-text-muted">
                       {target.promptText}
                     </p>
                   </div>
                   <div>
                     <label
                       htmlFor="result-mod-text"
-                      className="mb-1.5 block text-sm font-medium text-text"
+                      className="mb-1.5 block text-small font-medium text-text"
                     >
                       {t("result.fullModifiedTextLabel")}{" "}
                       <span className="text-text-muted">
@@ -367,7 +367,7 @@ export function AddResultModal({
                         setModifiedPromptText(event.target.value)
                       }
                       placeholder={t("result.fullModifiedTextPlaceholder")}
-                      className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                 </div>
@@ -379,18 +379,18 @@ export function AddResultModal({
             <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border-soft bg-surface-soft p-3" data-works-mark>
               <input type="checkbox" checked={markWorked} onChange={(event) => setMarkWorked(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-primary" />
               <span className="space-y-0.5">
-                <span className="block text-sm font-medium text-text">{t("result.markWorked")}</span>
-                <span className="block text-xs text-text-muted">{t("result.markWorkedHint")}</span>
+                <span className="block text-small font-medium text-text">{t("result.markWorked")}</span>
+                <span className="block text-caption text-text-muted">{t("result.markWorkedHint")}</span>
               </span>
             </label>
           )}
           {works && works.myVote !== null && (
-            <p className="text-xs text-text-muted" data-works-shown>
+            <p className="text-caption text-text-muted" data-works-shown>
               {works.myVote ? t("result.worksShownYes") : t("result.worksShownNo")}
             </p>
           )}
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p className="text-small text-danger">{error}</p>}
 
           </div>
 

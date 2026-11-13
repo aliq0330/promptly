@@ -206,7 +206,7 @@ function InterestPromptStrip({ interest, target, answered }: { interest: Interes
     return (
       <StripShell data-interest-thanks role="status" className="px-3.5 py-3">
         <p className="flex items-center gap-2 text-label font-semibold text-text-secondary">
-          <Check size={16} strokeWidth={2.2} aria-hidden className="text-primary" />
+          <Check size={16} aria-hidden className="text-primary" />
           {t("interest.thanks")}
         </p>
         <p className="mt-0.5 text-caption text-text-muted">{t("interest.thanksHint")}</p>
@@ -236,10 +236,10 @@ function InterestPromptStrip({ interest, target, answered }: { interest: Interes
         </button>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 pr-1">
-        <ReplyPill onClick={() => reply("not_interested")} icon={<X size={16} strokeWidth={2.2} aria-hidden />}>
+        <ReplyPill onClick={() => reply("not_interested")} icon={<X size={16} aria-hidden />}>
           {t("interest.no")}
         </ReplyPill>
-        <ReplyPill onClick={() => reply("interested")} icon={<Check size={16} strokeWidth={2.2} aria-hidden />} primary>
+        <ReplyPill onClick={() => reply("interested")} icon={<Check size={16} aria-hidden />} primary>
           {t("interest.yes")}
         </ReplyPill>
       </div>

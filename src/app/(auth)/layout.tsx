@@ -15,7 +15,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 export default function AuthGroupLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-dvh bg-background">
       <aside className="relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden border-r border-border-soft bg-surface p-10 lg:flex">
         <Link href="/" className="flex items-center gap-2" aria-label="Promptly">
           <BrandMark size={34} />
@@ -40,7 +40,7 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
           <BrandMark size={32} />
           <BrandWordmark className="text-[1.5rem]" />
         </Link>
-        <div className="w-full max-w-sm animate-rise-in rounded-xl border border-border-soft bg-surface p-6 shadow-card sm:p-8">{children}</div>
+        <div className="w-full max-w-sm animate-rise-in rounded-lg border border-border-soft bg-surface p-6 shadow-card sm:p-8">{children}</div>
       </main>
     </div>
   );

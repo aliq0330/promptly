@@ -144,8 +144,8 @@ export function EditSuggestionsPanel({
             >
               <div className="flex items-start justify-between gap-2">
                 <Link href={profileHref(suggestion.proposer)} className="flex items-center gap-2">
-                  <Avatar src={suggestion.proposer.avatarUrl} alt={suggestion.proposer.displayName} size={28} />
-                  <span className="text-sm">
+                  <Avatar src={suggestion.proposer.avatarUrl} alt={suggestion.proposer.displayName} size={32} />
+                  <span className="text-small">
                     <span className="font-medium text-text">{suggestion.proposer.displayName}</span>{" "}
                     <span className="text-text-muted">· {formatRelativeTime(suggestion.createdAt, language)}</span>
                   </span>
@@ -153,14 +153,14 @@ export function EditSuggestionsPanel({
                 <Badge variant={STATUS_VARIANT[suggestion.status]}>{t(STATUS_LABEL_KEYS[suggestion.status])}</Badge>
               </div>
 
-              <p className="mt-2 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-text">{suggestion.suggestionText}</p>
+              <p className="mt-2 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-small text-text">{suggestion.suggestionText}</p>
 
               <button
                 type="button"
                 onClick={() => setExpandedId(isExpanded ? null : suggestion.id)}
-                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                className="mt-2 inline-flex items-center gap-1 text-caption font-medium text-primary hover:underline"
               >
-                {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 {isExpanded ? t("editSuggestion.hidePreview") : t("editSuggestion.preview")}
               </button>
 
@@ -168,14 +168,14 @@ export function EditSuggestionsPanel({
                 <div className="mt-2 space-y-2 rounded-md border border-border-soft bg-background p-3">
                   {suggestion.proposedPromptText ? (
                     <>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("editSuggestion.currentToProposed")}</p>
+                      <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("editSuggestion.currentToProposed")}</p>
                       <DiffText before={currentPromptText} after={suggestion.proposedPromptText} />
                     </>
                   ) : (
                     <>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("prompt.currentPromptText")}</p>
-                      <p className="prompt-text whitespace-pre-wrap break-words text-sm text-text-muted">{currentPromptText}</p>
-                      <p className="text-xs text-text-muted">{t("editSuggestion.noteOnlyHint")}</p>
+                      <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("prompt.currentPromptText")}</p>
+                      <p className="prompt-text whitespace-pre-wrap break-words text-small text-text-muted">{currentPromptText}</p>
+                      <p className="text-caption text-text-muted">{t("editSuggestion.noteOnlyHint")}</p>
                     </>
                   )}
                 </div>
@@ -185,12 +185,12 @@ export function EditSuggestionsPanel({
                 <div className="mt-3 space-y-2">
                   {isAccepting ? (
                     <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
-                      <p className="text-xs font-medium text-text">{t("editSuggestion.editBeforeAcceptHint")}</p>
+                      <p className="text-caption font-medium text-text">{t("editSuggestion.editBeforeAcceptHint")}</p>
                       <textarea
                         rows={4}
                         value={draftText}
                         onChange={(event) => setDraftText(event.target.value)}
-                        className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-text shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                        className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-caption text-text shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                       />
                       <div className="flex flex-wrap items-center gap-2">
                         <Button type="button" size="sm" onClick={() => confirmAccept(suggestion)} disabled={isBusy || !draftText.trim()}>
@@ -221,7 +221,7 @@ export function EditSuggestionsPanel({
         })}
       </ul>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-small text-danger">{error}</p>}
     </section>
   );
 }

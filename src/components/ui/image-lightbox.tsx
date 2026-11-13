@@ -64,7 +64,7 @@ export function ImageLightbox({
   return (
     <Portal>
       <div
-        className="fixed inset-0 z-[60] flex flex-col bg-black/95 animate-fade-in"
+        className="fixed inset-0 z-(--z-popover) flex flex-col bg-black/95 animate-fade-in"
         role="dialog"
         aria-modal="true"
         aria-label={t("media.imageGalleryLabel")}
@@ -72,7 +72,7 @@ export function ImageLightbox({
       >
         <div className="flex items-center justify-between px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white/90" onClick={(event) => event.stopPropagation()}>
           {hasMultiple ? (
-            <span className="text-sm tabular-nums">
+            <span className="text-small tabular-nums">
               {index + 1} / {images.length}
             </span>
           ) : (
@@ -84,7 +84,7 @@ export function ImageLightbox({
             aria-label={t("common.close")}
             className="rounded-full p-2 text-white hover:bg-white/10"
           >
-            <X size={22} />
+            <X size={24} />
           </button>
         </div>
 

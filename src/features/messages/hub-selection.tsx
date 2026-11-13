@@ -8,6 +8,7 @@ import { useToast } from "@/features/groups/use-toast";
 import { bulkMuteTarget, bulkPinTarget } from "@/lib/messages-hub";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ConversationsMoreMenu, SelectionActionBar, SelectionHeader, useSelectionChrome } from "./conversation-selection";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Seçim cümlesindeki ad: kanal / oda / sohbet (proje dosya sohbeti) / öğe (kanal ile proje karışık seçildiyse). */
 export type HubWord = "channel" | "room" | "chat" | "item";
@@ -151,8 +152,8 @@ export function useHubSelection(actions: HubBulkActions, options: { word: (selec
     <>
       {confirmDelete && selected.length > 0 && (
         <Modal onClose={busy ? () => undefined : () => setConfirmDelete(false)} labelledBy="hub-bulk-delete-title">
-          <div className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
-            <h2 id="hub-bulk-delete-title" className="text-base font-semibold text-text">
+          <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+            <h2 id="hub-bulk-delete-title" className="text-body font-semibold text-text">
               {t("th.sel.deleteTitle", { count: selected.length })}
             </h2>
             <p className="text-small text-text-secondary">{options.deleteBody}</p>
@@ -164,7 +165,7 @@ export function useHubSelection(actions: HubBulkActions, options: { word: (selec
                 {busy ? t("common.loading") : t("common.delete")}
               </Button>
             </div>
-          </div>
+          </DialogShell>
         </Modal>
       )}
       {toastNode}

@@ -64,7 +64,7 @@ export function PresetPreviewModal({
 
           <section aria-labelledby="preset-preview-contents" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
             <h3 id="preset-preview-contents" className="flex items-center gap-1.5 border-b border-border-soft px-3 py-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-              <SlidersHorizontal size={13} aria-hidden />
+              <SlidersHorizontal size={12} aria-hidden />
               {t("preset.contentsTitle")}
             </h3>
             {entries.length === 0 ? (

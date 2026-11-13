@@ -259,7 +259,7 @@ export function MessageComposer({
       className="relative bg-background px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:px-4 lg:px-6"
     >
       {dragActive && (
-        <div className="pointer-events-none absolute inset-2 z-20 flex items-center justify-center rounded-xl border-2 border-dashed border-primary/60 bg-primary-soft/80 text-sm font-medium text-text">
+        <div className="pointer-events-none absolute inset-2 z-20 flex items-center justify-center rounded-xl border-2 border-dashed border-primary/60 bg-primary-soft/80 text-small font-medium text-text">
           {t("messages.dropPhotosHere")}
         </div>
       )}
@@ -293,7 +293,7 @@ export function MessageComposer({
         </ul>
       )}
       {imageNotice && (
-        <p role="alert" className="mb-2 flex items-start justify-between gap-2 rounded-lg bg-warning/10 px-3 py-1.5 text-xs text-warning">
+        <p role="alert" className="mb-2 flex items-start justify-between gap-2 rounded-lg bg-warning/10 px-3 py-1.5 text-caption text-warning">
           <span>{imageNotice}</span>
           <button type="button" onClick={onDismissNotice} aria-label={t("common.close")} className="shrink-0">
             <X size={12} aria-hidden />
@@ -311,11 +311,11 @@ export function MessageComposer({
           data-composer-plus
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface text-text transition-colors hover:bg-surface-soft focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
         >
-          <Plus size={22} strokeWidth={1.9} aria-hidden />
+          <Plus size={24} aria-hidden />
         </button>
         <div
           className={cn(
-            "relative flex min-w-0 flex-1 items-end gap-0.5 rounded-3xl bg-surface px-4 py-1.5 pr-2 transition-shadow duration-200 ease-soft focus-within:ring-2 focus-within:ring-primary/40",
+            "relative flex min-w-0 flex-1 items-end gap-0.5 rounded-xl bg-surface px-4 py-1.5 pr-2 transition-shadow duration-200 ease-soft focus-within:ring-2 focus-within:ring-primary/40",
             disabled && "opacity-50",
           )}
         >
@@ -378,7 +378,7 @@ export function MessageComposer({
           disabled={!canSend || disabled}
           aria-label={t("messages.sendMessageAria")}
           title={t("common.send")}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,background-color] duration-200 ease-soft hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-40"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,background-color] duration-200 ease-soft hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
         >
           {isSending ? <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <SendArrowIcon size={22} strokeWidth={2.2} seq={sendSeq} />}
         </button>
@@ -387,7 +387,7 @@ export function MessageComposer({
         <ComposerEmojiPicker variant="panel" onPick={insertEmoji} onBackspace={handleBackspace} onClose={closeEmoji} containerRef={formRef} />
       )}
       {error && (
-        <p role="alert" className="mt-2 text-xs text-danger">
+        <p role="alert" className="mt-2 text-caption text-danger">
           {error}
         </p>
       )}

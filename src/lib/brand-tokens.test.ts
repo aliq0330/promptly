@@ -51,6 +51,11 @@ const TEXT_PAIRS: [string, string][] = [
   ["secondary", "surface"],
   ["secondary", "surface-soft"],
   ["text", "primary-soft"],
+  // Text that sits ON a filled status / secondary colour (buttons, count bubbles) — never `text-white` (audit G1).
+  ["danger-fg", "danger"],
+  ["secondary-fg", "secondary"],
+  ["success-fg", "success"],
+  ["warning-fg", "warning"],
 ];
 
 for (const [mode, set] of [["açık", light], ["koyu", dark]] as const) {
@@ -77,4 +82,19 @@ test("marka dosyalarını üreten betik logonun aynı geometrisini çizer", () =
     assert.ok(path, `${name} brand-mark.tsx içinde bulunamadı`);
     assert.ok(script.includes(`"${path}"`), `${name} betikte farklı`);
   }
+});
+
+for (const [mode, set] of [["açık", light], ["koyu", dark]] as const) {
+  test(`${mode} modda form kontrol sınırı zeminlere karşı ≥ 3:1 (WCAG 1.4.11)`, () => {
+    for (const ground of ["bg", "surface", "surface-soft"]) {
+      const ratio = contrast(set["control-border"], set[ground]);
+      assert.ok(ratio >= 3, `${mode}: --p-control-border / --p-${ground} = ${ratio.toFixed(2)}:1`);
+    }
+  });
+}
+
+test("durum rengi zeminlerinde text-white yazılmaz (kontrast: *-foreground tokenları)", () => {
+  // Açık modda beyaz yeter, koyu modda dolgular açık tonlu olduğundan metin mürekkep olmalıdır.
+  assert.equal(dark["danger-fg"], dark["primary-fg"]);
+  assert.equal(light["danger-fg"], "#ffffff");
 });

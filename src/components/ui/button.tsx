@@ -39,11 +39,11 @@ const variantClasses: Record<ButtonVariant, string> = {
   secondary: "bg-primary-soft text-primary hover:bg-primary-soft/70",
   ghost: "bg-transparent text-text-secondary hover:bg-surface-soft hover:text-text",
   outline: "border border-border bg-surface text-text shadow-xs hover:border-border-strong hover:bg-surface-soft",
-  danger: "bg-danger text-white hover:bg-danger/90",
+  danger: "bg-danger text-danger-foreground hover:bg-danger/90",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "h-8 gap-1.5 px-3 text-label",
+  sm: "h-9 gap-1.5 px-3.5 text-label",
   md: "h-10 gap-2 px-4 text-small",
   lg: "h-12 gap-2 px-6 text-body",
   icon: "h-10 w-10 p-0",

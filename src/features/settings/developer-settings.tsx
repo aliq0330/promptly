@@ -24,7 +24,7 @@ export function DeveloperSettings() {
       <SettingsCard title={t("devSettings.connectTitle")} hint={t("devSettings.connectLead")}>
         <div className="space-y-4">
           {endpoints ? <ConnectWizard mcpMeUrl={endpoints.mcpMeUrl} keysHref="#anahtarlarim" /> : null}
-          <p className="border-t border-border-soft pt-4 text-xs leading-relaxed text-text-muted">
+          <p className="border-t border-border-soft pt-4 text-caption leading-relaxed text-text-muted">
             {t("devSettings.moreTools")}{" "}
             <Link href="/developers" className="font-medium text-primary hover:underline">
               {t("devSettings.docsTitle")}

@@ -43,6 +43,7 @@ import { MuteCard, MuteChip } from "./mute-card";
 import { useTeamMutes } from "./team-chat-data";
 import type { TeamCtx } from "./team-page";
 import { PillChoice } from "./team-ui";
+import { CountBadge } from "@/components/ui/badge";
 
 /**
  * Sohbet sekmesi (docs/history/353-*): her kanal AYRI bir konuşmadır (`conversations.kind = 'team_channel'`); üyelik ekip rolünden/Space erişiminden
@@ -125,7 +126,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
           {channel.mode === "private" ? <Lock size={14} aria-hidden /> : isProject ? <FolderOpen size={14} aria-hidden /> : <Hash size={14} aria-hidden />}
           <span className="min-w-0 flex-1 truncate">{channelLabel(channel)}</span>
           <MuteChip scope={channel.muteScope ?? (channel.muted ? "channel" : null)} />
-          {unread && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(channel.unreadCount)}</span>}
+          {unread && <CountBadge>{formatUnread(channel.unreadCount)}</CountBadge>}
         </button>
       </li>
     );
@@ -252,7 +253,7 @@ function ChannelAside({
   return (
     <aside className="hidden space-y-3.5 lg:row-start-1 lg:block lg:col-start-2" data-testid="team-channel-aside">
       {muteCard}
-      <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-channel-info-card">
+      <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-channel-info-card">
         <h3 className="font-display text-body font-bold text-text"># {projectTitle ?? channel.name}</h3>
         <p className="mt-1 text-small text-text-secondary">
           {channel.description || t(channel.mode === "private" ? "tm.chat.modePrivate" : channel.mode === "project" ? "tp.chat.modeProject" : channel.mode === "space" ? "tm.chat.modeSpace" : "tm.chat.modeOpen")}
@@ -261,21 +262,21 @@ function ChannelAside({
           {t("tc.chat.notifyAndInfo")}
         </button>
       </section>
-      <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-online">
+      <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-online">
         <h3 className="mb-2 font-display text-body font-bold text-text">
           {t("tm.chat.onlineCount", { count: onlineMembers.length })} <span className="font-sans text-small font-normal text-text-muted">· {t("tm.chat.memberCount", { count: channel.memberCount })}</span>
         </h3>
         <ul>
           {shown.map((member) => (
             <li key={member.userId} className="flex items-center gap-2.5 py-1.5">
-              <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName || member.username} size={28} />
+              <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName || member.username} size={32} />
               <span className="min-w-0 flex-1 truncate text-small text-text">{member.displayName || member.username}</span>
             </li>
           ))}
         </ul>
       </section>
       {archived.length > 0 && (
-        <details className="rounded-2xl border border-border-soft bg-surface p-4 text-caption text-text-muted">
+        <details className="rounded-lg border border-border-soft bg-surface p-4 text-caption text-text-muted">
           <summary className="cursor-pointer font-semibold">{t("tm.chat.archived", { count: archived.length })}</summary>
           <ul className="mt-2 space-y-1">
             {archived.map((entry) => (
@@ -319,7 +320,7 @@ function ChannelView({
   const iconButton = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-[20px] border border-border-soft bg-surface md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border-soft bg-surface md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border-soft px-5">
         <div className="min-w-0 flex-1 leading-tight">
           <h3 className="flex items-center gap-1.5 truncate font-display text-h3 font-bold text-text">
@@ -339,7 +340,7 @@ function ChannelView({
           <div className="hidden items-center lg:flex" data-channel-faces>
             {faces.map((m) => (
               <span key={m.userId} className="-ml-2 rounded-full ring-2 ring-surface first:ml-0">
-                <PresenceAvatar userId={m.userId} src={m.avatarUrl} alt={m.displayName || m.username} size={28} />
+                <PresenceAvatar userId={m.userId} src={m.avatarUrl} alt={m.displayName || m.username} size={32} />
               </span>
             ))}
             {more > 0 && <span className="ml-2 text-caption text-text-muted">+{more}</span>}
@@ -373,14 +374,14 @@ function ChannelView({
               c.id === channel.id ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary",
             )}
           >
-            {c.mode === "private" ? <Lock size={13} aria-hidden /> : c.mode === "project" ? <span aria-hidden className="h-2.5 w-2.5 rounded-[3px] bg-primary" /> : <Hash size={13} aria-hidden />}
+            {c.mode === "private" ? <Lock size={12} aria-hidden /> : c.mode === "project" ? <span aria-hidden className="h-2.5 w-2.5 rounded-[3px] bg-primary" /> : <Hash size={12} aria-hidden />}
             {labelOf ? labelOf(c) : c.name}
-            {c.unreadCount > 0 && !c.muted && c.id !== channel.id && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(c.unreadCount)}</span>}
+            {c.unreadCount > 0 && !c.muted && c.id !== channel.id && <CountBadge>{formatUnread(c.unreadCount)}</CountBadge>}
           </button>
         ))}
         {onNew && (
           <button type="button" onClick={onNew} aria-label={t("tm.chat.newChannel")} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text">
-            <Plus size={15} aria-hidden />
+            <Plus size={16} aria-hidden />
           </button>
         )}
       </ScrollRow>

@@ -175,7 +175,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
         {phase === "success" ? (
           <div role="status" data-report-success="" className="flex flex-1 flex-col items-center justify-center gap-3.5 px-7 py-9 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success/12 text-success" aria-hidden>
-              <CircleCheck size={32} strokeWidth={1.75} />
+              <CircleCheck size={32} />
             </span>
             <h2 id={titleId} className="font-display text-h2 font-bold text-text">
               {t("report.modal.successTitle")}
@@ -194,7 +194,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
           <>
             <div className="flex shrink-0 items-start gap-3.5 px-5 pb-3 pt-5 sm:px-6">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-danger/12 text-danger" aria-hidden>
-                <Flag size={22} strokeWidth={1.75} />
+                <Flag size={24} />
               </span>
               <div className="min-w-0 flex-1 pt-px">
                 <h2 id={titleId} className="font-display text-h2 font-bold leading-tight text-text">
@@ -209,7 +209,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                 aria-label={t("common.close")}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
               >
-                <X size={18} strokeWidth={1.75} />
+                <X size={18} />
               </button>
             </div>
 
@@ -260,7 +260,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                       )}
                     >
                       <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", on ? "bg-primary text-primary-foreground" : "bg-surface text-text-secondary")} aria-hidden>
-                        <Icon size={18} strokeWidth={1.75} />
+                        <Icon size={18} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-body font-semibold leading-snug text-text">{t(REPORT_REASON_TITLE[reason])}</span>
@@ -312,7 +312,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
               {phase === "error" && error && (
                 <div role="alert" data-report-error="" className="mb-3 flex items-start gap-2.5 rounded-md bg-danger/10 px-3 py-2.5 text-small text-danger">
                   <span className="mt-px shrink-0" aria-hidden>
-                    <TriangleAlert size={16} strokeWidth={1.75} />
+                    <TriangleAlert size={16} />
                   </span>
                   <span>{error.message}</span>
                 </div>

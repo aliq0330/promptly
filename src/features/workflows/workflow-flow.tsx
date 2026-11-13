@@ -173,12 +173,12 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
         <CardBandBackdrop as="span" backdrop={c?.thumbnailUrl ? <StorageImg src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" /> : undefined} />
         <span className="relative flex items-start gap-3.5 pr-16">
           {c?.thumbnailUrl ? (
-            <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[16px] bg-surface shadow-pop">
+            <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface shadow-pop">
               <StorageImg src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-              <span className="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-bold text-primary-foreground">{index + 1}</span>
+              <span className="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-micro font-bold text-primary-foreground">{index + 1}</span>
             </span>
           ) : (
-            <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] bg-surface font-display text-[1.5rem] font-extrabold text-primary shadow-pop">
+            <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface font-display text-[1.5rem] font-extrabold text-primary shadow-pop">
               {index + 1}
             </span>
           )}
@@ -232,7 +232,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
                 <span className="block space-y-1">
                   {step.outputs.map((output) => (
                     <span key={output.id} className="flex min-w-0 items-start gap-1.5 text-caption font-medium text-text">
-                      <Check size={13} className="mt-px shrink-0 text-success" aria-hidden />
+                      <Check size={12} className="mt-px shrink-0 text-success" aria-hidden />
                       <span className="min-w-0 break-words">{output.label || t("workflow.outputLabel")}</span>
                     </span>
                   ))}
@@ -278,7 +278,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
               title={t("studio.openInStudio")}
               className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
             >
-              <WandSparkles size={15} />
+              <WandSparkles size={16} />
             </Link>
           )}
           <Link
@@ -287,7 +287,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
             title={t("workflow.flowOpen")}
             className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
           >
-            <ArrowUpRight size={15} />
+            <ArrowUpRight size={16} />
           </Link>
         </div>
       )}
@@ -310,7 +310,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 id={`step-preview-${step.id}`} className="min-w-0 truncate text-base font-semibold text-text">
+              <h2 id={`step-preview-${step.id}`} className="min-w-0 truncate text-body font-semibold text-text">
                 {index + 1}. {step.title || t("workflow.untitledStep")}
               </h2>
               <button type="button" onClick={close} aria-label={t("workflow.flowPreviewClose")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
@@ -343,7 +343,7 @@ function Connector({ from, to }: { from: WorkflowStep; to: WorkflowStep }) {
           linked ? "bg-primary-soft text-primary" : "text-text-muted",
         )}
       >
-        <ArrowDown size={13} className="shrink-0" />
+        <ArrowDown size={12} className="shrink-0" />
         <span className="min-w-0 break-words text-center">
           {linked ? (
             <>

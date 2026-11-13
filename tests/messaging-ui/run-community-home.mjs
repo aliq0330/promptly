@@ -464,7 +464,7 @@ await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ x
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`${BASE}/communities/local?id=${id(1)}&tab=manage&section=settings`);
   await page.getByRole("heading", { name: "Topluluk ayarları" }).waitFor();
-  const cards = await page.getByRole("tabpanel").locator("div.rounded-xl.shadow-card").count();
+  const cards = await page.getByRole("tabpanel").locator("div.rounded-lg.shadow-card").count();
   assert.ok(cards >= 2, "settings are grouped into separate cards");
   assert.equal(await overflowFree(page), true);
 }, { setup: (db) => { db.addCommunity(id(1), { name: "Sahibi Olduğum", myRole: "owner", members: [[U.bob, "owner"]], rules: "1. Saygılı ol\n2. Kaynağı belirt" }); for (let i = 1; i <= 5; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` }); } });

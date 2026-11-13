@@ -42,7 +42,7 @@ export function InfoPanelShell({
             aria-label={t("common.close")}
             className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <ChevronLeft size={22} aria-hidden />
+            <ChevronLeft size={24} aria-hidden />
           </button>
           <h2 id={titleId} className="sr-only">
             {title}
@@ -91,7 +91,7 @@ export function InfoIdentity({
 }
 
 const TILE =
-  "relative flex min-h-[4.75rem] flex-1 flex-col items-center justify-center gap-2 rounded-[20px] bg-surface px-1 py-3 text-center text-[0.78rem] font-medium leading-tight text-text shadow-xs transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50";
+  "relative flex min-h-[4.75rem] flex-1 flex-col items-center justify-center gap-2 rounded-xl bg-surface px-1 py-3 text-center text-[0.78rem] font-medium leading-tight text-text shadow-xs transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50";
 
 /** Kimliğin altındaki hızlı eylem karoları (Profil · Ara · Sessize al gibi). */
 export function InfoTiles({ children }: { children: ReactNode }) {
@@ -127,7 +127,7 @@ export function InfoTile({
       </span>
       {label}
       {badge !== undefined && badge > 0 && (
-        <span data-info-tile-badge className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
+        <span data-info-tile-badge className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold leading-none text-primary-foreground">
           {badge > 9 ? "9+" : badge}
         </span>
       )}
@@ -147,7 +147,7 @@ export function InfoTile({
 /** Dolgulu, kenarlıksız kart; içine `InfoRow`lar ya da serbest içerik konur. */
 export function InfoCard({ children, className, ...rest }: { children: ReactNode; className?: string } & Record<string, unknown>) {
   return (
-    <section className={cn("mx-4 mt-3 shrink-0 overflow-hidden rounded-[22px] bg-surface py-1 shadow-xs", className)} {...rest}>
+    <section className={cn("mx-4 mt-3 shrink-0 overflow-hidden rounded-xl bg-surface py-1 shadow-xs", className)} {...rest}>
       {children}
     </section>
   );
@@ -182,7 +182,7 @@ export function InfoRow({
       </span>
       <span className={cn("min-w-0 flex-1 truncate", danger && "text-danger")}>{children}</span>
       {value !== undefined && <span className="shrink-0 text-small text-text-muted">{value}</span>}
-      {(onClick || href) && !danger && value !== undefined && <ChevronRight size={17} className="-ml-2 shrink-0 text-text-muted" aria-hidden />}
+      {(onClick || href) && !danger && value !== undefined && <ChevronRight size={16} className="-ml-2 shrink-0 text-text-muted" aria-hidden />}
     </>
   );
   return href ? (

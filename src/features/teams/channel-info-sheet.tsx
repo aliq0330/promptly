@@ -16,6 +16,7 @@ import { archiveTeamChannel, deleteTeamChannel, setChannelNotify, setTeamMute, t
 import { channelParam } from "@/lib/team-chat";
 import { teamLink, teamRoleCan } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 type NotifyLevel = "all" | "mentions" | "none";
 
@@ -83,18 +84,18 @@ export function ChannelInfoSheet({
     [t("tm.chan.online"), t("tm.chat.memberCount", { count: onlineCount })],
   ];
   const rows: { key: string; label: string; hint?: string; icon: React.ReactNode; onClick?: () => void; href?: string; disabled?: boolean; tone?: string }[] = [
-    { key: "pinned", label: t("tm.chan.pinned"), hint: String(pinnedCount), icon: <Pin size={19} strokeWidth={1.75} />, onClick: pinnedCount > 0 ? onShowPinned : undefined, disabled: pinnedCount === 0 },
-    { key: "search", label: t("tm.chan.search"), icon: <Search size={19} strokeWidth={1.75} />, onClick: onSearch },
-    { key: "team", label: t("tm.chan.openTeam"), icon: <ArrowUpRight size={19} strokeWidth={1.75} />, href: teamLink(team.slug, "chat", { channel: channelParam(channel) }), tone: "text-primary" },
+    { key: "pinned", label: t("tm.chan.pinned"), hint: String(pinnedCount), icon: <Pin size={20} />, onClick: pinnedCount > 0 ? onShowPinned : undefined, disabled: pinnedCount === 0 },
+    { key: "search", label: t("tm.chan.search"), icon: <Search size={20} />, onClick: onSearch },
+    { key: "team", label: t("tm.chan.openTeam"), icon: <ArrowUpRight size={20} />, href: teamLink(team.slug, "chat", { channel: channelParam(channel) }), tone: "text-primary" },
   ];
 
   return (
     <>
       <Modal onClose={busy ? () => undefined : onClose} labelledBy="channel-info-title">
-        <div data-channel-info className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-3xl border border-border-soft bg-surface shadow-lg sm:rounded-3xl" onClick={(event) => event.stopPropagation()}>
+        <div data-channel-info className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-xl border border-border-soft bg-surface shadow-pop sm:rounded-xl" onClick={(event) => event.stopPropagation()}>
           <div className="flex shrink-0 items-center gap-3 px-5 pb-2 pt-5">
-            <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-2xl", channel.mode === "private" ? "bg-warning/10 text-warning" : "bg-primary-soft text-primary")} aria-hidden>
-              {channel.mode === "private" ? <Lock size={20} /> : <Hash size={21} strokeWidth={2.2} />}
+            <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-lg", channel.mode === "private" ? "bg-warning/10 text-warning" : "bg-primary-soft text-primary")} aria-hidden>
+              {channel.mode === "private" ? <Lock size={20} /> : <Hash size={20} />}
             </span>
             <div className="min-w-0 flex-1 leading-tight">
               <h2 id="channel-info-title" className="truncate font-display text-h3 font-bold text-text">
@@ -110,7 +111,7 @@ export function ChannelInfoSheet({
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
             <p className="text-small leading-relaxed text-text-secondary">{channel.description || t("tm.chan.noDescription")}</p>
 
-            <dl className="overflow-hidden rounded-2xl border border-border-soft">
+            <dl className="overflow-hidden rounded-lg border border-border-soft">
               {facts.map(([label, value]) => (
                 <div key={label} className="flex items-baseline justify-between gap-3 border-b border-border-soft px-3.5 py-2.5 text-small last:border-b-0">
                   <dt className="text-text-muted">{label}</dt>
@@ -153,7 +154,7 @@ export function ChannelInfoSheet({
               </p>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-border-soft">
+            <div className="overflow-hidden rounded-lg border border-border-soft">
               {rows.map((row) => {
                 const inner = (
                   <>
@@ -198,9 +199,9 @@ export function ChannelInfoSheet({
               </div>
             )}
             {error && !confirm && (
-              <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+              <InlineAlert>
                 {error}
-              </p>
+              </InlineAlert>
             )}
           </div>
         </div>

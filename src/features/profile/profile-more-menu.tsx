@@ -100,7 +100,7 @@ export function ProfileMoreMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-12 z-30 w-64 space-y-3 rounded-md border border-border-soft bg-surface-elevated p-3 shadow-pop animate-pop-in"
+          className="absolute right-0 top-12 z-30 w-64 space-y-3 rounded-lg border border-border-soft bg-surface-elevated p-3 shadow-pop animate-pop-in"
         >
           {extraItems && (
             <div className="space-y-0.5 border-b border-border pb-3">
@@ -110,7 +110,7 @@ export function ProfileMoreMenu({
               })}
             </div>
           )}
-          <button type="button" role="menuitem" onClick={() => void handleMuteClick()} disabled={!mute.loaded} data-action={mute.muted ? "profile-unmute" : "profile-mute"} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft disabled:opacity-60">
+          <button type="button" role="menuitem" onClick={() => void handleMuteClick()} disabled={!mute.loaded} data-action={mute.muted ? "profile-unmute" : "profile-mute"} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft disabled:opacity-50">
             {mute.muted ? <Bell size={14} aria-hidden /> : <BellOff size={14} aria-hidden />}
             <span className="min-w-0">
               <span className="block">{mute.muted ? t("nc.profile.unmute") : t("nc.profile.mute")}</span>
@@ -122,7 +122,7 @@ export function ProfileMoreMenu({
             role="menuitem"
             onClick={handleBlockClick}
             className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface-soft",
+              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small hover:bg-surface-soft",
               blockState.isBlocked ? "text-text" : "text-danger",
             )}
           >

@@ -15,6 +15,7 @@ import { fetchStarredMessages, toChatFeatureError, unstarMessage } from "@/lib/s
 import { messageHref, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { StarredMessage } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 type Cursor = { starredAt: string; messageId: string } | null;
 
@@ -118,15 +119,15 @@ export function StarredMessagesView() {
         </div>
 
         {actionError && (
-          <p role="alert" className="mb-3 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+          <InlineAlert className="mb-3">
             {actionError}
-          </p>
+          </InlineAlert>
         )}
 
-        {status === "loading" && <p className="py-10 text-center text-sm text-text-muted">{t("common.loading")}</p>}
+        {status === "loading" && <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>}
         {status === "error" && (
           <div className="py-10 text-center">
-            <p className="mb-3 text-sm text-danger">{t("chat.starred.loadFailed")}</p>
+            <p className="mb-3 text-small text-danger">{t("chat.starred.loadFailed")}</p>
             <Button type="button" variant="ghost" size="sm" onClick={() => void loadFirst()}>
               {t("common.retry")}
             </Button>
@@ -145,18 +146,18 @@ export function StarredMessagesView() {
                   className="flex min-w-0 flex-1 items-start gap-3 rounded-l-lg px-3 py-3 transition-colors hover:bg-surface-soft"
                 >
                   {item.kind === "group" ? (
-                    <GroupAvatar name={item.chatName} avatarUrl={item.chatAvatarUrl} size={36} badge />
+                    <GroupAvatar name={item.chatName} avatarUrl={item.chatAvatarUrl} size={40} badge />
                   ) : (
-                    <Avatar src={item.chatAvatarUrl} alt={item.chatName} size={36} />
+                    <Avatar src={item.chatAvatarUrl} alt={item.chatName} size={40} />
                   )}
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 text-caption text-text-muted">
                       <span className="max-w-[12rem] truncate font-semibold text-text-secondary">{item.chatName}</span>
-                      {item.kind === "group" && <span className="rounded-full bg-primary-soft px-1.5 py-px text-[10px] font-medium text-primary">{t("chat.starred.groupTag")}</span>}
+                      {item.kind === "group" && <span className="rounded-full bg-primary-soft px-1.5 py-px text-micro font-medium text-primary">{t("chat.starred.groupTag")}</span>}
                       <span className="ml-auto shrink-0">{formatRelativeTime(item.createdAt, language)}</span>
                     </span>
                     <span className="mt-0.5 block text-caption text-text-muted">{item.senderName}</span>
-                    <span className="mt-0.5 line-clamp-3 break-words text-sm text-text">{snippet(item)}</span>
+                    <span className="mt-0.5 line-clamp-3 break-words text-small text-text">{snippet(item)}</span>
                   </span>
                 </Link>
                 <button

@@ -26,9 +26,10 @@ import { isProjectKey, markChannelRead, projectIdOfKey, projectKey } from "./hub
 import { HubAddButton, HubBody, HubEmptyNote, HubFrame, HubHeader, HubRow, HubSection, HubTile, HubTopLink } from "./hub-parts";
 import { useHubSelection, type HubBulkActions } from "./hub-selection";
 import { useRealMessages } from "./real-messages-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 const channelHref = (channel: { id: string }) => `/messages/local?id=${channel.id}`;
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-micro font-bold uppercase tracking-[0.04em] text-text-muted";
 
 /**
  * Mesajlar'dan açılan EKİP kanal listesi (docs/history/369-*, 381-*): ekibin kanalları ve projeleri sohbet listesinin YERİNE açılır (bilgisayarda sol sütun, telefonda sayfa)
@@ -67,7 +68,7 @@ function SearchBox({ value, onChange, label }: { value: string; onChange: (value
         placeholder={label}
         autoFocus
         data-hub-search
-        className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+        className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
       />
     </label>
   );
@@ -175,7 +176,7 @@ function TeamHub({ teamId, embedded, openId }: { teamId: string; embedded: boole
                 </HubTopLink>
               )
             }
-            media={<TeamMark name={summary?.name ?? "…"} tone={summary?.tone} size={56} className="rounded-[18px]" />}
+            media={<TeamMark name={summary?.name ?? "…"} tone={summary?.tone} size={56} className="rounded-lg" />}
             title={summary?.name ?? "…"}
             meta={summary ? t("th.team.meta", { members: t("tm.chat.memberCount", { count: summary.memberCount }) }) : ""}
             muteCard={<MuteCard compact scope="team" muted={mutes.teamMuted} busy={mutes.busy || !mutes.loaded} error={mutes.error} onToggle={(next) => void mutes.setTeamMuted(next)} />}
@@ -196,9 +197,9 @@ function TeamHub({ teamId, embedded, openId }: { teamId: string; embedded: boole
         </>
       )}
       {selection.error && (
-        <p role="alert" className="mx-4 mb-3 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert className="mx-4 mb-3">
           {selection.error}
-        </p>
+        </InlineAlert>
       )}
       <HubBody embedded={embedded} selecting={selection.selecting}>
         {(!loaded || channelRows.length > 0 || filter === "all") && (
@@ -233,7 +234,7 @@ function TeamHub({ teamId, embedded, openId }: { teamId: string; embedded: boole
                 key={project.projectId}
                 testKey={project.title}
                 href={teamHubHref(teamId, project.projectId, openId)}
-                tile={<HubTile tone="primary" square><Folder size={21} /></HubTile>}
+                tile={<HubTile tone="primary" square><Folder size={20} /></HubTile>}
                 title={project.title}
                 muteScope={project.muteScope ?? (mutes.isProjectMuted(project.projectId) ? "project" : null)}
                 at={project.lastMessageAt}
@@ -393,9 +394,9 @@ function ProjectHub({ teamId, projectId, embedded, openId }: { teamId: string; p
         </>
       )}
       {selection.error && (
-        <p role="alert" className="mx-4 mb-3 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert className="mx-4 mb-3">
           {selection.error}
-        </p>
+        </InlineAlert>
       )}
       <HubBody embedded={embedded} selecting={selection.selecting}>
         <HubSection title={t("th.project.chats")} testId="hub-project-chats">

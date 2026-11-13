@@ -59,7 +59,7 @@ export function InsightsView() {
   );
 
   return (
-    <PageContainer className="flex flex-col gap-6 lg:max-w-[1104px]">
+    <PageContainer className="flex flex-col gap-6 lg:max-w-6xl">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0 space-y-1.5">
           <SadeTitle>{t("insights.title")}</SadeTitle>
@@ -143,7 +143,7 @@ function ReadyBody({ data, period }: { data: CreatorInsights; period: InsightPer
       </div>
 
       <aside className="flex items-start gap-3 rounded-lg bg-surface-soft p-4 text-small leading-relaxed text-text-secondary">
-        <Info size={18} strokeWidth={1.75} className="mt-0.5 shrink-0" aria-hidden />
+        <Info size={18} className="mt-0.5 shrink-0" aria-hidden />
         <p>
           <strong className="font-semibold text-text">{t("insights.note.title")}</strong> {t("insights.note.body")}
         </p>

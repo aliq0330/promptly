@@ -684,7 +684,7 @@ export function StoryCreator() {
               {error}
               {media && !media.uploadedUrl && media.prepared && !busy && (
                 <button type="button" onClick={() => void (isPreview ? onPublish() : onSaveDraft())} className="inline-flex items-center gap-1 font-semibold text-primary">
-                  <RefreshCw size={13} aria-hidden /> {t("common.retry")}
+                  <RefreshCw size={12} aria-hidden /> {t("common.retry")}
                 </button>
               )}
             </p>
@@ -704,7 +704,7 @@ export function StoryCreator() {
                     </>
                   ) : (
                     <>
-                      <Check size={15} aria-hidden /> {t("stories.create.publish")}
+                      <Check size={16} aria-hidden /> {t("stories.create.publish")}
                     </>
                   )}
                 </Button>
@@ -712,7 +712,7 @@ export function StoryCreator() {
             ) : (
               <>
                 <Button type="button" variant="outline" onClick={() => void onSaveDraft()} disabled={Boolean(busy)}>
-                  {busy?.kind === "saving" || (busy?.kind === "uploading" && busy.purpose === "draft") ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Save size={15} aria-hidden />}
+                  {busy?.kind === "saving" || (busy?.kind === "uploading" && busy.purpose === "draft") ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Save size={16} aria-hidden />}
                   {t("stories.draft.save")}
                 </Button>
                 <Button
@@ -759,7 +759,7 @@ function ChoiceTile({ icon: Icon, label, hint, onClick }: { icon: typeof Type; l
       className="flex min-h-28 flex-col items-start justify-between gap-3 rounded-lg border border-border-soft bg-surface p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong"
     >
       <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-soft text-primary">
-        <Icon size={20} strokeWidth={1.75} aria-hidden />
+        <Icon size={20} aria-hidden />
       </span>
       <span>
         <span className="block text-small font-semibold text-text">{label}</span>
@@ -780,7 +780,7 @@ function ToolButton({ icon: Icon, label, onClick, pressed }: { icon: typeof Type
         pressed ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text",
       )}
     >
-      <Icon size={15} strokeWidth={1.75} aria-hidden />
+      <Icon size={16} aria-hidden />
       {label}
     </button>
   );
@@ -873,7 +873,7 @@ function StickerPanel({ sticker, onChange, onRemove }: { sticker: StorySticker; 
               />
               {sticker.options.length > STORY_LIMITS.pollOptionsMin && (
                 <button type="button" aria-label={t("stories.editor.removeOption")} onClick={() => onChange({ ...sticker, options: sticker.options.filter((_, i) => i !== index) })} className="flex h-10 w-10 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger">
-                  <X size={15} aria-hidden />
+                  <X size={16} aria-hidden />
                 </button>
               )}
             </div>

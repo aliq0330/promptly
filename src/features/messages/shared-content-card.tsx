@@ -34,7 +34,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset, Prompt, PromptMedia, PromptRequest, Workflow } from "@/types";
 import { StorageImage } from "@/components/ui/storage-media";
 
-const CARD_CLASS = "block w-72 max-w-full space-y-2 rounded-3xl bg-surface-soft p-2 text-left";
+const CARD_CLASS = "block w-72 max-w-full space-y-2 rounded-xl bg-surface-soft p-2 text-left";
 
 /** Kaydedilebilen paylaşım türleri (istek ve Space kaydedilmez — docs/history/184-*). */
 type SaveTarget = { kind: "prompt" | "workflow" | "preset"; id: string };
@@ -82,11 +82,11 @@ function SharedCard({
   if (state === "hidden") {
     return (
       <div className={cn(CARD_CLASS, "p-3")} data-shared-card="hidden" data-shared-post-card={testId === "post" ? "none" : undefined}>
-        <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
-          <Lock size={13} />
+        <span className="flex items-center gap-1.5 text-caption font-medium text-text-muted">
+          <Lock size={12} />
           {typeLabel}
         </span>
-        <span className="block text-xs text-text-muted">{hiddenMessage ?? t("messages.contentHidden")}</span>
+        <span className="block text-caption text-text-muted">{hiddenMessage ?? t("messages.contentHidden")}</span>
       </div>
     );
   }
@@ -99,14 +99,14 @@ function SharedCard({
               <StorageImage src={thumbnail.url} alt={thumbnail.alt} fill sizes="288px" className="object-cover" />
             ) : (
               <span aria-hidden className="flex h-full w-full items-center justify-center text-primary/60">
-                <Icon size={36} strokeWidth={1.4} />
+                <Icon size={36} />
               </span>
             ))}
           <span
             data-shared-type
             className="absolute left-2 top-2 inline-flex h-6 items-center gap-1 rounded-full bg-background/85 px-2 text-caption font-semibold text-text shadow-xs backdrop-blur"
           >
-            <Icon size={13} className="shrink-0" aria-hidden />
+            <Icon size={12} className="shrink-0" aria-hidden />
             {typeLabel}
           </span>
           {badge && <span className="absolute right-2 top-2">{badge}</span>}
@@ -124,7 +124,7 @@ function SharedCard({
       <div className="flex items-center gap-2 px-0.5 pb-0.5">
         <Link href={href} className={buttonClassName({ className: "h-11 flex-1 gap-1.5" })} data-shared-open>
           {openLabel}
-          <ArrowUpRight size={15} aria-hidden />
+          <ArrowUpRight size={16} aria-hidden />
         </Link>
         {save && state === "ready" && (
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-elevated text-text">

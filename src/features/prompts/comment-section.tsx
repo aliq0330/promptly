@@ -108,7 +108,7 @@ export function CommentSection({
             className="inline-flex items-center gap-1 text-caption font-medium text-primary transition-opacity hover:opacity-80"
           >
             {showAll ? t("common.showLess") : t("comments.viewAllThread")}
-            {!showAll && <ArrowRight size={13} aria-hidden />}
+            {!showAll && <ArrowRight size={12} aria-hidden />}
           </button>
         )}
       </div>
@@ -175,8 +175,8 @@ export function CommentSection({
         </form>
       )}
 
-      {postError && <p className="text-sm text-danger">{postError}</p>}
-      {deleteError && <p className="text-sm text-danger">{deleteError}</p>}
+      {postError && <p className="text-small text-danger">{postError}</p>}
+      {deleteError && <p className="text-small text-danger">{deleteError}</p>}
 
       {!loaded ? (
         <div className="space-y-3" role="status" aria-label={t("comments.loadingComments")}>

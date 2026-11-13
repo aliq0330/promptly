@@ -106,7 +106,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
   }
 
   if (rows === null) {
-    return <p className="text-sm text-text-muted">{t("draft.loading")}</p>;
+    return <p className="text-small text-text-muted">{t("draft.loading")}</p>;
   }
 
   return (
@@ -135,16 +135,16 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
               <div className="pb-2">
               <div className="rounded-md border border-border-soft bg-surface-soft p-3">
                 <div className="flex items-center gap-1.5 text-caption font-medium text-text-muted">
-                  <Icon size={13} aria-hidden />
+                  <Icon size={12} aria-hidden />
                   {t(KIND_META[row.kind].labelKey)}
                 </div>
-                <p className="mt-1 truncate text-sm font-medium text-text">{row.title.trim() || t("draft.untitled")}</p>
-                <p className="mb-2 text-xs text-text-muted">{t("draft.lastEdited", { time: formatRelativeTime(row.updatedAt, language) })}</p>
-                {confirmId === row.id && <p className="mb-2 text-xs text-danger">{t("draft.deleteConfirm")}</p>}
+                <p className="mt-1 truncate text-small font-medium text-text">{row.title.trim() || t("draft.untitled")}</p>
+                <p className="mb-2 text-caption text-text-muted">{t("draft.lastEdited", { time: formatRelativeTime(row.updatedAt, language) })}</p>
+                {confirmId === row.id && <p className="mb-2 text-caption text-danger">{t("draft.deleteConfirm")}</p>}
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     href={row.href}
-                    className="inline-flex min-h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary-hover"
+                    className="inline-flex min-h-9 items-center rounded-md bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover"
                   >
                     {t("draft.continue")}
                   </Link>
@@ -169,7 +169,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
       {visible.length > shown && (
         <LoadMoreButton wrapperClassName="flex justify-center pt-1" onLoadMore={() => setShown((count) => count + DRAFTS_SHOWN_STEP)} />
       )}
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-small text-danger">{error}</p>}
     </div>
   );
 }

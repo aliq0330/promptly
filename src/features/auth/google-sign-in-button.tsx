@@ -76,7 +76,7 @@ export function GoogleSignInButton({ next }: { next?: string | null }) {
         {busy ? t("auth.googleRedirecting") : t("auth.continueWithGoogle")}
       </Button>
       {error && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="text-small text-danger">
           {error}
         </p>
       )}

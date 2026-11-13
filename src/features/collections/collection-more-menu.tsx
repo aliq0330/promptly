@@ -10,6 +10,7 @@ import { deleteCollection } from "@/lib/supabase/collections";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
+import { MENU_ITEM_CLASS } from "@/components/ui/menu";
 
 const MENU_WIDTH = 208; // w-52
 const VIEWPORT_MARGIN = 8;
@@ -155,7 +156,7 @@ export function CollectionMoreMenu({
                 setOpen(false);
                 onEdit();
               }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+              className={MENU_ITEM_CLASS}
             >
               <Pencil size={14} />
               {t("collection.editTitle")}
@@ -165,12 +166,12 @@ export function CollectionMoreMenu({
               role="menuitem"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger/10"
             >
               {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <TrashIcon size={14} />}
               {confirmingDelete ? t("common.confirmDelete") : t("collection.delete")}
             </button>
-            {error && <p className="px-3 py-1 text-xs text-danger">{error}</p>}
+            {error && <p className="px-3 py-1 text-caption text-danger">{error}</p>}
           </div>
         </Portal>
       )}

@@ -18,6 +18,7 @@ import { conversationIdByUser, filterMessageableUsers } from "@/lib/supabase/mes
 import { buildNewChatSections, resolveNewChatTarget, type ChatPartner } from "@/lib/new-chat";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 /** How many follows / followers the picker reads — the table is never pulled whole. */
 const LIST_FETCH_LIMIT = 100;
@@ -179,11 +180,11 @@ export function NewChatModal({
   return (
     <Modal onClose={onClose} labelledBy="new-chat-title">
       <div
-        className="flex max-h-[85vh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg"
+        className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2 px-5 pb-3 pt-5">
-          <h2 id="new-chat-title" className="text-base font-semibold text-text">
+          <h2 id="new-chat-title" className="text-body font-semibold text-text">
             {t("messages.newChat")}
           </h2>
           <button
@@ -208,13 +209,13 @@ export function NewChatModal({
                 setPickError(null);
               }}
               placeholder={t("messages.newChatSearchPlaceholder")}
-              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
           {pickError && (
-            <p role="alert" className="mt-2 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert className="mt-2">
               {pickError}
-            </p>
+            </InlineAlert>
           )}
           {showCommunitiesLink && !searchingNow && (
             <Link
@@ -324,11 +325,11 @@ function PeopleSection({
               type="button"
               onClick={() => onPick(person)}
               disabled={pickingId !== null}
-              className="flex min-h-12 w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-surface-soft disabled:opacity-60"
+              className="flex min-h-12 w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-surface-soft disabled:opacity-50"
             >
               <PresenceAvatar userId={person.id} src={person.avatarUrl} alt={person.displayName} size={40} />
               <span className="min-w-0 flex-1 leading-tight">
-                <span className="block truncate text-sm font-semibold text-text">{person.displayName}</span>
+                <span className="block truncate text-small font-semibold text-text">{person.displayName}</span>
                 <PresenceStatusText userId={person.id} fallback={`@${person.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
               </span>
               {pickingId === person.id && <Loader2 size={16} className="shrink-0 animate-spin text-text-muted" />}

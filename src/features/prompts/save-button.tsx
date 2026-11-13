@@ -73,7 +73,7 @@ export function SaveButton({
         aria-label={t("prompt.loginToSaveAria", { count })}
         className={sharedClassName}
       >
-        <Bookmark size={size} strokeWidth={1.75} />
+        <Bookmark size={size} />
         <span aria-hidden>{formatCount(count)}</span>
       </button>
     );

@@ -93,7 +93,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
             <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />
             <CommentCountLink requestId={request.id} baseCount={request.commentCount} />
             <Link href={href} className={contentActionClassName(false)} title={t("request.replies")} aria-label={`${t("request.replies")} (${formatCount(request.responseCount)})`}>
-              <Reply size={16} strokeWidth={1.75} />
+              <Reply size={16} />
               <span aria-hidden>{formatCount(request.responseCount)}</span>
             </Link>
           </>

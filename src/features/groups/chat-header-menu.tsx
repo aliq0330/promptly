@@ -39,7 +39,7 @@ export function ChatHeaderMenu({ children, label }: { children: (close: () => vo
         <MoreVertical size={20} />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-10 z-30 w-64 space-y-0.5 rounded-md border border-border-soft bg-surface-elevated p-2 shadow-pop animate-pop-in">
+        <div role="menu" className="absolute right-0 top-10 z-30 w-64 space-y-0.5 rounded-lg border border-border-soft bg-surface-elevated p-2 shadow-pop animate-pop-in">
           {children(() => setOpen(false))}
         </div>
       )}

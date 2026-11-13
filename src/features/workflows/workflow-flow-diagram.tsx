@@ -53,7 +53,7 @@ function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: 
   return (
     <span
       className={cn(
-        "max-w-full truncate rounded-md px-1.5 py-0.5 text-[11px] leading-4",
+        "max-w-full truncate rounded-md px-1.5 py-0.5 text-micro leading-4",
         tone === "flow" ? "bg-primary-soft font-semibold text-primary" : "border border-border-soft bg-surface-soft font-mono text-text-secondary",
       )}
     >
@@ -100,12 +100,12 @@ function StepNode({ step, index, steps, box, options, lowDetail }: { step: Workf
         (options.showIo ? (
           <>
             <div className="grid grid-cols-[46px_minmax(0,1fr)] items-start gap-1.5">
-              <span className="pt-0.5 text-[10px] font-bold uppercase tracking-[0.07em] text-text-muted">{t("wfSpace.flow.input")}</span>
-              {inputs.length > 0 ? <ChipRow chips={inputs} /> : <span className="text-[11px] text-text-muted">—</span>}
+              <span className="pt-0.5 text-micro font-bold uppercase tracking-[0.07em] text-text-muted">{t("wfSpace.flow.input")}</span>
+              {inputs.length > 0 ? <ChipRow chips={inputs} /> : <span className="text-micro text-text-muted">—</span>}
             </div>
             <div className="grid grid-cols-[46px_minmax(0,1fr)] items-start gap-1.5">
-              <span className="pt-0.5 text-[10px] font-bold uppercase tracking-[0.07em] text-text-muted">{t("wfSpace.flow.output")}</span>
-              {outputs.length > 0 ? <ChipRow chips={outputs} /> : <span className="text-[11px] text-text-muted">—</span>}
+              <span className="pt-0.5 text-micro font-bold uppercase tracking-[0.07em] text-text-muted">{t("wfSpace.flow.output")}</span>
+              {outputs.length > 0 ? <ChipRow chips={outputs} /> : <span className="text-micro text-text-muted">—</span>}
             </div>
           </>
         ) : (
@@ -130,7 +130,7 @@ function LinkCard({ step, box, lowDetail }: { step: WorkflowStep; box: FlowBox; 
     >
       {!lowDetail && (
         <>
-          <p className={cn("flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.07em]", content ? "text-primary" : "text-text-muted")}>
+          <p className={cn("flex items-center gap-1.5 text-micro font-bold uppercase tracking-[0.07em]", content ? "text-primary" : "text-text-muted")}>
             {content ? <Icon size={12} aria-hidden /> : <Link2Off size={12} aria-hidden />}
             {content ? t(step.stepType === "request" ? "spaces.content.request" : "spaces.item.prompt") : t(step.contentMissing ? "spaces.source.unavailable" : "wfSpace.flow.noContent")}
           </p>
@@ -138,7 +138,7 @@ function LinkCard({ step, box, lowDetail }: { step: WorkflowStep; box: FlowBox; 
             <div className="flex min-h-0 flex-1 items-start gap-2">
               <div className="min-w-0 flex-1">
                 <p className="line-clamp-3 break-words text-[13px] font-semibold leading-[1.25] text-text">{content.title}</p>
-                <p className="mt-1 truncate text-[11.5px] text-text-muted">@{content.authorUsername}</p>
+                <p className="mt-1 truncate text-micro text-text-muted">@{content.authorUsername}</p>
               </div>
               {content.thumbnailUrl && <StorageImg src={content.thumbnailUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />}
             </div>
@@ -199,7 +199,7 @@ export const WorkflowFlowDiagram = memo(function WorkflowFlowDiagram({
       <div className="absolute left-0 top-0 origin-top-left" style={{ width: layout.width, height: layout.height, transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})` }}>
         <div className="absolute inset-2 rounded-[28px] border-2 border-dashed border-border-strong bg-surface/60" aria-hidden />
         <div className="absolute flex items-center gap-2.5" style={{ left: FLOW_PAD_X, right: FLOW_PAD_X, top: 18, height: 32 }}>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.07em] text-primary">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-micro font-bold uppercase tracking-[0.07em] text-primary">
             <WorkflowIcon size={13} aria-hidden />
             {t("workflow.singular")}
           </span>
@@ -236,7 +236,7 @@ export const WorkflowFlowDiagram = memo(function WorkflowFlowDiagram({
             .map((arrow) => (
               <span
                 key={`al${arrow.from}`}
-                className="absolute max-w-[120px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-[10px] text-primary"
+                className="absolute max-w-[120px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-border bg-surface px-2 py-0.5 font-mono text-micro text-primary"
                 style={{ left: arrow.labelX, top: arrow.labelY }}
               >
                 {arrow.label}
@@ -248,7 +248,7 @@ export const WorkflowFlowDiagram = memo(function WorkflowFlowDiagram({
             return (
               <span
                 key={`rt${rel.a}-${rel.b}`}
-                className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-secondary/40 bg-surface px-2 py-0.5 text-[10.5px] font-semibold text-secondary"
+                className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-secondary/40 bg-surface px-2 py-0.5 text-micro font-semibold text-secondary"
                 style={{ left: rel.labelX, top: rel.labelY }}
               >
                 {type ? t(RELATION_TYPES[type].labelKey) : ""}
@@ -259,7 +259,7 @@ export const WorkflowFlowDiagram = memo(function WorkflowFlowDiagram({
           layout.crossRowRelations.map((rel) => {
             const type = data.relations.find((r) => (r.a === rel.a && r.b === rel.b) || (r.a === rel.b && r.b === rel.a))?.type;
             return (
-              <p key={`cr${rel.a}-${rel.b}`} className="absolute truncate text-[11px] font-semibold text-secondary" style={{ left: layout.nodes[rel.a].x, top: rel.labelY, width: FLOW_NODE_W }}>
+              <p key={`cr${rel.a}-${rel.b}`} className="absolute truncate text-micro font-semibold text-secondary" style={{ left: layout.nodes[rel.a].x, top: rel.labelY, width: FLOW_NODE_W }}>
                 ↔ {t("wfSpace.flow.relatesTo", { n: rel.b + 1, title: stepTitle(rel.b), type: type ? t(RELATION_TYPES[type].labelKey) : "" })}
               </p>
             );

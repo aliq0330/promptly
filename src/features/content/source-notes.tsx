@@ -38,9 +38,9 @@ export function SourceNotes({ notes }: { notes: string[] }) {
         aria-controls={panelId}
         className="flex min-h-10 w-full items-center gap-2 py-1.5 text-left text-label font-medium text-text transition-colors hover:text-primary"
       >
-        <PenLine size={15} className="shrink-0 text-text-secondary" aria-hidden />
+        <PenLine size={16} className="shrink-0 text-text-secondary" aria-hidden />
         <span className="min-w-0 truncate">{t("source.heading")}</span>
-        <ChevronDown size={15} aria-hidden className={cn("shrink-0 text-text-muted transition-transform duration-200", open && "rotate-180")} />
+        <ChevronDown size={16} aria-hidden className={cn("shrink-0 text-text-muted transition-transform duration-200", open && "rotate-180")} />
         {license && (
           <span className="ml-auto inline-flex shrink-0 items-center rounded-md border border-border-soft bg-surface px-1.5 py-0.5 text-caption font-medium text-text-secondary">{license}</span>
         )}

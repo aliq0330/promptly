@@ -115,7 +115,7 @@ export function WelcomeTour() {
 
         <div key={step} className="animate-fade-in space-y-3 pb-1 pt-5">
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
-            <Icon size={22} aria-hidden />
+            <Icon size={24} aria-hidden />
           </span>
           <h2 id="tour-title" className="font-display text-h2 text-text">
             {t(current.title)}

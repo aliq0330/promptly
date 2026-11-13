@@ -3929,7 +3929,7 @@ const dictionary: Record<string, string> = {
   "spaces.palette.removeColor": "Rengi sil",
   "spaces.palette.moveLeft": "Sola taşı",
   "spaces.palette.moveRight": "Sağa taşı",
-  "spaces.palette.invalidHex": "Geçerli bir HEX kodu gir (ör. #7c5cff).",
+  "spaces.palette.invalidHex": "Geçerli bir HEX kodu gir (ör. #3b5be2).",
   "spaces.palette.tooMany": "Bir palette en çok {{max}} renk olabilir.",
   "spaces.palette.sourceManual": "Elle oluşturuldu",
   "spaces.palette.sourceImage": "Görselden çıkarıldı",

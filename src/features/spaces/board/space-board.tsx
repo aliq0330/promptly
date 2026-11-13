@@ -1542,32 +1542,32 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   const canMoveSelection = canReview(myRole) || selectedItems.every((entry) => isDrawingKind(entry.kind) || (entry.createdBy === userId && (entry.revState === "draft" || entry.revState === "changes")));
   const itemKindName = (item: SpaceItem) => t(ITEM_KIND_LABEL[item.kind]);
 
-  const teamContentRows: AddRow[] = CONTENT_ADD_ROWS.map((row) => ({ key: row.key, icon: <row.icon size={19} aria-hidden />, label: t(row.label), hint: t(row.hint), run: () => contentAdd.run(row) }));
+  const teamContentRows: AddRow[] = CONTENT_ADD_ROWS.map((row) => ({ key: row.key, icon: <row.icon size={20} aria-hidden />, label: t(row.label), hint: t(row.hint), run: () => contentAdd.run(row) }));
   const promptlyRows: AddRow[] = teamMode
     ? [
         ...teamContentRows,
-        { key: "image", icon: <ImagePlus size={19} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
-        { key: "note", icon: <StickyNote size={19} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
+        { key: "image", icon: <ImagePlus size={20} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
+        { key: "note", icon: <StickyNote size={20} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
         { key: "palette", icon: <PaletteIcon size={19} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
         ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={19} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
       ]
     : [
-      { key: "draft", icon: <SquareTerminal size={19} aria-hidden />, label: t("tb.add.prompt"), hint: t("tb.add.promptHint"), run: () => setDialog({ kind: "draft", near: viewCenter() }) },
-      { key: "image", icon: <ImagePlus size={19} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
-      { key: "note", icon: <StickyNote size={19} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
+      { key: "draft", icon: <SquareTerminal size={20} aria-hidden />, label: t("tb.add.prompt"), hint: t("tb.add.promptHint"), run: () => setDialog({ kind: "draft", near: viewCenter() }) },
+      { key: "image", icon: <ImagePlus size={20} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
+      { key: "note", icon: <StickyNote size={20} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
       { key: "palette", icon: <PaletteIcon size={19} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
       ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={19} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
       { key: "workflow", icon: <WorkflowIcon size={19} aria-hidden />, label: t("tb.add.workflow"), hint: t("tb.add.workflowHint"), run: () => setDialog({ kind: "importWorkflow" }) },
-      { key: "preset", icon: <SlidersHorizontal size={19} aria-hidden />, label: t("tb.add.preset"), hint: t("tb.add.presetHint"), run: () => setDialog({ kind: "content", type: "preset" }) },
-      { key: "request", icon: <Sparkles size={19} aria-hidden />, label: t("tb.add.request"), hint: t("tb.add.requestHint"), run: () => setDialog({ kind: "content", type: "request" }) },
+      { key: "preset", icon: <SlidersHorizontal size={20} aria-hidden />, label: t("tb.add.preset"), hint: t("tb.add.presetHint"), run: () => setDialog({ kind: "content", type: "preset" }) },
+      { key: "request", icon: <Sparkles size={20} aria-hidden />, label: t("tb.add.request"), hint: t("tb.add.requestHint"), run: () => setDialog({ kind: "content", type: "request" }) },
     ];
   const drawingRows: AddRow[] = [
-    { key: "text", icon: <Type size={19} aria-hidden />, label: t("tb.kind.text"), hint: t("tb.add.textHint"), tag: t("tb.add.new"), run: () => setToolMode("text"), hidden: !canDraw },
-    { key: "frame", icon: <Frame size={19} aria-hidden />, label: t("tb.kind.frame"), hint: t("tb.add.frameHint"), tag: t("tb.add.new"), run: () => setToolMode("frame"), hidden: !canDraw },
-    { key: "pencil", icon: <Pencil size={19} aria-hidden />, label: t("tb.tool.pencil"), hint: t("tb.add.pencilHint"), tag: t("tb.add.new"), run: () => setToolMode("pencil"), hidden: !canDraw },
-    { key: "shape", icon: <Square size={19} aria-hidden />, label: t("tb.tool.shape"), hint: t("tb.add.shapeHint"), tag: t("tb.add.new"), run: () => { setShape("rect"); setToolMode("rect"); }, hidden: !canDraw },
+    { key: "text", icon: <Type size={20} aria-hidden />, label: t("tb.kind.text"), hint: t("tb.add.textHint"), tag: t("tb.add.new"), run: () => setToolMode("text"), hidden: !canDraw },
+    { key: "frame", icon: <Frame size={20} aria-hidden />, label: t("tb.kind.frame"), hint: t("tb.add.frameHint"), tag: t("tb.add.new"), run: () => setToolMode("frame"), hidden: !canDraw },
+    { key: "pencil", icon: <Pencil size={20} aria-hidden />, label: t("tb.tool.pencil"), hint: t("tb.add.pencilHint"), tag: t("tb.add.new"), run: () => setToolMode("pencil"), hidden: !canDraw },
+    { key: "shape", icon: <Square size={20} aria-hidden />, label: t("tb.tool.shape"), hint: t("tb.add.shapeHint"), tag: t("tb.add.new"), run: () => { setShape("rect"); setToolMode("rect"); }, hidden: !canDraw },
     { key: "arrow", icon: <MinusLine size={19} className="-rotate-45" aria-hidden />, label: t("tb.add.lineArrow"), hint: t("tb.add.lineHint"), tag: t("tb.add.new"), run: () => { setShape("arrow"); setToolMode("arrow"); }, hidden: !canDraw },
-    { key: "connect", icon: <Spline size={19} aria-hidden />, label: t("tb.add.connect"), hint: t("tb.add.connectHint"), run: () => setToolMode("connect") },
+    { key: "connect", icon: <Spline size={20} aria-hidden />, label: t("tb.add.connect"), hint: t("tb.add.connectHint"), run: () => setToolMode("connect") },
   ];
   const zoomProps = {
     zoom: vp.zoom,
@@ -1610,7 +1610,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   const composerBody = draftPin && (
     <div className="space-y-3" data-testid="board-comment-composer">
       <div className="flex items-center gap-2.5">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-[0.6875rem] font-bold text-primary-foreground">{initialsOf(ownProfile?.displayName || ownProfile?.username || "?")}</span>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-micro font-bold text-primary-foreground">{initialsOf(ownProfile?.displayName || ownProfile?.username || "?")}</span>
         <div className="min-w-0 flex-1 space-y-0.5">
           <p className="text-small font-bold leading-none text-text">{t("tb.comments.newTitle")}</p>
           <CommentTargetChip item={draftPin.itemId ? (items.find((entry) => entry.id === draftPin.itemId) ?? null) : null} itemTitle={itemTitle} />
@@ -1943,7 +1943,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       {/* Bildirimler */}
       {(error || layoutNotice || undoNotice) && (
         <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex justify-center px-3">
-          <div role={error ? "alert" : "status"} className={cn("pointer-events-auto flex max-w-lg items-center gap-2 rounded-full px-3.5 py-2 text-small shadow-pop", error ? "bg-danger text-white" : "bg-text text-background")}>
+          <div role={error ? "alert" : "status"} className={cn("pointer-events-auto flex max-w-lg items-center gap-2 rounded-full px-3.5 py-2 text-small shadow-pop", error ? "bg-danger text-danger-foreground" : "bg-text text-background")}>
             <span className="min-w-0 break-words">{error ?? layoutNotice ?? undoNotice}</span>
             {!error && undoNotice && editable && (
               <button type="button" onClick={() => void undo()} className="shrink-0 font-semibold underline underline-offset-2">
@@ -1998,7 +1998,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
                 {selectedItems.length >= 2 && (
                   <SpaceMenu
                     label={t("spaces.board.align")}
-                    trigger={<AlignStartVertical size={17} aria-hidden />}
+                    trigger={<AlignStartVertical size={16} aria-hidden />}
                     items={[
                       { key: "left", label: t("spaces.board.alignLeft"), icon: AlignStartVertical, onSelect: () => align("left") },
                       { key: "centerX", label: t("spaces.board.alignCenterX"), icon: AlignCenterVertical, onSelect: () => align("centerX") },
@@ -2119,7 +2119,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         const left = Math.max(8, Math.min(at.x + 20, view.w - 344));
         const top = Math.max(8, Math.min(at.y - 44, view.h - 270));
         return (
-          <div className="absolute z-40 w-[21rem] rounded-2xl border border-border-soft bg-surface p-3.5 shadow-pop animate-pop-in" style={{ left, top }}>
+          <div className="absolute z-40 w-[21rem] rounded-lg border border-border-soft bg-surface p-3.5 shadow-pop animate-pop-in" style={{ left, top }}>
             {composerBody}
           </div>
         );
@@ -2203,12 +2203,12 @@ function ToolButton({ icon: Icon, label, onClick, active, disabled, danger, clas
       title={label}
       aria-pressed={active}
       className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40",
+        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-50",
         active ? "bg-primary-soft text-primary" : danger ? "text-danger hover:bg-danger/10" : "text-text-secondary hover:bg-surface-soft hover:text-text",
         className,
       )}
     >
-      <Icon size={17} aria-hidden />
+      <Icon size={16} aria-hidden />
     </button>
   );
 }

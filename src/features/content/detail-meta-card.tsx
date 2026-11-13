@@ -72,7 +72,7 @@ export function DetailMetaCard({
       {hasChips && <div className="flex min-w-0 basis-full flex-wrap gap-1.5">{children}</div>}
       {quoteCount > 0 && (
         <p data-quote-count={quoteCount} className="flex basis-full items-center gap-1.5 text-caption text-text-muted">
-          <Quote size={13} aria-hidden /> {t("quotes.count", { count: quoteCount })}
+          <Quote size={12} aria-hidden /> {t("quotes.count", { count: quoteCount })}
         </p>
       )}
       {footer}

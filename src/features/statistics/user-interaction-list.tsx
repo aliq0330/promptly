@@ -61,7 +61,7 @@ function EngagerRow({ item, kind, onNavigate }: { item: ContentEngager; kind: St
   return (
     <li className="flex items-start gap-3 px-5 py-3">
       <Link href={profileHref(profile)} onClick={onNavigate} className="relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <Avatar src={profile.avatarUrl} alt={profile.displayName} size={44} />
+        <Avatar src={profile.avatarUrl} alt={profile.displayName} size={40} />
         {item.reaction && (
           <span className="absolute -bottom-1 -right-1 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-surface ring-2 ring-surface">
             <ReactionIcon reaction={item.reaction} size={18} />

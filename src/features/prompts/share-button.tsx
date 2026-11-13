@@ -84,7 +84,7 @@ export function ShareButton({
       title={copied ? t("common.linkCopied") : t("common.share")}
       className={contentActionClassName(copied, className)}
     >
-      <Share2 size={16} strokeWidth={1.75} />
+      <Share2 size={16} />
       {label && <span>{copied ? t("common.copied") : label}</span>}
     </button>
   );

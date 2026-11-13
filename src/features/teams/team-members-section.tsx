@@ -83,7 +83,7 @@ function RolesMatrix({ ctx }: { ctx: TeamCtx }) {
                 const allowed = teamRoleCan(r.role, row.cap, policy);
                 return (
                   <td key={r.role} className="py-2 text-center">
-                    {allowed ? <Check size={15} className="mx-auto text-success" aria-label="✓" /> : <span className="text-text-muted" aria-label="–">–</span>}
+                    {allowed ? <Check size={16} className="mx-auto text-success" aria-label="✓" /> : <span className="text-text-muted" aria-label="–">–</span>}
                   </td>
                 );
               })}
@@ -196,7 +196,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
         <div className="min-w-0">
           {view === "members" && (
             <PagedListState list={list}>
-              <ul className="grid gap-0 max-md:overflow-hidden max-md:rounded-2xl max-md:border max-md:border-border-soft max-md:bg-surface md:grid-cols-3 md:gap-3.5" data-testid="team-members-list">
+              <ul className="grid gap-0 max-md:overflow-hidden max-md:rounded-lg max-md:border max-md:border-border-soft max-md:bg-surface md:grid-cols-3 md:gap-3.5" data-testid="team-members-list">
                 {list.items.map((member) => {
                   const manageable = canManage && member.role !== "owner" && teamRank(member.role) < myRank;
                   const name = member.displayName || member.username;
@@ -205,9 +205,9 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                     <li
                       key={member.userId}
                       data-member={member.username}
-                      className="flex items-center gap-3 border-b border-border-soft px-3.5 py-2.5 last:border-b-0 md:flex-col md:gap-1 md:rounded-[20px] md:border md:bg-surface md:px-4 md:py-[18px] md:text-center md:last:border-b"
+                      className="flex items-center gap-3 border-b border-border-soft px-3.5 py-2.5 last:border-b-0 md:flex-col md:gap-1 md:rounded-xl md:border md:bg-surface md:px-4 md:py-[18px] md:text-center md:last:border-b"
                     >
-                      <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={name} size={44} />
+                      <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={name} size={40} />
                       <span className="min-w-0 flex-1 md:w-full md:flex-none">
                         <span className="block truncate text-body font-bold text-text">{name}</span>
                         <span className="block truncate text-caption text-text-muted">
@@ -255,7 +255,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
             </PagedListState>
           )}
           {view === "guests" && (
-            <ul className="divide-y divide-border-soft rounded-2xl border border-border-soft bg-surface px-4" data-members-guests>
+            <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-4" data-members-guests>
               {guests.length === 0 && <li className="py-5 text-small text-text-muted">{t("tm.guests.empty")}</li>}
               {guests.map((g) => (
                 <li key={g.userId}>
@@ -265,7 +265,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
             </ul>
           )}
           {view === "invites" && (
-            <ul className="divide-y divide-border-soft rounded-2xl border border-border-soft bg-surface px-4" data-members-invites>
+            <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-4" data-members-invites>
               {pending.length === 0 && <li className="py-5 text-small text-text-muted">{t("tm.admin.invites.none")}</li>}
               {pending.map((p) => (
                 <li key={p.id}>
@@ -275,7 +275,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
             </ul>
           )}
           {view === "groups" && (
-            <ul className="divide-y divide-border-soft rounded-2xl border border-border-soft bg-surface px-4" data-members-groups>
+            <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-4" data-members-groups>
               {groups.length === 0 && <li className="py-5 text-small text-text-muted">{t("tm.groups.empty")}</li>}
               {groups.map((g) => (
                 <li key={g.id} className="flex items-center justify-between py-3 text-small">
@@ -293,7 +293,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               </Button>
             </div>
           )}
-          <button type="button" onClick={() => setMatrixOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3.5 text-left lg:hidden" data-roles-open>
+          <button type="button" onClick={() => setMatrixOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-3.5 text-left lg:hidden" data-roles-open>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-bold text-text">{t("tm.matrix.title")}</span>
               <span className="block text-caption text-text-secondary">{t("tm.matrix.subtitle")}</span>
@@ -305,7 +305,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
         <aside className="space-y-4 max-lg:hidden" data-testid="team-members-aside">
           {canManage && <InviteCard ctx={ctx} onDone={refresh} />}
           {canManage && pending.length > 0 && (
-            <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-members-pending">
+            <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-members-pending">
               <h3 className="mb-1 font-display text-body font-bold text-text">{t("tc.members.pending", { count: pending.length })}</h3>
               <ul>
                 {pending.map((invite) => (
@@ -316,7 +316,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               </ul>
             </section>
           )}
-          <button type="button" onClick={() => setMatrixOpen(true)} className="flex w-full items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3.5 text-left" data-roles-open-aside>
+          <button type="button" onClick={() => setMatrixOpen(true)} className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-3.5 text-left" data-roles-open-aside>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-bold text-text">{t("tm.matrix.title")}</span>
               <span className="block text-caption text-text-secondary">{t("tm.matrix.subtitle")}</span>
@@ -324,7 +324,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
             <ChevronRight size={18} className="text-text-muted" aria-hidden />
           </button>
           {groups.length > 0 && (
-            <section className="rounded-2xl border border-border-soft bg-surface p-4" data-members-groups-card>
+            <section className="rounded-lg border border-border-soft bg-surface p-4" data-members-groups-card>
               <h2 className="mb-3 font-display text-body font-bold">{t("tm.members.viewGroups")}</h2>
               <div className="flex flex-wrap gap-2">
                 {groups.map((g) => (

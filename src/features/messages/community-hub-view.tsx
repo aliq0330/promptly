@@ -28,8 +28,9 @@ import { useRealMessages } from "./real-messages-provider";
 import { RoomFormModal } from "./rooms/room-form-modal";
 import { RoomIconTile } from "./rooms/room-icon";
 import { patchCachedRoom, refreshCommunityRooms, useCommunityRooms } from "./rooms/use-community-rooms";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-micro font-bold uppercase tracking-[0.04em] text-text-muted";
 
 /**
  * Mesajlar'dan açılan TOPLULUK oda listesi (docs/history/369-*, 381-*): topluluğun odaları sohbet listesinin YERİNE açılır (bilgisayarda sol sütun, telefonda sayfa)
@@ -151,7 +152,7 @@ export function CommunityHubView({ communityId, embedded = false }: { communityI
                 </HubTopLink>
               )
             }
-            media={group ? <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={56} /> : <span className="h-14 w-14 rounded-[18px] bg-surface-soft" aria-hidden />}
+            media={group ? <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={56} /> : <span className="h-14 w-14 rounded-lg bg-surface-soft" aria-hidden />}
             title={group?.name ?? "…"}
             meta={group ? t("th.community.meta", { members: memberCountText(t, group.memberCount) }) : ""}
             muteCard={group && <MuteCard compact scope="community" muted={Boolean(mutedAt)} busy={muteBusy} error={muteError} onToggle={(next) => void toggleCommunityMute(next)} />}
@@ -179,16 +180,16 @@ export function CommunityHubView({ communityId, embedded = false }: { communityI
                 placeholder={t("th.search.rooms")}
                 autoFocus
                 data-hub-search
-                className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
             </label>
           )}
         </>
       )}
       {selection.error && (
-        <p role="alert" className="mx-4 mb-3 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert className="mx-4 mb-3">
           {selection.error}
-        </p>
+        </InlineAlert>
       )}
       <HubBody embedded={embedded} selecting={selection.selecting}>
         <HubSection title={t("th.community.rooms")} testId="hub-rooms">

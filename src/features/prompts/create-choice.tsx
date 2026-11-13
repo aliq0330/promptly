@@ -62,7 +62,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
           <li key={option.key}>
             <Link href={hrefOf(option)} onClick={onPick} data-create-option={option.key} className="group flex min-h-16 items-center gap-3 px-1 py-3 transition-colors">
               <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-colors", option.key === "prompt" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary group-hover:text-primary")}>
-                <option.icon size={20} strokeWidth={1.9} />
+                <option.icon size={20} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-body font-semibold text-text">{t(option.titleKey)}</span>
@@ -82,7 +82,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
             data-create-option={option.key}
             className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-xl bg-surface-soft px-2 py-3 text-center text-small font-semibold text-text transition-colors hover:bg-primary-soft hover:text-primary"
           >
-            <option.icon size={20} strokeWidth={1.9} className="text-text-secondary" />
+            <option.icon size={20} className="text-text-secondary" />
             {t(option.titleKey)}
           </Link>
         ))}
@@ -95,7 +95,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
         className="group mt-2 flex min-h-16 w-full items-center gap-3 px-1 py-3 text-left"
       >
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-surface-soft text-text-secondary group-hover:text-primary">
-          <Megaphone size={19} strokeWidth={1.9} />
+          <Megaphone size={20} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-body font-semibold text-text">{t("create.shareExistingTitle")}</span>
@@ -113,7 +113,7 @@ export function CreateMenuSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   return (
     <Modal onClose={onClose} labelledBy="create-menu-title">
-      <div className="w-full max-w-md rounded-t-2xl border border-border bg-surface px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-pop sm:rounded-2xl sm:pb-4" onClick={(event) => event.stopPropagation()}>
+      <div className="w-full max-w-md rounded-t-lg border border-border bg-surface px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-pop sm:rounded-lg sm:pb-4" onClick={(event) => event.stopPropagation()}>
         <h2 id="create-menu-title" className="px-1 pb-1 text-h3 font-bold text-text">
           {t("create.eyebrow")}
         </h2>

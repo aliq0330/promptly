@@ -91,7 +91,7 @@ export function CommunityCard({
           <CommunityCover coverUrl={null} coverColor={null} avatarUrl={community.avatarUrl} className="h-full sm:h-full" />
           <span className="absolute inset-0 grid place-items-center">
             <span className="inline-flex rounded-[1.15rem] border-[3px] border-surface bg-surface shadow-pop">
-              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={64} className="[&>span:first-child]:rounded-[0.95rem]" />
+              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={56} className="[&>span:first-child]:rounded-[0.95rem]" />
             </span>
           </span>
         </>

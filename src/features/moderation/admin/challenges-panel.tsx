@@ -23,7 +23,7 @@ import { archiveChallenge, fetchChallenges, saveChallenge } from "@/lib/supabase
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-const CARD = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5";
+const CARD = "rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5";
 
 const STATUS_KEY: Record<ChallengeStatus, TranslationKey> = {
   active: "admin.challenge.statusActive",

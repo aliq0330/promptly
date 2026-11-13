@@ -43,7 +43,7 @@ export function CardAvatar({ card, size = 40 }: { card: NotificationCard; size?:
         </span>
       ) : (
         <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-surface bg-primary text-primary-foreground">
-          <Icon size={11} aria-hidden />
+          <Icon size={12} aria-hidden />
         </span>
       )}
     </span>
@@ -62,7 +62,7 @@ export function StackedAvatars({ card, size = 28 }: { card: NotificationCard; si
         </span>
       ))}
       {extra > 0 && (
-        <span className="-ml-2 flex items-center justify-center rounded-full border-2 border-surface bg-surface-soft text-[0.6875rem] font-bold text-text-secondary" style={{ width: size, height: size }}>
+        <span className="-ml-2 flex items-center justify-center rounded-full border-2 border-surface bg-surface-soft text-micro font-bold text-text-secondary" style={{ width: size, height: size }}>
           +{extra}
         </span>
       )}
@@ -86,7 +86,7 @@ export function useHeadlineParts(card: NotificationCard): { names: string; text:
 export function CardHeadline({ card, className, as: Tag = "p", plain = false }: { card: NotificationCard; className?: string; as?: "p" | "span"; plain?: boolean }) {
   const { names, text } = useHeadlineParts(card);
   return (
-    <Tag className={cn("text-sm text-text", className)}>
+    <Tag className={cn("text-small text-text", className)}>
       {names && <span className="font-semibold">{names} </span>}
       <span className={cn(plain ? "" : "text-text-secondary", !names && "font-semibold !text-text")}>{text}</span>
     </Tag>
@@ -106,7 +106,7 @@ export function CommentExtrasStrip({ comment, context, all = false, className }:
     <div className={cn("space-y-2", className)} data-comment-extras-strip={items.length}>
       {plan.labelCount != null && (
         <p className="flex items-center gap-1.5 text-caption font-semibold text-text-muted" data-extras-label="">
-          <Paperclip size={13} aria-hidden />
+          <Paperclip size={12} aria-hidden />
           {t(plan.labelCount === 1 ? "nc.extras.one" : "nc.extras.many", { count: plan.labelCount })}
         </p>
       )}

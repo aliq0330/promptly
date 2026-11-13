@@ -134,7 +134,7 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
             maxLength={100}
             placeholder={t("communities.all.searchPlaceholder")}
             data-testid="all-search"
-            className="h-11 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+            className="h-11 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
           />
         </label>
       )}

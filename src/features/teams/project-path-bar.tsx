@@ -55,12 +55,12 @@ export function ProjectPathBar({ crumbs, backHref, onInfo, onMore, right }: { cr
         {right}
         {onMore ? (
           <button type="button" onClick={onMore} aria-label={t("tp.item.moreAria")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft" data-path-more>
-            <MoreVertical size={22} aria-hidden />
+            <MoreVertical size={24} aria-hidden />
           </button>
         ) : (
           onInfo && (
             <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-full text-primary hover:bg-primary-soft")} data-path-info>
-              <Info size={21} aria-hidden />
+              <Info size={20} aria-hidden />
             </button>
           )
         )}

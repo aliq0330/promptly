@@ -79,7 +79,7 @@ export function SpacePreview({ space }: { space: SpaceFeedCard }) {
           art={
             <SpaceCoverArt
               urls={art}
-              className="aspect-[16/9] w-full overflow-hidden rounded-[22px] border-4 border-surface shadow-pop"
+              className="aspect-[16/9] w-full overflow-hidden rounded-xl border-4 border-surface shadow-pop"
               iconSize={48}
             />
           }
@@ -96,7 +96,7 @@ export function SpacePreview({ space }: { space: SpaceFeedCard }) {
             space.owner ? (
               <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
                 <Link href={profileHref(space.owner)} className="inline-flex items-center gap-1.5 font-semibold text-text hover:text-primary">
-                  <Avatar src={space.owner.avatarUrl} alt="" size={22} />
+                  <Avatar src={space.owner.avatarUrl} alt="" size={24} />
                   {space.owner.displayName}
                 </Link>
                 <span aria-hidden>·</span>

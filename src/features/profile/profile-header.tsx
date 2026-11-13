@@ -118,17 +118,17 @@ export function ProfileHeader({
               rel="noreferrer noopener"
               className="inline-flex min-w-0 items-center gap-1.5 text-primary hover:underline"
             >
-              <Link2 size={15} className="shrink-0" aria-hidden />
+              <Link2 size={16} className="shrink-0" aria-hidden />
               <span className="truncate">{website}</span>
             </a>
           )}
           <span className="inline-flex items-center gap-1.5">
-            <Calendar size={15} className="shrink-0" aria-hidden />
+            <Calendar size={16} className="shrink-0" aria-hidden />
             {t("profile.joinedOn", { date: formatJoinDate(user.createdAt, language) })}
           </span>
           {reuseCount > 0 && (
             <span className="inline-flex items-center gap-1.5" data-profile-reuse>
-              <Repeat2 size={15} className="shrink-0" aria-hidden />
+              <Repeat2 size={16} className="shrink-0" aria-hidden />
               {t("profile.reuseLine", { count: formatCount(reuseCount) })}
             </span>
           )}

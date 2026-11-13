@@ -95,8 +95,8 @@ function ActivityList() {
         <p className="text-small text-text-muted">{t("spaces.activity.loadError")}</p>
       ) : list === null ? (
         <div className="space-y-3">
-          <Skeleton className="h-24 w-full rounded-2xl" />
-          <Skeleton className="h-24 w-full rounded-2xl" />
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-lg" />
         </div>
       ) : shown.length === 0 ? (
         <EmptyState icon={History} title={t("spaces.activity.empty")} />
@@ -105,7 +105,7 @@ function ActivityList() {
           {shown.map((entry) => (
             <li key={entry.id} data-activity={entry.action} data-activity-id={entry.id} className="flex gap-3">
               <Actor entry={entry} />
-              <div className="min-w-0 flex-1 rounded-2xl border border-border-soft bg-surface p-3.5">
+              <div className="min-w-0 flex-1 rounded-lg border border-border-soft bg-surface p-3.5">
                 <p className="text-small text-text">
                   <span className="font-semibold">{entry.actor?.displayName ?? t("spaces.activity.someone")}</span> {activityText(entry)}
                   <span className="text-caption text-text-muted"> · {formatRelativeTime(entry.createdAt, language)}</span>
@@ -126,7 +126,7 @@ function ActivityList() {
                   </Link>
                   <Link href={spaceActivityHref(space.id, entry.id)} className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text">
                     {t("spaces.activity.openEvent")}
-                    <ArrowRight size={13} aria-hidden />
+                    <ArrowRight size={12} aria-hidden />
                   </Link>
                 </div>
               </div>
@@ -203,7 +203,7 @@ function ActivityEventPage({ eventId }: { eventId: string }) {
       </div>
     );
   }
-  if (state === undefined) return <Skeleton className="h-48 w-full max-w-3xl rounded-2xl" />;
+  if (state === undefined) return <Skeleton className="h-48 w-full max-w-3xl rounded-lg" />;
 
   const { event, previous, next } = state;
   const mine = Boolean(user) && user?.id === event.actorId;
@@ -263,7 +263,7 @@ function ActivityEventPage({ eventId }: { eventId: string }) {
             )}
             {mine && (
               <button type="button" onClick={() => (setNoteDraft(event.authorNote ?? ""), setNoteError(null), setEditingNote(true))} className="inline-flex items-center gap-1.5 text-small font-semibold text-primary hover:underline" data-activity-add-note="">
-                {event.authorNote && <Pencil size={13} aria-hidden />}
+                {event.authorNote && <Pencil size={12} aria-hidden />}
                 {event.authorNote ? t("spaces.activity.editNote") : t("spaces.activity.addNote")}
                 {!event.authorNote && <span className="font-normal text-text-muted">({t("spaces.activity.noteOnlyAuthor")})</span>}
               </button>

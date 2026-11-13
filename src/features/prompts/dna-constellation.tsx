@@ -172,7 +172,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
                       animationDelay: `${i * STAGGER_MS}ms`,
                     }}
                   >
-                    <Icon size={18} strokeWidth={1.75} aria-hidden />
+                    <Icon size={18} aria-hidden />
                   </span>
                   {(labelled || isLit || isSelected) && (
                     <span

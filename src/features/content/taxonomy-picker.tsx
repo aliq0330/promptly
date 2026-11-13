@@ -91,7 +91,7 @@ export function TaxonomyPicker({
       <div>
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
           {!bare && (
-            <p className="text-sm font-medium text-text">
+            <p className="text-small font-medium text-text">
               {t("taxonomy.categoryLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
             </p>
           )}
@@ -117,7 +117,7 @@ export function TaxonomyPicker({
                   lockContentType && "cursor-default",
                 )}
               >
-                <Icon size={16} strokeWidth={1.75} aria-hidden />
+                <Icon size={16} aria-hidden />
                 {t(meta.labelKey)}
               </button>
             );
@@ -255,7 +255,7 @@ function CategoryRow({
       )}
     >
       <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-md", isSelected ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary")}>
-        <Icon size={16} strokeWidth={1.75} aria-hidden />
+        <Icon size={16} aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block break-words text-label font-semibold text-text">{taxonomyLabel(category.labelKey, language)}</span>

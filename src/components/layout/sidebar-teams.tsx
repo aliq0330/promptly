@@ -9,6 +9,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { listMyTeams, type TeamSummary } from "@/lib/supabase/teams";
 import { teamLink } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+import { CountBadge } from "@/components/ui/badge";
 
 /** Kısa ömürlü modül önbelleği: kenar çubuğu her sayfada yeniden kurulur, liste her gezinmede sorulmaz (docs/history/353-*). */
 let cache: { userId: string; at: number; teams: TeamSummary[] } | null = null;
@@ -42,7 +43,7 @@ function MyTeams() {
   const current = pathname.startsWith("/teams/local") ? params.get("id") : null;
   return (
     <div data-testid="sidebar-teams" className="hidden lg:block">
-      <p className="mb-1.5 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-text-muted">{t("tm.sidebar.title")}</p>
+      <p className="mb-1.5 px-3 text-micro font-semibold uppercase tracking-[0.1em] text-text-muted">{t("tm.sidebar.title")}</p>
       <ul className="space-y-0.5">
         {teams.slice(0, 6).map((team) => {
           const active = current === team.id || current === team.slug;
@@ -58,7 +59,7 @@ function MyTeams() {
               >
                 <TeamMark name={team.name} tone={team.tone} size={24} />
                 <span className="min-w-0 flex-1 truncate">{team.name}</span>
-                {team.unreadCount > 0 && <span className="rounded-full bg-secondary px-1.5 text-caption text-white">{team.unreadCount}</span>}
+                {team.unreadCount > 0 && <CountBadge>{team.unreadCount}</CountBadge>}
               </Link>
             </li>
           );

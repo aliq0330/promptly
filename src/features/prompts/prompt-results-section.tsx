@@ -132,7 +132,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
           ))}
         </div>
       ) : results.length === 0 ? (
-        <p className="rounded-[22px] border border-dashed border-border px-4 py-8 text-center text-small text-text-muted">
+        <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-small text-text-muted">
           {t("result.emptyPromptHint")}
         </p>
       ) : (

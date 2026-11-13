@@ -14,12 +14,12 @@ export function SaveIndicator({ status, onRetry, className }: { status: "idle" |
   return (
     <span role="status" aria-live="polite" data-save-status={status} className={cn("ml-auto inline-flex items-center gap-1.5 text-caption", status === "error" ? "text-danger" : "text-text-muted", className)}>
       {status === "saving" && <Loader2 size={13} className="animate-spin" aria-hidden />}
-      {status === "saved" && <Check size={13} aria-hidden />}
-      {status === "error" && <CloudOff size={13} aria-hidden />}
+      {status === "saved" && <Check size={12} aria-hidden />}
+      {status === "error" && <CloudOff size={12} aria-hidden />}
       {status === "saving" ? t("spaces.save.saving") : status === "saved" ? t("spaces.save.saved") : t("spaces.save.failed")}
       {status === "error" && (
         <button type="button" onClick={onRetry} className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-danger underline-offset-2 hover:underline">
-          <AlertCircle size={13} aria-hidden />
+          <AlertCircle size={12} aria-hidden />
           {t("common.retry")}
         </button>
       )}

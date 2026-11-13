@@ -288,7 +288,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               id="prompt-text"
               title={t("prompt.promptTextHeading")}
             >
-              <div data-prompt-block className="relative overflow-hidden rounded-[22px] bg-surface-soft">
+              <div data-prompt-block className="relative overflow-hidden rounded-xl bg-surface-soft">
                 {variables.length > 0 && <AssembleStatus filled={assemble.filled} total={assemble.total} complete={assemble.complete} />}
                 <ScrollablePrompt className="px-5 py-5 text-[0.875rem] text-text">
                   {variables.length > 0 ? (

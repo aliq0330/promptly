@@ -48,7 +48,7 @@ export function InfoPhotosCard({ conversationId, onJumpToMessage }: { conversati
       ) : photos === null ? (
         <div className="mx-3 grid grid-cols-4 gap-2" aria-busy="true">
           {[0, 1, 2, 3].map((index) => (
-            <span key={index} className="aspect-square animate-pulse rounded-xl bg-surface-soft" />
+            <span key={index} className="aspect-square skeleton-shimmer rounded-xl" />
           ))}
         </div>
       ) : preview.length === 0 ? (

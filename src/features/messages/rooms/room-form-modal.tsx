@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import type { CommunityRoom, CommunityRoomIcon } from "@/types";
 import { refreshCommunityRooms } from "./use-community-rooms";
 import { RoomIcon } from "./room-icon";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 const NEW_SECTION = "__new__";
 
@@ -123,7 +124,7 @@ export function RoomFormModal({
       }
     >
       <div className="space-y-5">
-        {limitReached && <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-small text-danger">{t("rooms.form.limit", { max: ROOM_LIMIT })}</p>}
+        {limitReached && <InlineAlert>{t("rooms.form.limit", { max: ROOM_LIMIT })}</InlineAlert>}
 
         {!sectionOnly && (
           <>
@@ -270,7 +271,7 @@ export function RoomFormModal({
           </>
         )}
 
-        {error && <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-small text-danger">{error}</p>}
+        {error && <InlineAlert>{error}</InlineAlert>}
       </div>
     </SpaceDialog>
   );

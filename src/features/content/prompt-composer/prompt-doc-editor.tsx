@@ -297,7 +297,7 @@ export const PromptDocEditor = forwardRef<
   );
 
   // Ayna ve textarea AYNI ölçüleri paylaşmalı (jeton çipleri metinle hizalı kalsın).
-  const metricsClass = fill ? "px-4 py-3 text-[16px] leading-7" : "px-3 py-2 text-sm leading-6 max-lg:text-[16px]";
+  const metricsClass = fill ? "px-4 py-3 text-[16px] leading-7" : "px-3 py-2 text-small leading-6 max-lg:text-[16px]";
 
   return (
     <div

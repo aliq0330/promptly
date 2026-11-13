@@ -109,7 +109,7 @@ export function InviteePicker({
                 onClick={() => toggle(person)}
                 disabled={disabled}
                 aria-label={t("groups.invite.removeSelected", { name: person.displayName })}
-                className="flex items-center gap-1.5 rounded-full border border-border-soft bg-primary-soft py-1 pl-1 pr-2 text-caption font-medium text-primary transition-colors hover:border-primary/40 disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-full border border-border-soft bg-primary-soft py-1 pl-1 pr-2 text-caption font-medium text-primary transition-colors hover:border-primary/40 disabled:opacity-50"
               >
                 <Avatar src={person.avatarUrl} alt={person.displayName} size={20} />
                 <span className="max-w-[9rem] truncate">{person.displayName}</span>
@@ -128,7 +128,7 @@ export function InviteePicker({
           onChange={(event) => setQuery(event.target.value)}
           disabled={disabled}
           placeholder={t("messages.newChatSearchPlaceholder")}
-          className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+          className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
       </label>
       {atLimit && <p className="text-caption text-text-muted">{t("groups.invite.batchLimit", { count: GROUP_INVITE_BATCH_MAX })}</p>}
@@ -183,9 +183,9 @@ export function InviteePicker({
                       isSelected && "bg-primary-soft/40",
                     )}
                   >
-                    <Avatar src={person.avatarUrl} alt={person.displayName} size={36} />
+                    <Avatar src={person.avatarUrl} alt={person.displayName} size={40} />
                     <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block truncate text-sm font-semibold text-text">{person.displayName}</span>
+                      <span className="block truncate text-small font-semibold text-text">{person.displayName}</span>
                       <span className="block truncate text-caption text-text-muted">@{person.username}</span>
                     </span>
                     {member ? (
@@ -198,7 +198,7 @@ export function InviteePicker({
                           isSelected && "border-primary bg-primary text-primary-foreground",
                         )}
                       >
-                        {isSelected && <Check size={13} strokeWidth={3} />}
+                        {isSelected && <Check size={12} />}
                       </span>
                     )}
                   </button>

@@ -44,11 +44,11 @@ function QuickActions() {
   return (
     <div className="flex flex-wrap gap-2">
       <Link href="/create?mode=prompt" className={buttonClassName({ size: "sm" })}>
-        <SquareTerminal size={15} />
+        <SquareTerminal size={16} />
         {t("home.sharePrompt")}
       </Link>
       <Link href="/requests/new" className={buttonClassName({ size: "sm", variant: "ghost" })}>
-        <Sparkles size={15} />
+        <Sparkles size={16} />
         {t("home.openRequest")}
       </Link>
     </div>

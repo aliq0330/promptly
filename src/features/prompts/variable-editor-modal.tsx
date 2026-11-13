@@ -98,7 +98,7 @@ export function VariableEditorModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
-          <h2 id="variable-editor-modal-title" className="text-base font-semibold text-text">
+          <h2 id="variable-editor-modal-title" className="text-body font-semibold text-text">
             {t("variable.editTitle")}
           </h2>
           <button
@@ -113,7 +113,7 @@ export function VariableEditorModal({
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
           <div>
-            <label htmlFor="variable-name" className="mb-1.5 block text-sm font-medium text-text">
+            <label htmlFor="variable-name" className="mb-1.5 block text-small font-medium text-text">
               {t("variable.nameLabel")}
             </label>
             <input
@@ -124,12 +124,12 @@ export function VariableEditorModal({
               onChange={(event) => setName(event.target.value)}
               onBlur={() => setTouched(true)}
               placeholder={t("variable.namePlaceholder")}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             {normalizedName && (
-              <p className="mt-1.5 font-mono text-xs text-primary">{`{${normalizedName}}`}</p>
+              <p className="mt-1.5 font-mono text-caption text-primary">{`{${normalizedName}}`}</p>
             )}
-            {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+            {error && <p className="mt-1 text-caption text-danger">{error}</p>}
           </div>
 
           <VariableSpecEditor
@@ -143,7 +143,7 @@ export function VariableEditorModal({
           />
 
           <div>
-            <label htmlFor="variable-description" className="mb-1.5 block text-sm font-medium text-text">
+            <label htmlFor="variable-description" className="mb-1.5 block text-small font-medium text-text">
               {t("variable.descriptionLabel")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <textarea
@@ -152,7 +152,7 @@ export function VariableEditorModal({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder={t("variable.descriptionPlaceholder")}
-              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
           </div>
 

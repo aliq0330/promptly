@@ -114,7 +114,7 @@ const KIND_LABEL: Record<DetailKind | "workflow" | "preset" | "request", Transla
   request: "tp.kind.request",
 };
 
-const CARD = "rounded-2xl border border-border-soft bg-surface";
+const CARD = "rounded-lg border border-border-soft bg-surface";
 
 export function AreaItemDetail({ ctx, role, onChanged }: { ctx: AreaItemContext; role: ProjectRole | null; onChanged: () => void }) {
   const { t } = useTranslation();
@@ -148,7 +148,7 @@ function DrawerFrame({ ctx, title, header, children }: { ctx: AreaItemContext; t
   return (
     <Modal onClose={close} labelledBy={id} variant={wide ? "side" : "sheet"}>
       <aside
-        className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-surface max-md:rounded-t-[22px] md:w-[35rem] md:max-w-full lg:w-[32.5rem]"
+        className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-surface max-md:rounded-t-xl md:w-[35rem] md:max-w-full lg:w-[32.5rem]"
         data-testid="item-drawer"
       >
         <div className="flex shrink-0 items-start gap-2 border-b border-border-soft px-5 pb-3.5 pt-4 md:pt-[18px]">
@@ -318,7 +318,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
       )}
 
       {item?.revState === "changes" && item.revNote && (
-        <div role="note" className="rounded-2xl border border-danger/30 bg-danger/10 p-3.5 text-small leading-relaxed text-danger" data-item-lead-note>
+        <div role="note" className="rounded-lg border border-danger/30 bg-danger/10 p-3.5 text-small leading-relaxed text-danger" data-item-lead-note>
           <b className="mb-0.5 block">{t("tp.item.leadNote")}</b>
           {item.revNote}
         </div>
@@ -511,7 +511,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
 function StickyBar({ children, testId }: { children: ReactNode; testId: string }) {
   const drawer = useContext(DrawerContext);
   return (
-    <div className={cn("sticky z-10 space-y-2 rounded-2xl border border-border-soft bg-surface p-3 shadow-pop", drawer ? "bottom-0" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-4")} data-testid={testId}>
+    <div className={cn("sticky z-10 space-y-2 rounded-lg border border-border-soft bg-surface p-3 shadow-pop", drawer ? "bottom-0" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-4")} data-testid={testId}>
       {children}
     </div>
   );
@@ -771,13 +771,13 @@ function ImageSection({ ctx, item, title, creator }: { ctx: AreaItemContext; ite
         onClick={() => available && setOpen(true)}
         disabled={!available}
         aria-label={t("media.viewFullscreen")}
-        className="relative block aspect-[4/3] w-full overflow-hidden rounded-3xl bg-surface-soft"
+        className="relative block aspect-[4/3] w-full overflow-hidden rounded-xl bg-surface-soft"
         data-item-image
       >
         <SpaceImage url={item.mediaUrl} alt={title} available={available} reason={reason ? t(reason) : undefined} className="h-full w-full" imgClassName="object-cover" />
         {available && (
           <span className="absolute bottom-3 right-3 inline-flex h-9 items-center gap-1.5 rounded-full bg-black/70 px-3 text-small font-semibold text-white">
-            <Maximize2 size={15} aria-hidden />
+            <Maximize2 size={16} aria-hidden />
             {t("tp.item.enlarge")}
           </span>
         )}
@@ -794,7 +794,7 @@ function ImageSection({ ctx, item, title, creator }: { ctx: AreaItemContext; ite
       )}
       {item.note && <p className="break-words rounded-xl bg-surface-soft px-3 py-2 text-small text-text-secondary">{item.note}</p>}
       {ctx.onBoard && (
-        <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-surface text-small font-semibold text-text hover:bg-surface-soft" data-item-show-on-board-button>
+        <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-border bg-surface text-small font-semibold text-text hover:bg-surface-soft" data-item-show-on-board-button>
           <Presentation size={18} aria-hidden />
           {t("tp.item.showOnBoard")}
         </Link>
@@ -814,7 +814,7 @@ function NoteSection({ item }: { item: SpaceItem }) {
   const attached = item.attachedItemId ? items.find((entry) => entry.id === item.attachedItemId) : null;
   return (
     <>
-      <div className="whitespace-pre-wrap break-words rounded-2xl border border-warning/30 bg-warning/10 p-4 text-body leading-relaxed text-text" data-item-note>
+      <div className="whitespace-pre-wrap break-words rounded-lg border border-warning/30 bg-warning/10 p-4 text-body leading-relaxed text-text" data-item-note>
         {item.body || item.note}
       </div>
       <dl className={cn(CARD, "overflow-hidden text-small")}>
@@ -850,7 +850,7 @@ function PaletteSection({ palette }: { palette: SpacePalette }) {
     <>
       {palette.description && <p className="break-words px-1 text-small text-text-secondary">{palette.description}</p>}
       {palette.colors.length > 0 && (
-        <div className="flex h-20 overflow-hidden rounded-3xl border border-border-soft" aria-hidden data-item-swatches>
+        <div className="flex h-20 overflow-hidden rounded-xl border border-border-soft" aria-hidden data-item-swatches>
           {palette.colors.map((hex, index) => (
             <span key={`${hex}-${index}`} className="flex-1" style={{ backgroundColor: hex }} />
           ))}

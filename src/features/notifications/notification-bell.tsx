@@ -30,7 +30,7 @@ export function NotificationBell() {
   const label = unreadCount > 0 ? t("nc.bellAriaUnread", { count: unreadCount }) : t("header.notificationsAriaLabel");
   const badge =
     unreadCount > 0 ? (
-      <span aria-hidden data-bell-badge="" className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-surface bg-secondary px-1 text-[0.6875rem] font-bold leading-none text-primary-foreground">
+      <span aria-hidden data-bell-badge="" className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-surface bg-secondary px-1 text-micro font-bold leading-none text-primary-foreground">
         {unreadCount > 99 ? "99+" : unreadCount}
       </span>
     ) : null;

@@ -68,10 +68,10 @@ export function ProjectVariablesPanel({
                 {canWrite && own && (
                   <>
                     <button type="button" onClick={() => setEditing(own)} aria-label={t("tp.variable.edit")} className="grid h-7 w-7 place-items-center rounded-full text-text-muted hover:bg-surface">
-                      <Pencil size={13} aria-hidden />
+                      <Pencil size={12} aria-hidden />
                     </button>
                     <button type="button" onClick={() => void remove(own)} aria-label={t("tp.variable.delete")} className="grid h-7 w-7 place-items-center rounded-full text-text-muted hover:bg-surface">
-                      <Trash2 size={13} aria-hidden />
+                      <Trash2 size={12} aria-hidden />
                     </button>
                   </>
                 )}

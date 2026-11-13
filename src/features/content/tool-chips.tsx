@@ -17,12 +17,12 @@ export function ToolChips({ refs, className, linked }: { refs: string[] | null |
         const chip = "inline-flex h-6 items-center gap-1 rounded-full bg-primary-soft px-2.5 text-caption font-medium text-text-secondary";
         return linked ? (
           <Link key={item.ref} href={toolHref(item.tool.id)} className={cn(chip, "transition-colors hover:bg-primary/15 hover:text-primary")}>
-            <Wrench size={11} aria-hidden />
+            <Wrench size={12} aria-hidden />
             {item.label}
           </Link>
         ) : (
           <span key={item.ref} className={chip}>
-            <Wrench size={11} aria-hidden />
+            <Wrench size={12} aria-hidden />
             {item.label}
           </span>
         );

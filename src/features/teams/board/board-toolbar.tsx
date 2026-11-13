@@ -30,7 +30,7 @@ import { BoardPopover, PopoverRow } from "./board-popover";
 export type BoardTool = "select" | "pan" | "connect" | "comment" | "text" | "frame" | "rect" | "oval" | "line" | "arrow" | "pencil";
 export type PillShape = Extract<ShapeKind, "rect" | "oval" | "line" | "arrow">;
 
-const PILL = "pointer-events-auto flex items-center gap-0.5 rounded-2xl border border-border-soft bg-surface p-[5px] shadow-card";
+const PILL = "pointer-events-auto flex items-center gap-0.5 rounded-lg border border-border-soft bg-surface p-[5px] shadow-card";
 
 function TbButton({ icon, label, active, onClick, chev, buttonRef, testId, disabled }: { icon: ReactNode; label: string; active?: boolean; onClick: () => void; chev?: boolean; buttonRef?: React.Ref<HTMLButtonElement>; testId?: string; disabled?: boolean }) {
   return (
@@ -43,10 +43,10 @@ function TbButton({ icon, label, active, onClick, chev, buttonRef, testId, disab
       disabled={disabled}
       data-testid={testId}
       onClick={onClick}
-      className={cn("flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 rounded-[11px] px-2 transition-colors disabled:opacity-40", active ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft hover:text-text")}
+      className={cn("flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 rounded-[11px] px-2 transition-colors disabled:opacity-50", active ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft hover:text-text")}
     >
       {icon}
-      {chev && <ChevronDown size={11} aria-hidden />}
+      {chev && <ChevronDown size={12} aria-hidden />}
     </button>
   );
 }
@@ -103,10 +103,10 @@ export function BoardToolbar(props: BoardToolbarProps) {
 
   const settingsRows = (
     <>
-      <PopoverRow icon={<SquareDashedMousePointer size={19} aria-hidden />} label={t("spaces.board.multiSelect")} onClick={() => { props.onMultiSelect(); close(); }} tag={props.multiSelect ? t("tb.toolbar.on") : undefined} testId="board-settings-multiselect" />
-      {editable && <PopoverRow icon={<Layers size={19} aria-hidden />} label={t("spaces.groups.manage")} onClick={() => { close(); props.onGroups(); }} testId="board-settings-groups" />}
-      <PopoverRow icon={<MessageCircle size={19} aria-hidden />} label={t("tb.comments.title")} onClick={() => { close(); props.onComments(); }} testId="board-settings-comments" />
-      <PopoverRow icon={<Keyboard size={19} aria-hidden />} label={t("spaces.board.shortcuts")} onClick={() => { close(); props.onShortcuts(); }} testId="board-settings-shortcuts" />
+      <PopoverRow icon={<SquareDashedMousePointer size={20} aria-hidden />} label={t("spaces.board.multiSelect")} onClick={() => { props.onMultiSelect(); close(); }} tag={props.multiSelect ? t("tb.toolbar.on") : undefined} testId="board-settings-multiselect" />
+      {editable && <PopoverRow icon={<Layers size={20} aria-hidden />} label={t("spaces.groups.manage")} onClick={() => { close(); props.onGroups(); }} testId="board-settings-groups" />}
+      <PopoverRow icon={<MessageCircle size={20} aria-hidden />} label={t("tb.comments.title")} onClick={() => { close(); props.onComments(); }} testId="board-settings-comments" />
+      <PopoverRow icon={<Keyboard size={20} aria-hidden />} label={t("spaces.board.shortcuts")} onClick={() => { close(); props.onShortcuts(); }} testId="board-settings-shortcuts" />
     </>
   );
 
@@ -121,14 +121,14 @@ export function BoardToolbar(props: BoardToolbarProps) {
       <div className={cn(PILL, "min-w-0 max-w-full overflow-x-auto scrollbar-none")} role="toolbar" aria-label={t("spaces.board.toolbar")}>
         {props.pagesSlot}
         <Sep />
-        <TbButton icon={<MousePointer2 size={19} aria-hidden />} label={t("spaces.board.toolSelect")} active={tool === "select" && !props.multiSelect} onClick={() => onTool("select")} testId="board-tool-select" />
-        {!phone && <TbButton icon={<Hand size={19} aria-hidden />} label={t("spaces.board.toolPan")} active={tool === "pan"} onClick={() => onTool("pan")} testId="board-tool-pan" />}
-        {!phone && canDraw && <TbButton icon={<Type size={19} aria-hidden />} label={t("tb.kind.text")} active={tool === "text"} onClick={() => onTool("text")} testId="board-tool-text" />}
-        {!phone && canDraw && <TbButton icon={<Frame size={19} aria-hidden />} label={t("tb.kind.frame")} active={tool === "frame"} onClick={() => onTool("frame")} testId="board-tool-frame" />}
-        {!phone && editable && <TbButton icon={<StickyNote size={19} aria-hidden />} label={t("spaces.board.addNote")} onClick={props.onAddNote} testId="board-tool-note" />}
-        {size === "desktop" && canDraw && <TbButton buttonRef={pencilRef} icon={<Pencil size={19} aria-hidden />} chev label={t("tb.tool.pencil")} active={tool === "pencil"} onClick={() => { onTool("pencil"); toggle("pencil"); }} testId="board-tool-pencil" />}
+        <TbButton icon={<MousePointer2 size={20} aria-hidden />} label={t("spaces.board.toolSelect")} active={tool === "select" && !props.multiSelect} onClick={() => onTool("select")} testId="board-tool-select" />
+        {!phone && <TbButton icon={<Hand size={20} aria-hidden />} label={t("spaces.board.toolPan")} active={tool === "pan"} onClick={() => onTool("pan")} testId="board-tool-pan" />}
+        {!phone && canDraw && <TbButton icon={<Type size={20} aria-hidden />} label={t("tb.kind.text")} active={tool === "text"} onClick={() => onTool("text")} testId="board-tool-text" />}
+        {!phone && canDraw && <TbButton icon={<Frame size={20} aria-hidden />} label={t("tb.kind.frame")} active={tool === "frame"} onClick={() => onTool("frame")} testId="board-tool-frame" />}
+        {!phone && editable && <TbButton icon={<StickyNote size={20} aria-hidden />} label={t("spaces.board.addNote")} onClick={props.onAddNote} testId="board-tool-note" />}
+        {size === "desktop" && canDraw && <TbButton buttonRef={pencilRef} icon={<Pencil size={20} aria-hidden />} chev label={t("tb.tool.pencil")} active={tool === "pencil"} onClick={() => { onTool("pencil"); toggle("pencil"); }} testId="board-tool-pencil" />}
         {size === "desktop" && canDraw && <TbButton buttonRef={shapeRef} icon={<ShapeIcon size={19} aria-hidden />} chev label={t("tb.tool.shape")} active={shapeTool} onClick={() => { onTool(props.shape); toggle("shape"); }} testId="board-tool-shape" />}
-        {!phone && editable && <TbButton icon={<Spline size={19} aria-hidden />} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => onTool(tool === "connect" ? "select" : "connect")} testId="board-tool-connect" />}
+        {!phone && editable && <TbButton icon={<Spline size={20} aria-hidden />} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => onTool(tool === "connect" ? "select" : "connect")} testId="board-tool-connect" />}
         {editable && <Sep />}
         {editable &&
           (phone ? (
@@ -143,7 +143,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
               data-testid="board-add-button"
               className="flex h-10 shrink-0 items-center gap-1.5 rounded-[11px] bg-primary pl-2.5 pr-3 text-small font-bold text-primary-foreground hover:bg-primary-hover"
             >
-              <Plus size={19} strokeWidth={2.4} aria-hidden />
+              <Plus size={20} aria-hidden />
               {t("tb.toolbar.add")}
               <ChevronDown size={14} aria-hidden />
             </button>
@@ -151,8 +151,8 @@ export function BoardToolbar(props: BoardToolbarProps) {
       </div>
 
       <div className={cn(PILL, "shrink-0")}>
-        <TbButton icon={<Play size={19} aria-hidden />} label={t("tb.present.start")} onClick={props.onPresent} disabled={!props.canPresent} testId="board-present-start" />
-        <TbButton buttonRef={settingsRef} icon={<SlidersHorizontal size={19} aria-hidden />} label={t("tb.toolbar.settings")} active={menu === "settings"} onClick={() => toggle("settings")} testId="board-settings-button" />
+        <TbButton icon={<Play size={20} aria-hidden />} label={t("tb.present.start")} onClick={props.onPresent} disabled={!props.canPresent} testId="board-present-start" />
+        <TbButton buttonRef={settingsRef} icon={<SlidersHorizontal size={20} aria-hidden />} label={t("tb.toolbar.settings")} active={menu === "settings"} onClick={() => toggle("settings")} testId="board-settings-button" />
         <button
           ref={zoomRef}
           type="button"
@@ -165,7 +165,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
           className={cn("flex h-10 shrink-0 items-center gap-1 rounded-[11px] px-2.5 text-small font-semibold tabular-nums text-text hover:bg-surface-soft", menu === "zoom" && "bg-surface-soft")}
         >
           {props.zoomPercent}%
-          <ChevronDown size={13} className="text-text-muted" aria-hidden />
+          <ChevronDown size={12} className="text-text-muted" aria-hidden />
         </button>
       </div>
 
@@ -190,7 +190,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
           {(["rect", "oval", "line", "arrow"] as const).map((kind) => {
             const Icon = kind === "oval" ? Circle : kind === "line" ? Minus : kind === "arrow" ? ArrowUpRight : Square;
             return (
-              <PopoverRow key={kind} icon={<Icon size={19} aria-hidden />} label={t(`tb.tool.${kind}` as const)} onClick={() => { props.onShape(kind); onTool(kind); close(); }} tag={props.shape === kind ? t("tb.toolbar.on") : undefined} />
+              <PopoverRow key={kind} icon={<Icon size={20} aria-hidden />} label={t(`tb.tool.${kind}` as const)} onClick={() => { props.onShape(kind); onTool(kind); close(); }} tag={props.shape === kind ? t("tb.toolbar.on") : undefined} />
             );
           })}
         </BoardPopover>

@@ -357,7 +357,7 @@ for (const [label, viewport] of [["mobil 390x800", { width: 390, height: 800 }],
     await d.getByRole("heading", { name: "Yeni sohbet" }).waitFor();
     await d.locator("section li").first().waitFor();
     await page.waitForTimeout(500);
-    const box = await d.locator("div.flex.max-h-\\[85vh\\]").boundingBox();
+    const box = await d.locator("div.flex.max-h-\\[85dvh\\]").boundingBox();
     assert.ok(box.x >= 0 && box.x + box.width <= viewport.width + 1 && box.y >= 0 && box.y + box.height <= viewport.height + 1, `panel inside viewport ${JSON.stringify(box)}`);
     if (viewport.width < 640) assert.ok(Math.abs(viewport.height - (box.y + box.height) - viewport.height * 0.05) < 4, "floats 5% above the bottom edge on phones (docs/history/380-*)");
     await d.getByPlaceholder("Kullanıcı adı veya isimle ara").fill("am");

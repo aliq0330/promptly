@@ -17,6 +17,7 @@ import { formatMessageStamp } from "@/lib/chat-grouping";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Message } from "@/types";
 import type { DeleteMode, MessageBubbleActions } from "./message-bubble-types";
+import { MENU_ITEM_CLASS } from "@/components/ui/menu";
 
 /** "Şikayet Et": merkezi şikâyet penceresini açar (docs/history/284-*); menü kapansa da pencere `ReportProvider`'da yaşar. */
 function ReportMessageMenuItem({ messageId, preview, onClose }: { messageId: string; preview: string | null; onClose: () => void }) {
@@ -33,7 +34,7 @@ function ReportMessageMenuItem({ messageId, preview, onClose }: { messageId: str
         // The long-press sheet covers the screen: close it so the report window is not hidden behind it.
         onClose();
       }}
-      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+      className={MENU_ITEM_CLASS}
     >
       <Flag size={14} />
       {t("messages.reportAction")}
@@ -64,7 +65,7 @@ function MenuItem({
       onBlur={onBlur}
       disabled={disabled}
       className={cn(
-        "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-soft disabled:pointer-events-none disabled:opacity-60",
+        "flex w-full items-center gap-2 px-3 py-2 text-left text-small hover:bg-surface-soft disabled:pointer-events-none disabled:opacity-50",
         danger ? "text-danger hover:bg-danger/10" : "text-text",
       )}
     >
@@ -114,9 +115,9 @@ export function MessageActionMenu({
       role="menu"
       aria-label={t("messages.messageOptionsAriaLabel")}
       className={cn(
-        "w-60 max-w-full origin-top overflow-hidden rounded-3xl bg-surface-elevated/90 py-1.5 shadow-pop backdrop-blur-xl animate-pop-in",
+        "w-60 max-w-full origin-top overflow-hidden rounded-xl bg-surface-elevated/90 py-1.5 shadow-pop backdrop-blur-xl animate-pop-in",
         // Larger touch targets than the old small popover: rows and icons are sized here once, not per item.
-        "[&_[role=menuitem]]:gap-3.5 [&_[role=menuitem]]:px-4 [&_[role=menuitem]]:py-3 [&_[role=menuitem]]:text-base [&_[role=menuitem]_svg]:size-5",
+        "[&_[role=menuitem]]:gap-3.5 [&_[role=menuitem]]:px-4 [&_[role=menuitem]]:py-3 [&_[role=menuitem]]:text-body [&_[role=menuitem]_svg]:size-5",
       )}
     >
       <div className="px-4 pb-1 pt-2 text-caption font-medium uppercase tracking-wide text-text-muted">
@@ -207,7 +208,7 @@ export function MessageActionMenu({
             />
           )}
           {!canEditOrDelete && (
-            <div className="border-t border-border px-3 py-2 text-xs text-text-muted">
+            <div className="border-t border-border px-3 py-2 text-caption text-text-muted">
               <p>{t("messages.editWindowExpired")}</p>
               <p>{t("messages.deleteForEveryoneWindowExpired")}</p>
             </div>

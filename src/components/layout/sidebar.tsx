@@ -59,7 +59,7 @@ export function Sidebar() {
             active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
           )}
         >
-          <Icon size={21} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-primary" : undefined} />
+          <Icon size={20} className={active ? "text-primary" : undefined} />
           <span className="sr-only lg:not-sr-only">{label}</span>
         </Link>
       </li>
@@ -88,7 +88,7 @@ export function Sidebar() {
           data-nav-create=""
           className={buttonClassName({ className: "h-11 w-full text-[0.9375rem] font-bold" })}
         >
-          <Plus size={18} strokeWidth={2.4} />
+          <Plus size={18} />
           <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
         </button>
         {createOpen && <CreateMenuSheet onClose={() => setCreateOpen(false)} />}
@@ -97,7 +97,7 @@ export function Sidebar() {
       <nav aria-label={t("nav.primaryLabel")} className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-3 lg:px-4">
         {visibleGroups.map((group) => (
           <div key={group.labelKey}>
-            <p className="mb-1.5 hidden px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-text-muted lg:block">
+            <p className="mb-1.5 hidden px-3 text-micro font-semibold uppercase tracking-[0.1em] text-text-muted lg:block">
               {t(group.labelKey)}
             </p>
             <div aria-hidden className="mx-auto mb-2 h-px w-8 bg-border-soft lg:hidden" />

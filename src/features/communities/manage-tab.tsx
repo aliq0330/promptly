@@ -31,7 +31,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  * her işlem sunucuda yeniden yetkilendirilir (RPC + RLS).
  */
 /** Ayar grubu kartı: topluluk ayarları ile temel bilgi/görünürlük/yetki ayrı kartlarda; içerik yoksa (yetki yok) kart gizlenir. */
-const SETTINGS_CARD = "rounded-xl border border-border-soft bg-surface p-4 shadow-card empty:hidden sm:p-5";
+const SETTINGS_CARD = "rounded-lg border border-border-soft bg-surface p-4 shadow-card empty:hidden sm:p-5";
 
 export function ManageTab({ group, role, onToast, reload, section }: CommunityTabProps) {
   const { t } = useTranslation();

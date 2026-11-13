@@ -133,7 +133,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
                   selected ? "border-primary bg-primary-soft text-primary" : "border-transparent bg-surface-soft text-text-secondary hover:bg-border-soft",
                 )}
               >
-                <Icon size={16} strokeWidth={1.75} aria-hidden />
+                <Icon size={16} aria-hidden />
                 <span aria-hidden className="font-display text-h2 font-bold leading-tight tabular-nums">{formatCount(totals[kind])}</span>
                 <span aria-hidden className="max-w-full truncate text-caption font-medium">{t(KIND_META[kind].tile)}</span>
               </button>
@@ -141,7 +141,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
           })}
           {copyCount !== undefined && (
             <div className="flex min-w-0 flex-col items-start gap-0.5 rounded-lg border-[1.5px] border-dashed border-border px-2 pb-2 pt-2.5 text-text-secondary sm:px-3.5 sm:pt-3">
-              <Copy size={16} strokeWidth={1.75} aria-hidden />
+              <Copy size={16} aria-hidden />
               <span className="font-display text-h2 font-bold leading-tight tabular-nums">{formatCount(copyCount)}</span>
               <span className="max-w-full truncate text-caption font-medium">{t("statistics.tileCopies")}</span>
             </div>

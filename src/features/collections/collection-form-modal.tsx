@@ -29,11 +29,11 @@ export function CollectionFormModal({
   return (
     <Modal onClose={onClose} labelledBy="collection-form-modal-title">
       <div
-        className="max-h-[90vh] w-full max-w-md space-y-4 overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="max-h-[90dvh] w-full max-w-md space-y-4 overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
-          <h2 id="collection-form-modal-title" className="min-w-0 text-base font-semibold text-text">
+          <h2 id="collection-form-modal-title" className="min-w-0 text-body font-semibold text-text">
             {isEdit ? t("collection.editTitle") : t("collection.createNewTitle")}
           </h2>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">

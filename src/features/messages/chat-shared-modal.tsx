@@ -40,7 +40,7 @@ export function ChatSharedModal({
   const [tab, setTab] = useState<ChatSharedKind>(mode === "media" ? "photos" : "content");
   return (
     <Modal onClose={onClose} labelledBy="chat-shared-title" overLayers>
-      <div data-chat-shared className="flex max-h-[min(80dvh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-[22px] bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <div data-chat-shared className="flex max-h-[min(80dvh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl bg-surface shadow-pop" onClick={(event) => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-2 pt-5">
           <h2 id="chat-shared-title" className="font-display text-h3 font-bold text-text">
             {mode === "media" ? t("messages.shared.mediaLinks") : t("messages.shared.content")}
@@ -161,11 +161,11 @@ function SharedList({ conversationId, kind, onJump }: { conversationId: string; 
               <button
                 type="button"
                 onClick={() => onJump(item.id)}
-                className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {kind === "links" && (
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary" aria-hidden>
-                    <Link2 size={17} />
+                    <Link2 size={16} />
                   </span>
                 )}
                 <span className="min-w-0 flex-1">

@@ -137,7 +137,7 @@ export function PaletteStrip({ colors, copyable, max = 8, className }: { colors:
         >
           {copied === color && (
             <span className="absolute inset-0 flex items-center justify-center rounded-[0.6rem] bg-text/50 text-background">
-              <Check size={14} strokeWidth={2.5} aria-hidden />
+              <Check size={14} aria-hidden />
             </span>
           )}
         </button>

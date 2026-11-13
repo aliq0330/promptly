@@ -217,7 +217,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
         {tab === "history" && versions.length > 0 && <PresetHistoryPanel presetId={preset.id} versions={versions} isOwner={isOwn} />}
 
         {tab === "preset" && (<>
-        <div className="flex flex-wrap items-start gap-3 rounded-[22px] border border-primary/20 bg-primary-soft/50 p-5 sm:p-6">
+        <div className="flex flex-wrap items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft/50 p-5 sm:p-6">
           <div className="min-w-0 flex-1 space-y-3">
             {/* Ne olduğu: bir prompta bağlı değil, uyumlu her prompta uygulanır (docs/history/340-*). */}
             <p className="text-small font-medium text-text">{t("preset.whatIs")}</p>
@@ -240,9 +240,9 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
 
         <DetailSection title={t("preset.contentsTitle")}>
           {entries.length === 0 ? (
-            <p className="rounded-[22px] border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("preset.noParameters")}</p>
+            <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("preset.noParameters")}</p>
           ) : (
-            <dl className="grid overflow-hidden rounded-[22px] border border-border-soft bg-border-soft [gap:1px] sm:grid-cols-2">
+            <dl className="grid overflow-hidden rounded-xl border border-border-soft bg-border-soft [gap:1px] sm:grid-cols-2">
               {entries.map((entry) => (
                 <div key={entry.fieldId} className="flex items-baseline justify-between gap-3 bg-surface px-5 py-3.5">
                   <dt className="shrink-0 text-small text-text-muted">{entry.fieldLabel}</dt>

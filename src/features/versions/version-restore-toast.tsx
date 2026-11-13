@@ -37,7 +37,7 @@ export function VersionRestoreToast({ contentId }: { contentId: string }) {
   if (from === null) return null;
   return (
     <Portal>
-      <div role="status" className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-6">
+      <div role="status" className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-(--z-popover) flex justify-center px-4 md:bottom-6">
         <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">{t("history.restoredToast", { from })}</div>
       </div>
     </Portal>

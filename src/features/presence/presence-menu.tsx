@@ -50,10 +50,10 @@ export function PresenceMenuToggle({ itemClassName, onNavigate }: { itemClassNam
         aria-checked={invisible}
         disabled={busy}
         onClick={() => void toggle()}
-        className={cn(itemClassName, "disabled:opacity-60")}
+        className={cn(itemClassName, "disabled:opacity-50")}
         data-presence-toggle
       >
-        <EyeOff size={17} className="shrink-0 text-text-secondary" />
+        <EyeOff size={16} className="shrink-0 text-text-secondary" />
         <span className="min-w-0 flex-1">
           <span className="block truncate">{t("presence.menuAppearOffline")}</span>
           <span className={cn("block truncate text-caption font-normal", failed ? "text-danger" : "text-text-muted")}>

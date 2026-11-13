@@ -23,10 +23,10 @@ const TONE_CLASS: Record<string, string> = {
 
 const SOLID_TONE_CLASS: Record<string, string> = {
   primary: "bg-primary text-primary-foreground",
-  secondary: "bg-secondary text-white",
-  success: "bg-success text-white",
-  warning: "bg-warning text-white",
-  plum: "bg-text-secondary text-white",
+  secondary: "bg-secondary text-secondary-foreground",
+  success: "bg-success text-success-foreground",
+  warning: "bg-warning text-warning-foreground",
+  plum: "bg-text-secondary text-background",
   sky: "bg-primary text-primary-foreground",
 };
 
@@ -79,7 +79,7 @@ export function PersonRow({
 }) {
   return (
     <div className={cn("flex items-center gap-3 py-2.5", className)}>
-      <Avatar src={avatarUrl} alt={name} size={36} />
+      <Avatar src={avatarUrl} alt={name} size={40} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-small font-medium text-text">{name}</p>
         {(sub || username) && <p className="truncate text-caption text-text-muted">{sub ?? `@${username}`}</p>}

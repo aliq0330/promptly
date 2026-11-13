@@ -16,6 +16,9 @@ interface AvatarProps {
   badge?: ReactNode;
 }
 
+/** The avatar scale (audit §16): inline 20 · row 24 / 32 · list 40 · card 56 · profile 80. Pass one of these as `size`. */
+export const AVATAR_SIZES = [20, 24, 32, 40, 56, 80] as const;
+
 function initialsFromName(name: string) {
   return name
     .trim()

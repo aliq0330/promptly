@@ -60,7 +60,7 @@ export function ApplicationCard({
             {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
             {post.pinnedAt && (
               <Badge variant="default">
-                <Pin size={11} aria-hidden /> {t("communities.announcements.pinned")}
+                <Pin size={12} aria-hidden /> {t("communities.announcements.pinned")}
               </Badge>
             )}
           </>
@@ -80,7 +80,7 @@ export function ApplicationCard({
             )
           ) : (
             <p className="flex aspect-[4/3] w-full items-center justify-center gap-2 bg-surface-soft px-3 text-small text-text-muted">
-              <EyeOff size={15} aria-hidden /> {t("communities.feed.contentGone")}
+              <EyeOff size={16} aria-hidden /> {t("communities.feed.contentGone")}
             </p>
           )
         }

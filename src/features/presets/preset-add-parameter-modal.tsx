@@ -117,7 +117,7 @@ export function PresetAddParameterModal({
           disabled={taken}
           aria-expanded={isOpen}
           onClick={() => setOpen(isOpen ? null : field.id)}
-          className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-soft disabled:cursor-default disabled:opacity-70 disabled:hover:bg-transparent"
+          className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-soft disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent"
         >
           <span className="min-w-0 flex-1 truncate text-label font-semibold text-text">{fieldName(field, language)}</span>
           {taken ? (
@@ -161,7 +161,7 @@ export function PresetAddParameterModal({
 
         <div className="space-y-2 border-b border-border-soft px-4 py-3">
           <div className="relative">
-            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}

@@ -152,15 +152,15 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
           return (
             <li key={version.id} className="rounded-md border border-border-soft bg-surface-soft p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm font-medium text-text">
+                <span className="text-small font-medium text-text">
                   v{version.versionNumber}
                   {version.versionNumber === latest && <span className="ml-1.5 text-primary">· {t("promptHistory.current")}</span>}
                 </span>
-                <time dateTime={version.createdAt} title={new Date(version.createdAt).toLocaleString(language === "tr" ? "tr-TR" : "en-US")} className="text-xs text-text-muted">
+                <time dateTime={version.createdAt} title={new Date(version.createdAt).toLocaleString(language === "tr" ? "tr-TR" : "en-US")} className="text-caption text-text-muted">
                   {formatRelativeTime(version.createdAt, language)}
                 </time>
               </div>
-              <p className="mt-1 text-xs text-text-muted">
+              <p className="mt-1 text-caption text-text-muted">
                 {t(SOURCE_LABEL_KEYS[version.source])}
                 {name && <> · {t("history.suggestedBy", { name })}</>}
               </p>
@@ -171,7 +171,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
                     type="button"
                     onClick={() => toggleComparison(version)}
                     aria-expanded={isComparing}
-                    className="text-xs font-medium text-primary hover:underline"
+                    className="text-caption font-medium text-primary hover:underline"
                   >
                     {isComparing ? t("promptHistory.hideComparison") : t("history.compare")}
                   </button>
@@ -180,7 +180,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
                   <button
                     type="button"
                     onClick={() => handleCopy(version)}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-text-secondary hover:text-text"
+                    className="inline-flex items-center gap-1 text-caption font-medium text-text-secondary hover:text-text"
                   >
                     {copiedId === version.id ? <Check size={12} aria-hidden /> : <Copy size={12} aria-hidden />}
                     {copiedId === version.id ? t("common.copied") : t("common.copy")}
@@ -194,7 +194,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
                       setInfo(null);
                       setRestoreTarget(version);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-text-secondary hover:text-text"
+                    className="inline-flex items-center gap-1 text-caption font-medium text-text-secondary hover:text-text"
                   >
                     <RotateCcw size={12} aria-hidden />
                     {t("history.restore")}
@@ -218,7 +218,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
                       onChange={(newerId) => setComparison({ ...comparison, newerId })}
                     />
                   </div>
-                  {pair ? renderComparison(pair.older, pair.newer) : <p className="text-xs text-text-muted">{t("history.sameVersion")}</p>}
+                  {pair ? renderComparison(pair.older, pair.newer) : <p className="text-caption text-text-muted">{t("history.sameVersion")}</p>}
                 </div>
               )}
             </li>
@@ -233,7 +233,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
             onClick={(event) => event.stopPropagation()}
           >
             <div className="space-y-2">
-              <h2 id="restore-version-title" className="text-base font-semibold text-text">
+              <h2 id="restore-version-title" className="text-body font-semibold text-text">
                 {t("history.restoreTitle")}
               </h2>
               <p className="text-small text-text-secondary">{t("history.restoreLead", { from: restoreTarget.versionNumber })}</p>
@@ -273,7 +273,7 @@ function VersionPicker<V extends HistoryVersion>({
   onChange: (id: string) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium text-text-muted">
+    <label className="flex flex-col gap-1 text-caption font-medium text-text-muted">
       {label}
       <select
         value={value}

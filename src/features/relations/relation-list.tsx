@@ -45,7 +45,7 @@ export function RelationList({
               className={cn("flex min-h-[56px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-soft", selected && "bg-primary-soft")}
             >
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-surface-soft text-text-muted">
-                <Icon size={18} strokeWidth={1.75} aria-hidden />
+                <Icon size={18} aria-hidden />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-small font-semibold text-text">{node.title}</span>

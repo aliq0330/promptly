@@ -43,6 +43,7 @@ import { homeHref, isInvitesSection, resolveHomeView, type HomeTab, type Invites
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { CommunityCategory } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 const SORTS: CommunitySort[] = ["popular", "newest", "active"];
 
@@ -174,10 +175,10 @@ export function CommunitiesPage() {
         user && (
           <HubControlRow>
             <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("communities.page.searchOpen")} title={t("communities.page.searchOpen")} className={CONTROL_ICON_BUTTON}>
-              <Search size={22} strokeWidth={1.75} aria-hidden />
+              <Search size={24} aria-hidden />
             </button>
             <Link href="/communities/all" aria-label={t("communities.all.button")} title={t("communities.all.button")} className={CONTROL_ICON_BUTTON} data-testid="communities-all-link">
-              <Compass size={22} strokeWidth={1.75} aria-hidden />
+              <Compass size={24} aria-hidden />
             </Link>
           </HubControlRow>
         )
@@ -303,7 +304,7 @@ export function DiscoverView({
               onChange={(event) => setQuery(event.target.value)}
               maxLength={100}
               placeholder={t("communities.search.placeholder")}
-              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
         )}
@@ -465,9 +466,9 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
   return (
     <div className="space-y-3">
       {action.error && (
-        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert>
           {action.error}
-        </p>
+        </InlineAlert>
       )}
       <ul className={HUB_GRID_CLASS}>
         {sortedItems.map((community) => {

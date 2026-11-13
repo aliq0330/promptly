@@ -1,5 +1,6 @@
 "use client";
 
+import { PAGE_GUTTER_CLASS, PAGE_PADDING_Y_CLASS, PAGE_WIDTH_CLASS } from "@/components/ui/page-header";
 import { LineArtScene } from "@/components/line-art/line-art-scene";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
@@ -39,7 +40,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { findCategory, findSubcategory, isContentTypeId, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import type { SearchCursor, SearchKind } from "@/lib/supabase/search";
-import { categoryHref, formatCount, profileHref, tagHref, toolHref } from "@/lib/utils";
+import { categoryHref, cn, formatCount, profileHref, tagHref, toolHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
@@ -294,7 +295,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   const showControls = (active || !idle) && (showTabMenu || showPosts);
 
   const peopleList = (people: UserProfile[]) => (
-    <div className="overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
+    <div className="overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card">
       {people.map((user) => (
         <Link
           key={user.id}
@@ -303,8 +304,8 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
         >
           <Avatar src={user.avatarUrl} alt={user.displayName} size={40} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{user.displayName}</p>
-            <p className="truncate text-xs text-text-muted">
+            <p className="truncate text-small font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{user.displayName}</p>
+            <p className="truncate text-caption text-text-muted">
               @{user.username} · {formatCount(user.followerCount)} {t("profile.followersSuffix")}
             </p>
           </div>
@@ -338,7 +339,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   );
 
   return (
-    <div className={idle ? "space-y-4" : "mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8"}>
+    <div className={idle ? "space-y-4" : cn("mx-auto w-full space-y-6", PAGE_WIDTH_CLASS.wide, PAGE_GUTTER_CLASS, PAGE_PADDING_Y_CLASS)}>
       <div className="space-y-3">
         <AdvancedSearchBox
           tokens={tokens}
@@ -392,27 +393,27 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
       </div>
 
       {!active ? (
-        idle ?? <p className="py-10 text-center text-sm text-text-muted">
+        idle ?? <p className="py-10 text-center text-small text-text-muted">
           {t("search.startTyping")}
         </p>
       ) : isSearching ? (
-        <p className="py-10 text-center text-sm text-text-muted">{t("search.searching")}</p>
+        <p className="py-10 text-center text-small text-text-muted">{t("search.searching")}</p>
       ) : (
         tab === "tools" ? (
           !normalized ? (
-            <p className="py-6 text-center text-sm text-text-muted">{t("search.startTyping")}</p>
+            <p className="py-6 text-center text-small text-text-muted">{t("search.startTyping")}</p>
           ) : (
             <ToolsSection query={normalized} />
           )
         ) : tab === "tags" ? (
           !normalized ? (
-            <p className="py-6 text-center text-sm text-text-muted">{t("search.startTyping")}</p>
+            <p className="py-6 text-center text-small text-text-muted">{t("search.startTyping")}</p>
           ) : (
             <TagRows tags={tags} emptyMessage={t("common.noResults")} />
           )
         ) : tab === "people" || tab === "communities" ? (
           !normalized ? (
-            <p className="py-6 text-center text-sm text-text-muted">{t("search.textOnlyHint")}</p>
+            <p className="py-6 text-center text-small text-text-muted">{t("search.textOnlyHint")}</p>
           ) : tab === "people" ? (
             users.length > 0 ? (
               <section className="space-y-3">
@@ -420,7 +421,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
                 {peopleList(users)}
               </section>
             ) : (
-              <p className="py-6 text-center text-sm text-text-muted">{t("common.noResults")}</p>
+              <p className="py-6 text-center text-small text-text-muted">{t("common.noResults")}</p>
             )
           ) : communities.failed ? (
             <ErrorBox message={t("communities.page.loadError")} onRetry={() => setRetryKey((key) => key + 1)} />
@@ -433,7 +434,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
               )}
             </section>
           ) : (
-            <p className="py-6 text-center text-sm text-text-muted">{t("common.noResults")}</p>
+            <p className="py-6 text-center text-small text-text-muted">{t("common.noResults")}</p>
           )
         ) : (
           <div className="space-y-8">
@@ -515,7 +516,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
             {(tab === "posts" ? noPosts : nothingFound) && (
               <div className="space-y-3 py-6 text-center">
                 <LineArtScene kind="search" className="mx-auto w-full max-w-[16rem] rounded-xl border border-border-soft" />
-                <p className="text-sm text-text-muted">{hasTokens ? t("search.noMatchingFilters") : t("common.noResults")}</p>
+                <p className="text-small text-text-muted">{hasTokens ? t("search.noMatchingFilters") : t("common.noResults")}</p>
                 {hasTokens && (
                   // docs/history/269-*: a dead end names its way out — one tap drops the chip that may have emptied the list.
                   <div className="mx-auto flex max-w-sm flex-col gap-2" data-search-remove-filters>
@@ -529,7 +530,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
                           onClick={() => setTokens(toggleToken(tokens, token))}
                           className="flex min-h-11 items-center gap-2 rounded-xl border border-border-soft bg-surface px-3.5 text-left text-label text-text hover:border-primary"
                         >
-                          <Icon size={15} className="shrink-0 text-primary" aria-hidden />
+                          <Icon size={16} className="shrink-0 text-primary" aria-hidden />
                           <span className="min-w-0 flex-1 truncate">{t("search.removeNamed", { label })}</span>
                         </button>
                       );

@@ -38,7 +38,7 @@ export function AppShell({ children, aside }: AppShellProps) {
   const bare = /^\/focus\/?$/.test(usePathname() ?? "");
   if (bare) {
     return (
-      <div className="flex min-h-screen">
+      <div className="flex min-h-dvh">
         <main id="main-content" className="min-w-0 flex-1">
           {children}
         </main>
@@ -51,10 +51,10 @@ export function AppShell({ children, aside }: AppShellProps) {
   }
   return (
     <MessageDockProvider>
-    <div className="flex min-h-screen">
+    <div className="flex min-h-dvh">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-label focus:shadow-pop"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-(--z-toast) focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-label focus:shadow-pop"
       >
         {t("common.skipToContent")}
       </a>
@@ -62,7 +62,7 @@ export function AppShell({ children, aside }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
         <div className="flex flex-1">
-          <main id="main-content" className="min-w-0 flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10">
+          <main id="main-content" className="min-w-0 flex-1 pb-(--nav-clearance) md:pb-10">
             {children}
           </main>
           {aside ? (

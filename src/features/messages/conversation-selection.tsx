@@ -66,10 +66,10 @@ export function ConversationsMoreMenu({
         data-conversations-more
         className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft", open && "bg-border-soft")}
       >
-        <MoreVertical size={22} strokeWidth={1.75} aria-hidden />
+        <MoreVertical size={24} aria-hidden />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-60 rounded-xl border border-border-soft bg-surface p-2 shadow-pop animate-pop-in">
+        <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-60 rounded-lg border border-border-soft bg-surface-elevated p-2 shadow-pop animate-pop-in">
           <button
             type="button"
             role="menuitem"
@@ -81,7 +81,7 @@ export function ConversationsMoreMenu({
             data-conversations-select
             className={itemClass}
           >
-            <CircleCheck size={20} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />
+            <CircleCheck size={20} aria-hidden className="shrink-0 text-text-muted" />
             {selectLabel ?? t("messages.selectChats")}
           </button>
           <button
@@ -95,7 +95,7 @@ export function ConversationsMoreMenu({
             data-conversations-mark-all
             className={itemClass}
           >
-            <CheckCheck size={20} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />
+            <CheckCheck size={20} aria-hidden className="shrink-0 text-text-muted" />
             {t("messages.markAllRead")}
           </button>
         </div>
@@ -116,7 +116,7 @@ export function SelectionHeader({ count, onDone, embedded, title }: { count: num
         title={t("messages.selectionDone")}
         className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-surface text-text shadow-card transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        <Check size={22} strokeWidth={2} aria-hidden />
+        <Check size={24} aria-hidden />
       </button>
       <h1 aria-live="polite" className="font-display text-h2 font-bold tracking-[-0.01em] text-text">
         {title ?? (count > 0 ? t("messages.selectionCount", { count }) : t("messages.selectChats"))}
@@ -165,7 +165,7 @@ export function SelectionActionBar({
 }) {
   const { t } = useTranslation();
   const pill = cn(
-    "pointer-events-auto h-12 rounded-full border border-border-soft bg-surface/95 font-semibold text-text shadow-pop backdrop-blur-xl transition-[opacity,background-color] duration-200 ease-soft hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-45",
+    "pointer-events-auto h-12 rounded-full border border-border-soft bg-surface/95 font-semibold text-text shadow-pop backdrop-blur-xl transition-[opacity,background-color] duration-200 ease-soft hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50",
     compact ? "h-11 shrink-0 whitespace-nowrap px-2.5 text-[0.8125rem]" : "px-4 text-body sm:px-6",
   );
   return (

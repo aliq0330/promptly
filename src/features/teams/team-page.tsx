@@ -151,7 +151,7 @@ function TeamPageInner() {
   if (state === "loading") {
     return (
       <div className="mx-auto w-full max-w-6xl space-y-4 px-3 py-5 sm:px-5 lg:px-8" data-testid="team-loading">
-        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-lg" />
         <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );

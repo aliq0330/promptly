@@ -13,6 +13,7 @@ import { capabilitiesFor, DEFAULT_ROLE_PERMISSIONS } from "@/lib/chat-groups";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupCapability, RolePermissions } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 const ROLES = ["admin", "moderator"] as const;
 
@@ -111,10 +112,10 @@ export function GroupOwnerSettings({
           aria-label={t("groups.owner.membersCanPin")}
           disabled={save.busy}
           onClick={() => setMembersCanPin((prev) => !prev)}
-          className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-surface-soft disabled:opacity-60"
+          className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-surface-soft disabled:opacity-50"
         >
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-text">{t("groups.owner.membersCanPin")}</span>
+            <span className="block text-small font-medium text-text">{t("groups.owner.membersCanPin")}</span>
             <span className="block text-caption text-text-muted">{t("groups.owner.membersCanPinHelp")}</span>
           </span>
           <span aria-hidden className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", membersCanPin ? "bg-primary" : "bg-border-strong")}>
@@ -146,10 +147,10 @@ export function GroupOwnerSettings({
                   aria-checked={on}
                   aria-label={`${t(`groups.role.${role}`)}: ${t(`groups.cap.${cap}`)}`}
                   onClick={() => toggle(role, cap)}
-                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-surface-soft disabled:opacity-60"
+                  className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-surface-soft disabled:opacity-50"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium text-text">{t(`groups.cap.${cap}`)}</span>
+                    <span className="block text-small font-medium text-text">{t(`groups.cap.${cap}`)}</span>
                     <span className="block text-caption text-text-muted">{t(`groups.cap.${cap}Help`)}</span>
                   </span>
                   <span aria-hidden className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", on ? "bg-primary" : "bg-border-strong")}>
@@ -171,9 +172,9 @@ export function GroupOwnerSettings({
       )}
 
       {save.error && (
-        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert>
           {save.error}
-        </p>
+        </InlineAlert>
       )}
       <div className="flex justify-end">
         <Button type="button" size="sm" onClick={() => void handleSave()} disabled={save.busy || (!historyChanged && !permsChanged && !pinChanged)}>

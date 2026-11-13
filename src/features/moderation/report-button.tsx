@@ -54,14 +54,14 @@ export function ReportButton({
         className="flex h-14 w-full items-center gap-3.5 px-4 text-left text-body text-danger transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft" aria-hidden>
-          <Flag size={18} strokeWidth={1.75} />
+          <Flag size={18} />
         </span>
         {label ?? t("messages.reportAction")}
       </button>
     );
   }
   return (
-    <button type="button" role={menuItem ? "menuitem" : undefined} onClick={open} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text">
+    <button type="button" role={menuItem ? "menuitem" : undefined} onClick={open} className="flex items-center gap-1.5 text-small text-text-muted hover:text-text">
       <Flag size={14} />
       {label ?? t("messages.reportAction")}
     </button>

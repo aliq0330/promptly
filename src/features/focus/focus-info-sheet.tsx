@@ -49,7 +49,7 @@ export function FocusInfoSheet({ item, onClose }: { item: PostFeedItem; onClose:
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain border-t border-border-soft px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex flex-wrap items-center gap-2">
           <p className="flex min-w-0 items-center gap-1.5 text-caption font-bold uppercase tracking-[0.1em] text-text-secondary">
-            <Icon size={13} strokeWidth={2.25} aria-hidden className="shrink-0" />
+            <Icon size={12} aria-hidden className="shrink-0" />
             <span className="truncate">
               {model.typeLabel}
               {model.tool && <> · {model.tool}</>}
@@ -67,19 +67,19 @@ export function FocusInfoSheet({ item, onClose }: { item: PostFeedItem; onClose:
               href={`/create?answerRequest=${item.data.id}`}
               className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-3.5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <Reply size={15} aria-hidden />
+              <Reply size={16} aria-hidden />
               {t("request.reply")}
             </Link>
           )}
           {prompt && prompt.promptText.trim() && (
             <button type="button" onClick={() => setPromptOpen(true)} aria-haspopup="dialog" className={chip}>
-              <SquareTerminal size={15} aria-hidden />
+              <SquareTerminal size={16} aria-hidden />
               {t("focusFeed.viewPrompt")}
             </button>
           )}
           <Link href={model.href} className={chip}>
             {t("focusFeed.openDetail")}
-            <ArrowUpRight size={15} aria-hidden />
+            <ArrowUpRight size={16} aria-hidden />
           </Link>
           <FocusAddToSpace item={item} className={chip} />
         </div>

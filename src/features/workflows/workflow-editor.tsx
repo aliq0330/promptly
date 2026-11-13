@@ -42,12 +42,13 @@ import { ToolPicker } from "@/features/content/tool-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LoadState = "loading" | "ready" | "notfound" | "forbidden";
 type AddTarget = { stepId: string | null; initialMode: "existing" | "scratch" } | null;
 
-const card = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6";
+const card = "rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-6";
 
 /**
  * The workflow editor: a compact header (type pill, title, description, cover) on top, then the step list and the selected step's
@@ -284,20 +285,20 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const liveIssues = validateWorkflow(meta, steps, true);
 
   const gate = authLoading || loadState === "loading" || mode === null ? (
-    <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>
+    <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>
   ) : !user ? (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("workflow.loginRequired")}</p>
-        <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
+        <p className="mb-4 text-small text-text-muted">{t("workflow.loginRequired")}</p>
+        <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover">
           {t("header.login")}
         </Link>
       </div>
   ) : loadState === "notfound" || loadState === "forbidden" ? (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("workflow.notFoundTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{loadState === "forbidden" ? t("workflow.notYours") : t("workflow.notFoundBody")}</p>
-        <Link href="/workflows" className="text-sm font-medium text-primary hover:underline">
+        <p className="mb-4 text-small text-text-muted">{loadState === "forbidden" ? t("workflow.notYours") : t("workflow.notFoundBody")}</p>
+        <Link href="/workflows" className="text-small font-medium text-primary hover:underline">
           {t("workflow.pageTitle")}
         </Link>
       </div>
@@ -446,7 +447,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
             {panes && selected ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="min-w-0 truncate text-base font-semibold text-text">
+                  <h2 className="min-w-0 truncate text-body font-semibold text-text">
                     {selectedIndex + 1} · {selected.title || t("workflow.untitledStep")}
                   </h2>
                   <StepActions
@@ -482,7 +483,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
                 )}
               </div>
             ) : (
-              <p className="py-10 text-center text-sm text-text-muted">{t("workflow.selectStepHint")}</p>
+              <p className="py-10 text-center text-small text-text-muted">{t("workflow.selectStepHint")}</p>
             )}
           </section>
         </div>
@@ -498,9 +499,9 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
 
       {mode === "mobile" && sheetOpen && selected && (
         <Modal onClose={() => setSheetOpen(false)} labelledBy="workflow-step-sheet-title">
-          <div className="flex max-h-[92vh] w-full flex-col rounded-lg border border-border bg-surface p-4 shadow-lg" onClick={(event) => event.stopPropagation()}>
+          <DialogShell className="flex max-h-[92dvh] w-full flex-col rounded-lg border border-border-soft bg-surface p-4 shadow-pop">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 id="workflow-step-sheet-title" className="min-w-0 truncate text-base font-semibold text-text">
+              <h2 id="workflow-step-sheet-title" className="min-w-0 truncate text-body font-semibold text-text">
                 {selectedIndex + 1}. {selected.title || t("workflow.untitledStep")}
               </h2>
               <button type="button" onClick={() => setSheetOpen(false)} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
@@ -508,7 +509,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">{detailTabs}</div>
-          </div>
+          </DialogShell>
         </Modal>
       )}
 
@@ -579,11 +580,11 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
             />
           }
         >
-          {saveState === "saved" && status === "draft" && !dirty && <p className="text-sm text-success">{t("draft.saved")}</p>}
-          {saveError && <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">{saveError}</p>}
+          {saveState === "saved" && status === "draft" && !dirty && <p className="text-small text-success">{t("draft.saved")}</p>}
+          {saveError && <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 p-3 text-small text-danger">{saveError}</p>}
           {attempted && warnings.length > 0 && (
             <div role="status" className="rounded-md border border-warning/40 bg-warning/5 p-3">
-              <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-text">
+              <p className="mb-1 flex items-center gap-1.5 text-small font-semibold text-text">
                 <TriangleAlert size={14} className="text-warning" />
                 {t("workflow.issuesHeading")}
               </p>

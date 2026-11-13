@@ -165,7 +165,7 @@ export function QuotePage() {
       {!content && (
         <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
           <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
-            <EyeOff size={15} aria-hidden /> {t("quotes.card.contentGone")}
+            <EyeOff size={16} aria-hidden /> {t("quotes.card.contentGone")}
           </p>
           <section className="space-y-2" aria-label={t("quotes.page.commentsTitle")}>
             <p className="text-caption text-text-muted">{t("quotes.page.commentsHelp")}</p>

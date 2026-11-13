@@ -30,6 +30,7 @@ import { usePrefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { CommentAttachment, CommentAttachmentType, CommentMedia } from "@/types";
 import type { CommentExtras } from "@/lib/supabase/comments";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Yazma çubuğundaki seçili ek içerik (henüz gönderilmedi): başlığı yalnız önizleme içindir, veritabanına yazılmaz. */
 export interface AttachmentDraft {
@@ -228,7 +229,7 @@ export function CommentExtrasToolbar({ extras, userId, disabled = false, classNa
         data-comment-extra="photo"
         className={cn(TOOL_BUTTON, draftMediaKind(extras.media) === "photo" && TOOL_ON)}
       >
-        <ImagePlus size={20} strokeWidth={1.75} aria-hidden />
+        <ImagePlus size={20} aria-hidden />
       </button>
       <button
         type="button"
@@ -241,7 +242,7 @@ export function CommentExtrasToolbar({ extras, userId, disabled = false, classNa
         data-comment-extra="gif"
         className={cn(TOOL_BUTTON, draftMediaKind(extras.media) === "gif" && TOOL_ON)}
       >
-        <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-[9px] font-extrabold leading-none tracking-[0.04em]">
+        <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-micro font-extrabold leading-none tracking-[0.04em]">
           {t("gif.badge")}
         </span>
       </button>
@@ -256,7 +257,7 @@ export function CommentExtrasToolbar({ extras, userId, disabled = false, classNa
         data-comment-extra="content"
         className={cn(TOOL_BUTTON, extras.attachment && TOOL_ON)}
       >
-        <Paperclip size={20} strokeWidth={1.75} aria-hidden />
+        <Paperclip size={20} aria-hidden />
       </button>
       {gifOpen && (
         <GifPicker
@@ -319,7 +320,7 @@ export function CommentExtrasPreview({
                 </span>
               )}
               <button type="button" onClick={extras.removeMedia} aria-label={t(draftMediaKind(media) === "photo" ? "commentExtras.removePhoto" : "commentExtras.removeGif")} data-comment-extra-remove="media" className={REMOVE_BUTTON}>
-                <X size={14} strokeWidth={2.5} aria-hidden />
+                <X size={14} aria-hidden />
               </button>
             </div>
           )}
@@ -400,7 +401,7 @@ function CommentGif({ gifId, width, height, className }: { gifId: string; width:
         // eslint-disable-next-line @next/next/no-img-element -- GIPHY'nin kendi adresi; dış hareketli görsel
         <img src={src} alt={t("commentExtras.gifAlt")} loading="lazy" draggable={false} onError={() => setFailed(true)} className="h-full w-full object-cover" />
       )}
-      <span aria-hidden className="absolute bottom-1.5 left-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-[0.06em] text-white">
+      <span aria-hidden className="absolute bottom-1.5 left-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-micro font-bold tracking-[0.06em] text-white">
         {t("gif.badge")}
       </span>
     </span>
@@ -487,7 +488,7 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
 
   return (
     <Modal onClose={onClose} labelledBy="comment-content-title">
-      <div data-comment-content-picker className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell data-comment-content-picker className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex shrink-0 items-center justify-between gap-2 px-5 pb-1 pt-4">
           <h2 id="comment-content-title" className="font-display text-h3 font-bold text-text">
             {t("commentExtras.picker.title")}
@@ -523,7 +524,7 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
               {t("communities.feed.pickLoadError")}
             </p>
           ) : items === null || list.loading ? (
-            <div className="mx-3 mt-2 h-20 animate-pulse rounded-lg bg-surface-soft" aria-busy="true" />
+            <div className="mx-3 mt-2 h-20 skeleton-shimmer rounded-lg" aria-busy="true" />
           ) : items.length === 0 ? (
             <p className="mx-3 mt-2 rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">
               {activeSource === "saved" ? t("commentExtras.picker.savedEmpty") : t("communities.feed.pickEmpty")}
@@ -546,14 +547,14 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
                       )}
                     >
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                        <Icon size={22} strokeWidth={1.75} aria-hidden />
+                        <Icon size={24} aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-body font-semibold text-text">{item.title || t("communities.feed.untitled")}</span>
                         <span className="block truncate text-small text-text-muted">{t(`communities.feed.type.${type}`)}</span>
                       </span>
                       <span aria-hidden className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2", isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border-strong")}>
-                        {isSelected && <Check size={14} strokeWidth={3} />}
+                        {isSelected && <Check size={14} />}
                       </span>
                     </button>
                   </li>
@@ -571,7 +572,7 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
             {selected ? t("commentExtras.picker.add") : t("commentExtras.picker.pickOne")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

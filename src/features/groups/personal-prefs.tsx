@@ -68,11 +68,11 @@ export function ChatMuteToggle({
         aria-checked={muted}
         onClick={() => void toggle()}
         disabled={mute.busy}
-        className="flex w-full items-center gap-3 rounded-lg border border-border-soft px-3 py-3 text-left transition-colors hover:border-border-strong hover:bg-surface-soft disabled:opacity-60"
+        className="flex w-full items-center gap-3 rounded-lg border border-border-soft px-3 py-3 text-left transition-colors hover:border-border-strong hover:bg-surface-soft disabled:opacity-50"
       >
         <BellOff size={18} className="shrink-0 text-text-muted" aria-hidden />
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-medium text-text">{t("groups.about.muteLabel")}</span>
+          <span className="block text-small font-medium text-text">{t("groups.about.muteLabel")}</span>
           <span className="block text-caption text-text-muted">{t("groups.about.muteHelp")}</span>
         </span>
         <span aria-hidden className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", muted ? "bg-primary" : "bg-border-strong")}>
@@ -126,7 +126,7 @@ export function LeaveCommunitySection({
             className="flex h-14 w-full items-center gap-3.5 px-4 text-left text-body text-danger transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft" aria-hidden>
-              <LogOut size={18} strokeWidth={1.75} />
+              <LogOut size={18} />
             </span>
             {t("groups.about.leave")}
           </button>

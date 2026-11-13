@@ -70,7 +70,7 @@ function Inbox() {
   // Telefon/tablet: seçili kart varsa tam sayfa ayrıntı.
   if (!wide && selected) {
     return (
-      <div className="fixed inset-0 z-[55] flex flex-col bg-background" data-notification-page="detail">
+      <div className="fixed inset-0 z-(--z-overlay) flex flex-col bg-background" data-notification-page="detail">
         <NotificationDetail card={selected} list={list} variant="page" onBack={() => select(null)} />
         <UndoBar placement="fixed" aboveNav={false} />
       </div>
@@ -88,13 +88,13 @@ function Inbox() {
               {t("nc.newCount", { count: list.newCount })}
             </button>
           )}
-          <button type="button" onClick={() => void markAllRead()} disabled={unreadCount === 0} aria-label={t("notifications.markAllRead")} title={t("notifications.markAllRead")} data-action="mark-all-read" className={cn(CONTROL_ICON_BUTTON, "disabled:cursor-not-allowed disabled:opacity-40")}>
-            <CheckCheck size={22} strokeWidth={1.75} aria-hidden />
+          <button type="button" onClick={() => void markAllRead()} disabled={unreadCount === 0} aria-label={t("notifications.markAllRead")} title={t("notifications.markAllRead")} data-action="mark-all-read" className={cn(CONTROL_ICON_BUTTON, "disabled:cursor-not-allowed disabled:opacity-50")}>
+            <CheckCheck size={24} aria-hidden />
           </button>
           <Link href="/settings/notifications" aria-label={t("nc.settings")} title={t("nc.settings")} data-action="settings" className={CONTROL_ICON_BUTTON}>
-            <Filter size={22} strokeWidth={1.75} aria-hidden />
+            <Filter size={24} aria-hidden />
           </Link>
-          <button type="button" onClick={() => setConfirmClear(true)} disabled={list.cards.length === 0} aria-label={t("notifications.clearAll")} title={t("notifications.clearAll")} data-action="clear-all" className={cn(CONTROL_ICON_BUTTON, "disabled:cursor-not-allowed disabled:opacity-40")}>
+          <button type="button" onClick={() => setConfirmClear(true)} disabled={list.cards.length === 0} aria-label={t("notifications.clearAll")} title={t("notifications.clearAll")} data-action="clear-all" className={cn(CONTROL_ICON_BUTTON, "disabled:cursor-not-allowed disabled:opacity-50")}>
             <TrashIcon size={22} strokeWidth={1.75} />
           </button>
         </>
@@ -107,7 +107,7 @@ function Inbox() {
       {list.status === "loading" && (
         <div aria-busy className="space-y-2" data-notification-loading="">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="skeleton-shimmer h-24 rounded-2xl" />
+            <div key={i} className="skeleton-shimmer h-24 rounded-lg" />
           ))}
         </div>
       )}
@@ -127,7 +127,7 @@ function Inbox() {
   );
 
   return (
-    <div className={cn("mx-auto w-full space-y-5 px-3 pb-24 pt-3 sm:px-5 sm:pt-5 lg:px-8", wide ? "max-w-6xl" : "max-w-3xl")} data-notification-page={wide ? "split" : "list"}>
+    <div className={cn("mx-auto w-full space-y-5 px-3 pb-24 pt-3 sm:px-6 sm:pt-5 lg:px-8", wide ? "max-w-6xl" : "max-w-3xl")} data-notification-page={wide ? "split" : "list"}>
       <div>
         <SadeTitle>{t("header.notificationsAriaLabel")}</SadeTitle>
         <p className="mt-1 text-small font-medium text-text-muted" data-unread-text="">{unreadCount > 0 ? t("nc.unreadCountLong", { count: unreadCount }) : t("nc.allRead")}</p>
@@ -158,7 +158,7 @@ function Inbox() {
 
       {wide ? (
         <div className="flex items-start gap-5">
-          <div ref={listRef} className="w-[23.75rem] shrink-0 space-y-3 rounded-[1.375rem] border border-border-soft bg-surface p-2" data-notification-list="">
+          <div ref={listRef} className="w-[23.75rem] shrink-0 space-y-3 rounded-xl border border-border-soft bg-surface p-2" data-notification-list="">
             {states}
             {list.status === "ready" &&
               grouped.map(({ group, items }) => (
@@ -176,7 +176,7 @@ function Inbox() {
             {list.status === "ready" && <LoadMore failed={list.moreFailed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={() => void list.loadMore()} auto />}
           </div>
           <div className="min-w-0 flex-1 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto">
-            {selected ? <NotificationDetail key={selected.key} card={selected} list={list} variant="panel" /> : list.status === "ready" ? <p className="rounded-[1.375rem] border border-border-soft bg-surface p-10 text-center text-small text-text-muted">{t("nc.selectOne")}</p> : null}
+            {selected ? <NotificationDetail key={selected.key} card={selected} list={list} variant="panel" /> : list.status === "ready" ? <p className="rounded-xl border border-border-soft bg-surface p-10 text-center text-small text-text-muted">{t("nc.selectOne")}</p> : null}
           </div>
         </div>
       ) : (

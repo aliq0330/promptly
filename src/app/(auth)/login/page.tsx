@@ -96,7 +96,7 @@ export default function LoginPage() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 py-4 text-center">
       <FormIconBadge>
-        <LogIn size={22} />
+        <LogIn size={24} />
       </FormIconBadge>
       <h1 className="text-h2 text-text">{t("common.login")}</h1>
 
@@ -122,7 +122,7 @@ export default function LoginPage() {
             <label htmlFor="login-password" className="block text-label font-medium text-text">
               {t("auth.passwordLabel")}
             </label>
-            <Link href="/reset-password" className="text-xs text-primary hover:underline">
+            <Link href="/reset-password" className="text-caption text-primary hover:underline">
               {t("auth.forgotPassword")}
             </Link>
           </div>
@@ -138,7 +138,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-small text-danger">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? t("auth.loggingIn") : t("common.login")}
@@ -146,7 +146,7 @@ export default function LoginPage() {
       <AuthDivider />
       <GoogleSignInButton next={readNextParam()} />
       <LegalNotice />
-      <p className="text-xs text-text-muted">
+      <p className="text-caption text-text-muted">
         {t("auth.noAccountYet")}{" "}
         <Link href="/signup" className="text-primary underline underline-offset-2 hover:no-underline">
           {t("auth.signUp")}

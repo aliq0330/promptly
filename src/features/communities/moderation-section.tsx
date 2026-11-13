@@ -59,7 +59,7 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
     <section aria-labelledby="community-moderation-title" className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 id="community-moderation-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-          <Flag size={15} aria-hidden /> {t("communities.moderation.title")}
+          <Flag size={16} aria-hidden /> {t("communities.moderation.title")}
         </h3>
         <Tabs variant="segmented" ariaLabel={t("communities.moderation.filterAria")} active={filter} onChange={setFilter} items={[{ key: "open", label: t("communities.moderation.open") }, { key: "closed", label: t("communities.moderation.closed") }]} />
       </div>
@@ -73,7 +73,7 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
           </button>
         </p>
       ) : reports === null || list.loading ? (
-        <div className="h-24 animate-pulse rounded-lg border border-border-soft bg-surface-soft" aria-busy="true" />
+        <div className="h-24 skeleton-shimmer rounded-lg border border-border-soft" aria-busy="true" />
       ) : reports.length === 0 ? (
         <p className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-small text-text-muted">
           <CircleCheck size={16} aria-hidden /> {filter === "open" ? t("communities.moderation.emptyOpen") : t("communities.moderation.emptyClosed")}
@@ -84,13 +84,13 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
             <li key={report.id} className="space-y-2.5 rounded-lg border border-border-soft bg-surface p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="neutral">
-                  {report.kind === "post" ? <SquareStack size={11} aria-hidden /> : <MessagesSquare size={11} aria-hidden />}
+                  {report.kind === "post" ? <SquareStack size={12} aria-hidden /> : <MessagesSquare size={12} aria-hidden />}
                   {report.kind === "post" ? t("communities.moderation.kindPost") : t("communities.moderation.kindMessage")}
                 </Badge>
                 {report.status !== "open" && <Badge variant={report.status === "dismissed" ? "outline" : "success"}>{report.status === "dismissed" ? t("communities.moderation.dismissed") : t("communities.moderation.resolved")}</Badge>}
                 <span className="text-caption text-text-muted">{formatRelativeTime(report.createdAt, language)}</span>
               </div>
-              {report.kind === "post" && report.postTitle && <p className="break-words text-sm font-medium text-text">{report.postTitle}</p>}
+              {report.kind === "post" && report.postTitle && <p className="break-words text-small font-medium text-text">{report.postTitle}</p>}
               {report.kind === "message" && (
                 <p className="break-words rounded-md bg-surface-soft px-3 py-2 text-small text-text-secondary">
                   {report.messagePreview ?? t("communities.moderation.messageGone")}

@@ -44,7 +44,7 @@ export function PinnedMessagesBar({
 
   return (
     <>
-      <div data-pinned-bar className="mx-3 mb-1 flex items-center gap-1 rounded-2xl bg-surface px-2 py-1 lg:mx-4">
+      <div data-pinned-bar className="mx-3 mb-1 flex items-center gap-1 rounded-lg bg-surface px-2 py-1 lg:mx-4">
         <button
           type="button"
           onClick={() => {
@@ -71,7 +71,7 @@ export function PinnedMessagesBar({
             title={t("chat.pin.unpin")}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
           >
-            <X size={15} />
+            <X size={16} />
           </button>
         )}
         <button
@@ -82,14 +82,14 @@ export function PinnedMessagesBar({
           aria-haspopup="dialog"
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
         >
-          <List size={15} />
+          <List size={16} />
         </button>
       </div>
       {listOpen && (
         <Modal onClose={() => setListOpen(false)} labelledBy="pinned-list-title">
-          <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-2xl bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+          <div className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg bg-surface shadow-pop" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-5">
-              <h2 id="pinned-list-title" className="flex items-center gap-2 text-base font-semibold text-text">
+              <h2 id="pinned-list-title" className="flex items-center gap-2 text-body font-semibold text-text">
                 <Pin size={16} className="text-primary" aria-hidden /> {t("chat.pin.listTitle")}
               </h2>
               <button
@@ -117,7 +117,7 @@ export function PinnedMessagesBar({
                       <span className="max-w-[10rem] truncate font-semibold text-text-secondary">{senderLabel(message.senderId)}</span>
                       <span>{formatRelativeTime(message.createdAt, language)}</span>
                     </span>
-                    <span className="mt-0.5 line-clamp-2 break-words text-sm text-text">{messagePreviewText(message, t)}</span>
+                    <span className="mt-0.5 line-clamp-2 break-words text-small text-text">{messagePreviewText(message, t)}</span>
                   </button>
                   {canPin && (
                     <button
@@ -127,7 +127,7 @@ export function PinnedMessagesBar({
                       title={t("chat.pin.unpin")}
                       className="flex w-10 shrink-0 items-center justify-center rounded-r-lg text-text-muted transition-colors hover:bg-surface-soft hover:text-danger"
                     >
-                      <X size={15} />
+                      <X size={16} />
                     </button>
                   )}
                 </li>

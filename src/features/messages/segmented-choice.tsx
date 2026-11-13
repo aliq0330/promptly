@@ -32,7 +32,7 @@ export function SegmentedChoice<K extends string>({
             data-segment={option.key}
             onClick={() => !selected && onChange(option.key)}
             className={cn(
-              "h-9 min-w-0 flex-1 truncate rounded-full px-2 text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60",
+              "h-9 min-w-0 flex-1 truncate rounded-full px-2 text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50",
               selected ? "bg-surface font-bold text-primary shadow-xs" : "font-medium text-text-secondary hover:text-text",
             )}
           >

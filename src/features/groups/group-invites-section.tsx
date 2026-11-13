@@ -32,6 +32,7 @@ import { SHARE_BASE_PATH } from "@/lib/share-link";
 import { formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, UserProfile } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 interface Loaded {
   key: string;
@@ -180,9 +181,9 @@ export function GroupInvitesSection({
           </Button>
         </div>
         {invite.error && (
-          <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+          <InlineAlert>
             {invite.error}
-          </p>
+          </InlineAlert>
         )}
         {lastInvite && (
           <div role="status" className="space-y-1 rounded-md bg-primary-soft/60 px-3 py-2 text-small text-text">
@@ -216,9 +217,9 @@ export function GroupInvitesSection({
       ) : (
         <>
           {rowAction.error && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert>
               {rowAction.error}
-            </p>
+            </InlineAlert>
           )}
           <section aria-labelledby="pending-invites-title" className="space-y-2">
             <h3 id="pending-invites-title" className="text-label font-semibold text-text">
@@ -231,9 +232,9 @@ export function GroupInvitesSection({
               <ul className="divide-y divide-border-soft rounded-lg border border-border-soft">
                 {current.invitations.slice(0, invShown).map((invitation) => (
                   <li key={invitation.id} className="flex items-center gap-3 px-3 py-2.5">
-                    <Avatar src={invitation.user?.avatarUrl} alt={invitation.user?.displayName ?? ""} size={36} />
+                    <Avatar src={invitation.user?.avatarUrl} alt={invitation.user?.displayName ?? ""} size={40} />
                     <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block truncate text-sm font-semibold text-text">{invitation.user?.displayName}</span>
+                      <span className="block truncate text-small font-semibold text-text">{invitation.user?.displayName}</span>
                       <span className="block truncate text-caption text-text-muted">
                         @{invitation.user?.username} · {formatRelativeTime(invitation.createdAt, language)}
                       </span>
@@ -294,15 +295,15 @@ export function GroupInvitesSection({
               {link.busy ? t("common.creating") : t("groups.link.create")}
             </Button>
             {link.error && (
-              <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+              <InlineAlert>
                 {link.error}
-              </p>
+              </InlineAlert>
             )}
             {freshLink && (
               <div className="space-y-2 rounded-md border border-primary/30 bg-primary-soft/40 p-3">
                 <p className="text-caption text-text-secondary">{t("groups.link.shownOnce")}</p>
                 <div className="flex gap-2">
-                  <input readOnly value={freshLink.url} aria-label={t("groups.link.title")} onFocus={(event) => event.currentTarget.select()} className={`${fieldControlClassName} h-10 min-w-0 flex-1 font-mono text-xs`} />
+                  <input readOnly value={freshLink.url} aria-label={t("groups.link.title")} onFocus={(event) => event.currentTarget.select()} className={`${fieldControlClassName} h-10 min-w-0 flex-1 font-mono text-caption`} />
                   <Button type="button" size="sm" onClick={() => void copyFresh()}>
                     <Copy size={14} /> {t("common.copy")}
                   </Button>
@@ -342,9 +343,9 @@ export function GroupInvitesSection({
               <ul className="divide-y divide-border-soft rounded-lg border border-border-soft">
                 {current.bans.slice(0, banShown).map((ban) => (
                   <li key={ban.userId} className="flex items-center gap-3 px-3 py-2.5">
-                    <Avatar src={ban.user?.avatarUrl} alt={ban.user?.displayName ?? ""} size={36} />
+                    <Avatar src={ban.user?.avatarUrl} alt={ban.user?.displayName ?? ""} size={40} />
                     <span className="min-w-0 flex-1 leading-tight">
-                      <span className="block truncate text-sm font-semibold text-text">{ban.user?.displayName ?? t("common.genericUser")}</span>
+                      <span className="block truncate text-small font-semibold text-text">{ban.user?.displayName ?? t("common.genericUser")}</span>
                       {ban.reason && <span className="block truncate text-caption text-text-muted">{ban.reason}</span>}
                     </span>
                     {canUnban && (

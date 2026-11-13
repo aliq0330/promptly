@@ -814,7 +814,7 @@ export function StudioView() {
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border-soft pt-4">
               <p className="min-w-0 flex-1 text-small text-text-muted">{t("studio.publishHint")}</p>
               <Button type="button" variant="outline" onClick={onPublishPrompt} disabled={!finalPrompt}>
-                <Send size={15} aria-hidden /> {t("studio.publishPrompt")}
+                <Send size={16} aria-hidden /> {t("studio.publishPrompt")}
               </Button>
             </div>
             {promptPublishError && (
@@ -913,7 +913,7 @@ function RunModeOption({ selected, onSelect, icon, title, hint }: { selected: bo
   );
 }
 
-const STUDIO_CARD = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5";
+const STUDIO_CARD = "rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5";
 const STUDIO_LABEL = "text-caption font-bold uppercase tracking-[0.06em] text-text-muted";
 
 /** An empty source slot: a dashed pill that opens the picker (`subtle` = the optional preset slot). */
@@ -930,7 +930,7 @@ function SourceSlot({ onClick, subtle = false, children }: { onClick: () => void
       )}
     >
       <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-primary">
-        <Plus size={14} strokeWidth={2.5} />
+        <Plus size={14} />
       </span>
       {children}
     </button>

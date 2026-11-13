@@ -14,7 +14,7 @@ import type { Collection, Conversation, Prompt, PromptRequest, PromptResultSumma
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
-      text: ["display", "h1", "h2", "h3", "body", "small", "caption", "label"],
+      text: ["display", "h1", "h2", "h3", "body", "small", "caption", "label", "micro"],
       shadow: ["card", "card-hover", "pop"],
       radius: ["xs"],
     },

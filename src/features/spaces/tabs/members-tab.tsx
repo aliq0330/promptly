@@ -159,7 +159,7 @@ export function MembersTab() {
                   <li key={member.userId} data-member={member.profile?.username ?? member.userId} className="flex items-center gap-3 p-3">
                     {member.profile ? (
                       <Link href={profileHref(member.profile)} className="flex min-w-0 flex-1 items-center gap-3">
-                        <Avatar src={member.profile.avatarUrl} alt="" size={36} />
+                        <Avatar src={member.profile.avatarUrl} alt="" size={40} />
                         <span className="min-w-0">
                           <span className="block truncate text-small font-semibold text-text">
                             {name}
@@ -260,7 +260,7 @@ export function MembersTab() {
             const Icon = ROLE_ICON[key];
             return (
               <p key={key} className="flex gap-2">
-                <Icon size={15} className="mt-0.5 shrink-0 text-text-muted" aria-hidden />
+                <Icon size={16} className="mt-0.5 shrink-0 text-text-muted" aria-hidden />
                 <span>
                   <span className="font-semibold text-text">{t(SPACE_ROLE_LABEL[key])}:</span> {t(`spaces.members.roleHelp.${key}`)}
                 </span>

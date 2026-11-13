@@ -124,7 +124,7 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
                   {i + 1}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{section.label}</span>
-                {i === index && <Check size={16} strokeWidth={2.6} className="shrink-0 text-primary" />}
+                {i === index && <Check size={16} className="shrink-0 text-primary" />}
               </button>
             </li>
           ))}
@@ -132,7 +132,7 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
       )}
       <div className="relative flex h-[3.125rem] w-[16.5rem] max-w-[calc(100vw-1.5rem)] items-center gap-1.5 overflow-hidden rounded-full border border-border-soft bg-surface px-1.5 shadow-pop">
         <button type="button" aria-label={t("devNav.prev")} disabled={index === 0} onClick={() => goTo(neighborSection(index, total, -1))} className={arrowClassName}>
-          <ChevronUp size={18} strokeWidth={2.4} />
+          <ChevronUp size={18} />
         </button>
         <button
           type="button"
@@ -146,7 +146,7 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
           <span className="block text-caption text-text-muted">{t("devNav.position", { n: index + 1, total })}</span>
         </button>
         <button type="button" aria-label={t("devNav.next")} disabled={index === total - 1} onClick={() => goTo(neighborSection(index, total, 1))} className={arrowClassName}>
-          <ChevronDown size={18} strokeWidth={2.4} />
+          <ChevronDown size={18} />
         </button>
         <span aria-hidden className="absolute bottom-0 left-0 h-[3px] bg-primary transition-[width] duration-200 ease-soft" style={{ width: `${pagerProgress(index, total) * 100}%` }} />
       </div>

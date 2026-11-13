@@ -32,7 +32,7 @@ export function QuoteDeleteDialog({ quote, onClose, onDeleted }: { quote: Quote;
 
   return (
     <Modal onClose={() => !busy && onClose()} labelledBy="quote-delete-title">
-      <div data-quote-delete className="w-full max-w-sm space-y-3 rounded-t-2xl border border-border bg-surface-elevated p-5 shadow-pop sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+      <div data-quote-delete className="w-full max-w-sm space-y-3 rounded-t-lg border border-border bg-surface-elevated p-5 shadow-pop sm:rounded-lg" onClick={(event) => event.stopPropagation()}>
         <h2 id="quote-delete-title" className="text-h3 font-bold text-text">
           {t("quotes.delete.title")}
         </h2>

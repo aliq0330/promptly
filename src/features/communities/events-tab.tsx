@@ -55,6 +55,7 @@ import Link from "next/link";
 import { useEventsPresence } from "@/features/presence/community-presence";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import type { EventPresence } from "@/lib/supabase/presence";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 type Scope = "upcoming" | "past";
 
@@ -135,9 +136,9 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
       </div>
       {role && <p className="text-caption text-text-muted">{t("communities.events.reminderNote", { hours: EVENT_REMINDER_WINDOW_HOURS })}</p>}
       {rsvpAction.error && (
-        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert>
           {rsvpAction.error}
-        </p>
+        </InlineAlert>
       )}
 
       {loadError ? (
@@ -152,7 +153,7 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
       ) : events === null || list.loading ? (
         <ul className="space-y-3" aria-busy="true">
           {[0, 1].map((i) => (
-            <li key={i} className="h-32 animate-pulse rounded-xl border border-border-soft bg-surface-soft" />
+            <li key={i} className="h-32 skeleton-shimmer rounded-xl border border-border-soft" />
           ))}
         </ul>
       ) : events.length === 0 ? (
@@ -243,10 +244,10 @@ function EventCard({
     { status: "not_going", label: t("communities.events.notGoing"), icon: <X size={14} /> },
   ];
   return (
-    <li className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card">
+    <li className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <h3 className="flex flex-wrap items-center gap-2 break-words text-sm font-semibold text-text">
+          <h3 className="flex flex-wrap items-center gap-2 break-words text-small font-semibold text-text">
             {event.title}
             {phase === "live" && <Badge variant="success">{t("communities.events.live")}</Badge>}
             {phase === "cancelled" && <Badge variant="danger">{t("communities.events.cancelled")}</Badge>}
@@ -271,12 +272,12 @@ function EventCard({
           <div className="flex shrink-0 gap-1">
             {phase !== "cancelled" && (
               <button type="button" onClick={onEdit} aria-label={t("common.edit")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
-                <Pencil size={15} />
+                <Pencil size={16} />
               </button>
             )}
             {phase !== "cancelled" && (
               <button type="button" onClick={onCancel} aria-label={t("communities.events.cancelConfirm")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
-                <CalendarX size={15} />
+                <CalendarX size={16} />
               </button>
             )}
             <button type="button" onClick={onDelete} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger/10 hover:text-danger">
@@ -325,7 +326,7 @@ function EventCard({
                 aria-pressed={event.myRsvp === option.status}
                 onClick={() => onRsvp(option.status)}
                 className={cn(
-                  "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-label font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60",
+                  "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-label font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50",
                   event.myRsvp === option.status ? "border-primary/50 bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong",
                 )}
               >
@@ -384,9 +385,9 @@ function EventFormModal({ groupId, event, onClose, onSaved }: { groupId: string;
 
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy="event-form-title">
-      <form onSubmit={submit} noValidate className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(e) => e.stopPropagation()}>
+      <form onSubmit={submit} noValidate className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop" onClick={(e) => e.stopPropagation()}>
         <div className="px-5 pb-2 pt-5">
-          <h2 id="event-form-title" className="text-base font-semibold text-text">
+          <h2 id="event-form-title" className="text-body font-semibold text-text">
             {event ? t("communities.events.editTitle") : t("communities.events.newTitle")}
           </h2>
         </div>
@@ -453,9 +454,9 @@ function EventFormModal({ groupId, event, onClose, onSaved }: { groupId: string;
             </label>
           )}
           {error && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert>
               {error}
-            </p>
+            </InlineAlert>
           )}
         </div>
         <div className="flex justify-end gap-2 border-t border-border-soft px-5 py-3">

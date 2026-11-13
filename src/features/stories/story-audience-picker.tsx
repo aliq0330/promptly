@@ -67,7 +67,7 @@ export function StoryAudiencePicker({
               audience === value ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong",
             )}
           >
-            <Icon size={16} strokeWidth={1.75} aria-hidden />
+            <Icon size={16} aria-hidden />
             {t(label)}
           </button>
         ))}
@@ -93,7 +93,7 @@ export function StoryAudiencePicker({
                   communityId === community.id ? "bg-primary-soft text-primary" : "text-text hover:bg-surface-soft",
                 )}
               >
-                <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={28} />
+                <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={32} />
                 <span className="min-w-0 flex-1 truncate font-medium">{community.name}</span>
               </button>
             ))

@@ -19,7 +19,7 @@ import { MessagesPanel } from "./messages-panel";
 import { UserActions } from "./user-actions";
 import { UserBadges } from "./users-panel";
 
-const CARD = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5";
+const CARD = "rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5";
 type DetailTab = AdminActivityKind | "messages" | "files" | "audit";
 
 function Stat({ label, value }: { label: string; value: string | number }) {

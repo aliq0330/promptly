@@ -47,7 +47,7 @@ export function MessageReactionBadge({
       ref={rootRef}
       data-message-reactions=""
       aria-label={shown.map((key) => t(REACTION_LABEL[key])).join(", ") + (total > 1 ? ` · ${total}` : "")}
-      className={cn("flex items-center gap-0.5 rounded-full bg-surface-elevated px-1.5 py-0.5 text-xs leading-none text-text ring-2 ring-background", className)}
+      className={cn("flex items-center gap-0.5 rounded-full bg-surface-elevated px-1.5 py-0.5 text-caption leading-none text-text ring-2 ring-background", className)}
     >
       {shown.map((key) => (
         <span key={key} data-reaction-emoji={key} className="flex">

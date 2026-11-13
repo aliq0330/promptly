@@ -23,6 +23,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 import { useLinkPresenceCount } from "@/features/presence/community-presence";
 import { OnlineCountText } from "@/features/presence/presence-ui";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 const TOKEN_STORAGE_KEY = "promptly-group-join-token";
 
@@ -130,7 +131,7 @@ export function JoinCommunityPage() {
   }
   if (status === "unauthenticated") {
     return shell(
-      <div className="space-y-4 rounded-xl border border-border-soft bg-surface p-6 text-center shadow-card">
+      <div className="space-y-4 rounded-lg border border-border-soft bg-surface p-6 text-center shadow-card">
         <h1 className="text-h3 font-semibold text-text">{t("groups.join.loginTitle")}</h1>
         <p className="text-small text-text-muted">{t("groups.join.loginBody")}</p>
         <Link href={authHref("/login", "/communities/join")} className={buttonClassName({ size: "md" })}>
@@ -170,7 +171,7 @@ export function JoinCommunityPage() {
   const isPrivate = preview.visibility !== "public";
 
   return shell(
-    <div className="space-y-5 rounded-xl border border-border-soft bg-surface p-6 shadow-card">
+    <div className="space-y-5 rounded-lg border border-border-soft bg-surface p-6 shadow-card">
       <div className="flex items-start gap-3">
         <GroupAvatar name={preview.name} avatarUrl={preview.avatarUrl} size={56} badge />
         <div className="min-w-0 space-y-1">
@@ -237,9 +238,9 @@ export function JoinCommunityPage() {
             </p>
           )}
           {action.error && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert>
               {action.error}
-            </p>
+            </InlineAlert>
           )}
           <Button type="button" className="w-full" onClick={() => void submit()} disabled={action.busy || preview.closed || (full && !isPrivate) || (preview.rulesRequired && !accepted)}>
             {action.busy ? t("common.loading") : isPrivate ? t("groups.join.sendRequest") : t("groups.join.joinNow")}

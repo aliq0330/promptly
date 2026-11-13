@@ -29,7 +29,7 @@ function CountBadge({ count }: { count: number }) {
   return (
     <span
       data-section-count=""
-      className="pointer-events-none absolute -top-1.5 left-[calc(50%+1.125rem)] flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-bold leading-none text-primary-foreground ring-2 ring-background"
+      className="pointer-events-none absolute -top-1.5 left-[calc(50%+1.125rem)] flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-micro font-bold leading-none text-primary-foreground ring-2 ring-background"
     >
       {count > 99 ? "99+" : count}
     </span>
@@ -105,9 +105,9 @@ export function SectionNav<K extends string>({
       title={t("toolbar.filter")}
       className={cn(FILTER_BUTTON, "relative")}
     >
-      <Filter size={17} strokeWidth={1.9} aria-hidden />
+      <Filter size={16} aria-hidden />
       {totalActive > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold tabular-nums text-primary-foreground">
+        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold tabular-nums text-primary-foreground">
           {totalActive}
         </span>
       )}
@@ -116,9 +116,9 @@ export function SectionNav<K extends string>({
   // The sade control row (docs/history/233-*) uses the same quiet icon button as Spaces / Topluluklar.
   const menuFilterButton = (
     <button type="button" onClick={() => setSheetOpen(true)} aria-haspopup="dialog" aria-label={filterLabel} title={t("toolbar.filter")} className={cn(CONTROL_ICON_BUTTON, "relative")}>
-      <Filter size={22} strokeWidth={1.75} aria-hidden />
+      <Filter size={24} aria-hidden />
       {totalActive > 0 && (
-        <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold tabular-nums text-primary-foreground">
+        <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold tabular-nums text-primary-foreground">
           {totalActive}
         </span>
       )}
@@ -245,7 +245,7 @@ function SectionTile<K extends string>({
           selected ? "bg-text text-background shadow-card" : "bg-surface-soft text-text-secondary group-hover:bg-border-soft group-hover:text-text",
         )}
       >
-        <Icon size={24} strokeWidth={1.75} aria-hidden />
+        <Icon size={24} aria-hidden />
       </span>
       <span className={cn("text-center text-caption leading-tight", selected ? "font-semibold text-text" : "font-medium text-text-muted")}>{item.label}</span>
       {item.count ? <CountBadge count={item.count} /> : null}
@@ -294,7 +294,7 @@ function SectionTabs<K extends string>({
             >
               {item.label}
               {item.count ? (
-                <span data-section-count="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-bold leading-none text-primary-foreground">
+                <span data-section-count="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-micro font-bold leading-none text-primary-foreground">
                   {item.count > 99 ? "99+" : item.count}
                 </span>
               ) : null}

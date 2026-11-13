@@ -84,8 +84,8 @@ export function ReferenceRequirementsField({
               onChange={(event) => onChange({ ...value, [kind]: event.target.checked })}
               className="size-4 shrink-0"
             />
-            <Icon size={15} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />
-            <span className="min-w-0 text-sm font-medium text-text">{t(LABEL_KEYS[kind])}</span>
+            <Icon size={16} aria-hidden className="shrink-0 text-text-muted" />
+            <span className="min-w-0 text-small font-medium text-text">{t(LABEL_KEYS[kind])}</span>
           </label>
         );
       })}
@@ -113,7 +113,7 @@ export function ReferenceRequirementNotes({
             key={kind}
             className="flex items-start gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-2 text-small text-text-secondary"
           >
-            <Icon size={16} strokeWidth={1.75} className="mt-0.5 shrink-0 text-primary" />
+            <Icon size={16} className="mt-0.5 shrink-0 text-primary" />
             <span className="min-w-0 break-words">{t(NOTE_KEYS[kind])}</span>
           </p>
         );

@@ -100,7 +100,7 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
                 type="button"
                 onClick={() => onNavigate(tab)}
                 data-overview-stat={tab}
-                className="flex w-full items-center gap-3 rounded-xl border border-border-soft bg-surface p-3.5 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface p-3.5 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
                   <Icon size={20} aria-hidden />
@@ -218,12 +218,12 @@ function OverviewAside({ groupsCount }: { groupsCount?: number }) {
         <ul className="space-y-2 text-small text-text-secondary">
           {stats.map(({ icon: Icon, label }) => (
             <li key={label} className="flex items-center gap-2">
-              <Icon size={15} className="text-text-muted" aria-hidden />
+              <Icon size={16} className="text-text-muted" aria-hidden />
               {label}
             </li>
           ))}
           <li className="flex items-center gap-2">
-            <UsersRound size={15} className="text-text-muted" aria-hidden />
+            <UsersRound size={16} className="text-text-muted" aria-hidden />
             {t(SPACE_VISIBILITY_LABEL[space.visibility as SpaceVisibility])}
           </li>
         </ul>
@@ -287,7 +287,7 @@ function ActivityList() {
               <li key={entry.id} className="flex items-start gap-2 text-caption text-text-secondary" data-activity={entry.action}>
                 {entry.actor ? (
                   <Link href={profileHref(entry.actor)} className="shrink-0">
-                    <Avatar src={entry.actor.avatarUrl} alt="" size={22} />
+                    <Avatar src={entry.actor.avatarUrl} alt="" size={24} />
                   </Link>
                 ) : (
                   <span className="h-[22px] w-[22px] shrink-0 rounded-full bg-surface-soft" />

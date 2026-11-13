@@ -138,7 +138,7 @@ export const PublishPanel = forwardRef<
         <section className="space-y-2" data-team-destination={team?.fileId ?? ""}>
           <div className="flex min-h-14 items-center gap-3 rounded-xl border border-primary bg-primary-soft px-3.5">
             <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-              <Users size={17} />
+              <Users size={16} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-label font-semibold text-text">{t("tf.create.destination")}</span>
@@ -164,12 +164,12 @@ export const PublishPanel = forwardRef<
                   onClick={() => choose(option.key)}
                   data-audience-option={option.key}
                   className={cn(
-                    "flex min-h-14 items-center gap-3 rounded-xl border px-3.5 text-left transition-colors disabled:opacity-60",
+                    "flex min-h-14 items-center gap-3 rounded-xl border px-3.5 text-left transition-colors disabled:opacity-50",
                     selected ? "border-primary bg-primary-soft text-text" : "border-border-strong bg-surface text-text-secondary hover:border-primary/50",
                   )}
                 >
                   <span aria-hidden className={cn("h-5 w-5 shrink-0 rounded-full border-2", selected ? "border-[6px] border-primary" : "border-border-strong")} />
-                  <option.icon size={18} strokeWidth={1.9} aria-hidden className="shrink-0" />
+                  <option.icon size={18} aria-hidden className="shrink-0" />
                   <span className="min-w-0 flex-1 text-body font-semibold">{option.label}</span>
                 </button>
               );
@@ -275,7 +275,7 @@ export const PublishPanel = forwardRef<
               onClick={() => problem.onFix?.()}
               className="flex w-full items-center gap-2.5 rounded-xl border border-danger/35 bg-danger/10 px-3 py-2.5 text-left text-small font-semibold text-text"
             >
-              <AlertCircle size={17} aria-hidden className="shrink-0 text-danger" />
+              <AlertCircle size={16} aria-hidden className="shrink-0 text-danger" />
               <span className="min-w-0 flex-1">{problem.label}</span>
               {problem.onFix && <ChevronRight size={16} aria-hidden className="shrink-0 text-text-muted" />}
             </button>

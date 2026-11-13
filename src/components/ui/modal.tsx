@@ -124,7 +124,7 @@ function useSheetDismiss(mode: "dialog" | "sheet" | "side", onCloseRef: React.Mu
       return false;
     };
     const dim = (progress: number) => {
-      overlay.style.backgroundColor = `rgb(10 8 20 / ${(0.45 * (1 - Math.min(1, progress))).toFixed(3)})`;
+      overlay.style.backgroundColor = `rgb(var(--p-scrim) / ${(0.45 * (1 - Math.min(1, progress))).toFixed(3)})`;
     };
     const settle = () => {
       sheet.style.transition = "transform 220ms var(--ease-soft)";
@@ -357,10 +357,10 @@ export function Modal({
         <div
           ref={overlayRef}
           className={
-            "fixed inset-0 flex animate-fade-in bg-[rgb(10_8_20/0.45)] " +
+            "fixed inset-0 flex animate-fade-in bg-scrim " +
             coverOverlay +
             (keyboard ? "" : "backdrop-blur-[2px] ") +
-            (overLayers ? "z-[70] " : "z-50 ") +
+            (overLayers ? "z-(--z-toast) " : "z-50 ") +
             (isSide ? "justify-end" : "flex-col justify-end")
           }
           style={overlayStyle}
@@ -387,7 +387,7 @@ export function Modal({
       <Portal>
         <div
           ref={overlayRef}
-          className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] p-4 animate-fade-in " + coverOverlay + (keyboard ? "max-sm:!p-0 " : "") + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-[70]" : "z-50")}
+          className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim p-4 animate-fade-in " + coverOverlay + (keyboard ? "max-sm:!p-0 " : "") + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-50")}
           style={overlayStyle}
           role="dialog"
           aria-modal="true"
@@ -406,7 +406,7 @@ export function Modal({
     <Portal>
       <div
         ref={overlayRef}
-        className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] animate-fade-in sm:p-4 " + coverOverlay + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-[70]" : "z-50")}
+        className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim animate-fade-in sm:p-4 " + coverOverlay + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-50")}
         style={overlayStyle}
         role="dialog"
         aria-modal="true"

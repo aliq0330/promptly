@@ -236,16 +236,16 @@ export function SaveToCollectionModal({
   return (
     <Modal onClose={requestClose} labelledBy="save-modal-title">
       <div
-        className="flex max-h-[85vh] w-full max-w-md flex-col rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 id="save-modal-title" className="text-base font-semibold text-text">
+            <h2 id="save-modal-title" className="text-body font-semibold text-text">
               {view === "create" ? t("collection.createNewTitle") : t("collection.addToTitle")}
             </h2>
             {view === "list" && (
-              <p className="text-xs text-text-muted">{isSaved ? t("collection.manageHint") : t("collection.pickToSaveHint")}</p>
+              <p className="text-caption text-text-muted">{isSaved ? t("collection.manageHint") : t("collection.pickToSaveHint")}</p>
             )}
           </div>
           <button type="button" onClick={requestClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
@@ -261,13 +261,13 @@ export function SaveToCollectionModal({
           <>
             <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
               {loading ? (
-                <p className="py-8 text-center text-sm text-text-muted">{t("common.loading")}</p>
+                <p className="py-8 text-center text-small text-text-muted">{t("common.loading")}</p>
               ) : loadFailed ? (
-                <p className="py-8 text-center text-sm text-danger">{t("common.actionFailedRetry")}</p>
+                <p className="py-8 text-center text-small text-danger">{t("common.actionFailedRetry")}</p>
               ) : collections.length === 0 ? (
                 <div className="space-y-3 py-4 text-center">
                   <FolderPlus size={28} className="mx-auto text-text-muted" />
-                  <p className="text-sm text-text-muted">{t("collection.noneYetHint")}</p>
+                  <p className="text-small text-text-muted">{t("collection.noneYetHint")}</p>
                 </div>
               ) : (
                 collections.map((collection) => {
@@ -280,7 +280,7 @@ export function SaveToCollectionModal({
                       disabled={saving}
                       role="checkbox"
                       aria-checked={isMember}
-                      className="flex w-full items-center gap-3 rounded-md border border-border p-2 text-left transition-colors hover:bg-accent-surface/50 disabled:opacity-70"
+                      className="flex w-full items-center gap-3 rounded-md border border-border p-2 text-left transition-colors hover:bg-accent-surface/50 disabled:opacity-50"
                     >
                       <StorageBackground
                         as="span"
@@ -290,9 +290,9 @@ export function SaveToCollectionModal({
                       />
                       <span className="min-w-0 flex-1">
                         <span className="flex min-w-0 items-center gap-1.5">
-                          <span className="block truncate text-sm font-medium text-text">{collection.name}</span>
+                          <span className="block truncate text-small font-medium text-text">{collection.name}</span>
                         </span>
-                        <span className="text-xs text-text-muted">{t("collection.itemCount", { count: collection.itemCount })}</span>
+                        <span className="text-caption text-text-muted">{t("collection.itemCount", { count: collection.itemCount })}</span>
                       </span>
                       <span
                         className={cn(
@@ -306,14 +306,14 @@ export function SaveToCollectionModal({
                   );
                 })
               )}
-              {error && <p className="text-sm text-danger">{error}</p>}
+              {error && <p className="text-small text-danger">{error}</p>}
             </div>
 
             <button
               type="button"
               onClick={() => setView("create")}
               disabled={saving || loadFailed}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border py-2.5 text-sm font-medium text-text transition-colors hover:bg-accent-surface disabled:opacity-50"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border py-2.5 text-small font-medium text-text transition-colors hover:bg-accent-surface disabled:opacity-50"
             >
               <Plus size={16} />
               {t("collection.createNewTitle")}
@@ -326,8 +326,8 @@ export function SaveToCollectionModal({
                 disabled={saving}
                 data-unsave-button=""
                 className={cn(
-                  "mt-2 flex w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-medium transition-colors disabled:opacity-50",
-                  confirmingUnsave ? "bg-danger text-white" : "text-danger hover:bg-surface-soft",
+                  "mt-2 flex w-full items-center justify-center gap-2 rounded-md py-2.5 text-small font-medium transition-colors disabled:opacity-50",
+                  confirmingUnsave ? "bg-danger text-danger-foreground" : "text-danger hover:bg-surface-soft",
                 )}
               >
                 <Bookmark size={16} />

@@ -111,7 +111,7 @@ export function CommunityGate({ group, gate, onChanged, onToast, compact = false
   return (
     <section
       aria-label={t("communities.gate.aria")}
-      className={cn("flex flex-col gap-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:flex-row sm:items-center", !compact && "p-5")}
+      className={cn("flex flex-col gap-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:flex-row sm:items-center", !compact && "p-5")}
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
         <Icon size={18} aria-hidden />

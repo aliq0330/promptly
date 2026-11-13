@@ -192,7 +192,7 @@ export function GroupMembersSection({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("groups.members.searchPlaceholder")}
-          className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+          className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
       </label>
 
@@ -230,7 +230,7 @@ export function GroupMembersSection({
                     <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={40} />
                     <span className="min-w-0 leading-tight">
                       <span className="flex flex-wrap items-center gap-1.5">
-                        <span className="truncate text-sm font-semibold text-text">{member.displayName}</span>
+                        <span className="truncate text-small font-semibold text-text">{member.displayName}</span>
                         <RoleBadge role={member.role} />
                         {isMe && <span className="text-caption text-text-muted">({t("groups.members.you")})</span>}
                       </span>
@@ -254,7 +254,7 @@ export function GroupMembersSection({
                         <MoreVertical size={16} />
                       </button>
                       {menuFor === member.userId && (
-                        <div role="menu" className="absolute right-0 top-10 z-30 w-56 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in">
+                        <div role="menu" className="absolute right-0 top-10 z-30 w-56 overflow-hidden rounded-lg border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in">
                           {roles.map((role) => (
                             <MenuButton
                               key={role}
@@ -317,7 +317,7 @@ export function GroupMembersSection({
               <input type="checkbox" checked={ban} onChange={(event) => setBan(event.target.checked)} disabled={action.busy} className="mt-0.5 accent-[var(--color-primary)]" />
               <span>
                 <span className="flex items-center gap-1 font-medium">
-                  <Ban size={13} aria-hidden /> {t("groups.members.banLabel")}
+                  <Ban size={12} aria-hidden /> {t("groups.members.banLabel")}
                 </span>
                 <span className="block text-caption text-text-muted">{t("groups.members.banHelp")}</span>
               </span>
@@ -335,7 +335,7 @@ function MenuButton({ icon, label, onClick, danger }: { icon: React.ReactNode; l
       type="button"
       role="menuitem"
       onClick={onClick}
-      className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-soft", danger ? "text-danger hover:bg-danger/10" : "text-text")}
+      className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-small hover:bg-surface-soft", danger ? "text-danger hover:bg-danger/10" : "text-text")}
     >
       {icon}
       {label}

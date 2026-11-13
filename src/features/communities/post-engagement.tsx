@@ -44,7 +44,7 @@ export function PostLike({ post, mode, onToast, size = 16 }: { post: CommunityPo
       aria-label={t("communities.post.engage.likesAria", { count: post.likeCount })}
       className={contentActionClassName(false, "opacity-70")}
     >
-      <Heart size={size} strokeWidth={1.75} />
+      <Heart size={size} />
       <span aria-hidden>{formatCount(post.likeCount)}</span>
     </button>
   );
@@ -62,7 +62,7 @@ export function PostCommentLink({ post, size = 16 }: { post: CommunityPost; size
       aria-label={t("communities.post.engage.commentsAria", { count })}
       className={contentActionClassName(false)}
     >
-      <MessageCircle size={size} strokeWidth={1.75} />
+      <MessageCircle size={size} />
       <span aria-hidden>{formatCount(count)}</span>
     </Link>
   );
@@ -177,7 +177,7 @@ export function PostEngagement({
           aria-label={t("communities.post.engage.commentsAria", { count: commentCount })}
           className={contentActionClassName(open)}
         >
-          <MessageCircle size={16} strokeWidth={1.75} />
+          <MessageCircle size={16} />
           <span aria-hidden>{formatCount(commentCount)}</span>
         </button>
         <PostStatisticsButton post={post} />

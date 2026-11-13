@@ -82,7 +82,7 @@ export function CommunityAside({ group, people, onReadRules }: { group: ChatGrou
             ))}
           </ol>
           <button type="button" onClick={onReadRules} className="mt-2.5 flex items-center gap-1 rounded-sm text-caption font-semibold text-primary hover:text-primary-hover">
-            {t("communities.aside.readRules")} <ArrowRight size={13} aria-hidden />
+            {t("communities.aside.readRules")} <ArrowRight size={12} aria-hidden />
           </button>
         </section>
       )}
@@ -117,7 +117,7 @@ export function MemberStack({ people }: { people: CommunityMember[] }) {
     <span className="flex -space-x-2" role="img" aria-label={t("communities.detail.membersPreview")} data-member-stack>
       {people.slice(0, 4).map((person) => (
         <span key={person.userId} aria-hidden className="inline-flex rounded-full ring-2 ring-surface">
-          <Avatar src={person.avatarUrl} alt={person.displayName} size={22} />
+          <Avatar src={person.avatarUrl} alt={person.displayName} size={24} />
         </span>
       ))}
     </span>

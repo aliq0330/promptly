@@ -41,7 +41,7 @@ export function SwitchRow({
       onClick={() => onChange(!checked)}
       className={cn(
         "flex min-h-16 w-full items-center gap-3 rounded-lg border bg-surface p-3 text-left transition-colors duration-200 ease-soft sm:px-4",
-        "border-border hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60",
+        "border-border hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50",
       )}
     >
       <span
@@ -94,12 +94,12 @@ export function VisibilitySwitch({
   const title = isPublic ? t("visibility.public") : t("visibility.private");
   return (
     <div className={className} data-visibility-switch>
-      {!hideLabel && <p className="mb-2 text-sm font-medium text-text">{t("visibility.label")}</p>}
+      {!hideLabel && <p className="mb-2 text-small font-medium text-text">{t("visibility.label")}</p>}
       <SwitchRow
         checked={isPublic}
         onChange={(next) => onChange(next ? "public" : "private")}
         disabled={disabled}
-        icon={isPublic ? <Globe size={18} strokeWidth={1.75} /> : <Lock size={18} strokeWidth={1.75} />}
+        icon={isPublic ? <Globe size={18} /> : <Lock size={18} />}
         title={title}
         description={isPublic ? t("visibility.publicHint") : t("visibility.privateHint")}
         ariaLabel={t("visibility.switchAria", { state: title })}

@@ -52,7 +52,7 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
   }, [ownerId]);
 
   if (loading) {
-    return <p className="py-10 text-center text-sm text-text-muted">{t("common.loading")}</p>;
+    return <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>;
   }
 
   return (
@@ -139,7 +139,7 @@ function SavedShortcutCard() {
     >
       <div className="flex aspect-[4/3] w-full items-center justify-center bg-surface-soft text-primary">
         <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary-soft">
-          <Bookmark size={22} strokeWidth={1.75} />
+          <Bookmark size={24} />
         </span>
       </div>
       <div className="min-w-0 space-y-1 p-3">

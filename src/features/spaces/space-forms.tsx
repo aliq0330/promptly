@@ -22,6 +22,7 @@ import {
 } from "@/lib/spaces";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { SPACE_KIND_ICON as KIND_ICON, VISIBILITY_ICON } from "./space-visuals";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 /*
  * Space oluşturma ve ayar formlarının ortak alanları (docs/history/213-*): ad, açıklama, tür, görünürlük (neyin yayımlanacağı
@@ -217,9 +218,9 @@ export function CoverPicker({ file, onChange }: { file: File | null; onChange: (
 export function FormError({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+    <InlineAlert>
       {message}
-    </p>
+    </InlineAlert>
   );
 }
 

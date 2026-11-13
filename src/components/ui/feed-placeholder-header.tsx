@@ -28,11 +28,11 @@ export function FeedPlaceholderHeader({
           <Icon size={18} />
         </div>
         <h1 className="text-h1 font-semibold text-text">{title}</h1>
-        <span className="rounded-sm bg-accent-surface px-2 py-0.5 text-xs font-medium text-primary">
+        <span className="rounded-sm bg-accent-surface px-2 py-0.5 text-caption font-medium text-primary">
           {t("common.comingSoon")}
         </span>
       </div>
-      <p className="max-w-md text-sm text-text-muted">{description}</p>
+      <p className="max-w-md text-small text-text-muted">{description}</p>
     </div>
   );
 }

@@ -26,7 +26,7 @@ export function FormSection({
   className?: string;
 } & Omit<React.HTMLAttributes<HTMLElement>, "title">) {
   return (
-    <section className={cn("min-w-0 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6", className)} {...rest}>
+    <section className={cn("min-w-0 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-6", className)} {...rest}>
       {(title || action) && (
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">

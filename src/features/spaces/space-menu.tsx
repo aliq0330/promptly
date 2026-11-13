@@ -117,7 +117,7 @@ export function SpaceMenu({ items, label, align = "right", trigger, className }:
               nodes[(index + (event.key === "ArrowDown" ? 1 : -1) + nodes.length) % nodes.length]?.focus();
             }}
             style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, width: MENU_WIDTH, maxWidth: `calc(100vw - ${EDGE * 2}px)` }}
-            className="fixed z-[60] overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in"
+            className="fixed z-(--z-popover) overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in"
           >
             {visible.map((item) => (
               <button
@@ -130,11 +130,11 @@ export function SpaceMenu({ items, label, align = "right", trigger, className }:
                   item.onSelect();
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-2.5 text-left text-small focus:bg-surface-soft focus:outline-none",
+                  "flex w-full items-center gap-2 px-3 py-2.5 text-left text-small focus-visible:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                   item.danger ? "text-danger hover:bg-danger/10" : "text-text hover:bg-surface-soft",
                 )}
               >
-                <item.icon size={15} aria-hidden />
+                <item.icon size={16} aria-hidden />
                 {item.label}
               </button>
             ))}

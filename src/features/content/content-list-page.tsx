@@ -201,10 +201,10 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
                   {steps.map((step, index) => (
                     <li key={step.titleKey} className="flex items-start gap-3 rounded-lg border border-border-soft bg-surface p-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
-                        <step.icon size={16} strokeWidth={2} />
+                        <step.icon size={16} />
                       </span>
                       <span className="min-w-0 leading-tight">
-                        <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-text-muted">
+                        <span className="block text-micro font-semibold uppercase tracking-[0.07em] text-text-muted">
                           {t("list.step")} {index + 1}
                         </span>
                         <span className="mt-1 block text-label font-semibold text-text">{t(step.titleKey)}</span>

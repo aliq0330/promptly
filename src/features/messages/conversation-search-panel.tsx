@@ -113,7 +113,7 @@ export function ConversationSearchPanel({
       <div className="flex items-center gap-1">
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">{t("chat.search.open")}</span>
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
           <input
             type="search"
             autoFocus
@@ -125,7 +125,7 @@ export function ConversationSearchPanel({
               if (event.key === "Enter" && hits.length > 0) void step(1);
             }}
             placeholder={t("chat.search.placeholder")}
-            className="h-9 w-full rounded-full border border-border-soft bg-background pl-9 pr-8 text-sm text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15 [&::-webkit-search-cancel-button]:hidden"
+            className="h-9 w-full rounded-full border border-border-soft bg-background pl-9 pr-8 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15 [&::-webkit-search-cancel-button]:hidden"
           />
           {input && (
             <button
@@ -134,7 +134,7 @@ export function ConversationSearchPanel({
               aria-label={t("chat.search.clear")}
               className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
             >
-              <X size={13} />
+              <X size={12} />
             </button>
           )}
         </label>
@@ -182,7 +182,7 @@ export function ConversationSearchPanel({
       </div>
 
       {(tooShort || status === "loading" || status === "error" || (status === "done" && hits.length === 0) || (listOpen && hits.length > 0)) && (
-        <div className="absolute inset-x-2 top-full z-20 mt-1 max-h-[min(50vh,22rem)] overflow-y-auto rounded-lg border border-border-soft bg-surface-elevated shadow-pop lg:inset-x-4">
+        <div className="absolute inset-x-2 top-full z-20 mt-1 max-h-[min(50dvh,22rem)] overflow-y-auto rounded-lg border border-border-soft bg-surface-elevated shadow-pop lg:inset-x-4">
           {tooShort && <p className="px-4 py-3 text-small text-text-muted">{t("chat.search.minChars", { min: SEARCH_MIN_CHARS })}</p>}
           {!tooShort && status === "loading" && hits.length === 0 && <p className="px-4 py-3 text-small text-text-muted">{t("chat.search.loading")}</p>}
           {status === "error" && (
@@ -210,7 +210,7 @@ export function ConversationSearchPanel({
                       <span className="max-w-[10rem] truncate font-semibold text-text-secondary">{senderLabel(hit.senderId)}</span>
                       <span>{formatRelativeTime(hit.createdAt, language)}</span>
                     </span>
-                    <span className="mt-0.5 block break-words text-sm text-text">
+                    <span className="mt-0.5 block break-words text-small text-text">
                       {splitHighlight(snippetAround(hit.body, term ?? ""), term ?? "").map((part, i) =>
                         part.match ? (
                           <mark key={i} className="rounded-sm bg-primary/20 px-0.5 text-text">

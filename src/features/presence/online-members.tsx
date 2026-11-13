@@ -69,7 +69,7 @@ export function OnlineMembersStrip({
                 href={profileHref({ username: member.username })}
                 className="flex max-w-[12rem] items-center gap-2 rounded-full py-0.5 pr-2 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={36} />
+                <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={40} />
                 <span className="min-w-0 leading-tight">
                   <span className="block truncate text-small font-medium text-text">{member.displayName}</span>
                   {member.role !== "member" && <RoleBadge role={member.role} />}

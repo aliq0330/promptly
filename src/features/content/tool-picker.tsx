@@ -50,7 +50,7 @@ export function ToolPicker({
   return (
     <div>
       {label && (
-        <label className="mb-1.5 block text-sm font-medium text-text">
+        <label className="mb-1.5 block text-small font-medium text-text">
           {label} <span className="text-text-muted">({t("common.optional")})</span>
         </label>
       )}
@@ -157,10 +157,10 @@ function ToolPickerModal({
       >
         <div className="mb-3 flex items-start justify-between gap-2">
           <div>
-            <h2 id="tool-picker-title" className="text-base font-semibold text-text">
+            <h2 id="tool-picker-title" className="text-body font-semibold text-text">
               {t("tool.pickerTitle")}
             </h2>
-            <p className="text-xs text-text-muted">{t("tool.maxHint", { max: String(MAX_TOOLS) })}</p>
+            <p className="text-caption text-text-muted">{t("tool.maxHint", { max: String(MAX_TOOLS) })}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
             <X size={18} />
@@ -174,12 +174,12 @@ function ToolPickerModal({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("tool.search")}
             aria-label={t("tool.search")}
-            className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
         <ul ref={listRef} className="-mx-1 min-h-0 flex-1 space-y-1 overflow-y-auto px-1 [overflow-anchor:none]">
           {tools.length === 0 && orphan.length === 0 && (
-            <li className="py-6 text-center text-sm text-text-muted">{t("tool.noResults")}</li>
+            <li className="py-6 text-center text-small text-text-muted">{t("tool.noResults")}</li>
           )}
           {[...tools.map((tool) => tool.id), ...orphan.map((ref) => parseToolRef(ref).toolId)].map((toolId) => {
             const tool = findTool(toolId);
@@ -203,7 +203,7 @@ function ToolPickerModal({
                   disabled={disabled}
                   aria-pressed={selected}
                   className={cn(
-                    "flex min-w-0 items-center gap-3 text-left text-sm",
+                    "flex min-w-0 items-center gap-3 text-left text-small",
                     disabled && "cursor-not-allowed opacity-50",
                   )}
                 >
@@ -217,7 +217,7 @@ function ToolPickerModal({
                   </span>
                   <span className="min-w-0">
                     <span className="font-medium text-text">{tool.name}</span>
-                    <span className="ml-2 text-xs text-text-muted">{tool.provider}</span>
+                    <span className="ml-2 text-caption text-text-muted">{tool.provider}</span>
                   </span>
                 </button>
                 {selected && tool.models.length > 0 && (
@@ -229,7 +229,7 @@ function ToolPickerModal({
                         aria-pressed={modelId === model.id}
                         onClick={() => setModel(toolId, modelId === model.id ? null : model.id)}
                         className={cn(
-                          "h-7 rounded-full border px-2.5 text-xs font-medium",
+                          "h-7 rounded-full border px-2.5 text-caption font-medium",
                           modelId === model.id
                             ? "border-text bg-text text-background"
                             : "border-border text-text-secondary hover:border-border-strong",

@@ -70,7 +70,7 @@ export default function DangerSettingsPage() {
               />
             </div>
             {deleteError && (
-              <p role="alert" className="text-sm text-danger">
+              <p role="alert" className="text-small text-danger">
                 {deleteError}
               </p>
             )}

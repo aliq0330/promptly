@@ -18,7 +18,7 @@ import {
 function DiffBlock({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{title}</p>
+      <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{title}</p>
       {children}
     </div>
   );
@@ -26,7 +26,7 @@ function DiffBlock({ title, children }: { title: string; children: ReactNode }) 
 
 function NoDifference() {
   const { t } = useTranslation();
-  return <p className="text-xs text-text-muted">{t("history.noDifference")}</p>;
+  return <p className="text-caption text-text-muted">{t("history.noDifference")}</p>;
 }
 
 /** A plain before → after pair for short non-text values (a type, a position). */
@@ -124,7 +124,7 @@ export function WorkflowDiffView({ older, newer }: { older: WorkflowVersionConte
                 <p className="text-small font-medium text-text">{stepName(step.title, step.index)}</p>
                 {step.fields.map((change) => (
                   <div key={change.field} className="space-y-1">
-                    <p className="text-xs text-text-muted">{t(STEP_FIELD_LABELS[change.field])}</p>
+                    <p className="text-caption text-text-muted">{t(STEP_FIELD_LABELS[change.field])}</p>
                     {TEXT_STEP_FIELDS.has(change.field) ? (
                       <DiffText before={change.before} after={change.after} />
                     ) : change.field === "content" ? (
@@ -190,26 +190,26 @@ function PresetFieldChangeView({ change }: { change: PresetFieldChange }) {
       <p className="text-small font-medium text-text">{change.name}</p>
       {change.nameChange && (
         <div className="space-y-1">
-          <p className="text-xs text-text-muted">{t("history.fieldRenamed")}</p>
+          <p className="text-caption text-text-muted">{t("history.fieldRenamed")}</p>
           <DiffText before={change.nameChange.before} after={change.nameChange.after} />
         </div>
       )}
       {change.typeChange && (
         <div className="space-y-1">
-          <p className="text-xs text-text-muted">{t("history.fieldTypeChanged")}</p>
+          <p className="text-caption text-text-muted">{t("history.fieldTypeChanged")}</p>
           <Change before={fieldTypeLabel(change.typeChange.before, t)} after={fieldTypeLabel(change.typeChange.after, t)} />
         </div>
       )}
       {(change.kindChanged || change.configChanged) && <p className="text-small text-text">{t("history.fieldSettingsChanged")}</p>}
       {change.valueChange && (
         <div className="space-y-1">
-          <p className="text-xs text-text-muted">{t("history.valueChanged")}</p>
+          <p className="text-caption text-text-muted">{t("history.valueChanged")}</p>
           <Change before={change.valueChange.before || t("history.none")} after={change.valueChange.after || t("history.none")} />
         </div>
       )}
       {change.optionsAdded.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs text-text-muted">{t("history.optionsAdded")}</p>
+          <p className="text-caption text-text-muted">{t("history.optionsAdded")}</p>
           <BulletList>
             {change.optionsAdded.map((option) => (
               <li key={option.key} className="rounded-[2px] bg-success/15 px-1.5 py-0.5 text-success">
@@ -221,7 +221,7 @@ function PresetFieldChangeView({ change }: { change: PresetFieldChange }) {
       )}
       {change.optionsRemoved.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs text-text-muted">{t("history.optionsRemoved")}</p>
+          <p className="text-caption text-text-muted">{t("history.optionsRemoved")}</p>
           <BulletList>
             {change.optionsRemoved.map((option) => (
               <li key={option.key} className="rounded-[2px] bg-danger/10 px-1.5 py-0.5 text-danger line-through decoration-danger/60">
@@ -235,13 +235,13 @@ function PresetFieldChangeView({ change }: { change: PresetFieldChange }) {
         <div key={option.key} className="space-y-1">
           {option.labelChange && (
             <>
-              <p className="text-xs text-text-muted">{t("history.optionLabelChanged")}</p>
+              <p className="text-caption text-text-muted">{t("history.optionLabelChanged")}</p>
               <DiffText before={option.labelChange.before} after={option.labelChange.after} />
             </>
           )}
           {option.valueChange && (
             <>
-              <p className="text-xs text-text-muted">{t("history.optionValueChanged")}</p>
+              <p className="text-caption text-text-muted">{t("history.optionValueChanged")}</p>
               <DiffText before={option.valueChange.before} after={option.valueChange.after} />
             </>
           )}

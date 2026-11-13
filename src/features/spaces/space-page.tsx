@@ -302,7 +302,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
               {owner && (
                 <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
                   <Link href={profileHref(owner)} className="inline-flex items-center gap-1.5 font-semibold text-text hover:text-primary">
-                    <Avatar src={owner.avatarUrl} alt="" size={22} />
+                    <Avatar src={owner.avatarUrl} alt="" size={24} />
                     {owner.displayName}
                   </Link>
                   <span aria-hidden>·</span>
@@ -410,7 +410,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           <footer className="mt-12 flex flex-wrap items-center gap-3 border-t border-border-soft pt-4 text-caption text-text-muted" data-space-footer="">
             {space.quoteCount > 0 && (
               <span className="inline-flex items-center gap-1.5" data-space-quote-count="">
-                <Quote size={13} aria-hidden /> {t("quotes.count", { count: space.quoteCount })}
+                <Quote size={12} aria-hidden /> {t("quotes.count", { count: space.quoteCount })}
               </span>
             )}
             {userId && userId !== space.ownerId && <ReportButton targetType="space" targetId={space.id} menuItem={false} />}

@@ -56,7 +56,7 @@ export function InsightStatTile({
   return (
     <div className={cn("flex min-w-0 flex-col gap-2 rounded-lg border border-border-soft bg-surface p-4 shadow-card", className)}>
       <div className="flex items-center gap-2 text-small font-medium text-text-secondary">
-        <Icon size={16} strokeWidth={1.75} aria-hidden />
+        <Icon size={16} aria-hidden />
         <span className="truncate">{label}</span>
       </div>
       <p className="font-display text-[2rem] font-bold leading-none tabular-nums text-text">{formatInsightNumber(current, language)}</p>

@@ -98,7 +98,7 @@ export function MessagesPanel({ userId }: { userId: string }) {
                   .join(" ");
             return (
               <li key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-small", mine ? "bg-primary-soft text-text" : "border border-border-soft bg-surface text-text", m.deletedAt && "italic text-text-muted")}>
+                <div className={cn("max-w-[85%] rounded-lg px-3 py-2 text-small", mine ? "bg-primary-soft text-text" : "border border-border-soft bg-surface text-text", m.deletedAt && "italic text-text-muted")}>
                   <p className="text-caption font-medium text-text-muted">@{m.senderUsername ?? "?"}</p>
                   <p className="whitespace-pre-wrap break-words">{content || "—"}</p>
                   <p className="mt-0.5 text-caption text-text-muted" title={formatDateTime(m.createdAt, language)}>

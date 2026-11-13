@@ -64,7 +64,7 @@ export function FocusCommentButton({ item, size, className }: { item: PostFeedIt
       title={t("comments.title")}
       className={contentActionClassName(false, className)}
     >
-      <MessageCircle size={size} strokeWidth={1.75} />
+      <MessageCircle size={size} />
       <span aria-hidden>{formatCount(count)}</span>
     </button>
   );
