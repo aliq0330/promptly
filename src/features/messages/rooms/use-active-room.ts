@@ -11,11 +11,11 @@ import type { CommunityRoom } from "@/types";
  * parametreleri bu sohbete ait olmadığından yerel durumdur. Hiçbiri geçerli değilse en son açılan oda, yoksa varsayılan oda.
  * Çözülen oda cihazda hatırlanır (Mesajlar listesinde satıra dokununca "son açılan odaya" gidilir).
  */
-export function useActiveRoom(communityId: string | null | undefined, rooms: readonly CommunityRoom[], dock: boolean): { room: CommunityRoom | null; setRoomId: (roomId: string) => void; requestedId: string | null } {
+export function useActiveRoom(communityId: string | null | undefined, rooms: readonly CommunityRoom[], dock: boolean, initialDockRoomId: string | null = null): { room: CommunityRoom | null; setRoomId: (roomId: string) => void; requestedId: string | null } {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [dockRoomId, setDockRoomId] = useState<string | null>(null);
+  const [dockRoomId, setDockRoomId] = useState<string | null>(initialDockRoomId);
   const requested = dock ? dockRoomId : searchParams.get("room");
 
   const room = useMemo(

@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { ChevronUp } from "@/components/icons/chevron-up";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
+import { useTeamChannelList } from "@/features/teams/team-chat-data";
 import { bucketConversations, unreadConversationCount } from "@/lib/conversation-lists";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { formatUnread, messageHref } from "@/lib/utils";
+import { formatUnread, messageHref, roomHref } from "@/lib/utils";
+import { DockHubView } from "./dock-hub-view";
 import { DockListView } from "./dock-list-view";
 import { LocalConversationView } from "./local-conversation-view";
 import { NewChatDraftView } from "./new-chat-draft-view";
@@ -102,6 +104,18 @@ function DockPanel() {
     router.push(href);
   }
   const backToList = () => dock.setView({ kind: "list" });
+  // Sohbetten geri bir ÜST SEVİYEYE döner (docs/history/382-*): proje kanalı → proje listesi, ekip kanalı → ekip listesi, topluluk odası → oda listesi; diğerleri → Mesajlar listesi.
+  const chatId = view.kind === "chat" ? view.conversationId : null;
+  const { conversations } = useRealMessages();
+  const chatConversation = chatId ? conversations.find((conversation) => conversation.id === chatId) : undefined;
+  const chatTeamId = chatConversation?.group?.team?.id ?? null;
+  const { channels: chatTeamChannels } = useTeamChannelList(chatTeamId);
+  const chatProjectId = chatTeamId && chatId ? (chatTeamChannels.find((channel) => channel.id === chatId)?.projectId ?? null) : null;
+  const backFromChat = () => {
+    if (chatTeamId) dock.setView({ kind: "team", teamId: chatTeamId, projectId: chatProjectId });
+    else if (chatConversation?.group && chatId) dock.setView({ kind: "community", communityId: chatId });
+    else backToList();
+  };
 
   return (
     <aside
@@ -117,12 +131,15 @@ function DockPanel() {
           key={view.conversationId}
           dock={{
             conversationId: view.conversationId,
-            onBack: backToList,
-            onExpand: () => expand(messageHref({ id: view.conversationId })),
+            roomId: view.roomId ?? null,
+            onBack: backFromChat,
+            onExpand: () => expand(view.roomId ? roomHref(view.conversationId, view.roomId) : messageHref({ id: view.conversationId })),
             onMinimize: dock.minimize,
             onOpenConversation: (conversationId: string) => dock.openChat(conversationId),
           }}
         />
+      ) : view.kind === "team" || view.kind === "community" ? (
+        <DockHubView view={view} />
       ) : view.kind === "draft" ? (
         <NewChatDraftView
           key={view.userId}

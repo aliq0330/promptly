@@ -132,6 +132,7 @@ export function HubSection({ title, hint, children, testId }: { title: string; h
  */
 export function HubRow({
   href,
+  onOpen,
   testKey,
   tile,
   title,
@@ -147,6 +148,8 @@ export function HubRow({
   selection,
 }: {
   href?: string;
+  /** Bağlantı yerine düğme (Mesajlar dock'u: satır sayfaya gitmez, panelin içinde açılır, docs/history/382-*). */
+  onOpen?: () => void;
   testKey: string;
   tile: ReactNode;
   title: string;
@@ -209,6 +212,13 @@ export function HubRow({
   if (selecting) {
     return (
       <button type="button" role="checkbox" aria-checked={selected} onClick={selection.onToggle} data-hub-row={testKey} data-selected={selected ? "true" : "false"} className={className}>
+        {body}
+      </button>
+    );
+  }
+  if (onOpen && !href) {
+    return (
+      <button type="button" onClick={onOpen} data-hub-row={testKey} aria-current={active ? "true" : undefined} className={className}>
         {body}
       </button>
     );

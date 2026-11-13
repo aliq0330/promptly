@@ -8,8 +8,17 @@ import { useMinWidth } from "@/features/notifications/use-min-width";
 /** Dock'un çıktığı en dar ekran: `lg` (1024px) — `md`'de 72px'lik ikon rayı var, panel için yer yok; ondan dar ekranlarda mesaj simgesi eskisi gibi `/messages` sayfasına gider. */
 export const MESSAGE_DOCK_MIN_WIDTH = 1024;
 
-/** Panelin hangi görünümde olduğu (docs/history/328-*): liste · mesaj istekleri · açık sohbet · "Yeni sohbet" taslağı (ilk mesajla oluşur). */
-export type DockView = { kind: "list" } | { kind: "requests" } | { kind: "chat"; conversationId: string } | { kind: "draft"; userId: string };
+/**
+ * Panelin hangi görünümde olduğu (docs/history/328-*, 382-*): liste · mesaj istekleri · ekip/proje kanal listesi · topluluk oda listesi · açık sohbet · "Yeni sohbet" taslağı (ilk mesajla oluşur).
+ * Kanal/oda listesi Mesajlar listesinin yerine panelin İÇİNDE açılır ve sohbetten geri o listeye döner; `roomId` topluluk sohbetinde açılacak oda.
+ */
+export type DockView =
+  | { kind: "list" }
+  | { kind: "requests" }
+  | { kind: "team"; teamId: string; projectId: string | null }
+  | { kind: "community"; communityId: string }
+  | { kind: "chat"; conversationId: string; roomId?: string | null }
+  | { kind: "draft"; userId: string };
 
 /** Sohbet/taslak ekranları dock içinde çalışırken sayfa yönlendirmesi yerine bunları çağırır (docs/history/328-*). */
 export interface DockHandlers {
@@ -24,7 +33,9 @@ interface MessageDockContextValue {
   view: DockView;
   setView: (view: DockView) => void;
   openList: () => void;
-  openChat: (conversationId: string) => void;
+  openChat: (conversationId: string, roomId?: string | null) => void;
+  openTeam: (teamId: string, projectId?: string | null) => void;
+  openCommunity: (communityId: string) => void;
   openDraft: (userId: string) => void;
   /** Paneli küçültür (hap kalır); görünüm (açık sohbet) hatırlanır, hap'a basınca kaldığı yerden açılır. */
   minimize: () => void;
@@ -45,8 +56,16 @@ export function MessageDockProvider({ children }: { children: ReactNode }) {
     setViewState({ kind: "list" });
     setOpen(true);
   }, []);
-  const openChat = useCallback((conversationId: string) => {
-    setViewState({ kind: "chat", conversationId });
+  const openChat = useCallback((conversationId: string, roomId?: string | null) => {
+    setViewState({ kind: "chat", conversationId, roomId: roomId ?? null });
+    setOpen(true);
+  }, []);
+  const openTeam = useCallback((teamId: string, projectId?: string | null) => {
+    setViewState({ kind: "team", teamId, projectId: projectId ?? null });
+    setOpen(true);
+  }, []);
+  const openCommunity = useCallback((communityId: string) => {
+    setViewState({ kind: "community", communityId });
     setOpen(true);
   }, []);
   const openDraft = useCallback((userId: string) => {
@@ -57,8 +76,8 @@ export function MessageDockProvider({ children }: { children: ReactNode }) {
   const toggle = useCallback(() => setOpen((value) => !value), []);
 
   const value = useMemo<MessageDockContextValue>(
-    () => ({ open, view, setView, openList, openChat, openDraft, minimize, toggle }),
-    [open, view, setView, openList, openChat, openDraft, minimize, toggle],
+    () => ({ open, view, setView, openList, openChat, openTeam, openCommunity, openDraft, minimize, toggle }),
+    [open, view, setView, openList, openChat, openTeam, openCommunity, openDraft, minimize, toggle],
   );
   return <MessageDockContext.Provider value={value}>{children}</MessageDockContext.Provider>;
 }
