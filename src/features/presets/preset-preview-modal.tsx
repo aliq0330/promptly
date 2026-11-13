@@ -12,6 +12,8 @@ import { presetParameterEntries } from "@/lib/preset-utils";
 import { presetHref } from "@/lib/utils";
 import type { Preset } from "@/types";
 import { PresetSaveCta } from "./preset-save-cta";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * A quick look at one preset from the Prompt form's panel: who made it, its
@@ -39,22 +41,21 @@ export function PresetPreviewModal({
 
   return (
     <Modal onClose={onClose} labelledBy="preset-preview-title">
-      <div
+      <DialogShell
         role="document"
         data-preset-preview={preset.id}
-        onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-pop"
+        className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop"
       >
         <div className="flex items-start gap-3 border-b border-border-soft px-4 py-3">
           <div className="min-w-0 flex-1">
-            <h2 id="preset-preview-title" className="break-words text-h3 font-semibold text-text">
+            <h2 id="preset-preview-title" className="break-words text-h3 font-bold text-text">
               {preset.title}
             </h2>
             <p className="text-caption text-text-muted">
               {preset.creator.displayName} · {t("preset.paramCount", { count: entries.length })}
             </p>
           </div>
-          <button type="button" aria-label={t("common.close")} onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
             <X size={18} />
           </button>
         </div>
@@ -111,7 +112,7 @@ export function PresetPreviewModal({
             {t("common.apply")}
           </button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

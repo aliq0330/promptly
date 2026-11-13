@@ -287,7 +287,7 @@ function SectionTabs<K extends string>({
               aria-selected={selected}
               onClick={() => onChange(item.key)}
               className={cn(
-                "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border-b-[3px] px-3.5 text-body transition-colors duration-200 ease-soft",
+                "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-4 text-body transition-colors duration-200 ease-soft",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                 selected ? "border-primary font-bold text-text" : "border-transparent font-medium text-text-muted hover:text-text",
               )}

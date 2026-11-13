@@ -111,10 +111,10 @@ function ReadyBody({ data, period }: { data: CreatorInsights; period: InsightPer
     <div className="flex flex-col gap-5">
       {summary.copies >= 100 && (
         // docs/history/374-*: a round number of copies gets a small celebration; the number on the board is the real one.
-        <div className="grid items-center gap-4 rounded-xl border border-border-soft bg-surface p-3 sm:grid-cols-[minmax(0,17rem)_1fr] sm:p-4" data-insights-milestone="">
+        <div className="grid items-center gap-4 rounded-lg border border-border-soft bg-surface p-3 sm:grid-cols-[minmax(0,17rem)_1fr] sm:p-4" data-insights-milestone="">
           <LineArtScene kind="milestone" value={String(summary.copies)} className="w-full rounded-lg border border-border-soft" />
           <div className="space-y-1">
-            <p className="text-h3 font-semibold text-text">{t("insights.milestone.title", { count: summary.copies.toLocaleString() })}</p>
+            <p className="text-h3 font-bold text-text">{t("insights.milestone.title", { count: summary.copies.toLocaleString() })}</p>
             <p className="text-small text-text-muted">{t("insights.milestone.body", { days: period })}</p>
           </div>
         </div>
@@ -133,11 +133,11 @@ function ReadyBody({ data, period }: { data: CreatorInsights; period: InsightPer
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch">
         <section className={`${CARD} min-w-0 flex-1`} aria-labelledby="insights-top-title">
-          <h2 id="insights-top-title" className="mb-2 text-h2 font-semibold text-text">{t("insights.top.title")}</h2>
+          <h2 id="insights-top-title" className="mb-2 text-h2 font-bold text-text">{t("insights.top.title")}</h2>
           <InsightTopList items={top} />
         </section>
         <section className={`${CARD} lg:w-[22rem] lg:shrink-0`} aria-labelledby="insights-mix-title">
-          <h2 id="insights-mix-title" className="mb-3 text-h2 font-semibold text-text">{t("insights.mix.title")}</h2>
+          <h2 id="insights-mix-title" className="mb-3 text-h2 font-bold text-text">{t("insights.mix.title")}</h2>
           <InsightReactionMix rows={reactions} days={period} />
         </section>
       </div>

@@ -43,6 +43,7 @@ import { TagPicker } from "@/features/prompts/tag-picker";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LoadState = "loading" | "ready" | "notfound" | "forbidden";
@@ -288,7 +289,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>
   ) : !user ? (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("auth.loginRequiredTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("workflow.loginRequired")}</p>
         <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-hover">
           {t("header.login")}
@@ -296,7 +297,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       </div>
   ) : loadState === "notfound" || loadState === "forbidden" ? (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("workflow.notFoundTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("workflow.notFoundTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{loadState === "forbidden" ? t("workflow.notYours") : t("workflow.notFoundBody")}</p>
         <Link href="/workflows" className="text-small font-medium text-primary hover:underline">
           {t("workflow.pageTitle")}
@@ -504,7 +505,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
               <h2 id="workflow-step-sheet-title" className="min-w-0 truncate text-body font-semibold text-text">
                 {selectedIndex + 1}. {selected.title || t("workflow.untitledStep")}
               </h2>
-              <button type="button" onClick={() => setSheetOpen(false)} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+              <button type="button" onClick={() => setSheetOpen(false)} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
                 <X size={18} />
               </button>
             </div>

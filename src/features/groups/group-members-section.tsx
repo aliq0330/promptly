@@ -30,6 +30,7 @@ import { assignableRoles, canBanMember, canRemoveMember } from "@/lib/chat-group
 import { cn, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 type Pending =
   | { kind: "remove"; member: GroupMember }
@@ -249,7 +250,7 @@ export function GroupMembersSection({
                         aria-haspopup="menu"
                         aria-expanded={menuFor === member.userId}
                         onClick={() => setMenuFor((prev) => (prev === member.userId ? null : member.userId))}
-                        className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+                        className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
                       >
                         <MoreVertical size={16} />
                       </button>

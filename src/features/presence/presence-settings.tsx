@@ -92,7 +92,7 @@ export function PresenceSettingsCard() {
             ))}
           </fieldset>
 
-          <p className="rounded-lg bg-surface-soft px-3.5 py-3 text-caption leading-relaxed text-text-secondary">{t("presence.reciprocity")}</p>
+          <p className="rounded-lg bg-surface-soft px-4 py-3 text-caption leading-relaxed text-text-secondary">{t("presence.reciprocity")}</p>
           <p aria-live="polite" className="min-h-4 text-caption">
             {error ? <span className="text-danger">{error}</span> : saved ? <span className="text-text-muted">{t("presence.saved")}</span> : null}
           </p>

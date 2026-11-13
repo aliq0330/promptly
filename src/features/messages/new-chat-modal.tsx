@@ -19,6 +19,7 @@ import { buildNewChatSections, resolveNewChatTarget, type ChatPartner } from "@/
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** How many follows / followers the picker reads — the table is never pulled whole. */
 const LIST_FETCH_LIMIT = 100;
@@ -191,7 +192,7 @@ export function NewChatModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
             <X size={18} />
           </button>

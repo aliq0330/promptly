@@ -13,6 +13,7 @@ import { messagePreviewText } from "./message-preview";
 import type { Message, MessageReceipt } from "@/types";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * "Mesaj bilgisi" (docs/history/174-*): grup sohbetinde KENDİ mesajımı kimlerin okuduğunu ve okumadığını gösterir. Veri sunucu
@@ -57,7 +58,7 @@ export function MessageInfoModal({ message, onClose }: { message: Message; onClo
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
             <X size={18} />
           </button>

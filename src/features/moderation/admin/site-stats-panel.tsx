@@ -79,7 +79,7 @@ export function SiteStatsPanel() {
       </div>
 
       <section className={CARD}>
-        <h2 className="mb-3 text-h3 font-semibold text-text">{t("admin.stats.usersTitle")}</h2>
+        <h2 className="mb-3 text-h3 font-bold text-text">{t("admin.stats.usersTitle")}</h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <Tile label={t("admin.stats.totalUsers")} value={stats.users.total} />
           <Tile label={t("admin.stats.new7d")} value={stats.users.new_7d} />
@@ -91,7 +91,7 @@ export function SiteStatsPanel() {
       </section>
 
       <section className={CARD}>
-        <h2 className="mb-3 text-h3 font-semibold text-text">
+        <h2 className="mb-3 text-h3 font-bold text-text">
           {t("admin.stats.contentTitle")}
           {type && <span className="ml-2 text-small font-normal text-text-muted">· {t(CONTENT_TYPE_KEY[type])}</span>}
         </h2>
@@ -125,7 +125,7 @@ export function SiteStatsPanel() {
       </section>
 
       <section className={CARD}>
-        <h2 className="mb-3 text-h3 font-semibold text-text">{t("admin.stats.byTypeTitle")}</h2>
+        <h2 className="mb-3 text-h3 font-bold text-text">{t("admin.stats.byTypeTitle")}</h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[460px] text-small">
             <thead>
@@ -161,7 +161,7 @@ export function SiteStatsPanel() {
       </section>
 
       <section className={CARD}>
-        <h2 className="mb-3 text-h3 font-semibold text-text">{t("admin.stats.dailyTitle")}</h2>
+        <h2 className="mb-3 text-h3 font-bold text-text">{t("admin.stats.dailyTitle")}</h2>
         <div className="flex h-28 items-end gap-1" role="img" aria-label={t("admin.stats.dailyTitle")}>
           {stats.daily.map((d) => (
             <div key={d.day} className="flex h-full flex-1 flex-col justify-end" title={`${d.day}: ${d.posts}`}>
@@ -176,7 +176,7 @@ export function SiteStatsPanel() {
       </section>
 
       <section className={CARD}>
-        <h2 className="mb-3 text-h3 font-semibold text-text">{t("admin.stats.engagementTitle")}</h2>
+        <h2 className="mb-3 text-h3 font-bold text-text">{t("admin.stats.engagementTitle")}</h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Tile label={t("admin.stats.comments")} value={formatCount(stats.engagement.comments)} />
           <Tile label={t("admin.stats.likes")} value={formatCount(stats.engagement.likes)} />
@@ -190,7 +190,7 @@ export function SiteStatsPanel() {
       </section>
 
       <section className={CARD}>
-        <h2 className="mb-1 text-h3 font-semibold text-text">{t("admin.stats.storageTitle")}</h2>
+        <h2 className="mb-1 text-h3 font-bold text-text">{t("admin.stats.storageTitle")}</h2>
         <p className="text-small text-text-secondary">
           {t("admin.stats.storageTotal")}: <span className="font-semibold tabular-nums text-text">{formatBytes(stats.storage.total_bytes)}</span> ·{" "}
           {t("admin.stats.files", { count: stats.storage.total_files })}

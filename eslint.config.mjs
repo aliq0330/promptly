@@ -13,6 +13,7 @@ const FORBIDDEN_CLASSES = [
   [/(^|[^\w-])text-\[(\d|1[01])(\.\d+)?px\]/, "12px altı metin: text-micro (yalnız sayaç rozeti) ya da text-caption kullan."],
   [/(^|[^\w-])(min-|max-)?h-\[[^\]]*\d(?<!d)vh\]/, "vh yerine dvh kullan (mobil tarayıcı çubuğu)."],
   [/(^|[^\w-])text-white(?![\w/-])[^"'`]*(^|[^\w-])bg-(danger|secondary|success|warning)(?![\w-])|(^|[^\w-])bg-(danger|secondary|success|warning)(?![\w/-])[^"'`]*(^|[^\w-])text-white(?![\w/-])/, "Durum rengi zemininde text-white yerine text-*-foreground kullan (kontrast)."],
+  [/(^|[^\w-])(p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap|gap-x|gap-y|space-x|space-y)-3\.5(?![\w.])|(^|[^\w-])(gap|gap-x|gap-y|space-x|space-y)-2\.5(?![\w.])/, "Boşluk ölçeği: 3.5 yerine 4 (ya da 3), gap-2.5 yerine gap-3 kullan; 0.5/1.5/2.5 yalnız ikon hizası/rozet için."],
 ];
 const classRules = FORBIDDEN_CLASSES.flatMap(([re, message]) => {
   const pattern = re.source.replace(/\\/g, "\\\\");

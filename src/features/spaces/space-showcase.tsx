@@ -26,7 +26,7 @@ export function SpaceShowcase({ items, onOpen }: { items: SpaceItem[]; onOpen: (
   const current = items[active];
 
   return (
-    <section aria-label={t("spaces.images.showcaseAria")} className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft" data-testid="space-showcase">
+    <section aria-label={t("spaces.images.showcaseAria")} className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft" data-testid="space-showcase">
       <Coverflow
         items={items}
         active={active}

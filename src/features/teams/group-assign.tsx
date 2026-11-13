@@ -86,7 +86,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
       disabled={busy}
       onClick={onPick}
       data-group-tile={key}
-      className={cn("flex min-h-[6.5rem] flex-col gap-2 rounded-lg border-[1.5px] p-3.5 text-left transition-colors disabled:opacity-50", selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft", extra)}
+      className={cn("flex min-h-[6.5rem] flex-col gap-2 rounded-lg border-[1.5px] p-4 text-left transition-colors disabled:opacity-50", selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft", extra)}
     >
       {children}
       {current && <span className="mt-auto text-caption font-semibold text-text-muted">{t("tf.group.current")}</span>}
@@ -112,7 +112,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
       }
     >
       <div className="space-y-4" data-testid="group-assign">
-        <div role="radiogroup" aria-label={t("spaces.groups.label")} className="grid grid-cols-2 gap-2.5">
+        <div role="radiogroup" aria-label={t("spaces.groups.label")} className="grid grid-cols-2 gap-3">
           {groups.map((group) =>
             tile(
               group.id,
@@ -159,7 +159,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
               disabled={busy}
               aria-expanded={creating}
               data-group-tile="new"
-              className={cn("flex min-h-[6.5rem] flex-col items-center justify-center gap-1.5 rounded-lg border-[1.5px] border-dashed p-3.5 text-small font-bold text-primary transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
+              className={cn("flex min-h-[6.5rem] flex-col items-center justify-center gap-1.5 rounded-lg border-[1.5px] border-dashed p-4 text-small font-bold text-primary transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
             >
               <FolderPlus size={24} aria-hidden />
               {t("tf.group.newTile")}

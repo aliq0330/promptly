@@ -478,7 +478,7 @@ function ContributorsList({ answers }: { answers: Prompt[] }) {
       <ul className="divide-y divide-border-soft">
         {authors.slice(0, 6).map((author) => (
           <li key={author.id}>
-            <Link href={profileHref(author)} className="group flex items-center gap-2.5 px-3.5 py-2.5 transition-colors duration-200 hover:bg-surface-soft">
+            <Link href={profileHref(author)} className="group flex items-center gap-3 px-4 py-2.5 transition-colors duration-200 hover:bg-surface-soft">
               <Avatar src={author.avatarUrl} alt={author.displayName} size={32} />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-label font-semibold text-text transition-colors group-hover:text-primary">{author.displayName}</span>

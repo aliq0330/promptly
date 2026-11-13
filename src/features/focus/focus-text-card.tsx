@@ -47,7 +47,7 @@ export function FocusTextCard({ prompt }: { prompt: Prompt }) {
 
   return (
     <ContentCard href={href} className="overflow-hidden">
-      <div className="flex flex-1 flex-col gap-3 p-3 sm:p-3.5">
+      <div className="flex flex-1 flex-col gap-3 p-3 sm:p-4">
         <FocusCreator user={prompt.author} />
 
         <div className="relative overflow-hidden rounded-md bg-surface-soft px-3 pb-3 pt-2.5">

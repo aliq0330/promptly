@@ -56,7 +56,7 @@ export function PendingMessageBubble({
         {displayBody && (
           <div
             className={cn(
-              "w-fit self-end rounded-xl rounded-br-md bg-primary px-3.5 py-2 text-[15px] leading-[1.4] text-primary-foreground",
+              "w-fit self-end rounded-xl rounded-br-md bg-primary px-4 py-2 text-[15px] leading-[1.4] text-primary-foreground",
               pending.status === "sending" && "opacity-70",
             )}
           >

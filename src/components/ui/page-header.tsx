@@ -59,7 +59,7 @@ export function SectionHeader({
   return (
     <div className={cn("flex items-end justify-between gap-3", className)}>
       <div className="min-w-0">
-        <h2 className="text-h2 font-medium text-text">{title}</h2>
+        <h2 className="text-h2 font-bold text-text">{title}</h2>
         {description && <p className="mt-0.5 text-small text-text-muted">{description}</p>}
       </div>
       {href && (

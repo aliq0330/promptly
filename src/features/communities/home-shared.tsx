@@ -29,7 +29,7 @@ export function LoadingRows({ count = 3 }: { count?: number }) {
 export function ErrorBox({ message, onRetry }: { message: string; onRetry: () => void }) {
   const { t } = useTranslation();
   return (
-    <div className="space-y-3 rounded-xl border border-border-soft bg-surface px-6 py-10 text-center">
+    <div className="space-y-3 rounded-lg border border-border-soft bg-surface px-6 py-10 text-center">
       <p role="alert" className="text-small text-danger">
         {message}
       </p>

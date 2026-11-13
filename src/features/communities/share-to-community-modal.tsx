@@ -16,6 +16,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const TYPES: CommunityPostType[] = ["prompt", "request", "workflow", "preset", "space"];
 
@@ -66,7 +67,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
               </h2>
               <p className="text-small text-text-muted">{t("communities.feed.shareHelp")}</p>
             </div>
-            <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+            <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
               <X size={18} aria-hidden />
             </button>
           </div>
@@ -96,7 +97,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                   <li key={item.id}>
                     <label
                       className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-2.5 text-small transition-colors",
+                        "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 text-small transition-colors",
                         selected?.id === item.id ? "border-primary/50 bg-primary-soft/40" : "border-border-soft bg-background hover:border-border-strong",
                       )}
                     >
@@ -134,7 +135,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                 </h2>
                 <p className="truncate text-small text-text-muted">{selected.title}</p>
               </div>
-              <button type="button" onClick={() => setNoteOpen(false)} disabled={busy} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+              <button type="button" onClick={() => setNoteOpen(false)} disabled={busy} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
                 <X size={18} aria-hidden />
               </button>
             </div>

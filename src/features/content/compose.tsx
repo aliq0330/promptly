@@ -12,6 +12,7 @@ import { resetPendingAnnounce } from "@/features/communities/announce-picker";
 import { resetCreateDestination } from "@/features/communities/community-return";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /**
  * Oluşturma ekranı kabuğu (docs/history/216-*, düzeni 244'te "tek sayfa form"a döndü): açıkken üst menü, kenar çubuğu ve alt menü kalkar
@@ -172,7 +173,7 @@ export function useComposeLeave({ dirty, saveDraft }: { dirty: boolean; saveDraf
 
   const dialog = asking ? (
     <Modal onClose={() => !saving && setAsking(false)} labelledBy="compose-leave-title">
-      <div data-compose-leave="" className="w-full max-w-sm overflow-hidden rounded-t-lg border border-border bg-surface-elevated text-center shadow-pop sm:rounded-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell data-compose-leave="" className="w-full max-w-sm overflow-hidden rounded-t-lg border border-border-soft bg-surface-elevated text-center shadow-pop sm:rounded-lg">
         <div className="px-5 pb-4 pt-5">
           <h2 id="compose-leave-title" className="text-h3 font-bold text-text">
             {saveDraft ? t("compose.leaveDraftTitle") : t("compose.leaveUnsavedTitle")}
@@ -193,18 +194,18 @@ export function useComposeLeave({ dirty, saveDraft }: { dirty: boolean; saveDraf
                 leave();
               } else setAsking(false);
             }}
-            className="block w-full border-t border-border px-4 py-3.5 text-body font-bold text-primary disabled:opacity-50"
+            className="block w-full border-t border-border px-4 py-4 text-body font-bold text-primary disabled:opacity-50"
           >
             {saving ? t("createActions.savingDraft") : t("createActions.saveDraft")}
           </button>
         )}
-        <button type="button" disabled={saving} data-leave-discard="" onClick={leave} className="block w-full border-t border-border px-4 py-3.5 text-body font-bold text-danger">
+        <button type="button" disabled={saving} data-leave-discard="" onClick={leave} className="block w-full border-t border-border px-4 py-4 text-body font-bold text-danger">
           {saveDraft ? t("compose.leaveDiscard") : t("compose.leaveExit")}
         </button>
-        <button type="button" disabled={saving} data-leave-continue="" onClick={() => setAsking(false)} className="block w-full border-t border-border px-4 py-3.5 text-body font-semibold text-text-secondary">
+        <button type="button" disabled={saving} data-leave-continue="" onClick={() => setAsking(false)} className="block w-full border-t border-border px-4 py-4 text-body font-semibold text-text-secondary">
           {t("compose.leaveContinue")}
         </button>
-      </div>
+      </DialogShell>
     </Modal>
   ) : null;
 

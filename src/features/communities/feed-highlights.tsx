@@ -92,7 +92,7 @@ function NextEventCard({ event, onOpen }: { event: CommunityEvent; onOpen: () =>
       type="button"
       data-feed-next-event
       onClick={onOpen}
-      className="flex w-full items-center gap-3.5 rounded-lg border border-border-soft bg-surface px-4 py-3 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="flex w-full items-center gap-4 rounded-lg border border-border-soft bg-surface px-4 py-3 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <span aria-hidden className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-primary-soft leading-none text-primary">
         <span className="text-micro font-bold tracking-[0.06em]">{date.month}</span>

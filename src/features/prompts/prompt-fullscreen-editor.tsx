@@ -301,7 +301,7 @@ export function PromptFullscreenEditor({
               data-testid="fullscreen-convert"
               data-mode={tone === "idle" ? target.kind : tone}
               className={cn(
-                "inline-flex h-11 min-w-0 max-w-[62%] items-center gap-2.5 rounded-full border px-3.5 text-left transition-colors",
+                "inline-flex h-11 min-w-0 max-w-[62%] items-center gap-3 rounded-full border px-4 text-left transition-colors",
                 tone === "active" && "border-primary bg-primary text-primary-foreground hover:bg-primary-hover",
                 tone === "token" && "border-primary bg-surface text-primary hover:bg-primary-soft",
                 tone === "done" && "border-success bg-success/10 text-success",

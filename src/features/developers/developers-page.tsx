@@ -88,7 +88,7 @@ export function DevelopersPage() {
       </header>
 
       <Section id="dev-start" n={num("dev-start")} total={total} title={t("devStart.title")}>
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           <StartCard target="dev-mcp" title={t("devStart.read.title")} desc={t("devStart.read.desc")} />
           {hasLinks && <StartCard target="dev-account" title={t("devStart.account.title")} desc={t("devStart.account.desc")} />}
           <StartCard target="dev-api" title={t("devStart.code.title")} desc={t("devStart.code.desc")} />

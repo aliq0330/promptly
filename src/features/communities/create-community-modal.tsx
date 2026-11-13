@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Camera } from "@/components/icons/camera";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { GroupAvatar } from "@/features/groups/group-avatar";
@@ -207,7 +207,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
             <label htmlFor="group-name" className={fieldLabelClassName}>
               {t("communities.create.nameLabel")}
             </label>
-            <input
+            <Input
               id="group-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -217,7 +217,6 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
               aria-invalid={touched && Boolean(nameProblem)}
               aria-describedby="group-name-help"
               placeholder={t("communities.create.namePlaceholder")}
-              className={fieldInputClassName}
             />
             <p id="group-name-help" className={touched && nameProblem ? "mt-1 text-caption text-danger" : "mt-1 text-caption text-text-muted"}>
               {touched && nameProblem === "empty"

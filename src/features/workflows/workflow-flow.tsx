@@ -18,6 +18,7 @@ import { CardBandBackdrop } from "@/features/content/content-card";
 import type { WorkflowStep } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
 import { StepPreviewBody } from "./step-content-preview";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 function useMediaQuery(query: string): boolean {
   return useSyncExternalStore(
@@ -169,9 +170,9 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
   // step number on a tile) as the art, "ADIM 1 · Prompt", the big title, the content it points to.
   const body = (
     <>
-      <span className="relative block rounded-t-xl px-3.5 pb-3.5 pt-3.5 sm:px-4 sm:pt-4" data-flow-step-band>
+      <span className="relative block rounded-t-xl px-4 pb-4 pt-4 sm:px-4 sm:pt-4" data-flow-step-band>
         <CardBandBackdrop as="span" backdrop={c?.thumbnailUrl ? <StorageImg src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" /> : undefined} />
-        <span className="relative flex items-start gap-3.5 pr-16">
+        <span className="relative flex items-start gap-4 pr-16">
           {c?.thumbnailUrl ? (
             <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface shadow-pop">
               <StorageImg src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" />
@@ -202,7 +203,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
         </span>
       </span>
 
-      <span className="block px-3.5 pb-3.5 sm:px-4">
+      <span className="block px-4 pb-4 sm:px-4">
         {(step.inputs.length > 0 || step.outputs.length > 0) && (
           <span className={cn("mt-3 grid gap-2", step.inputs.length > 0 && step.outputs.length > 0 && "sm:grid-cols-2")}>
             {step.inputs.length > 0 && (
@@ -313,7 +314,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
               <h2 id={`step-preview-${step.id}`} className="min-w-0 truncate text-body font-semibold text-text">
                 {index + 1}. {step.title || t("workflow.untitledStep")}
               </h2>
-              <button type="button" onClick={close} aria-label={t("workflow.flowPreviewClose")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+              <button type="button" onClick={close} aria-label={t("workflow.flowPreviewClose")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
                 <X size={18} />
               </button>
             </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { fieldInputClassName } from "@/components/ui/field";
+import { Input } from "@/components/ui/field";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { deleteUserAccount, setPostingBlock, suspendUser, type AdminUser } from "@/lib/supabase/admin";
 import { formatDateTime } from "./format";
@@ -46,17 +46,16 @@ export function UserActions({ user, onChanged, onDeleted }: { user: AdminUser; o
   }
 
   if (user.role === "moderator") {
-    return <p className="rounded-xl border border-border-soft bg-surface p-4 text-small text-text-muted">{t("admin.actions.cannotModerator")}</p>;
+    return <p className="rounded-lg border border-border-soft bg-surface p-4 text-small text-text-muted">{t("admin.actions.cannotModerator")}</p>;
   }
 
   const reasonInput = (
-    <input
+    <Input
       value={reason}
       onChange={(event) => setReason(event.target.value)}
       maxLength={300}
       placeholder={t("admin.actions.reasonPlaceholder")}
       aria-label={t("admin.actions.reasonPlaceholder")}
-      className={fieldInputClassName}
     />
   );
 
@@ -118,7 +117,7 @@ export function UserActions({ user, onChanged, onDeleted }: { user: AdminUser; o
         <label className="block text-caption text-text-muted" htmlFor="admin-delete-confirm">
           {t("admin.actions.deleteConfirmLabel", { username: user.username })}
         </label>
-        <input id="admin-delete-confirm" value={confirmName} onChange={(event) => setConfirmName(event.target.value)} autoComplete="off" className={fieldInputClassName} />
+        <Input id="admin-delete-confirm" value={confirmName} onChange={(event) => setConfirmName(event.target.value)} autoComplete="off" />
         <Button variant="danger" size="sm" disabled={busy || confirmName !== user.username} onClick={() => run(() => deleteUserAccount(user.id, confirmName), t("admin.actions.deleted"), onDeleted)}>
           {t("admin.actions.deleteButton")}
         </Button>

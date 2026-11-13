@@ -27,20 +27,20 @@ export function CollectionCard({
   const { t } = useTranslation();
   return (
     // Albüm kartı (docs/history/203-*): the band takes the cover picture's colours; the cover as its art, the name big.
-    <article className="group relative min-w-0 rounded-xl border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover">
+    <article className="group relative min-w-0 rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover">
       <Link href={collectionHref(collection)} className="block rounded-xl">
         <div className="relative rounded-t-xl p-2.5 pb-3">
           <CardBandBackdrop
             backdrop={collection.coverImage?.url ? <StorageImage src={collection.coverImage.url} alt="" fill sizes="240px" className="object-cover" /> : undefined}
           />
-          <div className="relative space-y-2.5">
+          <div className="relative space-y-3">
             <CollectionCover collection={collection} className="aspect-[4/3] w-full overflow-hidden rounded-lg shadow-pop" />
             <div className="min-w-0 space-y-0.5 px-1">
               <p className="truncate font-display text-[1.0625rem] font-extrabold leading-tight tracking-[-0.015em] text-text">{collection.name}</p>
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-3.5 py-2.5 text-caption text-text-muted">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-4 py-2.5 text-caption text-text-muted">
           <span className="shrink-0 tabular-nums">{t("collection.itemCount", { count: collection.itemCount })}</span>
           {readOnly ? (
             <span className="min-w-0 truncate">{t("collection.byOwner", { name: collection.owner.displayName })}</span>

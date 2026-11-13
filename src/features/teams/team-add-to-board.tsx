@@ -5,7 +5,7 @@ import { Check } from "@/components/icons/check";
 import { Plus } from "@/components/icons/plus";
 import { Presentation } from "@/components/icons/presentation";
 import { Button } from "@/components/ui/button";
-import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldLabelClassName, Input } from "@/components/ui/field";
 import { FormError, SubmitButton } from "@/features/spaces/space-forms";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -202,13 +202,12 @@ export function AddToBoardDialog({
               <label htmlFor="add-to-board-title" className={fieldLabelClassName}>
                 {t("tp.name.board")}
               </label>
-              <input
+              <Input
                 id="add-to-board-title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 maxLength={80}
                 placeholder={t("tp.name.boardPlaceholder")}
-                className={fieldInputClassName}
                 data-add-to-board-title=""
               />
             </div>

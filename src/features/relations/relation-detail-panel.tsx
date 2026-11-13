@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { RELATION_TYPES, isRelatableKind, otherEnd, type RelationEdge, type RelationNode } from "@/lib/relations/types";
 import { KIND_ICON, useRelationText } from "./relation-text";
 import { StorageImg } from "@/components/ui/storage-media";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Detail of the selected node and of every relation between it and the
@@ -48,7 +49,7 @@ export function RelationDetailPanel({
 
   if (!node) {
     return (
-      <div className={cn("rounded-xl border border-border-soft bg-surface p-4 text-small text-text-muted", className)}>
+      <div className={cn("rounded-lg border border-border-soft bg-surface p-4 text-small text-text-muted", className)}>
         {t("relations.panel.hint")}
       </div>
     );
@@ -77,7 +78,7 @@ export function RelationDetailPanel({
   };
 
   return (
-    <div className={cn("flex min-h-0 flex-col rounded-xl border border-border-soft bg-surface shadow-card", className)} data-relation-panel>
+    <div className={cn("flex min-h-0 flex-col rounded-lg border border-border-soft bg-surface shadow-card", className)} data-relation-panel>
       <div className="flex items-start gap-3 border-b border-border-soft p-4">
         {node.imageUrl ? (
           <StorageImg src={node.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-md object-cover" />
@@ -92,7 +93,7 @@ export function RelationDetailPanel({
             {kindLabel(node.kind)}
             {isCenter && <Badge variant="accent" className="whitespace-nowrap">{t("relations.panel.isCenter")}</Badge>}
           </p>
-          <h2 id={titleId} className="mt-0.5 break-words text-h3 font-semibold text-text">{node.title}</h2>
+          <h2 id={titleId} className="mt-0.5 break-words text-h3 font-bold text-text">{node.title}</h2>
           {node.ownerName && (
             <p className="text-caption text-text-muted">
               {t("relations.panel.owner")}: {node.ownerName}
@@ -101,7 +102,7 @@ export function RelationDetailPanel({
           )}
         </div>
         {onClose && (
-          <button type="button" aria-label={t("relations.panel.close")} onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" aria-label={t("relations.panel.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
             <X size={18} />
           </button>
         )}

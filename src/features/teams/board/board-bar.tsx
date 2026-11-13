@@ -35,7 +35,7 @@ export function TeamBoardBar({
   const shown = people.slice(0, 3);
   const more = people.length - shown.length;
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2.5 border-b border-border-soft bg-surface px-3 md:gap-3 md:px-4" data-testid="team-board-bar">
+    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border-soft bg-surface px-3 md:gap-3 md:px-4" data-testid="team-board-bar">
       <Link href={team.backHref} aria-label={t("tp.page.back")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border-soft bg-surface text-text hover:bg-surface-soft" data-board-back="">
         <ChevronLeft size={20} aria-hidden />
       </Link>
@@ -64,7 +64,7 @@ export function TeamBoardBar({
         <MessageCircle size={20} aria-hidden />
         <span className="tabular-nums" data-board-comment-count="">{commentCount}</span>
       </button>
-      <button type="button" onClick={onShare} data-testid="board-share-button" className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 text-small font-bold text-primary-foreground hover:bg-primary-hover max-sm:w-10 max-sm:justify-center max-sm:px-0" aria-label={t("tb.share.button")}>
+      <button type="button" onClick={onShare} data-testid="board-share-button" className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-bold text-primary-foreground hover:bg-primary-hover max-sm:w-10 max-sm:justify-center max-sm:px-0" aria-label={t("tb.share.button")}>
         <Share2 size={18} aria-hidden />
         <span className="max-sm:hidden">{t("tb.share.button")}</span>
       </button>

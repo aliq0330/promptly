@@ -269,7 +269,7 @@ export function AnnounceReportNotice() {
     <div
       role="status"
       data-announce-report=""
-      className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md animate-pop-in rounded-lg border border-border bg-surface-elevated p-3.5 shadow-pop md:bottom-6"
+      className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md animate-pop-in rounded-lg border border-border bg-surface-elevated p-4 shadow-pop md:bottom-6"
     >
       <div className="flex items-start gap-3">
         <span className={cn("mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full", failed.length > 0 ? "bg-warning/15 text-warning" : "bg-primary-soft text-primary")}>

@@ -22,6 +22,7 @@ import type { CommunityPostType, ShareableContent } from "@/lib/supabase/communi
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** Sohbette kütüphaneden paylaşılabilen türler (docs/history/268-*): "Var olan içeriği paylaş" (`ShareExistingModal`) ile aynı beş tür ve aynı sorgu. */
 export const LIBRARY_TYPES: { type: CommunityPostType; icon: IconComponent }[] = [
@@ -51,7 +52,7 @@ export function ChatAttachSheet({
 }) {
   const { t } = useTranslation();
   const rowClass =
-    "flex min-h-16 w-full items-center gap-3.5 rounded-xl px-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+    "flex min-h-16 w-full items-center gap-4 rounded-xl px-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
   return (
     <Modal onClose={onClose} labelledBy="chat-attach-title" variant="sheet">
       <div data-chat-attach className="flex w-full max-w-lg flex-col overflow-y-auto rounded-t-lg border border-b-0 border-border-soft bg-surface px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 shadow-pop">
@@ -155,7 +156,7 @@ export function ChatLibraryPicker({
           <h2 id="chat-library-title" className="font-display text-h3 font-bold text-text">
             {t("messages.library.title")}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
             <X size={18} aria-hidden />
           </button>
         </div>

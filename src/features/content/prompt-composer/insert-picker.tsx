@@ -9,6 +9,8 @@ import { Chip } from "@/components/ui/chip";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { TokenTone } from "./prompt-doc-editor";
+import { ScrollRow } from "@/components/ui/scroll-row";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 export interface PickerItem {
   id: string;
@@ -102,7 +104,7 @@ export function InsertPicker({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
           >
             <X size={16} />
           </button>
@@ -135,13 +137,13 @@ export function InsertPicker({
       </div>
 
       {filters.length > 1 && (
-        <div className="scrollbar-fine flex touch-pan-x gap-1.5 overflow-x-auto px-4 pb-2" role="group" aria-label={t("composer.filtersAria")}>
+        <ScrollRow className="flex gap-1.5 px-4 pb-2" role="group" aria-label={t("composer.filtersAria")}>
           {filters.map((entry) => (
             <Chip key={entry.id} selected={filter === entry.id} onClick={() => setFilter(entry.id)} className="h-7 px-2.5 text-caption">
               {entry.label}
             </Chip>
           ))}
-        </div>
+        </ScrollRow>
       )}
 
       <ul
@@ -176,7 +178,7 @@ export function InsertPicker({
               }}
               onClick={() => onPick(item)}
               aria-label={t("composer.insertAria", { name: item.label })}
-              className="flex min-h-[44px] w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:bg-surface-soft"
+              className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:bg-surface-soft"
             >
               {draggable && <GripVertical size={14} className="shrink-0 text-text-muted" aria-hidden />}
               <span className="min-w-0 flex-1">

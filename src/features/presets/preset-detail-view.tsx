@@ -116,11 +116,11 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
       </AsideSection>
       <AsideSection id="preset-info-title" title={t("preset.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-small">
-          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5">
             <dt className="text-text-muted">{t("preset.parameters")}</dt>
             <dd className="font-semibold tabular-nums text-text">{entries.length}</dd>
           </div>
-          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5">
             <dt className="text-text-muted">{t("preset.categoryLabel")}</dt>
             <dd className="truncate font-semibold text-text">{category}</dd>
           </div>
@@ -244,7 +244,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           ) : (
             <dl className="grid overflow-hidden rounded-xl border border-border-soft bg-border-soft [gap:1px] sm:grid-cols-2">
               {entries.map((entry) => (
-                <div key={entry.fieldId} className="flex items-baseline justify-between gap-3 bg-surface px-5 py-3.5">
+                <div key={entry.fieldId} className="flex items-baseline justify-between gap-3 bg-surface px-5 py-4">
                   <dt className="shrink-0 text-small text-text-muted">{entry.fieldLabel}</dt>
                   <dd className="min-w-0 truncate text-right text-small font-semibold text-text">{entry.valueLabel}</dd>
                 </div>

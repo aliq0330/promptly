@@ -87,7 +87,7 @@ export function NewFileDialog({ project, onClose, onDone }: { project: ProjectDe
       <div className="space-y-4">
         <TitleField value={title} onChange={setTitle} label={t("tp.name.file")} placeholder={t("tp.name.filePlaceholder")} autoFocus />
         <ReviewSwitchRow value={review} onChange={setReview} />
-        <div data-new-file-chat className="flex items-start gap-3 rounded-xl border border-border-soft bg-surface p-3.5">
+        <div data-new-file-chat className="flex items-start gap-3 rounded-lg border border-border-soft bg-surface p-4">
           <div className="min-w-0 flex-1">
             <p className="text-small font-bold text-text">{t("th.newFile.chatTitle")}</p>
             <p className="text-caption text-text-secondary">{t("th.newFile.chatHint")}</p>
@@ -106,7 +106,7 @@ export function NewFileDialog({ project, onClose, onDone }: { project: ProjectDe
 export function ReviewSwitchRow({ value, onChange }: { value: boolean; onChange: (value: boolean) => void }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-border-soft px-3.5 py-3">
+    <div className="flex items-start gap-3 rounded-xl border border-border-soft px-4 py-3">
       <span className="min-w-0 flex-1">
         <span className="block text-small font-bold text-text">{t(value ? "tp.review.switchOn" : "tp.review.switchOff")}</span>
         <span className="block text-caption text-text-secondary">{t("tp.review.switchHint")}</span>
@@ -354,7 +354,7 @@ export function ProjectSettingsDialog({ project, canManage, onClose, onDone, onD
         <DescriptionField value={description} onChange={setDescription} />
         <ReviewSwitchRow value={review} onChange={setReview} />
         {canManage && (
-          <div className="space-y-3 rounded-xl border border-border-soft p-3.5">
+          <div className="space-y-3 rounded-xl border border-border-soft p-4">
             <Button type="button" variant="outline" onClick={() => void toggleArchive()} disabled={busy}>
               {t(archived ? "tp.settings.restore" : "tp.settings.archive")}
             </Button>

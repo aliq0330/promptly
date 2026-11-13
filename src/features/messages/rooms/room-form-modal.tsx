@@ -133,7 +133,7 @@ export function RoomFormModal({
                 <label htmlFor={`${uid}-name`} className="text-label font-semibold text-text">{t("rooms.form.name")}</label>
                 <span className="text-caption font-semibold text-secondary">{t("rooms.form.required")}</span>
               </div>
-              <div className={cn("mt-1.5 flex h-12 items-center gap-2 rounded-lg border bg-surface px-3.5", showNameError && nameState !== "ok" ? "border-danger" : "border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20")}>
+              <div className={cn("mt-1.5 flex h-12 items-center gap-2 rounded-lg border bg-surface px-4", showNameError && nameState !== "ok" ? "border-danger" : "border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20")}>
                 <span aria-hidden className="font-bold text-text-muted">#</span>
                 <input
                   id={`${uid}-name`}
@@ -165,7 +165,7 @@ export function RoomFormModal({
                 maxLength={ROOM_DESCRIPTION_MAX}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder={t("rooms.form.descriptionPlaceholder")}
-                className="mt-1.5 h-12 w-full rounded-lg border border-border bg-surface px-3.5 text-body text-text outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="mt-1.5 h-12 w-full rounded-lg border border-border bg-surface px-4 text-body text-text outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
@@ -199,7 +199,7 @@ export function RoomFormModal({
               type="button"
               onClick={() => setSectionOpen((open) => !open)}
               aria-expanded={sectionOpen}
-              className="flex min-h-[52px] w-full items-center justify-between rounded-lg border border-border bg-surface px-3.5 text-left text-body hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex min-h-[52px] w-full items-center justify-between rounded-lg border border-border bg-surface px-4 text-left text-body hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <span className="font-semibold text-text">{t("rooms.form.section")}</span>
               <span className="flex items-center gap-1.5 text-text-secondary">
@@ -228,7 +228,7 @@ export function RoomFormModal({
                   onChange={(event) => setNewSection(event.target.value)}
                   placeholder={t("rooms.form.sectionNewPlaceholder")}
                   aria-label={t("rooms.form.sectionNewPlaceholder")}
-                  className="h-12 w-full rounded-lg border border-border bg-surface px-3.5 text-body text-text outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="h-12 w-full rounded-lg border border-border bg-surface px-4 text-body text-text outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               )}
             </div>
@@ -267,7 +267,7 @@ export function RoomFormModal({
 
             {isDefault && <p className="text-caption text-text-muted">{t("rooms.form.defaultNote")}</p>}
 
-            <p data-room-outcome className="rounded-lg bg-primary-soft px-3.5 py-3 text-small leading-relaxed text-text">{t(roomOutcomeKey(isDefault ? "all" : reading, posting))}</p>
+            <p data-room-outcome className="rounded-lg bg-primary-soft px-4 py-3 text-small leading-relaxed text-text">{t(roomOutcomeKey(isDefault ? "all" : reading, posting))}</p>
           </>
         )}
 

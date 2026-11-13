@@ -14,7 +14,7 @@ import { X } from "@/components/icons/x";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldControlClassName, fieldLabelClassName, Input, Select } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
@@ -56,6 +56,7 @@ import { useEventsPresence } from "@/features/presence/community-presence";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import type { EventPresence } from "@/lib/supabase/presence";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 type Scope = "upcoming" | "past";
 
@@ -142,7 +143,7 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
       )}
 
       {loadError ? (
-        <div className="space-y-3 rounded-xl border border-border-soft bg-surface px-6 py-10 text-center">
+        <div className="space-y-3 rounded-lg border border-border-soft bg-surface px-6 py-10 text-center">
           <p role="alert" className="text-small text-danger">
             {t("communities.events.loadError")}
           </p>
@@ -271,12 +272,12 @@ function EventCard({
         {canManage && phase !== "past" && (
           <div className="flex shrink-0 gap-1">
             {phase !== "cancelled" && (
-              <button type="button" onClick={onEdit} aria-label={t("common.edit")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+              <button type="button" onClick={onEdit} aria-label={t("common.edit")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
                 <Pencil size={16} />
               </button>
             )}
             {phase !== "cancelled" && (
-              <button type="button" onClick={onCancel} aria-label={t("communities.events.cancelConfirm")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+              <button type="button" onClick={onCancel} aria-label={t("communities.events.cancelConfirm")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
                 <CalendarX size={16} />
               </button>
             )}
@@ -396,7 +397,7 @@ function EventFormModal({ groupId, event, onClose, onSaved }: { groupId: string;
             <label htmlFor="event-title" className={fieldLabelClassName}>
               {t("communities.events.titleLabel")}
             </label>
-            <input id="event-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={COMMUNITY_TITLE_MAX + 20} disabled={busy} aria-invalid={has("title")} className={fieldInputClassName} />
+            <Input id="event-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={COMMUNITY_TITLE_MAX + 20} disabled={busy} aria-invalid={has("title")} />
             {has("title") && <p className="mt-1 text-caption text-danger">{t("communities.events.titleInvalid", { max: COMMUNITY_TITLE_MAX })}</p>}
           </div>
           <div>
@@ -410,13 +411,13 @@ function EventFormModal({ groupId, event, onClose, onSaved }: { groupId: string;
             <label htmlFor="event-timezone" className={fieldLabelClassName}>
               {t("communities.events.timezoneLabel")}
             </label>
-            <select id="event-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} disabled={busy} className={fieldInputClassName}>
+            <Select id="event-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} disabled={busy}>
               {timezoneOptions(timezone).map((tz) => (
                 <option key={tz} value={tz}>
                   {tz}
                 </option>
               ))}
-            </select>
+            </Select>
             <p className="mt-1 text-caption text-text-muted">{t("communities.events.timezoneHelp")}</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -424,13 +425,13 @@ function EventFormModal({ groupId, event, onClose, onSaved }: { groupId: string;
               <label htmlFor="event-start" className={fieldLabelClassName}>
                 {t("communities.events.startLabel")}
               </label>
-              <input id="event-start" type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} disabled={busy} aria-invalid={has("time")} className={fieldInputClassName} />
+              <Input id="event-start" type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} disabled={busy} aria-invalid={has("time")} />
             </div>
             <div>
               <label htmlFor="event-end" className={fieldLabelClassName}>
                 {t("communities.events.endLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
               </label>
-              <input id="event-end" type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} disabled={busy} aria-invalid={has("time")} className={fieldInputClassName} />
+              <Input id="event-end" type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} disabled={busy} aria-invalid={has("time")} />
             </div>
           </div>
           {has("time") && <p className="-mt-2 text-caption text-danger">{t("communities.events.timeInvalid")}</p>}
@@ -438,13 +439,13 @@ function EventFormModal({ groupId, event, onClose, onSaved }: { groupId: string;
             <label htmlFor="event-location" className={fieldLabelClassName}>
               {t("communities.events.locationLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
             </label>
-            <input id="event-location" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={COMMUNITY_EVENT_LOCATION_MAX + 20} disabled={busy} aria-invalid={has("location")} className={fieldInputClassName} />
+            <Input id="event-location" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={COMMUNITY_EVENT_LOCATION_MAX + 20} disabled={busy} aria-invalid={has("location")} />
           </div>
           <div>
             <label htmlFor="event-url" className={fieldLabelClassName}>
               {t("communities.events.urlLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
             </label>
-            <input id="event-url" type="url" inputMode="url" value={onlineUrl} onChange={(e) => setOnlineUrl(e.target.value)} maxLength={COMMUNITY_EVENT_URL_MAX + 20} placeholder="https://" disabled={busy} aria-invalid={has("url")} className={fieldInputClassName} />
+            <Input id="event-url" type="url" inputMode="url" value={onlineUrl} onChange={(e) => setOnlineUrl(e.target.value)} maxLength={COMMUNITY_EVENT_URL_MAX + 20} placeholder="https://" disabled={busy} aria-invalid={has("url")} />
             {has("url") && <p className="mt-1 text-caption text-danger">{t("communities.events.urlInvalid")}</p>}
           </div>
           {!event && (

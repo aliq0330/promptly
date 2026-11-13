@@ -137,7 +137,7 @@ export function CommentSection({
           .
         </p>
       ) : (
-        <form onSubmit={handleSubmit} className="flex items-start gap-2.5">
+        <form onSubmit={handleSubmit} className="flex items-start gap-3">
           <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? t("prompt.previewAuthorName")} size={32} />
           <div className="min-w-0 flex-1 space-y-2">
             {ratingEnabled && (
@@ -181,7 +181,7 @@ export function CommentSection({
       {!loaded ? (
         <div className="space-y-3" role="status" aria-label={t("comments.loadingComments")}>
           {[0, 1].map((i) => (
-            <div key={i} className="flex gap-2.5">
+            <div key={i} className="flex gap-3">
               <Skeleton className="h-8 w-8 rounded-full" />
               <div className="flex-1 space-y-1.5 pt-1">
                 <Skeleton className="h-3 w-32" />

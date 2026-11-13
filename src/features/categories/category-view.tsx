@@ -10,7 +10,7 @@ import { categoryHref, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 const SUB_CHIP =
-  "inline-flex h-9 shrink-0 items-center rounded-full border px-3.5 text-label font-medium whitespace-nowrap transition-colors duration-200 ease-soft";
+  "inline-flex h-9 shrink-0 items-center rounded-full border px-4 text-label font-medium whitespace-nowrap transition-colors duration-200 ease-soft";
 
 /**
  * A category's page (`/categories/local?type=&category=&sub=`, docs/history/211-*): the topic-page template for one taxonomy
@@ -30,7 +30,7 @@ export function CategoryView() {
   if (!isContentTypeId(type) || !category) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("category.notFound")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("category.notFound")}</h1>
         <p className="text-small text-text-muted">{t("category.notFoundBody")}</p>
       </div>
     );
@@ -70,7 +70,7 @@ export function CategoryView() {
       actionsLabel={t("category.actionsAria")}
       beforeNav={
         category.subcategories.length > 0 && (
-          <nav aria-label={t("category.subcategoriesAria")} className="scrollbar-none -mx-4 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+          <nav aria-label={t("category.subcategoriesAria")} className="scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:flex-wrap sm:px-0">
             <Link
               href={categoryHref(type, category.id)}
               aria-current={!sub ? "page" : undefined}

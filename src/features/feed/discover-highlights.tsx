@@ -144,7 +144,7 @@ interface CategoryEntry {
 }
 
 const TOPIC_CHIP =
-  "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-small font-semibold whitespace-nowrap transition-colors duration-200";
+  "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-small font-semibold whitespace-nowrap transition-colors duration-200";
 
 /**
  * ONE row of chips under the search box (docs/history/227-*; it was a category strip and a tag strip, two rows): the rising tags first
@@ -299,7 +299,7 @@ export function DiscoverAside({ creators, tags, onSeeAllCreators }: { creators: 
           <ul className="space-y-3">
             {visible.map((creator) => (
               <li key={creator.id} className="flex items-center gap-3">
-                <Link href={profileHref(creator)} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-full">
+                <Link href={profileHref(creator)} className="flex min-w-0 flex-1 items-center gap-3 rounded-full">
                   <Avatar src={creator.avatarUrl} alt={creator.displayName} size={40} />
                   <span className="min-w-0 leading-tight">
                     <span className="block truncate text-small font-semibold text-text">{creator.displayName}</span>

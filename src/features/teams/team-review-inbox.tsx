@@ -178,7 +178,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
           </ul>
 
           {current && (
-            <section className="min-w-0 space-y-4 rounded-xl border border-border-soft bg-surface p-5" data-testid="review-detail" data-review-detail={current.id}>
+            <section className="min-w-0 space-y-4 rounded-lg border border-border-soft bg-surface p-5" data-testid="review-detail" data-review-detail={current.id}>
               <div className="space-y-1">
                 <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">
                   {t(kindKey(current.kind))} · {current.fileTitle ?? t("tp.area.projectWide")}
@@ -253,7 +253,7 @@ function ProposalCard({ proposal, busy, onDecide }: { proposal: ReviewQueuePropo
   const [note, setNote] = useState("");
   const [open, setOpen] = useState(false);
   return (
-    <li className="space-y-3 rounded-xl border border-border-soft bg-surface p-4" data-review-proposal={proposal.itemId}>
+    <li className="space-y-3 rounded-lg border border-border-soft bg-surface p-4" data-review-proposal={proposal.itemId}>
       <div className="flex flex-wrap items-center gap-2">
         <span className="min-w-0 flex-1 text-small font-bold text-text">
           {proposal.proposed.title || proposal.current.title || t(kindKey(proposal.kind))}

@@ -97,7 +97,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
           ))}
         </div>
       ) : (
-        <div className="grid gap-3.5 lg:grid-cols-4 lg:gap-4">
+        <div className="grid gap-4 lg:grid-cols-4 lg:gap-4">
           <Panel
             className="rounded-xl lg:col-span-2"
             title={t("tm.panel.added")}
@@ -124,7 +124,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
             )}
           </Panel>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:col-span-2 lg:grid-cols-2 lg:gap-3.5" data-panel-stats>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:col-span-2 lg:grid-cols-2 lg:gap-4" data-panel-stats>
             <Stat label={t("tm.panel.approvalTime")} value={data.approvalHours === null ? "–" : approvalText(data.approvalHours)}>
               {data.approvalHours !== null && data.approvalHoursPrev !== null && Math.abs(data.approvalHours - data.approvalHoursPrev) >= 0.5 && (
                 <Delta text={`${data.approvalHours < data.approvalHoursPrev ? "−" : "+"}${approvalText(Math.abs(data.approvalHours - data.approvalHoursPrev))}`} tone={data.approvalHours < data.approvalHoursPrev ? "good" : "bad"} />

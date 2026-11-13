@@ -11,6 +11,7 @@ import { normalizeSearchTerm, SEARCH_MAX_CHARS, SEARCH_MIN_CHARS, snippetAround,
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ConversationSearchHit } from "@/types";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const DEBOUNCE_MS = 300;
 
@@ -153,7 +154,7 @@ export function ConversationSearchPanel({
               type="button"
               onClick={() => void step(-1)}
               aria-label={t("chat.search.prev")}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+              className={iconButtonClassName(false, "h-8 w-8")}
             >
               <ChevronUp size={16} />
             </button>
@@ -161,7 +162,7 @@ export function ConversationSearchPanel({
               type="button"
               onClick={() => void step(1)}
               aria-label={t("chat.search.next")}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+              className={iconButtonClassName(false, "h-8 w-8")}
             >
               <ChevronDown size={16} />
             </button>
@@ -171,7 +172,7 @@ export function ConversationSearchPanel({
           type="button"
           onClick={onClose}
           aria-label={t("chat.search.close")}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+          className={iconButtonClassName(false, "h-8 w-8")}
         >
           <X size={16} />
         </button>

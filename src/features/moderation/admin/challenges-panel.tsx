@@ -6,7 +6,7 @@ import { Trophy } from "@/components/icons/trophy";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldControlClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { resetActiveChallengeCache } from "@/features/challenges/use-active-challenge";
 import {
   challengeStatus,
@@ -164,15 +164,15 @@ export function ChallengesPanel() {
 
         {form && (
           <form onSubmit={submit} className="mt-4 space-y-3" noValidate>
-            <h2 className="text-h3 font-semibold text-text">{form.id ? t("admin.challenge.editHeading") : t("admin.challenge.new")}</h2>
+            <h2 className="text-h3 font-bold text-text">{form.id ? t("admin.challenge.editHeading") : t("admin.challenge.new")}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className={fieldLabelClassName} htmlFor="ch-title-tr">{t("admin.challenge.titleTr")}</label>
-                <input id="ch-title-tr" className={fieldInputClassName} maxLength={80} value={form.titleTr} onChange={(e) => set({ titleTr: e.target.value })} />
+                <Input id="ch-title-tr" maxLength={80} value={form.titleTr} onChange={(e) => set({ titleTr: e.target.value })} />
               </div>
               <div>
                 <label className={fieldLabelClassName} htmlFor="ch-title-en">{t("admin.challenge.titleEn")}</label>
-                <input id="ch-title-en" className={fieldInputClassName} maxLength={80} value={form.titleEn} onChange={(e) => set({ titleEn: e.target.value })} />
+                <Input id="ch-title-en" maxLength={80} value={form.titleEn} onChange={(e) => set({ titleEn: e.target.value })} />
               </div>
               <div>
                 <label className={fieldLabelClassName} htmlFor="ch-desc-tr">{t("admin.challenge.descriptionTr")}</label>
@@ -185,17 +185,17 @@ export function ChallengesPanel() {
             </div>
             <div>
               <label className={fieldLabelClassName} htmlFor="ch-tag">{t("admin.challenge.tag")}</label>
-              <input id="ch-tag" className={fieldInputClassName} maxLength={60} value={form.tagLabel} onChange={(e) => set({ tagLabel: e.target.value })} aria-describedby="ch-tag-hint" />
+              <Input id="ch-tag" maxLength={60} value={form.tagLabel} onChange={(e) => set({ tagLabel: e.target.value })} aria-describedby="ch-tag-hint" />
               <p id="ch-tag-hint" className="mt-1 text-caption text-text-muted">{t("admin.challenge.tagHint")}</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className={fieldLabelClassName} htmlFor="ch-starts">{t("admin.challenge.starts")}</label>
-                <input id="ch-starts" type="datetime-local" className={fieldInputClassName} value={form.startsAt} onChange={(e) => set({ startsAt: e.target.value })} />
+                <Input id="ch-starts" type="datetime-local" value={form.startsAt} onChange={(e) => set({ startsAt: e.target.value })} />
               </div>
               <div>
                 <label className={fieldLabelClassName} htmlFor="ch-ends">{t("admin.challenge.ends")}</label>
-                <input id="ch-ends" type="datetime-local" className={fieldInputClassName} value={form.endsAt} onChange={(e) => set({ endsAt: e.target.value })} />
+                <Input id="ch-ends" type="datetime-local" value={form.endsAt} onChange={(e) => set({ endsAt: e.target.value })} />
               </div>
             </div>
             {formError && (
@@ -233,7 +233,7 @@ export function ChallengesPanel() {
                   <Badge variant={STATUS_VARIANT[status]}>{t(STATUS_KEY[status])}</Badge>
                   <span className="text-caption text-text-muted">#{challenge.tagLabel}</span>
                 </div>
-                <h3 className="mt-2 text-h3 font-semibold text-text break-words">{copy.title}</h3>
+                <h3 className="mt-2 text-h3 font-bold text-text break-words">{copy.title}</h3>
                 <p className="mt-1 text-caption text-text-muted">
                   {fmt(challenge.startsAt)} → {fmt(challenge.endsAt)}
                 </p>

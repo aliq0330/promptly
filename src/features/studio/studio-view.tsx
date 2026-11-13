@@ -19,7 +19,7 @@ import { WandSparkles } from "@/components/icons/wand-sparkles";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
-import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldControlClassName, fieldInputClassName, fieldLabelClassName, Select } from "@/components/ui/field";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { RunButton } from "@/features/content/run-with-ai";
@@ -525,7 +525,7 @@ export function StudioView() {
               </p>
             )}
 
-            <div className="mt-3 space-y-2.5">
+            <div className="mt-3 space-y-3">
               {promptSource ? (
                 <StudioSourceCard source={{ kind: "prompt", item: promptSource }} onChange={() => setSourcePicker("prompt")} onRemove={clearSource} />
               ) : loadingPrompt ? (
@@ -652,25 +652,25 @@ export function StudioView() {
                 <label htmlFor="gen-provider" className={fieldLabelClassName}>
                   {t("generate.provider")}
                 </label>
-                <select id="gen-provider" value={provider} onChange={(event) => setProvider(event.target.value as AiProvider)} className={fieldInputClassName}>
+                <Select id="gen-provider" value={provider} onChange={(event) => setProvider(event.target.value as AiProvider)}>
                   {AI_PROVIDERS.map((p) => (
                     <option key={p} value={p}>
                       {t(`generate.provider.${p}`)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <label htmlFor="gen-model" className={fieldLabelClassName}>
                   {t("generate.model")}
                 </label>
-                <select id="gen-model" value={model} onChange={(event) => setModel(event.target.value)} className={fieldInputClassName}>
+                <Select id="gen-model" value={model} onChange={(event) => setModel(event.target.value)}>
                   {models.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <label htmlFor="gen-key" className={fieldLabelClassName}>
@@ -744,18 +744,17 @@ export function StudioView() {
                           <X size={14} aria-hidden />
                         </button>
                       </div>
-                      <select
+                      <Select
                         value={rowModel}
                         onChange={(event) => updateExtra(row.uid, { model: event.target.value })}
                         aria-label={t("generate.model")}
-                        className={fieldInputClassName}
                       >
                         {fallbackModels(row.provider, kind).map((m) => (
                           <option key={m.id} value={m.id}>
                             {m.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                       {row.provider !== provider && (
                         <input
                           type="password"

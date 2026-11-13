@@ -67,7 +67,7 @@ export function FocusFeedRail({ item, author, layout = "column" }: { item: PostF
   const RAIL_ACTION = compact ? COMPACT_ACTION : row ? ROW_ACTION : RAIL_ACTION_COLUMN;
   const iconSize = compact ? 22 : ICON_SIZE;
   return (
-    <div className={compact ? "flex items-center gap-1" : row ? "flex items-center gap-1.5 sm:gap-3" : "flex w-12 flex-col items-center gap-3.5 sm:w-14 sm:gap-4"}>
+    <div className={compact ? "flex items-center gap-1" : row ? "flex items-center gap-1.5 sm:gap-3" : "flex w-12 flex-col items-center gap-4 sm:w-14 sm:gap-4"}>
       {!row && <Link
         href={profileHref(author)}
         aria-label={author.displayName}

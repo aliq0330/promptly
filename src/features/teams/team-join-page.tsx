@@ -76,7 +76,7 @@ export function TeamJoinPage() {
   if (status === "unauthenticated") {
     return shell(
       <div className="space-y-4 rounded-lg border border-border-soft bg-surface p-6 text-center shadow-card">
-        <h1 className="text-h3 font-semibold">{t("tm.join.loginTitle")}</h1>
+        <h1 className="text-h3 font-bold">{t("tm.join.loginTitle")}</h1>
         <p className="text-small text-text-muted">{t("tm.join.loginBody")}</p>
         <Link href={authHref("/login", "/team-join")} className={buttonClassName({ size: "md" })}>
           {t("common.login")}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { fetchOwnPendingSuggestion, proposeEditSuggestion } from "@/lib/supabase/prompt-edit-suggestions";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * "Düzenleme öner" compose modal (CLAUDE.md şartnamesi §2) — always opened
@@ -75,7 +76,7 @@ export function SuggestEditModal({
         className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-4">
           <h2 id="suggest-edit-modal-title" className="text-body font-semibold text-text">
             {t("prompt.suggestEdit")}
           </h2>
@@ -83,7 +84,7 @@ export function SuggestEditModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
+            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
           >
             <X size={18} />
           </button>

@@ -19,6 +19,7 @@ import type { Tag, UserProfile } from "@/types";
 import { KIND_LABEL, tokenChip } from "./search-chip-meta";
 import { clearRecentSearches, readRecentSearches, rememberSearch } from "./search-recents";
 import { tokenKey, type ContentKind, type SearchToken } from "./search-tokens";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const DEBOUNCE_MS = 250;
 type GroupKey = SearchToken["kind"] | "recent" | "popular";
@@ -251,7 +252,7 @@ export function AdvancedSearchBox({
               setPendingRemove(false);
               inputRef.current?.focus();
             }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-9 w-9")}
           >
             <X size={16} />
           </button>
@@ -338,7 +339,7 @@ export function AdvancedSearchBox({
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => pick(entry)}
                     className={cn(
-                      "flex min-h-11 w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-label text-text transition-colors",
+                      "flex min-h-11 w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-label text-text transition-colors",
                       index === active ? "bg-surface-soft" : "hover:bg-surface-soft",
                     )}
                   >
@@ -361,7 +362,7 @@ export function AdvancedSearchBox({
               );
             })}
           </ul>
-          <p className="shrink-0 border-t border-border-soft px-3.5 py-2 text-caption text-text-muted">{t("search.suggestHint")}</p>
+          <p className="shrink-0 border-t border-border-soft px-4 py-2 text-caption text-text-muted">{t("search.suggestHint")}</p>
         </div>
       )}
     </div>

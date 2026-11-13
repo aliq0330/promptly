@@ -41,7 +41,7 @@ export function PhoneHomeIdentity({
   testId?: string;
 }) {
   return (
-    <div className="space-y-2.5 md:hidden" data-phone-home-identity data-testid={testId}>
+    <div className="space-y-3 md:hidden" data-phone-home-identity data-testid={testId}>
       <Link href={backHref} className="-ml-1 inline-flex h-8 items-center gap-0.5 rounded-full pr-2 text-small font-medium text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-phone-back {...backProps}>
         <ArrowLeft size={18} aria-hidden />
         {backLabel}
@@ -75,7 +75,7 @@ export function PhoneTileGrid({ items, ariaLabel, className }: { items: PhoneSec
             key={item.key}
             href={item.href}
             data-phone-section={item.key}
-            className="relative flex h-[62px] items-center gap-2.5 rounded-lg border border-border-soft bg-surface px-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="relative flex h-[62px] items-center gap-3 rounded-lg border border-border-soft bg-surface px-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
               <Icon size={18} aria-hidden />
@@ -129,13 +129,13 @@ export function PhoneHomeRow({ thumb, title, sub, href, action, testId }: { thum
     </>
   );
   return (
-    <div className="flex items-center gap-2.5 px-3 py-2.5" data-testid={testId}>
+    <div className="flex items-center gap-3 px-3 py-2.5" data-testid={testId}>
       {href ? (
-        <Link href={href} className="flex min-w-0 flex-1 items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           {inner}
         </Link>
       ) : (
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">{inner}</div>
+        <div className="flex min-w-0 flex-1 items-center gap-3">{inner}</div>
       )}
       {action}
     </div>
@@ -143,5 +143,5 @@ export function PhoneHomeRow({ thumb, title, sub, href, action, testId }: { thum
 }
 
 /** Küçük hap düğme sınıfı (önizleme satırlarındaki "İncele" / "Katıl"). */
-export const PHONE_HOME_PILL = "inline-flex h-8 shrink-0 items-center rounded-full bg-primary px-3.5 text-small font-bold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
-export const PHONE_HOME_PILL_OUTLINE = "inline-flex h-8 shrink-0 items-center rounded-full border border-border-strong bg-surface px-3.5 text-small font-bold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+export const PHONE_HOME_PILL = "inline-flex h-8 shrink-0 items-center rounded-full bg-primary px-4 text-small font-bold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+export const PHONE_HOME_PILL_OUTLINE = "inline-flex h-8 shrink-0 items-center rounded-full border border-border-strong bg-surface px-4 text-small font-bold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";

@@ -94,7 +94,7 @@ export function CommunityAside({ group, people, onReadRules }: { group: ChatGrou
           </h2>
           <ul className="mt-2.5 space-y-2">
             {staff.slice(0, 6).map((person) => (
-              <li key={person.userId} className="flex items-center gap-2.5">
+              <li key={person.userId} className="flex items-center gap-3">
                 <Avatar src={person.avatarUrl} alt={person.displayName} size={32} />
                 <Link href={profileHref(person)} className="min-w-0 flex-1 truncate text-small font-semibold text-text hover:text-primary">
                   {person.displayName}

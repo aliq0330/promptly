@@ -35,6 +35,7 @@ import type { CommunityPostType } from "@/lib/supabase/communities";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { quoteHref } from "@/lib/quotes";
 import type { Quote } from "@/lib/supabase/quotes";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 export type ShareModalTarget =
   | { contentType: "prompt"; prompt: Prompt }
@@ -331,7 +332,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
+            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
           >
             <X size={18} />
           </button>

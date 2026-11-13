@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
@@ -23,6 +24,7 @@ import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { CommunityCategory } from "@/types";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 const SORTS: BrowseSort[] = ["relevant", "popular", "newest", "active"];
 const SORT_LABEL: Record<BrowseSort, TranslationKey> = {
@@ -49,7 +51,7 @@ export function AllCommunitiesPage() {
         <Link href="/communities" className="inline-flex items-center gap-1.5 text-small text-text-secondary hover:underline" data-testid="all-back">
           <ArrowLeft size={14} aria-hidden /> {t("communities.page.title")}
         </Link>
-        <h1 className="text-h1 font-medium text-text">{t("communities.all.title")}</h1>
+        <h1 className="text-h1 font-bold text-text">{t("communities.all.title")}</h1>
       </div>
       {authLoading ? <LoadingRows /> : user ? <BrowseView onToast={show} /> : <DiscoverView onToast={show} onGoInvites={() => undefined} />}
       {toastNode}
@@ -61,8 +63,15 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
   const { t } = useTranslation();
   const { refresh } = useRealMessages();
   // `?q=` comes from the Topluluklar search box (docs/history/212-*); read once, the box below owns it after that.
-  const [query, setQuery] = useState(() => (typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("q") ?? "")));
+  // Reactive (`useSearchParams`), not `window.location` at first render: on a client navigation the router has not always updated the URL yet.
+  const urlQuery = useSearchParams().get("q") ?? "";
+  const [query, setQuery] = useState(urlQuery);
   const [debounced, setDebounced] = useState(() => query.trim());
+  useEffect(() => {
+    // A new `?q=` (the Topluluklar search box again) replaces what is in the box; typing afterwards is the box's own business.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setQuery(urlQuery);
+  }, [urlQuery]);
   const [sort, setSort] = useState<BrowseSort>("relevant");
   const [category, setCategory] = useState<CommunityCategory | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -140,7 +149,7 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
+        <ScrollRow className="flex gap-1.5 pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
           {[null, ...COMMUNITY_CATEGORIES].map((value) => (
             <button
               key={value ?? "all"}
@@ -155,7 +164,7 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
               {value ? t(CATEGORY_LABEL_KEYS[value]) : t("communities.filter.all")}
             </button>
           ))}
-        </div>
+        </ScrollRow>
         <SectionMenu ariaLabel={t("groups.page.sortAria")} title={t("groups.page.sortAria")} active={sort} onChange={setSort} items={SORTS.map((value) => ({ key: value, label: t(SORT_LABEL[value]) }))} />
       </div>
 

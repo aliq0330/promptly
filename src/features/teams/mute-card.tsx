@@ -34,8 +34,8 @@ export function MuteCard({
   const effective = muted || (scope === "project" && teamMuted);
   if (compact) {
     return (
-      <div data-mute-card={scope} data-muted={muted ? "true" : "false"} data-mute-compact="" className={cn("rounded-full border px-3.5 py-1.5", effective ? "border-warning/40 bg-warning/5" : "border-border-soft bg-surface")}>
-        <div className="flex items-center gap-2.5">
+      <div data-mute-card={scope} data-muted={muted ? "true" : "false"} data-mute-compact="" className={cn("rounded-full border px-4 py-1.5", effective ? "border-warning/40 bg-warning/5" : "border-border-soft bg-surface")}>
+        <div className="flex items-center gap-3">
           <span aria-hidden className={cn("shrink-0", effective ? "text-warning" : "text-text-secondary")}>
             {effective ? <BellOff size={16} /> : <Bell size={16} />}
           </span>

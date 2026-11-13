@@ -17,12 +17,12 @@ const SOFT = "h-11 flex-1 bg-surface-soft px-4 text-label text-text hover:bg-bor
  */
 export function PromptActions({ prompt, text }: { prompt: Prompt; text: string }) {
   return (
-    <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <div className="flex w-full divide-x divide-primary-foreground/30 overflow-hidden rounded-full bg-primary shadow-xs sm:w-auto">
         <CopyPromptButton text={text} promptId={prompt.id} variant="segment" size="md" />
         <RunButton text={text} recommendedRefs={prompt.tools} promptId={prompt.id} variant="segment" />
       </div>
-      <div className="flex gap-2.5">
+      <div className="flex gap-3">
         <OpenInStudioButton kind="prompt" id={prompt.id} quiet className={SOFT} />
         <PromptTryButton prompt={prompt} text={text} className={buttonClassName({ variant: "ghost", size: "md", className: `${SOFT} gap-2 font-semibold` })} />
       </div>

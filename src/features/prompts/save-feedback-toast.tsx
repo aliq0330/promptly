@@ -24,7 +24,7 @@ export function SaveFeedbackToast({
         data-save-toast=""
         className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-(--z-popover) flex justify-center px-4 md:bottom-6"
       >
-        <div className="pointer-events-auto flex max-w-full animate-pop-in items-center gap-3 rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">
+        <div className="pointer-events-auto flex max-w-full animate-pop-in items-center gap-3 rounded-md bg-text px-4 py-2 text-small text-background shadow-pop">
           <span className="min-w-0">{message}</span>
           {interactive && (
             <button

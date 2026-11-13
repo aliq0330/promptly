@@ -21,6 +21,7 @@ import type { WorkflowContentRef } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META } from "./step-meta";
 import { StorageImg } from "@/components/ui/storage-media";
 import { fieldDenseInputClassName } from "@/components/ui/field";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const inputClass = fieldDenseInputClassName;
 
@@ -52,7 +53,7 @@ export function AddContentModal({
           <h2 id="workflow-add-content-title" className="text-body font-semibold text-text">
             {t("workflow.pickerTitle")}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
             <X size={18} />
           </button>
         </div>

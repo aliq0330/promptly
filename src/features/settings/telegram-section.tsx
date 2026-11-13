@@ -152,7 +152,7 @@ export function TelegramSection() {
           {rows.map((row) => (
             <li key={row.id} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card" data-telegram-link={row.id}>
               <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex min-w-0 items-center gap-3">
                   <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
                     <Send size={16} />
                   </span>
@@ -175,7 +175,7 @@ export function TelegramSection() {
                 <SwitchRow checked={row.notifyActivity} disabled={busyId === row.id} onChange={(next) => void toggle(row, "activity", next)} icon={<Bell size={18} />} title={t("tg.activity")} description={t("tg.activityHint")} ariaLabel={t("tg.activity")} />
               </div>
               {confirmId === row.id ? (
-                <div className="space-y-2.5 rounded-lg bg-danger/10 p-3">
+                <div className="space-y-3 rounded-lg bg-danger/10 p-3">
                   <p className="text-caption leading-relaxed text-text-secondary">{t("tg.removeConfirm")}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" size="sm" variant="danger" disabled={busyId === row.id} onClick={() => void remove(row.id)}>{t("tg.removeYes")}</Button>

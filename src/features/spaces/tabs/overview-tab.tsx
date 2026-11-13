@@ -100,7 +100,7 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
                 type="button"
                 onClick={() => onNavigate(tab)}
                 data-overview-stat={tab}
-                className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface p-3.5 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface p-4 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
                   <Icon size={20} aria-hidden />
@@ -190,7 +190,7 @@ function OverviewSection({ title, onMore, children }: { title: string; onMore: (
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-h3 font-semibold text-text">{title}</h2>
+        <h2 className="text-h3 font-bold text-text">{title}</h2>
         <button type="button" onClick={onMore} className="inline-flex items-center gap-1 text-label font-medium text-text-secondary hover:text-primary">
           {t("common.viewAll")}
           <ArrowRight size={14} aria-hidden />
@@ -282,7 +282,7 @@ function ActivityList() {
         <p className="text-caption text-text-muted">{t("spaces.activity.empty")}</p>
       ) : (
         <>
-          <ul className="space-y-2.5">
+          <ul className="space-y-3">
             {list.map((entry) => (
               <li key={entry.id} className="flex items-start gap-2 text-caption text-text-secondary" data-activity={entry.action}>
                 {entry.actor ? (

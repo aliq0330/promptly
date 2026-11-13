@@ -69,7 +69,7 @@ export function HubCreateButton({
   attr?: Record<`data-${string}`, string | boolean>;
 }) {
   return (
-    <Button type="button" onClick={onClick} title={label} aria-label={label} data-testid={testId} className="h-10 shrink-0 rounded-full px-3.5 sm:px-5" {...attr}>
+    <Button type="button" onClick={onClick} title={label} aria-label={label} data-testid={testId} className="h-10 shrink-0 rounded-full px-4 sm:px-5" {...attr}>
       <Plus size={18} aria-hidden />
       <span className="max-sm:hidden">{label}</span>
       <span className="sm:hidden">{shortLabel ?? label}</span>
@@ -106,7 +106,7 @@ export function HubAttentionStrip({
   const action = buttonClassName({ variant: "outline", size: "sm", className: "shrink-0" });
   return (
     <div
-      className={cn("flex h-[3.75rem] items-center gap-3 rounded-lg border border-border-soft bg-surface pl-3.5 pr-3 shadow-card", onAction && "cursor-pointer")}
+      className={cn("flex h-[3.75rem] items-center gap-3 rounded-lg border border-border-soft bg-surface pl-4 pr-3 shadow-card", onAction && "cursor-pointer")}
       data-testid={testId}
       data-hub-attention=""
       // Şeridin boş yerine dokunmak da eylemi çalıştırır (düğme kendi tıklamasını zaten işler).
@@ -202,7 +202,7 @@ export function HubCard({
         {corner && <div className="absolute right-2 top-2 z-10 flex items-center gap-1.5">{corner}</div>}
         {coverOverlay && <div className="absolute inset-x-2.5 bottom-2 z-10 flex items-center gap-1.5">{coverOverlay}</div>}
       </div>
-      <div className={cn(HUB_CARD_BODY_CLASS, "flex min-w-0 flex-col px-3.5 py-3")}>
+      <div className={cn(HUB_CARD_BODY_CLASS, "flex min-w-0 flex-col px-4 py-3")}>
         <h3 className="min-w-0 truncate font-display text-[1.0625rem] font-bold leading-tight tracking-[-0.01em] text-text">
           <Link href={href} className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
             {title}
@@ -224,7 +224,7 @@ export function HubCardSkeleton() {
   return (
     <li aria-hidden className="overflow-hidden rounded-lg border border-border-soft bg-surface">
       <Skeleton className="aspect-video w-full rounded-none" />
-      <div className={cn(HUB_CARD_BODY_CLASS, "space-y-2 px-3.5 py-3")}>
+      <div className={cn(HUB_CARD_BODY_CLASS, "space-y-2 px-4 py-3")}>
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-3 w-1/2" />
       </div>

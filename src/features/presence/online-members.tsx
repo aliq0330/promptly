@@ -62,7 +62,7 @@ export function OnlineMembersStrip({
       ) : members.length === 0 ? (
         <p className="mt-2 text-small text-text-muted">{emptyText}</p>
       ) : (
-        <ul className="mt-2.5 flex flex-wrap gap-x-3 gap-y-2.5">
+        <ul className="mt-2.5 flex flex-wrap gap-x-3 gap-y-3">
           {members.map((member) => (
             <li key={member.userId}>
               <Link

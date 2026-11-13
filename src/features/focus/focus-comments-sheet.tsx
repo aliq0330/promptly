@@ -18,6 +18,7 @@ import { MentionInput } from "@/features/mentions/mention-field";
 import type { PostFeedItem } from "@/features/feed/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatCount } from "@/lib/utils";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 /**
  * Odak's comments (docs/history/200-*), Instagram-style: the comment button opens a sheet from the bottom while the post
@@ -181,7 +182,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
         </div>
 
         <div className="shrink-0 border-t border-border-soft bg-surface pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 md:pb-4">
-          <div role="group" aria-label={t("focusComments.emojiRow")} className="scrollbar-none flex justify-between gap-1 overflow-x-auto px-3 pb-2">
+          <ScrollRow role="group" aria-label={t("focusComments.emojiRow")} className="flex justify-between gap-1 px-3 pb-2">
             {QUICK_EMOJI.map((emoji) => (
               <button
                 key={emoji}
@@ -193,7 +194,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
                 {emoji}
               </button>
             ))}
-          </div>
+          </ScrollRow>
 
           {replyTarget && (
             <div className="mx-3 mb-2 flex items-center justify-between gap-2 rounded-lg bg-surface-soft px-3 py-1.5 text-caption text-text-secondary">
@@ -212,7 +213,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
           )}
 
           {user ? (
-            <form onSubmit={submit} className="flex items-center gap-2.5 px-3">
+            <form onSubmit={submit} className="flex items-center gap-3 px-3">
               <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? ""} size={40} />
               <div className="relative flex min-w-0 flex-1 items-center rounded-full border border-border bg-surface-soft pl-4 pr-1.5 focus-within:border-primary/60">
                 <MentionInput

@@ -26,10 +26,10 @@ export function HomeIntro() {
   if (!showcaseUnavailable) return <GuestShowcase onUnavailable={fallBack} />;
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-7 shadow-card sm:px-8 sm:py-9">
+    <section className="relative overflow-hidden rounded-lg border border-border-soft bg-surface px-5 py-7 shadow-card sm:px-8 sm:py-9">
       <div className="relative z-10 max-w-xl space-y-3">
         <p className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("nav.tagline")}</p>
-        <h1 className="text-h1 font-semibold text-text sm:text-display">{t("home.heroTitle")}</h1>
+        <h1 className="text-h1 font-bold text-text sm:text-display">{t("home.heroTitle")}</h1>
         <p className="text-small text-text-secondary sm:text-body">{t("home.heroDescription")}</p>
         <div className="pt-1">
           <QuickActions />

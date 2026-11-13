@@ -117,7 +117,7 @@ export function ModerationView() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
       <div>
-        <h1 className="text-h1 font-semibold text-text">{t("moderation.title")}</h1>
+        <h1 className="text-h1 font-bold text-text">{t("moderation.title")}</h1>
         <p className="text-small text-text-secondary">{t("moderation.subtitle")}</p>
       </div>
       {/* Sade düzen (docs/history/235-*): tek "Şikâyetler ▾" bölüm menüsü; şikâyet durumu süzgeci Filtre penceresinde. */}

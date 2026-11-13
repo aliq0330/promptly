@@ -180,7 +180,7 @@ export function CreatorStripSlot({ strips, ordinal }: { strips: CreatorStrips; o
           </button>
         </div>
       </div>
-      <ScrollRow as="ul" className="-mx-3 snap-x scroll-px-3 gap-2.5 px-3 pb-2 sm:mx-0 sm:scroll-px-0 sm:px-0" data-testid="creator-strip-list">
+      <ScrollRow as="ul" className="-mx-3 snap-x scroll-px-3 gap-3 px-3 pb-2 sm:mx-0 sm:scroll-px-0 sm:px-0" data-testid="creator-strip-list">
         {people.map((candidate) => (
           <CreatorCard key={candidate.profile.id} candidate={candidate} onDismiss={() => strips.dismiss(candidate.profile.id)} />
         ))}
@@ -210,7 +210,7 @@ function CreatorCard({ candidate, onDismiss }: { candidate: SuggestedCreator; on
       data-creator-card
       data-creator-id={profile.id}
       data-reason={reason.kind}
-      className="relative flex w-[46%] shrink-0 snap-start flex-col items-center rounded-xl border border-border-soft bg-surface px-3 pb-3 pt-4 text-center shadow-card sm:w-44"
+      className="relative flex w-[46%] shrink-0 snap-start flex-col items-center rounded-lg border border-border-soft bg-surface px-3 pb-3 pt-4 text-center shadow-card sm:w-44"
     >
       <button
         type="button"

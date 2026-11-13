@@ -81,7 +81,7 @@ function AuthPromptDialog({ reason, onClose }: { reason: AuthPromptReason; onClo
         >
           <X size={16} />
         </button>
-        <h2 id="auth-prompt-title" className="text-h3 font-semibold text-text">
+        <h2 id="auth-prompt-title" className="text-h3 font-bold text-text">
           {t("auth.loginRequiredTitle")}
         </h2>
         <p className="mt-1.5 text-small text-text-secondary">{t(REASON_KEYS[reason])}</p>

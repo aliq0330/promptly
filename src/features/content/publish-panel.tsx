@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import type { ContentVisibility } from "@/types";
 import { DestinationPicker, useDestinationBlock } from "./share-destination-field";
 import { useTeamDestinationLabel, type TeamCreateInfo } from "@/features/teams/team-return";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 export type Audience = "public" | "private" | "community";
 
@@ -136,7 +137,7 @@ export const PublishPanel = forwardRef<
 
       {inTeam && (
         <section className="space-y-2" data-team-destination={team?.fileId ?? ""}>
-          <div className="flex min-h-14 items-center gap-3 rounded-xl border border-primary bg-primary-soft px-3.5">
+          <div className="flex min-h-14 items-center gap-3 rounded-xl border border-primary bg-primary-soft px-4">
             <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
               <Users size={16} />
             </span>
@@ -164,7 +165,7 @@ export const PublishPanel = forwardRef<
                   onClick={() => choose(option.key)}
                   data-audience-option={option.key}
                   className={cn(
-                    "flex min-h-14 items-center gap-3 rounded-xl border px-3.5 text-left transition-colors disabled:opacity-50",
+                    "flex min-h-14 items-center gap-3 rounded-xl border px-4 text-left transition-colors disabled:opacity-50",
                     selected ? "border-primary bg-primary-soft text-text" : "border-border-strong bg-surface text-text-secondary hover:border-primary/50",
                   )}
                 >
@@ -217,7 +218,7 @@ export const PublishPanel = forwardRef<
             <p className="text-small text-text-muted">{t("share.announce.noCommunities")}</p>
           ) : (
             <>
-              <div className="scrollbar-fine -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
+              <ScrollRow className="-mx-3 flex gap-2 px-3 pb-1 sm:mx-0 sm:px-0">
                 {communities.list.map((item) => {
                   const on = selection.communityIds.includes(item.id);
                   return (
@@ -240,7 +241,7 @@ export const PublishPanel = forwardRef<
                     </button>
                   );
                 })}
-              </div>
+              </ScrollRow>
               {selection.communityIds.length > 0 && (
                 <textarea
                   value={selection.note}
@@ -273,7 +274,7 @@ export const PublishPanel = forwardRef<
               type="button"
               data-publish-problem={problem.key}
               onClick={() => problem.onFix?.()}
-              className="flex w-full items-center gap-2.5 rounded-xl border border-danger/35 bg-danger/10 px-3 py-2.5 text-left text-small font-semibold text-text"
+              className="flex w-full items-center gap-3 rounded-xl border border-danger/35 bg-danger/10 px-3 py-2.5 text-left text-small font-semibold text-text"
             >
               <AlertCircle size={16} aria-hidden className="shrink-0 text-danger" />
               <span className="min-w-0 flex-1">{problem.label}</span>

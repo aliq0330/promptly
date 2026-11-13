@@ -63,7 +63,7 @@ export function LocalPromptView() {
   if (!prompt) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("prompt.notFoundTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("prompt.notFoundTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">
           {t("prompt.notFoundBody")}
         </p>
@@ -80,7 +80,7 @@ export function LocalPromptView() {
   if (prompt.deletedAt) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("prompt.deletedTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("prompt.deletedTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">
           {t("prompt.deletedBody")}
         </p>

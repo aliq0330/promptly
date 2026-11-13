@@ -10,6 +10,7 @@ import type { CommunityTabProps } from "./community-page";
 import { communityHref, membersSections, type MembersSection } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { GroupRole } from "@/types";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 /** "online" = şu an çevrimiçi üyeler (docs/history/329-*; kişi başına gizlilik sunucuda). */
 type MemberFilter = GroupRole | null | "online";
@@ -48,7 +49,7 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
       )}
       {active === "list" && (
         <>
-          <div className="flex gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.members.filterAria")}>
+          <ScrollRow className="flex gap-1.5 pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.members.filterAria")}>
             {FILTERS.map((value) => (
               <button
                 key={value ?? "all"}
@@ -72,7 +73,7 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
                 )}
               </button>
             ))}
-          </div>
+          </ScrollRow>
           <GroupMembersSection
             group={group}
             viewerId={viewerId}

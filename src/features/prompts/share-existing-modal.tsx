@@ -87,7 +87,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
                     <label
                       data-share-existing-item={item.id}
                       className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-2.5 text-small transition-colors",
+                        "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 text-small transition-colors",
                         selected?.id === item.id ? "border-primary/50 bg-primary-soft/40" : "border-border-soft bg-background hover:border-border-strong",
                       )}
                     >

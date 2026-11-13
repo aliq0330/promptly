@@ -18,6 +18,8 @@ import {
   type RelationNode,
 } from "@/lib/relations/types";
 import { KIND_ICON, useRelationText } from "./relation-text";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * "İlişki ekle": pick a relation type → search accessible content → choose
@@ -97,12 +99,12 @@ export function AddRelationModal({
 
   return (
     <Modal onClose={onClose} labelledBy="add-relation-title">
-      <div role="document" onClick={(event) => event.stopPropagation()} className="flex max-h-[88dvh] w-full max-w-xl flex-col rounded-lg border border-border bg-surface shadow-pop">
+      <DialogShell role="document" className="flex max-h-[88dvh] w-full max-w-xl flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center gap-3 border-b border-border-soft px-4 py-3">
-          <h2 id="add-relation-title" className="min-w-0 flex-1 text-h3 font-semibold text-text">
+          <h2 id="add-relation-title" className="min-w-0 flex-1 text-h3 font-bold text-text">
             {t("relations.add.title")}
           </h2>
-          <button type="button" aria-label={t("common.close")} onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
             <X size={18} />
           </button>
         </div>
@@ -230,7 +232,7 @@ export function AddRelationModal({
             {saving ? t("relations.add.saving") : t("relations.add.save")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

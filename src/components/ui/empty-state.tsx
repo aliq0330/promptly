@@ -50,7 +50,7 @@ export function EmptyState({
       </div>
       )}
       <div className="space-y-1">
-        <p className="text-h3 font-semibold text-text">{title}</p>
+        <h2 className="font-sans text-h3 font-bold text-text">{title}</h2>
         {description && <p className="mx-auto max-w-sm text-small text-text-muted">{description}</p>}
       </div>
       {action &&

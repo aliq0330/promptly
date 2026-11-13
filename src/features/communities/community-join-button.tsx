@@ -148,7 +148,7 @@ export function CommunityJoinButton({
           outcomeIfLeave === "must_transfer" ? (
             <>
               <MenuItem icon={<LogOut size={14} />} label={t("groups.about.leave")} onClick={close} disabled />
-              <p className="max-w-56 px-3.5 pb-2 pt-1 text-caption text-text-muted">{t("communities.join.ownerCannotLeave")}</p>
+              <p className="max-w-56 px-4 pb-2 pt-1 text-caption text-text-muted">{t("communities.join.ownerCannotLeave")}</p>
             </>
           ) : (
             <MenuItem

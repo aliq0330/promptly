@@ -272,7 +272,7 @@ export function NotificationCardView({
       }}
       data-notification-card={card.key}
       data-unread={unread ? "true" : "false"}
-      className={cn("rounded-lg border p-3.5", isMilestone ? "border-secondary/30 bg-secondary/10" : unread ? "border-primary/25 bg-primary-soft/60" : "border-border-soft bg-surface")}
+      className={cn("rounded-lg border p-4", isMilestone ? "border-secondary/30 bg-secondary/10" : unread ? "border-primary/25 bg-primary-soft/60" : "border-border-soft bg-surface")}
     >
       {variant === "page" ? (
         <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
@@ -306,7 +306,7 @@ export function NotificationCardView({
 
           {replyOpen && !local?.reply && (
             <form
-              className="mt-2.5 flex items-end gap-2 rounded-lg border border-border bg-surface p-1.5 pl-3.5"
+              className="mt-2.5 flex items-end gap-2 rounded-lg border border-border bg-surface p-1.5 pl-4"
               onSubmit={async (event) => {
                 event.preventDefault();
                 if (await actions.reply(draft)) {
@@ -337,7 +337,7 @@ export function NotificationCardView({
 
           {local?.reply && (
             <div className="mt-2.5 flex justify-end">
-              <p className="max-w-[92%] whitespace-pre-line break-words rounded-lg rounded-br-md bg-primary px-3.5 py-2 text-small text-primary-foreground [overflow-wrap:anywhere]" data-reply-bubble="">
+              <p className="max-w-[92%] whitespace-pre-line break-words rounded-lg rounded-br-md bg-primary px-4 py-2 text-small text-primary-foreground [overflow-wrap:anywhere]" data-reply-bubble="">
                 {local.reply.body}
               </p>
             </div>

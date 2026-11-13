@@ -233,7 +233,7 @@ export function SpaceCard({
       footerEnd={<VisibilityBadge visibility={space.visibility} />}
       extra={
         <>
-          {error && <p role="alert" className="px-3.5 pb-2 text-caption text-danger">{error}</p>}
+          {error && <p role="alert" className="px-4 pb-2 text-caption text-danger">{error}</p>}
           {dialogs}
         </>
       }

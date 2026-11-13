@@ -89,7 +89,7 @@ export function StoryAudiencePicker({
                 aria-pressed={communityId === community.id}
                 onClick={() => onChange("community", community.id)}
                 className={cn(
-                  "flex min-h-11 w-full items-center gap-2.5 rounded-sm px-2 py-1.5 text-left text-small transition-colors",
+                  "flex min-h-11 w-full items-center gap-3 rounded-sm px-2 py-1.5 text-left text-small transition-colors",
                   communityId === community.id ? "bg-primary-soft text-primary" : "text-text hover:bg-surface-soft",
                 )}
               >

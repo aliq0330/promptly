@@ -10,6 +10,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptVariableType } from "@/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const TYPE_LABEL_KEYS: Record<PromptVariableType, TranslationKey> = {
   text: "variable.type.text",
@@ -92,7 +93,7 @@ export function VariableList({
                     onEdit(variable);
                   }}
                   aria-label={t("variable.editAriaLabel", { name: variable.name })}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+                  className={iconButtonClassName(false, "h-7 w-7 rounded-md")}
                 >
                   <Pencil size={12} />
                 </button>

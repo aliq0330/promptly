@@ -8,7 +8,7 @@ import { Pin } from "@/components/icons/pin";
 import { Plus } from "@/components/icons/plus";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldControlClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
@@ -20,6 +20,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
 import Link from "next/link";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Duyurular: herkes okur (herkese açık topluluk ya da üyelik); yayınlama / düzenleme / silme / sabitleme `manage_announcements` yeteneğiyle
@@ -128,7 +129,7 @@ export function AnnouncementsSection({
                 </h3>
                 {canManage && (
                   <div className="flex shrink-0 gap-1">
-                    <button type="button" onClick={() => setEditing(item)} aria-label={t("common.edit")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+                    <button type="button" onClick={() => setEditing(item)} aria-label={t("common.edit")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
                       <Pencil size={16} />
                     </button>
                     <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger/10 hover:text-danger">
@@ -238,7 +239,7 @@ function AnnouncementFormModal({
             <label htmlFor="announcement-title" className={fieldLabelClassName}>
               {t("communities.announcements.titleLabel")}
             </label>
-            <input id="announcement-title" value={title} onChange={(event) => setTitle(event.target.value)} disabled={busy} maxLength={COMMUNITY_TITLE_MAX + 20} aria-invalid={touched && !titleOk} className={fieldInputClassName} />
+            <Input id="announcement-title" value={title} onChange={(event) => setTitle(event.target.value)} disabled={busy} maxLength={COMMUNITY_TITLE_MAX + 20} aria-invalid={touched && !titleOk} />
             <p className={touched && !titleOk ? "mt-1 text-caption text-danger" : "mt-1 text-caption text-text-muted"}>{`${[...title.trim()].length}/${COMMUNITY_TITLE_MAX}`}</p>
           </div>
           <div>

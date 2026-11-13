@@ -403,7 +403,7 @@ export function CommentsPanel({
         <h2 className="font-display text-h3 font-extrabold text-text">{t("tb.comments.title")}</h2>
         <span className="rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold text-text-secondary">{threads.length}</span>
         <span className="flex-1" />
-        <button type="button" onClick={onNew} data-comment-new="" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary-soft px-3.5 text-small font-bold text-primary">
+        <button type="button" onClick={onNew} data-comment-new="" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary-soft px-4 text-small font-bold text-primary">
           <MessageCircle size={16} aria-hidden />
           {t("tb.comments.new")}
         </button>
@@ -411,7 +411,7 @@ export function CommentsPanel({
           <X size={18} aria-hidden />
         </button>
       </header>
-      <div className="shrink-0 space-y-2.5 px-4 pb-3">
+      <div className="shrink-0 space-y-3 px-4 pb-3">
         <div role="radiogroup" aria-label={t("tb.comments.scope")} className="flex gap-1 rounded-xl bg-surface-soft p-1">
           {[false, true].map((all) => (
             <button
@@ -434,7 +434,7 @@ export function CommentsPanel({
               aria-pressed={filter === key}
               onClick={() => setFilter(key)}
               data-comment-filter={key}
-              className={cn("h-8 rounded-full border px-3.5 text-small font-semibold", filter === key ? "border-text bg-text text-background" : "border-border-soft text-text-secondary")}
+              className={cn("h-8 rounded-full border px-4 text-small font-semibold", filter === key ? "border-text bg-text text-background" : "border-border-soft text-text-secondary")}
             >
               {t(key === "open" ? "tb.comments.open" : "tb.comments.resolved")} <span className="tabular-nums opacity-80">{key === "open" ? openCount : resolvedCount}</span>
             </button>
@@ -447,7 +447,7 @@ export function CommentsPanel({
             aria-checked={Boolean(pinsHidden)}
             onClick={() => onTogglePins(!pinsHidden)}
             data-comment-hide-pins=""
-            className="flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-border-soft px-3 text-left text-small font-semibold text-text hover:bg-surface-soft"
+            className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-border-soft px-3 text-left text-small font-semibold text-text hover:bg-surface-soft"
           >
             {pinsHidden ? <EyeOff size={18} className="shrink-0 text-text-secondary" aria-hidden /> : <Eye size={18} className="shrink-0 text-text-secondary" aria-hidden />}
             <span className="min-w-0 flex-1">{t("tb.comments.hidePins")}</span>
@@ -462,7 +462,7 @@ export function CommentsPanel({
           {error}
         </InlineAlert>
       )}
-      <ul className="min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain px-3 pb-4">
+      <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 pb-4">
         {scopeLoading && <li className="px-2 py-6 text-center text-small text-text-muted">{t("common.loading")}</li>}
         {!scopeLoading && shown.length === 0 && (
           <li className="flex flex-col items-center gap-2 px-4 py-10 text-center" data-testid="board-comments-empty">
@@ -481,7 +481,7 @@ export function CommentsPanel({
           const visibleReplies = open ? thread.replies : thread.replies.slice(-1);
           return (
             <li key={root.id} data-comment-thread={root.id} data-comment-active={active ? "" : undefined} className={cn("space-y-2 rounded-lg p-3", active ? "border-2 border-primary bg-primary-soft/40" : "border border-border-soft bg-surface")}>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-micro font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-small font-bold text-text">{authorName(root, t("tb.comments.someone"))}</p>
@@ -621,8 +621,8 @@ export function CommentPeek({
   const root = thread.root;
   const target = root.itemId ? (items.find((item) => item.id === root.itemId) ?? null) : null;
   return (
-    <div data-testid="board-comment-peek" className="pointer-events-auto w-full space-y-2.5 rounded-lg border border-border-soft bg-surface p-3.5 shadow-pop">
-      <div className="flex items-center gap-2.5">
+    <div data-testid="board-comment-peek" className="pointer-events-auto w-full space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-pop">
+      <div className="flex items-center gap-3">
         <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-micro font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-small font-bold text-text">{authorName(root, t("tb.comments.someone"))}</p>

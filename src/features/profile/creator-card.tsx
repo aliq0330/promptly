@@ -16,7 +16,7 @@ import type { UserProfile } from "@/types";
 export function CreatorCard({ creator }: { creator: UserProfile }) {
   const { t } = useTranslation();
   return (
-    <article className="group relative flex flex-col rounded-xl border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover">
+    <article className="group relative flex flex-col rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover">
       <div className="relative rounded-t-xl px-4 pb-4 pt-4">
         <CardBandBackdrop backdrop={creator.avatarUrl ? <Image src={creator.avatarUrl} alt="" fill sizes="240px" className="object-cover" /> : undefined} />
         <div className="relative flex items-center gap-3">

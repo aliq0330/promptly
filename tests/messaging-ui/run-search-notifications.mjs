@@ -68,7 +68,7 @@ await scenario("2. Arama: Tümü'nde Topluluklar bölümü (tamamen kapalı yok)
   assert.deepEqual(await resultTabNames(page), ["Tümü", "Gönderiler", "Kişiler", "Topluluklar"]);
   const list = page.locator("[data-search-communities]");
   await list.waitFor();
-  const names = await list.locator("h2").allTextContents();
+  const names = await list.locator("h2, h3").allTextContents();
   assert.deepEqual(names.map((s) => s.trim()).sort(), ["Atölye Bir", "Atölye Kapalı"], "public + restricted, never private");
   assert.equal(db.calls.filter((c) => c.table === "search_communities").length >= 1, true);
   await pickResultTab(page, "Topluluklar");

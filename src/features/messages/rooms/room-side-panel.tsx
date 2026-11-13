@@ -70,7 +70,7 @@ export function RoomSidePanel({
             <ul className="space-y-1">
               {members.map((member) => (
                 <li key={member.userId}>
-                  <Link href={profileHref({ username: member.username })} className="flex items-center gap-2.5 rounded-lg px-1 py-1.5 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  <Link href={profileHref({ username: member.username })} className="flex items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                     <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={40} />
                     <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{member.displayName}</span>
                     {member.role !== "member" && <RoleBadge role={member.role} />}

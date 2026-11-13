@@ -19,6 +19,7 @@ import {
 } from "@/lib/ai-tool-catalog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Optional, multi-select (max 3) "recommended tool/model" field shared by the
@@ -162,7 +163,7 @@ function ToolPickerModal({
             </h2>
             <p className="text-caption text-text-muted">{t("tool.maxHint", { max: String(MAX_TOOLS) })}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
             <X size={18} />
           </button>
         </div>

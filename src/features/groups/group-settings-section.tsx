@@ -7,7 +7,7 @@ import { Camera } from "@/components/icons/camera";
 import { CircleCheck } from "@/components/icons/circle-check";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldControlClassName, fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { VisibilityPicker } from "@/features/communities/visibility-picker";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -274,7 +274,7 @@ export function GroupSettingsSection({
           <label htmlFor="settings-name" className={fieldLabelClassName}>
             {t("groups.create.nameLabel")}
           </label>
-          <input id="settings-name" value={name} onChange={(event) => setName(event.target.value)} disabled={save.busy} maxLength={GROUP_NAME_MAX + 20} aria-invalid={touched && Boolean(nameProblem)} className={fieldInputClassName} />
+          <Input id="settings-name" value={name} onChange={(event) => setName(event.target.value)} disabled={save.busy} maxLength={GROUP_NAME_MAX + 20} aria-invalid={touched && Boolean(nameProblem)} />
           <p className={nameProblem ? "mt-1 text-caption text-danger" : "mt-1 text-caption text-text-muted"}>
             {nameProblem === "empty" ? t("groups.create.nameRequired") : nameProblem === "too_long" ? t("groups.create.nameTooLong", { max: GROUP_NAME_MAX }) : `${[...name.trim()].length}/${GROUP_NAME_MAX}`}
           </p>
@@ -388,7 +388,7 @@ export function GroupSettingsSection({
             <label htmlFor="delete-confirm-name" className={fieldLabelClassName}>
               {t("groups.settings.deleteTypeName", { name: group.name })}
             </label>
-            <input id="delete-confirm-name" value={deleteConfirmName} onChange={(event) => setDeleteConfirmName(event.target.value)} disabled={deleteAction.busy} autoComplete="off" className={fieldInputClassName} />
+            <Input id="delete-confirm-name" value={deleteConfirmName} onChange={(event) => setDeleteConfirmName(event.target.value)} disabled={deleteAction.busy} autoComplete="off" />
           </div>
         </ConfirmDialog>
       )}

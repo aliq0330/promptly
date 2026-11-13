@@ -209,7 +209,7 @@ export function ContentPickerDialog({
             {activeFilters > 0 && <span className="rounded-full bg-primary px-1.5 text-caption font-bold text-primary-foreground">{activeFilters}</span>}
           </button>
           {filtersOpen && (
-            <div className="mt-2 space-y-3 rounded-xl border border-border-soft bg-surface-soft/50 p-3" data-picker-filter-panel="">
+            <div className="mt-2 space-y-3 rounded-lg border border-border-soft bg-surface-soft/50 p-3" data-picker-filter-panel="">
               <SearchFilterSections tokens={tokens} onTokensChange={setTokens} hideKinds sort={sort} onSortChange={setSort} />
             </div>
           )}

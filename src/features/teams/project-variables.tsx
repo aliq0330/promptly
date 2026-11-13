@@ -45,7 +45,7 @@ export function ProjectVariablesPanel({
   };
 
   return (
-    <div className="space-y-3 rounded-xl border border-border-soft bg-surface p-4" data-testid="project-variables" data-variable-scope="file">
+    <div className="space-y-3 rounded-lg border border-border-soft bg-surface p-4" data-testid="project-variables" data-variable-scope="file">
       <div className="flex items-center gap-2">
         <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.variable.fileTitle")}</h3>
         {canWrite && (

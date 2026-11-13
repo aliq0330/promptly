@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { SPACE_KIND_LABEL, SPACE_KINDS, SPACE_SORTS, SPACE_VISIBILITIES, SPACE_VISIBILITY_LABEL, type SpaceKind, type SpaceSort, type SpaceVisibility } from "@/lib/spaces";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { SPACE_KIND_ICON, SPACE_KIND_TINT } from "./space-visuals";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const SORT_LABEL: Record<SpaceSort, TranslationKey> = {
   updated: "spaces.sort.updated",
@@ -46,12 +48,12 @@ export function SpacesFilterSheet({
   const dirty = sort !== "updated" || kind !== null || visibility !== null;
   return (
     <Modal onClose={onClose} labelledBy="spaces-filter-title">
-      <div role="document" onClick={(event) => event.stopPropagation()} className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-xl border border-border bg-surface shadow-pop">
+      <DialogShell role="document" className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center gap-2 px-5 pb-1 pt-4">
-          <h2 id="spaces-filter-title" className="min-w-0 flex-1 text-h3 font-semibold text-text">
+          <h2 id="spaces-filter-title" className="min-w-0 flex-1 text-h3 font-bold text-text">
             {t("spaces.home.filterTitle")}
           </h2>
-          <button type="button" aria-label={t("common.close")} onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-10 w-10 rounded-md")}>
             <X size={18} />
           </button>
         </div>
@@ -101,7 +103,7 @@ export function SpacesFilterSheet({
             {t("spaces.filter.done")}
           </button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

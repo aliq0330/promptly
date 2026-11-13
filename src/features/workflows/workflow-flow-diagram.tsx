@@ -198,7 +198,7 @@ export const WorkflowFlowDiagram = memo(function WorkflowFlowDiagram({
     >
       <div className="absolute left-0 top-0 origin-top-left" style={{ width: layout.width, height: layout.height, transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})` }}>
         <div className="absolute inset-2 rounded-[28px] border-2 border-dashed border-border-strong bg-surface/60" aria-hidden />
-        <div className="absolute flex items-center gap-2.5" style={{ left: FLOW_PAD_X, right: FLOW_PAD_X, top: 18, height: 32 }}>
+        <div className="absolute flex items-center gap-3" style={{ left: FLOW_PAD_X, right: FLOW_PAD_X, top: 18, height: 32 }}>
           <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-micro font-bold uppercase tracking-[0.07em] text-primary">
             <WorkflowIcon size={13} aria-hidden />
             {t("workflow.singular")}

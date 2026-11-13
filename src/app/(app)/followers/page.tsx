@@ -21,7 +21,7 @@ export default function FollowersPage() {
   return (
     <PageContainer className="space-y-6">
       <section className="space-y-3">
-        <h1 className="text-h1 font-semibold text-text">{t("nav.followers")}</h1>
+        <h1 className="text-h1 font-bold text-text">{t("nav.followers")}</h1>
         <PagedListState list={followers} skeleton={<p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>}>
           <CreatorList users={followers.items} emptyMessage={t("profile.noFollowersYet")} />
         </PagedListState>

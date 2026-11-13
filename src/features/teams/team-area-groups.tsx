@@ -125,7 +125,7 @@ export function FolderGrid({
     </li>
   );
   return (
-    <ul className="grid grid-cols-2 items-start gap-2.5 md:grid-cols-3 md:gap-3.5 xl:grid-cols-4" data-testid="area-folders">
+    <ul className="grid grid-cols-2 items-start gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4" data-testid="area-folders">
       {groups.map((group) => card(group.id, group.name, SPACE_COLOR_CLASS[group.color].dot, counts.get(group.id) ?? 0, previews.get(group.id) ?? []))}
       {(counts.get(NO_GROUP) ?? 0) > 0 && card(NO_GROUP, t("spaces.groups.none"), "bg-border-strong", counts.get(NO_GROUP) ?? 0, previews.get(NO_GROUP) ?? [], true)}
       {canAdd && (
@@ -176,7 +176,7 @@ export function EmptyFolder({ name, canAdd, onAdd, onPick }: { name: string; can
         <p className="text-body text-text-secondary">{t("tf.folder.emptyBody")}</p>
       </div>
       {canAdd && (
-        <div className="grid gap-2.5">
+        <div className="grid gap-3">
           <Button type="button" onClick={onAdd} className="h-12 rounded-full" data-folder-empty-add="">
             {t("tf.group.addHere", { name })}
           </Button>
@@ -327,7 +327,7 @@ export function GroupMenuDialog({
 
   const row = (key: string, icon: ReactNode, label: string, hint: string | null, onClick: () => void, danger = false) => (
     <li key={key}>
-      <button type="button" onClick={onClick} disabled={busy} data-group-menu-item={key} className={cn("flex min-h-14 w-full items-center gap-3.5 rounded-xl px-2 text-left text-body font-semibold hover:bg-surface-soft disabled:opacity-50", danger ? "text-danger hover:bg-danger/10" : "text-text")}>
+      <button type="button" onClick={onClick} disabled={busy} data-group-menu-item={key} className={cn("flex min-h-14 w-full items-center gap-4 rounded-xl px-2 text-left text-body font-semibold hover:bg-surface-soft disabled:opacity-50", danger ? "text-danger hover:bg-danger/10" : "text-text")}>
         <span aria-hidden className="shrink-0">
           {icon}
         </span>
@@ -370,9 +370,9 @@ export function GroupMenuDialog({
           <ul className="-mx-1">
             {caps.edit && row("rename", <Pencil size={24} />, t("tf.folder.rename"), null, () => setRenaming(true))}
             {caps.edit && (
-              <li className="flex items-start gap-3.5 px-2 py-3" data-group-menu-item="color">
+              <li className="flex items-start gap-4 px-2 py-3" data-group-menu-item="color">
                 <Palette size={24} aria-hidden className="mt-0.5 shrink-0 text-text" />
-                <div className="min-w-0 space-y-2.5">
+                <div className="min-w-0 space-y-3">
                   <span className="block text-body font-semibold text-text">{t("spaces.notes.color")}</span>
                   <ColorPicker value={group.color} onChange={recolor} disabled={busy} />
                 </div>

@@ -40,6 +40,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
 import { usePromptOutput, useWorkflowFocusSteps } from "./use-focus-data";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** Everything a slide shows about an entry, read from the real feed row (nothing assumed beyond its own fields). */
 export interface SlideModel {
@@ -98,7 +99,7 @@ function SlideByline({ author, createdAt, language, near }: { author: UserProfil
   const { user } = useAuth();
   const href = profileHref(author);
   return (
-    <div className="flex min-w-0 items-center gap-2.5">
+    <div className="flex min-w-0 items-center gap-3">
       <Link href={href} tabIndex={-1} aria-hidden className="shrink-0 rounded-full">
         <Avatar src={author.avatarUrl} alt={author.displayName} size={40} />
       </Link>
@@ -138,16 +139,16 @@ export function PromptDialog({ prompt, onClose }: { prompt: Prompt; onClose: () 
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-9 w-9")}
           >
             <X size={18} aria-hidden />
           </button>
         </div>
         <div className="mt-4 overflow-hidden rounded-xl bg-surface-soft">
-          <p className="px-3.5 pt-2.5 text-caption font-semibold uppercase tracking-[0.06em] text-text-secondary">
+          <p className="px-4 pt-2.5 text-caption font-semibold uppercase tracking-[0.06em] text-text-secondary">
             Prompt{tool ? <span className="normal-case tracking-normal text-text-muted"> · {tool}</span> : null}
           </p>
-          <p className="prompt-text max-h-[45dvh] overflow-y-auto whitespace-pre-line break-words px-3.5 pb-3.5 pt-1.5 text-text-secondary">{prompt.promptText}</p>
+          <p className="prompt-text max-h-[45dvh] overflow-y-auto whitespace-pre-line break-words px-4 pb-4 pt-1.5 text-text-secondary">{prompt.promptText}</p>
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
           <CopyPromptButton text={prompt.promptText} promptId={prompt.id} variant="primary" size="md" />
@@ -340,7 +341,7 @@ function WorkflowSteps({ workflow, near, onImage }: { workflow: Workflow; near: 
           const label = step.title || step.content?.title || t(STEP_TYPE_META[step.stepType].labelKey);
           return (
             <li key={step.id}>
-              <div className={cn("flex min-w-0 items-center gap-2.5 rounded-md px-3 py-2 text-small", row)}>
+              <div className={cn("flex min-w-0 items-center gap-3 rounded-md px-3 py-2 text-small", row)}>
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-micro font-bold leading-none text-primary-foreground">{index + 1}</span>
                 <StepIcon size={14} aria-hidden className="shrink-0 opacity-70" />
                 <span className="truncate">{label}</span>
@@ -522,7 +523,7 @@ function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideM
           {t("preset.singular")} · {t("preset.paramCount", { count: entries.length })}
         </p>
         {shown.map((entry) => (
-          <div key={entry.fieldId} className="flex min-w-0 items-baseline justify-between gap-3 rounded-lg bg-black/35 px-3.5 py-2.5 text-small">
+          <div key={entry.fieldId} className="flex min-w-0 items-baseline justify-between gap-3 rounded-lg bg-black/35 px-4 py-2.5 text-small">
             <span className="shrink-0 text-white/75">{entry.fieldLabel}</span>
             <span className="min-w-0 truncate text-right font-semibold text-white">{entry.valueLabel}</span>
           </div>
@@ -608,7 +609,7 @@ function AlbumSlide({
           <AlbumArtCard item={item} model={model} near={near} />
         )}
       </div>
-      <div className={cn(HIDE_WHILE_COMMENTS, "shrink-0 space-y-2.5 pt-4 md:space-y-3", PHONE_BOTTOM, "md:pb-8")}>
+      <div className={cn(HIDE_WHILE_COMMENTS, "shrink-0 space-y-3 pt-4 md:space-y-3", PHONE_BOTTOM, "md:pb-8")}>
         <SlideByline author={model.author} createdAt={model.createdAt} language={language} near={near} />
         <h2 id={titleId} className="line-clamp-2 break-words font-display text-[clamp(1.375rem,3.2vw,1.875rem)] font-extrabold leading-[1.1] tracking-[-0.03em] text-white">
           {model.title}
@@ -621,7 +622,7 @@ function AlbumSlide({
             onClick={() => openInfo(item)}
             aria-haspopup="dialog"
             data-focus-info-button=""
-            className="ml-auto inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-white/50 px-3.5 text-label font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="ml-auto inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-white/50 px-4 text-label font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             {t("focusFeed.info")}
             <ChevronUp size={16} aria-hidden />

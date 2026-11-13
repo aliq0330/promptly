@@ -61,7 +61,7 @@ function ContentAddChoice({ kind, onCreate, onPick, onClose }: { kind: TeamCreat
           {t(`tf.add.choiceTitle.${kind}` as TranslationKey)}
         </h2>
         <div className="grid gap-3">
-          <button type="button" onClick={onCreate} data-add-choice="create" className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface p-3.5 text-left transition-colors hover:bg-surface-soft">
+          <button type="button" onClick={onCreate} data-add-choice="create" className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface p-4 text-left transition-colors hover:bg-surface-soft">
             <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
               <Plus size={20} />
             </span>
@@ -70,7 +70,7 @@ function ContentAddChoice({ kind, onCreate, onPick, onClose }: { kind: TeamCreat
               <span className="block text-caption text-text-secondary">{t(`tf.add.createHint.${kind}` as TranslationKey)}</span>
             </span>
           </button>
-          <button type="button" onClick={onPick} data-add-choice="pick" className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface p-3.5 text-left transition-colors hover:bg-surface-soft">
+          <button type="button" onClick={onPick} data-add-choice="pick" className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface p-4 text-left transition-colors hover:bg-surface-soft">
             <span aria-hidden className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
               <Search size={20} />
             </span>

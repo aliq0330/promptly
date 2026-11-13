@@ -37,10 +37,10 @@ export function ContributorsPanel({ promptId }: { promptId: string }) {
   return (
     <DetailCard aria-label={t("contributors.title")} className="space-y-3 p-4">
       <Eyebrow>{t("contributors.title")}</Eyebrow>
-      <ul className="space-y-2.5">
+      <ul className="space-y-3">
         {contributors.map((contributor) => (
           <li key={contributor.proposer.id}>
-            <Link href={profileHref(contributor.proposer)} className="group flex items-center gap-2.5 rounded-md">
+            <Link href={profileHref(contributor.proposer)} className="group flex items-center gap-3 rounded-md">
               <Avatar src={contributor.proposer.avatarUrl} alt={contributor.proposer.displayName} size={32} />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-label font-medium text-text group-hover:text-primary">

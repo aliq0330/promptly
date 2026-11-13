@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { MailCheck } from "@/components/icons/mail-check";
 import { UserPlus } from "@/components/icons/user-plus";
 import { Button } from "@/components/ui/button";
-import { FormIconBadge, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { FormIconBadge, fieldLabelClassName, Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
@@ -109,42 +109,39 @@ export default function SignupPage() {
           <label htmlFor="signup-name" className={fieldLabelClassName}>
             {t("profile.displayNameLabel")}
           </label>
-          <input
+          <Input
             id="signup-name"
             type="text"
             required
             maxLength={40}
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
-            className={fieldInputClassName}
           />
         </div>
         <div>
           <label htmlFor="signup-email" className={fieldLabelClassName}>
             {t("settings.email")}
           </label>
-          <input
+          <Input
             id="signup-email"
             type="email"
             required
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className={fieldInputClassName}
           />
         </div>
         <div>
           <label htmlFor="signup-password" className={fieldLabelClassName}>
             {t("auth.passwordLabel")}
           </label>
-          <input
+          <Input
             id="signup-password"
             type="password"
             required
             autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className={fieldInputClassName}
           />
           <p className="mt-1 text-caption text-text-muted">{t("auth.minCharsHint", { min: PASSWORD_MIN_LENGTH })}</p>
         </div>

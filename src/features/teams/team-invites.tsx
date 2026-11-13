@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Copy } from "@/components/icons/copy";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
-import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldLabelClassName, Input, Select } from "@/components/ui/field";
 import { useToast } from "@/features/groups/use-toast";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -23,6 +23,7 @@ import type { TeamRole } from "@/lib/teams";
 import { absoluteUrl } from "@/lib/utils";
 import type { TeamCtx } from "./team-page";
 import { Panel, PersonRow, PillChoice, RoleChip, formatShortDate, roleLabelKey } from "./team-ui";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** Davet edilebilecek roller: sahip atanmaz; konuk yalnız `invite_guests` yetkisiyle (sunucu de denetler). */
 function inviteRoles(ctx: TeamCtx): TeamRole[] {
@@ -115,7 +116,7 @@ export function InviteDialog({ ctx, onClose, onDone, initial = "user", initialRo
             <label htmlFor="team-invite-username" className={fieldLabelClassName}>
               {t("tm.invite.username")}
             </label>
-            <input id="team-invite-username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@kullanici" className={fieldInputClassName} autoComplete="off" autoCapitalize="none" />
+            <Input id="team-invite-username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@kullanici" autoComplete="off" autoCapitalize="none" />
           </div>
         )}
         <div>
@@ -129,19 +130,19 @@ export function InviteDialog({ ctx, onClose, onDone, initial = "user", initialRo
               <label htmlFor="team-guest-days" className={fieldLabelClassName}>
                 {t("tm.invite.guestDaysLabel")}
               </label>
-              <select id="team-guest-days" value={guestDays} onChange={(e) => setGuestDays(Number(e.target.value))} className={fieldInputClassName}>
+              <Select id="team-guest-days" value={guestDays} onChange={(e) => setGuestDays(Number(e.target.value))}>
                 {[7, 14, 30, 60, 90].map((days) => (
                   <option key={days} value={days}>
                     {t("tm.invite.guestDays", { count: days })}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label htmlFor="team-guest-org" className={fieldLabelClassName}>
                 {t("tm.invite.guestOrg")}
               </label>
-              <input id="team-guest-org" value={guestOrg} onChange={(e) => setGuestOrg(e.target.value)} maxLength={80} className={fieldInputClassName} />
+              <Input id="team-guest-org" value={guestOrg} onChange={(e) => setGuestOrg(e.target.value)} maxLength={80} />
             </div>
           </div>
         )}
@@ -150,14 +151,14 @@ export function InviteDialog({ ctx, onClose, onDone, initial = "user", initialRo
             <label htmlFor="team-link-uses" className={fieldLabelClassName}>
               {t("tm.invite.maxUses")}
             </label>
-            <select id="team-link-uses" value={maxUses ?? 0} onChange={(e) => setMaxUses(Number(e.target.value) || null)} className={fieldInputClassName}>
+            <Select id="team-link-uses" value={maxUses ?? 0} onChange={(e) => setMaxUses(Number(e.target.value) || null)}>
               <option value={0}>{t("tm.invite.unlimited")}</option>
               {[1, 5, 10, 25, 50].map((n) => (
                 <option key={n} value={n}>
                   {n}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
         {mode === "link" && <p className="text-caption text-text-muted">{t("tm.invite.linkRoles")}</p>}
@@ -227,19 +228,19 @@ export function InviteCard({ ctx, onDone }: { ctx: TeamCtx; onDone: () => void }
           <label htmlFor="team-invite-card-username" className={fieldLabelClassName}>
             {t("tm.invite.username")}
           </label>
-          <input id="team-invite-card-username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="@kullanici" className={fieldInputClassName} autoComplete="off" autoCapitalize="none" />
+          <Input id="team-invite-card-username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="@kullanici" autoComplete="off" autoCapitalize="none" />
         </div>
         <div>
           <label htmlFor="team-invite-card-role" className={fieldLabelClassName}>
             {t("tm.invite.role")}
           </label>
-          <select id="team-invite-card-role" value={role} onChange={(event) => setRole(event.target.value as TeamRole)} className={fieldInputClassName}>
+          <Select id="team-invite-card-role" value={role} onChange={(event) => setRole(event.target.value as TeamRole)}>
             {roles.map((key) => (
               <option key={key} value={key}>
                 {t(roleLabelKey(key))}
               </option>
             ))}
-          </select>
+          </Select>
           <p className="mt-1 text-caption text-text-muted">{t(`tm.invite.roleHint.${role}` as "tm.invite.roleHint.member")}</p>
         </div>
         {sent && <p className="text-small text-success">{t("tm.invite.sent")}</p>}
@@ -306,7 +307,7 @@ export function InvitesPanel({ ctx }: { ctx: TeamCtx }) {
                 right={
                   <>
                     <RoleChip role={invite.role} />
-                    <button type="button" onClick={() => void run(() => cancelInvitation(invite.id))} aria-label={t("tm.admin.invites.cancel")} className="grid h-8 w-8 place-items-center rounded-full text-text-muted hover:bg-surface-soft">
+                    <button type="button" onClick={() => void run(() => cancelInvitation(invite.id))} aria-label={t("tm.admin.invites.cancel")} className={iconButtonClassName(false, "h-8 w-8")}>
                       <X size={14} aria-hidden />
                     </button>
                   </>

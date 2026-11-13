@@ -135,7 +135,7 @@ export function TeamPhoneHome({ team, tabs, canInvite, onInvite }: { team: TeamS
         }
         secondary={
           canInvite ? (
-            <button type="button" onClick={onInvite} className={buttonClassName({ variant: "outline", className: "h-11 shrink-0 gap-1.5 px-3.5" })} data-team-invite-phone>
+            <button type="button" onClick={onInvite} className={buttonClassName({ variant: "outline", className: "h-11 shrink-0 gap-1.5 px-4" })} data-team-invite-phone>
               <UserPlus size={16} aria-hidden />
               {t("tm.invite.title")}
             </button>

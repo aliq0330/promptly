@@ -15,6 +15,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { StoryLinkedType } from "@/types";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 export const LINKED_TYPE_META: Record<StoryLinkedType, { icon: typeof SquareTerminal; label: TranslationKey }> = {
   prompt: { icon: SquareTerminal, label: "communities.feed.type.prompt" },
@@ -61,10 +62,10 @@ export function StoryContentPicker({ onPick, onClose }: { onPick: (item: Linkabl
     <Modal onClose={onClose} labelledBy="story-content-picker-title">
       <DialogShell className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-3">
-          <h2 id="story-content-picker-title" className="text-h3 font-semibold text-text">
+          <h2 id="story-content-picker-title" className="text-h3 font-bold text-text">
             {t("stories.link.pickTitle")}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
             <X size={18} aria-hidden />
           </button>
         </div>

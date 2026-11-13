@@ -20,6 +20,7 @@ import type { StatisticsContentType, StatisticsKind } from "@/lib/supabase/conte
 import { cn, formatCount } from "@/lib/utils";
 import { UserInteractionList } from "./user-interaction-list";
 import { useEngagers } from "./use-engagers";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 const KIND_META: Record<StatisticsKind, { icon: IconComponent; tab: TranslationKey; tile: TranslationKey }> = {
   likes: { icon: Heart, tab: "statistics.tabLikes", tile: "statistics.tileLikes" },
@@ -98,9 +99,8 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
 
   return (
     <Modal onClose={onClose} labelledBy="statistics-title">
-      <div
-        className="flex h-[640px] max-h-[75dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border-soft bg-surface shadow-pop"
-        onClick={(event) => event.stopPropagation()}
+      <DialogShell
+        className="flex h-[640px] max-h-[75dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop"
       >
         <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3 pt-5">
           <h2 id="statistics-title" className="font-display text-h2 font-bold text-text">
@@ -116,7 +116,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
           </button>
         </div>
 
-        <div role="tablist" aria-label={t("statistics.tabsAria")} className={cn("grid shrink-0 gap-2 px-4 sm:gap-2.5 sm:px-5", tileCount === 4 ? "grid-cols-4" : tileCount === 3 ? "grid-cols-3" : "grid-cols-2")}>
+        <div role="tablist" aria-label={t("statistics.tabsAria")} className={cn("grid shrink-0 gap-2 px-4 sm:gap-3 sm:px-5", tileCount === 4 ? "grid-cols-4" : tileCount === 3 ? "grid-cols-3" : "grid-cols-2")}>
           {kinds.map((kind) => {
             const Icon = KIND_META[kind].icon;
             const selected = active === kind;
@@ -129,7 +129,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
                 aria-label={`${t(KIND_META[kind].tab)} ${formatCount(totals[kind])}`}
                 onClick={() => selectTab(kind)}
                 className={cn(
-                  "flex min-w-0 flex-col items-start gap-0.5 rounded-lg border-[1.5px] px-2 pb-2 pt-2.5 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-3.5 sm:pt-3",
+                  "flex min-w-0 flex-col items-start gap-0.5 rounded-lg border-[1.5px] px-2 pb-2 pt-2.5 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:px-4 sm:pt-3",
                   selected ? "border-primary bg-primary-soft text-primary" : "border-transparent bg-surface-soft text-text-secondary hover:bg-border-soft",
                 )}
               >
@@ -140,7 +140,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
             );
           })}
           {copyCount !== undefined && (
-            <div className="flex min-w-0 flex-col items-start gap-0.5 rounded-lg border-[1.5px] border-dashed border-border px-2 pb-2 pt-2.5 text-text-secondary sm:px-3.5 sm:pt-3">
+            <div className="flex min-w-0 flex-col items-start gap-0.5 rounded-lg border-[1.5px] border-dashed border-border px-2 pb-2 pt-2.5 text-text-secondary sm:px-4 sm:pt-3">
               <Copy size={16} aria-hidden />
               <span className="font-display text-h2 font-bold leading-tight tabular-nums">{formatCount(copyCount)}</span>
               <span className="max-w-full truncate text-caption font-medium">{t("statistics.tileCopies")}</span>
@@ -175,7 +175,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
             onNavigate={onClose}
           />
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

@@ -17,6 +17,7 @@ import { channelParam } from "@/lib/team-chat";
 import { teamLink, teamRoleCan } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 type NotifyLevel = "all" | "mentions" | "none";
 
@@ -92,7 +93,7 @@ export function ChannelInfoSheet({
   return (
     <>
       <Modal onClose={busy ? () => undefined : onClose} labelledBy="channel-info-title">
-        <div data-channel-info className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-xl border border-border-soft bg-surface shadow-pop sm:rounded-xl" onClick={(event) => event.stopPropagation()}>
+        <DialogShell data-channel-info className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-xl border border-border-soft bg-surface shadow-pop sm:rounded-lg">
           <div className="flex shrink-0 items-center gap-3 px-5 pb-2 pt-5">
             <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-lg", channel.mode === "private" ? "bg-warning/10 text-warning" : "bg-primary-soft text-primary")} aria-hidden>
               {channel.mode === "private" ? <Lock size={20} /> : <Hash size={20} />}
@@ -113,7 +114,7 @@ export function ChannelInfoSheet({
 
             <dl className="overflow-hidden rounded-lg border border-border-soft">
               {facts.map(([label, value]) => (
-                <div key={label} className="flex items-baseline justify-between gap-3 border-b border-border-soft px-3.5 py-2.5 text-small last:border-b-0">
+                <div key={label} className="flex items-baseline justify-between gap-3 border-b border-border-soft px-4 py-2.5 text-small last:border-b-0">
                   <dt className="text-text-muted">{label}</dt>
                   <dd className="text-right font-semibold text-text">{value}</dd>
                 </div>
@@ -165,7 +166,7 @@ export function ChannelInfoSheet({
                     {row.hint && <span className="text-small text-text-muted">{row.hint}</span>}
                   </>
                 );
-                const cls = "flex min-h-12 w-full items-center gap-3 border-b border-border-soft px-3.5 text-left last:border-b-0 hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50";
+                const cls = "flex min-h-12 w-full items-center gap-3 border-b border-border-soft px-4 text-left last:border-b-0 hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50";
                 return row.href ? (
                   <Link key={row.key} href={row.href} data-channel-info-row={row.key} className={cls}>
                     {inner}
@@ -204,7 +205,7 @@ export function ChannelInfoSheet({
               </InlineAlert>
             )}
           </div>
-        </div>
+        </DialogShell>
       </Modal>
 
       {confirm && (

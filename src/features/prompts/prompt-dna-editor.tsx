@@ -29,6 +29,7 @@ import { addMenuOrder } from "@/lib/prompt-dna/sections";
 import type { DnaAnalysis, DnaDetectedSection, DnaSection, DnaSectionType } from "@/lib/prompt-dna/types";
 import { cn } from "@/lib/utils";
 import { DNA_ICONS, dnaLabelKey, dnaSectionLabel } from "./dna-section-meta";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const ANALYZE_DEBOUNCE_MS = 400;
 const MIN_PROMPT_LENGTH = 8;
@@ -146,7 +147,7 @@ export function PromptDnaEditor({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           {hasSections ? (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <span className="text-label font-medium text-text-secondary">{t("dna.completeness", { filled: progress.filled, total: progress.total })}</span>
               <span className="h-1.5 w-24 overflow-hidden rounded-full bg-border-soft" aria-hidden="true">
                 <span className="block h-full rounded-full bg-primary transition-[width] duration-200 ease-soft" style={{ width: `${(progress.filled / Math.max(1, progress.total)) * 100}%` }} />
@@ -180,7 +181,7 @@ export function PromptDnaEditor({
               const Icon = DNA_ICONS[detected.type];
               return (
                 <li key={detected.type} className="rounded-md border border-border-soft bg-surface p-2.5">
-                  <div className="flex items-start gap-2.5">
+                  <div className="flex items-start gap-3">
                     <Icon size={16} className="mt-0.5 shrink-0 text-text-muted" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
                       <p className="flex flex-wrap items-center gap-1.5 text-label font-semibold text-text">
@@ -293,7 +294,7 @@ export function PromptDnaEditor({
                         type="button"
                         onClick={() => setEditing({ id: section.id, label: section.label ?? "", content: section.content, isNew: false })}
                         aria-label={t("dna.editAria", { label: heading })}
-                        className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text"
+                        className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
                       >
                         <Pencil size={16} />
                       </button>

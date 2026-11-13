@@ -10,6 +10,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { messagePreviewText } from "./message-preview";
 import { useMessageImageUrls } from "./message-image-grid";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const LIMIT = 100;
 const URL_PATTERN = /https?:\/\/[^\s]+/i;
@@ -40,7 +42,7 @@ export function ChatSharedModal({
   const [tab, setTab] = useState<ChatSharedKind>(mode === "media" ? "photos" : "content");
   return (
     <Modal onClose={onClose} labelledBy="chat-shared-title" overLayers>
-      <div data-chat-shared className="flex max-h-[min(80dvh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl bg-surface shadow-pop" onClick={(event) => event.stopPropagation()}>
+      <DialogShell data-chat-shared className="flex max-h-[min(80dvh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-surface shadow-pop">
         <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-2 pt-5">
           <h2 id="chat-shared-title" className="font-display text-h3 font-bold text-text">
             {mode === "media" ? t("messages.shared.mediaLinks") : t("messages.shared.content")}
@@ -49,7 +51,7 @@ export function ChatSharedModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-9 w-9")}
           >
             <X size={18} />
           </button>
@@ -76,7 +78,7 @@ export function ChatSharedModal({
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5">
           <SharedList key={tab} conversationId={conversationId} kind={tab} onJump={onJumpToMessage} />
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

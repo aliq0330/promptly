@@ -92,7 +92,7 @@ export function TeamProjectsSection({ ctx }: { ctx: TeamCtx }) {
 
         {failed && <SectionError message={t("tp.error.load")} onRetry={load} />}
         {!failed && projects === null && (
-          <div className="grid gap-3.5 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <Skeleton className="h-40 rounded-lg" />
             <Skeleton className="h-40 rounded-lg" />
           </div>
@@ -106,7 +106,7 @@ export function TeamProjectsSection({ ctx }: { ctx: TeamCtx }) {
           />
         )}
         {active.length > 0 && (
-          <ul className="grid gap-3 md:grid-cols-2 md:gap-3.5" data-testid="team-project-list">
+          <ul className="grid gap-3 md:grid-cols-2 md:gap-4" data-testid="team-project-list">
             {active.map((project) => (
               <li key={project.id}>
                 <ProjectCard team={team.id} project={project} changes={changesByProject.get(project.id) ?? 0} />
@@ -165,7 +165,7 @@ function WaitingStrip({ ctx }: { ctx: TeamCtx }) {
   const target = teamLink(team.id, "approvals");
   return (
     <section data-testid="team-waiting" className="rounded-lg border border-border-soft bg-surface p-3 md:flex md:items-stretch md:gap-3 md:border-0 md:bg-transparent md:p-0">
-      <Link href={target} className="flex min-h-12 items-center gap-2.5 md:block md:w-52 md:shrink-0 md:rounded-lg md:border md:border-border-soft md:bg-surface md:p-3.5" data-waiting-open>
+      <Link href={target} className="flex min-h-12 items-center gap-3 md:block md:w-52 md:shrink-0 md:rounded-lg md:border md:border-border-soft md:bg-surface md:p-4" data-waiting-open>
         <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart md:hidden" />
         <span className="min-w-0 flex-1 md:block">
           <span className="hidden items-center gap-2 font-display text-body font-bold text-text md:flex">
@@ -180,7 +180,7 @@ function WaitingStrip({ ctx }: { ctx: TeamCtx }) {
       <ul className="hidden min-w-0 flex-1 gap-3 md:grid md:grid-cols-3">
         {rows.slice(0, 3).map((item) => (
           <li key={item.id} className="min-w-0">
-            <Link href={boardItemHref(team.id, item)} className="block h-full rounded-lg border border-border-soft bg-surface p-3.5 hover:shadow-card" data-waiting-item={item.id}>
+            <Link href={boardItemHref(team.id, item)} className="block h-full rounded-lg border border-border-soft bg-surface p-4 hover:shadow-card" data-waiting-item={item.id}>
               <span className="block truncate text-caption font-bold uppercase tracking-[0.05em] text-text-muted">
                 {t(KIND_KEY[item.kind] ?? "tp.kind.content")}
                 {item.fileTitle ? ` · ${item.fileTitle}` : ""}
@@ -281,7 +281,7 @@ function ProjectCard({ team, project, changes }: { team: string; project: Projec
         <span className="rounded-lg bg-surface/60" />
         <span className="rounded-lg bg-current opacity-45" />
       </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-2 p-3.5">
+      <span className="flex min-w-0 flex-1 flex-col gap-2 p-4">
         <span className="block min-w-0">
           <span className="block truncate text-body font-bold text-text">{project.title}</span>
           <span className="block truncate text-small text-text-secondary">{t("tp.card.counts", { files: project.files.length, boards: project.boardCount, people: project.memberCount })}</span>
@@ -380,7 +380,7 @@ function CreateProjectDialog({ teamId, onClose, onCreated }: { teamId: string; o
           )}
         </div>
         <ProjectAccessEditor teamId={teamId} entries={entries} onChange={setEntries} lockedUserId={user?.id ?? null} />
-        <div className="flex items-start gap-3 rounded-xl border border-border-soft px-3.5 py-3">
+        <div className="flex items-start gap-3 rounded-xl border border-border-soft px-4 py-3">
           <span className="min-w-0 flex-1">
             <span className="block text-small font-bold text-text">{t("tp.create.reviewDefault")}</span>
             <span className="block text-caption text-text-secondary">{t("tp.create.reviewDefaultHint")}</span>

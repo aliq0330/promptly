@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { InviteCard, InviteDialog } from "./team-invites";
 import type { TeamCtx } from "./team-page";
 import { PersonRow, formatShortDate, roleLabelKey } from "./team-ui";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 type MembersView = "members" | "guests" | "invites" | "groups";
 
@@ -173,7 +174,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
         </button>
       </div>
       {searchOpen && <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("tm.members.search")} aria-label={t("tm.members.search")} autoFocus className="h-11 w-full rounded-full border border-border bg-surface px-4 text-small" />}
-      <div className="-mt-1 flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" role="tablist" aria-label={t("tm.members.filter")}>
+      <ScrollRow className="-mt-1 flex gap-2 pb-1 md:flex-wrap md:overflow-visible" role="tablist" aria-label={t("tm.members.filter")}>
         {views
           .filter((v) => v.show)
           .map((v) => (
@@ -190,13 +191,13 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               {v.count !== null && <span className="tabular-nums">{v.count}</span>}
             </button>
           ))}
-      </div>
+      </ScrollRow>
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
         <div className="min-w-0">
           {view === "members" && (
             <PagedListState list={list}>
-              <ul className="grid gap-0 max-md:overflow-hidden max-md:rounded-lg max-md:border max-md:border-border-soft max-md:bg-surface md:grid-cols-3 md:gap-3.5" data-testid="team-members-list">
+              <ul className="grid gap-0 max-md:overflow-hidden max-md:rounded-lg max-md:border max-md:border-border-soft max-md:bg-surface md:grid-cols-3 md:gap-4" data-testid="team-members-list">
                 {list.items.map((member) => {
                   const manageable = canManage && member.role !== "owner" && teamRank(member.role) < myRank;
                   const name = member.displayName || member.username;
@@ -205,7 +206,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                     <li
                       key={member.userId}
                       data-member={member.username}
-                      className="flex items-center gap-3 border-b border-border-soft px-3.5 py-2.5 last:border-b-0 md:flex-col md:gap-1 md:rounded-xl md:border md:bg-surface md:px-4 md:py-[18px] md:text-center md:last:border-b"
+                      className="flex items-center gap-3 border-b border-border-soft px-4 py-2.5 last:border-b-0 md:flex-col md:gap-1 md:rounded-xl md:border md:bg-surface md:px-4 md:py-[18px] md:text-center md:last:border-b"
                     >
                       <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={name} size={40} />
                       <span className="min-w-0 flex-1 md:w-full md:flex-none">
@@ -293,7 +294,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               </Button>
             </div>
           )}
-          <button type="button" onClick={() => setMatrixOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-3.5 text-left lg:hidden" data-roles-open>
+          <button type="button" onClick={() => setMatrixOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-4 text-left lg:hidden" data-roles-open>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-bold text-text">{t("tm.matrix.title")}</span>
               <span className="block text-caption text-text-secondary">{t("tm.matrix.subtitle")}</span>
@@ -316,7 +317,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               </ul>
             </section>
           )}
-          <button type="button" onClick={() => setMatrixOpen(true)} className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-3.5 text-left" data-roles-open-aside>
+          <button type="button" onClick={() => setMatrixOpen(true)} className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-4 text-left" data-roles-open-aside>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-bold text-text">{t("tm.matrix.title")}</span>
               <span className="block text-caption text-text-secondary">{t("tm.matrix.subtitle")}</span>
@@ -454,7 +455,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
           {modes.map((m) => {
             const on = mode === m.key;
             return (
-              <div key={m.key} className={cn("flex items-center gap-3 rounded-lg border px-3.5 py-2.5", on ? "border-2 border-primary bg-primary-soft/40" : "border-border-soft")}>
+              <div key={m.key} className={cn("flex items-center gap-3 rounded-lg border px-4 py-2.5", on ? "border-2 border-primary bg-primary-soft/40" : "border-border-soft")}>
                 <button type="button" role="radio" aria-checked={on} data-remove-mode={m.key} onClick={() => setMode(m.key)} className="flex min-w-0 flex-1 items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                   <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2", on ? "border-primary" : "border-border-strong")} aria-hidden>
                     {on && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
@@ -490,8 +491,8 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
             );
           })}
         </div>
-        <p className="rounded-lg bg-primary-soft px-3.5 py-2.5 text-caption text-primary">{t("tm.members.alwaysStays")}</p>
-        <label className="flex items-center gap-2.5 text-small text-text">
+        <p className="rounded-lg bg-primary-soft px-4 py-2.5 text-caption text-primary">{t("tm.members.alwaysStays")}</p>
+        <label className="flex items-center gap-3 text-small text-text">
           <input type="checkbox" checked={notify} onChange={(event) => setNotify(event.target.checked)} className="h-5 w-5 accent-primary" />
           {t("tm.members.notifyName", { name })}
         </label>

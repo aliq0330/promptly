@@ -1342,7 +1342,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             </button>
           }
         >
-          <span className="flex min-w-0 items-center gap-2.5" data-dock-chat-title="">
+          <span className="flex min-w-0 items-center gap-3" data-dock-chat-title="">
             {group ? (
               <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={34} badge />
             ) : (
@@ -1674,7 +1674,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           />
         )}
         {messageHighlightNotFound && (
-          <p className="mx-auto w-fit max-w-full rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-center text-caption text-text-muted shadow-xs">
+          <p className="mx-auto w-fit max-w-full rounded-full border border-border-soft bg-surface px-4 py-1.5 text-center text-caption text-text-muted shadow-xs">
             {t("messages.messageNotViewable")}
           </p>
         )}
@@ -1739,7 +1739,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             <button
               type="button"
               onClick={() => void returnToLatest()}
-              className="rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-caption font-medium text-primary shadow-xs transition-colors hover:border-border-strong"
+              className="rounded-full border border-border-soft bg-surface px-4 py-1.5 text-caption font-medium text-primary shadow-xs transition-colors hover:border-border-strong"
             >
               {t("chat.jump.latest")}
             </button>
@@ -1778,7 +1778,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             role="status"
             className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-(--z-popover) flex justify-center px-4 md:bottom-6"
           >
-            <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">{toast}</div>
+            <div className="animate-pop-in rounded-md bg-text px-4 py-2 text-small text-background shadow-pop">{toast}</div>
           </div>
         </Portal>
       )}

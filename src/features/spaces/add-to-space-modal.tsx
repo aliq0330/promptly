@@ -33,6 +33,7 @@ import type { Prompt } from "@/types";
 import { FormError } from "./space-forms";
 import { DIALOG_FOOTER_CLASS, SpaceDialog } from "./space-modals";
 import { SpaceCoverArt, SpaceImage } from "./space-visuals";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 export interface AddToSpaceTarget {
   type: "prompt" | SpaceContentType;
@@ -226,7 +227,7 @@ export function AddToSpaceModal({
           <fieldset className="space-y-2">
             <legend className="mb-1.5 text-label font-medium text-text">{t("spaces.add.what")}</legend>
             {images.length > 0 && (
-              <div className="scrollbar-fine flex gap-2 overflow-x-auto pb-1">
+              <ScrollRow className="flex gap-2 pb-1">
                 {images.map((media) => {
                   const on = chosenImages.includes(media.url);
                   return (
@@ -243,7 +244,7 @@ export function AddToSpaceModal({
                     </label>
                   );
                 })}
-              </div>
+              </ScrollRow>
             )}
             <label className="flex items-center gap-2 text-small text-text">
               <input type="checkbox" checked={includePrompt} onChange={(event) => setIncludePrompt(event.target.checked)} className="accent-primary" />

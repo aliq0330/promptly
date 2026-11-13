@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UseTagPickerResult } from "./use-tag-picker";
 import type { Tag } from "@/types";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 interface TagPickerProps {
   picker: UseTagPickerResult;
@@ -138,7 +139,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                     type="button"
                     onClick={() => picker.dismissSuggested(tag.slug)}
                     aria-label={t("tagPicker.dismissSuggestionAriaLabel", { label: tag.label })}
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-accent-surface hover:text-text"
+                    className={iconButtonClassName(false, "h-5 w-5")}
                   >
                     <X size={10} />
                   </button>

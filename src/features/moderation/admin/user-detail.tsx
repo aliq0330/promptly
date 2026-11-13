@@ -26,7 +26,7 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg bg-surface-soft p-3">
       <p className="text-caption text-text-muted">{label}</p>
-      <p className="mt-0.5 text-h3 font-semibold tabular-nums text-text">{value}</p>
+      <p className="mt-0.5 text-h3 font-bold tabular-nums text-text">{value}</p>
     </div>
   );
 }
@@ -106,7 +106,7 @@ export function UserDetail({ userId, onBack }: { userId: string; onBack: () => v
           <Avatar src={user.avatarUrl} alt={user.displayName} size={56} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h2 className="text-h3 font-semibold text-text">{user.displayName}</h2>
+              <h2 className="text-h3 font-bold text-text">{user.displayName}</h2>
               <span className="text-small text-text-muted">@{user.username}</span>
               <UserBadges user={user} />
             </div>

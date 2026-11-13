@@ -141,7 +141,7 @@ function IncomingRequestsView({ managed }: { managed: CommunitySummary[] }) {
   const pending = managed.filter((c) => c.pendingRequestCount > 0);
   if (pending.length === 0) return <EmptyState icon={ShieldCheck} title={t("communities.invitesTab.incomingEmpty")} description={t("communities.invitesTab.incomingEmptyHelp")} />;
   return (
-    <ul className="divide-y divide-border-soft rounded-xl border border-border-soft bg-surface" data-testid="incoming-requests">
+    <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface" data-testid="incoming-requests">
       {pending.map((community) => (
         <li key={community.id} className="flex items-center gap-3 px-4 py-3">
           <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={40} />
@@ -364,7 +364,7 @@ export function RequestsView({ userId, onCount, onToast }: { userId: string; onC
           {action.error}
         </InlineAlert>
       )}
-      <ul className="divide-y divide-border-soft rounded-xl border border-border-soft bg-surface">
+      <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface">
         {current.requests.map((request) => (
           <li key={request.id} className="flex items-center gap-3 px-4 py-3">
             <GroupAvatar name={request.groupName} avatarUrl={request.groupAvatarUrl} size={40} />

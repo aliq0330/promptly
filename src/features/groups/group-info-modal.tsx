@@ -210,7 +210,7 @@ export function GroupInfoModal({
 
       {rooms.length > 0 && (
         <InfoCard aria-labelledby="info-rooms-title" data-info-rooms="">
-          <div className="flex items-center px-4 pb-1 pt-3.5">
+          <div className="flex items-center px-4 pb-1 pt-4">
             <h3 id="info-rooms-title" className="min-w-0 flex-1 font-display text-body font-bold text-text">
               {t("rooms.info.rooms")}
             </h3>
@@ -315,7 +315,7 @@ export function GroupInfoModal({
         title={t("presence.onlineMembersTitle")}
         emptyText={t("presence.onlineMembersEmpty")}
         moreHref={communityHref(group.id, "members")}
-        className="px-4 py-3.5"
+        className="px-4 py-4"
         frame={(content) => <InfoCard>{content}</InfoCard>}
       />
 
@@ -336,10 +336,10 @@ export function GroupInfoModal({
       </InfoCard>
 
       <InfoCard aria-labelledby="info-chat-title">
-        <h3 id="info-chat-title" className="px-4 pb-1 pt-3.5 text-label font-semibold text-text">
+        <h3 id="info-chat-title" className="px-4 pb-1 pt-4 text-label font-semibold text-text">
           {t("groups.info.chatTitle")}
         </h3>
-        <dl className="px-4 pb-3.5 text-small">
+        <dl className="px-4 pb-4 text-small">
           <Fact label={t("groups.settings.postingLabel")}>{group.postingPolicy === "admins" ? t("groups.settings.postingAdmins") : t("groups.settings.postingMembers")}</Fact>
           <Fact label={t("groups.about.history")}>{group.historyVisible ? t("groups.about.historyVisibleValue") : t("groups.about.historyHiddenValue")}</Fact>
         </dl>
@@ -350,7 +350,7 @@ export function GroupInfoModal({
               onClick={() => setSettingsOpen((open) => !open)}
               aria-expanded={settingsOpen}
               aria-controls="info-settings-panel"
-              className="flex h-14 w-full items-center gap-3.5 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+              className="flex h-14 w-full items-center gap-4 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary" aria-hidden>
                 <Settings size={18} />

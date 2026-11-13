@@ -6,7 +6,7 @@ import { Copy } from "@/components/icons/copy";
 import { KeyRound } from "@/components/icons/key-round";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, fieldInputClassName } from "@/components/ui/field";
+import { ChoiceCard, Input, Select } from "@/components/ui/field";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   API_TOKEN_ACTIVE_LIMIT,
@@ -141,7 +141,7 @@ export function ApiKeysSection() {
         <h4 className="text-small font-semibold text-text">{t("apiKeys.newTitle")}</h4>
         <div>
           <label htmlFor="api-key-name" className={labelClassName}>{t("apiKeys.nameLabel")}</label>
-          <input
+          <Input
             id="api-key-name"
             type="text"
             value={name}
@@ -149,7 +149,6 @@ export function ApiKeysSection() {
             onChange={(event) => setName(event.target.value)}
             placeholder={t("apiKeys.namePlaceholder")}
             autoComplete="off"
-            className={fieldInputClassName}
           />
           <p className="mt-1 text-caption text-text-muted">{t("apiKeys.nameHint")}</p>
         </div>
@@ -174,18 +173,17 @@ export function ApiKeysSection() {
 
         <div>
           <label htmlFor="api-key-expiry" className={labelClassName}>{t("apiKeys.expiryLabel")}</label>
-          <select
+          <Select
             id="api-key-expiry"
             value={expiry === null ? "never" : String(expiry)}
             onChange={(event) => setExpiry(event.target.value === "never" ? null : Number(event.target.value))}
-            className={fieldInputClassName}
           >
             {API_TOKEN_EXPIRY_OPTIONS.map((days) => (
               <option key={days ?? "never"} value={days === null ? "never" : String(days)}>
                 {days === null ? t("apiKeys.expiryNever") : t("apiKeys.expiryDays", { count: days })}
               </option>
             ))}
-          </select>
+          </Select>
           {expiry === null && <p className="mt-1 text-caption text-text-muted">{t("apiKeys.expiryNeverHint")}</p>}
         </div>
 
@@ -216,7 +214,7 @@ export function ApiKeysSection() {
             {rows.map((row) => {
               const status = apiTokenStatus(row);
               return (
-                <li key={row.id} className="space-y-2 px-3.5 py-3" data-api-key-row={row.id} data-status={status}>
+                <li key={row.id} className="space-y-2 px-4 py-3" data-api-key-row={row.id} data-status={status}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="min-w-0 break-words text-small font-medium text-text">{row.name}</span>
                     <Badge variant={status === "active" ? "success" : status === "expired" ? "warning" : "neutral"}>

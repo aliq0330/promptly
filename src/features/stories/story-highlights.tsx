@@ -28,6 +28,7 @@ import { StoryCanvas } from "./story-canvas";
 import { Ring } from "./story-tray";
 import { useStoryViewer } from "./story-viewer-provider";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** Hikâyenin yuvarlak küçük resmi (öne çıkan kapağı): 9:16 tuvalin ortası. */
 export function StoryCircleThumb({ story, size = 54 }: { story: Story | null; size?: number }) {
@@ -244,10 +245,10 @@ export function HighlightEditor({
     <Modal onClose={onClose} labelledBy="highlight-editor-title">
       <DialogShell className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-3">
-          <h2 id="highlight-editor-title" className="text-h3 font-semibold text-text">
+          <h2 id="highlight-editor-title" className="text-h3 font-bold text-text">
             {highlight ? t("stories.highlight.editTitle") : t("stories.highlight.newTitle")}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
             <X size={18} aria-hidden />
           </button>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldLabelClassName, Input } from "@/components/ui/field";
 import { FormError, SubmitButton } from "@/features/spaces/space-forms";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -55,13 +55,12 @@ export function NewProjectChannelDialog({ projectId, onClose, onCreated }: { pro
           <label htmlFor="project-channel-name" className={fieldLabelClassName}>
             {t("th.newChannel.name")}
           </label>
-          <input
+          <Input
             id="project-channel-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
             maxLength={40}
             placeholder={t("th.newChannel.namePlaceholder")}
-            className={fieldInputClassName}
             autoComplete="off"
           />
           <p className="mt-1 text-caption text-text-muted">{t("th.newChannel.nameHint")}</p>
@@ -70,7 +69,7 @@ export function NewProjectChannelDialog({ projectId, onClose, onCreated }: { pro
           <label htmlFor="project-channel-desc" className={fieldLabelClassName}>
             {t("th.newChannel.description")}
           </label>
-          <input id="project-channel-desc" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={200} className={fieldInputClassName} />
+          <Input id="project-channel-desc" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={200} />
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("th.newChannel.posting")}</span>

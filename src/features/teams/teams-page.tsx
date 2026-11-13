@@ -12,7 +12,7 @@ import { Search } from "@/components/icons/search";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldLabelClassName, Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
@@ -150,13 +150,12 @@ function TeamsPageInner() {
             </button>
           </HubControlRow>
           {searchOpen && (
-            <input
+            <Input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("tm.filter.search")}
               aria-label={t("tm.filter.search")}
-              className={fieldInputClassName}
             />
           )}
           {todos.length > 0 && (
@@ -171,7 +170,7 @@ function TeamsPageInner() {
       {activeTab === "teams" && invites.length > 0 && (
         <ul className="space-y-2" data-testid="team-invites">
           {invites.map((invite) => (
-            <li key={invite.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border-soft bg-surface p-3.5 max-md:p-3">
+            <li key={invite.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border-soft bg-surface p-4 max-md:p-3">
               <TeamMark name={invite.teamName} tone={invite.teamTone} size={40} className="rounded-xl" />
               <div className="min-w-0 flex-1 max-md:basis-[calc(100%-3.5rem)]">
                 <p className="text-small text-text-secondary">
@@ -273,12 +272,12 @@ function TodoList({ todos }: { todos: TeamTodo[] }) {
   return (
     <section aria-label={t("tm.todos.title")} data-testid="team-todos">
       <h2 className="mb-3 text-h3 font-bold">{t("tm.todos.title")}</h2>
-      <ul className="space-y-2.5">
+      <ul className="space-y-3">
         {todos.map((todo, index) => {
           const Icon = todo.kind === "unread" ? MessageCircle : todo.kind === "project_review" ? Eye : Check;
           const tone = todo.kind === "unread" ? "bg-success/10 text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary" : "bg-warning/10 text-warning";
           return (
-            <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface px-3.5 py-3">
+            <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-3">
               <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", tone)} aria-hidden>
                 <Icon size={16} />
               </span>
@@ -434,13 +433,13 @@ export function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; o
           <label htmlFor="team-name" className={fieldLabelClassName}>
             {t("tm.create.name")}
           </label>
-          <input id="team-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} className={fieldInputClassName} autoComplete="off" />
+          <Input id="team-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} autoComplete="off" />
         </div>
         <div>
           <label htmlFor="team-desc" className={fieldLabelClassName}>
             {t("tm.create.description")}
           </label>
-          <textarea id="team-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-small" />
+          <textarea id="team-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-small" />
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.create.tone")}</span>

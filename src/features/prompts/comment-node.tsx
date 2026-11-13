@@ -151,7 +151,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
         isHighlighted && "-m-1.5 bg-primary/10 p-1.5 ring-1 ring-primary/40",
       )}
     >
-      <div className="flex gap-2.5">
+      <div className="flex gap-3">
         <Link href={profileHref(comment.author)} className="shrink-0 hover:opacity-80" aria-label={comment.author.displayName}>
           <Avatar src={comment.author.avatarUrl} alt={comment.author.displayName} size={depth === 0 ? 32 : 28} />
         </Link>

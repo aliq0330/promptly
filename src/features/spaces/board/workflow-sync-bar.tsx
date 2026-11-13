@@ -125,7 +125,7 @@ export function WorkflowSyncBar({
               type="button"
               disabled={busy !== null}
               onClick={() => void apply(id, plan)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-3.5 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
             >
               {busy === id && <Loader2 size={13} className="animate-spin" aria-hidden />}
               {busy === id ? t("wfSpace.sync.updating") : t("wfSpace.sync.update")}
@@ -148,7 +148,7 @@ export function WorkflowSyncBar({
               type="button"
               disabled={busy !== null}
               onClick={() => void convert(id, frame, title, input)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-3.5 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
             >
               {busy === `legacy:${id}` && <Loader2 size={13} className="animate-spin" aria-hidden />}
               {busy === `legacy:${id}` ? t("wfSpace.legacy.converting") : t("wfSpace.legacy.convert")}

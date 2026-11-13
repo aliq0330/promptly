@@ -44,9 +44,9 @@ export function DetailShell({
   return (
     <div className={cn("w-full pb-16", entrance === "fade" ? "animate-fade-in" : "animate-rise-in")}>
       {band}
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
+      <div className="mx-auto w-full max-w-6xl px-3 sm:px-6 lg:px-8">
         {actions}
-        <div className={cn("pt-6 lg:pt-8", aside && "lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12")}>
+        <div className={cn("pt-6 lg:pt-8", aside && "xl:grid xl:grid-cols-[minmax(0,1fr)_18.75rem] xl:gap-7")}>
           <div className="min-w-0">{children}</div>
           {aside}
         </div>
@@ -102,7 +102,7 @@ export function DetailBand({
       {/* With a menu the band starts a little lower on phones/tablets, so the ⋮ sits above the art instead of on it. */}
       <div
         className={cn(
-          "relative mx-auto flex w-full max-w-6xl px-4 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-10 lg:pb-10 lg:pt-10",
+          "relative mx-auto flex w-full max-w-6xl px-3 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-8 lg:pb-10 lg:pt-10",
           compact ? "flex-row items-center gap-4 pb-5" : "flex-col gap-6 pb-7",
           menu ? "pt-11" : compact ? "pt-5" : "pt-6",
         )}
@@ -245,7 +245,7 @@ export function DetailArtPlaceholder({ icon: Icon }: { icon: IconComponent }) {
 
 /** "Hakkında": the side column from `lg` (tool, classification, related content); stacked under the content below it. */
 export function DetailAside({ children, className }: { children: ReactNode; className?: string }) {
-  return <aside data-detail-aside className={cn("mt-12 space-y-8 lg:sticky lg:top-24 lg:mt-0 lg:self-start", className)}>{children}</aside>;
+  return <aside data-detail-aside className={cn("mt-12 space-y-8 xl:sticky xl:top-24 xl:mt-0 xl:self-start", className)}>{children}</aside>;
 }
 
 /** A titled section of the content column ("Prompt", "Yorumlar · 4" …); `action` sits on the right of the heading row. */
@@ -266,7 +266,7 @@ export function DetailSection({
 }) {
   const headingId = useId();
   return (
-    <section ref={ref} id={id} aria-labelledby={headingId} className={cn("scroll-mt-24 space-y-3.5", className)}>
+    <section ref={ref} id={id} aria-labelledby={headingId} className={cn("scroll-mt-24 space-y-4", className)}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <h2 id={headingId} className="min-w-0 flex-1 font-display text-[1.375rem] font-bold leading-tight text-text">
           {title}
@@ -351,12 +351,12 @@ export function DetailByline({
 }) {
   const href = profileHref(person);
   return (
-    <div className="flex max-w-full items-center gap-2.5">
+    <div className="flex max-w-full items-center gap-3">
       <Link href={href} tabIndex={-1} aria-hidden className="shrink-0 rounded-full">
         <Avatar src={person.avatarUrl} alt={person.displayName} size={40} />
       </Link>
       <div className="min-w-0 leading-tight">
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Link href={href} data-detail-author className="min-w-0 truncate text-label font-semibold text-text transition-colors hover:text-primary">
             {person.displayName}
           </Link>
@@ -427,7 +427,7 @@ export function DetailActionBar({
               "fixed inset-x-0 bottom-0 z-30 border-t border-border-soft bg-surface/95 backdrop-blur-xl animate-fade-in [animation-fill-mode:backwards] md:left-[72px] lg:left-64",
           )}
         >
-          <div className={cn(dock.pinned && "mx-auto w-full max-w-6xl px-4 py-1.5 sm:px-6 lg:px-10")}>
+          <div className={cn(dock.pinned && "mx-auto w-full max-w-6xl px-3 py-1.5 sm:px-6 lg:px-8")}>
             <div role="toolbar" aria-label={t("detail.actionsAria")} data-detail-actions className="-mx-1.5 flex items-center gap-0.5">
               {children}
               {end && <div className="ml-auto flex items-center gap-0.5">{end}</div>}
@@ -497,7 +497,7 @@ export function AsideSection({
   href?: string;
 }) {
   return (
-    <section aria-labelledby={id} className="space-y-2.5">
+    <section aria-labelledby={id} className="space-y-3">
       <div className="flex items-center justify-between gap-3 px-1">
         <h2 id={id} className="text-label font-semibold text-text">
           {title}
@@ -539,7 +539,7 @@ export function AsideLinkRow({
   meta: ReactNode;
 }) {
   return (
-    <Link href={href} className="group flex items-start gap-3 px-3.5 py-3 transition-colors duration-200 hover:bg-surface-soft">
+    <Link href={href} className="group flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-surface-soft">
       <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
         <Icon size={14} />
       </span>

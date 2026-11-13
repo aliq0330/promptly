@@ -17,6 +17,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
 import { VariableConditionEditor } from "./variable-condition-editor";
 import { VariableSpecEditor, type SpecEditorValue, type VariableFormValues } from "./variable-spec-editor";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Yeni değişken oluşturma / metne bağlama penceresi (Bölüm 9.136).
@@ -95,7 +96,7 @@ export function VariableCreateModal({
         className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-4">
           <h2 id="variable-create-title" className="text-body font-semibold text-text">
             {selectedText ? t("variable.convertTitle") : t("variable.createTitle")}
           </h2>
@@ -103,7 +104,7 @@ export function VariableCreateModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
+            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
           >
             <X size={18} />
           </button>

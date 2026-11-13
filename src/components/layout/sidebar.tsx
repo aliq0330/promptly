@@ -53,7 +53,7 @@ export function Sidebar() {
           aria-current={active ? "page" : undefined}
           title={label}
           className={cn(
-            "group relative flex h-11 items-center gap-3.5 rounded-xl text-[0.9375rem] transition-colors duration-200",
+            "group relative flex h-11 items-center gap-4 rounded-xl text-[0.9375rem] transition-colors duration-200",
             "justify-center lg:justify-start lg:px-3",
             // Meydan: the active entry is a soft brand pill — no edge bar.
             active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
@@ -69,7 +69,7 @@ export function Sidebar() {
   return (
     <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className="sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border-soft bg-surface md:flex md:w-[72px] lg:w-64">
       <div className="flex h-16 items-center justify-center px-3 lg:justify-start lg:px-5">
-        <Link href="/" className="flex items-center gap-2.5 rounded-md" aria-label="Promptly">
+        <Link href="/" className="flex items-center gap-3 rounded-md" aria-label="Promptly">
           <BrandMark size={32} />
           <span className="hidden leading-none lg:block">
             <BrandWordmark className="block text-[1.55rem]" />

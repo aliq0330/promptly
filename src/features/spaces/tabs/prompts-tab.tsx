@@ -151,7 +151,7 @@ export function PromptsTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: str
             const reason = rowSource === "draft" ? null : sourceReasonKey(resolved.state);
             const text = rowSource === "draft" ? item.body : (resolved.prompt?.promptText ?? "");
             return (
-              <li key={`${rowSource}-${item.id}`} data-prompt-row={rowSource} className="rounded-lg border border-border-soft bg-surface p-3.5 shadow-xs">
+              <li key={`${rowSource}-${item.id}`} data-prompt-row={rowSource} className="rounded-lg border border-border-soft bg-surface p-4 shadow-xs">
                 <div className="flex items-start gap-3">
                   {rowSource === "image" && <SpaceImage url={item.mediaUrl} alt="" available={!reason} className="h-14 w-14 shrink-0 rounded-md" />}
                   <div className="min-w-0 flex-1 space-y-1">
