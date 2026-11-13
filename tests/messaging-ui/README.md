@@ -83,7 +83,7 @@ Not: `run-community-home.mjs` ve `run-community-posts.mjs` aynı portu (4176) ku
 `run-profile-collections.mjs` (8 senaryo; 7–8 = profil bölüm menüsü grupları + Filtre simgesi, `docs/history/233-*`): başkasının/kendi profilinde herkese açık + boş olmayan koleksiyonların halka şeridi (özel koleksiyon sızmaz, bağlantı, kapak/simge karosu), koleksiyon yoksa şerit çizilmez, İngilizce etiket + 390px'te taşma yok. Ağ taklidi `mock.mjs` + dosya içi `db.extraRoutes` (`collections`, `collection_items`, `profiles?username=`). Gerçek Supabase'e KARŞI DENENMEDİ.
 
 ```bash
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-profile-collections.mjs   # 8/8 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-profile-collections.mjs   # 9/9 beklenir
 ```
 
 ## Hikâyeler (`docs/history/198-*`)
@@ -421,3 +421,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 ## Dock'ta kanal listesi (`docs/history/382-*`)
 
 `run-team-chat-hub.mjs` 21–23 ve `run-rooms.mjs` 12f: Mesajlar dock'unda ekip/proje/topluluk satırı panelin içinde sade kanal/oda listesine (başlık + arama + düz satırlar) açılır, kanal sohbeti panelde açar, ‹ bir üst seviyedir, sohbetin üstünde çip satırı yoktur. Gerçek Supabase'e KARŞI DENENMEDİ.
+
+## Yorum sıralaması · sabit yorum (`docs/history/385-*`)
+
+`run-comment-order.mjs` (9 senaryo): varsayılan sıra EN YENİ (kısa açılışta en yeni 3, "Tümünü gör" en eskiyi açar), sıralama çipleri (tablet/masaüstü; telefonda alt sayfa menüsü) (En eski / En beğenilen → `order=` sunucuya gider, liste yeniden dizilir), içerik sahibi sabitler (en üste çıkar, etiket, yenilemeden sonra da başta, ikinciyi sabitlemek ilkini düşürür, kaldırma), sahip olmayan "Sabitle" görmez + "Yazar" rozeti, sabitleme hatasında iyimser sabit geri alınır, "N yeni yorum" hapı (`page.clock` ile 45 sn yoklama, HEAD sayımı), İngilizce, telefonda alt sayfa menüsü + taşma yok. Ağ taklidi `mock-communities.mjs` (`prompt_comments` sıralaması + `rpc/set_comment_pinned`). Gerçek Supabase'e KARŞI DENENMEDİ; veritabanı kuralları `supabase/tests/comment-pin.sql`'dedir.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium/chrome-linux/chrome node tests/messaging-ui/run-comment-order.mjs   # 9/9 beklenir
+```

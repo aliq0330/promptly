@@ -86,7 +86,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 const section = (page) => page.locator("#comments");
 const nodeOf = (page, i) => section(page).locator("[data-comment-reactions]").nth(i);
 const picker = (page) => page.locator("[data-reaction-picker]");
-const firstId = (db) => db.comments.filter((c) => c.prompt_id === ID.prompt).sort((a, b) => a.created_at.localeCompare(b.created_at))[0].id;
+const firstId = (db) => db.comments.filter((c) => c.prompt_id === ID.prompt).sort((a, b) => b.created_at.localeCompare(a.created_at))[0].id; // listede ilk görünen = en yeni (docs/history/385-*)
 
 await scenario("1. Her yorumun tepki düğmesi gönderidekiyle aynı: dokununca altı emojili seçici açılır; seçilen emoji kalbin yerine geçer ve POST reaction taşır", async ({ page, db, state }) => {
   await nodeOf(page, 0).waitFor();
@@ -131,7 +131,7 @@ await scenario("2. Tepkiler SAYILIR: başkalarının tepkileri toplamda, en çok
   await dialog.waitFor({ state: "detached" });
 }, {
   setup: (db, state) => {
-    const id = db.comments.filter((c) => c.prompt_id === ID.prompt).sort((a, b) => a.created_at.localeCompare(b.created_at))[0].id;
+    const id = firstId(db);
     state.others[id] = { love: 3, fire: 2 };
   },
 });
@@ -141,7 +141,7 @@ await scenario("3. Oturum açan kişinin kendi tepkisi sayfa açılınca görün
   await nodeOf(page, 0).locator('img[src*="clap"]').first().waitFor();
   assert.match(await nodeOf(page, 0).locator("button").first().textContent(), /1/);
   void db;
-}, { setup: (db, state) => { state.mine.set(db.comments.filter((c) => c.prompt_id === ID.prompt).sort((a, b) => a.created_at.localeCompare(b.created_at))[0].id, "clap"); } });
+}, { setup: (db, state) => { state.mine.set(firstId(db), "clap"); } });
 
 await scenario("4. Mobil (390): seçici ekrana sığar, yorum satırında taşma yok; İngilizce etiketler", async ({ page }) => {
   await nodeOf(page, 0).waitFor();

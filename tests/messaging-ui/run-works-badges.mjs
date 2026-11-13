@@ -158,6 +158,7 @@ await scenario("4. Yorumlarda rozet: oy veren yazarlarda ✓/✗, oy vermemiş y
 }, { votes: { [U.bob.id]: true, [U.dave.id]: false }, canVote: false });
 
 await scenario("5. Ziyaretçi de rozeti görür (yorumlar ve sonuçlar ziyaretçiye açık)", async ({ page }) => {
+  await openAllComments(page);   // varsayılan sıra en yeni (docs/history/385-*): en eski yorum "Tümünü gör" ile açılır
   await commentLine(page, "Deniz: Kare formatta").locator("[data-works-badge='yes']").waitFor();
 }, { guest: true, votes: { [U.bob.id]: true }, canVote: false });
 

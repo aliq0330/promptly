@@ -225,7 +225,7 @@ await scenario("8. Profil şikâyeti: Profil önizlemesi, 9 neden (Sahte hesap i
 await scenario("9. Yorum şikâyeti: Yorum önizlemesi (yorum metni), 8 neden, p_target_type=comment", async ({ page, db, state }) => {
   seedComments(db, "prompt");
   await page.goto(BASE + PAGES.prompt);
-  await page.getByText("Deniz: Kare formatta").first().waitFor();
+  await page.getByText("Mert: Dördüncü yorum").first().waitFor(); // varsayılan sıra en yeni (docs/history/385-*)
   await page.getByRole("button", { name: "Şikayet Et" }).first().click();
   await modal(page).waitFor();
   await modal(page).locator("[data-report-preview]").getByText("Yorum", { exact: true }).waitFor();
@@ -235,7 +235,7 @@ await scenario("9. Yorum şikâyeti: Yorum önizlemesi (yorum metni), 8 neden, p
   await page.locator("[data-report-success]").waitFor();
   assert.equal(state.reports[0].p_target_type, "comment");
   assert.equal(state.reports[0].p_reason_code, "harassment");
-  assert.equal(state.reports[0].p_target_id, db.comments[0].id);
+  assert.equal(state.reports[0].p_target_id, db.comments[3].id);
 });
 
 await scenario("10. Telefon: pencere alttan açılan, yerden kopuk sayfa (yanlardan 10 px içeride, en çok %75 yükseklik), alt düğmeler sabit ve görünür, yatay taşma yok", async ({ page }) => {

@@ -33,6 +33,7 @@ import { spaceConnectionTranslations } from "./translations-space-connections";
 import { reactionTranslations } from "./translations-reactions";
 import { insightsTranslations } from "./translations-insights";
 import { commentExtrasTranslations } from "./translations-comment-extras";
+import { commentOrderTranslations } from "./translations-comment-order";
 import { apiKeysTranslations } from "./translations-api-keys";
 import { telegramTranslations } from "./translations-telegram";
 import { settingsTranslations } from "./translations-settings";
@@ -3309,6 +3310,7 @@ export const translations = {
   ...reactionTranslations,
   ...insightsTranslations,
   ...commentExtrasTranslations,
+  ...commentOrderTranslations,
   ...apiKeysTranslations,
   ...telegramTranslations,
   ...settingsTranslations,

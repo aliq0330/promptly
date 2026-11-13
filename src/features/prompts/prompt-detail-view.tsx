@@ -331,7 +331,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           )}
 
           <DetailComments>
-            <EngageComments target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} headless />
+            <EngageComments target={{ promptId: prompt.id }} ownerId={prompt.author.id} highlightCommentId={highlightCommentId} headless />
           </DetailComments>
           <VersionRestoreToast contentId={prompt.id} />
         </article>

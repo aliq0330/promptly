@@ -256,7 +256,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
         </>)}
 
         <DetailComments>
-          <EngageComments target={{ presetId: preset.id }} highlightCommentId={highlightCommentId} headless />
+          <EngageComments target={{ presetId: preset.id }} ownerId={preset.creator.id} highlightCommentId={highlightCommentId} headless />
         </DetailComments>
         <VersionRestoreToast contentId={preset.id} />
         {tryPicker && (

@@ -4,6 +4,7 @@ import { withoutBlocked } from "./blocked-users";
 import { translateForRuntime } from "@/lib/i18n/runtime";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { extrasColumns, extrasUpdateColumns, mapCommentAttachment, mapCommentMedia, type CommentExtrasInput } from "@/lib/comment-extras-model";
+import { DEFAULT_COMMENT_SORT, type CommentSort } from "@/lib/comment-sort";
 import type { PromptComment } from "@/types";
 
 interface CommentRow {
@@ -23,11 +24,13 @@ interface CommentRow {
   media_height?: number | null;
   attach_type?: string | null;
   attach_id?: string | null;
+  /** İçerik sahibinin sabitlediği yorum (docs/history/385-*): sütun yoksa (migration gecikti) gelmez. */
+  pinned_at?: string | null;
   profiles: ProfileRow;
 }
 
 const COMMENT_SELECT = `
-  id, body, parent_id, like_count, created_at, edited_at, deleted_at, rating, space_activity_id, media_kind, media_ref, media_width, media_height, attach_type, attach_id,
+  id, body, parent_id, like_count, created_at, edited_at, deleted_at, rating, space_activity_id, media_kind, media_ref, media_width, media_height, attach_type, attach_id, pinned_at,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
@@ -52,6 +55,7 @@ function mapCommentRow(
     ...(row.space_activity_id ? { spaceActivityId: row.space_activity_id } : {}),
     media: mapCommentMedia(row),
     attachment: mapCommentAttachment(row),
+    pinnedAt: row.pinned_at ?? null,
   };
 }
 
@@ -318,18 +322,36 @@ async function fetchDescendants(parentIds: string[], scope: CommentScope): Promi
   return out;
 }
 
-/** One page of TOP-LEVEL comments (oldest first) plus all their replies. `nextOffset` null = the last page. */
-export async function fetchCommentThreadPage(scope: CommentScope, offset = 0, limit = COMMENTS_PAGE): Promise<{ comments: PromptComment[]; nextOffset: number | null }> {
-  const { data, error } = await applyScope(supabase.from("prompt_comments").select(COMMENT_SELECT), scope)
+/**
+ * One page of TOP-LEVEL comments plus all their replies. The pinned comment always comes first, then the chosen sort
+ * (default newest first; `liked` = most reactions, ties newest first). Replies stay oldest first. `nextOffset` null = the last page.
+ */
+export async function fetchCommentThreadPage(scope: CommentScope, offset = 0, limit = COMMENTS_PAGE, sort: CommentSort = DEFAULT_COMMENT_SORT): Promise<{ comments: PromptComment[]; nextOffset: number | null }> {
+  let query = applyScope(supabase.from("prompt_comments").select(COMMENT_SELECT), scope)
     .is("parent_id", null)
-    .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
-    .range(offset, offset + limit - 1);
+    .order("pinned_at", { ascending: false, nullsFirst: false });
+  if (sort === "liked") query = query.order("like_count", { ascending: false });
+  query = query.order("created_at", { ascending: sort === "oldest" }).order("id", { ascending: sort === "oldest" });
+  const { data, error } = await query.range(offset, offset + limit - 1);
   if (error) throw new Error(error.message);
   const tops = (data ?? []) as unknown as CommentRow[];
   const replies = await fetchDescendants(tops.map((row) => row.id), scope);
   const comments = await withoutBlocked([...tops.map((row) => mapCommentRow(row, targetOf(scope))), ...replies], (c) => c.author.id);
   return { comments, nextOffset: tops.length === limit ? offset + limit : null };
+}
+
+/** Comments (and replies) written by OTHERS after `afterIso` in this discussion — drives the "N yeni yorum" pill; a failed count is simply 0. */
+export async function countNewComments(scope: CommentScope, afterIso: string, myUserId: string | null): Promise<number> {
+  let query = applyScope(supabase.from("prompt_comments").select("id", { count: "exact", head: true }), scope).gt("created_at", afterIso).is("deleted_at", null);
+  if (myUserId) query = query.neq("author_id", myUserId);
+  const { count, error } = await query;
+  return error ? 0 : (count ?? 0);
+}
+
+/** İçerik sahibi: yorumu sabitle / sabitlemeyi kaldır (`set_comment_pinned` RPC'si; hedef başına tek sabit, öncekinin sabiti kalkar). */
+export async function setCommentPinned(commentId: string, pinned: boolean): Promise<void> {
+  const { error } = await supabase.rpc("set_comment_pinned", { p_comment_id: commentId, p_pinned: pinned });
+  if (error) throw new Error(error.message);
 }
 
 /** The whole thread (root comment + every reply) that contains `commentId` — the target of a notification link that may sit on a page not loaded yet. `[]` when it is not in this discussion / not readable. */

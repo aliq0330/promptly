@@ -460,7 +460,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           `PromptDetailView` de zaten hiç `disabledReason` geçirmiyor —
           burası da artık aynı, koşulsuz davranışı kullanıyor.
         */}
-        <EngageComments target={{ requestId: live.id }} highlightCommentId={highlightCommentId} headless />
+        <EngageComments target={{ requestId: live.id }} ownerId={live.author.id} highlightCommentId={highlightCommentId} headless />
       </DetailComments>
       <VersionRestoreToast contentId={live.id} />
       </article>

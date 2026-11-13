@@ -98,7 +98,7 @@ export function EngageShare({ target, label }: { target: ShareModalTarget; label
 }
 
 /** Yorum bölümü: başvuru sayfasında yorumlar GÖNDERİNİN kendisine aittir (üye değilse yazma kapalı + nedeni). */
-export function EngageComments({ target, highlightCommentId, headless }: { target: CommentTarget; highlightCommentId?: string | null; headless?: boolean }) {
+export function EngageComments({ target, highlightCommentId, headless, ownerId }: { target: CommentTarget; highlightCommentId?: string | null; headless?: boolean; /** İçeriğin yazarı: yorum sabitleme + "Yazar" rozeti (yalnız içeriğin kendi yorumlarında; başvuru/alıntı gönderisinde yok). */ ownerId?: string | null }) {
   const { t } = useTranslation();
   const scope = usePostScope();
   const quoteScope = useQuoteScope();
@@ -107,5 +107,5 @@ export function EngageComments({ target, highlightCommentId, headless }: { targe
     const disabledReason = scope.mode === "open" ? undefined : scope.mode === "join" ? t("communities.post.engage.joinToComment") : t("communities.post.engage.closed");
     return <CommentSection target={{ communityPostId: scope.post.id }} disabledReason={disabledReason} highlightCommentId={highlightCommentId ?? null} headless={headless} />;
   }
-  return <CommentSection target={target} highlightCommentId={highlightCommentId ?? null} headless={headless} />;
+  return <CommentSection target={target} ownerId={ownerId ?? null} highlightCommentId={highlightCommentId ?? null} headless={headless} />;
 }

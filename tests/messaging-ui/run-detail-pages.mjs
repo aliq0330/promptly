@@ -117,14 +117,15 @@ await scenario("2c. prompt: çıktı görseli bantta kendi oranında, kırpılma
 }, { viewport: { width: 390, height: 844 } });
 
 // 3 — yorumlar kısa açılır (3), 'Tümünü gör' hepsini açar ve 'Daha az göster' geri toplar; yeni yorum yazınca hepsi açık
-await scenario("3. yorumlar: ilk 3 görünür, 'Tümünü gör' dördüncüyü açar, 'Daha az göster' toplar", "prompt", async ({ page }) => {
+// Varsayılan sıra EN YENİ (docs/history/385-*): ilk üç = Mert · Selin · Elif; gizli kalan en eski (Deniz).
+await scenario("3. yorumlar: en yeni 3 görünür, 'Tümünü gör' en eskiyi açar, 'Daha az göster' toplar", "prompt", async ({ page }) => {
   const section = page.locator("#comments");
   await section.getByText("Elif:").waitFor();
-  assert.equal(await section.getByText("Mert:").count(), 0, "4th comment hidden at first");
+  assert.equal(await section.getByText("Deniz:").count(), 0, "oldest comment hidden at first");
   await section.getByRole("button", { name: /Tümünü gör/ }).click();
-  await section.getByText("Mert:").waitFor();
+  await section.getByText("Deniz:").waitFor();
   await section.getByRole("button", { name: "Daha az göster" }).click();
-  assert.equal(await section.getByText("Mert:").count(), 0);
+  assert.equal(await section.getByText("Deniz:").count(), 0);
 });
 await scenario("3b. yorum yazınca konu tamamen açılır ve yorum alanı satırı doldurur (Gönder yan yana, taşmaz)", "prompt", async ({ page }) => {
   const section = page.locator("#comments");

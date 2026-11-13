@@ -6,6 +6,7 @@ import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import {
+  countNewComments,
   deleteComment,
   fetchCommentThread,
   fetchCommentThreadPage,
@@ -21,7 +22,9 @@ import {
   updateCommentRating,
   postCommentOnSpace,
   postCommentOnQuote,
+  setCommentPinned,
 } from "@/lib/supabase/comments";
+import { byCreatedAsc, compareTopLevel, DEFAULT_COMMENT_SORT, type CommentSort } from "@/lib/comment-sort";
 import { removeCommentPhotos } from "@/lib/supabase/comment-media";
 import type { CommentExtras } from "@/lib/supabase/comments";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -59,7 +62,20 @@ const HIGHLIGHT_DURATION_MS = 2500;
  */
 export function useCommentThread(
   target: CommentTarget,
-  { highlightCommentId = null, spaceOwnerId = null, onChange }: { highlightCommentId?: string | null; /** Space yorumlarında: sahibi kendini puanlayamaz. */ spaceOwnerId?: string | null; /** Yorum/puan eklendi, değişti ya da silindi (Space puan özeti yeniden okunsun diye). */ onChange?: () => void } = {},
+  {
+    highlightCommentId = null,
+    spaceOwnerId = null,
+    contentOwnerId = null,
+    onChange,
+  }: {
+    highlightCommentId?: string | null;
+    /** Space yorumlarında: sahibi kendini puanlayamaz. */
+    spaceOwnerId?: string | null;
+    /** Prompt/istek/workflow/ayar paketi yazarı (docs/history/385-*): yorumu sabitleyebilir, yorumlarında "Yazar" rozeti çıkar. Verilmezse sabitleme yüzeyi yoktur. */
+    contentOwnerId?: string | null;
+    /** Yorum/puan eklendi, değişti ya da silindi (Space puan özeti yeniden okunsun diye). */
+    onChange?: () => void;
+  } = {},
 ) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -75,6 +91,10 @@ export function useCommentThread(
   const editExtras = useCommentExtras();
   // The thread opens short (first few comments) so a long discussion never pushes related content out of reach; a jumped-to comment or the viewer's own new comment opens it all.
   const [showAll, setShowAll] = useState(Boolean(highlightCommentId));
+  // Üst düzey yorumların sırası (docs/history/385-*): varsayılan en yeni üstte; sabit yorum her sıralamada başta; yanıtlar hep eskiden yeniye.
+  const [sort, setSort] = useState<CommentSort>(DEFAULT_COMMENT_SORT);
+  const [newCount, setNewCount] = useState(0);
+  const [pinError, setPinError] = useState<string | null>(null);
   const [postError, setPostError] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [comments, setComments] = useState<PromptComment[]>([]);
@@ -186,8 +206,9 @@ export function useCommentThread(
     setLoaded(false);
     setLoadFailed(false);
     setMoreFailed(false);
+    setNewCount(0);
     (async () => {
-      const first = await fetchCommentThreadPage(scopeRef.current, 0);
+      const first = await fetchCommentThreadPage(scopeRef.current, 0, undefined, sort);
       let result = first.comments;
       // Space'te kişi başına tek puan: kişinin kendi puanlı yorumu başka bir sayfada olsa da yüklenir.
       if (targetKind === "space" && user) {
@@ -247,7 +268,7 @@ export function useCommentThread(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetKind, targetId, user?.id, highlightCommentId, reloadKey]);
+  }, [targetKind, targetId, user?.id, highlightCommentId, reloadKey, sort]);
 
   /** The next page of top-level comments (with their replies), appended — also by itself when the end of the list scrolls into view. */
   async function loadMoreComments() {
@@ -256,7 +277,7 @@ export function useCommentThread(
     setLoadingMore(true);
     setMoreFailed(false);
     try {
-      const page = await fetchCommentThreadPage(scopeRef.current, nextOffset);
+      const page = await fetchCommentThreadPage(scopeRef.current, nextOffset, undefined, sort);
       setComments((prev) => mergeComments(prev, page.comments));
       setNextOffset(page.nextOffset);
     } catch (err) {
@@ -294,8 +315,8 @@ export function useCommentThread(
     window.addEventListener(PROMPT_COMMENT_POSTED_EVENT, onPosted);
     return () => window.removeEventListener(PROMPT_COMMENT_POSTED_EVENT, onPosted);
   }, [targetKind, targetId]);
-  // Oldest first, like the server order — pages and the viewer's own new comments merge into one chronological thread.
-  const sorted = useMemo(() => [...comments].sort(byCreated), [comments]);
+  // Replies are always oldest first; the top level follows the chosen sort (pinned first) — pages and the viewer's own new comments merge into one list.
+  const sorted = useMemo(() => [...comments].sort(byCreatedAsc), [comments]);
   const childrenByParent = useMemo(() => {
     const map = new Map<string, PromptComment[]>();
     for (const comment of sorted) {
@@ -306,7 +327,27 @@ export function useCommentThread(
     }
     return map;
   }, [sorted]);
-  const topLevel = useMemo(() => sorted.filter((c) => !c.parentId), [sorted]);
+  const topLevel = useMemo(() => sorted.filter((c) => !c.parentId).sort(compareTopLevel(sort)), [sorted, sort]);
+  // "N yeni yorum" (docs/history/385-*): başkalarının yüklü listeden SONRA yazdıkları; pin yorumlarındaki gibi 45 sn'de bir yoklanır (Realtime yok), sekme gizliyken beklenir.
+  const latestAtRef = useRef("");
+  useEffect(() => {
+    latestAtRef.current = comments.reduce((max, c) => (c.createdAt > max ? c.createdAt : max), "");
+  }, [comments]);
+  useEffect(() => {
+    if (!loaded || loadFailed) return;
+    let cancelled = false;
+    const poll = async () => {
+      if (document.visibilityState !== "visible" || !latestAtRef.current) return;
+      const count = await countNewComments(scopeRef.current, latestAtRef.current, user?.id ?? null).catch(() => 0);
+      if (!cancelled) setNewCount(count);
+    };
+    const id = window.setInterval(() => void poll(), 45_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [loaded, loadFailed, user?.id, targetKind, targetId]);
+  const canPin = Boolean(contentOwnerId) && user?.id === contentOwnerId && (targetKind === "prompt" || targetKind === "request" || targetKind === "workflow" || targetKind === "preset");
   const ratingEnabled = targetKind === "space";
   // Kişi başına tek puan: kullanıcının zaten puanlı (silinmemiş) yorumu varsa yeni yorumda puan verilmez, mevcut puan yorumundaki yıldızlardan değişir.
   const myRatedComment = useMemo(() => (user ? comments.find((c) => c.author.id === user.id && c.rating && !c.deletedAt) ?? null : null), [comments, user]);
@@ -475,6 +516,24 @@ export function useCommentThread(
     }
   }
 
+  /** İçerik sahibi: üst düzey yorumu sabitler / sabitlemeyi kaldırır (iyimser; hata olursa geri alınır). Hedef başına tek sabit: öncekinin sabiti de kalkar. */
+  async function togglePin(id: string) {
+    if (!canPin) return;
+    const target = comments.find((c) => c.id === id);
+    if (!target || target.parentId || target.deletedAt) return;
+    const pin = !target.pinnedAt;
+    const snapshot = comments;
+    const stamp = new Date().toISOString();
+    setPinError(null);
+    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, pinnedAt: pin ? stamp : null } : pin ? { ...c, pinnedAt: null } : c)));
+    try {
+      await setCommentPinned(id, pin);
+    } catch (err) {
+      setComments(snapshot);
+      setPinError(err instanceof Error ? err.message : t("comments.pinFailed"));
+    }
+  }
+
   /** Kendi puanlı yorumunun yıldızlarını değiştirir (iyimser; hata olursa geri alınır). */
   async function rateComment(id: string, rating: number) {
     if (!user || rating < 1 || rating > 5) return;
@@ -525,6 +584,8 @@ export function useCommentThread(
     editExtras,
     attachmentStateFor,
     worksVoteOf: targetKind === "prompt" ? (authorId: string) => worksVotes.get(authorId) : undefined,
+    contentOwnerId,
+    onTogglePin: canPin ? togglePin : undefined,
   };
 
 
@@ -557,10 +618,13 @@ export function useCommentThread(
     moreFailed,
     loadFailed,
     retryLoad: () => setReloadKey((n) => n + 1),
+    sort,
+    setSort,
+    newCount,
+    showNewComments: () => setReloadKey((n) => n + 1),
+    pinError,
   };
 }
-
-const byCreated = (a: PromptComment, b: PromptComment) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
 
 /** Adds the comments not in the list yet (the list's own copies — edited, liked — win). */
 function mergeComments(current: PromptComment[], incoming: PromptComment[]): PromptComment[] {
