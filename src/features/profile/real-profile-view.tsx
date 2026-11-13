@@ -61,7 +61,7 @@ export function RealProfileView() {
   if (status === "not-found" || !profile) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("profile.profileNotFoundTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("profile.profileNotFoundTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">
           {t("profile.profileNotFoundBody")}
         </p>

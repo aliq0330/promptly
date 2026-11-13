@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogIn } from "@/components/icons/log-in";
 import { Button } from "@/components/ui/button";
-import { FormIconBadge, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { FormIconBadge, fieldLabelClassName, Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
@@ -105,7 +105,7 @@ export default function LoginPage() {
           <label htmlFor="login-email" className={fieldLabelClassName}>
             {t("auth.emailOrUsername")}
           </label>
-          <input
+          <Input
             id="login-email"
             type="text"
             required
@@ -114,7 +114,6 @@ export default function LoginPage() {
             autoCorrect="off"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className={fieldInputClassName}
           />
         </div>
         <div>
@@ -126,14 +125,13 @@ export default function LoginPage() {
               {t("auth.forgotPassword")}
             </Link>
           </div>
-          <input
+          <Input
             id="login-password"
             type="password"
             required
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className={fieldInputClassName}
           />
         </div>
       </div>

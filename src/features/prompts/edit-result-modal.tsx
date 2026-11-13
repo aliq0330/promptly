@@ -8,6 +8,7 @@ import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
 import { updatePromptResult } from "@/lib/supabase/prompt-results";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptResult } from "@/types";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** Same free-text "tool" suggestions as `AddResultModal` — one list, shared by create and edit. */
 const TOOL_SUGGESTIONS = [
@@ -75,7 +76,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
         className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-4">
           <h2 id="edit-result-modal-title" className="text-body font-semibold text-text">
             {t("result.modalEditTitle")}
           </h2>
@@ -83,7 +84,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
+            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
           >
             <X size={18} />
           </button>

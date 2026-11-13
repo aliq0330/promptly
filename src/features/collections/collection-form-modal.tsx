@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Standalone create/edit modal — used from the profile page's "+ Koleksiyon
@@ -36,7 +37,7 @@ export function CollectionFormModal({
           <h2 id="collection-form-modal-title" className="min-w-0 text-body font-semibold text-text">
             {isEdit ? t("collection.editTitle") : t("collection.createNewTitle")}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
             <X size={18} />
           </button>
         </div>

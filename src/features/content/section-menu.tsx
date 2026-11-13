@@ -6,6 +6,7 @@ import { Check } from "@/components/icons/check";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Ortak sade kontrol satırı simge düğmesi (docs/history/231-*, 232-*): arama · filtre · görünüm · "+". */
 export const CONTROL_ICON_BUTTON =
@@ -143,12 +144,12 @@ export function SectionMenu<K extends string>({
       )}
       {open && !wide && (
         <Modal onClose={() => setOpen(false)} labelledBy="section-menu-title" variant="sheet">
-          <div role="document" onClick={(event) => event.stopPropagation()} className="max-h-[85dvh] w-full overflow-y-auto rounded-t-xl bg-surface px-4 pb-6 pt-3 shadow-pop">
-            <h2 id="section-menu-title" className="px-3 pb-2 text-h3 font-semibold text-text">
+          <DialogShell role="document" className="max-h-[85dvh] w-full overflow-y-auto rounded-t-xl bg-surface px-4 pb-6 pt-3 shadow-pop">
+            <h2 id="section-menu-title" className="px-3 pb-2 text-h3 font-bold text-text">
               {title}
             </h2>
             {list}
-          </div>
+          </DialogShell>
         </Modal>
       )}
     </div>

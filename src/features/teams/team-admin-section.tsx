@@ -17,7 +17,7 @@ import Link from "next/link";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
@@ -250,13 +250,13 @@ function GeneralSection({ ctx }: { ctx: TeamCtx }) {
           <label htmlFor="team-set-name" className={fieldLabelClassName}>
             {t("tm.create.name")}
           </label>
-          <input id="team-set-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} className={fieldInputClassName} />
+          <Input id="team-set-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
         </div>
         <div>
           <label htmlFor="team-set-desc" className={fieldLabelClassName}>
             {t("tm.create.description")}
           </label>
-          <textarea id="team-set-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-small" />
+          <textarea id="team-set-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-small" />
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.create.tone")}</span>
@@ -292,7 +292,7 @@ function PolicyRow({ label, hint, children }: { label: string; hint?: string; ch
 
 function PillSelect<K extends string>({ label, value, options, onChange }: { label: string; value: K; options: { key: K; label: string }[]; onChange: (key: K) => void }) {
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value as K)} aria-label={label} className="h-9 max-w-[11rem] rounded-full border border-border bg-background pl-3.5 pr-2 text-caption font-bold text-text">
+    <select value={value} onChange={(event) => onChange(event.target.value as K)} aria-label={label} className="h-9 max-w-[11rem] rounded-full border border-border bg-background pl-4 pr-2 text-caption font-bold text-text">
       {options.map((option) => (
         <option key={option.key} value={option.key}>
           {option.label}
@@ -339,7 +339,7 @@ function PoliciesSection({ ctx, stacked = false }: { ctx: TeamCtx; stacked?: boo
   };
   const num = (key: "inviteLinkTtlDays") => String(value(key));
   const roleOptions = <R extends "owner" | "admin" | "editor">(keys: R[]) => keys.map((key) => ({ key, label: t(`tm.role.${key}` as "tm.role.owner") }));
-  const card = "rounded-xl border border-border-soft bg-surface px-4 pb-1 pt-3";
+  const card = "rounded-lg border border-border-soft bg-surface px-4 pb-1 pt-3";
   const cardTitle = "mb-1 border-b border-border-soft pb-2 text-body font-bold text-text";
   return (
     <div className="space-y-4" data-testid="team-policies">

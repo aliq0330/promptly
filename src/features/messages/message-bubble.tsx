@@ -38,6 +38,7 @@ import { RoleBadge } from "@/features/groups/role-badge";
 import { communityHref } from "@/lib/communities";
 import { StoryReplyCard } from "@/features/stories/story-reply-card";
 import { gifIdFromPath, giphyUrl } from "@/lib/giphy";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** A message's stored photos (signed URLs resolved lazily) + the fullscreen viewer they open. */
 function BubbleImages({ attachments, isMe }: { attachments: MessageAttachment[]; isMe: boolean }) {
@@ -278,7 +279,7 @@ export function MessageBubble({
             setEmojiOpen((prev) => !prev);
             setSheetOpen(false);
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+          className={iconButtonClassName(false, "h-8 w-8")}
         >
           <SmilePlus size={16} />
         </button>
@@ -296,7 +297,7 @@ export function MessageBubble({
             event.stopPropagation();
             openSheet();
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+          className={iconButtonClassName(false, "h-8 w-8")}
         >
           <MoreVertical size={16} />
         </button>
@@ -389,7 +390,7 @@ export function MessageBubble({
           </span>
         )}
         {isDeleted ? (
-          <div className="max-w-[75%] rounded-xl bg-surface-soft/60 px-3.5 py-2 text-small italic text-text-muted">
+          <div className="max-w-[75%] rounded-xl bg-surface-soft/60 px-4 py-2 text-small italic text-text-muted">
             {t("messages.thisMessageWasDeleted")}
           </div>
         ) : isEditingHere ? (
@@ -399,7 +400,7 @@ export function MessageBubble({
               onChange={(event) => actions.onEditDraftChange(event.target.value)}
               rows={2}
               autoFocus
-              className="w-full resize-none rounded-lg bg-surface-soft px-3.5 py-2 text-small text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full resize-none rounded-lg bg-surface-soft px-4 py-2 text-small text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
             <div className="flex items-center gap-2">
               <Button
@@ -447,7 +448,7 @@ export function MessageBubble({
               <Link
                 href={communityHref(message.conversationId)}
                 data-announcement-card
-                className="flex w-fit max-w-full flex-col gap-1 self-start rounded-xl bg-surface-soft px-4 py-3.5 text-small text-text transition-colors hover:bg-surface-elevated"
+                className="flex w-fit max-w-full flex-col gap-1 self-start rounded-xl bg-surface-soft px-4 py-4 text-small text-text transition-colors hover:bg-surface-elevated"
               >
                 <span className="flex items-center gap-2 text-micro font-semibold uppercase tracking-[0.08em] text-primary">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated">
@@ -464,7 +465,7 @@ export function MessageBubble({
             {displayBody && !message.announcementId && (
               <div
                 className={cn(
-                  "flex w-fit max-w-full flex-wrap items-end gap-x-2.5 rounded-xl px-3.5 py-2 text-[15px] leading-[1.4]",
+                  "flex w-fit max-w-full flex-wrap items-end gap-x-3 rounded-xl px-4 py-2 text-[15px] leading-[1.4]",
                   isMe ? "self-end bg-primary text-primary-foreground" : "self-start bg-surface-soft text-text",
                   groupEnd && (isMe ? "rounded-br-md" : "rounded-bl-md"),
                 )}

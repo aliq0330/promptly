@@ -63,7 +63,7 @@ export function TagsDiscoverView() {
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
       <div>
-        <h1 className="mb-1 text-h1 font-semibold text-text">{t("tag.discoverTitle")}</h1>
+        <h1 className="mb-1 text-h1 font-bold text-text">{t("tag.discoverTitle")}</h1>
         <p className="text-small text-text-muted">
           {t("tag.discoverIntro")}
         </p>
@@ -90,7 +90,7 @@ export function TagsDiscoverView() {
             <section className="space-y-3">
               <div className="flex items-center gap-1.5">
                 <Hash size={16} className="text-primary" />
-                <h2 className="text-h3 font-semibold text-text">{t("tag.followedHeading")}</h2>
+                <h2 className="text-h3 font-bold text-text">{t("tag.followedHeading")}</h2>
               </div>
               <TagChipRow tags={followed.tags} emptyMessage="" />
             </section>
@@ -99,7 +99,7 @@ export function TagsDiscoverView() {
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <Flame size={16} className="text-primary" />
-              <h2 className="text-h3 font-semibold text-text">{t("tag.popularHeading")}</h2>
+              <h2 className="text-h3 font-bold text-text">{t("tag.popularHeading")}</h2>
             </div>
             <TagChipRow tags={popular} emptyMessage={t("tag.noUsageData")} />
           </section>
@@ -107,7 +107,7 @@ export function TagsDiscoverView() {
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <TrendingUp size={16} className="text-primary" />
-              <h2 className="text-h3 font-semibold text-text">{t("tag.risingHeading")}</h2>
+              <h2 className="text-h3 font-bold text-text">{t("tag.risingHeading")}</h2>
             </div>
             {trending.length === 0 ? (
               <p className="text-small text-text-muted">
@@ -129,14 +129,14 @@ export function TagsDiscoverView() {
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <Hash size={16} className="text-primary" />
-              <h2 className="text-h3 font-semibold text-text">{t("tag.newHeading")}</h2>
+              <h2 className="text-h3 font-bold text-text">{t("tag.newHeading")}</h2>
             </div>
             <TagChipRow tags={newest} emptyMessage={t("tag.noNewTags")} />
           </section>
 
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-h3 font-semibold text-text">{t("tag.allHeading", { count: allTags.length })}</h2>
+              <h2 className="text-h3 font-bold text-text">{t("tag.allHeading", { count: allTags.length })}</h2>
               <div className="flex gap-1.5">
                 {(["popular", "newest", "az"] as SortMode[]).map((mode) => (
                   <button
@@ -181,7 +181,7 @@ function TagResultsSection({ title, tags, emptyMessage }: { title?: string; tags
   const { t } = useTranslation();
   return (
     <div className="space-y-3">
-      {title && <h2 className="text-h3 font-semibold text-text">{title}</h2>}
+      {title && <h2 className="text-h3 font-bold text-text">{title}</h2>}
       {tags.length === 0 ? (
         <p className="py-6 text-center text-small text-text-muted">{emptyMessage}</p>
       ) : (

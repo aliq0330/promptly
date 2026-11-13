@@ -39,7 +39,7 @@ const seedBob = (db, opts = {}) => db.addConv(CONV, U.bob, { texts: ["merhaba", 
 // 1
 await scenario("1. Sohbet yokken boş durum 'Sohbet başlat' gösterir ve aynı modalı açar", async ({ page }) => {
   await openList(page);
-  await page.locator("p:visible", { hasText: "Henüz sohbetin yok" }).waitFor();
+  await page.locator("p:visible, h2:visible", { hasText: "Henüz sohbetin yok" }).waitFor();
   const btn = page.locator("button:visible", { hasText: "Sohbet başlat" });
   assert.match(await btn.getAttribute("class"), /bg-primary/);
   await btn.click();
@@ -183,7 +183,7 @@ await scenario("10. Sohbeti sil: yalnızca kendi listen; karşı taraf ve mesajl
   assert.equal(calls(db, "conversation_members", "DELETE").length, 0, "no membership row is deleted");
   await openList(page);
   assert.deepEqual(await visibleRowNames(page), []);
-  await page.locator("p:visible", { hasText: "Henüz sohbetin yok" }).waitFor();
+  await page.locator("p:visible, h2:visible", { hasText: "Henüz sohbetin yok" }).waitFor();
   // a new message brings it back, showing only the new message
   db.addMessage(CONV, U.bob.id, "geri döndüm");
   await openList(page);
@@ -370,7 +370,7 @@ for (const [label, viewport] of [["mobil 390x800", { width: 390, height: 800 }],
 await scenario("17. İngilizce: menü, modal ve boş durum çevrilmiş", async ({ page, context }) => {
   await context.addInitScript(() => { try { localStorage.setItem("promptly-language", "en"); } catch {} });
   await page.goto(`${BASE}/messages`);
-  await page.locator("p:visible", { hasText: "You have no chats yet" }).waitFor();
+  await page.locator("p:visible, h2:visible", { hasText: "You have no chats yet" }).waitFor();
   await page.locator("button:visible", { hasText: "Start a chat" }).click();
   await dlg(page).getByRole("heading", { name: "New chat" }).waitFor();
   await dlg(page).getByPlaceholder("Search by username or name").waitFor();

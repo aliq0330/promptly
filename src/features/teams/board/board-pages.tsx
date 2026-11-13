@@ -389,7 +389,7 @@ function PageFooterActions({ actions, onOverview, onClosed }: { actions: PageAct
             actions.create();
           }}
           data-board-page-new=""
-          className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 text-small font-bold text-primary hover:bg-surface-soft"
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-bold text-primary hover:bg-surface-soft"
         >
           <Plus size={20} aria-hidden />
           {t("tb.pages.new")}
@@ -402,7 +402,7 @@ function PageFooterActions({ actions, onOverview, onClosed }: { actions: PageAct
           onOverview();
         }}
         data-board-overview-open=""
-        className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 text-small font-semibold text-text hover:bg-surface-soft"
+        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-semibold text-text hover:bg-surface-soft"
       >
         <LayoutGrid size={20} aria-hidden />
         {t("tb.pages.all")}
@@ -513,7 +513,7 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
   // Akışta çizilir (iç kaydırma yok): içerik kadar uzar, sayfa kayar. Alt menü boşluğunu sayfanın kendi alt dolgusu verir (docs/history/370-*).
   return (
     <div className="flex flex-col bg-background pb-6" data-testid="board-overview">
-      <header className="flex shrink-0 flex-wrap items-center gap-2.5 px-4 pb-3 pt-4 md:px-6">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 px-4 pb-3 pt-4 md:px-6">
         <div className="w-full min-w-0 md:w-auto md:flex-1">
           <h2 className="font-display text-h2 font-extrabold text-text">{t("tb.overview.title")}</h2>
           <p className="text-small text-text-secondary">{t("tb.overview.sub", { count: team.pages.length })}</p>
@@ -530,11 +530,11 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
         )}
       </header>
       <div className="px-4 md:px-6">
-        <ul className="grid grid-cols-2 gap-2.5 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
           {team.pages.map((page, index) => {
             const current = page.id === team.currentId;
             return (
-              <li key={page.id} data-board-page={page.id} className={cn("space-y-2.5 rounded-lg bg-surface p-2.5 md:p-3", current ? "border-2 border-primary" : "border border-border-soft")}>
+              <li key={page.id} data-board-page={page.id} className={cn("space-y-3 rounded-lg bg-surface p-2.5 md:p-3", current ? "border-2 border-primary" : "border border-border-soft")}>
                 <button type="button" onClick={() => { onClose(); if (!current) actions.open(page.id); }} className="block w-full" aria-label={t("tb.overview.open", { name: page.title })}>
                   <BoardThumb spaceId={page.id} className="h-28 w-full md:h-44" />
                 </button>
@@ -560,7 +560,7 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
             </li>
           )}
         </ul>
-        <p className="mt-4 rounded-xl border border-primary/25 bg-primary-soft px-3.5 py-3 text-small text-text-secondary">{t("tb.overview.note")}</p>
+        <p className="mt-4 rounded-xl border border-primary/25 bg-primary-soft px-4 py-3 text-small text-text-secondary">{t("tb.overview.note")}</p>
       </div>
     </div>
   );

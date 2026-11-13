@@ -13,6 +13,7 @@ import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Below `md` the primary chip row turns into editorial tabs: flat, 42px,
@@ -31,7 +32,7 @@ const MOBILE_TABS =
 /** One titled block of the filter sheet. */
 export function SheetSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="space-y-2.5">
+    <section className="space-y-3">
       <h3 className="text-label font-semibold text-text">{title}</h3>
       {children}
     </section>
@@ -106,14 +107,14 @@ export function ListFilterSheet({
     <Modal onClose={onClose} labelledBy={titleId}>
       <DialogShell className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
-          <h2 id={titleId} className="text-h3 font-semibold text-text">
+          <h2 id={titleId} className="text-h3 font-bold text-text">
             {t("toolbar.filterTitle")}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-10 w-10")}
           >
             <X size={18} />
           </button>
@@ -277,7 +278,7 @@ export function ListToolbar({
             onClick={() => setOpen(true)}
             aria-haspopup="dialog"
             aria-label={filterLabel}
-            className="h-11 gap-2 rounded-lg px-3.5 md:h-10"
+            className="h-11 gap-2 rounded-lg px-4 md:h-10"
           >
             <Filter size={16} aria-hidden />
             {t("toolbar.filter")}

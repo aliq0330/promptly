@@ -136,7 +136,7 @@ export function QuotePage() {
             )}
           </div>
           {quote.note && (
-            <p data-quote-note className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-3.5 py-3 text-body text-text">
+            <p data-quote-note className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-4 py-3 text-body text-text">
               {quote.note}
             </p>
           )}

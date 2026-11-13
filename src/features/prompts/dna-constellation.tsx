@@ -94,7 +94,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
     <div className="space-y-3">
       <div
         ref={stageRef}
-        className="relative w-full overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card"
+        className="relative w-full overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card"
         style={{ height: height || 280 }}
         data-dna-constellation
       >

@@ -117,7 +117,7 @@ export function MessageActionMenu({
       className={cn(
         "w-60 max-w-full origin-top overflow-hidden rounded-xl bg-surface-elevated/90 py-1.5 shadow-pop backdrop-blur-xl animate-pop-in",
         // Larger touch targets than the old small popover: rows and icons are sized here once, not per item.
-        "[&_[role=menuitem]]:gap-3.5 [&_[role=menuitem]]:px-4 [&_[role=menuitem]]:py-3 [&_[role=menuitem]]:text-body [&_[role=menuitem]_svg]:size-5",
+        "[&_[role=menuitem]]:gap-4 [&_[role=menuitem]]:px-4 [&_[role=menuitem]]:py-3 [&_[role=menuitem]]:text-body [&_[role=menuitem]_svg]:size-5",
       )}
     >
       <div className="px-4 pb-1 pt-2 text-caption font-medium uppercase tracking-wide text-text-muted">

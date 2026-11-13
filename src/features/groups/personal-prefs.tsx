@@ -112,7 +112,7 @@ export function LeaveCommunitySection({
     return (
       <>
         {outcome === "must_transfer" ? (
-          <div className="space-y-2 px-4 py-3.5">
+          <div className="space-y-2 px-4 py-4">
             <p className="text-small text-text-secondary">{t("groups.about.ownerMustTransfer")}</p>
             <Button type="button" variant="outline" size="sm" onClick={onGoToMembers}>
               {t("groups.about.goTransfer")}
@@ -123,7 +123,7 @@ export function LeaveCommunitySection({
             type="button"
             onClick={() => setConfirm(true)}
             data-leave-community
-            className="flex h-14 w-full items-center gap-3.5 px-4 text-left text-body text-danger transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            className="flex h-14 w-full items-center gap-4 px-4 text-left text-body text-danger transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft" aria-hidden>
               <LogOut size={18} />
@@ -131,7 +131,7 @@ export function LeaveCommunitySection({
             {t("groups.about.leave")}
           </button>
         )}
-        {outcome !== "must_transfer" && <p className="px-4 pb-3.5 text-caption leading-relaxed text-text-muted">{t("groups.about.leaveAlsoChat")}</p>}
+        {outcome !== "must_transfer" && <p className="px-4 pb-4 text-caption leading-relaxed text-text-muted">{t("groups.about.leaveAlsoChat")}</p>}
         {confirm && (
           <LeaveCommunityDialog groupId={group.id} name={group.name} role={group.myRole} memberCount={group.memberCount} onLeft={onLeft} onClose={() => setConfirm(false)} />
         )}

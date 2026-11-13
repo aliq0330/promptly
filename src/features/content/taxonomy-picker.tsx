@@ -250,7 +250,7 @@ function CategoryRow({
       aria-controls={`taxonomy-panel-${category.id}`}
       data-taxonomy-category={category.id}
       className={cn(
-        "flex min-h-12 w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary @md:gap-3 @md:px-2.5",
+        "flex min-h-12 w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary @md:gap-3 @md:px-2.5",
         open ? "bg-surface-soft" : "hover:bg-surface-soft",
       )}
     >
@@ -321,7 +321,7 @@ function Leaf({ selected, onClick, subtle, children, ...rest }: { selected: bool
       onClick={onClick}
       {...rest}
       className={cn(
-        "flex min-h-11 w-full items-center gap-2.5 rounded-md px-2 py-2 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary @md:min-h-12 @md:px-2.5",
+        "flex min-h-11 w-full items-center gap-3 rounded-md px-2 py-2 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary @md:min-h-12 @md:px-2.5",
         selected ? "bg-primary-soft font-medium text-text" : cn("hover:bg-surface-soft hover:text-text", subtle ? "text-text-muted" : "text-text-secondary"),
       )}
     >

@@ -133,12 +133,12 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
       </AsideSection>
       <AsideSection id="workflow-info-title" title={t("workflow.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-label">
-          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5">
             <dt className="text-text-muted">{t("workflow.sidebarSteps")}</dt>
             <dd className="font-semibold tabular-nums text-text">{steps.length}</dd>
           </div>
           {category && (
-            <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
               <dt className="text-text-muted">{t("workflow.sidebarType")}</dt>
               <dd className="truncate font-semibold text-text">{category}</dd>
             </div>

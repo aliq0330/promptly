@@ -44,6 +44,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { CommunityCategory } from "@/types";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 const SORTS: CommunitySort[] = ["popular", "newest", "active"];
 
@@ -319,7 +320,7 @@ export function DiscoverView({
         )}
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
+      <ScrollRow className="flex gap-1.5 pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
         {[null, ...COMMUNITY_CATEGORIES].map((value) => (
           <button
             key={value ?? "all"}
@@ -334,7 +335,7 @@ export function DiscoverView({
             {value ? t(CATEGORY_LABEL_KEYS[value]) : t("communities.filter.all")}
           </button>
         ))}
-      </div>
+      </ScrollRow>
 
       {searching && <h2 className="text-label font-semibold text-text">{t("communities.search.resultsTitle")}</h2>}
 

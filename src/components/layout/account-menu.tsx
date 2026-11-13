@@ -65,7 +65,7 @@ const PANEL_CLASS =
   "absolute right-0 top-11 z-40 w-[min(15rem,calc(100vw-1.5rem))] md:w-[min(18.5rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-lg border border-border-soft bg-surface-elevated shadow-pop animate-pop-in";
 
 const ITEM_CLASS =
-  "flex min-h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-left md:min-h-11 md:gap-3 md:px-3 text-small font-medium text-text transition-colors duration-200 hover:bg-surface-soft focus-visible:bg-surface-soft";
+  "flex min-h-9 w-full items-center gap-3 rounded-lg px-2.5 text-left md:min-h-11 md:gap-3 md:px-3 text-small font-medium text-text transition-colors duration-200 hover:bg-surface-soft focus-visible:bg-surface-soft";
 
 function MenuGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -175,7 +175,7 @@ export function AccountMenu() {
             href={ownProfileHref}
             onClick={close}
             aria-label={t("account.myProfile")}
-            className="flex items-center gap-2.5 border-b border-border-soft px-3 py-2.5 transition-colors duration-200 hover:bg-surface-soft md:gap-3 md:p-4"
+            className="flex items-center gap-3 border-b border-border-soft px-3 py-2.5 transition-colors duration-200 hover:bg-surface-soft md:gap-3 md:p-4"
           >
             <Avatar src={profile.avatarUrl} alt="" size={40} />
             <div className="min-w-0 flex-1">
@@ -258,7 +258,7 @@ export function AccountMenu() {
           </div>
 
           {/* Rarely used links as one quiet text row (developers + legal, docs/history/300-*, 301-*): phones have no sidebar, so they live here. */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-soft px-3.5 py-2.5 md:px-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-soft px-4 py-2.5 md:px-4">
             <FooterLink href="/developers" label={t("dev.title")} onNavigate={close} />
             <div role="group" aria-label={t("legal.groupTitle")} className="contents">
               <FooterLink href="/terms" label={t("legal.termsTitle")} onNavigate={close} />

@@ -29,7 +29,7 @@ export function UndoBar({ placement, aboveNav = true }: { placement: "inline" | 
       data-undo-bar={placement}
       {...(placement === "fixed" ? { "data-undo-fixed": "" } : {})}
       className={cn(
-        "flex items-center gap-2.5 rounded-full bg-text py-1 pl-4 pr-1.5 text-background",
+        "flex items-center gap-3 rounded-full bg-text py-1 pl-4 pr-1.5 text-background",
         placement === "inline" && "mx-2.5 mb-2",
         placement === "fixed" &&
           cn(

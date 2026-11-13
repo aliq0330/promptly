@@ -85,7 +85,7 @@ function ActivityList() {
             type="button"
             aria-pressed={filter === f.key}
             onClick={() => setFilter(f.key)}
-            className={cn("rounded-full border px-3.5 py-1.5 text-small font-medium transition-colors", filter === f.key ? "border-text bg-text text-background" : "border-border bg-surface text-text-secondary hover:border-border-strong")}
+            className={cn("rounded-full border px-4 py-1.5 text-small font-medium transition-colors", filter === f.key ? "border-text bg-text text-background" : "border-border bg-surface text-text-secondary hover:border-border-strong")}
           >
             {t(f.label)}
           </button>
@@ -105,7 +105,7 @@ function ActivityList() {
           {shown.map((entry) => (
             <li key={entry.id} data-activity={entry.action} data-activity-id={entry.id} className="flex gap-3">
               <Actor entry={entry} />
-              <div className="min-w-0 flex-1 rounded-lg border border-border-soft bg-surface p-3.5">
+              <div className="min-w-0 flex-1 rounded-lg border border-border-soft bg-surface p-4">
                 <p className="text-small text-text">
                   <span className="font-semibold">{entry.actor?.displayName ?? t("spaces.activity.someone")}</span> {activityText(entry)}
                   <span className="text-caption text-text-muted"> · {formatRelativeTime(entry.createdAt, language)}</span>
@@ -240,7 +240,7 @@ function ActivityEventPage({ eventId }: { eventId: string }) {
               autoFocus
               placeholder={t("spaces.activity.notePlaceholder")}
               data-activity-note-input=""
-              className="w-full resize-none rounded-xl border border-border bg-surface px-3 py-2 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
             <div className="flex items-center gap-2">
               <Button type="submit" size="sm" disabled={noteBusy}>
@@ -256,7 +256,7 @@ function ActivityEventPage({ eventId }: { eventId: string }) {
         ) : (
           <>
             {event.authorNote && (
-              <p className="rounded-xl bg-surface-soft px-3.5 py-3 text-small text-text" data-activity-note="">
+              <p className="rounded-xl bg-surface-soft px-4 py-3 text-small text-text" data-activity-note="">
                 <span className="block text-label font-semibold uppercase tracking-[0.06em] text-text-muted">{t("spaces.activity.noteBy", { name: event.actor?.displayName ?? t("spaces.activity.someone") })}</span>
                 {event.authorNote}
               </p>

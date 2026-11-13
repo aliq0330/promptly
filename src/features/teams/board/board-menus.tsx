@@ -221,7 +221,7 @@ export function MovePopover({
           disabled={busy}
           data-board-move-target={page.id}
           onClick={() => void run(async () => page.id)}
-          className="flex min-h-12 w-full items-center gap-2.5 rounded-xl px-2 py-1 text-left hover:bg-surface-soft disabled:opacity-50"
+          className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 py-1 text-left hover:bg-surface-soft disabled:opacity-50"
         >
           <BoardThumb spaceId={page.id} className="h-9 w-14 shrink-0" />
           <span className="min-w-0 flex-1">
@@ -238,7 +238,7 @@ export function MovePopover({
         disabled={busy}
         data-board-move-new=""
         onClick={() => void run(() => (currentPage && !currentPage.isMain ? createBoardInGroup(team.currentId, t("tb.pages.newDefaultName")) : createBoard(team.projectId, t("tb.pages.newDefaultName"), team.fileId ?? "")).then((id) => { team.reload(); return id; }))}
-        className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 text-small font-bold text-primary hover:bg-surface-soft disabled:opacity-50"
+        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-bold text-primary hover:bg-surface-soft disabled:opacity-50"
       >
         <Plus size={20} aria-hidden />
         {t("tb.move.new")}

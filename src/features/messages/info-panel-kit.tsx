@@ -76,7 +76,7 @@ export function InfoIdentity({
   return (
     <div className="flex shrink-0 flex-col items-center px-7 pt-1 text-center">
       {media}
-      <p className="mt-3.5 break-words font-display text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-text" {...(nameAttr ? { [nameAttr]: "" } : {})}>
+      <p className="mt-4 break-words font-display text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-text" {...(nameAttr ? { [nameAttr]: "" } : {})}>
         {name}
       </p>
       {sub && (
@@ -95,7 +95,7 @@ const TILE =
 
 /** Kimliğin altındaki hızlı eylem karoları (Profil · Ara · Sessize al gibi). */
 export function InfoTiles({ children }: { children: ReactNode }) {
-  return <div className="flex shrink-0 gap-2.5 px-4 pt-5">{children}</div>;
+  return <div className="flex shrink-0 gap-3 px-4 pt-5">{children}</div>;
 }
 
 export function InfoTile({
@@ -154,7 +154,7 @@ export function InfoCard({ children, className, ...rest }: { children: ReactNode
 }
 
 const ROW =
-  "flex h-14 w-full items-center gap-3.5 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50";
+  "flex h-14 w-full items-center gap-4 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50";
 
 export function InfoRow({
   icon,

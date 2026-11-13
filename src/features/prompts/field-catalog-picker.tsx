@@ -25,6 +25,7 @@ import { useTranslation, useLanguage } from "@/lib/i18n/language-provider";
 import { catalogText, localizeCatalogField } from "@/lib/generator-field-catalog-en";
 import { GENERATOR_FIELD_TYPE_LABELS } from "./field-type-labels";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * "Alan Ekle" modal, catalog step (the user's "HAZIR KATEGORİ / ALT
@@ -192,7 +193,7 @@ export function FieldCatalogPicker({
       <label
         key={field.id}
         className={cn(
-          "flex items-start gap-2.5 rounded-xl px-3 py-2.5 text-small transition-colors duration-200 ease-soft",
+          "flex items-start gap-3 rounded-xl px-3 py-2.5 text-small transition-colors duration-200 ease-soft",
           used ? "cursor-not-allowed opacity-55" : "cursor-pointer",
           selected ? "bg-primary-soft ring-1 ring-primary/25" : used ? "bg-surface-soft" : "bg-surface-soft hover:bg-primary-soft/60",
         )}
@@ -247,7 +248,7 @@ export function FieldCatalogPicker({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-9 w-9")}
           >
             <X size={18} />
           </button>
@@ -444,7 +445,7 @@ export function FieldCatalogPicker({
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft px-5 py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft px-5 py-4">
           {onCreateCustom ? (
             <button type="button" onClick={onCreateCustom} className="inline-flex items-center gap-1.5 text-small font-medium text-primary hover:underline">
               <Plus size={14} /> {t("fieldCatalog.createCustomField")}

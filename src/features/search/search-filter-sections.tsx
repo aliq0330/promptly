@@ -215,7 +215,7 @@ function TokenFinder({
   const options = (word ? found : initial).filter((token) => !selectedKeys.has(tokenKey(token)));
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       <p className="text-caption text-text-muted">{hint}</p>
       {selected.length > 0 && (
         <SheetChips>
@@ -244,7 +244,7 @@ function TokenFinder({
           {options.map((token) =>
             token.kind === "user" ? (
               <li key={tokenKey(token)} className="border-b border-border-soft last:border-0">
-                <button type="button" onClick={() => onToggle(token)} className="flex min-h-12 w-full items-center gap-2.5 px-3 text-left text-label text-text hover:bg-surface-soft">
+                <button type="button" onClick={() => onToggle(token)} className="flex min-h-12 w-full items-center gap-3 px-3 text-left text-label text-text hover:bg-surface-soft">
                   <Avatar src={token.user.avatarUrl} alt={token.user.displayName} size={32} />
                   <span className="truncate">@{token.user.username}</span>
                   <span className="truncate text-caption text-text-muted">{token.user.displayName}</span>
@@ -279,7 +279,7 @@ function ToolSection({ selected, onToggle, has }: { selected: SearchToken[]; onT
   const shown = expanded ? filtered : tools.filter((tool, index) => index < TOOL_PREVIEW || selectedIds.has(tool.id));
   return (
     <SheetSection title={t("search.groupTools")}>
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         <p className="text-caption text-text-muted">{t("search.hintAny")}</p>
         {expanded && <FinderInput value={text} onChange={setText} placeholder={t("search.findTool")} label={t("search.findTool")} />}
         <SheetChips>

@@ -157,7 +157,7 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
                 <label
                   key={value}
                   className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 text-small transition-colors",
+                    "flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 text-small transition-colors",
                     level === value ? "border-primary/50 bg-primary-soft/40" : "border-border-soft bg-background hover:border-border-strong",
                   )}
                 >
@@ -171,7 +171,7 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
             </div>
             <div className="space-y-2">
               {tempMuted ? (
-                <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-soft px-3.5 py-2.5 text-small text-text-secondary">
+                <div className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-soft px-4 py-2.5 text-small text-text-secondary">
                   <BellOff size={16} aria-hidden />
                   <span>{t("communities.notify.mutedUntil", { until: new Date(mutedUntil as string).toLocaleString() })}</span>
                   <Button type="button" size="sm" variant="outline" onClick={() => void savePrefs(level, null)} disabled={prefs.busy}>

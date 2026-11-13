@@ -1517,7 +1517,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
 
   const overviewOpen = Boolean(team && pagesUi.overview);
   const rootClass = cn(
-    "relative flex scroll-mt-3 flex-col overflow-hidden rounded-xl border border-border-soft bg-surface-soft",
+    "relative flex scroll-mt-3 flex-col overflow-hidden rounded-lg border border-border-soft bg-surface-soft",
     fullscreen
       ? "fixed inset-0 z-[45] rounded-none border-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
       : teamMode
@@ -1609,7 +1609,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   };
   const composerBody = draftPin && (
     <div className="space-y-3" data-testid="board-comment-composer">
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-micro font-bold text-primary-foreground">{initialsOf(ownProfile?.displayName || ownProfile?.username || "?")}</span>
         <div className="min-w-0 flex-1 space-y-0.5">
           <p className="text-small font-bold leading-none text-text">{t("tb.comments.newTitle")}</p>
@@ -1919,7 +1919,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         )}
         {tool === "connect" && (
           <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center px-3">
-            <div role="status" data-board-connect-hint="" className="pointer-events-auto flex max-w-full items-center gap-2 rounded-full bg-text px-3.5 py-1.5 text-small text-background shadow-pop">
+            <div role="status" data-board-connect-hint="" className="pointer-events-auto flex max-w-full items-center gap-2 rounded-full bg-text px-4 py-1.5 text-small text-background shadow-pop">
               <Spline size={14} aria-hidden />
               <span className="min-w-0 truncate">{activeFrom ? t("spaces.connect.hintTo") : t("spaces.connect.hintFrom")}</span>
               <button type="button" onClick={() => setToolMode("select")} className="shrink-0 font-semibold underline underline-offset-2">
@@ -1933,7 +1933,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         {items.length === 0 && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center">
             <div className="max-w-sm space-y-2">
-              <p className="text-h3 font-semibold text-text">{t("spaces.board.emptyTitle")}</p>
+              <p className="text-h3 font-bold text-text">{t("spaces.board.emptyTitle")}</p>
               <p className="text-small text-text-secondary">{editable ? t("spaces.board.emptyEditor") : t("spaces.board.emptyViewer")}</p>
             </div>
           </div>
@@ -1943,7 +1943,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       {/* Bildirimler */}
       {(error || layoutNotice || undoNotice) && (
         <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex justify-center px-3">
-          <div role={error ? "alert" : "status"} className={cn("pointer-events-auto flex max-w-lg items-center gap-2 rounded-full px-3.5 py-2 text-small shadow-pop", error ? "bg-danger text-danger-foreground" : "bg-text text-background")}>
+          <div role={error ? "alert" : "status"} className={cn("pointer-events-auto flex max-w-lg items-center gap-2 rounded-full px-4 py-2 text-small shadow-pop", error ? "bg-danger text-danger-foreground" : "bg-text text-background")}>
             <span className="min-w-0 break-words">{error ?? layoutNotice ?? undoNotice}</span>
             {!error && undoNotice && editable && (
               <button type="button" onClick={() => void undo()} className="shrink-0 font-semibold underline underline-offset-2">
@@ -2119,7 +2119,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         const left = Math.max(8, Math.min(at.x + 20, view.w - 344));
         const top = Math.max(8, Math.min(at.y - 44, view.h - 270));
         return (
-          <div className="absolute z-40 w-[21rem] rounded-lg border border-border-soft bg-surface p-3.5 shadow-pop animate-pop-in" style={{ left, top }}>
+          <div className="absolute z-40 w-[21rem] rounded-lg border border-border-soft bg-surface p-4 shadow-pop animate-pop-in" style={{ left, top }}>
             {composerBody}
           </div>
         );

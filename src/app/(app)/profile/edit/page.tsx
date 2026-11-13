@@ -122,7 +122,7 @@ export default function EditProfilePage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("auth.loginRequiredTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("profile.loginRequiredToEditBody")}</p>
         <Link
           href="/login"
@@ -136,7 +136,7 @@ export default function EditProfilePage() {
 
   return (
     <div className="mx-auto max-w-xl px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-      <h1 className="mb-1 text-h1 font-semibold text-text">{t("profile.editProfileHeading")}</h1>
+      <h1 className="mb-1 text-h1 font-bold text-text">{t("profile.editProfileHeading")}</h1>
       <p className="mb-6 text-small text-text-muted">
         {t("profile.editProfileHint")}
       </p>

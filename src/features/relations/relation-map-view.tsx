@@ -256,7 +256,7 @@ export function RelationMapView() {
       ) : (
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-2">
-            <div className="relative overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card" data-relation-stage>
+            <div className="relative overflow-hidden rounded-lg border border-border-soft bg-surface-soft shadow-card" data-relation-stage>
               {viewMode === "map" ? (
                 <div className="h-[68dvh] min-h-[420px] lg:h-[640px]">
                   {visibleEdges.length === 0 ? (

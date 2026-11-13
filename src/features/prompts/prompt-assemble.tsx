@@ -99,7 +99,7 @@ export function AssembleStatus({ filled, total, complete }: { filled: number; to
   const { t } = useTranslation();
   if (total === 0) return null;
   return (
-    <div className="flex items-center gap-2.5 border-b border-border-soft px-4 py-2" data-assemble-status={complete ? "ready" : "pending"}>
+    <div className="flex items-center gap-3 border-b border-border-soft px-4 py-2" data-assemble-status={complete ? "ready" : "pending"}>
       <div className="h-1 flex-1 overflow-hidden rounded-full bg-border-soft" aria-hidden>
         <div
           className="h-full origin-left rounded-full bg-primary transition-transform duration-[var(--motion-emphasis)] ease-soft"

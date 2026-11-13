@@ -164,7 +164,7 @@ export function ResultDetailView() {
         result.originalPrompt ? (
           <DetailAside>
             <AsideSection id="result-origin-title" title={t("result.madeWithWhichPrompt")}>
-              <Link href={promptHref(result.originalPrompt)} className="group block space-y-1 p-3.5 transition-colors hover:bg-surface-soft" data-result-origin>
+              <Link href={promptHref(result.originalPrompt)} className="group block space-y-1 p-4 transition-colors hover:bg-surface-soft" data-result-origin>
                 <span className="flex items-center gap-1.5 text-label font-semibold text-text group-hover:text-primary">
                   <SquareTerminal size={14} className="shrink-0 text-primary" aria-hidden />
                   <span className="truncate">{result.originalPrompt.title}</span>
@@ -179,7 +179,7 @@ export function ResultDetailView() {
     >
       <div className="space-y-10">
         {isOrphan && (
-          <p className="flex items-start gap-2.5 rounded-xl bg-surface-soft px-4 py-3 text-small text-text-secondary" data-result-orphan="">
+          <p className="flex items-start gap-3 rounded-xl bg-surface-soft px-4 py-3 text-small text-text-secondary" data-result-orphan="">
             <Lock size={16} className="mt-0.5 shrink-0 text-text-muted" aria-hidden />
             {t("result.orphanNotice")}
           </p>
@@ -191,7 +191,7 @@ export function ResultDetailView() {
         )}
 
         {result.hasModification && result.originalPrompt && (
-          <section className="rounded-xl border border-border-soft bg-surface">
+          <section className="rounded-lg border border-border-soft bg-surface">
             <button
               type="button"
               onClick={() => setIsModificationOpen((open) => !open)}

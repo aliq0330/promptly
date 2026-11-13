@@ -89,7 +89,7 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
   if (items.length === 0) return null;
 
   return (
-    <section aria-labelledby="suggestion-strip-title" className="space-y-2.5" data-testid="suggestion-strip">
+    <section aria-labelledby="suggestion-strip-title" className="space-y-3" data-testid="suggestion-strip">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="suggestion-strip-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
@@ -106,7 +106,7 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
           </button>
         </div>
       </div>
-      <ul ref={scroller} className="-mx-3 flex snap-x snap-mandatory scroll-px-3 gap-2.5 overflow-x-auto scroll-smooth px-3 pb-2 sm:mx-0 sm:scroll-px-0 sm:px-0" data-testid="suggestion-list">
+      <ul ref={scroller} className="-mx-3 flex snap-x snap-mandatory scroll-px-3 gap-3 overflow-x-auto scroll-smooth px-3 pb-2 sm:mx-0 sm:scroll-px-0 sm:px-0" data-testid="suggestion-list">
         {items.map((community) => (
           <li
             key={community.id}
@@ -115,7 +115,7 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
             className="relative flex w-[72%] shrink-0 snap-start flex-col rounded-xl border border-border-soft bg-surface shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:w-64"
           >
             {/* Albüm kartı (docs/history/203-*): the band takes the community picture's colours. */}
-            <div className="relative flex-1 rounded-t-xl p-3 pb-3.5">
+            <div className="relative flex-1 rounded-t-xl p-3 pb-4">
               <CardBandBackdrop backdrop={<CommunityCover coverUrl={null} coverColor={null} avatarUrl={community.avatarUrl} className="h-full sm:h-full" />} />
               <div className="relative space-y-2">
                 <div className="flex items-center gap-3">

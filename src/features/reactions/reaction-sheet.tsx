@@ -122,7 +122,7 @@ export function ReactionSheet({
       >
         <div className="flex shrink-0 items-center justify-between gap-2 px-4 pb-2 pt-4">
           <div className="min-w-0">
-            <h2 id="reaction-sheet-title" className="text-h3 font-semibold text-text">
+            <h2 id="reaction-sheet-title" className="text-h3 font-bold text-text">
               {t("reaction.sheet.title")}
             </h2>
             <p className="text-caption text-text-muted tabular-nums">{t("reaction.sheet.total", { count: total })}</p>

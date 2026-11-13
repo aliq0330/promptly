@@ -390,7 +390,7 @@ export function RelationGraph({
                 data-node-key={node.key}
                 data-node-center={isCenter || undefined}
                 className={cn(
-                  "absolute flex items-center gap-2.5 overflow-hidden rounded-lg border bg-surface px-3 text-left shadow-card transition-[border-color,box-shadow,background-color,opacity] duration-200 ease-soft",
+                  "absolute flex items-center gap-3 overflow-hidden rounded-lg border bg-surface px-3 text-left shadow-card transition-[border-color,box-shadow,background-color,opacity] duration-200 ease-soft",
                   isCenter ? "animate-pop-in border-primary bg-primary-soft" : "animate-node-emerge border-border-soft hover:border-border-strong",
                   selected && "border-primary ring-2 ring-primary",
                   dimmed && "opacity-60",

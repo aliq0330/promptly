@@ -30,7 +30,7 @@ export function FocusInfoSheet({ item, onClose }: { item: PostFeedItem; onClose:
   // "Ayrıntıları aç"; a prompt's "Kopyala" is in its prompt block below and in "Promptu incele".
   const canReply = item.kind === "request" && item.data.status === "open" && user?.id !== item.data.author.id;
   const chip =
-    "inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-soft px-3.5 text-label font-semibold text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+    "inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-soft px-4 text-label font-semibold text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
   // Esc closes the sheet, unless a dialog opened from inside it ("Promptu incele", "Space'e ekle") is on top.
   useEffect(() => {
@@ -65,7 +65,7 @@ export function FocusInfoSheet({ item, onClose }: { item: PostFeedItem; onClose:
           {canReply && item.kind === "request" && (
             <Link
               href={`/create?answerRequest=${item.data.id}`}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-3.5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Reply size={16} aria-hidden />
               {t("request.reply")}

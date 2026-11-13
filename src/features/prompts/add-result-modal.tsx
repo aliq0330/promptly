@@ -16,6 +16,7 @@ import type { WorksState } from "@/lib/prompt-works";
 import { fetchPromptWorks, setPromptWorks } from "@/lib/supabase/prompt-works";
 import { publishWorksVote } from "./works-badges";
 import type { PromptResultMediaType } from "@/types";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 type Mode = "file" | "text";
 
@@ -183,7 +184,7 @@ export function AddResultModal({
         className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-4">
           <h2
             id="add-result-modal-title"
             className="text-body font-semibold text-text"
@@ -194,7 +195,7 @@ export function AddResultModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
+            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
           >
             <X size={18} />
           </button>

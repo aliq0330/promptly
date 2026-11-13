@@ -151,7 +151,7 @@ function DrawerFrame({ ctx, title, header, children }: { ctx: AreaItemContext; t
         className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-surface max-md:rounded-t-xl md:w-[35rem] md:max-w-full lg:w-[32.5rem]"
         data-testid="item-drawer"
       >
-        <div className="flex shrink-0 items-start gap-2 border-b border-border-soft px-5 pb-3.5 pt-4 md:pt-[18px]">
+        <div className="flex shrink-0 items-start gap-2 border-b border-border-soft px-5 pb-4 pt-4 md:pt-[18px]">
           <div className="min-w-0 flex-1">
             <h2 id={id} className="sr-only">
               {title}
@@ -318,7 +318,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
       )}
 
       {item?.revState === "changes" && item.revNote && (
-        <div role="note" className="rounded-lg border border-danger/30 bg-danger/10 p-3.5 text-small leading-relaxed text-danger" data-item-lead-note>
+        <div role="note" className="rounded-lg border border-danger/30 bg-danger/10 p-4 text-small leading-relaxed text-danger" data-item-lead-note>
           <b className="mb-0.5 block">{t("tp.item.leadNote")}</b>
           {item.revNote}
         </div>
@@ -657,7 +657,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
       {reason && <p className="rounded-xl bg-surface-soft px-3 py-2 text-small text-text-secondary">{t(reason)}</p>}
       {text ? (
         <>
-          <div className={cn(CARD, "p-3.5")} data-item-prompt-text>
+          <div className={cn(CARD, "p-4")} data-item-prompt-text>
             <div className="prompt-text whitespace-pre-wrap break-words text-small leading-relaxed text-text">
               {tokens.map((token, index) => {
                 if (!token.variable) return <span key={index}>{token.text}</span>;
@@ -671,7 +671,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
             </div>
           </div>
 
-          <div className={cn(CARD, "flex items-center gap-3 px-3.5 py-3")}>
+          <div className={cn(CARD, "flex items-center gap-3 px-4 py-3")}>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-bold text-text">{t("tp.item.fillTitle")}</span>
               <span className="block text-caption text-text-secondary">{t("tp.item.fillHint")}</span>
@@ -693,15 +693,15 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
           </div>
 
           <section className={cn(CARD, "overflow-hidden")} data-item-variables>
-            <h2 className="px-3.5 pb-1.5 pt-3 text-caption font-bold uppercase tracking-wider text-text-secondary">{t("tp.item.vars")}</h2>
+            <h2 className="px-4 pb-1.5 pt-3 text-caption font-bold uppercase tracking-wider text-text-secondary">{t("tp.item.vars")}</h2>
             {names.length === 0 ? (
-              <p className="border-t border-border-soft px-3.5 py-3 text-small text-text-muted">{t("tp.item.varsNone")}</p>
+              <p className="border-t border-border-soft px-4 py-3 text-small text-text-muted">{t("tp.item.varsNone")}</p>
             ) : (
               <ul>
                 {names.map((name) => {
                   const found = values.get(name);
                   return (
-                    <li key={name} className="flex items-center gap-2.5 border-t border-border-soft px-3.5 py-2.5 text-small" data-item-variable={name}>
+                    <li key={name} className="flex items-center gap-3 border-t border-border-soft px-4 py-2.5 text-small" data-item-variable={name}>
                       <span className="prompt-text text-secondary">{`{${found?.name ?? name}}`}</span>
                       <span className={cn("min-w-0 flex-1 truncate font-semibold", found ? "text-text" : "text-text-muted")}>{found ? found.value : "—"}</span>
                       <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-semibold", found ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
@@ -785,7 +785,7 @@ function ImageSection({ ctx, item, title, creator }: { ctx: AreaItemContext; ite
       {rows.length > 0 && (
         <dl className={cn(CARD, "overflow-hidden text-small")}>
           {rows.map(([label, value], index) => (
-            <div key={label} className={cn("flex justify-between gap-3 px-3.5 py-2.5", index > 0 && "border-t border-border-soft")}>
+            <div key={label} className={cn("flex justify-between gap-3 px-4 py-2.5", index > 0 && "border-t border-border-soft")}>
               <dt className="text-text-secondary">{label}</dt>
               <dd className="min-w-0 truncate font-bold text-text">{value}</dd>
             </div>
@@ -818,11 +818,11 @@ function NoteSection({ item }: { item: SpaceItem }) {
         {item.body || item.note}
       </div>
       <dl className={cn(CARD, "overflow-hidden text-small")}>
-        <div className="flex justify-between gap-3 px-3.5 py-2.5">
+        <div className="flex justify-between gap-3 px-4 py-2.5">
           <dt className="text-text-secondary">{t("tp.item.noteLinked")}</dt>
           <dd className="min-w-0 truncate font-bold text-text">{attached ? itemTitle(attached) : t("tp.item.noteNoLink")}</dd>
         </div>
-        <div className="flex justify-between gap-3 border-t border-border-soft px-3.5 py-2.5">
+        <div className="flex justify-between gap-3 border-t border-border-soft px-4 py-2.5">
           <dt className="text-text-secondary">{t("tp.item.noteVisibility")}</dt>
           <dd className="min-w-0 truncate text-right font-bold text-text">{t(item.isPrivate ? "tp.item.noteVisPrivate" : "tp.item.noteVisAll")}</dd>
         </div>
@@ -859,7 +859,7 @@ function PaletteSection({ palette }: { palette: SpacePalette }) {
       <ul className={cn(CARD, "overflow-hidden")} data-item-palette-colors>
         {palette.colors.map((hex, index) => (
           <li key={`${hex}-${index}`} className={cn(index > 0 && "border-t border-border-soft")}>
-            <button type="button" onClick={() => void copy(hex)} aria-label={t("tp.item.copyColor", { hex })} className="flex min-h-[3.5rem] w-full items-center gap-3 px-3.5 py-2 text-left hover:bg-surface-soft" data-item-color={hex}>
+            <button type="button" onClick={() => void copy(hex)} aria-label={t("tp.item.copyColor", { hex })} className="flex min-h-[3.5rem] w-full items-center gap-3 px-4 py-2 text-left hover:bg-surface-soft" data-item-color={hex}>
               <span aria-hidden className="h-9 w-9 shrink-0 rounded-[10px] border border-border" style={{ backgroundColor: hex }} />
               <span className="prompt-text min-w-0 flex-1 text-body font-semibold text-text">{hex}</span>
               <span className={cn("shrink-0 text-small font-semibold", copied === hex ? "text-success" : "text-primary")}>{copied === hex ? t("common.copied") : t("common.copy")}</span>

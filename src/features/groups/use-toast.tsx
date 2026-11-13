@@ -24,7 +24,7 @@ export function useToast(): { node: ReactNode; show: (message: string, durationM
   const node = message ? (
     <Portal>
       <div role="status" className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-(--z-toast) flex justify-center px-4 md:bottom-6">
-        <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">{message}</div>
+        <div className="animate-pop-in rounded-md bg-text px-4 py-2 text-small text-background shadow-pop">{message}</div>
       </div>
     </Portal>
   ) : null;

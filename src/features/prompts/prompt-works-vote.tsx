@@ -138,7 +138,7 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
   const showInvite = state.canVote && state.myVote !== null && invite !== null;
 
   return (
-    <section data-works-vote aria-labelledby="works-vote-title" className="mt-4 space-y-3 rounded-xl border border-border-soft bg-surface p-4">
+    <section data-works-vote aria-labelledby="works-vote-title" className="mt-4 space-y-3 rounded-lg border border-border-soft bg-surface p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="works-vote-title" className="text-small font-semibold text-text">
           {t("prompt.works.title")}

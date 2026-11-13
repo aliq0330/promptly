@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth-provider";
 import { recordPromptCopy } from "@/lib/supabase/prompt-usage";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * The one "Çalıştır" surface — a button plus the tool-picker modal behind it,
@@ -137,7 +138,7 @@ function RunModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
+            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
           >
             <X size={18} />
           </button>

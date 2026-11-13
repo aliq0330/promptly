@@ -30,6 +30,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
 import type { Story, StoryAudience, StoryAuthor, StoryHighlight, StoryPollResults } from "@/types";
 import { StoryAudiencePicker } from "./story-audience-picker";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Görüntüleyicinin içinde açılan alt sayfalar (docs/history/198-*). Görüntüleyici katmanının İÇİNDE çizilirler (ayrı portal değil),
@@ -53,10 +54,10 @@ export function ViewerSheet({ title, onClose, children, labelId }: { title: stri
         className="relative z-10 flex max-h-[78%] w-full max-w-md animate-sheet-up flex-col rounded-t-xl bg-surface text-text shadow-pop focus:outline-none"
       >
         <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-3">
-          <h2 id={labelId} className="text-h3 font-semibold">
+          <h2 id={labelId} className="text-h3 font-bold">
             {title}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
             <X size={18} aria-hidden />
           </button>
         </div>

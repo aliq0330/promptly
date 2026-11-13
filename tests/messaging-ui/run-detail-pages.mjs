@@ -139,11 +139,11 @@ await scenario("3b. yorum yazınca konu tamamen açılır ve yorum alanı satır
   await section.getByText("Mert:").waitFor();
 }, { viewport: { width: 390, height: 844 } });
 
-// 4 — yerleşim (Albüm, docs/history/201-*): taşma yok; bant içeriğin üstünde; lg+ (≥1024px) "Hakkında" içeriğin sağında,
+// 4 — yerleşim (Albüm, docs/history/201-*): taşma yok; bant içeriğin üstünde; xl+ (≥1280px, Hub ile aynı kırılma — docs/history/384-*) "Hakkında" içeriğin sağında,
 // daha dar ekranda altında; tek eylem satırı; birincil düğme (Kopyala/Yanıtla/Çalıştır/Studio'da aç) bandın hemen altında
 for (const [label, width, height] of [["320", 320, 700], ["375", 375, 800], ["390", 390, 844], ["430", 430, 900], ["768", 768, 1000], ["1024", 1024, 900], ["1280", 1280, 900], ["1440", 1440, 1000]]) {
   for (const kind of ["prompt", "request", "workflow", "preset"]) {
-    await scenario(`4. ${kind} @${label}px: yatay taşma yok; "Hakkında" ${width >= 1024 ? "sağda" : "altta"}`, kind, async ({ page }) => {
+    await scenario(`4. ${kind} @${label}px: yatay taşma yok; "Hakkında" ${width >= 1280 ? "sağda" : "altta"}`, kind, async ({ page }) => {
       await page.waitForTimeout(500);
       assert.equal(await overflowFree(page), true, "no horizontal overflow");
       const band = await box(page.locator("[data-detail-band]"));
@@ -151,7 +151,7 @@ for (const [label, width, height] of [["320", 320, 700], ["375", 375, 800], ["39
       const aside = await box(page.locator("[data-detail-aside]"));
       assert.ok(band.bottom <= article.top, "band above the content");
       assert.equal(await page.locator("[data-detail-actions]").count(), 1, "one actions row");
-      if (width >= 1024) assert.ok(article.right <= aside.left, "Hakkında right of the content");
+      if (width >= 1280) assert.ok(article.right <= aside.left, "Hakkında right of the content");
       else assert.ok(aside.top >= article.bottom, "Hakkında under the content");
       // Bandın içeriği taşmaz: kapak başlığın üstüne binmez
       const art = page.locator("[data-detail-band] figure").first();

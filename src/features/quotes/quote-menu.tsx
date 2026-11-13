@@ -10,6 +10,7 @@ import { ReportButton } from "@/features/moderation/report-button";
 import { ReportModal } from "@/features/moderation/report-modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { deleteQuote, type Quote } from "@/lib/supabase/quotes";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** "Alıntıyı sil" onayı (kart menüsü ve alıntı sayfasının ⋮ menüsü ortak kullanır): alıntı beğeni/yorumlarıyla kalkar, alıntılanan içerik durur. */
 export function QuoteDeleteDialog({ quote, onClose, onDeleted }: { quote: Quote; onClose: () => void; onDeleted: () => void }) {
@@ -32,7 +33,7 @@ export function QuoteDeleteDialog({ quote, onClose, onDeleted }: { quote: Quote;
 
   return (
     <Modal onClose={() => !busy && onClose()} labelledBy="quote-delete-title">
-      <div data-quote-delete className="w-full max-w-sm space-y-3 rounded-t-lg border border-border bg-surface-elevated p-5 shadow-pop sm:rounded-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell data-quote-delete className="w-full max-w-sm space-y-3 rounded-t-lg border border-border-soft bg-surface-elevated p-5 shadow-pop sm:rounded-lg">
         <h2 id="quote-delete-title" className="text-h3 font-bold text-text">
           {t("quotes.delete.title")}
         </h2>
@@ -50,7 +51,7 @@ export function QuoteDeleteDialog({ quote, onClose, onDeleted }: { quote: Quote;
             {t("quotes.delete.confirm")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }
@@ -86,7 +87,7 @@ export function QuoteMenu({ quote, onDeleted }: { quote: Quote; onDeleted: () =>
                 }}
               />
             ) : (
-              <div className="px-3.5 py-2">
+              <div className="px-4 py-2">
                 <ReportButton targetType="quote" targetId={quote.id} />
               </div>
             )

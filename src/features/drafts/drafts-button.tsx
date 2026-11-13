@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useLanguage, useTranslation } from "@/lib/i18n/language-provider";
 import { formatRelativeTime } from "@/lib/utils";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const DRAFTS_SHOWN_STEP = 50;
 
@@ -128,7 +129,7 @@ export function DraftsButton({
               <h2 id="drafts-modal-title" className="text-body font-semibold text-text">
                 {t("draft.drawerTitle")}
               </h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+              <button type="button" onClick={() => setOpen(false)} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
                 <X size={18} />
               </button>
             </div>

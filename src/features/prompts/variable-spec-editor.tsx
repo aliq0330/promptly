@@ -6,7 +6,7 @@ import { Palette } from "@/components/icons/palette";
 import { Plus } from "@/components/icons/plus";
 import { X } from "@/components/icons/x";
 import { Chip } from "@/components/ui/chip";
-import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldControlClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { cn, resizeImageToDataUrlFit } from "@/lib/utils";
 import { ImageProcessingError } from "@/lib/image-processing";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -194,13 +194,12 @@ export function VariableSpecEditor({
       <label htmlFor={`${idPrefix}-${key}`} className={fieldLabelClassName}>
         {t(label)}
       </label>
-      <input
+      <Input
         id={`${idPrefix}-${key}`}
         type="number"
         inputMode="decimal"
         value={spec.config[key] ?? ""}
         onChange={(event) => setConfig({ [key]: event.target.value === "" ? undefined : Number(event.target.value) })}
-        className={fieldInputClassName}
       />
     </div>
   );
@@ -231,13 +230,12 @@ export function VariableSpecEditor({
           <label htmlFor={`${idPrefix}-default`} className={fieldLabelClassName}>
             {t("variable.defaultValueLabel")} <span className="text-text-muted">({t("common.optional")})</span>
           </label>
-          <input
+          <Input
             id={`${idPrefix}-default`}
             type="text"
             value={defaultValue}
             onChange={(event) => onChange({ spec, defaultValue: event.target.value })}
             placeholder={t("variable.defaultValuePlaceholder")}
-            className={fieldInputClassName}
           />
         </div>
       )}
@@ -332,13 +330,12 @@ export function VariableSpecEditor({
             <label htmlFor={`${idPrefix}-default`} className={fieldLabelClassName}>
               {t("variable.defaultValueLabel")}
             </label>
-            <input
+            <Input
               id={`${idPrefix}-default`}
               type="number"
               inputMode="decimal"
               value={defaultValue}
               onChange={(event) => onChange({ spec, defaultValue: event.target.value })}
-              className={fieldInputClassName}
             />
           </div>
         </div>
@@ -351,7 +348,7 @@ export function VariableSpecEditor({
               <label htmlFor={`${idPrefix}-on`} className={fieldLabelClassName}>
                 {t("variable.toggleOnLabel")}
               </label>
-              <input
+              <Input
                 id={`${idPrefix}-on`}
                 type="text"
                 value={spec.config.onText ?? ""}
@@ -359,21 +356,19 @@ export function VariableSpecEditor({
                   setConfig({ onText: event.target.value }, defaultValue === (spec.config.onText ?? "") ? event.target.value : defaultValue)
                 }
                 placeholder={t("variable.toggleOnPlaceholder")}
-                className={fieldInputClassName}
               />
             </div>
             <div>
               <label htmlFor={`${idPrefix}-off`} className={fieldLabelClassName}>
                 {t("variable.toggleOffLabel")} <span className="text-text-muted">({t("common.optional")})</span>
               </label>
-              <input
+              <Input
                 id={`${idPrefix}-off`}
                 type="text"
                 value={spec.config.offText ?? ""}
                 onChange={(event) =>
                   setConfig({ offText: event.target.value }, defaultValue === (spec.config.offText ?? "") ? event.target.value : defaultValue)
                 }
-                className={fieldInputClassName}
               />
             </div>
           </div>

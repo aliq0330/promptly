@@ -36,7 +36,7 @@ export function CreatePostModal({ communityId, onClose, onApply }: { communityId
   const { t } = useTranslation();
   const [step, setStep] = useState<"choose" | "new">("choose");
   const optionClass = cn(
-    "flex w-full items-start gap-3 rounded-lg border border-border-soft bg-background p-3.5 text-left transition-colors",
+    "flex w-full items-start gap-3 rounded-lg border border-border-soft bg-background p-4 text-left transition-colors",
     "hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
   );
 
@@ -51,7 +51,7 @@ export function CreatePostModal({ communityId, onClose, onApply }: { communityId
               </h2>
               <p className="text-small text-text-muted">{t("communities.post.choose.help")}</p>
             </div>
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               <button type="button" className={optionClass} onClick={() => setStep("new")} data-post-option="new">
                 <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
                   <FilePlus2 size={16} aria-hidden />
@@ -83,7 +83,7 @@ export function CreatePostModal({ communityId, onClose, onApply }: { communityId
               </h2>
               <p className="text-small text-text-muted">{t("communities.post.new.help")}</p>
             </div>
-            <ul className="grid grid-cols-2 gap-2.5">
+            <ul className="grid grid-cols-2 gap-3">
               {TYPES.map(({ type, icon: Icon, label }) => (
                 <li key={type}>
                   <Link href={`${CREATE_HREF[type]}${CREATE_HREF[type].includes("?") ? "&" : "?"}community=${communityId}`} className={cn(optionClass, "items-center")} data-post-new-type={type}>

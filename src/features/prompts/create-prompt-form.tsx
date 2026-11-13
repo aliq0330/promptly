@@ -63,7 +63,7 @@ function LoginGate({ message }: { message: string }) {
   const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">
-      <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
+      <h1 className="mb-2 text-h2 font-bold text-text">{t("auth.loginRequiredTitle")}</h1>
       <p className="mb-4 text-small text-text-muted">{message}</p>
       <div className="flex justify-center gap-2">
         <Link
@@ -682,7 +682,7 @@ export function CreatePromptForm() {
   if (editForbidden) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("prompt.noEditPermissionTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("prompt.noEditPermissionTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("prompt.noEditPermissionBody")}</p>
         <Link
           href="/discover"
@@ -697,7 +697,7 @@ export function CreatePromptForm() {
   if (notFound) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">
+        <h1 className="mb-2 text-h2 font-bold text-text">
           {isEditMode
             ? t("prompt.promptNotFound")
             : isAnswerMode
@@ -724,7 +724,7 @@ export function CreatePromptForm() {
   if (isRequestDeleted && answeredRequest) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.thisRequestDeletedTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("request.thisRequestDeletedTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("request.requestDeletedNoNewReplies")}</p>
         <Link
           href="/requests"
@@ -739,7 +739,7 @@ export function CreatePromptForm() {
   if (isRequestClosed && answeredRequest) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.thisRequestClosedTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("request.thisRequestClosedTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("request.requestClosedNoNewReplies")}</p>
         <Link
           href={requestHref(answeredRequest)}

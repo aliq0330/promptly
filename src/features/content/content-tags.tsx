@@ -8,7 +8,7 @@ export function ContentTags({ tags, max = 3 }: { tags: Tag[]; max?: number }) {
   const shown = tags.slice(0, max);
   const rest = tags.length - shown.length;
   return (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
       {shown.map((tag) => (
         <Link
           key={tag.slug}

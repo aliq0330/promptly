@@ -182,7 +182,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
     >
       {dock ? (
         <DockHeader onBack={dock.onBack} onMinimize={dock.onMinimize}>
-          <span className="flex min-w-0 items-center gap-2.5" data-dock-chat-title="">
+          <span className="flex min-w-0 items-center gap-3" data-dock-chat-title="">
             <PresenceAvatar userId={target.id} src={target.avatarUrl} alt={target.displayName} size={34} />
             <span className="min-w-0 leading-tight">
               <span className="block truncate font-display text-[1rem] font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>

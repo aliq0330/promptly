@@ -16,6 +16,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
 import { VariableConditionEditor } from "./variable-condition-editor";
 import { VariableSpecEditor, type SpecEditorValue, type VariableFormValues } from "./variable-spec-editor";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * "Değişkeni düzenle" modal (CLAUDE.md §4) — renaming an existing variable
@@ -97,7 +98,7 @@ export function VariableEditorModal({
         className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-4">
           <h2 id="variable-editor-modal-title" className="text-body font-semibold text-text">
             {t("variable.editTitle")}
           </h2>
@@ -105,7 +106,7 @@ export function VariableEditorModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
+            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
           >
             <X size={18} />
           </button>

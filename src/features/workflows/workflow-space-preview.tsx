@@ -177,7 +177,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
   if (state.failed) {
     return (
       <DetailSection id="workflow-space" title={t("wfSpace.preview.heading")}>
-        <div role="status" className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface-soft px-3 py-3 text-small text-text-secondary">
+        <div role="status" className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-soft px-3 py-3 text-small text-text-secondary">
           <span className="min-w-0 flex-1">{t("wfSpace.preview.linksFailed")}</span>
           <button
             type="button"
@@ -200,7 +200,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
 
   return (
     <DetailSection id="workflow-space" title={t("wfSpace.preview.heading")}>
-      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="overflow-hidden rounded-lg border border-border bg-surface">
         <div className="space-y-2 border-b border-border-soft bg-surface-soft px-3 py-2.5">
           {links.length > 1 && (
             <div role="group" aria-label={t("wfSpace.preview.spacesAria")} className="flex flex-wrap gap-1.5">

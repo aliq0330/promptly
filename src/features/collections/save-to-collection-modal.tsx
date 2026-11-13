@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
 import { StorageBackground } from "@/components/ui/storage-media";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * "Koleksiyona ekle" — the one place a work's collection memberships are changed (docs/history/336-*). Saving and
@@ -248,7 +249,7 @@ export function SaveToCollectionModal({
               <p className="text-caption text-text-muted">{isSaved ? t("collection.manageHint") : t("collection.pickToSaveHint")}</p>
             )}
           </div>
-          <button type="button" onClick={requestClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+          <button type="button" onClick={requestClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
             <X size={18} />
           </button>
         </div>

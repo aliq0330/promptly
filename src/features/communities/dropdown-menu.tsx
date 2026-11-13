@@ -65,7 +65,7 @@ export function MenuItem({ icon, label, onClick, danger = false, disabled = fals
       role="menuitem"
       onClick={onClick}
       disabled={disabled}
-      className={"flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-small transition-colors hover:bg-surface-soft disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent " + (danger ? "text-danger" : "text-text")}
+      className={"flex w-full items-center gap-3 px-4 py-2 text-left text-small transition-colors hover:bg-surface-soft disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent " + (danger ? "text-danger" : "text-text")}
     >
       <span aria-hidden className="shrink-0">
         {icon}

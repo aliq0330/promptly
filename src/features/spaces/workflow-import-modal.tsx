@@ -173,7 +173,7 @@ export function WorkflowImportModal({
             {plan && loaded?.value ? (
               <WorkflowPlanPreview plan={plan} steps={loaded.value.steps} />
             ) : (
-              <div className={cn("h-40 rounded-xl border border-border-soft bg-surface-soft", !loaded && "skeleton-shimmer")} aria-hidden />
+              <div className={cn("h-40 rounded-lg border border-border-soft bg-surface-soft", !loaded && "skeleton-shimmer")} aria-hidden />
             )}
             {loaded && !loaded.value && <p className="mt-2 text-caption text-danger">{t("wfSpace.import.loadFailed")}</p>}
             {plan && (
@@ -189,7 +189,7 @@ export function WorkflowImportModal({
             <p className="mb-2 text-caption text-text-muted">{t("wfSpace.objects.optStepsHint")}</p>
             <div className="space-y-2">
               {optionRows.map((row) => (
-                <label key={row.key} className={cn("flex items-start gap-2.5 text-small text-text", row.disabled && "opacity-50")}>
+                <label key={row.key} className={cn("flex items-start gap-3 text-small text-text", row.disabled && "opacity-50")}>
                   <input
                     type="checkbox"
                     checked={options[row.key] && !row.disabled}

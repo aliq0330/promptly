@@ -14,6 +14,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 const STORAGE_KEY = "promptly-tour-seen";
 const OPEN_EVENT = "promptly:open-tour";
@@ -97,7 +98,7 @@ export function WelcomeTour() {
 
   return (
     <Modal onClose={close} labelledBy="tour-title">
-      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border-soft bg-surface p-5 shadow-pop sm:p-6" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="w-full max-w-md overflow-hidden rounded-lg border border-border-soft bg-surface p-5 shadow-pop sm:p-6">
         {/* "Paylaşma anı" (docs/history/373-*): stays mounted across steps, so the story runs on while the reader pages. */}
         <LineArtScene kind="share" className="-mx-5 -mt-5 mb-4 aspect-[2/1] border-b border-border-soft sm:-mx-6 sm:-mt-6" />
         <div className="flex items-center justify-between gap-3">
@@ -138,7 +139,7 @@ export function WelcomeTour() {
             <Button onClick={() => (isLast ? close() : setStep((value) => value + 1))}>{isLast ? t("tour.done") : t("tour.next")}</Button>
           </div>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

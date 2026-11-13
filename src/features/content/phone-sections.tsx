@@ -76,7 +76,7 @@ export function PhoneSectionList({ items, ariaLabel, className }: { items: Phone
                 href={item.href}
                 data-phone-section={item.key}
                 className={cn(
-                  "flex min-h-14 items-center gap-3 px-3.5 py-2 text-body font-medium transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+                  "flex min-h-14 items-center gap-3 px-4 py-2 text-body font-medium transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                   item.danger ? "text-danger" : "text-text",
                 )}
               >

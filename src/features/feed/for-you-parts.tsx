@@ -26,6 +26,7 @@ import { findTool } from "@/lib/ai-tool-catalog";
 import type { ForYouReason } from "@/lib/supabase/feed";
 import type { FeedItem } from "./types";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 function interestLabel(value: string, t: ReturnType<typeof useTranslation>["t"]): string {
   return (INTEREST_OPTIONS as readonly string[]).includes(value) ? t(INTEREST_OPTION_LABELS[value as InterestOption]) : value;
@@ -96,20 +97,20 @@ export function ForYouSettingsModal({ onClose, onChanged }: { onClose: () => voi
     <Modal onClose={onClose} labelledBy={titleId} overLayers>
       <DialogShell className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
-          <h2 id={titleId} className="text-h3 font-semibold text-text">
+          <h2 id={titleId} className="text-h3 font-bold text-text">
             {t("forYou.settingsTitle")}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-10 w-10")}
           >
             <X size={18} />
           </button>
         </div>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
-          <section className="space-y-2.5">
+          <section className="space-y-3">
             <h3 className="text-label font-semibold text-text">{t("forYou.interestsTitle")}</h3>
             <p className="text-caption text-text-muted">{t("forYou.interestsHint")}</p>
             <InterestChips onChanged={onChanged} />
@@ -173,7 +174,7 @@ export function ForYouSetupBanner({ onOpen }: { onOpen: () => void }) {
     }
   }
   return (
-    <section aria-label={t("forYou.settingsTitle")} data-for-you-setup className="flex min-h-12 items-center gap-1 rounded-lg bg-primary-soft pl-3.5 pr-1">
+    <section aria-label={t("forYou.settingsTitle")} data-for-you-setup className="flex min-h-12 items-center gap-1 rounded-lg bg-primary-soft pl-4 pr-1">
       <button type="button" onClick={onOpen} aria-haspopup="dialog" className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-left text-label font-semibold text-primary">
         <span className="truncate">{t("forYou.setupBanner")}</span>
         <ChevronRight size={16} aria-hidden className="shrink-0" />

@@ -34,7 +34,7 @@ export function InfoPhotosCard({ conversationId, onJumpToMessage }: { conversati
   const count = photos ? `${photos.items.length}${photos.truncated ? "+" : ""}` : "";
 
   return (
-    <InfoCard aria-label={t("messages.contact.photos")} data-contact-photos className="pb-3.5">
+    <InfoCard aria-label={t("messages.contact.photos")} data-contact-photos className="pb-4">
       <div className="flex h-12 items-center justify-between px-4">
         <h3 className="text-body font-semibold text-text">{t("messages.contact.photos")}</h3>
         <span className="text-small text-text-muted" data-contact-photo-count>

@@ -175,7 +175,7 @@ export function WorkflowSpaceField({
               <p className="mb-2 text-caption text-text-muted">{t("wfSpace.objects.optStepsHint")}</p>
               <div className="space-y-2">
                 {layers.map((row) => (
-                  <label key={row.key} className={cn("flex items-start gap-2.5 text-small text-text", row.disabled && "opacity-50")}>
+                  <label key={row.key} className={cn("flex items-start gap-3 text-small text-text", row.disabled && "opacity-50")}>
                     <input type="checkbox" checked={choice[row.key] && !row.disabled} disabled={row.disabled} onChange={(event) => onChange({ ...choice, [row.key]: event.target.checked })} className="mt-1 h-4 w-4 accent-primary" />
                     <span>
                       <span className="block font-medium">{row.label}</span>

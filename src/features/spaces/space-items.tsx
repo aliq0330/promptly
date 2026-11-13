@@ -14,7 +14,7 @@ import { Plus } from "@/components/icons/plus";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldControlClassName, fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
@@ -380,7 +380,7 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard, drawer }: { it
                 <label htmlFor={captionId} className={fieldLabelClassName}>
                   {t("spaces.detail.caption")}
                 </label>
-                <input id={captionId} value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={SPACE_ITEM_TITLE_MAX} className={fieldInputClassName} placeholder={source.title} />
+                <Input id={captionId} value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={SPACE_ITEM_TITLE_MAX} placeholder={source.title} />
               </div>
               <div>
                 <label htmlFor={noteId} className={fieldLabelClassName}>
@@ -564,7 +564,7 @@ export function NoteEditorModal({
           <label htmlFor={titleId} className={fieldLabelClassName}>
             {t("spaces.notes.titleLabel")}
           </label>
-          <input id={titleId} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={SPACE_ITEM_TITLE_MAX} className={fieldInputClassName} autoFocus />
+          <Input id={titleId} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={SPACE_ITEM_TITLE_MAX} autoFocus />
         </div>
         <div>
           <label htmlFor={bodyId} className={fieldLabelClassName}>
@@ -646,7 +646,7 @@ export function DraftEditorModal({ draft, onClose, near }: { draft?: SpaceItem |
           <label htmlFor={titleId} className={fieldLabelClassName}>
             {t("spaces.prompts.draftTitle")}
           </label>
-          <input id={titleId} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={SPACE_ITEM_TITLE_MAX} className={fieldInputClassName} autoFocus />
+          <Input id={titleId} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={SPACE_ITEM_TITLE_MAX} autoFocus />
         </div>
         <div>
           <label htmlFor={bodyId} className={fieldLabelClassName}>

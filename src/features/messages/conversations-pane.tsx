@@ -31,6 +31,7 @@ import { CONTROL_ICON_BUTTON, type SectionMenuItem } from "@/features/content/se
 import type { Conversation } from "@/types";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 type KindFilter = "all" | "personal" | "community" | "team";
 
@@ -281,7 +282,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           </>
         )}
         {!selectionActive && view === "inbox" && (
-          <div role="group" aria-label={t("rooms.filter.aria")} data-kind-chips className="mb-3 flex gap-2 overflow-x-auto scrollbar-none">
+          <ScrollRow role="group" aria-label={t("rooms.filter.aria")} data-kind-chips className="mb-3 flex gap-2">
             {(["all", "personal", "community", "team"] as const).map((key) => (
               <button
                 key={key}
@@ -291,14 +292,14 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                 onClick={() => setKindFilter(key)}
                 className={cn(
                   "shrink-0 rounded-full text-small transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                  embedded ? "h-9 px-3.5" : "h-10 px-[18px]",
+                  embedded ? "h-9 px-4" : "h-10 px-[18px]",
                   kindFilter === key ? "bg-primary font-semibold text-primary-foreground" : "border border-border-soft bg-surface font-medium text-text hover:border-border-strong",
                 )}
               >
                 {t(`rooms.filter.${key}` as const)}
               </button>
             ))}
-          </div>
+          </ScrollRow>
         )}
         {!selectionActive && view === "inbox" && (kindFilter === "team" || kindFilter === "community") && kindCount > 0 && (
           <p data-kind-summary className="mb-2 px-1 text-caption text-text-muted">

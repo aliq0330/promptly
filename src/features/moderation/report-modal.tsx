@@ -24,6 +24,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import { REPORT_DETAILS_MAX, reportDetailsProblem, reportReasonsFor, type ReportReasonCode, type ReportTargetType } from "@/lib/report-reasons";
 import { fetchReportPreview, submitReport, type ReportError, type ReportPreview } from "@/lib/supabase/reports";
 import { cn } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Şikâyet edilen şey: tür + kimlik (+ penceredeki küçük önizleme için isteğe bağlı başlık / alt satır). */
 export interface ReportTarget {
@@ -166,14 +167,13 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
 
   return (
     <Modal onClose={submitting ? () => undefined : onClose} labelledBy={titleId} overLayers>
-      <div
+      <DialogShell
         ref={frameRef}
         data-report-modal=""
-        className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border-soft bg-surface shadow-pop"
-        onClick={(event) => event.stopPropagation()}
+        className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop"
       >
         {phase === "success" ? (
-          <div role="status" data-report-success="" className="flex flex-1 flex-col items-center justify-center gap-3.5 px-7 py-9 text-center">
+          <div role="status" data-report-success="" className="flex flex-1 flex-col items-center justify-center gap-4 px-7 py-9 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success/12 text-success" aria-hidden>
               <CircleCheck size={32} />
             </span>
@@ -192,7 +192,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
           </div>
         ) : (
           <>
-            <div className="flex shrink-0 items-start gap-3.5 px-5 pb-3 pt-5 sm:px-6">
+            <div className="flex shrink-0 items-start gap-4 px-5 pb-3 pt-5 sm:px-6">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-danger/12 text-danger" aria-hidden>
                 <Flag size={24} />
               </span>
@@ -255,7 +255,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                       disabled={submitting}
                       onClick={() => setCode(reason)}
                       className={cn(
-                        "flex w-full items-start gap-3 rounded-lg border-[1.5px] px-3.5 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                        "flex w-full items-start gap-3 rounded-lg border-[1.5px] px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                         on ? "border-primary bg-primary-soft" : "border-transparent bg-surface-soft hover:border-border-strong",
                       )}
                     >
@@ -292,7 +292,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                     placeholder={t("report.modal.notePlaceholder")}
                     aria-invalid={noteInvalid}
                     className={cn(
-                      "block w-full resize-none rounded-lg border-[1.5px] bg-surface px-3.5 py-3 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15",
+                      "block w-full resize-none rounded-lg border-[1.5px] bg-surface px-4 py-3 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15",
                       noteInvalid ? "border-danger" : "border-border focus:border-primary/60",
                     )}
                   />
@@ -310,7 +310,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
 
             <div data-dialog-footer="" className="shrink-0 border-t border-border-soft px-5 pb-4 pt-3 sm:px-6">
               {phase === "error" && error && (
-                <div role="alert" data-report-error="" className="mb-3 flex items-start gap-2.5 rounded-md bg-danger/10 px-3 py-2.5 text-small text-danger">
+                <div role="alert" data-report-error="" className="mb-3 flex items-start gap-3 rounded-md bg-danger/10 px-3 py-2.5 text-small text-danger">
                   <span className="mt-px shrink-0" aria-hidden>
                     <TriangleAlert size={16} />
                   </span>
@@ -318,7 +318,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                 </div>
               )}
               <p className="mb-3 text-caption text-text-muted">{t(toStaff ? "report.modal.helperCommunity" : "report.modal.helper")}</p>
-              <div className="flex gap-2.5">
+              <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={onClose}
@@ -349,7 +349,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
             </div>
           </>
         )}
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

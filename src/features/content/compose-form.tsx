@@ -15,7 +15,7 @@ import type { UserProfile } from "@/types";
  */
 
 export const formInputClassName =
-  "w-full rounded-xl border border-border-strong bg-surface px-3.5 text-body text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "w-full rounded-xl border border-border-strong bg-surface px-4 text-body text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 export const formTextInputClassName = cn(formInputClassName, "h-12");
 export const formTextareaClassName = cn(formInputClassName, "resize-none py-3");
 
@@ -135,7 +135,7 @@ export function FormDisclosure({
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex min-h-14 w-full items-center gap-3 px-3.5 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <span className="min-w-0 flex-1">
           <span className="block truncate text-body font-semibold text-text">{label}</span>
@@ -150,7 +150,7 @@ export function FormDisclosure({
         <ChevronDown size={18} aria-hidden className={cn("shrink-0 text-text-muted transition-transform", open && "rotate-180")} />
       </button>
       {open && (
-        <div id={panelId} className="border-t border-border-soft p-3.5">
+        <div id={panelId} className="border-t border-border-soft p-4">
           {children}
         </div>
       )}
@@ -161,7 +161,7 @@ export function FormDisclosure({
 /** Yalnız bir topluluğa yazılırken formun üstünde görünen satır ("Ali · Açık Topluluk"); dokununca "Kim görsün?" bölümüne götürür. */
 export function ComposeAudienceLine({ profile, label, onClick }: { profile: UserProfile | null; label: string; onClick: () => void }) {
   return (
-    <div className="mb-5 flex items-center gap-2.5">
+    <div className="mb-5 flex items-center gap-3">
       <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? ""} size={32} className="shrink-0" />
       <p className="min-w-0 truncate text-body font-bold text-text">
         {profile?.displayName ?? ""}

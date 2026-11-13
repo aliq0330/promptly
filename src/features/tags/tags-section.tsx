@@ -36,7 +36,7 @@ export function TagsSection() {
     <section className="space-y-5" data-tags-section>
       {trending.length > 0 && (
         <div className="space-y-2">
-          <h2 className="flex items-center gap-1.5 text-h3 font-semibold text-text">
+          <h2 className="flex items-center gap-1.5 text-h3 font-bold text-text">
             <TrendingUp size={16} className="text-primary" aria-hidden />
             {t("tag.risingHeading")}
           </h2>

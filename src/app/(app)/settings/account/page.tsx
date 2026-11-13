@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { fieldInputClassName } from "@/components/ui/field";
+import { Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { translateAuthError } from "@/features/auth/auth-errors";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
@@ -115,7 +115,7 @@ export default function AccountSettingsPage() {
           <label htmlFor="settings-username" className={settingsLabelClassName}>
             {t("settings.usernameLabel")}
           </label>
-          <input
+          <Input
             id="settings-username"
             type="text"
             required
@@ -126,7 +126,6 @@ export default function AccountSettingsPage() {
             autoCorrect="off"
             value={newUsername ?? profile?.username ?? ""}
             onChange={(event) => setNewUsername(event.target.value)}
-            className={fieldInputClassName}
           />
         </div>
         {usernameError && <p className="text-small text-danger">{usernameError}</p>}
@@ -137,7 +136,7 @@ export default function AccountSettingsPage() {
       </SettingsCard>
 
       <SettingsCard as="form" onSubmit={handleChangeEmail} title={t("settings.changeEmail")}>
-        <div className="rounded-lg bg-surface-soft px-3.5 py-2.5">
+        <div className="rounded-lg bg-surface-soft px-4 py-2.5">
           <p className="mb-0.5 text-caption font-medium text-text-muted">{t("settings.email")}</p>
           <p className="break-all text-small text-text">{user.email}</p>
         </div>
@@ -145,14 +144,13 @@ export default function AccountSettingsPage() {
           <label htmlFor="settings-new-email" className={settingsLabelClassName}>
             {t("settings.newEmail")}
           </label>
-          <input
+          <Input
             id="settings-new-email"
             type="email"
             required
             autoComplete="email"
             value={newEmail}
             onChange={(event) => setNewEmail(event.target.value)}
-            className={fieldInputClassName}
           />
         </div>
         {emailError && <p className="text-small text-danger">{emailError}</p>}
@@ -167,28 +165,26 @@ export default function AccountSettingsPage() {
           <label htmlFor="settings-password" className={settingsLabelClassName}>
             {t("settings.newPassword")}
           </label>
-          <input
+          <Input
             id="settings-password"
             type="password"
             required
             autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className={fieldInputClassName}
           />
         </div>
         <div>
           <label htmlFor="settings-confirm-password" className={settingsLabelClassName}>
             {t("settings.newPasswordConfirm")}
           </label>
-          <input
+          <Input
             id="settings-confirm-password"
             type="password"
             required
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
-            className={fieldInputClassName}
           />
         </div>
         {error && <p className="text-small text-danger">{error}</p>}

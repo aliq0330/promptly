@@ -23,14 +23,14 @@ export default function FollowingPage() {
   return (
     <PageContainer className="space-y-6">
       <section className="space-y-3">
-        <h1 className="text-h1 font-semibold text-text">{t("nav.followingPeople")}</h1>
+        <h1 className="text-h1 font-bold text-text">{t("nav.followingPeople")}</h1>
         <PagedListState list={followed} skeleton={<p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>}>
           <CreatorList users={followed.items} />
         </PagedListState>
       </section>
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-h3 font-semibold text-text">{t("following.recentPosts")}</h2>
+          <h2 className="text-h3 font-bold text-text">{t("following.recentPosts")}</h2>
         </div>
         {!feed.loading && (
           <>

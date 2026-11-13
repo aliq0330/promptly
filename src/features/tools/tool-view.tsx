@@ -29,7 +29,7 @@ export function ToolView() {
   if (!tool) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("tool.notFound")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("tool.notFound")}</h1>
         <p className="text-small text-text-muted">{t("tool.notFoundBody")}</p>
       </div>
     );

@@ -20,6 +20,7 @@ import type { SpaceConnection, SpaceItem, SpacePalette } from "@/lib/supabase/sp
 import { canvasToBlob, downloadBlob, renderBoard } from "./board-export-render";
 import type { TeamBoardConfig } from "./board-types";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /**
  * Paylaş penceresi (docs/history/367-*): "Paylaşım" (davet, erişimi olanlar, erişim notu, pano bağlantısı) ve "Dışa aktarma" (PNG, PDF, JSON).
@@ -122,7 +123,7 @@ export function ShareDialog({
 
   return (
     <Modal onClose={onClose} labelledBy={titleId}>
-      <div data-testid="board-share-dialog" onClick={(event) => event.stopPropagation()} className="flex max-h-[92dvh] w-full max-w-[32.5rem] flex-col overflow-hidden rounded-xl border border-border-soft bg-surface shadow-pop">
+      <DialogShell data-testid="board-share-dialog" className="flex max-h-[92dvh] w-full max-w-[32.5rem] flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
         <header className="flex shrink-0 items-center gap-2 px-5 pb-2.5 pt-4">
           <h2 id={titleId} className="min-w-0 flex-1 truncate font-display text-h3 font-extrabold text-text">
             {t("tb.share.title", { name: team.fileTitle ?? team.projectTitle })}
@@ -131,7 +132,7 @@ export function ShareDialog({
             <X size={20} aria-hidden />
           </button>
         </header>
-        <div className="shrink-0 px-5 pb-3.5">
+        <div className="shrink-0 px-5 pb-4">
           <div role="tablist" aria-label={t("tb.share.tabs")} className="flex gap-1 rounded-xl bg-surface-soft p-1">
             {(["share", "export"] as const).map((key) => (
               <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)} data-share-tab={key} className={cn("h-10 flex-1 rounded-lg text-small font-semibold", tab === key ? "bg-surface text-text shadow-xs" : "text-text-secondary")}>
@@ -145,7 +146,7 @@ export function ShareDialog({
           <>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-5 pb-3">
               {canInvite && (
-                <button type="button" onClick={onInvite} data-board-invite="" className="flex h-12 w-full items-center gap-2.5 rounded-xl border border-border px-3.5 text-left text-body text-text-secondary hover:bg-surface-soft">
+                <button type="button" onClick={onInvite} data-board-invite="" className="flex h-12 w-full items-center gap-3 rounded-xl border border-border px-4 text-left text-body text-text-secondary hover:bg-surface-soft">
                   <UserPlus size={20} aria-hidden />
                   {t("tb.share.invite")}
                 </button>
@@ -184,14 +185,14 @@ export function ShareDialog({
                 </span>
               </div>
             </div>
-            <footer className="shrink-0 space-y-2 border-t border-border-soft px-5 pb-5 pt-3.5 text-center">
+            <footer className="shrink-0 space-y-2 border-t border-border-soft px-5 pb-5 pt-4 text-center">
               <p className="text-small text-text-secondary">{t("tb.share.onlyMembers")}</p>
               {copyButton("bg-primary text-primary-foreground")}
             </footer>
           </>
         ) : (
-          <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto overscroll-contain px-5 pb-5">
-            <section className="space-y-2.5 rounded-lg border border-border-soft p-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5">
+            <section className="space-y-3 rounded-lg border border-border-soft p-4">
               <h3 className="text-body font-bold text-text">{t("tb.share.sendTitle")}</h3>
               <p className="text-small leading-relaxed text-text-secondary">{t("tb.share.sendBody")}</p>
               {canInvite && (
@@ -200,7 +201,7 @@ export function ShareDialog({
                   {t("tb.share.inviteButton")}
                 </button>
               )}
-              <button type="button" onClick={() => void copyLink()} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface text-body font-semibold text-text">
+              <button type="button" onClick={() => void copyLink()} className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface text-body font-semibold text-text">
                 <Link2 size={20} aria-hidden />
                 {copied === "ok" ? t("common.copied") : t("tb.share.copyLink")}
               </button>
@@ -212,7 +213,7 @@ export function ShareDialog({
                 return (
                   <li key={row.kind}>
                     <button type="button" disabled={!canExport || busy !== null} onClick={() => void runExport(row.kind)} data-board-export={row.kind} className="flex min-h-16 w-full items-center gap-3 rounded-xl px-1 text-left disabled:opacity-50">
-                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border-soft bg-surface text-primary">
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-border-soft bg-surface text-primary">
                         <Icon size={24} aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1 leading-tight">
@@ -233,7 +234,7 @@ export function ShareDialog({
             )}
           </div>
         )}
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

@@ -43,7 +43,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
 
   return (
     <div className="space-y-4" data-dev-connect="" data-guide-method={method}>
-      <div role="radiogroup" aria-label={t("guide.pick")} className="grid gap-2.5">
+      <div role="radiogroup" aria-label={t("guide.pick")} className="grid gap-3">
         {CONNECT_METHODS.map((id) => {
           const selected = id === method;
           return (
@@ -55,7 +55,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
               data-guide-method-tile={id}
               onClick={() => chooseMethod(id)}
               className={cn(
-                "flex min-h-14 items-center gap-3 rounded-lg border-2 p-3.5 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                "flex min-h-14 items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:border-border-strong",
               )}
             >
@@ -97,7 +97,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
         {step.warn && <p className="text-small font-medium text-warning">{t(step.warn)}</p>}
         {step.sketch && <ConnectorSketch />}
 
-        <div className="flex gap-2.5 pt-1">
+        <div className="flex gap-3 pt-1">
           <Button type="button" variant="outline" size="lg" className="px-5" disabled={index === 0} onClick={() => setStepIndex(index - 1)}>
             {t("guide.back")}
           </Button>
@@ -113,13 +113,13 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
           )}
         </div>
         {last && (
-          <p role="status" className="rounded-lg bg-success/10 px-3.5 py-3 text-small leading-relaxed text-text">
+          <p role="status" className="rounded-lg bg-success/10 px-4 py-3 text-small leading-relaxed text-text">
             {t(method === "oauth" ? "guide.oauth.done" : "guide.key.done")}
           </p>
         )}
       </div>
 
-      <ol aria-label={t("guide.allSteps")} className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-3.5">
+      <ol aria-label={t("guide.allSteps")} className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-4">
         {steps.map((item, i) => {
           const state = stepState(i, index);
           return (
@@ -149,7 +149,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
         })}
       </ol>
 
-      <p className="rounded-lg bg-surface-soft px-3.5 py-2.5 text-caption leading-relaxed text-text-secondary">
+      <p className="rounded-lg bg-surface-soft px-4 py-2.5 text-caption leading-relaxed text-text-secondary">
         {t(method === "oauth" ? "dev.meOauthLimits" : "devSettings.secretNote")}
       </p>
     </div>
@@ -162,7 +162,7 @@ function ConnectorSketch() {
   return (
     <div className="space-y-2" data-guide-sketch="">
       <p className="text-caption font-semibold text-text-muted">{t("guide.sketch.label")}</p>
-      <div aria-hidden className="space-y-3 rounded-lg bg-surface-soft p-3.5">
+      <div aria-hidden className="space-y-3 rounded-lg bg-surface-soft p-4">
         <p className="text-small font-semibold text-text-secondary">{t("guide.sketch.title")}</p>
         <div className="space-y-1">
           <p className="text-caption text-text-muted">{t("guide.sketch.name")}</p>

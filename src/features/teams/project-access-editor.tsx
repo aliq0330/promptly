@@ -9,6 +9,7 @@ import { listTeamGroups, listTeamMembers, type TeamGroup, type TeamMember } from
 import { PROJECT_ROLES, type ProjectRole } from "@/lib/team-projects";
 import { projectRoleLabelKey } from "./project-ui";
 import { PersonRow } from "./team-ui";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Proje erişimi: kişi/grup listesi + proje rolü (Lider · Düzenleyici · Görüntüleyici). Yalnız seçimi tutar; kaydetme çağıranındır
@@ -83,7 +84,7 @@ export function ProjectAccessEditor({
                       ))}
                     </select>
                     {!locked && (
-                      <button type="button" onClick={() => remove(entry)} aria-label={t("tp.access.remove")} className="grid h-8 w-8 place-items-center rounded-full text-text-muted hover:bg-surface-soft">
+                      <button type="button" onClick={() => remove(entry)} aria-label={t("tp.access.remove")} className={iconButtonClassName(false, "h-8 w-8")}>
                         <X size={14} aria-hidden />
                       </button>
                     )}

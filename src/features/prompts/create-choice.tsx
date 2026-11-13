@@ -19,6 +19,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 import { ShareExistingModal } from "./share-existing-modal";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 type MenuOption = { key: string; href: string; icon: IconComponent; titleKey: TranslationKey; hintKey?: TranslationKey };
 
@@ -113,12 +114,12 @@ export function CreateMenuSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   return (
     <Modal onClose={onClose} labelledBy="create-menu-title">
-      <div className="w-full max-w-md rounded-t-lg border border-border bg-surface px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-pop sm:rounded-lg sm:pb-4" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="w-full max-w-md rounded-t-lg border border-border-soft bg-surface px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-pop sm:rounded-lg sm:pb-4">
         <h2 id="create-menu-title" className="px-1 pb-1 text-h3 font-bold text-text">
           {t("create.eyebrow")}
         </h2>
         <CreateMenuList onPick={onClose} />
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

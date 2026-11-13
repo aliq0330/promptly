@@ -7,7 +7,7 @@ import { Plus } from "@/components/icons/plus";
 import { Avatar } from "@/components/ui/avatar";
 import { PresenceStatusText } from "@/features/presence/presence-ui";
 import { Button } from "@/components/ui/button";
-import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldLabelClassName, Input, Select } from "@/components/ui/field";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useToast } from "@/features/groups/use-toast";
 import { SpaceDialog } from "@/features/spaces/space-modals";
@@ -53,7 +53,7 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
   const list = groups ?? [];
   const selected = list.find((g) => g.id === selectedId) ?? list[0] ?? null;
 
-  const card = "rounded-xl border border-border-soft bg-surface p-4";
+  const card = "rounded-lg border border-border-soft bg-surface p-4";
   const detail = selected && (
     <div className="space-y-3" data-group-detail={selected.id}>
       <div className="flex flex-wrap items-center gap-2">
@@ -189,7 +189,7 @@ function GroupMembersCard({ group, members }: { group: TeamGroup; members: TeamM
   const shown = inGroup.slice(0, 8);
   const rest = Math.max(0, group.memberCount - shown.length);
   return (
-    <section className="rounded-xl border border-border-soft bg-surface p-4" data-group-members>
+    <section className="rounded-lg border border-border-soft bg-surface p-4" data-group-members>
       <h4 className="mb-2 text-small font-bold">{t("tm.groups.membersHeading")}</h4>
       <div className="flex flex-wrap gap-2">
         {shown.map((m) => (
@@ -271,7 +271,7 @@ function GroupDialog({ ctx, group, onClose, onSaved }: { ctx: TeamCtx; group: Te
           <label htmlFor="group-name" className={fieldLabelClassName}>
             {t("tm.groups.name")}
           </label>
-          <input id="group-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} className={fieldInputClassName} autoComplete="off" />
+          <Input id="group-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} autoComplete="off" />
         </div>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("tm.create.tone")}>
           {TEAM_TONES.map((option) => (
@@ -284,14 +284,14 @@ function GroupDialog({ ctx, group, onClose, onSaved }: { ctx: TeamCtx; group: Te
           <label htmlFor="group-lead" className={fieldLabelClassName}>
             {t("tm.groups.leadLabel")}
           </label>
-          <select id="group-lead" value={lead} onChange={(e) => setLead(e.target.value)} className={fieldInputClassName}>
+          <Select id="group-lead" value={lead} onChange={(e) => setLead(e.target.value)}>
             <option value="">{t("tm.groups.noLead")}</option>
             {members.map((m) => (
               <option key={m.userId} value={m.userId}>
                 {m.displayName || m.username}
               </option>
             ))}
-          </select>
+          </Select>
           <p className="mt-1 text-caption text-text-muted">{t("tm.groups.leadHint")}</p>
         </div>
         <div>
@@ -397,7 +397,7 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
       {guests && guests.length === 0 && <p className="text-small text-text-muted">{t("tm.guests.empty")}</p>}
       {list.length > 0 && (
         <>
-          <table className="hidden w-full overflow-hidden rounded-xl border border-border-soft bg-surface text-small md:table" data-testid="team-guests">
+          <table className="hidden w-full overflow-hidden rounded-lg border border-border-soft bg-surface text-small md:table" data-testid="team-guests">
             <thead className="bg-surface-soft text-caption uppercase tracking-[0.06em] text-text-muted">
               <tr className="text-left">
                 {(["tm.guests.col.guest", "tm.guests.col.spaces", "tm.guests.col.level", "tm.guests.col.until", "tm.guests.col.lastSeen", "tm.guests.col.actions"] as const).map((key) => (
@@ -426,7 +426,7 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
           </table>
           <ul className="space-y-2 md:hidden" data-testid="team-guests-cards">
             {list.map((guest) => (
-              <li key={guest.userId} className="rounded-xl border border-border-soft bg-surface p-3.5" data-guest-card>
+              <li key={guest.userId} className="rounded-lg border border-border-soft bg-surface p-4" data-guest-card>
                 <div className="flex items-center gap-3">
                   <PersonRow name={guest.displayName || guest.username} avatarUrl={guest.avatarUrl} sub={guest.guestOrg ?? undefined} className="flex-1" />
                   {leftChip(guest)}
@@ -449,7 +449,7 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
           {t("tm.guests.prune", { count: expiredCount })}
         </Button>
       )}
-      <section className="rounded-xl border border-border-soft bg-surface p-4" data-guest-hidden>
+      <section className="rounded-lg border border-border-soft bg-surface p-4" data-guest-hidden>
         <h3 className="mb-2 text-small font-bold">{t("tm.guests.cannotSee")}</h3>
         <div className="flex flex-wrap gap-2">
           {hidden.map((key) => (

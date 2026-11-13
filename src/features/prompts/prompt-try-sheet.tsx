@@ -22,6 +22,8 @@ import { fetchRecentPresets, fetchSavedPresets } from "@/lib/supabase/presets";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { Preset, Prompt } from "@/types";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const RECENT_TTL_MS = 3 * 60 * 1000;
 const RECENT_LIMIT = 60;
@@ -150,13 +152,13 @@ function PromptTrySheet({
 
   return (
     <Modal onClose={onClose} labelledBy="prompt-try-title">
-      <div role="document" onClick={(event) => event.stopPropagation()} className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-pop">
+      <DialogShell role="document" className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="px-4 pb-1 pt-3">
           <div className="flex items-center gap-2">
-            <h2 id="prompt-try-title" className="min-w-0 flex-1 text-h3 font-semibold text-text">
+            <h2 id="prompt-try-title" className="min-w-0 flex-1 text-h3 font-bold text-text">
               {t("promptTry.title")}
             </h2>
-            <button type="button" aria-label={t("common.close")} onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+            <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-10 w-10 rounded-md")}>
               <X size={18} />
             </button>
           </div>
@@ -240,7 +242,7 @@ function PromptTrySheet({
             <CopyPromptButton text={composed} promptId={prompt.id} label={t("promptTry.copy")} size="md" variant="outline" className="min-h-11 flex-1 justify-center sm:flex-none" />
           </div>
         )}
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

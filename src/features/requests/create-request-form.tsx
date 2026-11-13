@@ -281,7 +281,7 @@ export function CreateRequestForm() {
   if (!user) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("auth.loginRequiredTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("request.loginToCreateMessage")}</p>
         <div className="flex justify-center gap-2">
           <Link
@@ -308,7 +308,7 @@ export function CreateRequestForm() {
   if (editForbidden) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.noEditPermissionTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("request.noEditPermissionTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("request.noEditPermissionBody")}</p>
         <Link
           href="/requests"
@@ -323,7 +323,7 @@ export function CreateRequestForm() {
   if (isEditMode && !editingRequest) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.requestNotFound")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("request.requestNotFound")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("request.editSourceGoneBody")}</p>
         <Link
           href="/requests"

@@ -81,7 +81,7 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
       ) : (
         <ul className="space-y-3">
           {reports.map((report) => (
-            <li key={report.id} className="space-y-2.5 rounded-lg border border-border-soft bg-surface p-4">
+            <li key={report.id} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="neutral">
                   {report.kind === "post" ? <SquareStack size={12} aria-hidden /> : <MessagesSquare size={12} aria-hidden />}

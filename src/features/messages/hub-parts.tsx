@@ -60,7 +60,7 @@ export function HubHeader({
         <span className="flex-1" />
         {topRight}
       </div>
-      <div className="flex items-center gap-3.5 pb-3 pt-1">
+      <div className="flex items-center gap-4 pb-3 pt-1">
         {media}
         <div className="min-w-0">
           <h1 data-hub-title className="truncate font-display text-h2 font-extrabold leading-[1.15] tracking-[-0.02em] text-text">

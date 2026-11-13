@@ -102,7 +102,7 @@ function StatsBody({ stats }: { stats: CommunityStats }) {
             <dt className="flex items-center gap-1.5 text-caption text-text-muted">
               {card.icon} {card.label}
             </dt>
-            <dd className="mt-1 text-h3 font-semibold text-text">{card.value}</dd>
+            <dd className="mt-1 text-h3 font-bold text-text">{card.value}</dd>
             {card.hint && <p className="text-caption text-text-muted">{card.hint}</p>}
           </div>
         ))}

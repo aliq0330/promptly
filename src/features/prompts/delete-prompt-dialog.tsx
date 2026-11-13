@@ -10,6 +10,7 @@ import { StorageImg } from "@/components/ui/storage-media";
 import { fetchPromptDeleteImpact, type PromptDeleteImpact } from "@/lib/supabase/prompts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /**
  * "Bu promptu sil?" (docs/history/283-*): what deleting takes along and what stays — how many user results the prompt has (they are NOT deleted: they
@@ -49,12 +50,11 @@ export function DeletePromptDialog({
 
   return (
     <Modal onClose={onClose} labelledBy="delete-prompt-title">
-      <div
+      <DialogShell
         role="alertdialog"
         aria-labelledby="delete-prompt-title"
         data-delete-prompt-dialog=""
-        className="w-full max-w-md space-y-4 rounded-t-xl border border-border-soft bg-surface p-5 shadow-pop sm:rounded-xl"
-        onClick={(event) => event.stopPropagation()}
+        className="w-full max-w-md space-y-4 rounded-t-xl border border-border-soft bg-surface p-5 shadow-pop sm:rounded-lg"
       >
         <div className="space-y-1.5">
           <h2 id="delete-prompt-title" className="font-display text-h2 font-bold text-text">
@@ -75,7 +75,7 @@ export function DeletePromptDialog({
         ) : (
           <div className="space-y-2">
             {resultCount > 0 && (
-              <div className="flex items-start gap-3 rounded-lg bg-surface-soft px-3.5 py-3" data-delete-results="">
+              <div className="flex items-start gap-3 rounded-lg bg-surface-soft px-4 py-3" data-delete-results="">
                 <div className="mt-0.5 flex shrink-0 items-center">
                   {impact?.resultThumbnails.map((url, index) => (
                     <span key={index} className={cn("h-[30px] w-[30px] overflow-hidden rounded-[9px] bg-border-soft ring-2 ring-surface-soft", index > 0 && "-ml-2.5")}>
@@ -95,7 +95,7 @@ export function DeletePromptDialog({
               </div>
             )}
             {impact && hasEngagement && (
-              <div className="flex items-center gap-3 rounded-lg bg-surface-soft px-3.5 py-3">
+              <div className="flex items-center gap-3 rounded-lg bg-surface-soft px-4 py-3">
                 <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-surface text-text-secondary">
                   <Heart size={16} aria-hidden />
                 </span>
@@ -112,7 +112,7 @@ export function DeletePromptDialog({
           </p>
         )}
 
-        <div className="flex gap-2.5 pt-1">
+        <div className="flex gap-3 pt-1">
           <Button type="button" variant="ghost" size="lg" className="h-12 flex-1 rounded-full bg-surface-soft hover:bg-border-soft" onClick={onClose} disabled={deleting}>
             {t("common.cancel")}
           </Button>
@@ -121,7 +121,7 @@ export function DeletePromptDialog({
             {deleting ? t("common.deleting") : t("deletePrompt.confirm")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

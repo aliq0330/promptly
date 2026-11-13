@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { KeyRound } from "@/components/icons/key-round";
 import { CircleCheck } from "@/components/icons/circle-check";
 import { Button } from "@/components/ui/button";
-import { FormIconBadge, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { FormIconBadge, fieldLabelClassName, Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
@@ -122,28 +122,26 @@ export default function ResetPasswordPage() {
             <label htmlFor="new-password" className={fieldLabelClassName}>
               {t("auth.newPasswordLabel")}
             </label>
-            <input
+            <Input
               id="new-password"
               type="password"
               required
               autoComplete="new-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className={fieldInputClassName}
             />
           </div>
           <div>
             <label htmlFor="confirm-password" className={fieldLabelClassName}>
               {t("auth.confirmNewPasswordLabel")}
             </label>
-            <input
+            <Input
               id="confirm-password"
               type="password"
               required
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              className={fieldInputClassName}
             />
           </div>
         </div>
@@ -188,14 +186,13 @@ export default function ResetPasswordPage() {
         <label htmlFor="reset-email" className={fieldLabelClassName}>
           {t("settings.email")}
         </label>
-        <input
+        <Input
           id="reset-email"
           type="email"
           required
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className={fieldInputClassName}
         />
       </div>
 

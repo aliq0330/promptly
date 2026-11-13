@@ -152,6 +152,7 @@ await scenario("1. telefon: görünür başlık yok (yalnız ekran okuyucuya); t
   assert.equal(await page.locator('main [role="tablist"]').count(), 0, "sekme satırı yok");
   await menu.click();
   const options = page.getByRole("radio");
+  await options.first().waitFor();
   assert.equal(await options.count(), 11, "menüde 11 bölüm");
   assert.equal(await options.first().getAttribute("aria-checked"), "true");
   await page.keyboard.press("Escape");

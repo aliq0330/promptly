@@ -22,7 +22,7 @@ export interface RelatedCardItem {
  */
 export function RelatedCards({ items }: { items: RelatedCardItem[] }) {
   return (
-    <ul className="grid grid-cols-2 gap-2.5 p-2.5">
+    <ul className="grid grid-cols-2 gap-3 p-2.5">
       {items.map((item) => (
         <li key={item.id} className="min-w-0">
           <Link
@@ -52,7 +52,7 @@ export function RelatedCards({ items }: { items: RelatedCardItem[] }) {
 /** Placeholder with the same footprint while a related list loads. */
 export function RelatedCardsSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 gap-2.5 p-2.5" aria-hidden>
+    <div className="grid grid-cols-2 gap-3 p-2.5" aria-hidden>
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="space-y-2">
           <Skeleton className="aspect-[4/3] w-full rounded-md" />

@@ -59,7 +59,7 @@ export function WorkflowPlanPreview({ plan, steps }: { plan: WorkflowImportPlan;
   const promptTitle = useMemo(() => new Map(steps.flatMap((step) => (step.content ? [[step.content.id, step.content.title] as const] : []))), [steps]);
 
   return (
-    <div ref={hostRef} data-plan-preview="" className="relative w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft" style={{ height: Math.round(world.h * scale) }}>
+    <div ref={hostRef} data-plan-preview="" className="relative w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft" style={{ height: Math.round(world.h * scale) }}>
       <div className="absolute left-0 top-0 origin-top-left" style={{ width: world.w, height: world.h, transform: `scale(${scale})` }}>
         <BoardConnectors connections={connections} boxes={boxes} zoom={scale} selectedId={null} interactive={false} lowDetail={scale < 0.4} />
         {plan.items.map((item) => {

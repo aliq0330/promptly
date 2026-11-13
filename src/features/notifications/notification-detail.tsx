@@ -72,7 +72,7 @@ function GroupMembers({ card }: { card: NotificationCard }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border-soft" data-group-members="">
       {members.map((member) => (
-        <div key={member.id} className="flex items-center gap-3 border-b border-border-soft px-3.5 py-2.5 last:border-b-0">
+        <div key={member.id} className="flex items-center gap-3 border-b border-border-soft px-4 py-2.5 last:border-b-0">
           <Avatar src={member.actor?.avatarUrl} alt={member.actor?.displayName ?? ""} size={40} />
           <div className="min-w-0 flex-1">
             {member.actor ? (
@@ -92,7 +92,7 @@ function GroupMembers({ card }: { card: NotificationCard }) {
           )}
         </div>
       ))}
-      {members.length === 0 && !loading && <p className="px-3.5 py-4 text-small text-text-muted">{failed ? t("nc.membersFailed") : t("nc.membersEmpty")}</p>}
+      {members.length === 0 && !loading && <p className="px-4 py-4 text-small text-text-muted">{failed ? t("nc.membersFailed") : t("nc.membersEmpty")}</p>}
       <LoadMore failed={failed} hasMore={hasMore} loadingMore={loading && members.length > 0} onLoadMore={() => last && void load({ at: last.createdAt, id: last.id })} auto />
     </div>
   );
@@ -112,7 +112,7 @@ function LinkedContent({ card, list }: { card: NotificationCard; list: List }) {
     );
   }
   return (
-    <div className="flex items-stretch gap-3.5 rounded-lg border border-border p-3" data-linked-content="card">
+    <div className="flex items-stretch gap-4 rounded-lg border border-border p-3" data-linked-content="card">
       <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-primary-soft">
         {linked.thumbnailUrl && <StorageImage src={linked.thumbnailUrl} alt="" fill sizes="80px" className="object-cover" />}
       </div>
@@ -166,7 +166,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
   const lines = suggestion && suggestion.proposedText && suggestion.currentText != null ? changedExcerpt(diffLines(suggestion.currentText, suggestion.proposedText), 2) : [];
 
   const header = (
-    <div className="flex flex-wrap items-center gap-3.5">
+    <div className="flex flex-wrap items-center gap-4">
       <CardAvatar card={card} size={variant === "panel" ? 56 : 52} />
       <div className="min-w-0 flex-1 basis-60">
         <p className="text-small font-semibold text-primary">
@@ -320,7 +320,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
       {actions.replyTarget && user && (
         <div data-reply-composer="">
           <label htmlFor="detail-reply" className="mb-2 block text-label font-bold text-text-secondary">{t("nc.replyLabel")}</label>
-          <div className="space-y-2.5 rounded-lg border border-border bg-surface p-3 pl-4">
+          <div className="space-y-3 rounded-lg border border-border bg-surface p-3 pl-4">
             <textarea id="detail-reply" rows={variant === "panel" ? 3 : 2} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} placeholder={t("nc.replyPlaceholder", { name: actor?.displayName ?? "" })} className="w-full resize-none bg-transparent text-body text-text outline-none placeholder:text-text-muted" />
             <CommentExtrasPreview extras={extras} />
             <div className="flex flex-wrap items-center gap-1.5">

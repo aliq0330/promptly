@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { AlertCircle } from "@/components/icons/alert-circle";
-import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -62,32 +61,7 @@ export function RoleChip({ role }: { role: TeamRole }) {
   return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-caption font-medium", tone)}>{t(ROLE_KEY[role])}</span>;
 }
 
-export function PersonRow({
-  name,
-  username,
-  avatarUrl,
-  sub,
-  right,
-  className,
-}: {
-  name: string;
-  username?: string | null;
-  avatarUrl?: string | null;
-  sub?: ReactNode;
-  right?: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex items-center gap-3 py-2.5", className)}>
-      <Avatar src={avatarUrl} alt={name} size={40} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-small font-medium text-text">{name}</p>
-        {(sub || username) && <p className="truncate text-caption text-text-muted">{sub ?? `@${username}`}</p>}
-      </div>
-      {right && <div className="flex shrink-0 items-center gap-2">{right}</div>}
-    </div>
-  );
-}
+export { PersonRow } from "@/components/ui/person-row";
 
 /** Bölüm kutusu: başlık + açıklama + içerik; Yönetim sayfalarının ortak iskeleti. */
 export function Panel({ title, hint, action, children, className }: { title: string; hint?: string; action?: ReactNode; children: ReactNode; className?: string }) {
@@ -143,7 +117,7 @@ export function PillChoice<K extends string>({
           title={option.hint}
           onClick={() => onChange(option.key)}
           className={cn(
-            "min-h-9 shrink-0 whitespace-nowrap rounded-full border px-3.5 text-small transition-colors",
+            "min-h-9 shrink-0 whitespace-nowrap rounded-full border px-4 text-small transition-colors",
             value === option.key ? "border-primary bg-primary-soft font-medium text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft",
           )}
         >

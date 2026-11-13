@@ -42,7 +42,7 @@ export function attachmentHref(type: CommentAttachmentType, id: string): string 
 /** Kartın hâli: yükleniyor · okuyucu göremiyor/kaldırıldı · yüklenemedi · hazır. */
 export type AttachmentState = { status: "loading" } | { status: "hidden" } | { status: "error" } | { status: "ready"; card: AttachmentCard };
 
-const SHELL = "relative flex w-full max-w-xs items-center gap-2.5 rounded-lg bg-surface-soft p-2 text-left";
+const SHELL = "relative flex w-full max-w-xs items-center gap-3 rounded-lg bg-surface-soft p-2 text-left";
 
 /**
  * Yorum ekinin KÜÇÜK önizleme kartı (docs/history/308-*): mesajdaki büyük paylaşım kartının (`SharedCard`) tek satırlık hâli — kapak, tür etiketi,

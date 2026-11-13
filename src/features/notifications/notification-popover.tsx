@@ -104,7 +104,7 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
       >
         <span aria-hidden style={{ right: pos.nub }} className="absolute -top-[9px] size-4 rotate-45 rounded-tl border-l border-t border-border-soft bg-surface" />
 
-        <div className="flex shrink-0 items-center gap-1 py-3.5 pl-5 pr-2">
+        <div className="flex shrink-0 items-center gap-1 py-4 pl-5 pr-2">
           <h2 className="flex-1 font-display text-[1.3125rem] font-bold tracking-[-0.01em] text-text">{t("header.notificationsAriaLabel")}</h2>
           <button type="button" onClick={() => void markAllRead()} disabled={unreadCount === 0} data-action="mark-all-read" className="h-11 rounded-full px-3 text-small font-semibold text-primary hover:bg-primary-soft disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <span className="max-[520px]:hidden">{t("notifications.markAllRead")}</span>
@@ -115,7 +115,7 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
           </Link>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2.5 px-5 pb-2.5">
+        <div className="flex shrink-0 items-center gap-3 px-5 pb-2.5">
           <SectionMenu items={menu} active={view} onChange={setView} ariaLabel={t("notifications.categoriesAria")} title={t("header.notificationsAriaLabel")} />
           <span className="text-small font-semibold text-text-muted" data-unread-text="">{unreadCount > 0 ? t("nc.unreadCount", { count: unreadCount }) : t("nc.allRead")}</span>
           <span className="flex-1" />
@@ -157,7 +157,7 @@ export function NotificationPopover({ anchor, onClose }: { anchor: HTMLElement |
 
         <UndoBar placement="inline" />
 
-        <div className={cn("shrink-0 border-t border-border-soft p-3.5")}>
+        <div className={cn("shrink-0 border-t border-border-soft p-4")}>
           <Link href="/notifications" onClick={onClose} data-action="see-all" className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary-soft text-body font-semibold text-primary hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             {t("nc.seeAll")}
             <ArrowRight size={16} aria-hidden />

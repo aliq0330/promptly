@@ -127,7 +127,7 @@ export function ConnectedAppsSection() {
               </p>
 
               {confirmKey === grant.key ? (
-                <div className="space-y-2.5 rounded-lg bg-danger/10 p-3">
+                <div className="space-y-3 rounded-lg bg-danger/10 p-3">
                   <p className="text-caption leading-relaxed text-text-secondary">{t("apps.revokeConfirm")}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" size="sm" variant="danger" disabled={busyKey === grant.key} onClick={() => void revoke(grant)}>

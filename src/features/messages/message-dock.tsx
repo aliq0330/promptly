@@ -60,7 +60,7 @@ function DockPill({ pillRef }: { pillRef: React.RefObject<HTMLButtonElement | nu
       aria-expanded={false}
       data-app-chrome=""
       data-message-dock-pill=""
-      className="fixed bottom-4 right-6 z-40 flex h-12 animate-fade-in items-center gap-2.5 rounded-full border border-border-soft bg-surface py-1 pl-1.5 pr-4 text-small font-semibold text-text shadow-pop transition-transform duration-200 ease-soft hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="fixed bottom-4 right-6 z-40 flex h-12 animate-fade-in items-center gap-3 rounded-full border border-border-soft bg-surface py-1 pl-1.5 pr-4 text-small font-semibold text-text shadow-pop transition-transform duration-200 ease-soft hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {recent.length > 0 && (
         <span aria-hidden className="flex">

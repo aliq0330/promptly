@@ -55,7 +55,7 @@ export function CommunityCard({
   const meta = note ? (
     note
   ) : (
-    <span className="inline-flex min-w-0 items-center gap-x-2.5 whitespace-nowrap">
+    <span className="inline-flex min-w-0 items-center gap-x-3 whitespace-nowrap">
       <span className="truncate">
         {memberCountText(t, community.memberCount)}
         {full && ` · ${t("groups.page.full")}`}

@@ -10,6 +10,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { messagePreviewText } from "./message-preview";
 import type { PinnedItem } from "./use-pinned-messages";
 import type { Message } from "@/types";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Başlığın altındaki ince sabit-mesaj çubuğu (docs/history/174-*). Çubuğa dokunmak o mesaja götürür ve bir sonraki sabite geçer
@@ -69,7 +71,7 @@ export function PinnedMessagesBar({
             onClick={() => handleUnpin(current.message)}
             aria-label={t("chat.pin.unpin")}
             title={t("chat.pin.unpin")}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-8 w-8")}
           >
             <X size={16} />
           </button>
@@ -80,14 +82,14 @@ export function PinnedMessagesBar({
           aria-label={t("chat.pin.showAll")}
           title={t("chat.pin.showAll")}
           aria-haspopup="dialog"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+          className={iconButtonClassName(false, "h-8 w-8")}
         >
           <List size={16} />
         </button>
       </div>
       {listOpen && (
         <Modal onClose={() => setListOpen(false)} labelledBy="pinned-list-title">
-          <div className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg bg-surface shadow-pop" onClick={(event) => event.stopPropagation()}>
+          <DialogShell className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg bg-surface shadow-pop">
             <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-5">
               <h2 id="pinned-list-title" className="flex items-center gap-2 text-body font-semibold text-text">
                 <Pin size={16} className="text-primary" aria-hidden /> {t("chat.pin.listTitle")}
@@ -96,7 +98,7 @@ export function PinnedMessagesBar({
                 type="button"
                 onClick={() => setListOpen(false)}
                 aria-label={t("common.close")}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text"
+                className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
               >
                 <X size={18} />
               </button>
@@ -133,7 +135,7 @@ export function PinnedMessagesBar({
                 </li>
               ))}
             </ul>
-          </div>
+          </DialogShell>
         </Modal>
       )}
     </>

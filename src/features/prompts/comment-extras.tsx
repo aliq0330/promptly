@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import type { CommentAttachment, CommentAttachmentType, CommentMedia } from "@/types";
 import type { CommentExtras } from "@/lib/supabase/comments";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** Yazma çubuğundaki seçili ek içerik (henüz gönderilmedi): başlığı yalnız önizleme içindir, veritabanına yazılmaz. */
 export interface AttachmentDraft {
@@ -493,11 +494,11 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
           <h2 id="comment-content-title" className="font-display text-h3 font-bold text-text">
             {t("commentExtras.picker.title")}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
             <X size={18} aria-hidden />
           </button>
         </div>
-        <div className="shrink-0 space-y-2.5 px-5 pb-2 pt-2">
+        <div className="shrink-0 space-y-3 px-5 pb-2 pt-2">
           <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={changeType} items={LIBRARY_TYPES.map(({ type: value }) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
           {canSave && (
             <Tabs

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
 import { Crown } from "@/components/icons/crown";
@@ -14,7 +13,7 @@ import { X } from "@/components/icons/x";
 import { Pencil } from "@/components/icons/pencil";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
@@ -33,6 +32,7 @@ import { useSpaceContext } from "../space-provider";
 import { FormError } from "../space-forms";
 import { ShareSpaceModal } from "../space-modals";
 import { VisibilityBadge } from "../space-visuals";
+import { PersonRow } from "@/components/ui/person-row";
 
 const ROLE_ICON: Record<SpaceRole, typeof Crown> = { owner: Crown, editor: Pencil, viewer: Eye };
 
@@ -113,13 +113,13 @@ export function MembersTab() {
         )}
         {caps.manageMembers && (
           <form onSubmit={invite} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4" data-testid="invite-member">
-            <h2 className="text-h3 font-semibold text-text">{t("spaces.members.inviteTitle")}</h2>
+            <h2 className="text-h3 font-bold text-text">{t("spaces.members.inviteTitle")}</h2>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <div className="min-w-0 flex-1">
                 <label htmlFor={inputId} className={fieldLabelClassName}>
                   {t("spaces.members.username")}
                 </label>
-                <input id={inputId} value={username} onChange={(event) => setUsername(event.target.value)} placeholder="@kullanici" autoComplete="off" autoCapitalize="none" spellCheck={false} className={fieldInputClassName} />
+                <Input id={inputId} value={username} onChange={(event) => setUsername(event.target.value)} placeholder="@kullanici" autoComplete="off" autoCapitalize="none" spellCheck={false} />
               </div>
               <div>
                 <label htmlFor={roleId} className={fieldLabelClassName}>
@@ -145,7 +145,7 @@ export function MembersTab() {
         <FormError message={error} />
 
         <section className="space-y-2">
-          <h2 className="text-h3 font-semibold text-text">{t("spaces.members.title")}</h2>
+          <h2 className="text-h3 font-bold text-text">{t("spaces.members.title")}</h2>
           {failed ? (
             <p className="text-small text-text-muted">{t("spaces.members.loadError")}</p>
           ) : members === null ? (
@@ -156,22 +156,16 @@ export function MembersTab() {
                 const Icon = ROLE_ICON[member.role];
                 const name = member.profile?.displayName ?? "—";
                 return (
-                  <li key={member.userId} data-member={member.profile?.username ?? member.userId} className="flex items-center gap-3 p-3">
-                    {member.profile ? (
-                      <Link href={profileHref(member.profile)} className="flex min-w-0 flex-1 items-center gap-3">
-                        <Avatar src={member.profile.avatarUrl} alt="" size={40} />
-                        <span className="min-w-0">
-                          <span className="block truncate text-small font-semibold text-text">
-                            {name}
-                            {member.userId === userId && <span className="font-normal text-text-muted"> · {t("spaces.card.you")}</span>}
-                          </span>
-                          <span className="block truncate text-caption text-text-muted">@{member.profile.username}</span>
-                        </span>
-                      </Link>
-                    ) : (
-                      <span className="min-w-0 flex-1 text-small text-text-muted">—</span>
-                    )}
-                    {caps.manageMembers && member.role !== "owner" ? (
+                  <li key={member.userId} data-member={member.profile?.username ?? member.userId} className="px-3">
+                    <PersonRow
+                      name={name}
+                      avatarUrl={member.profile?.avatarUrl}
+                      href={member.profile ? profileHref(member.profile) : undefined}
+                      nameSuffix={member.userId === userId ? <span className="font-normal text-text-muted"> · {t("spaces.card.you")}</span> : undefined}
+                      sub={member.profile ? `@${member.profile.username}` : undefined}
+                      right={
+                        <>
+                          {caps.manageMembers && member.role !== "owner" ? (
                       <>
                         <select
                           value={member.role}
@@ -192,6 +186,9 @@ export function MembersTab() {
                         {t(SPACE_ROLE_LABEL[member.role])}
                       </span>
                     )}
+                        </>
+                      }
+                    />
                   </li>
                 );
               })}
@@ -201,7 +198,7 @@ export function MembersTab() {
 
         {caps.manageMembers && invites.length > 0 && (
           <section className="space-y-2" data-testid="pending-invites">
-            <h2 className="text-h3 font-semibold text-text">{t("spaces.members.pending")}</h2>
+            <h2 className="text-h3 font-bold text-text">{t("spaces.members.pending")}</h2>
             <ul className="space-y-2">
               {invites.map((invite) => (
                 <li key={invite.id} className="flex items-center gap-3 rounded-lg border border-dashed border-border p-3">

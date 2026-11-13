@@ -316,7 +316,7 @@ function FileInfoSheet({
             <ReviewSwitchRow value={file.reviewRequired} onChange={(on) => void toggleReview(on)} />
           </div>
         ) : (
-          <p className="rounded-xl border border-border-soft bg-surface p-3.5 text-small text-text-secondary" data-file-review-note>
+          <p className="rounded-lg border border-border-soft bg-surface p-4 text-small text-text-secondary" data-file-review-note>
             {t(file.reviewRequired ? "tp.review.noteOn" : "tp.review.noteOff")}
           </p>
         )}
@@ -434,7 +434,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
             <h2 className="min-w-0 flex-1 font-display text-h3 font-bold text-text">{t("tp.files.title")}</h2>
             {reviewOnNames.length > 0 && <span className="truncate text-small text-text-muted max-md:hidden">{t("tc.proj.reviewOn", { names: reviewOnNames.join(", ") })}</span>}
           </div>
-          <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:gap-3.5 xl:grid-cols-3" data-testid="project-files">
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-3" data-testid="project-files">
             {legacyShared && detail.mainAreaId && (
               <li>
                 <FileCard
@@ -474,10 +474,10 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           {legacyShared && sharedBoards.length > 0 && (
             <>
               <h2 className="font-display text-h3 font-bold text-text">{t("tc.proj.boards")}</h2>
-              <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 md:gap-3" data-testid="project-boards">
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-3" data-testid="project-boards">
                 {sharedBoards.map((board) => (
                   <li key={board.id}>
-                    <Link href={board.href} className="block rounded-lg border border-border-soft bg-surface px-3.5 py-3 hover:shadow-card" data-project-board={board.id}>
+                    <Link href={board.href} className="block rounded-lg border border-border-soft bg-surface px-4 py-3 hover:shadow-card" data-project-board={board.id}>
                       <span className="block truncate font-bold text-text">{board.title}</span>
                       <span className="block text-caption text-text-muted">{t("tp.board.items", { count: board.itemCount })}</span>
                     </Link>
@@ -558,7 +558,7 @@ function FileCard({ href, title, meta, tone, chip, chipTone, attrs }: { href: st
         <span className="rounded-lg bg-current opacity-45" />
         <span className="rounded-lg bg-surface/60 sm:hidden" />
       </span>
-      <span className="block min-w-0 flex-1 p-3 md:px-3.5 md:py-3">
+      <span className="block min-w-0 flex-1 p-3 md:px-4 md:py-3">
         <span className="block truncate text-body font-bold text-text">{title}</span>
         <span className="block text-small text-text-secondary max-sm:line-clamp-2 sm:truncate">{meta}</span>
         {chip && (

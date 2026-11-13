@@ -155,7 +155,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
         }}
         data-manage-room={room.id}
         className={cn(
-          "flex items-center gap-2.5 rounded-xl border bg-surface px-2.5 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-soft",
+          "flex items-center gap-3 rounded-xl border bg-surface px-2.5 py-2 transition-[background-color,border-color,box-shadow] duration-200 ease-soft",
           dragging ? "border-primary/40 bg-primary-soft shadow-card" : "border-border-soft",
         )}
       >
@@ -257,7 +257,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
                 type="button"
                 onClick={() => setArchivedOpen((open) => !open)}
                 aria-expanded={archivedOpen}
-                className="flex min-h-12 w-full items-center justify-between rounded-xl border border-dashed border-border-strong px-3.5 text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex min-h-12 w-full items-center justify-between rounded-xl border border-dashed border-border-strong px-4 text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <span>{t("rooms.manage.archived")}</span>
                 <span className="flex items-center gap-1.5">

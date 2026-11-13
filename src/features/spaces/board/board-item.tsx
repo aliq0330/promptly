@@ -225,9 +225,9 @@ function StepChips({ label, values }: { label: string; values: string[] }) {
 function WorkflowFlowItem({ item, fallback, lowDetail }: { item: SpaceItem; fallback: ReactNode; lowDetail: boolean }) {
   const { data, state } = useWorkflowFlow(item.contentId);
   if (state === "failed") return <>{fallback}</>;
-  if (!data) return <div className="skeleton-shimmer h-full w-full rounded-xl border border-border-soft bg-surface-soft" aria-hidden />;
+  if (!data) return <div className="skeleton-shimmer h-full w-full rounded-lg border border-border-soft bg-surface-soft" aria-hidden />;
   return (
-    <div className="h-full w-full overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
+    <div className="h-full w-full overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card">
       <WorkflowFlowDiagram data={data} options={{ showIo: item.flowShowIo, showLinks: item.flowShowLinks, showRelations: item.flowShowRelations }} fit={{ mode: "box" }} lowDetail={lowDetail} />
     </div>
   );

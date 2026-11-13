@@ -7,6 +7,7 @@ import { X } from "@/components/icons/x";
 import { Portal } from "@/components/ui/portal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 export interface ToolbarAction {
   id: string;
@@ -134,7 +135,7 @@ export function SelectionToolbar({
             type="button"
             onClick={onEditCancel}
             aria-label={t("common.cancelAction")}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text"
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
             <X size={16} />
           </button>

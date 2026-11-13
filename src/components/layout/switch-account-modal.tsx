@@ -42,7 +42,7 @@ export function SwitchAccountModal({ currentUserId, onClose }: { currentUserId: 
       <div className="flex max-h-[80dvh] w-full max-w-sm flex-col rounded-lg border border-border-soft bg-surface">
         <div className="flex items-start justify-between gap-3 border-b border-border-soft p-4">
           <div>
-            <h2 id="switch-account-title" className="text-h3 font-semibold text-text">{t("accountSwitch.title")}</h2>
+            <h2 id="switch-account-title" className="text-h3 font-bold text-text">{t("accountSwitch.title")}</h2>
             <p className="text-caption text-text-muted">{t("accountSwitch.help")}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary hover:bg-surface-soft">

@@ -54,11 +54,11 @@ export function GuestShowcase({ onUnavailable }: { onUnavailable: () => void }) 
   return (
     <section
       aria-labelledby="guest-showcase-title"
-      className="relative grid overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]"
+      className="relative grid overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]"
     >
       <div className="relative z-10 space-y-3 self-center px-5 pb-5 pt-6 sm:px-8 sm:py-9">
         <p className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("nav.tagline")}</p>
-        <h1 id="guest-showcase-title" className="text-h1 font-semibold text-text">
+        <h1 id="guest-showcase-title" className="text-h1 font-bold text-text">
           {t("showcase.title")}
         </h1>
         <p className="text-small text-text-secondary sm:text-body">{t("showcase.description")}</p>

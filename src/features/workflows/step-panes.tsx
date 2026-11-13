@@ -166,7 +166,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
 
   return (
     <div className="space-y-6">
-      <section className="space-y-2.5">
+      <section className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-small font-semibold text-text">{t("workflow.inputsHeading")}</h3>
           <Button type="button" variant="ghost" size="sm" onClick={() => onChange({ inputs: [...step.inputs, { id: newId(), label: "", source: null }] })}>
@@ -215,7 +215,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
         ))}
       </section>
 
-      <section className="space-y-2.5">
+      <section className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-small font-semibold text-text">{t("workflow.outputsHeading")}</h3>
           <Button type="button" variant="ghost" size="sm" onClick={() => onChange({ outputs: [...step.outputs, { id: newId(), label: "" }] })}>
@@ -356,7 +356,7 @@ export function StepPreview({ step, steps, index }: Omit<PaneProps, "onChange">)
   const Icon = meta.icon;
   const isLast = index === steps.length - 1;
   return (
-    <div className="space-y-2.5 rounded-lg border border-border-soft bg-surface-soft p-3">
+    <div className="space-y-3 rounded-lg border border-border-soft bg-surface-soft p-3">
       <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.previewHeading")}</p>
       <p className="flex items-center gap-2 text-small font-semibold text-text">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-caption text-primary-foreground">{index + 1}</span>

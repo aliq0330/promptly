@@ -97,7 +97,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
   const renderColumn = (state: BoardState) => {
     const cards = cardsOf(state);
     return (
-      <ul className="space-y-2.5" data-board-column={state}>
+      <ul className="space-y-3" data-board-column={state}>
         {cards.length === 0 && <li className="rounded-lg border border-dashed border-border bg-surface/60 px-4 py-6 text-center text-small text-text-muted">{t("tc.appr.columnEmpty")}</li>}
         {cards.map((card) => (
           <li key={card.type === "item" ? card.item.id : `p-${card.proposal.itemId}`}>
@@ -132,7 +132,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
               onClick={() => setProject(entry.id)}
               aria-pressed={project === entry.id}
               data-board-project={entry.id}
-              className={cn("h-9 rounded-full border px-3.5 text-small font-semibold", project === entry.id ? "border-text bg-text text-background" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
+              className={cn("h-9 rounded-full border px-4 text-small font-semibold", project === entry.id ? "border-text bg-text text-background" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
             >
               {entry.title}
               {entry.count > 0 && <span className="ml-1.5 tabular-nums opacity-70">{entry.count}</span>}
@@ -193,7 +193,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
   if (card.type === "proposal") {
     const p = card.proposal;
     return (
-      <article className="space-y-2 rounded-lg bg-surface p-3.5" data-board-proposal={p.itemId}>
+      <article className="space-y-2 rounded-lg bg-surface p-4" data-board-proposal={p.itemId}>
         <span className="block text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
           {t("tc.appr.proposal")} · {p.fileTitle ?? p.projectTitle}
         </span>
@@ -209,7 +209,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
   const item = card.item;
   const when = item.decidedAt ?? item.submittedAt;
   return (
-    <article className="space-y-2 rounded-lg bg-surface p-3.5" data-board-card={item.id} data-board-state={item.state}>
+    <article className="space-y-2 rounded-lg bg-surface p-4" data-board-card={item.id} data-board-state={item.state}>
       <span className="block text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
         {item.unitCount > 1 ? t("tc.appr.package", { count: item.unitCount }) : t(kindKey(item.kind))} · {item.fileTitle ?? t("tp.area.projectWide")}
       </span>

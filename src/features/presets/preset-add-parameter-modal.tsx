@@ -18,6 +18,8 @@ import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { cn } from "@/lib/utils";
 import { PresetFieldInput } from "./preset-field-input";
 import { fieldControlClassName } from "@/components/ui/field";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 const INPUT = `h-10 ${fieldControlClassName}`;
 
@@ -146,15 +148,15 @@ export function PresetAddParameterModal({
 
   return (
     <Modal onClose={onClose} labelledBy="add-parameter-title">
-      <div onClick={(event) => event.stopPropagation()} className="flex max-h-[92dvh] w-full max-w-xl flex-col rounded-lg border border-border bg-surface shadow-pop">
+      <DialogShell className="flex max-h-[92dvh] w-full max-w-xl flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-start justify-between gap-3 border-b border-border-soft px-4 py-3">
           <div>
-            <h2 id="add-parameter-title" className="text-h3 font-semibold text-text">
+            <h2 id="add-parameter-title" className="text-h3 font-bold text-text">
               {t("presetField.addTitle")}
             </h2>
             <p className="text-caption text-text-secondary">{t("presetBuilder.addHint")}</p>
           </div>
-          <button type="button" aria-label={t("common.close")} onClick={onClose} className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
             <X size={16} />
           </button>
         </div>
@@ -219,7 +221,7 @@ export function PresetAddParameterModal({
             {t("presetField.done")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

@@ -41,7 +41,7 @@ export function CollectionBand({ collection, items }: { collection: Collection; 
       }
       title={<DetailTitle>{collection.name}</DetailTitle>}
       byline={
-        <Link href={profileHref(collection.owner)} className="group inline-flex max-w-full items-center gap-2.5 rounded-md" data-collection-byline>
+        <Link href={profileHref(collection.owner)} className="group inline-flex max-w-full items-center gap-3 rounded-md" data-collection-byline>
           <Avatar src={collection.owner.avatarUrl} alt={collection.owner.displayName} size={32} />
           <span className="min-w-0 text-label leading-tight">
             <span className="font-semibold text-text transition-colors group-hover:text-primary">{collection.owner.displayName}</span>{" "}

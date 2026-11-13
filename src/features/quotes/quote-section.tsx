@@ -25,6 +25,7 @@ import { createQuote } from "@/lib/supabase/quotes";
 import type { CommunityPostType } from "@/lib/supabase/communities";
 import { cn } from "@/lib/utils";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 type FeedResult = { ok: true; quoteId: string } | { ok: false; message: string } | null;
 
@@ -208,7 +209,7 @@ export function QuoteSection({
                 </h2>
                 {contextTitle && <p className="truncate text-small text-text-muted">{contextTitle}</p>}
               </div>
-              <button type="button" onClick={() => setOpen(false)} disabled={busy} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+              <button type="button" onClick={() => setOpen(false)} disabled={busy} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
                 <X size={18} aria-hidden />
               </button>
             </div>

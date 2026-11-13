@@ -5,7 +5,7 @@ import { ImagePlus } from "@/components/icons/image-plus";
 import { Loader2 } from "@/components/icons/loader-2";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { ChoiceCard, fieldControlClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { imageSourceProblem } from "@/lib/image-processing";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -56,7 +56,7 @@ export function TitleField({
       <label htmlFor={id} className={fieldLabelClassName}>
         {label ?? t("spaces.form.title")}
       </label>
-      <input
+      <Input
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -65,7 +65,6 @@ export function TitleField({
         // Dokunmatik cihazda pencere açılır açılmaz klavyeyi açma: klavye pencereyi ekranın dışına iter (docs/history/218-*).
         autoFocus={autoFocus && !(typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches)}
         placeholder={placeholder ?? t("spaces.form.titlePlaceholder")}
-        className={fieldInputClassName}
       />
     </div>
   );

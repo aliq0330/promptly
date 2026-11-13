@@ -93,7 +93,7 @@ export function StepList({
                     type="button"
                     onClick={() => onSelect(step.id)}
                     aria-current={selected ? "step" : undefined}
-                    className="flex min-w-0 flex-1 items-start gap-2.5 text-left"
+                    className="flex min-w-0 flex-1 items-start gap-3 text-left"
                   >
                     <span
                       className={cn(

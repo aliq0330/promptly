@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { fieldInputClassName } from "@/components/ui/field";
+import { Input } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
@@ -57,7 +57,7 @@ export default function DangerSettingsPage() {
               <label htmlFor="settings-delete-confirm" className={settingsLabelClassName}>
                 {t("settings.deleteAccountConfirmLabel", { username: profile.username })}
               </label>
-              <input
+              <Input
                 id="settings-delete-confirm"
                 type="text"
                 value={deleteConfirm}
@@ -66,7 +66,6 @@ export default function DangerSettingsPage() {
                 autoCapitalize="none"
                 spellCheck={false}
                 disabled={isDeleting}
-                className={fieldInputClassName}
               />
             </div>
             {deleteError && (

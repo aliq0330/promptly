@@ -61,7 +61,7 @@ export function LocalRequestView() {
   if (!request) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.requestNotFound")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("request.requestNotFound")}</h1>
         <p className="mb-4 text-small text-text-muted">
           {t("request.notFoundBody")}
         </p>
@@ -78,7 +78,7 @@ export function LocalRequestView() {
   if (request.deletedAt) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.thisRequestDeletedTitle")}</h1>
+        <h1 className="mb-2 text-h2 font-bold text-text">{t("request.thisRequestDeletedTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">
           {t("request.deletedButRepliesVisibleBody")}
         </p>

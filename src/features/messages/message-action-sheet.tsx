@@ -250,7 +250,7 @@ export function MessageActionSheet({
       style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div
-        className="pointer-events-none absolute inset-x-0 flex flex-col gap-2.5"
+        className="pointer-events-none absolute inset-x-0 flex flex-col gap-3"
         style={{ ...style, visibility: hidden ? "hidden" : "visible" }}
       >
         <div

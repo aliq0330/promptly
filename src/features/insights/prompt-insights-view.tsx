@@ -146,7 +146,7 @@ export function PromptInsightsView() {
                 <>
                   <InsightTrendCard days={state.data.days} periodDays={period} />
                   <section className={INSIGHT_CARD} aria-labelledby="insights-prompt-mix-title">
-                    <h2 id="insights-prompt-mix-title" className="mb-3 text-h2 font-semibold text-text">{t("insights.mix.title")}</h2>
+                    <h2 id="insights-prompt-mix-title" className="mb-3 text-h2 font-bold text-text">{t("insights.mix.title")}</h2>
                     <InsightReactionMix rows={state.data.reactions} days={period} />
                   </section>
                 </>

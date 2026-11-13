@@ -175,7 +175,7 @@ export function CommunityPostPage() {
               </DropdownMenu>
             )}
           </div>
-          {post.note && <p data-post-note className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-3.5 py-3 text-small text-text-secondary">{post.note}</p>}
+          {post.note && <p data-post-note className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-4 py-3 text-small text-text-secondary">{post.note}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border-soft pt-3">
             <p className="min-w-0 flex-1 basis-56 text-caption text-text-muted">{t("communities.post.page.scopeHelp")}</p>
             {originalHref && (

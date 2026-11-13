@@ -88,11 +88,11 @@ export function SpaceDialog({
         }
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-soft px-5 py-3.5">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-soft px-5 py-4">
           {leading}
           <div className="min-w-0 flex-1">
             {eyebrow && <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">{eyebrow}</p>}
-            <h2 id={id} className="truncate text-h3 font-semibold text-text">
+            <h2 id={id} className="truncate text-h3 font-bold text-text">
               {title}
             </h2>
           </div>

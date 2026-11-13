@@ -902,7 +902,7 @@ function MenuButton({ icon: Icon, label, onClick, danger }: { icon: typeof Flag;
       type="button"
       role="menuitem"
       onClick={onClick}
-      className={cn("flex min-h-11 w-full items-center gap-2.5 px-3.5 text-left text-small hover:bg-surface-soft", danger ? "text-danger" : "text-text")}
+      className={cn("flex min-h-11 w-full items-center gap-3 px-4 text-left text-small hover:bg-surface-soft", danger ? "text-danger" : "text-text")}
     >
       <Icon size={16} aria-hidden />
       {label}

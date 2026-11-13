@@ -14,7 +14,7 @@ import { Plus } from "@/components/icons/plus";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldInputClassName, fieldLabelClassName, Input } from "@/components/ui/field";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -157,7 +157,7 @@ export function PaletteCard({ palette }: { palette: SpacePalette }) {
     <li className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-xs" data-palette={palette.name}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="truncate text-h3 font-semibold text-text">{palette.name}</h3>
+          <h3 className="truncate text-h3 font-bold text-text">{palette.name}</h3>
           {palette.description && <p className="break-words text-small text-text-secondary">{palette.description}</p>}
           <p className="text-caption text-text-muted">
             {palette.source === "image" ? t("spaces.palette.sourceImage") : t("spaces.palette.sourceManual")} · {formatRelativeTime(palette.updatedAt, language)}
@@ -368,13 +368,13 @@ function PaletteFormModal({ palette, onClose, onSubmit }: { palette?: SpacePalet
           <label htmlFor={nameId} className={fieldLabelClassName}>
             {t("spaces.palette.name")}
           </label>
-          <input id={nameId} value={name} onChange={(event) => setName(event.target.value)} maxLength={SPACE_PALETTE_NAME_MAX} className={fieldInputClassName} autoFocus />
+          <Input id={nameId} value={name} onChange={(event) => setName(event.target.value)} maxLength={SPACE_PALETTE_NAME_MAX} autoFocus />
         </div>
         <div>
           <label htmlFor={descriptionId} className={fieldLabelClassName}>
             {t("spaces.form.description")} <span className="font-normal text-text-muted">{t("spaces.form.optional")}</span>
           </label>
-          <input id={descriptionId} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={SPACE_PALETTE_DESCRIPTION_MAX} className={fieldInputClassName} />
+          <Input id={descriptionId} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={SPACE_PALETTE_DESCRIPTION_MAX} />
         </div>
         <FormError message={error} />
         <div data-dialog-footer className={DIALOG_FOOTER_CLASS}>

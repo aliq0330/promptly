@@ -11,7 +11,7 @@ import { Search } from "@/components/icons/search";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ScrollRow } from "@/components/ui/scroll-row";
-import { fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldLabelClassName, Input, Select } from "@/components/ui/field";
 import { LocalConversationView, type EmbeddedChatControls } from "@/features/messages/local-conversation-view";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { useOnlineIds } from "@/features/presence/use-presence";
@@ -119,7 +119,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
           data-channel-mode={channel.mode}
           aria-current={current ? "true" : undefined}
           className={cn(
-            "flex min-h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            "flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
             current ? "bg-primary-soft font-bold text-primary" : cn("text-text-secondary hover:bg-surface-soft", unread && "font-bold text-text"),
           )}
         >
@@ -251,14 +251,14 @@ function ChannelAside({
   const onlineMembers = members.filter((member) => online.has(member.userId));
   const shown = (onlineMembers.length > 0 ? onlineMembers : members).slice(0, 8);
   return (
-    <aside className="hidden space-y-3.5 lg:row-start-1 lg:block lg:col-start-2" data-testid="team-channel-aside">
+    <aside className="hidden space-y-4 lg:row-start-1 lg:block lg:col-start-2" data-testid="team-channel-aside">
       {muteCard}
       <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-channel-info-card">
         <h3 className="font-display text-body font-bold text-text"># {projectTitle ?? channel.name}</h3>
         <p className="mt-1 text-small text-text-secondary">
           {channel.description || t(channel.mode === "private" ? "tm.chat.modePrivate" : channel.mode === "project" ? "tp.chat.modeProject" : channel.mode === "space" ? "tm.chat.modeSpace" : "tm.chat.modeOpen")}
         </p>
-        <button type="button" onClick={() => controls.current?.openChannelInfo()} className="mt-3 h-9 rounded-full border border-border px-3.5 text-small font-semibold text-text hover:bg-surface-soft" data-channel-aside-info>
+        <button type="button" onClick={() => controls.current?.openChannelInfo()} className="mt-3 h-9 rounded-full border border-border px-4 text-small font-semibold text-text hover:bg-surface-soft" data-channel-aside-info>
           {t("tc.chat.notifyAndInfo")}
         </button>
       </section>
@@ -268,7 +268,7 @@ function ChannelAside({
         </h3>
         <ul>
           {shown.map((member) => (
-            <li key={member.userId} className="flex items-center gap-2.5 py-1.5">
+            <li key={member.userId} className="flex items-center gap-3 py-1.5">
               <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName || member.username} size={32} />
               <span className="min-w-0 flex-1 truncate text-small text-text">{member.displayName || member.username}</span>
             </li>
@@ -320,7 +320,7 @@ function ChannelView({
   const iconButton = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border-soft bg-surface md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
+    <div className="flex flex-col overflow-hidden rounded-lg border border-border-soft bg-surface md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border-soft px-5">
         <div className="min-w-0 flex-1 leading-tight">
           <h3 className="flex items-center gap-1.5 truncate font-display text-h3 font-bold text-text">
@@ -352,7 +352,7 @@ function ChannelView({
           aria-label={t("chat.search.open")}
           title={t("chat.search.open")}
           data-chat-search-toggle
-          className={cn(iconButton, "bg-surface-soft text-text-secondary hover:text-text lg:w-44 lg:justify-start lg:gap-2 lg:px-3.5 lg:whitespace-nowrap")}
+          className={cn(iconButton, "bg-surface-soft text-text-secondary hover:text-text lg:w-44 lg:justify-start lg:gap-2 lg:px-4 lg:whitespace-nowrap")}
         >
           <Search size={16} aria-hidden />
           <span className="hidden text-small lg:inline">{t("tm.chat.searchHint")}</span>
@@ -370,7 +370,7 @@ function ChannelView({
             aria-current={c.id === channel.id ? "true" : undefined}
             data-channel-chip={c.name}
             className={cn(
-              "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-small font-semibold",
+              "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-small font-semibold",
               c.id === channel.id ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary",
             )}
           >
@@ -470,14 +470,14 @@ function NewChannelDialog({ ctx, onClose, onCreated }: { ctx: TeamCtx; onClose: 
           <label htmlFor="channel-name" className={fieldLabelClassName}>
             {t("tm.chat.channelName")}
           </label>
-          <input id="channel-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} className={fieldInputClassName} autoComplete="off" placeholder="tasarim" />
+          <Input id="channel-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} autoComplete="off" placeholder="tasarim" />
           {slug && <p className="mt-1 text-caption text-text-muted">#{slug}</p>}
         </div>
         <div>
           <label htmlFor="channel-desc" className={fieldLabelClassName}>
             {t("tm.chat.channelDescription")}
           </label>
-          <input id="channel-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} className={fieldInputClassName} />
+          <Input id="channel-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} />
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.chat.whoJoins")}</span>
@@ -493,14 +493,14 @@ function NewChannelDialog({ ctx, onClose, onCreated }: { ctx: TeamCtx; onClose: 
           <p className="mt-1.5 text-caption text-text-muted">{t(`tm.chat.mode.${mode}Hint` as "tm.chat.mode.openHint")}</p>
         </div>
         {mode === "space" && (
-          <select value={space} onChange={(e) => setSpace(e.target.value)} aria-label={t("tm.chat.pickSpace")} className={fieldInputClassName}>
+          <Select value={space} onChange={(e) => setSpace(e.target.value)} aria-label={t("tm.chat.pickSpace")}>
             <option value="">{t("tm.chat.pickSpace")}</option>
             {spaces.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.title}
               </option>
             ))}
-          </select>
+          </Select>
         )}
         {mode === "private" && <AccessEditor teamId={ctx.team.id} entries={entries} onChange={setEntries} levels={false} />}
         <div className="grid gap-3 sm:grid-cols-2">
@@ -601,7 +601,7 @@ function ChannelSettingsDialog({ ctx, channel, onClose, onChanged }: { ctx: Team
             <label htmlFor="channel-set-desc" className={fieldLabelClassName}>
               {t("tm.chat.channelDescription")}
             </label>
-            <input id="channel-set-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} className={fieldInputClassName} />
+            <Input id="channel-set-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} />
           </div>
           <div>
             <span className={fieldLabelClassName}>{t("tm.chat.posting")}</span>

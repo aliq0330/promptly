@@ -15,7 +15,7 @@ export function InsightTrendCard({ days, periodDays }: { days: InsightDay[]; per
     <section className={INSIGHT_CARD} aria-labelledby="insights-trend-title">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id="insights-trend-title" className="text-h2 font-semibold text-text">{t("insights.chart.title")}</h2>
+          <h2 id="insights-trend-title" className="text-h2 font-bold text-text">{t("insights.chart.title")}</h2>
           <p className="mt-1 text-small text-text-secondary">{t("insights.chart.range", { from, to })}</p>
         </div>
         <div className="flex items-center gap-4 text-small text-text-secondary">

@@ -56,12 +56,12 @@ export function SpacePreview({ space }: { space: SpaceFeedCard }) {
             [t("spaces.tab.prompts"), space.promptCount],
             [t("spaces.tab.notes"), space.noteCount],
           ].map(([label, value]) => (
-            <div key={label} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+            <div key={label} className="flex items-center justify-between gap-3 px-4 py-2.5">
               <dt className="text-text-muted">{label}</dt>
               <dd className="font-semibold tabular-nums text-text">{value}</dd>
             </div>
           ))}
-          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5">
             <dt className="text-text-muted">{t("spaces.preview.updated")}</dt>
             <dd className="truncate font-semibold text-text">{formatRelativeTime(space.updatedAt, language)}</dd>
           </div>

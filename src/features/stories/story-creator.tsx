@@ -776,7 +776,7 @@ function ToolButton({ icon: Icon, label, onClick, pressed }: { icon: typeof Type
       onClick={onClick}
       aria-pressed={pressed}
       className={cn(
-        "inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 text-label font-medium transition-colors duration-200 ease-soft",
+        "inline-flex min-h-10 items-center gap-1.5 rounded-full border px-4 text-label font-medium transition-colors duration-200 ease-soft",
         pressed ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text",
       )}
     >

@@ -10,6 +10,8 @@ import { PresetPreviewModal } from "@/features/presets/preset-preview-modal";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset } from "@/types";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * "Hazır ayar seç" on the Üret page: the same Topluluk / Kaydettiklerim lists
@@ -31,17 +33,16 @@ export function StudioPresetPicker({ contentType, onPick, onClose }: { contentTy
   return (
     <>
       <Modal onClose={onClose} labelledBy="generate-preset-picker-title">
-        <div
+        <DialogShell
           role="document"
-          onClick={(event) => event.stopPropagation()}
-          className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-pop"
+          className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop"
         >
           <div className="flex items-center gap-2 border-b border-border-soft px-4 py-3">
             <SlidersHorizontal size={18} className="shrink-0 text-primary" aria-hidden />
-            <h2 id="generate-preset-picker-title" className="min-w-0 flex-1 text-h3 font-semibold text-text">
+            <h2 id="generate-preset-picker-title" className="min-w-0 flex-1 text-h3 font-bold text-text">
               {t("generate.presetBrowse")}
             </h2>
-            <button type="button" aria-label={t("common.close")} onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+            <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
               <X size={18} />
             </button>
           </div>
@@ -56,7 +57,7 @@ export function StudioPresetPicker({ contentType, onPick, onClose }: { contentTy
               onSavedChange={() => setSavedVersion((v) => v + 1)}
             />
           </div>
-        </div>
+        </DialogShell>
       </Modal>
       {previewing && (
         <PresetPreviewModal

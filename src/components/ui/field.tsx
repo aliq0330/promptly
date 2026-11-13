@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 /** The shared control surface, without a height — inputs, textareas, selects. */
 export const fieldControlClassName =
-  "w-full rounded-lg border border-control-border bg-background px-3.5 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "w-full rounded-lg border border-control-border bg-background px-4 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-text-muted focus:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 /** A single-line text input. */
 export const fieldInputClassName = `h-11 ${fieldControlClassName}`;
@@ -58,7 +58,7 @@ export function ChoiceCard({ children, className }: { children: ReactNode; class
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-start gap-3 rounded-lg border border-border-soft bg-background px-3.5 py-3 text-small text-text transition-colors duration-200 ease-soft hover:border-border-strong has-checked:border-primary/50 has-checked:bg-primary-soft/40",
+        "flex cursor-pointer items-start gap-3 rounded-lg border border-border-soft bg-background px-4 py-3 text-small text-text transition-colors duration-200 ease-soft hover:border-border-strong has-checked:border-primary/50 has-checked:bg-primary-soft/40",
         className,
       )}
     >

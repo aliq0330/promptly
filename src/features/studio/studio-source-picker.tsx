@@ -14,6 +14,8 @@ import { FitBadge } from "@/features/presets/preset-fit-badge";
 import { presetFit, targetOfPrompt, type PresetFit } from "@/lib/preset-fit";
 import type { Preset, Prompt } from "@/types";
 import { StorageImg } from "@/components/ui/storage-media";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 export type SourcePickerKind = "prompt";
 
@@ -96,16 +98,15 @@ export function StudioSourcePicker({
 
   return (
     <Modal onClose={onClose} labelledBy="studio-source-picker-title">
-      <div
+      <DialogShell
         role="document"
-        onClick={(event) => event.stopPropagation()}
-        className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-pop"
+        className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop"
       >
         <div className="flex items-center gap-2 border-b border-border-soft px-4 py-3">
-          <h2 id="studio-source-picker-title" className="min-w-0 flex-1 text-h3 font-semibold text-text">
+          <h2 id="studio-source-picker-title" className="min-w-0 flex-1 text-h3 font-bold text-text">
             {t(titleKey)}
           </h2>
-          <button type="button" aria-label={t("common.close")} onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+          <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
             <X size={18} />
           </button>
         </div>
@@ -156,7 +157,7 @@ export function StudioSourcePicker({
             ))}
           </ul>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

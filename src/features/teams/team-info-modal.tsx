@@ -101,7 +101,7 @@ export function TeamInfoModal({
       </div>
 
       <InfoCard aria-labelledby="team-info-channels">
-        <div className="flex items-center px-4 pb-1 pt-3.5">
+        <div className="flex items-center px-4 pb-1 pt-4">
           <h3 id="team-info-channels" className="min-w-0 flex-1 font-display text-body font-bold text-text">
             {t("tm.info.channels")}
           </h3>
@@ -161,7 +161,7 @@ export function TeamInfoModal({
       </InfoCard>
 
       <InfoCard aria-labelledby="team-info-notify">
-        <div className="space-y-2 px-4 py-3.5">
+        <div className="space-y-2 px-4 py-4">
           <h3 id="team-info-notify" className="font-display text-body font-bold text-text">
             {t("tm.info.notifications")}
           </h3>

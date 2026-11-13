@@ -50,6 +50,7 @@ import { ReviewChip } from "./project-ui";
 import { AreaItemDetail, type AreaItemContext } from "./team-item-detail";
 import { ProposeChangeDialog } from "./team-propose-dialog";
 import { paletteItemParam } from "@/lib/team-item-kit";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 /**
  * Alan görünümü (docs/history/362-*): ekip projesinin bir kabı (proje geneli, dosya ya da ek pano). Alan, Space motorunun gizli bir
@@ -481,7 +482,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
   const lead = role === "lead";
 
   return (
-    <div className="space-y-3.5" data-testid="area-folder-list">
+    <div className="space-y-4" data-testid="area-folder-list">
       {(reviewOn || pendingN > 0 || changesN > 0) && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border-soft bg-surface px-4 py-3" data-testid="area-review-summary">
           {add?.reviewSwitch ? (
@@ -501,7 +502,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
             {t("tc.file.counts", { approved: approvedN, pending: pendingN, changes: changesN })}
           </span>
           {lead && pendingN > 0 && reviewHref && (
-            <Link href={reviewHref} className="inline-flex h-9 items-center rounded-full bg-primary-soft px-3.5 text-small font-semibold text-primary" data-area-summary-review>
+            <Link href={reviewHref} className="inline-flex h-9 items-center rounded-full bg-primary-soft px-4 text-small font-semibold text-primary" data-area-summary-review>
               {t("tc.file.review")}
             </Link>
           )}
@@ -512,7 +513,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
         <section className="space-y-2" data-testid="area-boards">
           <h3 className="font-display text-body font-bold text-text">{t("tb.file.boardsTitle")}</h3>
           {boardCards.length > 0 ? (
-            <ul className="grid grid-cols-2 items-start gap-2.5 md:grid-cols-3 md:gap-3.5 xl:grid-cols-4" data-testid="area-board-rows">
+            <ul className="grid grid-cols-2 items-start gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4" data-testid="area-board-rows">
               {boardCards.map((row) => (
                 <li key={row.key}>
                   <AreaCard row={row} reviewOn={reviewOn} />
@@ -520,7 +521,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
               ))}
             </ul>
           ) : (
-            <p className="rounded-xl border border-dashed border-border-soft px-3.5 py-3 text-small text-text-secondary" data-testid="area-boards-empty">
+            <p className="rounded-xl border border-dashed border-border-soft px-4 py-3 text-small text-text-secondary" data-testid="area-boards-empty">
               {t("tb.file.boardsEmpty")}
             </p>
           )}
@@ -540,7 +541,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
 
       {nav.view === "groups" && nav.folder === null && (
         <div className="space-y-3" data-testid="area-groups-view">
-          {groups.length === 0 && <p className="rounded-xl border border-dashed border-border-soft px-3.5 py-3 text-small text-text-secondary">{t("tf.folder.noGroups")}</p>}
+          {groups.length === 0 && <p className="rounded-xl border border-dashed border-border-soft px-4 py-3 text-small text-text-secondary">{t("tf.folder.noGroups")}</p>}
           <FolderGrid groups={groups} counts={groupCounts} previews={groupPreviews} canAdd={canAdd} onOpen={(folder) => go({ view: "groups", folder })} onNew={() => setNewGroupOpen(true)} />
         </div>
       )}
@@ -556,7 +557,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
 
       {(nav.view === "items" || inFolder) && scope.length > 0 && (
         <div className="flex flex-wrap items-center gap-2" data-testid="area-filters">
-          <div role="group" aria-label={t("tp.area.list.viewAria")} className="flex min-w-0 flex-1 gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
+          <ScrollRow role="group" aria-label={t("tp.area.list.viewAria")} className="flex gap-2 md:flex-wrap md:overflow-visible" wrapperClassName="min-w-0 flex-1">
             {chips.map((key) => (
               <button
                 key={key}
@@ -565,7 +566,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
                 aria-pressed={effectiveFilter === key}
                 data-area-filter={key}
                 className={cn(
-                  "h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-small font-semibold md:h-8 md:px-3.5",
+                  "h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-small font-semibold md:h-8 md:px-4",
                   effectiveFilter === key ? "border-text bg-text text-background" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
                   key === "waiting" && effectiveFilter !== key && "text-warning",
                 )}
@@ -573,7 +574,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
                 {key === "all" ? t("common.all") : key === "waiting" ? t("tc.file.waiting") : t(FILTER_LABEL[key])} <span className="tabular-nums opacity-70">{counts(key)}</span>
               </button>
             ))}
-          </div>
+          </ScrollRow>
           {add?.variableNames && add.variableNames.length > 0 && !inFolder && (
             <button type="button" onClick={add.onVariables} className="inline-flex items-center gap-1.5 text-small text-text-muted max-md:hidden" data-area-variables>
               {t("tc.file.variables")}
@@ -594,7 +595,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
       )}
 
       {(nav.view === "items" || inFolder) && shown.length > 0 && (
-        <ul className="grid grid-cols-2 items-start gap-2.5 md:grid-cols-3 md:gap-3.5 xl:grid-cols-4" data-testid="area-rows">
+        <ul className="grid grid-cols-2 items-start gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4" data-testid="area-rows">
           {shown.map((row) => (
             <li key={row.key}>
               <AreaCard
@@ -705,7 +706,7 @@ function AreaCard({ row, reviewOn, groupName, select }: { row: AreaRow; reviewOn
       )}
       <span className={cn("relative block overflow-hidden rounded-lg md:rounded-xl", select?.checked && "ring-[3px] ring-primary ring-offset-2 ring-offset-background", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning/10 text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" || row.kind === "group" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
         {row.kind === "image" && row.mediaUrl && <StorageImg src={row.mediaUrl} alt={row.title} className="absolute inset-0 h-full w-full object-cover" />}
-        {(row.kind === "prompt" || row.kind === "note") && <span className={cn("block p-3.5 pb-14 text-caption leading-relaxed", row.kind === "prompt" && "font-mono")}>{(row.body || "").slice(0, 260)}</span>}
+        {(row.kind === "prompt" || row.kind === "note") && <span className={cn("block p-4 pb-14 text-caption leading-relaxed", row.kind === "prompt" && "font-mono")}>{(row.body || "").slice(0, 260)}</span>}
         {row.kind === "palette" && (
           <span className="absolute inset-0 flex">
             {(row.colors ?? []).slice(0, 6).map((color, index) => (
@@ -753,7 +754,7 @@ function AddMenuDialog({ reviewOn, onClose, onPick, onNewBoard, onNewVariable, o
           const Icon = option.icon;
           return (
             <li key={option.key}>
-              <button type="button" onClick={option.run} data-area-add-option={option.key} className="flex h-full w-full flex-col gap-2 rounded-lg border border-border-soft bg-surface p-3.5 text-left transition-colors hover:bg-surface-soft">
+              <button type="button" onClick={option.run} data-area-add-option={option.key} className="flex h-full w-full flex-col gap-2 rounded-lg border border-border-soft bg-surface p-4 text-left transition-colors hover:bg-surface-soft">
                 <span aria-hidden className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
                   <Icon size={20} />
                 </span>
@@ -809,7 +810,7 @@ function AreaReviewPanel({ role, reviewHref, onChanged }: { role: ProjectRole | 
   const pendingForLead = role === "lead" ? open.filter((item) => item.revState === "pending").length : 0;
 
   return (
-    <section className="space-y-3 rounded-xl border border-border-soft bg-surface p-4" data-testid="area-review-panel">
+    <section className="space-y-3 rounded-lg border border-border-soft bg-surface p-4" data-testid="area-review-panel">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.review.panelTitle")}</h3>
         {submittable.length > 0 && (

@@ -8,6 +8,7 @@ import { listTeamGroups, listTeamMembers, type AccessEntry, type TeamGroup, type
 import { SPACE_ELEVATION_LEVELS, TEAM_SPACE_LEVELS, roleCanHoldSpaceLevel, type TeamRole, type TeamSpaceLevel } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import { PersonRow } from "./team-ui";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * Kişi/grup listesi + "düzenler / görür" düzeyi (Space erişimi ve özel kanal üyeliği aynı bileşen). Yalnız seçimi tutar; kaydetme çağıranındır.
@@ -111,7 +112,7 @@ export function AccessEditor({
                         <option value="view">{t("tm.access.view")}</option>
                       </select>
                     )}
-                    <button type="button" onClick={() => remove(entry)} aria-label={t("tm.access.remove")} className="grid h-8 w-8 place-items-center rounded-full text-text-muted hover:bg-surface-soft">
+                    <button type="button" onClick={() => remove(entry)} aria-label={t("tm.access.remove")} className={iconButtonClassName(false, "h-8 w-8")}>
                       <X size={14} aria-hidden />
                     </button>
                   </>

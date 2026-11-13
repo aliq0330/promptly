@@ -206,6 +206,8 @@ await scenario("17 the floating pager starts on section 1, ▲ is disabled; ▼ 
   await bar.getByText("Claude'a bağla", { exact: true }).waitFor();
   await bar.getByText("2 / 6", { exact: true }).waitFor();
   await page.waitForFunction(() => { const top = document.getElementById("dev-mcp").getBoundingClientRect().top; return top > -40 && top < 260; });
+  // Kaydırma sürerken sayaç/düğme durumu bir an geriden gelebilir: düğmenin açılmasını bekle (zamanlamaya bağlı değil).
+  await page.waitForFunction(() => !document.querySelector('button[aria-label="Önceki bölüm"]').disabled);
   assert.equal(await bar.getByRole("button", { name: "Önceki bölüm" }).isDisabled(), false);
   await bar.getByRole("button", { name: "Önceki bölüm" }).click();
   await bar.getByText("1 / 6", { exact: true }).waitFor();

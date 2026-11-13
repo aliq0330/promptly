@@ -22,7 +22,7 @@ export function textArtTone(seed: string): string {
 }
 
 export function TextArt({ seed, className, children }: { seed: string; className?: string; children: React.ReactNode }) {
-  return <div className={cn("flex min-h-28 w-full flex-col gap-2.5 overflow-hidden py-4 pl-4 pr-14 text-text", textArtTone(seed), className)}>{children}</div>;
+  return <div className={cn("flex min-h-28 w-full flex-col gap-3 overflow-hidden py-4 pl-4 pr-14 text-text", textArtTone(seed), className)}>{children}</div>;
 }
 
 /** A title set big inside a text surface (the real title link stays in the card's hidden hover layer, so this is decoration for assistive tech). */

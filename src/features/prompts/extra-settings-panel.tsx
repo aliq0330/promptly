@@ -30,6 +30,8 @@ import {
 import { cn } from "@/lib/utils";
 import { resolvePresetFields } from "@/lib/preset-utils";
 import type { Preset } from "@/types";
+import { DialogShell } from "@/components/ui/dialog-shell";
+import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * The prompt form's "Hazır Ayarlar ve Ek Alan Önerileri" row + applied chips.
@@ -234,21 +236,20 @@ function ExtraSettingsPanel({
   return (
     <>
       <Modal onClose={onClose} labelledBy="extra-settings-title">
-        <div
+        <DialogShell
           role="document"
           data-extra-panel
-          onClick={(event) => event.stopPropagation()}
-          className="flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-lg border border-border bg-surface shadow-pop"
+          className="flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-lg border border-border-soft bg-surface shadow-pop"
         >
           <div className="flex items-start gap-3 border-b border-border-soft px-4 py-3">
             <Settings size={18} className="mt-0.5 shrink-0 text-primary" aria-hidden />
             <div className="min-w-0 flex-1">
-              <h2 id="extra-settings-title" className="text-h3 font-semibold text-text">
+              <h2 id="extra-settings-title" className="text-h3 font-bold text-text">
                 {t("extra.title")}
               </h2>
               <p className="text-caption text-text-secondary">{t("extra.hint")}</p>
             </div>
-            <button type="button" aria-label={t("extra.close")} onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
+            <button type="button" aria-label={t("extra.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
               <X size={18} />
             </button>
           </div>
@@ -257,7 +258,7 @@ function ExtraSettingsPanel({
             <SelectionSummary fields={fields} selection={clean} onChange={setDraft} className="rounded-md border border-border-soft bg-surface-soft p-3" />
 
             {language === "tr" && (
-              <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border-soft bg-surface-soft px-3 py-2.5">
+              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border-soft bg-surface-soft px-3 py-2.5">
                 <input type="checkbox" data-english-fragments checked={englishFragments} onChange={(e) => onEnglishFragmentsChange(e.target.checked)} className="mt-0.5" />
                 <span>
                   <span className="block text-label font-semibold text-text">{t("extra.englishFragments")}</span>
@@ -271,7 +272,7 @@ function ExtraSettingsPanel({
             <Tabs variant="segmented" ariaLabel={t("extra.presets")} active={tab} onChange={setTab} items={tabs} />
 
             {tab === "fields" ? (
-              <section aria-labelledby="extra-fields-title" className="space-y-2.5">
+              <section aria-labelledby="extra-fields-title" className="space-y-3">
                 <h3 id="extra-fields-title" className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
                   {t("presetField.fieldsHeading")} <span className="tabular-nums">({topFields.length})</span>
                 </h3>
@@ -334,7 +335,7 @@ function ExtraSettingsPanel({
               {t("extra.apply")}
             </Button>
           </div>
-        </div>
+        </DialogShell>
       </Modal>
 
       {previewing && (

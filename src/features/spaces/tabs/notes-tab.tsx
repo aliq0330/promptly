@@ -119,7 +119,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
             const attached = note.attachedItemId ? items.find((item) => item.id === note.attachedItemId) : null;
             const author = authorName(note.createdBy);
             return (
-              <li key={note.id} data-note={note.title || note.id} className={cn("flex flex-col rounded-lg border p-3.5", SPACE_COLOR_CLASS[note.color].surface, SPACE_COLOR_CLASS[note.color].border)}>
+              <li key={note.id} data-note={note.title || note.id} className={cn("flex flex-col rounded-lg border p-4", SPACE_COLOR_CLASS[note.color].surface, SPACE_COLOR_CLASS[note.color].border)}>
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="min-w-0 break-words text-body font-semibold text-text">{note.title || t("spaces.notes.untitled")}</h3>
                   <ItemReviewBadge state={note.revState} />

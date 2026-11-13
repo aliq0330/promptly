@@ -297,7 +297,7 @@ function StepPanel({
       {/* Albüm (docs/history/203-*): the step opens with a small band — its type as the art, "Adım 2 / 3", the big title. */}
       <header data-run-step-band className="relative rounded-t-xl px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
         <CardBandBackdrop />
-        <div className="relative flex items-start gap-3.5">
+        <div className="relative flex items-start gap-4">
           <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface text-primary shadow-pop">
             <Icon size={24} />
           </span>
@@ -406,7 +406,7 @@ function RunSummary({ steps, state, onBack }: { steps: WorkflowStep[]; state: Wo
   return (
     <section aria-labelledby="run-summary-title" className="space-y-4 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5">
       <header className="space-y-1">
-        <h3 id="run-summary-title" className="text-h3 font-semibold text-text">
+        <h3 id="run-summary-title" className="text-h3 font-bold text-text">
           {t("workflow.run.summaryTitle")}
         </h3>
         <p className="text-small text-text-secondary">{t("workflow.run.progress", { done: progress.doneCount, total: progress.total })}</p>
