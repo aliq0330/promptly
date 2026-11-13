@@ -276,7 +276,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
         </>)}
 
         <DetailComments>
-          <EngageComments target={{ workflowId: workflow.id }} highlightCommentId={highlightCommentId} headless />
+          <EngageComments target={{ workflowId: workflow.id }} ownerId={workflow.creator.id} highlightCommentId={highlightCommentId} headless />
         </DetailComments>
         <VersionRestoreToast contentId={workflow.id} />
       </article>

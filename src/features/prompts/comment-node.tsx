@@ -5,6 +5,7 @@ import { CommentReactions } from "@/features/reactions/comment-reactions";
 import Link from "next/link";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { ChevronUp } from "@/components/icons/chevron-up";
+import { Pin } from "@/components/icons/pin";
 import { Reply } from "@/components/icons/reply";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,10 @@ export interface CommentTree {
    * (rozet çıkmaz). Salt okunur yansımadır; yorumun içine yazılmaz.
    */
   worksVoteOf?: (authorId: string) => boolean | undefined;
+  /** İçeriğin sahibi (docs/history/385-*): yorumlarında "Yazar" rozeti çıkar. */
+  contentOwnerId?: string | null;
+  /** Yalnız içerik sahibinde: üst düzey yorumu sabitler / sabitlemeyi kaldırır. */
+  onTogglePin?: (id: string) => void;
 }
 
 /**
@@ -96,6 +101,23 @@ export function CommentNode({
 }) {
   const node = tree.layout === "sheet" ? <SheetCommentNode comment={comment} depth={depth} tree={tree} /> : <ThreadCommentNode comment={comment} depth={depth} tree={tree} />;
   return <ExitMotion leaving={tree.isLeavingId(comment.id)}>{node}</ExitMotion>;
+}
+
+/** İçeriğin sahibinin yorumlarında küçük "Yazar" rozeti (docs/history/385-*). */
+function AuthorBadge({ className }: { className?: string }) {
+  const { t } = useTranslation();
+  return <span className={cn("inline-flex items-center rounded-full bg-primary-soft px-2 py-0.5 text-caption font-semibold text-primary", className)}>{t("comments.authorBadge")}</span>;
+}
+
+/** Sabitlenmiş yorumun üstündeki etiket. */
+function PinnedLabel() {
+  const { t } = useTranslation();
+  return (
+    <p data-comment-pinned className="mb-1 flex items-center gap-1 text-caption font-semibold text-primary">
+      <Pin size={12} aria-hidden />
+      {t("comments.pinnedLabel")}
+    </p>
+  );
 }
 
 /** Space yorumunun puanı: başkasınınki yalnız yıldız, kendininki dokunarak değişir (docs/history/242-*). Puan yorumla birlikte, yorumun üstünde görünür. */
@@ -142,12 +164,16 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
   // who a reply is answering — this hint keeps that relationship visible.
   const showParentHint = depth > MAX_INDENT_DEPTH && parent;
   const isHighlighted = tree.highlightedId === comment.id;
+  const isPinned = Boolean(comment.pinnedAt) && depth === 0 && !isDeleted;
+  const isByOwner = Boolean(tree.contentOwnerId) && tree.contentOwnerId === comment.author.id && !isDeleted;
 
   return (
     <div
       ref={(el) => tree.registerNodeRef(comment.id, el)}
+      data-comment-id={comment.id}
       className={cn(
         "space-y-2 rounded-md transition-colors duration-700",
+        isPinned && "rounded-lg border border-primary/30 bg-primary-soft/60 p-3",
         isHighlighted && "-m-1.5 bg-primary/10 p-1.5 ring-1 ring-primary/40",
       )}
     >
@@ -156,6 +182,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
           <Avatar src={comment.author.avatarUrl} alt={comment.author.displayName} size={depth === 0 ? 32 : 28} />
         </Link>
         <div className="min-w-0 flex-1">
+          {isPinned && <PinnedLabel />}
           {isDeleted ? (
             <p className="text-small italic text-text-muted">
               <Link href={profileHref(comment.author)} className="font-medium not-italic text-text hover:underline">
@@ -197,6 +224,11 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 <Link href={profileHref(comment.author)} className="font-medium text-text hover:underline">
                   {comment.author.displayName}
                 </Link>{" "}
+                {isByOwner && (
+                  <>
+                    <AuthorBadge className="align-middle" />{" "}
+                  </>
+                )}
                 {worksVote !== undefined && (
                   <>
                     <WorksBadge works={worksVote} className="align-middle" />{" "}
@@ -229,6 +261,11 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                   className="font-medium hover:text-text"
                 >
                   {t("request.reply")}
+                </button>
+              )}
+              {tree.onTogglePin && depth === 0 && (
+                <button type="button" onClick={() => tree.onTogglePin?.(comment.id)} aria-pressed={isPinned} data-comment-pin className="font-medium hover:text-text">
+                  {isPinned ? t("comments.unpin") : t("comments.pin")}
                 </button>
               )}
               {!isOwn && tree.currentUserId && (
@@ -343,6 +380,8 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
   const parent = comment.parentId ? tree.commentsById.get(comment.parentId) : undefined;
   const showParentHint = depth > SHEET_MAX_INDENT_DEPTH && parent;
   const isHighlighted = tree.highlightedId === comment.id;
+  const isPinned = Boolean(comment.pinnedAt) && depth === 0 && !isDeleted;
+  const isByOwner = Boolean(tree.contentOwnerId) && tree.contentOwnerId === comment.author.id && !isDeleted;
 
   return (
     <div ref={(el) => tree.registerNodeRef(comment.id, el)} data-comment-id={comment.id}>
@@ -356,10 +395,12 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
           <Avatar src={comment.author.avatarUrl} alt={comment.author.displayName} size={depth === 0 ? 36 : 28} />
         </Link>
         <div className="min-w-0 flex-1">
+          {isPinned && <PinnedLabel />}
           <p className="flex min-w-0 items-baseline gap-1.5 text-small">
             <Link href={profileHref(comment.author)} className="truncate font-semibold text-text hover:underline">
               {comment.author.username}
             </Link>
+            {isByOwner && <AuthorBadge className="self-center" />}
             {worksVote !== undefined && <WorksBadge works={worksVote} className="self-center" />}
             <span className="shrink-0 text-caption text-text-muted">
               {formatRelativeTime(comment.createdAt, language)}

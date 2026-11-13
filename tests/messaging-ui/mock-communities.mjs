@@ -475,7 +475,7 @@ export function setupCommunities(db) {
       }
     }
     if (table === "prompt_comments") {
-      const COMMENT_COLS = (c) => ({ id: c.id, body: c.body, parent_id: c.parent_id ?? null, like_count: 0, created_at: c.created_at, edited_at: null, deleted_at: null, profiles: pub(userById(c.author_id)),
+      const COMMENT_COLS = (c) => ({ id: c.id, body: c.body, parent_id: c.parent_id ?? null, like_count: c.like_count ?? 0, created_at: c.created_at, edited_at: null, deleted_at: c.deleted_at ?? null, pinned_at: c.pinned_at ?? null, profiles: pub(userById(c.author_id)),
         // Yorum medyası/eki (docs/history/308-*): satırda varsa olduğu gibi döner.
         media_kind: c.media_kind ?? null, media_ref: c.media_ref ?? null, media_width: c.media_width ?? null, media_height: c.media_height ?? null, attach_type: c.attach_type ?? null, attach_id: c.attach_id ?? null });
       if (method === "GET") {
@@ -485,7 +485,19 @@ export function setupCommunities(db) {
         const byId = eq(q, "id");
         let list = db.comments.filter((c) => (byId ? c.id === byId : parents ? parents.includes(c.parent_id) : cp ? c.community_post_id === cp : pr ? c.prompt_id === pr : false));
         if (q.get("parent_id") === "is.null") list = list.filter((c) => !c.parent_id);
-        list = list.sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
+        // Sıralama (docs/history/385-*): PostgREST `order=pinned_at.desc.nullslast,like_count.desc,created_at.desc,id.desc` taklidi; `order` yoksa eskiden yeniye.
+        const orderSpec = (q.get("order") ?? "created_at.asc,id.asc").split(",").map((part) => { const [col, dir, nulls] = part.split("."); return { col, desc: dir === "desc", nullsLast: nulls === "nullslast" }; });
+        list = list.sort((a, b) => {
+          for (const { col, desc, nullsLast } of orderSpec) {
+            const x = a[col] ?? null; const y = b[col] ?? null;
+            if (x === y) continue;
+            if (x === null) return nullsLast ? 1 : -1;
+            if (y === null) return nullsLast ? -1 : 1;
+            const cmp = typeof x === "number" ? x - y : String(x).localeCompare(String(y));
+            if (cmp !== 0) return desc ? -cmp : cmp;
+          }
+          return 0;
+        });
         db.commentQueries = [...(db.commentQueries ?? []), { parent: q.get("parent_id"), offset: Number(q.get("offset") ?? 0), limit: Number(q.get("limit") ?? 0) }];
         if (q.get("limit")) list = list.slice(Number(q.get("offset") ?? 0), Number(q.get("offset") ?? 0) + Number(q.get("limit")));
         return rows(list.map(COMMENT_COLS));
@@ -501,6 +513,15 @@ export function setupCommunities(db) {
         db.comments.push(row);
         return json(201, COMMENT_COLS(row));
       }
+    }
+    if (table === "rpc/set_comment_pinned") {
+      log("set_comment_pinned", body);
+      const target = db.comments.find((c) => c.id === body.p_comment_id);
+      if (!target) return err("comment_not_found");
+      if (db.pinError) return err(db.pinError);
+      if (body.p_pinned) db.comments.forEach((c) => { if (c.prompt_id === target.prompt_id && c.workflow_id === target.workflow_id && c.request_id === target.request_id && c.preset_id === target.preset_id) c.pinned_at = null; });
+      target.pinned_at = body.p_pinned ? db.stamp() : null;
+      return json(200, null);
     }
     if (table === "rpc/delete_community_post" || table === "rpc/moderate_community_post" || table === "rpc/set_community_post_pinned" || table === "rpc/update_community_post") {
       log(table.slice(4), body);

@@ -172,6 +172,8 @@ export interface PromptComment {
   media?: CommentMedia | null;
   /** Yorumun en çok BİR içerik eki: kopya değil başvuru; okuyucu yetkisine göre küçük önizleme kartı olarak çizilir. */
   attachment?: CommentAttachment | null;
+  /** İçerik sahibinin sabitlediği yorum (docs/history/385-*): hedef başına en çok biri, her sıralamada listenin başında durur. */
+  pinnedAt?: string | null;
 }
 
 /** Fotoğraf `path` ile (imzalı adresle gösterilir), GIF yalnız GIPHY `gifId` ile (adres `lib/giphy.ts`'te üretilir) taşınır. */

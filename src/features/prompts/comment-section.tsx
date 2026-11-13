@@ -4,9 +4,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { LoadMore } from "@/features/feed/load-more";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode } from "./comment-node";
 import { ArrowRight } from "@/components/icons/arrow-right";
+import { ArrowUp } from "@/components/icons/arrow-up";
+import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
+import type { CommentSort } from "@/lib/comment-sort";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { MentionInput } from "@/features/mentions/mention-field";
 import { useCommentThread, type CommentTarget } from "./use-comment-thread";
@@ -29,8 +33,11 @@ export function CommentSection({
   spaceOwnerId = null,
   placeholder,
   onChange,
+  ownerId = null,
 }: {
   target: CommentTarget;
+  /** Prompt/istek/workflow/ayar paketi yazarı: yorum sabitleyebilir, yorumlarında "Yazar" rozeti çıkar (docs/history/385-*). */
+  ownerId?: string | null;
   /** Space yorumlarında: sahibi kendini puanlayamaz (yıldız seçici yerine açıklama görür). */
   spaceOwnerId?: string | null;
   /** Yazma kutusunun ipucu metni (varsayılan "Bir yorum yaz…"). */
@@ -53,6 +60,11 @@ export function CommentSection({
   highlightCommentId?: string | null;
 }) {
   const { t } = useTranslation();
+  const sortItems: SectionMenuItem<CommentSort>[] = [
+    { key: "newest", label: t("comments.sort.newest") },
+    { key: "liked", label: t("comments.sort.liked") },
+    { key: "oldest", label: t("comments.sort.oldest") },
+  ];
   const {
     user,
     ownProfile,
@@ -82,7 +94,12 @@ export function CommentSection({
     moreFailed,
     loadFailed,
     retryLoad,
-  } = useCommentThread(target, { highlightCommentId, spaceOwnerId, onChange });
+    sort,
+    setSort,
+    newCount,
+    showNewComments,
+    pinError,
+  } = useCommentThread(target, { highlightCommentId, spaceOwnerId, contentOwnerId: ownerId, onChange });
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -100,18 +117,57 @@ export function CommentSection({
             <span className="font-normal tabular-nums text-text-muted"> · {hasMore ? `${comments.length}+` : comments.length}</span>
           </h2>
         )}
-        {(topLevel.length > COLLAPSED_COMMENTS || hasMore) && (
-          <button
-            type="button"
-            onClick={() => setShowAll((prev) => !prev)}
-            aria-expanded={showAll}
-            className="inline-flex items-center gap-1 text-caption font-medium text-primary transition-opacity hover:opacity-80"
-          >
-            {showAll ? t("common.showLess") : t("comments.viewAllThread")}
-            {!showAll && <ArrowRight size={12} aria-hidden />}
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {(topLevel.length > 1 || hasMore) && (
+            <>
+              {/* Tablet/masaüstü: satır içi çipler (pencere/açılır kutu yok). Telefon: tek hap, alt sayfa (SectionMenu). */}
+              <div role="group" aria-label={t("comments.sort.label")} className="hidden gap-0.5 rounded-full bg-surface-soft p-1 sm:flex">
+                {sortItems.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    data-sort-chip={item.key}
+                    aria-pressed={sort === item.key}
+                    onClick={() => setSort(item.key)}
+                    className={cn(
+                      "h-9 rounded-full px-3 text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                      sort === item.key ? "bg-surface font-semibold text-primary shadow-xs" : "font-medium text-text-secondary hover:text-text",
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              <div className="sm:hidden">
+                <SectionMenu items={sortItems} active={sort} onChange={setSort} ariaLabel={t("comments.sort.label")} title={t("comments.sort.label")} align="end" />
+              </div>
+            </>
+          )}
+          {(topLevel.length > COLLAPSED_COMMENTS || hasMore) && (
+            <button
+              type="button"
+              onClick={() => setShowAll((prev) => !prev)}
+              aria-expanded={showAll}
+              className="inline-flex items-center gap-1 text-caption font-medium text-primary transition-opacity hover:opacity-80"
+            >
+              {showAll ? t("common.showLess") : t("comments.viewAllThread")}
+              {!showAll && <ArrowRight size={12} aria-hidden />}
+            </button>
+          )}
+        </div>
       </div>
+
+      {newCount > 0 && (
+        <button
+          type="button"
+          onClick={showNewComments}
+          data-new-comments
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-small font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
+          <ArrowUp size={14} aria-hidden />
+          {newCount === 1 ? t("comments.newOne") : t("comments.newMany", { count: newCount })}
+        </button>
+      )}
 
       {highlightNotFound && (
         <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
@@ -177,6 +233,7 @@ export function CommentSection({
 
       {postError && <p className="text-small text-danger">{postError}</p>}
       {deleteError && <p className="text-small text-danger">{deleteError}</p>}
+      {pinError && <p className="text-small text-danger">{pinError}</p>}
 
       {!loaded ? (
         <div className="space-y-3" role="status" aria-label={t("comments.loadingComments")}>

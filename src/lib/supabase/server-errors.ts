@@ -27,10 +27,13 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   // Ekibe özgü içerik (docs/history/376-*)
   team_content_not_shareable: "error.teamContentNotShareable",
   team_content_immutable: "error.teamContentImmutable",
+  // Yorum sabitleme (docs/history/385-*)
+  pin_not_allowed: "error.pinNotAllowed",
+  pin_top_level_only: "error.pinTopLevelOnly",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
-const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public", "token_limit", "link_limit", "invalid_name", "invalid_scope", "invalid_expiry"]);
+const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public", "token_limit", "link_limit", "invalid_name", "invalid_scope", "invalid_expiry", "pin_not_allowed", "pin_top_level_only"]);
 
 export function friendlyServerMessage(code: unknown): string | null {
   if (typeof code !== "string") return null;
@@ -69,6 +72,8 @@ const OPTIONAL_COLUMNS = [
   "is_demo", "flow_show_io", "flow_show_links", "flow_show_relations", "source_workflow_id", "source_step_id", "source_role", "source_step_no", "locked", "data", "reaction", "approved_at", "approved_by", "review_requested_at", "review_requested_by", "community_id", "team_id", "team_project_id", "team_file_id", "rev_state", "rev_note", "rev_submitted_at", "rev_decided_at", "rev_unit", "file_item_id",
   // Yorum medyası/eki (docs/history/308-*): sütunlar yoksa yorumlar yine açılır, yalnız ek görünmez.
   "media_kind", "media_ref", "media_width", "media_height", "attach_type", "attach_id",
+  // Yorum sabitleme (docs/history/385-*): sütun yoksa yorumlar yine açılır (sıralamadaki `pinned_at` da düşer), yalnız sabit yorum görünmez.
+  "pinned_at",
 ] as const;
 const missingOptional = new Set<string>();
 
@@ -83,8 +88,19 @@ function withoutMissingColumns(url: string): string {
   if (!select) return url;
   let next = select;
   for (const column of missingOptional) next = stripColumn(next, column);
-  if (next === select) return url;
+  // Sıralama listesindeki eksik sütun da düşer (`order=pinned_at.desc.nullslast,created_at.desc`).
+  const order = parsed.searchParams.get("order");
+  let nextOrder = order;
+  if (order) {
+    const kept = order.split(",").filter((part) => ![...missingOptional].some((column) => part.startsWith(`${column}.`)));
+    nextOrder = kept.join(",");
+  }
+  if (next === select && nextOrder === order) return url;
   parsed.searchParams.set("select", next);
+  if (order) {
+    if (nextOrder) parsed.searchParams.set("order", nextOrder);
+    else parsed.searchParams.delete("order");
+  }
   return parsed.toString();
 }
 
