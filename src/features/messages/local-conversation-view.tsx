@@ -82,7 +82,6 @@ import { getCachedRooms, patchCachedRoom, refreshCommunityRooms, useCommunityRoo
 import { useActiveRoom } from "./rooms/use-active-room";
 import { RoomFormModal } from "./rooms/room-form-modal";
 import { RoomInfoSheet } from "./rooms/room-info-sheet";
-import { ChannelChipsRow, type ChannelChip } from "./channel-chips-row";
 import { useChannelPresence, useMyProjectRole, useTeamChannelList, useTeamMutes, useTeamSummary } from "@/features/teams/team-chat-data";
 import { TeamMark } from "@/features/teams/team-ui";
 import { TeamInfoModal } from "@/features/teams/team-info-modal";
@@ -150,7 +149,7 @@ export interface EmbeddedChatControls {
   openChannelInfo: () => void;
 }
 
-export function LocalConversationView({ dock }: { dock?: DockHandlers & { conversationId: string; /** Ekip sayfasına gömülü (docs/history/353-*): başlığı sayfa çizer, burada çizilmez. */ embedded?: boolean; /** Gömülü sohbeti sayfanın başlığı yönetir: "Ara" ve "Kanal bilgisi" bu tutamaçla açılır. */ controlRef?: Ref<EmbeddedChatControls>; /** Dock: kanal/oda çipi başka bir sohbeti panelde açar. */ onOpenConversation?: (conversationId: string) => void } } = {}) {
+export function LocalConversationView({ dock }: { dock?: DockHandlers & { conversationId: string; /** Ekip sayfasına gömülü (docs/history/353-*): başlığı sayfa çizer, burada çizilmez. */ embedded?: boolean; /** Gömülü sohbeti sayfanın başlığı yönetir: "Ara" ve "Kanal bilgisi" bu tutamaçla açılır. */ controlRef?: Ref<EmbeddedChatControls>; /** Dock: bilgi sayfasından başka bir kanal seçilince panelde açar. */ onOpenConversation?: (conversationId: string) => void; /** Dock: topluluk sohbetinde açılacak oda (oda listesinden gelir). */ roomId?: string | null } } = {}) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -284,7 +283,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   // Grup: gönderen adları/avatarları + kadro rolleri; "kim yazabilir" ayarı.
   // Sohbet odaları (docs/history/352-*): topluluk sohbeti birden çok odaya bölünür; mesajlar/okundu/yazıyor açık odayla sınırlıdır.
   const roomsState = useCommunityRooms(communityId);
-  const { room: activeRoom, setRoomId, requestedId: requestedRoomId } = useActiveRoom(communityId, roomsState.rooms, isDock);
+  const { room: activeRoom, setRoomId, requestedId: requestedRoomId } = useActiveRoom(communityId, roomsState.rooms, isDock, dock?.roomId ?? null);
   const activeRoomMessageId = activeRoom ? messageRoomId(activeRoom) : null;
   const roomScope = useMemo<MessageRoomScope | undefined>(() => (isGroup && activeRoom ? { id: activeRoomMessageId } : undefined), [isGroup, activeRoom, activeRoomMessageId]);
   const roomScopeRef = useRef<MessageRoomScope | undefined>(undefined);
@@ -1612,33 +1611,6 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       </div>
       )}
       {teamChannel && !dock?.embedded && teamSummary?.myRole === "guest" && <GuestBanner guestUntil={teamSummary.guestUntil} />}
-      {/* Kanal çipleri YALNIZ Mesajlar dock'unda kalır; sayfada kanallar ekip/proje sayfasında listelenir (docs/history/369-*). */}
-      {teamChannel && dock && !dock.embedded && teamChannelsState.channels.length > 0 && (
-        <ChannelChipsRow
-          tone="team"
-          ariaLabel={t("tm.chat.channelsAria")}
-          activeId={id}
-          items={teamChannelsState.channels.map<ChannelChip>((channel) => ({ id: channel.id, name: channel.name, locked: channel.mode === "private", unread: channel.unreadCount, muted: channel.muted }))}
-          onSelect={(item) => openTeamChannel(item.id)}
-        />
-      )}
-      {isGroup && !teamChannel && dock && activeRoom && roomsState.rooms.filter((room) => !room.archivedAt).length > 1 && (
-        <ChannelChipsRow
-          tone="community"
-          ariaLabel={t("rooms.chat.roomsAria")}
-          activeId={activeRoom.id}
-          items={roomsState.rooms
-            .filter((room) => !room.archivedAt)
-            .map<ChannelChip>((room) => ({
-              id: room.id,
-              name: room.name,
-              locked: room.readPolicy === "staff" || (!room.isDefault && room.postingPolicy === "admins" && !room.canPost),
-              unread: room.unreadCount,
-              muted: room.muted,
-            }))}
-          onSelect={(item) => setRoomId(item.id)}
-        />
-      )}
       {searchOpen && (
         <ConversationSearchPanel
           conversationId={conversation.id}

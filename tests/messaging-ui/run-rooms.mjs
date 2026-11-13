@@ -398,6 +398,25 @@ await scenario("12b. Masaüstü: topluluk satırı sol sütunu oda listesine çe
   assert.equal(await aside.locator('[data-hub="community"]').count(), 0);
 }, { viewport: DESKTOP, setup: (db) => { seedResult = seed(db); } });
 
+await scenario("12f. Dock (docs/history/382-*): topluluk satırı panelde SADE oda listesine açılır; oda satırı o odanın sohbetini panelde açar; ‹ oda listesi → Mesajlar; çip satırı yok", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await page.locator("[data-message-dock-pill]").click();
+  const panel = page.locator("[data-message-dock]");
+  await panel.waitFor();
+  await panel.locator("[data-conversation-row]").filter({ hasText: "Tasarım Atölyesi" }).first().click();
+  await panel.locator("[data-dock-hub]").waitFor();
+  assert.match(await panel.locator("[data-dock-hub-title]").innerText(), /Tasarım Atölyesi/);
+  for (const sel of ["[data-conversations-more]", "[data-kind-chip]", "[data-selection-bar]"]) assert.equal(await panel.locator(sel).count(), 0, `sade liste: ${sel} yok`);
+  assert.ok((await panel.locator("[data-hub-row]").count()) >= 5, "odalar listelenir");
+  await panel.locator('[data-hub-row="Duyurular"]').click();
+  await panel.locator("[data-chat-scroll]").getByText("resmî duyuru").waitFor();
+  assert.equal(await page.locator("[data-channel-chips]").count(), 0, "çip satırı yok");
+  await panel.locator("[data-dock-back]").click();
+  await panel.locator("[data-dock-hub]").waitFor();
+  await panel.locator("[data-dock-back]").click();
+  await panel.locator("[data-conversation-row]").first().waitFor();
+}, { viewport: DESKTOP, setup: (db) => { seedResult = seed(db); } });
+
 const hubRoom = (page, name) => page.locator(`[data-hub-row="${name}"]`);
 const startRoomSelecting = async (page) => {
   await page.locator("[data-conversations-more]").click();

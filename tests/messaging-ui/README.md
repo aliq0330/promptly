@@ -417,3 +417,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-team-project
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-team-chat-hub.mjs   # 20/20 beklenir
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-rooms.mjs            # 33/33 beklenir
 ```
+
+## Dock'ta kanal listesi (`docs/history/382-*`)
+
+`run-team-chat-hub.mjs` 21–23 ve `run-rooms.mjs` 12f: Mesajlar dock'unda ekip/proje/topluluk satırı panelin içinde sade kanal/oda listesine (başlık + arama + düz satırlar) açılır, kanal sohbeti panelde açar, ‹ bir üst seviyedir, sohbetin üstünde çip satırı yoktur. Gerçek Supabase'e KARŞI DENENMEDİ.

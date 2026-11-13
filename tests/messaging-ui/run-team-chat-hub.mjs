@@ -382,6 +382,65 @@ await scenario("15. Kanal bağlantısıyla (?id=) açılan ekip kanalında sol s
   await aside.locator('[data-hub="project"]').waitFor();
 }, { viewport: { width: 1280, height: 900 }, setup: conversations });
 
+const dockPanel = (page) => page.locator("[data-message-dock]");
+const openDock = async (page) => {
+  await page.goto(`${BASE}/`);
+  await page.locator("[data-message-dock-pill]").click();
+  await dockPanel(page).waitFor();
+};
+
+await scenario("21. Dock (docs/history/382-*): ekip satırı panelde SADE kanal listesine açılır (başlık + arama + düz satırlar); kanal sohbeti panelde açar; ‹ bir üst seviye (kanal listesi → Mesajlar); adres değişmez", async ({ page }) => {
+  await openDock(page);
+  const url = page.url();
+  const panel = dockPanel(page);
+  await panel.locator("[data-conversation-row]").filter({ hasText: "Atölye Mor" }).first().click();
+  await panel.locator("[data-dock-hub]").waitFor();
+  await panel.locator("[data-dock-hub-title]").getByText("Atölye Mor").waitFor();
+  for (const sel of ["[data-conversations-more]", "[data-list-search]", "[data-kind-chip]", "[data-mute-card]", "[data-selection-bar]"]) assert.equal(await panel.locator(sel).count(), 0, `sade liste: ${sel} yok`);
+  await panel.locator('[data-hub-row="genel"]').waitFor();
+  await panel.locator('[data-hub-row="duyurular"]').waitFor();
+  await panel.locator('[data-testid="hub-projects"] [data-hub-row="Villa Projesi"]').waitFor();
+  await panel.locator("[data-dock-search]").fill("duyu");
+  await panel.locator('[data-hub-row="genel"]').waitFor({ state: "detached" });
+  await panel.locator("[data-dock-search]").fill("");
+  await panel.locator('[data-hub-row="genel"]').click();
+  await panel.locator("[data-chat-scroll]").getByText("lansman afişi hazır").waitFor();
+  assert.equal(await page.locator("[data-channel-chips]").count(), 0, "çip satırı yok");
+  await panel.locator("[data-dock-back]").click();
+  await panel.locator("[data-dock-hub]").waitFor();
+  await panel.locator("[data-dock-back]").click();
+  await panel.locator("[data-conversation-row]").first().waitFor();
+  assert.equal(await panel.locator("[data-dock-hub]").count(), 0);
+  assert.equal(page.url(), url, "adres değişmedi");
+}, { viewport: { width: 1280, height: 860 }, setup: conversations });
+
+await scenario("22. Dock: proje satırı proje listesini açar; proje kanalı sohbeti açar; ‹ proje listesi → ekip listesi → Mesajlar; '+' yalnız yetkiliye", async ({ page }) => {
+  await openDock(page);
+  const panel = dockPanel(page);
+  await panel.locator("[data-conversation-row]").filter({ hasText: "Atölye Mor" }).first().click();
+  await panel.locator("[data-dock-add]").waitFor();
+  await panel.locator('[data-hub-row="Villa Projesi"]').click();
+  await panel.locator('[data-testid="hub-project-chats"]').waitFor();
+  assert.match(await panel.locator("[data-dock-hub-title]").innerText(), /Villa Projesi/);
+  await panel.locator('[data-hub-row="villa-projesi"]').click();
+  await panel.locator("[data-chat-scroll]").getByText("plan güncellendi").waitFor();
+  await panel.locator("[data-dock-back]").click();
+  await panel.locator('[data-testid="hub-project-chats"]').waitFor();
+  await panel.locator("[data-dock-back]").click();
+  await panel.locator('[data-testid="hub-channels"]').waitFor();
+  await panel.locator("[data-dock-back]").click();
+  await panel.locator("[data-conversation-row]").first().waitFor();
+}, { viewport: { width: 1280, height: 860 }, setup: conversations });
+
+await scenario("23. Dock: üye (yönetici değil) kanal listesinde '+' görmez; İngilizce başlık ve arama etiketi", async ({ page }) => {
+  await openDock(page);
+  const panel = dockPanel(page);
+  await panel.locator("[data-conversation-row]").filter({ hasText: "Atölye Mor" }).first().click();
+  await panel.locator("[data-dock-hub]").waitFor();
+  assert.equal(await panel.locator("[data-dock-add]").count(), 0);
+  await panel.getByPlaceholder("Search channels").waitFor();
+}, { viewport: { width: 1280, height: 860 }, lang: "en", setup: conversations, opts: { role: "member" } });
+
 const rowSel = (page, name) => page.locator(`[data-hub-row="${name}"]`);
 const startSelecting = async (page) => {
   await page.locator("[data-conversations-more]").click();

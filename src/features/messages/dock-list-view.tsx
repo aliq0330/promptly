@@ -106,7 +106,13 @@ export function DockListView({ kind, onExpand }: { kind: "list" | "requests"; on
             conversations={shown}
             flush
             emptyLabel={inRequests ? t("messages.requestsEmpty") : undefined}
-            onOpen={(conversation) => dock.openChat(conversation.id)}
+            onOpen={(conversation) => {
+              // Ekip (kanalları toplanmış) ve topluluk satırı panelin içinde KANAL/ODA LİSTESİNE açılır (docs/history/382-*); diğerleri sohbeti açar.
+              const team = conversation.group?.team ?? null;
+              if (team && conversation.teamRollup) dock.openTeam(team.id);
+              else if (conversation.group && !team) dock.openCommunity(conversation.group.id);
+              else dock.openChat(conversation.id);
+            }}
           />
         )}
       </div>
