@@ -19,6 +19,7 @@ import { formatRelativeTime, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
 import Link from "next/link";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 /**
  * Duyurular: herkes okur (herkese açık topluluk ya da üyelik); yayınlama / düzenleme / silme / sabitleme `manage_announcements` yeteneğiyle
@@ -87,7 +88,7 @@ export function AnnouncementsSection({
       <div className={highlight ? "contents" : "flex items-center justify-between gap-3"}>
         {/* In the feed's summary the warm card speaks for itself; the heading stays for screen readers. */}
         <h2 id="community-announcements-title" className={highlight ? "sr-only" : "flex items-center gap-1.5 text-label font-semibold text-text"}>
-          <Megaphone size={15} aria-hidden /> {t("communities.announcements.title")}
+          <Megaphone size={16} aria-hidden /> {t("communities.announcements.title")}
         </h2>
         {canManage && (
           <Button type="button" size="sm" variant="outline" onClick={() => setEditing("new")}>
@@ -104,7 +105,7 @@ export function AnnouncementsSection({
           </button>
         </p>
       ) : items === null ? (
-        <div className="h-20 animate-pulse rounded-lg border border-border-soft bg-surface-soft" aria-busy="true" />
+        <div className="h-20 skeleton-shimmer rounded-lg border border-border-soft" aria-busy="true" />
       ) : items.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.announcements.empty")}</p>
       ) : (
@@ -118,17 +119,17 @@ export function AnnouncementsSection({
               }
             >
               {highlight && item.pinned && (
-                <p className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-secondary">{t("communities.announcements.pinnedEyebrow")}</p>
+                <p className="text-micro font-bold uppercase tracking-[0.08em] text-secondary">{t("communities.announcements.pinnedEyebrow")}</p>
               )}
               <div className="flex items-start justify-between gap-3">
-                <h3 className="flex min-w-0 items-center gap-1.5 break-words text-sm font-semibold text-text">
-                  {item.pinned && !highlight && <Pin size={13} className="shrink-0 text-primary" aria-label={t("communities.announcements.pinned")} />}
+                <h3 className="flex min-w-0 items-center gap-1.5 break-words text-small font-semibold text-text">
+                  {item.pinned && !highlight && <Pin size={12} className="shrink-0 text-primary" aria-label={t("communities.announcements.pinned")} />}
                   <span className="min-w-0">{item.title}</span>
                 </h3>
                 {canManage && (
                   <div className="flex shrink-0 gap-1">
                     <button type="button" onClick={() => setEditing(item)} aria-label={t("common.edit")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text">
-                      <Pencil size={15} />
+                      <Pencil size={16} />
                     </button>
                     <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger/10 hover:text-danger">
                       <TrashIcon size={15} />
@@ -226,9 +227,9 @@ function AnnouncementFormModal({
 
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy="announcement-form-title">
-      <form onSubmit={submit} noValidate className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <form onSubmit={submit} noValidate className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop" onClick={(event) => event.stopPropagation()}>
         <div className="px-5 pb-2 pt-5">
-          <h2 id="announcement-form-title" className="text-base font-semibold text-text">
+          <h2 id="announcement-form-title" className="text-body font-semibold text-text">
             {announcement ? t("communities.announcements.editTitle") : t("communities.announcements.newTitle")}
           </h2>
         </div>
@@ -271,9 +272,9 @@ function AnnouncementFormModal({
             )}
           </div>
           {error && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert>
               {error}
-            </p>
+            </InlineAlert>
           )}
         </div>
         <div className="flex justify-end gap-2 border-t border-border-soft px-5 py-3">

@@ -88,7 +88,7 @@ export function BoardPopover({
       role="dialog"
       aria-label={label}
       data-board-popover=""
-      className={cn("fixed z-[60] max-h-[min(80dvh,40rem)] overflow-y-auto overscroll-contain rounded-2xl border border-border-soft bg-surface p-2 shadow-pop animate-pop-in", className)}
+      className={cn("fixed z-(--z-popover) max-h-[min(80dvh,40rem)] overflow-y-auto overscroll-contain rounded-lg border border-border-soft bg-surface p-2 shadow-pop animate-pop-in", className)}
       style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999, width: Math.min(width, typeof window === "undefined" ? width : window.innerWidth - EDGE * 2) }}
     >
       {children}
@@ -125,14 +125,14 @@ export function PopoverRow({
       onClick={onClick}
       disabled={disabled}
       data-testid={testId}
-      className={cn("flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 py-1.5 text-left transition-colors hover:bg-surface-soft disabled:opacity-45", danger ? "text-danger" : "text-text")}
+      className={cn("flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 py-1.5 text-left transition-colors hover:bg-surface-soft disabled:opacity-50", danger ? "text-danger" : "text-text")}
     >
       {icon && <span aria-hidden className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-[10px]", danger ? "bg-danger/10" : "bg-primary-soft text-primary")}>{icon}</span>}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-small font-bold">{label}</span>
         {hint && <span className="block text-caption leading-snug text-text-secondary">{hint}</span>}
       </span>
-      {tag && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-[0.6875rem] font-bold text-primary">{tag}</span>}
+      {tag && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-micro font-bold text-primary">{tag}</span>}
       {trailing}
     </button>
   );

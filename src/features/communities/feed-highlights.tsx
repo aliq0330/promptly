@@ -95,12 +95,12 @@ function NextEventCard({ event, onOpen }: { event: CommunityEvent; onOpen: () =>
       className="flex w-full items-center gap-3.5 rounded-lg border border-border-soft bg-surface px-4 py-3 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <span aria-hidden className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-primary-soft leading-none text-primary">
-        <span className="text-[0.625rem] font-bold tracking-[0.06em]">{date.month}</span>
+        <span className="text-micro font-bold tracking-[0.06em]">{date.month}</span>
         <span className="mt-0.5 font-display text-[1.25rem] font-bold">{date.day}</span>
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-caption text-text-muted">{t("communities.feed.nextEvent")}</span>
-        <span className="block break-words text-sm font-semibold text-text">{event.title}</span>
+        <span className="block break-words text-small font-semibold text-text">{event.title}</span>
         <span className="block text-caption text-text-muted">{formatEventRange(event.startsAt, event.endsAt, event.timezone, language)}</span>
       </span>
       <span className="shrink-0 rounded-full bg-text px-3 py-1.5 text-caption font-semibold text-background">{t("communities.overview.allEvents")}</span>

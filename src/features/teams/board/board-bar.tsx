@@ -48,9 +48,9 @@ export function TeamBoardBar({
       {shown.length > 0 && (
         <div className="hidden items-center md:flex" aria-hidden>
           {shown.map((person, index) => (
-            <Avatar key={person.id} src={person.avatarUrl} alt="" size={30} className={cn("border-2 border-surface", index > 0 && "-ml-2")} />
+            <Avatar key={person.id} src={person.avatarUrl} alt="" size={32} className={cn("border-2 border-surface", index > 0 && "-ml-2")} />
           ))}
-          {more > 0 && <span className="-ml-2 grid h-[30px] min-w-[30px] place-items-center rounded-full border-2 border-surface bg-text-secondary px-1 text-[0.6875rem] font-bold text-background">+{more}</span>}
+          {more > 0 && <span className="-ml-2 grid h-[30px] min-w-[30px] place-items-center rounded-full border-2 border-surface bg-text-secondary px-1 text-micro font-bold text-background">+{more}</span>}
         </div>
       )}
       <button
@@ -61,7 +61,7 @@ export function TeamBoardBar({
         data-testid="board-comments-toggle"
         className={cn("flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-small font-bold", commentsActive ? "border-warning/40 bg-warning/12 text-text" : "border-border-soft bg-surface text-text hover:bg-surface-soft")}
       >
-        <MessageCircle size={19} aria-hidden />
+        <MessageCircle size={20} aria-hidden />
         <span className="tabular-nums" data-board-comment-count="">{commentCount}</span>
       </button>
       <button type="button" onClick={onShare} data-testid="board-share-button" className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 text-small font-bold text-primary-foreground hover:bg-primary-hover max-sm:w-10 max-sm:justify-center max-sm:px-0" aria-label={t("tb.share.button")}>
@@ -70,7 +70,7 @@ export function TeamBoardBar({
       </button>
       {team.role && <ProjectRoleChip role={team.role} className="hidden lg:inline-flex" />}
       <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} data-path-info="" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border-soft bg-surface text-primary hover:bg-surface-soft">
-        <Info size={19} aria-hidden />
+        <Info size={20} aria-hidden />
       </button>
     </header>
   );

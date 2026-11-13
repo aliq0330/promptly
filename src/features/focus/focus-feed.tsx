@@ -357,7 +357,7 @@ function FocusMenu({ mediaOnly, onToggleMedia, muted, onToggleMuted }: { mediaOn
         {!muted && <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />}
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-60 rounded-xl border border-border-soft bg-surface-elevated p-1.5 shadow-pop animate-pop-in">
+        <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-60 rounded-lg border border-border-soft bg-surface-elevated p-1.5 shadow-pop animate-pop-in">
           <button type="button" role="menuitemcheckbox" aria-checked={mediaOnly} title={t("focusFeed.mediaOnlyTitle")} onClick={onToggleMedia} className={item}>
             <Images size={18} aria-hidden className="text-text-secondary" />
             {t("focusFeed.mediaOnly")}
@@ -769,7 +769,7 @@ function StepButton({ label, disabled, onClick, children }: { label: string; dis
       title={label}
       disabled={disabled}
       onClick={onClick}
-      className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface/85 text-text-secondary shadow-sm backdrop-blur-md transition-colors hover:bg-surface hover:text-text disabled:opacity-40"
+      className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface/85 text-text-secondary shadow-sm backdrop-blur-md transition-colors hover:bg-surface hover:text-text disabled:opacity-50"
     >
       {children}
     </button>

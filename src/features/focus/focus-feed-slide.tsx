@@ -39,6 +39,7 @@ import { FocusFeedRail } from "./focus-feed-rail";
 import { useAuth } from "@/features/auth/auth-provider";
 import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
 import { usePromptOutput, useWorkflowFocusSteps } from "./use-focus-data";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Everything a slide shows about an entry, read from the real feed row (nothing assumed beyond its own fields). */
 export interface SlideModel {
@@ -99,7 +100,7 @@ function SlideByline({ author, createdAt, language, near }: { author: UserProfil
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       <Link href={href} tabIndex={-1} aria-hidden className="shrink-0 rounded-full">
-        <Avatar src={author.avatarUrl} alt={author.displayName} size={36} />
+        <Avatar src={author.avatarUrl} alt={author.displayName} size={40} />
       </Link>
       <div className="min-w-0 leading-tight">
         <div className="flex min-w-0 items-center gap-2">
@@ -124,7 +125,7 @@ export function PromptDialog({ prompt, onClose }: { prompt: Prompt; onClose: () 
   const tool = resolveToolRefs(prompt.tools)[0]?.label ?? prompt.tool;
   return (
     <Modal onClose={onClose} labelledBy={titleId}>
-      <div className="w-full max-w-lg rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="w-full max-w-lg rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-caption font-bold uppercase tracking-[0.08em] text-primary">{t("focusFeed.promptDialogTitle")}</p>
@@ -152,10 +153,10 @@ export function PromptDialog({ prompt, onClose }: { prompt: Prompt; onClose: () 
           <CopyPromptButton text={prompt.promptText} promptId={prompt.id} variant="primary" size="md" />
           <Link href={promptHref(prompt)} className="inline-flex h-9 items-center gap-1 rounded-full px-3 text-label font-semibold text-primary hover:bg-primary-soft">
             {t("focusFeed.openDetail")}
-            <ArrowUpRight size={15} aria-hidden />
+            <ArrowUpRight size={16} aria-hidden />
           </Link>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }
@@ -171,7 +172,7 @@ function SlideImage({ cover, active, near }: { cover: FocusFeedCover; active: bo
       {state === "loading" && <div aria-hidden className="skeleton-shimmer absolute inset-0 opacity-40 md:opacity-100" />}
       {state === "broken" && (
         <div aria-hidden className="absolute inset-0 flex items-center justify-center text-text-muted">
-          <ImageOff size={36} strokeWidth={1.5} />
+          <ImageOff size={36} />
         </div>
       )}
       {near && (
@@ -287,7 +288,7 @@ function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt; cover:
         <>
           {!cover && (
             <div aria-hidden className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-soft via-surface-soft to-surface">
-              <Music size={72} strokeWidth={1.25} className="text-primary/60" />
+              <Music size={72} className="text-primary/60" />
             </div>
           )}
           <StorageAudio ref={audioRef} src={output.mediaUrl} loop preload={active ? "auto" : "metadata"} {...events} />
@@ -340,13 +341,13 @@ function WorkflowSteps({ workflow, near, onImage }: { workflow: Workflow; near: 
           return (
             <li key={step.id}>
               <div className={cn("flex min-w-0 items-center gap-2.5 rounded-md px-3 py-2 text-small", row)}>
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[0.6875rem] font-bold leading-none text-primary-foreground">{index + 1}</span>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-micro font-bold leading-none text-primary-foreground">{index + 1}</span>
                 <StepIcon size={14} aria-hidden className="shrink-0 opacity-70" />
                 <span className="truncate">{label}</span>
               </div>
               {index < listed.length - 1 && (
                 <span aria-hidden className={cn("flex h-3 items-center pl-4", onImage ? "text-white/60" : "text-text-muted")}>
-                  <ArrowDown size={11} />
+                  <ArrowDown size={12} />
                 </span>
               )}
             </li>
@@ -437,7 +438,7 @@ function AlbumArtImage({ cover, active, near }: { cover: FocusFeedCover; active:
         <div aria-hidden className="absolute aspect-square w-[min(100%,22rem)] max-h-full overflow-hidden rounded-[26px] bg-white/10">
           {state === "loading" ? <div className="skeleton-shimmer absolute inset-0 opacity-40" /> : (
             <span className="absolute inset-0 flex items-center justify-center text-white/60">
-              <ImageOff size={36} strokeWidth={1.5} />
+              <ImageOff size={36} />
             </span>
           )}
         </div>
@@ -500,7 +501,7 @@ function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideM
     return (
       <div data-album-art className={cn(frame, "gap-4 border border-white/15 bg-white/10 backdrop-blur-md")}>
         <div className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-white/80">
-          <Icon size={15} strokeWidth={2.25} aria-hidden />
+          <Icon size={16} aria-hidden />
           {t("request.title")}
           <span className="ml-auto">
             <RequestStatus request={request} />
@@ -517,7 +518,7 @@ function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideM
     return (
       <div data-album-art className={cn(frame, "gap-2 border border-white/15 bg-white/10 backdrop-blur-md")}>
         <p className="mb-1 flex items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-white/80">
-          <Icon size={15} strokeWidth={2.25} aria-hidden />
+          <Icon size={16} aria-hidden />
           {t("preset.singular")} · {t("preset.paramCount", { count: entries.length })}
         </p>
         {shown.map((entry) => (
@@ -540,7 +541,7 @@ function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideM
         <div className="min-h-0 overflow-hidden">{structure}</div>
       ) : (
         <span aria-hidden className="flex aspect-square items-center justify-center text-primary">
-          <Icon size={64} strokeWidth={1.3} />
+          <Icon size={64} />
         </span>
       )}
     </div>
@@ -556,7 +557,7 @@ export function FocusAddToSpace({ item, className }: { item: PostFeedItem; class
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={className} data-focus-add-to-space="">
-        <Shapes size={15} aria-hidden />
+        <Shapes size={16} aria-hidden />
         {t("spaces.add.menu")}
       </button>
       {open && <AddToSpaceModal target={{ type: item.kind, id: item.data.id }} onClose={() => setOpen(false)} />}

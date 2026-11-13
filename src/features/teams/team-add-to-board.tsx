@@ -165,7 +165,7 @@ export function AddToBoardDialog({
                     onClick={() => toggle(board.id)}
                     data-add-to-board={board.id}
                     data-add-to-board-placed={here ? "" : undefined}
-                    className={cn("flex min-h-14 w-full items-center gap-3 rounded-2xl border px-3 text-left transition-colors disabled:opacity-70", on ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft")}
+                    className={cn("flex min-h-14 w-full items-center gap-3 rounded-lg border px-3 text-left transition-colors disabled:opacity-50", on ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft")}
                   >
                     <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
                       <Presentation size={18} />
@@ -175,7 +175,7 @@ export function AddToBoardDialog({
                       <span className="block truncate text-caption text-text-secondary">{here ? t("tf.addToBoard.already") : t("tp.addToBoard.items", { count: board.itemCount })}</span>
                     </span>
                     <span aria-hidden className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-md border-2", on ? "border-primary bg-primary text-primary-foreground" : "border-border-strong")}>
-                      {on && <Check size={13} />}
+                      {on && <Check size={12} />}
                     </span>
                   </button>
                 </li>
@@ -190,7 +190,7 @@ export function AddToBoardDialog({
             aria-checked={creating}
             onClick={() => setCreating((open) => !open)}
             data-add-to-board-new=""
-            className={cn("flex min-h-14 w-full items-center gap-3 rounded-2xl border border-dashed px-3 text-left transition-colors", creating ? "border-primary bg-primary-soft" : "border-border hover:bg-surface-soft")}
+            className={cn("flex min-h-14 w-full items-center gap-3 rounded-lg border border-dashed px-3 text-left transition-colors", creating ? "border-primary bg-primary-soft" : "border-border hover:bg-surface-soft")}
           >
             <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
               <Plus size={18} />

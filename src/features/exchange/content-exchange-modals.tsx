@@ -230,7 +230,7 @@ export function ImportContentModal<K extends ExchangeContentKind>({ kind, onClos
       <div className="space-y-4" data-testid="exchange-import" data-kind={kind} data-limit-title={limits.title}>
         {step === "done" ? (
           <div className="flex items-start gap-3" data-testid="exchange-done">
-            <CircleCheck size={22} className="mt-0.5 shrink-0 text-success" aria-hidden />
+            <CircleCheck size={24} className="mt-0.5 shrink-0 text-success" aria-hidden />
             <div>
               <p className="text-small font-semibold text-text">{t(keys.importDone, { count: created })}</p>
               <p className="text-small text-text-secondary">{t("exchange.import.doneHint")}</p>

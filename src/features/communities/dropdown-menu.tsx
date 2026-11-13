@@ -50,7 +50,7 @@ export function DropdownMenu({
         {trigger ?? <MoreVertical size={16} />}
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-30 mt-1 min-w-48 animate-pop-in overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-pop">
+        <div role="menu" className="absolute right-0 top-full z-30 mt-1 min-w-48 animate-pop-in overflow-hidden rounded-lg border border-border-soft bg-surface-elevated py-1 shadow-pop">
           {children(() => setOpen(false))}
         </div>
       )}

@@ -78,7 +78,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
             <span
               key={tag.slug}
               className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium",
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-caption font-medium",
                 source === "automatic"
                   ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border bg-surface text-text",
@@ -86,12 +86,12 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
             >
               {source === "automatic" && (
                 <span title={t("tagPicker.autoSuggestedTitle")} className="inline-flex shrink-0">
-                  <WandSparkles size={11} aria-hidden="true" />
+                  <WandSparkles size={12} aria-hidden="true" />
                   <span className="sr-only">{t("tagPicker.autoSuggestedSr")}</span>
                 </span>
               )}
               <span>{tag.label}</span>
-              {source === "automatic" && <span className="text-[10px] font-normal opacity-80">· {t("tagPicker.automatic")}</span>}
+              {source === "automatic" && <span className="text-micro font-normal opacity-80">· {t("tagPicker.automatic")}</span>}
               {!disabled && (
                 <button
                   type="button"
@@ -99,7 +99,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                   aria-label={t("tagPicker.removeTagAriaLabel", { label: tag.label })}
                   className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full hover:bg-black/10"
                 >
-                  <X size={11} />
+                  <X size={12} />
                 </button>
               )}
             </span>
@@ -107,11 +107,11 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
         </div>
       )}
 
-      {picker.isAnalyzing && <p className="text-xs text-text-muted">{t("tagPicker.analyzing")}</p>}
+      {picker.isAnalyzing && <p className="text-caption text-text-muted">{t("tagPicker.analyzing")}</p>}
 
       {!disabled && picker.suggested.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs text-text-muted">{t("tagPicker.moreSuggestions")}</p>
+          <p className="text-caption text-text-muted">{t("tagPicker.moreSuggestions")}</p>
           <div className="flex flex-wrap gap-1.5">
             {picker.suggested.map((tag) => {
               const isAccepting = picker.acceptingSlug === tag.slug;
@@ -128,11 +128,11 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                     }}
                     disabled={isAccepting}
                     title={tag.isCandidate ? t("tagPicker.candidateHint") : undefined}
-                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-caption font-medium text-text-muted transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
                   >
-                    <Plus size={11} />
+                    <Plus size={12} />
                     {tag.label}
-                    {isAccepting && <span className="text-[10px] font-normal">{t("tagPicker.creating")}</span>}
+                    {isAccepting && <span className="text-micro font-normal">{t("tagPicker.creating")}</span>}
                   </button>
                   <button
                     type="button"
@@ -146,7 +146,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               );
             })}
           </div>
-          {picker.acceptError && <p className="text-xs text-danger">{picker.acceptError}</p>}
+          {picker.acceptError && <p className="text-caption text-danger">{picker.acceptError}</p>}
         </div>
       )}
 
@@ -160,7 +160,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               setCreateError(null);
             }}
             placeholder={t("tagPicker.searchOrCreatePlaceholder")}
-            className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-9 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
           {normalizedQuery && (
             <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-border bg-surface shadow-lg">
@@ -169,11 +169,11 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                   key={tag.slug}
                   type="button"
                   onClick={() => handleSelectExisting(tag)}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-small text-text hover:bg-accent-surface"
                 >
                   <span>{tag.label}</span>
                   {typeof tag.usageCount === "number" && (
-                    <span className="shrink-0 text-xs text-text-muted">{t("tagPicker.usageCount", { count: tag.usageCount })}</span>
+                    <span className="shrink-0 text-caption text-text-muted">{t("tagPicker.usageCount", { count: tag.usageCount })}</span>
                   )}
                 </button>
               ))}
@@ -182,22 +182,22 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                   type="button"
                   onClick={handleCreate}
                   disabled={isCreating}
-                  className="flex w-full items-center gap-1.5 border-t border-border px-3 py-2 text-left text-sm font-medium text-primary hover:bg-accent-surface disabled:opacity-60"
+                  className="flex w-full items-center gap-1.5 border-t border-border px-3 py-2 text-left text-small font-medium text-primary hover:bg-accent-surface disabled:opacity-50"
                 >
-                  <Plus size={13} />
+                  <Plus size={12} />
                   {isCreating ? t("tagPicker.creating") : t("tagPicker.createTagAction", { label: query.trim() })}
                 </button>
               )}
               {matches.length === 0 && !canCreateNew && (
-                <p className="px-3 py-2 text-sm text-text-muted">{t("tagPicker.noMatch")}</p>
+                <p className="px-3 py-2 text-small text-text-muted">{t("tagPicker.noMatch")}</p>
               )}
             </div>
           )}
-          {createError && <p className="mt-1 text-xs text-danger">{createError}</p>}
+          {createError && <p className="mt-1 text-caption text-danger">{createError}</p>}
         </div>
       )}
 
-      <p className="text-xs text-text-muted">
+      <p className="text-caption text-text-muted">
         {t("tagPicker.autoHint")}
       </p>
     </div>

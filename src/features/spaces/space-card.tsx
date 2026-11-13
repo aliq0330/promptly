@@ -103,23 +103,23 @@ export function SpaceCard({
   const counts = (
     <span className="flex items-center gap-3 text-caption text-text-muted">
       <span className="inline-flex items-center gap-1" title={t("spaces.count.images", { count: space.imageCount })}>
-        <ImageIcon size={13} aria-hidden />
+        <ImageIcon size={12} aria-hidden />
         <span className="sr-only">{t("spaces.count.images", { count: space.imageCount })}</span>
         <span aria-hidden>{formatCount(space.imageCount)}</span>
       </span>
       <span className="inline-flex items-center gap-1" title={t("spaces.count.prompts", { count: space.promptCount })}>
-        <SquareTerminal size={13} aria-hidden />
+        <SquareTerminal size={12} aria-hidden />
         <span className="sr-only">{t("spaces.count.prompts", { count: space.promptCount })}</span>
         <span aria-hidden>{formatCount(space.promptCount)}</span>
       </span>
       <span className="inline-flex items-center gap-1" title={t("spaces.count.notes", { count: space.noteCount })}>
-        <StickyNote size={13} aria-hidden />
+        <StickyNote size={12} aria-hidden />
         <span className="sr-only">{t("spaces.count.notes", { count: space.noteCount })}</span>
         <span aria-hidden>{formatCount(space.noteCount)}</span>
       </span>
       {space.memberCount !== null && space.memberCount > 1 && (
         <span className="inline-flex items-center gap-1" title={t("spaces.count.members", { count: space.memberCount })}>
-          <UsersRound size={13} aria-hidden />
+          <UsersRound size={12} aria-hidden />
           <span aria-hidden>{space.memberCount}</span>
         </span>
       )}
@@ -128,7 +128,7 @@ export function SpaceCard({
 
   const owner = space.owner && (
     <span className="flex min-w-0 items-center gap-1.5 text-caption text-text-muted">
-      <Avatar src={space.owner.avatarUrl} alt="" size={18} />
+      <Avatar src={space.owner.avatarUrl} alt="" size={20} />
       <span className="truncate">{space.ownerId === userId ? t("spaces.card.you") : space.owner.displayName}</span>
       <span aria-hidden>·</span>
       <span className="shrink-0">{t("spaces.card.edited", { time: formatRelativeTime(space.updatedAt, language) })}</span>

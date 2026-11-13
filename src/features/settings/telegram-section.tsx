@@ -125,7 +125,7 @@ export function TelegramSection() {
     return (
       <section className="space-y-2" data-telegram="">
         <h3 className="px-1 font-display text-h3 font-bold tracking-[-0.02em] text-text">{t("tg.title")}</h3>
-        <p role="alert" className="px-1 text-sm text-danger">{t("tg.loadFailed")}</p>
+        <p role="alert" className="px-1 text-small text-danger">{t("tg.loadFailed")}</p>
         <Button type="button" size="sm" variant="outline" onClick={() => setReloadKey((key) => key + 1)}>{t("common.retry")}</Button>
       </section>
     );
@@ -140,21 +140,21 @@ export function TelegramSection() {
     <section className="space-y-3" data-telegram="">
       <div className="space-y-1 px-1">
         <h3 className="font-display text-h3 font-bold tracking-[-0.02em] text-text">{t("tg.title")}</h3>
-        <p className="text-xs leading-relaxed text-text-muted">{t("tg.hint")}</p>
+        <p className="text-caption leading-relaxed text-text-muted">{t("tg.hint")}</p>
       </div>
-      {error && <p role="alert" className="px-1 text-sm text-danger">{error}</p>}
-      {justLinked && <p role="status" className="px-1 text-sm font-semibold text-success">{t("tg.justLinked")}</p>}
+      {error && <p role="alert" className="px-1 text-small text-danger">{error}</p>}
+      {justLinked && <p role="status" className="px-1 text-small font-semibold text-success">{t("tg.justLinked")}</p>}
 
       {rows.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border bg-surface px-4 py-5 text-small text-text-muted">{t("tg.empty")}</p>
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => (
-            <li key={row.id} className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card" data-telegram-link={row.id}>
+            <li key={row.id} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card" data-telegram-link={row.id}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
-                    <Send size={16} strokeWidth={2} />
+                    <Send size={16} />
                   </span>
                   <p className="break-words text-[0.9375rem] font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{telegramLinkLabel(row)}</p>
                 </div>
@@ -176,7 +176,7 @@ export function TelegramSection() {
               </div>
               {confirmId === row.id ? (
                 <div className="space-y-2.5 rounded-lg bg-danger/10 p-3">
-                  <p className="text-xs leading-relaxed text-text-secondary">{t("tg.removeConfirm")}</p>
+                  <p className="text-caption leading-relaxed text-text-secondary">{t("tg.removeConfirm")}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" size="sm" variant="danger" disabled={busyId === row.id} onClick={() => void remove(row.id)}>{t("tg.removeYes")}</Button>
                     <Button type="button" size="sm" variant="outline" disabled={busyId === row.id} onClick={() => setConfirmId(null)}>{t("apiKeys.revokeNo")}</Button>
@@ -193,7 +193,7 @@ export function TelegramSection() {
       )}
 
       {handle && (
-        <div className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card" data-telegram-connect="">
+        <div className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card" data-telegram-connect="">
           <p className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">{t("tg.connectTitle")}</p>
           {atLimit ? (
             <p className="text-small text-text-muted">{t("tg.limit")}</p>

@@ -229,13 +229,13 @@ function ProjectInfoSheet({
         <div className="flex flex-wrap gap-2">
           {detail.channelId && (
             <Link href={teamLink(team.id, "chat", { channel: detail.channelId })} className={buttonClassName({ variant: "outline", size: "sm", className: "gap-1.5" })} data-project-open-chat>
-              <MessageCircle size={15} aria-hidden />
+              <MessageCircle size={16} aria-hidden />
               {t("tp.page.openChat")}
             </Link>
           )}
           {lead && (
             <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={onSettings} data-project-settings>
-              <Settings size={15} aria-hidden />
+              <Settings size={16} aria-hidden />
               {t("tp.settings.title")}
             </Button>
           )}
@@ -245,7 +245,7 @@ function ProjectInfoSheet({
             <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.people.title")}</h3>
             {lead && (
               <button type="button" onClick={onAccess} className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary" data-project-edit-access>
-                <UsersRound size={13} aria-hidden />
+                <UsersRound size={12} aria-hidden />
                 {t("tp.people.edit")}
               </button>
             )}
@@ -325,7 +325,7 @@ function FileInfoSheet({
           {fileChannel ? (
             <div className="flex flex-wrap items-center gap-2">
               <Link href={teamLink(teamId, "chat", { channel: fileChannel.id })} className={buttonClassName({ variant: "outline", size: "sm", className: "gap-1.5" })} data-file-open-chat>
-                <MessageCircle size={15} aria-hidden />
+                <MessageCircle size={16} aria-hidden />
                 {t("th.file.chatOpen")}
               </Link>
               <MuteChip scope={fileChannel.muteScope ?? (fileChannel.muted ? "channel" : null)} />
@@ -334,7 +334,7 @@ function FileInfoSheet({
             <div className="space-y-2">
               <p className="text-caption text-text-secondary">{t("th.file.chatNoneLead")}</p>
               <Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={busy || !channelsState.loaded} onClick={() => void createChat()} data-file-create-chat>
-                <Plus size={15} aria-hidden />
+                <Plus size={16} aria-hidden />
                 {t("th.file.chatCreate")}
               </Button>
             </div>
@@ -348,11 +348,11 @@ function FileInfoSheet({
         {lead && (
           <div className="flex flex-wrap gap-2 border-t border-border-soft pt-4">
             <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={onRename} data-file-rename>
-              <Pencil size={15} aria-hidden />
+              <Pencil size={16} aria-hidden />
               {t("tp.file.rename")}
             </Button>
             <Button type="button" size="sm" variant="outline" className="gap-1.5 text-danger" onClick={onDelete} data-file-delete>
-              <Trash2 size={15} aria-hidden />
+              <Trash2 size={16} aria-hidden />
               {t("tp.file.deleteTitle")}
             </Button>
           </div>
@@ -389,8 +389,8 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
 
       <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_18.75rem] xl:items-start xl:gap-5">
         <div className="min-w-0 space-y-4">
-          <header className={cn("hidden items-center gap-4 rounded-[20px] px-[18px] py-4 md:flex", BAND_TONE[project.tone] ?? BAND_TONE.primary)} data-project-header>
-            <TeamMark name={project.title} tone={project.tone} solid size={56} className="rounded-2xl" />
+          <header className={cn("hidden items-center gap-4 rounded-xl px-[18px] py-4 md:flex", BAND_TONE[project.tone] ?? BAND_TONE.primary)} data-project-header>
+            <TeamMark name={project.title} tone={project.tone} solid size={56} className="rounded-lg" />
             <div className="min-w-0 flex-1">
               <p className="text-caption font-bold uppercase tracking-[0.08em] text-primary">
                 {t("tp.page.kicker")} · {t("tc.proj.yourRole")}: {t(projectRoleLabelKey(myRole)).toLocaleUpperCase()}
@@ -423,7 +423,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           )}
 
           {lead && (detail.pendingCount ?? 0) > 0 && (
-            <Link href={projectLink(team.id, project.id, { review: true })} className="flex min-h-12 items-center gap-3 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-small hover:shadow-card" data-project-review-link>
+            <Link href={projectLink(team.id, project.id, { review: true })} className="flex min-h-12 items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-3 text-small hover:shadow-card" data-project-review-link>
               <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart" />
               <span className="min-w-0 flex-1 font-semibold text-text">{t("tc.proj.waitingBanner", { count: detail.pendingCount ?? 0 })}</span>
               <span className="font-semibold text-primary">{t("tc.over.open")}</span>
@@ -463,7 +463,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
             ))}
             {lead && !archived && (
               <li className="max-md:hidden">
-                <button type="button" onClick={() => setDialog("file")} className="grid min-h-[11rem] w-full place-items-center rounded-2xl border border-dashed border-border text-small font-semibold text-text-muted hover:bg-surface-soft" data-project-new-file-card>
+                <button type="button" onClick={() => setDialog("file")} className="grid min-h-[11rem] w-full place-items-center rounded-lg border border-dashed border-border text-small font-semibold text-text-muted hover:bg-surface-soft" data-project-new-file-card>
                   + {t("tp.file.new")}
                 </button>
               </li>
@@ -477,7 +477,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
               <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:grid-cols-3 md:gap-3" data-testid="project-boards">
                 {sharedBoards.map((board) => (
                   <li key={board.id}>
-                    <Link href={board.href} className="block rounded-2xl border border-border-soft bg-surface px-3.5 py-3 hover:shadow-card" data-project-board={board.id}>
+                    <Link href={board.href} className="block rounded-lg border border-border-soft bg-surface px-3.5 py-3 hover:shadow-card" data-project-board={board.id}>
                       <span className="block truncate font-bold text-text">{board.title}</span>
                       <span className="block text-caption text-text-muted">{t("tp.board.items", { count: board.itemCount })}</span>
                     </Link>
@@ -489,7 +489,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
         </div>
 
         <aside className="mt-4 hidden gap-3 md:grid md:grid-cols-2 xl:mt-0 xl:block xl:space-y-4" data-testid="project-side">
-          <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="project-people">
+          <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="project-people">
             <div className="mb-1 flex items-center gap-2">
               <h3 className="min-w-0 flex-1 font-display text-body font-bold text-text">{t("tp.people.title")}</h3>
               {lead && (
@@ -551,7 +551,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
 /** Dosya kartı (mockup B2): üstte tonlu mini kolaj, altta ad · özet · durum çipi. */
 function FileCard({ href, title, meta, tone, chip, chipTone, attrs }: { href: string; title: string; meta: string; tone: string; chip?: string; chipTone: "primary" | "warning" | "neutral"; attrs?: Record<string, string> }) {
   return (
-    <Link href={href} className="flex overflow-hidden rounded-2xl border border-border-soft bg-surface transition-shadow hover:shadow-card-hover max-sm:flex-row sm:flex-col" data-project-file-card {...attrs}>
+    <Link href={href} className="flex overflow-hidden rounded-lg border border-border-soft bg-surface transition-shadow hover:shadow-card-hover max-sm:flex-row sm:flex-col" data-project-file-card {...attrs}>
       <span aria-hidden className={cn("grid shrink-0 grid-cols-2 gap-1.5 p-2.5 max-sm:w-24 sm:h-[4.5rem] sm:grid-cols-3 md:h-24", toneClass(tone))}>
         <span className="rounded-lg bg-current" />
         <span className="rounded-lg bg-surface" />
@@ -775,12 +775,12 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
           </h1>
           {!isMain && canAddToArea(myRole) && (
             <Button type="button" size="sm" variant="outline" onClick={() => setRenaming(true)} aria-label={t("tp.board.rename")}>
-              <Pencil size={15} aria-hidden />
+              <Pencil size={16} aria-hidden />
             </Button>
           )}
           {!isMain && lead && (
             <Button type="button" size="sm" variant="outline" className="text-danger" onClick={() => void remove()} aria-label={t("tp.board.delete")}>
-              <Trash2 size={15} aria-hidden />
+              <Trash2 size={16} aria-hidden />
             </Button>
           )}
           <button type="button" onClick={() => setDialog("info")} aria-label={t("tp.info.open")} data-path-info className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-text-secondary hover:bg-surface-soft">

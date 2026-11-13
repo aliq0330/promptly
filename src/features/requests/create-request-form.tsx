@@ -282,17 +282,17 @@ export function CreateRequestForm() {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("request.loginToCreateMessage")}</p>
+        <p className="mb-4 text-small text-text-muted">{t("request.loginToCreateMessage")}</p>
         <div className="flex justify-center gap-2">
           <Link
             href="/login"
-            className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
+            className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-dark"
           >
             {t("header.login")}
           </Link>
           <Link
             href="/signup"
-            className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+            className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
           >
             {t("auth.createAccount")}
           </Link>
@@ -302,17 +302,17 @@ export function CreateRequestForm() {
   }
 
   if (!editChecked) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>;
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>;
   }
 
   if (editForbidden) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.noEditPermissionTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("request.noEditPermissionBody")}</p>
+        <p className="mb-4 text-small text-text-muted">{t("request.noEditPermissionBody")}</p>
         <Link
           href="/requests"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.backToRequests")}
         </Link>
@@ -324,10 +324,10 @@ export function CreateRequestForm() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.requestNotFound")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("request.editSourceGoneBody")}</p>
+        <p className="mb-4 text-small text-text-muted">{t("request.editSourceGoneBody")}</p>
         <Link
           href="/requests"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.backToRequests")}
         </Link>
@@ -393,7 +393,7 @@ export function CreateRequestForm() {
       onSaveDraft={canSaveDraft && !communityId ? () => void handleSaveDraft() : undefined}
       aside={
         <>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
+          <p className="mb-2 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <RequestCard request={previewRequest} />
           </div>
@@ -532,9 +532,9 @@ export function CreateRequestForm() {
               />
             }
           >
-            {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
+            {draftNotice && <p className="text-small text-success">{t("draft.saved")}</p>}
             {publishError && (
-              <p role="alert" className="animate-pop-in text-sm text-danger">
+              <p role="alert" className="animate-pop-in text-small text-danger">
                 {publishError}
               </p>
             )}

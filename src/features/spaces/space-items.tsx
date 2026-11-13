@@ -216,7 +216,7 @@ function GroupPicker({ value, onChange, canManage, id }: { value: string | null;
       <FormError message={error} />
       {canManage && groups.length > 0 && (
         <button type="button" onClick={() => setManage(true)} className="inline-flex items-center gap-1 text-caption font-semibold text-primary hover:underline" data-group-manage>
-          <Layers size={13} aria-hidden />
+          <Layers size={12} aria-hidden />
           {t("spaces.groups.manage")}
         </button>
       )}
@@ -590,7 +590,7 @@ export function NoteEditorModal({
           <input type="checkbox" checked={isPrivate} onChange={(event) => setIsPrivate(event.target.checked)} className="mt-0.5 accent-primary" />
           <span>
             <span className="flex items-center gap-1 font-medium">
-              <Lock size={13} aria-hidden />
+              <Lock size={12} aria-hidden />
               {t("spaces.notes.private")}
             </span>
             <span className="block text-caption text-text-muted">{t("spaces.notes.privateHelp")}</span>
@@ -775,7 +775,7 @@ export function GroupsManagerModal({ onClose }: { onClose: () => void }) {
                         aria-label={t("spaces.groups.rename", { name: group.name })}
                         className="rounded-full p-2 text-text-muted hover:bg-surface-soft hover:text-text"
                       >
-                        <Pencil size={15} />
+                        <Pencil size={16} />
                       </button>
                       <button type="button" onClick={() => setConfirmDelete(group.id)} aria-label={t("spaces.groups.delete", { name: group.name })} className="rounded-full p-2 text-text-muted hover:bg-danger/10 hover:text-danger">
                         <TrashIcon size={15} />
@@ -837,7 +837,7 @@ export function GroupPill({ groupId }: { groupId: string | null }) {
   if (!group) return null;
   return (
     <span className={cn("inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-0.5 text-caption font-medium", SPACE_COLOR_CLASS[group.color].surface, SPACE_COLOR_CLASS[group.color].text)}>
-      <Layers size={11} aria-hidden />
+      <Layers size={12} aria-hidden />
       <span className="truncate">{group.name}</span>
     </span>
   );

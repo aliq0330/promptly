@@ -62,12 +62,12 @@ export function RealProfileView() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("profile.profileNotFoundTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">
+        <p className="mb-4 text-small text-text-muted">
           {t("profile.profileNotFoundBody")}
         </p>
         <Link
           href="/"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("common.backToHome")}
         </Link>

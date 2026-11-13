@@ -14,6 +14,7 @@ import { fetchLinkableContent, type LinkableContent } from "@/lib/supabase/stori
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { StoryLinkedType } from "@/types";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 export const LINKED_TYPE_META: Record<StoryLinkedType, { icon: typeof SquareTerminal; label: TranslationKey }> = {
   prompt: { icon: SquareTerminal, label: "communities.feed.type.prompt" },
@@ -58,7 +59,7 @@ export function StoryContentPicker({ onPick, onClose }: { onPick: (item: Linkabl
 
   return (
     <Modal onClose={onClose} labelledBy="story-content-picker-title">
-      <div className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-3">
           <h2 id="story-content-picker-title" className="text-h3 font-semibold text-text">
             {t("stories.link.pickTitle")}
@@ -70,7 +71,7 @@ export function StoryContentPicker({ onPick, onClose }: { onPick: (item: Linkabl
         <div className="px-4 pt-3">
           <label className="relative block">
             <span className="sr-only">{t("stories.link.searchLabel")}</span>
-            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
             <input
               type="search"
               value={query}
@@ -101,7 +102,7 @@ export function StoryContentPicker({ onPick, onClose }: { onPick: (item: Linkabl
                       className="flex min-h-12 w-full items-start gap-3 rounded-md px-3 py-2 text-left hover:bg-surface-soft"
                     >
                       <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
-                        <Icon size={16} strokeWidth={1.75} aria-hidden />
+                        <Icon size={16} aria-hidden />
                       </span>
                       <span className="min-w-0">
                         <span className="block truncate text-small font-semibold text-text">{item.title}</span>
@@ -117,7 +118,7 @@ export function StoryContentPicker({ onPick, onClose }: { onPick: (item: Linkabl
             </ul>
           )}
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

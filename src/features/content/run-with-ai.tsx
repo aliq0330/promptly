@@ -130,7 +130,7 @@ function RunModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
-          <h2 id="run-modal-title" className="text-base font-semibold text-text">
+          <h2 id="run-modal-title" className="text-body font-semibold text-text">
             {t("run.button")}
           </h2>
           <button
@@ -171,7 +171,7 @@ function RunModal({
                         aria-pressed={preview ? selected : undefined}
                         onClick={() => handleToolClick(tool.id)}
                         className={cn(
-                          "flex min-h-11 w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors duration-200 ease-soft disabled:opacity-60",
+                          "flex min-h-11 w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors duration-200 ease-soft disabled:opacity-50",
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                           selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:border-border hover:bg-surface-soft",
                         )}

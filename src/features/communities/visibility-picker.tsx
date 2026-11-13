@@ -91,7 +91,7 @@ export function VisibilityPicker({
             <label
               key={option}
               className={cn(
-                "flex cursor-pointer flex-col gap-2 rounded-lg border bg-background px-3.5 py-3 text-sm text-text transition-colors duration-200 ease-soft focus-within:ring-2 focus-within:ring-primary/40 hover:border-border-strong",
+                "flex cursor-pointer flex-col gap-2 rounded-lg border bg-background px-3.5 py-3 text-small text-text transition-colors duration-200 ease-soft focus-within:ring-2 focus-within:ring-primary/40 hover:border-border-strong",
                 selected ? "border-primary bg-primary-soft/50 shadow-xs" : "border-border-soft",
                 disabled && "cursor-not-allowed opacity-70",
               )}

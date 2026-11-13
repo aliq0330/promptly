@@ -47,7 +47,7 @@ export function VariableList({
 
   return (
     <div className="space-y-2 rounded-md border border-border bg-surface p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+      <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">
         {t("variable.sectionHeading", { count: variables.length })}
       </p>
       <ul className="space-y-1.5">
@@ -57,7 +57,7 @@ export function VariableList({
           return (
             <li
               key={variable.tempId}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-small"
             >
               <div className="min-w-0 flex-1 basis-40 break-words">
                 <span className="font-mono text-primary">{`{${variable.name}}`}</span>
@@ -67,17 +67,17 @@ export function VariableList({
                   </Badge>
                 )}
                 {isChoiceType(variable.type) ? (
-                  <span className="ml-2 break-words text-xs text-text-muted">→ {describeOptions(variable.options)}</span>
+                  <span className="ml-2 break-words text-caption text-text-muted">→ {describeOptions(variable.options)}</span>
                 ) : (
                   variable.defaultValue && (
-                    <span className="ml-2 break-words text-xs text-text-muted">→ {variable.defaultValue}</span>
+                    <span className="ml-2 break-words text-caption text-text-muted">→ {variable.defaultValue}</span>
                   )
                 )}
-                <span className="ml-2 text-xs text-text-muted">
+                <span className="ml-2 text-caption text-text-muted">
                   {usageCount === 0 ? t("variable.unusedInText") : t("variable.usedInCount", { count: usageCount })}
                 </span>
                 {variable.config.condition && (
-                  <p className={conditionStatus(variable, variables) === "ok" ? "mt-0.5 text-xs text-text-muted" : "mt-0.5 text-xs text-warning"}>
+                  <p className={conditionStatus(variable, variables) === "ok" ? "mt-0.5 text-caption text-text-muted" : "mt-0.5 text-caption text-warning"}>
                     {conditionStatus(variable, variables) === "ok"
                       ? t("variable.conditionBadge", { variable: variable.config.condition.variable, value: variable.config.condition.equals || "—" })
                       : t("variable.conditionIgnored")}
@@ -94,13 +94,13 @@ export function VariableList({
                   aria-label={t("variable.editAriaLabel", { name: variable.name })}
                   className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
                 >
-                  <Pencil size={13} />
+                  <Pencil size={12} />
                 </button>
                 {isConfirming ? (
                   <button
                     type="button"
                     onClick={() => onDelete(variable)}
-                    className="max-w-full whitespace-normal rounded-md bg-danger/10 px-2 py-1 text-left text-xs font-medium text-danger hover:bg-danger/20"
+                    className="max-w-full whitespace-normal rounded-md bg-danger/10 px-2 py-1 text-left text-caption font-medium text-danger hover:bg-danger/20"
                   >
                     {usageCount > 0
                       ? t("variable.deleteWithUsagesConfirm", { count: usageCount })

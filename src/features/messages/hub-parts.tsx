@@ -97,11 +97,11 @@ export function HubAddButton({ label, href, onClick, dataAttr }: { label: string
   const attr = { [dataAttr]: "" };
   return href ? (
     <Link href={href} {...attr} aria-label={label} title={label} className={className}>
-      <Plus size={22} strokeWidth={1.75} aria-hidden />
+      <Plus size={24} aria-hidden />
     </Link>
   ) : (
     <button type="button" onClick={onClick} {...attr} aria-label={label} title={label} className={className}>
-      <Plus size={22} strokeWidth={1.75} aria-hidden />
+      <Plus size={24} aria-hidden />
     </button>
   );
 }
@@ -175,7 +175,7 @@ export function HubRow({
       {/* Seçim halkası: genişlik 0 → 40 px geçişiyle satırı sağa iter (sohbet listesiyle aynı). */}
       <span aria-hidden className={cn("flex shrink-0 items-center overflow-hidden transition-[width] duration-200 ease-soft", selecting ? "w-10" : "w-0")}>
         <span className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition-colors duration-200 ease-soft", selected ? "border-primary bg-primary text-primary-foreground" : "border-border-strong bg-transparent")}>
-          {selected && <Check size={15} strokeWidth={3} />}
+          {selected && <Check size={16} />}
         </span>
       </span>
       <span className="py-2 pr-3">{tile}</span>
@@ -194,7 +194,7 @@ export function HubRow({
         <span className="flex items-center justify-between gap-2">
           <span className={cn("min-w-0 flex-1 truncate text-small", shownUnread > 0 ? "font-medium text-text" : "text-text-muted")}>{subtitle}</span>
           {shownUnread > 0 && (
-            <span data-hub-unread className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+            <span data-hub-unread className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-micro font-semibold text-primary-foreground">
               {formatUnread(shownUnread)}
             </span>
           )}

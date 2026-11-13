@@ -17,6 +17,7 @@ import type { CommunityRoom } from "@/types";
 import { RoomFormModal } from "./room-form-modal";
 import { RoomIconTile } from "./room-icon";
 import { patchCachedRoom, refreshCommunityRooms } from "./use-community-rooms";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 type RoomNotify = "all" | "none";
 
@@ -95,7 +96,7 @@ export function RoomInfoSheet({
   return (
     <>
       <Modal onClose={busy ? () => undefined : onClose} labelledBy="room-info-title">
-        <div data-room-info className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-3xl border border-border-soft bg-surface shadow-lg sm:rounded-3xl" onClick={(event) => event.stopPropagation()}>
+        <div data-room-info className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-xl border border-border-soft bg-surface shadow-pop sm:rounded-xl" onClick={(event) => event.stopPropagation()}>
           <div className="flex shrink-0 items-center gap-3 px-5 pb-2 pt-5">
             <RoomIconTile icon={room.icon} size={44} />
             <div className="min-w-0 flex-1 leading-tight">
@@ -112,7 +113,7 @@ export function RoomInfoSheet({
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
             <p className="text-small leading-relaxed text-text-secondary">{room.description || t("rooms.info.noDescription")}</p>
 
-            <dl className="overflow-hidden rounded-2xl border border-border-soft">
+            <dl className="overflow-hidden rounded-lg border border-border-soft">
               {facts.map(([label, value]) => (
                 <div key={label} className="flex items-baseline justify-between gap-3 border-b border-border-soft px-3.5 py-2.5 text-small last:border-b-0">
                   <dt className="text-text-muted">{label}</dt>
@@ -136,18 +137,18 @@ export function RoomInfoSheet({
               />
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-border-soft">
+            <div className="overflow-hidden rounded-lg border border-border-soft">
               <button type="button" data-room-info-row="pinned" disabled={pinnedCount === 0} onClick={onShowPinned} className={rowClass}>
-                <Pin size={19} strokeWidth={1.75} className="shrink-0 text-text" aria-hidden />
+                <Pin size={20} className="shrink-0 text-text" aria-hidden />
                 <span className="min-w-0 flex-1 text-small font-semibold text-text">{t("rooms.info.pinned")}</span>
                 <span className="text-small text-text-muted">{pinnedCount}</span>
               </button>
               <button type="button" data-room-info-row="search" onClick={onSearch} className={rowClass}>
-                <Search size={19} strokeWidth={1.75} className="shrink-0 text-text" aria-hidden />
+                <Search size={20} className="shrink-0 text-text" aria-hidden />
                 <span className="min-w-0 flex-1 text-small font-semibold text-text">{t("rooms.info.search")}</span>
               </button>
               <Link href={communityHref(community.id)} data-room-info-row="community" className={rowClass}>
-                <ArrowUpRight size={19} strokeWidth={1.75} className="shrink-0 text-primary" aria-hidden />
+                <ArrowUpRight size={20} className="shrink-0 text-primary" aria-hidden />
                 <span className="min-w-0 flex-1 text-small font-semibold text-primary">{t("rooms.info.communityPage")}</span>
               </Link>
             </div>
@@ -170,9 +171,9 @@ export function RoomInfoSheet({
               </div>
             )}
             {error && !confirmArchive && (
-              <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+              <InlineAlert>
                 {error}
-              </p>
+              </InlineAlert>
             )}
           </div>
         </div>

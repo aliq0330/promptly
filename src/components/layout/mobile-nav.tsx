@@ -64,7 +64,7 @@ export function MobileNav() {
       aria-label={t("nav.primaryLabel")}
       // Opaque, and its colour continues below the screen edge (`after:`): the strip the browser's own toolbar floats over
       // (iOS Safari) shows this colour instead of the page background, like Instagram's — docs/history/193-*.
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-soft bg-surface pb-[env(safe-area-inset-bottom)] after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-[50vh] after:bg-surface md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-soft bg-surface pb-[env(safe-area-inset-bottom)] after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-[50dvh] after:bg-surface md:hidden"
     >
       <span
         aria-hidden
@@ -84,7 +84,7 @@ export function MobileNav() {
           const label = t(item.labelKey);
           const isCreate = item.href === CREATE_HREF;
           const itemClassName = cn(
-            "relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
+            "relative flex flex-1 flex-col items-center justify-center gap-1 text-micro font-medium transition-colors",
             active ? "text-text" : "text-text-muted",
           );
           const inner = (
@@ -103,7 +103,7 @@ export function MobileNav() {
                 {MotionIcon ? (
                   <MotionIcon size={22} strokeWidth={active ? 2.2 : 1.8} seq={iconSeq[item.href]} className={active ? "text-primary" : undefined} />
                 ) : (
-                  <Icon size={22} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-primary" : undefined} />
+                  <Icon size={24} className={active ? "text-primary" : undefined} />
                 )}
               </>
             )}

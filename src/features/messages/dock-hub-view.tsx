@@ -29,7 +29,7 @@ import { RoomFormModal } from "./rooms/room-form-modal";
 import { RoomIconTile } from "./rooms/room-icon";
 import { useCommunityRooms } from "./rooms/use-community-rooms";
 
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-micro font-bold uppercase tracking-[0.04em] text-text-muted";
 const mutedScopeOf = (channel: TeamChannel) => channel.muteScope ?? (channel.muted ? "channel" : null);
 
 /** Dock'taki kanal/oda listesinin satırı (arama bunun adına ve önizlemesine bakar). */
@@ -87,7 +87,7 @@ function DockChannelList({
         actions={
           add && (
             <button type="button" onClick={add.onClick} aria-label={add.label} title={add.label} {...{ [add.dataAttr]: "" }} className={DOCK_ICON_BUTTON}>
-              <Plus size={19} aria-hidden />
+              <Plus size={20} aria-hidden />
             </button>
           )
         }
@@ -202,7 +202,7 @@ function DockTeamList({ teamId }: { teamId: string }) {
         <HubRow
           testKey={project.title}
           onOpen={() => dock.openTeam(teamId, project.projectId)}
-          tile={<HubTile tone="primary" square><Folder size={21} /></HubTile>}
+          tile={<HubTile tone="primary" square><Folder size={20} /></HubTile>}
           title={project.title}
           muteScope={project.muteScope}
           at={project.lastMessageAt}

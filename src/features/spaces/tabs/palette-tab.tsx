@@ -82,7 +82,7 @@ export function PaletteCard({ palette }: { palette: SpacePalette }) {
   const { space, setPalettes, setItems, caps, items, addItems } = useSpaceContext();
   const place = usePlaceNewItems();
   const [hex, setHex] = useState("");
-  const [picker, setPicker] = useState("#7c5cff");
+  const [picker, setPicker] = useState("#3b5be2");
   const [selected, setSelected] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -241,7 +241,7 @@ export function PaletteCard({ palette }: { palette: SpacePalette }) {
                   const normalized = normalizeHex(event.target.value);
                   if (normalized) setPicker(normalized);
                 }}
-                placeholder="#7c5cff"
+                placeholder="#3b5be2"
                 maxLength={7}
                 spellCheck={false}
                 className={cn(fieldInputClassName, "h-10 w-32 font-mono")}

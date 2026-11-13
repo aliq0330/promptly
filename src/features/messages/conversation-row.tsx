@@ -73,21 +73,21 @@ export function ConversationRow({
             selected ? "border-primary bg-primary text-primary-foreground" : "border-border-strong bg-transparent",
           )}
         >
-          {selected && <Check size={15} strokeWidth={3} />}
+          {selected && <Check size={16} />}
         </span>
       </span>
       <span className="py-2.5 pr-3">
         {opensHub ? (
           // Üst üste binen iki soluk katman: "birden çok sohbet tek satırda" (WhatsApp Toplulukları).
           <span data-stacked-mark className="relative ml-2 inline-block" style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}>
-            <span aria-hidden className="absolute inset-y-1 -left-2 w-full rounded-[18px] bg-border-strong/40" />
-            <span aria-hidden className="absolute inset-y-0.5 -left-1 w-full rounded-[18px] bg-border-strong/70" />
+            <span aria-hidden className="absolute inset-y-1 -left-2 w-full rounded-lg bg-border-strong/40" />
+            <span aria-hidden className="absolute inset-y-0.5 -left-1 w-full rounded-lg bg-border-strong/70" />
             <span className="relative block">
-              {team ? <TeamMark name={team.name} tone={team.tone} size={AVATAR_SIZE} className="rounded-[18px]" /> : <GroupAvatar name={group!.name} avatarUrl={group!.avatarUrl} size={AVATAR_SIZE} badge />}
+              {team ? <TeamMark name={team.name} tone={team.tone} size={AVATAR_SIZE} className="rounded-lg" /> : <GroupAvatar name={group!.name} avatarUrl={group!.avatarUrl} size={AVATAR_SIZE} badge />}
             </span>
           </span>
         ) : team ? (
-          <TeamMark name={team.name} tone={team.tone} size={AVATAR_SIZE} className="rounded-[18px]" />
+          <TeamMark name={team.name} tone={team.tone} size={AVATAR_SIZE} className="rounded-lg" />
         ) : group ? (
           <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={AVATAR_SIZE} badge />
         ) : (
@@ -103,7 +103,7 @@ export function ConversationRow({
             {showKindTag && group && (
               <span
                 data-kind-tag={team ? "team" : "community"}
-                className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em]", team ? "bg-primary-soft text-primary" : "bg-success/10 text-success")}
+                className={cn("shrink-0 rounded-full px-2 py-0.5 text-micro font-bold uppercase tracking-[0.04em]", team ? "bg-primary-soft text-primary" : "bg-success/10 text-success")}
               >
                 {t(team ? "rooms.filter.team" : "rooms.filter.community")}
               </span>
@@ -135,7 +135,7 @@ export function ConversationRow({
           {unread && (
             <span
               className={cn(
-                "mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold",
+                "mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-micro font-semibold",
                 muted ? "bg-border-strong text-text" : "bg-primary text-primary-foreground",
               )}
             >

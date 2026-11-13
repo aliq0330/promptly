@@ -27,7 +27,7 @@ export function ProfileAvatar({
           title={t("profile.changeProfilePhoto")}
           className="absolute bottom-1 right-1 z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-primary text-primary-foreground transition-colors hover:bg-primary-dark"
         >
-          <Pencil size={13} />
+          <Pencil size={12} />
         </Link>
       )}
     </div>

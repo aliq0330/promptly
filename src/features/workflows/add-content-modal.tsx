@@ -20,8 +20,9 @@ import { cn } from "@/lib/utils";
 import type { WorkflowContentRef } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META } from "./step-meta";
 import { StorageImg } from "@/components/ui/storage-media";
+import { fieldDenseInputClassName } from "@/components/ui/field";
 
-const inputClass = "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60";
+const inputClass = fieldDenseInputClassName;
 
 /**
  * Add / replace a step's content: pick an existing prompt,
@@ -44,11 +45,11 @@ export function AddContentModal({
   return (
     <Modal onClose={onClose} labelledBy="workflow-add-content-title">
       <div
-        className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-lg border border-border bg-surface p-4 shadow-lg sm:p-5"
+        className="flex max-h-[90dvh] w-full max-w-xl flex-col rounded-lg border border-border bg-surface p-4 shadow-lg sm:p-5"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 id="workflow-add-content-title" className="text-base font-semibold text-text">
+          <h2 id="workflow-add-content-title" className="text-body font-semibold text-text">
             {t("workflow.pickerTitle")}
           </h2>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
@@ -121,13 +122,13 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("workflow.pickerSearch")}
           aria-label={t("workflow.pickerSearch")}
-          className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
       {list === null ? (
-        <p className="py-6 text-center text-sm text-text-muted">{t("workflow.pickerSearching")}</p>
+        <p className="py-6 text-center text-small text-text-muted">{t("workflow.pickerSearching")}</p>
       ) : list.length === 0 ? (
-        <p className="py-6 text-center text-sm text-text-muted">{t("workflow.pickerEmpty")}</p>
+        <p className="py-6 text-center text-small text-text-muted">{t("workflow.pickerEmpty")}</p>
       ) : (
         <ul className="space-y-1.5">
           {list.map((ref) => {
@@ -152,7 +153,7 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
                     </span>
                   )}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-text">{ref.title}</span>
+                    <span className="block truncate text-small font-medium text-text">{ref.title}</span>
                     <span className="flex items-center gap-1 truncate text-caption text-text-muted">
                       {MediaIcon && <MediaIcon size={12} className="shrink-0" />}
                       <span className="truncate">
@@ -162,7 +163,7 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
                       </span>
                     </span>
                   </span>
-                  <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full", isAdded ? "bg-success text-white" : "bg-primary-soft text-primary")}>
+                  <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full", isAdded ? "bg-success text-success-foreground" : "bg-primary-soft text-primary")}>
                     {isAdded ? <Check size={14} aria-label={t("workflow.pickerAdded")} /> : <Plus size={14} />}
                   </span>
                 </button>
@@ -222,14 +223,14 @@ function ScratchForm({ onSelect }: { onSelect: (ref: WorkflowContentRef) => void
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="wf-new-name" className="mb-1.5 block text-sm font-medium text-text">
+        <label htmlFor="wf-new-name" className="mb-1.5 block text-small font-medium text-text">
           {nameLabel} <span className="text-danger">*</span>
         </label>
         <input id="wf-new-name" value={name} maxLength={120} onChange={(event) => setName(event.target.value)} className={inputClass} aria-invalid={errors.name} />
         {errors.name && <p className="mt-1 text-caption text-danger">{t("workflow.fieldRequired")}</p>}
       </div>
       <div>
-        <label htmlFor="wf-new-body" className="mb-1.5 block text-sm font-medium text-text">
+        <label htmlFor="wf-new-body" className="mb-1.5 block text-small font-medium text-text">
           {bodyLabel} <span className="text-danger">*</span>
         </label>
         <textarea
@@ -238,7 +239,7 @@ function ScratchForm({ onSelect }: { onSelect: (ref: WorkflowContentRef) => void
           value={body}
           onChange={(event) => setBody(event.target.value)}
           aria-invalid={errors.body}
-          className={cn("w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-text prompt-text")}
+          className={cn("w-full rounded-md border border-border bg-background px-3 py-2 text-small text-text prompt-text")}
         />
         {errors.body && <p className="mt-1 text-caption text-danger">{t("workflow.fieldRequired")}</p>}
       </div>
@@ -250,7 +251,7 @@ function ScratchForm({ onSelect }: { onSelect: (ref: WorkflowContentRef) => void
         contentType={taxonomy.contentType}
         category={taxonomy.category}
       />
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-small text-danger">{error}</p>}
       <Button type="submit" size="lg" className="w-full" disabled={busy}>
         {busy ? t("workflow.creating") : t("workflow.createAndAdd")}
       </Button>

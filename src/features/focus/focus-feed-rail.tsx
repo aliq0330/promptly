@@ -74,7 +74,7 @@ export function FocusFeedRail({ item, author, layout = "column" }: { item: PostF
         title={author.displayName}
         className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background transition-transform duration-200 ease-soft hover:scale-105"
       >
-        <Avatar src={author.avatarUrl} alt={author.displayName} size={44} />
+        <Avatar src={author.avatarUrl} alt={author.displayName} size={40} />
       </Link>}
 
       {item.kind === "prompt" ? (
@@ -105,7 +105,7 @@ export function FocusFeedRail({ item, author, layout = "column" }: { item: PostF
             title={t("request.replies")}
             aria-label={`${t("request.replies")} (${formatCount(item.data.responseCount)})`}
           >
-            <Reply size={iconSize} strokeWidth={1.75} />
+            <Reply size={iconSize} />
             <span aria-hidden>{formatCount(item.data.responseCount)}</span>
           </Link>
         </>

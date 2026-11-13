@@ -1,5 +1,6 @@
 "use client";
 
+import { PageContainer } from "@/components/ui/page-header";
 import { CreatorList } from "@/features/profile/creator-list";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { FeedGrid } from "@/features/feed/feed-grid";
@@ -20,10 +21,10 @@ export default function FollowingPage() {
   const feed = useFeedPages({ scope: "following", order: "newest", kind: "prompt", taxonomy: EMPTY_TAXONOMY_FILTER }, Boolean(user));
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+    <PageContainer className="space-y-6">
       <section className="space-y-3">
         <h1 className="text-h1 font-semibold text-text">{t("nav.followingPeople")}</h1>
-        <PagedListState list={followed} skeleton={<p className="py-10 text-center text-sm text-text-muted">{t("common.loading")}</p>}>
+        <PagedListState list={followed} skeleton={<p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>}>
           <CreatorList users={followed.items} />
         </PagedListState>
       </section>
@@ -38,6 +39,6 @@ export default function FollowingPage() {
           </>
         )}
       </section>
-    </div>
+    </PageContainer>
   );
 }

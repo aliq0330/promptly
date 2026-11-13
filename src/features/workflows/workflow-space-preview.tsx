@@ -215,7 +215,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
                     link.spaceId === current.spaceId ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:bg-surface-soft",
                   )}
                 >
-                  {link.visibility === "public" && !link.archived ? <Globe size={13} aria-hidden /> : <Lock size={13} aria-hidden />}
+                  {link.visibility === "public" && !link.archived ? <Globe size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
                   <span className="truncate">{link.spaceTitle}</span>
                 </button>
               ))}
@@ -223,7 +223,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <p className="flex min-w-0 items-center gap-1.5 text-small font-semibold text-text">
-              <Shapes size={15} className="shrink-0 text-primary" aria-hidden />
+              <Shapes size={16} className="shrink-0 text-primary" aria-hidden />
               <span className="truncate">{current.spaceTitle}</span>
             </p>
             <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold", isPublic ? "bg-primary-soft text-primary" : "bg-surface text-text-secondary")}>
@@ -236,7 +236,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
               className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-small font-semibold text-text hover:bg-surface-soft"
             >
               {t("wfSpace.preview.open")}
-              <ArrowUpRight size={13} aria-hidden />
+              <ArrowUpRight size={12} aria-hidden />
             </Link>
           </div>
         </div>

@@ -85,7 +85,7 @@ export function StepPreviewBody({ step }: { step: WorkflowStep }) {
             {MediaIcon && <MediaIcon size={12} className="shrink-0" />}
             <span className="truncate">{stepSubtitle(step, language)}</span>
           </p>
-          <p className="break-words text-sm font-semibold text-text">{ref.title}</p>
+          <p className="break-words text-small font-semibold text-text">{ref.title}</p>
           <p className="truncate text-caption text-text-muted">@{ref.authorUsername}</p>
         </div>
       </div>

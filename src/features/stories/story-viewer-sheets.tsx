@@ -70,7 +70,7 @@ function PersonRow({ user, trailing, onOpen }: { user: StoryAuthor; trailing?: R
   return (
     <li className="flex min-h-12 items-center gap-3 py-1.5">
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-        <Avatar src={user.avatarUrl} alt={user.displayName} size={36} />
+        <Avatar src={user.avatarUrl} alt={user.displayName} size={40} />
         <span className="min-w-0">
           <span className="block truncate text-small font-semibold text-text">{user.displayName}</span>
           <span className="block truncate text-caption text-text-muted">@{user.username}</span>
@@ -172,7 +172,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
         ) : (
           <>
             <p className="mb-1 flex items-center gap-1.5 text-caption text-text-muted">
-              <Eye size={13} aria-hidden /> {t("stories.viewers.summary", { viewers: story.viewerCount, views: story.viewCount })}
+              <Eye size={12} aria-hidden /> {t("stories.viewers.summary", { viewers: story.viewerCount, views: story.viewCount })}
             </p>
             <ul className="divide-y divide-border-soft">
               {viewers.map((row) => (
@@ -194,7 +194,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                           title={t("stories.viewers.block", { name: row.user.displayName })}
                           className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-danger"
                         >
-                          <Ban size={15} aria-hidden />
+                          <Ban size={16} aria-hidden />
                         </button>
                       )}
                     </span>
@@ -274,7 +274,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                       }}
                       className="inline-flex min-h-9 items-center gap-1 rounded-full px-2 font-semibold text-primary hover:bg-primary-soft"
                     >
-                      <Share2 size={13} aria-hidden /> {t("stories.question.shareAnswer")}
+                      <Share2 size={12} aria-hidden /> {t("stories.question.shareAnswer")}
                     </button>
                   </div>
                 </li>
@@ -442,7 +442,7 @@ export function AddToHighlightSheet({ storyId, onClose, onDone }: { storyId: str
                     type="button"
                     disabled={busy || already}
                     onClick={() => void run(() => addStoryToHighlight(highlight.id, storyId), t("stories.highlight.added", { title: highlight.title }))}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-small hover:bg-surface-soft disabled:opacity-60"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-small hover:bg-surface-soft disabled:opacity-50"
                   >
                     <span className="truncate font-medium">{highlight.title}</span>
                     <span className="text-caption text-text-muted">{already ? t("stories.highlight.alreadyIn") : t("stories.highlight.count", { count: highlight.storyIds.length })}</span>
@@ -469,7 +469,7 @@ export function AddToHighlightSheet({ storyId, onClose, onDone }: { storyId: str
           className="min-h-11 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
         <Button type="submit" disabled={busy || !title.trim()}>
-          <Plus size={15} aria-hidden /> {t("stories.highlight.create")}
+          <Plus size={16} aria-hidden /> {t("stories.highlight.create")}
         </Button>
       </form>
       {error && (

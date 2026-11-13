@@ -28,6 +28,8 @@ import {
 } from "@/lib/chat-groups";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityCategory, CommunityFeedPolicy, GroupPostingPolicy, GroupVisibility, UserProfile } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 const ACCEPTED_AVATAR_TYPES = "image/jpeg,image/png,image/webp";
 
@@ -121,8 +123,8 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
   if (created) {
     return (
       <Modal onClose={() => onCreated(created.groupId)} labelledBy="create-community-title">
-        <div className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
-          <h2 id="create-community-title" className="text-base font-semibold text-text">
+        <DialogShell className="w-full max-w-md space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+          <h2 id="create-community-title" className="text-body font-semibold text-text">
             {t("communities.create.doneTitle")}
           </h2>
           <p className="text-small text-text-secondary">{t("communities.create.doneBody", { invited: created.invite.invitedCount, skipped: created.invite.skipped.length })}</p>
@@ -138,7 +140,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
               {t("communities.create.goToCommunity")}
             </Button>
           </div>
-        </div>
+        </DialogShell>
       </Modal>
     );
   }
@@ -148,11 +150,11 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2 px-5 pb-3 pt-5">
-          <h2 id="create-community-title" className="text-base font-semibold text-text">
+          <h2 id="create-community-title" className="text-body font-semibold text-text">
             {t("communities.create.title")}
           </h2>
           <button
@@ -175,7 +177,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
               aria-label={t("communities.create.avatarPick")}
               className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <GroupAvatar name={name || t("communities.create.title")} avatarUrl={avatarPreview} size={64} />
+              <GroupAvatar name={name || t("communities.create.title")} avatarUrl={avatarPreview} size={56} />
               <span className="absolute inset-0 flex items-center justify-center rounded-full bg-text/40 text-background opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                 <Camera size={20} />
               </span>
@@ -338,14 +340,14 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
           </div>
 
           {error && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert>
               {error}
-            </p>
+            </InlineAlert>
           )}
           {!error && touched && !canSubmit && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert>
               {t("communities.create.fixErrors")}
-            </p>
+            </InlineAlert>
           )}
         </div>
 

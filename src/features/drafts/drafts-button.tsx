@@ -100,7 +100,7 @@ export function DraftsButton({
           className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
         >
           <FileText size={18} aria-hidden />
-          {count > 0 && <span className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-[0.625rem] font-bold leading-4 text-primary-foreground">{count}</span>}
+          {count > 0 && <span className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-micro font-bold leading-4 text-primary-foreground">{count}</span>}
         </button>
       ) : (
         <Button
@@ -113,7 +113,7 @@ export function DraftsButton({
             void refresh();
           }}
         >
-          <FileText size={15} aria-hidden />
+          <FileText size={16} aria-hidden />
           {count > 0 ? t("draft.buttonLabel", { count }) : t("draft.buttonLabelEmpty")}
         </Button>
       )}
@@ -121,11 +121,11 @@ export function DraftsButton({
       {open && (
         <Modal onClose={() => setOpen(false)} labelledBy="drafts-modal-title">
           <div
-            className="max-h-[80vh] w-full max-w-md space-y-3 overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
+            className="max-h-[80dvh] w-full max-w-md space-y-3 overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-2">
-              <h2 id="drafts-modal-title" className="text-base font-semibold text-text">
+              <h2 id="drafts-modal-title" className="text-body font-semibold text-text">
                 {t("draft.drawerTitle")}
               </h2>
               <button type="button" onClick={() => setOpen(false)} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
@@ -134,9 +134,9 @@ export function DraftsButton({
             </div>
 
             {items === null ? (
-              <p className="text-sm text-text-muted">{t("draft.loading")}</p>
+              <p className="text-small text-text-muted">{t("draft.loading")}</p>
             ) : items.length === 0 ? (
-              <p className="rounded-md border border-dashed border-border p-4 text-center text-sm text-text-muted">{t("draft.empty")}</p>
+              <p className="rounded-md border border-dashed border-border p-4 text-center text-small text-text-muted">{t("draft.empty")}</p>
             ) : (
               <ul>
                 {items.slice(0, shown).map((item) => (
@@ -144,11 +144,11 @@ export function DraftsButton({
                   <ExitMotion leaving={isLeaving(item.id)}>
                   <div className="pb-2">
                   <div className="rounded-md border border-border-soft bg-surface-soft p-3">
-                    <p className="truncate text-sm font-medium text-text">{item.title.trim() || t("draft.untitled")}</p>
-                    <p className="mb-2 text-xs text-text-muted">{t("draft.lastEdited", { time: formatRelativeTime(item.updatedAt, language) })}</p>
-                    {confirmId === item.id && <p className="mb-2 text-xs text-danger">{t("draft.deleteConfirm")}</p>}
+                    <p className="truncate text-small font-medium text-text">{item.title.trim() || t("draft.untitled")}</p>
+                    <p className="mb-2 text-caption text-text-muted">{t("draft.lastEdited", { time: formatRelativeTime(item.updatedAt, language) })}</p>
+                    {confirmId === item.id && <p className="mb-2 text-caption text-danger">{t("draft.deleteConfirm")}</p>}
                     <div className="flex flex-wrap items-center gap-2">
-                      <Link href={item.href} onClick={() => setOpen(false)} className="inline-flex min-h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
+                      <Link href={item.href} onClick={() => setOpen(false)} className="inline-flex min-h-9 items-center rounded-md bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover">
                         {t("draft.continue")}
                       </Link>
                       <Button type="button" variant="ghost" size="sm" disabled={busyId === item.id} onClick={() => void handleDelete(item.id)}>
@@ -171,7 +171,7 @@ export function DraftsButton({
             {items !== null && items.length > shown && (
               <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => setShown((count) => count + DRAFTS_SHOWN_STEP)} />
             )}
-            {error && <p className="text-sm text-danger">{error}</p>}
+            {error && <p className="text-small text-danger">{error}</p>}
           </div>
         </Modal>
       )}

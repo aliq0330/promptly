@@ -483,7 +483,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
   return (
     <div className="space-y-3.5" data-testid="area-folder-list">
       {(reviewOn || pendingN > 0 || changesN > 0) && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-border-soft bg-surface px-4 py-3" data-testid="area-review-summary">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border-soft bg-surface px-4 py-3" data-testid="area-review-summary">
           {add?.reviewSwitch ? (
             <label className="flex min-h-9 items-center gap-2 text-small font-semibold text-text" data-area-review-switch>
               <input type="checkbox" checked={reviewOn} disabled={add.reviewSwitch.busy} onChange={(event) => add.reviewSwitch?.onChange(event.target.checked)} aria-label={t("tp.review.switchLabel")} className="h-5 w-5 accent-[var(--color-primary)]" />
@@ -643,7 +643,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
       )}
       {deleting && <BulkDeleteDialog count={selected.length} busy={deleteBusy} error={deleteError} onConfirm={() => void deleteSelected()} onCancel={() => setDeleting(false)} />}
       {nothingYet && effectiveFilter === "all" && nav.view === "items" && (
-        <div className="rounded-2xl border border-dashed border-border bg-surface-soft/40 px-5 py-7 text-center" data-testid="area-empty">
+        <div className="rounded-lg border border-dashed border-border bg-surface-soft/40 px-5 py-7 text-center" data-testid="area-empty">
           <p className="text-body font-bold text-text">{t("tp.area.list.emptyTitle")}</p>
           <p className="mx-auto mt-1 max-w-xs text-small text-text-secondary">{t(canAdd ? "tp.area.list.emptyBody" : "tp.area.list.emptyViewer")}</p>
         </div>
@@ -656,11 +656,11 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
           onClose={exitSelecting}
           actions={[
             folderGroup
-              ? { key: "move", label: t("tf.bulk.move"), icon: <FolderPlus size={22} />, tone: "primary", disabled: selected.length === 0, onClick: () => setAssigning(true) }
-              : { key: "group", label: t("tf.group.add"), icon: <FolderPlus size={22} />, tone: "primary", disabled: selected.length === 0, onClick: () => setAssigning(true) },
-            ...(folderGroup ? [{ key: "ungroup", label: t("tf.group.removeFrom"), icon: <FolderMinus size={22} />, disabled: selected.length === 0, onClick: () => void removeFromGroup() }] : []),
-            ...(mayBoard ? [{ key: "board", label: t("tf.bulk.toBoard"), icon: <Presentation size={22} />, disabled: selected.length === 0, onClick: () => setBoardFor(selected.map(canonicalOf)) }] : []),
-            ...(canAdd ? [{ key: "delete", label: t("tf.bulk.delete"), icon: <Trash2 size={22} />, tone: "danger" as const, disabled: !mayDeleteAll, onClick: () => { setDeleteError(null); setDeleting(true); } }] : []),
+              ? { key: "move", label: t("tf.bulk.move"), icon: <FolderPlus size={24} />, tone: "primary", disabled: selected.length === 0, onClick: () => setAssigning(true) }
+              : { key: "group", label: t("tf.group.add"), icon: <FolderPlus size={24} />, tone: "primary", disabled: selected.length === 0, onClick: () => setAssigning(true) },
+            ...(folderGroup ? [{ key: "ungroup", label: t("tf.group.removeFrom"), icon: <FolderMinus size={24} />, disabled: selected.length === 0, onClick: () => void removeFromGroup() }] : []),
+            ...(mayBoard ? [{ key: "board", label: t("tf.bulk.toBoard"), icon: <Presentation size={24} />, disabled: selected.length === 0, onClick: () => setBoardFor(selected.map(canonicalOf)) }] : []),
+            ...(canAdd ? [{ key: "delete", label: t("tf.bulk.delete"), icon: <Trash2 size={24} />, tone: "danger" as const, disabled: !mayDeleteAll, onClick: () => { setDeleteError(null); setDeleting(true); } }] : []),
           ]}
         />
       )}
@@ -703,7 +703,7 @@ function AreaCard({ row, reviewOn, groupName, select }: { row: AreaRow; reviewOn
           <Check size={14} />
         </span>
       )}
-      <span className={cn("relative block overflow-hidden rounded-[18px] md:rounded-[20px]", select?.checked && "ring-[3px] ring-primary ring-offset-2 ring-offset-background", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning/10 text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" || row.kind === "group" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
+      <span className={cn("relative block overflow-hidden rounded-lg md:rounded-xl", select?.checked && "ring-[3px] ring-primary ring-offset-2 ring-offset-background", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning/10 text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" || row.kind === "group" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
         {row.kind === "image" && row.mediaUrl && <StorageImg src={row.mediaUrl} alt={row.title} className="absolute inset-0 h-full w-full object-cover" />}
         {(row.kind === "prompt" || row.kind === "note") && <span className={cn("block p-3.5 pb-14 text-caption leading-relaxed", row.kind === "prompt" && "font-mono")}>{(row.body || "").slice(0, 260)}</span>}
         {row.kind === "palette" && (
@@ -719,7 +719,7 @@ function AreaCard({ row, reviewOn, groupName, select }: { row: AreaRow; reviewOn
           </span>
         )}
         <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-3 pb-2.5 pt-7 text-white">
-          <span className="block text-[0.625rem] font-bold uppercase tracking-[0.06em] opacity-90">{t(ROW_KIND_KEY[row.kind])}{row.sub ? ` · ${row.sub}` : ""}{groupName ? ` · ${groupName}` : ""}</span>
+          <span className="block text-micro font-bold uppercase tracking-[0.06em] opacity-90">{t(ROW_KIND_KEY[row.kind])}{row.sub ? ` · ${row.sub}` : ""}{groupName ? ` · ${groupName}` : ""}</span>
           <span className="block truncate text-small font-bold leading-snug">{row.title}</span>
         </span>
         {showState && row.state && (
@@ -753,7 +753,7 @@ function AddMenuDialog({ reviewOn, onClose, onPick, onNewBoard, onNewVariable, o
           const Icon = option.icon;
           return (
             <li key={option.key}>
-              <button type="button" onClick={option.run} data-area-add-option={option.key} className="flex h-full w-full flex-col gap-2 rounded-2xl border border-border-soft bg-surface p-3.5 text-left transition-colors hover:bg-surface-soft">
+              <button type="button" onClick={option.run} data-area-add-option={option.key} className="flex h-full w-full flex-col gap-2 rounded-lg border border-border-soft bg-surface p-3.5 text-left transition-colors hover:bg-surface-soft">
                 <span aria-hidden className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
                   <Icon size={20} />
                 </span>

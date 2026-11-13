@@ -219,7 +219,7 @@ export function InviteCard({ ctx, onDone }: { ctx: TeamCtx; onDone: () => void }
     }
   };
   return (
-    <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-invite-card">
+    <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-invite-card">
       <h3 className="font-display text-body font-bold text-text">{t("tm.invite.title")}</h3>
       <p className="mb-3 text-small text-text-secondary">{t("tc.members.inviteHint")}</p>
       <form onSubmit={(event) => void submit(event)} className="space-y-3">

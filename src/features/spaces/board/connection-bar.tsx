@@ -78,19 +78,19 @@ export function ConnectionBar({
             <SpaceMenu
               label={t("spaces.connect.style")}
               align="left"
-              trigger={<Minus size={17} aria-hidden />}
+              trigger={<Minus size={16} aria-hidden />}
               items={CONNECTOR_STYLES.map((style) => ({ key: style, label: `${connection.lineStyle === style ? "✓ " : ""}${t(`spaces.connect.style.${style}`)}`, icon: STYLE_ICON[style], onSelect: () => onPatch({ lineStyle: style }) }))}
             />
             <SpaceMenu
               label={t("spaces.connect.arrow")}
               align="left"
-              trigger={<ArrowRight size={17} aria-hidden />}
+              trigger={<ArrowRight size={16} aria-hidden />}
               items={CONNECTOR_ARROWS.map((arrow) => ({ key: arrow, label: `${connection.arrow === arrow ? "✓ " : ""}${t(`spaces.connect.arrow.${arrow}`)}`, icon: ARROW_ICON[arrow], onSelect: () => onPatch({ arrow }) }))}
             />
             <SpaceMenu
               label={t("spaces.connect.route")}
               align="left"
-              trigger={<Spline size={17} aria-hidden />}
+              trigger={<Spline size={16} aria-hidden />}
               items={CONNECTOR_ROUTES.map((route) => ({ key: route, label: `${connection.route === route ? "✓ " : ""}${t(`spaces.connect.route.${route}`)}`, icon: ROUTE_ICON[route], onSelect: () => onPatch({ route }) }))}
             />
             <span aria-hidden className="mx-0.5 h-5 w-px shrink-0 bg-border-soft" />
@@ -132,7 +132,7 @@ function BarButton({ icon: Icon, label, onClick, danger }: { icon: IconComponent
       title={label}
       className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors", danger ? "text-danger hover:bg-danger/10" : "text-text-secondary hover:bg-surface-soft hover:text-text")}
     >
-      <Icon size={17} aria-hidden />
+      <Icon size={16} aria-hidden />
     </button>
   );
 }

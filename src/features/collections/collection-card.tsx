@@ -73,7 +73,7 @@ export function CollectionCover({ collection, className }: { collection: Collect
   return (
     <div className={cn("flex items-center justify-center bg-surface-soft text-primary", className)}>
       <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary-soft">
-        <FolderOpen size={22} strokeWidth={1.75} />
+        <FolderOpen size={24} />
       </span>
     </div>
   );

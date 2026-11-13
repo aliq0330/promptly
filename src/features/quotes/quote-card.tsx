@@ -54,7 +54,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
             )
           ) : (
             <p className="flex aspect-[4/3] w-full items-center justify-center gap-2 bg-surface-soft px-3 text-small text-text-muted">
-              <EyeOff size={15} aria-hidden /> {t("quotes.card.contentGone")}
+              <EyeOff size={16} aria-hidden /> {t("quotes.card.contentGone")}
             </p>
           )
         }

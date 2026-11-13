@@ -73,7 +73,7 @@ export function ReactionSummary({ contentType, id, likeCount, className, overLay
         <span className="min-w-0 truncate" aria-hidden>
           {text}
         </span>
-        <ChevronRight size={14} strokeWidth={2} className="shrink-0" aria-hidden />
+        <ChevronRight size={14} className="shrink-0" aria-hidden />
       </button>
       {open && <ReactionSheet contentType={contentType} id={id} likeCount={likeCount} counts={breakdown.counts} overLayers={overLayers} onClose={() => setOpen(false)} />}
     </>

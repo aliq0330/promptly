@@ -136,7 +136,7 @@ export function TeamPhoneHome({ team, tabs, canInvite, onInvite }: { team: TeamS
         secondary={
           canInvite ? (
             <button type="button" onClick={onInvite} className={buttonClassName({ variant: "outline", className: "h-11 shrink-0 gap-1.5 px-3.5" })} data-team-invite-phone>
-              <UserPlus size={17} aria-hidden />
+              <UserPlus size={16} aria-hidden />
               {t("tm.invite.title")}
             </button>
           ) : undefined
@@ -182,7 +182,7 @@ export function TeamPhoneHome({ team, tabs, canInvite, onInvite }: { team: TeamS
 export function ProjectMini({ teamId, project, sub }: { teamId: string; project: ProjectSummary; sub: string }) {
   return (
     <li>
-      <Link href={projectLink(teamId, project.id)} className="block overflow-hidden rounded-2xl border border-border-soft bg-surface transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-phone-project={project.id}>
+      <Link href={projectLink(teamId, project.id)} className="block overflow-hidden rounded-lg border border-border-soft bg-surface transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-phone-project={project.id}>
         <span aria-hidden className="grid h-14 place-items-center bg-primary-soft text-primary">
           <FolderOpen size={24} />
         </span>

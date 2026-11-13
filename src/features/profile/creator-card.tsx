@@ -21,7 +21,7 @@ export function CreatorCard({ creator }: { creator: UserProfile }) {
         <CardBandBackdrop backdrop={creator.avatarUrl ? <Image src={creator.avatarUrl} alt="" fill sizes="240px" className="object-cover" /> : undefined} />
         <div className="relative flex items-center gap-3">
           <span className="inline-flex shrink-0 rounded-full border-[3px] border-surface bg-surface shadow-pop">
-            <Avatar src={creator.avatarUrl} alt={creator.displayName} size={52} />
+            <Avatar src={creator.avatarUrl} alt={creator.displayName} size={56} />
           </span>
           <div className="min-w-0 flex-1 leading-tight">
             <h3 className="truncate font-display text-[1.125rem] font-extrabold tracking-[-0.015em] text-text">

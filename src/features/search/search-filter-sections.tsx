@@ -245,7 +245,7 @@ function TokenFinder({
             token.kind === "user" ? (
               <li key={tokenKey(token)} className="border-b border-border-soft last:border-0">
                 <button type="button" onClick={() => onToggle(token)} className="flex min-h-12 w-full items-center gap-2.5 px-3 text-left text-label text-text hover:bg-surface-soft">
-                  <Avatar src={token.user.avatarUrl} alt={token.user.displayName} size={28} />
+                  <Avatar src={token.user.avatarUrl} alt={token.user.displayName} size={32} />
                   <span className="truncate">@{token.user.username}</span>
                   <span className="truncate text-caption text-text-muted">{token.user.displayName}</span>
                 </button>

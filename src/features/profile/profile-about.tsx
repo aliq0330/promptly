@@ -30,9 +30,9 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
 
   return (
     <div className="space-y-5 py-2">
-      {user.bio && <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-text">{user.bio}</p>}
+      {user.bio && <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-small text-text">{user.bio}</p>}
 
-      <div className="space-y-2 text-sm text-text-muted">
+      <div className="space-y-2 text-small text-text-muted">
         {user.website && (
           <a
             href={user.website.startsWith("http") ? user.website : `https://${user.website}`}
@@ -40,25 +40,25 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
             rel="noreferrer noopener"
             className="flex items-center gap-2 text-primary hover:underline"
           >
-            <Link2 size={15} className="shrink-0" />
+            <Link2 size={16} className="shrink-0" />
             {user.website}
           </a>
         )}
         {presenceLabel && (
           <p className="flex items-center gap-2" data-profile-last-seen>
-            <Clock size={15} className="shrink-0" />
+            <Clock size={16} className="shrink-0" />
             {presenceLabel}
           </p>
         )}
         <p className="flex items-center gap-2">
-          <Calendar size={15} className="shrink-0" />
+          <Calendar size={16} className="shrink-0" />
           {t("profile.joinedOn", { date: formatJoinDate(user.createdAt, language) })}
         </p>
       </div>
 
       {user.interests && user.interests.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+          <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">
             {t("profile.creativeInterests")}
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -70,7 +70,7 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
       )}
 
       {!hasAnything && (
-        <p className="py-6 text-center text-sm text-text-muted">
+        <p className="py-6 text-center text-small text-text-muted">
           {t("profile.noAdditionalInfo")}
         </p>
       )}

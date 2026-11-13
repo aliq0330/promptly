@@ -12,6 +12,7 @@ import { SortSelect, SORT_KEYS, SORT_LABELS, type ContentSortKey } from "@/featu
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /**
  * Below `md` the primary chip row turns into editorial tabs: flat, 42px,
@@ -103,7 +104,7 @@ export function ListFilterSheet({
   const titleId = useId();
   return (
     <Modal onClose={onClose} labelledBy={titleId}>
-      <div className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
           <h2 id={titleId} className="text-h3 font-semibold text-text">
             {t("toolbar.filterTitle")}
@@ -155,7 +156,7 @@ export function ListFilterSheet({
             {t("toolbar.apply")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

@@ -94,7 +94,7 @@ export function GroupRequestsSection({
             <Link href={profileHref(request.user)} className="flex min-w-0 flex-1 items-center gap-3">
               <PresenceAvatar userId={request.user.id} src={request.user.avatarUrl} alt={request.user.displayName} size={40} />
               <span className="min-w-0 leading-tight">
-                <span className="block truncate text-sm font-semibold text-text">{request.user.displayName}</span>
+                <span className="block truncate text-small font-semibold text-text">{request.user.displayName}</span>
                 <span className="block truncate text-caption text-text-muted">
                   @{request.user.username} · {formatRelativeTime(request.createdAt, language)}
                 </span>

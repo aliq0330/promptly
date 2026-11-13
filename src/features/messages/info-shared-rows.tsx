@@ -33,10 +33,10 @@ export function InfoSharedRows({ conversationId, onJumpToMessage }: { conversati
   return (
     <>
       <InfoCard>
-        <InfoRow icon={<ImageIcon size={18} strokeWidth={1.75} />} onClick={() => setOpen("media")} value={mediaCount ?? "…"} testId="media-links">
+        <InfoRow icon={<ImageIcon size={18} />} onClick={() => setOpen("media")} value={mediaCount ?? "…"} testId="media-links">
           {t("messages.shared.mediaLinks")}
         </InfoRow>
-        <InfoRow icon={<LayoutGrid size={18} strokeWidth={1.75} />} onClick={() => setOpen("content")} value={stats ? stats.content : "…"} testId="shared-content">
+        <InfoRow icon={<LayoutGrid size={18} />} onClick={() => setOpen("content")} value={stats ? stats.content : "…"} testId="shared-content">
           {t("messages.shared.content")}
         </InfoRow>
       </InfoCard>

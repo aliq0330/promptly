@@ -215,7 +215,7 @@ export function AdvancedSearchBox({
         onClick={() => inputRef.current?.focus()}
         className="flex h-[3.25rem] w-full items-center rounded-[1.625rem] border border-transparent bg-surface-soft pl-12 pr-1.5 transition-colors focus-within:border-primary focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/20"
       >
-        <Search size={19} className="pointer-events-none absolute left-4 top-[1.0625rem] text-text-muted" />
+        <Search size={20} className="pointer-events-none absolute left-4 top-[1.0625rem] text-text-muted" />
         <input
           ref={inputRef}
           id={id}
@@ -344,14 +344,14 @@ export function AdvancedSearchBox({
                   >
                     {token?.kind === "user" ? (
                       <>
-                        <Avatar src={token.user.avatarUrl} alt={token.user.displayName} size={28} />
+                        <Avatar src={token.user.avatarUrl} alt={token.user.displayName} size={32} />
                         <span className="truncate">@{token.user.username}</span>
                         <span className="truncate text-caption text-text-muted">{token.user.displayName}</span>
                       </>
                     ) : (
                       <>
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface-soft text-text-secondary">
-                          <Icon size={15} aria-hidden />
+                          <Icon size={16} aria-hidden />
                         </span>
                         <span className="truncate">{token?.kind === "tag" ? `#${chip?.label}` : (chip?.label ?? entry.recent)}</span>
                       </>

@@ -75,7 +75,7 @@ export function TeamJoinPage() {
   if (!token) return shell(<EmptyState icon={Link2Off} title={t("tm.join.invalidTitle")} description={t("tm.join.invalidBody")} action={{ label: t("tm.page.backToTeams"), href: "/teams" }} />);
   if (status === "unauthenticated") {
     return shell(
-      <div className="space-y-4 rounded-xl border border-border-soft bg-surface p-6 text-center shadow-card">
+      <div className="space-y-4 rounded-lg border border-border-soft bg-surface p-6 text-center shadow-card">
         <h1 className="text-h3 font-semibold">{t("tm.join.loginTitle")}</h1>
         <p className="text-small text-text-muted">{t("tm.join.loginBody")}</p>
         <Link href={authHref("/login", "/team-join")} className={buttonClassName({ size: "md" })}>
@@ -107,7 +107,7 @@ export function TeamJoinPage() {
   };
 
   return shell(
-    <div className="space-y-4 rounded-xl border border-border-soft bg-surface p-6 text-center shadow-card" data-testid="team-join">
+    <div className="space-y-4 rounded-lg border border-border-soft bg-surface p-6 text-center shadow-card" data-testid="team-join">
       <div className="flex justify-center">
         <TeamMark name={preview.teamName} tone={preview.tone} size={64} />
       </div>

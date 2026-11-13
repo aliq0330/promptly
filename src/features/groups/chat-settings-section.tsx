@@ -9,6 +9,7 @@ import { updateChatGroup } from "@/lib/supabase/chat-groups";
 import { can } from "@/lib/chat-groups";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupPostingPolicy } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 /**
  * SOHBET ayarları (sohbet bilgi penceresi, yetkililere): kim mesaj yazabilir (`edit_settings`), yeni üyeler geçmişi görür mü ve üyeler
@@ -65,9 +66,9 @@ export function ChatSettingsSection({
             </ChoiceCard>
           </fieldset>
           {save.error && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert>
               {save.error}
-            </p>
+            </InlineAlert>
           )}
           <div className="flex justify-end">
             <Button type="button" size="sm" onClick={() => void handleSave()} disabled={save.busy || !dirty}>

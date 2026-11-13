@@ -128,7 +128,7 @@ export const BoardConnectors = memo(function BoardConnectors({
                 data-connector-label={connection.id}
                 data-board-connector={interactive ? connection.id : undefined}
                 className={cn(
-                  "absolute left-0 top-0 max-w-[180px] truncate whitespace-nowrap rounded-full border bg-surface px-2 py-0.5 text-[11px] font-semibold leading-4 shadow-xs",
+                  "absolute left-0 top-0 max-w-[180px] truncate whitespace-nowrap rounded-full border bg-surface px-2 py-0.5 text-micro font-semibold leading-4 shadow-xs",
                   colors.pill,
                   selected && "ring-2 ring-primary",
                   interactive ? "pointer-events-auto cursor-pointer" : "",

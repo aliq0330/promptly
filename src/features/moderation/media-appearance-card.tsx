@@ -76,7 +76,7 @@ export function MediaAppearanceCard() {
       <div className="flex items-start gap-3">
         <Palette size={18} className="mt-0.5 shrink-0 text-text-muted" />
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-text">{t("moderation.appearanceTitle")}</h2>
+          <h2 className="text-small font-semibold text-text">{t("moderation.appearanceTitle")}</h2>
           <p className="text-small text-text-secondary">{t("moderation.appearanceHint")}</p>
         </div>
       </div>

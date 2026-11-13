@@ -66,7 +66,7 @@ export function RoomRow({
           {formatUnread(room.unreadCount)}
         </span>
       )}
-      {current && <Check size={20} strokeWidth={2.6} className="shrink-0 text-primary" aria-hidden />}
+      {current && <Check size={20} className="shrink-0 text-primary" aria-hidden />}
       {trailing}
     </>
   );

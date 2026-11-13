@@ -21,6 +21,7 @@ import { useShareableContent } from "@/features/communities/use-shareable-conten
 import type { CommunityPostType, ShareableContent } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Sohbette kütüphaneden paylaşılabilen türler (docs/history/268-*): "Var olan içeriği paylaş" (`ShareExistingModal`) ile aynı beş tür ve aynı sorgu. */
 export const LIBRARY_TYPES: { type: CommunityPostType; icon: IconComponent }[] = [
@@ -53,13 +54,13 @@ export function ChatAttachSheet({
     "flex min-h-16 w-full items-center gap-3.5 rounded-xl px-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
   return (
     <Modal onClose={onClose} labelledBy="chat-attach-title" variant="sheet">
-      <div data-chat-attach className="flex w-full max-w-lg flex-col overflow-y-auto rounded-t-2xl border border-b-0 border-border-soft bg-surface px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 shadow-pop">
+      <div data-chat-attach className="flex w-full max-w-lg flex-col overflow-y-auto rounded-t-lg border border-b-0 border-border-soft bg-surface px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 shadow-pop">
         <h2 id="chat-attach-title" className="sr-only">
           {t("messages.attach.title")}
         </h2>
         <button type="button" onClick={onPhoto} className={rowClass} data-attach-photo>
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-            <ImagePlus size={22} strokeWidth={1.75} aria-hidden />
+            <ImagePlus size={24} aria-hidden />
           </span>
           <span className="flex flex-col">
             <span className="text-body font-semibold text-text">{t("messages.attach.photo")}</span>
@@ -69,7 +70,7 @@ export function ChatAttachSheet({
         {onGif && (
           <button type="button" onClick={onGif} className={rowClass} data-attach-gif>
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-              <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-[10px] font-extrabold leading-none tracking-[0.04em]">
+              <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-micro font-extrabold leading-none tracking-[0.04em]">
                 {t("gif.badge")}
               </span>
             </span>
@@ -82,7 +83,7 @@ export function ChatAttachSheet({
         {onImport && (
           <button type="button" onClick={onImport} className={rowClass} data-attach-import>
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-              <FileDown size={22} strokeWidth={1.75} aria-hidden />
+              <FileDown size={24} aria-hidden />
             </span>
             <span className="flex flex-col">
               <span className="text-body font-semibold text-text">{t("messages.attach.import")}</span>
@@ -103,8 +104,8 @@ export function ChatAttachSheet({
                     data-attach-library={type}
                     className="flex w-full flex-col items-center gap-2 rounded-xl px-1 py-1.5 text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
-                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-                      <Icon size={24} strokeWidth={1.75} aria-hidden />
+                    <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <Icon size={24} aria-hidden />
                     </span>
                     <span className="text-caption font-medium">{t(`communities.feed.type.${type}`)}</span>
                   </button>
@@ -149,7 +150,7 @@ export function ChatLibraryPicker({
 
   return (
     <Modal onClose={onClose} labelledBy="chat-library-title">
-      <div data-chat-library className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell data-chat-library className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex shrink-0 items-center justify-between gap-2 px-5 pb-1 pt-4">
           <h2 id="chat-library-title" className="font-display text-h3 font-bold text-text">
             {t("messages.library.title")}
@@ -181,7 +182,7 @@ export function ChatLibraryPicker({
               {t("communities.feed.pickLoadError")}
             </p>
           ) : items === null || list.loading ? (
-            <div className="mx-3 mt-2 h-20 animate-pulse rounded-lg bg-surface-soft" aria-busy="true" />
+            <div className="mx-3 mt-2 h-20 skeleton-shimmer rounded-lg" aria-busy="true" />
           ) : items.length === 0 ? (
             <p className="mx-3 mt-2 rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
           ) : (
@@ -202,7 +203,7 @@ export function ChatLibraryPicker({
                       )}
                     >
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                        <Icon size={22} strokeWidth={1.75} aria-hidden />
+                        <Icon size={24} aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-body font-semibold text-text">{item.title || t("communities.feed.untitled")}</span>
@@ -215,7 +216,7 @@ export function ChatLibraryPicker({
                           isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border-strong",
                         )}
                       >
-                        {isSelected && <Check size={14} strokeWidth={3} />}
+                        {isSelected && <Check size={14} />}
                       </span>
                     </button>
                   </li>
@@ -230,7 +231,7 @@ export function ChatLibraryPicker({
             {selected ? t("messages.library.add", { type: t(`communities.feed.type.${type}`) }) : t("messages.library.pickOne")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

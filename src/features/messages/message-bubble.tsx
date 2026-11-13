@@ -329,8 +329,8 @@ export function MessageBubble({
         {formatClockTime(message.createdAt, language)}
         {message.editedAt && !isDeleted && ` · ${t("comments.edited")}`}
       </span>
-      {!isDeleted && actions.isPinned?.(message.id) && <Pin size={11} aria-label={t("chat.pin.barLabel")} />}
-      {!isDeleted && actions.isStarred?.(message.id) && <Star size={11} className="fill-current" aria-label={t("chat.star.unstar")} data-starred-mark />}
+      {!isDeleted && actions.isPinned?.(message.id) && <Pin size={12} aria-label={t("chat.pin.barLabel")} />}
+      {!isDeleted && actions.isStarred?.(message.id) && <Star size={12} className="fill-current" aria-label={t("chat.star.unstar")} data-starred-mark />}
       {!isDeleted && isMe && readState && (
         <span
           data-read-state={readState}
@@ -372,7 +372,7 @@ export function MessageBubble({
       {replyPreview && (
         <div
           className={cn(
-            "mb-1 flex max-w-[75%] items-center gap-1 rounded-xl bg-surface-soft px-2.5 py-1.5 text-xs text-text-muted",
+            "mb-1 flex max-w-[75%] items-center gap-1 rounded-xl bg-surface-soft px-2.5 py-1.5 text-caption text-text-muted",
             isMe && "flex-row-reverse text-right",
             showSender && "ml-9",
           )}
@@ -385,11 +385,11 @@ export function MessageBubble({
       <div className={cn("flex items-stretch gap-1", isMe ? "flex-row-reverse" : "flex-row")}>
         {showSender && sender && (
           <span className="mr-1 flex w-7 shrink-0 items-end" data-message-avatar>
-            {groupStart && <Avatar src={sender.avatarUrl} alt={sender.displayName} size={28} />}
+            {groupStart && <Avatar src={sender.avatarUrl} alt={sender.displayName} size={32} />}
           </span>
         )}
         {isDeleted ? (
-          <div className="max-w-[75%] rounded-[20px] bg-surface-soft/60 px-3.5 py-2 text-sm italic text-text-muted">
+          <div className="max-w-[75%] rounded-xl bg-surface-soft/60 px-3.5 py-2 text-small italic text-text-muted">
             {t("messages.thisMessageWasDeleted")}
           </div>
         ) : isEditingHere ? (
@@ -399,7 +399,7 @@ export function MessageBubble({
               onChange={(event) => actions.onEditDraftChange(event.target.value)}
               rows={2}
               autoFocus
-              className="w-full resize-none rounded-2xl bg-surface-soft px-3.5 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full resize-none rounded-lg bg-surface-soft px-3.5 py-2 text-small text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
             <div className="flex items-center gap-2">
               <Button
@@ -414,7 +414,7 @@ export function MessageBubble({
                 {t("common.cancelAction")}
               </Button>
             </div>
-            {actions.editError && <p className="text-xs text-danger">{actions.editError}</p>}
+            {actions.editError && <p className="text-caption text-danger">{actions.editError}</p>}
           </div>
         ) : (
           <div
@@ -447,9 +447,9 @@ export function MessageBubble({
               <Link
                 href={communityHref(message.conversationId)}
                 data-announcement-card
-                className="flex w-fit max-w-full flex-col gap-1 self-start rounded-[22px] bg-surface-soft px-4 py-3.5 text-sm text-text transition-colors hover:bg-surface-elevated"
+                className="flex w-fit max-w-full flex-col gap-1 self-start rounded-xl bg-surface-soft px-4 py-3.5 text-small text-text transition-colors hover:bg-surface-elevated"
               >
-                <span className="flex items-center gap-2 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-primary">
+                <span className="flex items-center gap-2 text-micro font-semibold uppercase tracking-[0.08em] text-primary">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated">
                     <Megaphone size={14} aria-hidden />
                   </span>
@@ -457,14 +457,14 @@ export function MessageBubble({
                 </span>
                 <span className="mt-1 block break-words font-display text-[1.0625rem] font-semibold">{displayBody}</span>
                 <span className="inline-flex items-center gap-0.5 text-small text-primary">
-                  {t("communities.chat.announcementOpen")} <ChevronRight size={15} aria-hidden />
+                  {t("communities.chat.announcementOpen")} <ChevronRight size={16} aria-hidden />
                 </span>
               </Link>
             )}
             {displayBody && !message.announcementId && (
               <div
                 className={cn(
-                  "flex w-fit max-w-full flex-wrap items-end gap-x-2.5 rounded-[20px] px-3.5 py-2 text-[15px] leading-[1.4]",
+                  "flex w-fit max-w-full flex-wrap items-end gap-x-2.5 rounded-xl px-3.5 py-2 text-[15px] leading-[1.4]",
                   isMe ? "self-end bg-primary text-primary-foreground" : "self-start bg-surface-soft text-text",
                   groupEnd && (isMe ? "rounded-br-md" : "rounded-bl-md"),
                 )}
@@ -473,7 +473,7 @@ export function MessageBubble({
                 <p className="min-w-0 break-words">{displayBody}</p>
                 <span
                   data-message-meta
-                  className={cn("ml-auto inline-flex shrink-0 items-center gap-1 pt-1 text-[11px] leading-none", isMe ? "text-primary-foreground/85" : "text-text-muted")}
+                  className={cn("ml-auto inline-flex shrink-0 items-center gap-1 pt-1 text-micro leading-none", isMe ? "text-primary-foreground/85" : "text-text-muted")}
                 >
                   {metaContent}
                 </span>
@@ -487,7 +487,7 @@ export function MessageBubble({
       </div>
 
       {!inlineMeta && !isEditingHere && (
-        <div data-message-meta className={cn("mt-1 flex items-center gap-1 px-1 text-[11px] text-text-muted", showSender && "ml-9")}>
+        <div data-message-meta className={cn("mt-1 flex items-center gap-1 px-1 text-micro text-text-muted", showSender && "ml-9")}>
           {metaContent}
         </div>
       )}

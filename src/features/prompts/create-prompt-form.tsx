@@ -64,17 +64,17 @@ function LoginGate({ message }: { message: string }) {
   return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">
       <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
-      <p className="mb-4 text-sm text-text-muted">{message}</p>
+      <p className="mb-4 text-small text-text-muted">{message}</p>
       <div className="flex justify-center gap-2">
         <Link
           href="/login"
-          className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
+          className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-small font-medium text-primary-foreground hover:bg-primary-dark"
         >
           {t("header.login")}
         </Link>
         <Link
           href="/signup"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("auth.createAccount")}
         </Link>
@@ -676,17 +676,17 @@ export function CreatePromptForm() {
   }
 
   if (!sourceChecked) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>;
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>;
   }
 
   if (editForbidden) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("prompt.noEditPermissionTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("prompt.noEditPermissionBody")}</p>
+        <p className="mb-4 text-small text-text-muted">{t("prompt.noEditPermissionBody")}</p>
         <Link
           href="/discover"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("common.backToDiscover")}
         </Link>
@@ -704,7 +704,7 @@ export function CreatePromptForm() {
               ? t("request.requestNotFound")
               : t("prompt.promptNotFound")}
         </h1>
-        <p className="mb-4 text-sm text-text-muted">
+        <p className="mb-4 text-small text-text-muted">
           {isEditMode
             ? t("prompt.editSourceGoneBody")
             : isAnswerMode
@@ -713,7 +713,7 @@ export function CreatePromptForm() {
         </p>
         <Link
           href={isAnswerMode ? "/requests" : "/discover"}
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {isAnswerMode ? t("common.backToRequests") : t("common.backToDiscover")}
         </Link>
@@ -725,10 +725,10 @@ export function CreatePromptForm() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.thisRequestDeletedTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("request.requestDeletedNoNewReplies")}</p>
+        <p className="mb-4 text-small text-text-muted">{t("request.requestDeletedNoNewReplies")}</p>
         <Link
           href="/requests"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("common.backToRequests")}
         </Link>
@@ -740,10 +740,10 @@ export function CreatePromptForm() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.thisRequestClosedTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("request.requestClosedNoNewReplies")}</p>
+        <p className="mb-4 text-small text-text-muted">{t("request.requestClosedNoNewReplies")}</p>
         <Link
           href={requestHref(answeredRequest)}
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.viewRequest")}
         </Link>
@@ -794,7 +794,7 @@ export function CreatePromptForm() {
       onSaveDraft={canSaveDraft && !communityId ? () => void handleSaveDraft() : undefined}
       aside={
         <>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
+          <p className="mb-2 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <PromptCard prompt={previewPrompt} />
           </div>
@@ -810,7 +810,7 @@ export function CreatePromptForm() {
         className="space-y-6"
       >
         {isAnswerMode && answeredRequest && (
-          <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
+          <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-small">
             <div className="flex items-center justify-between gap-2">
               <span className="font-medium text-primary">{t("prompt.answeringThisRequest")}</span>
               <Link
@@ -834,7 +834,7 @@ export function CreatePromptForm() {
         )}
 
         {duplicateSource && (
-          <div className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
+          <div className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-small text-primary">
             <Copy size={16} className="mt-0.5 shrink-0" />
             <p>
               <Link href={promptHref(duplicateSource)} className="font-medium underline">
@@ -846,7 +846,7 @@ export function CreatePromptForm() {
         )}
 
         {outputFailedParam && (
-          <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+          <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-small text-danger">
             {t("output.uploadFailed", { message: outputFailedParam === "1" ? "" : outputFailedParam })}
           </div>
         )}
@@ -1001,11 +1001,11 @@ export function CreatePromptForm() {
             extra={
               showsVisibilityChoice ? (
                 <div>
-                  <p className="mb-2 text-sm font-medium text-text">{t("prompt.showOnProfileQuestion")}</p>
+                  <p className="mb-2 text-small font-medium text-text">{t("prompt.showOnProfileQuestion")}</p>
                   <SwitchRow
                     checked={showOnProfile}
                     onChange={setShowOnProfile}
-                    icon={showOnProfile ? <Eye size={18} strokeWidth={1.75} /> : <EyeOff size={18} strokeWidth={1.75} />}
+                    icon={showOnProfile ? <Eye size={18} /> : <EyeOff size={18} />}
                     title={showOnProfile ? t("prompt.shareOnProfile") : t("prompt.dontShareOnProfile")}
                     description={showOnProfile ? t("prompt.shareOnProfileHint") : t("prompt.dontShareOnProfileHint")}
                     ariaLabel={t("prompt.showOnProfileQuestion")}
@@ -1015,9 +1015,9 @@ export function CreatePromptForm() {
               ) : undefined
             }
           >
-            {draftNotice && <p className="animate-pop-in text-sm text-success">{t("draft.saved")}</p>}
+            {draftNotice && <p className="animate-pop-in text-small text-success">{t("draft.saved")}</p>}
             {publishError && (
-              <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+              <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-small text-danger">
                 {publishError}
               </div>
             )}

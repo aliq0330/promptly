@@ -43,7 +43,7 @@ export function StatisticsButton({
         aria-haspopup="dialog"
         className={contentActionClassName(false, className)}
       >
-        <ChartNoAxesColumn size={size} strokeWidth={1.75} />
+        <ChartNoAxesColumn size={size} />
         {label && <span className="hidden sm:inline">{label}</span>}
       </button>
       {open && <StatisticsModal target={target} onClose={close} />}

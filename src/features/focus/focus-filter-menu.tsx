@@ -111,7 +111,7 @@ export function FocusFilterMenu({
         <div
           role="menu"
           aria-label={t("focusFeed.filter")}
-          className="absolute left-1/2 top-full z-40 mt-2 max-h-[calc(100dvh-6rem)] w-[min(18rem,calc(100vw-1.5rem))] -translate-x-1/2 overflow-y-auto rounded-xl border border-border-soft bg-surface-elevated p-1.5 shadow-pop animate-pop-in"
+          className="absolute left-1/2 top-full z-40 mt-2 max-h-[calc(100dvh-6rem)] w-[min(18rem,calc(100vw-1.5rem))] -translate-x-1/2 overflow-y-auto rounded-lg border border-border-soft bg-surface-elevated p-1.5 shadow-pop animate-pop-in"
         >
           <p className={heading}>{t("toolbar.postKind")}</p>
           {FOCUS_CHANNELS.map((key) => {

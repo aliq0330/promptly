@@ -20,7 +20,7 @@ export function LoadingRows({ count = 3 }: { count?: number }) {
   return (
     <ul className="space-y-3" aria-busy="true" aria-label={t("common.loadingAriaLabel")}>
       {Array.from({ length: count }, (_, i) => (
-        <li key={i} className="h-28 animate-pulse rounded-xl border border-border-soft bg-surface-soft" />
+        <li key={i} className="h-28 skeleton-shimmer rounded-xl border border-border-soft" />
       ))}
     </ul>
   );

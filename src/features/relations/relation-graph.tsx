@@ -414,12 +414,12 @@ export function RelationGraph({
                   <StorageImg src={node.imageUrl} alt="" draggable={false} className={cn("shrink-0 rounded-md object-cover", isCenter ? "h-14 w-14" : "h-9 w-9")} />
                 ) : (
                   <span className={cn("grid shrink-0 place-items-center rounded-md bg-surface-soft text-text-muted", isCenter ? "h-14 w-14" : "h-9 w-9")}>
-                    <Icon size={isCenter ? 22 : 18} strokeWidth={1.75} aria-hidden />
+                    <Icon size={isCenter ? 22 : 18} aria-hidden />
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-                    <Icon size={11} aria-hidden />
+                    <Icon size={12} aria-hidden />
                     <span className="truncate">{isCenter ? t("relations.centerLabel") : kindLabel(node.kind)}</span>
                   </span>
                   <span className={cn("block font-semibold leading-snug text-text", isCenter ? "line-clamp-2 text-small" : "line-clamp-2 text-label")}>{node.title}</span>
@@ -455,7 +455,7 @@ export function RelationGraph({
           <Minus size={16} />
         </ToolButton>
         <ToolButton label={t("relations.fit")} onClick={fit} bordered>
-          <Maximize2 size={15} />
+          <Maximize2 size={16} />
         </ToolButton>
       </div>
     </div>

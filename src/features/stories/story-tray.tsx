@@ -95,13 +95,13 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
             {own ? (
               <button type="button" onClick={() => openStories({ groups, startGroupIndex: 0 })} aria-label={t("stories.tray.openOwn")} className="group rounded-full">
                 <Ring state="own">
-                  <Avatar src={profile?.avatarUrl ?? own.author.avatarUrl} alt={profile?.displayName ?? own.author.displayName} size={54} />
+                  <Avatar src={profile?.avatarUrl ?? own.author.avatarUrl} alt={profile?.displayName ?? own.author.displayName} size={56} />
                 </Ring>
               </button>
             ) : (
               <Link href={createHref} aria-label={t("stories.tray.addFirst")} className="group rounded-full">
                 <Ring state="none">
-                  <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? user.email ?? ""} size={54} />
+                  <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? user.email ?? ""} size={56} />
                 </Ring>
               </Link>
             )}
@@ -114,7 +114,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
               >
                 {/* Görünen rozet 24px; dokunma alanı 36px. */}
                 <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground">
-                  <Plus size={14} strokeWidth={2.5} aria-hidden />
+                  <Plus size={14} aria-hidden />
                 </span>
               </Link>
             )}
@@ -142,7 +142,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
                   className="group relative flex w-[68px] shrink-0 flex-col items-center gap-1.5 rounded-md text-center"
                 >
                   <Ring state={unseen ? "unseen" : "seen"}>
-                    <Avatar src={item.author.avatarUrl} alt={item.author.displayName} size={54} />
+                    <Avatar src={item.author.avatarUrl} alt={item.author.displayName} size={56} />
                   </Ring>
                   {item.communityStoryCount > 0 && !communityId && (
                     <span
@@ -160,7 +160,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
 
       {offline ? (
         <p className="flex items-center gap-1.5 text-caption text-text-muted" role="status">
-          <WifiOff size={13} aria-hidden /> {t("stories.tray.offline")}
+          <WifiOff size={12} aria-hidden /> {t("stories.tray.offline")}
         </p>
       ) : failed ? (
         <p className="flex items-center gap-2 text-caption text-text-muted" role="status">

@@ -99,7 +99,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
       ) : (
         <div className="grid gap-3.5 lg:grid-cols-4 lg:gap-4">
           <Panel
-            className="rounded-[20px] lg:col-span-2"
+            className="rounded-xl lg:col-span-2"
             title={t("tm.panel.added")}
             action={peak > 0 ? <span className="text-caption text-text-muted">{t("tm.panel.peak", { count: peak })}</span> : undefined}
           >
@@ -139,7 +139,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
             </Stat>
           </div>
 
-          <Panel className="rounded-[20px] lg:col-span-2" title={t("tm.panel.top")}>
+          <Panel className="rounded-xl lg:col-span-2" title={t("tm.panel.top")}>
             {data.top.length === 0 ? (
               <p className="text-small text-text-muted">{t("tm.panel.noTop")}</p>
             ) : (
@@ -162,7 +162,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
             )}
           </Panel>
 
-          <Panel className="rounded-[20px] lg:col-span-2" title={t("tm.panel.alerts")}>
+          <Panel className="rounded-xl lg:col-span-2" title={t("tm.panel.alerts")}>
             <ul className="space-y-1 text-small" data-panel-alerts>
               {alerts.filter((alert) => alert.n > 0).length === 0 && <li className="py-1 text-text-muted">{t("tc.panel.noAlerts")}</li>}
               {alerts

@@ -538,7 +538,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
       aria-label={t("stories.viewer.label")}
       tabIndex={-1}
       data-story-viewer
-      className="fixed inset-x-0 top-0 z-[60] flex h-dvh flex-col bg-story-stage text-story-white transition-colors duration-300 before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-[50vh] before:bg-inherit after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-[50vh] after:bg-inherit focus:outline-none"
+      className="fixed inset-x-0 top-0 z-(--z-popover) flex h-dvh flex-col bg-story-stage text-story-white transition-colors duration-300 before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-[50dvh] before:bg-inherit after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-[50dvh] after:bg-inherit focus:outline-none"
     >
       <p className="sr-only" aria-live="polite">
         {positionLabel}
@@ -552,7 +552,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
           aria-label={t("stories.viewer.previous")}
           className="absolute left-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-story-white/10 text-story-white hover:bg-story-white/20 sm:flex"
         >
-          <ChevronLeft size={22} aria-hidden />
+          <ChevronLeft size={24} aria-hidden />
         </button>
         <button
           type="button"
@@ -560,7 +560,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
           aria-label={t("stories.viewer.next")}
           className="absolute right-4 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-story-white/10 text-story-white hover:bg-story-white/20 sm:flex"
         >
-          <ChevronRight size={22} aria-hidden />
+          <ChevronRight size={24} aria-hidden />
         </button>
 
         <div ref={stageRef} className="relative h-full w-full sm:h-auto sm:w-[min(100cqw,calc(100cqh*9/16))] sm:overflow-hidden sm:rounded-xl">
@@ -691,7 +691,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
               </div>
             )}
             {story?.moderationStatus === "removed" && (
-              <p className="pointer-events-auto mt-2 rounded-md bg-danger/90 px-3 py-1.5 text-caption font-medium text-white">{t("stories.viewer.removedNotice")}</p>
+              <p className="pointer-events-auto mt-2 rounded-md bg-danger/90 px-3 py-1.5 text-caption font-medium text-danger-foreground">{t("stories.viewer.removedNotice")}</p>
             )}
           </div>
 
@@ -850,7 +850,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                 {story.reactionCount > 0 && <span className="text-story-white/70">· {t("stories.viewers.reactions", { count: story.reactionCount })}</span>}
               </button>
               <button type="button" onClick={() => setSheet({ kind: "highlight" })} className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-small font-semibold hover:bg-story-white/10">
-                <Highlighter size={17} aria-hidden /> {t("stories.highlight.short")}
+                <Highlighter size={16} aria-hidden /> {t("stories.highlight.short")}
               </button>
             </div>
           ) : canInteract ? (
@@ -904,7 +904,7 @@ function MenuButton({ icon: Icon, label, onClick, danger }: { icon: typeof Flag;
       onClick={onClick}
       className={cn("flex min-h-11 w-full items-center gap-2.5 px-3.5 text-left text-small hover:bg-surface-soft", danger ? "text-danger" : "text-text")}
     >
-      <Icon size={16} strokeWidth={1.75} aria-hidden />
+      <Icon size={16} aria-hidden />
       {label}
     </button>
   );
@@ -1010,9 +1010,9 @@ function ReplyBar({
           type="submit"
           disabled={!text.trim() || sending}
           aria-label={t("stories.reply.send")}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-story-white text-story-black disabled:opacity-40"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-story-white text-story-black disabled:opacity-50"
         >
-          {sending ? <Loader2 size={17} className="animate-spin" aria-hidden /> : <Send size={17} aria-hidden />}
+          {sending ? <Loader2 size={17} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
         </button>
       </form>
       <p className="min-h-4 text-center text-caption text-story-white/75" aria-live="polite">

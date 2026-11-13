@@ -74,7 +74,7 @@ export function ComposeShell({
             data-compose-close=""
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text transition-colors hover:bg-surface-soft"
           >
-            <X size={22} strokeWidth={1.9} />
+            <X size={24} />
           </button>
           <div className="flex min-w-0 flex-1 items-center gap-1.5">
             <h1 className="truncate text-body font-bold text-text">{title}</h1>
@@ -104,7 +104,7 @@ export function ComposeShell({
       </div>
       {status && <div className="px-4 pt-2 text-caption text-text-muted sm:hidden">{status}</div>}
 
-      <div className={cn("mx-auto px-3 pb-16 pt-4 sm:px-5 lg:px-8 lg:pb-12", wide ? "max-w-5xl" : "grid max-w-5xl grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px]")}>
+      <div className={cn("mx-auto px-3 pb-16 pt-4 sm:px-6 lg:px-8 lg:pb-12", wide ? "max-w-5xl" : "grid max-w-5xl grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px]")}>
         <div className="min-w-0">
           {children}
         </div>
@@ -119,7 +119,7 @@ export function PublishPreview({ thumbnail, icon: Icon, typeLabel, title, meta }
   return (
     <div data-publish-preview="" className="flex items-center gap-3 rounded-xl border border-border-soft bg-gradient-to-b from-primary-soft to-surface p-3">
       <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-soft text-primary">
-        {thumbnail ? <StorageImg src={thumbnail} alt="" className="h-full w-full object-cover" /> : <Icon size={24} strokeWidth={1.75} />}
+        {thumbnail ? <StorageImg src={thumbnail} alt="" className="h-full w-full object-cover" /> : <Icon size={24} />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-caption font-bold uppercase tracking-[0.06em] text-primary">{typeLabel}</span>
@@ -172,7 +172,7 @@ export function useComposeLeave({ dirty, saveDraft }: { dirty: boolean; saveDraf
 
   const dialog = asking ? (
     <Modal onClose={() => !saving && setAsking(false)} labelledBy="compose-leave-title">
-      <div data-compose-leave="" className="w-full max-w-sm overflow-hidden rounded-t-2xl border border-border bg-surface-elevated text-center shadow-pop sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+      <div data-compose-leave="" className="w-full max-w-sm overflow-hidden rounded-t-lg border border-border bg-surface-elevated text-center shadow-pop sm:rounded-lg" onClick={(event) => event.stopPropagation()}>
         <div className="px-5 pb-4 pt-5">
           <h2 id="compose-leave-title" className="text-h3 font-bold text-text">
             {saveDraft ? t("compose.leaveDraftTitle") : t("compose.leaveUnsavedTitle")}
@@ -193,7 +193,7 @@ export function useComposeLeave({ dirty, saveDraft }: { dirty: boolean; saveDraf
                 leave();
               } else setAsking(false);
             }}
-            className="block w-full border-t border-border px-4 py-3.5 text-body font-bold text-primary disabled:opacity-60"
+            className="block w-full border-t border-border px-4 py-3.5 text-body font-bold text-primary disabled:opacity-50"
           >
             {saving ? t("createActions.savingDraft") : t("createActions.saveDraft")}
           </button>

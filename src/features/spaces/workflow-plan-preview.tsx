@@ -72,7 +72,7 @@ export function WorkflowPlanPreview({ plan, steps }: { plan: WorkflowImportPlan;
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[12px] font-bold text-primary-foreground">{item.sourceStepNo}</span>
                   <p className="line-clamp-2 min-w-0 flex-1 text-[14px] font-semibold leading-5 text-text">{item.title || t("wfSpace.objects.untitledStep")}</p>
                 </div>
-                {item.body && <p className="mt-2 line-clamp-3 whitespace-pre-line break-words font-mono text-[11px] leading-4 text-text-muted">{item.body.replace(/^>> /gm, "→ ").replace(/^<< /gm, "← ")}</p>}
+                {item.body && <p className="mt-2 line-clamp-3 whitespace-pre-line break-words font-mono text-micro leading-4 text-text-muted">{item.body.replace(/^>> /gm, "→ ").replace(/^<< /gm, "← ")}</p>}
               </div>
             );
           }
@@ -85,7 +85,7 @@ export function WorkflowPlanPreview({ plan, steps }: { plan: WorkflowImportPlan;
           }
           return (
             <div key={item.id} data-plan-prompt="" className={cn("absolute overflow-hidden rounded-xl border border-border bg-surface p-3")} style={{ ...style, zIndex: 10 }}>
-              <p className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-primary">
+              <p className="flex items-center gap-1.5 text-micro font-bold uppercase tracking-[0.08em] text-primary">
                 <SquareTerminal size={12} aria-hidden />
                 {t("spaces.item.prompt")}
               </p>

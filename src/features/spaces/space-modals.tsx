@@ -83,7 +83,7 @@ export function SpaceDialog({
         data-space-drawer={drawer ? "" : undefined}
         className={
           drawer
-            ? "flex h-full min-h-0 w-full flex-col overflow-hidden bg-surface max-md:rounded-t-[22px] md:w-[32.5rem] md:max-w-full md:border-l md:border-border"
+            ? "flex h-full min-h-0 w-full flex-col overflow-hidden bg-surface max-md:rounded-t-xl md:w-[32.5rem] md:max-w-full md:border-l md:border-border"
             : cn("flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg", wide ? "max-w-xl" : "max-w-md")
         }
         onClick={(event) => event.stopPropagation()}
@@ -507,7 +507,7 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
             className="flex cursor-pointer items-center gap-3 rounded-lg border border-border-soft bg-background px-3 py-2.5 has-[:checked]:border-primary/50 has-[:checked]:bg-primary-soft"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-soft text-text-secondary">
-              <House size={17} aria-hidden />
+              <House size={16} aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-semibold text-text">{t("spaces.feed.toggle")}</span>

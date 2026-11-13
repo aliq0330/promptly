@@ -276,7 +276,7 @@ export function ProfileView({
                 data-profile-search=""
                 className={cn(CONTROL_ICON_BUTTON, searchOpen && "bg-surface-soft")}
               >
-                {searchOpen ? <X size={22} strokeWidth={1.75} aria-hidden /> : <Search size={22} strokeWidth={1.75} aria-hidden />}
+                {searchOpen ? <X size={24} aria-hidden /> : <Search size={24} aria-hidden />}
               </button>
             )}
             {showFilter && (
@@ -298,7 +298,7 @@ export function ProfileView({
             )}
             {isOwnProfile && (
               <Link href="/create" aria-label={t("create.promptTitle")} title={t("create.promptTitle")} data-profile-create="" className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft")}>
-                <Plus size={22} strokeWidth={1.75} aria-hidden />
+                <Plus size={24} aria-hidden />
               </Link>
             )}
           </div>

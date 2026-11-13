@@ -62,7 +62,7 @@ function useDropdown() {
 }
 
 const PANEL_CLASS =
-  "absolute right-0 top-11 z-40 w-[min(15rem,calc(100vw-1.5rem))] md:w-[min(18.5rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-xl border border-border-soft bg-surface-elevated shadow-pop animate-pop-in";
+  "absolute right-0 top-11 z-40 w-[min(15rem,calc(100vw-1.5rem))] md:w-[min(18.5rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-lg border border-border-soft bg-surface-elevated shadow-pop animate-pop-in";
 
 const ITEM_CLASS =
   "flex min-h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-left md:min-h-11 md:gap-3 md:px-3 text-small font-medium text-text transition-colors duration-200 hover:bg-surface-soft focus-visible:bg-surface-soft";
@@ -162,7 +162,7 @@ export function AccountMenu() {
         aria-expanded={open}
         className={cn("block rounded-full transition-shadow duration-200", open && "ring-2 ring-primary/40")}
       >
-        <Avatar src={profile.avatarUrl} alt={profile.displayName} size={36} badge={<OwnPresenceDot avatarSize={36} />} />
+        <Avatar src={profile.avatarUrl} alt={profile.displayName} size={40} badge={<OwnPresenceDot avatarSize={36} />} />
       </button>
 
       {open && (
@@ -177,7 +177,7 @@ export function AccountMenu() {
             aria-label={t("account.myProfile")}
             className="flex items-center gap-2.5 border-b border-border-soft px-3 py-2.5 transition-colors duration-200 hover:bg-surface-soft md:gap-3 md:p-4"
           >
-            <Avatar src={profile.avatarUrl} alt="" size={36} />
+            <Avatar src={profile.avatarUrl} alt="" size={40} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-small font-semibold text-text">{profile.displayName}</p>
               <p className="truncate text-caption text-text-muted">@{profile.username}</p>
@@ -203,7 +203,7 @@ export function AccountMenu() {
               onClick={toggleTheme}
               className={ITEM_CLASS}
             >
-              <Moon size={17} className="shrink-0 text-text-secondary" />
+              <Moon size={16} className="shrink-0 text-text-secondary" />
               <span className="flex-1 truncate">{t("account.nightMode")}</span>
               <span
                 aria-hidden
@@ -231,13 +231,13 @@ export function AccountMenu() {
               {isModerator && <MenuLink href="/moderation" icon={ShieldCheck} label={t("nav.moderation")} onNavigate={close} />}
               {canSwitch && (
                 <button type="button" role="menuitem" onClick={() => { close(); setSwitchOpen(true); }} className={ITEM_CLASS}>
-                  <ArrowLeftRight size={17} className="shrink-0 text-text-secondary" />
+                  <ArrowLeftRight size={16} className="shrink-0 text-text-secondary" />
                   <span>{t("accountSwitch.menuItem")}</span>
                 </button>
               )}
               {canReturn && (
-                <button type="button" role="menuitem" onClick={handleReturn} disabled={returning} className={cn(ITEM_CLASS, "disabled:opacity-60")}>
-                  <Undo2 size={17} className="shrink-0 text-text-secondary" />
+                <button type="button" role="menuitem" onClick={handleReturn} disabled={returning} className={cn(ITEM_CLASS, "disabled:opacity-50")}>
+                  <Undo2 size={16} className="shrink-0 text-text-secondary" />
                   <span>{t("accountSwitch.returnItem")}</span>
                 </button>
               )}
@@ -250,9 +250,9 @@ export function AccountMenu() {
               role="menuitem"
               onClick={handleSignOut}
               disabled={signingOut}
-              className={cn(ITEM_CLASS, "text-danger disabled:opacity-60")}
+              className={cn(ITEM_CLASS, "text-danger disabled:opacity-50")}
             >
-              <LogOut size={17} className="shrink-0" />
+              <LogOut size={16} className="shrink-0" />
               <span>{signingOut ? t("settings.signingOut") : t("settings.signOut")}</span>
             </button>
           </div>

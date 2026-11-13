@@ -473,7 +473,7 @@ export function VariableDialog({ projectId, fileId, variable, onClose, onDone }:
             placeholder="musteri"
             autoCapitalize="none"
             autoCorrect="off"
-            className="h-11 w-full rounded-xl border border-border bg-background px-3 font-mono text-small disabled:opacity-60"
+            className="h-11 w-full rounded-xl border border-border bg-background px-3 font-mono text-small disabled:opacity-50"
           />
           <span className="mt-1 block text-caption text-text-muted">{t("tp.variable.nameHint")}</span>
         </label>

@@ -99,7 +99,7 @@ export function ReactionGrid({
             onPointerEnter={() => icons.current[key]?.play()}
             className={cn(
               "group flex min-w-0 items-center transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              compact ? "shrink-0 justify-center rounded-full p-1" : "flex-col gap-0.5 rounded-[20px] pb-1.5 pt-2 text-caption",
+              compact ? "shrink-0 justify-center rounded-full p-1" : "flex-col gap-0.5 rounded-xl pb-1.5 pt-2 text-caption",
               current === key ? "bg-primary-soft text-primary" : "text-text-muted hover:bg-surface-soft hover:text-text",
             )}
           >
@@ -120,7 +120,7 @@ export function ReactionGrid({
           type="button"
           role="menuitem"
           onClick={() => onChoose(null)}
-          className="mt-1 w-full rounded-b-[20px] border-t border-border-soft pb-1.5 pt-2.5 text-small font-semibold text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="mt-1 w-full rounded-b-xl border-t border-border-soft pb-1.5 pt-2.5 text-small font-semibold text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           {t("reaction.remove")}
         </button>

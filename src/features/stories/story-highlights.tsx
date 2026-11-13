@@ -27,6 +27,7 @@ import { LoadMoreButton } from "@/features/feed/load-more";
 import { StoryCanvas } from "./story-canvas";
 import { Ring } from "./story-tray";
 import { useStoryViewer } from "./story-viewer-provider";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Hikâyenin yuvarlak küçük resmi (öne çıkan kapağı): 9:16 tuvalin ortası. */
 export function StoryCircleThumb({ story, size = 54 }: { story: Story | null; size?: number }) {
@@ -128,7 +129,7 @@ export function StoryHighlightsRow({ ownerId, isOwnProfile }: { ownerId: string;
                 className="absolute -right-1.5 top-10 flex h-9 w-9 items-center justify-center rounded-full"
               >
                 <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-surface-elevated text-text-secondary">
-                  <Pencil size={11} aria-hidden />
+                  <Pencil size={12} aria-hidden />
                 </span>
               </button>
             )}
@@ -139,7 +140,7 @@ export function StoryHighlightsRow({ ownerId, isOwnProfile }: { ownerId: string;
       {isOwnProfile && (
         <button type="button" onClick={() => setEditing("new")} className="group flex w-[68px] shrink-0 flex-col items-center gap-1.5 rounded-md text-center">
           <span className="flex h-[66px] w-[66px] items-center justify-center rounded-full border-[1.5px] border-dashed border-border-strong text-text-muted transition-colors group-hover:border-primary group-hover:text-primary">
-            <Plus size={22} strokeWidth={2} aria-hidden />
+            <Plus size={24} aria-hidden />
           </span>
           <span className="w-full truncate text-caption text-text-secondary">{t("stories.highlight.new")}</span>
         </button>
@@ -241,7 +242,7 @@ export function HighlightEditor({
 
   return (
     <Modal onClose={onClose} labelledBy="highlight-editor-title">
-      <div className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-3">
           <h2 id="highlight-editor-title" className="text-h3 font-semibold text-text">
             {highlight ? t("stories.highlight.editTitle") : t("stories.highlight.newTitle")}
@@ -312,10 +313,10 @@ export function HighlightEditor({
             <span />
           )}
           <Button type="button" onClick={() => void save()} disabled={busy || !title.trim() || selected.length === 0}>
-            {busy ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Check size={15} aria-hidden />} {t("common.save")}
+            {busy ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Check size={16} aria-hidden />} {t("common.save")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

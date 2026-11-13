@@ -54,7 +54,7 @@ export function PresenceSettingsCard() {
   return (
     <SettingsCard title={t("presence.settingsTitle")} hint={t("presence.settingsHint")}>
       {!available || !me ? (
-        <p className="text-xs text-text-muted" data-presence-settings="unavailable">
+        <p className="text-caption text-text-muted" data-presence-settings="unavailable">
           {me === null && !available ? t("settings.loadingEllipsis") : t("presence.unavailable")}
         </p>
       ) : (
@@ -66,7 +66,7 @@ export function PresenceSettingsCard() {
                 <input type="radio" name="presence-mode" value={mode} checked={(optimistic?.mode ?? me.mode) === mode} onChange={() => void change({ mode })} className="mt-0.5" />
                 <span>
                   <span className="font-medium">{t(MODE_LABEL[mode].label)}</span>
-                  <span className="block text-xs text-text-muted">{t(MODE_LABEL[mode].hint)}</span>
+                  <span className="block text-caption text-text-muted">{t(MODE_LABEL[mode].hint)}</span>
                 </span>
               </ChoiceCard>
             ))}
@@ -86,14 +86,14 @@ export function PresenceSettingsCard() {
                 />
                 <span>
                   <span className="font-medium">{t(AUDIENCE_LABEL[audience].label)}</span>
-                  <span className="block text-xs text-text-muted">{t(AUDIENCE_LABEL[audience].hint)}</span>
+                  <span className="block text-caption text-text-muted">{t(AUDIENCE_LABEL[audience].hint)}</span>
                 </span>
               </ChoiceCard>
             ))}
           </fieldset>
 
-          <p className="rounded-lg bg-surface-soft px-3.5 py-3 text-xs leading-relaxed text-text-secondary">{t("presence.reciprocity")}</p>
-          <p aria-live="polite" className="min-h-4 text-xs">
+          <p className="rounded-lg bg-surface-soft px-3.5 py-3 text-caption leading-relaxed text-text-secondary">{t("presence.reciprocity")}</p>
+          <p aria-live="polite" className="min-h-4 text-caption">
             {error ? <span className="text-danger">{error}</span> : saved ? <span className="text-text-muted">{t("presence.saved")}</span> : null}
           </p>
         </div>

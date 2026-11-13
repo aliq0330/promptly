@@ -125,7 +125,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
                   <ItemReviewBadge state={note.revState} />
                   {note.isPrivate && (
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface/80 px-2 py-0.5 text-caption text-text-secondary" title={t("spaces.notes.privateHelp")}>
-                      <Lock size={11} aria-hidden />
+                      <Lock size={12} aria-hidden />
                       {t("spaces.notes.privateBadge")}
                     </span>
                   )}
@@ -133,7 +133,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
                 {note.body && <p className="mt-1.5 whitespace-pre-wrap break-words text-small text-text-secondary">{note.body}</p>}
                 {attached && (
                   <button type="button" onClick={() => setOpenId(attached.id)} className="mt-2 inline-flex max-w-full items-center gap-1 self-start truncate rounded-full bg-surface/80 px-2 py-0.5 text-caption text-text-secondary hover:text-text">
-                    <Link2 size={11} aria-hidden />
+                    <Link2 size={12} aria-hidden />
                     <span className="truncate">{itemTitle(attached)}</span>
                   </button>
                 )}
@@ -143,13 +143,13 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1">
                   <Button variant="ghost" size="sm" onClick={() => onShowOnBoard(note.id)}>
-                    <MapPin size={13} aria-hidden />
+                    <MapPin size={12} aria-hidden />
                     {t("spaces.detail.showOnBoard")}
                   </Button>
                   {caps.edit && (
                     <>
                       <Button variant="ghost" size="sm" onClick={() => setEditing(note)}>
-                        <Pencil size={13} aria-hidden />
+                        <Pencil size={12} aria-hidden />
                         {t("common.edit")}
                       </Button>
                       <Button variant="ghost" size="sm" className="text-danger hover:bg-danger/10" onClick={() => setDeleting(note)}>

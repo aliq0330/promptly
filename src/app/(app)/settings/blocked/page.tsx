@@ -40,24 +40,24 @@ export default function BlockedUsersPage() {
 
   return (
     <div className="mx-auto w-full max-w-xl animate-rise-in space-y-5 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
-      <Link href="/settings/privacy" className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text">
+      <Link href="/settings/privacy" className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text">
         <ArrowLeft size={14} />
         {t("settings.backToSettings")}
       </Link>
       <h1 className="text-h1 text-text">{t("settings.blockedUsers")}</h1>
-      {error && <p className="text-sm text-danger">{error}</p>}
-      <PagedListState list={blockedPages} skeleton={<p className="py-10 text-center text-sm text-text-muted">{t("settings.loadingEllipsis")}</p>}>
+      {error && <p className="text-small text-danger">{error}</p>}
+      <PagedListState list={blockedPages} skeleton={<p className="py-10 text-center text-small text-text-muted">{t("settings.loadingEllipsis")}</p>}>
         {blocked.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border-soft py-10 text-center text-sm text-text-muted">{t("settings.blockedEmpty")}</p>
+          <p className="rounded-xl border border-dashed border-border-soft py-10 text-center text-small text-text-muted">{t("settings.blockedEmpty")}</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
+          <div className="overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card">
             {blocked.map((profile) => (
               <div key={profile.id} className="flex items-center gap-3 border-b border-border-soft px-4 py-3 last:border-0">
                 <Link href={profileHref(profile)} className="flex min-w-0 flex-1 items-center gap-3">
-                  <Avatar src={profile.avatarUrl} alt={profile.displayName} size={44} />
+                  <Avatar src={profile.avatarUrl} alt={profile.displayName} size={40} />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-text">{profile.displayName}</p>
-                    <p className="truncate text-xs text-text-muted">@{profile.username}</p>
+                    <p className="truncate text-small font-medium text-text">{profile.displayName}</p>
+                    <p className="truncate text-caption text-text-muted">@{profile.username}</p>
                   </div>
                 </Link>
                 <Button type="button" size="sm" variant="outline" disabled={busyId === profile.id} onClick={() => handleUnblock(profile)} className="shrink-0">

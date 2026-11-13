@@ -20,7 +20,7 @@ export function ShareRedirect({ href, title, description }: { href: string; titl
   }, [href]);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-4 py-16 text-center">
       <h1 className="text-h2 text-text break-words">{title}</h1>
       {description && <p className="text-small text-text-muted break-words">{description}</p>}
       <p className="text-small text-text-muted" role="status">

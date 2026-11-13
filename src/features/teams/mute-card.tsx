@@ -54,7 +54,7 @@ export function MuteCard({
     );
   }
   return (
-    <div data-mute-card={scope} data-muted={muted ? "true" : "false"} className={cn("rounded-2xl border px-4 py-3", effective ? "border-warning/40 bg-warning/5" : "border-border-soft bg-surface")}>
+    <div data-mute-card={scope} data-muted={muted ? "true" : "false"} className={cn("rounded-lg border px-4 py-3", effective ? "border-warning/40 bg-warning/5" : "border-border-soft bg-surface")}>
       <div className="flex items-center gap-3">
         <span aria-hidden className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", effective ? "bg-warning/15 text-warning" : "bg-surface-soft text-text-secondary")}>
           {effective ? <BellOff size={18} /> : <Bell size={18} />}
@@ -82,7 +82,7 @@ export function MuteChip({ scope }: { scope: "team" | "project" | "channel" | nu
   const { t } = useTranslation();
   if (!scope) return null;
   return (
-    <span data-mute-chip={scope} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.04em] text-text-muted">
+    <span data-mute-chip={scope} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-soft px-2 py-0.5 text-micro font-bold uppercase tracking-[0.04em] text-text-muted">
       <BellOff size={10} aria-hidden />
       {t(`th.chip.${scope}` as "th.chip.team")}
     </span>

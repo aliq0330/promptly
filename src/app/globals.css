@@ -65,6 +65,24 @@
   --p-success: #15803d;
   --p-warning: #b45309;
   --p-danger: #d12f2f;
+  /* Text that sits ON a filled status/secondary colour (buttons, count bubbles). White passes AA on every light fill;
+   * dark mode swaps to ink (see `.dark`) because the dark fills are light tones. Never write `text-white` on these. */
+  --p-danger-fg: #ffffff;
+  --p-secondary-fg: #ffffff;
+  --p-success-fg: #ffffff;
+  --p-warning-fg: #ffffff;
+  /* Boundary of a form control (input, textarea, select): WCAG 1.4.11 needs 3:1 against the ground. Cards keep the
+   * hairline `border` — they are decoration; a field is something you have to find. */
+  --p-control-border: #868899;
+  /* Overlay scrim (RGB triplet, so the alpha can be animated) and the z-index ladder. */
+  --p-scrim: 10 8 20;
+  /* Space left at the bottom of a page for the 64 px mobile tab bar + the home-indicator inset. */
+  --nav-clearance: calc(5.5rem + env(safe-area-inset-bottom));
+  --z-sticky: 30;
+  --z-nav: 40;
+  --z-overlay: 50;
+  --z-popover: 60;
+  --z-toast: 70;
   /* Shadow strength multiplier + the 1px top "light catch" on raised surfaces.
    * Dark mode needs much stronger (black) shadows to read at all, and a faint
    * white inner highlight to separate stacked surfaces — the premium detail
@@ -108,6 +126,11 @@
   --p-success: #4ade80;
   --p-warning: #fbbf24;
   --p-danger: #f87171;
+  --p-danger-fg: #0b0a0f;
+  --p-secondary-fg: #0b0a0f;
+  --p-success-fg: #0b0a0f;
+  --p-warning-fg: #0b0a0f;
+  --p-control-border: #74738a;
   --p-sa: 4;
   --p-highlight: rgb(255 255 255 / 0.045);
 }
@@ -145,6 +168,12 @@
   --color-success: var(--p-success);
   --color-warning: var(--p-warning);
   --color-danger: var(--p-danger);
+  --color-danger-foreground: var(--p-danger-fg);
+  --color-secondary-foreground: var(--p-secondary-fg);
+  --color-success-foreground: var(--p-success-fg);
+  --color-warning-foreground: var(--p-warning-fg);
+  --color-control-border: var(--p-control-border);
+  --color-scrim: rgb(var(--p-scrim) / 0.45);
 
   /* Legacy aliases (pre-2.0 names, still used across the codebase) */
   --color-accent-surface: var(--p-primary-soft);
@@ -218,6 +247,9 @@
   --text-caption--line-height: 1.4;
   --text-label: 0.8125rem;
   --text-label--line-height: 1.3;
+  /* The one sub-12px size: count bubbles and unit badges only (docs: audit G3). Everything readable is `caption` or bigger. */
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.2;
 
   /* Motion */
   --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -1209,4 +1241,27 @@
 .line-art[data-line-art="loader"] svg ellipse {
   vector-effect: non-scaling-stroke;
   stroke-width: 1px;
+}
+
+/*
+ * Windows High Contrast / forced colours (audit A7): the soft borders and tinted fills disappear there, so the shapes that carry
+ * meaning (form controls, cards, focus) get a real system-colour outline and keyboard focus stays visible.
+ */
+@media (forced-colors: active) {
+  input,
+  textarea,
+  select,
+  [role="menu"],
+  [role="dialog"] {
+    border: 1px solid CanvasText;
+  }
+  :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  .skeleton-shimmer {
+    forced-color-adjust: none;
+    background: GrayText;
+    opacity: 0.25;
+  }
 }

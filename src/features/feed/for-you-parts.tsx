@@ -25,6 +25,7 @@ import { updateOwnInterests } from "@/lib/supabase/profiles";
 import { findTool } from "@/lib/ai-tool-catalog";
 import type { ForYouReason } from "@/lib/supabase/feed";
 import type { FeedItem } from "./types";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 function interestLabel(value: string, t: ReturnType<typeof useTranslation>["t"]): string {
   return (INTEREST_OPTIONS as readonly string[]).includes(value) ? t(INTEREST_OPTION_LABELS[value as InterestOption]) : value;
@@ -70,7 +71,7 @@ export function InterestChips({ onChanged }: { onChanged: () => void }) {
     <div className="space-y-2">
       <div role="group" aria-label={t("forYou.interestsTitle")} className="flex flex-wrap gap-1.5">
         {INTEREST_OPTIONS.map((value) => (
-          <Chip key={value} selected={chosen.includes(value)} onClick={() => void toggle(value)} disabled={saving} className="disabled:opacity-60">
+          <Chip key={value} selected={chosen.includes(value)} onClick={() => void toggle(value)} disabled={saving} className="disabled:opacity-50">
             {t(INTEREST_OPTION_LABELS[value])}
           </Chip>
         ))}
@@ -93,7 +94,7 @@ export function ForYouSettingsModal({ onClose, onChanged }: { onClose: () => voi
   const titleId = useId();
   return (
     <Modal onClose={onClose} labelledBy={titleId} overLayers>
-      <div className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
           <h2 id={titleId} className="text-h3 font-semibold text-text">
             {t("forYou.settingsTitle")}
@@ -118,7 +119,7 @@ export function ForYouSettingsModal({ onClose, onChanged }: { onClose: () => voi
             {t("feed.goToDiscover")}
           </Link>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }
@@ -220,7 +221,7 @@ export function ForYouReasonNote({ item, reason }: { item: FeedItem; reason: For
   const Icon = REASON_ICON[reason.kind];
   return (
     <p className="mb-1.5 flex min-w-0 items-center gap-1.5 px-1 text-caption font-semibold text-text-secondary">
-      <Icon size={13} strokeWidth={2} aria-hidden className="shrink-0 text-primary" />
+      <Icon size={12} aria-hidden className="shrink-0 text-primary" />
       <span className="truncate">{text}</span>
     </p>
   );

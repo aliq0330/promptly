@@ -84,13 +84,13 @@ export default function SignupPage() {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
         <FormIconBadge>
-          <MailCheck size={22} />
+          <MailCheck size={24} />
         </FormIconBadge>
         <h1 className="text-h2 text-text">{t("auth.checkEmailTitle")}</h1>
-        <p className="text-sm text-text-muted">
+        <p className="text-small text-text-muted">
           <strong className="text-text">{email}</strong> {t("auth.checkEmailBodySuffix")}
         </p>
-        <Link href="/login" className="text-sm font-medium text-primary underline underline-offset-2 hover:no-underline">
+        <Link href="/login" className="text-small font-medium text-primary underline underline-offset-2 hover:no-underline">
           {t("auth.backToLogin")}
         </Link>
       </div>
@@ -100,7 +100,7 @@ export default function SignupPage() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 py-4 text-center">
       <FormIconBadge>
-        <UserPlus size={22} />
+        <UserPlus size={24} />
       </FormIconBadge>
       <h1 className="text-h2 text-text">{t("auth.signUp")}</h1>
 
@@ -146,11 +146,11 @@ export default function SignupPage() {
             onChange={(event) => setPassword(event.target.value)}
             className={fieldInputClassName}
           />
-          <p className="mt-1 text-xs text-text-muted">{t("auth.minCharsHint", { min: PASSWORD_MIN_LENGTH })}</p>
+          <p className="mt-1 text-caption text-text-muted">{t("auth.minCharsHint", { min: PASSWORD_MIN_LENGTH })}</p>
         </div>
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-small text-danger">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? t("auth.creatingAccount") : t("auth.createAccountButton")}
@@ -158,7 +158,7 @@ export default function SignupPage() {
       <AuthDivider />
       <GoogleSignInButton next={readNextParam()} />
       <LegalNotice />
-      <p className="text-xs text-text-muted">
+      <p className="text-caption text-text-muted">
         {t("auth.alreadyHaveAccount")}{" "}
         <Link href="/login" className="text-primary underline underline-offset-2 hover:no-underline">
           {t("common.login")}

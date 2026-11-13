@@ -27,7 +27,7 @@ export function BoardSheet({ title, onClose, children }: { title?: string; onClo
   const id = useId();
   return (
     <Modal variant="sheet" onClose={onClose} labelledBy={id}>
-      <div data-board-sheet="" className="flex w-full flex-col overflow-hidden rounded-t-[22px] border border-border-soft bg-surface pb-[max(1rem,env(safe-area-inset-bottom))] pt-5">
+      <div data-board-sheet="" className="flex w-full flex-col overflow-hidden rounded-t-xl border border-border-soft bg-surface pb-[max(1rem,env(safe-area-inset-bottom))] pt-5">
         <h2 id={id} className={title ? "px-5 pb-2 text-caption font-bold uppercase tracking-[0.06em] text-text-muted" : "sr-only"}>
           {title ?? "·"}
         </h2>
@@ -124,20 +124,20 @@ export function ZoomMenuBody({ props, onDone }: { props: ZoomMenuProps; onDone: 
         run();
         if (!opts.keep) onDone();
       }}
-      className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-body font-semibold text-text hover:bg-surface-soft disabled:text-text-muted disabled:opacity-60"
+      className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-body font-semibold text-text hover:bg-surface-soft disabled:text-text-muted disabled:opacity-50"
     >
       <span aria-hidden className="grid h-6 w-6 place-items-center text-text-secondary">{icon}</span>
       <span className="flex-1">{label}</span>
-      {opts.checked && <Check size={19} className="text-primary" strokeWidth={2.6} aria-hidden />}
+      {opts.checked && <Check size={20} className="text-primary" aria-hidden />}
     </button>
   );
   const divider = <div className="my-1.5 h-px bg-border-soft" />;
   return (
     <div data-testid="board-zoom-menu">
-      {row("in", <Plus size={19} aria-hidden />, t("spaces.board.zoomIn"), props.onZoomIn, { keep: true })}
-      {row("out", <Minus size={19} aria-hidden />, t("spaces.board.zoomOut"), props.onZoomOut, { keep: true })}
-      {row("fit", <Maximize size={19} aria-hidden />, t("tb.zoom.fitAll"), props.onFit)}
-      {row("selection", <Crosshair size={19} aria-hidden />, t("tb.zoom.fitSelection"), props.onFitSelection, { disabled: !props.hasSelection })}
+      {row("in", <Plus size={20} aria-hidden />, t("spaces.board.zoomIn"), props.onZoomIn, { keep: true })}
+      {row("out", <Minus size={20} aria-hidden />, t("spaces.board.zoomOut"), props.onZoomOut, { keep: true })}
+      {row("fit", <Maximize size={20} aria-hidden />, t("tb.zoom.fitAll"), props.onFit)}
+      {row("selection", <Crosshair size={20} aria-hidden />, t("tb.zoom.fitSelection"), props.onFitSelection, { disabled: !props.hasSelection })}
       {divider}
       <p className="px-3 pb-1 pt-0.5 text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tb.zoom.now", { percent: Math.round(props.zoom * 100) })}</p>
       <div className="grid grid-cols-3 gap-2 px-2 pb-1">
@@ -158,16 +158,16 @@ export function ZoomMenuBody({ props, onDone }: { props: ZoomMenuProps; onDone: 
         ))}
       </div>
       {divider}
-      {row("guides", <LayoutGrid size={19} aria-hidden />, t("tb.zoom.guides"), props.onGuides, { checked: props.guides, keep: true })}
+      {row("guides", <LayoutGrid size={20} aria-hidden />, t("tb.zoom.guides"), props.onGuides, { checked: props.guides, keep: true })}
       {row("minimap", <MapIcon size={19} aria-hidden />, t("spaces.board.minimap"), props.onMinimap, { checked: props.minimap, keep: true })}
-      {row("search", <Search size={19} aria-hidden />, t("tb.zoom.search"), props.onSearch)}
-      {row("shortcuts", <Keyboard size={19} aria-hidden />, t("spaces.board.shortcuts"), props.onShortcuts)}
-      {row("fullscreen", props.fullscreen ? <Minimize2 size={19} aria-hidden /> : <Maximize2 size={19} aria-hidden />, props.fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen"), props.onFullscreen)}
+      {row("search", <Search size={20} aria-hidden />, t("tb.zoom.search"), props.onSearch)}
+      {row("shortcuts", <Keyboard size={20} aria-hidden />, t("spaces.board.shortcuts"), props.onShortcuts)}
+      {row("fullscreen", props.fullscreen ? <Minimize2 size={20} aria-hidden /> : <Maximize2 size={20} aria-hidden />, props.fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen"), props.onFullscreen)}
       {props.editable && (
         <>
           {divider}
-          {row("undo", <Undo2 size={19} aria-hidden />, t("spaces.board.undo"), props.onUndo, { disabled: !props.canUndo })}
-          {row("redo", <Redo2 size={19} aria-hidden />, t("spaces.board.redo"), props.onRedo, { disabled: !props.canRedo })}
+          {row("undo", <Undo2 size={20} aria-hidden />, t("spaces.board.undo"), props.onUndo, { disabled: !props.canUndo })}
+          {row("redo", <Redo2 size={20} aria-hidden />, t("spaces.board.redo"), props.onRedo, { disabled: !props.canRedo })}
         </>
       )}
     </div>
@@ -240,7 +240,7 @@ export function MovePopover({
         onClick={() => void run(() => (currentPage && !currentPage.isMain ? createBoardInGroup(team.currentId, t("tb.pages.newDefaultName")) : createBoard(team.projectId, t("tb.pages.newDefaultName"), team.fileId ?? "")).then((id) => { team.reload(); return id; }))}
         className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 text-small font-bold text-primary hover:bg-surface-soft disabled:opacity-50"
       >
-        <Plus size={19} strokeWidth={2.4} aria-hidden />
+        <Plus size={20} aria-hidden />
         {t("tb.move.new")}
       </button>
         </>
@@ -255,7 +255,7 @@ export function MovePopover({
             disabled={!isCopy && !canMove}
             onClick={() => setCopy(isCopy)}
             data-board-move-mode={isCopy ? "copy" : "move"}
-            className={cn("h-9 flex-1 rounded-lg text-small font-semibold disabled:opacity-40", copy === isCopy ? "bg-surface text-text shadow-xs" : "text-text-secondary")}
+            className={cn("h-9 flex-1 rounded-lg text-small font-semibold disabled:opacity-50", copy === isCopy ? "bg-surface text-text shadow-xs" : "text-text-secondary")}
           >
             {t(isCopy ? "tb.move.copy" : "tb.move.move")}
           </button>

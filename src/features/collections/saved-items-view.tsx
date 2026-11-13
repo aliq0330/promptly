@@ -53,7 +53,7 @@ export function SavedItemsView() {
   const loaded = !saved.loading;
 
   if (failed) {
-    return <div className="mx-auto max-w-md px-4 py-16 text-center text-sm text-text-muted">{t("saved.loadFailed")}</div>;
+    return <div className="mx-auto max-w-md px-4 py-16 text-center text-small text-text-muted">{t("saved.loadFailed")}</div>;
   }
   if (!loaded) return <DetailSkeleton />;
 
@@ -82,7 +82,7 @@ export function SavedItemsView() {
             <ScrollRow className="gap-3">
               {collections.map((collection) => (
                 <Link key={collection.id} href={collectionHref(collection)} className="group w-[8.75rem] shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                  <CollectionCover collection={collection} className="aspect-[7/5] w-full overflow-hidden rounded-2xl" />
+                  <CollectionCover collection={collection} className="aspect-[7/5] w-full overflow-hidden rounded-lg" />
                   <p className="mt-2 truncate text-small font-medium text-text group-hover:text-primary">{collection.name}</p>
                   <p className="text-caption tabular-nums text-text-muted">{t("collection.itemCount", { count: collection.itemCount })}</p>
                 </Link>

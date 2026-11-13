@@ -123,7 +123,7 @@ export function ReactionButton({
         aria-label={t("prompt.loginToLikeAria", { count })}
         className={classes}
       >
-        <Heart size={size} strokeWidth={1.75} />
+        <Heart size={size} />
         {actionLabel}
         {showCount && <span aria-hidden>{formatCount(count)}</span>}
       </button>
@@ -152,7 +152,7 @@ export function ReactionButton({
         {reaction ? (
           <ReactionIcon ref={iconRef} reaction={reaction} size={size + 4} className="-my-1" />
         ) : (
-          <Heart size={size} strokeWidth={1.75} />
+          <Heart size={size} />
         )}
         {actionLabel}
         {showCount && <RollingCount value={count} />}

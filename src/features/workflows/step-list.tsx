@@ -38,7 +38,7 @@ export function StepList({
     <div className="space-y-3">
       {steps.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border-strong bg-surface-soft p-5 text-center">
-          <p className="text-sm font-medium text-text">{t("workflow.noStepsTitle")}</p>
+          <p className="text-small font-medium text-text">{t("workflow.noStepsTitle")}</p>
           <p className="mt-1 text-caption text-text-muted">{t("workflow.noStepsBody")}</p>
         </div>
       ) : (
@@ -104,7 +104,7 @@ export function StepList({
                       {index + 1}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className={cn("block truncate text-sm font-medium", step.title ? "text-text" : "text-text-muted")}>
+                      <span className={cn("block truncate text-small font-medium", step.title ? "text-text" : "text-text-muted")}>
                         {step.title || t("workflow.untitledStep")}
                       </span>
                       <span className="mt-0.5 flex min-w-0 items-center gap-1 text-caption text-text-muted">
@@ -125,7 +125,7 @@ export function StepList({
                         aria-label={t("workflow.moveUp")}
                         disabled={index === 0}
                         onClick={() => onReorder(index, index - 1)}
-                        className="rounded p-1 text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-30"
+                        className="rounded p-1 text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-50"
                       >
                         <ChevronUp size={14} />
                       </button>
@@ -134,7 +134,7 @@ export function StepList({
                         aria-label={t("workflow.moveDown")}
                         disabled={index === steps.length - 1}
                         onClick={() => onReorder(index, index + 1)}
-                        className="rounded p-1 text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-30"
+                        className="rounded p-1 text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-50"
                       >
                         <ChevronDown size={14} />
                       </button>
@@ -145,7 +145,7 @@ export function StepList({
                   <div className="flex items-center gap-2 py-1 pl-[26px]" aria-hidden>
                     <span className="flex flex-col items-center text-border-strong">
                       <span className="h-2 w-px bg-border-strong" />
-                      <ArrowDown size={13} />
+                      <ArrowDown size={12} />
                     </span>
                     {carried.length > 0 && (
                       <span className="flex min-w-0 flex-wrap gap-1">

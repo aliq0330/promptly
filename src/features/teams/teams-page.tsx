@@ -41,6 +41,7 @@ import { teamLink } from "@/lib/teams";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
 import { ProjectMini } from "./team-phone-home";
+import { CountBadge } from "@/components/ui/badge";
 
 /**
  * `/teams`: Ekipler (docs/history/353-*). Ekip artık topluluktan bağımsız bir sistemdir: bu sayfa üyesi olduğum ekiplerin günlük kapısı —
@@ -145,7 +146,7 @@ function TeamsPageInner() {
             }
           >
             <button type="button" onClick={() => setSearchOpen((open) => !open)} aria-label={t("header.searchAriaLabel")} aria-pressed={searchOpen} data-teams-search className={cn(CONTROL_ICON_BUTTON, searchOpen && "bg-surface-soft")}>
-              <Search size={22} strokeWidth={1.75} aria-hidden />
+              <Search size={24} aria-hidden />
             </button>
           </HubControlRow>
           {searchOpen && (
@@ -170,7 +171,7 @@ function TeamsPageInner() {
       {activeTab === "teams" && invites.length > 0 && (
         <ul className="space-y-2" data-testid="team-invites">
           {invites.map((invite) => (
-            <li key={invite.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border-soft bg-surface p-3.5 max-md:p-3">
+            <li key={invite.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border-soft bg-surface p-3.5 max-md:p-3">
               <TeamMark name={invite.teamName} tone={invite.teamTone} size={40} className="rounded-xl" />
               <div className="min-w-0 flex-1 max-md:basis-[calc(100%-3.5rem)]">
                 <p className="text-small text-text-secondary">
@@ -277,9 +278,9 @@ function TodoList({ todos }: { todos: TeamTodo[] }) {
           const Icon = todo.kind === "unread" ? MessageCircle : todo.kind === "project_review" ? Eye : Check;
           const tone = todo.kind === "unread" ? "bg-success/10 text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary" : "bg-warning/10 text-warning";
           return (
-            <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-2xl border border-border-soft bg-surface px-3.5 py-3">
+            <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface px-3.5 py-3">
               <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", tone)} aria-hidden>
-                <Icon size={17} />
+                <Icon size={16} />
               </span>
               <span className="min-w-0 flex-1 text-small text-text-secondary">
                 <strong className="font-bold text-text">{todo.teamName}</strong> · {todoTitle(t, todo)}
@@ -345,7 +346,7 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
       meta={`${t(roleLabelKey(team.myRole))} · ${t("tm.card.members", { count: team.memberCount })} · ${t("tp.header.projects", { count: team.spaceCount })}`}
       cover={
         <span aria-hidden className={cn("absolute inset-0 grid place-items-center", CARD_BAND[team.tone] ?? CARD_BAND.primary)}>
-          <TeamMark name={team.name} tone={team.tone} size={64} solid className="rounded-2xl ring-2 ring-surface" />
+          <TeamMark name={team.name} tone={team.tone} size={64} solid className="rounded-lg ring-2 ring-surface" />
         </span>
       }
       chip={<span className={HUB_CARD_CHIP_CLASS}>{t("tc.band.kicker")}</span>}
@@ -375,8 +376,8 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
             aria-label={t("tm.card.openChat")}
             className="inline-flex items-center gap-1.5 rounded-full p-1.5 text-text-secondary hover:bg-surface-soft"
           >
-            <MessageCircle size={17} aria-hidden />
-            {team.unreadCount > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{team.unreadCount}</span>}
+            <MessageCircle size={16} aria-hidden />
+            {team.unreadCount > 0 && <CountBadge>{team.unreadCount}</CountBadge>}
           </Link>
           {approvals === 0 && team.unreadCount === 0 && <HubBadge tone={team.myRole === "owner" || team.myRole === "admin" ? "success" : "neutral"}>{t(roleLabelKey(team.myRole))}</HubBadge>}
         </>

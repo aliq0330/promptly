@@ -76,7 +76,7 @@ export function SuggestEditModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
-          <h2 id="suggest-edit-modal-title" className="text-base font-semibold text-text">
+          <h2 id="suggest-edit-modal-title" className="text-body font-semibold text-text">
             {t("prompt.suggestEdit")}
           </h2>
           <button
@@ -90,10 +90,10 @@ export function SuggestEditModal({
         </div>
 
         {pendingCheck === "checking" ? (
-          <p className="px-5 py-4 text-sm text-text-muted">{t("prompt.checking")}</p>
+          <p className="px-5 py-4 text-small text-text-muted">{t("prompt.checking")}</p>
         ) : pendingCheck === "already-pending" ? (
           <div className="space-y-4 px-5 py-4">
-            <p className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
+            <p className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-small text-warning">
               {t("prompt.alreadyHasPendingSuggestion")}
             </p>
             <div className="flex justify-end">
@@ -104,7 +104,7 @@ export function SuggestEditModal({
           </div>
         ) : sent ? (
           <div className="space-y-4 px-5 py-4">
-            <p className="rounded-md border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
+            <p className="rounded-md border border-success/30 bg-success/10 px-3 py-2 text-small text-success">
               {t("prompt.suggestionSent")}
             </p>
             <div className="flex justify-end">
@@ -116,14 +116,14 @@ export function SuggestEditModal({
         ) : (
           <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
             <div>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("prompt.currentPromptText")}</p>
-              <p className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface-soft px-3 py-2 font-mono text-xs text-text-muted">
+              <p className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("prompt.currentPromptText")}</p>
+              <p className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface-soft px-3 py-2 font-mono text-caption text-text-muted">
                 {promptText}
               </p>
             </div>
 
             <div>
-              <label htmlFor="suggest-edit-text" className="mb-1.5 block text-sm font-medium text-text">
+              <label htmlFor="suggest-edit-text" className="mb-1.5 block text-small font-medium text-text">
                 {t("prompt.suggestEditQuestion")}
               </label>
               <textarea
@@ -133,14 +133,14 @@ export function SuggestEditModal({
                 onChange={(event) => setSuggestionText(event.target.value)}
                 maxLength={2000}
                 placeholder={t("prompt.suggestEditPlaceholder")}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                 autoFocus
               />
             </div>
 
             {showProposedField ? (
               <div>
-                <label htmlFor="suggest-edit-proposed" className="mb-1.5 block text-sm font-medium text-text">
+                <label htmlFor="suggest-edit-proposed" className="mb-1.5 block text-small font-medium text-text">
                   {t("prompt.proposedNewText")} <span className="text-text-muted">({t("common.optional")})</span>
                 </label>
                 <textarea
@@ -149,20 +149,20 @@ export function SuggestEditModal({
                   value={proposedPromptText}
                   onChange={(event) => setProposedPromptText(event.target.value)}
                   placeholder={t("prompt.proposedNewTextPlaceholder")}
-                  className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                  className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                 />
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => setShowProposedField(true)}
-                className="text-xs font-medium text-primary hover:underline"
+                className="text-caption font-medium text-primary hover:underline"
               >
                 {t("prompt.suggestFullTextToggle")}
               </button>
             )}
 
-            {error && <p className="text-sm text-danger">{error}</p>}
+            {error && <p className="text-small text-danger">{error}</p>}
 
             </div>
 

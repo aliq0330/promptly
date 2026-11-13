@@ -21,11 +21,11 @@ export function ContentTypeLabel({
   return (
     <p
       className={cn(
-        "flex min-w-0 items-center gap-1.5 text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.07em] text-text-secondary",
+        "flex min-w-0 items-center gap-1.5 text-micro font-semibold uppercase leading-none tracking-[0.07em] text-text-secondary",
         className,
       )}
     >
-      <Icon size={13} strokeWidth={2.1} aria-hidden className="shrink-0 text-primary" />
+      <Icon size={12} aria-hidden className="shrink-0 text-primary" />
       <span className="shrink-0">{label}</span>
       {detail && (
         <>
@@ -45,8 +45,8 @@ export function ContentTypeLabel({
  */
 export function ContentTypePill({ icon: Icon, label, detail, className }: { icon: IconComponent; label: string; detail?: string | null; className?: string }) {
   return (
-    <span className={cn("inline-flex min-w-0 items-center gap-1.5 text-[0.6875rem] font-bold uppercase leading-none tracking-[0.08em] text-primary", className)}>
-      <Icon size={13} strokeWidth={2.1} aria-hidden className="shrink-0" />
+    <span className={cn("inline-flex min-w-0 items-center gap-1.5 text-micro font-bold uppercase leading-none tracking-[0.08em] text-primary", className)}>
+      <Icon size={12} aria-hidden className="shrink-0" />
       <span className="truncate">
         {label}
         {detail && <span className="font-semibold normal-case tracking-normal text-text-secondary"> · {detail}</span>}

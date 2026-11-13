@@ -8,7 +8,7 @@ export function CreatorList({ users, emptyMessage }: { users: UserProfile[]; emp
   const { t } = useTranslation();
   if (users.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-text-muted">{emptyMessage ?? t("profile.notFollowingAnyoneYet")}</p>
+      <p className="py-10 text-center text-small text-text-muted">{emptyMessage ?? t("profile.notFollowingAnyoneYet")}</p>
     );
   }
 

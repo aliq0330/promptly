@@ -240,13 +240,13 @@ export function ContentCardPost({
       <div data-card-media className="relative overflow-hidden rounded-xl bg-primary-soft">
         {art ?? (
           <div aria-hidden className="flex aspect-[4/3] w-full items-center justify-center text-primary/40">
-            {TypeIcon && <TypeIcon size={44} strokeWidth={1.5} />}
+            {TypeIcon && <TypeIcon size={44} />}
           </div>
         )}
         {status && <div className="absolute bottom-2.5 right-2.5 z-[3] flex flex-wrap items-center justify-end gap-1.5">{status}</div>}
         {art && TypeIcon && TypeIcon !== ImageIcon && (
           <span aria-hidden className="absolute right-2.5 top-2.5 z-[1] flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
-            <TypeIcon size={18} strokeWidth={1.75} />
+            <TypeIcon size={18} />
           </span>
         )}
         {/* Kicker (type · tool) + title over the picture, ALWAYS visible (docs/history/277-*). The overlay lets clicks through to the stretched link; the title link inside it is the keyboard way in. */}

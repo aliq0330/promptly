@@ -106,7 +106,7 @@ export function WorksBadge({ works, tone = "plain", className }: { works: boolea
         className,
       )}
     >
-      <Icon size={12} strokeWidth={2.25} aria-hidden />
+      <Icon size={12} aria-hidden />
       {works ? t("prompt.works.yes") : t("prompt.works.no")}
     </span>
   );

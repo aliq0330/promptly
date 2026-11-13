@@ -82,7 +82,7 @@ export const BoardItem = memo(function BoardItem({
       )}
       {item.locked && !lowDetail && (
         <span aria-hidden className="pointer-events-none absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-surface/90 text-text-secondary shadow-sm">
-          <Lock size={11} strokeWidth={2} />
+          <Lock size={12} />
         </span>
       )}
       {showHandle && (
@@ -169,7 +169,7 @@ function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item:
       <div className={cn("flex h-full w-full flex-col overflow-hidden rounded-lg border p-3 shadow-card", colors.surface, colors.border)}>
         <p className="flex items-center gap-1.5 text-caption font-semibold text-text-secondary">
           <StickyNote size={12} aria-hidden />
-          {item.isPrivate && <Lock size={11} aria-label={t("spaces.notes.privateBadge")} />}
+          {item.isPrivate && <Lock size={12} aria-label={t("spaces.notes.privateBadge")} />}
           <span className="truncate">{item.title || t("spaces.item.note")}</span>
         </p>
         {!lowDetail && (
@@ -208,14 +208,14 @@ function StepChips({ label, values }: { label: string; values: string[] }) {
   const shown = values.slice(0, 3);
   return (
     <div className="grid grid-cols-[48px_minmax(0,1fr)] items-start gap-1.5">
-      <span className="pt-0.5 text-[10px] font-bold uppercase tracking-[0.07em] text-text-muted">{label}</span>
+      <span className="pt-0.5 text-micro font-bold uppercase tracking-[0.07em] text-text-muted">{label}</span>
       <div className="flex min-w-0 flex-wrap gap-1">
         {shown.map((value, index) => (
-          <span key={index} className="max-w-full truncate rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 font-mono text-[11px] leading-4 text-text-secondary">
+          <span key={index} className="max-w-full truncate rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 font-mono text-micro leading-4 text-text-secondary">
             {value}
           </span>
         ))}
-        {values.length > shown.length && <span className="rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 text-[11px] leading-4 text-text-muted">+{values.length - shown.length}</span>}
+        {values.length > shown.length && <span className="rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 text-micro leading-4 text-text-muted">+{values.length - shown.length}</span>}
       </div>
     </div>
   );

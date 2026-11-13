@@ -112,7 +112,7 @@ function Cell({
         </span>
       )}
       {isGif && (
-        <span aria-hidden data-message-gif-badge className="absolute left-1.5 top-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-[0.06em] text-white">
+        <span aria-hidden data-message-gif-badge className="absolute left-1.5 top-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-micro font-bold tracking-[0.06em] text-white">
           {t("gif.badge")}
         </span>
       )}
@@ -219,7 +219,7 @@ export function SendStateOverlay({
             event.stopPropagation();
             onRetry();
           }}
-          className="inline-flex items-center gap-1 rounded-full bg-danger px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+          className="inline-flex items-center gap-1 rounded-full bg-danger px-3 py-1.5 text-caption font-medium text-danger-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
         >
           <RefreshCw size={12} aria-hidden />
           {t("common.retry")}

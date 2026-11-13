@@ -122,7 +122,7 @@ export function CommunityCoverPicker({
             data-cover-pick
             className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-surface px-4 text-label font-semibold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
           >
-            <Camera size={15} aria-hidden /> {shownPhoto ? t("groups.cover.photoChange") : t("groups.cover.photoPick")}
+            <Camera size={16} aria-hidden /> {shownPhoto ? t("groups.cover.photoChange") : t("groups.cover.photoPick")}
           </button>
           <input
             ref={fileRef}

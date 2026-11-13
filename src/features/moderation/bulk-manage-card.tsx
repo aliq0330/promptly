@@ -178,7 +178,7 @@ export function BulkManageCard() {
       <div className="flex items-start gap-3">
         <ListChecks size={18} className="mt-0.5 shrink-0 text-text-muted" />
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-text">{t("exchange.manage.title")}</h2>
+          <h2 className="text-small font-semibold text-text">{t("exchange.manage.title")}</h2>
           <p className="text-small text-text-secondary">{t("exchange.manage.hint")}</p>
         </div>
       </div>

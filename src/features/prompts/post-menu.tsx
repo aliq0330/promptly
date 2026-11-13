@@ -30,6 +30,7 @@ import { ExportPromptsModal } from "@/features/exchange/export-prompts-modal";
 import { fetchPromptForExport } from "@/lib/supabase/prompt-exchange";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { useCardExit } from "@/features/content/content-card";
+import { MENU_ITEM_CLASS } from "@/components/ui/menu";
 
 /**
  * Every post card's three-dot menu (header, top-right) — not just the
@@ -272,7 +273,7 @@ export function PostMenu({
         <div
           role="menu"
           className={cn(
-            "absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
+            "absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-lg border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
           )}
         >
           {!communityId && !postScope && (
@@ -280,7 +281,7 @@ export function PostMenu({
               type="button"
               role="menuitem"
               onClick={handleCopyLink}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+              className={MENU_ITEM_CLASS}
             >
               <Link2 size={14} />
               {copied ? t("common.copied") : t("common.copyLink")}
@@ -297,7 +298,7 @@ export function PostMenu({
                 setOpen(false);
                 setSpaceOpen(true);
               }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+              className={MENU_ITEM_CLASS}
             >
               <Shapes size={14} />
               {t("spaces.add.menu")}
@@ -314,7 +315,7 @@ export function PostMenu({
                 setOpen(false);
                 setExportOpen(true);
               }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+              className={MENU_ITEM_CLASS}
             >
               <Download size={14} />
               {t("exchange.export.menu")}
@@ -333,7 +334,7 @@ export function PostMenu({
                 extra.onSelect();
               }}
               className={cn(
-                "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-soft",
+                "flex w-full items-center gap-2 px-3 py-2 text-left text-small hover:bg-surface-soft",
                 extra.danger ? "text-danger" : extra.selected ? "font-semibold text-primary" : "text-text",
               )}
             >
@@ -349,12 +350,12 @@ export function PostMenu({
                 role="menuitem"
                 onClick={handleRemoveFromCollection}
                 disabled={isRemoving}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger/10"
               >
                 {isRemoving ? <Loader2 size={14} className="animate-spin" /> : <FolderMinus size={14} />}
                 {confirmingRemove ? t("common.confirmDelete") : t("common.removeFromCollection")}
               </button>
-              {removeError && <p className="px-3 py-1 text-xs text-danger">{removeError}</p>}
+              {removeError && <p className="px-3 py-1 text-caption text-danger">{removeError}</p>}
             </>
           )}
           {isOwn && !postScope && (
@@ -370,7 +371,7 @@ export function PostMenu({
                       setOpen(false);
                       onEdit();
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+                    className={MENU_ITEM_CLASS}
                   >
                     <Pencil size={14} />
                     {t("common.edit")}
@@ -381,7 +382,7 @@ export function PostMenu({
                   href={editHref}
                   role="menuitem"
                   onClick={(event) => event.stopPropagation()}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+                  className={MENU_ITEM_CLASS}
                 >
                   <Pencil size={14} />
                   {t("common.edit")}
@@ -392,7 +393,7 @@ export function PostMenu({
                   href={`/create?duplicate=${promptId}`}
                   role="menuitem"
                   onClick={(event) => event.stopPropagation()}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+                  className={MENU_ITEM_CLASS}
                 >
                   <Copy size={14} />
                   {t("common.duplicate")}
@@ -403,7 +404,7 @@ export function PostMenu({
                 role="menuitem"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger/10"
               >
                 {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <TrashIcon size={14} />}
                 {confirmingDelete && !asksInDialog ? t("common.confirmDelete") : t("common.delete")}
@@ -418,7 +419,7 @@ export function PostMenu({
               />
             </div>
           )}
-          {error && <p className="px-3 py-1 text-xs text-danger">{error}</p>}
+          {error && <p className="px-3 py-1 text-caption text-danger">{error}</p>}
         </div>
       )}
       {deleteDialogOpen && promptId && (

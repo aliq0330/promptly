@@ -57,7 +57,7 @@ export function Header() {
           href="/discover"
           className="group flex h-10 w-full max-w-lg items-center gap-2.5 rounded-full border border-border-soft bg-surface px-4 text-small text-text-muted shadow-xs transition-[border-color,box-shadow,color] duration-200 hover:border-border hover:text-text-secondary hover:shadow-sm"
         >
-          <Search size={17} className="shrink-0" />
+          <Search size={16} className="shrink-0" />
           <span className="truncate">{t("header.searchPlaceholder")}</span>
         </Link>
         )}

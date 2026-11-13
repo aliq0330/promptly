@@ -133,7 +133,7 @@ export function Tabs<K extends string>({
         );
         const content = (
           <>
-            {Icon && <Icon size={15} className={selected ? "text-primary" : undefined} />}
+            {Icon && <Icon size={16} className={selected ? "text-primary" : undefined} />}
             {item.label}
             {item.count !== undefined && (
               <span

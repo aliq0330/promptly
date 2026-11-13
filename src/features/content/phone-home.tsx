@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { cn } from "@/lib/utils";
 import type { PhoneSectionItem } from "./phone-sections";
+import { CountBadge } from "@/components/ui/badge";
 
 /**
  * Telefonda "ana ekran" kalıbı (docs/history/358-*, kullanıcı mockup'ı onayladı): Ekip ve Topluluk sayfalarının KÖK ekranı aynı iskeletten
@@ -46,7 +47,7 @@ export function PhoneHomeIdentity({
         {backLabel}
       </Link>
       <div className="flex items-center gap-3">
-        <span className="shrink-0 [&>*]:!rounded-2xl">{mark}</span>
+        <span className="shrink-0 [&>*]:!rounded-lg">{mark}</span>
         <div className="min-w-0 flex-1">
           <p className="text-caption font-bold uppercase tracking-[0.08em] text-primary">{eyebrow}</p>
           <h1 className="font-display text-h2 font-bold leading-tight text-text [overflow-wrap:anywhere]">{title}</h1>
@@ -74,7 +75,7 @@ export function PhoneTileGrid({ items, ariaLabel, className }: { items: PhoneSec
             key={item.key}
             href={item.href}
             data-phone-section={item.key}
-            className="relative flex h-[62px] items-center gap-2.5 rounded-2xl border border-border-soft bg-surface px-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="relative flex h-[62px] items-center gap-2.5 rounded-lg border border-border-soft bg-surface px-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
               <Icon size={18} aria-hidden />
@@ -84,9 +85,9 @@ export function PhoneTileGrid({ items, ariaLabel, className }: { items: PhoneSec
               {(item.sub ?? item.meta) !== undefined && (item.sub ?? item.meta) !== "" && <span className="block truncate text-caption text-text-muted">{item.sub ?? item.meta}</span>}
             </span>
             {item.badge ? (
-              <span className="absolute -right-1 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-secondary px-1.5 text-caption font-bold text-white ring-2 ring-background" data-phone-badge>
+              <CountBadge className="absolute -right-1 -top-1.5 ring-2 ring-background" data-phone-badge>
                 {item.badge}
-              </span>
+              </CountBadge>
             ) : null}
           </Link>
         );
@@ -113,7 +114,7 @@ export function PhoneHomeSection({ title, href, linkLabel, children, testId }: {
 }
 
 export function PhoneHomeCard({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("divide-y divide-border-soft overflow-hidden rounded-2xl border border-border-soft bg-surface", className)}>{children}</div>;
+  return <div className={cn("divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface", className)}>{children}</div>;
 }
 
 /** Önizleme satırı: küçük görsel/simge + iki satır metin (bağlantı) + (varsa) sağda eylem. Eylem bağlantının DIŞINDA durur (iç içe bağlantı olmaz). */

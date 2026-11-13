@@ -42,7 +42,7 @@ export function attachmentHref(type: CommentAttachmentType, id: string): string 
 /** Kartın hâli: yükleniyor · okuyucu göremiyor/kaldırıldı · yüklenemedi · hazır. */
 export type AttachmentState = { status: "loading" } | { status: "hidden" } | { status: "error" } | { status: "ready"; card: AttachmentCard };
 
-const SHELL = "relative flex w-full max-w-xs items-center gap-2.5 rounded-2xl bg-surface-soft p-2 text-left";
+const SHELL = "relative flex w-full max-w-xs items-center gap-2.5 rounded-lg bg-surface-soft p-2 text-left";
 
 /**
  * Yorum ekinin KÜÇÜK önizleme kartı (docs/history/308-*): mesajdaki büyük paylaşım kartının (`SharedCard`) tek satırlık hâli — kapak, tür etiketi,
@@ -102,7 +102,7 @@ export function CompactContentCard({
         ) : card.thumbnailUrl ? (
           <StorageImage src={card.thumbnailUrl} alt="" fill sizes="56px" className="object-cover" />
         ) : (
-          <Icon size={22} strokeWidth={1.75} aria-hidden />
+          <Icon size={24} aria-hidden />
         )}
       </span>
       <span className="min-w-0 flex-1">
@@ -154,7 +154,7 @@ function RemoveButton({ onRemove }: { onRemove: () => void }) {
       data-comment-extra-remove="attachment"
       className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <X size={14} strokeWidth={2.5} aria-hidden />
+      <X size={14} aria-hidden />
     </button>
   );
 }

@@ -65,7 +65,7 @@ export function ConversationList({
   const visibleCount = Math.max(shown, activeIndex + 1);
   if (conversations.length === 0) {
     return (
-      <p className="px-4 py-10 text-center text-sm text-text-muted">{emptyLabel ?? t("messages.noConversationsYet")}</p>
+      <p className="px-4 py-10 text-center text-small text-text-muted">{emptyLabel ?? t("messages.noConversationsYet")}</p>
     );
   }
 

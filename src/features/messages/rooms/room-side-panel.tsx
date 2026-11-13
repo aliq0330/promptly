@@ -71,7 +71,7 @@ export function RoomSidePanel({
               {members.map((member) => (
                 <li key={member.userId}>
                   <Link href={profileHref({ username: member.username })} className="flex items-center gap-2.5 rounded-lg px-1 py-1.5 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                    <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={36} />
+                    <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={member.displayName} size={40} />
                     <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{member.displayName}</span>
                     {member.role !== "member" && <RoleBadge role={member.role} />}
                   </Link>

@@ -37,7 +37,7 @@ export function FitBadge({ fit, preset, className }: { fit: PresetFit; preset: P
   const match = fit.level === "match";
   return (
     <span data-fit={fit.level} className={cn("inline-flex items-start gap-1 text-caption font-semibold leading-snug", match ? "text-success" : "text-warning", className)}>
-      {match && <Check size={12} strokeWidth={3} aria-hidden className="mt-0.5 shrink-0" />}
+      {match && <Check size={12} aria-hidden className="mt-0.5 shrink-0" />}
       <span>{summarize(fit, preset)}</span>
     </span>
   );

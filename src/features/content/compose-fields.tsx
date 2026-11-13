@@ -37,7 +37,7 @@ export function ContentTypePicker({ value, onChange, locked = false }: { value: 
               selected ? "border-primary bg-primary-soft font-bold text-primary" : "border-border-strong bg-surface text-text-secondary hover:border-primary/50 hover:text-text",
             )}
           >
-            <option.icon size={16} strokeWidth={1.9} aria-hidden />
+            <option.icon size={16} aria-hidden />
             {t(option.labelKey)}
           </button>
         );
@@ -61,9 +61,9 @@ export function SuggestedTagsRow({ picker, max = 4 }: { picker: UseTagPickerResu
           disabled={picker.acceptingSlug === tag.slug}
           onClick={() => void picker.acceptSuggested(tag)}
           data-compose-suggestion={tag.slug}
-          className={cn(chipClassName, "border-dashed border-border-strong text-text-secondary hover:border-primary/50 hover:text-primary disabled:opacity-60")}
+          className={cn(chipClassName, "border-dashed border-border-strong text-text-secondary hover:border-primary/50 hover:text-primary disabled:opacity-50")}
         >
-          <Plus size={13} aria-hidden />#{tag.label}
+          <Plus size={12} aria-hidden />#{tag.label}
         </button>
       ))}
     </div>

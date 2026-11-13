@@ -70,7 +70,7 @@ export function CommentCountLink({
       title={t("comments.title")}
       aria-label={`${t("comments.title")} (${formatCount(count)})`}
     >
-      <MessageCircle size={size} strokeWidth={1.75} />
+      <MessageCircle size={size} />
       <span aria-hidden>{formatCount(count)}</span>
     </Link>
   );

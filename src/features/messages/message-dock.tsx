@@ -77,7 +77,7 @@ function DockPill({ pillRef }: { pillRef: React.RefObject<HTMLButtonElement | nu
       )}
       <span className={recent.length > 0 ? undefined : "pl-2.5"}>{t("header.messagesAriaLabel")}</span>
       {unread > 0 && (
-        <span aria-hidden data-dock-badge="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold leading-none text-primary-foreground">
+        <span aria-hidden data-dock-badge="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-micro font-bold leading-none text-primary-foreground">
           {formatUnread(unread)}
         </span>
       )}

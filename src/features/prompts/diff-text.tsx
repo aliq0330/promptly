@@ -14,7 +14,7 @@ import { diffWords } from "@/lib/prompt-diff";
 export function DiffText({ before, after, className }: { before: string; after: string; className?: string }) {
   const tokens = diffWords(before, after);
   return (
-    <p className={`prompt-text whitespace-pre-wrap break-words text-sm ${className ?? ""}`}>
+    <p className={`prompt-text whitespace-pre-wrap break-words text-small ${className ?? ""}`}>
       {tokens.map((token, index) => {
         if (token.type === "same") return <span key={index}>{token.text}</span>;
         if (token.type === "removed") {

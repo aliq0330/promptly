@@ -17,9 +17,9 @@ import { cn } from "@/lib/utils";
 import type { WorkflowStep } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
 import { StorageImg } from "@/components/ui/storage-media";
+import { fieldDenseInputClassName } from "@/components/ui/field";
 
-const inputClass =
-  "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60";
+const inputClass = fieldDenseInputClassName;
 
 interface PaneProps {
   step: WorkflowStep;
@@ -33,7 +33,7 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor={`step-title-${step.id}`} className="mb-1.5 block text-sm font-medium text-text">
+        <label htmlFor={`step-title-${step.id}`} className="mb-1.5 block text-small font-medium text-text">
           {t("workflow.stepTitleLabel")} <span className="text-danger">*</span>
         </label>
         <input
@@ -46,7 +46,7 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
         />
       </div>
       <div>
-        <label htmlFor={`step-desc-${step.id}`} className="mb-1.5 block text-sm font-medium text-text">
+        <label htmlFor={`step-desc-${step.id}`} className="mb-1.5 block text-small font-medium text-text">
           {t("workflow.stepDescriptionLabel")}
         </label>
         <textarea
@@ -55,11 +55,11 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
           value={step.description}
           onChange={(event) => onChange({ description: event.target.value })}
           placeholder={t("workflow.stepDescriptionPlaceholder")}
-          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
       <div>
-        <label htmlFor={`step-instr-${step.id}`} className="mb-1.5 block text-sm font-medium text-text">
+        <label htmlFor={`step-instr-${step.id}`} className="mb-1.5 block text-small font-medium text-text">
           {t("workflow.instructionsLabel")}
         </label>
         <textarea
@@ -68,7 +68,7 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
           value={step.instructions}
           onChange={(event) => onChange({ instructions: event.target.value })}
           placeholder={t("workflow.instructionsPlaceholder")}
-          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
     </div>
@@ -92,7 +92,7 @@ export function ContentPane({
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium text-text">{t("workflow.contentUsed")}</p>
+      <p className="text-small font-medium text-text">{t("workflow.contentUsed")}</p>
       {c ? (
         <div className="flex items-start gap-3 rounded-lg border border-border-soft bg-surface-soft p-3">
           {c.thumbnailUrl ? (
@@ -107,7 +107,7 @@ export function ContentPane({
               <Icon size={12} />
               {t(meta.labelKey)}
             </p>
-            <p className="truncate text-sm font-semibold text-text">{c.title}</p>
+            <p className="truncate text-small font-semibold text-text">{c.title}</p>
             <p className="flex items-center gap-1 truncate text-caption text-text-muted">
               {MediaIcon && <MediaIcon size={12} className="shrink-0" />}
               <span className="truncate">{[stepSubtitle(step, language), `@${c.authorUsername}`].filter(Boolean).join(" · ")}</span>
@@ -115,7 +115,7 @@ export function ContentPane({
           </div>
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-border-strong bg-surface-soft p-4 text-sm text-text-muted">
+        <div className="rounded-lg border border-dashed border-border-strong bg-surface-soft p-4 text-small text-text-muted">
           {step.contentMissing ? t("workflow.contentMissing") : t("workflow.noContent")}
         </div>
       )}
@@ -168,7 +168,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
     <div className="space-y-6">
       <section className="space-y-2.5">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-text">{t("workflow.inputsHeading")}</h3>
+          <h3 className="text-small font-semibold text-text">{t("workflow.inputsHeading")}</h3>
           <Button type="button" variant="ghost" size="sm" onClick={() => onChange({ inputs: [...step.inputs, { id: newId(), label: "", source: null }] })}>
             <Plus size={14} />
             {t("workflow.addInput")}
@@ -201,7 +201,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
                 aria-label={t("workflow.useFromPrevious")}
                 value={input.source ? `${input.source.stepId}::${input.source.outputId}` : ""}
                 onChange={(event) => setInput(input.id, { source: event.target.value })}
-                className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm text-text"
+                className="h-10 w-full rounded-md border border-border bg-background px-2 text-small text-text"
               >
                 <option value="">{sources.length ? t("workflow.noLink") : t("workflow.noSourcesBefore")}</option>
                 {sources.map(({ step: from, stepIndex, output }) => (
@@ -217,7 +217,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
 
       <section className="space-y-2.5">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-text">{t("workflow.outputsHeading")}</h3>
+          <h3 className="text-small font-semibold text-text">{t("workflow.outputsHeading")}</h3>
           <Button type="button" variant="ghost" size="sm" onClick={() => onChange({ outputs: [...step.outputs, { id: newId(), label: "" }] })}>
             <Plus size={14} />
             {t("workflow.addOutput")}
@@ -267,7 +267,7 @@ export function SettingsPane({
   const [confirm, setConfirm] = useState(false);
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-text">{t("workflow.settingsHeading")}</h3>
+      <h3 className="text-small font-semibold text-text">{t("workflow.settingsHeading")}</h3>
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" disabled={index === 0} onClick={() => onMove(-1)}>
           <ChevronUp size={14} />
@@ -358,7 +358,7 @@ export function StepPreview({ step, steps, index }: Omit<PaneProps, "onChange">)
   return (
     <div className="space-y-2.5 rounded-lg border border-border-soft bg-surface-soft p-3">
       <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.previewHeading")}</p>
-      <p className="flex items-center gap-2 text-sm font-semibold text-text">
+      <p className="flex items-center gap-2 text-small font-semibold text-text">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-caption text-primary-foreground">{index + 1}</span>
         <span className="truncate">{step.title || t("workflow.untitledStep")}</span>
       </p>

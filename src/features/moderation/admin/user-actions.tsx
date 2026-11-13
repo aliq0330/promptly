@@ -61,7 +61,7 @@ export function UserActions({ user, onChanged, onDeleted }: { user: AdminUser; o
   );
 
   return (
-    <section className="space-y-5 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5" data-admin-actions>
+    <section className="space-y-5 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5" data-admin-actions>
       <h3 className="text-small font-semibold text-text">{t("admin.actions.title")}</h3>
 
       <div className="space-y-2">

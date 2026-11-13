@@ -31,7 +31,7 @@ export function GroupAvatar({
           className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-surface bg-primary text-primary-foreground"
           style={{ width: Math.max(16, size * 0.4), height: Math.max(16, size * 0.4) }}
         >
-          <Users size={Math.max(9, size * 0.22)} strokeWidth={2.25} />
+          <Users size={Math.max(9, size * 0.22)} />
         </span>
       )}
     </span>

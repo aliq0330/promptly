@@ -137,7 +137,7 @@ export function VariableConditionEditor({
       )}
 
       {error && (
-        <p role="alert" className="text-xs text-danger">
+        <p role="alert" className="text-caption text-danger">
           {t(ERROR_KEYS[error])}
         </p>
       )}

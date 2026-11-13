@@ -32,7 +32,7 @@ export function InsightTopList({ items }: { items: InsightTopItem[] }) {
             >
               <span className="font-display text-h3 font-bold text-text-muted tabular-nums">{index + 1}</span>
               <span className="grid h-11 w-11 place-items-center rounded-md bg-primary-soft text-primary">
-                <Icon size={20} strokeWidth={1.75} aria-hidden />
+                <Icon size={20} aria-hidden />
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-small font-semibold text-text">{item.title}</span>

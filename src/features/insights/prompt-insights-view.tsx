@@ -66,9 +66,9 @@ export function PromptInsightsView() {
   const tool = summary?.tools[0] ? findTool(summary.tools[0])?.name ?? summary.tools[0] : null;
 
   return (
-    <PageContainer className="flex flex-col gap-6 lg:max-w-[1104px]">
+    <PageContainer className="flex flex-col gap-6 lg:max-w-6xl">
       <Link href="/insights" className="inline-flex min-h-9 w-fit items-center gap-1 rounded-md text-small font-medium text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <ChevronLeft size={18} strokeWidth={1.75} aria-hidden />
+        <ChevronLeft size={18} aria-hidden />
         {t("insights.detail.back")}
       </Link>
 

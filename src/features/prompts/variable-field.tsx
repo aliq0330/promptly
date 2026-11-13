@@ -15,9 +15,9 @@ import {
   toggleValue,
 } from "@/lib/prompt-variable-types";
 import type { PromptVariableOption, PromptVariableSpec } from "@/types";
+import { fieldDenseInputClassName } from "@/components/ui/field";
 
-const INPUT_CLASS =
-  "h-10 w-full rounded-lg border border-border bg-background px-3 text-body text-text placeholder:text-text-muted focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong";
+const INPUT_CLASS = cn(fieldDenseInputClassName, "text-body");
 
 /** Selects with this many options or fewer are shown as chips, more as a dropdown. */
 const CHIP_LIMIT = 6;
@@ -278,7 +278,7 @@ function Control({
           onChange={(event) => onChange(event.target.value)}
           className="h-10 min-w-0 flex-1"
         />
-        <output htmlFor={id} className="w-14 shrink-0 text-right font-mono text-sm tabular-nums text-text">
+        <output htmlFor={id} className="w-14 shrink-0 text-right font-mono text-small tabular-nums text-text">
           {current}
         </output>
       </div>

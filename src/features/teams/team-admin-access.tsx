@@ -194,9 +194,9 @@ function GroupMembersCard({ group, members }: { group: TeamGroup; members: TeamM
       <div className="flex flex-wrap gap-2">
         {shown.map((m) => (
           <span key={m.userId} className="inline-flex items-center gap-1.5 rounded-full bg-surface-soft py-1 pl-1 pr-3 text-caption font-bold text-text">
-            <Avatar src={m.avatarUrl} alt={m.displayName || m.username} size={22} />
+            <Avatar src={m.avatarUrl} alt={m.displayName || m.username} size={24} />
             {m.displayName || m.username}
-            {group.leadId === m.userId && <span className="rounded-full bg-primary-soft px-1.5 text-[0.6875rem] text-primary">{t("tm.groups.leadBadge")}</span>}
+            {group.leadId === m.userId && <span className="rounded-full bg-primary-soft px-1.5 text-micro text-primary">{t("tm.groups.leadBadge")}</span>}
           </span>
         ))}
         {rest > 0 && <span className="inline-flex items-center rounded-full border border-border-soft px-3 py-1 text-caption font-bold text-text-muted">{t("tm.groups.more", { count: rest })}</span>}

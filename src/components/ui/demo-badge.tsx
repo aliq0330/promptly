@@ -9,7 +9,7 @@ export function DemoAccountBadge({ className }: { className?: string }) {
   const { t } = useTranslation();
   return (
     <Badge variant="neutral" title={t("profile.demoBadgeHint")} className={className} data-demo-badge>
-      <FlaskConical size={12} strokeWidth={1.75} aria-hidden />
+      <FlaskConical size={12} aria-hidden />
       {t("profile.demoBadge")}
     </Badge>
   );

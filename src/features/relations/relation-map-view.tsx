@@ -185,7 +185,7 @@ export function RelationMapView() {
               {t("relations.add")}
             </Button>
             <Button type="button" variant="outline" onClick={reset}>
-              <RotateCcw size={15} />
+              <RotateCcw size={16} />
               {t("relations.reset")}
             </Button>
           </div>
@@ -225,19 +225,19 @@ export function RelationMapView() {
         <ul className="mt-3 space-y-1 text-caption text-text-muted">
           {dnaNotice && (
             <li className="flex items-start gap-1.5">
-              <Info size={13} className="mt-0.5 shrink-0" aria-hidden />
+              <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
               {t(dnaNotice)}
             </li>
           )}
           {hasDnaEdges && (
             <li className="flex items-start gap-1.5">
-              <Info size={13} className="mt-0.5 shrink-0" aria-hidden />
+              <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
               {t("relations.dnaNote")}
             </li>
           )}
           {graph.capped.length > 0 && (
             <li className="flex items-start gap-1.5">
-              <Info size={13} className="mt-0.5 shrink-0" aria-hidden />
+              <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
               {t("relations.capped")}
             </li>
           )}

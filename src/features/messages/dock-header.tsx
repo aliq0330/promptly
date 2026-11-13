@@ -39,14 +39,14 @@ export function DockHeader({
     <div className={cn("flex shrink-0 items-center gap-1 border-b border-border-soft px-2 py-2", className)}>
       {onBack && (
         <button type="button" onClick={onBack} aria-label={backLabel ?? t("messages.backToListAriaLabel")} data-dock-back="" className={DOCK_ICON_BUTTON}>
-          <ArrowLeft size={19} aria-hidden />
+          <ArrowLeft size={20} aria-hidden />
         </button>
       )}
       <div className={cn("flex min-w-0 flex-1 items-center", !onBack && "pl-2")}>{children}</div>
       {actions}
       {onExpand && (
         <button type="button" onClick={onExpand} aria-label={expandLabel} title={expandLabel} data-dock-expand="" className={DOCK_ICON_BUTTON}>
-          <Maximize2 size={17} aria-hidden />
+          <Maximize2 size={16} aria-hidden />
         </button>
       )}
       <button type="button" onClick={onMinimize} aria-label={t("dock.minimize")} title={t("dock.minimize")} data-dock-minimize="" className={DOCK_ICON_BUTTON}>

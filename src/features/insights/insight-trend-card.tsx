@@ -4,7 +4,7 @@ import { InsightTrendChart } from "@/features/insights/insight-trend-chart";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatInsightDay, type InsightDay } from "@/lib/insights";
 
-export const INSIGHT_CARD = "rounded-xl border border-border-soft bg-surface p-5 shadow-card sm:p-6";
+export const INSIGHT_CARD = "rounded-lg border border-border-soft bg-surface p-5 shadow-card sm:p-6";
 
 /** "Günlük trend" kartı (başlık + aralık + gösterge + grafik): genel panel ve prompt ayrıntısı AYNI kartı kullanır. */
 export function InsightTrendCard({ days, periodDays }: { days: InsightDay[]; periodDays: number }) {

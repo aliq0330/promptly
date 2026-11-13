@@ -153,7 +153,7 @@ export function TeamBand({
               <MoreVertical size={20} aria-hidden />
             </button>
             {menuOpen && (
-              <ul role="menu" className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-border-soft bg-surface p-1.5 shadow-pop" data-team-menu-list>
+              <ul role="menu" className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-lg border border-border-soft bg-surface-elevated p-1.5 shadow-pop" data-team-menu-list>
                 {menuItems.map((item) => (
                   <li key={item.key} role="none">
                     <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center rounded-lg px-3 text-small font-medium text-text hover:bg-surface-soft">

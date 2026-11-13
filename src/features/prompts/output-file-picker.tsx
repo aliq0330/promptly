@@ -72,7 +72,7 @@ export function OutputFilePicker({
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-text-muted">{kind === "video" ? t("output.hintVideo") : t("output.hintAudio")}</p>
+      <p className="text-small text-text-muted">{kind === "video" ? t("output.hintVideo") : t("output.hintAudio")}</p>
 
       <input
         id={inputId}
@@ -89,10 +89,10 @@ export function OutputFilePicker({
         <div className="space-y-3 rounded-lg border border-border-soft bg-surface-soft p-3">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
-              <Icon size={18} strokeWidth={1.75} />
+              <Icon size={18} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-text">{file.name}</p>
+              <p className="truncate text-small font-medium text-text">{file.name}</p>
               <p className="text-caption text-text-muted">{formatSize(file.size)}</p>
             </div>
             <button
@@ -122,14 +122,14 @@ export function OutputFilePicker({
           disabled={disabled}
           className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border-strong bg-surface-soft px-4 py-8 text-center transition-colors hover:border-primary/60 hover:bg-primary-soft/40"
         >
-          <Upload size={20} strokeWidth={1.75} className="text-text-muted" />
-          <span className="text-sm font-medium text-text">{t("output.choose")}</span>
+          <Upload size={20} className="text-text-muted" />
+          <span className="text-small font-medium text-text">{t("output.choose")}</span>
           <span className="text-caption text-text-muted">{formats} · {t("output.maxSize")}</span>
         </button>
       )}
 
       {error && (
-        <p role="alert" className="text-sm text-danger">
+        <p role="alert" className="text-small text-danger">
           {error}
         </p>
       )}

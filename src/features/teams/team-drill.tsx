@@ -67,17 +67,17 @@ export function DrillHeader({
     <header className={cn("-mx-3 px-2 pb-3 pt-1.5 sm:-mx-5 md:hidden", BAND_TONE[tone ?? "primary"] ?? BAND_TONE.primary)} data-drill-header>
       <div className="flex items-center">
         <Link href={backHref} aria-label={t("tp.page.up")} className={iconButton} data-drill-back>
-          <ArrowLeft size={22} aria-hidden />
+          <ArrowLeft size={24} aria-hidden />
         </Link>
         <span className="min-w-0 flex-1 truncate px-1 text-caption text-text-secondary">{markName ? parent : null}</span>
         {chatHref && (
           <Link href={chatHref} aria-label={t("tp.page.openChat")} className={iconButton} data-drill-chat>
-            <MessageCircle size={22} aria-hidden />
+            <MessageCircle size={24} aria-hidden />
           </Link>
         )}
         {onInfo && (
           <button type="button" onClick={onInfo} aria-label={t("tp.info.open")} className={iconButton} data-drill-info>
-            <Info size={22} aria-hidden />
+            <Info size={24} aria-hidden />
           </button>
         )}
       </div>

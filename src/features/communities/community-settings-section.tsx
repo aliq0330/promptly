@@ -12,6 +12,7 @@ import { can } from "@/lib/chat-groups";
 import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, COMMUNITY_RULES_MAX } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, CommunityCategory, CommunityFeedPolicy } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 /**
  * Topluluğa özgü ayarlar: kategori ve akışta kim paylaşır (`edit_settings`), kurallar ve "kabul zorunlu" (`edit_rules`), topluluğu kapatma /
@@ -120,9 +121,9 @@ export function CommunitySettingsSection({ group, onChanged, onToast }: { group:
             </div>
           )}
           {save.error && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+            <InlineAlert>
               {save.error}
-            </p>
+            </InlineAlert>
           )}
           <Button type="button" size="sm" onClick={() => void handleSave()} disabled={save.busy || !dirty}>
             {save.busy ? t("common.loading") : t("common.save")}

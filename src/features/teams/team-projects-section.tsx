@@ -93,8 +93,8 @@ export function TeamProjectsSection({ ctx }: { ctx: TeamCtx }) {
         {failed && <SectionError message={t("tp.error.load")} onRetry={load} />}
         {!failed && projects === null && (
           <div className="grid gap-3.5 md:grid-cols-2">
-            <Skeleton className="h-40 rounded-2xl" />
-            <Skeleton className="h-40 rounded-2xl" />
+            <Skeleton className="h-40 rounded-lg" />
+            <Skeleton className="h-40 rounded-lg" />
           </div>
         )}
         {projects !== null && active.length === 0 && archived.length === 0 && (
@@ -164,8 +164,8 @@ function WaitingStrip({ ctx }: { ctx: TeamCtx }) {
   const heading = pending.length > 0 || proposals > 0 ? t("tc.over.waiting") : t("tc.over.changesWaiting");
   const target = teamLink(team.id, "approvals");
   return (
-    <section data-testid="team-waiting" className="rounded-2xl border border-border-soft bg-surface p-3 md:flex md:items-stretch md:gap-3 md:border-0 md:bg-transparent md:p-0">
-      <Link href={target} className="flex min-h-12 items-center gap-2.5 md:block md:w-52 md:shrink-0 md:rounded-2xl md:border md:border-border-soft md:bg-surface md:p-3.5" data-waiting-open>
+    <section data-testid="team-waiting" className="rounded-lg border border-border-soft bg-surface p-3 md:flex md:items-stretch md:gap-3 md:border-0 md:bg-transparent md:p-0">
+      <Link href={target} className="flex min-h-12 items-center gap-2.5 md:block md:w-52 md:shrink-0 md:rounded-lg md:border md:border-border-soft md:bg-surface md:p-3.5" data-waiting-open>
         <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-heart md:hidden" />
         <span className="min-w-0 flex-1 md:block">
           <span className="hidden items-center gap-2 font-display text-body font-bold text-text md:flex">
@@ -180,7 +180,7 @@ function WaitingStrip({ ctx }: { ctx: TeamCtx }) {
       <ul className="hidden min-w-0 flex-1 gap-3 md:grid md:grid-cols-3">
         {rows.slice(0, 3).map((item) => (
           <li key={item.id} className="min-w-0">
-            <Link href={boardItemHref(team.id, item)} className="block h-full rounded-2xl border border-border-soft bg-surface p-3.5 hover:shadow-card" data-waiting-item={item.id}>
+            <Link href={boardItemHref(team.id, item)} className="block h-full rounded-lg border border-border-soft bg-surface p-3.5 hover:shadow-card" data-waiting-item={item.id}>
               <span className="block truncate text-caption font-bold uppercase tracking-[0.05em] text-text-muted">
                 {t(KIND_KEY[item.kind] ?? "tp.kind.content")}
                 {item.fileTitle ? ` · ${item.fileTitle}` : ""}
@@ -221,7 +221,7 @@ function ActivityCard({ ctx }: { ctx: TeamCtx }) {
     };
   }, [team.id]);
   return (
-    <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-activity">
+    <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-activity">
       <h3 className="mb-1 font-display text-body font-bold text-text">{t("tc.over.activity")}</h3>
       {rows === null && <Skeleton className="h-24 rounded-lg" />}
       {rows !== null && rows.length === 0 && <p className="py-3 text-small text-text-muted">{t("tc.over.activityEmpty")}</p>}
@@ -248,7 +248,7 @@ function ChannelsCard({ ctx }: { ctx: TeamCtx }) {
   const shown = channels.filter((channel) => channel.mode !== "project").slice(0, 5);
   if (loaded && shown.length === 0) return null;
   return (
-    <section className="rounded-2xl border border-border-soft bg-surface p-4" data-testid="team-overview-channels">
+    <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-overview-channels">
       <h3 className="mb-2 font-display text-body font-bold text-text">{t("tc.over.channels")}</h3>
       <ul>
         {shown.map((channel) => (
@@ -272,7 +272,7 @@ function ProjectCard({ team, project, changes }: { team: string; project: Projec
   return (
     <Link
       href={projectLink(team, project.id)}
-      className={cn("flex h-full overflow-hidden rounded-2xl border border-border-soft bg-surface transition-shadow hover:shadow-card-hover max-md:flex-row md:flex-col", project.archivedAt && "opacity-70")}
+      className={cn("flex h-full overflow-hidden rounded-lg border border-border-soft bg-surface transition-shadow hover:shadow-card-hover max-md:flex-row md:flex-col", project.archivedAt && "opacity-70")}
       data-project-card={project.id}
     >
       <span aria-hidden className={cn("grid shrink-0 grid-cols-2 gap-1.5 p-2.5 max-md:w-[5.25rem] md:h-[4.75rem] md:grid-cols-4", toneClass(project.tone))}>

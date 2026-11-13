@@ -21,7 +21,7 @@ export function SavedPostCard({ post, collectionRemoval }: { post: CommunityPost
     <DropdownMenu label={t("communities.feed.postMenu")}>
       {(close) => (
         <MenuItem
-          icon={<FolderMinus size={15} />}
+          icon={<FolderMinus size={16} />}
           label={t("common.removeFromCollection")}
           danger
           onClick={() => {

@@ -64,7 +64,7 @@ export function MessageButton({ user, compact = false }: { user: UserProfile; co
         <MessagesSquare size={18} aria-hidden />
         <span className={LABEL_CLASS}>{isStarting ? t("messages.startingEllipsis") : t("messages.sendMessage")}</span>
       </button>
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p className="text-caption text-danger">{error}</p>}
     </div>
   );
 }

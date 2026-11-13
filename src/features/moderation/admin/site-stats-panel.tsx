@@ -8,7 +8,7 @@ import { cn, formatCount } from "@/lib/utils";
 import { ADMIN_CONTENT_TYPES, CONTENT_TYPE_KEY, formatBytes, kindKey } from "./format";
 import { TypeFilter } from "./type-filter";
 
-const CARD = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5";
+const CARD = "rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5";
 const CONTENT_KINDS = ["prompts", "requests", "workflows", "presets"] as const;
 const KIND_OF: Record<(typeof CONTENT_KINDS)[number], string> = { prompts: "prompt", requests: "request", workflows: "workflow", presets: "preset" };
 

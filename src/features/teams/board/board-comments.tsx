@@ -29,6 +29,7 @@ import { filterThreads, groupThreads, initialsOf, type CommentFilter, type Threa
 import { formatRelativeTime, cn } from "@/lib/utils";
 import type { SpaceItem } from "@/lib/supabase/spaces";
 import type { ProjectPerson } from "@/lib/supabase/team-projects";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 /**
  * Panoda konumlu yorumlar (docs/history/367-*): yükleme + yazma kancası, tuvaldeki pinler, yazma kutusu ve yorum paneli.
@@ -136,13 +137,13 @@ export function PinMarker({ comment, x, y, active, draft, replies, onSelect }: {
         onSelect?.();
       }}
       className={cn(
-        "pointer-events-auto absolute flex items-center justify-center rounded-[50%_50%_50%_0] border-2 border-surface text-[0.6875rem] font-bold text-primary-foreground shadow-card transition-[width,height,box-shadow]",
+        "pointer-events-auto absolute flex items-center justify-center rounded-[50%_50%_50%_0] border-2 border-surface text-micro font-bold text-primary-foreground shadow-card transition-[width,height,box-shadow]",
         resolved ? "bg-text-muted" : draft ? "bg-primary" : pinTone(comment?.authorId ?? null),
         active && "shadow-pop ring-4 ring-primary/30",
       )}
       style={{ left: x, top: y - size, width: size, height: size, zIndex: active ? 40 : 30 }}
     >
-      {resolved ? <Check size={14} strokeWidth={3} aria-hidden /> : draft ? <MessageCircle size={14} aria-hidden /> : initialsOf(name)}
+      {resolved ? <Check size={14} aria-hidden /> : draft ? <MessageCircle size={14} aria-hidden /> : initialsOf(name)}
       {!resolved && !draft && replies ? <span className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-text px-1 text-[0.5625rem] text-background">{replies}</span> : null}
     </button>
   );
@@ -319,7 +320,7 @@ export function CommentTargetChip({ item, itemTitle }: { item: SpaceItem | null;
   const Icon = item ? (item.kind === "image" ? ImageIcon : item.kind === "prompt" ? SquareTerminal : item.kind === "note" ? StickyNote : MapPin) : MapPin;
   return (
     <span className="inline-flex max-w-full items-center gap-1.5 self-start rounded-full bg-surface-soft px-2.5 py-0.5 text-caption font-semibold text-text-secondary" data-comment-target="">
-      <Icon size={13} aria-hidden />
+      <Icon size={12} aria-hidden />
       <span className="truncate">{item ? itemTitle(item) : t("tb.comments.freePoint")}</span>
     </span>
   );
@@ -403,7 +404,7 @@ export function CommentsPanel({
         <span className="rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold text-text-secondary">{threads.length}</span>
         <span className="flex-1" />
         <button type="button" onClick={onNew} data-comment-new="" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary-soft px-3.5 text-small font-bold text-primary">
-          <MessageCircle size={17} aria-hidden />
+          <MessageCircle size={16} aria-hidden />
           {t("tb.comments.new")}
         </button>
         <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-10 w-10 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
@@ -457,9 +458,9 @@ export function CommentsPanel({
         )}
       </div>
       {error && (
-        <p role="alert" className="mx-4 mb-2 rounded-lg bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert className="mx-4 mb-2">
           {error}
-        </p>
+        </InlineAlert>
       )}
       <ul className="min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain px-3 pb-4">
         {scopeLoading && <li className="px-2 py-6 text-center text-small text-text-muted">{t("common.loading")}</li>}
@@ -479,9 +480,9 @@ export function CommentsPanel({
           const open = expanded.has(root.id) || thread.replies.length <= 1;
           const visibleReplies = open ? thread.replies : thread.replies.slice(-1);
           return (
-            <li key={root.id} data-comment-thread={root.id} data-comment-active={active ? "" : undefined} className={cn("space-y-2 rounded-2xl p-3", active ? "border-2 border-primary bg-primary-soft/40" : "border border-border-soft bg-surface")}>
+            <li key={root.id} data-comment-thread={root.id} data-comment-active={active ? "" : undefined} className={cn("space-y-2 rounded-lg p-3", active ? "border-2 border-primary bg-primary-soft/40" : "border border-border-soft bg-surface")}>
               <div className="flex items-center gap-2.5">
-                <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
+                <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-micro font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-small font-bold text-text">{authorName(root, t("tb.comments.someone"))}</p>
                   <p className="text-caption text-text-muted">
@@ -508,7 +509,7 @@ export function CommentsPanel({
                     data-comment-resolve={root.id}
                     className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-surface-soft", root.resolvedAt ? "text-success" : "text-text-secondary")}
                   >
-                    <CircleCheck size={19} aria-hidden />
+                    <CircleCheck size={20} aria-hidden />
                   </button>
                 )}
                 {(mine || canModerate) && (
@@ -620,9 +621,9 @@ export function CommentPeek({
   const root = thread.root;
   const target = root.itemId ? (items.find((item) => item.id === root.itemId) ?? null) : null;
   return (
-    <div data-testid="board-comment-peek" className="pointer-events-auto w-full space-y-2.5 rounded-2xl border border-border-soft bg-surface p-3.5 shadow-pop">
+    <div data-testid="board-comment-peek" className="pointer-events-auto w-full space-y-2.5 rounded-lg border border-border-soft bg-surface p-3.5 shadow-pop">
       <div className="flex items-center gap-2.5">
-        <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
+        <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-micro font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-small font-bold text-text">{authorName(root, t("tb.comments.someone"))}</p>
           <p className="text-caption text-text-muted">{formatRelativeTime(root.createdAt, language)}</p>
@@ -636,13 +637,13 @@ export function CommentPeek({
         <CommentText body={root.body} />
       </p>
       <div className="flex items-center gap-1.5">
-        <button type="button" onClick={onPrev} aria-label={t("tb.comments.prev")} disabled={total < 2} className="grid h-11 w-11 place-items-center rounded-full border border-border-soft disabled:opacity-40">
+        <button type="button" onClick={onPrev} aria-label={t("tb.comments.prev")} disabled={total < 2} className="grid h-11 w-11 place-items-center rounded-full border border-border-soft disabled:opacity-50">
           <span aria-hidden className="text-h3">‹</span>
         </button>
         <span className="px-1.5 text-small font-bold tabular-nums text-text-secondary">
           {index + 1} / {total}
         </span>
-        <button type="button" onClick={onNext} aria-label={t("tb.comments.next")} disabled={total < 2} className="grid h-11 w-11 place-items-center rounded-full border border-border-soft disabled:opacity-40">
+        <button type="button" onClick={onNext} aria-label={t("tb.comments.next")} disabled={total < 2} className="grid h-11 w-11 place-items-center rounded-full border border-border-soft disabled:opacity-50">
           <span aria-hidden className="text-h3">›</span>
         </button>
         <span className="flex-1" />

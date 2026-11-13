@@ -74,7 +74,7 @@ export function ProjectAccessEditor({
                       value={entry.role}
                       disabled={locked}
                       onChange={(event) => setRole(entry, event.target.value as ProjectRole)}
-                      className="h-8 rounded-full border border-border bg-background px-3 text-caption font-semibold disabled:opacity-60"
+                      className="h-8 rounded-full border border-border bg-background px-3 text-caption font-semibold disabled:opacity-50"
                     >
                       {roleChoices(entry).map((role) => (
                         <option key={role} value={role}>

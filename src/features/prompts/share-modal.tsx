@@ -319,12 +319,12 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
   return (
     <Modal onClose={onClose} labelledBy="share-modal-title">
       <div
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
         data-share-modal={target.contentType}
       >
         <div className="flex items-start justify-between gap-2">
-          <h2 id="share-modal-title" className="text-base font-semibold text-text">
+          <h2 id="share-modal-title" className="text-body font-semibold text-text">
             {t("common.share")}
           </h2>
           <button
@@ -346,9 +346,9 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
           />
           <span className="min-w-0 flex-1 space-y-0.5">
             <Badge variant={preview.badgeVariant}>{preview.badgeLabel}</Badge>
-            <span className="block truncate text-sm font-semibold text-text">{preview.title}</span>
+            <span className="block truncate text-small font-semibold text-text">{preview.title}</span>
             {preview.description && (
-              <span className="line-clamp-1 block text-xs text-text-muted">{preview.description}</span>
+              <span className="line-clamp-1 block text-caption text-text-muted">{preview.description}</span>
             )}
           </span>
         </div>
@@ -378,8 +378,8 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
                 <Send size={18} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-text">{t("share.sendAsMessage")}</span>
-                <span className="block text-xs text-text-muted">{t("share.sendAsMessageHint")}</span>
+                <span className="block text-small font-semibold text-text">{t("share.sendAsMessage")}</span>
+                <span className="block text-caption text-text-muted">{t("share.sendAsMessageHint")}</span>
               </span>
               <ChevronRight size={16} className="shrink-0 text-text-muted" />
             </Link>
@@ -395,8 +395,8 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
                 <CircleFadingPlus size={18} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-text">{t("share.toStory")}</span>
-                <span className="block text-xs text-text-muted">{t("share.toStoryHint")}</span>
+                <span className="block text-small font-semibold text-text">{t("share.toStory")}</span>
+                <span className="block text-caption text-text-muted">{t("share.toStoryHint")}</span>
               </span>
               <ChevronRight size={16} className="shrink-0 text-text-muted" />
             </Link>
@@ -411,10 +411,10 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
               <Share2 size={18} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-text">
+              <span className="block text-small font-semibold text-text">
                 {copied ? t("common.linkCopied") : t("share.shareElsewhere")}
               </span>
-              <span className="block text-xs text-text-muted">{t("share.shareElsewhereHint")}</span>
+              <span className="block text-caption text-text-muted">{t("share.shareElsewhereHint")}</span>
             </span>
             <ChevronRight size={16} className="shrink-0 text-text-muted" />
           </button>
@@ -428,7 +428,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
                   <Shapes size={18} />
                 </span>
-                <span className="min-w-0 flex-1 text-sm font-semibold text-text">{t("share.addToSpace")}</span>
+                <span className="min-w-0 flex-1 text-small font-semibold text-text">{t("share.addToSpace")}</span>
                 <ChevronRight size={16} className="shrink-0 text-text-muted" />
               </button>
             )}
@@ -437,7 +437,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
                   <Bookmark size={18} />
                 </span>
-                <span className="min-w-0 flex-1 text-sm font-semibold text-text">{t("share.saveToCollection")}</span>
+                <span className="min-w-0 flex-1 text-small font-semibold text-text">{t("share.saveToCollection")}</span>
                 <ChevronRight size={16} className="shrink-0 text-text-muted" />
               </button>
             )}
@@ -482,7 +482,7 @@ export function ShareTriggerButton({
         title={t("common.share")}
         className={contentActionClassName(false, className)}
       >
-        <Share2 size={size} strokeWidth={1.75} />
+        <Share2 size={size} />
         {label && <span className="hidden sm:inline">{label}</span>}
       </button>
       {open && <ShareModal target={target} onClose={() => setOpen(false)} />}

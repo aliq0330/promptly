@@ -147,14 +147,14 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
   }
 
   if (!user || state === "loading") {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>;
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>;
   }
 
   if (state === "unavailable" || !target) {
-    const backClass = "inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong";
+    const backClass = "inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p role="alert" className="mb-4 text-sm text-text-secondary">
+        <p role="alert" className="mb-4 text-small text-text-secondary">
           {t("messages.newChatUnavailable")}
         </p>
         {dock ? (
@@ -204,16 +204,16 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
           href={profileHref(target)}
           className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 transition-colors duration-200 ease-soft hover:bg-surface-soft"
         >
-          <PresenceAvatar userId={target.id} src={target.avatarUrl} alt={target.displayName} size={36} />
+          <PresenceAvatar userId={target.id} src={target.avatarUrl} alt={target.displayName} size={40} />
           <span className="min-w-0 leading-tight">
-            <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>
+            <span className="block truncate text-small font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>
             <PresenceStatusText userId={target.id} fallback={`@${target.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
           </span>
         </Link>
       </div>
       )}
       <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-4">
-        <p className="max-w-xs text-center text-sm text-text-muted">{t("messages.draftHint")}</p>
+        <p className="max-w-xs text-center text-small text-text-muted">{t("messages.draftHint")}</p>
       </div>
       <MessageComposer
         draft={draft}

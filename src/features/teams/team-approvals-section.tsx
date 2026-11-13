@@ -66,7 +66,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
   if (!board) {
     return (
       <section data-testid="team-approvals" className="space-y-3">
-        {ctx.boardFailed ? <SectionError message={t("tp.error.load")} onRetry={reloadBoard} /> : <Skeleton className="h-64 w-full rounded-2xl" />}
+        {ctx.boardFailed ? <SectionError message={t("tp.error.load")} onRetry={reloadBoard} /> : <Skeleton className="h-64 w-full rounded-lg" />}
       </section>
     );
   }
@@ -98,7 +98,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
     const cards = cardsOf(state);
     return (
       <ul className="space-y-2.5" data-board-column={state}>
-        {cards.length === 0 && <li className="rounded-2xl border border-dashed border-border bg-surface/60 px-4 py-6 text-center text-small text-text-muted">{t("tc.appr.columnEmpty")}</li>}
+        {cards.length === 0 && <li className="rounded-lg border border-dashed border-border bg-surface/60 px-4 py-6 text-center text-small text-text-muted">{t("tc.appr.columnEmpty")}</li>}
         {cards.map((card) => (
           <li key={card.type === "item" ? card.item.id : `p-${card.proposal.itemId}`}>
             <BoardCard teamId={team.id} card={card} state={state} busy={busy} onApprove={() => approve(card)} onChanges={() => setChanging(card)} />
@@ -117,7 +117,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
         </div>
         {decidable.length > 1 && (
           <Button type="button" variant="outline" disabled={busy} onClick={() => void run(() => decideReview(decidable.map((item) => item.id), "approve"), "tp.review.approvedToast")} data-board-approve-all>
-            <Check size={15} aria-hidden />
+            <Check size={16} aria-hidden />
             {t("tp.review.approveAll", { count: decidable.length })}
           </Button>
         )}
@@ -152,7 +152,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
       ) : wide ? (
         <div className="grid grid-cols-3 gap-4" data-board-layout="columns">
           {(["pending", "changes", "approved"] as const).map((state) => (
-            <div key={state} className="rounded-[20px] bg-surface-soft p-3">
+            <div key={state} className="rounded-xl bg-surface-soft p-3">
               <h3 className="mb-2.5 flex items-center gap-2 px-1.5 font-display text-body font-bold text-text">
                 <span aria-hidden className={cn("h-2.5 w-2.5 rounded-full", COLUMN[state].dot)} />
                 {t(COLUMN[state].label)}
@@ -193,7 +193,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
   if (card.type === "proposal") {
     const p = card.proposal;
     return (
-      <article className="space-y-2 rounded-2xl bg-surface p-3.5" data-board-proposal={p.itemId}>
+      <article className="space-y-2 rounded-lg bg-surface p-3.5" data-board-proposal={p.itemId}>
         <span className="block text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
           {t("tc.appr.proposal")} · {p.fileTitle ?? p.projectTitle}
         </span>
@@ -209,7 +209,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
   const item = card.item;
   const when = item.decidedAt ?? item.submittedAt;
   return (
-    <article className="space-y-2 rounded-2xl bg-surface p-3.5" data-board-card={item.id} data-board-state={item.state}>
+    <article className="space-y-2 rounded-lg bg-surface p-3.5" data-board-card={item.id} data-board-state={item.state}>
       <span className="block text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
         {item.unitCount > 1 ? t("tc.appr.package", { count: item.unitCount }) : t(kindKey(item.kind))} · {item.fileTitle ?? t("tp.area.projectWide")}
       </span>

@@ -16,6 +16,7 @@ import { teamLink, teamRoleCan } from "@/lib/teams";
 import { MuteCard, MuteChip } from "./mute-card";
 import { cn, formatUnread } from "@/lib/utils";
 import { RoleChip, TeamMark } from "./team-ui";
+import { CountBadge } from "@/components/ui/badge";
 
 type NotifyLevel = "all" | "mentions" | "none";
 
@@ -91,8 +92,8 @@ export function TeamInfoModal({
       />
 
       <InfoTiles>
-        <InfoTile icon={<ArrowUpRight size={22} strokeWidth={1.75} />} label={t("tm.info.teamPage")} href={teamLink(team.slug, "chat", { channel: team.channelName })} testId="team-page" attrs={{ "data-info-team-link": "" }} />
-        <InfoTile icon={<Search size={22} strokeWidth={1.75} />} label={t("tm.chan.search")} onClick={onSearch} testId="search" />
+        <InfoTile icon={<ArrowUpRight size={24} />} label={t("tm.info.teamPage")} href={teamLink(team.slug, "chat", { channel: team.channelName })} testId="team-page" attrs={{ "data-info-team-link": "" }} />
+        <InfoTile icon={<Search size={24} />} label={t("tm.chan.search")} onClick={onSearch} testId="search" />
       </InfoTiles>
 
       <div className="px-4">
@@ -133,7 +134,7 @@ export function TeamInfoModal({
                   className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
                 >
                   <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", channel.mode === "private" ? "bg-warning/10 text-warning" : "bg-primary-soft text-primary")} aria-hidden>
-                    {channel.mode === "private" ? <Lock size={16} /> : <Hash size={17} strokeWidth={2.2} />}
+                    {channel.mode === "private" ? <Lock size={16} /> : <Hash size={16} />}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className={cn("flex items-center gap-1.5 text-body", current || unread ? "font-bold text-text" : "font-semibold text-text")}>
@@ -142,7 +143,7 @@ export function TeamInfoModal({
                     </span>
                     {sub && <span className={cn("block truncate text-caption", current ? "font-semibold text-primary" : "text-text-muted")}>{sub}</span>}
                   </span>
-                  {unread && <span className="rounded-full bg-secondary px-1.5 text-caption font-bold text-white">{formatUnread(channel.unreadCount)}</span>}
+                  {unread && <CountBadge>{formatUnread(channel.unreadCount)}</CountBadge>}
                 </button>
                 <button
                   type="button"
@@ -151,7 +152,7 @@ export function TeamInfoModal({
                   data-info-channel-info={channel.name}
                   className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <Info size={17} aria-hidden />
+                  <Info size={16} aria-hidden />
                 </button>
               </div>
             );
@@ -188,7 +189,7 @@ export function TeamInfoModal({
       <Link
         href={teamLink(team.slug, "spaces")}
         data-info-open-team
-        className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-[22px] bg-primary-soft px-4 py-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <span className="min-w-0 flex-1">
           <span className="block text-body font-bold text-primary">{t("tm.info.openTeam")}</span>

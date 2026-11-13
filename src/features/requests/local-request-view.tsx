@@ -62,12 +62,12 @@ export function LocalRequestView() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.requestNotFound")}</h1>
-        <p className="mb-4 text-sm text-text-muted">
+        <p className="mb-4 text-small text-text-muted">
           {t("request.notFoundBody")}
         </p>
         <Link
           href="/requests"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.backToRequests")}
         </Link>
@@ -79,12 +79,12 @@ export function LocalRequestView() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.thisRequestDeletedTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">
+        <p className="mb-4 text-small text-text-muted">
           {t("request.deletedButRepliesVisibleBody")}
         </p>
         <Link
           href="/requests"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.backToRequests")}
         </Link>

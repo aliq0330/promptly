@@ -35,7 +35,7 @@ export function TagView() {
   }, [slug]);
 
   if (!slug) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("tag.notFound")}.</div>;
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("tag.notFound")}.</div>;
   }
   if (!found || found.slug !== slug) return <DetailSkeleton />;
   const tag = found.tag;
@@ -43,7 +43,7 @@ export function TagView() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("tag.notFound")}</h1>
-        <p className="text-sm text-text-muted">{t("tag.notFoundBody")}</p>
+        <p className="text-small text-text-muted">{t("tag.notFoundBody")}</p>
       </div>
     );
   }

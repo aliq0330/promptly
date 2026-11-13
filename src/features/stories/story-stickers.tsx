@@ -175,9 +175,9 @@ export function QuestionSticker({
             type="submit"
             disabled={!text.trim() || state === "sending"}
             aria-label={t("stories.question.send")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-story-cobalt text-story-white disabled:opacity-40"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-story-cobalt text-story-white disabled:opacity-50"
           >
-            <Send size={15} aria-hidden />
+            <Send size={16} aria-hidden />
           </button>
         </form>
       ) : (

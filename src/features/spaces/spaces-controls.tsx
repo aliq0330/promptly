@@ -121,7 +121,7 @@ export function SpaceTemplates({ onPick }: { onPick: (kind: SpaceKind) => void }
             <li key={kind} className="w-36 shrink-0 sm:w-40">
               <button type="button" onClick={() => onPick(kind)} data-space-template={kind} className="group block w-full space-y-2 text-left focus-visible:outline-none">
                 <span className={cn("grid h-24 w-full place-items-center rounded-xl transition-transform duration-200 ease-soft group-active:scale-[0.97] group-focus-visible:ring-2 group-focus-visible:ring-primary", SPACE_KIND_TINT[kind])}>
-                  <Icon size={36} strokeWidth={1.5} aria-hidden />
+                  <Icon size={36} aria-hidden />
                 </span>
                 <span className="block truncate text-small font-medium text-text">{t(SPACE_KIND_LABEL[kind])}</span>
               </button>

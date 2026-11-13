@@ -46,7 +46,7 @@ function StartCard({ target, title, desc }: { target: string; title: string; des
       type="button"
       onClick={() => scrollToSection(target)}
       data-dev-start={target}
-      className="group flex w-full items-center gap-3 rounded-xl border border-border-soft bg-surface p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <span className="min-w-0 flex-1">
         <span className="block text-body font-semibold text-text">{title}</span>

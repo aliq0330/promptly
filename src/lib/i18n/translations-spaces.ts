@@ -383,7 +383,7 @@ export const spaceTranslations = {
   "spaces.palette.removeColor": { tr: "Rengi sil", en: "Delete color" },
   "spaces.palette.moveLeft": { tr: "Sola taşı", en: "Move left" },
   "spaces.palette.moveRight": { tr: "Sağa taşı", en: "Move right" },
-  "spaces.palette.invalidHex": { tr: "Geçerli bir HEX kodu gir (ör. #7c5cff).", en: "Enter a valid HEX code (e.g. #7c5cff)." },
+  "spaces.palette.invalidHex": { tr: "Geçerli bir HEX kodu gir (ör. #3b5be2).", en: "Enter a valid HEX code (e.g. #3b5be2)." },
   "spaces.palette.tooMany": { tr: "Bir palette en çok {{max}} renk olabilir.", en: "A palette can have at most {{max}} colors." },
   "spaces.palette.sourceManual": { tr: "Elle oluşturuldu", en: "Made by hand" },
   "spaces.palette.sourceImage": { tr: "Görselden çıkarıldı", en: "Extracted from an image" },

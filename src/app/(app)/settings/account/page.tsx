@@ -129,8 +129,8 @@ export default function AccountSettingsPage() {
             className={fieldInputClassName}
           />
         </div>
-        {usernameError && <p className="text-sm text-danger">{usernameError}</p>}
-        {usernameSaved && <p className="text-sm text-success">{t("settings.usernameUpdated")}</p>}
+        {usernameError && <p className="text-small text-danger">{usernameError}</p>}
+        {usernameSaved && <p className="text-small text-success">{t("settings.usernameUpdated")}</p>}
         <Button type="submit" size="sm" disabled={isSavingUsername || !profile}>
           {isSavingUsername ? t("settings.updating") : t("settings.updateUsername")}
         </Button>
@@ -139,7 +139,7 @@ export default function AccountSettingsPage() {
       <SettingsCard as="form" onSubmit={handleChangeEmail} title={t("settings.changeEmail")}>
         <div className="rounded-lg bg-surface-soft px-3.5 py-2.5">
           <p className="mb-0.5 text-caption font-medium text-text-muted">{t("settings.email")}</p>
-          <p className="break-all text-sm text-text">{user.email}</p>
+          <p className="break-all text-small text-text">{user.email}</p>
         </div>
         <div>
           <label htmlFor="settings-new-email" className={settingsLabelClassName}>
@@ -155,8 +155,8 @@ export default function AccountSettingsPage() {
             className={fieldInputClassName}
           />
         </div>
-        {emailError && <p className="text-sm text-danger">{emailError}</p>}
-        {emailSent && <p className="text-sm text-success">{t("settings.emailConfirmationSent")}</p>}
+        {emailError && <p className="text-small text-danger">{emailError}</p>}
+        {emailSent && <p className="text-small text-success">{t("settings.emailConfirmationSent")}</p>}
         <Button type="submit" size="sm" disabled={isSavingEmail}>
           {isSavingEmail ? t("settings.updating") : t("settings.updateEmail")}
         </Button>
@@ -191,8 +191,8 @@ export default function AccountSettingsPage() {
             className={fieldInputClassName}
           />
         </div>
-        {error && <p className="text-sm text-danger">{error}</p>}
-        {success && <p className="text-sm text-success">{t("settings.passwordUpdated")}</p>}
+        {error && <p className="text-small text-danger">{error}</p>}
+        {success && <p className="text-small text-success">{t("settings.passwordUpdated")}</p>}
         <Button type="submit" size="sm" disabled={isSubmitting}>
           {isSubmitting ? t("settings.updating") : t("settings.updatePassword")}
         </Button>

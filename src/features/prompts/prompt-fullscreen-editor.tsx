@@ -310,7 +310,7 @@ export function PromptFullscreenEditor({
             >
               <Icon size={18} className="shrink-0" aria-hidden />
               <span className="flex min-w-0 flex-col leading-tight">
-                <span className="whitespace-nowrap text-[11px] font-semibold opacity-90">{kindLine}</span>
+                <span className="whitespace-nowrap text-micro font-semibold opacity-90">{kindLine}</span>
                 <span className={cn("truncate text-label font-semibold", tone !== "idle" && "font-mono")} data-testid="fullscreen-convert-text">
                   {valueLine}
                 </span>

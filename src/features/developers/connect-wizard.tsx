@@ -72,7 +72,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
         })}
       </div>
 
-      <div className="space-y-4 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5" data-guide-card="">
+      <div className="space-y-4 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5" data-guide-card="">
         <div className="flex gap-1.5" aria-hidden>
           {steps.map((item, i) => (
             <span key={item.id} className={cn("h-1.5 flex-1 rounded-full", i < filledSegments(index, steps.length) ? "bg-primary" : "bg-border")} />
@@ -135,12 +135,12 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
                   aria-hidden
                   className={cn(
                     "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-caption font-bold",
-                    state === "done" && "bg-success text-white",
+                    state === "done" && "bg-success text-success-foreground",
                     state === "current" && "bg-primary text-primary-foreground",
                     state === "todo" && "border-2 border-border-strong text-text-muted",
                   )}
                 >
-                  {state === "done" ? <Check size={14} strokeWidth={3} /> : i + 1}
+                  {state === "done" ? <Check size={14} /> : i + 1}
                 </span>
                 <span className={cn("min-w-0 flex-1 break-words text-small", state === "todo" ? "text-text-secondary" : "font-medium text-text")}>{t(item.title)}</span>
               </button>
@@ -149,7 +149,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
         })}
       </ol>
 
-      <p className="rounded-lg bg-surface-soft px-3.5 py-2.5 text-xs leading-relaxed text-text-secondary">
+      <p className="rounded-lg bg-surface-soft px-3.5 py-2.5 text-caption leading-relaxed text-text-secondary">
         {t(method === "oauth" ? "dev.meOauthLimits" : "devSettings.secretNote")}
       </p>
     </div>

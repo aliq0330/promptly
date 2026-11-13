@@ -179,7 +179,7 @@ export function ResultDetailView() {
     >
       <div className="space-y-10">
         {isOrphan && (
-          <p className="flex items-start gap-2.5 rounded-[22px] bg-surface-soft px-4 py-3 text-small text-text-secondary" data-result-orphan="">
+          <p className="flex items-start gap-2.5 rounded-xl bg-surface-soft px-4 py-3 text-small text-text-secondary" data-result-orphan="">
             <Lock size={16} className="mt-0.5 shrink-0 text-text-muted" aria-hidden />
             {t("result.orphanNotice")}
           </p>
@@ -191,7 +191,7 @@ export function ResultDetailView() {
         )}
 
         {result.hasModification && result.originalPrompt && (
-          <section className="rounded-[22px] border border-border-soft bg-surface">
+          <section className="rounded-xl border border-border-soft bg-surface">
             <button
               type="button"
               onClick={() => setIsModificationOpen((open) => !open)}
@@ -218,7 +218,7 @@ export function ResultDetailView() {
                     </div>
                     <div>
                       <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("result.userModification")}</p>
-                      <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-border-soft bg-surface-soft p-2.5 font-mono text-xs text-text">
+                      <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-border-soft bg-surface-soft p-2.5 font-mono text-caption text-text">
                         {result.modifiedPromptText}
                       </p>
                     </div>

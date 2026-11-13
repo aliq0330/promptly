@@ -39,7 +39,7 @@ export function SwitchAccountModal({ currentUserId, onClose }: { currentUserId: 
 
   return (
     <Modal onClose={onClose} labelledBy="switch-account-title">
-      <div className="flex max-h-[80vh] w-full max-w-sm flex-col rounded-lg border border-border-soft bg-surface">
+      <div className="flex max-h-[80dvh] w-full max-w-sm flex-col rounded-lg border border-border-soft bg-surface">
         <div className="flex items-start justify-between gap-3 border-b border-border-soft p-4">
           <div>
             <h2 id="switch-account-title" className="text-h3 font-semibold text-text">{t("accountSwitch.title")}</h2>
@@ -61,7 +61,7 @@ export function SwitchAccountModal({ currentUserId, onClose }: { currentUserId: 
                     type="button"
                     onClick={() => handleSwitch(account.id)}
                     disabled={busyId !== null || isCurrent}
-                    className="flex min-h-11 w-full items-center gap-3 rounded-lg px-2.5 text-left transition-colors duration-200 hover:bg-surface-soft disabled:opacity-60"
+                    className="flex min-h-11 w-full items-center gap-3 rounded-lg px-2.5 text-left transition-colors duration-200 hover:bg-surface-soft disabled:opacity-50"
                   >
                     <Avatar src={account.avatarUrl} alt={account.displayName} size={32} />
                     <span className="min-w-0 flex-1">

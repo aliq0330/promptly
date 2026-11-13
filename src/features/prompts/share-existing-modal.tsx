@@ -14,6 +14,7 @@ import { LoadMore } from "@/features/feed/load-more";
 import { useShareableContent } from "@/features/communities/use-shareable-content";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 const TYPES: CommunityPostType[] = ["prompt", "request", "workflow", "preset", "space"];
 
@@ -52,9 +53,9 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
   return (
     <>
       <Modal onClose={onClose} labelledBy="share-existing-title">
-        <div className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()} data-share-existing="">
+        <DialogShell className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop" data-share-existing="">
           <div className="space-y-1 px-5 pb-2 pt-5">
-            <h2 id="share-existing-title" className="text-base font-semibold text-text">
+            <h2 id="share-existing-title" className="text-body font-semibold text-text">
               {t("create.shareExistingTitle")}
             </h2>
             <p className="text-small text-text-muted">{t("shareExisting.help")}</p>
@@ -76,7 +77,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
                 {t("communities.feed.pickLoadError")}
               </p>
             ) : items === null || list.loading ? (
-              <div className="h-20 animate-pulse rounded-lg bg-surface-soft" aria-busy="true" />
+              <div className="h-20 skeleton-shimmer rounded-lg" aria-busy="true" />
             ) : items.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
             ) : (
@@ -86,7 +87,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
                     <label
                       data-share-existing-item={item.id}
                       className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-2.5 text-sm transition-colors",
+                        "flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-2.5 text-small transition-colors",
                         selected?.id === item.id ? "border-primary/50 bg-primary-soft/40" : "border-border-soft bg-background hover:border-border-strong",
                       )}
                     >
@@ -111,7 +112,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
               <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={list.grow} />
             )}
           </div>
-        </div>
+        </DialogShell>
       </Modal>
       {selected && (
         // Seçim değişince form sıfırlansın (önceki içeriğin alıntı sonuçları taşınmasın).

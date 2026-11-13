@@ -17,6 +17,7 @@ import { canSharePost } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 const PAGE_LIMIT = 4;
 
@@ -40,7 +41,7 @@ function DestinationIcon({ destination, size }: { destination: CreateDestination
   if (destination) return <GroupAvatar name={destination.name} avatarUrl={destination.avatarUrl} size={size} />;
   return (
     <span aria-hidden className="grid shrink-0 place-items-center rounded-full bg-primary-soft text-primary" style={{ width: size, height: size }}>
-      <Globe size={Math.round(size * 0.55)} strokeWidth={1.9} />
+      <Globe size={Math.round(size * 0.55)} />
     </span>
   );
 }
@@ -83,9 +84,9 @@ export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedI
 
   return (
     <Modal onClose={onClose} labelledBy="share-destination-title">
-      <div className="flex max-h-[80vh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <DialogShell className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
         <div className="space-y-1 border-b border-border-soft p-4">
-          <h2 id="share-destination-title" className="text-base font-semibold text-text">
+          <h2 id="share-destination-title" className="text-body font-semibold text-text">
             {t("home.destination.label")}
           </h2>
         </div>
@@ -131,11 +132,11 @@ export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedI
               className={rowClass(selectedId === community.id)}
               data-destination-option={community.id}
             >
-              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={36} />
+              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={40} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-label font-semibold text-text">{community.name}</span>
                 <span className="flex items-center gap-1 truncate text-caption text-text-muted">
-                  {community.visibility !== "public" && <Lock size={11} aria-hidden className="shrink-0" />}
+                  {community.visibility !== "public" && <Lock size={12} aria-hidden className="shrink-0" />}
                   {communityHint(community, t)}
                 </span>
               </span>
@@ -148,7 +149,7 @@ export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedI
             {t("common.close")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

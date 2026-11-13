@@ -58,13 +58,13 @@ export function EditHistoryPanel({ contentType, contentId }: { contentType: "pro
   const latest = listed[0].event;
 
   return (
-    <div className="border-t border-border pt-3 text-xs text-text-muted">
+    <div className="border-t border-border pt-3 text-caption text-text-muted">
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
         className="flex items-center gap-1.5 font-medium text-text-muted transition-colors hover:text-text"
       >
-        <History size={13} />
+        <History size={12} />
         {t("editHistory.lastEdited")}: {formatRelativeTime(latest.createdAt, language)} · {t("editHistory.editHistory")}
       </button>
       {expanded && (

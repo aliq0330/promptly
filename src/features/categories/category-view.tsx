@@ -31,7 +31,7 @@ export function CategoryView() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("category.notFound")}</h1>
-        <p className="text-sm text-text-muted">{t("category.notFoundBody")}</p>
+        <p className="text-small text-text-muted">{t("category.notFoundBody")}</p>
       </div>
     );
   }

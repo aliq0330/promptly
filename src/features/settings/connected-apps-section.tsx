@@ -88,15 +88,15 @@ export function ConnectedAppsSection() {
     <section className="space-y-3" data-connected-apps="">
       <div className="space-y-1 px-1">
         <h3 className="font-display text-h3 font-bold tracking-[-0.02em] text-text">{t("apps.title")}</h3>
-        <p className="text-xs leading-relaxed text-text-muted">{t("apps.hint")}</p>
+        <p className="text-caption leading-relaxed text-text-muted">{t("apps.hint")}</p>
       </div>
-      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+      {error && <p role="alert" className="text-small text-danger">{error}</p>}
       {grants.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border bg-surface px-4 py-5 text-small text-text-muted">{t("apps.empty")}</p>
       ) : (
         <ul className="space-y-3">
           {grants.map((grant) => (
-            <li key={grant.key} className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card" data-connected-app={grant.key}>
+            <li key={grant.key} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card" data-connected-app={grant.key}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="break-words text-[0.9375rem] font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{grant.name}</p>
@@ -128,7 +128,7 @@ export function ConnectedAppsSection() {
 
               {confirmKey === grant.key ? (
                 <div className="space-y-2.5 rounded-lg bg-danger/10 p-3">
-                  <p className="text-xs leading-relaxed text-text-secondary">{t("apps.revokeConfirm")}</p>
+                  <p className="text-caption leading-relaxed text-text-secondary">{t("apps.revokeConfirm")}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" size="sm" variant="danger" disabled={busyKey === grant.key} onClick={() => void revoke(grant)}>
                       {t("apps.revokeYes")}

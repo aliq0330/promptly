@@ -104,7 +104,7 @@ export function SectionMenu<K extends string>({
               (item.dividerBefore || item.key === "invites") && "mt-1 border-t border-border-soft pt-1",
             )}
           >
-            {Icon && <Icon size={20} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />}
+            {Icon && <Icon size={20} aria-hidden className="shrink-0 text-text-muted" />}
             <span className="flex-1">{item.label}</span>
             {item.meta ? <span data-section-meta className="text-small tabular-nums text-text-muted">{item.meta}</span> : null}
             {item.count ? <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-caption font-bold text-primary-foreground">{item.count}</span> : null}

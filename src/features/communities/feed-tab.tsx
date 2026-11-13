@@ -51,6 +51,8 @@ import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content
 import { FEED_GRID_COLUMNS, FEED_ITEM_CONTEXT_CLASS } from "./community-layout";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: CommunityPost };
 
@@ -184,9 +186,9 @@ export function FeedTab(props: CommunityTabProps) {
       <FeedHighlights {...props} />
       {justShared && <p role="status" className="rounded-md bg-success/10 px-3 py-2 text-small text-text">{t("communities.feed.sharedBanner")}</p>}
       {pinAction.error && (
-        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <InlineAlert>
           {pinAction.error}
-        </p>
+        </InlineAlert>
       )}
 
       {/* "Gönderi oluştur" simgesi sayfanın kontrol satırındaki yuvadadır (docs/history/232-*). */}
@@ -202,7 +204,7 @@ export function FeedTab(props: CommunityTabProps) {
                 title={t("communities.feed.share")}
                 className={`${CONTROL_ICON_BUTTON} bg-surface-soft hover:bg-border-soft`}
               >
-                <Plus size={22} strokeWidth={1.75} aria-hidden />
+                <Plus size={24} aria-hidden />
               </button>
             )}
           </>,
@@ -395,10 +397,10 @@ function PostItem({
     <DropdownMenu label={t("communities.feed.postMenu")}>
       {(close) => (
         <>
-          {mine && <MenuItem icon={<Pencil size={15} />} label={t("communities.feed.editNote")} onClick={() => { close(); onAction({ kind: "edit", post }); }} />}
-          {canPin && <MenuItem icon={post.pinnedAt ? <PinOff size={15} /> : <Pin size={15} />} label={post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin")} onClick={() => { close(); onPin(post); }} />}
-          {role && !mine && <MenuItem icon={<Flag size={15} />} label={t("communities.report.menu")} onClick={() => { close(); onAction({ kind: "report", post }); }} />}
-          {canModerate && !mine && <MenuItem icon={<ShieldAlert size={15} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); onAction({ kind: "moderate", post }); }} />}
+          {mine && <MenuItem icon={<Pencil size={16} />} label={t("communities.feed.editNote")} onClick={() => { close(); onAction({ kind: "edit", post }); }} />}
+          {canPin && <MenuItem icon={post.pinnedAt ? <PinOff size={16} /> : <Pin size={16} />} label={post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin")} onClick={() => { close(); onPin(post); }} />}
+          {role && !mine && <MenuItem icon={<Flag size={16} />} label={t("communities.report.menu")} onClick={() => { close(); onAction({ kind: "report", post }); }} />}
+          {canModerate && !mine && <MenuItem icon={<ShieldAlert size={16} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); onAction({ kind: "moderate", post }); }} />}
           {mine && <MenuItem icon={<TrashIcon size={15} />} label={t("communities.feed.deleteMine")} danger onClick={() => { close(); onAction({ kind: "delete", post }); }} />}
         </>
       )}
@@ -424,8 +426,8 @@ export function EditNoteModal({ post, onClose, onSaved }: { post: CommunityPost;
   }
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy="edit-note-title">
-      <div className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
-        <h2 id="edit-note-title" className="text-base font-semibold text-text">
+      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+        <h2 id="edit-note-title" className="text-body font-semibold text-text">
           {t("communities.feed.editNote")}
         </h2>
         <div>
@@ -435,9 +437,9 @@ export function EditNoteModal({ post, onClose, onSaved }: { post: CommunityPost;
           <textarea id="edit-note" value={note} onChange={(event) => setNote(event.target.value)} rows={4} maxLength={COMMUNITY_NOTE_MAX} disabled={busy} className={`${fieldControlClassName} resize-none py-2.5`} />
         </div>
         {error && (
-          <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+          <InlineAlert>
             {error}
-          </p>
+          </InlineAlert>
         )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={busy}>
@@ -447,7 +449,7 @@ export function EditNoteModal({ post, onClose, onSaved }: { post: CommunityPost;
             {busy ? t("common.loading") : t("common.save")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

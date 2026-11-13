@@ -353,7 +353,7 @@ export const PromptComposer = forwardRef<
                 closePicker();
                 onOpenCatalog();
               }}
-              className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+              className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-small font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
             >
               <Library size={16} /> {isVariable ? t("composer.fieldLibrary") : t("composer.fromCatalog")}
             </button>
@@ -362,7 +362,7 @@ export const PromptComposer = forwardRef<
             <button
               type="button"
               onClick={() => setPicker((prev) => (prev ? { ...prev, surface: "panel" } : prev))}
-              className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+              className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-small font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
             >
               <PanelRight size={16} /> {isVariable ? t("composer.allVariables") : t("composer.allFields")}
             </button>
@@ -421,7 +421,7 @@ export const PromptComposer = forwardRef<
 
       {picker?.surface === "sheet" && (
         <Modal variant="sheet" onClose={closePicker} labelledBy="insert-picker-title">
-          <div className="flex h-[min(34rem,78dvh)] w-full max-w-lg flex-col rounded-t-2xl border border-b-0 border-border bg-surface-elevated pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-pop">
+          <div className="flex h-[min(34rem,78dvh)] w-full max-w-lg flex-col rounded-t-lg border border-b-0 border-border bg-surface-elevated pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-pop">
             <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border-strong" aria-hidden />
             {pickerContent("sheet")}
           </div>

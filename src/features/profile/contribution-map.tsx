@@ -79,11 +79,11 @@ export function ContributionMap({ userId }: { userId: string }) {
   });
 
   return (
-    <section className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6" aria-label={t("contrib.title", { count: total })}>
+    <section className="rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-6" aria-label={t("contrib.title", { count: total })}>
       <h2 className="mb-4 text-center text-h3 font-semibold text-text-secondary">{t("contrib.title", { count: total })}</h2>
       <ScrollRow ref={scrollRef} className="pb-1">
         <div className="mx-auto flex w-max shrink-0 gap-1.5">
-          <div className="flex flex-col gap-[3px] pt-5 text-[10px] leading-3 text-text-muted" aria-hidden>
+          <div className="flex flex-col gap-[3px] pt-5 text-micro leading-3 text-text-muted" aria-hidden>
             {dayLabels.map((label, i) => (
               <span key={i} className="h-3">{label}</span>
             ))}
@@ -91,7 +91,7 @@ export function ContributionMap({ userId }: { userId: string }) {
           <div className="flex gap-[3px]">
             {weeks.map((col, ci) => (
               <div key={ci} className="flex flex-col gap-[3px]">
-                <span className="h-4 whitespace-nowrap text-[10px] leading-4 text-text-muted" aria-hidden>
+                <span className="h-4 whitespace-nowrap text-micro leading-4 text-text-muted" aria-hidden>
                   {monthLabels[ci]}
                 </span>
                 {col.map((day, di) => {
@@ -111,7 +111,7 @@ export function ContributionMap({ userId }: { userId: string }) {
           </div>
         </div>
       </ScrollRow>
-      <div className="mt-3 flex items-center justify-end gap-1.5 text-[11px] text-text-muted">
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-micro text-text-muted">
         <span>{t("contrib.less")}</span>
         {LEVEL_CLASSES.map((cls, i) => (
           <span key={i} className={cn("h-3 w-3 rounded-full", cls)} aria-hidden />

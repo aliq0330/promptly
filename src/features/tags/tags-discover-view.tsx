@@ -61,10 +61,10 @@ export function TagsDiscoverView() {
   }, [allTags, normalizedQuery, sortMode]);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+    <div className="mx-auto max-w-4xl space-y-8 px-3 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
       <div>
         <h1 className="mb-1 text-h1 font-semibold text-text">{t("tag.discoverTitle")}</h1>
-        <p className="text-sm text-text-muted">
+        <p className="text-small text-text-muted">
           {t("tag.discoverIntro")}
         </p>
       </div>
@@ -76,12 +76,12 @@ export function TagsDiscoverView() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("tag.searchPlaceholder")}
-          className="h-full w-full bg-transparent text-sm text-text outline-none placeholder:text-text-muted"
+          className="h-full w-full bg-transparent text-small text-text outline-none placeholder:text-text-muted"
         />
       </div>
 
       {!loaded ? (
-        <p className="py-10 text-center text-sm text-text-muted">{t("common.loading")}</p>
+        <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>
       ) : normalizedQuery ? (
         <TagResultsSection title={t("tag.resultsFor", { query: query.trim() })} tags={filteredAll} emptyMessage={t("tag.noMatch")} />
       ) : (
@@ -110,7 +110,7 @@ export function TagsDiscoverView() {
               <h2 className="text-h3 font-semibold text-text">{t("tag.risingHeading")}</h2>
             </div>
             {trending.length === 0 ? (
-              <p className="text-sm text-text-muted">
+              <p className="text-small text-text-muted">
                 {t("tag.noRising")}
               </p>
             ) : (
@@ -143,7 +143,7 @@ export function TagsDiscoverView() {
                     key={mode}
                     type="button"
                     onClick={() => setSortMode(mode)}
-                    className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                    className={`rounded-full border px-2.5 py-1 text-caption font-medium transition-colors ${
                       sortMode === mode
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-surface text-text-muted hover:text-text"
@@ -163,7 +163,7 @@ export function TagsDiscoverView() {
 }
 
 function TagChipRow({ tags, emptyMessage }: { tags: Tag[]; emptyMessage: string }) {
-  if (tags.length === 0) return <p className="text-sm text-text-muted">{emptyMessage}</p>;
+  if (tags.length === 0) return <p className="text-small text-text-muted">{emptyMessage}</p>;
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((tag) => (
@@ -183,7 +183,7 @@ function TagResultsSection({ title, tags, emptyMessage }: { title?: string; tags
     <div className="space-y-3">
       {title && <h2 className="text-h3 font-semibold text-text">{title}</h2>}
       {tags.length === 0 ? (
-        <p className="py-6 text-center text-sm text-text-muted">{emptyMessage}</p>
+        <p className="py-6 text-center text-small text-text-muted">{emptyMessage}</p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-surface">
           {tags.map((tag) => (
@@ -192,8 +192,8 @@ function TagResultsSection({ title, tags, emptyMessage }: { title?: string; tags
               href={tagHref(tag)}
               className="flex items-center justify-between gap-2 border-b border-border px-4 py-3 transition-colors last:border-0 hover:bg-accent-surface/40"
             >
-              <span className="text-sm font-medium text-text">#{tag.label}</span>
-              <span className="text-xs text-text-muted">
+              <span className="text-small font-medium text-text">#{tag.label}</span>
+              <span className="text-caption text-text-muted">
                 {t("tagPicker.usageCount", { count: formatCount(tag.usageCount ?? 0) })}
               </span>
             </Link>

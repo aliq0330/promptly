@@ -9,10 +9,12 @@ import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 export type ChatConfirmKind = "delete" | "clear";
 
-const itemClass = "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface-soft disabled:opacity-50";
+const itemClass = "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small hover:bg-surface-soft disabled:opacity-50";
 
 /**
  * The chat actions of an accepted conversation — Arşivle / Arşivden çıkar,
@@ -111,15 +113,15 @@ export function ChatConfirmModal({
         : t("messages.clearHistoryConfirm");
   return (
     <Modal onClose={busy ? () => undefined : onCancel} labelledBy="chat-confirm-title">
-      <div className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
-        <h2 id="chat-confirm-title" className="text-base font-semibold text-text">
+      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+        <h2 id="chat-confirm-title" className="text-body font-semibold text-text">
           {title}
         </h2>
         <p className="text-small text-text-secondary">{body}</p>
         {error && (
-          <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+          <InlineAlert>
             {error}
-          </p>
+          </InlineAlert>
         )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={busy}>
@@ -129,7 +131,7 @@ export function ChatConfirmModal({
             {busy ? t("common.loading") : title}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

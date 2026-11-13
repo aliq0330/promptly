@@ -36,7 +36,7 @@ export function QuoteCommentLink({ quote, size = 16 }: { quote: Quote; size?: nu
       aria-label={t("quotes.engage.commentsAria", { count })}
       className={contentActionClassName(false)}
     >
-      <MessageCircle size={size} strokeWidth={1.75} />
+      <MessageCircle size={size} />
       <span aria-hidden>{formatCount(count)}</span>
     </Link>
   );
@@ -77,7 +77,7 @@ export function QuoteEngagement({ quote, defaultOpen = true, highlightCommentId 
           aria-label={t("quotes.engage.commentsAria", { count: commentCount })}
           className={contentActionClassName(open)}
         >
-          <MessageCircle size={16} strokeWidth={1.75} />
+          <MessageCircle size={16} />
           <span aria-hidden>{formatCount(commentCount)}</span>
         </button>
         <QuoteStatisticsButton quote={quote} />

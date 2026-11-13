@@ -262,7 +262,7 @@ export function PromptTextEditor({
   );
 
   const tabSwitcher = (
-    <div className="flex rounded-md border border-border p-0.5 text-xs">
+    <div className="flex rounded-md border border-border p-0.5 text-caption">
       <button
         type="button"
         onClick={() => setTab("template")}
@@ -279,7 +279,7 @@ export function PromptTextEditor({
         disabled={variables.length === 0}
         title={variables.length === 0 ? t("variable.previewDisabledHint") : undefined}
         className={cn(
-          "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors disabled:opacity-40",
+          "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors disabled:opacity-50",
           activeTab === "preview" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
         )}
       >
@@ -339,7 +339,7 @@ export function PromptTextEditor({
 
       {activeTab === "preview" && (
         <div className="space-y-3 rounded-md border border-border bg-background p-3">
-          <div className="whitespace-pre-wrap break-words font-mono text-sm text-text">{previewText}</div>
+          <div className="whitespace-pre-wrap break-words font-mono text-small text-text">{previewText}</div>
           <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
             {variables.filter((variable) => previewVisible[variable.name] !== false).map((variable) => (
               <VariableField
@@ -351,7 +351,7 @@ export function PromptTextEditor({
             ))}
           </div>
           {Object.keys(previewValues).length > 0 && (
-            <button type="button" onClick={() => setPreviewValues({})} className="text-xs font-medium text-primary hover:underline">
+            <button type="button" onClick={() => setPreviewValues({})} className="text-caption font-medium text-primary hover:underline">
               {t("variable.resetToDefaults")}
             </button>
           )}
@@ -359,7 +359,7 @@ export function PromptTextEditor({
       )}
 
       {orphanTokens.length > 0 && (
-        <p className="text-xs text-warning">
+        <p className="text-caption text-warning">
           {t("variable.orphanTokensWarning", { tokens: orphanTokens.map((name) => `{${name}}`).join(", ") })}
         </p>
       )}

@@ -168,7 +168,7 @@ export function DetailArt({
   );
 }
 
-const ART_FRAME_CLASS = "relative block w-full overflow-hidden rounded-[22px] bg-surface-soft shadow-pop [--art-h:240px] md:[--art-h:300px]";
+const ART_FRAME_CLASS = "relative block w-full overflow-hidden rounded-xl bg-surface-soft shadow-pop [--art-h:240px] md:[--art-h:300px]";
 
 /** One thumbnail under the art (opens the lightbox at that image). */
 export function DetailArtThumb({ onOpen, children }: { onOpen: () => void; children: ReactNode }) {
@@ -203,13 +203,13 @@ export function CollageArt({
   [data: `data-${string}`]: string | undefined;
 }) {
   const tile = cn(
-    "relative overflow-hidden bg-surface shadow-pop lg:h-[248px] lg:w-[248px] lg:rounded-[22px]",
-    compact ? "h-24 w-24 rounded-[18px]" : "h-[200px] w-[200px] rounded-[22px]",
+    "relative overflow-hidden bg-surface shadow-pop lg:h-[248px] lg:w-[248px] lg:rounded-xl",
+    compact ? "h-24 w-24 rounded-lg" : "h-[200px] w-[200px] rounded-xl",
   );
   if (images.length === 0) {
     return (
       <span aria-hidden {...rest} className={cn(tile, "flex items-center justify-center text-primary")}>
-        <Icon size={compact ? 36 : 56} strokeWidth={1.4} className="lg:h-14 lg:w-14" />
+        <Icon size={compact ? 36 : 56} className="lg:h-14 lg:w-14" />
       </span>
     );
   }
@@ -225,7 +225,7 @@ export function CollageArt({
       {[0, 1, 2, 3].map((index) => (
         <span
           key={index}
-          className="relative overflow-hidden rounded-[6px] bg-surface-soft first:rounded-tl-[18px] last:rounded-br-[18px] [&:nth-child(2)]:rounded-tr-[18px] [&:nth-child(3)]:rounded-bl-[18px]"
+          className="relative overflow-hidden rounded-[6px] bg-surface-soft first:rounded-tl-lg last:rounded-br-lg [&:nth-child(2)]:rounded-tr-lg [&:nth-child(3)]:rounded-bl-lg"
         >
           {images[index] && <StorageImg src={images[index].url} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         </span>
@@ -237,8 +237,8 @@ export function CollageArt({
 /** Art for a post without a picture: its type's icon on a soft tile, so every band has the same rhythm. */
 export function DetailArtPlaceholder({ icon: Icon }: { icon: IconComponent }) {
   return (
-    <span aria-hidden className="flex h-36 w-36 items-center justify-center rounded-[22px] bg-surface/80 text-primary shadow-pop lg:h-48 lg:w-48">
-      <Icon size={56} strokeWidth={1.4} />
+    <span aria-hidden className="flex h-36 w-36 items-center justify-center rounded-xl bg-surface/80 text-primary shadow-pop lg:h-48 lg:w-48">
+      <Icon size={56} />
     </span>
   );
 }
@@ -298,12 +298,12 @@ export function Eyebrow({
     <Tag
       id={id}
       className={cn(
-        "flex items-center gap-1.5 font-sans text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.08em]",
+        "flex items-center gap-1.5 font-sans text-micro font-semibold uppercase leading-none tracking-[0.08em]",
         tone === "primary" ? "text-primary" : "text-text-muted",
         className,
       )}
     >
-      {Icon && <Icon size={13} strokeWidth={2.1} aria-hidden className="shrink-0" />}
+      {Icon && <Icon size={12} aria-hidden className="shrink-0" />}
       {children}
     </Tag>
   );
@@ -353,7 +353,7 @@ export function DetailByline({
   return (
     <div className="flex max-w-full items-center gap-2.5">
       <Link href={href} tabIndex={-1} aria-hidden className="shrink-0 rounded-full">
-        <Avatar src={person.avatarUrl} alt={person.displayName} size={36} />
+        <Avatar src={person.avatarUrl} alt={person.displayName} size={40} />
       </Link>
       <div className="min-w-0 leading-tight">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
@@ -472,7 +472,7 @@ export function DetailCard({
   "aria-labelledby"?: string;
 }) {
   return (
-    <Tag className={cn("rounded-[22px] border border-border-soft bg-surface", className)} {...rest}>
+    <Tag className={cn("rounded-xl border border-border-soft bg-surface", className)} {...rest}>
       {children}
     </Tag>
   );
@@ -521,7 +521,7 @@ export function ViewAllLink({ href }: { href: string }) {
   return (
     <Link href={href} className="inline-flex shrink-0 items-center gap-1 text-caption font-medium text-primary transition-opacity hover:opacity-80">
       {t("common.viewAll")}
-      <ArrowRight size={13} aria-hidden />
+      <ArrowRight size={12} aria-hidden />
     </Link>
   );
 }

@@ -3929,7 +3929,7 @@ const dictionary: Record<string, string> = {
   "spaces.palette.removeColor": "Delete color",
   "spaces.palette.moveLeft": "Move left",
   "spaces.palette.moveRight": "Move right",
-  "spaces.palette.invalidHex": "Enter a valid HEX code (e.g. #7c5cff).",
+  "spaces.palette.invalidHex": "Enter a valid HEX code (e.g. #3b5be2).",
   "spaces.palette.tooMany": "A palette can have at most {{max}} colors.",
   "spaces.palette.sourceManual": "Made by hand",
   "spaces.palette.sourceImage": "Extracted from an image",

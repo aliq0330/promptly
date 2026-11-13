@@ -246,7 +246,7 @@ export function MessageActionSheet({
       onClickCapture={onRootClickCapture}
       onClick={onRootClick}
       // `fixed inset-0` scroller: when even the clipped group is taller than a very short visible area, the sheet itself scrolls.
-      className="fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-background/55 outline-none backdrop-blur-xl animate-fade-in"
+      className="fixed inset-0 z-(--z-popover) overflow-y-auto overscroll-contain bg-background/55 outline-none backdrop-blur-xl animate-fade-in"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div

@@ -81,7 +81,7 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
     return (
       <div className="flex gap-3 overflow-hidden" aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="suggestions-loading">
         {[0, 1].map((i) => (
-          <div key={i} className="h-40 w-[78%] shrink-0 animate-pulse rounded-xl border border-border-soft bg-surface-soft sm:w-72" />
+          <div key={i} className="h-40 w-[78%] shrink-0 skeleton-shimmer rounded-xl border border-border-soft sm:w-72" />
         ))}
       </div>
     );
@@ -120,7 +120,7 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
               <div className="relative space-y-2">
                 <div className="flex items-center gap-3">
                   <span className="inline-flex shrink-0 rounded-[0.95rem] border-[3px] border-surface bg-surface shadow-pop">
-                    <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={44} className="[&>span:first-child]:rounded-[0.75rem]" />
+                    <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={40} className="[&>span:first-child]:rounded-[0.75rem]" />
                   </span>
                   <div className="min-w-0 flex-1 space-y-0.5">
                     <Eyebrow tone="primary">{t(CATEGORY_LABEL_KEYS[community.category])}</Eyebrow>

@@ -33,6 +33,8 @@ import {
 import { communityChatHref, COMMUNITY_COVER_COLORS, COMMUNITY_VISIBILITY_OPTIONS, coverModeOf, normalizeCoverColor, type CoverMode } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupVisibility } from "@/types";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 /** Görünürlüğe geçiş eylemlerinin düğme etiketi + onay penceresi metinleri. */
 const VISIBILITY_ACTION_KEYS: Record<GroupVisibility, { label: TranslationKey; title: TranslationKey }> = {
@@ -219,7 +221,7 @@ export function GroupSettingsSection({
             aria-label={t("groups.create.avatarPick")}
             className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <GroupAvatar name={name || group.name} avatarUrl={shownAvatar} size={64} />
+            <GroupAvatar name={name || group.name} avatarUrl={shownAvatar} size={56} />
             <span className="absolute inset-0 flex items-center justify-center rounded-full bg-text/40 text-background opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
               <Camera size={20} />
             </span>
@@ -306,9 +308,9 @@ export function GroupSettingsSection({
         </p>
 
         {save.error && (
-          <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+          <InlineAlert>
             {save.error}
-          </p>
+          </InlineAlert>
         )}
         <div className="flex justify-end">
           <Button type="button" size="sm" onClick={() => void handleSave()} disabled={save.busy || !dirty}>
@@ -400,8 +402,8 @@ function VisibilityResultDialog({ result, onClose }: { result: VisibilityChangeR
   const reasons = countSkippedByReason(result);
   return (
     <Modal onClose={onClose} labelledBy="visibility-result-title">
-      <div className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
-        <h2 id="visibility-result-title" className="flex items-center gap-2 text-base font-semibold text-text">
+      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+        <h2 id="visibility-result-title" className="flex items-center gap-2 text-body font-semibold text-text">
           <CircleCheck size={18} className="text-success" aria-hidden /> {t("groups.settings.resultTitle")}
         </h2>
         <ul className="space-y-1.5 text-small text-text-secondary">
@@ -425,7 +427,7 @@ function VisibilityResultDialog({ result, onClose }: { result: VisibilityChangeR
             {t("common.done")}
           </Button>
         </div>
-      </div>
+      </DialogShell>
     </Modal>
   );
 }

@@ -23,7 +23,7 @@ export function PublishCelebration() {
   if (!shown) return null;
   return (
     <div role="status" className="pointer-events-none fixed inset-0 z-[80] flex items-center justify-center">
-      <div className="mi-celebrate flex flex-col items-center gap-2 rounded-2xl bg-surface px-7 py-6 shadow-pop">
+      <div className="mi-celebrate flex flex-col items-center gap-2 rounded-lg bg-surface px-7 py-6 shadow-pop">
         <svg width="68" height="68" viewBox="0 0 68 68" fill="none" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="overflow-visible text-success">
           <circle className="mi-pulse" cx="34" cy="34" r="28" stroke="currentColor" strokeWidth="2" />
           <circle className="mi-ring" cx="34" cy="34" r="28" stroke="currentColor" strokeWidth="3" pathLength={1} />

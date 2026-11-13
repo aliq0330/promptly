@@ -175,7 +175,7 @@ export function StoryArchiveView() {
                         className={cn("relative block w-full overflow-hidden rounded-md ring-1 ring-border-soft", order >= 0 && "ring-2 ring-primary")}
                       >
                         <StoryCanvas mode="thumb" story={story} />
-                        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-story-black/70 to-transparent px-1.5 pb-1 pt-4 text-left text-[11px] font-medium text-story-white">
+                        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-story-black/70 to-transparent px-1.5 pb-1 pt-4 text-left text-micro font-medium text-story-white">
                           {story.moderationStatus === "removed"
                             ? t("stories.archive.removed")
                             : live
@@ -201,7 +201,7 @@ export function StoryArchiveView() {
       {selecting && selected.length > 0 && (
         <div className="sticky bottom-20 z-20 flex justify-center md:bottom-6">
           <Button type="button" onClick={() => setEditorOpen(true)} className="shadow-pop">
-            <Highlighter size={15} aria-hidden /> {t("stories.archive.createHighlight", { count: selected.length })}
+            <Highlighter size={16} aria-hidden /> {t("stories.archive.createHighlight", { count: selected.length })}
           </Button>
         </div>
       )}

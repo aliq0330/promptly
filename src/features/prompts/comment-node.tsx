@@ -108,7 +108,7 @@ function CommentRating({ comment, tree, isOwn }: { comment: PromptComment; tree:
       ) : (
         <StarRatingDisplay value={rating} size={14} />
       )}
-      <span className="text-xs font-semibold tabular-nums text-text-secondary">{rating}/5</span>
+      <span className="text-caption font-semibold tabular-nums text-text-secondary">{rating}/5</span>
     </div>
   );
 }
@@ -157,7 +157,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
         </Link>
         <div className="min-w-0 flex-1">
           {isDeleted ? (
-            <p className="text-sm italic text-text-muted">
+            <p className="text-small italic text-text-muted">
               <Link href={profileHref(comment.author)} className="font-medium not-italic text-text hover:underline">
                 {comment.author.displayName}
               </Link>{" "}
@@ -171,7 +171,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 onChange={tree.onEditDraftChange}
                 rows={2}
                 autoFocus
-                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-small text-text focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
               <div className="flex items-center gap-2">
                 <Button
@@ -188,12 +188,12 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
               </div>
               <CommentExtrasPreview extras={tree.editExtras} attachmentState={tree.attachmentStateFor} />
               {tree.currentUserId && <CommentExtrasToolbar extras={tree.editExtras} userId={tree.currentUserId} disabled={tree.isSavingEdit} className="-ml-1.5" />}
-              {tree.editError && <p className="text-xs text-danger">{tree.editError}</p>}
+              {tree.editError && <p className="text-caption text-danger">{tree.editError}</p>}
             </div>
           ) : (
             <>
               {comment.rating ? <CommentRating comment={comment} tree={tree} isOwn={isOwn} /> : null}
-              <p className="text-sm break-words">
+              <p className="text-small break-words">
                 <Link href={profileHref(comment.author)} className="font-medium text-text hover:underline">
                   {comment.author.displayName}
                 </Link>{" "}
@@ -203,8 +203,8 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                   </>
                 )}
                 {showParentHint && (
-                  <span className="mr-1 inline-flex items-center gap-0.5 text-xs font-medium text-primary">
-                    <Reply size={11} />@{parent.author.username}
+                  <span className="mr-1 inline-flex items-center gap-0.5 text-caption font-medium text-primary">
+                    <Reply size={12} />@{parent.author.username}
                   </span>
                 )}
                 <span className="text-text-muted">
@@ -216,7 +216,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
           )}
 
           {!isDeleted && !isEditingHere && (
-            <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-text-muted">
+            <div className="mt-0.5 flex flex-wrap items-center gap-3 text-caption text-text-muted">
               <span>
                 {formatRelativeTime(comment.createdAt, language)}
                 {comment.editedAt && ` · ${t("comments.edited")}`}
@@ -261,7 +261,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
               }}
               className="mt-2 space-y-1.5"
             >
-              <p className="text-xs text-text-muted">
+              <p className="text-caption text-text-muted">
                 <span className="font-medium text-primary">@{comment.author.username}</span> {t("comments.replyingToSuffix")}
               </p>
               <MentionTextarea
@@ -271,7 +271,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 rows={2}
                 autoFocus
                 placeholder={t("comments.writeAReply")}
-                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
               <CommentExtrasPreview extras={tree.replyExtras} />
               <div className="flex items-center gap-2">
@@ -283,7 +283,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 </Button>
                 {tree.currentUserId && <CommentExtrasToolbar extras={tree.replyExtras} userId={tree.currentUserId} disabled={tree.isPosting} className="ml-auto" />}
               </div>
-              {tree.postError && <p className="text-xs text-danger">{tree.postError}</p>}
+              {tree.postError && <p className="text-caption text-danger">{tree.postError}</p>}
             </form>
           )}
 
@@ -291,9 +291,9 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
             <button
               type="button"
               onClick={() => tree.onToggleExpand(comment.id)}
-              className="mt-1.5 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              className="mt-1.5 flex items-center gap-1 text-caption font-medium text-primary hover:underline"
             >
-              {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               {isExpanded
                 ? t("comments.hideReplies")
                 : children.length === 1

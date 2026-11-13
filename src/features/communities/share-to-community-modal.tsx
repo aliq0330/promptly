@@ -14,6 +14,8 @@ import { LoadMore } from "@/features/feed/load-more";
 import { useShareableContent } from "@/features/communities/use-shareable-content";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { DialogShell } from "@/components/ui/dialog-shell";
 
 const TYPES: CommunityPostType[] = ["prompt", "request", "workflow", "preset", "space"];
 
@@ -56,10 +58,10 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
   return (
     <>
       <Modal onClose={busy ? () => undefined : onClose} labelledBy="share-community-title">
-        <div className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+        <DialogShell className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
           <div className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-5">
             <div className="min-w-0 space-y-1">
-              <h2 id="share-community-title" className="text-base font-semibold text-text">
+              <h2 id="share-community-title" className="text-body font-semibold text-text">
                 {t("communities.feed.shareTitle")}
               </h2>
               <p className="text-small text-text-muted">{t("communities.feed.shareHelp")}</p>
@@ -85,7 +87,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                 {t("communities.feed.pickLoadError")}
               </p>
             ) : items === null || list.loading ? (
-              <div className="h-20 animate-pulse rounded-lg bg-surface-soft" aria-busy="true" />
+              <div className="h-20 skeleton-shimmer rounded-lg" aria-busy="true" />
             ) : items.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
             ) : (
@@ -94,7 +96,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                   <li key={item.id}>
                     <label
                       className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-2.5 text-sm transition-colors",
+                        "flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-2.5 text-small transition-colors",
                         selected?.id === item.id ? "border-primary/50 bg-primary-soft/40" : "border-border-soft bg-background hover:border-border-strong",
                       )}
                     >
@@ -119,15 +121,15 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
               <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={list.grow} />
             )}
           </div>
-        </div>
+        </DialogShell>
       </Modal>
 
       {selected && noteOpen && (
         <Modal onClose={busy ? () => undefined : () => setNoteOpen(false)} labelledBy="share-note-title" overLayers>
-          <div data-share-note-dialog="" className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+          <DialogShell data-share-note-dialog="" className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
             <div className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-5">
               <div className="min-w-0">
-                <h2 id="share-note-title" className="text-base font-semibold text-text">
+                <h2 id="share-note-title" className="text-body font-semibold text-text">
                   {t("communities.feed.shareTitle")}
                 </h2>
                 <p className="truncate text-small text-text-muted">{selected.title}</p>
@@ -145,9 +147,9 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                 <p className="mt-1 text-caption text-text-muted">{`${[...note.trim()].length}/${COMMUNITY_NOTE_MAX}`} · {t("communities.feed.visibilityNote")}</p>
               </div>
               {error && (
-                <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+                <InlineAlert>
                   {error}
-                </p>
+                </InlineAlert>
               )}
             </div>
             <div data-dialog-footer="" className="flex shrink-0 justify-end gap-2 border-t border-border-soft px-5 py-3">
@@ -159,7 +161,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                 {t("communities.feed.shareSubmit")}
               </Button>
             </div>
-          </div>
+          </DialogShell>
         </Modal>
       )}
     </>

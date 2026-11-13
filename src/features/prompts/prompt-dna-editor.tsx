@@ -255,7 +255,7 @@ export function PromptDnaEditor({
                         maxLength={60}
                         placeholder={t("dna.customLabelPlaceholder")}
                         aria-label={t("dna.customLabel")}
-                        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-text"
+                        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-small text-text"
                       />
                     )}
                     <textarea
@@ -266,7 +266,7 @@ export function PromptDnaEditor({
                       autoFocus
                       placeholder={t("dna.contentPlaceholder")}
                       aria-label={t("dna.contentLabel")}
-                      className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-sm text-text"
+                      className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-small text-text"
                     />
                     <div className="flex justify-end gap-1.5">
                       <Button type="button" variant="ghost" size="sm" onClick={cancelEdit}>
@@ -295,7 +295,7 @@ export function PromptDnaEditor({
                         aria-label={t("dna.editAria", { label: heading })}
                         className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text"
                       >
-                        <Pencil size={15} />
+                        <Pencil size={16} />
                       </button>
                       <button
                         type="button"
@@ -338,9 +338,9 @@ export function PromptDnaEditor({
                   type="button"
                   disabled={taken}
                   onClick={() => startAdd(type)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-label font-medium text-text-secondary transition-colors hover:border-border-strong hover:text-text disabled:pointer-events-none disabled:opacity-40"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-label font-medium text-text-secondary transition-colors hover:border-border-strong hover:text-text disabled:pointer-events-none disabled:opacity-50"
                 >
-                  <Icon size={13} aria-hidden="true" />
+                  <Icon size={12} aria-hidden="true" />
                   {label(type)}
                 </button>
               );

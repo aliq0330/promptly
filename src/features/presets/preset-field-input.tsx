@@ -283,7 +283,7 @@ export function PresetFieldInput({
           <input
             type="color"
             aria-label={label}
-            value={hex ?? "#7c3aed"}
+            value={hex ?? "#3b5be2"}
             onChange={(event) => onChange(event.target.value)}
             className="h-10 w-14 cursor-pointer rounded-md border border-border bg-background p-1"
             data-field-input={field.id}

@@ -22,6 +22,7 @@ import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import { searchWorkflowsPage } from "@/lib/supabase/workflows";
 import type { TeamCreateKind } from "@/lib/team-create";
 import { cn } from "@/lib/utils";
+import { InlineAlert } from "@/components/ui/inline-alert";
 
 /**
  * Ekip dosyası / pano için içerik SEÇME penceresi (docs/history/376-*). Prompt, İstek, Workflow ve Ayar paketi için AYNI pencere:
@@ -203,7 +204,7 @@ export function ContentPickerDialog({
             data-picker-filter=""
             className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border-soft px-3 text-small font-semibold text-text-secondary hover:bg-surface-soft"
           >
-            <Filter size={15} aria-hidden />
+            <Filter size={16} aria-hidden />
             {t("tf.pick.filter")}
             {activeFilters > 0 && <span className="rounded-full bg-primary px-1.5 text-caption font-bold text-primary-foreground">{activeFilters}</span>}
           </button>
@@ -215,9 +216,9 @@ export function ContentPickerDialog({
         </div>
 
         {error && (
-          <p role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-small text-danger">
+          <InlineAlert>
             {error}
-          </p>
+          </InlineAlert>
         )}
 
         {!current && (
@@ -251,7 +252,7 @@ export function ContentPickerDialog({
                 </span>
                 {done ? (
                   <span className={cn("inline-flex items-center gap-1 text-small font-semibold text-success")} data-picker-added={row.id}>
-                    <Check size={15} aria-hidden />
+                    <Check size={16} aria-hidden />
                     {t("tf.pick.added")}
                   </span>
                 ) : (

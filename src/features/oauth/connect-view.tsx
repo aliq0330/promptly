@@ -81,13 +81,13 @@ function ConnectInner() {
     <PageContainer className="mx-auto max-w-md space-y-5 py-8">
       <header data-oauth-connect="" className="space-y-4 text-center">
         <div aria-hidden className="flex items-center justify-center gap-3">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border-soft bg-secondary/10 font-display text-2xl font-bold text-secondary">{initial}</span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-lg border border-border-soft bg-secondary/10 font-display text-2xl font-bold text-secondary">{initial}</span>
           <span className="flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-border-strong" />
             <span className="h-1.5 w-1.5 rounded-full bg-border-strong" />
             <span className="h-1.5 w-1.5 rounded-full bg-primary" />
           </span>
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary font-display text-2xl font-bold text-primary-foreground">P</span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary font-display text-2xl font-bold text-primary-foreground">P</span>
         </div>
         <h1 className="break-words font-display text-h1 text-text [overflow-wrap:anywhere]">{t("oauth.heading", { name: info.clientName })}</h1>
         <dl className="space-y-1 text-small text-text-secondary">
@@ -104,10 +104,10 @@ function ConnectInner() {
         </dl>
       </header>
 
-      <div className="divide-y divide-border-soft rounded-xl border border-border-soft bg-surface shadow-card">
+      <div className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface shadow-card">
         <div className="flex items-start gap-3 p-4">
           <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
-            <Check size={16} strokeWidth={2.5} />
+            <Check size={16} />
           </span>
           <div className="min-w-0">
             <p className="text-small font-semibold text-text">{t("connect.rowRead")}</p>
@@ -116,7 +116,7 @@ function ConnectInner() {
         </div>
         <label className="flex cursor-pointer items-center gap-3 p-4">
           <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-            <Plus size={16} strokeWidth={2.5} />
+            <Plus size={16} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-small font-semibold text-text">{t("connect.writeLabel")}</span>
@@ -125,12 +125,12 @@ function ConnectInner() {
           <input type="checkbox" role="switch" className="peer sr-only" checked={write} disabled={busy} onChange={(event) => setWrite(event.target.checked)} />
           <span
             aria-hidden
-            className="relative h-7 w-12 shrink-0 rounded-full bg-border-strong transition-colors duration-200 ease-soft after:absolute after:left-0.5 after:top-0.5 after:h-6 after:w-6 after:rounded-full after:bg-surface-elevated after:shadow-sm after:transition-transform after:duration-200 peer-checked:bg-primary peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-60"
+            className="relative h-7 w-12 shrink-0 rounded-full bg-border-strong transition-colors duration-200 ease-soft after:absolute after:left-0.5 after:top-0.5 after:h-6 after:w-6 after:rounded-full after:bg-surface-elevated after:shadow-sm after:transition-transform after:duration-200 peer-checked:bg-primary peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-50"
           />
         </label>
         <div className="flex items-start gap-3 p-4">
           <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-danger/10 text-danger">
-            <X size={16} strokeWidth={2.5} />
+            <X size={16} />
           </span>
           <div className="min-w-0">
             <p className="text-small font-semibold text-text">{t("connect.rowNever")}</p>

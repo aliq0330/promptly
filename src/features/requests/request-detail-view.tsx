@@ -267,7 +267,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             title={t("request.replies")}
             aria-label={`${t("request.replies")} (${formatCount(live.responseCount)})`}
           >
-            <Reply size={20} strokeWidth={1.75} />
+            <Reply size={20} />
             <span aria-hidden>{formatCount(live.responseCount)}</span>
           </a>
         </DetailActionBar>
@@ -310,7 +310,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
         {activeTab === "request" && (<>
         <DetailSection title={t("detail.requestBrief")}>
-          <div className="overflow-hidden rounded-[22px] bg-surface-soft">
+          <div className="overflow-hidden rounded-xl bg-surface-soft">
             <ScrollablePrompt className="px-5 py-5 text-[0.875rem] text-text">{live.description}</ScrollablePrompt>
           </div>
           {live.creativeDirection && (
@@ -385,11 +385,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                         <>
                           {isPendingThis ? (
                             <>
-                              <span className="text-xs text-text-muted">{t("request.confirmUnselect")}</span>
+                              <span className="text-caption text-text-muted">{t("request.confirmUnselect")}</span>
                               <button
                                 type="button"
                                 onClick={() => setSelectionTarget(null)}
-                                className="text-xs font-medium text-text-muted hover:text-text"
+                                className="text-caption font-medium text-text-muted hover:text-text"
                               >
                                 {t("common.cancel")}
                               </button>
@@ -397,7 +397,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                                 type="button"
                                 disabled={isSelecting}
                                 onClick={() => confirmSelection(null)}
-                                className="text-xs font-medium text-danger hover:underline"
+                                className="text-caption font-medium text-danger hover:underline"
                               >
                                 {t("request.unselectReply")}
                               </button>
@@ -406,7 +406,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                             <button
                               type="button"
                               onClick={() => setSelectionTarget({ id: prompt.id, confirming: true })}
-                              className="text-xs font-medium text-text-muted hover:text-text"
+                              className="text-caption font-medium text-text-muted hover:text-text"
                             >
                               {t("request.unselectReply")}
                             </button>
@@ -414,11 +414,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                         </>
                       ) : isPendingThis ? (
                         <>
-                          <span className="text-xs text-text-muted">{t("request.confirmSelect")}</span>
+                          <span className="text-caption text-text-muted">{t("request.confirmSelect")}</span>
                           <button
                             type="button"
                             onClick={() => setSelectionTarget(null)}
-                            className="text-xs font-medium text-text-muted hover:text-text"
+                            className="text-caption font-medium text-text-muted hover:text-text"
                           >
                             {t("common.cancel")}
                           </button>
@@ -426,7 +426,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                             type="button"
                             disabled={isSelecting}
                             onClick={() => confirmSelection(prompt.id)}
-                            className="text-xs font-medium text-primary hover:underline"
+                            className="text-caption font-medium text-primary hover:underline"
                           >
                             {t("request.selectReply")}
                           </button>
@@ -435,7 +435,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                         <button
                           type="button"
                           onClick={() => setSelectionTarget({ id: prompt.id, confirming: true })}
-                          className="text-xs font-medium text-primary hover:underline"
+                          className="text-caption font-medium text-primary hover:underline"
                         >
                           {t("request.selectReply")}
                         </button>
@@ -447,7 +447,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             })}
           </div>
         )}
-        {selectionError && <p className="text-sm text-danger">{selectionError}</p>}
+        {selectionError && <p className="text-small text-danger">{selectionError}</p>}
       </DetailSection>
         </>)}
 
@@ -479,7 +479,7 @@ function ContributorsList({ answers }: { answers: Prompt[] }) {
         {authors.slice(0, 6).map((author) => (
           <li key={author.id}>
             <Link href={profileHref(author)} className="group flex items-center gap-2.5 px-3.5 py-2.5 transition-colors duration-200 hover:bg-surface-soft">
-              <Avatar src={author.avatarUrl} alt={author.displayName} size={28} />
+              <Avatar src={author.avatarUrl} alt={author.displayName} size={32} />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-label font-semibold text-text transition-colors group-hover:text-primary">{author.displayName}</span>
                 <span className="block truncate text-caption text-text-muted">@{author.username}</span>

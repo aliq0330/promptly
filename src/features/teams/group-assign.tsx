@@ -86,7 +86,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
       disabled={busy}
       onClick={onPick}
       data-group-tile={key}
-      className={cn("flex min-h-[6.5rem] flex-col gap-2 rounded-2xl border-[1.5px] p-3.5 text-left transition-colors disabled:opacity-70", selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft", extra)}
+      className={cn("flex min-h-[6.5rem] flex-col gap-2 rounded-lg border-[1.5px] p-3.5 text-left transition-colors disabled:opacity-50", selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft", extra)}
     >
       {children}
       {current && <span className="mt-auto text-caption font-semibold text-text-muted">{t("tf.group.current")}</span>}
@@ -159,9 +159,9 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
               disabled={busy}
               aria-expanded={creating}
               data-group-tile="new"
-              className={cn("flex min-h-[6.5rem] flex-col items-center justify-center gap-1.5 rounded-2xl border-[1.5px] border-dashed p-3.5 text-small font-bold text-primary transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
+              className={cn("flex min-h-[6.5rem] flex-col items-center justify-center gap-1.5 rounded-lg border-[1.5px] border-dashed p-3.5 text-small font-bold text-primary transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
             >
-              <FolderPlus size={22} aria-hidden />
+              <FolderPlus size={24} aria-hidden />
               {t("tf.group.newTile")}
             </button>
           )}
@@ -193,7 +193,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
         <FormError message={error} />
         {caps.edit && groups.length > 0 && (
           <button type="button" onClick={() => setManage(true)} className="inline-flex items-center gap-1.5 text-small font-semibold text-primary hover:underline" data-group-manage>
-            <Layers size={15} aria-hidden />
+            <Layers size={16} aria-hidden />
             {t("spaces.groups.manage")}
           </button>
         )}

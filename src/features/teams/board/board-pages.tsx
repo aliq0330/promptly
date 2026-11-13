@@ -367,7 +367,7 @@ export function PageRows({ team, actions, onPicked, thumbClass = "h-9 w-14" }: {
                 <span className="block truncate text-small font-bold text-text">{page.title}</span>
                 <span className="block truncate text-caption text-text-secondary">{pageMeta(page, t, language)}</span>
               </span>
-              {current && <Check size={18} className="shrink-0 text-primary" strokeWidth={2.6} aria-label={t("tb.pages.current")} />}
+              {current && <Check size={18} className="shrink-0 text-primary" aria-label={t("tb.pages.current")} />}
             </button>
             <PageMenu page={page} index={index} extrasCount={extrasCount} actions={actions} />
           </li>
@@ -391,7 +391,7 @@ function PageFooterActions({ actions, onOverview, onClosed }: { actions: PageAct
           data-board-page-new=""
           className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 text-small font-bold text-primary hover:bg-surface-soft"
         >
-          <Plus size={19} strokeWidth={2.4} aria-hidden />
+          <Plus size={20} aria-hidden />
           {t("tb.pages.new")}
         </button>
       )}
@@ -404,7 +404,7 @@ function PageFooterActions({ actions, onOverview, onClosed }: { actions: PageAct
         data-board-overview-open=""
         className="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 text-small font-semibold text-text hover:bg-surface-soft"
       >
-        <LayoutGrid size={19} aria-hidden />
+        <LayoutGrid size={20} aria-hidden />
         {t("tb.pages.all")}
       </button>
     </div>
@@ -421,7 +421,7 @@ export function PagesPopover({ anchorRef, team, actions, onClose, onOverview }: 
         <span className="rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold text-text-secondary">{team.pages.length}</span>
         {team.groupId && actions.canEdit && (
           <button type="button" onClick={() => { onClose(); actions.renameGroup(); }} aria-label={t("tb.group.rename")} data-board-group-rename="" className="ml-auto grid h-8 w-8 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
-            <Pencil size={15} aria-hidden />
+            <Pencil size={16} aria-hidden />
           </button>
         )}
       </div>
@@ -458,7 +458,7 @@ export function PagesDrawer({ team, actions, onClose, onOverview }: { team: Team
             <p className="min-w-0 flex-1 truncate text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tb.pages.groupLabel", { name: team.groupTitle ?? team.fileTitle ?? team.projectTitle })}</p>
             {team.groupId && actions.canEdit && (
               <button type="button" onClick={() => { onClose(); actions.renameGroup(); }} aria-label={t("tb.group.rename")} className="grid h-8 w-8 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
-                <Pencil size={15} aria-hidden />
+                <Pencil size={16} aria-hidden />
               </button>
             )}
           </div>
@@ -498,7 +498,7 @@ export function PagesButton({ buttonRef, team, open, onClick, compact }: { butto
     >
       <span className="grid h-[1.375rem] min-w-[1.375rem] place-items-center rounded-full bg-surface-soft px-1.5 text-caption font-bold text-text-secondary">{team.pages.length}</span>
       {!compact && <span className="max-w-[11rem] truncate text-small font-semibold" data-board-page-name="">{current?.title ?? team.mainTitle}</span>}
-      <ChevronDown size={15} className="text-text-muted" aria-hidden />
+      <ChevronDown size={16} className="text-text-muted" aria-hidden />
     </button>
   );
 }
@@ -534,7 +534,7 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
           {team.pages.map((page, index) => {
             const current = page.id === team.currentId;
             return (
-              <li key={page.id} data-board-page={page.id} className={cn("space-y-2.5 rounded-2xl bg-surface p-2.5 md:p-3", current ? "border-2 border-primary" : "border border-border-soft")}>
+              <li key={page.id} data-board-page={page.id} className={cn("space-y-2.5 rounded-lg bg-surface p-2.5 md:p-3", current ? "border-2 border-primary" : "border border-border-soft")}>
                 <button type="button" onClick={() => { onClose(); if (!current) actions.open(page.id); }} className="block w-full" aria-label={t("tb.overview.open", { name: page.title })}>
                   <BoardThumb spaceId={page.id} className="h-28 w-full md:h-44" />
                 </button>
@@ -543,7 +543,7 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
                     <span className="block truncate text-small font-bold text-text">{page.title}</span>
                     <span className="block truncate text-caption text-text-secondary">{pageMeta(page, t, language)}</span>
                   </span>
-                  {current && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-[0.6875rem] font-bold text-primary">{t("tb.overview.open.chip")}</span>}
+                  {current && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-micro font-bold text-primary">{t("tb.overview.open.chip")}</span>}
                   <PageMenu page={page} index={index} extrasCount={extrasCount} actions={actions} />
                 </div>
               </li>
@@ -551,9 +551,9 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
           })}
           {actions.canCreate && (
             <li>
-              <button type="button" onClick={actions.create} className="flex h-full min-h-40 w-full flex-col items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed border-border text-small font-bold text-text-secondary hover:bg-surface-soft">
+              <button type="button" onClick={actions.create} className="flex h-full min-h-40 w-full flex-col items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed border-border text-small font-bold text-text-secondary hover:bg-surface-soft">
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft text-primary">
-                  <Plus size={22} strokeWidth={2.4} aria-hidden />
+                  <Plus size={24} aria-hidden />
                 </span>
                 {t("tb.pages.new")}
               </button>

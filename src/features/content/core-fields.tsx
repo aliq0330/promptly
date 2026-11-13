@@ -36,13 +36,13 @@ interface CoreFieldProps {
 function FieldLabel({ id, label, required, optional, counter }: { id: string; label: string; required?: boolean; optional?: boolean; counter?: string }) {
   const { t } = useTranslation();
   return (
-    <label htmlFor={id} className="mb-1.5 flex items-center justify-between gap-2 text-sm font-medium text-text">
+    <label htmlFor={id} className="mb-1.5 flex items-center justify-between gap-2 text-small font-medium text-text">
       <span>
         {label}
         {required && <span className="text-danger"> *</span>}
         {optional && <span className="font-normal text-text-muted"> ({t("common.optional")})</span>}
       </span>
-      {counter && <span className="text-xs font-normal text-text-muted">{counter}</span>}
+      {counter && <span className="text-caption font-normal text-text-muted">{counter}</span>}
     </label>
   );
 }

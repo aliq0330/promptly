@@ -117,7 +117,7 @@ export function ApiKeysSection() {
         <div role="status" className="space-y-3 rounded-lg border border-primary/40 bg-primary-soft p-4" data-api-key-reveal="">
           <div className="space-y-1">
             <p className="text-small font-semibold text-text">{t("apiKeys.revealTitle")}</p>
-            <p className="text-xs leading-relaxed text-text-secondary">{t("apiKeys.revealBody")}</p>
+            <p className="text-caption leading-relaxed text-text-secondary">{t("apiKeys.revealBody")}</p>
           </div>
           <div className="relative rounded-lg border border-border-soft bg-surface">
             <pre aria-label={t("apiKeys.revealLabel")} className="prompt-text overflow-x-auto whitespace-pre-wrap break-all px-3 py-3 pr-12 text-small text-text">{created.token}</pre>
@@ -160,14 +160,14 @@ export function ApiKeysSection() {
             <input type="radio" name="api-key-access" checked={preset === "read"} onChange={() => setPreset("read")} className="mt-0.5" />
             <span>
               <span className="font-medium">{t("apiKeys.accessRead")}</span>
-              <span className="block text-xs text-text-muted">{t("apiKeys.accessReadHint")}</span>
+              <span className="block text-caption text-text-muted">{t("apiKeys.accessReadHint")}</span>
             </span>
           </ChoiceCard>
           <ChoiceCard>
             <input type="radio" name="api-key-access" checked={preset === "write"} onChange={() => setPreset("write")} className="mt-0.5" />
             <span>
               <span className="font-medium">{t("apiKeys.accessWrite")}</span>
-              <span className="block text-xs text-text-muted">{t("apiKeys.accessWriteHint")}</span>
+              <span className="block text-caption text-text-muted">{t("apiKeys.accessWriteHint")}</span>
             </span>
           </ChoiceCard>
         </fieldset>
@@ -189,8 +189,8 @@ export function ApiKeysSection() {
           {expiry === null && <p className="mt-1 text-caption text-text-muted">{t("apiKeys.expiryNeverHint")}</p>}
         </div>
 
-        {formError && <p role="alert" className="text-sm text-danger">{formError}</p>}
-        {rows !== null && !canCreate && <p className="text-xs text-text-muted">{t("apiKeys.limitReached")}</p>}
+        {formError && <p role="alert" className="text-small text-danger">{formError}</p>}
+        {rows !== null && !canCreate && <p className="text-caption text-text-muted">{t("apiKeys.limitReached")}</p>}
         <Button type="submit" size="sm" disabled={creating || !canCreate || !isValidApiTokenName(name)}>
           <KeyRound size={14} />
           {creating ? t("apiKeys.creating") : t("apiKeys.create")}
@@ -202,15 +202,15 @@ export function ApiKeysSection() {
           <h4 className="text-small font-semibold text-text">{t("apiKeys.listTitle")}</h4>
           {rows !== null && <span className="text-caption text-text-muted">{t("apiKeys.activeCount", { count: activeCount, max: API_TOKEN_ACTIVE_LIMIT })}</span>}
         </div>
-        {rows === null && !loadFailed && <p className="text-xs text-text-muted">{t("apiKeys.loading")}</p>}
+        {rows === null && !loadFailed && <p className="text-caption text-text-muted">{t("apiKeys.loading")}</p>}
         {loadFailed && (
           <div className="flex flex-wrap items-center gap-3">
-            <p role="alert" className="text-sm text-danger">{t("apiKeys.loadFailed")}</p>
+            <p role="alert" className="text-small text-danger">{t("apiKeys.loadFailed")}</p>
             <Button type="button" size="sm" variant="outline" onClick={reload}>{t("apiKeys.retry")}</Button>
           </div>
         )}
-        {rows !== null && rows.length === 0 && <p className="text-xs text-text-muted">{t("apiKeys.empty")}</p>}
-        {listError && <p role="alert" className="text-sm text-danger">{listError}</p>}
+        {rows !== null && rows.length === 0 && <p className="text-caption text-text-muted">{t("apiKeys.empty")}</p>}
+        {listError && <p role="alert" className="text-small text-danger">{listError}</p>}
         {rows !== null && rows.length > 0 && (
           <ul className="divide-y divide-border-soft rounded-lg border border-border-soft">
             {rows.map((row) => {
@@ -235,7 +235,7 @@ export function ApiKeysSection() {
                   {status === "active" &&
                     (confirmId === row.id ? (
                       <div className="space-y-2">
-                        <p className="text-xs text-text-secondary">{t("apiKeys.revokeConfirm")}</p>
+                        <p className="text-caption text-text-secondary">{t("apiKeys.revokeConfirm")}</p>
                         <div className="flex flex-wrap gap-2">
                           <Button type="button" size="sm" variant="danger" disabled={revokingId === row.id} onClick={() => void handleRevoke(row.id)}>
                             {revokingId === row.id ? t("apiKeys.revoking") : t("apiKeys.revokeYes")}

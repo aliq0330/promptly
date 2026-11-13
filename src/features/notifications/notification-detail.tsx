@@ -70,10 +70,10 @@ function GroupMembers({ card }: { card: NotificationCard }) {
 
   const last = members[members.length - 1];
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-soft" data-group-members="">
+    <div className="overflow-hidden rounded-lg border border-border-soft" data-group-members="">
       {members.map((member) => (
         <div key={member.id} className="flex items-center gap-3 border-b border-border-soft px-3.5 py-2.5 last:border-b-0">
-          <Avatar src={member.actor?.avatarUrl} alt={member.actor?.displayName ?? ""} size={36} />
+          <Avatar src={member.actor?.avatarUrl} alt={member.actor?.displayName ?? ""} size={40} />
           <div className="min-w-0 flex-1">
             {member.actor ? (
               <Link href={`/profile/real?username=${encodeURIComponent(member.actor.username)}`} className="truncate text-small font-semibold text-text hover:underline">
@@ -105,19 +105,19 @@ function LinkedContent({ card, list }: { card: NotificationCard; list: List }) {
   if (!item) return null;
   if (!linked) {
     return (
-      <Link href={attachmentHref(item.type, item.id)} className="flex items-center gap-3 rounded-2xl border border-border p-3 text-small font-semibold text-primary hover:bg-primary-soft" data-linked-content="open">
+      <Link href={attachmentHref(item.type, item.id)} className="flex items-center gap-3 rounded-lg border border-border p-3 text-small font-semibold text-primary hover:bg-primary-soft" data-linked-content="open">
         {t(`nc.open.${item.type}` as const)}
         <ArrowRight size={16} aria-hidden />
       </Link>
     );
   }
   return (
-    <div className="flex items-stretch gap-3.5 rounded-2xl border border-border p-3" data-linked-content="card">
+    <div className="flex items-stretch gap-3.5 rounded-lg border border-border p-3" data-linked-content="card">
       <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-primary-soft">
         {linked.thumbnailUrl && <StorageImage src={linked.thumbnailUrl} alt="" fill sizes="80px" className="object-cover" />}
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <p className="text-[0.6875rem] font-bold uppercase tracking-[0.06em] text-text-muted">{t(`communities.feed.type.${linked.type}` as const)}</p>
+        <p className="text-micro font-bold uppercase tracking-[0.06em] text-text-muted">{t(`communities.feed.type.${linked.type}` as const)}</p>
         <p className="mt-0.5 line-clamp-2 font-display text-[1.0625rem] font-bold leading-snug text-text">{linked.title}</p>
       </div>
       <Link href={attachmentHref(item.type, item.id)} className={buttonClassName({ variant: "secondary", className: "h-11 self-center" })}>
@@ -207,8 +207,8 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         </>
       )}
       {kind === "followBack" && actor && (
-        <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-surface-soft p-4.5" data-profile-card="">
-          <Avatar src={actor.avatarUrl} alt={actor.displayName} size={64} />
+        <div className="flex flex-wrap items-center gap-4 rounded-lg bg-surface-soft p-4.5" data-profile-card="">
+          <Avatar src={actor.avatarUrl} alt={actor.displayName} size={56} />
           <div className="min-w-0 flex-1 basis-52">
             <p className="text-[1.0625rem] font-bold text-text">{actor.displayName}</p>
             <p className="mt-0.5 text-small text-text-muted">
@@ -229,7 +229,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         <div className="space-y-3">
           {suggestion?.note && <p className="text-body leading-relaxed text-text-secondary">“{suggestion.note}”</p>}
           {lines.length > 0 && (
-            <div className="space-y-1 rounded-2xl bg-surface-soft px-4 py-3 font-mono text-small leading-relaxed" data-suggestion-diff="">
+            <div className="space-y-1 rounded-lg bg-surface-soft px-4 py-3 font-mono text-small leading-relaxed" data-suggestion-diff="">
               {lines.map((line, index) => (
                 <div key={index} className={cn("break-words", line.op === "del" && "text-danger", line.op === "add" && "text-success", line.op === "same" && "text-text-muted")}>
                   {line.op === "del" ? "− " : line.op === "add" ? "+ " : "  "}
@@ -263,7 +263,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         </div>
       )}
       {kind === "milestone" && milestone && (
-        <div className="flex flex-wrap items-center gap-5 rounded-2xl border border-secondary/30 bg-secondary/10 p-5" data-milestone="">
+        <div className="flex flex-wrap items-center gap-5 rounded-lg border border-secondary/30 bg-secondary/10 p-5" data-milestone="">
           <p className="font-display text-[3.5rem] font-extrabold leading-none tracking-[-0.03em] text-secondary">{milestone.count}</p>
           <p className="min-w-0 flex-1 basis-60 text-body leading-relaxed text-text-secondary">{t(milestone.kind === "copies" ? "nc.milestone.copiesBody" : "nc.milestone.reactionsBody", { count: milestone.count, title: milestone.title })}</p>
           <Link href={card.targetHref} className={buttonClassName({ variant: "primary", className: "h-11 !bg-secondary" })}>
@@ -312,7 +312,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
       <DetailReactionSection card={card} list={list} showHint={variant === "page"} />
       {local?.reply && (
         <div className="flex flex-col items-end gap-1">
-          <p className="max-w-[80%] whitespace-pre-line break-words rounded-2xl rounded-br-md bg-primary px-4 py-3 text-body text-primary-foreground [overflow-wrap:anywhere]" data-reply-bubble="">{local.reply.body}</p>
+          <p className="max-w-[80%] whitespace-pre-line break-words rounded-lg rounded-br-md bg-primary px-4 py-3 text-body text-primary-foreground [overflow-wrap:anywhere]" data-reply-bubble="">{local.reply.body}</p>
           <p className="text-caption text-text-muted">{t("nc.replyJustNow")}</p>
         </div>
       )}
@@ -320,7 +320,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
       {actions.replyTarget && user && (
         <div data-reply-composer="">
           <label htmlFor="detail-reply" className="mb-2 block text-label font-bold text-text-secondary">{t("nc.replyLabel")}</label>
-          <div className="space-y-2.5 rounded-2xl border border-border bg-surface p-3 pl-4">
+          <div className="space-y-2.5 rounded-lg border border-border bg-surface p-3 pl-4">
             <textarea id="detail-reply" rows={variant === "panel" ? 3 : 2} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} placeholder={t("nc.replyPlaceholder", { name: actor?.displayName ?? "" })} className="w-full resize-none bg-transparent text-body text-text outline-none placeholder:text-text-muted" />
             <CommentExtrasPreview extras={extras} />
             <div className="flex flex-wrap items-center gap-1.5">
@@ -349,7 +349,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
 
   if (variant === "panel") {
     return (
-      <article aria-label={t("nc.selectedAria")} data-notification-detail={card.key} className="rounded-[1.375rem] border border-border-soft bg-surface p-7 shadow-card">
+      <article aria-label={t("nc.selectedAria")} data-notification-detail={card.key} className="rounded-lg border border-border-soft bg-surface p-7 shadow-card">
         {content}
       </article>
     );
@@ -366,7 +366,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
           <MoreVertical size={20} />
         </span>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4">{content}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-(--nav-clearance) pt-4">{content}</div>
     </div>
   );
 }

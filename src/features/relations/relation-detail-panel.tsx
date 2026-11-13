@@ -83,7 +83,7 @@ export function RelationDetailPanel({
           <StorageImg src={node.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-md object-cover" />
         ) : (
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-md bg-surface-soft text-text-muted">
-            <Icon size={22} strokeWidth={1.75} aria-hidden />
+            <Icon size={24} aria-hidden />
           </span>
         )}
         <div className="min-w-0 flex-1">

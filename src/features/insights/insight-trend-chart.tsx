@@ -83,7 +83,7 @@ export function InsightTrendChart({ days, periodDays }: { days: InsightDay[]; pe
               <circle cx={peakX} cy={peakY} r={5.5} className="fill-surface stroke-primary" strokeWidth={3} />
               <g transform={`translate(${bubbleX},${bubbleY})`}>
                 <rect width={bubbleW} height={42} rx={10} className="fill-text" />
-                <text x={12} y={17} className="fill-surface-soft text-[11px]">
+                <text x={12} y={17} className="fill-surface-soft text-micro">
                   {formatInsightDay(peakDay.day, language)}
                 </text>
                 <text x={12} y={34} className="fill-surface text-[12px] font-semibold">
