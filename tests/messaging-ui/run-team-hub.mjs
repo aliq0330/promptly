@@ -333,18 +333,18 @@ await scenario("18. Mesajlar: ekibin iki kanalı TEK satırdır (ekip adı + eti
   assert.ok(await overflowFree(page));
 }, { setup: twoChannels() });
 
-await scenario("19. Ekip sohbeti başlığı: ekip adı + '# kanal · N üye'; çip satırı YOK; geri ekip sayfasına (kanal listesi) döner, satır kanalı değiştirir", async ({ page }) => {
+await scenario("19. Ekip sohbeti başlığı: ekip adı + '# kanal · N üye'; çip satırı YOK; kanal listesi solda sohbet listesinin yerindedir (docs/history/381-*), satır kanalı değiştirir", async ({ page }) => {
   await page.goto(`${BASE}/messages/local?id=${CH_GENERAL}`);
   const header = page.locator("[data-team-header]");
   await header.waitFor();
   assert.match(await header.innerText(), /Atölye Mor/);
   assert.match(await page.locator("[data-team-header-sub]").innerText(), /# genel/);
   assert.equal(await page.locator("[data-channel-chips]").count(), 0, "çip satırı yok");
-  await page.getByRole("button", { name: /Mesaj listesine dön|Back to message list/i }).first().click();
-  await page.waitForFunction(() => location.search.includes("hub=team"));
-  await page.locator('[data-hub="team"]').waitFor();
-  await page.locator('[data-hub-row="genel"]').waitFor();
-  await page.locator('[data-hub-row="yonetim"]').click();
+  const aside = page.locator("aside");
+  await aside.locator('[data-hub="team"]').waitFor();
+  await aside.locator('[data-hub-row="genel"][aria-current="true"]').waitFor();
+  assert.equal(await aside.locator("[data-conversation-row]").count(), 0, "sohbet listesi kanal listesiyle yer değiştirdi");
+  await aside.locator('[data-hub-row="yonetim"]').click();
   await page.waitForFunction((id) => location.search.includes(`id=${id}`), CH_SECRET);
   await page.locator("[data-chat-scroll]").getByText("bütçe toplantısı").waitFor();
 }, { setup: twoChannels() });

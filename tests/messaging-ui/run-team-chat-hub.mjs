@@ -76,6 +76,7 @@ function seed(db, { role = "owner", projectRole = "lead", fileChat = false, mute
     return null;
   });
   reply("team_set_channel_notify", () => null);
+  reply("team_delete_channel", () => null);
   reply("team_my_project_role", () => projectRole);
   const detail = () => ({
     project: { id: PROJECT, team_id: TEAM, title: "Villa Projesi", description: "", tone: "primary", access_mode: "selected", base_role: "view", review_default: true, archived_at: null, created_at: "2026-11-01T00:00:00Z" },
@@ -185,8 +186,7 @@ await scenario("3. Ekibi sessize al: anahtar team_set_mute(proje yok) yazar; her
   assert.equal(set.p_project, null);
   assert.equal(set.p_muted, true);
   assert.equal(await card.getAttribute("data-muted"), "true");
-  assert.match(await card.innerText(), /Sessizde/);
-  assert.match(await card.innerText(), /sahiplik/i, "yine gelen bildirimler açıkça yazılı");
+  assert.equal(await card.getAttribute("data-mute-compact"), "", "sütunda tek satırlık kart (açıklama cümlesi yok)");
   assert.equal(await page.locator('[data-hub-row="genel"] [data-hub-unread]').count(), 0, "sessiz kanalda okunmamış rozeti yok");
   await card.getByRole("switch").click();
   await page.waitForFunction(() => document.querySelectorAll("[data-mute-chip]").length === 0);
@@ -223,7 +223,7 @@ await scenario("5. Projeyi sessize al: team_set_mute(proje); projenin kanalları
   const set = called(db, "team_set_mute")[0].body;
   assert.equal(set.p_project, PROJECT);
   assert.equal(set.p_muted, true);
-  assert.match(await card.innerText(), /hiçbir kanalından bildirim gelmiyor/);
+  assert.equal(await card.getAttribute("data-muted"), "true");
   await page.goto(hubUrl);
   await page.locator('[data-hub-row="Villa Projesi"] [data-mute-chip="project"]').waitFor();
   assert.equal(await page.locator('[data-hub-row="genel"] [data-mute-chip]').count(), 0, "ekip kanalı etkilenmez");
@@ -333,20 +333,149 @@ await scenario("12. İngilizce: ekip sayfası, sessize alma kartı ve etiketler"
   await card.getByText("Mute this team").waitFor();
   await card.getByRole("switch").click();
   await page.locator('[data-hub-row="genel"] [data-mute-chip="team"]').getByText("Muted · team").waitFor();
-  assert.match(await card.innerText(), /Ownership transfers/);
 }, { lang: "en", setup: conversations });
 
-await scenario("13. Masaüstü (iki bölme): soldaki ekip satırı sağ bölmede ekip sayfasını açar, satır seçili kalır; kanal satırı sohbeti sağda açar", async ({ page }) => {
+await scenario("13. Masaüstü (iki bölme): ekip satırı sol sütunu ekibin kanal listesine çevirir, sağda varsayılan kanalın sohbeti açılır; kanal satırı sohbeti değiştirir; geri sohbet listesine döner", async ({ page }) => {
   await page.goto(`${BASE}/messages`);
-  const row = page.locator("[data-conversation-row]:visible").first();
+  const aside = page.locator("aside");
+  const row = aside.locator("[data-conversation-row]:visible").first();
   await row.getByText("Atölye Mor").first().waitFor();
   await row.click();
-  await page.locator('[data-hub="team"]').waitFor();
-  await page.waitForFunction(() => document.querySelector("[data-conversation-row][aria-current]"));
-  await page.locator('[data-hub-row="genel"]').click();
+  await page.waitForFunction((id) => location.search.includes("hub=team") && location.search.includes(`id=${id}`), CH_GENERAL);
+  await aside.locator('[data-hub="team"]').waitFor();
+  assert.equal(await aside.locator("[data-conversation-row]").count(), 0, "sohbet listesi sütunun yerinde değil, kanal listesi geçti");
   await page.locator("[data-chat-scroll]").getByText("lansman afişi hazır").waitFor();
+  await aside.locator('[data-hub-row="genel"][aria-current="true"]').waitFor();
+  assert.equal(await page.getByRole("button", { name: /Mesaj listesine dön|Back to message list/i }).first().isHidden(), true, "sohbet başlığında geri düğmesi yok (liste solda)");
+  await aside.locator('[data-hub-row="duyurular"]').click();
+  await page.locator("[data-chat-scroll]").getByText("toplantı 15:00").waitFor();
+  await aside.locator('[data-hub-row="duyurular"][aria-current="true"]').waitFor();
+  assert.equal(await aside.locator('[data-hub="team"]').count(), 1, "kanal değişince sol sütun kanal listesi olarak kalır");
   assert.equal(await page.locator("[data-channel-chips]").count(), 0, "çip satırı yok");
+  await aside.locator("[data-hub-back]").click();
+  await aside.locator("[data-conversation-row]").first().waitFor();
+  assert.equal(await aside.locator('[data-hub="team"]').count(), 0);
 }, { viewport: { width: 1280, height: 900 }, setup: conversations });
+
+await scenario("14. Masaüstü: proje satırı sol sütunu PROJE listesine çevirir, sohbet değişmez; üst düzeye dönüş ekip listesine, sağdaki sohbet korunur", async ({ page }) => {
+  await page.goto(`${hubUrl}&id=${CH_GENERAL}`);
+  const aside = page.locator("aside");
+  await aside.locator('[data-hub="team"]').waitFor();
+  await page.locator("[data-chat-scroll]").getByText("lansman afişi hazır").waitFor();
+  await aside.locator('[data-hub-row="Villa Projesi"]').click();
+  await aside.locator('[data-hub="project"]').waitFor();
+  await page.locator("[data-chat-scroll]").getByText("lansman afişi hazır").waitFor();
+  await aside.locator('[data-hub-row="villa-projesi"]').click();
+  await page.locator("[data-chat-scroll]").getByText("plan güncellendi").waitFor();
+  await aside.locator('[data-hub-row="villa-projesi"][aria-current="true"]').waitFor();
+  await aside.locator("[data-hub-back]").click();
+  await aside.locator('[data-hub="team"]').waitFor();
+  await page.locator("[data-chat-scroll]").getByText("plan güncellendi").waitFor();
+}, { viewport: { width: 1280, height: 900 }, setup: conversations });
+
+await scenario("15. Kanal bağlantısıyla (?id=) açılan ekip kanalında sol sütun yine ekibin listesidir; proje kanalında projenin listesi", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?id=${CH_ANN}`);
+  const aside = page.locator("aside");
+  await aside.locator('[data-hub="team"]').waitFor();
+  await aside.locator('[data-hub-row="duyurular"][aria-current="true"]').waitFor();
+  await page.goto(`${BASE}/messages/local?id=${CH_MAIN}`);
+  await aside.locator('[data-hub="project"]').waitFor();
+}, { viewport: { width: 1280, height: 900 }, setup: conversations });
+
+const rowSel = (page, name) => page.locator(`[data-hub-row="${name}"]`);
+const startSelecting = async (page) => {
+  await page.locator("[data-conversations-more]").click();
+  await page.locator("[data-conversations-select]").click();
+  await page.locator("[data-selection-header]").waitFor();
+};
+
+await scenario("16. Seçim modu (telefon): ⋮ → Kanal seç; üstte 'N kanal seçildi', satırlarda daire, altta Sabitle · Okundu · Sessize al · Sil; ✓ seçimi bitirir", async ({ page }) => {
+  await page.goto(hubUrl);
+  await rowSel(page, "genel").waitFor();
+  assert.equal(await page.locator("[data-selection-bar]").count(), 0);
+  await startSelecting(page);
+  assert.match(await page.locator("[data-selection-header]").innerText(), /Kanal seç/);
+  await rowSel(page, "duyurular").click();
+  assert.match(await page.locator("[data-selection-header]").innerText(), /1 kanal seçildi/);
+  await rowSel(page, "Villa Projesi").click();
+  assert.match(await page.locator("[data-selection-header]").innerText(), /2 öğe seçildi/, "kanal + proje karışıksa 'öğe'");
+  const bar = page.locator("[data-selection-bar]");
+  await bar.locator("[data-selection-pin]").waitFor();
+  await bar.locator("[data-selection-read]").waitFor();
+  await bar.locator("[data-selection-mute]").waitFor();
+  assert.equal(await bar.locator("[data-selection-delete]").isDisabled(), true, "proje seçiliyken Sil kapalı");
+  assert.equal(await bar.locator("[data-selection-archive]").count(), 0, "Arşivle yok");
+  await rowSel(page, "Villa Projesi").click();
+  assert.equal(await bar.locator("[data-selection-delete]").isDisabled(), false, "yalnız kanal seçiliyken Sil açık (yönetici)");
+  await rowSel(page, "genel").click();
+  assert.equal(await bar.locator("[data-selection-delete]").isDisabled(), true, "varsayılan kanal silinemez");
+  await page.locator("[data-selection-header] button").first().click();
+  await page.locator("[data-selection-bar]").waitFor({ state: "detached" });
+  assert.ok(await overflowFree(page));
+}, { setup: conversations });
+
+await scenario("17. Seçim modu: Sessize al kanalın bildirimini 'none' yapar; proje satırı team_set_mute(proje) çağırır; sesi aç geri alır", async ({ page, db }) => {
+  await page.goto(hubUrl);
+  await rowSel(page, "genel").waitFor();
+  await startSelecting(page);
+  await rowSel(page, "duyurular").click();
+  await page.locator("[data-selection-mute]").click();
+  await page.waitForFunction(() => !document.querySelector("[data-selection-bar]"));
+  const notify = called(db, "team_set_channel_notify")[0].body;
+  assert.equal(notify.p_channel, CH_ANN);
+  assert.equal(notify.p_level, "none");
+  await startSelecting(page);
+  await rowSel(page, "Villa Projesi").click();
+  await page.locator("[data-selection-mute]").click();
+  await page.waitForFunction(() => !document.querySelector("[data-selection-bar]"));
+  const set = called(db, "team_set_mute").at(-1).body;
+  assert.equal(set.p_project, PROJECT);
+  assert.equal(set.p_muted, true);
+}, { setup: conversations });
+
+await scenario("18. Seçim modu: Okundu imleci ilerletir ve rozet kalkar; Tümü okundu menüden; Sabitle satıra raptiye koyar ve başa alır", async ({ page, db }) => {
+  await page.goto(hubUrl);
+  await page.locator('[data-hub-row="genel"] [data-hub-unread]').waitFor();
+  await startSelecting(page);
+  await rowSel(page, "genel").click();
+  await page.locator("[data-selection-read]").click();
+  await page.waitForFunction(() => !document.querySelector("[data-selection-bar]"));
+  assert.ok(db.readCalls.some((c) => c.conversation_id === CH_GENERAL), "okundu imleci genel için ilerledi");
+  await rowSel(page, "duyurular").waitFor();
+  await startSelecting(page);
+  await rowSel(page, "duyurular").click();
+  await page.locator("[data-selection-pin]").click();
+  await page.waitForFunction(() => !document.querySelector("[data-selection-bar]"));
+  await page.locator('[data-hub-row="duyurular"] [data-hub-pinned]').waitFor();
+  const first = await page.locator('[data-testid="hub-channels"] [data-hub-row]').first().getAttribute("data-hub-row");
+  assert.equal(first, "duyurular", "sabitlenen kanal listenin başına çıkar");
+}, { setup: conversations });
+
+await scenario("19. Seçim modu: Sil onay penceresi → team_delete_channel; yetkisiz üyede Sil düğmesi hiç çizilmez; arama ve süzgeç satırları daraltır", async ({ page, db }) => {
+  await page.goto(hubUrl);
+  await rowSel(page, "duyurular").waitFor();
+  await page.locator("[data-list-search]").click();
+  await page.locator("[data-hub-search]").fill("duyu");
+  await rowSel(page, "genel").waitFor({ state: "detached" });
+  await rowSel(page, "duyurular").waitFor();
+  await page.locator("[data-list-search]").click();
+  await startSelecting(page);
+  await rowSel(page, "duyurular").click();
+  await page.locator("[data-selection-delete]").click();
+  await page.locator("[data-hub-delete-confirm]").click();
+  await page.waitForFunction(() => !document.querySelector("[data-selection-bar]"));
+  assert.equal(called(db, "team_delete_channel")[0].body.p_channel, CH_ANN);
+}, { setup: conversations });
+
+await scenario("20. Üye (yönetici değil): seçim çubuğunda Sil yok, '+' yok", async ({ page }) => {
+  await page.goto(hubUrl);
+  await rowSel(page, "genel").waitFor();
+  assert.equal(await page.locator("[data-hub-add-channel]").count(), 0);
+  await startSelecting(page);
+  await rowSel(page, "duyurular").click();
+  await page.locator("[data-selection-pin]").waitFor();
+  assert.equal(await page.locator("[data-selection-delete]").count(), 0);
+}, { setup: conversations, opts: { role: "member" } });
 
 await browser.close();
 server.close();

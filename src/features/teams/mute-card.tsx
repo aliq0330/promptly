@@ -17,18 +17,42 @@ export function MuteCard({
   busy,
   error,
   onToggle,
+  compact = false,
 }: {
-  scope: "team" | "project";
+  scope: "team" | "project" | "community";
   muted: boolean;
   /** Proje kartı için: ekibin tamamı sessiz mi (proje ayrıca sessiz değilse bile bildirim gelmez). */
   teamMuted?: boolean;
   busy: boolean;
   error: string | null;
   onToggle: (muted: boolean) => void;
+  /** Kanal listesi sütununda tek satır (docs/history/381-*): yalnız başlık ve anahtar; açıklama cümlesi kalkar, uyarılar (proje için "ekip de sessiz", hata) altında kalır. */
+  compact?: boolean;
 }) {
   const { t } = useTranslation();
-  const prefix = scope === "team" ? "th.mute.team" : "th.mute.project";
+  const prefix = scope === "team" ? "th.mute.team" : scope === "community" ? "th.mute.community" : "th.mute.project";
   const effective = muted || (scope === "project" && teamMuted);
+  if (compact) {
+    return (
+      <div data-mute-card={scope} data-muted={muted ? "true" : "false"} data-mute-compact="" className={cn("rounded-full border px-3.5 py-1.5", effective ? "border-warning/40 bg-warning/5" : "border-border-soft bg-surface")}>
+        <div className="flex items-center gap-2.5">
+          <span aria-hidden className={cn("shrink-0", effective ? "text-warning" : "text-text-secondary")}>
+            {effective ? <BellOff size={16} /> : <Bell size={16} />}
+          </span>
+          <p className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t(`${prefix}.title` as "th.mute.team.title")}</p>
+          <span className={cn(busy && "pointer-events-none opacity-60")}>
+            <Switch checked={muted} onChange={onToggle} label={t(`${prefix}.title` as "th.mute.team.title")} />
+          </span>
+        </div>
+        {scope === "project" && teamMuted && <p className="pb-1 pt-0.5 text-caption font-medium text-warning">{t("th.mute.project.teamMuted")}</p>}
+        {error && (
+          <p role="alert" className="pb-1 pt-0.5 text-caption text-danger">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
   return (
     <div data-mute-card={scope} data-muted={muted ? "true" : "false"} className={cn("rounded-2xl border px-4 py-3", effective ? "border-warning/40 bg-warning/5" : "border-border-soft bg-surface")}>
       <div className="flex items-center gap-3">

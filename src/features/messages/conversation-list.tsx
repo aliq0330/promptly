@@ -82,7 +82,6 @@ export function ConversationList({
           onUnarchive={onUnarchive ? () => onUnarchive(conversation.id) : undefined}
           unarchiveBusy={busyId === conversation.id}
           onOpen={onOpen}
-          expandable={flush}
           selection={selection ? { selected: selection.selectedIds.has(conversation.id), onToggle: () => selection.onToggle(conversation.id) } : undefined}
         />
       ))}

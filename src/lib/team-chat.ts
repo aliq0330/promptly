@@ -100,9 +100,12 @@ export function summarizeTeamRow(channels: readonly HubChannel[], max = 3): { na
   return { names: names.slice(0, max), extra: Math.max(0, names.length - max), projects: groups.projects.length };
 }
 
-/** Mesajlar'dan açılan ekip sayfası ya da (projeId verilirse) proje sayfası. Telefonda tam sayfa, masaüstünde sağ bölme. */
-export function teamHubHref(teamId: string, projectId?: string | null): string {
-  return `/messages/local?hub=team&team=${encodeURIComponent(teamId)}${projectId ? `&project=${encodeURIComponent(projectId)}` : ""}`;
+/**
+ * Mesajlar'dan açılan ekip kanal listesi ya da (projeId verilirse) proje kanal listesi. Telefonda tam sayfa, bilgisayarda sol sütun (docs/history/381-*).
+ * `openId` bilgisayarda sağ bölmede açık kalacak kanaldır: ekip ↔ proje listesi arasında gezerken sohbet değişmez.
+ */
+export function teamHubHref(teamId: string, projectId?: string | null, openId?: string | null): string {
+  return `/messages/local?hub=team&team=${encodeURIComponent(teamId)}${projectId ? `&project=${encodeURIComponent(projectId)}` : ""}${openId ? `&id=${encodeURIComponent(openId)}` : ""}`;
 }
 
 /** Mesajlar'dan açılan topluluk sayfası (odalar listesi); `id` topluluğun sohbet kimliğidir. */

@@ -408,3 +408,12 @@ npm i --no-save playwright
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npx next build --webpack
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-team-projects.mjs   # 52/52 beklenir
 ```
+
+## Kanal listesi sohbet listesi gibi (`docs/history/381-*`)
+
+`run-team-chat-hub.mjs` (senaryo 13–20) ve `run-rooms.mjs` (12–12e): ekip/proje/topluluk kanal listesi bilgisayarda SOL SÜTUNDA sohbet listesinin yerini alır (sağ bölme hep sohbet; ekipte kanal seçili değilse varsayılan kanal açılır, `?id=` bağlantısında da sütun kanal listesidir), telefonda aynı liste sayfa; sohbet listesiyle aynı arama, ⋮ menüsü (Kanal seç · Tümü okundu) ve seçim modu (Sabitle · Okundu · Sessize al · Sil; Sil yalnız yetkiliye, varsayılan/ana kanal ve proje kilitli). Ağ taklidi: `mock-rooms.mjs` (`set_room_pinned`, `my_room_pins`) + ekip RPC'leri `run-team-chat-hub.mjs` içinde (`team_set_channel_notify`, `team_delete_channel`). DB tarafı `supabase/tests/room-pins.sql` (10/10). Gerçek Supabase'e KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-team-chat-hub.mjs   # 20/20 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-rooms.mjs            # 33/33 beklenir
+```

@@ -44,6 +44,7 @@ const CHECKS = [
   { name: "rpc workflow_space_links (workflow sayfasındaki Space önizlemesi, ziyaretçiye de açık, docs/history/339-*)", rpc: "workflow_space_links", body: { p_workflow_id: "00000000-0000-4000-8000-000000000000" } },
   { name: "messages.room_id + community_rooms (sohbet odaları, docs/history/352-*)", get: () => `messages?select=${encodeURIComponent("id,room_id")}&limit=1` },
   { name: "community_rooms ziyaretçiye KAPALI olmalı (odalar yalnız üyeye görünür, docs/history/352-*)", get: () => `community_rooms?select=${encodeURIComponent("id,community_id,name")}&limit=1`, mustBeDenied: true },
+  { name: "rpc my_room_pins ziyaretçiye KAPALI olmalı (oda sabitleme, docs/history/381-*)", rpc: "my_room_pins", body: { p_community_id: "00000000-0000-4000-8000-000000000000" }, mustBeDenied: true },
   { name: "rpc community_rooms_overview ziyaretçiye KAPALI olmalı (docs/history/352-*)", rpc: "community_rooms_overview", body: { p_community_id: "00000000-0000-4000-8000-000000000000" }, mustBeDenied: true },
   { name: "rpc create_community_room ziyaretçiye KAPALI olmalı (docs/history/352-*)", rpc: "create_community_room", body: { p_community_id: "00000000-0000-4000-8000-000000000000", p_name: "x" }, mustBeDenied: true },
   { name: "rpc space_apply_workflow_plan ziyaretçiye KAPALI olmalı (workflow'u panoya tek işlemde yazar, docs/history/339-*)", rpc: "space_apply_workflow_plan", body: { p_space_id: "00000000-0000-4000-8000-000000000000", p_group: null, p_items: [], p_connections: [] }, mustBeDenied: true },

@@ -19,17 +19,19 @@ export function useSelectionChrome(active: boolean) {
   }, [active]);
 }
 
-/** Liste kontrol satırındaki `⋯` düğmesi: "Sohbet seç" ve "Tümü okundu". */
+/** Liste kontrol satırındaki `⋯` düğmesi: "Sohbet seç" ve "Tümü okundu". Kanal/oda listeleri aynı menüyü kendi seçme adıyla kullanır (`selectLabel`, docs/history/381-*). */
 export function ConversationsMoreMenu({
   canSelect,
   canMarkAllRead,
   onSelect,
   onMarkAllRead,
+  selectLabel,
 }: {
   canSelect: boolean;
   canMarkAllRead: boolean;
   onSelect: () => void;
   onMarkAllRead: () => void;
+  selectLabel?: string;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -80,7 +82,7 @@ export function ConversationsMoreMenu({
             className={itemClass}
           >
             <CircleCheck size={20} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />
-            {t("messages.selectChats")}
+            {selectLabel ?? t("messages.selectChats")}
           </button>
           <button
             type="button"
@@ -102,8 +104,8 @@ export function ConversationsMoreMenu({
   );
 }
 
-/** Seçim modunun başlığı: ✓ (seçimi bitir) + "N sohbet seçildi". */
-export function SelectionHeader({ count, onDone, embedded }: { count: number; onDone: () => void; embedded?: boolean }) {
+/** Seçim modunun başlığı: ✓ (seçimi bitir) + "N sohbet seçildi". `title` kanal/oda listelerinde kendi cümlesini ("2 kanal seçildi") verir. */
+export function SelectionHeader({ count, onDone, embedded, title }: { count: number; onDone: () => void; embedded?: boolean; title?: string }) {
   const { t } = useTranslation();
   return (
     <div className={cn("mb-3 flex items-center gap-4", embedded ? "min-h-11" : "min-h-14")} data-selection-header>
@@ -117,15 +119,16 @@ export function SelectionHeader({ count, onDone, embedded }: { count: number; on
         <Check size={22} strokeWidth={2} aria-hidden />
       </button>
       <h1 aria-live="polite" className="font-display text-h2 font-bold tracking-[-0.01em] text-text">
-        {count > 0 ? t("messages.selectionCount", { count }) : t("messages.selectChats")}
+        {title ?? (count > 0 ? t("messages.selectionCount", { count }) : t("messages.selectChats"))}
       </h1>
     </div>
   );
 }
 
 /**
- * Seçim modunun alt çubuğu: Arşivle · Okundu · Sil. Telefonda ekranın altına SABİT (`position: fixed`, liste altından kayar);
+ * Seçim modunun alt çubuğu: Arşivle · Sabitle · Okundu · Sessize al · Sil. Telefonda ekranın altına SABİT (`position: fixed`, liste altından kayar);
  * iki bölmeli masaüstü panelinde (`embedded`) panelin kendi alt kenarına yapışır. Hiçbir sohbet seçili değilken soluk ve basılamaz.
+ * Her eylem isteğe bağlıdır: verilmeyen düğme çizilmez (sohbet listesi Arşivle/Sabitle/Okundu/Sil, kanal listeleri Sabitle/Okundu/Sessize al/Sil kullanır).
  */
 export function SelectionActionBar({
   archiveLabel,
@@ -136,35 +139,51 @@ export function SelectionActionBar({
   onDelete,
   onPin,
   pinLabel,
+  onMute,
+  muteLabel,
+  deleteDisabled,
+  compact,
   embedded,
 }: {
-  archiveLabel: string;
+  archiveLabel?: string;
   disabled: boolean;
   busy: boolean;
-  onArchive: () => void;
+  onArchive?: () => void;
   onRead: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   /** Sabitle / Sabitlemeyi kaldır (docs/history/352-*): verilirse Arşivle'nin yanında dördüncü düğme çıkar. */
   onPin?: () => void;
   pinLabel?: string;
+  /** Sessize al / Sesi aç (kanal ve oda listeleri, docs/history/381-*). */
+  onMute?: () => void;
+  muteLabel?: string;
+  /** Sil görünür ama seçimde silinemeyen satır var (varsayılan/ana kanal, proje): soluk ve basılamaz. */
+  deleteDisabled?: boolean;
+  /** Dört düğme dar bir sütuna/telefona sığsın: daha az iç boşluk, küçük yazı, tek satır (kanal listeleri, docs/history/381-*). */
+  compact?: boolean;
   embedded?: boolean;
 }) {
   const { t } = useTranslation();
-  const pill =
-    "pointer-events-auto h-12 rounded-full border border-border-soft bg-surface/95 px-4 text-body sm:px-6 font-semibold text-text shadow-pop backdrop-blur-xl transition-[opacity,background-color] duration-200 ease-soft hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-45";
+  const pill = cn(
+    "pointer-events-auto h-12 rounded-full border border-border-soft bg-surface/95 font-semibold text-text shadow-pop backdrop-blur-xl transition-[opacity,background-color] duration-200 ease-soft hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-45",
+    compact ? "h-11 shrink-0 whitespace-nowrap px-2.5 text-[0.8125rem]" : "px-4 text-body sm:px-6",
+  );
   return (
     <div
       role="toolbar"
       aria-label={t("messages.selectionBarAria")}
       data-selection-bar
       className={cn(
-        "pointer-events-none z-40 flex items-center justify-between gap-2 px-4",
-        embedded ? "sticky bottom-0 pb-4 pt-6" : "fixed inset-x-0 bottom-0 pb-[max(1.5rem,env(safe-area-inset-bottom))]",
+        "pointer-events-none z-40 flex items-center justify-between",
+        compact ? "gap-1.5 px-3" : "gap-2 px-4",
+        embedded ? "sticky bottom-0 mt-auto pb-4 pt-6" : "fixed inset-x-0 bottom-0 pb-[max(1.5rem,env(safe-area-inset-bottom))]",
       )}
     >
-      <button type="button" onClick={onArchive} disabled={disabled || busy} className={pill} data-selection-archive>
-        {archiveLabel}
-      </button>
+      {onArchive && (
+        <button type="button" onClick={onArchive} disabled={disabled || busy} className={pill} data-selection-archive>
+          {archiveLabel}
+        </button>
+      )}
       {onPin && (
         <button type="button" onClick={onPin} disabled={disabled || busy} className={pill} data-selection-pin>
           {pinLabel}
@@ -173,9 +192,16 @@ export function SelectionActionBar({
       <button type="button" onClick={onRead} disabled={disabled || busy} className={pill} data-selection-read>
         {t("messages.markRead")}
       </button>
-      <button type="button" onClick={onDelete} disabled={disabled || busy} className={cn(pill, "text-danger")} data-selection-delete>
-        {t("common.delete")}
-      </button>
+      {onMute && (
+        <button type="button" onClick={onMute} disabled={disabled || busy} className={pill} data-selection-mute>
+          {muteLabel}
+        </button>
+      )}
+      {onDelete && (
+        <button type="button" onClick={onDelete} disabled={disabled || busy || deleteDisabled} className={cn(pill, "text-danger")} data-selection-delete>
+          {t("common.delete")}
+        </button>
+      )}
     </div>
   );
 }
