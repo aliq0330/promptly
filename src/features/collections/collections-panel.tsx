@@ -9,7 +9,7 @@ import { FolderPlus } from "@/components/icons/folder-plus";
 import { Plus } from "@/components/icons/plus";
 import { CollectionCard } from "./collection-card";
 import { CollectionFormModal } from "./collection-form-modal";
-import { createCollection, fetchFollowedCollections, fetchOwnCollections, updateCollection } from "@/lib/supabase/collections";
+import { createCollection, fetchFollowedCollections, fetchOwnCollections, saveCollectionSettings } from "@/lib/supabase/collections";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection, UserProfile } from "@/types";
 
@@ -68,14 +68,19 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
 
       <div className="grid grid-cols-2 gap-x-3 gap-y-5 pt-2 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
         <SavedShortcutCard />
-        {collections.map((collection) => (
-          <CollectionCard
-            key={collection.id}
-            collection={collection}
-            onEdit={() => setFormMode({ edit: collection })}
-            onDeleted={() => setCollections((prev) => prev.filter((c) => c.id !== collection.id))}
-          />
-        ))}
+        {collections.map((collection) =>
+          // Ortak olduğum (sahibi olmadığım) koleksiyon: yönetim menüsü yok, sahibi adıyla görünür (docs/history/386-*).
+          collection.owner.id === ownerId ? (
+            <CollectionCard
+              key={collection.id}
+              collection={collection}
+              onEdit={() => setFormMode({ edit: collection })}
+              onDeleted={() => setCollections((prev) => prev.filter((c) => c.id !== collection.id))}
+            />
+          ) : (
+            <CollectionCard key={collection.id} collection={collection} readOnly />
+          ),
+        )}
       </div>
 
       {collections.length === 0 && (
@@ -117,9 +122,11 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
           collection={formMode.edit}
           onClose={() => setFormMode("none")}
           onSubmit={async (values) => {
-            await updateCollection(formMode.edit.id, values);
+            await saveCollectionSettings(formMode.edit, values);
             setCollections((prev) =>
-              prev.map((c) => (c.id === formMode.edit.id ? { ...c, name: values.name, visibility: values.visibility } : c)),
+              prev.map((c) =>
+                c.id === formMode.edit.id ? { ...c, name: values.name, visibility: values.visibility, isShared: values.shared, memberCount: values.shared ? c.memberCount : 0 } : c,
+              ),
             );
             setFormMode("none");
           }}

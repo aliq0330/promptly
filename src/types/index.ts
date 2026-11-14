@@ -578,6 +578,10 @@ export interface Collection {
   itemCount: number;
   /** Real, trigger-maintained `collections.follower_count` — people following this (public) collection. */
   followerCount: number;
+  /** Ortak koleksiyon (docs/history/386-*): sahip + ortaklar birlikte içerik ekler. Yalnız `set_collection_shared` açar/kapatır. */
+  isShared: boolean;
+  /** Sahip hariç ortak sayısı (tetikleyiciyle tutulan `collections.member_count`). */
+  memberCount: number;
   /** The most recently added item's first media, or null for an empty/text-only collection — never a separate uploaded cover. */
   coverImage: PromptMedia | null;
   createdAt: string;

@@ -91,6 +91,17 @@ const TEAM_TEMPLATES: [re: RegExp, key: string][] = [
 ];
 
 /** Ekip panosu konumlu yorumları (docs/history/367-*): ilk alıntı → `actor`, ikinci → `preview`. */
+/** Ortak koleksiyon bildirimleri (docs/history/386-*, SQL: 20261125100000_collaborative_collections.sql). `name` = koleksiyon adı. */
+export const COLLAB_TEMPLATES: [RegExp, string][] = [
+  [/^Seni "([\s\S]*)" koleksiyonuna ortak olarak davet etti\.$/, "notifMsg.collabInvited"],
+  [/^"([\s\S]*)" koleksiyonuna ortak oldu\.$/, "notifMsg.collabJoined"],
+  [/^"([\s\S]*)" koleksiyonundan ayrıldı\.$/, "notifMsg.collabLeft"],
+  [/^"([\s\S]*)" koleksiyonuna içerik ekledi\.$/, "notifMsg.collabAdded"],
+  [/^Seni "([\s\S]*)" koleksiyonunun ortaklığından çıkardı\.$/, "notifMsg.collabRemoved"],
+  [/^"([\s\S]*)" koleksiyonunda ortak çalışma kapatıldı\.$/, "notifMsg.collabOff"],
+  [/^"([\s\S]*)" koleksiyonu sahibi tarafından silindi\.$/, "notifMsg.collabDeleted"],
+];
+
 const PIN_TEMPLATES: [re: RegExp, key: string][] = [
   [/^([\s\S]*?) panoda bir yorumda sizden bahsetti: "([\s\S]*)"$/, "notifMsg.teamPinMention"],
   [/^([\s\S]*?) panodaki yorumunuzu yanıtladı: "([\s\S]*)"$/, "notifMsg.teamPinReply"],
@@ -205,6 +216,11 @@ export function localizeNotificationMessage(rawMessage: string, language: "tr" |
     "ekip erişim süreni uzattı.": "notifMsg.teamGuestExtended",
   };
   if (TEAM_FIXED[message]) return t(TEAM_FIXED[message] as TranslationKey);
+  // Ortak koleksiyon (docs/history/386-*): koleksiyon adı çevrilmez.
+  for (const [re, key] of COLLAB_TEMPLATES) {
+    const m = re.exec(message);
+    if (m) return t(key as TranslationKey, { name: m[1] ?? "" });
+  }
   const spaceJoined = /^"([\s\S]*)" Space'ine katıldı\.$/.exec(message);
   if (spaceJoined) return t("notifMsg.spaceJoined", { name: spaceJoined[1] });
   // Yaratıcı paneli kilometre taşları (docs/history/295-*): prompt başlığı çevrilmez.

@@ -48,6 +48,7 @@ import { notificationCenterTranslations } from "./translations-notification-cent
 import { hubTranslations } from "./translations-hub";
 import { messageDockTranslations } from "./translations-message-dock";
 import { presenceTranslations } from "./translations-presence";
+import { collabTranslations } from "./translations-collab";
 
 export const translations = {
   // ---- Primary navigation (desktop sidebar) ----
@@ -3326,6 +3327,7 @@ export const translations = {
   ...hubTranslations,
   ...messageDockTranslations,
   ...presenceTranslations,
+  ...collabTranslations,
   "report.modal.title": { tr: "İçeriği şikâyet et", en: "Report content" },
   "report.modal.subtitle": { tr: "Bu içeriği neden şikâyet ettiğini seç.", en: "Choose why you're reporting this." },
   "report.modal.reasonsLabel": { tr: "Şikâyet nedeni", en: "Reason for the report" },

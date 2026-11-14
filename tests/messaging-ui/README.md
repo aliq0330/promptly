@@ -429,3 +429,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium/chrome-linux/chrome node tests/messaging-ui/run-comment-order.mjs   # 9/9 beklenir
 ```
+
+## Ortak koleksiyon (`docs/history/386-*`)
+
+`run-collab-collections.mjs` (20 senaryo): sahip/ortak/ziyaretçi/yabancı rolleri (Ortak etiketi, iki sekme, "X ekledi" satırları, **içeriği yalnız ekleyen kaldırır**), özel ortak koleksiyonun ortak olmayana görünmemesi, Ortaklar sekmesi (davet → kullanıcı adıyla RPC, hata mesajı, geri çekme, ortağı çıkar iki seçenek, ayrıl), "İçerik ekle", sıradan koleksiyonu ortak yapma (ortak olamayacak içerik uyarısı + "Çıkar"), `/saved` davet şeridi ve raf etiketi, kaydet penceresinde kilitli satır, profil, İngilizce, telefon taşma, koyu tema. Ağ taklidi testin içindedir (`withCollab`: RLS/tetikleyici kurallarının istemciyi ilgilendiren kısmı). Gerçek Supabase'e KARŞI DENENMEDİ — DB tarafı `supabase/tests/collaborative-collections.sql`.
+
+```bash
+node tests/messaging-ui/run-collab-collections.mjs   # 20/20 beklenir
+```
+

@@ -30,10 +30,25 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   // Yorum sabitleme (docs/history/385-*)
   pin_not_allowed: "error.pinNotAllowed",
   pin_top_level_only: "error.pinTopLevelOnly",
+  // Ortak koleksiyon (docs/history/386-*)
+  collection_not_found: "error.collectionNotFound",
+  collection_system: "error.collectionSystem",
+  collection_has_unshareable_items: "error.collectionHasUnshareable",
+  collection_not_shared: "error.collectionNotShared",
+  collection_user_not_found: "error.collectionUserNotFound",
+  collection_self_invite: "error.collectionSelfInvite",
+  collection_already_member: "error.collectionAlreadyMember",
+  collection_invite_exists: "error.collectionInviteExists",
+  collection_invite_not_found: "error.collectionInviteNotFound",
+  collection_member_limit: "error.collectionMemberLimit",
+  collection_joined_limit: "error.collectionJoinedLimit",
+  collection_owner_cannot_leave: "error.collectionOwnerCannotLeave",
+  collection_item_not_shareable: "error.collectionItemNotShareable",
+  collection_follow_member: "error.collectionFollowMember",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
-const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public", "token_limit", "link_limit", "invalid_name", "invalid_scope", "invalid_expiry", "pin_not_allowed", "pin_top_level_only"]);
+const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public", "token_limit", "link_limit", "invalid_name", "invalid_scope", "invalid_expiry", "pin_not_allowed", "pin_top_level_only", ...Object.keys(SERVER_ERROR_KEYS).filter((code) => code.startsWith("collection_"))]);
 
 export function friendlyServerMessage(code: unknown): string | null {
   if (typeof code !== "string") return null;
@@ -74,6 +89,8 @@ const OPTIONAL_COLUMNS = [
   "media_kind", "media_ref", "media_width", "media_height", "attach_type", "attach_id",
   // Yorum sabitleme (docs/history/385-*): sütun yoksa yorumlar yine açılır (sıralamadaki `pinned_at` da düşer), yalnız sabit yorum görünmez.
   "pinned_at",
+  // Ortak koleksiyon (docs/history/386-*): sütunlar yoksa koleksiyonlar yine açılır, yalnız "Ortak" etiketi ve ekleyen görünmez.
+  "is_shared", "member_count", "added_by",
 ] as const;
 const missingOptional = new Set<string>();
 
