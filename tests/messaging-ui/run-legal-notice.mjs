@@ -158,18 +158,19 @@ await scenario("9 hidden while the compose screen or the story viewer is open (s
   assert.equal(await notice(page).evaluate((el) => getComputedStyle(el).visibility), "visible", "and it comes back");
 });
 
-await scenario("10 desktop: terms and privacy links in the wide sidebar (also for a visitor)", async ({ page }) => {
+await scenario("10 desktop: terms and privacy links in the «Sen» menu of the wide sidebar (docs/history/387-*)", async ({ page }) => {
   await page.goto(BASE + "/settings/");
-  const side = page.locator("aside[data-app-chrome]");
-  await side.getByRole("link", { name: "Kullanım Koşulları" }).waitFor();
-  assert.match(await side.getByRole("link", { name: "Kullanım Koşulları" }).getAttribute("href"), TERMS_HREF);
-  assert.match(await side.getByRole("link", { name: "Gizlilik Politikası" }).getAttribute("href"), PRIVACY_HREF);
+  await page.locator("aside[data-app-chrome]:visible [data-nav-you]").click();
+  const menu = page.getByRole("menu", { name: "Hesap menüsü" });
+  await menu.getByRole("menuitem", { name: "Kullanım Koşulları" }).waitFor();
+  assert.match(await menu.getByRole("menuitem", { name: "Kullanım Koşulları" }).getAttribute("href"), TERMS_HREF);
+  assert.match(await menu.getByRole("menuitem", { name: "Gizlilik Politikası" }).getAttribute("href"), PRIVACY_HREF);
   await shot(page, "legal-sidebar");
 });
 
 await scenario("10b visitor on desktop also finds them in the sidebar (a public page inside the shell)", async ({ page }) => {
   await page.goto(BASE + "/privacy/");
-  const side = page.locator("aside[data-app-chrome]");
+  const side = page.locator("aside[data-app-chrome]:visible");
   await side.getByRole("link", { name: "Gizlilik Politikası" }).waitFor();
 }, { guest: true });
 
@@ -203,7 +204,8 @@ await scenario("13 the English menus and settings use English labels", async ({ 
   await page.goto(BASE + "/settings/legal/");
   await page.getByRole("heading", { name: "Legal", level: 1 }).waitFor();
   await page.locator("section[aria-labelledby=settings-legal]").getByRole("link", { name: /Terms of Use/ }).waitFor();
-  await page.locator("aside[data-app-chrome]").getByRole("link", { name: "Privacy Policy" }).waitFor();
+  await page.locator("aside[data-app-chrome]:visible [data-nav-you]").click();
+  await page.getByRole("menu", { name: "Account menu" }).getByRole("menuitem", { name: "Privacy Policy" }).waitFor();
 }, { lang: "en" });
 
 await server.close();

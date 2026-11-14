@@ -7,7 +7,6 @@ import { Focus } from "@/components/icons/focus";
 import { Languages } from "@/components/icons/languages";
 import { MessagesSquare } from "@/components/icons/messages-square";
 import { Search } from "@/components/icons/search";
-import { buttonClassName } from "@/components/ui/button";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
@@ -19,12 +18,11 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/icon-button";
 import { BrandMark, BrandWordmark } from "@/components/layout/brand-mark";
-import { AccountMenu, GuestAuthMenu } from "@/components/layout/account-menu";
+import { GuestAuthMenu } from "@/components/layout/account-menu";
 
 /**
- * Guests get "Giriş Yap" / "Kayıt Ol" (`GuestAuthMenu`); a signed-in member
- * gets the avatar dropdown (`AccountMenu`). Notifications and Messages stay
- * here in the top bar, never in the account menu.
+ * Üst çubuk = DURUM, gezinme değil (docs/history/387-*): arama · Odak · bildirim · mesajlar. Hesap menüsü («Sen») burada değil gezinme
+ * bölgesindedir (telefonda alt çubuğun son sekmesi, rayda ve kenar çubuğunda en alt). Misafir "Giriş Yap" / "Kayıt Ol" (`GuestAuthMenu`) görür.
  */
 export function Header() {
   const status = useAuthStatus();
@@ -74,10 +72,16 @@ export function Header() {
           <Search size={20} />
         </Link>
         )}
-        {/* Odak (docs/history/227-*): from `md` it is a header button — a vertical full-screen feed is not a sidebar destination; on a phone it keeps its bottom-nav slot. A full page load, not a client-side swap (docs/history/249-*). */}
-        <FullLoadLink href="/focus" className={buttonClassName({ variant: "outline", size: "sm", className: "mr-1 hidden shrink-0 gap-1.5 md:inline-flex" })}>
-          <Focus size={16} aria-hidden />
-          {t("header.focusLink")}
+        {/* Odak (docs/history/387-*): her boyutta üst çubukta — telefon/tablette ikon, masaüstünde ikon + yazı. Tam sayfa yüklemesi, istemci geçişi değil (docs/history/249-*). */}
+        <FullLoadLink
+          href="/focus"
+          aria-label={t("nav.focus")}
+          title={t("nav.focus")}
+          data-header-focus=""
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:mr-1 lg:w-auto lg:border lg:border-border lg:px-4 lg:text-label lg:font-semibold lg:text-text"
+        >
+          <Focus size={20} aria-hidden />
+          <span className="max-lg:sr-only">{t("nav.focus")}</span>
         </FullLoadLink>
         {status === "authenticated" && (
           <>
@@ -126,9 +130,8 @@ export function Header() {
             <GuestAuthMenu />
           </>
         )}
-        {/* While the session is still resolving, hold the avatar's space so nothing shifts. */}
-        {status === "loading" && <span aria-hidden className="ml-1.5 h-9 w-9 shrink-0" />}
-        {status === "authenticated" && <AccountMenu />}
+        {/* While the session is still resolving, hold the bell + messages space so nothing shifts. */}
+        {status === "loading" && <span aria-hidden className="h-10 w-20 shrink-0" />}
       </div>
     </header>
   );

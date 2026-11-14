@@ -429,3 +429,14 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium/chrome-linux/chrome node tests/messaging-ui/run-comment-order.mjs   # 9/9 beklenir
 ```
+
+
+## Gezinme yerleşimi (`docs/history/387-*`)
+
+`run-nav-layout.mjs` (13 senaryo): masaüstü kenar çubuğu (gruplar, «Sen» kartı + menü, Odak/mesaj üst çubukta, **Mesajlar hapı kalır**), tablet etiketli ray + yana açılan «Sen» menüsü, telefon alt çubuk (Odak yok, «Sen» sekmesi) + «Sen» sayfası (kısayol ızgarası, Görünüm/Dil/Çıkış), çubuk göstergesi, misafir (giriş yuvası, Yasal bağlantıları kenar çubuğunda), İngilizce. Kenar çubuğu, ray ve alt çubuk DOM'da birlikte durur: seçicilerde `:visible` kullan. Gerçek cihaza/iOS Safari'ye KARŞI DENENMEDİ.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npx next build --webpack   # Turbopack bu sandbox'ta Google yazı tipinde takılabilir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-nav-layout.mjs   # 13/13 beklenir
+SHOTS=/tmp/nav-shots node tests/messaging-ui/run-nav-layout.mjs   # ekran görüntüleri
+```

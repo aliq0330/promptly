@@ -4,13 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ComponentType } from "react";
 import { CreateMenuSheet } from "@/features/prompts/create-choice";
-import { FullLoadLink } from "@/components/ui/full-load-link";
-import { CommunityIcon, CompassIcon, FocusIcon, HomeIcon, PlusIcon, type MotionIconProps } from "@/components/ui/motion-icons";
+import { CommunityIcon, CompassIcon, HomeIcon, PlusIcon, type MotionIconProps } from "@/components/ui/motion-icons";
 import { cn } from "@/lib/utils";
-import { CREATE_HREF, FOCUS_HREF, guestLoginNavItem, isNavItemActive, mobileNavItems, PROFILE_NAV_PLACEHOLDER, type NavItem } from "@/components/layout/nav-items";
+import { CREATE_HREF, guestLoginNavItem, isNavItemActive, mobileNavItems, YOU_HREF, type NavItem } from "@/components/layout/nav-items";
+import { PhoneAccountTab } from "@/components/layout/account-menu";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
-import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /** Her sekmenin kendi hareketli ikonu (docs/history/335-*): sekme AKTİF olunca bir kez oynar; sayfa açılışında oynamaz. Listede olmayan (giriş) kalıp sitenin ikon setinden (`@/components/icons`) gelir. */
@@ -18,17 +17,16 @@ const MOTION_ICONS: Record<string, ComponentType<MotionIconProps>> = {
   "/": HomeIcon,
   "/discover": CompassIcon,
   "/communities": CommunityIcon,
-  [FOCUS_HREF]: FocusIcon,
 };
 
 /**
- * Mobile-only bottom navigation; the middle "Oluştur" action is visually emphasized.
+ * Mobile-only bottom navigation (docs/history/387-*): Ana Sayfa · Keşfet · Oluştur (vurgulu, ortada) · Topluluklar · Sen. «Sen» avatar +
+ * etiket; basınca alttan «Sen» sayfası açılır (`PhoneAccountTab`). Odak üst çubuğa taşındı.
  * Hidden inside an open chat (`/messages/local`, a conversation or a new-chat draft): the chat panel then runs to the
  * screen's bottom edge and the composer sits there, like other messengers (docs/history/193-*).
  */
 export function MobileNav() {
   const pathname = usePathname();
-  const profileNavHref = useProfileNavHref();
   const { t } = useTranslation();
   const status = useAuthStatus();
   const { requireAuth } = useAuthPrompt();
@@ -36,8 +34,7 @@ export function MobileNav() {
   // "+" = Oluştur menüsü (docs/history/216-*): ayrı seçim sayfası yerine alttan açılan pencere.
   const [createOpen, setCreateOpen] = useState(false);
 
-  // Always five slots, so nothing reflows between states. (Every slot is public since Odak took the profile slot —
-  // docs/history/199-*; an "authenticated" entry would get "Giriş Yap" for guests and a placeholder while the session resolves.)
+  // Always five slots, so nothing reflows between states. «Sen» is member-only: guests get "Giriş Yap" in that slot, and the slot stays empty while the session resolves.
   const items: (NavItem | null)[] = mobileNavItems.map((item) => {
     if ((item.visibility ?? "public") === "public" || status === "authenticated") return item;
     return status === "unauthenticated" ? guestLoginNavItem : null;
@@ -77,7 +74,7 @@ export function MobileNav() {
       <ul className="flex h-16 items-stretch">
         {items.map((item, index) => {
           if (!item) return <li key={`slot-${index}`} aria-hidden className="flex flex-1" />;
-          const href = item.href === PROFILE_NAV_PLACEHOLDER ? profileNavHref : item.href;
+          const href = item.href;
           const active = isNavItemActive(pathname, item);
           const Icon = item.icon;
           const MotionIcon = MOTION_ICONS[item.href];
@@ -122,17 +119,12 @@ export function MobileNav() {
                 >
                   {inner}
                 </button>
+              ) : item.href === YOU_HREF ? (
+                <PhoneAccountTab active={active} className={itemClassName} />
               ) : (
-                // Odak is entered by a full page load (docs/history/249-*): iOS Safari colours the strip behind its toolbar on load.
-                item.href === FOCUS_HREF ? (
-                  <FullLoadLink href={href} aria-current={active ? "page" : undefined} className={itemClassName}>
-                    {inner}
-                  </FullLoadLink>
-                ) : (
-                  <Link href={href} aria-current={active ? "page" : undefined} className={itemClassName}>
-                    {inner}
-                  </Link>
-                )
+                <Link href={href} aria-current={active ? "page" : undefined} className={itemClassName}>
+                  {inner}
+                </Link>
               )}
             </li>
           );
