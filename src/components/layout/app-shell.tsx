@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
+import { NavRail } from "@/components/layout/nav-rail";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { PublishCelebration } from "@/components/layout/publish-celebration";
@@ -24,8 +25,9 @@ interface AppShellProps {
 /**
  * Three compositions of one shell:
  *   mobile  (<md):  header + content + bottom nav
- *   tablet  (md–lg): 72px icon rail + header + content
- *   desktop (lg+):  256px grouped sidebar + header + content (+ optional aside)
+ *   tablet  (md–lg): 84px labelled rail + header + content
+ *   desktop (lg+):  248px grouped sidebar + header + content (+ optional aside)
+ * One destination, one place (docs/history/387-*): the three navs list the same destinations, the header is status only (search, Odak, bell, messages).
  * Below `lg` the header and the bottom nav slide away while scrolling down (`useChromeAutoHide`).
  * Odak (`/focus`) is a page of its own (docs/history/248-*): its route gets NO bars at all — no header, sidebar, bottom nav or
  * skip link in the DOM — only the providers, the notices and its own full-screen stage. (Hiding them was not enough on iPhone:
@@ -58,6 +60,7 @@ export function AppShell({ children, aside }: AppShellProps) {
       >
         {t("common.skipToContent")}
       </a>
+      <NavRail />
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />

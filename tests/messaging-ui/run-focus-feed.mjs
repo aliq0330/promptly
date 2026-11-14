@@ -426,16 +426,18 @@ await scenario("13. Misafir: beğeni giriş penceresi açar; Takip sekmesi giri�
   await stage(page).getByRole("link", { name: "Giriş Yap" }).waitFor();
 }, { guest: true });
 
-await scenario("14. Telefon 390px: alt menüde Profil yerine Odak; ekranı kaplar, alt/üst menü gizli, ray ekranda", async ({ page }) => {
+await scenario("14. Telefon 390px: Odak üst çubukta (alt menüde «Sen», docs/history/386-*); ekranı kaplar, alt/üst menü gizli, ray ekranda", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await page.locator("article").first().waitFor();
   const nav = page.locator("nav[data-app-chrome]");
   const labels = (await nav.locator("li").allTextContents()).map((s) => s.trim());
-  assert.deepEqual(labels, ["Ana Sayfa", "Keşfet", "Oluştur", "Topluluklar", "Odak"]);
+  assert.deepEqual(labels.slice(0, 4), ["Ana Sayfa", "Keşfet", "Oluştur", "Topluluklar"]);
+  assert.match(labels[4], /Sen$/, "son yuva «Sen»");
+  const focusLink = page.locator("header[data-app-header]").getByRole("link", { name: "Odak" });
   // Odak'a giriş GERÇEK sayfa yüklemesidir (docs/history/249-*): Safari araç çubuğu rengini yüklemede örnekler, uygulama içi geçişte değil.
-  assert.equal(await nav.getByRole("link", { name: "Odak" }).getAttribute("href"), "/promptly/focus/", "a plain link, not next/link");
+  assert.equal(await focusLink.getAttribute("href"), "/promptly/focus/", "a plain link, not next/link");
   await page.evaluate(() => { window.__spaMarker = 1; });
-  await nav.getByRole("link", { name: "Odak" }).click();
+  await focusLink.click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(600);
   assert.equal(await page.evaluate(() => window.__spaMarker), undefined, "the page was LOADED (window state is gone), not swapped client-side");

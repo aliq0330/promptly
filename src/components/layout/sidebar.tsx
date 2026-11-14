@@ -5,29 +5,23 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CreateMenuSheet } from "@/features/prompts/create-choice";
 import { Plus } from "@/components/icons/plus";
-import { ShieldCheck } from "@/components/icons/shield-check";
 import { cn } from "@/lib/utils";
 import { BrandMark, BrandWordmark } from "@/components/layout/brand-mark";
 import { buttonClassName } from "@/components/ui/button";
-import { filterNavItems, guestLoginNavItem, isNavItemActive, navGroups, PROFILE_NAV_PLACEHOLDER, settingsNavItem, type NavItem } from "@/components/layout/nav-items";
-import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
+import { filterNavItems, guestLoginNavItem, isNavItemActive, navGroups, type NavItem } from "@/components/layout/nav-items";
+import { SidebarAccount } from "@/components/layout/account-menu";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
-import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { SidebarTeams } from "@/components/layout/sidebar-teams";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
- * Desktop: full 256px sidebar with grouped navigation.
- * Tablet (md–lg): the same component collapses to a 72px icon rail —
- * labels become accessible names/tooltips, group titles become dividers.
- * Mobile: hidden (MobileNav takes over).
+ * Masaüstü (lg+): 248 px kenar çubuğu (docs/history/387-*). Sıra: marka · Oluştur · gezinme grupları (başlıksız · Çalışma · Kütüphane)
+ * · en altta «Sen» kartı (profil, Ayarlar, görünüm, dil, çıkış menüde). Tablet için ayrı ince ray (`NavRail`), telefon için alt çubuk (`MobileNav`).
  */
 export function Sidebar() {
   const pathname = usePathname();
-  const profileNavHref = useProfileNavHref();
   const { t } = useTranslation();
-  const isModerator = useIsModerator();
   const status = useAuthStatus();
   const [createOpen, setCreateOpen] = useState(false);
   const { requireAuth } = useAuthPrompt();
@@ -35,96 +29,84 @@ export function Sidebar() {
   const visibleGroups = navGroups
     .map((group) => ({ ...group, items: filterNavItems(group.items, isAuthenticated) }))
     .filter((group) => group.items.length > 0);
-  const bottomItems: NavItem[] = isAuthenticated
-    ? [...(isModerator ? [{ href: "/moderation", labelKey: "nav.moderation" as const, icon: ShieldCheck }] : []), settingsNavItem]
-    : status === "unauthenticated"
-      ? [guestLoginNavItem]
-      : [];
 
   function renderItem(item: NavItem) {
-    const href = item.href === PROFILE_NAV_PLACEHOLDER ? profileNavHref : item.href;
     const active = isNavItemActive(pathname, item);
     const Icon = item.icon;
-    const label = t(item.labelKey);
     return (
       <li key={item.labelKey}>
         <Link
-          href={href}
+          href={item.href}
           aria-current={active ? "page" : undefined}
-          title={label}
           className={cn(
-            "group relative flex h-11 items-center gap-4 rounded-xl text-[0.9375rem] transition-colors duration-200",
-            "justify-center lg:justify-start lg:px-3",
+            "flex h-11 items-center gap-3 rounded-xl px-3 text-body transition-colors duration-200",
             // Meydan: the active entry is a soft brand pill — no edge bar.
             active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
           )}
         >
           <Icon size={20} className={active ? "text-primary" : undefined} />
-          <span className="sr-only lg:not-sr-only">{label}</span>
+          <span>{t(item.labelKey)}</span>
         </Link>
       </li>
     );
   }
 
   return (
-    <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className="sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border-soft bg-surface md:flex md:w-[72px] lg:w-64">
-      <div className="flex h-16 items-center justify-center px-3 lg:justify-start lg:px-5">
+    <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className="sticky top-0 hidden h-dvh w-62 shrink-0 flex-col border-r border-border-soft bg-surface px-4 lg:flex">
+      <div className="flex h-16 items-center px-1">
         <Link href="/" className="flex items-center gap-3 rounded-md" aria-label="Promptly">
           <BrandMark size={32} />
-          <span className="hidden leading-none lg:block">
-            <BrandWordmark className="block text-[1.55rem]" />
-            <span className="mt-0.5 block text-caption text-text-muted">{t("nav.tagline")}</span>
-          </span>
+          <BrandWordmark className="block text-[1.55rem]" />
         </Link>
       </div>
 
-      <div className="px-3 pb-2 lg:px-4">
+      <div className="pb-2">
         {/* Oluştur menüsü (docs/history/216-*): ayrı seçim sayfası yerine pencere; misafire giriş diyaloğu. */}
         <button
           type="button"
           onClick={() => (status === "unauthenticated" ? requireAuth("create") : setCreateOpen(true))}
           aria-haspopup="dialog"
-          title={t("nav.createShort")}
           data-nav-create=""
-          className={buttonClassName({ className: "h-11 w-full text-[0.9375rem] font-bold" })}
+          className={buttonClassName({ className: "h-11 w-full text-body font-bold" })}
         >
           <Plus size={18} />
-          <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
+          {t("nav.createShort")}
         </button>
         {createOpen && <CreateMenuSheet onClose={() => setCreateOpen(false)} />}
       </div>
 
-      <nav aria-label={t("nav.primaryLabel")} className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-3 lg:px-4">
-        {visibleGroups.map((group) => (
-          <div key={group.labelKey}>
-            <p className="mb-1.5 hidden px-3 text-micro font-semibold uppercase tracking-[0.1em] text-text-muted lg:block">
-              {t(group.labelKey)}
-            </p>
-            <div aria-hidden className="mx-auto mb-2 h-px w-8 bg-border-soft lg:hidden" />
+      <nav aria-label={t("nav.primaryLabel")} className="flex flex-1 flex-col gap-5 overflow-y-auto py-3">
+        {visibleGroups.map((group, index) => (
+          <div key={group.labelKey ?? `group-${index}`}>
+            {group.labelKey && <p className="mb-1.5 px-3 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t(group.labelKey)}</p>}
             <ul className="space-y-0.5">{group.items.map(renderItem)}</ul>
           </div>
         ))}
         {isAuthenticated && <SidebarTeams />}
       </nav>
 
-      {bottomItems.length > 0 && (
-        <div className="border-t border-border-soft px-3 py-3 lg:px-4">
-          <ul className="space-y-0.5">{bottomItems.map(renderItem)}</ul>
+      <div className="border-t border-border-soft py-3">
+        {isAuthenticated ? (
+          <SidebarAccount />
+        ) : status === "unauthenticated" ? (
+          <ul>{renderItem(guestLoginNavItem)}</ul>
+        ) : null}
+      </div>
+
+      {/* Ziyaretçinin «Sen» menüsü yok: Geliştiriciler + Yasal bağlantıları (docs/history/300-*) kenar çubuğunda sessiz bir satırda kalır; üyede menüdedir. */}
+      {status === "unauthenticated" && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 px-3 pb-4 text-caption text-text-muted">
+          <Link href="/developers" className="rounded-sm hover:text-text hover:underline">
+            {t("dev.title")}
+          </Link>
+          <Link href="/terms" className="rounded-sm hover:text-text hover:underline">
+            {t("legal.termsTitle")}
+          </Link>
+          <Link href="/privacy" className="rounded-sm hover:text-text hover:underline">
+            {t("legal.privacyTitle")}
+          </Link>
         </div>
       )}
-
-      {/* Yasal bağlantılar (docs/history/300-*): yalnız geniş kenar çubuğunda (72px ray'da yer yok; orada Ayarlar'daki "Yasal" grubu). */}
-      <div className="hidden flex-wrap gap-x-3 gap-y-1 px-5 pb-4 text-caption text-text-muted lg:flex">
-        <Link href="/developers" className="rounded-sm hover:text-text hover:underline">
-          {t("dev.title")}
-        </Link>
-        <Link href="/terms" className="rounded-sm hover:text-text hover:underline">
-          {t("legal.termsTitle")}
-        </Link>
-        <Link href="/privacy" className="rounded-sm hover:text-text hover:underline">
-          {t("legal.privacyTitle")}
-        </Link>
-      </div>
     </aside>
   );
 }

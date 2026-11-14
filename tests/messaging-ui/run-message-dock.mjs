@@ -86,7 +86,7 @@ await scenario("3. Sayfa değişse de panel ve açık sohbet yerinde kalır", as
   await pill(page).click();
   await row(page, "Carol").click();
   await title(page).waitFor();
-  await page.locator("a[href$='/discover'], a[href$='/discover/']").first().click();
+  await page.locator("a[href$='/discover']:visible, a[href$='/discover/']:visible").first().click();
   await page.waitForURL(/\/discover/);
   await panel(page).waitFor();
   assert.match(await title(page).innerText(), /Carol/, "same chat after navigating");

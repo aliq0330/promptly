@@ -91,7 +91,7 @@ await scenario("6 phone: nothing overflows sideways", async ({ page }) => {
 
 await scenario("7 the wide sidebar links to it (also for visitors)", async ({ page }) => {
   await page.goto(BASE + "/privacy/");
-  const link = page.locator("aside[data-app-chrome]").getByRole("link", { name: "Geliştiriciler" });
+  const link = page.locator("aside[data-app-chrome]:visible").getByRole("link", { name: "Geliştiriciler" });
   assert.match(await link.getAttribute("href"), /\/developers\/?$/);
   await link.click();
   await page.waitForURL(/\/developers\/?$/);
