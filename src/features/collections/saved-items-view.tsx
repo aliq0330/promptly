@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bookmark } from "@/components/icons/bookmark";
+import { Users } from "@/components/icons/users";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { StorageImage } from "@/components/ui/storage-media";
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { CollectionEntryList } from "./collection-entry-list";
+import { CollectionInvitesStrip } from "./collection-invites-strip";
 import { entryImage } from "./collection-band";
 import { CollectionCover } from "./collection-card";
 import { CollageArt, DetailBand, DetailShell, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
@@ -29,8 +31,9 @@ export function SavedItemsView() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [shelfVersion, setShelfVersion] = useState(0);
 
-  // "Koleksiyonlarım" shelf (docs/history/234-*): the viewer's own collections, each opening its own page; a failure just leaves the shelf out.
+  // "Koleksiyonlarım" shelf (docs/history/234-*): the viewer's own collections (and the ortak ones they are in, docs/history/386-*), each opening its own page; a failure just leaves the shelf out.
   useEffect(() => {
     let cancelled = false;
     if (!user) return;
@@ -38,7 +41,7 @@ export function SavedItemsView() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, shelfVersion]);
 
   // The saved works, 24 at a time (a member can have thousands): the list grows as it is scrolled.
   const saved = usePagedList(`saved|${user?.id ?? ""}`, Boolean(user), (offset) => fetchSavedItemsPage(user?.id ?? "", offset), collectionEntryKey);
@@ -74,6 +77,7 @@ export function SavedItemsView() {
       }
     >
       <div className="space-y-4">
+        {user && <CollectionInvitesStrip onJoined={() => setShelfVersion((n) => n + 1)} />}
         {collections.length > 0 && (
           <section aria-labelledby="saved-collections" data-saved-collections="" className="space-y-2">
             <h2 id="saved-collections" className="px-1 text-label font-semibold uppercase tracking-[0.08em] text-text-muted">
@@ -85,6 +89,12 @@ export function SavedItemsView() {
                   <CollectionCover collection={collection} className="aspect-[7/5] w-full overflow-hidden rounded-lg" />
                   <p className="mt-2 truncate text-small font-medium text-text group-hover:text-primary">{collection.name}</p>
                   <p className="text-caption tabular-nums text-text-muted">{t("collection.itemCount", { count: collection.itemCount })}</p>
+                  {collection.isShared && (
+                    <p className="flex items-center gap-1 truncate text-caption font-medium text-secondary" data-collection-shared-chip="">
+                      <Users size={12} aria-hidden />
+                      {collection.owner.id === user?.id ? (collection.visibility === "private" ? t("collab.privateShared") : t("collab.kicker")) : t("collab.withOwner", { name: collection.owner.displayName })}
+                    </p>
+                  )}
                 </Link>
               ))}
             </ScrollRow>

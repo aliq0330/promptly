@@ -6,16 +6,17 @@ import { Check } from "@/components/icons/check";
 import { FolderPlus } from "@/components/icons/folder-plus";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Plus } from "@/components/icons/plus";
+import { Users } from "@/components/icons/users";
 import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { CollectionForm } from "./collection-form";
+import { CollectionForm, type CollectionFormValues } from "./collection-form";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import {
   addItemToCollection,
   createCollection,
-  fetchCollectionIdsContaining,
+  fetchCollectionMembership,
   fetchIsSaved,
   fetchOwnCollections,
   removeFromCollection,
@@ -82,6 +83,8 @@ export function SaveToCollectionModal({
   const [isSaved, setIsSaved] = useState(false);
   /** The collections the database holds the work in right now (as last read or confirmed by a write). */
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  /** Ortak koleksiyonlarda BAŞKASININ eklediği satırlar: tik görünür ama kaldırılamaz (içeriği yalnız ekleyen çıkarır, docs/history/386-*). */
+  const [lockedIds, setLockedIds] = useState<Set<string>>(new Set());
   /** The draft: what the ticks currently say. */
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -102,12 +105,13 @@ export function SaveToCollectionModal({
     }
     setLoading(true);
     setLoadFailed(false);
-    Promise.all([fetchOwnCollections(user.id), fetchCollectionIdsContaining(contentId, user.id, contentType), fetchIsSaved(contentId, user.id, contentType)])
-      .then(([ownCollections, ids, saved]) => {
+    Promise.all([fetchOwnCollections(user.id), fetchCollectionMembership(contentId, user.id, contentType), fetchIsSaved(contentId, user.id, contentType)])
+      .then(([ownCollections, membership, saved]) => {
         if (cancelled) return;
         setCollections(ownCollections);
-        setSavedIds(ids);
-        setSelectedIds(new Set(ids));
+        setSavedIds(membership.ids);
+        setLockedIds(membership.lockedIds);
+        setSelectedIds(new Set(membership.ids));
         setIsSaved(saved);
         reportedSavedRef.current = saved;
       })
@@ -126,7 +130,7 @@ export function SaveToCollectionModal({
   const isDirty = add.length > 0 || remove.length > 0;
 
   function handleToggle(collectionId: string) {
-    if (saving) return;
+    if (saving || lockedIds.has(collectionId)) return;
     setError(null);
     setConfirmingUnsave(false);
     setSelectedIds((prev) => {
@@ -226,7 +230,7 @@ export function SaveToCollectionModal({
     if (!savingRef.current) onClose();
   }
 
-  async function handleCreate(values: { name: string; visibility: "public" | "private" }) {
+  async function handleCreate(values: CollectionFormValues) {
     if (!user || !profile) throw new Error(t("collection.loginRequiredToCreate"));
     const created = await createCollection(values, user.id, profile);
     setCollections((prev) => [created, ...prev]);
@@ -273,14 +277,17 @@ export function SaveToCollectionModal({
               ) : (
                 collections.map((collection) => {
                   const isMember = selectedIds.has(collection.id);
+                  const locked = lockedIds.has(collection.id);
+                  const partnerOf = collection.owner.id !== user?.id;
                   return (
                     <button
                       key={collection.id}
                       type="button"
                       onClick={() => handleToggle(collection.id)}
-                      disabled={saving}
+                      disabled={saving || locked}
                       role="checkbox"
                       aria-checked={isMember}
+                      data-collection-row={collection.id}
                       className="flex w-full items-center gap-3 rounded-md border border-border p-2 text-left transition-colors hover:bg-accent-surface/50 disabled:opacity-50"
                     >
                       <StorageBackground
@@ -294,6 +301,13 @@ export function SaveToCollectionModal({
                           <span className="block truncate text-small font-medium text-text">{collection.name}</span>
                         </span>
                         <span className="text-caption text-text-muted">{t("collection.itemCount", { count: collection.itemCount })}</span>
+                        {collection.isShared && (
+                          <span className="flex items-center gap-1 text-caption text-secondary" data-collection-shared-chip="">
+                            <Users size={12} aria-hidden />
+                            {partnerOf ? t("collab.withOwner", { name: collection.owner.displayName }) : collection.visibility === "private" ? t("collab.privateShared") : t("collab.kicker")}
+                          </span>
+                        )}
+                        {locked && <span className="block text-caption text-text-muted">{t("collab.lockedHint")}</span>}
                       </span>
                       <span
                         className={cn(

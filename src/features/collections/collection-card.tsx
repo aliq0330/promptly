@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FolderOpen } from "@/components/icons/folder-open";
 import { Globe } from "@/components/icons/globe";
 import { Lock } from "@/components/icons/lock";
+import { Users } from "@/components/icons/users";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { cn, collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -42,6 +43,12 @@ export function CollectionCard({
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-4 py-2.5 text-caption text-text-muted">
           <span className="shrink-0 tabular-nums">{t("collection.itemCount", { count: collection.itemCount })}</span>
+          {collection.isShared && (
+            <span className="flex shrink-0 items-center gap-1 font-medium text-secondary" data-collection-shared-chip="">
+              <Users size={12} aria-hidden />
+              {collection.visibility === "private" ? t("collab.privateShared") : t("collab.kicker")}
+            </span>
+          )}
           {readOnly ? (
             <span className="min-w-0 truncate">{t("collection.byOwner", { name: collection.owner.displayName })}</span>
           ) : (

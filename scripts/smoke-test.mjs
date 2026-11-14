@@ -65,6 +65,16 @@ const CHECKS = [
   { name: "rpc group_unread_counts (grup okunmamış sayısı okuma anında, docs/history/258-*; yalnız oturumlu)", rpc: "group_unread_counts", body: { p_ids: [] }, deniedOk: true, soft: true },
   { name: "rpc feed_page_proven (Keşfet → Kanıtlanmış sıralaması, docs/history/307-*)", rpc: "feed_page_proven", body: { p_limit: 1 } },
   { name: "rpc discover_tool_counts", rpc: "discover_tool_counts", body: {} },
+  // Ortak koleksiyon (docs/history/386-*): yeni sütunlar + ziyaretçiye açık okuma RPC'leri + yalnız oturumlu yazma RPC'leri.
+  { name: "collections ortak sütunları (docs/history/386-*)", get: () => `collections?select=${encodeURIComponent("id,is_shared,member_count")}&limit=1` },
+  { name: "collection_items.added_by (ekleyen, docs/history/386-*)", get: () => `collection_items?select=${encodeURIComponent("id,added_by")}&limit=1` },
+  { name: "collection_members (yalnız kendi satırım okunur; ziyaretçide boş, docs/history/386-*)", get: () => `collection_members?select=${encodeURIComponent("collection_id,user_id")}&limit=1` },
+  { name: "rpc collection_members_list (ortak listesi; herkese açık koleksiyonda ziyaretçi de okur, docs/history/386-*)", rpc: "collection_members_list", body: { p_collection: "00000000-0000-4000-8000-000000000000" } },
+  { name: "rpc profile_collections (profildeki ortak koleksiyonlar; ziyaretçi de okur, docs/history/386-*)", rpc: "profile_collections", body: { p_user: "00000000-0000-4000-8000-000000000000", p_limit: 1, p_offset: 0 } },
+  { name: "rpc set_collection_shared ziyaretçiye KAPALI olmalı (docs/history/386-*)", rpc: "set_collection_shared", body: { p_collection: "00000000-0000-4000-8000-000000000000", p_shared: true }, mustBeDenied: true },
+  { name: "rpc invite_collection_member ziyaretçiye KAPALI olmalı (docs/history/386-*)", rpc: "invite_collection_member", body: { p_collection: "00000000-0000-4000-8000-000000000000", p_username: "x" }, mustBeDenied: true },
+  { name: "rpc my_collection_invitations ziyaretçiye KAPALI olmalı (docs/history/386-*)", rpc: "my_collection_invitations", body: {}, mustBeDenied: true },
+  { name: "rpc remove_collection_member ziyaretçiye KAPALI olmalı (docs/history/386-*)", rpc: "remove_collection_member", body: { p_collection: "00000000-0000-4000-8000-000000000000", p_user: "00000000-0000-4000-8000-000000000000", p_remove_items: false }, mustBeDenied: true },
   { name: "rpc unsave_content (Kaydedilenlerden kaldır, docs/history/336-*; yalnız oturumlu)", rpc: "unsave_content", body: { p_type: "prompt", p_id: "00000000-0000-4000-8000-000000000000" }, deniedOk: true, soft: true },
   // Yalnız oturumlu kullanıcıya açık RPC (docs/history/250-*): ziyaretçiye 401/403 dönmesi "var ama kapalı" demektir; 404 "yok" demektir ve boru hattını durdurur.
   // Bildirim merkezi (docs/history/326-*): yalnız oturumlu RPC'ler (ziyaretçiye 401/403 = "var ama kapalı"; 404 = "yok" ve boru hattını durdurur).
