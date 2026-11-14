@@ -11,6 +11,7 @@ import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Users } from "@/components/icons/users";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
+import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { IconComponent } from "@/components/icons/icon";
 import { ListControlRow } from "@/features/content/list-control-row";
@@ -50,6 +51,7 @@ export function CollectionEntryList({
   emptyScene,
   removalFor,
   dropWhenUnsaved = false,
+  addedBy,
   totalCount,
   footer,
 }: {
@@ -59,8 +61,10 @@ export function CollectionEntryList({
   emptyDescriptionKey: TranslationKey;
   /** The line-art scene of the empty list (docs/history/374-*). */
   emptyScene?: LineArtKind;
-  removalFor?: (entry: CollectionEntry) => EntryRemoval;
+  removalFor?: (entry: CollectionEntry) => EntryRemoval | undefined;
   dropWhenUnsaved?: boolean;
+  /** Ortak koleksiyonda içeriği kimin eklediği (docs/history/386-*): kimlik → ad/avatar; verilirse her kartın altında "X ekledi" satırı çizilir. */
+  addedBy?: Map<string, { name: string; avatarUrl: string | null }>;
   /** The list holds only the pages loaded so far: the real size (counted by the database), when known, for the "Tümü" count. */
   totalCount?: number | null;
   /** Under the cards, also when a filter hides every loaded one — "Daha fazla" for the next page. */
@@ -143,7 +147,7 @@ export function CollectionEntryList({
       ) : (
         <ContentGrid>
           {visibleItems.map((entry) => (
-            <EntryCell key={`${entry.type}:${entry.data.id}`} entry={entry} removal={removalFor?.(entry)} dropWhenUnsaved={dropWhenUnsaved} />
+            <EntryCell key={`${entry.type}:${entry.data.id}`} entry={entry} removal={removalFor?.(entry)} dropWhenUnsaved={dropWhenUnsaved} adder={addedBy && entry.addedBy ? addedBy.get(entry.addedBy) : undefined} />
           ))}
         </ContentGrid>
       )}
@@ -176,7 +180,8 @@ function searchFields(entry: CollectionEntry) {
   return { title: data.title, description: data.description, creator: "author" in data ? data.author : data.creator, tags: data.tags.map((tag) => tag.label) };
 }
 
-function EntryCell({ entry, removal, dropWhenUnsaved }: { entry: CollectionEntry; removal?: EntryRemoval; dropWhenUnsaved: boolean }) {
+function EntryCell({ entry, removal, dropWhenUnsaved, adder }: { entry: CollectionEntry; removal?: EntryRemoval; dropWhenUnsaved: boolean; adder?: { name: string; avatarUrl: string | null } }) {
+  const { t } = useTranslation();
   // Seeded with the real count so reading the shared entry first can't pin it at 0 for the card's own bookmark.
   const save = useEngagementEntry("save", entry.type, entry.data.id, entry.data.saveCount);
   if (dropWhenUnsaved && save.activeChecked && !save.active) return null;
@@ -190,6 +195,12 @@ function EntryCell({ entry, removal, dropWhenUnsaved }: { entry: CollectionEntry
         <PresetCard preset={entry.data} collectionRemoval={removal} />
       ) : (
         <WorkflowCard workflow={entry.data} collectionRemoval={removal} />
+      )}
+      {adder && (
+        <p className="mt-1.5 flex items-center gap-1.5 px-1 text-caption text-text-muted" data-collection-added-by="">
+          <Avatar src={adder.avatarUrl} alt="" size={20} />
+          <span className="min-w-0 truncate">{t("collab.addedBy", { name: adder.name })}</span>
+        </p>
       )}
     </div>
   );

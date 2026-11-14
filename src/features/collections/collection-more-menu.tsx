@@ -171,6 +171,7 @@ export function CollectionMoreMenu({
               {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <TrashIcon size={14} />}
               {confirmingDelete ? t("common.confirmDelete") : t("collection.delete")}
             </button>
+            {confirmingDelete && collection.isShared && collection.memberCount > 0 && <p className="px-3 py-1 text-caption text-text-muted">{t("collab.deleteWarn")}</p>}
             {error && <p className="px-3 py-1 text-caption text-danger">{error}</p>}
           </div>
         </Portal>

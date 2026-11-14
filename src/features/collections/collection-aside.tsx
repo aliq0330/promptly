@@ -5,6 +5,8 @@ import Link from "next/link";
 import { AsideSection, DetailAside } from "@/features/content/detail-parts";
 import { CollectionCover } from "./collection-card";
 import { fetchPublicCollectionsByOwner } from "@/lib/supabase/collections";
+import type { CollectionMember } from "@/lib/supabase/collection-members";
+import type { CollectionRole } from "@/lib/collection-permissions";
 import { collectionHref, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language } from "@/lib/i18n/translations";
@@ -21,7 +23,7 @@ const META_ROW = "flex items-center justify-between gap-3 px-4 py-3 text-small";
  * and the owner's other PUBLIC collections — a real list (`fetchPublicCollectionsByOwner`), drawn only when there is one.
  * Stacked under the list below `lg`.
  */
-export function CollectionAside({ collection }: { collection: Collection }) {
+export function CollectionAside({ collection, members, role }: { collection: Collection; members?: CollectionMember[] | null; role?: CollectionRole }) {
   const { t, language } = useTranslation();
   const ownerId = collection.owner.id;
   const [others, setOthers] = useState<{ ownerId: string; list: Collection[] } | null>(null);
@@ -52,6 +54,12 @@ export function CollectionAside({ collection }: { collection: Collection }) {
     },
   ];
   if (collection.visibility === "public") rows.push({ label: t("collection.aside.followers"), value: collection.followerCount });
+  // Ortak koleksiyon (docs/history/386-*): ortakların adları ve (ortağa/sahibe) kendi rolü.
+  if (collection.isShared) {
+    const partners = (members ?? []).filter((member) => member.role === "member");
+    rows.push({ label: t("collab.aside.partners"), value: partners.length > 0 ? partners.map((member) => member.displayName).join(", ") : collection.memberCount });
+    if (role === "owner" || role === "member") rows.push({ label: t("collab.yourRole"), value: role === "owner" ? t("collab.roleOwner") : t("collab.roleMember") });
+  }
 
   return (
     <DetailAside>

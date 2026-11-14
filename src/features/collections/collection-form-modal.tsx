@@ -2,7 +2,7 @@
 
 import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
-import { CollectionForm } from "./collection-form";
+import { CollectionForm, type CollectionFormValues } from "./collection-form";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -22,7 +22,7 @@ export function CollectionFormModal({
   /** Present → edit mode (fields pre-filled, "Kaydet"); absent → create mode ("Oluştur"). */
   collection?: Collection;
   onClose: () => void;
-  onSubmit: (values: { name: string; visibility: "public" | "private" }) => Promise<void>;
+  onSubmit: (values: CollectionFormValues) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const isEdit = Boolean(collection);
@@ -45,6 +45,10 @@ export function CollectionFormModal({
         <CollectionForm
           initialName={collection?.name}
           initialVisibility={collection?.visibility}
+          showSharing
+          initialShared={collection?.isShared}
+          collectionId={collection?.id}
+          memberCount={collection?.memberCount}
           submitLabel={isEdit ? t("common.save") : t("common.create")}
           onCancel={onClose}
           onSubmit={onSubmit}

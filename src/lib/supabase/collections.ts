@@ -8,6 +8,7 @@ import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import type { LikeableContentType } from "./likes";
 import { fetchCommunityPostsByIds, type CommunityPost } from "./communities";
+import { fetchMemberCollectionIds, fetchProfileCollectionIds, setCollectionShared } from "./collection-members";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. A community application post is saved as the POST itself (docs/history/184-*). */
 type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset" | "community_post">;
@@ -19,12 +20,16 @@ import type { Collection, Preset, Prompt, Workflow } from "@/types";
  * discriminated-union pattern already used for the mixed home/discover feed
  * (`src/features/feed/types.ts`) rather than inventing a new shape.
  */
-export type CollectionEntry =
+export type CollectionEntry = (
   | { type: "prompt"; data: Prompt }
   | { type: "workflow"; data: Workflow }
   | { type: "preset"; data: Preset }
   /** A community APPLICATION post saved as the post itself (its own like/comment/save counts, docs/history/184-*). */
-  | { type: "community_post"; data: CommunityPost };
+  | { type: "community_post"; data: CommunityPost }
+) & {
+  /** Ortak koleksiyonda içeriği ekleyen kişi (docs/history/386-*); boş = eski satır ya da sahibe geçen (ayrılan ortağın bıraktığı) içerik. */
+  addedBy?: string | null;
+};
 
 /** Which real column a save target lives in — mirrors likes.ts's `targetColumn`. */
 function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "workflow_id" | "preset_id" | "community_post_id" {
@@ -40,6 +45,9 @@ export interface CollectionRow {
   visibility: "public" | "private";
   item_count: number;
   follower_count: number;
+  /** Ortak koleksiyon (docs/history/386-*). Sütunlar henüz yoksa (migration gecikti) `undefined` gelir ve "ortak değil" sayılır. */
+  is_shared?: boolean;
+  member_count?: number;
   /** The per-user SYSTEM collection ("Kaydedilenlerin tümü", docs/history/336-*): never listed or edited as a collection. */
   is_default: boolean;
   created_at: string;
@@ -48,7 +56,7 @@ export interface CollectionRow {
 }
 
 const COLLECTION_SELECT = `
-  id, name, visibility, item_count, follower_count, is_default, created_at, updated_at,
+  id, name, visibility, item_count, follower_count, is_shared, member_count, is_default, created_at, updated_at,
   profiles:owner_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests, is_demo )
 `;
 
@@ -60,6 +68,8 @@ function mapCollectionRow(row: CollectionRow, coverImage: Collection["coverImage
     visibility: row.visibility,
     itemCount: row.item_count,
     followerCount: row.follower_count ?? 0,
+    isShared: row.is_shared ?? false,
+    memberCount: row.member_count ?? 0,
     coverImage,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -114,17 +124,23 @@ async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collect
  */
 export async function fetchOwnCollections(userId: string): Promise<Collection[]> {
   try {
-    const { data, error } = await supabase
-      .from("collections")
-      .select(COLLECTION_SELECT)
-      .eq("owner_id", userId)
-      .eq("is_default", false)
-      .order("created_at", { ascending: false });
+    // Ortak koleksiyonlar (docs/history/386-*): sahibi olduklarımın yanına ORTAK olduklarım da gelir (≤ 50; kendi üyelik satırlarım okunur).
+    const [owned, memberIds] = await Promise.all([
+      supabase.from("collections").select(COLLECTION_SELECT).eq("owner_id", userId).eq("is_default", false).order("created_at", { ascending: false }),
+      fetchMemberCollectionIds(userId),
+    ]);
+    const { data, error } = owned;
     if (error || !data) {
       if (error) console.error("fetchOwnCollections", error);
       return [];
     }
     const rows = data as unknown as CollectionRow[];
+    if (memberIds.length > 0) {
+      const joined = await supabase.from("collections").select(COLLECTION_SELECT).in("id", memberIds).eq("is_default", false);
+      if (joined.error) console.error("fetchOwnCollections (member)", joined.error);
+      else rows.push(...(joined.data as unknown as CollectionRow[]));
+      rows.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    }
     const covers = await fetchCovers(rows.map((row) => row.id));
     return rows.map((row) => mapCollectionRow(row, covers.get(row.id) ?? null));
   } catch (err) {
@@ -148,21 +164,23 @@ export async function fetchCollectionById(id: string): Promise<Collection | null
   }
 }
 
-/** Newest-first non-empty public collections of one person — what a visitor sees on their profile (RLS would also show the owner their private ones, which is why `visibility` is filtered explicitly). */
+/**
+ * Newest-first non-empty collections on one person's profile — what a visitor sees there. Public ones, plus (docs/history/386-*) the
+ * ORTAK collections the person co-owns: a public one for everybody, a private one only for people who are in it too (the database
+ * decides; `profile_collections` lists only what the caller can read). A personal private collection never shows. If the RPC is not
+ * deployed yet it falls back to the person's own public collections.
+ */
 export async function fetchPublicCollectionsByOwner(ownerId: string): Promise<Collection[]> {
   try {
-    const { data, error } = await supabase
-      .from("collections")
-      .select(COLLECTION_SELECT)
-      .eq("owner_id", ownerId)
-      .eq("visibility", "public")
-      .gt("item_count", 0)
-      .order("created_at", { ascending: false });
+    const ids = await fetchProfileCollectionIds(ownerId);
+    let query = supabase.from("collections").select(COLLECTION_SELECT).order("created_at", { ascending: false });
+    query = ids === null ? query.eq("owner_id", ownerId).eq("visibility", "public") : query.in("id", ids.length > 0 ? ids : ["00000000-0000-0000-0000-000000000000"]);
+    const { data, error } = await query.gt("item_count", 0);
     if (error || !data) {
       if (error) console.error("fetchPublicCollectionsByOwner", error);
       return [];
     }
-    const rows = data as unknown as CollectionRow[];
+    const rows = (data as unknown as CollectionRow[]).filter((row) => row.visibility === "public" || row.is_shared);
     const covers = await fetchCovers(rows.map((row) => row.id));
     return rows.map((row) => mapCollectionRow(row, covers.get(row.id) ?? null));
   } catch (err) {
@@ -248,7 +266,7 @@ export async function fetchFollowedCollections(userId: string): Promise<Collecti
   }
 }
 
-type CollectionItemRow = { community_post_id?: string | null; prompts: PromptRow | null; workflows: WorkflowRow | null; presets: PresetRow | null };
+type CollectionItemRow = { community_post_id?: string | null; added_by?: string | null; prompts: PromptRow | null; workflows: WorkflowRow | null; presets: PresetRow | null };
 
 /**
  * Rows that point at a community post are resolved in ONE extra read afterwards (`resolvePostEntries`): a post the viewer can no
@@ -257,15 +275,16 @@ type CollectionItemRow = { community_post_id?: string | null; prompts: PromptRow
 function mapCollectionItemRows(rows: CollectionItemRow[], posts: Map<string, CommunityPost> = new Map()): CollectionEntry[] {
   const entries: CollectionEntry[] = [];
   for (const row of rows) {
+    const addedBy = row.added_by ?? null;
     if (row.community_post_id) {
       const post = posts.get(row.community_post_id);
-      if (post) entries.push({ type: "community_post", data: post });
+      if (post) entries.push({ type: "community_post", data: post, addedBy });
     } else if (row.prompts && !row.prompts.deleted_at) {
-      entries.push({ type: "prompt", data: mapPromptRow(row.prompts) });
+      entries.push({ type: "prompt", data: mapPromptRow(row.prompts), addedBy });
     } else if (row.workflows) {
-      entries.push({ type: "workflow", data: mapWorkflowRow(row.workflows) });
+      entries.push({ type: "workflow", data: mapWorkflowRow(row.workflows), addedBy });
     } else if (row.presets) {
-      entries.push({ type: "preset", data: mapPresetRow(row.presets) });
+      entries.push({ type: "preset", data: mapPresetRow(row.presets), addedBy });
     }
   }
   return entries;
@@ -297,7 +316,7 @@ async function resolvePostEntries(rows: CollectionItemRow[]): Promise<Map<string
 export async function fetchCollectionItemsPage(collectionId: string, offset = 0, limit = COLLECTION_PAGE): Promise<PagedResult<CollectionEntry>> {
   const { data, count, error } = await supabase
     .from("collection_items")
-    .select(`created_at, community_post_id, prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
+    .select(`created_at, community_post_id, added_by, prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
     .eq("collection_id", collectionId)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
@@ -363,23 +382,45 @@ const saveLookup = batcherRegistry((key) => {
   };
 });
 
+/** Which collections hold one work for this user, and which of those rows the user may NOT take it out of. */
+export interface CollectionMembership {
+  ids: Set<string>;
+  /** Ortak koleksiyonda başkasının eklediği satır: tik görünür ama kaldırılamaz (içeriği yalnız ekleyen çıkarır, docs/history/386-*). */
+  lockedIds: Set<string>;
+}
+
 /**
- * Which of this user's own (non-system) collections already contain this work — powers the collection modal's per-row
- * ticks. THROWS on failure: an unknown membership must never be read as "in no collection", or the modal would offer to
- * add over something it just failed to see.
+ * Which of this user's collections already contain this work — powers the collection modal's per-row ticks: the collections they
+ * own (non-system) AND the ortak ones they are a member of (docs/history/386-*). THROWS on failure: an unknown membership must never
+ * be read as "in no collection", or the modal would offer to add over something it just failed to see.
  */
-export async function fetchCollectionIdsContaining(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<Set<string>> {
-  const { data, error } = await supabase
-    .from("collection_items")
-    .select("collection_id, collections!inner ( owner_id, is_default )")
-    .eq(saveTargetColumn(contentType), id)
-    .eq("collections.owner_id", userId)
-    .eq("collections.is_default", false);
-  if (error) {
-    console.error("fetchCollectionIdsContaining", error);
-    throw new Error(error.message);
+export async function fetchCollectionMembership(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<CollectionMembership> {
+  const column = saveTargetColumn(contentType);
+  const memberIds = await fetchMemberCollectionIds(userId);
+  const [owned, joined] = await Promise.all([
+    supabase
+      .from("collection_items")
+      .select("collection_id, added_by, collections!inner ( owner_id, is_default )")
+      .eq(column, id)
+      .eq("collections.owner_id", userId)
+      .eq("collections.is_default", false),
+    memberIds.length > 0 ? supabase.from("collection_items").select("collection_id, added_by").eq(column, id).in("collection_id", memberIds) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (owned.error || joined.error) {
+    console.error("fetchCollectionMembership", owned.error ?? joined.error);
+    throw new Error((owned.error ?? joined.error)!.message);
   }
-  return new Set(((data ?? []) as unknown as { collection_id: string }[]).map((row) => row.collection_id));
+  const ids = new Set<string>();
+  const lockedIds = new Set<string>();
+  for (const row of (owned.data ?? []) as unknown as { collection_id: string; added_by?: string | null }[]) {
+    ids.add(row.collection_id);
+    if (row.added_by && row.added_by !== userId) lockedIds.add(row.collection_id);
+  }
+  for (const row of (joined.data ?? []) as unknown as { collection_id: string; added_by?: string | null }[]) {
+    ids.add(row.collection_id);
+    if (row.added_by !== userId) lockedIds.add(row.collection_id);
+  }
+  return { ids, lockedIds };
 }
 
 /** Like `isPromptSaved` but THROWS on failure, for the modal (an unknown state must not be read as "not saved"). */
@@ -438,7 +479,7 @@ export async function unsaveWork(id: string, contentType: SaveableContentType = 
 }
 
 export async function createCollection(
-  input: { name: string; visibility: "public" | "private" },
+  input: { name: string; visibility: "public" | "private"; /** Ortak çalışmaya açık oluştur (docs/history/386-*). */ shared?: boolean },
   ownerId: string,
   ownerProfile: Collection["owner"],
 ): Promise<Collection> {
@@ -448,6 +489,8 @@ export async function createCollection(
     .select("id, created_at, updated_at")
     .single();
   if (error || !data) throw new Error(error?.message ?? translateForRuntime("collection.createFailed"));
+  // Boş bir koleksiyon her zaman ortak yapılabilir (ortak olamayacak içerik yok); hata olursa koleksiyon yine de oluşmuştur.
+  if (input.shared) await setCollectionShared(data.id, true);
   return {
     id: data.id,
     owner: ownerProfile,
@@ -455,6 +498,8 @@ export async function createCollection(
     visibility: input.visibility,
     itemCount: 0,
     followerCount: 0,
+    isShared: Boolean(input.shared),
+    memberCount: 0,
     coverImage: null,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
@@ -471,6 +516,15 @@ export async function updateCollection(
     .update({ name: patch.name.trim(), visibility: patch.visibility })
     .eq("id", collectionId);
   if (error) throw new Error(error.message);
+}
+
+/**
+ * Koleksiyon ayarlarının tek kaydı (docs/history/386-*): ad + görünürlük, sonra ortak çalışma değiştiyse `set_collection_shared`. Açarken ortak
+ * olamayacak içerik varsa sunucu `collection_has_unshareable_items` ile reddeder (ad/görünürlük o zamana kadar yazılmış olur).
+ */
+export async function saveCollectionSettings(collection: Pick<Collection, "id" | "isShared">, values: { name: string; visibility: "public" | "private"; shared: boolean }): Promise<void> {
+  await updateCollection(collection.id, { name: values.name, visibility: values.visibility });
+  if (values.shared !== collection.isShared) await setCollectionShared(collection.id, values.shared);
 }
 
 /** Deletes a collection the caller owns (RLS enforces ownership) — only removes the collection and its collection_items rows (on delete cascade); the works themselves stay saved ("Kaydedilenlerin tümü"), other collections are untouched. The system collection can never be deleted (the `collections_before_delete` trigger rejects it). */

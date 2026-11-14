@@ -107,7 +107,7 @@ jobs:
         run: |
           set -o pipefail
           status=0
-          for s in run-safety run-shared-cards run-detail-pages run-home-motion run-feed-filters run-search-notifications run-comment-extras run-telegram-settings run-save-collections; do
+          for s in run-safety run-shared-cards run-detail-pages run-home-motion run-feed-filters run-search-notifications run-comment-extras run-telegram-settings run-save-collections run-collab-collections; do
             echo "== $s"
             out=$(node tests/messaging-ui/$s.mjs 2>&1) && ok=1 || { ok=0; status=1; }
             echo "$out" | tail -3
