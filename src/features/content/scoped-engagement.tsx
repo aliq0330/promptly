@@ -43,6 +43,7 @@ export function EngageCommentCount({
   requestId,
   workflowId,
   presetId,
+  skillId,
   baseCount,
   size = 18,
 }: {
@@ -50,6 +51,7 @@ export function EngageCommentCount({
   requestId?: string;
   workflowId?: string;
   presetId?: string;
+  skillId?: string;
   baseCount: number;
   size?: number;
 }) {
@@ -57,7 +59,7 @@ export function EngageCommentCount({
   const quoteScope = useQuoteScope();
   if (quoteScope) return <QuoteCommentLink quote={quoteScope.quote} size={size} />;
   if (scope) return <PostCommentLink post={scope.post} size={size} />;
-  return <CommentCountLink promptId={promptId} requestId={requestId} workflowId={workflowId} presetId={presetId} baseCount={baseCount} size={size} />;
+  return <CommentCountLink promptId={promptId} requestId={requestId} workflowId={workflowId} presetId={presetId} skillId={skillId} baseCount={baseCount} size={size} />;
 }
 
 export function EngageSave({

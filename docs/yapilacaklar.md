@@ -213,12 +213,12 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 - [ ] **K** Slug stratejisi: başlık değişince `slug` sabit kalıyor (bilinçli); yeniden adlandırma gerekirse karar
 - Etki alanı: `my-content-view.tsx` (`createLinks`), `kind-drafts-button`, taslaklar listesi
 
-### Aşama 3 — sosyal entegrasyon
-- [ ] **B** Ortak tablolara `skill_id` dalları: `prompt_likes`, `prompt_comments`, `collection_items`, `reaction_stats`, `content_relations`, `reports`; `target_id` birleşimi ve `handle_prompt_like_change` / `handle_prompt_comment_change` / `handle_comment_delete` / `notify_comment_*` / `content_engagers` zincirlerinde AÇIK dal (**"tam biri dolu" CHECK yeniden kurulumu yıkıcıdır: `-- ci:allow-destructive` + kullanıcı onayı**)
-- [ ] **B** Beğeni/tepki, yorum, kaydet + koleksiyon + ortak koleksiyon arayüzü: kartta `PromptCardFooter` benzeri altbilgi, detayda `DetailActionBar` çubuğu (`Engage*` ailesi, `LikeableContentType`, `CommentScopeKind`, `SaveableContentType`, `StatisticsContentType` genişler)
-- [ ] **O** Profilde "Skill'ler" bölümü + `profile_content_stats` + İçeriklerim (**taslaklar şimdi listede görünmüyor, yalnız detay adresinden**)
+### Aşama 3 — sosyal entegrasyon (dilim 1 yapıldı, `390-*`: beğeni/tepki, yorum + sabitleme, bildirim cümleleri, İstatistik, şikâyet/moderasyon, profil bölümü; kalanlar aşağıda)
+- [x] **B** (beğeni/tepki + yorum + istatistik + şikâyet yapıldı; `collection_items`/`content_relations` dalları KALDI) Ortak tablolara `skill_id` dalları: `prompt_likes`, `prompt_comments`, `collection_items`, `reaction_stats`, `content_relations`, `reports`; `target_id` birleşimi ve `handle_prompt_like_change` / `handle_prompt_comment_change` / `handle_comment_delete` / `notify_comment_*` / `content_engagers` zincirlerinde AÇIK dal (**"tam biri dolu" CHECK yeniden kurulumu yıkıcıdır: `-- ci:allow-destructive` + kullanıcı onayı**)
+- [ ] **B** (beğeni/tepki + yorum arayüzü YAPILDI `390-*`; KALAN: kaydet + koleksiyon + ortak koleksiyon, `SaveableContentType`) Beğeni/tepki, yorum, kaydet + koleksiyon + ortak koleksiyon arayüzü: kartta `PromptCardFooter` benzeri altbilgi, detayda `DetailActionBar` çubuğu (`Engage*` ailesi, `LikeableContentType`, `CommentScopeKind`, `SaveableContentType`, `StatisticsContentType` genişler)
+- [ ] **O** (profil bölümü YAPILDI `390-*`; KALAN: `profile_content_stats` Skill sayısı + İçeriklerim) Profilde "Skill'ler" bölümü + `profile_content_stats` + İçeriklerim (**taslaklar şimdi listede görünmüyor, yalnız detay adresinden**)
 - [ ] **O** Bildirimler (yayın → takipçilere, yeni sürüm → sabitleyenlere): SQL Türkçe cümle + `notification-message.ts` + `nc.pref.*` + `_notification_pref_key` / `_notification_category` / `cardKindKey`
-- [ ] **O** Şikâyet (`submit_report('skill', …)`) + moderatör kuyruğu + içeriği/paketi kaldırma + `admin_*` sayaçları
+- [x] **O** (şikâyet + moderatör kuyruğu + kaldırma YAPILDI `390-*`; `admin_*` sayaçları KALDI) Şikâyet (`submit_report('skill', …)`) + moderatör kuyruğu + içeriği/paketi kaldırma + `admin_*` sayaçları
 - [ ] **O** Yaratıcı paneli / İstatistik: indirme, kaydedilme, tepki, yorum (`creator_insights_*`), `skill_uses` kaynaklı kullanım
 - [ ] **K** Paylaş modalı ve mesajla paylaşım (`ShareModal`'a hedef ekle, bağlantı + kısa özet)
 

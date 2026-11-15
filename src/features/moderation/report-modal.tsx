@@ -84,6 +84,7 @@ export const REPORT_TYPE_LABEL: Record<ReportTargetType, TranslationKey> = {
   request: "report.type.request",
   workflow: "report.type.workflow",
   preset: "report.type.preset",
+  skill: "report.type.skill",
   space: "report.type.space",
   quote: "report.type.quote",
   story: "report.type.story",

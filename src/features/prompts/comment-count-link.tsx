@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MessageCircle } from "@/components/icons/message-circle";
-import { formatCount, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
+import { formatCount, presetHref, promptHref, requestHref, resultHref, skillHref, workflowHref } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useCommentCountDelta } from "./comment-count-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -32,6 +32,7 @@ export function CommentCountLink({
   resultId,
   workflowId,
   presetId,
+  skillId,
   spaceId,
   baseCount,
   size = 16,
@@ -42,6 +43,8 @@ export function CommentCountLink({
   resultId?: string;
   workflowId?: string;
   presetId?: string;
+  /** Skill (docs/history/390-*). */
+  skillId?: string;
   /** Akışta paylaşılmış Space (docs/history/215-*): yorumlar Space sayfasının sonunda. */
   spaceId?: string;
   baseCount: number;
@@ -49,10 +52,12 @@ export function CommentCountLink({
   className?: string;
 }) {
   const { t } = useTranslation();
-  const delta = useCommentCountDelta(promptId ?? requestId ?? resultId ?? workflowId ?? presetId ?? spaceId);
+  const delta = useCommentCountDelta(promptId ?? requestId ?? resultId ?? workflowId ?? presetId ?? skillId ?? spaceId);
   const count = Math.max(0, baseCount + delta);
   const baseHref = spaceId
     ? spaceHref(spaceId)
+    : skillId
+    ? skillHref({ id: skillId })
     : presetId
     ? presetHref({ id: presetId })
     : workflowId

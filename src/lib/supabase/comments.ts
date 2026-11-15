@@ -39,7 +39,7 @@ export { mapCommentAttachment, mapCommentMedia };
 
 function mapCommentRow(
   row: CommentRow,
-  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string } | { spaceId: string } | { quoteId: string },
+  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { skillId: string } | { communityPostId: string } | { spaceId: string } | { quoteId: string },
 ): PromptComment {
   return {
     id: row.id,
@@ -125,6 +125,23 @@ export async function postCommentOnPreset(
     .single();
   if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
   return mapCommentRow(data as unknown as CommentRow, { presetId });
+}
+
+/** Skill'e yorum (docs/history/390-*): okunabilirlik/engel/yanıt-aynı-Skill kuralları sunucu tetikleyicisindedir; `skills.comment_count` tetikleyiciyle tutulur. */
+export async function postCommentOnSkill(
+  skillId: string,
+  authorId: string,
+  body: string,
+  parentId: string | null,
+  extras?: CommentExtras,
+): Promise<PromptComment> {
+  const { data, error } = await supabase
+    .from("prompt_comments")
+    .insert({ skill_id: skillId, author_id: authorId, body, parent_id: parentId, ...extrasColumns(extras) })
+    .select(COMMENT_SELECT)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
+  return mapCommentRow(data as unknown as CommentRow, { skillId });
 }
 
 /** Genuinely, permanently posts a comment on a real workflow. `handle_prompt_comment_change` keeps `workflows.comment_count` in sync, even across users. */
@@ -258,7 +275,7 @@ export async function deleteComment(commentId: string): Promise<void> {
 
 export const COMMENTS_PAGE = 20;
 
-export type CommentScopeKind = "prompt" | "request" | "result" | "workflow" | "preset" | "community_post" | "space" | "space_activity" | "quote";
+export type CommentScopeKind = "prompt" | "request" | "result" | "workflow" | "preset" | "skill" | "community_post" | "space" | "space_activity" | "quote";
 /** Which discussion a thread belongs to (`spaceId` is also needed for a Space activity). */
 export interface CommentScope {
   kind: CommentScopeKind;
@@ -272,6 +289,7 @@ const SCOPE_COLUMN: Record<Exclude<CommentScopeKind, "space" | "space_activity">
   result: "result_id",
   workflow: "workflow_id",
   preset: "preset_id",
+  skill: "skill_id",
   community_post: "community_post_id",
   quote: "quote_id",
 };
@@ -295,6 +313,7 @@ function targetOf(scope: CommentScope): Parameters<typeof mapCommentRow>[1] {
     case "result": return { resultId: scope.id };
     case "workflow": return { workflowId: scope.id };
     case "preset": return { presetId: scope.id };
+    case "skill": return { skillId: scope.id };
     case "community_post": return { communityPostId: scope.id };
     case "quote": return { quoteId: scope.id };
     default: return { spaceId: scope.kind === "space" ? scope.id : (scope.spaceId ?? "") };

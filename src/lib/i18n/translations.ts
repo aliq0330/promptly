@@ -3394,6 +3394,7 @@ export const translations = {
   "report.type.request": { tr: "Prompt İsteği", en: "Prompt request" },
   "report.type.workflow": { tr: "Workflow", en: "Workflow" },
   "report.type.preset": { tr: "Ayar Paketi", en: "Preset" },
+  "report.type.skill": { tr: "Skill", en: "Skill" },
   "report.type.space": { tr: "Space", en: "Space" },
   "report.type.quote": { tr: "Alıntı", en: "Quote" },
   "report.type.story": { tr: "Hikâye", en: "Story" },

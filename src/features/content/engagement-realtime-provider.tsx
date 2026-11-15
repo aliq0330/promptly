@@ -75,6 +75,11 @@ export function EngagementRealtimeProvider() {
       )
       .on(
         "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "skills" },
+        (payload) => applyLikeSave("skill", payload.new as { id: string; like_count?: number }),
+      )
+      .on(
+        "postgres_changes",
         { event: "UPDATE", schema: "public", table: "content_quotes" },
         (payload) => applyLikeSave("quote", payload.new as { id: string; like_count?: number }),
       )

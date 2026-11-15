@@ -24,11 +24,23 @@ function migrationSource(): string {
   return readFileSync(join(dir, file), "utf8");
 }
 
+/** `_report_reasons_for()`'ı EN SON tanımlayan migration (Skill, docs/history/390-*, fonksiyonu başka bir migration'da yeniden kurdu). */
+function reasonsFunctionSource(): string {
+  const dir = join(ROOT, "supabase", "migrations");
+  const files = readdirSync(dir)
+    .filter((name) => name.endsWith(".sql"))
+    .sort();
+  const latest = files.filter((name) => /create or replace function public\._report_reasons_for/i.test(readFileSync(join(dir, name), "utf8"))).at(-1);
+  assert.ok(latest, "_report_reasons_for tanımı bulunamadı");
+  return readFileSync(join(dir, latest), "utf8");
+}
+
 /** `when p_target_type in ('a','b') then array['x','y']` / `= 'c' then array[...]` bloklarını türe göre ayrıştırır. */
 function sqlTable(): Record<string, string[]> {
-  const sql = migrationSource();
-  const body = sql.slice(sql.indexOf("create or replace function public._report_reasons_for"));
-  const end = body.indexOf("$$;");
+  const sql = reasonsFunctionSource();
+  const body = sql.slice(sql.search(/create or replace function public\._report_reasons_for/i));
+  const ends = [body.indexOf("$$;"), body.indexOf("$function$\n", body.indexOf("$function$") + 1)].filter((i) => i > 0);
+  const end = Math.min(...ends);
   const result: Record<string, string[]> = {};
   const re = /when p_target_type (?:in \(([^)]*)\)|= '([^']+)')\s+then array\[([^\]]*)\]/g;
   for (const match of body.slice(0, end).matchAll(re)) {

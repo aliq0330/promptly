@@ -56,6 +56,7 @@ const TYPE_KEY: Record<string, TranslationKey> = {
   story: "moderation.type.story",
   space: "moderation.type.space",
   quote: "moderation.type.quote",
+  skill: "report.type.skill",
   community: "report.type.community",
 };
 

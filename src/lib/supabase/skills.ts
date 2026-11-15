@@ -5,6 +5,7 @@ import { PROFILE_SELECT } from "./profiles";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { sanitizeSearchText, type ContentSearchFilters } from "./taxonomy-query";
 import type { SearchCursor, SearchPage } from "./search";
+import { OWNED_PAGE, type PagedResult } from "./paged";
 import { translateForRuntime } from "@/lib/i18n/runtime";
 import { isValidSkillSlug, slugifySkillName, withSlugSuffix } from "@/lib/skills/skill-md";
 import type { Skill, SkillCategory, SkillCompat, SkillLicense } from "@/types";
@@ -124,6 +125,30 @@ export async function searchSkillsPage(query: string, _filters: ContentSearchFil
     console.error("searchSkillsPage", err);
     return { items: [], nextCursor: null };
   }
+}
+
+/**
+ * Bir kişinin Skill'leri (profil bölümü, docs/history/390-*), sayfa sayfa (offset; toplam ilk sayfada). Ziyaretçiye yalnız yayında + herkese açık olanlar;
+ * sahibinin kendi profilinde taslak ve özel olanlar da görünür (RLS zaten başkasınınkini vermez, süzgeç ikinci katmandır).
+ */
+export async function fetchSkillsByAuthorPage(authorId: string, isOwn: boolean, offset = 0, limit = OWNED_PAGE): Promise<PagedResult<Skill>> {
+  let request = supabase
+    .from("skills")
+    .select(SKILL_LIST_SELECT, offset === 0 ? { count: "exact" } : undefined)
+    .eq("author_id", authorId);
+  if (!isOwn) request = request.eq("status", "published").eq("visibility", "public");
+  const { data, count, error } = await request.order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as SkillRow[];
+  return { items: rows.map(mapSkillRow), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
+}
+
+/** Profil menüsündeki sayı: ziyaretçiye yayında + herkese açık, sahibine hepsi. Hata = 0 (bölüm gizli kalır). */
+export async function fetchProfileSkillCount(authorId: string, isOwn: boolean): Promise<number> {
+  let request = supabase.from("skills").select("id", { count: "exact", head: true }).eq("author_id", authorId);
+  if (!isOwn) request = request.eq("status", "published").eq("visibility", "public");
+  const { count, error } = await request;
+  return error ? 0 : (count ?? 0);
 }
 
 /** Tek Skill (talimat dahil); yok ya da görünmüyorsa (RLS) `null`. */
