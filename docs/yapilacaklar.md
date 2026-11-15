@@ -201,16 +201,16 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 - [ ] **K** `skill_categories` tablosu (şimdi `skills.category` CHECK; expand → contract ile tabloya geçiş)
 - [x] **O** `lib/skills/package-validate.ts` (zip slip, bomba, magic byte, gizli anahtar) + `zip.ts` (`fflate`, dinamik yükleme — **bağımlılık kararı bekliyor**) + `semver.ts` + kötü ZIP fixture'ları — **yapıldı** (`fflate` 0.8.2, dinamik yükleme; kötü ZIP fixture'ları `package-build.test.ts`'te)
 - [x] **B** Edge Function `skill-package` + `skill_publish_begin/commit` (idempotent) + `smoke-test.mjs` girişleri; **Edge'de ZIP açma süre/bellek sınırını ilk iş olarak ölç** — **yazıldı, DEPLOY EDİLMEDİ** (elle: Deploy Edge Functions → `skill-package`); çekirdek Node'da testli, `Deno.serve` bağlayıcısı çalıştırılmadı; ZIP süre/bellek ÖLÇÜLMEDİ
-- [ ] **K** Paket limitlerini ölçümle kesinleştir (taslak: ZIP 10 MB, açılmış 40 MB, ≤ 100 dosya, kişi başına 200 MB, günde 10 yayın)
+- [x] **K** Paket limitleri ölçüldü (`scripts/measure-skill-package.mjs`, `398-*`): çekirdek maliyeti düşük, limitler KORUNDU; Edge'in duvar süresi/bellek tavanı deploy sonrası denenecek
 
-### Aşama 2 — oluşturma editörü (gelişmiş) — yapıldı (`389-*`); kalan: slug yeniden adlandırma kararı, etiket arayüzü
+### Aşama 2 — oluşturma editörü (gelişmiş) — yapıldı (`389-*`); etiket arayüzü ve slug `398-*` ile yapıldı
 - [x] **B** Gelişmiş mod: dosya yükleme (ilerleme/iptal/yeniden dene, dosya başına doğrulama durumu), dosya ağacı (`role="tree"`), kurallar / iş akışı / araç tanımı / referans / örnek bileşenleri (`FormDisclosure`) — **yapıldı** (`389-*`)
 - [x] **O** Masaüstünde üç bölme (dosya ağacı · düzenleyici · canlı önizleme); telefonda "Dosya düzenle" tam ekran sayfası (`Modal` kuralları) — **yapıldı**
 - [x] **O** Bağlı içerik seçimi: mevcut **Oluştur / Seç** kalıbı (`content-add`, `content-picker`) ile Prompt/Workflow/Ayar paketi bağla — **yapıldı** (`ContentPickerDialog` + `CompactContentCard`)
 - [x] **O** Yayın akışı: sürüm önerisi (düzeltme/yeni özellik/kalıp değişikliği), değişiklik notu zorunluluğu (`1.0.0` sonrası), `client_token` ile tekrar deneme — **yapıldı**
-- [x] **O** ZIP/klasör **içe aktarma** (frontmatter forma dolar; yazar/durum/görünürlük/sayaç dosyadan alınmaz; atıf `metadata.source`) — **ZIP yapıldı** (klasör seçimi yok)
+- [x] **O** ZIP/klasör **içe aktarma** (frontmatter forma dolar; yazar/durum/görünürlük/sayaç dosyadan alınmaz; atıf `metadata.source`) — **ZIP yapıldı** (klasör seçimi `398-*` ile eklendi)
 - [x] **O** Güvenli Markdown görüntüleyici (HTML üretmez, `dangerouslySetInnerHTML` yok) — detayda talimat şimdi düz metin — **yapıldı** (detay + düzenleyici önizlemesi)
-- [ ] **K** Slug stratejisi: başlık değişince `slug` sabit kalıyor (bilinçli); yeniden adlandırma gerekirse karar
+- [x] **K** Slug yeniden adlandırma YAPILDI (`398-*`): düzenleyicide "Klasör adı (slug)"; değişince yeni sürümler yeni adla paketlenir
 - Etki alanı: `my-content-view.tsx` (`createLinks`), `kind-drafts-button`, taslaklar listesi
 
 ### Aşama 3 — sosyal entegrasyon (dilim 1 yapıldı, `390-*`: beğeni/tepki, yorum + sabitleme, bildirim cümleleri, İstatistik, şikâyet/moderasyon, profil bölümü; kalanlar aşağıda)
