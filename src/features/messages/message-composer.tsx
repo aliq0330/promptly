@@ -15,7 +15,6 @@ import { ChatAttachSheet, type ChatLibraryType } from "./chat-attach";
 import { GifPicker } from "@/features/gif/gif-picker";
 import type { GifItem } from "@/lib/giphy";
 import { ComposerEmojiPicker, useIsWideComposer } from "./composer-emoji-picker";
-import type { CommunityPostType } from "@/lib/supabase/communities";
 import type { ComposerImage } from "./use-composer-images";
 
 const ACCEPT = ALLOWED_IMAGE_MIME.join(",");

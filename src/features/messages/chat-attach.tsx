@@ -21,7 +21,7 @@ import { useGrowingList } from "@/features/content/use-growing-list";
 import { useShareableContent } from "@/features/communities/use-shareable-content";
 import { fetchOwnShareableSkillsWindow } from "@/lib/supabase/skills";
 import { GraduationCap } from "@/components/icons/graduation-cap";
-import type { CommunityPostType, ShareableContent } from "@/lib/supabase/communities";
+import type { CommunityPostType } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { DialogShell } from "@/components/ui/dialog-shell";

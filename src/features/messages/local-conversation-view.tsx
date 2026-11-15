@@ -103,7 +103,6 @@ import { ChatLibraryPicker, type ChatLibraryType, type ChatShareable } from "./c
 import { composeSkillShareBody } from "./skill-share-format";
 import { ContactInfoPanel } from "./contact-info-panel";
 import { ImportPromptsModal } from "@/features/exchange/import-prompts-modal";
-import type { CommunityPostType, ShareableContent } from "@/lib/supabase/communities";
 import { composeCommunityPostShareBody } from "./community-post-share-format";
 import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
 
