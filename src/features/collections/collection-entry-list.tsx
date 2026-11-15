@@ -19,6 +19,8 @@ import type { SectionMenuItem } from "@/features/content/section-menu";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
+import { SkillCard } from "@/features/skills/skill-card";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { SavedPostCard } from "@/features/communities/saved-post-card";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { useEngagementEntry } from "@/features/content/engagement-store";
@@ -156,12 +158,13 @@ export function CollectionEntryList({
   );
 }
 
-const ENTRY_TYPES: CollectionEntry["type"][] = ["prompt", "workflow", "preset", "community_post"];
-const ENTRY_TYPE_ICONS: Record<CollectionEntry["type"], IconComponent> = { prompt: SquareTerminal, workflow: WorkflowIcon, preset: SlidersHorizontal, community_post: Users };
+const ENTRY_TYPES: CollectionEntry["type"][] = ["prompt", "workflow", "preset", "skill", "community_post"];
+const ENTRY_TYPE_ICONS: Record<CollectionEntry["type"], IconComponent> = { prompt: SquareTerminal, workflow: WorkflowIcon, preset: SlidersHorizontal, skill: GraduationCap, community_post: Users };
 const ENTRY_TYPE_LABELS: Record<CollectionEntry["type"], TranslationKey> = {
   prompt: "feed.filterPrompts",
   workflow: "nav.workflows",
   preset: "nav.presets",
+  skill: "skill.pageTitle",
   community_post: "collection.typeCommunityPosts",
 };
 
@@ -176,6 +179,7 @@ function searchFields(entry: CollectionEntry) {
       tags: summary?.tags.map((tag) => tag.label) ?? [],
     };
   }
+  if (entry.type === "skill") return { title: entry.data.title, description: entry.data.summary, creator: entry.data.creator, tags: [] as string[] };
   const data = entry.data;
   return { title: data.title, description: data.description, creator: "author" in data ? data.author : data.creator, tags: data.tags.map((tag) => tag.label) };
 }
@@ -193,6 +197,8 @@ function EntryCell({ entry, removal, dropWhenUnsaved, adder }: { entry: Collecti
         <PromptCard prompt={entry.data} collectionRemoval={removal} />
       ) : entry.type === "preset" ? (
         <PresetCard preset={entry.data} collectionRemoval={removal} />
+      ) : entry.type === "skill" ? (
+        <SkillCard skill={entry.data} collectionRemoval={removal} />
       ) : (
         <WorkflowCard workflow={entry.data} collectionRemoval={removal} />
       )}

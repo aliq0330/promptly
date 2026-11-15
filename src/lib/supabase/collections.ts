@@ -11,8 +11,9 @@ import { fetchCommunityPostsByIds, type CommunityPost } from "./communities";
 import { fetchMemberCollectionIds, fetchProfileCollectionIds, setCollectionShared } from "./collection-members";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. A community application post is saved as the POST itself (docs/history/184-*). */
-type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset" | "community_post">;
-import type { Collection, Preset, Prompt, Workflow } from "@/types";
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset" | "community_post" | "skill">;
+import { SKILL_LIST_SELECT, mapSkillRow, type SkillRow } from "./skills";
+import type { Collection, Preset, Prompt, Skill, Workflow } from "@/types";
 
 /**
  * A single row in a collection's contents — a collection can hold prompts,
@@ -24,6 +25,8 @@ export type CollectionEntry = (
   | { type: "prompt"; data: Prompt }
   | { type: "workflow"; data: Workflow }
   | { type: "preset"; data: Preset }
+  /** Kaydedilen Skill (docs/history/391-*): `collection_items.skill_id`. */
+  | { type: "skill"; data: Skill }
   /** A community APPLICATION post saved as the post itself (its own like/comment/save counts, docs/history/184-*). */
   | { type: "community_post"; data: CommunityPost }
 ) & {
@@ -32,7 +35,8 @@ export type CollectionEntry = (
 };
 
 /** Which real column a save target lives in — mirrors likes.ts's `targetColumn`. */
-function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "workflow_id" | "preset_id" | "community_post_id" {
+function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "workflow_id" | "preset_id" | "community_post_id" | "skill_id" {
+  if (contentType === "skill") return "skill_id";
   if (contentType === "community_post") return "community_post_id";
   if (contentType === "preset") return "preset_id";
   if (contentType === "workflow") return "workflow_id";
@@ -266,7 +270,7 @@ export async function fetchFollowedCollections(userId: string): Promise<Collecti
   }
 }
 
-type CollectionItemRow = { community_post_id?: string | null; added_by?: string | null; prompts: PromptRow | null; workflows: WorkflowRow | null; presets: PresetRow | null };
+type CollectionItemRow = { community_post_id?: string | null; added_by?: string | null; prompts: PromptRow | null; workflows: WorkflowRow | null; presets: PresetRow | null; skills?: SkillRow | null };
 
 /**
  * Rows that point at a community post are resolved in ONE extra read afterwards (`resolvePostEntries`): a post the viewer can no
@@ -285,6 +289,8 @@ function mapCollectionItemRows(rows: CollectionItemRow[], posts: Map<string, Com
       entries.push({ type: "workflow", data: mapWorkflowRow(row.workflows), addedBy });
     } else if (row.presets) {
       entries.push({ type: "preset", data: mapPresetRow(row.presets), addedBy });
+    } else if (row.skills) {
+      entries.push({ type: "skill", data: mapSkillRow(row.skills), addedBy });
     }
   }
   return entries;
@@ -316,7 +322,7 @@ async function resolvePostEntries(rows: CollectionItemRow[]): Promise<Map<string
 export async function fetchCollectionItemsPage(collectionId: string, offset = 0, limit = COLLECTION_PAGE): Promise<PagedResult<CollectionEntry>> {
   const { data, count, error } = await supabase
     .from("collection_items")
-    .select(`created_at, community_post_id, added_by, prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
+    .select(`created_at, community_post_id, added_by, prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} ), skills ( ${SKILL_LIST_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
     .eq("collection_id", collectionId)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
@@ -343,7 +349,7 @@ export const collectionEntryKey = (entry: CollectionEntry) => `${entry.type}:${e
 export async function fetchSavedItemsPage(userId: string, offset = 0, limit = COLLECTION_PAGE): Promise<PagedResult<CollectionEntry>> {
   const { data, count, error } = await supabase
     .from("collection_items")
-    .select(`created_at, community_post_id, collections!inner ( owner_id, is_default ), prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
+    .select(`created_at, community_post_id, collections!inner ( owner_id, is_default ), prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} ), skills ( ${SKILL_LIST_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
     .eq("collections.owner_id", userId)
     .eq("collections.is_default", true)
     .order("created_at", { ascending: false })

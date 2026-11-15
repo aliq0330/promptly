@@ -215,12 +215,12 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 
 ### Aşama 3 — sosyal entegrasyon (dilim 1 yapıldı, `390-*`: beğeni/tepki, yorum + sabitleme, bildirim cümleleri, İstatistik, şikâyet/moderasyon, profil bölümü; kalanlar aşağıda)
 - [x] **B** (beğeni/tepki + yorum + istatistik + şikâyet yapıldı; `collection_items`/`content_relations` dalları KALDI) Ortak tablolara `skill_id` dalları: `prompt_likes`, `prompt_comments`, `collection_items`, `reaction_stats`, `content_relations`, `reports`; `target_id` birleşimi ve `handle_prompt_like_change` / `handle_prompt_comment_change` / `handle_comment_delete` / `notify_comment_*` / `content_engagers` zincirlerinde AÇIK dal (**"tam biri dolu" CHECK yeniden kurulumu yıkıcıdır: `-- ci:allow-destructive` + kullanıcı onayı**)
-- [ ] **B** (beğeni/tepki + yorum arayüzü YAPILDI `390-*`; KALAN: kaydet + koleksiyon + ortak koleksiyon, `SaveableContentType`) Beğeni/tepki, yorum, kaydet + koleksiyon + ortak koleksiyon arayüzü: kartta `PromptCardFooter` benzeri altbilgi, detayda `DetailActionBar` çubuğu (`Engage*` ailesi, `LikeableContentType`, `CommentScopeKind`, `SaveableContentType`, `StatisticsContentType` genişler)
-- [ ] **O** (profil bölümü YAPILDI `390-*`; KALAN: `profile_content_stats` Skill sayısı + İçeriklerim) Profilde "Skill'ler" bölümü + `profile_content_stats` + İçeriklerim (**taslaklar şimdi listede görünmüyor, yalnız detay adresinden**)
-- [ ] **O** Bildirimler (yayın → takipçilere, yeni sürüm → sabitleyenlere): SQL Türkçe cümle + `notification-message.ts` + `nc.pref.*` + `_notification_pref_key` / `_notification_category` / `cardKindKey`
+- [x] **B** (beğeni/tepki + yorum `390-*`; kaydet + koleksiyon + ortak koleksiyon `391-*` YAPILDI) Beğeni/tepki, yorum, kaydet + koleksiyon + ortak koleksiyon arayüzü: kartta `PromptCardFooter` benzeri altbilgi, detayda `DetailActionBar` çubuğu (`Engage*` ailesi, `LikeableContentType`, `CommentScopeKind`, `SaveableContentType`, `StatisticsContentType` genişler)
+- [x] **O** (profil bölümü `390-*`, İçeriklerim `391-*` YAPILDI; `profile_content_stats` imzasına DOKUNULMADI, sayı `head` sayımından) Profilde "Skill'ler" bölümü + `profile_content_stats` + İçeriklerim (**taslaklar şimdi listede görünmüyor, yalnız detay adresinden**)
+- [x] **O** (YAPILDI `391-*`) Bildirimler (yayın → takipçilere, yeni sürüm → sabitleyenlere): SQL Türkçe cümle + `notification-message.ts` + `nc.pref.*` + `_notification_pref_key` / `_notification_category` / `cardKindKey`
 - [x] **O** (şikâyet + moderatör kuyruğu + kaldırma YAPILDI `390-*`; `admin_*` sayaçları KALDI) Şikâyet (`submit_report('skill', …)`) + moderatör kuyruğu + içeriği/paketi kaldırma + `admin_*` sayaçları
-- [ ] **O** Yaratıcı paneli / İstatistik: indirme, kaydedilme, tepki, yorum (`creator_insights_*`), `skill_uses` kaynaklı kullanım
-- [ ] **K** Paylaş modalı ve mesajla paylaşım (`ShareModal`'a hedef ekle, bağlantı + kısa özet)
+- [x] **O** (YAPILDI `391-*`: `creator_insights_skills` + panel bölümü) Yaratıcı paneli / İstatistik: indirme, kaydedilme, tepki, yorum (`creator_insights_*`), `skill_uses` kaynaklı kullanım
+- [x] **K** (Paylaş modalı YAPILDI `391-*`; mesajla paylaşım/hikâye YAPILMADI) Paylaş modalı ve mesajla paylaşım (`ShareModal`'a hedef ekle, bağlantı + kısa özet)
 
 ### Aşama 4 — keşif ve arama
 - [ ] **B** `skill_feed_page` (keyset, uzmanlık alanı/paket içeriği/araç/sıralama) — `feed_page` imzasına DOKUNMA; karma "Tümü" akışına katılım ayrı karar

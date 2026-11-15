@@ -45,6 +45,11 @@ export const insightsTranslations = {
   "insights.chart.peakCopies": { tr: "{{count}} kopyalama", en: "{{count}} copies" },
   "insights.chart.peakReactions": { tr: "{{count}} tepki", en: "{{count}} reactions" },
 
+  "insights.skills.title": { tr: "Skill'ler", en: "Skills" },
+  "insights.skills.uses": { tr: "Kullanım", en: "Uses" },
+  "insights.skills.reactions": { tr: "Tepki", en: "Reactions" },
+  "insights.skills.comments": { tr: "Yorum", en: "Comments" },
+  "insights.skills.saves": { tr: "Kayıt", en: "Saves" },
   "insights.top.title": { tr: "En çok kopyalananlar", en: "Most copied" },
   "insights.top.copies": { tr: "kopyalama", en: "copies" },
   "insights.top.reactions": { tr: "tepki", en: "reactions" },

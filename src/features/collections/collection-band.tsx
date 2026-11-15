@@ -17,6 +17,7 @@ export function entryImage(entry: CollectionEntry): PromptMedia | null {
     const content = entry.data.content;
     return content ? contentImage({ kind: content.type, data: content.data } as ImageSource) : null;
   }
+  if (entry.type === "skill") return null;
   return contentImage({ kind: entry.type, data: entry.data } as ImageSource);
 }
 

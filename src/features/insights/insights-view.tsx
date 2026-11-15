@@ -20,6 +20,7 @@ import { SectionMenu, type SectionMenuItem } from "@/features/content/section-me
 import { InsightReactionMix } from "@/features/insights/insight-reaction-mix";
 import { InsightStatTile } from "@/features/insights/insight-stat-tile";
 import { InsightTopList } from "@/features/insights/insight-top-list";
+import { InsightSkillsSection } from "@/features/insights/insight-skills-section";
 import { INSIGHT_CARD, InsightTrendCard } from "@/features/insights/insight-trend-card";
 import { useCreatorInsights } from "@/features/insights/use-creator-insights";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -99,6 +100,9 @@ export function InsightsView() {
       {state.status === "ready" && !hasNoActivity(state.data.summary, state.data.days, state.data.top) && (
         <ReadyBody data={state.data} period={period} />
       )}
+
+      {/* Skill'ler (docs/history/391-*): yalnız Skill yayınlamış yazarda görünür; prompt etkinliği olmasa da çizilir. */}
+      {state.status === "ready" && <InsightSkillsSection period={period} />}
     </PageContainer>
   );
 }

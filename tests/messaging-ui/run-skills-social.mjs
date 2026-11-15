@@ -31,7 +31,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 })], likes: [], comments: [], likeCalls: [], commentCalls: [], mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -85,6 +85,31 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     if (req.method() === "HEAD") return route.fulfill({ status: 200, headers: { "access-control-allow-origin": "*", "access-control-expose-headers": "*", "content-range": "*/0" }, body: "" });
     return json(route, state.comments);
   });
+  const SYS = "c6000000-0000-4000-8000-000000000001";
+  await context.route(/\/rest\/v1\/collections\?/, (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    const accept = route.request().headers().accept ?? "";
+    const row = { id: SYS, name: "Kaydedilenler", visibility: "private", item_count: 0, follower_count: 0, is_default: true, created_at: "2026-02-01T00:00:00Z", updated_at: "2026-02-01T00:00:00Z", profiles: pubOf(me) };
+    return json(route, accept.includes("vnd.pgrst.object") ? row : [row]);
+  });
+  await context.route(/\/rest\/v1\/collection_items/, (route) => {
+    const req = route.request();
+    if (req.method() === "POST") {
+      const body = JSON.parse(req.postData() || "{}");
+      state.saveCalls.push(body);
+      state.savedIds.add(body.skill_id);
+      return route.fulfill({ status: 201, headers: { "access-control-allow-origin": "*" }, body: "" });
+    }
+    const url = new URL(req.url());
+    if (url.searchParams.has("skill_id")) {
+      const ids = (url.searchParams.get("skill_id") ?? "").replace(/^(in\.\(|eq\.)|\)$/g, "").split(",");
+      return json(route, ids.filter((id) => state.savedIds.has(id)).map((id) => ({ skill_id: id, id: `ci-${id}`, collections: { owner_id: me.id, is_default: true } })));
+    }
+    return json(route, []);
+  });
+  await context.route(/\/rest\/v1\/rpc\/creator_insights_skills/, (route) =>
+    json(route, [{ skill_id: S_PUB, title: "Skill 1", uses: 4, prev_uses: 2, reactions: 3, prev_reactions: 3, comments: 1, prev_comments: 0, saves: 2, prev_saves: 1 }]),
+  );
   await context.addInitScript((l) => { try { localStorage.setItem("promptly-language", l); localStorage.setItem("promptly-tour-seen", "1"); } catch {} }, lang);
   const page = await context.newPage();
   page.setDefaultTimeout(8000);
@@ -193,6 +218,36 @@ await scenario("7b. Profilde Skill'ler bölümü: sahibi taslağını da görür
   await page.locator("[data-section-option='skills']").click();
   await page.getByText("Skill 1").first().waitFor();
   await page.getByText("Skill 2").first().waitFor();
+}, { me: U.alice });
+
+await scenario("10. Kaydet: detayda tek dokunuşla sistem koleksiyonuna skill_id ile yazılır, simge 'kaydedildi' olur", async ({ page, state }) => {
+  await openDetail(page);
+  const save = page.locator("[data-detail-actions] button[aria-pressed]").first();
+  await save.waitFor();
+  assert.equal(await save.getAttribute("aria-pressed"), "false");
+  await save.click();
+  const end = Date.now() + 4000;
+  while (Date.now() < end && state.saveCalls.length === 0) await new Promise((r) => setTimeout(r, 100));
+  assert.equal(state.saveCalls.length, 1);
+  assert.equal(state.saveCalls[0].skill_id, S_PUB);
+  assert.equal(state.saveCalls[0].collection_id, "c6000000-0000-4000-8000-000000000001");
+  for (const other of ["prompt_id", "preset_id", "workflow_id", "community_post_id"]) assert.equal(state.saveCalls[0][other], undefined, `${other} boş olmalı`);
+  await page.locator('[data-detail-actions] button[aria-pressed="true"]').first().waitFor();
+});
+
+await scenario("11. Listedeki kartta Kaydet düğmesi vardır", async ({ page }) => {
+  await page.goto(`${BASE}/skills`);
+  const card = page.locator("article, [data-content-card]").filter({ hasText: "Skill 1" }).first();
+  await card.waitFor();
+  assert.ok(await card.locator("button[aria-pressed]").count() >= 1, "kart altbilgisinde kaydet düğmesi");
+});
+
+await scenario("12. Yaratıcı paneli: yayınlanmış Skill'i olan yazara Skill sayıları bölümü çizilir", async ({ page }) => {
+  await page.goto(`${BASE}/insights`);
+  const section = page.locator("[data-insights-skills]");
+  await section.waitFor();
+  assert.match(await section.innerText(), /Skill 1/);
+  assert.ok(await section.locator("[data-insights-skill-row]").count() === 1);
 }, { me: U.alice });
 
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {

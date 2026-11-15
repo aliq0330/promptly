@@ -132,7 +132,7 @@ export function CollectionDetailView() {
    * Same single-collection removal for every collection and every entry
    * type; the work stays saved, so the shared bookmark state is untouched.
    */
-  async function handleRemoveItem(id: string, contentType: "prompt" | "workflow" | "preset" | "community_post") {
+  async function handleRemoveItem(id: string, contentType: "prompt" | "workflow" | "preset" | "community_post" | "skill") {
     if (!collection) return;
     await removeFromCollection(collection.id, id, contentType);
     entries.removeItem(`${contentType}:${id}`);

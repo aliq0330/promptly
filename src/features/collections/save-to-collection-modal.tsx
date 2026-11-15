@@ -26,7 +26,7 @@ import type { LikeableContentType } from "@/lib/supabase/likes";
 import { applyMembershipResult, diffMembership, savedAfterCommit } from "@/lib/saved-selection";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. */
-type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset" | "community_post">;
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset" | "community_post" | "skill">;
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -55,6 +55,7 @@ export function SaveToCollectionModal({
   promptId,
   workflowId,
   presetId,
+  skillId,
   communityPostId,
   onClose,
   onAdded,
@@ -63,6 +64,7 @@ export function SaveToCollectionModal({
   promptId?: string;
   workflowId?: string;
   presetId?: string;
+  skillId?: string;
   communityPostId?: string;
   onClose: () => void;
   /** Called when adding to a collection saved a work that was not saved yet — lets the caller (SaveButton) fill the bookmark without waiting for a refetch. */
@@ -74,8 +76,8 @@ export function SaveToCollectionModal({
   const { user } = useAuth();
   const { profile } = useOwnProfile();
 
-  const contentId = (communityPostId ?? presetId ?? workflowId ?? promptId)!;
-  const contentType: SaveableContentType = communityPostId ? "community_post" : presetId ? "preset" : workflowId ? "workflow" : "prompt";
+  const contentId = (communityPostId ?? skillId ?? presetId ?? workflowId ?? promptId)!;
+  const contentType: SaveableContentType = communityPostId ? "community_post" : skillId ? "skill" : presetId ? "preset" : workflowId ? "workflow" : "prompt";
 
   const [view, setView] = useState<"list" | "create">("list");
   const [collections, setCollections] = useState<Collection[]>([]);
