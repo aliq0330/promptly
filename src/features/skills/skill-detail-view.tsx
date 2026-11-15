@@ -31,6 +31,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import { MarkdownView } from "./markdown-view";
 import { SimilarSkills } from "./skill-aside-blocks";
 import { SkillWorksVote } from "./skill-works-vote";
+import { SkillQualitySection } from "./skill-quality-section";
 import { SkillInstallSection } from "./skill-install-section";
 import { downloadSkillMd, downloadSkillMetadata, skillMdFor } from "./skill-download";
 import { downloadSkillPackage, pickLatestVersion, SkillFilesSection, SkillRelatedSection, SkillVersionsSection } from "./skill-detail-parts";
@@ -249,6 +250,8 @@ export function SkillDetailView() {
         </DetailSection>
 
         {skill.status === "published" && skill.visibility === "public" && <SkillWorksVote skillId={skill.id} isOwn={isOwn} justDownloaded={downloads} />}
+
+        <SkillQualitySection skill={skill} hasPackage={Boolean(latest)} />
 
         {latest && <SkillFilesSection version={latest} />}
 

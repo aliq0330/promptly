@@ -195,6 +195,7 @@ const CHECKS = [
   { name: "rpc related_skills ziyaretçiye açık (benzer Skill, docs/history/392-*)", rpc: "related_skills", body: { p_skill: "00000000-0000-4000-8000-000000000000", p_limit: 1 } },
   { name: "rpc skills_for_content ziyaretçiye açık (ters yön, docs/history/392-*)", rpc: "skills_for_content", body: { p_type: "prompt", p_id: "00000000-0000-4000-8000-000000000000", p_limit: 1 } },
   { name: "collection_items.skill_id (Skill kaydet/koleksiyon, docs/history/391-*)", get: () => `collection_items?select=${encodeURIComponent("skill_id")}&limit=1` },
+  { name: "rpc admin_skill_stats ziyaretçiye KAPALI olmalı (moderatör Skill sayıları, docs/history/395-*)", rpc: "admin_skill_stats", body: {}, mustBeDenied: true },
   { name: "rpc creator_insights_skills ziyaretçiye KAPALI olmalı (Yaratıcı paneli Skill sayıları, docs/history/391-*)", rpc: "creator_insights_skills", body: { p_days: 30 }, mustBeDenied: true },
   { name: "prompt_likes.skill_id (Skill beğenisi, docs/history/390-*)", get: () => `prompt_likes?select=${encodeURIComponent("skill_id,target_id")}&limit=1` },
   { name: "prompt_comments.skill_id (Skill yorumu, docs/history/390-*)", get: () => `prompt_comments?select=${encodeURIComponent("skill_id,pinned_at")}&limit=1` },

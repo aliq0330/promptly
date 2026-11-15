@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { fetchAdminSiteStats, type AdminContentType, type AdminSiteStats } from "@/lib/supabase/admin";
+import { fetchAdminSiteStats, fetchAdminSkillStats, type AdminContentType, type AdminSiteStats, type AdminSkillStats } from "@/lib/supabase/admin";
 import { cn, formatCount } from "@/lib/utils";
 import { ADMIN_CONTENT_TYPES, CONTENT_TYPE_KEY, formatBytes, kindKey } from "./format";
 import { TypeFilter } from "./type-filter";
@@ -33,6 +33,38 @@ function Bar({ label, value, max, right }: { label: string; value: number; max: 
         <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
       </div>
     </div>
+  );
+}
+
+/** Skill sayıları: kendi RPC'sinden gelir; yüklenemezse bölüm hiç çizilmez (genel istatistik etkilenmez). */
+function SkillStatsSection() {
+  const { t } = useTranslation();
+  const [stats, setStats] = useState<AdminSkillStats | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAdminSkillStats().then((value) => {
+      if (!cancelled) setStats(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  if (!stats) return null;
+  return (
+    <section className={CARD} data-admin-skill-stats="">
+      <h2 className="mb-3 text-h3 font-bold text-text">{t("admin.skillStats.title")}</h2>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <Tile label={t("admin.skillStats.total")} value={stats.total} />
+        <Tile label={t("admin.skillStats.published")} value={stats.published} />
+        <Tile label={t("admin.skillStats.draft")} value={stats.draft} />
+        <Tile label={t("admin.skillStats.private")} value={stats.private} />
+        <Tile label={t("admin.skillStats.withPackage")} value={stats.with_package} />
+        <Tile label={t("admin.skillStats.versions")} value={stats.versions} />
+        <Tile label={t("admin.skillStats.quotes")} value={stats.quotes} />
+        <Tile label={t("admin.skillStats.uses")} value={stats.uses} />
+        <Tile label={t("admin.skillStats.reportsOpen")} value={stats.reports_open} tone={stats.reports_open > 0 ? "danger" : undefined} />
+      </div>
+    </section>
   );
 }
 
@@ -123,6 +155,8 @@ export function SiteStatsPanel() {
           </table>
         </div>
       </section>
+
+      <SkillStatsSection />
 
       <section className={CARD}>
         <h2 className="mb-3 text-h3 font-bold text-text">{t("admin.stats.byTypeTitle")}</h2>
