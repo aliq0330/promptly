@@ -1,0 +1,108 @@
+/**
+ * Skill / Beceri çekirdeği (docs/history/388-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar (`...skillsTranslations`).
+ * Kullanıcı içeriği (Skill adı, açıklama, talimat) çevrilmez; araç adları (Claude Code, Codex, Cursor) marka adıdır.
+ */
+export const skillsTranslations = {
+  // --- Tür adı, menü, sayfa ---
+  "skill.singular": { tr: "Skill", en: "Skill" },
+  "createMenu.skill": { tr: "Skill", en: "Skill" },
+  "compose.newSkill": { tr: "Yeni Skill", en: "New Skill" },
+  "skill.pageTitle": { tr: "Skill'ler", en: "Skills" },
+  "skill.pageDescription": {
+    tr: "Yapay zekâya bir işi ve çalışma yöntemini kazandıran, indirilebilir uzmanlık paketleri.",
+    en: "Downloadable expertise packages that teach an AI how to do a job and how to work.",
+  },
+  "skill.create": { tr: "Skill oluştur", en: "Create a Skill" },
+  "skill.searchPlaceholder": { tr: "Skill ara", en: "Search Skills" },
+  "skill.step1Title": { tr: "Uzmanlığını yaz", en: "Write your expertise" },
+  "skill.step1Body": { tr: "Talimatlarını ve çalışma yöntemini Markdown ile yaz.", en: "Write your instructions and way of working in Markdown." },
+  "skill.step2Title": { tr: "Yayınla", en: "Publish" },
+  "skill.step2Body": { tr: "Herkese açık yayınla ya da yalnız sana görünür bırak.", en: "Publish it publicly or keep it visible only to you." },
+  "skill.step3Title": { tr: "İndir ve kullan", en: "Download and use" },
+  "skill.step3Body": { tr: "SKILL.md dosyasını indirip kendi yapay zekâ aracında kullan.", en: "Download the SKILL.md file and use it in your own AI tool." },
+  "skill.noneYetTitle": { tr: "Henüz Skill yok", en: "No Skills yet" },
+  "skill.noneYetBody": { tr: "İlk Skill'i sen yayınla.", en: "Be the first to publish a Skill." },
+  "skill.untitled": { tr: "Adsız Skill", en: "Untitled Skill" },
+  "skill.draftBadge": { tr: "Taslak", en: "Draft" },
+  "skill.privateBadge": { tr: "Sadece ben", en: "Only me" },
+  "skill.notFoundTitle": { tr: "Skill bulunamadı", en: "Skill not found" },
+  "skill.notFoundBody": { tr: "Bağlantı bozuk olabilir ya da Skill silinmiş ya da gizlenmiş olabilir.", en: "The link may be broken, or the Skill may have been deleted or hidden." },
+  "skill.backToSkills": { tr: "Skill'lere dön", en: "Back to Skills" },
+  "skill.cardVersion": { tr: "Sürüm {{version}}", en: "Version {{version}}" },
+  "skill.noRunNotice": {
+    tr: "Promptly bu Skill'i çalıştırmaz. Talimatları ve varsa betikleri kendi aracında kullanmadan önce incele.",
+    en: "Promptly does not run this Skill. Review its instructions, and any scripts, before using them in your own tool.",
+  },
+
+  // --- Oluşturma / düzenleme ---
+  "skill.editTitle": { tr: "Skill'i düzenle", en: "Edit Skill" },
+  "skill.loginRequiredBody": { tr: "Skill oluşturmak için giriş yapmalısın.", en: "You need to sign in to create a Skill." },
+  "skill.noEditPermissionTitle": { tr: "Bu Skill'i düzenleyemezsin", en: "You can't edit this Skill" },
+  "skill.noEditPermissionBody": { tr: "Yalnızca sahibi bir Skill'i düzenleyebilir.", en: "Only the owner can edit a Skill." },
+  "skill.sectionInstructions": { tr: "Talimat", en: "Instructions" },
+  "skill.nameLabel": { tr: "Skill adı", en: "Skill name" },
+  "skill.namePlaceholder": { tr: "Örn. Senior Frontend Developer", en: "e.g. Senior Frontend Developer" },
+  "skill.errorName": { tr: "Skill adı en az 3 karakter olmalı.", en: "The Skill name must be at least 3 characters." },
+  "skill.summaryLabel": { tr: "Kısa açıklama", en: "Short description" },
+  "skill.summaryPlaceholder": { tr: "Bu Skill ne yapar, hangi problemi çözer?", en: "What does this Skill do, and what problem does it solve?" },
+  "skill.errorSummary": { tr: "Kısa açıklama en az 10 karakter olmalı.", en: "The short description must be at least 10 characters." },
+  "skill.categoryLabel": { tr: "Uzmanlık alanı", en: "Area of expertise" },
+  "skill.categoryHint": {
+    tr: "Skill'in kendi uzmanlık alanı. Görsel, metin, ses ya da video türünden bağımsızdır.",
+    en: "The Skill's own area of expertise. It is independent of image, text, audio or video.",
+  },
+  "skill.errorCategory": { tr: "Bir uzmanlık alanı seç.", en: "Choose an area of expertise." },
+  "skill.instructionsLabel": { tr: "Uzmanlık talimatları", en: "Expertise instructions" },
+  "skill.instructionsPlaceholder": {
+    tr: "# Rol\nSen deneyimli bir … uzmanısın.\n\n# Çalışma yöntemi\n1. …",
+    en: "# Role\nYou are an experienced … specialist.\n\n# Way of working\n1. …",
+  },
+  "skill.instructionsHint": { tr: "Markdown destekli. SKILL.md dosyasının gövdesi olur.", en: "Markdown is supported. It becomes the body of the SKILL.md file." },
+  "skill.errorInstructions": { tr: "Talimat en az 20 karakter olmalı.", en: "The instructions must be at least 20 characters." },
+  "skill.compatLabel": { tr: "Desteklenen araçlar", en: "Supported tools" },
+  "skill.compatSummaryNone": { tr: "Belirtilmedi", en: "Not specified" },
+  "skill.compat.other": { tr: "Diğer araçlar", en: "Other tools" },
+  "skill.licenseLabel": { tr: "Lisans", en: "License" },
+  "skill.license.proprietary": { tr: "Tüm hakları saklı", en: "All rights reserved" },
+  "skill.versionLabel": { tr: "Sürüm", en: "Version" },
+  "skill.versionHint": { tr: "1.0.0 biçiminde. Güncelleme yaptığında numarayı sen artırırsın.", en: "In the form 1.0.0. You raise the number when you update it." },
+  "skill.errorVersion": { tr: "Sürüm 1.0.0 biçiminde olmalı.", en: "The version must look like 1.0.0." },
+  "skill.skillMdNotice": {
+    tr: "SKILL.md, formdaki alanlardan kendiliğinden hazırlanır. Dosya, kural ve referans eklemek sonraki sürümde gelecek.",
+    en: "SKILL.md is prepared automatically from the form. Adding files, rules and references is coming later.",
+  },
+
+  // --- Detay ---
+  "skill.aboutTitle": { tr: "Skill bilgisi", en: "Skill info" },
+  "skill.version": { tr: "Sürüm", en: "Version" },
+  "skill.license": { tr: "Lisans", en: "License" },
+  "skill.category": { tr: "Uzmanlık alanı", en: "Area of expertise" },
+  "skill.compat": { tr: "Uyumlu araçlar", en: "Compatible tools" },
+  "skill.updated": { tr: "Güncellendi", en: "Updated" },
+  "skill.instructionsTitle": { tr: "Talimat", en: "Instructions" },
+  "skill.noInstructions": { tr: "Bu Skill'in henüz talimatı yok.", en: "This Skill has no instructions yet." },
+  "skill.skillMdTitle": { tr: "SKILL.md", en: "SKILL.md" },
+  "skill.skillMdHint": { tr: "Aracının okuyacağı dosya. Kopyala ya da indir.", en: "The file your tool reads. Copy it or download it." },
+  "skill.skillMdLabel": { tr: "SKILL.md içeriği", en: "SKILL.md contents" },
+  "skill.download": { tr: "SKILL.md indir", en: "Download SKILL.md" },
+  "skill.edit": { tr: "Düzenle", en: "Edit" },
+  "skill.delete": { tr: "Sil", en: "Delete" },
+  "skill.deleteTitle": { tr: "Skill silinsin mi?", en: "Delete this Skill?" },
+  "skill.deleteBody": { tr: "“{{title}}” kalıcı olarak silinir. Bu geri alınamaz.", en: "“{{title}}” will be deleted permanently. This can't be undone." },
+
+  // --- Hatalar ---
+  "skill.error.save": { tr: "Skill kaydedilemedi. Biraz sonra tekrar dene.", en: "The Skill couldn't be saved. Try again in a moment." },
+  "skill.error.notFound": { tr: "Skill bulunamadı ya da bunu değiştirme iznin yok.", en: "Skill not found, or you don't have permission to change it." },
+  "skill.error.slug": { tr: "Bu ad için uygun bir dosya adı bulunamadı. Adı biraz değiştir.", en: "No suitable file name was found for this name. Change the name a little." },
+  "skill.error.delete": { tr: "Skill silinemedi. Biraz sonra tekrar dene.", en: "The Skill couldn't be deleted. Try again in a moment." },
+
+  // --- Uzmanlık alanları (DB değeri çevrilmez; yalnız görünen ad) ---
+  "skills.category.software": { tr: "Yazılım ve Geliştirme", en: "Software & Development" },
+  "skills.category.design": { tr: "Tasarım ve Yaratıcılık", en: "Design & Creativity" },
+  "skills.category.research": { tr: "Araştırma ve Analiz", en: "Research & Analysis" },
+  "skills.category.business": { tr: "İş ve Yönetim", en: "Business & Management" },
+  "skills.category.marketing": { tr: "Pazarlama ve İletişim", en: "Marketing & Communication" },
+  "skills.category.education": { tr: "Eğitim ve Öğrenme", en: "Education & Learning" },
+  "skills.category.data": { tr: "Veri ve Otomasyon", en: "Data & Automation" },
+  "skills.category.productivity": { tr: "Üretkenlik ve Kişisel Asistanlar", en: "Productivity & Personal Assistants" },
+} as const;

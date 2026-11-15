@@ -4,6 +4,9 @@ Bu liste kalıcıdır; her madde bitince durumu burada güncellenir. Tamamlanan 
 anlatısı `docs/history/NNN-*.md` dosyasındadır (CLAUDE.md Bölüm 8). Boyut: **K** = birkaç
 saat, **O** = 1–2 gün, **B** = birkaç gün.
 
+> **Skill (5. içerik türü):** çekirdek yapıldı, geri kalanı bu dosyanın sonundaki "Skill için yapılacaklar" bölümündedir; tam plan
+> `docs/skill-plani.md`'dedir.
+
 ## Çalışma kuralları (her madde için)
 
 1. **Mevcut mimariyi genişlet**, paralel sistem kurma (`feed_page`, i18n, token'lar, feature klasörleri).
@@ -175,3 +178,81 @@ Toplulukta oluşturulan içerik topluluğa aittir (`community_id`): normal içer
 
 ### 20. Topluluk kartlarında İstatistik ve Paylaş — yapıldı (canlıya uygulanmadı)
 Yerel içerik kartı ve başvuru kartı/sayfası normal kartlardaki gibi İstatistik + Paylaş sunar (Kaydet kapalı kalır). Paylaşım özel içerikte paylaşım sayfasına çevrilmez. `content_engagers` topluluk içeriğini ve `community_post` hedefini kabul eder (`20260920110000`, `docs/history/181-*`). Uygulama sırası: 179'un migration'ı → bu migration → istemci.
+
+---
+
+## Skill için yapılacaklar (5. içerik türü)
+
+Tam plan: [`docs/skill-plani.md`](skill-plani.md) (ürün, mimari, güvenlik, 17 dilimlik teslim sırası). Çekirdek dilimin anlatısı:
+`docs/history/388-skill-cekirdegi.md`. Boyutlar K/O/B (yukarıdaki anlam). Her madde bitince `[x]` yapılır, anlatısı `docs/history/NNN-*`'e yazılır.
+Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut deseni genişlet, migration yalnız ekler, TR+EN, testler.
+
+### Yapıldı — çekirdek (388)
+- [x] `skills` tablosu + RLS + engelleme + sayaç koruması + hız sınırı (`20261126100000_skills_core.sql`, SQL testi `skills-core.sql`)
+- [x] `SKILL.md` üretimi ve ad/slug/sürüm yardımcıları (`lib/skills/skill-md.ts`, birim testli); uzmanlık alanı/araç/lisans listeleri (`categories.ts`, migration CHECK'iyle aynası test edilir)
+- [x] Oluşturma/düzenleme: kolay mod (`/skills/create`, `?edit=`), taslak + yayın + "Kim görsün?"
+- [x] Liste (`/skills`, keyset + basit arama), kart (`SkillCard`, `ContentCardPost`), detay (`/skills/local?id=`, talimat + `SKILL.md` kopyala/indir, sahibe Düzenle/Sil)
+- [x] Oluştur menüsünde Skill girişi (**`NEXT_PUBLIC_SKILLS_ENABLED=true` arkasında**), TR+EN metinler
+
+### Aşama 1 — veri modeli ve paket (kalan)
+- [ ] **O** `skill_versions`: değişmez sürüm (`version`, `changelog`, `package_path`, `package_sha256`, `manifest`), yazma yalnız RPC/tetikleyici, SELECT üst Skill'den
+- [ ] **O** `skill_files` + özel `skill-files` bucket + Storage politikaları; `orphan_storage_objects` bucket listesi ve `delete_account_data` güncellenir
+- [ ] **O** `skill_tags`, `skill_relations` (kimlik başvurusu, `quote_target_ok`), `skill_uses` (kişi-Skill-gün, istemciye kapalı), `skill_pins`
+- [ ] **K** `skill_categories` tablosu (şimdi `skills.category` CHECK; expand → contract ile tabloya geçiş)
+- [ ] **O** `lib/skills/package-validate.ts` (zip slip, bomba, magic byte, gizli anahtar) + `zip.ts` (`fflate`, dinamik yükleme — **bağımlılık kararı bekliyor**) + `semver.ts` + kötü ZIP fixture'ları
+- [ ] **B** Edge Function `skill-package` + `skill_publish_begin/commit` (idempotent) + `smoke-test.mjs` girişleri; **Edge'de ZIP açma süre/bellek sınırını ilk iş olarak ölç**
+- [ ] **K** Paket limitlerini ölçümle kesinleştir (taslak: ZIP 10 MB, açılmış 40 MB, ≤ 100 dosya, kişi başına 200 MB, günde 10 yayın)
+
+### Aşama 2 — oluşturma editörü (gelişmiş)
+- [ ] **B** Gelişmiş mod: dosya yükleme (ilerleme/iptal/yeniden dene, dosya başına doğrulama durumu), dosya ağacı (`role="tree"`), kurallar / iş akışı / araç tanımı / referans / örnek bileşenleri (`FormDisclosure`)
+- [ ] **O** Masaüstünde üç bölme (dosya ağacı · düzenleyici · canlı önizleme); telefonda "Dosya düzenle" tam ekran sayfası (`Modal` kuralları)
+- [ ] **O** Bağlı içerik seçimi: mevcut **Oluştur / Seç** kalıbı (`content-add`, `content-picker`) ile Prompt/Workflow/Ayar paketi bağla
+- [ ] **O** Yayın akışı: sürüm önerisi (düzeltme/yeni özellik/kalıp değişikliği), değişiklik notu zorunluluğu (`1.0.0` sonrası), `client_token` ile tekrar deneme
+- [ ] **O** ZIP/klasör **içe aktarma** (frontmatter forma dolar; yazar/durum/görünürlük/sayaç dosyadan alınmaz; atıf `metadata.source`)
+- [ ] **O** Güvenli Markdown görüntüleyici (HTML üretmez, `dangerouslySetInnerHTML` yok) — detayda talimat şimdi düz metin
+- [ ] **K** Slug stratejisi: başlık değişince `slug` sabit kalıyor (bilinçli); yeniden adlandırma gerekirse karar
+- Etki alanı: `my-content-view.tsx` (`createLinks`), `kind-drafts-button`, taslaklar listesi
+
+### Aşama 3 — sosyal entegrasyon
+- [ ] **B** Ortak tablolara `skill_id` dalları: `prompt_likes`, `prompt_comments`, `collection_items`, `reaction_stats`, `content_relations`, `reports`; `target_id` birleşimi ve `handle_prompt_like_change` / `handle_prompt_comment_change` / `handle_comment_delete` / `notify_comment_*` / `content_engagers` zincirlerinde AÇIK dal (**"tam biri dolu" CHECK yeniden kurulumu yıkıcıdır: `-- ci:allow-destructive` + kullanıcı onayı**)
+- [ ] **B** Beğeni/tepki, yorum, kaydet + koleksiyon + ortak koleksiyon arayüzü: kartta `PromptCardFooter` benzeri altbilgi, detayda `DetailActionBar` çubuğu (`Engage*` ailesi, `LikeableContentType`, `CommentScopeKind`, `SaveableContentType`, `StatisticsContentType` genişler)
+- [ ] **O** Profilde "Skill'ler" bölümü + `profile_content_stats` + İçeriklerim (**taslaklar şimdi listede görünmüyor, yalnız detay adresinden**)
+- [ ] **O** Bildirimler (yayın → takipçilere, yeni sürüm → sabitleyenlere): SQL Türkçe cümle + `notification-message.ts` + `nc.pref.*` + `_notification_pref_key` / `_notification_category` / `cardKindKey`
+- [ ] **O** Şikâyet (`submit_report('skill', …)`) + moderatör kuyruğu + içeriği/paketi kaldırma + `admin_*` sayaçları
+- [ ] **O** Yaratıcı paneli / İstatistik: indirme, kaydedilme, tepki, yorum (`creator_insights_*`), `skill_uses` kaynaklı kullanım
+- [ ] **K** Paylaş modalı ve mesajla paylaşım (`ShareModal`'a hedef ekle, bağlantı + kısa özet)
+
+### Aşama 4 — keşif ve arama
+- [ ] **B** `skill_feed_page` (keyset, uzmanlık alanı/paket içeriği/araç/sıralama) — `feed_page` imzasına DOKUNMA; karma "Tümü" akışına katılım ayrı karar
+- [ ] **O** `search_content` `p_kind='skill'` (+ `SearchKind`, `ContentKind`/`search-tokens`); şimdiki `searchSkillsPage` `ilike` + `created_at` imlecidir (talimat dahil, dizin maliyeti **ölçülmeli**, `EXPLAIN` 5–7 tekrar medyan)
+- [ ] **O** Keşfet "Skill'ler" bölümü (`SectionMenu`), `ListFilterSheet` Skill süzgeçleri (uzmanlık alanı, paket içeriği, uyumlu araç, sıralama), Ana Sayfa tür çipi
+- [ ] **O** Arama sonucunda eşleşme kaynağı (başlık/talimat/kural/araç/etiket)
+- [ ] **O** `related_skills` RPC'si (benzer Skill) + İlişki Haritası (`/relations`) + ters yön "Bu prompt şu Skill'lerde"
+- [ ] **K** Kart/detay için kapak görseli (isteğe bağlı), "Önerilen" sıralama puanı (`use_count`, `save_count`, tepki, tazelik)
+
+### Aşama 5 — dağıtım ve entegrasyon
+- [ ] **O** Detayda indirme menüsü (ZIP, SKILL.md, Markdown kopyala, JSON, önceki sürümler), Sürümler sekmesi, sürüm sabitleme (`skill_pins`) + bildirim, `record_skill_use`
+- [ ] **O** `/share/skill/<anahtar>/` statik paylaşım sayfası (`ShareKind`, `share-link.ts`, `og:*`)
+- [ ] **O** Dışa/içe aktarma zarfı `promptly.skills` (`lib/exchange`)
+- [ ] **B** Adaptörler: Claude Code kurulum adımları (doğrula), Codex ve Cursor (`lib/skills/adapters/*`, `verified`/`draft`, golden test; **resmî belgeyle doğrulanmadan kullanıcıya sunulmaz**)
+- [ ] **B** Açık API `public-skills.ts` (+ `openapi.ts`) ve MCP `search_skills` / `get_skill` / `list_skill_files`; `sync-function-shared.mjs`; Edge `api`/`mcp`/`skill-package` elle deploy; `promptly-mcp` yeni sürüm; `/developers` metni
+- [ ] **K** Alıntılama (`create_quote`) Skill'e açılsın mı — karar bekliyor (öneri: açık)
+
+### Açılış (dilim 5.4)
+- [ ] **O** Gizlilik Politikası (`skill_uses`, Skill dosyaları) + Kullanım Koşulları (Skill = kod/betik/lisans) güncellemesi, `TERMS_VERSION` artırılır; **hukuki danışman onayı**
+- [ ] **K** Çeviri gözden geçirme, CLAUDE.md'ye Skill'in kalıcı kuralları (rota, tablolar, bayrak), `docs/history` notları
+- [ ] **K** `NEXT_PUBLIC_SKILLS_ENABLED=true` değişkenini deploy ortamına ekle (`.github/workflows/deploy.yml`); bayrak açılınca menü girişi görünür
+- [ ] **K** Gerçek Supabase/cihaz elle kontrol listesi: gerçek yükleme ve imzalı indirme, Claude Code'a kurulum, iOS Safari dosya seçici, TR/EN görünüm
+
+### Aşama 6 — gelişmiş
+- [ ] "Çalıştı mı?" oyu (`prompt_works_votes` kalıbı; kopyalama şartı yerine indirme kaydı), kullanım değerlendirmesi (araç + sürüm etiketli yorum)
+- [ ] Kalite göstergeleri, otomatik güvenlik taraması, Skill paketlerini birbirine bağlama, değişiklik notlu sürüm güncelleme bildirimleri
+
+### Çekirdeğin bilinen sınırları (bilerek yapılmadı)
+- Gerçek Supabase'e, Storage'a ve cihaza karşı **denenmedi**; SQL testi yerel PostgreSQL'de, arayüz yalnız tip/lint/derleme ile doğrulandı (Skill için ağ taklitli Playwright paketi henüz yok → `tests/messaging-ui/run-skills.mjs`).
+- Kart ve detayda beğeni/yorum/kaydet/İstatistik/Paylaş yok; sayaç sütunları var ama yazılmıyor (hep 0).
+- Skill menü girişi bayrak arkasında; `/skills` adresleri bayraksız da açılır (yalnız menü satırı gizlenir).
+- Sürüm elle verilir, geçmişi tutulmaz; `SKILL.md` her indirmede o anki alanlardan derlenir (değişmez paket yok).
+- Arama `created_at` imleciyle çalışır (aynı anda eklenen satırlar nadiren atlanabilir) ve talimatı `ilike` ile tarar.
+- Moderatör kuyruğu/sayaçları, hesap silme dışındaki silme yan etkileri (`orphan_storage_objects`) henüz Skill'i bilmiyor.
+
