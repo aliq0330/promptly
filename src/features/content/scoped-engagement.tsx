@@ -66,12 +66,14 @@ export function EngageSave({
   promptId,
   workflowId,
   presetId,
+  skillId,
   saveCount,
   size = 18,
 }: {
   promptId?: string;
   workflowId?: string;
   presetId?: string;
+  skillId?: string;
   saveCount: number;
   size?: number;
 }) {
@@ -80,7 +82,7 @@ export function EngageSave({
   // Alıntı kaydedilmez (docs/history/217-*): Kaydet düğmesi hiç çizilmez.
   if (quoteScope) return null;
   if (scope) return <PostSave post={scope.post} size={size} />;
-  return <SaveButton promptId={promptId} workflowId={workflowId} presetId={presetId} saveCount={saveCount} size={size} />;
+  return <SaveButton promptId={promptId} workflowId={workflowId} presetId={presetId} skillId={skillId} saveCount={saveCount} size={size} />;
 }
 
 export function EngageStatistics({ target, label, size = 18 }: { target: StatisticsTarget; label?: string; size?: number }) {

@@ -113,6 +113,8 @@ export const skillsTranslations = {
     tr: "Beğeni ve yorumlar Skill yayınlanıp herkese açık olduğunda açılır.",
     en: "Likes and comments open once the Skill is published and public.",
   },
+  "notifMsg.skillPublished": { tr: "Yeni bir Skill yayınladı: \"{{preview}}\"", en: "Published a new Skill: \"{{preview}}\"" },
+  "notifMsg.skillVersion": { tr: "Sabitlediğin Skill'in yeni sürümü yayınlandı: \"{{preview}}\"", en: "A new version of a Skill you pinned is out: \"{{preview}}\"" },
   "notifMsg.likedSkill": { tr: "Skill'ini beğendi: \"{{preview}}\"", en: "Liked your Skill: \"{{preview}}\"" },
   "notifMsg.commentedSkill": { tr: "Skill'ine yorum yaptı: \"{{preview}}\"", en: "Commented on your Skill: \"{{preview}}\"" },
   "notifMsg.commentedSkillNone": { tr: "Skill'ine yorum yaptı.", en: "Commented on your Skill." },

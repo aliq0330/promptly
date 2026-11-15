@@ -124,3 +124,38 @@ export async function fetchPromptInsights(promptId: string, days: number): Promi
     reactions: mixRows(mix.data),
   };
 }
+
+/** Yaratıcı panelindeki Skill satırı (docs/history/391-*): yayınlanmış, herkese açık Skill başına dönem sayıları + önceki dönem. */
+export interface SkillInsightRow {
+  id: string;
+  title: string;
+  uses: number;
+  prevUses: number;
+  reactions: number;
+  prevReactions: number;
+  comments: number;
+  prevComments: number;
+  saves: number;
+  prevSaves: number;
+}
+
+/** `creator_insights_skills` RPC'si (yalnız çağıranın KENDİ Skill'leri, toplu sayı). Hata fırlar: panel bölümü yüklenemedi gösterir. */
+export async function fetchSkillInsights(days: number): Promise<SkillInsightRow[]> {
+  const { data, error } = await supabase.rpc("creator_insights_skills", { p_days: days });
+  if (error) {
+    console.error("fetchSkillInsights", error);
+    throw new Error(translateForRuntime("insights.loadError"));
+  }
+  return rows(data).map((r) => ({
+    id: String(r.skill_id),
+    title: String(r.title ?? ""),
+    uses: Number(r.uses ?? 0),
+    prevUses: Number(r.prev_uses ?? 0),
+    reactions: Number(r.reactions ?? 0),
+    prevReactions: Number(r.prev_reactions ?? 0),
+    comments: Number(r.comments ?? 0),
+    prevComments: Number(r.prev_comments ?? 0),
+    saves: Number(r.saves ?? 0),
+    prevSaves: Number(r.prev_saves ?? 0),
+  }));
+}

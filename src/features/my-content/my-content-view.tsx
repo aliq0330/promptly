@@ -35,6 +35,10 @@ import { LoadMore } from "@/features/feed/load-more";
 import { fetchRequestsByAuthorPage } from "@/lib/supabase/requests";
 import { fetchWorkflowsByCreatorPage } from "@/lib/supabase/workflows";
 import { fetchPresetsByCreatorPage } from "@/lib/supabase/presets";
+import { fetchProfileSkillCount, fetchSkillsByAuthorPage } from "@/lib/supabase/skills";
+import { SkillCard } from "@/features/skills/skill-card";
+import { GraduationCap } from "@/components/icons/graduation-cap";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
@@ -43,6 +47,7 @@ type Kind =
   | "requests"
   | "workflows"
   | "presets"
+  | "skills"
   | "drafts";
 type VisibilityFilter = "all" | "public" | "private";
 
@@ -97,6 +102,17 @@ export function MyContentView() {
   const requestPages = usePagedList(`mine-requests|${userId ?? ""}|${filterKey}`, Boolean(userId) && kind === "requests", (offset) => fetchRequestsByAuthorPage(userId ?? "", filter, offset));
   const workflowPages = usePagedList(`mine-workflows|${userId ?? ""}|${filterKey}`, Boolean(userId) && kind === "workflows", (offset) => fetchWorkflowsByCreatorPage(userId ?? "", filter, offset));
   const presetPages = usePagedList(`mine-presets|${userId ?? ""}|${filterKey}`, Boolean(userId) && kind === "presets", (offset) => fetchPresetsByCreatorPage(userId ?? "", filter, offset));
+  // Skill'ler (docs/history/391-*): bayrak arkasında; taslaklar ve özel Skill'ler de burada listelenir (kendi içeriğin).
+  const skillPages = usePagedList(`mine-skills|${userId ?? ""}|${filterKey}`, Boolean(userId) && SKILLS_MENU_ENABLED && kind === "skills", (offset) => fetchSkillsByAuthorPage(userId ?? "", true, offset, undefined, filter));
+  const [skillTotal, setSkillTotal] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    if (!userId || !SKILLS_MENU_ENABLED) return;
+    let cancelled = false;
+    fetchProfileSkillCount(userId, true).then((count) => !cancelled && setSkillTotal(count));
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
   const requests = requestPages.items;
   const workflows = workflowPages.items;
   const presets = presetPages.items;
@@ -156,8 +172,17 @@ export function MyContentView() {
         isPrivate: p.visibility === "private",
         node: <PresetCard preset={p} />,
       })),
+      skills: skillPages.items.map((s) => ({
+        id: s.id,
+        title: s.title,
+        description: s.summary,
+        createdAt: s.createdAt,
+        likeCount: s.likeCount,
+        isPrivate: s.visibility === "private",
+        node: <SkillCard skill={s} />,
+      })),
     }),
-    [prompts, promptPages, requests, workflows, presets],
+    [prompts, promptPages, requests, workflows, presets, skillPages.items],
   );
 
   const kindTabs = useMemo(
@@ -186,6 +211,7 @@ export function MyContentView() {
         count: stats?.presets ?? presetPages.total ?? undefined,
         icon: SlidersHorizontal,
       },
+      ...(SKILLS_MENU_ENABLED ? [{ key: "skills" as const, label: t("skill.pageTitle"), count: skillTotal ?? skillPages.total ?? undefined, icon: GraduationCap }] : []),
       { key: "drafts" as const, label: t("profile.tabDrafts"), icon: FileText },
     ],
     [
@@ -195,6 +221,8 @@ export function MyContentView() {
       requestPages.total,
       workflowPages.total,
       presetPages.total,
+      skillTotal,
+      skillPages.total,
     ],
   );
 
@@ -206,14 +234,15 @@ export function MyContentView() {
     requests: { href: "/requests/new", label: t("create.requestTitle") },
     workflows: { href: "/workflows/create", label: t("workflow.create") },
     presets: { href: "/presets/create", label: t("preset.create") },
+    skills: { href: "/skills/create", label: t("skill.create") },
   };
 
   // Every kind is filtered, searched and sorted by the database; the list is shown as loaded.
   const visible = kind === "drafts" ? [] : entries[kind];
-  const pages = kind === "drafts" ? promptPages : { prompts: promptPages, requests: requestPages, workflows: workflowPages, presets: presetPages }[kind];
+  const pages = kind === "drafts" ? promptPages : { prompts: promptPages, requests: requestPages, workflows: workflowPages, presets: presetPages, skills: skillPages }[kind];
 
   // "Is there anything at all?" — for prompts the counted total; a filtered-to-nothing list is then "no match", not "no content".
-  const total = kind === "drafts" ? 0 : (stats?.[kind] ?? pages.total ?? entries[kind].length);
+  const total = kind === "drafts" ? 0 : kind === "skills" ? (skillTotal ?? pages.total ?? entries[kind].length) : (stats?.[kind] ?? pages.total ?? entries[kind].length);
 
   const searching = searchOpen || search !== "";
   const menuItems: SectionMenuItem<Kind>[] = kindTabs.map((tab) => ({ key: tab.key, label: tab.label, icon: tab.icon, meta: "count" in tab ? tab.count : undefined, dividerBefore: tab.key === "drafts" }));

@@ -1,6 +1,6 @@
 "use client";
 
-import { fetchCreatorInsights, fetchPromptInsights, InsightNotFoundError, type CreatorInsights, type PromptInsights } from "@/lib/supabase/insights";
+import { fetchCreatorInsights, fetchPromptInsights, fetchSkillInsights, InsightNotFoundError, type CreatorInsights, type PromptInsights, type SkillInsightRow } from "@/lib/supabase/insights";
 import { useInsightData, type InsightState } from "@/features/insights/use-insight-data";
 
 /** Genel panel: beş RPC tek `Promise.all`'da, dönem başına önbellekli. */
@@ -15,4 +15,9 @@ export function usePromptInsights(promptId: string | null, days: number): { stat
     () => (promptId ? fetchPromptInsights(promptId, days) : Promise.reject(new InsightNotFoundError())),
     (error) => error instanceof InsightNotFoundError,
   );
+}
+
+/** Yaratıcı panelinin "Skill'ler" bölümü (docs/history/391-*): genel panelden bağımsız yüklenir; hata ya da boş liste bölümü gizler/ya da yeniden denetir. */
+export function useSkillInsights(days: number): { state: InsightState<SkillInsightRow[]>; retry: () => void } {
+  return useInsightData(`skills:${days}`, () => fetchSkillInsights(days));
 }

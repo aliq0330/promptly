@@ -5,7 +5,7 @@ import { PROFILE_SELECT } from "./profiles";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { sanitizeSearchText, type ContentSearchFilters } from "./taxonomy-query";
 import type { SearchCursor, SearchPage } from "./search";
-import { OWNED_PAGE, type PagedResult } from "./paged";
+import { OWNED_PAGE, type OwnedListFilter, type PagedResult } from "./paged";
 import { translateForRuntime } from "@/lib/i18n/runtime";
 import { isValidSkillSlug, slugifySkillName, withSlugSuffix } from "@/lib/skills/skill-md";
 import type { Skill, SkillCategory, SkillCompat, SkillLicense } from "@/types";
@@ -131,13 +131,18 @@ export async function searchSkillsPage(query: string, _filters: ContentSearchFil
  * Bir kişinin Skill'leri (profil bölümü, docs/history/390-*), sayfa sayfa (offset; toplam ilk sayfada). Ziyaretçiye yalnız yayında + herkese açık olanlar;
  * sahibinin kendi profilinde taslak ve özel olanlar da görünür (RLS zaten başkasınınkini vermez, süzgeç ikinci katmandır).
  */
-export async function fetchSkillsByAuthorPage(authorId: string, isOwn: boolean, offset = 0, limit = OWNED_PAGE): Promise<PagedResult<Skill>> {
+export async function fetchSkillsByAuthorPage(authorId: string, isOwn: boolean, offset = 0, limit = OWNED_PAGE, filter: OwnedListFilter = {}): Promise<PagedResult<Skill>> {
   let request = supabase
     .from("skills")
     .select(SKILL_LIST_SELECT, offset === 0 ? { count: "exact" } : undefined)
     .eq("author_id", authorId);
   if (!isOwn) request = request.eq("status", "published").eq("visibility", "public");
-  const { data, count, error } = await request.order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + limit - 1);
+  else if (filter.visibility && filter.visibility !== "all") request = request.eq("visibility", filter.visibility);
+  const text = sanitizeSearchText(filter.search ?? "");
+  if (text) request = request.or(`title.ilike.%${text}%,summary.ilike.%${text}%`);
+  const sort = filter.sort ?? "newest";
+  request = sort === "most-liked" ? request.order("like_count", { ascending: false }).order("created_at", { ascending: false }) : request.order("created_at", { ascending: sort === "oldest" });
+  const { data, count, error } = await request.order("id", { ascending: sort === "oldest" }).range(offset, offset + limit - 1);
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as unknown as SkillRow[];
   return { items: rows.map(mapSkillRow), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };

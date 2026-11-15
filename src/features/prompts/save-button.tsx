@@ -26,6 +26,7 @@ export function SaveButton({
   promptId,
   workflowId,
   presetId,
+  skillId,
   communityPostId,
   saveCount = 0,
   size = 16,
@@ -34,6 +35,7 @@ export function SaveButton({
   promptId?: string;
   workflowId?: string;
   presetId?: string;
+  skillId?: string;
   communityPostId?: string;
   /** Real, trigger-maintained `save_count` column — the count seed for this id's engagement-store entry. */
   saveCount?: number;
@@ -42,8 +44,8 @@ export function SaveButton({
 }) {
   const { t } = useTranslation();
   const { requireAuth } = useAuthPrompt();
-  const id = (communityPostId ?? presetId ?? workflowId ?? promptId)!;
-  const contentType = communityPostId ? "community_post" : presetId ? "preset" : workflowId ? "workflow" : "prompt";
+  const id = (communityPostId ?? skillId ?? presetId ?? workflowId ?? promptId)!;
+  const contentType = communityPostId ? "community_post" : skillId ? "skill" : presetId ? "preset" : workflowId ? "workflow" : "prompt";
   const { isSaved, saveCount: count, markSaved, markUnsaved, quickSave, saving, canSave } = useSaveState(id, contentType, saveCount);
   const [modalOpen, setModalOpen] = useState(false);
   // Counted on the viewer's own save/unsave, never on the async "is it saved?" answer arriving.
@@ -119,7 +121,7 @@ export function SaveButton({
 
       {modalOpen && (
         <SaveToCollectionModal
-          {...(contentType === "community_post" ? { communityPostId: id } : contentType === "preset" ? { presetId: id } : contentType === "workflow" ? { workflowId: id } : { promptId: id })}
+          {...(contentType === "community_post" ? { communityPostId: id } : contentType === "skill" ? { skillId: id } : contentType === "preset" ? { presetId: id } : contentType === "workflow" ? { workflowId: id } : { promptId: id })}
           onClose={() => setModalOpen(false)}
           onAdded={() => {
             setPopSeq((n) => n + 1);

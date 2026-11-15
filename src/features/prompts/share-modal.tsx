@@ -18,12 +18,12 @@ import type { Language } from "@/lib/i18n/translations";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
-import { presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
+import { presetHref, promptHref, requestHref, resultHref, skillHref, workflowHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { shareOrCopyLink } from "./share-button";
-import type { Preset, Prompt, PromptRequest, PromptResult, StoryLinkedType, Workflow } from "@/types";
+import type { Preset, Prompt, PromptRequest, PromptResult, Skill, StoryLinkedType, Workflow } from "@/types";
 import { StorageBackground } from "@/components/ui/storage-media";
 import { QuoteSection } from "@/features/quotes/quote-section";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
@@ -42,6 +42,8 @@ export type ShareModalTarget =
   | { contentType: "request"; request: PromptRequest }
   | { contentType: "workflow"; workflow: Workflow }
   | { contentType: "preset"; preset: Preset }
+  /** Bir Skill (docs/history/391-*): bağlantı Skill'in kendi sayfasıdır (statik paylaşım sayfası sonraki dilimdir). */
+  | { contentType: "skill"; skill: Skill }
   | { contentType: "prompt_result"; result: PromptResult }
   /** Bir topluluk gönderisi (başvuru): önizleme çağıran tarafından hazırlanır; bağlantı gönderinin kendi sayfasıdır. */
   | { contentType: "community_post"; postId: string; title: string; description: string; thumbnailUrl: string | null; badgeLabel: string; href: string }
@@ -146,6 +148,21 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       storyLink: storyLinkFor("request", request.id, !request.isDraft && (request.visibility ?? "public") === "public" && !request.communityId),
     };
   }
+  if (target.contentType === "skill") {
+    const skill = target.skill;
+    return {
+      id: skill.id,
+      title: skill.title,
+      description: skill.summary,
+      thumbnailUrl: null,
+      badgeLabel: `${t("skill.singular")} · v${skill.version}`,
+      badgeVariant: "neutral",
+      href: skillHref(skill),
+      messageParam: null,
+      directLink: true,
+      storyLink: null,
+    };
+  }
   if (target.contentType === "space") {
     const space = target.space;
     return {
@@ -240,7 +257,7 @@ function announceTarget(target: ShareModalTarget, space: Space | null): { type: 
 }
 
 /** "Kendin için" hedefleri: Space'e ekle (topluluğa ait içerik eklenemez) ve koleksiyona kaydet (istek kaydedilemez). */
-function selfTargets(target: ShareModalTarget): { space: AddToSpaceTarget | null; save: { promptId?: string; workflowId?: string; presetId?: string } | null } {
+function selfTargets(target: ShareModalTarget): { space: AddToSpaceTarget | null; save: { promptId?: string; workflowId?: string; presetId?: string; skillId?: string } | null } {
   if (target.contentType === "prompt") {
     const x = target.prompt;
     return { space: x.communityId ? null : { type: "prompt", id: x.id }, save: { promptId: x.id } };
@@ -256,6 +273,10 @@ function selfTargets(target: ShareModalTarget): { space: AddToSpaceTarget | null
   if (target.contentType === "preset") {
     const x = target.preset;
     return { space: x.communityId ? null : { type: "preset", id: x.id }, save: { presetId: x.id } };
+  }
+  // Skill: koleksiyona kaydedilir; Space'e eklenemez (Space içerik türleri arasında değil).
+  if (target.contentType === "skill") {
+    return { space: null, save: target.skill.status === "published" && target.skill.visibility === "public" ? { skillId: target.skill.id } : null };
   }
   return { space: null, save: null };
 }

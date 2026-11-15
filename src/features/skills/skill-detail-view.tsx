@@ -19,7 +19,7 @@ import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTitle } from "@/features/content/detail-parts";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { DropdownMenu } from "@/features/communities/dropdown-menu";
-import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { ReportButton } from "@/features/moderation/report-button";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -162,7 +162,8 @@ export function SkillDetailView() {
           end={
             skill.status === "published" && skill.visibility === "public" ? (
               <>
-                <EngageStatistics target={{ contentType: "skill", contentId: skill.id, likeCount: skill.likeCount, commentCount: skill.commentCount }} size={20} />
+                <EngageStatistics target={{ contentType: "skill", contentId: skill.id, likeCount: skill.likeCount, commentCount: skill.commentCount, saveCount: skill.saveCount }} size={20} />
+                <EngageShare target={{ contentType: "skill", skill }} />
               </>
             ) : undefined
           }
@@ -176,6 +177,7 @@ export function SkillDetailView() {
             <>
               <EngageLike id={skill.id} likeCount={skill.likeCount} contentType="skill" size={20} />
               <EngageCommentCount skillId={skill.id} baseCount={skill.commentCount} size={20} />
+              <EngageSave skillId={skill.id} saveCount={skill.saveCount} size={20} />
             </>
           )}
           {latest && (

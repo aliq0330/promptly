@@ -64,7 +64,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
   const { t } = useTranslation();
   const { user } = useAuth();
   const { contentType, contentId } = target;
-  const canSave = contentType === "request" || contentType === "space" || contentType === "quote" || contentType === "skill" ? false : contentType === "community_post" ? target.savable === true : true;
+  const canSave = contentType === "request" || contentType === "space" || contentType === "quote" ? false : contentType === "community_post" ? target.savable === true : true;
   const kinds: StatisticsKind[] = canSave ? ["likes", "comments", "saves"] : ["likes", "comments"];
   const [active, setActive] = useState<StatisticsKind>("likes");
   const copyCount = target.copyCount;
