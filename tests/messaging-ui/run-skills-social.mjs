@@ -304,6 +304,8 @@ await scenario("13. Keşfet → Skill'ler: kartlar sunucudan gelir; uzmanlık al
   await root.waitFor();
   await root.getByText("Skill 1").first().waitFor();
   await root.locator("[data-skill-category='design']").click();
+  // "Logo Skill" ilk (süzgeçsiz) listede de var: süzgeçli yanıt gelene kadar bekle, yoksa yarış olur.
+  await page.waitForFunction(() => !document.querySelector("[data-skill-discover]")?.textContent?.includes("Skill 1"), null, { timeout: 8000 });
   await root.getByText("Logo Skill").first().waitFor();
   assert.equal(state.feedCalls.at(-1).p_category, "design");
   assert.equal(await root.getByText("Skill 1").count(), 0, "süzgeç dışı kart kalkar");
