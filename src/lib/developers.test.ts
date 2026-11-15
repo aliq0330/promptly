@@ -46,6 +46,7 @@ test("personal (key) snippets use the key placeholder, the personal MCP address 
   assert.ok(snippets.curlMe.includes(`${endpoints.apiBase}/me"`) && snippets.curlMe.includes("pmt_YOUR_KEY"));
   assert.ok(snippets.curlMeList.includes(`${endpoints.apiBase}/me/prompts?status=draft`));
   assert.ok(snippets.curlSearchContent.includes("/workflows?q="));
+  assert.ok(snippets.curlSearchSkills.includes("/skills?q="));
   assert.ok(snippets.curlMeUpdate.includes("-X PATCH") && snippets.curlMeUpdate.includes("expectedUpdatedAt"));
   assert.ok(snippets.curlMeSave.includes("-X POST") && snippets.curlMeSave.includes("@promptly-prompts.json"));
   assert.ok(snippets.claudeCodeMe.includes(`${endpoints.mcpUrl}/me`) && snippets.claudeCodeMe.includes('--header "Authorization: Bearer pmt_YOUR_KEY"'));

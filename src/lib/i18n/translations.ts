@@ -1773,6 +1773,8 @@ export const translations = {
   "dev.toolPopular": { tr: "en çok kopyalanan ya da beğenilen promptlar", en: "most copied or liked prompts" },
   "dev.toolGet": { tr: "tam metin, değişkenler ve yazar bilgisi", en: "full text, variables and author credit" },
   "dev.toolContent": { tr: "herkese açık istekleri, ayar paketlerini ve workflow'ları arar ve okur (kind: request | preset | workflow)", en: "searches and reads public requests, presets and workflows (kind: request | preset | workflow)" },
+  "dev.toolSkills": { tr: "herkese açık Skill'leri arar, SKILL.md gövdesini ve son sürümün dosya listesini okur (dosya gövdeleri ve betikler dönmez, hiçbir şey çalıştırılmaz)", en: "searches public Skills and reads the SKILL.md body and the latest version's file list (file bodies and scripts are not returned, nothing is executed)" },
+  "dev.apiSkills": { tr: "Skill ara", en: "Search Skills" },
   "dev.apiContent": { tr: "İstek, ayar paketi ve workflow ara", en: "Search requests, presets and workflows" },
   "dev.apiContentBody": {
     tr: "Aynı yapı /requests, /presets ve /workflows için geçerli; tek kayıt için sonuna /<id> ekle. Workflow'da adımlar da gelir; adımın bağlı promptu yalnızca herkese açıksa görünür.",

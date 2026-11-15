@@ -1,5 +1,6 @@
 "use client";
 
+import { SkillsUsingContent } from "@/features/skills/skill-aside-blocks";
 import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useState } from "react";
@@ -128,6 +129,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
       </AsideSection>
 
       <RelatedPresets preset={preset} />
+      <SkillsUsingContent type="preset" id={preset.id} />
     </DetailAside>
   );
 

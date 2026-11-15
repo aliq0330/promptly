@@ -27,12 +27,12 @@ export const LEGAL_CONTACT_EMAIL = "aliq0330@gmail.com";
  * "Kullanım Koşulları güncellendi" bandı yeniden çıkar (`features/legal/terms-update-notice.tsx`, karar `lib/legal-notice.ts`).
  * Yürürlükten sonra hesap açan kişi bandı görmez (kayıt ekranında yeni metni zaten görmüştür). Yalnız yazım düzeltmesi için artırma.
  */
-export const TERMS_VERSION = "2026-11-08";
-export const TERMS_EFFECTIVE_AT = "2026-11-08T12:00:00Z";
+export const TERMS_VERSION = "2026-11-15";
+export const TERMS_EFFECTIVE_AT = "2026-11-15T12:00:00Z";
 
 // İki belge ayrı güncellenir: birinin değişmesi diğerinin tarihini oynatmaz.
-const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 8 Kasım 2026", en: "Last updated: November 8, 2026" };
-const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 2 Kasım 2026", en: "Last updated: November 2, 2026" };
+const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 15 Kasım 2026", en: "Last updated: November 15, 2026" };
+const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 15 Kasım 2026", en: "Last updated: November 15, 2026" };
 
 const p = (tr: string, en: string): LegalBlock => ({ type: "p", text: { tr, en } });
 const ul = (tr: string[], en: string[]): LegalBlock => ({ type: "ul", items: { tr, en } });
@@ -99,6 +99,19 @@ export const PRIVACY_POLICY: LegalDocument = {
         p(
           "Herkese açık yayınladığın içerikler ve profil bilgilerin (kullanıcı adın, görünen adın, avatarın, biyografin) siteyi ziyaret eden herkes tarafından görülebilir. Özel olarak işaretlediğin içerikler ve taslakların yalnızca sana görünür; bu içeriklerin görsel, ses ve video dosyalarına başkaları erişemez. E-posta adresin başkalarına gösterilmez. Kişisel bilgilerini satmıyoruz.",
           "Content you publish publicly and your profile details (username, display name, avatar, bio) can be seen by anyone who visits the site. Content you mark private and your drafts are visible only to you, and other people cannot access the image, audio and video files of that content. Your email address is not shown to others. We do not sell your personal information.",
+        ),
+      ],
+    },
+    {
+      title: { tr: "Skill'ler", en: "Skills" },
+      blocks: [
+        p(
+          "Bir Skill yayınladığında başlığı, açıklaması, talimatı (SKILL.md) ve yüklediğin paket dosyaları saklanır. Taslak ve özel Skill'lerin dosyaları yalnızca sana görünür; herkese açık yayınladığın sürümün paketini (ZIP) herkes indirebilir. Bir Skill'i indirdiğinde ya da kullanım olarak saydığımız bir işlem yaptığında, hangi hesabın hangi Skill'i hangi gün kullandığı kaydedilir; bu kayıt kimseye gösterilmez, Skill sahibi yalnızca toplu sayıyı görür. Sabitlediğin sürümler ve kaydettiğin Skill'ler hesabına bağlı tutulur; Skill'ini yayınladığında takipçilerine, sabitlediğin bir Skill'in yeni sürümü çıktığında sana bildirim gönderilir.",
+          "When you publish a Skill we store its title, description, instructions (SKILL.md) and the package files you upload. The files of draft and private Skills are visible only to you; the package (ZIP) of a version you publish publicly can be downloaded by anyone. When you download a Skill or do something we count as use, we record which account used which Skill on which day; this record is shown to nobody, and a Skill's owner sees only the totals. The versions you pin and the Skills you save are kept on your account; your followers get a notification when you publish a Skill, and you get one when a Skill you pinned gets a new version.",
+        ),
+        p(
+          "Skill dosyaları sunucularımızda çalıştırılmaz; yalnızca saklanır, taranır (örneğin içine yanlışlıkla gizli anahtar konup konmadığı) ve indirilmek üzere sunulur.",
+          "Skill files are never run on our servers; they are only stored, scanned (for example for secret keys put in by mistake) and offered for download.",
         ),
       ],
     },
@@ -279,11 +292,24 @@ export const TERMS_OF_USE: LegalDocument = {
       ],
     },
     {
+      title: { tr: "Skill'ler", en: "Skills" },
+      blocks: [
+        p(
+          "Skill, bir yapay zekâ aracına bir işi öğreten talimat ve isteğe bağlı dosyalardan (kurallar, referanslar, örnekler, betikler) oluşan pakettir. Bir Skill yayınlarken içeriğin sana ait olduğunu ya da yayınlama hakkına sahip olduğunu, seçtiğin lisansın doğru olduğunu ve içinde gizli anahtar, parola ya da başkasının kişisel verisi bulunmadığını kabul edersin. Zararlı yazılım, başkasının hesabına ya da sistemine zarar vermeye yarayan kod ve yanıltıcı Skill'ler yasaktır; bunları kaldırabilir, hesabı kısıtlayabiliriz.",
+          "A Skill is a package of instructions and optional files (rules, references, examples, scripts) that teaches an AI tool a job. When you publish a Skill you confirm that the content is yours or that you have the right to publish it, that the license you pick is correct, and that it contains no secret keys, passwords or other people's personal data. Malware, code meant to harm other people's accounts or systems, and misleading Skills are forbidden; we may remove them and restrict the account.",
+        ),
+        p(
+          "Başkasının Skill'ini kullanırken lisans şartlarına (atıf dahil) uymak sana aittir. Skill'ler, özellikle betik içerenler, kod gibi davranabilir: Promptly bu dosyaları çalıştırmaz, güvenliklerini ya da amaca uygunluklarını garanti etmez ve onları yapay zekâ aracına vermeden ya da çalıştırmadan önce okuyup kontrol etmek senin sorumluluğundadır. Betik içeren bir Skill'in indirmesi sırasında bu konuda ayrıca uyarırız.",
+          "When you use someone else's Skill, following its license (including attribution) is up to you. Skills, especially ones with scripts, can act like code: Promptly does not run these files, does not guarantee their safety or fitness for a purpose, and reading and checking them before giving them to an AI tool or running them is your responsibility. We also warn about this when you download a Skill that contains scripts.",
+        ),
+      ],
+    },
+    {
       title: { tr: "Otomatik erişim (API ve MCP)", en: "Automated access (API and MCP)" },
       blocks: [
         p(
-          "Promptly'nin herkese açık API'sini ve MCP paketini (promptly-mcp) kullanabilirsin; bunlar yalnızca herkese açık içeriği okur ve hesap gerektirmez. Siteyi aşırı yüklememeli ve uyguladığımız sınırları aşmaya çalışmamalısın; sınırları aşan ya da siteye zarar veren kullanımı engelleyebiliriz. Bu araçların döndürdüğü metinler kullanıcı içeriğidir: bir yapay zekâ aracına ya da otomasyona vermeden önce kontrol etmek ve sonuçlarından sorumlu olmak sana aittir.",
-          "You may use Promptly's public API and MCP package (promptly-mcp); they only read public content and need no account. You must not overload the site or try to get around the limits we apply; we may block use that exceeds them or harms the site. The text these tools return is user content: checking it before you give it to an AI tool or automation, and being responsible for the results, is up to you.",
+          "Promptly'nin herkese açık API'sini ve MCP paketini (promptly-mcp) kullanabilirsin; bunlar yalnızca herkese açık içeriği (prompt, istek, ayar paketi, workflow ve Skill'lerin metni ile dosya listesi) okur ve hesap gerektirmez. Siteyi aşırı yüklememeli ve uyguladığımız sınırları aşmaya çalışmamalısın; sınırları aşan ya da siteye zarar veren kullanımı engelleyebiliriz. Bu araçların döndürdüğü metinler kullanıcı içeriğidir: bir yapay zekâ aracına ya da otomasyona vermeden önce kontrol etmek ve sonuçlarından sorumlu olmak sana aittir.",
+          "You may use Promptly's public API and MCP package (promptly-mcp); they only read public content (prompts, requests, presets, workflows and the text and file list of Skills) and need no account. You must not overload the site or try to get around the limits we apply; we may block use that exceeds them or harms the site. The text these tools return is user content: checking it before you give it to an AI tool or automation, and being responsible for the results, is up to you.",
         ),
         p(
           "Kişisel bir API anahtarı oluşturursan, o anahtarla yapılan her işlem senin adına yapılmış sayılır. Anahtarını kimseyle paylaşma ve herkese açık yerlere (depo, ekran görüntüsü, paylaşılan not) koyma; sızdığını düşünürsen hemen iptal et. Anahtarla da içerik kuralları, hız sınırları ve hesap kısıtlamaları aynen geçerlidir; kötüye kullanılan ya da siteye zarar veren anahtarları iptal edebiliriz.",

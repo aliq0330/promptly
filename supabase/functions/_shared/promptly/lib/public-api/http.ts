@@ -16,6 +16,7 @@ import { bearerOf, getMyPrompt, importMyPrompts, listMyPrompts, listMySaved, typ
 import { getMyContent, getWhoami, importMyContent, listMyContent, ME_KIND_SEGMENTS, updateMyDraft, type MeDraftKind } from "./me-content.ts";
 import { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";
 import { getPublicContent, PUBLIC_KIND_SEGMENTS, searchPublicContent } from "./public-content.ts";
+import { getPublicSkill, listPublicSkillFiles, searchPublicSkills } from "./public-skills.ts";
 import { fillPrompt, getPrompt, popularPrompts, searchPrompts, type PublicPrompt } from "./prompts.ts";
 import { checkRequest, clientKeyOf, RATE_LIMIT_EXPOSE_HEADERS, withRateLimitHeaders, type RateLimiter } from "./rate-limit.ts";
 import { createRestClient, PublicApiError, type PublicApiConfig, type RestClient } from "./rest.ts";
@@ -140,7 +141,7 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
       version: PUBLIC_API_VERSION,
       docs: `${serverUrlOf(url, publicBaseUrl)}/openapi.json`,
       site: client.siteUrl,
-      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /requests", "GET /requests/{id}", "GET /presets", "GET /presets/{id}", "GET /workflows", "GET /workflows/{id}", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "PATCH /me/prompts/{id}", "GET /me/requests", "POST /me/requests", "GET /me/requests/{id}", "PATCH /me/requests/{id}", "GET /me/presets", "POST /me/presets", "GET /me/presets/{id}", "PATCH /me/presets/{id}", "GET /me/workflows", "POST /me/workflows", "GET /me/workflows/{id}", "PATCH /me/workflows/{id}", "GET /me/saved"],
+      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /requests", "GET /requests/{id}", "GET /presets", "GET /presets/{id}", "GET /workflows", "GET /workflows/{id}", "GET /skills", "GET /skills/{id}", "GET /skills/{id}/files", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "PATCH /me/prompts/{id}", "GET /me/requests", "POST /me/requests", "GET /me/requests/{id}", "PATCH /me/requests/{id}", "GET /me/presets", "POST /me/presets", "GET /me/presets/{id}", "PATCH /me/presets/{id}", "GET /me/workflows", "POST /me/workflows", "GET /me/workflows/{id}", "PATCH /me/workflows/{id}", "GET /me/saved"],
     });
   }
   if (segments.length === 1 && segments[0] === "openapi.json") {
@@ -161,6 +162,28 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
         subcategory: url.searchParams.get("subcategory"),
         tags: listParam(url, "tag"),
         tools: listParam(url, "tool"),
+        sort: url.searchParams.get("sort"),
+        limit: intParam(url, "limit"),
+        cursor: url.searchParams.get("cursor"),
+      }),
+    );
+  }
+  // Herkese açık Skill (docs/history/393-*): arama + tek kayıt + dosya listesi, salt okunur.
+  if (segments[0] === "skills" && segments.length <= 3) {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    if (segments.length === 3) {
+      if (segments[2] !== "files") return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
+      return json(await listPublicSkillFiles(client, decodeURIComponent(segments[1]), url.searchParams.get("version")));
+    }
+    if (segments.length === 2) return json(await getPublicSkill(client, decodeURIComponent(segments[1])));
+    return json(
+      await searchPublicSkills(client, {
+        query: url.searchParams.get("q"),
+        category: url.searchParams.get("category"),
+        compat: listParam(url, "compat"),
+        license: url.searchParams.get("license"),
+        hasPackage: url.searchParams.get("has_package") === "true" ? true : null,
+        tags: listParam(url, "tag"),
         sort: url.searchParams.get("sort"),
         limit: intParam(url, "limit"),
         cursor: url.searchParams.get("cursor"),

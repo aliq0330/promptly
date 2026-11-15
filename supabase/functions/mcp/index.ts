@@ -43,7 +43,7 @@ const me =
 
 Deno.serve(
   createRemoteHandler({
-    version: "0.2.0",
+    version: "0.3.0",
     me,
     getClient: () => createRestClient({ url: SUPABASE_URL, anonKey: ANON_KEY }),
     log: (message, error) => console.error("mcp", message, error ?? ""),

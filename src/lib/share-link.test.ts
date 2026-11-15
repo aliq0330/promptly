@@ -13,11 +13,14 @@ test("detail hrefs of the seven shareable kinds become share paths", () => {
   // docs/history/306-*: Space ve alıntı da kendi önizleme sayfasına sahip; ek parametreli (sekme, odak) bağlantılar olduğu gibi kalır.
   assert.equal(shareLinkForHref(`/spaces/local?id=${ID}`), `/share/space/${ID}/`);
   assert.equal(shareLinkForHref(`/quotes/local?id=${ID}`), `/share/quote/${ID}/`);
+  assert.equal(shareLinkForHref(`/skills/local?id=${ID}`), `/share/skill/${ID}/`);
   assert.equal(shareLinkForHref(`/spaces/local?id=${ID}&tab=comments`), `/spaces/local?id=${ID}&tab=comments`);
   assert.deepEqual(parseSharePath(`/promptly/share/space/${ID}/`), { kind: "space", key: ID });
   assert.deepEqual(parseSharePath(`/share/quote/${ID}`), { kind: "quote", key: ID });
+  assert.deepEqual(parseSharePath(`/share/skill/${ID}`), { kind: "skill", key: ID });
   assert.equal(detailHrefFor("space", ID), `/spaces/local?id=${ID}`);
   assert.equal(detailHrefFor("quote", ID), `/quotes/local?id=${ID}`);
+  assert.equal(detailHrefFor("skill", ID), `/skills/local?id=${ID}`);
 });
 
 test("anything else is returned unchanged (results, collections, tags, messages, odd params)", () => {

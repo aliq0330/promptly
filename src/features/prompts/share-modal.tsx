@@ -42,7 +42,7 @@ export type ShareModalTarget =
   | { contentType: "request"; request: PromptRequest }
   | { contentType: "workflow"; workflow: Workflow }
   | { contentType: "preset"; preset: Preset }
-  /** Bir Skill (docs/history/391-*): bağlantı Skill'in kendi sayfasıdır (statik paylaşım sayfası sonraki dilimdir). */
+  /** Bir Skill (docs/history/391-*, 393-*): bağlantı statik paylaşım sayfasıdır (`/share/skill/<id>/`, kendi başlığı/açıklamasıyla). */
   | { contentType: "skill"; skill: Skill }
   | { contentType: "prompt_result"; result: PromptResult }
   /** Bir topluluk gönderisi (başvuru): önizleme çağıran tarafından hazırlanır; bağlantı gönderinin kendi sayfasıdır. */
@@ -159,7 +159,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       badgeVariant: "neutral",
       href: skillHref(skill),
       messageParam: null,
-      directLink: true,
+      directLink: false,
       storyLink: null,
     };
   }

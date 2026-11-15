@@ -35,6 +35,7 @@ export interface DeveloperSnippets {
   curlSearch: string;
   curlGet: string;
   curlSearchContent: string;
+  curlSearchSkills: string;
   curlFill: string;
   fetchJs: string;
   pythonRequests: string;
@@ -62,6 +63,7 @@ export function developerSnippets(endpoints: DeveloperEndpoints): DeveloperSnipp
     curlSearch: `curl "${apiBase}/prompts?q=cyberpunk&content_type=image&limit=5"`,
     curlGet: `curl "${apiBase}/prompts/<id>"`,
     curlSearchContent: `curl "${apiBase}/workflows?q=logo&limit=5"`,
+    curlSearchSkills: `curl "${apiBase}/skills?q=review&compat=claude-code&limit=5"`,
     curlFill: `curl -X POST "${apiBase}/prompts/<id>/fill" \\\n  -H "Content-Type: application/json" \\\n  -d '{"values":{"subject":"a lighthouse"}}'`,
     fetchJs: `const res = await fetch("${apiBase}/prompts?q=logo&limit=3");\nconst { items } = await res.json();\nconsole.log(items[0].title, items[0].url);`,
     curlMe: `curl "${apiBase}/me" \\\n  -H "Authorization: Bearer pmt_YOUR_KEY"`,

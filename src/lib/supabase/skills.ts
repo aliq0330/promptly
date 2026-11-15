@@ -3,8 +3,7 @@ import { withoutBlocked } from "./blocked-users";
 import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { PROFILE_SELECT } from "./profiles";
 import { mapProfileRow, type ProfileRow } from "./mappers";
-import { sanitizeSearchText, type ContentSearchFilters } from "./taxonomy-query";
-import type { SearchCursor, SearchPage } from "./search";
+import { sanitizeSearchText } from "./taxonomy-query";
 import { OWNED_PAGE, type OwnedListFilter, type PagedResult } from "./paged";
 import { translateForRuntime } from "@/lib/i18n/runtime";
 import { isValidSkillSlug, slugifySkillName, withSlugSuffix } from "@/lib/skills/skill-md";
@@ -93,36 +92,6 @@ export async function fetchRecentSkills(limit = 24, cursor?: KeysetCursor): Prom
     return { items: await withoutBlocked(rows.map(mapSkillRow), (skill) => skill.creator.id), nextCursor: nextCursorFrom(rows, limit, (row) => row.created_at) };
   } catch (err) {
     console.error("fetchRecentSkills", err);
-    return { items: [], nextCursor: null };
-  }
-}
-
-/**
- * Basit metin araması (başlık, açıklama, talimat). Metin eşleşmesi tek `.or()` olduğundan sayfa imleci yalnız `created_at`'e bakar
- * (aynı anda eklenen satırlar nadiren atlanabilir). Kalıcı çözüm `search_content`'e `skill` türünü eklemektir (yapılacaklar listesi).
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- süzgeçler Skill süzgeçleri diliminde (yapılacaklar listesi) kullanılacak
-export async function searchSkillsPage(query: string, _filters: ContentSearchFilters = {}, limit = 20, cursor?: SearchCursor | null): Promise<SearchPage<Skill>> {
-  try {
-    const text = sanitizeSearchText(query);
-    let request = supabase
-      .from("skills")
-      .select(SKILL_LIST_SELECT)
-      .eq("status", "published")
-      .eq("visibility", "public")
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .limit(limit);
-    if (text) request = request.or(`title.ilike.%${text}%,summary.ilike.%${text}%,instructions.ilike.%${text}%`);
-    if (cursor) request = request.lt("created_at", cursor.createdAt);
-    const { data, error } = await request;
-    if (error) throw new Error(error.message);
-    const rows = (data ?? []) as unknown as SkillRow[];
-    const items = await withoutBlocked(rows.map(mapSkillRow), (skill) => skill.creator.id);
-    const last = rows[rows.length - 1];
-    return { items, nextCursor: rows.length === limit && last ? { rank: 0, createdAt: last.created_at, id: last.id } : null };
-  } catch (err) {
-    console.error("searchSkillsPage", err);
     return { items: [], nextCursor: null };
   }
 }

@@ -101,6 +101,15 @@ export const SHARE_SOURCES: readonly ShareSource[] = [
     },
   },
   {
+    kind: "skill",
+    table: "skills",
+    keyColumn: "id",
+    titleColumn: "title",
+    descriptionColumn: "summary",
+    // Yalnız yayında + herkese açık Skill'in sayfası olur (docs/history/393-*); taslak/özel Skill'in başlığı hiçbir meta etikete girmez.
+    filters: ["status=eq.published", "visibility=eq.public"],
+  },
+  {
     kind: "profile",
     table: "profiles",
     keyColumn: "username",

@@ -11,7 +11,9 @@ import { DetailSection } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatBytes } from "@/lib/skills/paths";
 import { attachmentKey, fetchAttachmentCards, type AttachmentCard } from "@/lib/supabase/comment-attachments";
-import { fetchSkillRelations, getSkillPackageUrl, recordSkillUse, setSkillVersionDeprecated, skillErrorMessage, type SkillRelation, type SkillVersion } from "@/lib/supabase/skill-package";
+import { fetchMySkillPin, fetchSkillRelations, getSkillPackageUrl, pinSkillVersion, recordSkillUse, setSkillVersionDeprecated, skillErrorMessage, unpinSkill, type SkillRelation, type SkillVersion } from "@/lib/supabase/skill-package";
+import { Pin } from "@/components/icons/pin";
+import { useAuth } from "@/features/auth/auth-provider";
 import { formatRelativeTime } from "@/lib/utils";
 
 /** Yayınlanmış sürümlerin en yenisi (kullanımdan kaldırılmamış olan tercih edilir). */
@@ -41,9 +43,42 @@ export function SkillVersionsSection({
   onChanged: () => void;
 }) {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const latest = pickLatestVersion(versions);
+  // Kişisel sürüm sabitleme (docs/history/393-*): yazar kendi Skill'ini sabitlemez; yeni sürüm çıkınca sabitleyene bildirim gider.
+  const [pinned, setPinned] = useState<string | null>(null);
+  const canPin = Boolean(user) && !isOwn;
+  useEffect(() => {
+    if (!user || isOwn) return;
+    let cancelled = false;
+    fetchMySkillPin(skillId, user.id)
+      .then((version) => !cancelled && setPinned(version))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [skillId, user, isOwn]);
+
+  async function togglePin(version: SkillVersion) {
+    if (!user) return;
+    setBusy(`pin:${version.id}`);
+    setError(null);
+    try {
+      if (pinned === version.version) {
+        await unpinSkill(skillId, user.id);
+        setPinned(null);
+      } else {
+        await pinSkillVersion(skillId, user.id, version.version);
+        setPinned(version.version);
+      }
+    } catch (err) {
+      setError(skillErrorMessage(err));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function download(version: SkillVersion) {
     setError(null);
@@ -79,8 +114,14 @@ export function SkillVersionsSection({
                 <span className="font-display text-body font-bold text-text">{version.version}</span>
                 {latest?.id === version.id && <Badge variant="success">{t("skill.detail.latest")}</Badge>}
                 {version.deprecatedAt && <Badge variant="warning">{t("skill.detail.deprecated")}</Badge>}
+                {pinned === version.version && <Badge variant="neutral" data-skill-pinned="">{t("skill.detail.pinned")}</Badge>}
                 <span className="text-caption text-text-muted">{formatRelativeTime(version.createdAt, language)}</span>
                 <span className="ml-auto flex items-center gap-1">
+                  {canPin && (
+                    <Button type="button" variant="ghost" size="sm" disabled={busy === `pin:${version.id}`} aria-pressed={pinned === version.version} onClick={() => void togglePin(version)} data-skill-pin="">
+                      <Pin size={14} aria-hidden /> {pinned === version.version ? t("skill.detail.unpin") : t("skill.detail.pin")}
+                    </Button>
+                  )}
                   {isOwn && (
                     <Button type="button" variant="ghost" size="sm" disabled={busy === version.id} onClick={() => void toggleDeprecated(version)} data-skill-deprecate="">
                       {version.deprecatedAt ? t("skill.detail.undeprecate") : t("skill.detail.deprecate")}

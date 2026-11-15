@@ -27,3 +27,30 @@ export function downloadSkillMd(skill: Skill): void {
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Skill'in makine okunur özeti (indirilebilir JSON): ad, sürüm, lisans, uzmanlık alanı, uyumlu araçlar, yazar ve bağlantı. Talimat metni burada yoktur (SKILL.md'dedir). */
+export function skillMetadataJson(skill: Skill): string {
+  const url = typeof window === "undefined" ? null : `${window.location.origin}${window.location.pathname}?id=${skill.id}`;
+  return JSON.stringify(
+    { name: skill.slug, title: skill.title, description: skill.summary, version: skill.version, license: skill.license, category: skill.category, compat: skill.compat, author: skill.creator.username, source: url },
+    null,
+    2,
+  );
+}
+
+function downloadText(fileName: string, text: string, type: string): void {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function downloadSkillMetadata(skill: Skill): void {
+  downloadText(`${skill.slug}.json`, skillMetadataJson(skill), "application/json;charset=utf-8");
+}
+
