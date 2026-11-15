@@ -54,12 +54,12 @@ Lisans: MIT, Apache-2.0, CC0-1.0, CC-BY-4.0, CC-BY-SA-4.0, özel (tüm hakları 
 | Tablo | Görevi | Durum |
 | --- | --- | --- |
 | `skills` | Ana kayıt, talimat, sayaçlar (korumalı) | **Çekirdekte yapıldı** (`20261126100000_skills_core.sql`) |
-| `skill_versions` | Değişmez sürüm (`version`, `changelog`, `package_path`, `package_sha256`, `manifest jsonb`) | Yapılacak |
-| `skill_files` | Dosya kayıtları (`path`, `kind`, `size`, `sha256`, `storage_path`, `is_script`) | Yapılacak |
-| `skill_tags` | Etiket bağları (`tags` + sayaç tetikleyicisi kalıbı) | Yapılacak |
-| `skill_relations` | Prompt/Workflow/Ayar paketi bağları (kimlik başvurusu, `quote_target_ok`) | Yapılacak |
-| `skill_uses` | Kişi-Skill-gün kullanım kaydı (`prompt_copy_events` kalıbı; istemciye kapalı) | Yapılacak |
-| `skill_pins` | Kişisel sürüm sabitleme | Yapılacak |
+| `skill_versions` | Değişmez sürüm (`version`, `changelog`, `package_path`, `package_sha256`, `manifest jsonb`) | **Yapıldı** (`20261127100000`, `389-*`) |
+| `skill_files` | Dosya kayıtları (`path`, `kind`, `size`, `sha256`, `storage_path`, `is_script`) | **Yapıldı** (`20261127100000`, `389-*`) |
+| `skill_tags` | Etiket bağları (`tags` + sayaç tetikleyicisi kalıbı) | **Yapıldı** (`20261127100000`, `389-*`) |
+| `skill_relations` | Prompt/Workflow/Ayar paketi bağları (kimlik başvurusu, `quote_target_ok`) | **Yapıldı** (`20261127100000`, `389-*`) |
+| `skill_uses` | Kişi-Skill-gün kullanım kaydı (`prompt_copy_events` kalıbı; istemciye kapalı) | **Yapıldı** (`20261127100000`, `389-*`) |
+| `skill_pins` | Kişisel sürüm sabitleme | **Yapıldı** (`20261127100000`, `389-*`) |
 | `skill_categories` | Uzmanlık taksonomisi (şimdilik `skills.category` CHECK; tablo ileride) | Yapılacak (karar) |
 
 Ortak tablolara `skill_id` dalları: `prompt_likes`, `prompt_comments` (+ `target_id` birleşimi, `handle_prompt_like_change` /
@@ -179,6 +179,8 @@ medyan. Gerçek Supabase/Storage/cihaz denenemez: raporda "denenmedi" yazılır;
 | 5.3 | 5 | Açık API, MCP araçları, `public-skills`, Edge deploy, `promptly-mcp` sürümü | 5.1 |
 | 5.4 | 5 | Açılış: menü bayrağı, Gizlilik ve Koşullar, çeviri gözden geçirme | 5.2, 5.3 |
 | 6.x | 6 | Çalıştı mı oyu, kalite göstergeleri, güvenlik taraması, Skill paketlerini bağlama | 5.4 |
+
+**Yapıldı:** çekirdek (`388-*`) + dilim 1.2, 1.3, 1.4 (Edge deploy elle) + 2.1, 2.2, 2.3 (`389-*`). Kalan: 3.x, 4.x, 5.x, 6.x.
 
 **Çekirdek dilim (yapıldı)**, yukarıdakilerin yalnız temel kısmını kapsar: 1.1'in `skills` tablosu, 1.3'ün `skill-md` + kategori yardımcıları,
 2.1'in kolay mod editörü, 4.1'in basit listesi ve basit detay sayfası ile menü girişi (bayrak arkasında). Ayrıntı: `docs/history/388-skill-cekirdegi.md`.

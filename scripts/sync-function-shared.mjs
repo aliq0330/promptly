@@ -25,6 +25,13 @@ const ENTRY = join(SRC, "lib/public-api/index.ts");
 export const VENDOR_DIR = join(ROOT, "supabase/functions/_shared/promptly");
 const README = "README.md";
 
+/**
+ * İKİNCİ çekirdek: Skill paketi (doğrulama, derleme, yayın akışı) — `skill-package` Edge Function'ı için. Aynı kurallar (göreli içe aktarma,
+ * `.ts` uzantısı, bağımlılıksız): ZIP kütüphanesi (`fflate`) buraya girmez, Edge'de `npm:fflate` ile dışarıdan verilir. docs/history/389-*.
+ */
+const SKILLS_ENTRY = join(SRC, "lib/skills/package-publish.ts");
+export const SKILLS_VENDOR_DIR = join(ROOT, "supabase/functions/_shared/skills");
+
 /** [kaynak, hedef] — repo köküne göre. Hedef klasörde elle yazılmış dosyalar da vardır (index.ts, deno.json); yalnız bunlar üretilir. */
 const EXTRA_FILES = [
   ["mcp/src/server.ts", "supabase/functions/mcp/server.ts"],
@@ -72,7 +79,7 @@ export function collectFiles(entry = ENTRY) {
   return [...seen].map((file) => relative(SRC, file)).sort();
 }
 
-function listVendored(dir = VENDOR_DIR, base = VENDOR_DIR) {
+function listVendored(dir = VENDOR_DIR, base = dir) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir).flatMap((name) => {
     const full = join(dir, name);
@@ -89,16 +96,32 @@ Supabase deploy'u yalnız \`supabase/functions\`'ı paketler). Kaynağı değiş
 \`npm test\` kopya eskiyse kırılır. Ayrıntı: \`docs/history/297-*\`.
 `;
 
+const SKILLS_README_TEXT = `# Üretilmiş kopya — elle düzenleme
+
+Bu klasör \`src/lib/skills\` içindeki Skill paketi çekirdeğinin (doğrulama, derleme, yayın akışı) BİREBİR kopyasıdır (Edge Function \`skill-package\` için;
+Supabase deploy'u yalnız \`supabase/functions\`'ı paketler). Kaynağı değiştir, sonra \`node scripts/sync-function-shared.mjs\` çalıştır.
+\`npm test\` kopya eskiyse kırılır. Ayrıntı: \`docs/history/389-*\`.
+`;
+
+/** [giriş, hedef klasör, README metni] — her biri kendi kapsamını giriş dosyasından kendiliğinden bulur. */
+const TARGETS = [
+  { entry: ENTRY, dir: VENDOR_DIR, readme: README_TEXT },
+  { entry: SKILLS_ENTRY, dir: SKILLS_VENDOR_DIR, readme: SKILLS_README_TEXT },
+];
+
 /** Farklar: eksik/eskimiş/fazla dosyalar. */
 export function diff() {
   const files = collectFiles();
   const problems = [];
-  for (const rel of files) {
-    const target = join(VENDOR_DIR, rel);
-    if (!existsSync(target)) problems.push(`missing: ${rel}`);
-    else if (readFileSync(target, "utf8") !== readFileSync(join(SRC, rel), "utf8")) problems.push(`stale: ${rel}`);
+  for (const { entry, dir } of TARGETS) {
+    const list = collectFiles(entry);
+    for (const rel of list) {
+      const target = join(dir, rel);
+      if (!existsSync(target)) problems.push(`missing: ${relative(ROOT, target)}`);
+      else if (readFileSync(target, "utf8") !== readFileSync(join(SRC, rel), "utf8")) problems.push(`stale: ${relative(ROOT, target)}`);
+    }
+    for (const rel of listVendored(dir)) if (!list.includes(rel)) problems.push(`extra: ${relative(ROOT, join(dir, rel))}`);
   }
-  for (const rel of listVendored()) if (!files.includes(rel)) problems.push(`extra: ${rel}`);
   for (const [from, to] of EXTRA_FILES) {
     const target = join(ROOT, to);
     const expected = extraContent(from, readFileSync(join(ROOT, from), "utf8"), files);
@@ -110,13 +133,15 @@ export function diff() {
 
 function write() {
   const files = collectFiles();
-  rmSync(VENDOR_DIR, { recursive: true, force: true });
-  for (const rel of files) {
-    const target = join(VENDOR_DIR, rel);
-    mkdirSync(dirname(target), { recursive: true });
-    writeFileSync(target, readFileSync(join(SRC, rel), "utf8"));
+  for (const { entry, dir, readme } of TARGETS) {
+    rmSync(dir, { recursive: true, force: true });
+    for (const rel of collectFiles(entry)) {
+      const target = join(dir, rel);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, readFileSync(join(SRC, rel), "utf8"));
+    }
+    writeFileSync(join(dir, README), readme);
   }
-  writeFileSync(join(VENDOR_DIR, README), README_TEXT);
   for (const [from, to] of EXTRA_FILES) {
     mkdirSync(dirname(join(ROOT, to)), { recursive: true });
     writeFileSync(join(ROOT, to), extraContent(from, readFileSync(join(ROOT, from), "utf8"), files));
@@ -128,7 +153,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (process.argv.includes("--check")) {
     const problems = diff();
     if (problems.length > 0) {
-      console.error(`The vendored Edge Function copies (supabase/functions/_shared/promptly, supabase/functions/mcp) are out of date:\n  ${problems.join("\n  ")}\nRun: node scripts/sync-function-shared.mjs`);
+      console.error(`The vendored Edge Function copies (supabase/functions/_shared/promptly, supabase/functions/_shared/skills, supabase/functions/mcp) are out of date:\n  ${problems.join("\n  ")}\nRun: node scripts/sync-function-shared.mjs`);
       process.exit(1);
     }
     console.log("Vendored Edge Function copies are up to date.");

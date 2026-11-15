@@ -449,3 +449,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_K
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-nav-layout.mjs   # 13/13 beklenir
 SHOTS=/tmp/nav-shots node tests/messaging-ui/run-nav-layout.mjs   # ekran görüntüleri
 ```
+
+## Skill paketi ve gelişmiş editör (`docs/history/389-*`)
+
+`run-skills-package.mjs` (23 senaryo): kolay mod bozulmadı, gelişmiş mod bölümleri, **ad yokken dosya yüklenmez / ad verilince taslak kendiliğinden açılır**, kötü dosyaların (ELF, iç içe ZIP, geçersiz JSON, .exe) yüklemeden reddi ve sebebin satırda görünmesi, betik klasörü uyarısı + "Betik" rozeti, tam ekran düzenleyici (yeni dosya, canlı güvenli Markdown önizlemesi — `<script>` ve `javascript:` bağlantısı çalışmaz/çizilmez, JSON hatasında Kaydet kapalı, kaydedilmemiş değişiklik sorusu, masaüstünde `role="tree"` + üç bölme, telefonda dosya seçici + sekmeler), var olan dosyayı düzenleme/değiştirme/silme, sürüm yayını (ilk 1.0.0, sürüm önerisi, ZORUNLU değişiklik notu, 1.10.0 > 1.1.0, uyarı onayı sonrası **aynı `client_token`** ile yeniden gönderme, doğrulama hatası/servis yok mesajı), detay sayfası (ZIP birincil eylem, sürümler, manifest + betik uyarısı, kullanımdan kaldır, imzalı adresten eski sürümü indirme), ZIP içe aktarma (zip slip + ELF raporu, yazar/sürüm dosyadan alınmaz), İngilizce, telefon taşması. Ağ taklidi testin içindedir (`withSkills` + `installSkillRoutes`: `skills`/`skill_files`/`skill_versions`/`skill_relations`, `skill-files` Storage yüklemesi/indirmesi/imzası ve Edge Function `skill-package`). **Gerçek Supabase'e / Storage'a / Edge Function'a KARŞI DENENMEDİ** — DB kuralları `supabase/tests/skills-package.sql`, paket kuralları `src/lib/skills/*.test.ts`.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy NEXT_PUBLIC_SKILLS_ENABLED=true npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-skills-package.mjs   # 23/23 beklenir (port 4189)
+```
