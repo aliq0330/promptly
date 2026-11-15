@@ -36,7 +36,7 @@ interface ShareSource {
 
 /** First non-empty `title` among the embedded target rows of a quote (a hidden target embeds as null — then there is no page). */
 function quotedTitle(record: Record<string, unknown>): string | null {
-  for (const key of ["prompts", "prompt_requests", "workflows", "presets", "spaces"]) {
+  for (const key of ["prompts", "prompt_requests", "workflows", "presets", "spaces", "skills"]) {
     const embed = record[key];
     const row = Array.isArray(embed) ? embed[0] : embed;
     if (row && typeof row === "object" && typeof (row as Record<string, unknown>).title === "string") return (row as Record<string, string>).title;
@@ -94,7 +94,7 @@ export const SHARE_SOURCES: readonly ShareSource[] = [
     descriptionColumn: "note",
     filters: [],
     // Alıntının kendi başlığı yoktur: sayfa, alıntılanan içeriğin başlığını ve alıntı notunu taşır. Hedef RLS ile okunamıyorsa embed null gelir ve satır düşer.
-    select: "id,note,prompts(title),prompt_requests(title),workflows(title),presets(title),spaces(title)",
+    select: "id,note,prompts(title),prompt_requests(title),workflows(title),presets(title),spaces(title),skills(title)",
     pick: (record) => {
       const title = quotedTitle(record);
       return title ? { title, description: record.note } : null;

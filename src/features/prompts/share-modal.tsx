@@ -31,7 +31,7 @@ import { AddToSpaceModal, type AddToSpaceTarget } from "@/features/spaces/add-to
 import { SpaceShareSettings } from "@/features/spaces/space-modals";
 import { SPACE_KIND_LABEL, spaceHref } from "@/lib/spaces";
 import type { Space } from "@/lib/supabase/spaces";
-import type { CommunityPostType } from "@/lib/supabase/communities";
+import type { QuoteContentType } from "@/lib/supabase/quotes";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { quoteHref } from "@/lib/quotes";
 import type { Quote } from "@/lib/supabase/quotes";
@@ -229,7 +229,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
  * "Alıntıla" hedefi (akışta + topluluklarda; eskiden "Topluluklarda duyur"): yalnız topluluğa ait OLMAYAN içerik; herkese açık + yayında değilse satır nedeniyle kapalı durur
  * (topluluk paylaşımı hiçbir içeriği otomatik açmaz). Sonuç ve topluluk gönderisi duyurulamaz.
  */
-function announceTarget(target: ShareModalTarget, space: Space | null): { type: CommunityPostType; id: string; blockedKey: TranslationKey | null } | null {
+function announceTarget(target: ShareModalTarget, space: Space | null): { type: QuoteContentType; id: string; blockedKey: TranslationKey | null } | null {
   if (target.contentType === "prompt") {
     const x = target.prompt;
     if (x.communityId) return null;
@@ -249,6 +249,10 @@ function announceTarget(target: ShareModalTarget, space: Space | null): { type: 
     const x = target.preset;
     if (x.communityId) return null;
     return { type: "preset", id: x.id, blockedKey: x.status === "published" && x.visibility === "public" ? null : "share.announce.notPublic" };
+  }
+  if (target.contentType === "skill") {
+    const x = target.skill;
+    return { type: "skill", id: x.id, blockedKey: x.status === "published" && x.visibility === "public" ? null : "share.announce.notPublic" };
   }
   if (target.contentType === "space" && space) {
     return { type: "space", id: space.id, blockedKey: space.visibility === "public" && !space.archivedAt ? null : "share.announce.spaceNotPublic" };
