@@ -995,6 +995,41 @@ export interface Workflow {
  * to a Generator against the same fixed group/option catalog. It is a
  * STARTING configuration, never a locked one.
  */
+/** Skill'in uzmanlık alanı (kendi taksonomisi; görsel/metin/ses/video'dan bağımsız). DB: `skills.category` CHECK. */
+export type SkillCategory = "software" | "design" | "research" | "business" | "marketing" | "education" | "data" | "productivity";
+/** Hedef araç uyumluluğu (yalnız veri; hiçbir araç sunucuda çalıştırılmaz). DB: `skills.compat` CHECK. */
+export type SkillCompat = "claude-code" | "codex" | "cursor" | "other";
+/** Lisans kodu (SPDX'e eşlenir, `lib/skills/skill-md.ts`). DB: `skills.license` CHECK. */
+export type SkillLicense = "mit" | "apache-2.0" | "cc0-1.0" | "cc-by-4.0" | "cc-by-sa-4.0" | "proprietary";
+
+/**
+ * Skill / Beceri (docs/history/388-*) — 5. içerik türü, çekirdek dilim. Aranabilir metin (`instructions`) DB'de durur;
+ * `SKILL.md` bundan derlenir. Dosyalar, sürüm geçmişi ve ortak sosyal sayaçlar sonraki dilimlerdir (`docs/yapilacaklar.md`).
+ */
+export interface Skill {
+  id: string;
+  creator: UserProfile;
+  /** Klasör ve SKILL.md `name` alanı; yazar içinde benzersiz. */
+  slug: string;
+  title: string;
+  summary: string;
+  /** SKILL.md gövdesi (Markdown). Liste sorgularında BOŞ gelir (`fetchRecentSkills`), yalnız detayda okunur. */
+  instructions: string;
+  category: SkillCategory | null;
+  compat: SkillCompat[];
+  license: SkillLicense;
+  version: string;
+  status: "draft" | "published";
+  visibility: "public" | "private";
+  /** Korumalı sayaçlar (`skills.*_count`); bu dilimde hiçbir tetikleyici yazmaz, hep 0. */
+  useCount: number;
+  likeCount: number;
+  commentCount: number;
+  saveCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Preset {
   id: string;
   creator: UserProfile;

@@ -19,6 +19,8 @@ const ROUTE_TITLES: Record<string, TranslationKey> = {
   "/workflows/create": "nav.workflows",
   "/presets": "nav.presets",
   "/presets/create": "nav.presets",
+  "/skills": "skill.pageTitle",
+  "/skills/create": "skill.pageTitle",
   "/tags": "nav.tags",
   "/saved": "nav.saved",
   "/following": "nav.followingPeople",

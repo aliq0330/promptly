@@ -270,6 +270,11 @@ export function presetHref(preset: { id: string }): string {
   return `/presets/local?id=${preset.id}`;
 }
 
+/** Skill detay sayfası (statik export: `/skills/local?id=`). */
+export function skillHref(skill: { id: string }): string {
+  return `/skills/local?id=${skill.id}`;
+}
+
 /**
  * İlişki Haritası for one piece of content — a parameterless static route +
  * `?type=&id=`, same idea as `promptHref`. `kind` is prompt |

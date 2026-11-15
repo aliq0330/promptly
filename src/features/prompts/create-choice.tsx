@@ -10,6 +10,7 @@ import { Megaphone } from "@/components/icons/megaphone";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { Workflow } from "@/components/icons/workflow";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -17,6 +18,7 @@ import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { SpacesIcon } from "@/features/spaces/space-visuals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { cn } from "@/lib/utils";
 import { ShareExistingModal } from "./share-existing-modal";
 import { DialogShell } from "@/components/ui/dialog-shell";
@@ -35,6 +37,8 @@ const ROWS: MenuOption[] = [
 const TILES: MenuOption[] = [
   { key: "workflow", href: "/workflows/create", icon: Workflow, titleKey: "createMenu.workflow" },
   { key: "preset", href: "/presets/create", icon: SlidersHorizontal, titleKey: "createMenu.preset" },
+  // Skill (docs/history/388-*): 5. içerik türü; giriş `NEXT_PUBLIC_SKILLS_ENABLED` arkasındadır (çekirdek dilim yarım bir özelliktir).
+  ...(SKILLS_MENU_ENABLED ? [{ key: "skill", href: "/skills/create", icon: GraduationCap, titleKey: "createMenu.skill" } satisfies MenuOption] : []),
   { key: "space", href: "/spaces?new=1", icon: SpacesIcon, titleKey: "createMenu.space" },
 ];
 
@@ -54,7 +58,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
   const { user } = useAuth();
   const { requireAuth } = useAuthPrompt();
   const [shareExisting, setShareExisting] = useState(false);
-  const hrefOf = (option: MenuOption) => (option.key === "space" ? option.href : withParam(withParam(option.href, "tag", tag), "community", community));
+  const hrefOf = (option: MenuOption) => (option.key === "space" || option.key === "skill" ? option.href : withParam(withParam(option.href, "tag", tag), "community", community));
 
   return (
     <div data-create-menu="">
@@ -74,7 +78,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
           </li>
         ))}
       </ul>
-      <div className="grid grid-cols-3 gap-2 pt-3">
+      <div className={cn("grid gap-2 pt-3", TILES.length > 3 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3")}>
         {TILES.map((option) => (
           <Link
             key={option.key}
