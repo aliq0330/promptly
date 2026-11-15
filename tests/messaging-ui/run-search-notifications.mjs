@@ -51,7 +51,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 // Arama sonuç türleri TEK menüde (docs/history/236-*).
 const resultMenu = (page) => page.locator("[data-section-menu]");
-const resultTabNames = async (page) => { await resultMenu(page).click(); const names = (await page.getByRole("radio").allTextContents()).map((x) => x.trim()); await page.keyboard.press("Escape"); await page.mouse.click(5, 5); return names; };
+const resultTabNames = async (page) => { await resultMenu(page).click(); await page.getByRole("radio").first().waitFor(); const names = (await page.getByRole("radio").allTextContents()).map((x) => x.trim()); await page.keyboard.press("Escape"); await page.mouse.click(5, 5); return names; };
 const pickResultTab = async (page, name) => { await resultMenu(page).click(); await page.getByRole("radio", { name, exact: true }).click(); };
 
 const seedCommunities = (db) => {
