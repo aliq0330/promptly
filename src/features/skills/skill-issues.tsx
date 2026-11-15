@@ -34,10 +34,22 @@ export const SKILL_ISSUE_KEYS: Record<SkillIssueCode, TranslationKey> = {
   secret_private_key: "skill.pkg.issue.secret_private_key",
   secret_jwt: "skill.pkg.issue.secret_jwt",
   secret_warning: "skill.pkg.issue.secret_warning",
+  script_risk: "skill.pkg.issue.script_risk",
+};
+
+const RISK_KEYS: Record<string, TranslationKey> = {
+  pipe_to_shell: "skill.scan.pipe_to_shell",
+  network: "skill.scan.network",
+  destructive_delete: "skill.scan.destructive_delete",
+  dynamic_eval: "skill.scan.dynamic_eval",
+  privilege: "skill.scan.privilege",
+  credential_paths: "skill.scan.credential_paths",
+  obfuscation: "skill.scan.obfuscation",
 };
 
 export function issueText(issue: SkillIssue, t: (key: TranslationKey, params?: Record<string, string>) => string): string {
   const base = t(SKILL_ISSUE_KEYS[issue.code]);
+  if (issue.code === "script_risk" && issue.detail) return `${base} (${RISK_KEYS[issue.detail] ? t(RISK_KEYS[issue.detail]) : issue.detail})`;
   return issue.code === "secret_warning" && issue.detail ? `${base} (${issue.detail})` : base;
 }
 

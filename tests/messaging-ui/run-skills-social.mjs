@@ -477,6 +477,14 @@ await scenario("24. Oy sonrası araç etiketi: 'Hangi araçta denedin?' Cursor s
   assert.deepEqual(state.toolCalls[1], { p_skill_id: S_PUB, p_tool: null });
 });
 
+await scenario("25. Genel arama: metin aramasında 'Skill'ler' grubu skill_feed_page'den gelir", async ({ page, state }) => {
+  await page.goto(`${BASE}/search?q=logo`);
+  const group = page.locator("[data-search-skills]");
+  await group.waitFor();
+  assert.match(await group.innerText(), /Logo Skill/);
+  assert.ok(state.feedCalls.some((call) => call.p_query === "logo"));
+});
+
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {
   await openDetail(page);
   await page.locator("#comments").waitFor();

@@ -121,3 +121,55 @@ export function readSkillZip(zip: Uint8Array): ReadZipResult {
   }
   return { files, skillMd, metadata, issues };
 }
+
+/**
+ * Klasör içe aktarma (docs/history/398-*): tarayıcının klasör seçicisinden gelen dosyalar (`webkitRelativePath` = `klasör/yol/dosya`) ZIP'le AYNI kurallardan geçer — tek üst klasör
+ * soyulur, `SKILL.md`/`metadata.json`/`LICENSE` aynı işlenir, yol/boyut/sayı denetimleri aynıdır. `entries`: seçilen dosyaların göreli yolu + baytları.
+ */
+export function readSkillFolder(entries: readonly { path: string; bytes: Uint8Array }[]): ReadZipResult {
+  const issues: SkillIssue[] = [];
+  const kept = entries.filter((entry) => !IGNORED(entry.path));
+  if (kept.length > SKILL_LIMITS.maxFiles + 3) {
+    issues.push({ path: "", code: "too_many_files", severity: "error", detail: String(kept.length) });
+    return { files: [], skillMd: null, metadata: null, issues };
+  }
+  const total = kept.reduce((sum, entry) => sum + entry.bytes.length, 0);
+  if (total > SKILL_LIMITS.maxTotalBytes + 1024 * 1024) {
+    issues.push({ path: "", code: "total_too_large", severity: "error", detail: String(total) });
+    return { files: [], skillMd: null, metadata: null, issues };
+  }
+  const root = stripSingleRoot(kept.map((entry) => entry.path));
+  const files: SkillFileInput[] = [];
+  let skillMd: string | null = null;
+  let metadata: Record<string, unknown> | null = null;
+  for (const entry of kept) {
+    const name = entry.path;
+    if (entry.bytes.length > SKILL_LIMITS.maxFileBytes) {
+      issues.push({ path: name, code: "file_too_large", severity: "error", detail: String(entry.bytes.length) });
+      continue;
+    }
+    const path = root && name.startsWith(root) ? name.slice(root.length) : name;
+    if (path.toLowerCase() === "skill.md") {
+      skillMd = new TextDecoder("utf-8", { fatal: false }).decode(entry.bytes);
+      files.push({ path: "SKILL.md", bytes: entry.bytes });
+      continue;
+    }
+    if (path === "metadata.json") {
+      try {
+        const parsed: unknown = JSON.parse(new TextDecoder("utf-8").decode(entry.bytes));
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) metadata = parsed as Record<string, unknown>;
+      } catch {
+        /* geçersiz JSON yok sayılır */
+      }
+      continue;
+    }
+    if (path === "LICENSE") continue;
+    const pathIssue = validateSkillPath(path);
+    if (pathIssue) {
+      issues.push(pathIssue);
+      continue;
+    }
+    files.push({ path, bytes: entry.bytes });
+  }
+  return { files, skillMd, metadata, issues };
+}

@@ -12,6 +12,7 @@ import {
   toExchangePrompt,
   toExchangeRequest,
   toExchangeSkill,
+  withSkillSourceNote,
   toExchangeWorkflow,
   withSourceNote,
   type BulkBatchReport,
@@ -174,7 +175,7 @@ export async function importContent<K extends ExchangeContentKind>(kind: K, item
   const { data, error } = kind === "workflow"
     ? await supabase.rpc("import_workflows", { p_items: items, p_dry_run: dryRun })
     : kind === "skill"
-      ? await supabase.rpc("import_skills", { p_items: items, p_dry_run: dryRun })
+      ? await supabase.rpc("import_skills", { p_items: (items as ExchangeSkill[]).map((item) => withSkillSourceNote(item)).map(({ source: _source, ...rest }) => rest), p_dry_run: dryRun })
       : await supabase.rpc("import_content", { p_kind: kind, p_items: items, p_dry_run: dryRun });
   if (error) throw new Error(error.message);
   return data as ImportReport;

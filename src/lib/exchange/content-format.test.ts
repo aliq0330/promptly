@@ -181,7 +181,7 @@ test("uygulamadan dışa aktarma: yalnız herkese açık prompt başvurusu yazı
 });
 
 // ---- Skill (docs/history/397-*) ----
-import { parseContent as parseSkills, serializeContent as serializeSkills, contentFileName as skillFileName, toExchangeSkill, SKILL_CATEGORY_IDS as FORMAT_CATEGORIES, SKILL_COMPAT_IDS as FORMAT_COMPAT, SKILL_LICENSE_IDS as FORMAT_LICENSES } from "./content-format.ts";
+import { withSkillSourceNote, parseContent as parseSkills, serializeContent as serializeSkills, contentFileName as skillFileName, toExchangeSkill, SKILL_CATEGORY_IDS as FORMAT_CATEGORIES, SKILL_COMPAT_IDS as FORMAT_COMPAT, SKILL_LICENSE_IDS as FORMAT_LICENSES } from "./content-format.ts";
 import { SKILL_CATEGORY_IDS, SKILL_COMPAT_IDS, SKILL_LICENSE_IDS } from "../skills/categories.ts";
 
 test("skill listeleri uygulama listeleriyle aynıdır (migration CHECK'iyle aynası categories testindedir)", () => {
@@ -218,4 +218,17 @@ test("skill dosyası en çok 20 kayıt taşır; başka türün zarfı reddedilir
   assert.equal(parseSkills("skill", JSON.stringify(rows.slice(0, 20))).fatal, null);
   assert.equal(parseSkills("skill", JSON.stringify({ format: "promptly.presets", schemaVersion: 1, items: [{ title: "x" }] })).fatal, "unknown_format");
   assert.match(skillFileName("skill", new Date("2026-11-15T00:00:00Z")), /^promptly-skills-2026-11-15\.json$/);
+});
+
+test("skill atfı: dosyada source okunur; içe aktarmada özete tek Kaynak satırı eklenir ve sınır aşılmaz", () => {
+  const raw = JSON.stringify([{ title: "x", summary: "özet", source: { author: "Ayşe", url: "https://promptly.test/skills/local?id=1" } }]);
+  const [item] = parseSkills("skill", raw).items;
+  assert.deepEqual(item.source, { author: "Ayşe", url: "https://promptly.test/skills/local?id=1" });
+  const noted = withSkillSourceNote(item);
+  assert.match(noted.summary, /^özet\n\nKaynak: Ayşe https:\/\/promptly\.test/);
+  assert.equal(withSkillSourceNote(noted).summary, noted.summary, "ikinci kez eklenmez");
+  const long = withSkillSourceNote({ ...item, summary: "a".repeat(1000) });
+  assert.ok(long.summary.length <= 1000 && long.summary.includes("Kaynak:"));
+  const bad = parseSkills("skill", JSON.stringify([{ title: "x", source: { author: "A", url: "javascript:alert(1)" } }])).items[0];
+  assert.equal(bad.source, undefined, "yalnız http(s) bağlantısı atıf olur");
 });

@@ -1,0 +1,11 @@
+# 398 — Skill: etiket arayüzü, slug yeniden adlandırma, klasörden içe aktarma, atıf, risk onayı, genel arama, limit ölçümü
+
+**Durum:** uygulandı (yalnız istemci + çekirdek; migration YOK). Birim 1192, `run-skills-package` 24/24, `run-skills-social` 30/30; gerçek Supabase/cihaz DENENMEDİ.
+
+- **Etiket arayüzü:** düzenleyicide "Etiketler" (ortak `TagPicker`/`useTagPicker`, öneri motoru başlık+özet+talimattan çalışır); kayıtta `replaceSkillTags` (`skill_tags`, ≤ 10 sunucuda zorlanır); açılışta mevcut etiketler yüklenir.
+- **Slug (klasör adı) yeniden adlandırma:** "Klasör adı (slug)" satırı; yeni Skill'de addan türer, elle değiştirilebilir, düzenlemede mevcut değer gelir. Değişirse yeni sürümler yeni adla paketlenir; önceden kurulan kopyalar eski klasörde kalır (uyarı metni formda). Çakışma `skill.error.slug`.
+- **Klasörden içe aktarma:** `readSkillFolder` (ZIP okuyucuyla aynı kurallar: tek üst klasör soyulur, `SKILL.md`/`metadata.json`/`LICENSE`, yol/boyut/sayı denetimleri) + "Klasörden içe aktar" düğmesi (`webkitdirectory`).
+- **Dışa aktarma atfı:** Skill detayında "Promptly dosyası (.json) indir" — başkasının herkese açık Skill'inde yazar adı + bağlantı `source` olarak yazılır; içe aktarırken özete tek `Kaynak:` satırı eklenir (≤ 1000 karakter korunur; yalnız http(s)).
+- **Yayın öncesi risk onayı:** betik risk kalıpları (`script_risk`) artık yayında UYARI + açık onay isteyen sorunlardır (gizli anahtar uyarılarıyla aynı yol; Edge `skill-package` aynı çekirdeği çalıştırır). Engellemez, "güvenli" demez.
+- **Genel aramada "Skill'ler" grubu:** `/search` ve Keşfet aramasında metin sorgusunda `skill_feed_page`'den gelen Skill kartları (menü bayrağı arkasında); `search_content` değişmedi.
+- **Paket limitleri ölçümü:** `node --expose-gc scripts/measure-skill-package.mjs` (çekirdek Node'da): 100 dosyalı paket ≈ 20 ms; 5 MB'lık tek dosya ≈ 110 ms / +6 MB; 40 MB'lık açılmış paket (8 × 5 MB, ZIP ≈ 5,6 MB) ≈ 600 ms / +7 MB RSS; yüksek oranlı sıkıştırma `zip_bomb` ile anında reddedilir. Sonuç: mevcut limitler (ZIP 10 MB, açılmış 40 MB, dosya 5 MB, ≤ 100 dosya) çekirdek maliyeti açısından rahattır ve KORUNDU. Edge'in duvar süresi ve bellek tavanı bu betikle ölçülmez (Deno/Edge'de çalıştırılmadı); `skill-package` deploy edildikten sonra gerçek bir 10 MB paketle denenmelidir.

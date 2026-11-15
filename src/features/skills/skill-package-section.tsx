@@ -53,6 +53,7 @@ export function SkillPackageSection({
   uploads,
   onEdit,
   onImportZip,
+  onImportFolder,
   importing,
   importIssues,
   disabled,
@@ -62,12 +63,15 @@ export function SkillPackageSection({
   uploads: SkillUploads;
   onEdit: (path: string, isNew: boolean) => void;
   onImportZip: (file: File) => void;
+  /** Klasör seçicisinden gelen dosyalar (`webkitRelativePath` dolu); ZIP ile aynı kurallardan geçer. */
+  onImportFolder: (files: File[]) => void;
   importing: boolean;
   importIssues: SkillIssue[];
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
   const zipInput = useRef<HTMLInputElement>(null);
+  const folderInput = useRef<HTMLInputElement>(null);
   const [newIn, setNewIn] = useState<Folder | null>(null);
   const [removing, setRemoving] = useState<SkillFile | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
@@ -110,6 +114,25 @@ export function SkillPackageSection({
             const picked = event.target.files?.[0];
             event.target.value = "";
             if (picked) onImportZip(picked);
+          }}
+        />
+        <Button type="button" variant="outline" size="sm" disabled={disabled || importing} onClick={() => folderInput.current?.click()} data-skill-import-folder="">
+          <Upload size={16} aria-hidden /> {t("skill.pkg.importFolder")}
+        </Button>
+        <input
+          ref={folderInput}
+          type="file"
+          // @ts-expect-error `webkitdirectory` standart olmayan ama tüm büyük tarayıcılarda çalışan klasör seçici özniteliğidir
+          webkitdirectory=""
+          multiple
+          className="sr-only"
+          tabIndex={-1}
+          aria-label={t("skill.pkg.importFolder")}
+          data-skill-folder-input=""
+          onChange={(event) => {
+            const picked = Array.from(event.target.files ?? []);
+            event.target.value = "";
+            if (picked.length > 0) onImportFolder(picked);
           }}
         />
         <span className="text-caption text-text-muted" data-skill-package-total="">

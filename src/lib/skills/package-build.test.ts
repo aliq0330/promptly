@@ -160,3 +160,25 @@ test("a header that understates the size never yields more bytes than it declare
   const file = read.files.find((f) => f.path === "references/x.md");
   assert.ok(!file || file.bytes.length <= 10, "output is bounded by the declared size");
 });
+
+// ---- Klasör içe aktarma (docs/history/398-*) ----
+import { readSkillFolder } from "./zip.ts";
+
+test("klasör içe aktarma ZIP ile aynı kuralları uygular: tek üst klasör soyulur, SKILL.md ve metadata ayrıştırılır, kaçan yol atlanır", () => {
+  const read = readSkillFolder([
+    { path: "my-skill/SKILL.md", bytes: enc("# Merhaba") },
+    { path: "my-skill/rules/a.md", bytes: enc("kural") },
+    { path: "my-skill/metadata.json", bytes: enc(JSON.stringify({ license: "mit" })) },
+    { path: "my-skill/.DS_Store", bytes: enc("x") },
+    { path: "my-skill/../evil.md", bytes: enc("x") },
+  ]);
+  assert.deepEqual(read.files.map((file) => file.path).sort(), ["SKILL.md", "rules/a.md"]);
+  assert.equal(read.skillMd, "# Merhaba");
+  assert.deepEqual(read.metadata, { license: "mit" });
+  assert.ok(read.issues.some((issue) => issue.path.includes("evil")), "kaçan yol raporlanır");
+});
+
+test("klasör içe aktarma sayı ve boyut sınırlarını uygular", () => {
+  const many = Array.from({ length: 200 }, (_, i) => ({ path: `s/f${i}.md`, bytes: enc("x") }));
+  assert.equal(readSkillFolder(many).issues[0].code, "too_many_files");
+});

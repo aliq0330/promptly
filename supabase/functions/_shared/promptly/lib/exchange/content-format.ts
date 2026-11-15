@@ -254,13 +254,17 @@ export function normalizeSkill(raw: unknown, row: number): { item: ExchangeSkill
   const categoryRaw = str(r.category).trim().toLowerCase();
   const category = categoryRaw === "" ? null : categoryRaw;
   if (category !== null && !SKILL_CATEGORY_IDS.includes(category)) report("category", "invalid_category");
+  const sourceRaw = r.source && typeof r.source === "object" && !Array.isArray(r.source) ? (r.source as Record<string, unknown>) : null;
+  const sourceAuthor = sourceRaw ? str(sourceRaw.author).trim().slice(0, 120) : "";
+  const sourceUrl = sourceRaw ? str(sourceRaw.url).trim() : "";
+  const source = sourceAuthor && /^https?:\/\/\S{1,300}$/.test(sourceUrl) ? { author: sourceAuthor, url: sourceUrl } : undefined;
   const license = str(r.license).trim().toLowerCase() || "mit";
   if (!SKILL_LICENSE_IDS.includes(license)) report("license", "invalid_license");
   const compat = dedupe(strList(r.compat), false);
   if (compat.some((tool) => !SKILL_COMPAT_IDS.includes(tool))) report("compat", "invalid_compat");
 
   if (issues.length > 0) return { item: null, issues };
-  return { item: { title, summary, instructions, category, compat, license }, issues };
+  return { item: { title, summary, instructions, category, compat, license, ...(source ? { source } : {}) }, issues };
 }
 
 export function normalizeWorkflow(raw: unknown, row: number): { item: ExchangeWorkflow | null; issues: ExchangeIssue[] } {
@@ -503,6 +507,19 @@ export interface ExchangeAppSkill {
   category: string | null;
   compat: readonly string[];
   license: string;
+}
+
+/**
+ * Başkasının Skill'i dışa aktarılırken dosyaya atıf (yazar adı + bağlantı) yazılır; içe aktarırken özete tek `Kaynak:` satırı olarak eklenir (prompt biçimindeki `withSourceNote` ile aynı
+ * fikir). Özet sınırı (1000) aşılırsa özet kısaltılır, atıf satırı korunur.
+ */
+export function withSkillSourceNote(item: ExchangeSkill): ExchangeSkill {
+  const { source } = item;
+  if (!source || /(^|\n)Kaynak:/.test(item.summary)) return item;
+  const note = `Kaynak: ${source.author} ${source.url}`.trim();
+  const room = CONTENT_LIMITS.skill.summary - note.length - 2;
+  const body = item.summary.length > room ? `${item.summary.slice(0, Math.max(0, room - 1)).trimEnd()}…` : item.summary;
+  return { ...item, summary: body ? `${body}\n\n${note}` : note };
 }
 
 /** Kendi Skill'inden dosya kaydı: yalnız içerik alanları (durum, görünürlük, sürüm, sayaç, paket dosyası yazılmaz). */

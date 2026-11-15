@@ -175,6 +175,8 @@ export interface SaveSkillInput {
   version: string;
   status: "draft" | "published";
   visibility: "public" | "private";
+  /** Verilirse (düzenlemede de) klasör adı olarak yazılır; verilmezse yeni Skill'de addan türetilir, düzenlemede değişmez. Geçerli biçim `isValidSkillSlug`. */
+  slug?: string | null;
 }
 
 /** Aynı yazarda aynı `slug` varsa Postgres `unique violation` (23505) verir. */
@@ -198,17 +200,22 @@ export async function saveSkill(input: SaveSkillInput, userId: string): Promise<
     status: input.status,
     visibility: input.visibility,
   };
+  const wantedSlug = input.slug?.trim() || null;
+  if (wantedSlug && !isValidSkillSlug(wantedSlug)) throw new Error(translateForRuntime("skill.error.slug"));
 
   if (input.id) {
-    const { data, error } = await supabase.from("skills").update(fields).eq("id", input.id).eq("author_id", userId).select("id").maybeSingle();
-    if (error) throw new Error(error.message || translateForRuntime("skill.error.save"));
+    const { data, error } = await supabase.from("skills").update(wantedSlug ? { ...fields, slug: wantedSlug } : fields).eq("id", input.id).eq("author_id", userId).select("id").maybeSingle();
+    if (error) {
+      if (wantedSlug && isSlugConflict(error)) throw new Error(translateForRuntime("skill.error.slug"));
+      throw new Error(error.message || translateForRuntime("skill.error.save"));
+    }
     if (!data) throw new Error(translateForRuntime("skill.error.notFound"));
     return input.id;
   }
 
-  const base = slugifySkillName(fields.title) || "skill";
+  const base = wantedSlug ?? (slugifySkillName(fields.title) || "skill");
   const id = crypto.randomUUID();
-  for (let attempt = 1; attempt <= 8; attempt += 1) {
+  for (let attempt = 1; attempt <= (wantedSlug ? 1 : 8); attempt += 1) {
     const slug = withSlugSuffix(base, attempt);
     if (!isValidSkillSlug(slug)) break;
     const { error } = await supabase.from("skills").insert({ id, author_id: userId, slug, ...fields });
@@ -223,4 +230,21 @@ export async function deleteSkill(id: string, userId: string): Promise<void> {
   const { data, error } = await supabase.from("skills").delete().eq("id", id).eq("author_id", userId).select("id");
   if (error) throw new Error(error.message || translateForRuntime("skill.error.delete"));
   if (!data || data.length === 0) throw new Error(translateForRuntime("skill.error.notFound"));
+}
+
+/** Skill'in etiketleri (`skill_tags` ⋈ `tags`); okuma Skill'in görünürlüğünü izler. */
+export async function fetchSkillTags(skillId: string): Promise<{ slug: string; label: string }[]> {
+  const { data, error } = await supabase.from("skill_tags").select("tags ( slug, label )").eq("skill_id", skillId).limit(20);
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as { tags: { slug: string; label: string } | null }[]).flatMap((row) => (row.tags ? [row.tags] : []));
+}
+
+/** Etiket kümesini değiştirir (sahibi; ≤ 10 sunucuda zorlanır). Önce silinir sonra eklenir: kısmi hata etiketi eksik bırakır, fazla etiket bırakmaz. */
+export async function replaceSkillTags(skillId: string, slugs: string[]): Promise<void> {
+  const unique = [...new Set(slugs)];
+  const { error: deleteError } = await supabase.from("skill_tags").delete().eq("skill_id", skillId);
+  if (deleteError) throw new Error(deleteError.message);
+  if (unique.length === 0) return;
+  const { error } = await supabase.from("skill_tags").insert(unique.map((tagSlug) => ({ skill_id: skillId, tag_slug: tagSlug })));
+  if (error) throw new Error(error.message);
 }

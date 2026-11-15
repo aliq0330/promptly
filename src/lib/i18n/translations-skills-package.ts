@@ -43,6 +43,7 @@ export const skillPackageTranslations = {
   },
   "skill.pkg.noRunNotice": { tr: "Promptly hiçbir dosyayı çalıştırmaz; betikler yalnızca veridir. İzinli türler: .md .txt .json .yaml .csv .pdf .png .jpg .webp ve işaretli betikler (.sh .py .js .ps1 .bat).", en: "Promptly never runs any file; scripts are only data. Allowed types: .md .txt .json .yaml .csv .pdf .png .jpg .webp and flagged scripts (.sh .py .js .ps1 .bat)." },
   "skill.pkg.importZip": { tr: "ZIP'ten içe aktar", en: "Import from ZIP" },
+  "skill.pkg.importFolder": { tr: "Klasörden içe aktar", en: "Import from folder" },
   "skill.pkg.importReport": { tr: "İçe aktarma raporu", en: "Import report" },
   "skill.pkg.importFailed": { tr: "ZIP içe aktarılamadı.", en: "The ZIP could not be imported." },
   "skill.pkg.total": { tr: "{{count}} dosya · {{size}} / {{max}}", en: "{{count}} files · {{size}} / {{max}}" },
@@ -127,6 +128,7 @@ export const skillPackageTranslations = {
   "skill.pkg.issue.zip_unreadable": { tr: "ZIP okunamadı; dosya bozuk olabilir.", en: "The ZIP couldn't be read; it may be corrupted." },
   "skill.pkg.issue.secret_private_key": { tr: "Özel anahtar bulundu. Yayınlanamaz; dosyadan kaldır.", en: "A private key was found. It can't be published; remove it from the file." },
   "skill.pkg.issue.secret_jwt": { tr: "Oturum belirteci (JWT) bulundu. Yayınlanamaz; dosyadan kaldır.", en: "A session token (JWT) was found. It can't be published; remove it from the file." },
+  "skill.pkg.issue.script_risk": { tr: "Betikte dikkat edilmesi gereken bir kalıp var. Yayınlarsan okuyucular bu dosyada uyarı görür; kesin bir güvenlik kararı değildir.", en: "The script contains a pattern worth attention. If you publish, readers see a warning on this file; this is not a definitive security verdict." },
   "skill.pkg.issue.secret_warning": { tr: "Gizli anahtara benzeyen bir değer var. Gerçek bir anahtarsa kaldır.", en: "A value that looks like a secret key. Remove it if it's a real one." },
 
   // --- Bağlı içerik ---
