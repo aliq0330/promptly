@@ -24,7 +24,8 @@ import { SpacePreview } from "@/features/spaces/space-preview";
 import { quoteVerbKey } from "@/lib/quotes";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchQuoteById, type Quote } from "@/lib/supabase/quotes";
-import { formatRelativeTime, profileHref } from "@/lib/utils";
+import { formatRelativeTime, profileHref, skillHref } from "@/lib/utils";
+import { SkillCard } from "@/features/skills/skill-card";
 import { QuoteEngagement } from "./quote-engagement";
 import { QuoteDeleteDialog, QuoteReportDialog } from "./quote-menu";
 import { QuoteScopeProvider } from "./quote-scope";
@@ -92,7 +93,9 @@ export function QuotePage() {
   }
 
   const content = quote.content;
+  const skill = quote.skill;
   const summary = content ? summarizeContent(content) : null;
+  const originalHref = summary?.href ?? (skill ? skillHref(skill) : null);
   const mine = user?.id === quote.author.id;
 
   // Alıntı işleri içeriğin NORMAL ⋮ menüsüne eklenir (ikinci menü yok); içeriğin kendi yönetimi orijinalin sayfasında kalır.
@@ -142,8 +145,8 @@ export function QuotePage() {
           )}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border-soft pt-3">
             <p className="min-w-0 flex-1 basis-56 text-caption text-text-muted">{t("quotes.page.scopeHelp")}</p>
-            {summary && (
-              <Link href={summary.href} data-open-original className={buttonClassName({ size: "sm", variant: "outline", className: "ml-auto shrink-0 gap-1.5" })}>
+            {originalHref && (
+              <Link href={originalHref} data-open-original className={buttonClassName({ size: "sm", variant: "outline", className: "ml-auto shrink-0 gap-1.5" })}>
                 {t("quotes.page.openOriginal")}
                 <ArrowUpRight size={14} aria-hidden />
               </Link>
@@ -164,9 +167,15 @@ export function QuotePage() {
 
       {!content && (
         <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
-          <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
-            <EyeOff size={16} aria-hidden /> {t("quotes.card.contentGone")}
-          </p>
+          {skill ? (
+            <div data-quote-skill={skill.id} className="max-w-md">
+              <SkillCard skill={skill} />
+            </div>
+          ) : (
+            <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
+              <EyeOff size={16} aria-hidden /> {t("quotes.card.contentGone")}
+            </p>
+          )}
           <section className="space-y-2" aria-label={t("quotes.page.commentsTitle")}>
             <p className="text-caption text-text-muted">{t("quotes.page.commentsHelp")}</p>
             <QuoteEngagement quote={quote} highlightCommentId={highlightCommentId} />

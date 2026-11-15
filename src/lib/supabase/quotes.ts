@@ -4,10 +4,11 @@ import { fetchRequestsByIds } from "./requests";
 import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
 import { fetchSpaceFeedCards } from "./spaces";
+import { fetchSkillsByIds } from "./skills";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { translateForRuntime } from "@/lib/i18n/runtime";
 import type { CommunityPostContent, CommunityPostType } from "./communities";
-import type { UserProfile } from "@/types";
+import type { Skill, UserProfile } from "@/types";
 
 /** Alıntı notu sınırı (sunucu: `content_quotes_note_len`). */
 export const QUOTE_NOTE_MAX = 500;
@@ -17,12 +18,17 @@ export const QUOTE_NOTE_MAX = 500;
  * (`prompt_likes.quote_id` / `prompt_comments.quote_id`); alıntılanan içeriğin sayaçlarına karışmaz. İçerik artık okunamıyorsa (özel yapıldı,
  * silindi) sunucu alıntıyı hiç döndürmez — `content` boş kalması yalnız ikinci istek arasında kaybolan içerik içindir.
  */
+/** Alıntılanabilen içerik türleri: topluluk türleri + Skill (docs/history/394-*; Skill topluluğa duyurulmaz, yalnız akışta alıntılanır). */
+export type QuoteContentType = CommunityPostType | "skill";
+
 export interface Quote {
   id: string;
   author: UserProfile;
-  contentType: CommunityPostType;
+  contentType: QuoteContentType;
   targetId: string;
   content: CommunityPostContent | null;
+  /** Yalnız `contentType === "skill"`: alıntılanan Skill (içerik gittiyse `null`; `content` Skill için hep `null`). */
+  skill: Skill | null;
   note: string | null;
   likeCount: number;
   commentCount: number;
@@ -36,7 +42,7 @@ interface QuoteCardRow {
   author_username: string | null;
   author_display_name: string | null;
   author_avatar_url: string | null;
-  content_type: CommunityPostType;
+  content_type: QuoteContentType;
   target_id: string;
   note: string | null;
   like_count: number;
@@ -89,14 +95,16 @@ export async function fetchQuotesByIds(ids: string[]): Promise<Quote[]> {
   const { data, error } = await supabase.rpc("quote_feed_cards", { p_ids: ids });
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as QuoteCardRow[];
-  const idsOf = (type: CommunityPostType) => [...new Set(rows.filter((row) => row.content_type === type).map((row) => row.target_id))];
-  const [prompts, requests, workflows, presets, spaces] = await Promise.all([
+  const idsOf = (type: QuoteContentType) => [...new Set(rows.filter((row) => row.content_type === type).map((row) => row.target_id))];
+  const [prompts, requests, workflows, presets, spaces, skills] = await Promise.all([
     fetchPromptsByIds(idsOf("prompt")),
     fetchRequestsByIds(idsOf("request")),
     fetchWorkflowsByIds(idsOf("workflow")),
     fetchPresetsByIds(idsOf("preset")),
     fetchSpaceFeedCards(idsOf("space")).catch(() => []),
+    fetchSkillsByIds(idsOf("skill")),
   ]);
+  const skillById = new Map(skills.map((skill) => [skill.id, skill]));
   const content = new Map<string, CommunityPostContent>();
   for (const data of prompts) content.set(`prompt-${data.id}`, { type: "prompt", data });
   for (const data of requests) content.set(`request-${data.id}`, { type: "request", data });
@@ -106,14 +114,16 @@ export async function fetchQuotesByIds(ids: string[]): Promise<Quote[]> {
 
   const byId = new Map<string, Quote>();
   for (const row of rows) {
-    const target = content.get(`${row.content_type}-${row.target_id}`) ?? null;
-    if (!target) continue;
+    const skill = row.content_type === "skill" ? (skillById.get(row.target_id) ?? null) : null;
+    const target = row.content_type === "skill" ? null : (content.get(`${row.content_type}-${row.target_id}`) ?? null);
+    if (!target && !skill) continue;
     byId.set(row.id, {
       id: row.id,
       author: mapAuthor(row),
       contentType: row.content_type,
       targetId: row.target_id,
       content: target,
+      skill,
       note: row.note,
       likeCount: row.like_count ?? 0,
       commentCount: row.comment_count ?? 0,
@@ -129,7 +139,7 @@ export async function fetchQuoteById(id: string): Promise<Quote | null> {
 }
 
 /** İçeriği alıntılar (tek yazma yolu `create_quote`; kurallar sunucuda). Başarısızlıkta nedeni yazan bir hata fırlatır. */
-export async function createQuote(type: CommunityPostType, contentId: string, note: string): Promise<string> {
+export async function createQuote(type: QuoteContentType, contentId: string, note: string): Promise<string> {
   const { data, error } = await supabase.rpc("create_quote", { p_content_type: type, p_content_id: contentId, p_note: note.trim() || null });
   if (error) throw toQuoteError(error);
   return String(data);

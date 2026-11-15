@@ -32,7 +32,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], pinCalls: [], pin: null, worksCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -124,6 +124,13 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     const rows = list.filter((s) => !q || s.title.toLowerCase().includes(q)).map((s) => ({ id: s.id, created_at: s.created_at, sort_rank: 0, match_source: q ? "title" : null }));
     return json(route, rows);
   });
+  await context.route(/\/rest\/v1\/rpc\/create_quote/, (route) => {
+    state.quoteCalls.push(JSON.parse(route.request().postData() || "{}"));
+    return json(route, "a0000000-0000-4000-8000-0000000000b4");
+  });
+  await context.route(/\/rest\/v1\/rpc\/quote_feed_cards/, (route) =>
+    json(route, [{ id: "a0000000-0000-4000-8000-0000000000b4", author_id: U.carol.id, author_username: "carol", author_display_name: "Carol", author_avatar_url: null, content_type: "skill", target_id: S_PUB, note: "Skill alıntı notu", like_count: 0, comment_count: 0, created_at: "2026-11-15T10:00:00Z", is_liked: false }]),
+  );
   await context.route(/\/rest\/v1\/rpc\/related_skills/, (route) => json(route, [{ id: S_PUB2, score: 5 }]));
   await context.route(/\/rest\/v1\/rpc\/skills_for_content/, (route) => json(route, [{ id: S_PUB }]));
   await context.route(/\/rest\/v1\/skill_pins/, (route) => {
@@ -383,6 +390,29 @@ await scenario("17c. Çalıştı mı?: sahibine ve oysuz Skill'de blok çizilmez
   await page.locator("#comments").waitFor();
   assert.equal(await page.locator("[data-skill-works]").count(), 0);
 }, { me: U.alice });
+
+await scenario("18. Alıntıla: Skill detayında Paylaş → Alıntıla; create_quote('skill', id, not) çağrılır, topluluk seçici yoktur", async ({ page, state }) => {
+  await openDetail(page);
+  await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
+  const modal = page.locator('[data-share-modal="skill"]');
+  await modal.waitFor();
+  await modal.locator("[data-quote-section] button[aria-expanded]").click();
+  const quote = page.locator("[data-quote-popup]");
+  await quote.locator("[data-quote-destination=feed]").waitFor();
+  assert.equal(await quote.getByText("Topluluklarda alıntıla").count(), 0, "Skill topluluğa duyurulmaz");
+  await quote.locator("[data-quote-note-input]").fill("Denemeye değer");
+  await quote.locator("[data-quote-submit]").click();
+  await quote.locator("[data-quote-open]").waitFor();
+  assert.deepEqual(state.quoteCalls[0], { p_content_type: "skill", p_content_id: S_PUB, p_note: "Denemeye değer" });
+});
+
+await scenario("19. Alıntı sayfası: Skill alıntısı not + Skill kartı + 'Orijinal içeriği aç' gösterir", async ({ page }) => {
+  await page.goto(`${BASE}/quotes/local?id=a0000000-0000-4000-8000-0000000000b4`);
+  const card = page.locator("[data-quote-skill]");
+  await card.waitFor();
+  assert.match(await page.locator("[data-quote-note]").first().innerText(), /Skill alıntı notu/);
+  assert.match((await page.locator("[data-open-original]").getAttribute("href")) ?? "", new RegExp(`/skills/local/?\\?id=${S_PUB}`));
+});
 
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {
   await openDetail(page);

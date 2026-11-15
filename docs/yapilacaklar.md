@@ -236,7 +236,7 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 - [ ] **O** (YAPILMADI `393-*`: `content-format.ts`/`import_content` kind başına dallanıyor, ayrı dilim) Dışa/içe aktarma zarfı `promptly.skills` (`lib/exchange`)
 - [x] **B** (Claude Code `verified` YAPILDI `393-*`; Codex/Cursor `draft`, resmî belge doğrulanmadı → sunulmuyor) Adaptörler: Claude Code kurulum adımları (doğrula), Codex ve Cursor (`lib/skills/adapters/*`, `verified`/`draft`, golden test; **resmî belgeyle doğrulanmadan kullanıcıya sunulmaz**)
 - [x] **B** (YAPILDI `393-*`; Edge `api`/`mcp` elle deploy + `promptly-mcp` 0.3.0 elle yayın) Açık API `public-skills.ts` (+ `openapi.ts`) ve MCP `search_skills` / `get_skill` / `list_skill_files`; `sync-function-shared.mjs`; Edge `api`/`mcp`/`skill-package` elle deploy; `promptly-mcp` yeni sürüm; `/developers` metni
-- [ ] **K** (YAPILMADI `393-*`: `content_quotes` CHECK + `quote_count` + akış kartı gerekir) Alıntılama (`create_quote`) Skill'e açılsın mı — karar bekliyor (öneri: açık)
+- [x] **K** (YAPILDI `394-*`) Alıntılama (`create_quote`) Skill'e açıldı; topluluğa duyurulmaz, yalnız akış
 
 ### Açılış (dilim 5.4)
 - [x] **O** (YAZILDI `393-*`, `TERMS_VERSION` 2026-11-15; **hukuki danışman onayı YOK**) Gizlilik Politikası (`skill_uses`, Skill dosyaları) + Kullanım Koşulları (Skill = kod/betik/lisans) güncellemesi, `TERMS_VERSION` artırılır; **hukuki danışman onayı**

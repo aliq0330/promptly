@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EyeOff } from "@/components/icons/eye-off";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
@@ -29,6 +30,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
 
   const href = quoteHref(quote.id);
   const summary = quote.content ? summarizeContent(quote.content) : null;
+  const skill = quote.skill;
   const poster = summary?.playable ? summary.media[0] : undefined;
 
   return (
@@ -36,10 +38,10 @@ export function QuoteCard({ quote }: { quote: Quote }) {
       <ContentCardPost
         author={quote.author}
         meta={`${t(quoteVerbKey(quote))} · ${formatRelativeTime(quote.createdAt, language)}`}
-        typeIcon={summary?.typeIcon}
+        typeIcon={summary?.typeIcon ?? (skill ? GraduationCap : undefined)}
         titleInArt={Boolean(summary && summary.type !== "space" && summary.media.length === 0 && !summary.promptText)}
         status={<Badge variant="default">{t("quotes.badge")}</Badge>}
-        badges={summary && <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.tools.length > 0 ? null : summary.detail} />}
+        badges={skill ? <ContentTypePill icon={GraduationCap} label={t("skill.singular")} detail={null} /> : summary && <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.tools.length > 0 ? null : summary.detail} />}
         menu={<QuoteMenu quote={quote} onDeleted={() => setGone(true)} />}
         art={
           summary ? (
@@ -52,13 +54,18 @@ export function QuoteCard({ quote }: { quote: Quote }) {
             ) : (
               <SummaryTextArt summary={summary} seed={quote.id} />
             )
+          ) : skill ? (
+            <p data-quote-skill-art="" className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 bg-surface-soft px-4 text-center">
+              <GraduationCap size={32} aria-hidden className="text-text-muted" />
+              <span className="line-clamp-3 break-words text-small text-text-secondary">{skill.summary}</span>
+            </p>
           ) : (
             <p className="flex aspect-[4/3] w-full items-center justify-center gap-2 bg-surface-soft px-3 text-small text-text-muted">
               <EyeOff size={16} aria-hidden /> {t("quotes.card.contentGone")}
             </p>
           )
         }
-        title={summary ? <ContentCardTitle href={href} title={summary.title} /> : null}
+        title={summary ? <ContentCardTitle href={href} title={summary.title} /> : skill ? <ContentCardTitle href={href} title={skill.title} /> : null}
         footer={
           // `contents`: the buttons stay direct items of the shared action row; the wrapper only marks them as the QUOTE's own counters.
           <div className="contents" data-quote-engagement={quote.id}>

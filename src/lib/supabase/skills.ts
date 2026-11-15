@@ -140,6 +140,18 @@ export async function fetchSkillById(id: string): Promise<Skill | null> {
   }
 }
 
+/** Kimliklerden Skill kartları (alıntı kartı için); okunamayanlar (RLS) dönmez. Sıra `ids`'in sırasıdır. */
+export async function fetchSkillsByIds(ids: string[]): Promise<Skill[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("skills").select(SKILL_LIST_SELECT).in("id", ids);
+  if (error || !data) {
+    if (error) console.error("fetchSkillsByIds", error);
+    return [];
+  }
+  const byId = new Map((data as unknown as SkillRow[]).map((row) => [row.id, mapSkillRow(row)]));
+  return ids.flatMap((id) => byId.get(id) ?? []);
+}
+
 export interface SaveSkillInput {
   /** Düzenlemede mevcut kimlik, yeni Skill için `null`. */
   id: string | null;

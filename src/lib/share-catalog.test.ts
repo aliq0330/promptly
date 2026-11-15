@@ -66,7 +66,7 @@ test("Space pages: only public, non-archived Spaces (link/private Spaces never g
 
 test("Quote pages take the quoted content's title + the note; a target RLS hid (null embeds) drops the row", () => {
   const url = buildCatalogUrl("https://x.supabase.co", source("quote"), 0);
-  assert.ok(url.includes("select=id,note,prompts(title),prompt_requests(title),workflows(title),presets(title),spaces(title)"));
+  assert.ok(url.includes("select=id,note,prompts(title),prompt_requests(title),workflows(title),presets(title),spaces(title),skills(title)"));
   const entries = mapCatalogRows(source("quote"), [
     { id: "q1", note: "  Harika\n bir yön ", prompts: { title: "Neon Tokyo" }, prompt_requests: null, workflows: null, presets: null, spaces: null },
     { id: "q2", note: "gizli hedef", prompts: null, prompt_requests: null, workflows: null, presets: null, spaces: null },

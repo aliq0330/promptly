@@ -22,7 +22,7 @@ import {
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { quoteHref } from "@/lib/quotes";
 import { createQuote } from "@/lib/supabase/quotes";
-import type { CommunityPostType } from "@/lib/supabase/communities";
+import type { QuoteContentType } from "@/lib/supabase/quotes";
 import { cn } from "@/lib/utils";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -51,7 +51,7 @@ export function QuoteSection({
   contextTitle,
   extra,
 }: {
-  type: CommunityPostType;
+  type: QuoteContentType;
   contentId: string;
   blockedReason?: string | null;
   /** Akış hedefi başka yerde yönetiliyorsa (Space sahibinin "Akışta paylaş" anahtarı) yalnız topluluklar sunulur. */
@@ -98,6 +98,8 @@ export function QuoteSection({
     }
     if (pending.length > 0) {
       const names = new Map(communities.list.map((community) => [community.id, community.name]));
+      // Topluluk başvurusu Skill'i kabul etmez (seçici zaten gizli); tip burada daralır.
+      if (type === "skill") return setBusy(false);
       const next = await announceToCommunities(type, contentId, { ...selection, communityIds: pending }, names);
       setResults((previous) => [...(previous ?? []).filter((old) => !next.some((result) => result.communityId === old.communityId)), ...next]);
     }
@@ -154,8 +156,12 @@ export function QuoteSection({
         </label>
       )}
 
-      <p className="text-label font-semibold text-text">{t("quotes.section.communities")}</p>
-      <AnnouncePicker value={selection} onChange={setSelection} communities={communities.list} status={communities.status} disabled={busy} results={results} hideNote />
+      {type !== "skill" && (
+        <>
+          <p className="text-label font-semibold text-text">{t("quotes.section.communities")}</p>
+          <AnnouncePicker value={selection} onChange={setSelection} communities={communities.list} status={communities.status} disabled={busy} results={results} hideNote />
+        </>
+      )}
 
       <p className="text-caption text-text-muted">{t("quotes.section.dailyHint")}</p>
     </>

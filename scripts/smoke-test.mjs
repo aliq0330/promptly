@@ -178,6 +178,8 @@ const CHECKS = [
   { name: "rpc api_me_media_commit ziyaretçiye KAPALI olmalı (docs/history/333-*)", rpc: "api_me_media_commit", body: { p_prompt_id: "00000000-0000-0000-0000-000000000000", p_path: "x", p_url: "y", p_width: 1, p_height: 1 }, mustBeDenied: true },
   { name: "rpc telegram_link_code_create ziyaretçiye KAPALI olmalı (docs/history/323-*)", rpc: "telegram_link_code_create", body: { p_write: false }, mustBeDenied: true },
   // Skill (docs/history/388-*, 389-*): paket modeli. Sürüm/etiket/ilişki ziyaretçiye açıktır (Skill görünürlüğünü izler); dosya, kullanım, sabitleme ve yayın RPC'leri KAPALI.
+  { name: "content_quotes.skill_id + skills.quote_count (Skill alıntılama, docs/history/394-*)", get: () => `content_quotes?select=${encodeURIComponent("id,skill_id,target_id")}&limit=1` },
+  { name: "skills.quote_count (Skill alıntılama, docs/history/394-*)", get: () => `skills?select=${encodeURIComponent("id,quote_count")}&limit=1` },
   { name: "skills (Skill çekirdeği, docs/history/388-*)", get: () => `skills?select=${encodeURIComponent("id,slug,title,version,status,visibility,use_count")}&limit=1` },
   { name: "skill_versions (değişmez sürüm + paket özeti, docs/history/389-*)", get: () => `skill_versions?select=${encodeURIComponent("id,skill_id,version,changelog,package_path,package_sha256,package_size,file_count,manifest,deprecated_at")}&limit=1` },
   { name: "skill_tags (Skill etiketleri, docs/history/389-*)", get: () => `skill_tags?select=skill_id,tag_slug&limit=1` },
