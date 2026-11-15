@@ -57,9 +57,37 @@ export const CLAUDE_CODE_ADAPTER: SkillAdapter = {
   },
 };
 
-/** Codex ve Cursor: resmî belgeyle DOĞRULANMADI → `draft`, arayüzde gösterilmez. */
-export const CODEX_ADAPTER: SkillAdapter = { id: "codex", status: "draft", docsUrl: null, steps: () => [] };
-export const CURSOR_ADAPTER: SkillAdapter = { id: "cursor", status: "draft", docsUrl: null, steps: () => [] };
+function installSteps(slug: string, zipFileName: string | null, personal: string, project: string): SkillInstallStep[] {
+  if (!isInstallableSlug(slug)) return [];
+  const unzip = (target: string): string =>
+    zipFileName && safeFile(zipFileName) ? `mkdir -p ${target}/${slug} && unzip -o ${zipFileName} -d ${target}/${slug}` : `mkdir -p ${target}/${slug} && mv SKILL.md ${target}/${slug}/SKILL.md`;
+  return [
+    { command: unzip(personal), noteKey: "skill.install.personal" },
+    { command: unzip(project), noteKey: "skill.install.project" },
+  ];
+}
+
+/**
+ * Codex: https://learn.chatgpt.com/docs/build-skills (eski adres developers.openai.com/codex/skills buraya yönlenir; 2026-11-15'te okundu). Kullanıcı kapsamı `$HOME/.agents/skills`,
+ * depo kapsamı `$REPO_ROOT/.agents/skills`; her skill bir klasördür ve `SKILL.md` (`name` + `description` zorunlu) taşır. `~/.codex/skills` belgede YOK, bu yüzden kullanılmaz.
+ */
+export const CODEX_ADAPTER: SkillAdapter = {
+  id: "codex",
+  status: "verified",
+  docsUrl: "https://learn.chatgpt.com/docs/build-skills",
+  steps: ({ slug, zipFileName }) => installSteps(slug, zipFileName, "~/.agents/skills", ".agents/skills"),
+};
+
+/**
+ * Cursor: https://cursor.com/docs/context/skills (2026-11-15'te okundu). Kullanıcı kapsamı `~/.cursor/skills` (ya da `~/.agents/skills`), proje kapsamı `.cursor/skills` (ya da `.agents/skills`);
+ * klasör adı `SKILL.md`'deki `name` ile eşleşmelidir (Promptly slug'ı ad olarak yazar).
+ */
+export const CURSOR_ADAPTER: SkillAdapter = {
+  id: "cursor",
+  status: "verified",
+  docsUrl: "https://cursor.com/docs/context/skills",
+  steps: ({ slug, zipFileName }) => installSteps(slug, zipFileName, "~/.cursor/skills", ".cursor/skills"),
+};
 
 export const SKILL_ADAPTERS: readonly SkillAdapter[] = [CLAUDE_CODE_ADAPTER, CODEX_ADAPTER, CURSOR_ADAPTER];
 

@@ -75,7 +75,7 @@ import { DockHeader, DOCK_ICON_BUTTON } from "./dock-header";
 import type { DockHandlers } from "./message-dock-provider";
 import { supabase } from "@/lib/supabase/client";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn } from "@/lib/utils";
+import { absoluteUrl, cn } from "@/lib/utils";
 import { messageRoomId, pickRoom, readLastRoomId, roomSlug, totalRoomUnread } from "@/lib/community-rooms";
 import { markRoomReadUpTo, setRoomMuted } from "@/lib/supabase/community-rooms";
 import { getCachedRooms, patchCachedRoom, refreshCommunityRooms, useCommunityRooms } from "./rooms/use-community-rooms";
@@ -99,7 +99,8 @@ import { translateForRuntime } from "@/lib/i18n/runtime";
 import { composeWorkflowShareBody } from "./workflow-share-format";
 import { composePresetShareBody } from "./preset-share-format";
 import { composeSpaceShareBody } from "./space-share-format";
-import { ChatLibraryPicker } from "./chat-attach";
+import { ChatLibraryPicker, type ChatLibraryType, type ChatShareable } from "./chat-attach";
+import { composeSkillShareBody } from "./skill-share-format";
 import { ContactInfoPanel } from "./contact-info-panel";
 import { ImportPromptsModal } from "@/features/exchange/import-prompts-modal";
 import type { CommunityPostType, ShareableContent } from "@/lib/supabase/communities";
@@ -194,7 +195,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   const pendingRef = useRef<PendingSend[]>([]);
 
   // "+" menüsü (docs/history/268-*): kütüphaneden paylaş seçicisi (hangi türle açıldı) ve prompt içe aktarma penceresi.
-  const [libraryType, setLibraryType] = useState<CommunityPostType | null>(null);
+  const [libraryType, setLibraryType] = useState<ChatLibraryType | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   // Birebir sohbette kişiye dokununca açılan "Kişi bilgisi" paneli.
   const [contactOpen, setContactOpen] = useState(false);
@@ -710,10 +711,10 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   });
 
   /** Seçiciden gelen içerik, derin bağlantıyla gelen paylaşımla AYNI yoldan mesaja eklenir (`?share<Tür>Id=`): başlık çözülür, not yazılır, gönderilir. */
-  function attachLibraryItem(item: ShareableContent) {
+  function attachLibraryItem(item: ChatShareable) {
     setLibraryType(null);
     if (!id || dock) return;
-    const param = { prompt: "sharePromptId", request: "shareRequestId", workflow: "shareWorkflowId", preset: "sharePresetId", space: "shareSpaceId" }[item.type];
+    const param = { prompt: "sharePromptId", request: "shareRequestId", workflow: "shareWorkflowId", preset: "sharePresetId", space: "shareSpaceId", skill: "shareSkillId" }[item.type];
     router.replace(`/messages/local?id=${id}&${param}=${item.id}`);
   }
 
@@ -727,6 +728,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     (pendingShare?.type === "workflow" && !pendingShare.resolved) ||
     (pendingShare?.type === "preset" && !pendingShare.resolved) ||
     (pendingShare?.type === "space" && !pendingShare.resolved) ||
+    (pendingShare?.type === "skill" && !pendingShare.resolved) ||
     (pendingShare?.type === "community_post" && !pendingShare.resolved);
 
   /** The finished `body` for an outgoing message — workflow/preset shares have no embed column (Bölüm 9.52), so they're composed into the text itself. */
@@ -737,6 +739,8 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         ? composePresetShareBody(trimmed, pendingShare.title, pendingShare.id)
         : pendingShare?.type === "space"
           ? composeSpaceShareBody(trimmed, pendingShare.title, pendingShare.id)
+          : pendingShare?.type === "skill"
+          ? composeSkillShareBody(trimmed, pendingShare.title, pendingShare.id, (path) => absoluteUrl(path))
           : pendingShare?.type === "community_post"
           ? composeCommunityPostShareBody(trimmed, pendingShare.title, pendingShare.id)
           : trimmed || undefined;

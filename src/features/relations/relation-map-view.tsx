@@ -35,6 +35,7 @@ import { AddRelationModal } from "./add-relation-modal";
 import { RelationDetailPanel } from "./relation-detail-panel";
 import { RelationGraph as RelationCanvas } from "./relation-graph";
 import { RelationList } from "./relation-list";
+import { SkillsUsingContent } from "@/features/skills/skill-aside-blocks";
 import { KIND_ICON, useRelationText } from "./relation-text";
 
 type ViewMode = "map" | "list";
@@ -272,6 +273,12 @@ export function RelationMapView() {
               )}
 
             </div>
+            {/* Skill'ler (docs/history/396-*): harita Skill düğümü çizmez; merkezdeki prompt/workflow'u kullanan Skill'ler haritanın altında ayrı bir bölümdür (`skills_for_content`). */}
+            {(center.kind === "prompt" || center.kind === "workflow") && (
+              <div data-relation-skills="" className="mt-4">
+                <SkillsUsingContent type={center.kind} id={center.id} />
+              </div>
+            )}
             {/* Below lg the detail panel is a real bottom sheet (portal) — never a layer inside the stage, where it was clipped and covered list rows. */}
             {!isDesktop && panelNode && !drawerOpen && (
               <button

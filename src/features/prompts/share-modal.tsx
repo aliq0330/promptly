@@ -158,7 +158,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       badgeLabel: `${t("skill.singular")} · v${skill.version}`,
       badgeVariant: "neutral",
       href: skillHref(skill),
-      messageParam: null,
+      messageParam: `shareSkillId=${skill.id}`,
       directLink: false,
       storyLink: null,
     };

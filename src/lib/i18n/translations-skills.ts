@@ -110,6 +110,13 @@ export const skillsTranslations = {
   "skill.install.hint": { tr: "{{file}} dosyasını indirdikten sonra, indirdiğin klasörde çalıştır. Komutlar yalnızca kopyalanır; Promptly bir şey çalıştırmaz.", en: "After downloading {{file}}, run this in the folder you downloaded it to. The commands are only copied; Promptly runs nothing." },
   "skill.install.personal": { tr: "Kişisel (tüm projelerinde)", en: "Personal (all your projects)" },
   "skill.install.project": { tr: "Proje (yalnız bu depoda)", en: "Project (this repository only)" },
+  "messages.openSkill": { tr: "Skill'i aç", en: "Open Skill" },
+  "communities.feed.type.skill": { tr: "Skill", en: "Skill" },
+  "skill.install.titleAll": { tr: "Araca kur", en: "Install in your tool" },
+  "skill.install.titleCodex": { tr: "Codex'e kur", en: "Install in Codex" },
+  "skill.install.titleCursor": { tr: "Cursor'a kur", en: "Install in Cursor" },
+  "skill.install.docsCodex": { tr: "Resmî Codex belgesi", en: "Official Codex docs" },
+  "skill.install.docsCursor": { tr: "Resmî Cursor belgesi", en: "Official Cursor docs" },
   "skill.install.docs": { tr: "Resmî Claude Code belgesi", en: "Official Claude Code docs" },
   // Çalıştı mı? (docs/history/393-*)
   "error.useRequired": { tr: "Oy vermek için Skill'i önce indirmiş (kullanmış) olmalısın.", en: "You need to download (use) the Skill before you can vote." },

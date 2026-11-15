@@ -140,6 +140,17 @@ export async function fetchSkillById(id: string): Promise<Skill | null> {
   }
 }
 
+/** Sohbette "kütüphaneden paylaş" için: kendi yayında + herkese açık Skill'ler (alıcının okuyamayacağı taslak/özel listelenmez); başlık araması + `limit` satırlık pencere. */
+export async function fetchOwnShareableSkillsWindow(userId: string, { search = "", limit = 30 }: { search?: string; limit?: number } = {}): Promise<{ items: { id: string; type: "skill"; title: string }[]; hasMore: boolean }> {
+  const text = sanitizeSearchText(search);
+  let query = supabase.from("skills").select("id, title").eq("author_id", userId).eq("status", "published").eq("visibility", "public");
+  if (text) query = query.ilike("title", `%${text}%`);
+  const { data, error } = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as { id: string; title: string }[];
+  return { items: rows.slice(0, limit).map((row) => ({ id: row.id, type: "skill" as const, title: row.title })), hasMore: rows.length > limit };
+}
+
 /** Kimliklerden Skill kartları (alıntı kartı için); okunamayanlar (RLS) dönmez. Sıra `ids`'in sırasıdır. */
 export async function fetchSkillsByIds(ids: string[]): Promise<Skill[]> {
   if (ids.length === 0) return [];

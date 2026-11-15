@@ -19,6 +19,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchCommunityPostById } from "@/lib/supabase/communities";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { fetchSpace } from "@/lib/supabase/spaces";
+import { fetchSkillById } from "@/lib/supabase/skills";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 
 export interface ShareParams {
@@ -28,11 +29,12 @@ export interface ShareParams {
   presetId: string | null;
   postId: string | null;
   spaceId: string | null;
+  skillId: string | null;
 }
 
 export type PendingShare =
   | { type: "prompt" | "request"; id: string; title: string }
-  | { type: "workflow" | "preset" | "space" | "community_post"; id: string; title: string; resolved: boolean };
+  | { type: "workflow" | "preset" | "space" | "skill" | "community_post"; id: string; title: string; resolved: boolean };
 
 /** Adres parametrelerini okur (dock'ta sohbet adresten gelmez — `null` verilir, paylaşım yok). */
 export function readShareParams(params: URLSearchParams | null): ShareParams {
@@ -43,6 +45,7 @@ export function readShareParams(params: URLSearchParams | null): ShareParams {
     presetId: params?.get("sharePresetId") ?? null,
     postId: params?.get("sharePostId") ?? null,
     spaceId: params?.get("shareSpaceId") ?? null,
+    skillId: params?.get("shareSkillId") ?? null,
   };
 }
 
@@ -52,9 +55,10 @@ interface FetchedTitles {
   preset: string | null;
   post: string | null;
   space: string | null;
+  skill: string | null;
 }
 
-const EMPTY: FetchedTitles = { content: null, workflow: null, preset: null, post: null, space: null };
+const EMPTY: FetchedTitles = { content: null, workflow: null, preset: null, post: null, space: null, skill: null };
 
 export function usePendingShare(share: ShareParams): { pendingShare: PendingShare | null; dismissShare: () => void } {
   const { t } = useTranslation();
@@ -64,7 +68,7 @@ export function usePendingShare(share: ShareParams): { pendingShare: PendingShar
   const { getCached: getCachedPreset } = useRealPresets();
   const [fetched, setFetched] = useState<FetchedTitles>(EMPTY);
   const [dismissed, setDismissed] = useState(false);
-  const { promptId, requestId, workflowId, presetId, postId, spaceId } = share;
+  const { promptId, requestId, workflowId, presetId, postId, spaceId, skillId } = share;
 
   // Yeni bir paylaşım bağlantısı: başlıklar sıfırlanır; önbellekte yoksa gerçek okuma yapılır.
   useEffect(() => {
@@ -98,6 +102,13 @@ export function usePendingShare(share: ShareParams): { pendingShare: PendingShar
           if (result) set({ space: result.title });
         })
         .catch(() => undefined);
+    } else if (skillId) {
+      // Skill: başlık okunabilen (yayında + herkese açık ya da kendi) Skill'den gelir; okunamıyorsa başlık gelmez ve gönderilemez.
+      fetchSkillById(skillId)
+        .then((result) => {
+          if (result) set({ skill: result.title });
+        })
+        .catch(() => undefined);
     } else if (postId) {
       // Topluluk başvuru gönderisi: başlık gönderinin başvurduğu içeriktendir; okunamıyorsa (topluluğa erişim yok) başlık gelmez ve gönderilemez.
       fetchCommunityPostById(postId)
@@ -111,7 +122,7 @@ export function usePendingShare(share: ShareParams): { pendingShare: PendingShar
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [promptId, requestId, workflowId, presetId, postId, spaceId]);
+  }, [promptId, requestId, workflowId, presetId, postId, spaceId, skillId]);
 
   const dismissShare = useCallback(() => setDismissed(true), []);
 
@@ -138,6 +149,8 @@ export function usePendingShare(share: ShareParams): { pendingShare: PendingShar
               }
             : spaceId
               ? { type: "space", id: spaceId, title: fetched.space ?? loading, resolved: Boolean(fetched.space) }
+              : skillId
+                ? { type: "skill", id: skillId, title: fetched.skill ?? loading, resolved: Boolean(fetched.skill) }
               : postId
                 ? { type: "community_post", id: postId, title: fetched.post ?? loading, resolved: Boolean(fetched.post) }
                 : null;

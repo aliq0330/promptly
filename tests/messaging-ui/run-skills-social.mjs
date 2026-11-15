@@ -423,6 +423,24 @@ await scenario("20. Kalite göstergeleri: detayda 7 ölçüt + 'x / 7 ölçüt t
   assert.match(await block.innerText(), /puan ya da güvenlik onayı değildir/);
 });
 
+await scenario("21. Mesajla paylaş: Skill'in Paylaş penceresinde 'Promptly'de mesaj olarak gönder' bağlantısı shareSkillId taşır", async ({ page }) => {
+  await openDetail(page);
+  await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
+  const modal = page.locator('[data-share-modal="skill"]');
+  await modal.waitFor();
+  const link = modal.locator('a[href*="shareSkillId="]');
+  await link.waitFor();
+  assert.match((await link.getAttribute("href")) ?? "", new RegExp(`/messages/?\\?shareSkillId=${S_PUB}`));
+});
+
+await scenario("22. Ana Sayfa: Filtre penceresinde 'Skill'ler' çipi; seçilince Skill listesi açılır", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await page.getByRole("button", { name: /Filtre/ }).first().click();
+  await page.getByText("Skill'ler", { exact: true }).click();
+  await page.locator("[data-skill-discover]").waitFor();
+  await page.locator("[data-skill-discover]").getByText("Skill 1").first().waitFor();
+});
+
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {
   await openDetail(page);
   await page.locator("#comments").waitFor();

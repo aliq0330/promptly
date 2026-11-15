@@ -17,7 +17,10 @@ import { fieldControlClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { LoadMore } from "@/features/feed/load-more";
+import { useGrowingList } from "@/features/content/use-growing-list";
 import { useShareableContent } from "@/features/communities/use-shareable-content";
+import { fetchOwnShareableSkillsWindow } from "@/lib/supabase/skills";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import type { CommunityPostType, ShareableContent } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -25,6 +28,14 @@ import { DialogShell } from "@/components/ui/dialog-shell";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** Sohbette kütüphaneden paylaşılabilen türler (docs/history/268-*): "Var olan içeriği paylaş" (`ShareExistingModal`) ile aynı beş tür ve aynı sorgu. */
+/** Sohbette paylaşılabilen türler: topluluk türleri + Skill (docs/history/396-*; Skill topluluğa duyurulmaz ama mesajla paylaşılır). */
+export type ChatLibraryType = CommunityPostType | "skill";
+export interface ChatShareable {
+  id: string;
+  type: ChatLibraryType;
+  title: string;
+}
+
 export const LIBRARY_TYPES: { type: CommunityPostType; icon: IconComponent }[] = [
   { type: "prompt", icon: SquareTerminal },
   { type: "request", icon: Sparkles },
@@ -32,6 +43,18 @@ export const LIBRARY_TYPES: { type: CommunityPostType; icon: IconComponent }[] =
   { type: "preset", icon: SlidersHorizontal },
   { type: "space", icon: Shapes },
 ];
+
+/** Sohbet seçicisinin türleri: yorum eki gibi topluluk dışı yerler `LIBRARY_TYPES`'ı kullanır (Skill yorum eki değildir). */
+export const CHAT_LIBRARY_TYPES: { type: ChatLibraryType; icon: IconComponent }[] = [...LIBRARY_TYPES, { type: "skill", icon: GraduationCap }];
+
+/** Seçici listesi: Skill kendi sorgusundan, diğer türler topluluk paylaşımıyla AYNI kaynaktan (`useShareableContent`). */
+function useChatShareable(userId: string, type: ChatLibraryType) {
+  const communityType: CommunityPostType = type === "skill" ? "prompt" : type;
+  const community = useShareableContent(userId, communityType);
+  const [skillSearch, setSkillSearch] = useState("");
+  const skillList = useGrowingList(`${userId}|skill|${skillSearch.trim()}`, (limit) => fetchOwnShareableSkillsWindow(userId, { search: skillSearch.trim(), limit }), 30);
+  return type === "skill" ? { search: skillSearch, setSearch: setSkillSearch, list: skillList } : community;
+}
 
 /**
  * Composer'ın "+" düğmesinin açtığı alt sayfa: fotoğraf yükle · GIF · prompt içe aktar · kütüphaneden paylaş (tür seç → seçici).
@@ -48,7 +71,7 @@ export function ChatAttachSheet({
   onPhoto: () => void;
   onGif?: () => void;
   onImport?: () => void;
-  onPickType?: (type: CommunityPostType) => void;
+  onPickType?: (type: ChatLibraryType) => void;
 }) {
   const { t } = useTranslation();
   const rowClass =
@@ -97,7 +120,7 @@ export function ChatAttachSheet({
             <div className="mx-2 my-2 border-t border-border-soft" />
             <p className="px-2 pb-3 pt-1 text-small font-semibold text-text-muted">{t("messages.library.title")}</p>
             <ul className="grid grid-cols-5 gap-1 px-0.5">
-              {LIBRARY_TYPES.map(({ type, icon: Icon }) => (
+              {CHAT_LIBRARY_TYPES.map(({ type, icon: Icon }) => (
                 <li key={type}>
                   <button
                     type="button"
@@ -131,19 +154,19 @@ export function ChatLibraryPicker({
   onClose,
 }: {
   userId: string;
-  initialType: CommunityPostType;
-  onPick: (item: ShareableContent) => void;
+  initialType: ChatLibraryType;
+  onPick: (item: ChatShareable) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [type, setType] = useState<CommunityPostType>(initialType);
-  const { search, setSearch, list } = useShareableContent(userId, type);
+  const [type, setType] = useState<ChatLibraryType>(initialType);
+  const { search, setSearch, list } = useChatShareable(userId, type);
   const items = list.items;
   const loadError = list.failed && items !== null && items.length === 0;
-  const [selected, setSelected] = useState<ShareableContent | null>(null);
-  const Icon = LIBRARY_TYPES.find((entry) => entry.type === type)?.icon ?? SquareTerminal;
+  const [selected, setSelected] = useState<ChatShareable | null>(null);
+  const Icon = CHAT_LIBRARY_TYPES.find((entry) => entry.type === type)?.icon ?? SquareTerminal;
 
-  function changeType(next: CommunityPostType) {
+  function changeType(next: ChatLibraryType) {
     setType(next);
     setSelected(null);
     setSearch("");
@@ -161,7 +184,7 @@ export function ChatLibraryPicker({
           </button>
         </div>
         <div className="shrink-0 px-5 pb-1 pt-2">
-          <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={changeType} items={LIBRARY_TYPES.map(({ type: value }) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
+          <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={changeType} items={CHAT_LIBRARY_TYPES.map(({ type: value }) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
         </div>
         <div className="shrink-0 px-5 pb-2 pt-2">
           <label className="relative block">
