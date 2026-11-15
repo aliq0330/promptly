@@ -89,7 +89,9 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   const sharePresetId = searchParams.get("sharePresetId");
   // Topluluk başvuru gönderisi de aynı yolla (düz metin bloğu) taşınır.
   const sharePostId = searchParams.get("sharePostId");
-  const isSharing = Boolean(sharePromptId || shareRequestId || shareWorkflowId || sharePresetId || sharePostId);
+  // Skill de aynı yolla (düz metin bloğu, docs/history/396-*).
+  const shareSkillId = searchParams.get("shareSkillId");
+  const isSharing = Boolean(sharePromptId || shareRequestId || shareWorkflowId || sharePresetId || sharePostId || shareSkillId);
   const shareQuery = sharePromptId
     ? `sharePromptId=${sharePromptId}`
     : shareRequestId
@@ -100,7 +102,9 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           ? `sharePresetId=${sharePresetId}`
           : sharePostId
             ? `sharePostId=${sharePostId}`
-            : undefined;
+            : shareSkillId
+              ? `shareSkillId=${shareSkillId}`
+              : undefined;
 
   const activeId = pathname.startsWith("/messages/local") ? searchParams.get("id") : null;
 

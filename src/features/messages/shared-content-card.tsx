@@ -17,6 +17,8 @@ import { CARD_SAVE_CLASS } from "@/features/content/action-styles";
 import { SaveButton } from "@/features/prompts/save-button";
 import { SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { fetchSpace, type Space } from "@/lib/supabase/spaces";
+import { fetchSkillById } from "@/lib/supabase/skills";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { cn } from "@/lib/utils";
 import { spaceHref } from "@/lib/spaces";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
@@ -26,12 +28,12 @@ import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { presetHref, promptHref, requestHref, skillHref, workflowHref } from "@/lib/utils";
 import { fetchCommunityPostById, type CommunityPost } from "@/lib/supabase/communities";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { postPageHref } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Preset, Prompt, PromptMedia, PromptRequest, Workflow } from "@/types";
+import type { Preset, Prompt, PromptMedia, PromptRequest, Skill, Workflow } from "@/types";
 import { StorageImage } from "@/components/ui/storage-media";
 
 const CARD_CLASS = "block w-72 max-w-full space-y-2 rounded-xl bg-surface-soft p-2 text-left";
@@ -244,6 +246,24 @@ export function SharedSpaceCard({ spaceId }: { spaceId: string }) {
       cover={value ? <SpaceCoverArt urls={value.coverUrl ? [value.coverUrl] : []} className="h-full w-full" iconSize={36} /> : undefined}
       description={value?.description}
       openLabel={t("messages.openSpace")}
+    />
+  );
+}
+
+/** A message's shared-Skill card — found by id (parsed from the plain-text share block, see `skill-share-format.ts`); a Skill the viewer cannot read is the "hidden or removed" card. */
+export function SharedSkillCard({ skillId }: { skillId: string }) {
+  const { t } = useTranslation();
+  const { value, settled } = useSharedItem<Skill>(null, () => fetchSkillById(skillId), skillId);
+  return (
+    <SharedCard
+      state={settled && !value ? "hidden" : value ? "ready" : "loading"}
+      href={skillHref({ id: skillId })}
+      icon={GraduationCap}
+      typeLabel={t("skill.singular")}
+      title={value?.title}
+      ownerName={value?.creator.displayName}
+      description={value?.summary}
+      openLabel={t("messages.openSkill")}
     />
   );
 }

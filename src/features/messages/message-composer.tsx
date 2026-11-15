@@ -11,11 +11,10 @@ import { X } from "@/components/icons/x";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ALLOWED_IMAGE_MIME } from "@/lib/supabase/message-images";
-import { ChatAttachSheet } from "./chat-attach";
+import { ChatAttachSheet, type ChatLibraryType } from "./chat-attach";
 import { GifPicker } from "@/features/gif/gif-picker";
 import type { GifItem } from "@/lib/giphy";
 import { ComposerEmojiPicker, useIsWideComposer } from "./composer-emoji-picker";
-import type { CommunityPostType } from "@/lib/supabase/communities";
 import type { ComposerImage } from "./use-composer-images";
 
 const ACCEPT = ALLOWED_IMAGE_MIME.join(",");
@@ -126,7 +125,7 @@ export function MessageComposer({
   /** Whether a file is being dragged over the conversation — shows the drop hint. */
   dragActive: boolean;
   /** "+" → Kütüphaneden paylaş: seçilen türün seçicisini açar (yoksa o satır çizilmez ve "+" yalnız fotoğraf ekler). */
-  onPickLibrary?: (type: CommunityPostType) => void;
+  onPickLibrary?: (type: ChatLibraryType) => void;
   /** "+" → Prompt içe aktar. */
   onImport?: () => void;
   /** "+" → GIF (docs/history/308-*): GIPHY seçicisini açar; seçilen GIF'i çağıran GÖNDERİR (taslak metne dokunulmaz). Yoksa GIF satırı çizilmez. */
