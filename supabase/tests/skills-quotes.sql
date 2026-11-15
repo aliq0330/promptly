@@ -91,5 +91,5 @@ reset role;
 delete from public.skills where id = :sk;
 select pg_temp.check(11, 'deleting the skill removes its quotes', (select count(*) = 0 from public.content_quotes where content_type = 'skill'));
 
-select n, name, case when ok then 'PASS' else 'FAIL' end as r, detail from pg_temp.results order by n, name;
-select count(*) filter (where not ok) as failures, count(*) as total from pg_temp.results;
+select n, case when ok then 'PASS' else 'FAIL' end as result, name, detail from pg_temp.results order by n, name;
+select 'FAILED=' || count(*) filter (where not ok) from pg_temp.results;
