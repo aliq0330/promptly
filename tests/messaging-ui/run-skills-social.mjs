@@ -414,6 +414,15 @@ await scenario("19. Alıntı sayfası: Skill alıntısı not + Skill kartı + 'O
   assert.match((await page.locator("[data-open-original]").getAttribute("href")) ?? "", new RegExp(`/skills/local/?\\?id=${S_PUB}`));
 });
 
+await scenario("20. Kalite göstergeleri: detayda 7 ölçüt + 'x / 7 ölçüt tamam' çizilir; puan/onay iddiası yoktur", async ({ page }) => {
+  await openDetail(page);
+  const block = page.locator("[data-skill-quality]");
+  await block.waitFor();
+  assert.equal(await block.locator("[data-quality-check]").count(), 7);
+  assert.match(await block.locator("[data-skill-quality-score]").innerText(), /\d+ \/ 7 ölçüt tamam/);
+  assert.match(await block.innerText(), /puan ya da güvenlik onayı değildir/);
+});
+
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {
   await openDetail(page);
   await page.locator("#comments").waitFor();

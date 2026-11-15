@@ -218,7 +218,7 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 - [x] **B** (beğeni/tepki + yorum `390-*`; kaydet + koleksiyon + ortak koleksiyon `391-*` YAPILDI) Beğeni/tepki, yorum, kaydet + koleksiyon + ortak koleksiyon arayüzü: kartta `PromptCardFooter` benzeri altbilgi, detayda `DetailActionBar` çubuğu (`Engage*` ailesi, `LikeableContentType`, `CommentScopeKind`, `SaveableContentType`, `StatisticsContentType` genişler)
 - [x] **O** (profil bölümü `390-*`, İçeriklerim `391-*` YAPILDI; `profile_content_stats` imzasına DOKUNULMADI, sayı `head` sayımından) Profilde "Skill'ler" bölümü + `profile_content_stats` + İçeriklerim (**taslaklar şimdi listede görünmüyor, yalnız detay adresinden**)
 - [x] **O** (YAPILDI `391-*`) Bildirimler (yayın → takipçilere, yeni sürüm → sabitleyenlere): SQL Türkçe cümle + `notification-message.ts` + `nc.pref.*` + `_notification_pref_key` / `_notification_category` / `cardKindKey`
-- [x] **O** (şikâyet + moderatör kuyruğu + kaldırma YAPILDI `390-*`; `admin_*` sayaçları KALDI) Şikâyet (`submit_report('skill', …)`) + moderatör kuyruğu + içeriği/paketi kaldırma + `admin_*` sayaçları
+- [x] **O** (şikâyet + moderatör kuyruğu + kaldırma YAPILDI `390-*`; Skill sayıları `admin_skill_stats` ile YAPILDI `395-*`) Şikâyet (`submit_report('skill', …)`) + moderatör kuyruğu + içeriği/paketi kaldırma + `admin_*` sayaçları
 - [x] **O** (YAPILDI `391-*`: `creator_insights_skills` + panel bölümü) Yaratıcı paneli / İstatistik: indirme, kaydedilme, tepki, yorum (`creator_insights_*`), `skill_uses` kaynaklı kullanım
 - [x] **K** (Paylaş modalı YAPILDI `391-*`; mesajla paylaşım/hikâye YAPILMADI) Paylaş modalı ve mesajla paylaşım (`ShareModal`'a hedef ekle, bağlantı + kısa özet)
 
@@ -246,7 +246,7 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 
 ### Aşama 6 — gelişmiş
 - [x] (oy YAPILDI `393-*`; kullanım değerlendirmesi YAPILMADI) "Çalıştı mı?" oyu (`prompt_works_votes` kalıbı; kopyalama şartı yerine indirme kaydı), kullanım değerlendirmesi (araç + sürüm etiketli yorum)
-- [ ] Kalite göstergeleri, otomatik güvenlik taraması, Skill paketlerini birbirine bağlama, değişiklik notlu sürüm güncelleme bildirimleri
+- [x] (kalite göstergeleri YAPILDI `395-*`; sürüm güncelleme bildirimi `391-*`) / [ ] otomatik güvenlik taraması, Skill paketlerini birbirine bağlama
 
 ### Çekirdeğin bilinen sınırları (bilerek yapılmadı)
 - Gerçek Supabase'e, Storage'a ve cihaza karşı **denenmedi**; SQL testi yerel PostgreSQL'de, arayüz yalnız tip/lint/derleme ile doğrulandı (Skill için ağ taklitli Playwright paketi henüz yok → `tests/messaging-ui/run-skills.mjs`).

@@ -45,6 +45,25 @@ export async function fetchAdminSiteStats(contentType: AdminContentType | null):
   return data as AdminSiteStats;
 }
 
+/** Skill sayıları (docs/history/395-*): `admin_site_stats`'tan AYRI, yalnızca ekleyici RPC; eski veritabanında yoksa `null` (bölüm çizilmez). */
+export interface AdminSkillStats {
+  total: number;
+  published: number;
+  draft: number;
+  private: number;
+  with_package: number;
+  quotes: number;
+  uses: number;
+  versions: number;
+  reports_open: number;
+}
+
+export async function fetchAdminSkillStats(): Promise<AdminSkillStats | null> {
+  const { data, error } = await supabase.rpc("admin_skill_stats");
+  if (error || !data) return null;
+  return data as AdminSkillStats;
+}
+
 export interface AdminUser {
   id: string;
   username: string;
