@@ -26,7 +26,7 @@ create index if not exists content_quotes_skill_idx on public.content_quotes (sk
 create policy "Quotes are readable while their target is public" on public.content_quotes
   for select using (
     public.quote_target_ok(content_type, target_id)
-    and not public.is_blocked(auth.uid(), author_id)
+    and not public.is_blocked((select auth.uid()), author_id)
   );
 
 alter table public.content_quotes drop constraint content_quotes_type_check;
