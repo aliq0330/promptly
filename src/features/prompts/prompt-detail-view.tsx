@@ -1,5 +1,6 @@
 "use client";
 
+import { SkillsUsingContent } from "@/features/skills/skill-aside-blocks";
 import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
@@ -233,6 +234,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           </AsideSection>
           <RelatedPrompts prompt={prompt} />
           <PromptSpacesAside promptId={prompt.id} />
+          <SkillsUsingContent type="prompt" id={prompt.id} />
           <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
         </DetailAside>
       }

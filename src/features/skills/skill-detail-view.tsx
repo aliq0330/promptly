@@ -28,6 +28,7 @@ import { fetchSkillVersions, recordSkillUse, type SkillVersion } from "@/lib/sup
 import { deleteSkill, fetchSkillById } from "@/lib/supabase/skills";
 import { formatRelativeTime } from "@/lib/utils";
 import { MarkdownView } from "./markdown-view";
+import { SimilarSkills } from "./skill-aside-blocks";
 import { downloadSkillMd, skillMdFor } from "./skill-download";
 import { downloadSkillPackage, pickLatestVersion, SkillFilesSection, SkillRelatedSection, SkillVersionsSection } from "./skill-detail-parts";
 import type { Skill } from "@/types";
@@ -124,6 +125,7 @@ export function SkillDetailView() {
           <InfoRow label={t("skill.updated")} value={formatRelativeTime(skill.updatedAt, language)} />
         </dl>
       </AsideSection>
+      <SimilarSkills skillId={skill.id} />
     </DetailAside>
   );
 

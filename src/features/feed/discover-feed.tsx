@@ -37,10 +37,13 @@ import { ToolsSection } from "@/features/tools/tools-section";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SpacesIcon } from "@/features/spaces/space-visuals";
 import { SpaceDiscoverSection } from "@/features/spaces/space-discover-section";
+import { SkillDiscoverSection } from "@/features/skills/skill-discover-section";
+import { GraduationCap } from "@/components/icons/graduation-cap";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 type FeedSection = "all" | "prompts" | "requests" | "workflows" | "presets" | "quotes";
-type EntitySection = "spaces" | "tools" | "tags" | "creators" | "communities";
+type EntitySection = "spaces" | "skills" | "tools" | "tags" | "creators" | "communities";
 type Section = FeedSection | EntitySection;
 
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid; dividerBefore?: boolean }[] = [
@@ -52,6 +55,8 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
   { key: "presets", labelKey: "nav.presets", icon: SlidersHorizontal },
   // Herkese açık Space'ler (docs/history/241-*: akışa yalnız alıntı olarak girerler) ve alıntılar (docs/history/217-*).
   { key: "spaces", labelKey: "nav.spaces", icon: SpacesIcon },
+  // Skill'ler (docs/history/392-*): karma akışa girmez, kendi sunucu sorgusu (`skill_feed_page`); menü girişi bayrak arkasındadır.
+  ...(SKILLS_MENU_ENABLED ? [{ key: "skills" as const, labelKey: "skill.pageTitle" as const, icon: GraduationCap }] : []),
   { key: "quotes", labelKey: "quotes.discover.section", icon: QuoteIcon },
   // … and the things to find and follow (docs/history/221-*).
   { key: "tools", labelKey: "discover.sectionTools", icon: Bot, dividerBefore: true },
@@ -71,7 +76,7 @@ const SECTION_KIND: Record<FeedSection, FeedKind | "all"> = {
 };
 
 const isEntity = (section: Section): section is EntitySection =>
-  section === "spaces" || section === "tools" || section === "tags" || section === "creators" || section === "communities";
+  section === "spaces" || section === "skills" || section === "tools" || section === "tags" || section === "creators" || section === "communities";
 
 /** A quote has no content type / category / AI tool, so the post filters do not apply to it (the database leaves it out when one is set). */
 const hasPostFilters = (section: FeedSection) => section !== "quotes";
@@ -221,7 +226,9 @@ export function DiscoverFeed() {
           onClear={clearFilters}
         />
 
-        {section === "spaces" ? (
+        {section === "skills" ? (
+          <SkillDiscoverSection />
+        ) : section === "spaces" ? (
           <SpaceDiscoverSection />
         ) : section === "tools" ? (
           <ToolsSection />

@@ -17,6 +17,7 @@ const ONLY = process.env.ONLY ?? "";
 
 const S_PUB = "d6000000-0000-4000-8000-000000000001"; // Alice'in yayınlanmış Skill'i
 const S_DRAFT = "d6000000-0000-4000-8000-000000000002"; // Alice'in taslağı
+const S_PUB2 = "d6000000-0000-4000-8000-000000000003"; // Alice'in ikinci yayınlanmış Skill'i (tasarım)
 const PUBLIC_COLS = ["id", "username", "display_name", "avatar_url", "cover_url", "bio", "website", "follower_count", "following_count", "created_at", "interests", "is_demo"];
 const pubOf = (u) => Object.fromEntries(PUBLIC_COLS.map((c) => [c, u[c]]));
 const json = (route, body, status = 200, headers = {}) =>
@@ -31,14 +32,15 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
-      const id = (q.get("id") ?? "").replace(/^eq\./, "");
+      const idParam = q.get("id") ?? "";
+      const ids = idParam.startsWith("in.(") ? idParam.slice(4, -1).split(",") : idParam ? [idParam.replace(/^eq\./, "")] : [];
       const author = (q.get("author_id") ?? "").replace(/^eq\./, "");
       let list = state.skills.filter((s) => s.author_id === me.id || (s.status === "published" && s.visibility === "public"));
-      if (id) list = list.filter((s) => s.id === id);
+      if (ids.length) list = list.filter((s) => ids.includes(s.id));
       if (author) list = list.filter((s) => s.author_id === author);
       return ctx.rows(list);
     }
@@ -107,6 +109,16 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     }
     return json(route, []);
   });
+  await context.route(/\/rest\/v1\/rpc\/skill_feed_page/, (route) => {
+    const body = JSON.parse(route.request().postData() || "{}");
+    state.feedCalls.push(body);
+    const list = state.skills.filter((s) => s.status === "published" && s.visibility === "public" && (!body.p_category || s.category === body.p_category));
+    const q = (body.p_query ?? "").toLowerCase();
+    const rows = list.filter((s) => !q || s.title.toLowerCase().includes(q)).map((s) => ({ id: s.id, created_at: s.created_at, sort_rank: 0, match_source: q ? "title" : null }));
+    return json(route, rows);
+  });
+  await context.route(/\/rest\/v1\/rpc\/related_skills/, (route) => json(route, [{ id: S_PUB2, score: 5 }]));
+  await context.route(/\/rest\/v1\/rpc\/skills_for_content/, (route) => json(route, [{ id: S_PUB }]));
   await context.route(/\/rest\/v1\/rpc\/creator_insights_skills/, (route) =>
     json(route, [{ skill_id: S_PUB, title: "Skill 1", uses: 4, prev_uses: 2, reactions: 3, prev_reactions: 3, comments: 1, prev_comments: 0, saves: 2, prev_saves: 1 }]),
   );
@@ -249,6 +261,35 @@ await scenario("12. Yaratıcı paneli: yayınlanmış Skill'i olan yazara Skill 
   assert.match(await section.innerText(), /Skill 1/);
   assert.ok(await section.locator("[data-insights-skill-row]").count() === 1);
 }, { me: U.alice });
+
+await scenario("13. Keşfet → Skill'ler: kartlar sunucudan gelir; uzmanlık alanı çipi ve arama RPC parametresine gider, eşleşme kaynağı yazar", async ({ page, state }) => {
+  await page.goto(`${BASE}/discover`);
+  await page.locator("[data-section-menu]").first().click();
+  await page.locator("[data-section-option='skills']").click();
+  const root = page.locator("[data-skill-discover]");
+  await root.waitFor();
+  await root.getByText("Skill 1").first().waitFor();
+  await root.locator("[data-skill-category='design']").click();
+  await root.getByText("Logo Skill").first().waitFor();
+  assert.equal(state.feedCalls.at(-1).p_category, "design");
+  assert.equal(await root.getByText("Skill 1").count(), 0, "süzgeç dışı kart kalkar");
+  await root.locator("[data-skill-category='all']").click();
+  await root.locator("[data-skill-search]").fill("logo");
+  await root.locator("[data-skill-match='title']").first().waitFor();
+  assert.equal(state.feedCalls.at(-1).p_query, "logo");
+  await root.locator("[data-skill-sort='popular']").click();
+  await page.waitForFunction(() => true);
+  const end = Date.now() + 3000;
+  while (Date.now() < end && state.feedCalls.at(-1).p_sort !== "popular") await new Promise((r) => setTimeout(r, 100));
+  assert.equal(state.feedCalls.at(-1).p_sort, "popular");
+});
+
+await scenario("14. Skill detayında 'Benzer Skill'ler' yan bölümü çizilir", async ({ page }) => {
+  await openDetail(page);
+  const block = page.locator("#skill-similar-title");
+  await block.waitFor();
+  await page.getByText("Logo Skill").first().waitFor();
+});
 
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {
   await openDetail(page);

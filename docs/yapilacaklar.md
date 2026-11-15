@@ -223,12 +223,12 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 - [x] **K** (Paylaş modalı YAPILDI `391-*`; mesajla paylaşım/hikâye YAPILMADI) Paylaş modalı ve mesajla paylaşım (`ShareModal`'a hedef ekle, bağlantı + kısa özet)
 
 ### Aşama 4 — keşif ve arama
-- [ ] **B** `skill_feed_page` (keyset, uzmanlık alanı/paket içeriği/araç/sıralama) — `feed_page` imzasına DOKUNMA; karma "Tümü" akışına katılım ayrı karar
-- [ ] **O** `search_content` `p_kind='skill'` (+ `SearchKind`, `ContentKind`/`search-tokens`); şimdiki `searchSkillsPage` `ilike` + `created_at` imlecidir (talimat dahil, dizin maliyeti **ölçülmeli**, `EXPLAIN` 5–7 tekrar medyan)
-- [ ] **O** Keşfet "Skill'ler" bölümü (`SectionMenu`), `ListFilterSheet` Skill süzgeçleri (uzmanlık alanı, paket içeriği, uyumlu araç, sıralama), Ana Sayfa tür çipi
-- [ ] **O** Arama sonucunda eşleşme kaynağı (başlık/talimat/kural/araç/etiket)
-- [ ] **O** `related_skills` RPC'si (benzer Skill) + İlişki Haritası (`/relations`) + ters yön "Bu prompt şu Skill'lerde"
-- [ ] **K** Kart/detay için kapak görseli (isteğe bağlı), "Önerilen" sıralama puanı (`use_count`, `save_count`, tepki, tazelik)
+- [x] **B** (YAPILDI `392-*`; karma akışa katılım YAPILMADI) `skill_feed_page` (keyset, uzmanlık alanı/paket içeriği/araç/sıralama) — `feed_page` imzasına DOKUNMA; karma "Tümü" akışına katılım ayrı karar
+- [x] **O** (KARAR: `search_content`'e DOKUNULMADI, arama `skill_feed_page`'dedir `392-*`) `search_content` `p_kind='skill'` (+ `SearchKind`, `ContentKind`/`search-tokens`); şimdiki `searchSkillsPage` `ilike` + `created_at` imlecidir (talimat dahil, dizin maliyeti **ölçülmeli**, `EXPLAIN` 5–7 tekrar medyan)
+- [x] **O** (bölüm + süzgeçler YAPILDI `392-*`; Ana Sayfa tür çipi YAPILMADI) Keşfet "Skill'ler" bölümü (`SectionMenu`), `ListFilterSheet` Skill süzgeçleri (uzmanlık alanı, paket içeriği, uyumlu araç, sıralama), Ana Sayfa tür çipi
+- [x] **O** (YAPILDI `392-*`: `match_source`) Arama sonucunda eşleşme kaynağı (başlık/talimat/kural/araç/etiket)
+- [x] **O** (RPC + ters yön YAPILDI `392-*`; İlişki Haritası YAPILMADI) `related_skills` RPC'si (benzer Skill) + İlişki Haritası (`/relations`) + ters yön "Bu prompt şu Skill'lerde"
+- [x] **K** ("Önerilen" puanı YAPILDI `392-*`; kapak görseli YAPILMADI) Kart/detay için kapak görseli (isteğe bağlı), "Önerilen" sıralama puanı (`use_count`, `save_count`, tepki, tazelik)
 
 ### Aşama 5 — dağıtım ve entegrasyon
 - [ ] **O** Detayda indirme menüsü (ZIP, SKILL.md, Markdown kopyala, JSON, önceki sürümler), Sürümler sekmesi, sürüm sabitleme (`skill_pins`) + bildirim, `record_skill_use`
