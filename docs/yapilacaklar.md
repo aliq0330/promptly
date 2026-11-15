@@ -220,33 +220,33 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 - [x] **O** (YAPILDI `391-*`) Bildirimler (yayın → takipçilere, yeni sürüm → sabitleyenlere): SQL Türkçe cümle + `notification-message.ts` + `nc.pref.*` + `_notification_pref_key` / `_notification_category` / `cardKindKey`
 - [x] **O** (şikâyet + moderatör kuyruğu + kaldırma YAPILDI `390-*`; Skill sayıları `admin_skill_stats` ile YAPILDI `395-*`) Şikâyet (`submit_report('skill', …)`) + moderatör kuyruğu + içeriği/paketi kaldırma + `admin_*` sayaçları
 - [x] **O** (YAPILDI `391-*`: `creator_insights_skills` + panel bölümü) Yaratıcı paneli / İstatistik: indirme, kaydedilme, tepki, yorum (`creator_insights_*`), `skill_uses` kaynaklı kullanım
-- [x] **K** (Paylaş modalı YAPILDI `391-*`; mesajla paylaşım/hikâye YAPILMADI) Paylaş modalı ve mesajla paylaşım (`ShareModal`'a hedef ekle, bağlantı + kısa özet)
+- [x] **K** (Paylaş modalı `391-*` + mesajla paylaşım `396-*` YAPILDI; hikâye YAPILMADI — hikâye bağlantı modeli dört türe özgü) Paylaş modalı ve mesajla paylaşım (`ShareModal`'a hedef ekle, bağlantı + kısa özet)
 
 ### Aşama 4 — keşif ve arama
 - [x] **B** (YAPILDI `392-*`; karma akışa katılım YAPILMADI) `skill_feed_page` (keyset, uzmanlık alanı/paket içeriği/araç/sıralama) — `feed_page` imzasına DOKUNMA; karma "Tümü" akışına katılım ayrı karar
 - [x] **O** (KARAR: `search_content`'e DOKUNULMADI, arama `skill_feed_page`'dedir `392-*`) `search_content` `p_kind='skill'` (+ `SearchKind`, `ContentKind`/`search-tokens`); şimdiki `searchSkillsPage` `ilike` + `created_at` imlecidir (talimat dahil, dizin maliyeti **ölçülmeli**, `EXPLAIN` 5–7 tekrar medyan)
-- [x] **O** (bölüm + süzgeçler YAPILDI `392-*`; Ana Sayfa tür çipi YAPILMADI) Keşfet "Skill'ler" bölümü (`SectionMenu`), `ListFilterSheet` Skill süzgeçleri (uzmanlık alanı, paket içeriği, uyumlu araç, sıralama), Ana Sayfa tür çipi
+- [x] **O** (bölüm + süzgeçler YAPILDI `392-*`; Ana Sayfa tür çipi YAPILDI `396-*`) Keşfet "Skill'ler" bölümü (`SectionMenu`), `ListFilterSheet` Skill süzgeçleri (uzmanlık alanı, paket içeriği, uyumlu araç, sıralama), Ana Sayfa tür çipi
 - [x] **O** (YAPILDI `392-*`: `match_source`) Arama sonucunda eşleşme kaynağı (başlık/talimat/kural/araç/etiket)
-- [x] **O** (RPC + ters yön YAPILDI `392-*`; İlişki Haritası YAPILMADI) `related_skills` RPC'si (benzer Skill) + İlişki Haritası (`/relations`) + ters yön "Bu prompt şu Skill'lerde"
+- [x] **O** (RPC + ters yön YAPILDI `392-*`; İlişki Haritası: düğüm DEĞİL, haritanın altında "şu Skill'lerde" bölümü `396-*`) `related_skills` RPC'si (benzer Skill) + İlişki Haritası (`/relations`) + ters yön "Bu prompt şu Skill'lerde"
 - [x] **K** ("Önerilen" puanı YAPILDI `392-*`; kapak görseli YAPILMADI) Kart/detay için kapak görseli (isteğe bağlı), "Önerilen" sıralama puanı (`use_count`, `save_count`, tepki, tazelik)
 
 ### Aşama 5 — dağıtım ve entegrasyon
 - [x] **O** (YAPILDI `393-*`) Detayda indirme menüsü (ZIP, SKILL.md, Markdown kopyala, JSON, önceki sürümler), Sürümler sekmesi, sürüm sabitleme (`skill_pins`) + bildirim, `record_skill_use`
 - [x] **O** (YAPILDI `393-*`) `/share/skill/<anahtar>/` statik paylaşım sayfası (`ShareKind`, `share-link.ts`, `og:*`)
-- [ ] **O** (YAPILMADI `393-*`: `content-format.ts`/`import_content` kind başına dallanıyor, ayrı dilim) Dışa/içe aktarma zarfı `promptly.skills` (`lib/exchange`)
-- [x] **B** (Claude Code `verified` YAPILDI `393-*`; Codex/Cursor `draft`, resmî belge doğrulanmadı → sunulmuyor) Adaptörler: Claude Code kurulum adımları (doğrula), Codex ve Cursor (`lib/skills/adapters/*`, `verified`/`draft`, golden test; **resmî belgeyle doğrulanmadan kullanıcıya sunulmaz**)
+- [x] **O** (YAPILDI `397-*`: `import_skills` RPC + `promptly.skills` zarfı + İçeriklerim'de İçe/Dışa aktar) Dışa/içe aktarma zarfı `promptly.skills` (`lib/exchange`)
+- [x] **B** (Claude Code `verified` YAPILDI `393-*`; Codex/Cursor da `verified` (YAPILDI `396-*`, resmî belgeden)) Adaptörler: Claude Code kurulum adımları (doğrula), Codex ve Cursor (`lib/skills/adapters/*`, `verified`/`draft`, golden test; **resmî belgeyle doğrulanmadan kullanıcıya sunulmaz**)
 - [x] **B** (YAPILDI `393-*`; Edge `api`/`mcp` elle deploy + `promptly-mcp` 0.3.0 elle yayın) Açık API `public-skills.ts` (+ `openapi.ts`) ve MCP `search_skills` / `get_skill` / `list_skill_files`; `sync-function-shared.mjs`; Edge `api`/`mcp`/`skill-package` elle deploy; `promptly-mcp` yeni sürüm; `/developers` metni
 - [x] **K** (YAPILDI `394-*`) Alıntılama (`create_quote`) Skill'e açıldı; topluluğa duyurulmaz, yalnız akış
 
 ### Açılış (dilim 5.4)
 - [x] **O** (YAZILDI `393-*`, `TERMS_VERSION` 2026-11-15; **hukuki danışman onayı YOK**) Gizlilik Politikası (`skill_uses`, Skill dosyaları) + Kullanım Koşulları (Skill = kod/betik/lisans) güncellemesi, `TERMS_VERSION` artırılır; **hukuki danışman onayı**
-- [x] **K** (CLAUDE.md + history notları YAPILDI; çeviri gözden geçirmesi YAPILMADI) Çeviri gözden geçirme, CLAUDE.md'ye Skill'in kalıcı kuralları (rota, tablolar, bayrak), `docs/history` notları
+- [x] **K** (CLAUDE.md + history notları YAPILDI; çeviri taraması betikle YAPILDI `396-*`, insan gözden geçirmesi YOK) Çeviri gözden geçirme, CLAUDE.md'ye Skill'in kalıcı kuralları (rota, tablolar, bayrak), `docs/history` notları
 - [x] **K** (`deploy.yml` `vars.NEXT_PUBLIC_SKILLS_ENABLED`'e BAĞLANDI `393-*`; DEĞER YAZILMADI, bayrak KAPALI — GitHub → Settings → Variables'tan açılır) `NEXT_PUBLIC_SKILLS_ENABLED=true` değişkenini deploy ortamına ekle (`.github/workflows/deploy.yml`); bayrak açılınca menü girişi görünür
 - [ ] **K** Gerçek Supabase/cihaz elle kontrol listesi: gerçek yükleme ve imzalı indirme, Claude Code'a kurulum, iOS Safari dosya seçici, TR/EN görünüm
 
 ### Aşama 6 — gelişmiş
-- [x] (oy YAPILDI `393-*`; kullanım değerlendirmesi YAPILMADI) "Çalıştı mı?" oyu (`prompt_works_votes` kalıbı; kopyalama şartı yerine indirme kaydı), kullanım değerlendirmesi (araç + sürüm etiketli yorum)
-- [x] (kalite göstergeleri YAPILDI `395-*`; sürüm güncelleme bildirimi `391-*`) / [ ] otomatik güvenlik taraması, Skill paketlerini birbirine bağlama
+- [x] (oy `393-*`; araç etiketli değerlendirme `397-*` YAPILDI [sürüm etiketi yok]) "Çalıştı mı?" oyu (`prompt_works_votes` kalıbı; kopyalama şartı yerine indirme kaydı), kullanım değerlendirmesi (araç + sürüm etiketli yorum)
+- [x] (kalite göstergeleri `395-*`; sürüm güncelleme bildirimi `391-*`; betik risk taraması [bilgilendirici] ve Skill ↔ Skill bağları `397-*` YAPILDI)
 
 ### Çekirdeğin bilinen sınırları (bilerek yapılmadı)
 - Gerçek Supabase'e, Storage'a ve cihaza karşı **denenmedi**; SQL testi yerel PostgreSQL'de, arayüz yalnız tip/lint/derleme ile doğrulandı (Skill için ağ taklitli Playwright paketi henüz yok → `tests/messaging-ui/run-skills.mjs`).
