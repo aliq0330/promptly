@@ -1,3 +1,4 @@
+-- ci:allow-destructive
 -- Skill alıntılama (docs/history/394-*): Skill, `content_quotes`'un altıncı hedefidir (Prompt, İstek, Workflow, Ayar paketi, Space, Skill).
 --
 -- Alıntı Skill'in kopyası değil başvurusudur; kendi beğeni/yorum/istatistik/bildirimi alıntıya aittir ve alıntılanan Skill'in sayaçlarına
