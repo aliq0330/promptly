@@ -11,6 +11,7 @@ import {
   toExchangePreset,
   toExchangePrompt,
   toExchangeRequest,
+  toExchangeSkill,
   toExchangeWorkflow,
   withSourceNote,
   type BulkBatchReport,
@@ -21,6 +22,7 @@ import {
   type ExchangePreset,
   type ExchangePrompt,
   type ExchangeRequest,
+  type ExchangeSkill,
   type ExchangeWorkflow,
 } from "@/lib/exchange";
 import { shareLinkForHref } from "@/lib/share-link";
@@ -171,9 +173,27 @@ export async function importContent<K extends ExchangeContentKind>(kind: K, item
   // Workflow'un adım grafiği ayrı bir RPC'dir (`import_workflows`); İstek / Hazır ayar `import_content`.
   const { data, error } = kind === "workflow"
     ? await supabase.rpc("import_workflows", { p_items: items, p_dry_run: dryRun })
-    : await supabase.rpc("import_content", { p_kind: kind, p_items: items, p_dry_run: dryRun });
+    : kind === "skill"
+      ? await supabase.rpc("import_skills", { p_items: items, p_dry_run: dryRun })
+      : await supabase.rpc("import_content", { p_kind: kind, p_items: items, p_dry_run: dryRun });
   if (error) throw new Error(error.message);
   return data as ImportReport;
+}
+
+/** Kendi Skill'lerin (taslak ve özel dahil): yalnız içerik alanları; talimat dahil okunur (paket dosyaları ve betikler yazılmaz). Sayfalı okunur, 1000 satırda kesilmez. */
+export async function fetchOwnSkillsForExport(userId: string): Promise<ExchangeSkill[]> {
+  const { rows } = await fetchAllRows((from, to) =>
+    supabase
+      .from("skills")
+      .select("title, summary, instructions, category, compat, license")
+      .eq("author_id", userId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+  );
+  return (rows as unknown as { title: string; summary: string; instructions: string; category: string | null; compat: string[] | null; license: string }[]).map((row) =>
+    toExchangeSkill({ title: row.title, summary: row.summary, instructions: row.instructions, category: row.category, compat: row.compat ?? [], license: row.license }),
+  );
 }
 
 interface WorkflowStepExportRow {

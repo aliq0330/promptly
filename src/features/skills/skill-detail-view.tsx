@@ -32,6 +32,7 @@ import { MarkdownView } from "./markdown-view";
 import { SimilarSkills } from "./skill-aside-blocks";
 import { SkillWorksVote } from "./skill-works-vote";
 import { SkillQualitySection } from "./skill-quality-section";
+import { SkillLinkedSkills } from "./skill-links-section";
 import { SkillInstallSection } from "./skill-install-section";
 import { downloadSkillMd, downloadSkillMetadata, skillMdFor } from "./skill-download";
 import { downloadSkillPackage, pickLatestVersion, SkillFilesSection, SkillRelatedSection, SkillVersionsSection } from "./skill-detail-parts";
@@ -258,6 +259,8 @@ export function SkillDetailView() {
         {skill.status === "published" && skill.visibility === "public" && <SkillInstallSection skill={skill} zipFileName={latest ? `${skill.slug}-${latest.version}.zip` : null} />}
 
         <SkillRelatedSection skillId={skill.id} />
+
+        <SkillLinkedSkills skillId={skill.id} />
 
         <SkillVersionsSection skillId={skill.id} slug={skill.slug} versions={versions} isOwn={isOwn} onChanged={() => setReload((value) => value + 1)} />
 

@@ -179,3 +179,43 @@ test("uygulamadan dışa aktarma: yalnız herkese açık prompt başvurusu yazı
   assert.ok(!JSON.stringify(out).includes("ÖZEL BAŞLIK"), "özel promptun başlığı dosyaya sızmaz");
   assert.deepEqual(out.steps[1].inputs, [{ id: "i", label: "I", source: { step: "s1", output: "o" } }, { id: "j", label: "J", source: null }]);
 });
+
+// ---- Skill (docs/history/397-*) ----
+import { parseContent as parseSkills, serializeContent as serializeSkills, contentFileName as skillFileName, toExchangeSkill, SKILL_CATEGORY_IDS as FORMAT_CATEGORIES, SKILL_COMPAT_IDS as FORMAT_COMPAT, SKILL_LICENSE_IDS as FORMAT_LICENSES } from "./content-format.ts";
+import { SKILL_CATEGORY_IDS, SKILL_COMPAT_IDS, SKILL_LICENSE_IDS } from "../skills/categories.ts";
+
+test("skill listeleri uygulama listeleriyle aynıdır (migration CHECK'iyle aynası categories testindedir)", () => {
+  assert.deepEqual([...FORMAT_CATEGORIES], [...SKILL_CATEGORY_IDS]);
+  assert.deepEqual([...FORMAT_COMPAT], [...SKILL_COMPAT_IDS]);
+  assert.deepEqual([...FORMAT_LICENSES], [...SKILL_LICENSE_IDS]);
+});
+
+test("skill zarfı gidiş-dönüş: yalnız içerik alanları taşınır, durum/görünürlük/sürüm/sayaç yazılmaz", () => {
+  const item = toExchangeSkill({ title: "Logo", summary: "özet", instructions: "# a", category: "design", compat: ["claude-code"], license: "mit" });
+  const text = serializeSkills("skill", [item], "2026-11-15T00:00:00.000Z");
+  const parsed = JSON.parse(text);
+  assert.equal(parsed.format, "promptly.skills");
+  assert.deepEqual(Object.keys(parsed.items[0]).sort(), ["category", "compat", "instructions", "license", "summary", "title"]);
+  const back = parseSkills("skill", text);
+  assert.equal(back.fatal, null);
+  assert.deepEqual(back.items, [item]);
+});
+
+test("skill kuralları: başlık zorunlu, alan/lisans/araç geçerli olmalı; dosyadaki durum/yazar alanları yok sayılır", () => {
+  const codes = (row: object) => parseSkills("skill", JSON.stringify([row])).issues.map((issue) => issue.code);
+  assert.deepEqual(codes({ summary: "x" }), ["required"]);
+  assert.deepEqual(codes({ title: "x", category: "cooking" }), ["invalid_category"]);
+  assert.deepEqual(codes({ title: "x", license: "wtfpl" }), ["invalid_license"]);
+  assert.deepEqual(codes({ title: "x", compat: ["emacs"] }), ["invalid_compat"]);
+  assert.deepEqual(codes({ title: "x".repeat(121) }), ["too_long"]);
+  const ok = parseSkills("skill", JSON.stringify([{ title: "x", status: "published", visibility: "public", authorId: "u", likeCount: 9, version: "9.9.9" }]));
+  assert.deepEqual(Object.keys(ok.items[0]).sort(), ["category", "compat", "instructions", "license", "summary", "title"]);
+});
+
+test("skill dosyası en çok 20 kayıt taşır; başka türün zarfı reddedilir; dosya adı skills", () => {
+  const rows = Array.from({ length: 21 }, (_, i) => ({ title: `t${i}` }));
+  assert.equal(parseSkills("skill", JSON.stringify(rows)).fatal, "too_many_items");
+  assert.equal(parseSkills("skill", JSON.stringify(rows.slice(0, 20))).fatal, null);
+  assert.equal(parseSkills("skill", JSON.stringify({ format: "promptly.presets", schemaVersion: 1, items: [{ title: "x" }] })).fatal, "unknown_format");
+  assert.match(skillFileName("skill", new Date("2026-11-15T00:00:00Z")), /^promptly-skills-2026-11-15\.json$/);
+});

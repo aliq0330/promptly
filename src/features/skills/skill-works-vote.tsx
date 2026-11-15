@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { summarizeWorks, toggleVote, type WorksState } from "@/lib/prompt-works";
-import { fetchSkillWorks, setSkillWorks } from "@/lib/supabase/skill-works";
+import { fetchSkillWorks, fetchSkillWorksByTool, setSkillWorks, setSkillWorksTool, WORKS_TOOLS, type WorksTool, type WorksToolRow } from "@/lib/supabase/skill-works";
+import { SKILL_COMPAT_LABEL, skillLabelText } from "@/lib/skills/categories";
 
 /**
  * Skill "Çalıştı mı?" (docs/history/393-*): Skill'i indirmiş (kullanmış) kişi tek dokunuşla oy verir; sayılar herkese açık Skill'de herkese görünür.
@@ -22,10 +23,13 @@ export function SkillWorksVote({ skillId, isOwn, justDownloaded }: { skillId: st
   const [state, setState] = useState<WorksState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tools, setTools] = useState<WorksToolRow[]>([]);
+  const [myTool, setMyTool] = useState<WorksTool | null>(null);
 
   const load = useCallback(() => {
     let cancelled = false;
     void fetchSkillWorks(skillId).then((next) => !cancelled && setState(next));
+    void fetchSkillWorksByTool(skillId).then((rows) => !cancelled && setTools(rows));
     return () => {
       cancelled = true;
     };
@@ -48,6 +52,22 @@ export function SkillWorksVote({ skillId, isOwn, justDownloaded }: { skillId: st
       setState(await setSkillWorks(skillId, next.myVote));
     } catch (failure) {
       setState(previous);
+      setError(failure instanceof Error && failure.message ? failure.message : t("prompt.works.voteFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function chooseTool(tool: WorksTool) {
+    if (busy) return;
+    const next = myTool === tool ? null : tool;
+    setBusy(true);
+    setError(null);
+    try {
+      await setSkillWorksTool(skillId, next);
+      setMyTool(next);
+      setTools(await fetchSkillWorksByTool(skillId));
+    } catch (failure) {
       setError(failure instanceof Error && failure.message ? failure.message : t("prompt.works.voteFailed"));
     } finally {
       setBusy(false);
@@ -86,6 +106,25 @@ export function SkillWorksVote({ skillId, isOwn, justDownloaded }: { skillId: st
         </div>
       ) : (
         signedInVoter && <p className="text-caption text-text-muted">{t("skill.works.useFirst")}</p>
+      )}
+      {state.canVote && state.myVote !== null && (
+        <div role="group" aria-label={t("skill.works.toolAria")} className="flex flex-wrap items-center gap-2" data-skill-works-tool-picker="">
+          <span className="text-caption text-text-muted">{t("skill.works.toolPrompt")}</span>
+          {WORKS_TOOLS.map((tool) => (
+            <Button key={tool} variant={myTool === tool ? "primary" : "outline"} size="sm" aria-pressed={myTool === tool} disabled={busy} onClick={() => void chooseTool(tool)} data-skill-works-tool={tool}>
+              {skillLabelText(SKILL_COMPAT_LABEL[tool], t)}
+            </Button>
+          ))}
+        </div>
+      )}
+      {tools.length > 0 && (
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-secondary" data-skill-works-by-tool="">
+          {tools.map((row) => (
+            <li key={row.tool} data-skill-works-tool-row={row.tool}>
+              <span className="font-semibold text-text">{skillLabelText(SKILL_COMPAT_LABEL[row.tool], t)}</span>: {t("skill.works.toolCounts", { yes: row.yes, no: row.no })}
+            </li>
+          ))}
+        </ul>
       )}
       {error && (
         <p role="alert" className="text-small text-danger">

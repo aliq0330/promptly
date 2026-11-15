@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Download } from "@/components/icons/download";
 import { FileText } from "@/components/icons/file-text";
 import { Badge } from "@/components/ui/badge";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import type { ScriptRiskCode } from "@/lib/skills/package-validate";
 import { Button } from "@/components/ui/button";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { CompactContentCard, type AttachmentState } from "@/features/content/compact-content-card";
@@ -152,18 +154,34 @@ export function SkillVersionsSection({
   );
 }
 
+const RISK_LABEL: Record<ScriptRiskCode, TranslationKey> = {
+  pipe_to_shell: "skill.scan.pipe_to_shell",
+  network: "skill.scan.network",
+  destructive_delete: "skill.scan.destructive_delete",
+  dynamic_eval: "skill.scan.dynamic_eval",
+  privilege: "skill.scan.privilege",
+  credential_paths: "skill.scan.credential_paths",
+  obfuscation: "skill.scan.obfuscation",
+};
+
 /** Son sürümün dosya listesi (manifest'ten) + betik uyarısı. Paket dosyalarının içeriği ZIP'tedir; sayfada yalnız liste görünür. */
 export function SkillFilesSection({ version }: { version: SkillVersion }) {
   const { t } = useTranslation();
   const files = version.manifest?.files ?? [];
   if (files.length === 0) return null;
   const hasScript = files.some((file) => file.script);
+  const hasRisks = files.some((file) => (file.risks?.length ?? 0) > 0);
   return (
     <DetailSection title={t("skill.detail.filesTitle")} id="skill-files">
       <p className="mb-3 text-small text-text-muted">{t("skill.detail.filesHint", { version: version.version })}</p>
       {hasScript && (
         <div className="mb-3">
           <InlineAlert tone="warning">{t("skill.detail.scriptWarning")}</InlineAlert>
+        </div>
+      )}
+      {hasRisks && (
+        <div className="mb-3" data-skill-scan="">
+          <InlineAlert tone="warning">{t("skill.scan.note")}</InlineAlert>
         </div>
       )}
       <ul className="divide-y divide-border-soft rounded-xl border border-border-soft" data-skill-manifest="">
@@ -173,6 +191,15 @@ export function SkillFilesSection({ version }: { version: SkillVersion }) {
             <code className="min-w-0 flex-1 break-all font-mono text-caption text-text">{file.path}</code>
             {file.script && <Badge variant="warning">{t("skill.pkg.scriptBadge")}</Badge>}
             <span className="shrink-0 text-caption text-text-muted">{formatBytes(file.size)}</span>
+            {(file.risks?.length ?? 0) > 0 && (
+              <div className="flex w-full flex-wrap gap-1.5 pl-6" data-skill-risks={file.path}>
+                {file.risks?.map((risk) => (
+                  <Badge key={risk} variant="warning" data-skill-risk={risk}>
+                    {t(RISK_LABEL[risk])}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </li>
         ))}
       </ul>

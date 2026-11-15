@@ -205,6 +205,32 @@ export function scanSecrets(text: string, path: string): SkillIssue[] {
   return found;
 }
 
+/**
+ * Betik risk taraması (docs/history/397-*): BİLGİLENDİRİCİ, kesin değil. Betikte okuyucunun çalıştırmadan önce görmesi gereken kalıpları işaretler; yayını ENGELLEMEZ ve
+ * "güvenli" demez (kaçınma/gizleme kolaydır). Skill içindeki hiçbir şey sunucuda çalıştırılmaz. Kural kodları `skill.scan.<kod>` çeviri anahtarlarıdır.
+ */
+export const SCRIPT_RISK_CODES = ["pipe_to_shell", "network", "destructive_delete", "dynamic_eval", "privilege", "credential_paths", "obfuscation"] as const;
+export type ScriptRiskCode = (typeof SCRIPT_RISK_CODES)[number];
+
+const SCRIPT_RISK_RULES: { code: ScriptRiskCode; pattern: RegExp }[] = [
+  { code: "pipe_to_shell", pattern: /\b(?:curl|wget)\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba|z|da|k)?sh\b/i },
+  { code: "network", pattern: /\b(?:curl|wget|nc|ncat|netcat|scp|ssh|ftp)\s|\bfetch\s*\(|\brequests\.(?:get|post|put|delete)\b|\burllib\b|\bhttp\.client\b|\baxios\b|\/dev\/tcp\/|\bXMLHttpRequest\b|\bnew\s+WebSocket\b/i },
+  { code: "destructive_delete", pattern: /\brm\s+-[a-z]*r[a-z]*f?[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/|~|\$HOME|\*)|\bshutil\.rmtree\b|\bdel\s+\/[sq]\b|\bRemove-Item\b[^\n]*-Recurse|\bmkfs\b|\bdd\s+if=/i },
+  { code: "dynamic_eval", pattern: /\beval\s*[(\s"'$]|\bexec\s*\(|\bos\.system\s*\(|\bsubprocess\.[a-z_]+\([^)]*shell\s*=\s*True|\bchild_process\b|\bbash\s+-c\b|\bsh\s+-c\b|\bnew\s+Function\s*\(|\bpickle\.loads?\b/i },
+  { code: "privilege", pattern: /\bsudo\b|\bchmod\s+(?:-R\s+)?[0-7]?777\b|\bchown\s|\bsetuid\b|\bdoas\b/i },
+  { code: "credential_paths", pattern: /~\/\.ssh|\$HOME\/\.ssh|\.aws\/credentials|\bid_rsa\b|\.npmrc\b|\.netrc\b|\.git-credentials|\bkeychain\b|\/etc\/(?:passwd|shadow)/i },
+  { code: "obfuscation", pattern: /\bbase64\s+(?:-d|--decode)\b|\batob\s*\(|\bFromBase64String\b|\\x[0-9a-f]{2}(?:\\x[0-9a-f]{2}){15,}|\bb64decode\s*\(/i },
+];
+
+/** Betik metninde işaretlenen risk kodları (tekrarsız, kural sırasıyla). Boş metin / eşleşme yok → `[]`. */
+export function scanScriptRisks(text: string): ScriptRiskCode[] {
+  const found: ScriptRiskCode[] = [];
+  for (const rule of SCRIPT_RISK_RULES) {
+    if (rule.pattern.test(text)) found.push(rule.code);
+  }
+  return found;
+}
+
 /** Tek dosyanın içerik denetimi (yol ayrıca `validateSkillPath` ile). */
 export function validateFileContent(path: string, bytes: Uint8Array): SkillIssue[] {
   const issues: SkillIssue[] = [];

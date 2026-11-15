@@ -29,6 +29,7 @@ import { SkillFileEditor } from "./skill-file-editor";
 import { SkillPackageSection } from "./skill-package-section";
 import { SkillPublishDialog } from "./skill-publish-dialog";
 import { SkillRelationsSection } from "./skill-relations-section";
+import { SkillLinksEditor } from "./skill-links-section";
 import { useSkillUploads } from "./use-skill-uploads";
 
 const SUMMARY_MIN = 10;
@@ -409,6 +410,9 @@ export function SkillEditor({ editId }: { editId: string | null }) {
             </ComposeSection>
             <ComposeSection title={t("skill.rel.sectionTitle")}>
               <SkillRelationsSection skillId={skillId} ensureDraft={ensureDraft} disabled={isSaving} />
+            </ComposeSection>
+            <ComposeSection title={t("skill.links.sectionTitle")}>
+              <SkillLinksEditor skillId={skillId} ensureDraft={ensureDraft} disabled={isSaving} />
             </ComposeSection>
           </>
         )}
