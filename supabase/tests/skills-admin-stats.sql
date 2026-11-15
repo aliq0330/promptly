@@ -28,5 +28,5 @@ reset role;
 set role authenticated; select pg_temp.as_user(:bob);
 select pg_temp.check(2, 'a moderator gets the counts', (select (j ->> 'total')::int = 3 and (j ->> 'published')::int = 2 and (j ->> 'draft')::int = 1 and (j ->> 'private')::int = 1 and (j ->> 'with_package')::int = 0 from (select public.admin_skill_stats() as j) x));
 reset role;
-select n, name, case when ok then 'PASS' else 'FAIL' end as r, detail from pg_temp.results order by n, name;
-select count(*) filter (where not ok) as failures, count(*) as total from pg_temp.results;
+select n, case when ok then 'PASS' else 'FAIL' end as result, name, detail from pg_temp.results order by n, name;
+select 'FAILED=' || count(*) filter (where not ok) from pg_temp.results;
