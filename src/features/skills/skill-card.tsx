@@ -4,6 +4,8 @@ import { GraduationCap } from "@/components/icons/graduation-cap";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
+import { CommentCountLink } from "@/features/prompts/comment-count-link";
+import { LikeButton } from "@/features/prompts/like-button";
 import { postMeta } from "@/features/prompts/post-header";
 import { TextArt, TextArtTitle } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -13,7 +15,7 @@ import type { Skill } from "@/types";
 
 /**
  * Skill kartı: görsel kart kabuğu (`ContentCardPost`, docs/history/266-*) — ikinci bir kart kabuğu yazılmaz. Görselin yeri yazı yüzeyidir
- * (ad, kısa açıklama, sürüm · araçlar), tıpkı görselsiz prompt kartı gibi. Beğeni/yorum/kaydet altbilgisi sonraki dilimdir (yapılacaklar listesi).
+ * (ad, kısa açıklama, sürüm · araçlar), tıpkı görselsiz prompt kartı gibi. Altbilgide Beğeni + Yorum vardır (docs/history/390-*; yalnız yayında + herkese açık Skill); Kaydet sonraki dilimdir.
  */
 export function SkillCard({ skill }: { skill: Skill }) {
   const { t, language } = useTranslation();
@@ -43,6 +45,14 @@ export function SkillCard({ skill }: { skill: Skill }) {
           </TextArt>
         }
         title={<ContentCardTitle href={href} title={skill.title || t("skill.untitled")} />}
+        footer={
+          skill.status === "published" && skill.visibility === "public" ? (
+            <>
+              <LikeButton id={skill.id} likeCount={skill.likeCount} contentType="skill" />
+              <CommentCountLink skillId={skill.id} baseCount={skill.commentCount} />
+            </>
+          ) : undefined
+        }
       />
     </ContentCard>
   );

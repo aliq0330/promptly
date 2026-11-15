@@ -18,6 +18,9 @@ const PREVIEW_TEMPLATES: [prefix: string, key: string, hasNoPreviewForm: boolean
   ["Workflow'una yorum yaptı", "notifMsg.commentedWorkflow", true],
   ["Hazır ayarını beğendi", "notifMsg.likedPreset", false],
   ["Hazır ayarına yorum yaptı", "notifMsg.commentedPreset", true],
+  // Skill (docs/history/390-*)
+  ["Skill'ini beğendi", "notifMsg.likedSkill", false],
+  ["Skill'ine yorum yaptı", "notifMsg.commentedSkill", true],
   ["Sonucuna yorum yaptı", "notifMsg.commentedResult", true],
   ["İsteğine yorum yaptı", "notifMsg.commentedRequest", true],
   ["Koleksiyonunu takip etmeye başladı", "notifMsg.followedCollection", false],

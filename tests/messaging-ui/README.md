@@ -458,3 +458,10 @@ SHOTS=/tmp/nav-shots node tests/messaging-ui/run-nav-layout.mjs   # ekran görü
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy NEXT_PUBLIC_SKILLS_ENABLED=true npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-skills-package.mjs   # 23/23 beklenir (port 4189)
 ```
+
+`run-skills-social.mjs` (11 senaryo): yayında + herkese açık Skill'de beğeni/yorum sayaçları + İstatistik + yorum bölümü, taslakta "yayınlanınca açılır" notu (beğeni/yorum yok), tepkinin `prompt_likes`'a **`skill_id`** ile yazılması (seçilen tepki sütunlu, başka hedef sütunu boş), yorumun `prompt_comments`'a `skill_id` ile yazılıp listede görünmesi, ⋮ menüsünde Şikâyet penceresi (yalnız başkasının Skill'inde), listedeki kartta sayaçlar, profilde "Skill'ler" bölümü (ziyaretçi yalnız yayındakini, sahibi taslağı da görür), İngilizce, telefon taşması. Ağ taklidi testin içindedir. **Gerçek Supabase'e / Realtime'a / cihaza KARŞI DENENMEDİ** — DB kuralları `supabase/tests/skills-social.sql`.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy NEXT_PUBLIC_SKILLS_ENABLED=true npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-skills-social.mjs   # 11/11 beklenir (port 4190)
+```

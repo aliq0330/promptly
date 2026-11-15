@@ -46,6 +46,10 @@ import { fetchWorkflowsByCreatorPage } from "@/lib/supabase/workflows";
 import { fetchRequestsByAuthorPage } from "@/lib/supabase/requests";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
+import { ProfileSkillsPanel } from "@/features/skills/profile-skills-panel";
+import { GraduationCap } from "@/components/icons/graduation-cap";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
+import { fetchProfileSkillCount } from "@/lib/supabase/skills";
 import type { Collection, Prompt, PromptContentType, UserProfile } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns } from "@/features/content/content-card";
 import { ProfileSpacesPanel, usePublicSpaces, type PublicSpaces } from "@/features/spaces/public-spaces";
@@ -68,7 +72,7 @@ function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
 }
 
 /** One flat set of sections since Meydan (docs/history/190-*). Since docs/history/272-* ALL of them sit in ONE "Promptlar ▾" menu pill (the tabs + "Daha fazla" of 243-* are gone), like Topluluklar / Spaces. */
-export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "drafts" | "saved" | "collections" | "spaces" | "quotes" | "results" | "liked" | "about";
+export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "skills" | "drafts" | "saved" | "collections" | "spaces" | "quotes" | "results" | "liked" | "about";
 
 export function ProfileView({
   user,
@@ -127,6 +131,17 @@ export function ProfileView({
       cancelled = true;
     };
   }, [user.id]);
+
+  // Skill'ler (docs/history/390-*): bölüm `NEXT_PUBLIC_SKILLS_ENABLED` arkasındadır; hiç yoksa başkasının profilinde görünmez (kendi profilinde boş durum + ipucu).
+  const [skillCount, setSkillCount] = useState(0);
+  useEffect(() => {
+    if (!SKILLS_MENU_ENABLED) return;
+    let cancelled = false;
+    fetchProfileSkillCount(user.id, isOwnProfile).then((count) => !cancelled && setSkillCount(count));
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id, isOwnProfile]);
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
   // "İstekler" and "Workflow'lar": a page at a time like the prompts (RLS: a visitor sees the public ones, the owner their private ones too); "Hazır Ayarlar" pages itself.
@@ -187,6 +202,7 @@ export function ProfileView({
       { key: "workflows", label: t("nav.workflows"), icon: WorkflowIcon, meta: postCounts.workflows },
       { key: "presets", label: t("nav.presets"), icon: SlidersHorizontal, meta: postCounts.presets },
     ];
+    if (SKILLS_MENU_ENABLED && (skillCount > 0 || isOwnProfile)) base.push({ key: "skills", label: t("skill.pageTitle"), icon: GraduationCap, meta: skillCount });
     if (quoteCount > 0 || isOwnProfile) base.push({ key: "quotes", label: t("quotes.profile.tab"), icon: QuoteIcon, meta: quoteCount });
     if (resultCount > 0 || isOwnProfile) base.push({ key: "results", label: t("results.profile.tab"), icon: Images, meta: resultCount });
     let firstOfGroup = true;
@@ -203,7 +219,7 @@ export function ProfileView({
     if (!isOwnProfile && publicCollections.length > 0) group({ key: "collections", label: t("profile.tabCollections"), icon: Folder, meta: publicCollections.length });
     base.push({ key: "about", label: t("profile.tabAbout"), icon: Info, dividerBefore: true });
     return base;
-  }, [postCounts, quoteCount, resultCount, isOwnProfile, liked.total, publicCollections.length, spaceCount, t]);
+  }, [postCounts, skillCount, quoteCount, resultCount, isOwnProfile, liked.total, publicCollections.length, spaceCount, t]);
 
   const normalizedSearch = search.trim().toLocaleLowerCase("tr");
 
@@ -361,6 +377,8 @@ export function ProfileView({
               <ProfileResultsPanel creator={user} isOwn={isOwnProfile} />
             ) : activeTab === "presets" ? (
               <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} />
+            ) : activeTab === "skills" ? (
+              <ProfileSkillsPanel ownerId={user.id} isOwn={isOwnProfile} />
             ) : activeTab === "saved" ? (
               // No more separate flat "Tümü" list here — Kaydedilenler IS the
               // collections view now, "Genel" (the default, general-save

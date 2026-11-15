@@ -105,4 +105,15 @@ export const skillsTranslations = {
   "skills.category.education": { tr: "Eğitim ve Öğrenme", en: "Education & Learning" },
   "skills.category.data": { tr: "Veri ve Otomasyon", en: "Data & Automation" },
   "skills.category.productivity": { tr: "Üretkenlik ve Kişisel Asistanlar", en: "Productivity & Personal Assistants" },
+  // Sosyal katman (docs/history/390-*)
+  "skill.profile.noneOwn": { tr: "Henüz bir Skill yayınlamadın. İlkini oluştur, yapay zekâya bir işi öğret.", en: "You haven't published a Skill yet. Create your first one and teach an AI a job." },
+  "skill.profile.noneOther": { tr: "Bu kişinin herkese açık Skill'i yok.", en: "This person has no public Skills." },
+  "skill.menu": { tr: "Skill menüsü", en: "Skill menu" },
+  "skill.social.unpublished": {
+    tr: "Beğeni ve yorumlar Skill yayınlanıp herkese açık olduğunda açılır.",
+    en: "Likes and comments open once the Skill is published and public.",
+  },
+  "notifMsg.likedSkill": { tr: "Skill'ini beğendi: \"{{preview}}\"", en: "Liked your Skill: \"{{preview}}\"" },
+  "notifMsg.commentedSkill": { tr: "Skill'ine yorum yaptı: \"{{preview}}\"", en: "Commented on your Skill: \"{{preview}}\"" },
+  "notifMsg.commentedSkillNone": { tr: "Skill'ine yorum yaptı.", en: "Commented on your Skill." },
 } as const;

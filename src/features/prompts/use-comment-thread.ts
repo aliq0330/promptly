@@ -14,6 +14,7 @@ import {
   type CommentScope,
   postCommentOnCommunityPost,
   postCommentOnPreset,
+  postCommentOnSkill,
   postCommentOnWorkflow,
   postCommentOnPrompt,
   postCommentOnRequest,
@@ -42,6 +43,7 @@ export type CommentTarget =
   | { resultId: string }
   | { workflowId: string }
   | { presetId: string }
+  | { skillId: string }
   | { communityPostId: string }
   /** Space'in GENEL yorumları: 1–5 puan yorumla birlikte verilir (docs/history/242-*). */
   | { spaceId: string; spaceActivityId?: undefined }
@@ -131,7 +133,7 @@ export function useCommentThread(
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" | "community_post" | "space" | "space_activity" | "quote" =
+  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" | "skill" | "community_post" | "space" | "space_activity" | "quote" =
     "promptId" in target
       ? "prompt"
       : "requestId" in target
@@ -140,6 +142,8 @@ export function useCommentThread(
           ? "workflow"
           : "presetId" in target
             ? "preset"
+            : "skillId" in target
+            ? "skill"
             : "communityPostId" in target
               ? "community_post"
               : "spaceId" in target
@@ -158,6 +162,8 @@ export function useCommentThread(
           ? target.workflowId
           : "presetId" in target
             ? target.presetId
+            : "skillId" in target
+            ? target.skillId
             : "communityPostId" in target
               ? target.communityPostId
               : "spaceId" in target
@@ -177,6 +183,7 @@ export function useCommentThread(
     if (kind === "request") return postCommentOnRequest(id, userId, body, parentId, extras);
     if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId, extras);
     if (kind === "preset") return postCommentOnPreset(id, userId, body, parentId, extras);
+    if (kind === "skill") return postCommentOnSkill(id, userId, body, parentId, extras);
     if (kind === "community_post") return postCommentOnCommunityPost(id, userId, body, parentId, extras);
     if (kind === "space") return postCommentOnSpace(id, userId, body, parentId, { rating, ...extras });
     if (kind === "space_activity" && "spaceId" in target) return postCommentOnSpace(target.spaceId, userId, body, parentId, { activityId: id, ...extras });
@@ -347,7 +354,7 @@ export function useCommentThread(
       window.clearInterval(id);
     };
   }, [loaded, loadFailed, user?.id, targetKind, targetId]);
-  const canPin = Boolean(contentOwnerId) && user?.id === contentOwnerId && (targetKind === "prompt" || targetKind === "request" || targetKind === "workflow" || targetKind === "preset");
+  const canPin = Boolean(contentOwnerId) && user?.id === contentOwnerId && (targetKind === "prompt" || targetKind === "request" || targetKind === "workflow" || targetKind === "preset" || targetKind === "skill");
   const ratingEnabled = targetKind === "space";
   // Kişi başına tek puan: kullanıcının zaten puanlı (silinmemiş) yorumu varsa yeni yorumda puan verilmez, mevcut puan yorumundaki yıldızlardan değişir.
   const myRatedComment = useMemo(() => (user ? comments.find((c) => c.author.id === user.id && c.rating && !c.deletedAt) ?? null : null), [comments, user]);

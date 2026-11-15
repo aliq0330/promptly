@@ -141,6 +141,8 @@ export interface PromptComment {
   resultId?: string;
   workflowId?: string;
   presetId?: string;
+  /** Skill yorumu (docs/history/390-*): `prompt_comments.skill_id`. */
+  skillId?: string;
   /** Topluluk gönderisi yorumu: yorum gönderinin kendi kimliğine bağlıdır, gönderinin işaret ettiği içeriğin yorumlarına karışmaz (`prompt_comments.community_post_id`). */
   communityPostId?: string;
   /** Akışta paylaşılmış bir Space'in yorumu (docs/history/215-*). */

@@ -16,8 +16,11 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
-import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailLede, DetailSection, DetailShell, DetailTitle } from "@/features/content/detail-parts";
+import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTitle } from "@/features/content/detail-parts";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
+import { DropdownMenu } from "@/features/communities/dropdown-menu";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageStatistics } from "@/features/content/scoped-engagement";
+import { ReportButton } from "@/features/moderation/report-button";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILL_CATEGORY_LABEL, SKILL_COMPAT_LABEL, SKILL_LICENSE_LABEL, skillLabelText } from "@/lib/skills/categories";
@@ -37,7 +40,10 @@ import type { Skill } from "@/types";
 export function SkillDetailView() {
   const { t, language } = useTranslation();
   const router = useRouter();
-  const id = useSearchParams().get("id");
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+  const highlight = searchParams.get("hl");
+  const highlightCommentId = highlight?.startsWith("comment:") ? highlight.slice("comment:".length) : null;
   const { user } = useAuth();
   const [skill, setSkill] = useState<Skill | null | undefined>(undefined);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -134,17 +140,44 @@ export function SkillDetailView() {
           }
           title={<DetailTitle>{skill.title || t("skill.untitled")}</DetailTitle>}
           byline={<DetailByline person={skill.creator} createdAt={skill.createdAt} language={language} follow={!isOwn && <FollowButton user={skill.creator} />} />}
+          menu={
+            !isOwn && user ? (
+              <span data-skill-menu="" className="relative z-10">
+                <DropdownMenu label={t("skill.menu")}>
+                  {() => (
+                    <div className="px-4 py-2">
+                      <ReportButton targetType="skill" targetId={skill.id} title={skill.title} subtitle={`@${skill.creator.username}`} />
+                    </div>
+                  )}
+                </DropdownMenu>
+              </span>
+            ) : undefined
+          }
         />
       }
       aside={aside}
       actions={
         <DetailActionBar
+          below={skill.status === "published" && skill.visibility === "public" ? <EngageReactionSummary id={skill.id} likeCount={skill.likeCount} contentType="skill" /> : undefined}
+          end={
+            skill.status === "published" && skill.visibility === "public" ? (
+              <>
+                <EngageStatistics target={{ contentType: "skill", contentId: skill.id, likeCount: skill.likeCount, commentCount: skill.commentCount }} size={20} />
+              </>
+            ) : undefined
+          }
           primary={
             <button type="button" onClick={() => void primaryDownload()} data-skill-download="" className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
               <Download size={18} aria-hidden /> {latest ? t("skill.detail.downloadZip", { version: latest.version }) : t("skill.download")}
             </button>
           }
         >
+          {skill.status === "published" && skill.visibility === "public" && (
+            <>
+              <EngageLike id={skill.id} likeCount={skill.likeCount} contentType="skill" size={20} />
+              <EngageCommentCount skillId={skill.id} baseCount={skill.commentCount} size={20} />
+            </>
+          )}
           {latest && (
             <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => downloadSkillMd(skill)} data-skill-download-md="">
               <Download size={16} aria-hidden /> {t("skill.detail.downloadMd")}
@@ -209,6 +242,16 @@ export function SkillDetailView() {
           <p className="mb-3 text-small text-text-muted">{t("skill.skillMdHint")}</p>
           <CodeBlock text={skillMdFor(skill)} label={t("skill.skillMdLabel")} />
         </DetailSection>
+
+        {skill.status === "published" && skill.visibility === "public" ? (
+          <DetailComments>
+            <EngageComments target={{ skillId: skill.id }} ownerId={skill.creator.id} highlightCommentId={highlightCommentId} headless />
+          </DetailComments>
+        ) : (
+          <p className="rounded-xl border border-dashed border-border px-4 py-4 text-center text-small text-text-muted" data-skill-social-off="">
+            {t("skill.social.unpublished")}
+          </p>
+        )}
       </article>
 
       {confirmDelete && (
