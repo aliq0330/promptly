@@ -4,9 +4,10 @@ import { fetchRequestsByIds } from "./requests";
 import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
 import { fetchQuotesByIds, type Quote } from "./quotes";
+import { fetchSkillsByIds } from "./skills";
 import { nextFeedCursor, type FeedCursor, type FeedOrder } from "@/lib/feed-cursor";
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
-import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
+import type { Preset, Prompt, PromptRequest, Skill, Workflow } from "@/types";
 
 /** One slot of the home feed: a prompt, request, workflow, preset or a quote of any of them — a Space reaches the feed only as a quote (docs/history/241-*). */
 export type FeedEntry =
@@ -14,11 +15,15 @@ export type FeedEntry =
   | { kind: "request"; data: PromptRequest }
   | { kind: "workflow"; data: Workflow }
   | { kind: "preset"; data: Preset }
-  | { kind: "quote"; data: Quote };
+  | { kind: "quote"; data: Quote }
+  | { kind: "skill"; data: Skill };
 
 export type FeedKind = FeedEntry["kind"];
-/** A feed slot that is a content post (everything but a quote). */
-export type PostEntry = Exclude<FeedEntry, { kind: "quote" }>;
+/**
+ * A feed slot that is a full-screen-playable content post: prompt, request, workflow, preset. A quote is a note about another post and a Skill
+ * (docs/history/400-*) is a card-only entry — neither goes to Odak or "Sana özel".
+ */
+export type PostEntry = Exclude<FeedEntry, { kind: "quote" | "skill" }>;
 export type FeedScope = "all" | "following";
 export type { FeedCursor, FeedOrder };
 
@@ -146,13 +151,14 @@ export async function fetchFeedCount(filter: { taxonomy: TaxonomyFilterValue; ta
 /** Full rows for a page of feed ids, in the page's order; a row that vanished in between (deleted, blocked author) is skipped. */
 async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
   const idsOf = (kind: FeedKind) => rows.filter((row) => row.kind === kind).map((row) => row.id);
-  const [prompts, requests, workflows, presets, quotes] = await Promise.all([
+  const [prompts, requests, workflows, presets, quotes, skills] = await Promise.all([
     fetchPromptsByIds(idsOf("prompt")),
     fetchRequestsByIds(idsOf("request")),
     fetchWorkflowsByIds(idsOf("workflow")),
     fetchPresetsByIds(idsOf("preset")),
     // A quote whose target can't be loaded (gone private) is skipped like any other vanished row.
     fetchQuotesByIds(idsOf("quote")).catch(() => [] as Quote[]),
+    fetchSkillsByIds(idsOf("skill")).catch(() => [] as Skill[]),
   ]);
   const byKey = new Map<string, FeedEntry>();
   for (const data of prompts) byKey.set(`prompt-${data.id}`, { kind: "prompt", data });
@@ -160,6 +166,7 @@ async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
   for (const data of workflows) byKey.set(`workflow-${data.id}`, { kind: "workflow", data });
   for (const data of presets) byKey.set(`preset-${data.id}`, { kind: "preset", data });
   for (const data of quotes) byKey.set(`quote-${data.id}`, { kind: "quote", data });
+  for (const data of skills) byKey.set(`skill-${data.id}`, { kind: "skill", data });
 
   return rows.flatMap((row) => byKey.get(`${row.kind}-${row.id}`) ?? []);
 }
@@ -176,7 +183,7 @@ export interface ForYouReason {
 }
 
 export interface ForYouPage {
-  /** "Sana özel" ranks content posts only (`for_you_page` never returns a quote). */
+  /** "Sana özel" ranks content posts only (`for_you_page` never returns a quote or a Skill). */
   items: PostEntry[];
   /** `${kind}-${id}` → reason. */
   reasons: Record<string, ForYouReason>;
@@ -216,7 +223,7 @@ export async function fetchForYouPage(params: {
   if (error) throw new Error(error.message);
 
   const rows = (data ?? []) as ForYouRow[];
-  const items = (await hydrateFeedRows(rows)).filter((item): item is PostEntry => item.kind !== "quote");
+  const items = (await hydrateFeedRows(rows)).filter((item): item is PostEntry => item.kind !== "quote" && item.kind !== "skill");
   const reasons: Record<string, ForYouReason> = {};
   for (const row of rows) reasons[`${row.kind}-${row.id}`] = { kind: row.reason_kind, ref: row.reason_ref };
   return { items, reasons, nextCursor: nextFeedCursor(rows, limit) };

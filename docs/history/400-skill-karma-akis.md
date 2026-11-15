@@ -1,0 +1,10 @@
+# 400 — Skill karma akışta
+
+**Durum:** uygulandı (kodlandı; yerel PostgreSQL + ağ taklitli testle sınandı; gerçek Supabase/cihaz DENENMEDİ). Migration `20261201160000_skill_in_feed.sql` (yalnız işlev gövdeleri yeniden yazılır; imza ve dönüş aynı, veri değişmez).
+
+- **`feed_page` + `skill_part`:** yayında + herkese açık Skill'ler karma akışa (Keşfet "Tümü", Takip Ettiklerim, etiket/araç konu sayfaları) girer; `p_kinds` verilirse yalnız `'skill'` içeriyorsa gelir. Sıralama aynı üçlü keyset (`sort_rank`, `created_at`, `id`): `recommended` = Skill karması (`use*2 + save*3 + like*2 + comment`), `popular` = beğeni, `used` = kullanım sayısı.
+- **Süzgeçler:** etiket (`p_tag`/`p_tags`), takip edilen etiketler (`tagged`), takip edilen kişiler ve yazar süzgeci uygulanır. İçerik türü/kategori/alt kategori ve AI aracı süzgeçleri VERİLİRSE Skill girmez (Skill'in kategorisi ve uyumlu araçları prompt taksonomisinden ayrı kataloglardır); "Medya" süzgeci açıkken de girmez.
+- **`feed_count`:** konu sayfasındaki gönderi sayısı akışla aynı kümeyi sayar (Skill yalnız taksonomi/araç süzgeci yokken sayılır).
+- **İstemci:** `FeedEntry` yeni `{kind:"skill"}` kolu; `PostEntry`/`PostFeedItem` Skill'i DIŞLAR → Odak ve "Sana özel" (`for_you_page` Skill döndürmez) Skill almaz, ilgi geri bildirimi Skill için sorulmaz. Akışta Skill `SkillCard` ile çizilir; kimlikleri `fetchSkillsByIds` ile okunur, okunamayan satır sessizce atlanır (imleç ham satırlardan ilerler).
+- **Bilinçli sınırlar:** Odak'ın tür çipinde Skill yok; `feed_page` aşırı yüklü eski 10/11/13/16 argümanlı sarmalayıcılar gövdeyi `feed_page` 17 argümanlı biçimden çağırır, bu yüzden hepsi Skill'i aynı kuralla taşır; Ana Sayfa'daki "Skill'ler" çipi (396) ayrı `skill_feed_page` listesi olarak kalır.
+- Testler: SQL `skills-feed` (15 kontrol: gizli/taslak yok, süzgeçler, keyset, takip kapsamı, `feed_count`); `feed-filters`, `topic-pages`, `quotes`, `feed-page-media`, `space-posts`, `community-home` yeniden koşuldu (yeşil); ağ taklitli `run-skills-social` 33/33 (yeni senaryo 28); `npm test` 1192/1192.

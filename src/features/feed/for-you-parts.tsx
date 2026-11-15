@@ -203,8 +203,8 @@ const REASON_ICON: Record<ForYouReason["kind"], IconComponent> = {
 /** The one-line reason above a "Sana özel" card — always the server's real signal (`for_you_page`). */
 export function ForYouReasonNote({ item, reason }: { item: FeedItem; reason: ForYouReason | undefined }) {
   const { t } = useTranslation();
-  // "Sana özel" never ranks a quote; the guard narrows the item to a content post.
-  if (!reason || item.kind === "quote") return null;
+  // "Sana özel" never ranks a quote or a Skill; the guard narrows the item to a content post.
+  if (!reason || item.kind === "quote" || item.kind === "skill") return null;
   const tagLabel = (slug: string | null) => (slug ? (item.data.tags.find((tag) => tag.slug === slug)?.label ?? slug) : "");
   const person = item.kind === "workflow" || item.kind === "preset" ? item.data.creator : item.data.author;
   const text =

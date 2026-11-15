@@ -32,7 +32,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -124,6 +124,11 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     const q = (body.p_query ?? "").toLowerCase();
     const rows = list.filter((s) => !q || s.title.toLowerCase().includes(q)).map((s) => ({ id: s.id, created_at: s.created_at, sort_rank: 0, match_source: q ? "title" : null }));
     return json(route, rows);
+  });
+  await context.route(/\/rest\/v1\/rpc\/feed_page(\?|$)/, (route) => {
+    const body = JSON.parse(route.request().postData() || "{}");
+    state.mixedFeedCalls.push(body);
+    return json(route, [{ kind: "skill", id: S_PUB, created_at: "2026-11-15T10:00:00Z", sort_rank: 0 }, { kind: "skill", id: "d6000000-0000-4000-8000-0000000000ff", created_at: "2026-11-14T10:00:00Z", sort_rank: 0 }]);
   });
   await context.route(/\/rest\/v1\/rpc\/create_quote/, (route) => {
     state.quoteCalls.push(JSON.parse(route.request().postData() || "{}"));
@@ -508,6 +513,13 @@ await scenario("27. İlişki Haritası: Skill merkezliyken harita açılır ve b
   await page.goto(`${BASE}/relations?type=skill&id=${S_PUB}`);
   await page.getByText("Skill 1").first().waitFor();
   await page.getByText("Logo Skill").first().waitFor();
+});
+
+await scenario("28. Karma akış: Keşfet 'Tümü' akışında feed_page'in döndürdüğü skill satırı Skill kartı olarak çizilir; okunamayan satır sessizce atlanır", async ({ page, state }) => {
+  await page.goto(`${BASE}/discover`);
+  await page.getByText("Skill 1").first().waitFor();
+  assert.ok(state.mixedFeedCalls.length >= 1, "feed_page çağrıldı");
+  assert.equal(await page.getByText("Skill 1").count() >= 1, true);
 });
 
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {
