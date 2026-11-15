@@ -17,6 +17,7 @@ export {
   toExchangePreset,
   toExchangeRequest,
   toExchangeSkill,
+  withSkillSourceNote,
   toExchangeWorkflow,
   type ContentParseResult,
   type ExchangeContentItem,

@@ -1,4 +1,6 @@
 import { renderSkillMd, SKILL_MD_FILE_NAME } from "@/lib/skills/skill-md";
+import { serializeContent, toExchangeSkill, contentFileName } from "@/lib/exchange";
+import { absoluteUrl, skillHref } from "@/lib/utils";
 import type { Skill } from "@/types";
 
 /** Skill'in SKILL.md metni (atıf dahil): yazarın kullanıcı adı + bu sayfanın bağlantısı. Yalnız tarayıcıda çağrılır. */
@@ -48,6 +50,12 @@ function downloadText(fileName: string, text: string, type: string): void {
   anchor.click();
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** `promptly.skills` dosyası (docs/history/398-*): başkasının herkese açık Skill'i dışa aktarılırken yazar adı + bağlantı ATIF olarak yazılır; içe aktaran kişide özete `Kaynak:` satırı girer. */
+export function downloadSkillExchange(skill: Skill): void {
+  const item = { ...toExchangeSkill({ title: skill.title, summary: skill.summary, instructions: skill.instructions, category: skill.category, compat: skill.compat, license: skill.license }), source: { author: skill.creator.displayName || skill.creator.username, url: absoluteUrl(skillHref(skill)) } };
+  downloadText(contentFileName("skill"), serializeContent("skill", [item]), "application/json;charset=utf-8");
 }
 
 export function downloadSkillMetadata(skill: Skill): void {

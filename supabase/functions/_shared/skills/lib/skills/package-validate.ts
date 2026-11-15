@@ -42,7 +42,8 @@ export type SkillIssueCode =
   | "zip_unreadable"
   | "secret_private_key"
   | "secret_jwt"
-  | "secret_warning";
+  | "secret_warning"
+  | "script_risk";
 
 export interface SkillIssue {
   /** Dosya yolu; paket düzeyi sorunda boş. */
@@ -255,6 +256,10 @@ export function validateFileContent(path: string, bytes: Uint8Array): SkillIssue
     }
   }
   issues.push(...scanSecrets(text, path));
+  // Betikte risk kalıbı: yayın engellenmez ama sahibin açık onayı istenir (aynı "uyarı + onay" yolu; Edge `skill-package` da aynı çekirdeği çalıştırır) — docs/history/398-*.
+  if (isScriptPath(path)) {
+    for (const risk of scanScriptRisks(text)) issues.push({ path, code: "script_risk", severity: "warning", detail: risk });
+  }
   return issues;
 }
 

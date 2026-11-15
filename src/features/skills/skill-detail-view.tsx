@@ -34,7 +34,7 @@ import { SkillWorksVote } from "./skill-works-vote";
 import { SkillQualitySection } from "./skill-quality-section";
 import { SkillLinkedSkills } from "./skill-links-section";
 import { SkillInstallSection } from "./skill-install-section";
-import { downloadSkillMd, downloadSkillMetadata, skillMdFor } from "./skill-download";
+import { downloadSkillExchange, downloadSkillMd, downloadSkillMetadata, skillMdFor } from "./skill-download";
 import { downloadSkillPackage, pickLatestVersion, SkillFilesSection, SkillRelatedSection, SkillVersionsSection } from "./skill-detail-parts";
 import type { Skill } from "@/types";
 
@@ -197,6 +197,7 @@ export function SkillDetailView() {
                   <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadMd")} onClick={() => { close(); downloadSkillMd(skill); void recordSkillUse(skill.id); }} />
                   <MenuItem icon={<Copy size={16} />} label={t("skill.detail.copyMd")} onClick={() => { close(); void navigator.clipboard?.writeText(skillMdFor(skill)).catch(() => undefined); }} />
                   <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadJson")} onClick={() => { close(); downloadSkillMetadata(skill); }} />
+                  <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadExchange")} onClick={() => { close(); downloadSkillExchange(skill); }} />
                 </>
               )}
             </DropdownMenu>

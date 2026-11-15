@@ -29,6 +29,7 @@ import { searchPromptsPage } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
 import { searchRequestsPage } from "@/lib/supabase/requests";
 import { SearchQuotes } from "@/features/quotes/search-quotes";
+import { SearchSkills } from "@/features/skills/search-skills";
 import { searchWorkflowsPage } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { searchPresetsPage } from "@/lib/supabase/presets";
@@ -105,6 +106,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   const tab: SearchTab = scope ? scopeTab(scope) : pickedTab;
   // Alıntılar (docs/history/217-*): metin aramasında ayrı bir grup; bulunan sayı "sonuç yok" metnini etkiler.
   const [quoteHits, setQuoteHits] = useState(0);
+  const [skillHits, setSkillHits] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
   const { node: toastNode, show: showToast } = useToast();
   const [isSearching, setIsSearching] = useState(false);
@@ -285,7 +287,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
     );
 
   const textOnly = !hasTokens;
-  const quoteTotal = !scope && textOnly && normalized.length >= 2 ? quoteHits : 0;
+  const quoteTotal = !scope && textOnly && normalized.length >= 2 ? quoteHits + skillHits : 0;
   const noPosts = prompts.length === 0 && workflows.length === 0 && presets.length === 0 && requests.length === 0 && quoteTotal === 0;
   const nothingFound = noPosts && (!textOnly || (users.length === 0 && tags.length === 0 && communities.items.length === 0));
   const taxonomy: TaxonomyFilterValue = { contentType: singleMedia, category, subcategory };
@@ -513,6 +515,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
               </section>
             )}
             {!scope && textOnly && normalized.length >= 2 && <SearchQuotes query={normalized} onCount={setQuoteHits} />}
+            {!scope && textOnly && normalized.length >= 2 && <SearchSkills query={normalized} onCount={setSkillHits} />}
             {(tab === "posts" ? noPosts : nothingFound) && (
               <div className="space-y-3 py-6 text-center">
                 <LineArtScene kind="search" className="mx-auto w-full max-w-[16rem] rounded-xl border border-border-soft" />

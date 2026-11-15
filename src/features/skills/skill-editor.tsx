@@ -21,7 +21,11 @@ import { isValidSkillVersion } from "@/lib/skills/skill-md";
 import { planSkillImport } from "@/lib/skills/skill-import";
 import type { SkillIssue } from "@/lib/skills/package-validate";
 import { fetchSkillFiles, fetchSkillVersions, type SkillFile, type SkillVersion } from "@/lib/supabase/skill-package";
-import { fetchSkillById, saveSkill } from "@/lib/supabase/skills";
+import { fetchSkillById, fetchSkillTags, replaceSkillTags, saveSkill } from "@/lib/supabase/skills";
+import { TagPicker } from "@/features/prompts/tag-picker";
+import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { useTagCatalog } from "@/features/tags/use-tag-catalog";
+import { isValidSkillSlug, slugifySkillName } from "@/lib/skills/skill-md";
 import { skillHref } from "@/lib/utils";
 import type { ContentVisibility, Skill, SkillCategory, SkillCompat, SkillLicense } from "@/types";
 import { SkillCard } from "./skill-card";
@@ -62,6 +66,12 @@ export function SkillEditor({ editId }: { editId: string | null }) {
   const [skillId, setSkillId] = useState<string | null>(editId);
   const [currentStatus, setCurrentStatus] = useState<"draft" | "published">("draft");
   const [advanced, setAdvanced] = useState(false);
+  // Klasör adı (slug): yeni Skill'de addan türer ve sahibi değiştirmedikçe addan izlenir; düzenlemede mevcut değer gelir. Değişince yeni sürümler yeni adla paketlenir (docs/history/398-*).
+  const [slug, setSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
+  const { catalog: tagCatalog } = useTagCatalog();
+  const tagPicker = useTagPicker({ title, content: `${summary}\n${instructions}`, catalog: tagCatalog });
+  const tagsSeeded = useRef(false);
   const [files, setFiles] = useState<SkillFile[]>([]);
   const [versions, setVersions] = useState<SkillVersion[]>([]);
   const [editorTarget, setEditorTarget] = useState<{ path: string; isNew: boolean } | null>(null);
@@ -104,6 +114,13 @@ export function SkillEditor({ editId }: { editId: string | null }) {
       setLicense(skill.license);
       setVersion(skill.version);
       setVisibility(skill.visibility);
+      setSlug(skill.slug);
+      setSlugTouched(true);
+      const loadedTags = await fetchSkillTags(editId).catch(() => []);
+      if (!tagsSeeded.current) {
+        tagsSeeded.current = true;
+        loadedTags.forEach((tag) => tagPicker.addManual(tag));
+      }
       setLoadState("ready");
     });
     return () => {
@@ -120,7 +137,9 @@ export function SkillEditor({ editId }: { editId: string | null }) {
   const latestVersion = latestSemver(versions.map((item) => item.version));
   const locked = files.length > 0 || versions.length > 0;
 
-  const dirty = useDirty(JSON.stringify([title, summary, instructions, category, compat, license, version, visibility]), loadState === "ready");
+  const effectiveSlug = slugTouched ? slug : slugifySkillName(title);
+  const slugError = slugTouched && slug !== "" && !isValidSkillSlug(slug);
+  const dirty = useDirty(JSON.stringify([title, summary, instructions, category, compat, license, version, visibility, slugTouched ? slug : "", tagPicker.accepted.map((entry) => entry.tag.slug)]), loadState === "ready");
   const leave = useComposeLeave({ dirty, saveDraft: () => save(true, true) });
 
   /**
@@ -171,13 +190,28 @@ export function SkillEditor({ editId }: { editId: string | null }) {
 
   /** ZIP içe aktarma: alanları doldurur, taslağı (içe aktarılan alanlarla) açar, dosyaları yükleme kuyruğuna alır. Sorunlar listelenir; hata taşıyan dosya atlanır. */
   async function importZip(file: File) {
+    await runImport(async () => {
+      const { readSkillZip } = await import("@/lib/skills/zip");
+      return readSkillZip(new Uint8Array(await file.arrayBuffer()));
+    });
+  }
+
+  /** Klasör içe aktarma (docs/history/398-*): seçilen klasörün dosyaları ZIP ile AYNI okuyucu kurallarından geçer. */
+  async function importFolder(picked: File[]) {
+    await runImport(async () => {
+      const { readSkillFolder } = await import("@/lib/skills/zip");
+      const entries = await Promise.all(picked.map(async (file) => ({ path: (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name, bytes: new Uint8Array(await file.arrayBuffer()) })));
+      return readSkillFolder(entries);
+    });
+  }
+
+  async function runImport(read: () => Promise<import("@/lib/skills/zip").ReadZipResult>) {
     if (importing) return;
     setImporting(true);
     setImportIssues([]);
     setError(null);
     try {
-      const { readSkillZip } = await import("@/lib/skills/zip");
-      const plan = planSkillImport(readSkillZip(new Uint8Array(await file.arrayBuffer())));
+      const plan = planSkillImport(await read());
       setImportIssues(plan.issues);
       const f = plan.fields;
       const merged = {
@@ -216,6 +250,10 @@ export function SkillEditor({ editId }: { editId: string | null }) {
       return false;
     }
     if (versionError) return false;
+    if (slugError) {
+      document.getElementById("skill-slug")?.focus();
+      return false;
+    }
     if (!asDraft && (summaryError || categoryError || instructionsError)) return false;
     if (advanced && uploads.busy) {
       setError(t("skill.pkg.uploadsBusy"));
@@ -227,7 +265,8 @@ export function SkillEditor({ editId }: { editId: string | null }) {
       // Gelişmiş modda "yayında" olmayı yayın penceresi (Edge Function) verir: burada durum korunur. Yayınlanmış sürümü olan Skill taslak diye gizlenmez.
       const keepStatus = advanced && (versions.length > 0 || !asDraft);
       const status = keepStatus ? currentStatus : asDraft ? "draft" : "published";
-      const id = await saveSkill({ id: skillIdRef.current, title, summary, instructions, category, compat, license, version, status, visibility }, user.id);
+      const id = await saveSkill({ id: skillIdRef.current, title, summary, instructions, category, compat, license, version, status, visibility, slug: slugTouched && slug ? slug : null }, user.id);
+      await replaceSkillTags(id, tagPicker.accepted.map((entry) => entry.tag.slug));
       skillIdRef.current = id;
       setSkillId(id);
       if (advanced && !asDraft) {
@@ -403,6 +442,7 @@ export function SkillEditor({ editId }: { editId: string | null }) {
                 importing={importing}
                 importIssues={importIssues}
                 onImportZip={(file) => void importZip(file)}
+                onImportFolder={(files) => void importFolder(files)}
                 onEdit={(path, isNew) => void openEditor(path, isNew)}
                 onFileRemoved={(file) => setFiles((prev) => prev.filter((item) => item.id !== file.id))}
                 disabled={isSaving}
@@ -425,6 +465,31 @@ export function SkillEditor({ editId }: { editId: string | null }) {
                 {advanced ? t("skill.advanced.turnOff") : t("skill.advanced.turnOn")}
               </Button>
               {locked && advanced && <p className="text-caption text-text-muted">{t("skill.advanced.locked")}</p>}
+            </div>
+          </FormDisclosure>
+          <FormDisclosure
+            id="tags"
+            label={t("forms.tags")}
+            value={tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined}
+            hint={tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined}
+          >
+            <TagPicker picker={tagPicker} />
+          </FormDisclosure>
+          <FormDisclosure id="slug" label={t("skill.slug.label")} value={effectiveSlug || undefined} hint={t("skill.slug.hint")}>
+            <div className="space-y-2">
+              <input
+                id="skill-slug"
+                value={slugTouched ? slug : effectiveSlug}
+                onChange={(event) => {
+                  setSlugTouched(true);
+                  setSlug(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+                }}
+                maxLength={64}
+                aria-invalid={slugError}
+                className={formTextInputClassName}
+                data-skill-slug-input=""
+              />
+              <p className={slugError ? "text-caption text-danger" : "text-caption text-text-muted"}>{slugError ? t("skill.slug.invalid") : skillId ? t("skill.slug.changeWarning") : t("skill.slug.help")}</p>
             </div>
           </FormDisclosure>
           <FormDisclosure id="compat" label={t("skill.compatLabel")} value={compatSummary}>

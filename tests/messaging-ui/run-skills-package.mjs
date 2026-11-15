@@ -632,6 +632,23 @@ await scenario("23. Dosyayı değiştir: aynı yola yazılır (satır sayısı a
 });
 
 // ====================================================================================================================
+await scenario("24. Klasör adı (slug) ve etiketler: slug addan türer, elle değiştirilebilir ve geçersiz biçim uyarılır; Etiketler satırı vardır; gelişmiş modda 'Klasörden içe aktar'", async ({ page }) => {
+  await openEditor(page);
+  await page.locator("#skill-title").fill("Logo Tasarımı");
+  await disclosure(page, "slug").getByRole("button").first().click();
+  const slug = page.locator("[data-skill-slug-input]");
+  await slug.waitFor();
+  assert.equal(await slug.inputValue(), "logo-tasarimi");
+  await slug.fill("Benim Logo!");
+  assert.equal(await slug.inputValue(), "benimlogo", "yalnız küçük harf, rakam ve tire kalır");
+  await slug.fill("-kotu-");
+  await page.getByText("tire ile başlayıp bitemez").waitFor();
+  assert.ok(await disclosure(page, "tags").isVisible(), "Etiketler satırı");
+  await enableAdvanced(page);
+  assert.ok(await page.locator("[data-skill-import-folder]").isVisible());
+  assert.equal(await page.locator("[data-skill-folder-input]").getAttribute("webkitdirectory"), "");
+});
+
 await browser.close();
 server.close();
 const failed = results.filter(([s]) => s === "FAIL");
