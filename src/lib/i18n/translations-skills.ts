@@ -105,6 +105,23 @@ export const skillsTranslations = {
   "skills.category.education": { tr: "Eğitim ve Öğrenme", en: "Education & Learning" },
   "skills.category.data": { tr: "Veri ve Otomasyon", en: "Data & Automation" },
   "skills.category.productivity": { tr: "Üretkenlik ve Kişisel Asistanlar", en: "Productivity & Personal Assistants" },
+  // Kurulum (docs/history/393-*)
+  "skill.install.title": { tr: "Claude Code'a kur", en: "Install in Claude Code" },
+  "skill.install.hint": { tr: "{{file}} dosyasını indirdikten sonra, indirdiğin klasörde çalıştır. Komutlar yalnızca kopyalanır; Promptly bir şey çalıştırmaz.", en: "After downloading {{file}}, run this in the folder you downloaded it to. The commands are only copied; Promptly runs nothing." },
+  "skill.install.personal": { tr: "Kişisel (tüm projelerinde)", en: "Personal (all your projects)" },
+  "skill.install.project": { tr: "Proje (yalnız bu depoda)", en: "Project (this repository only)" },
+  "skill.install.docs": { tr: "Resmî Claude Code belgesi", en: "Official Claude Code docs" },
+  // Çalıştı mı? (docs/history/393-*)
+  "error.useRequired": { tr: "Oy vermek için Skill'i önce indirmiş (kullanmış) olmalısın.", en: "You need to download (use) the Skill before you can vote." },
+  "skill.works.title": { tr: "Çalıştı mı?", en: "Did it work?" },
+  "skill.works.useFirst": { tr: "Oy vermek için Skill'i önce indir.", en: "Download the Skill first to vote." },
+  // Dağıtım (docs/history/393-*)
+  "skill.detail.moreDownloads": { tr: "Diğer indirme seçenekleri", en: "More download options" },
+  "skill.detail.copyMd": { tr: "SKILL.md'yi kopyala", en: "Copy SKILL.md" },
+  "skill.detail.downloadJson": { tr: "Özet (JSON) indir", en: "Download summary (JSON)" },
+  "skill.detail.pin": { tr: "Sabitle", en: "Pin" },
+  "skill.detail.unpin": { tr: "Sabitlemeyi kaldır", en: "Unpin" },
+  "skill.detail.pinned": { tr: "Sabitledin", en: "Pinned by you" },
   // Keşif (docs/history/392-*)
   "skill.discover.sortRecommended": { tr: "Önerilen", en: "Recommended" },
   "skill.discover.sortNew": { tr: "En yeni", en: "Newest" },

@@ -18,7 +18,8 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTitle } from "@/features/content/detail-parts";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
-import { DropdownMenu } from "@/features/communities/dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/features/communities/dropdown-menu";
+import { Copy } from "@/components/icons/copy";
 import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { ReportButton } from "@/features/moderation/report-button";
 import { FollowButton } from "@/features/profile/follow-button";
@@ -29,7 +30,9 @@ import { deleteSkill, fetchSkillById } from "@/lib/supabase/skills";
 import { formatRelativeTime } from "@/lib/utils";
 import { MarkdownView } from "./markdown-view";
 import { SimilarSkills } from "./skill-aside-blocks";
-import { downloadSkillMd, skillMdFor } from "./skill-download";
+import { SkillWorksVote } from "./skill-works-vote";
+import { SkillInstallSection } from "./skill-install-section";
+import { downloadSkillMd, downloadSkillMetadata, skillMdFor } from "./skill-download";
 import { downloadSkillPackage, pickLatestVersion, SkillFilesSection, SkillRelatedSection, SkillVersionsSection } from "./skill-detail-parts";
 import type { Skill } from "@/types";
 
@@ -54,6 +57,7 @@ export function SkillDetailView() {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [rawView, setRawView] = useState(false);
   const [reload, setReload] = useState(0);
+  const [downloads, setDownloads] = useState(0);
   usePageTitle(skill?.title);
 
   useEffect(() => {
@@ -91,11 +95,13 @@ export function SkillDetailView() {
     setDownloadError(null);
     if (!latest) {
       downloadSkillMd(skill);
-      void recordSkillUse(skill.id);
+      void recordSkillUse(skill.id).then(() => setDownloads((n) => n + 1));
       return;
     }
     try {
       await downloadSkillPackage(skill.id, skill.slug, latest);
+      // Kullanım kaydı arka planda yazılır (indirmeyi bekletmez): oy hakkı kısa bir gecikmeyle yeniden sorulur.
+      window.setTimeout(() => setDownloads((n) => n + 1), 1500);
     } catch {
       setDownloadError(t("skill.detail.downloadFailed"));
     }
@@ -182,11 +188,17 @@ export function SkillDetailView() {
               <EngageSave skillId={skill.id} saveCount={skill.saveCount} size={20} />
             </>
           )}
-          {latest && (
-            <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => downloadSkillMd(skill)} data-skill-download-md="">
-              <Download size={16} aria-hidden /> {t("skill.detail.downloadMd")}
-            </Button>
-          )}
+          <span data-skill-download-menu="">
+            <DropdownMenu label={t("skill.detail.moreDownloads")}>
+              {(close) => (
+                <>
+                  <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadMd")} onClick={() => { close(); downloadSkillMd(skill); void recordSkillUse(skill.id); }} />
+                  <MenuItem icon={<Copy size={16} />} label={t("skill.detail.copyMd")} onClick={() => { close(); void navigator.clipboard?.writeText(skillMdFor(skill)).catch(() => undefined); }} />
+                  <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadJson")} onClick={() => { close(); downloadSkillMetadata(skill); }} />
+                </>
+              )}
+            </DropdownMenu>
+          </span>
           {isOwn ? (
             <>
               <Link href={`/skills/create?edit=${skill.id}`} data-skill-edit="" className={buttonClassName({ variant: "outline", size: "sm", className: "rounded-full" })}>
@@ -236,7 +248,11 @@ export function SkillDetailView() {
           )}
         </DetailSection>
 
+        {skill.status === "published" && skill.visibility === "public" && <SkillWorksVote skillId={skill.id} isOwn={isOwn} justDownloaded={downloads} />}
+
         {latest && <SkillFilesSection version={latest} />}
+
+        {skill.status === "published" && skill.visibility === "public" && <SkillInstallSection skill={skill} zipFileName={latest ? `${skill.slug}-${latest.version}.zip` : null} />}
 
         <SkillRelatedSection skillId={skill.id} />
 

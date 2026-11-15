@@ -377,3 +377,22 @@ export async function recordSkillUse(skillId: string): Promise<void> {
     console.error("recordSkillUse", error);
   }
 }
+
+/** Kişisel sürüm sabitleme (docs/history/393-*, `skill_pins`): kişi başına Skill başına tek satır. `null` = sabitli sürüm yok. Yeni sürüm çıkınca sabitleyene bildirim gider. */
+export async function fetchMySkillPin(skillId: string, userId: string): Promise<string | null> {
+  const { data, error } = await supabase.from("skill_pins").select("version").eq("skill_id", skillId).eq("user_id", userId).maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.version as string | undefined) ?? null;
+}
+
+/** Bir sürümü sabitler (varsa öncekinin yerine geçer). */
+export async function pinSkillVersion(skillId: string, userId: string, version: string): Promise<void> {
+  const { error } = await supabase.from("skill_pins").upsert({ skill_id: skillId, user_id: userId, version }, { onConflict: "user_id,skill_id" });
+  if (error) throw new Error(error.message);
+}
+
+export async function unpinSkill(skillId: string, userId: string): Promise<void> {
+  const { error } = await supabase.from("skill_pins").delete().eq("skill_id", skillId).eq("user_id", userId);
+  if (error) throw new Error(error.message);
+}
+

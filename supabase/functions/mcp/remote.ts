@@ -106,12 +106,12 @@ export function createRemoteHandler(options: RemoteHandlerOptions): (request: Re
               : "Add this URL as a remote MCP server / custom connector in your MCP client. No account or key needed; read-only.",
             tools: isMe
               ? [
-                  "search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content",
+                  "search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content", "search_skills", "get_skill", "list_skill_files",
                   "whoami", "list_my_prompts", "get_my_prompt", "list_my_content", "get_my_content", "list_my_saved",
                   "save_prompt_draft", "save_request_draft", "save_preset_draft", "save_workflow_draft", "update_my_draft",
                   ...(options.me?.attachImage ? ["attach_image"] : []),
                 ]
-              : ["search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content"],
+              : ["search_prompts", "popular_prompts", "get_prompt", "fill_prompt", "search_content", "get_content", "search_skills", "get_skill", "list_skill_files"],
             site: "https://aliq0330.github.io/promptly",
           }),
           { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } },

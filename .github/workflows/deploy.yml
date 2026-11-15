@@ -71,6 +71,9 @@ jobs:
           NEXT_PUBLIC_GIPHY_API_KEY: ${{ secrets.NEXT_PUBLIC_GIPHY_API_KEY }}
           # Telegram botu (docs/history/323-*): ayar kartı ve derin bağlantı. Tanımlı değilse (ve bağlantı yoksa) bölüm hiç görünmez, site yine yayınlanır. Gizli değil, herkese açık kullanıcı adı.
           NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${{ vars.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME }}
+          # Skill menü girişleri (docs/history/393-*): GitHub → Settings → Variables → `NEXT_PUBLIC_SKILLS_ENABLED=true` ile AÇILIR. Tanımlı değilse Skill menüde görünmez
+          # (sayfalar adresle yine açıktır); site yine yayınlanır. Bayrağı açmak tek bir ayar değişikliği + yeni derlemedir.
+          NEXT_PUBLIC_SKILLS_ENABLED: ${{ vars.NEXT_PUBLIC_SKILLS_ENABLED }}
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

@@ -32,7 +32,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], pinCalls: [], pin: null, worksCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -44,7 +44,14 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
       if (author) list = list.filter((s) => s.author_id === author);
       return ctx.rows(list);
     }
-    if (table === "skill_versions" && method === "GET") return ctx.rows([]);
+    if (table === "skill_versions" && method === "GET") {
+      const sha = "a".repeat(64);
+      return ctx.rows(
+        (q.get("skill_id") ?? "") === `eq.${S_PUB}`
+          ? [{ id: "v-1", skill_id: S_PUB, version: "1.0.0", changelog: "", package_path: `${S_PUB}/packages/1.0.0-${sha.slice(0, 16)}.zip`, package_sha256: sha, package_size: 1024, file_count: 1, manifest: { schema: 1, files: [] }, deprecated_at: null, created_at: "2026-03-02T00:00:00Z" }]
+          : [],
+      );
+    }
     if (table === "skill_relations" && method === "GET") return ctx.rows([]);
     return null;
   };
@@ -119,6 +126,33 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   });
   await context.route(/\/rest\/v1\/rpc\/related_skills/, (route) => json(route, [{ id: S_PUB2, score: 5 }]));
   await context.route(/\/rest\/v1\/rpc\/skills_for_content/, (route) => json(route, [{ id: S_PUB }]));
+  await context.route(/\/rest\/v1\/skill_pins/, (route) => {
+    const req = route.request();
+    if (req.method() === "POST") {
+      const body = JSON.parse(req.postData() || "{}");
+      state.pinCalls.push({ op: "upsert", body });
+      state.pin = body.version;
+      return route.fulfill({ status: 201, headers: { "access-control-allow-origin": "*" }, body: "" });
+    }
+    if (req.method() === "DELETE") {
+      state.pinCalls.push({ op: "delete" });
+      state.pin = null;
+      return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*" }, body: "" });
+    }
+    return json(route, state.pin ? { version: state.pin } : null);
+  });
+  await context.route(/\/rest\/v1\/rpc\/skill_works_state/, (route) => json(route, [{ yes_count: state.works.yes, no_count: state.works.no, my_vote: state.works.my, can_vote: state.works.can }]));
+  await context.route(/\/rest\/v1\/rpc\/set_skill_works/, (route) => {
+    const body = JSON.parse(route.request().postData() || "{}");
+    state.worksCalls.push(body);
+    const w = state.works;
+    if (w.my === true) w.yes -= 1;
+    if (w.my === false) w.no -= 1;
+    w.my = body.p_works;
+    if (body.p_works === true) w.yes += 1;
+    if (body.p_works === false) w.no += 1;
+    return json(route, [{ yes_count: w.yes, no_count: w.no, my_vote: w.my }]);
+  });
   await context.route(/\/rest\/v1\/rpc\/creator_insights_skills/, (route) =>
     json(route, [{ skill_id: S_PUB, title: "Skill 1", uses: 4, prev_uses: 2, reactions: 3, prev_reactions: 3, comments: 1, prev_comments: 0, saves: 2, prev_saves: 1 }]),
   );
@@ -159,7 +193,7 @@ await scenario("2. Taslak Skill (sahibi): beğeni/yorum yok, 'yayınlanınca aç
   await openDetail(page, S_DRAFT);
   await page.locator("[data-skill-social-off]").waitFor();
   assert.equal(await page.locator("#comments").count(), 0);
-  assert.equal(await page.locator('[data-detail-actions] button[aria-haspopup="menu"]').count(), 0, "tepki düğmesi yok");
+  assert.equal(await page.locator('[data-detail-actions] button[aria-haspopup="menu"]:not([data-skill-download-menu] *)').count(), 0, "tepki düğmesi yok");
 }, { me: U.alice });
 
 await scenario("3. Tepki verince prompt_likes'a skill_id ile yazılır (varsayılan love sütunsuz, seçilen tepki sütunlu)", async ({ page, state }) => {
@@ -290,6 +324,63 @@ await scenario("14. Skill detayında 'Benzer Skill'ler' yan bölümü çizilir",
   await block.waitFor();
   await page.getByText("Logo Skill").first().waitFor();
 });
+
+await scenario("15. Sürüm sabitleme: okuyucu bir sürümü sabitler (upsert skill_pins), rozet çıkar, tekrar basınca kaldırılır; sahibi sabitleyemez", async ({ page, state }) => {
+  await openDetail(page);
+  const btn = page.locator("[data-skill-pin]").first();
+  await btn.waitFor();
+  await btn.click();
+  await page.locator("[data-skill-pinned]").waitFor();
+  assert.deepEqual(state.pinCalls[0], { op: "upsert", body: { skill_id: S_PUB, user_id: U.bob.id, version: "1.0.0" } });
+  await btn.click();
+  await page.waitForFunction(() => !document.querySelector("[data-skill-pinned]"));
+  assert.equal(state.pinCalls[1].op, "delete");
+});
+
+await scenario("15b. Sahibi kendi Skill'ini sabitleyemez (düğme yok)", async ({ page }) => {
+  await openDetail(page);
+  await page.locator("#skill-versions").waitFor();
+  assert.equal(await page.locator("[data-skill-pin]").count(), 0);
+}, { me: U.alice });
+
+await scenario("16. İndirme menüsü: SKILL.md indir · kopyala · özet (JSON) indir seçenekleri", async ({ page }) => {
+  await openDetail(page);
+  await page.locator("[data-skill-download-menu] button").first().click();
+  const items = await page.getByRole("menuitem").allInnerTexts();
+  assert.ok(items.some((x) => /SKILL\.md'yi kopyala/.test(x)), items.join("|"));
+  assert.ok(items.some((x) => /JSON/.test(x)));
+  assert.ok(items.some((x) => /SKILL\.md/.test(x)));
+});
+
+await scenario("17. Çalıştı mı?: indirmiş okuyucu oy verir (set_skill_works), sayı güncellenir; tekrar basınca geri alır", async ({ page, state }) => {
+  await openDetail(page);
+  const yes = page.locator("[data-skill-works-yes]");
+  await yes.waitFor();
+  await yes.click();
+  const end = Date.now() + 4000;
+  while (Date.now() < end && state.worksCalls.length === 0) await new Promise((r) => setTimeout(r, 100));
+  assert.deepEqual(state.worksCalls[0], { p_skill_id: S_PUB, p_works: true });
+  assert.equal(await yes.getAttribute("aria-pressed"), "true");
+  await yes.click();
+  const end2 = Date.now() + 4000;
+  while (Date.now() < end2 && state.worksCalls.length < 2) await new Promise((r) => setTimeout(r, 100));
+  assert.deepEqual(state.worksCalls[1], { p_skill_id: S_PUB, p_works: null });
+});
+
+await scenario("17b. Çalıştı mı?: indirmemiş okuyucuya oy düğmesi yerine 'önce indir' notu çıkar; yazar hiçbir şey görmez", async ({ page, state }) => {
+  state.works.can = false;
+  await openDetail(page);
+  await page.locator("[data-skill-works]").waitFor();
+  assert.equal(await page.locator("[data-skill-works-yes]").count(), 0);
+  assert.match(await page.locator("[data-skill-works]").innerText(), /önce indir/i);
+});
+
+await scenario("17c. Çalıştı mı?: sahibine ve oysuz Skill'de blok çizilmez", async ({ page, state }) => {
+  state.works.can = false;
+  await openDetail(page);
+  await page.locator("#comments").waitFor();
+  assert.equal(await page.locator("[data-skill-works]").count(), 0);
+}, { me: U.alice });
 
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {
   await openDetail(page);

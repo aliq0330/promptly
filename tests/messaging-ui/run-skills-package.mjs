@@ -514,7 +514,7 @@ await scenario("17. Sürümsüz Skill: birincil eylem SKILL.md indir (kolay mod 
   const download = page.locator("[data-skill-download]");
   await download.waitFor();
   assert.match(await download.innerText(), /SKILL\.md|İndir/);
-  assert.equal(await page.locator("[data-skill-download-md]").count(), 0, "ikinci SKILL.md düğmesi yalnız ZIP varken");
+  await page.locator("[data-skill-download-menu]").waitFor();
   assert.match(await page.locator("#skill-versions").innerText(), /Henüz paketlenmiş sürüm yok/);
 });
 
