@@ -1,4 +1,4 @@
-import type { SkillLicense } from "@/types";
+import type { SkillLicenseId as SkillLicense } from "./limits.ts";
 
 /**
  * SKILL.md üretimi ve Skill kimlik yardımcıları (docs/history/388-*). Saf ve bağımlılıksızdır (Node + tarayıcı + Edge): aranabilir metin
@@ -86,4 +86,98 @@ export function renderSkillMd(input: SkillMdInput): string {
   lines.push("---");
   const body = input.instructions.replace(/\r\n/g, "\n").trim();
   return body ? `${lines.join("\n")}\n\n${body}\n` : `${lines.join("\n")}\n`;
+}
+
+export interface ParsedSkillMd {
+  /** Frontmatter `name` (klasör/slug); yoksa `null`. */
+  name: string | null;
+  description: string | null;
+  /** Ham `license` değeri (SPDX); eşleşen Skill lisansı `skillLicenseFromSpdx` ile bulunur. */
+  license: string | null;
+  version: string | null;
+  author: string | null;
+  source: string | null;
+  /** Frontmatter'dan sonraki Markdown gövdesi (baş/son boşluklar kırpılmış). */
+  body: string;
+  /** Frontmatter bulundu mu (yoksa tüm metin gövdedir). */
+  hasFrontmatter: boolean;
+}
+
+function unquoteYaml(raw: string): string {
+  const value = raw.trim();
+  if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (typeof parsed === "string") return parsed;
+    } catch {
+      /* tırnaklı ama JSON değil: aşağıda ham iç metin döner */
+    }
+    return value.slice(1, -1);
+  }
+  if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) return value.slice(1, -1).replace(/''/g, "'");
+  return value;
+}
+
+/**
+ * `SKILL.md`'yi okur: `---` ile çevrili frontmatter (yalnız bildiğimiz anahtarlar: name, description, license, `metadata.version/author/source`)
+ * + gövde. YAML alt kümesidir (tek satırlık düz/tırnaklı değerler, `>` / `|` blok metinleri, bir düzey `metadata:`); bilinmeyen anahtarlar yok sayılır,
+ * hiçbir şey çalıştırılmaz. Frontmatter yoksa tüm metin gövdedir.
+ */
+export function parseSkillMd(source: string): ParsedSkillMd {
+  const text = source.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
+  const empty: ParsedSkillMd = { name: null, description: null, license: null, version: null, author: null, source: null, body: text.trim(), hasFrontmatter: false };
+  if (!text.startsWith("---\n")) return empty;
+  const end = text.indexOf("\n---", 4);
+  if (end === -1) return empty;
+  const afterFence = text.indexOf("\n", end + 1);
+  const front = text.slice(4, end);
+  const body = afterFence === -1 ? "" : text.slice(afterFence + 1).trim();
+
+  const values: Record<string, string> = {};
+  const lines = front.split("\n");
+  let section: string | null = null;
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    const indented = /^\s+/.test(line);
+    const match = /^\s*([A-Za-z0-9_-]+)\s*:\s*(.*)$/.exec(line);
+    if (!match) continue;
+    const [, key, rest] = match;
+    if (!indented) {
+      section = rest.trim() === "" ? key : null;
+      if (rest.trim() === "") continue;
+    } else if (section !== "metadata") {
+      continue;
+    }
+    const scope = indented ? `metadata.${key}` : key;
+    const marker = rest.trim();
+    if (marker === ">" || marker === "|" || marker === ">-" || marker === "|-") {
+      const block: string[] = [];
+      while (i + 1 < lines.length && (/^\s+/.test(lines[i + 1]) || lines[i + 1].trim() === "")) {
+        i += 1;
+        block.push(lines[i].trim());
+      }
+      values[scope] = (marker.startsWith(">") ? block.join(" ") : block.join("\n")).replace(/\s+$/, "").trim();
+    } else {
+      values[scope] = unquoteYaml(rest);
+    }
+  }
+  return {
+    name: values.name || null,
+    description: values.description || null,
+    license: values.license || null,
+    version: values["metadata.version"] || null,
+    author: values["metadata.author"] || null,
+    source: values["metadata.source"] || null,
+    body,
+    hasFrontmatter: true,
+  };
+}
+
+/** SPDX kimliğinden Skill lisansı (büyük/küçük harf duyarsız); tanınmazsa `null`. */
+export function skillLicenseFromSpdx(spdx: string | null | undefined): SkillLicense | null {
+  if (!spdx) return null;
+  const wanted = spdx.trim().toLowerCase();
+  const found = (Object.entries(SKILL_LICENSE_SPDX) as [SkillLicense, string][]).find(([, id]) => id.toLowerCase() === wanted);
+  return found ? found[0] : null;
 }

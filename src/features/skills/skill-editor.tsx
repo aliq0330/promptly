@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { ChipRow, Chip } from "@/components/ui/chip";
+import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/field";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -15,20 +16,31 @@ import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/fe
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { announcePublished } from "@/lib/publish-celebration";
 import { SKILL_CATEGORY_IDS, SKILL_CATEGORY_LABEL, SKILL_COMPAT_IDS, SKILL_COMPAT_LABEL, SKILL_LICENSE_IDS, SKILL_LICENSE_LABEL, skillLabelText } from "@/lib/skills/categories";
+import { latestSemver } from "@/lib/skills/semver";
 import { isValidSkillVersion } from "@/lib/skills/skill-md";
+import { planSkillImport } from "@/lib/skills/skill-import";
+import type { SkillIssue } from "@/lib/skills/package-validate";
+import { fetchSkillFiles, fetchSkillVersions, type SkillFile, type SkillVersion } from "@/lib/supabase/skill-package";
 import { fetchSkillById, saveSkill } from "@/lib/supabase/skills";
 import { skillHref } from "@/lib/utils";
 import type { ContentVisibility, Skill, SkillCategory, SkillCompat, SkillLicense } from "@/types";
 import { SkillCard } from "./skill-card";
+import { SkillFileEditor } from "./skill-file-editor";
+import { SkillPackageSection } from "./skill-package-section";
+import { SkillPublishDialog } from "./skill-publish-dialog";
+import { SkillRelationsSection } from "./skill-relations-section";
+import { useSkillUploads } from "./use-skill-uploads";
 
 const SUMMARY_MIN = 10;
 const INSTRUCTIONS_MIN = 20;
 const INSTRUCTIONS_MAX = 60000;
 
 /**
- * Skill oluşturma / düzenleme (`/skills/create`, `?edit=<id>`) — çekirdek dilimin KOLAY modu: ad, kısa açıklama, uzmanlık alanı, talimat
- * (Markdown), uyumlu araçlar, lisans, sürüm ve "Kim görsün?". Tek sayfa form (`ComposeShell` + `PublishPanel`, docs/history/244-*);
- * topluluk/ekip bağlamı yoktur. Gelişmiş mod (dosya yükleme, kurallar, bağlı içerik) sonraki dilimdir (`docs/yapilacaklar.md`).
+ * Skill oluşturma / düzenleme (`/skills/create`, `?edit=<id>`). KOLAY mod (çekirdek, docs/history/388-*): ad, kısa açıklama, uzmanlık alanı, talimat
+ * (Markdown), uyumlu araçlar, lisans, sürüm ve "Kim görsün?" — doğrudan yayınlanır, dosya yoktur. GELİŞMİŞ mod (docs/history/389-*): paket dosyaları
+ * (kurallar, referanslar, örnekler, betikler, araç tanımı), ZIP içe aktarma, bağlı içerik ve DEĞİŞMEZ sürüm yayını (Edge Function `skill-package`).
+ * Dosya/içerik eklemek için Skill'in bir taslağı olmalıdır; ilk eklemede taslak kendiliğinden oluşturulur (ad gerekir). Tek sayfa form
+ * (`ComposeShell` + `PublishPanel`, docs/history/244-*); topluluk/ekip bağlamı yoktur.
  */
 export function SkillEditor({ editId }: { editId: string | null }) {
   const { t } = useTranslation();
@@ -45,6 +57,20 @@ export function SkillEditor({ editId }: { editId: string | null }) {
   const [version, setVersion] = useState("1.0.0");
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
 
+  // Gelişmiş mod (docs/history/389-*)
+  const [skillId, setSkillId] = useState<string | null>(editId);
+  const [currentStatus, setCurrentStatus] = useState<"draft" | "published">("draft");
+  const [advanced, setAdvanced] = useState(false);
+  const [files, setFiles] = useState<SkillFile[]>([]);
+  const [versions, setVersions] = useState<SkillVersion[]>([]);
+  const [editorTarget, setEditorTarget] = useState<{ path: string; isNew: boolean } | null>(null);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importIssues, setImportIssues] = useState<SkillIssue[]>([]);
+  const skillIdRef = useRef<string | null>(editId);
+  const creating = useRef<Promise<string | null> | null>(null);
+  const fieldsRef = useRef({ title, summary, instructions, category, compat, license, version, visibility });
+
   const [loadState, setLoadState] = useState<"loading" | "ready" | "notfound" | "forbidden">(editId ? "loading" : "ready");
   const [attempted, setAttempted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,12 +78,23 @@ export function SkillEditor({ editId }: { editId: string | null }) {
   const panelRef = useRef<PublishPanelHandle>(null);
 
   useEffect(() => {
+    fieldsRef.current = { title, summary, instructions, category, compat, license, version, visibility };
+  });
+
+  useEffect(() => {
     if (!editId || authLoading || !user) return;
     let cancelled = false;
-    fetchSkillById(editId).then((skill) => {
+    fetchSkillById(editId).then(async (skill) => {
       if (cancelled) return;
       if (!skill) return setLoadState("notfound");
       if (skill.creator.id !== user.id) return setLoadState("forbidden");
+      // Dosya ve sürüm okumaları başarısız olursa kolay mod açılır (veri kaybı yok); gelişmiş mod bilgisi eksik kalır.
+      const [loadedFiles, loadedVersions] = await Promise.all([fetchSkillFiles(editId).catch(() => [] as SkillFile[]), fetchSkillVersions(editId).catch(() => [] as SkillVersion[])]);
+      if (cancelled) return;
+      setFiles(loadedFiles);
+      setVersions(loadedVersions);
+      setAdvanced(loadedFiles.length > 0 || loadedVersions.length > 0);
+      setCurrentStatus(skill.status);
       setTitle(skill.title);
       setSummary(skill.summary);
       setInstructions(skill.instructions);
@@ -77,10 +114,96 @@ export function SkillEditor({ editId }: { editId: string | null }) {
   const summaryError = summary.trim().length < SUMMARY_MIN;
   const categoryError = category === null;
   const instructionsError = instructions.trim().length < INSTRUCTIONS_MIN;
-  const versionError = !isValidSkillVersion(version.trim());
+  // Gelişmiş modda sürüm numarasını yayın penceresi verir (alan gizlidir); kolay modda form alanıdır.
+  const versionError = !advanced && !isValidSkillVersion(version.trim());
+  const latestVersion = latestSemver(versions.map((item) => item.version));
+  const locked = files.length > 0 || versions.length > 0;
 
   const dirty = useDirty(JSON.stringify([title, summary, instructions, category, compat, license, version, visibility]), loadState === "ready");
   const leave = useComposeLeave({ dirty, saveDraft: () => save(true, true) });
+
+  /**
+   * Dosya / bağlı içerik eklemek için Skill'in bir satırı olmalı: yoksa taslak olarak oluşturur ve kimliğini verir (eşzamanlı çağrılar tek taslak açar).
+   * Ad yoksa `null` döner (ad alanına odaklanır). `override`: ZIP içe aktarmada form durumu henüz güncellenmediği için alanlar buradan verilir.
+   */
+  const ensureDraft = useCallback(
+    async (override?: Partial<typeof fieldsRef.current>): Promise<string | null> => {
+      if (skillIdRef.current) return skillIdRef.current;
+      if (!user) return null;
+      const fields = { ...fieldsRef.current, ...override };
+      if (fields.title.trim().length < 3) {
+        setAttempted(true);
+        document.getElementById("skill-title")?.focus();
+        return null;
+      }
+      if (!creating.current) {
+        creating.current = saveSkill({ id: null, ...fields, status: "draft" }, user.id)
+          .then((id) => {
+            skillIdRef.current = id;
+            setSkillId(id);
+            setCurrentStatus("draft");
+            return id;
+          })
+          .catch((err) => {
+            console.error("ensureDraft", err);
+            setError(err instanceof Error && err.message ? err.message : t("skill.error.save"));
+            return null;
+          })
+          .finally(() => {
+            creating.current = null;
+          });
+      }
+      return creating.current;
+    },
+    [user, t],
+  );
+
+  const onFileSaved = useCallback((file: SkillFile) => {
+    setFiles((prev) => [...prev.filter((item) => item.id !== file.id), file].sort((a, b) => (a.path < b.path ? -1 : 1)));
+  }, []);
+  const uploads = useSkillUploads({ ensureDraft, files, onSaved: onFileSaved });
+
+  async function openEditor(path: string, isNew: boolean) {
+    const id = await ensureDraft();
+    if (id) setEditorTarget({ path, isNew });
+  }
+
+  /** ZIP içe aktarma: alanları doldurur, taslağı (içe aktarılan alanlarla) açar, dosyaları yükleme kuyruğuna alır. Sorunlar listelenir; hata taşıyan dosya atlanır. */
+  async function importZip(file: File) {
+    if (importing) return;
+    setImporting(true);
+    setImportIssues([]);
+    setError(null);
+    try {
+      const { readSkillZip } = await import("@/lib/skills/zip");
+      const plan = planSkillImport(readSkillZip(new Uint8Array(await file.arrayBuffer())));
+      setImportIssues(plan.issues);
+      const f = plan.fields;
+      const merged = {
+        title: f.title || fieldsRef.current.title,
+        summary: f.summary || fieldsRef.current.summary,
+        instructions: f.instructions || fieldsRef.current.instructions,
+        category: f.category ?? fieldsRef.current.category,
+        compat: f.compat.length > 0 ? f.compat : fieldsRef.current.compat,
+        license: f.license ?? fieldsRef.current.license,
+      };
+      setTitle(merged.title);
+      setSummary(merged.summary);
+      setInstructions(merged.instructions);
+      setCategory(merged.category);
+      setCompat(merged.compat);
+      setLicense(merged.license);
+      if (plan.files.length === 0) return;
+      const id = await ensureDraft(merged);
+      if (!id) return setError(t("skill.pkg.needTitleFirst"));
+      uploads.enqueue(plan.files.map((item) => ({ path: item.path, bytes: item.bytes })));
+    } catch (err) {
+      console.error("importZip", err);
+      setError(t("skill.pkg.importFailed"));
+    } finally {
+      setImporting(false);
+    }
+  }
 
   /** `leaving`: ✕ → "Taslağa kaydet" — kaydedip çıkılır. Taslak için yalnız ad ve geçerli sürüm gerekir; yayın için hepsi. */
   async function save(asDraft: boolean, leaving = false): Promise<boolean> {
@@ -93,14 +216,26 @@ export function SkillEditor({ editId }: { editId: string | null }) {
     }
     if (versionError) return false;
     if (!asDraft && (summaryError || categoryError || instructionsError)) return false;
+    if (advanced && uploads.busy) {
+      setError(t("skill.pkg.uploadsBusy"));
+      return false;
+    }
     setIsSaving(true);
     try {
-      const id = await saveSkill(
-        { id: editId, title, summary, instructions, category, compat, license, version, status: asDraft ? "draft" : "published", visibility },
-        user.id,
-      );
+      const wasNew = !skillIdRef.current;
+      // Gelişmiş modda "yayında" olmayı yayın penceresi (Edge Function) verir: burada durum korunur. Yayınlanmış sürümü olan Skill taslak diye gizlenmez.
+      const keepStatus = advanced && (versions.length > 0 || !asDraft);
+      const status = keepStatus ? currentStatus : asDraft ? "draft" : "published";
+      const id = await saveSkill({ id: skillIdRef.current, title, summary, instructions, category, compat, license, version, status, visibility }, user.id);
+      skillIdRef.current = id;
+      setSkillId(id);
+      if (advanced && !asDraft) {
+        setIsSaving(false);
+        setPublishOpen(true);
+        return true;
+      }
       if (asDraft && leaving) return true;
-      if (!asDraft && !editId) announcePublished();
+      if (!asDraft && wasNew) announcePublished();
       router.push(skillHref({ id }));
       return true;
     } catch (err) {
@@ -258,7 +393,36 @@ export function SkillEditor({ editId }: { editId: string | null }) {
           <InlineAlert tone="info">{t("skill.skillMdNotice")}</InlineAlert>
         </ComposeSection>
 
+        {advanced && (
+          <>
+            <ComposeSection title={t("skill.pkg.sectionTitle")}>
+              <SkillPackageSection
+                files={files}
+                uploads={uploads}
+                importing={importing}
+                importIssues={importIssues}
+                onImportZip={(file) => void importZip(file)}
+                onEdit={(path, isNew) => void openEditor(path, isNew)}
+                onFileRemoved={(file) => setFiles((prev) => prev.filter((item) => item.id !== file.id))}
+                disabled={isSaving}
+              />
+            </ComposeSection>
+            <ComposeSection title={t("skill.rel.sectionTitle")}>
+              <SkillRelationsSection skillId={skillId} ensureDraft={ensureDraft} disabled={isSaving} />
+            </ComposeSection>
+          </>
+        )}
+
         <ComposeSection title={t("compose.sectionDetails")}>
+          <FormDisclosure id="advanced" label={t("skill.advanced.label")} hint={t("skill.advanced.hint")} value={advanced ? t("skill.advanced.on") : t("skill.advanced.off")}>
+            <div className="space-y-3">
+              <p className="text-small text-text-secondary">{t("skill.advanced.body")}</p>
+              <Button type="button" variant="outline" size="sm" onClick={() => setAdvanced((prev) => !prev)} disabled={locked && advanced} data-skill-advanced-toggle="">
+                {advanced ? t("skill.advanced.turnOff") : t("skill.advanced.turnOn")}
+              </Button>
+              {locked && advanced && <p className="text-caption text-text-muted">{t("skill.advanced.locked")}</p>}
+            </div>
+          </FormDisclosure>
           <FormDisclosure id="compat" label={t("skill.compatLabel")} value={compatSummary}>
             <ChipRow aria-label={t("skill.compatLabel")}>
               {SKILL_COMPAT_IDS.map((id) => (
@@ -277,11 +441,17 @@ export function SkillEditor({ editId }: { editId: string | null }) {
               ))}
             </Select>
           </FormDisclosure>
-          <FormDisclosure id="version" label={t("skill.versionLabel")} value={version}>
-            <FormField label={t("skill.versionLabel")} htmlFor="skill-version" hint={t("skill.versionHint")} error={attempted && versionError ? t("skill.errorVersion") : null}>
-              <input id="skill-version" value={version} onChange={(event) => setVersion(event.target.value)} maxLength={32} aria-invalid={attempted && versionError} className={formTextInputClassName} />
-            </FormField>
-          </FormDisclosure>
+          {advanced ? (
+            <FormDisclosure id="version" label={t("skill.versionLabel")} value={latestVersion ?? t("skill.advanced.noVersionYet")}>
+              <p className="text-small text-text-secondary">{t("skill.advanced.versionAtPublish")}</p>
+            </FormDisclosure>
+          ) : (
+            <FormDisclosure id="version" label={t("skill.versionLabel")} value={version}>
+              <FormField label={t("skill.versionLabel")} htmlFor="skill-version" hint={t("skill.versionHint")} error={attempted && versionError ? t("skill.errorVersion") : null}>
+                <input id="skill-version" value={version} onChange={(event) => setVersion(event.target.value)} maxLength={32} aria-invalid={attempted && versionError} className={formTextInputClassName} />
+              </FormField>
+            </FormDisclosure>
+          )}
         </ComposeSection>
 
         <ComposeSection title={t("publish.whoSees")} id="compose-publish">
@@ -311,6 +481,23 @@ export function SkillEditor({ editId }: { editId: string | null }) {
         </ComposeSection>
       </form>
       {leave.dialog}
+      {editorTarget && skillId && (
+        <SkillFileEditor skillId={skillId} files={files} initialPath={editorTarget.path} isNew={editorTarget.isNew} onClose={() => setEditorTarget(null)} onSaved={onFileSaved} />
+      )}
+      {publishOpen && skillId && (
+        <SkillPublishDialog
+          skillId={skillId}
+          versions={versions}
+          onClose={() => setPublishOpen(false)}
+          onPublished={(published) => {
+            setVersions((prev) => [published, ...prev.filter((item) => item.id !== published.id)]);
+            setCurrentStatus("published");
+            setPublishOpen(false);
+            announcePublished();
+            router.push(skillHref({ id: skillId }));
+          }}
+        />
+      )}
     </ComposeShell>
   );
 }

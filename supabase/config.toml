@@ -33,3 +33,7 @@ verify_jwt = false
 
 [functions.media-upload]
 verify_jwt = false
+
+# Skill yayın paketi (docs/history/389-*): oturum açmış kullanıcının Supabase JWT'siyle çağrılır → doğrulama AÇIK (varsayılan); fonksiyon ayrıca `auth.getUser()` ile doğrular.
+[functions.skill-package]
+verify_jwt = true

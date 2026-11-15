@@ -10,6 +10,7 @@ import { Pencil } from "@/components/icons/pencil";
 import { Trash2 } from "@/components/icons/trash-2";
 import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/ui/code-block";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -20,15 +21,18 @@ import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILL_CATEGORY_LABEL, SKILL_COMPAT_LABEL, SKILL_LICENSE_LABEL, skillLabelText } from "@/lib/skills/categories";
+import { fetchSkillVersions, recordSkillUse, type SkillVersion } from "@/lib/supabase/skill-package";
 import { deleteSkill, fetchSkillById } from "@/lib/supabase/skills";
 import { formatRelativeTime } from "@/lib/utils";
+import { MarkdownView } from "./markdown-view";
 import { downloadSkillMd, skillMdFor } from "./skill-download";
+import { downloadSkillPackage, pickLatestVersion, SkillFilesSection, SkillRelatedSection, SkillVersionsSection } from "./skill-detail-parts";
 import type { Skill } from "@/types";
 
 /**
- * `/skills/local?id=…` — Skill detay sayfası (Albüm düzeni, çekirdek dilim). Birincil eylem "SKILL.md indir". Talimat düz metin olarak
- * gösterilir (güvenli Markdown görüntüleyici sonraki dilimdir). Beğeni/yorum/kaydet/İstatistik/Paylaş çubuğu, Dosyalar ve Sürümler
- * sekmeleri sonraki dilimlerdir (`docs/yapilacaklar.md`).
+ * `/skills/local?id=…` — Skill detay sayfası (Albüm düzeni). Yayınlanmış bir sürüm varsa birincil eylem "ZIP indir" (değişmez paket, imzalı adres);
+ * yoksa "SKILL.md indir" (alanlardan derlenir). Talimat güvenli Markdown görüntüleyicide (HTML üretmez) gösterilir, "Ham metin" ile düz görünür. Sürümler,
+ * paket dosyaları (manifest) ve bağlı içerik bölümleri docs/history/389-*. Beğeni/yorum/kaydet/İstatistik/Paylaş çubuğu sonraki dilimdir (`docs/yapilacaklar.md`).
  */
 export function SkillDetailView() {
   const { t, language } = useTranslation();
@@ -39,6 +43,10 @@ export function SkillDetailView() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [versions, setVersions] = useState<SkillVersion[]>([]);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [rawView, setRawView] = useState(false);
+  const [reload, setReload] = useState(0);
   usePageTitle(skill?.title);
 
   useEffect(() => {
@@ -50,6 +58,17 @@ export function SkillDetailView() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    fetchSkillVersions(id)
+      .then((list) => !cancelled && setVersions(list))
+      .catch(() => !cancelled && setVersions([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [id, reload]);
+
   if (!id) return <NotFoundBlock title={t("skill.notFoundTitle")} description={t("common.brokenLinkHint")} />;
   if (skill === undefined) return <DetailSkeleton />;
   if (!skill) return <NotFoundBlock title={t("skill.notFoundTitle")} description={t("skill.notFoundBody")} />;
@@ -57,6 +76,23 @@ export function SkillDetailView() {
   const isOwn = user?.id === skill.creator.id;
   const category = skill.category ? t(SKILL_CATEGORY_LABEL[skill.category]) : null;
   const tools = skill.compat.map((tool) => skillLabelText(SKILL_COMPAT_LABEL[tool], t)).join(", ");
+
+  const latest = pickLatestVersion(versions);
+
+  async function primaryDownload() {
+    if (!skill) return;
+    setDownloadError(null);
+    if (!latest) {
+      downloadSkillMd(skill);
+      void recordSkillUse(skill.id);
+      return;
+    }
+    try {
+      await downloadSkillPackage(skill.id, skill.slug, latest);
+    } catch {
+      setDownloadError(t("skill.detail.downloadFailed"));
+    }
+  }
 
   async function confirmDeletion() {
     if (!user || !skill) return;
@@ -104,11 +140,16 @@ export function SkillDetailView() {
       actions={
         <DetailActionBar
           primary={
-            <button type="button" onClick={() => downloadSkillMd(skill)} data-skill-download="" className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
-              <Download size={18} aria-hidden /> {t("skill.download")}
+            <button type="button" onClick={() => void primaryDownload()} data-skill-download="" className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
+              <Download size={18} aria-hidden /> {latest ? t("skill.detail.downloadZip", { version: latest.version }) : t("skill.download")}
             </button>
           }
         >
+          {latest && (
+            <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => downloadSkillMd(skill)} data-skill-download-md="">
+              <Download size={16} aria-hidden /> {t("skill.detail.downloadMd")}
+            </Button>
+          )}
           {isOwn ? (
             <>
               <Link href={`/skills/create?edit=${skill.id}`} data-skill-edit="" className={buttonClassName({ variant: "outline", size: "sm", className: "rounded-full" })}>
@@ -129,13 +170,40 @@ export function SkillDetailView() {
 
         <InlineAlert tone="info">{t("skill.noRunNotice")}</InlineAlert>
 
-        <DetailSection title={t("skill.instructionsTitle")}>
+        {downloadError && (
+          <p role="alert" className="text-small text-danger">
+            {downloadError}
+          </p>
+        )}
+
+        <DetailSection
+          title={t("skill.instructionsTitle")}
+          action={
+            skill.instructions.trim() ? (
+              <button type="button" onClick={() => setRawView((prev) => !prev)} aria-pressed={rawView} data-skill-raw-toggle="" className="rounded-full px-3 py-1 text-caption font-semibold text-primary hover:bg-primary-soft">
+                {rawView ? t("skill.detail.renderedToggle") : t("skill.detail.rawToggle")}
+              </button>
+            ) : undefined
+          }
+        >
           {skill.instructions.trim() ? (
-            <pre className="prompt-text whitespace-pre-wrap break-words rounded-xl border border-border-soft bg-surface-soft px-5 py-4 text-small text-text">{skill.instructions}</pre>
+            rawView ? (
+              <pre className="prompt-text whitespace-pre-wrap break-words rounded-xl border border-border-soft bg-surface-soft px-5 py-4 text-small text-text">{skill.instructions}</pre>
+            ) : (
+              <div className="rounded-xl border border-border-soft bg-surface px-5 py-4" data-skill-instructions="">
+                <MarkdownView source={skill.instructions} />
+              </div>
+            )
           ) : (
             <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("skill.noInstructions")}</p>
           )}
         </DetailSection>
+
+        {latest && <SkillFilesSection version={latest} />}
+
+        <SkillRelatedSection skillId={skill.id} />
+
+        <SkillVersionsSection skillId={skill.id} slug={skill.slug} versions={versions} isOwn={isOwn} onChanged={() => setReload((value) => value + 1)} />
 
         <DetailSection title={t("skill.skillMdTitle")}>
           <p className="mb-3 text-small text-text-muted">{t("skill.skillMdHint")}</p>

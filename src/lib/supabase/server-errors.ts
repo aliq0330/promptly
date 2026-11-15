@@ -45,10 +45,24 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   collection_owner_cannot_leave: "error.collectionOwnerCannotLeave",
   collection_item_not_shareable: "error.collectionItemNotShareable",
   collection_follow_member: "error.collectionFollowMember",
+  // Skill paketi (docs/history/389-*)
+  skill_too_many_files: "error.skillTooManyFiles",
+  skill_files_too_large: "error.skillFilesTooLarge",
+  skill_quota_exceeded: "error.skillQuotaExceeded",
+  skill_too_many_tags: "error.skillTooManyTags",
+  skill_too_many_relations: "error.skillTooManyRelations",
+  skill_relation_not_public: "error.skillRelationNotPublic",
+  skill_version_invalid: "error.skillVersionInvalid",
+  skill_version_exists: "error.skillVersionExists",
+  skill_version_not_newer: "error.skillVersionNotNewer",
+  skill_changelog_required: "error.skillChangelogRequired",
+  skill_publish_rate_limit: "error.skillPublishRateLimit",
+  skill_not_found: "error.skillNotFound",
+  skill_version_immutable: "error.skillVersionImmutable",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
-const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public", "token_limit", "link_limit", "invalid_name", "invalid_scope", "invalid_expiry", "pin_not_allowed", "pin_top_level_only", ...Object.keys(SERVER_ERROR_KEYS).filter((code) => code.startsWith("collection_"))]);
+const INLINE_ONLY = new Set(["report_duplicate", "self_vote_not_allowed", "copy_required", "attachment_not_public", "token_limit", "link_limit", "invalid_name", "invalid_scope", "invalid_expiry", "pin_not_allowed", "pin_top_level_only", ...Object.keys(SERVER_ERROR_KEYS).filter((code) => code.startsWith("collection_") || code.startsWith("skill_"))]);
 
 export function friendlyServerMessage(code: unknown): string | null {
   if (typeof code !== "string") return null;
