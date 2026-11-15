@@ -23,13 +23,14 @@ import {
   type ExchangeIssueCode,
 } from "./prompt-format.ts";
 
-export type ExchangeContentKind = "request" | "preset" | "workflow";
+export type ExchangeContentKind = "request" | "preset" | "workflow" | "skill";
 
 /** JSON zarfındaki `format` değeri (prompt için `EXCHANGE_JSON_FORMAT` = "promptly.prompts"). */
 export const CONTENT_JSON_FORMAT: Record<ExchangeContentKind, string> = {
   request: "promptly.requests",
   preset: "promptly.presets",
   workflow: "promptly.workflows",
+  skill: "promptly.skills",
 };
 
 /** Sınırlar `import_content` RPC'si ve tablo CHECK'leriyle aynıdır. */
@@ -37,7 +38,20 @@ export const CONTENT_LIMITS = {
   request: { title: 200, description: 5000, direction: 5000 },
   preset: { title: 120, description: 1000, selectionChars: 20000 },
   workflow: { title: 120, description: 1000, steps: 30, stepTitle: 200, stepDescription: 1000, instructions: 5000, ioPerStep: 10, ioLabel: 80 },
+  /** `import_skills` RPC'si ve `skills` tablosu CHECK'leriyle aynı; dosya en çok `skillItems` Skill taşır (Skill oluşturma saatte 20 ile sınırlıdır). */
+  skill: { title: 120, summary: 1000, instructions: 60000 },
 } as const;
+
+/**
+ * Skill listeleri `lib/skills/categories.ts` ile VE `skills` tablosunun CHECK'leriyle aynıdır (Edge kopyası uygulama tiplerini import edemediği için burada ayrıca durur;
+ * `content-format.test.ts` üçünü karşılaştırır).
+ */
+export const SKILL_CATEGORY_IDS: readonly string[] = ["software", "design", "research", "business", "marketing", "education", "data", "productivity"];
+export const SKILL_COMPAT_IDS: readonly string[] = ["claude-code", "codex", "cursor", "other"];
+export const SKILL_LICENSE_IDS: readonly string[] = ["mit", "apache-2.0", "cc0-1.0", "cc-by-4.0", "cc-by-sa-4.0", "proprietary"];
+
+/** Skill dosyasındaki en çok kayıt (hız sınırıyla aynı: saatte 20). */
+export const SKILL_IMPORT_MAX_ITEMS = 20;
 
 export type ExchangeSelectionValue = string | number | boolean | (string | number | boolean)[];
 
@@ -94,7 +108,22 @@ export interface ExchangeWorkflow {
   steps: ExchangeWorkflowStep[];
 }
 
-export type ExchangeContentItem<K extends ExchangeContentKind> = K extends "request" ? ExchangeRequest : K extends "preset" ? ExchangePreset : ExchangeWorkflow;
+/**
+ * Skill kaydı (docs/history/397-*): yalnız başlık, özet, talimat (`SKILL.md` gövdesi), uzmanlık alanı, uyumlu araç ve lisans. Paket dosyaları/betikler, sürüm, durum,
+ * görünürlük, yazar, sayaçlar dosyaya YAZILMAZ ve içe aktarırken dosyadan ALINMAZ (hep çağıranın özel taslağı).
+ */
+export interface ExchangeSkill {
+  title: string;
+  summary: string;
+  instructions: string;
+  category: string | null;
+  compat: string[];
+  license: string;
+  /** Başkasının Skill'i dışa aktarılırsa atıf (yazar adı + bağlantı); içe aktarırken açıklamaya `Kaynak:` satırı olarak girmez, yalnız dosyada taşınır. */
+  source?: { author: string; url: string };
+}
+
+export type ExchangeContentItem<K extends ExchangeContentKind> = K extends "request" ? ExchangeRequest : K extends "preset" ? ExchangePreset : K extends "workflow" ? ExchangeWorkflow : ExchangeSkill;
 
 export interface ContentParseResult<K extends ExchangeContentKind> {
   items: ExchangeContentItem<K>[];
@@ -204,6 +233,36 @@ function normalizeIO(raw: unknown, seen: Set<string>): ExchangeWorkflowIO | null
 }
 
 /** `import_workflows` ile AYNI kurallar: anahtarlar benzersiz, bağlantı yalnız önceki adımın var olan çıktısından, sınırlar. */
+export function normalizeSkill(raw: unknown, row: number): { item: ExchangeSkill | null; issues: ExchangeIssue[] } {
+  const issues: ExchangeIssue[] = [];
+  const report = (field: string, code: ExchangeIssueCode) => issues.push({ row, field, code });
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    report("", "invalid_row");
+    return { item: null, issues };
+  }
+  const r = raw as Record<string, unknown>;
+  const limits = CONTENT_LIMITS.skill;
+
+  const title = str(r.title).trim();
+  if (!title) report("title", "required");
+  else if (title.length > limits.title) report("title", "too_long");
+  const summary = str(r.summary).trim();
+  if (summary.length > limits.summary) report("summary", "too_long");
+  const instructions = str(r.instructions);
+  if (instructions.length > limits.instructions) report("instructions", "too_long");
+
+  const categoryRaw = str(r.category).trim().toLowerCase();
+  const category = categoryRaw === "" ? null : categoryRaw;
+  if (category !== null && !SKILL_CATEGORY_IDS.includes(category)) report("category", "invalid_category");
+  const license = str(r.license).trim().toLowerCase() || "mit";
+  if (!SKILL_LICENSE_IDS.includes(license)) report("license", "invalid_license");
+  const compat = dedupe(strList(r.compat), false);
+  if (compat.some((tool) => !SKILL_COMPAT_IDS.includes(tool))) report("compat", "invalid_compat");
+
+  if (issues.length > 0) return { item: null, issues };
+  return { item: { title, summary, instructions, category, compat, license }, issues };
+}
+
 export function normalizeWorkflow(raw: unknown, row: number): { item: ExchangeWorkflow | null; issues: ExchangeIssue[] } {
   const issues: ExchangeIssue[] = [];
   const report = (field: string, code: ExchangeIssueCode) => issues.push({ row, field, code });
@@ -314,11 +373,11 @@ export function parseContent<K extends ExchangeContentKind>(kind: K, text: strin
   } else return fatal("invalid_json");
 
   if (rows.length === 0) return fatal("empty");
-  if (rows.length > maxItems) return { ...fatal<K>("too_many_items"), total: rows.length };
+  if (rows.length > (kind === "skill" ? Math.min(maxItems, SKILL_IMPORT_MAX_ITEMS) : maxItems)) return { ...fatal<K>("too_many_items"), total: rows.length };
   const items: ExchangeContentItem<K>[] = [];
   const issues: ExchangeIssue[] = [];
   rows.forEach((raw, index) => {
-    const result = kind === "request" ? normalizeRequest(raw, index + 1) : kind === "preset" ? normalizePreset(raw, index + 1) : normalizeWorkflow(raw, index + 1);
+    const result = kind === "request" ? normalizeRequest(raw, index + 1) : kind === "preset" ? normalizePreset(raw, index + 1) : kind === "skill" ? normalizeSkill(raw, index + 1) : normalizeWorkflow(raw, index + 1);
     if (result.item) items.push(result.item as ExchangeContentItem<K>);
     issues.push(...result.issues);
   });
@@ -327,7 +386,7 @@ export function parseContent<K extends ExchangeContentKind>(kind: K, text: strin
 
 /** `promptly-requests-2026-11-01.json` / `promptly-presets-…`. */
 export function contentFileName(kind: ExchangeContentKind, date: Date = new Date()): string {
-  return `promptly-${kind === "request" ? "requests" : kind === "preset" ? "presets" : "workflows"}-${date.toISOString().slice(0, 10)}.json`;
+  return `promptly-${kind === "request" ? "requests" : kind === "preset" ? "presets" : kind === "skill" ? "skills" : "workflows"}-${date.toISOString().slice(0, 10)}.json`;
 }
 
 /** Uygulama tiplerinden dışa aktarma (yapısal tipler: bu dosya uygulama tiplerini import etmez). */
@@ -434,6 +493,21 @@ export function toExchangeWorkflow(source: ExchangeAppWorkflow, publicPromptIds:
       outputs: step.outputs.map((output) => ({ id: output.id, label: output.label })),
     })),
   };
+}
+
+/** Uygulama tiplerinden Skill kaydı (yapısal tip: bu dosya uygulama tiplerini import etmez). */
+export interface ExchangeAppSkill {
+  title: string;
+  summary: string;
+  instructions: string;
+  category: string | null;
+  compat: readonly string[];
+  license: string;
+}
+
+/** Kendi Skill'inden dosya kaydı: yalnız içerik alanları (durum, görünürlük, sürüm, sayaç, paket dosyası yazılmaz). */
+export function toExchangeSkill(source: ExchangeAppSkill): ExchangeSkill {
+  return { title: source.title, summary: source.summary, instructions: source.instructions, category: source.category, compat: [...source.compat], license: source.license };
 }
 
 /** Prompt zarfının adı, yanlış dosyayı seçince daha iyi hata verebilmek için dışarıdan okunabilir. */

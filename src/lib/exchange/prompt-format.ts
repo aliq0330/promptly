@@ -104,7 +104,10 @@ export type ExchangeIssueCode =
   | "invalid_steps"
   | "invalid_connection"
   | "too_many_steps"
-  | "missing_frontmatter";
+  | "missing_frontmatter"
+  | "invalid_category"
+  | "invalid_license"
+  | "invalid_compat";
 
 /** Tek bir satır/prompt sorunu. `row` 1'den başlar (kullanıcının dosyada gördüğü sıra). */
 export interface ExchangeIssue {

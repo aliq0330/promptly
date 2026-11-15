@@ -42,6 +42,16 @@ const KIND_KEYS: Record<ExchangeContentKind, { exportTitle: TranslationKey; expo
     importLimits: "exchange.content.import.limits.preset",
     importDone: "exchange.content.import.done.preset",
   },
+  skill: {
+    exportTitle: "exchange.content.export.title.skill",
+    exportCount: "exchange.content.export.count.skill",
+    exportEmpty: "exchange.content.export.empty.skill",
+    exportNote: "exchange.content.export.note.skill",
+    importTitle: "exchange.content.import.title.skill",
+    importIntro: "exchange.content.import.intro.skill",
+    importLimits: "exchange.content.import.limits.skill",
+    importDone: "exchange.content.import.done.skill",
+  },
   workflow: {
     exportTitle: "exchange.content.export.title.workflow",
     exportCount: "exchange.content.export.count.workflow",

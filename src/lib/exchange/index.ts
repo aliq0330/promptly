@@ -16,6 +16,7 @@ export {
   serializeContent,
   toExchangePreset,
   toExchangeRequest,
+  toExchangeSkill,
   toExchangeWorkflow,
   type ContentParseResult,
   type ExchangeContentItem,
@@ -23,6 +24,7 @@ export {
   type ExchangePreset,
   type ExchangeRequest,
   type ExchangeSelectionValue,
+  type ExchangeSkill,
   type ExchangeWorkflow,
   type ExchangeWorkflowStep,
 } from "./content-format.ts";

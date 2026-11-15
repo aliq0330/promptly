@@ -32,7 +32,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -48,11 +48,12 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
       const sha = "a".repeat(64);
       return ctx.rows(
         (q.get("skill_id") ?? "") === `eq.${S_PUB}`
-          ? [{ id: "v-1", skill_id: S_PUB, version: "1.0.0", changelog: "", package_path: `${S_PUB}/packages/1.0.0-${sha.slice(0, 16)}.zip`, package_sha256: sha, package_size: 1024, file_count: 1, manifest: { schema: 1, files: [] }, deprecated_at: null, created_at: "2026-03-02T00:00:00Z" }]
+          ? [{ id: "v-1", skill_id: S_PUB, version: "1.0.0", changelog: "", package_path: `${S_PUB}/packages/1.0.0-${sha.slice(0, 16)}.zip`, package_sha256: sha, package_size: 1024, file_count: 1, manifest: { schema: 1, files: [{ path: "scripts/install.sh", kind: "script", size: 20, sha256: "b".repeat(64), script: true, risks: ["pipe_to_shell", "network"] }] }, deprecated_at: null, created_at: "2026-03-02T00:00:00Z" }]
           : [],
       );
     }
     if (table === "skill_relations" && method === "GET") return ctx.rows([]);
+    if (table === "skill_links" && method === "GET") return ctx.rows((q.get("skill_id") ?? "") === `eq.${S_PUB}` ? [{ id: "l-1", linked_skill_id: S_PUB2, position: 0 }] : []);
     return null;
   };
   const context = await browser.newContext({ viewport });
@@ -149,7 +150,12 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     return json(route, state.pin ? { version: state.pin } : null);
   });
   await context.route(/\/rest\/v1\/rpc\/skill_works_state/, (route) => json(route, [{ yes_count: state.works.yes, no_count: state.works.no, my_vote: state.works.my, can_vote: state.works.can }]));
-  await context.route(/\/rest\/v1\/rpc\/set_skill_works/, (route) => {
+  await context.route(/\/rest\/v1\/rpc\/skill_works_by_tool/, (route) => json(route, [{ tool: "cursor", yes_count: 2, no_count: 1 }]));
+  await context.route(/\/rest\/v1\/rpc\/set_skill_works_tool/, (route) => {
+    state.toolCalls.push(JSON.parse(route.request().postData() || "{}"));
+    return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*" }, body: "" });
+  });
+  await context.route(/\/rest\/v1\/rpc\/set_skill_works(?!_)/, (route) => {
     const body = JSON.parse(route.request().postData() || "{}");
     state.worksCalls.push(body);
     const w = state.works;
@@ -439,6 +445,36 @@ await scenario("22. Ana Sayfa: Filtre penceresinde 'Skill'ler' çipi; seçilince
   await page.getByText("Skill'ler", { exact: true }).click();
   await page.locator("[data-skill-discover]").waitFor();
   await page.locator("[data-skill-discover]").getByText("Skill 1").first().waitFor();
+});
+
+await scenario("23. Detay: betik risk rozetleri (otomatik tarama notu), birlikte kullanılan Skill kartı ve araç başına 'çalıştı' toplamı", async ({ page }) => {
+  await openDetail(page);
+  const scan = page.locator("[data-skill-scan]");
+  await scan.waitFor();
+  assert.match(await scan.innerText(), /kesin değildir/);
+  await page.locator('[data-skill-risk="pipe_to_shell"]').waitFor();
+  await page.locator('[data-skill-risk="network"]').waitFor();
+  const linked = page.locator("[data-skill-linked]");
+  await linked.waitFor();
+  assert.match(await linked.innerText(), /Logo Skill/);
+  const row = page.locator('[data-skill-works-tool-row="cursor"]');
+  await row.waitFor();
+  assert.match(await row.innerText(), /Cursor.*2 çalıştı · 1 çalışmadı/);
+});
+
+await scenario("24. Oy sonrası araç etiketi: 'Hangi araçta denedin?' Cursor seçilince set_skill_works_tool çağrılır; tekrar basınca etiketi kaldırır", async ({ page, state }) => {
+  await openDetail(page);
+  await page.locator("[data-skill-works-yes]").click();
+  const picker = page.locator("[data-skill-works-tool-picker]");
+  await picker.waitFor();
+  await picker.locator('[data-skill-works-tool="cursor"]').click();
+  const end = Date.now() + 4000;
+  while (Date.now() < end && state.toolCalls.length === 0) await new Promise((r) => setTimeout(r, 100));
+  assert.deepEqual(state.toolCalls[0], { p_skill_id: S_PUB, p_tool: "cursor" });
+  await picker.locator('[data-skill-works-tool="cursor"]').click();
+  const end2 = Date.now() + 4000;
+  while (Date.now() < end2 && state.toolCalls.length < 2) await new Promise((r) => setTimeout(r, 100));
+  assert.deepEqual(state.toolCalls[1], { p_skill_id: S_PUB, p_tool: null });
 });
 
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {

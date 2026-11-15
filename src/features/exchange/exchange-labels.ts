@@ -18,6 +18,9 @@ export const ISSUE_KEYS: Record<ExchangeIssueCode, TranslationKey> = {
   invalid_connection: "exchange.issue.invalid_connection",
   too_many_steps: "exchange.issue.too_many_steps",
   missing_frontmatter: "exchange.issue.missing_frontmatter",
+  invalid_category: "exchange.issue.invalid_category",
+  invalid_license: "exchange.issue.invalid_license",
+  invalid_compat: "exchange.issue.invalid_compat",
 };
 
 export const FATAL_KEYS: Record<ExchangeFatalCode | "fetch_failed" | "bad_url", TranslationKey> = {

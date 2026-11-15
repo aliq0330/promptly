@@ -34,3 +34,31 @@ export async function setSkillWorks(skillId: string, works: boolean | null): Pro
   const row = Array.isArray(data) ? (data[0] as Record<string, unknown> | undefined) : undefined;
   return { ...parseState(row), canVote: true };
 }
+
+export type WorksTool = "claude-code" | "codex" | "cursor" | "other";
+export const WORKS_TOOLS: readonly WorksTool[] = ["claude-code", "codex", "cursor", "other"];
+
+export interface WorksToolRow {
+  tool: WorksTool;
+  yes: number;
+  no: number;
+}
+
+/** Araç etiketli oyların araç başına toplamı (herkese açık Skill'de ziyaretçiye de açık); hata/eski veritabanı = boş liste (bölüm çizilmez). */
+export async function fetchSkillWorksByTool(skillId: string): Promise<WorksToolRow[]> {
+  try {
+    const { data, error } = await supabase.rpc("skill_works_by_tool", { p_skill_id: skillId });
+    if (error || !Array.isArray(data)) return [];
+    return (data as Record<string, unknown>[])
+      .filter((row) => typeof row.tool === "string" && (WORKS_TOOLS as readonly string[]).includes(row.tool))
+      .map((row) => ({ tool: row.tool as WorksTool, yes: n(row.yes_count), no: n(row.no_count) }));
+  } catch {
+    return [];
+  }
+}
+
+/** Kendi oyuna "hangi araçta denedin" etiketi yazar (oy yoksa sunucu `no_vote` der). */
+export async function setSkillWorksTool(skillId: string, tool: WorksTool | null): Promise<void> {
+  const { error } = await supabase.rpc("set_skill_works_tool", { p_skill_id: skillId, p_tool: tool });
+  if (error) throw new Error(error.message);
+}

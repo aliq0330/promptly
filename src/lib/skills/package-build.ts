@@ -1,5 +1,5 @@
 import { SKILL_LICENSE_SPDX, renderSkillMd, skillDescription } from "./skill-md.ts";
-import { describeSkillFile, type SkillFileInput } from "./package-validate.ts";
+import { decodeUtf8, describeSkillFile, scanScriptRisks, type ScriptRiskCode, type SkillFileInput } from "./package-validate.ts";
 import type { SkillFileKind, SkillLicenseId as SkillLicense } from "./limits.ts";
 
 /**
@@ -16,6 +16,8 @@ export interface SkillManifestFile {
   size: number;
   sha256: string;
   script: boolean;
+  /** Yalnız betiklerde ve yalnız eşleşme varsa: otomatik risk işaretleri (`scanScriptRisks`; bilgilendirici, kesin değil). */
+  risks?: ScriptRiskCode[];
 }
 
 /** `skill_versions.manifest` (jsonb): paketteki yazar dosyalarının listesi. Okuyucular dosya listesini buradan görür. */
@@ -88,7 +90,13 @@ export async function buildPackage(input: PackageBuildInput): Promise<BuiltPacka
   const manifestFiles: SkillManifestFile[] = [];
   for (const file of sorted) {
     const info = describeSkillFile(file.path);
-    manifestFiles.push({ path: file.path, kind: info.kind, size: file.bytes.length, sha256: await sha256Hex(file.bytes), script: info.isScript });
+    const entry: SkillManifestFile = { path: file.path, kind: info.kind, size: file.bytes.length, sha256: await sha256Hex(file.bytes), script: info.isScript };
+    if (info.isScript) {
+      const text = decodeUtf8(file.bytes);
+      const risks = text === null ? [] : scanScriptRisks(text);
+      if (risks.length > 0) entry.risks = risks;
+    }
+    manifestFiles.push(entry);
   }
   const { skill } = input;
   const manifest: SkillManifest = { schema: SKILL_MANIFEST_SCHEMA, name: skill.slug, version: input.version, license: skill.license, files: manifestFiles };

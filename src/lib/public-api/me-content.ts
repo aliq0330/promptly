@@ -11,7 +11,8 @@ import { isUuid } from "./prompts.ts";
 import { PublicApiError } from "./rest.ts";
 
 /** Bu yüzeyde okunup/eklenen içerik türleri (Prompt `me.ts`'tedir). */
-export type MeContentKind = ExchangeContentKind;
+/** Kişisel API yüzeyi İstek / Hazır ayar / Workflow ile sınırlıdır; Skill dışa/içe aktarması yalnız uygulama içindedir (docs/history/397-*). */
+export type MeContentKind = Exclude<ExchangeContentKind, "skill">;
 /** Taslağı güncellenebilen türler (Prompt dahil). */
 export type MeDraftKind = "prompt" | MeContentKind;
 
