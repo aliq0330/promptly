@@ -29,9 +29,9 @@ function readPausedUntil(): number {
   }
 }
 
-/** The post a feedback answer is about — null for a quote (no answer to give). */
+/** The post a feedback answer is about — null for a quote or a Skill (no answer to give). */
 export function interestTarget(item: FeedItem): (InterestTarget & { authorId: string }) | null {
-  if (item.kind === "quote") return null;
+  if (item.kind === "quote" || item.kind === "skill") return null;
   const authorId = item.kind === "workflow" || item.kind === "preset" ? item.data.creator.id : item.data.author.id;
   return { kind: item.kind, id: item.data.id, authorId };
 }

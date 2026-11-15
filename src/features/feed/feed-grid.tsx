@@ -10,6 +10,7 @@ import { RequestCard } from "@/features/requests/request-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { QuoteCard } from "@/features/quotes/quote-card";
+import { SkillCard } from "@/features/skills/skill-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
 import { InterestCardFrame, type InterestFeedback } from "./interest-feedback";
@@ -82,6 +83,8 @@ export function FeedGrid({
       <PresetCard preset={item.data} />
     ) : item.kind === "quote" ? (
       <QuoteCard quote={item.data} />
+    ) : item.kind === "skill" ? (
+      <SkillCard skill={item.data} />
     ) : (
       <WorkflowCard workflow={item.data} />
     );
