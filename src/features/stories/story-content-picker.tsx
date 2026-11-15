@@ -6,6 +6,7 @@ import { Search } from "@/components/icons/search";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { Workflow } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
@@ -22,6 +23,7 @@ export const LINKED_TYPE_META: Record<StoryLinkedType, { icon: typeof SquareTerm
   workflow: { icon: Workflow, label: "communities.feed.type.workflow" },
   preset: { icon: SlidersHorizontal, label: "communities.feed.type.preset" },
   request: { icon: Sparkles, label: "communities.feed.type.request" },
+  skill: { icon: GraduationCap, label: "communities.feed.type.skill" },
 };
 
 /**

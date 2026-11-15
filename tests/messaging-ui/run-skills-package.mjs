@@ -132,6 +132,14 @@ function withSkills(db, { me = ALICE } = {}) {
 
 /** Storage (özel `skill-files` bucket'ı) ve Edge Function taklidi: bağlamdaki rotalar `installMock`'tan SONRA kurulur (sonuncu kazanır). */
 async function installSkillRoutes(context, world) {
+  // Uzmanlık alanları tablodan gelir (docs/history/399-*): bilinen sekiz alan + sonradan eklenen "Mutfak".
+  await context.route(/\/rest\/v1\/skill_categories/, (route) =>
+    route.fulfill({
+      status: 200,
+      headers: { "access-control-allow-origin": "*", "content-type": "application/json" },
+      body: JSON.stringify([...["software", "design", "research", "business", "marketing", "education", "data", "productivity"].map((id, index) => ({ id, label_tr: id, label_en: id, position: (index + 1) * 10 })), { id: "cooking", label_tr: "Mutfak", label_en: "Cooking", position: 90 }]),
+    }),
+  );
   const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-expose-headers": "*" };
   await context.route("https://example.supabase.co/storage/v1/object/skill-files/**", async (route) => {
     const req = route.request();
@@ -647,6 +655,15 @@ await scenario("24. Klasör adı (slug) ve etiketler: slug addan türer, elle de
   await enableAdvanced(page);
   assert.ok(await page.locator("[data-skill-import-folder]").isVisible());
   assert.equal(await page.locator("[data-skill-folder-input]").getAttribute("webkitdirectory"), "");
+});
+
+await scenario("25. Uzmanlık alanı çipleri tablodan: sonradan eklenen 'Mutfak' alanı düzenleyicide seçilebilir", async ({ page }) => {
+  await openEditor(page);
+  const chip = page.locator('[data-skill-category="cooking"]');
+  await chip.waitFor();
+  assert.equal((await chip.innerText()).trim(), "Mutfak");
+  await chip.click();
+  assert.equal(await chip.getAttribute("aria-pressed"), "true");
 });
 
 await browser.close();

@@ -8,6 +8,7 @@ import { Workflow } from "@/components/icons/workflow";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { isContentTypeId, taxonomyLabel, taxonomyPathLabel } from "@/lib/content-taxonomy";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { RELATION_TYPES, type RelationEdge, type RelationNodeKind, type RelationReason, type RelationType } from "@/lib/relations/types";
 
 export const KIND_ICON: Record<RelationNodeKind, IconComponent> = {
@@ -15,6 +16,7 @@ export const KIND_ICON: Record<RelationNodeKind, IconComponent> = {
   workflow: Workflow,
   request: Sparkles,
   suggestion: PenLine,
+  skill: GraduationCap,
 };
 
 /**

@@ -38,8 +38,10 @@ import {
   type RelationReason,
   type RelationType,
 } from "@/lib/relations/types";
-import { promptHref, requestHref, workflowHref } from "@/lib/utils";
-import type { Prompt, PromptEditSuggestion, PromptRequest, Workflow } from "@/types";
+import { promptHref, requestHref, skillHref, workflowHref } from "@/lib/utils";
+import { fetchSkillById, fetchSkillsByAuthorPage, fetchSkillsByIds } from "./skills";
+import { fetchSkillFeedPage, fetchSkillsForContent } from "./skill-discovery";
+import type { Prompt, PromptEditSuggestion, PromptRequest, Skill, Workflow } from "@/types";
 
 /* ---------------------------------------------------------------------- */
 /* Caps — "limit or paginate large graphs". The UI shows when one was hit. */
@@ -118,6 +120,22 @@ export function workflowToNode(w: Workflow): RelationNode {
   };
 }
 
+export function skillToNode(s: Skill): RelationNode {
+  return {
+    key: nodeKey("skill", s.id),
+    kind: "skill",
+    id: s.id,
+    title: s.title,
+    description: clip(s.summary),
+    ownerId: s.creator.id,
+    ownerName: s.creator.displayName,
+    ownerUsername: s.creator.username,
+    imageUrl: null,
+    contentType: null,
+    href: skillHref(s),
+  };
+}
+
 export function requestToNode(r: PromptRequest): RelationNode {
   return {
     key: nodeKey("request", r.id),
@@ -167,14 +185,16 @@ async function fetchNodesByRefs(refs: Ref[]): Promise<Map<string, RelationNode>>
   const promptIds = ids("prompt");
   const workflowIds = ids("workflow");
   const requestIds = ids("request");
+  const skillIds = ids("skill");
 
-  const [prompts, workflows, requests] = await Promise.all([
+  const [prompts, workflows, requests, skillList] = await Promise.all([
     promptIds.length ? supabase.from("prompts").select(PROMPT_SELECT).in("id", promptIds) : Promise.resolve({ data: [] }),
     workflowIds.length ? supabase.from("workflows").select(WORKFLOW_SELECT).in("id", workflowIds) : Promise.resolve({ data: [] }),
     requestIds.length ? supabase.from("prompt_requests").select(REQUEST_SELECT).in("id", requestIds) : Promise.resolve({ data: [] }),
+    skillIds.length ? fetchSkillsByIds(skillIds) : Promise.resolve([] as Skill[]),
   ]).catch((err) => {
     console.error("fetchNodesByRefs", err);
-    return [{ data: [] }, { data: [] }, { data: [] }];
+    return [{ data: [] }, { data: [] }, { data: [] }, [] as Skill[]] as const;
   });
 
   const blockedFiltered = async <T,>(items: T[], authorId: (item: T) => string) => withoutBlocked(items, authorId);
@@ -196,6 +216,9 @@ async function fetchNodesByRefs(refs: Ref[]): Promise<Map<string, RelationNode>>
     (r) => r.author.id,
   )) {
     out.set(nodeKey("request", r.id), requestToNode(r));
+  }
+  for (const s of await blockedFiltered(skillList.filter((skill) => skill.status === "published" && skill.visibility === "public"), (skill) => skill.creator.id)) {
+    out.set(nodeKey("skill", s.id), skillToNode(s));
   }
   return out;
 }
@@ -219,6 +242,10 @@ async function loadCenter(kind: RelatableKind, id: string): Promise<CenterLoaded
   if (kind === "workflow") {
     const workflow = await fetchWorkflowById(id);
     return workflow ? { node: workflowToNode(workflow.workflow), workflow } : null;
+  }
+  if (kind === "skill") {
+    const skill = await fetchSkillById(id);
+    return skill && skill.status === "published" && skill.visibility === "public" ? { node: skillToNode(skill) } : null;
   }
   const request = await fetchRequestById(id);
   return request && !request.deletedAt ? { node: requestToNode(request), request } : null;
@@ -590,6 +617,38 @@ async function manualRelations(center: RelationNode, viewerId: string | null): P
   return { nodes, edges, capped: rows.length > shownRows.length ? "manual" : undefined };
 }
 
+/**
+ * Skill bağları (docs/history/399-*): bir Skill'in bağladığı Prompt / Workflow (`skill_relations`) ve Skill (`skill_links`) uçları, ve ters yönde onu bağlayan Skill'ler.
+ * Türetilir (kopya/yeni kayıt yok); düğümler kendi görünürlüğünden geçer (okunamayan uç kendiliğinden düşer).
+ */
+async function skillLinkRelations(center: RelationNode): Promise<Partial_> {
+  const refs: Ref[] = [];
+  const edges: RelationEdge[] = [];
+  const add = (from: RelationNode["key"], to: RelationNode["key"], ref: Ref) => {
+    refs.push(ref);
+    edges.push(edge("skill_link", from, to, { reasons: [] }));
+  };
+  if (center.kind === "skill") {
+    const [rel, out, inc] = await Promise.all([
+      supabase.from("skill_relations").select("target_type, target_id").eq("skill_id", center.id).limit(20),
+      supabase.from("skill_links").select("linked_skill_id").eq("skill_id", center.id).limit(10),
+      supabase.from("skill_links").select("skill_id").eq("linked_skill_id", center.id).limit(10),
+    ]);
+    for (const row of (rel.data ?? []) as { target_type: string; target_id: string }[]) {
+      if (row.target_type === "prompt" || row.target_type === "workflow") add(center.key, nodeKey(row.target_type, row.target_id), { kind: row.target_type, id: row.target_id });
+    }
+    for (const row of (out.data ?? []) as { linked_skill_id: string }[]) add(center.key, nodeKey("skill", row.linked_skill_id), { kind: "skill", id: row.linked_skill_id });
+    for (const row of (inc.data ?? []) as { skill_id: string }[]) add(nodeKey("skill", row.skill_id), center.key, { kind: "skill", id: row.skill_id });
+  } else if (center.kind === "prompt" || center.kind === "workflow") {
+    const skills = await fetchSkillsForContent(center.kind, center.id, 10);
+    for (const skill of skills) add(nodeKey("skill", skill.id), center.key, { kind: "skill", id: skill.id });
+  } else {
+    return EMPTY;
+  }
+  const resolved = await fetchNodesByRefs(refs);
+  return { nodes: [...resolved.values()], edges: edges.filter((item) => resolved.has(item.from) || item.from === center.key).filter((item) => resolved.has(item.to) || item.to === center.key) };
+}
+
 /* ---------------------------------------------------------------------- */
 /* The graph                                                               */
 /* ---------------------------------------------------------------------- */
@@ -613,16 +672,17 @@ export async function fetchRelationGraph(kind: RelatableKind, id: string, viewer
   const center = loaded.node;
 
   const dnaFallback = { ...EMPTY, status: (kind === "prompt" ? "unavailable" : "not_applicable") as DnaStatus };
-  const [manual, workflows, provenance, children, suggestions, dna] = await Promise.all([
+  const [manual, workflows, provenance, children, suggestions, dna, skillLinks] = await Promise.all([
     safe(manualRelations(center, viewerId), EMPTY),
     kind === "workflow" ? Promise.resolve(loaded.workflow ? workflowCenterRelations(center, loaded.workflow) : EMPTY) : safe(workflowRelations(center), EMPTY),
     loaded.prompt ? safe(promptProvenance(center, loaded.prompt), EMPTY) : Promise.resolve(EMPTY),
     loaded.request ? safe(requestResults(center, loaded.request), EMPTY) : Promise.resolve(EMPTY),
     loaded.prompt ? safe(acceptedSuggestions(center, loaded.prompt), EMPTY) : Promise.resolve(EMPTY),
     loaded.prompt ? safe(dnaSuggestions(center, loaded.prompt), dnaFallback) : Promise.resolve({ ...EMPTY, status: "not_applicable" as DnaStatus }),
+    safe(skillLinkRelations(center), EMPTY),
   ]);
 
-  const parts: Partial_[] = [manual, workflows, provenance, children, suggestions, dna];
+  const parts: Partial_[] = [manual, workflows, provenance, children, suggestions, dna, skillLinks];
   const nodeMap = new Map<string, RelationNode>([[center.key, center]]);
   for (const part of parts) for (const node of part.nodes) if (!nodeMap.has(node.key)) nodeMap.set(node.key, node);
 
@@ -708,6 +768,10 @@ export async function searchRelatableContent(query: string, kinds: RelatableKind
       if (kind === "workflow") {
         const list = q ? await searchWorkflows(q, {}, limit) : viewerId ? (await fetchWorkflowsByCreator(viewerId)).slice(0, limit) : [];
         return list.filter((w) => w.status === "published").map(workflowToNode);
+      }
+      if (kind === "skill") {
+        const list = q ? (await fetchSkillFeedPage({ query: q, sort: "popular" }, limit)).items : viewerId ? (await fetchSkillsByAuthorPage(viewerId, true, 0, limit)).items : [];
+        return list.filter((s) => s.status === "published" && s.visibility === "public").map(skillToNode);
       }
       const list = q ? await searchRequests(q, {}, limit) : viewerId ? (await fetchRequestsByAuthor(viewerId)).slice(0, limit) : [];
       return list.filter((r) => !r.deletedAt).map(requestToNode);

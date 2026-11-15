@@ -46,7 +46,7 @@ import { STORY_LIMITS, STORY_REACTIONS, isStoryActive, storyDisplayDuration, sto
 import { communityHref } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { absoluteUrl, cn, copyTextToClipboard, formatRelativeTime, messageHref, profileHref } from "@/lib/utils";
-import type { Story } from "@/types";
+import type { Story, StoryLinkedType } from "@/types";
 import { StoryCanvas } from "./story-canvas";
 import { PollSticker, QuestionSticker } from "./story-stickers";
 import { AddToHighlightSheet, ConfirmSheet, OwnerActivitySheet, ReportStorySheet, ReshareSheet, type ActivityTab } from "./story-viewer-sheets";
@@ -730,13 +730,13 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                         if (await copyTextToClipboard(absoluteUrl(storyHref(story.id)))) setNotice(t("common.linkCopied"));
                       }}
                     />
-                    {user && story.linkedType && story.linkedId && (
+                    {user && story.linkedType && story.linkedType !== "skill" && story.linkedId && (
                       <MenuButton
                         icon={Shapes}
                         label={t("spaces.add.fromStory")}
                         onClick={() => {
                           setMenuOpen(false);
-                          setSpaceTarget({ type: story.linkedType!, id: story.linkedId! });
+                          setSpaceTarget({ type: story.linkedType as Exclude<StoryLinkedType, "skill">, id: story.linkedId! });
                         }}
                       />
                     )}

@@ -15,12 +15,12 @@ import type { TranslationKey } from "../i18n/translations.ts";
 import type { DnaSectionType } from "../prompt-dna/types.ts";
 
 /** What a node can be. `suggestion` only ever appears as an accepted edit suggestion. */
-export type RelationNodeKind = "prompt" | "workflow" | "request" | "suggestion";
+export type RelationNodeKind = "prompt" | "workflow" | "request" | "suggestion" | "skill";
 
 /** Node kinds that can be the CENTER of a map (and the ends of a manual relation). */
-export type RelatableKind = "prompt" | "workflow" | "request";
+export type RelatableKind = "prompt" | "workflow" | "request" | "skill";
 
-export const RELATABLE_KINDS: readonly RelatableKind[] = ["prompt", "workflow", "request"];
+export const RELATABLE_KINDS: readonly RelatableKind[] = ["prompt", "workflow", "request", "skill"];
 
 export type RelationType =
   | "dna_similar"
@@ -29,7 +29,8 @@ export type RelationType =
   | "inspired_by"
   | "workflow_step"
   | "request_result"
-  | "accepted_suggestion";
+  | "accepted_suggestion"
+  | "skill_link";
 
 /** Relation types a user may create by hand (the only ones stored in `content_relations`). */
 export type ManualRelationType = "similar" | "alternative" | "inspired_by";
@@ -39,7 +40,7 @@ export const MANUAL_RELATION_TYPES: readonly ManualRelationType[] = ["similar", 
 export type RelationOrigin = "dna" | "manual" | "derived";
 
 /** The filter chips on the map. `all` is always offered; the rest only when the data has them. */
-export type RelationFilter = "all" | "dna" | "manual" | "workflow" | "request";
+export type RelationFilter = "all" | "dna" | "manual" | "workflow" | "request" | "skill";
 
 export interface RelationTypeDef {
   /** Directed: the arrow runs from `from` to `to`. Undirected relations draw no arrowhead. */
@@ -59,9 +60,11 @@ export const RELATION_TYPES: Record<RelationType, RelationTypeDef> = {
   workflow_step: { directed: true, origin: "derived", filter: "workflow", labelKey: "relations.type.workflow_step", meaningKey: "relations.meaning.workflow_step" },
   request_result: { directed: true, origin: "derived", filter: "request", labelKey: "relations.type.request_result", meaningKey: "relations.meaning.request_result" },
   accepted_suggestion: { directed: true, origin: "derived", filter: "request", labelKey: "relations.type.accepted_suggestion", meaningKey: "relations.meaning.accepted_suggestion" },
+  // Skill (docs/history/399-*): Skill'in bağladığı içerik / Skill ↔ Skill bağı (`skill_relations`, `skill_links`); türetilir, `content_relations`'a yazılmaz.
+  skill_link: { directed: true, origin: "derived", filter: "skill", labelKey: "relations.type.skill_link", meaningKey: "relations.meaning.skill_link" },
 };
 
-export const FILTER_ORDER: readonly Exclude<RelationFilter, "all">[] = ["dna", "manual", "workflow", "request"];
+export const FILTER_ORDER: readonly Exclude<RelationFilter, "all">[] = ["dna", "manual", "workflow", "request", "skill"];
 
 export function isManualRelationType(value: string): value is ManualRelationType {
   return (MANUAL_RELATION_TYPES as readonly string[]).includes(value);

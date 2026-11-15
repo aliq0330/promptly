@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { summarizeWorks, toggleVote, type WorksState } from "@/lib/prompt-works";
-import { fetchSkillWorks, fetchSkillWorksByTool, setSkillWorks, setSkillWorksTool, WORKS_TOOLS, type WorksTool, type WorksToolRow } from "@/lib/supabase/skill-works";
+import { fetchSkillWorks, fetchSkillWorksByTool, fetchSkillWorksByVersion, setSkillWorks, setSkillWorksVersion, type WorksVersionRow, setSkillWorksTool, WORKS_TOOLS, type WorksTool, type WorksToolRow } from "@/lib/supabase/skill-works";
 import { SKILL_COMPAT_LABEL, skillLabelText } from "@/lib/skills/categories";
+import { fetchSkillVersions } from "@/lib/supabase/skill-package";
 
 /**
  * Skill "Çalıştı mı?" (docs/history/393-*): Skill'i indirmiş (kullanmış) kişi tek dokunuşla oy verir; sayılar herkese açık Skill'de herkese görünür.
@@ -25,11 +26,16 @@ export function SkillWorksVote({ skillId, isOwn, justDownloaded }: { skillId: st
   const [error, setError] = useState<string | null>(null);
   const [tools, setTools] = useState<WorksToolRow[]>([]);
   const [myTool, setMyTool] = useState<WorksTool | null>(null);
+  const [versionRows, setVersionRows] = useState<WorksVersionRow[]>([]);
+  const [myVersion, setMyVersion] = useState<string | null>(null);
+  const [versions, setVersions] = useState<string[]>([]);
 
   const load = useCallback(() => {
     let cancelled = false;
     void fetchSkillWorks(skillId).then((next) => !cancelled && setState(next));
     void fetchSkillWorksByTool(skillId).then((rows) => !cancelled && setTools(rows));
+    void fetchSkillWorksByVersion(skillId).then((rows) => !cancelled && setVersionRows(rows));
+    void fetchSkillVersions(skillId).then((list) => !cancelled && setVersions(list.slice(0, 6).map((item) => item.version))).catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -67,6 +73,22 @@ export function SkillWorksVote({ skillId, isOwn, justDownloaded }: { skillId: st
       await setSkillWorksTool(skillId, next);
       setMyTool(next);
       setTools(await fetchSkillWorksByTool(skillId));
+    } catch (failure) {
+      setError(failure instanceof Error && failure.message ? failure.message : t("prompt.works.voteFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function chooseVersion(version: string) {
+    if (busy) return;
+    const next = myVersion === version ? null : version;
+    setBusy(true);
+    setError(null);
+    try {
+      await setSkillWorksVersion(skillId, next);
+      setMyVersion(next);
+      setVersionRows(await fetchSkillWorksByVersion(skillId));
     } catch (failure) {
       setError(failure instanceof Error && failure.message ? failure.message : t("prompt.works.voteFailed"));
     } finally {
@@ -116,6 +138,25 @@ export function SkillWorksVote({ skillId, isOwn, justDownloaded }: { skillId: st
             </Button>
           ))}
         </div>
+      )}
+      {state.canVote && state.myVote !== null && versions.length > 0 && (
+        <div role="group" aria-label={t("skill.works.versionAria")} className="flex flex-wrap items-center gap-2" data-skill-works-version-picker="">
+          <span className="text-caption text-text-muted">{t("skill.works.versionPrompt")}</span>
+          {versions.map((version) => (
+            <Button key={version} variant={myVersion === version ? "primary" : "outline"} size="sm" aria-pressed={myVersion === version} disabled={busy} onClick={() => void chooseVersion(version)} data-skill-works-version={version}>
+              v{version}
+            </Button>
+          ))}
+        </div>
+      )}
+      {versionRows.length > 0 && (
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-secondary" data-skill-works-by-version="">
+          {versionRows.map((row) => (
+            <li key={row.version} data-skill-works-version-row={row.version}>
+              <span className="font-semibold text-text">v{row.version}</span>: {t("skill.works.toolCounts", { yes: row.yes, no: row.no })}
+            </li>
+          ))}
+        </ul>
       )}
       {tools.length > 0 && (
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-secondary" data-skill-works-by-tool="">

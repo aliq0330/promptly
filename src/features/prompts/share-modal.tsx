@@ -160,7 +160,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       href: skillHref(skill),
       messageParam: `shareSkillId=${skill.id}`,
       directLink: false,
-      storyLink: null,
+      storyLink: storyLinkFor("skill", skill.id, skill.status === "published" && skill.visibility === "public"),
     };
   }
   if (target.contentType === "space") {

@@ -32,7 +32,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -150,6 +150,11 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     return json(route, state.pin ? { version: state.pin } : null);
   });
   await context.route(/\/rest\/v1\/rpc\/skill_works_state/, (route) => json(route, [{ yes_count: state.works.yes, no_count: state.works.no, my_vote: state.works.my, can_vote: state.works.can }]));
+  await context.route(/\/rest\/v1\/rpc\/skill_works_by_version/, (route) => json(route, [{ version: "1.0.0", yes_count: 3, no_count: 0 }]));
+  await context.route(/\/rest\/v1\/rpc\/set_skill_works_version/, (route) => {
+    state.versionCalls.push(JSON.parse(route.request().postData() || "{}"));
+    return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*" }, body: "" });
+  });
   await context.route(/\/rest\/v1\/rpc\/skill_works_by_tool/, (route) => json(route, [{ tool: "cursor", yes_count: 2, no_count: 1 }]));
   await context.route(/\/rest\/v1\/rpc\/set_skill_works_tool/, (route) => {
     state.toolCalls.push(JSON.parse(route.request().postData() || "{}"));
@@ -189,6 +194,8 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 const openDetail = async (page, id = S_PUB) => {
   await page.goto(`${BASE}/skills/local?id=${id}`);
   await page.getByRole("heading", { level: 1 }).waitFor();
+  // Detay bölümleri (oy, sürüm/araç toplamları, bağlar, kalite) ayrı isteklerle gelir ve düzen yer değiştirir: eylem çubuğu "kararlı" olana kadar bekle.
+  await page.waitForLoadState("networkidle").catch(() => undefined);
 };
 
 await scenario("1. Yayınlanmış Skill: beğeni + yorum sayaçları, İstatistik ve yorum bölümü görünür", async ({ page }) => {
@@ -483,6 +490,24 @@ await scenario("25. Genel arama: metin aramasında 'Skill'ler' grubu skill_feed_
   await group.waitFor();
   assert.match(await group.innerText(), /Logo Skill/);
   assert.ok(state.feedCalls.some((call) => call.p_query === "logo"));
+});
+
+await scenario("26. Oy sonrası sürüm etiketi: 'Hangi sürümde denedin?' v1.0.0 seçilince set_skill_works_version çağrılır; sürüm başına toplam görünür", async ({ page, state }) => {
+  await openDetail(page);
+  await page.locator('[data-skill-works-version-row="1.0.0"]').waitFor();
+  await page.locator("[data-skill-works-yes]").click();
+  const picker = page.locator("[data-skill-works-version-picker]");
+  await picker.waitFor();
+  await picker.locator('[data-skill-works-version="1.0.0"]').click();
+  const end = Date.now() + 4000;
+  while (Date.now() < end && state.versionCalls.length === 0) await new Promise((r) => setTimeout(r, 100));
+  assert.deepEqual(state.versionCalls[0], { p_skill_id: S_PUB, p_version: "1.0.0" });
+});
+
+await scenario("27. İlişki Haritası: Skill merkezliyken harita açılır ve birlikte kullanılan Skill düğümü görünür", async ({ page }) => {
+  await page.goto(`${BASE}/relations?type=skill&id=${S_PUB}`);
+  await page.getByText("Skill 1").first().waitFor();
+  await page.getByText("Logo Skill").first().waitFor();
 });
 
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {

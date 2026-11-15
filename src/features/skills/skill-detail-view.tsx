@@ -24,7 +24,7 @@ import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, 
 import { ReportButton } from "@/features/moderation/report-button";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { SKILL_CATEGORY_LABEL, SKILL_COMPAT_LABEL, SKILL_LICENSE_LABEL, skillLabelText } from "@/lib/skills/categories";
+import { SKILL_COMPAT_LABEL, SKILL_LICENSE_LABEL, skillCategoryName, skillLabelText } from "@/lib/skills/categories";
 import { fetchSkillVersions, recordSkillUse, type SkillVersion } from "@/lib/supabase/skill-package";
 import { deleteSkill, fetchSkillById } from "@/lib/supabase/skills";
 import { formatRelativeTime } from "@/lib/utils";
@@ -32,10 +32,13 @@ import { MarkdownView } from "./markdown-view";
 import { SimilarSkills } from "./skill-aside-blocks";
 import { SkillWorksVote } from "./skill-works-vote";
 import { SkillQualitySection } from "./skill-quality-section";
+import { RelationMapRow } from "@/features/relations/relation-map-link";
+import { SkillDetailCover } from "./skill-cover-card";
 import { SkillLinkedSkills } from "./skill-links-section";
 import { SkillInstallSection } from "./skill-install-section";
 import { downloadSkillExchange, downloadSkillMd, downloadSkillMetadata, skillMdFor } from "./skill-download";
 import { downloadSkillPackage, pickLatestVersion, SkillFilesSection, SkillRelatedSection, SkillVersionsSection } from "./skill-detail-parts";
+import { useSkillCategories } from "./use-skill-categories";
 import type { Skill } from "@/types";
 
 /**
@@ -45,6 +48,7 @@ import type { Skill } from "@/types";
  */
 export function SkillDetailView() {
   const { t, language } = useTranslation();
+  const categoryRows = useSkillCategories();
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
@@ -87,7 +91,7 @@ export function SkillDetailView() {
   if (!skill) return <NotFoundBlock title={t("skill.notFoundTitle")} description={t("skill.notFoundBody")} />;
 
   const isOwn = user?.id === skill.creator.id;
-  const category = skill.category ? t(SKILL_CATEGORY_LABEL[skill.category]) : null;
+  const category = skill.category ? skillCategoryName(skill.category, language, t, categoryRows) : null;
   const tools = skill.compat.map((tool) => skillLabelText(SKILL_COMPAT_LABEL[tool], t)).join(", ");
 
   const latest = pickLatestVersion(versions);
@@ -132,6 +136,11 @@ export function SkillDetailView() {
           {tools && <InfoRow label={t("skill.compat")} value={tools} />}
           <InfoRow label={t("skill.updated")} value={formatRelativeTime(skill.updatedAt, language)} />
         </dl>
+        {skill.status === "published" && skill.visibility === "public" && (
+          <div className="mt-2 flex flex-wrap">
+            <RelationMapRow kind="skill" id={skill.id} />
+          </div>
+        )}
       </AsideSection>
       <SimilarSkills skillId={skill.id} />
     </DetailAside>
@@ -141,7 +150,7 @@ export function SkillDetailView() {
     <DetailShell
       band={
         <DetailBand
-          art={<DetailArtPlaceholder icon={GraduationCap} />}
+          art={skill.coverPath ? <SkillDetailCover path={skill.coverPath} fallback={<DetailArtPlaceholder icon={GraduationCap} />} /> : <DetailArtPlaceholder icon={GraduationCap} />}
           kicker={
             <div className="flex flex-wrap items-center gap-2">
               <ContentTypeLabel icon={GraduationCap} label={t("skill.singular")} detail={category} />

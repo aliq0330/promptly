@@ -998,7 +998,8 @@ export interface Workflow {
  * STARTING configuration, never a locked one.
  */
 /** Skill'in uzmanlık alanı (kendi taksonomisi; görsel/metin/ses/video'dan bağımsız). DB: `skills.category` CHECK. */
-export type SkillCategory = "software" | "design" | "research" | "business" | "marketing" | "education" | "data" | "productivity";
+/** Uzmanlık alanı kimliği (`skill_categories.id`): bilinen sekiz alan koddadır, yenileri tabloya eklenir (docs/history/399-*). */
+export type SkillCategory = string;
 /** Hedef araç uyumluluğu (yalnız veri; hiçbir araç sunucuda çalıştırılmaz). DB: `skills.compat` CHECK. */
 export type SkillCompat = "claude-code" | "codex" | "cursor" | "other";
 /** Lisans kodu (SPDX'e eşlenir, `lib/skills/skill-md.ts`). DB: `skills.license` CHECK. */
@@ -1023,6 +1024,8 @@ export interface Skill {
   version: string;
   status: "draft" | "published";
   visibility: "public" | "private";
+  /** `skill-files` bucket'ındaki kapak görseli yolu (`{skill}/cover/{uuid}.{jpg|png|webp}`); yoksa `null` (docs/history/399-*). */
+  coverPath?: string | null;
   /** Korumalı sayaçlar (`skills.*_count`); bu dilimde hiçbir tetikleyici yazmaz, hep 0. */
   useCount: number;
   likeCount: number;
@@ -1074,7 +1077,7 @@ export interface Preset {
 
 export type StoryKind = "image" | "video" | "text";
 export type StoryAudience = "public" | "followers" | "community";
-export type StoryLinkedType = "prompt" | "request" | "workflow" | "preset";
+export type StoryLinkedType = "prompt" | "request" | "workflow" | "preset" | "skill";
 /** Metin hikâyesi zemini — adlandırılmış (hex saklanmaz); her izleyicide aynı görünür (`--color-story-*`). */
 export type StoryBackground = "cobalt" | "sunset" | "ink" | "paper" | "forest" | "berry";
 export type StoryTextColor = "white" | "black" | "yellow" | "cobalt" | "orange" | "mint";

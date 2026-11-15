@@ -253,7 +253,8 @@ export function normalizeSkill(raw: unknown, row: number): { item: ExchangeSkill
 
   const categoryRaw = str(r.category).trim().toLowerCase();
   const category = categoryRaw === "" ? null : categoryRaw;
-  if (category !== null && !SKILL_CATEGORY_IDS.includes(category)) report("category", "invalid_category");
+  // Uzmanlık alanı artık tablodan gelir (`skill_categories`): istemci yalnız BİÇİMİ doğrular, bilinen/bilinmeyen kararı veritabanındadır (`import_skills`).
+  if (category !== null && !/^[a-z][a-z0-9-]{1,30}$/.test(category)) report("category", "invalid_category");
   const sourceRaw = r.source && typeof r.source === "object" && !Array.isArray(r.source) ? (r.source as Record<string, unknown>) : null;
   const sourceAuthor = sourceRaw ? str(sourceRaw.author).trim().slice(0, 120) : "";
   const sourceUrl = sourceRaw ? str(sourceRaw.url).trim() : "";

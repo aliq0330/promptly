@@ -15,12 +15,14 @@ import { ComposeSection, FormDisclosure, FormField, formTextInputClassName, form
 import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/features/content/publish-panel";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { announcePublished } from "@/lib/publish-celebration";
-import { SKILL_CATEGORY_IDS, SKILL_CATEGORY_LABEL, SKILL_COMPAT_IDS, SKILL_COMPAT_LABEL, SKILL_LICENSE_IDS, SKILL_LICENSE_LABEL, skillLabelText } from "@/lib/skills/categories";
+import { SKILL_COMPAT_IDS, SKILL_COMPAT_LABEL, SKILL_LICENSE_IDS, SKILL_LICENSE_LABEL, skillLabelText } from "@/lib/skills/categories";
 import { latestSemver } from "@/lib/skills/semver";
 import { isValidSkillVersion } from "@/lib/skills/skill-md";
 import { planSkillImport } from "@/lib/skills/skill-import";
 import type { SkillIssue } from "@/lib/skills/package-validate";
 import { fetchSkillFiles, fetchSkillVersions, type SkillFile, type SkillVersion } from "@/lib/supabase/skill-package";
+import { useSkillCategories } from "./use-skill-categories";
+import { skillCategoryIds, skillCategoryName } from "@/lib/skills/categories";
 import { fetchSkillById, fetchSkillTags, replaceSkillTags, saveSkill } from "@/lib/supabase/skills";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
@@ -34,6 +36,7 @@ import { SkillPackageSection } from "./skill-package-section";
 import { SkillPublishDialog } from "./skill-publish-dialog";
 import { SkillRelationsSection } from "./skill-relations-section";
 import { SkillLinksEditor } from "./skill-links-section";
+import { SkillCoverField } from "./skill-cover-field";
 import { useSkillUploads } from "./use-skill-uploads";
 
 const SUMMARY_MIN = 10;
@@ -48,7 +51,7 @@ const INSTRUCTIONS_MAX = 60000;
  * (`ComposeShell` + `PublishPanel`, docs/history/244-*); topluluk/ekip bağlamı yoktur.
  */
 export function SkillEditor({ editId }: { editId: string | null }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
@@ -69,6 +72,8 @@ export function SkillEditor({ editId }: { editId: string | null }) {
   // Klasör adı (slug): yeni Skill'de addan türer ve sahibi değiştirmedikçe addan izlenir; düzenlemede mevcut değer gelir. Değişince yeni sürümler yeni adla paketlenir (docs/history/398-*).
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [coverPath, setCoverPath] = useState<string | null>(null);
+  const categoryRows = useSkillCategories();
   const { catalog: tagCatalog } = useTagCatalog();
   const tagPicker = useTagPicker({ title, content: `${summary}\n${instructions}`, catalog: tagCatalog });
   const tagsSeeded = useRef(false);
@@ -116,6 +121,7 @@ export function SkillEditor({ editId }: { editId: string | null }) {
       setVisibility(skill.visibility);
       setSlug(skill.slug);
       setSlugTouched(true);
+      setCoverPath(skill.coverPath ?? null);
       const loadedTags = await fetchSkillTags(editId).catch(() => []);
       if (!tagsSeeded.current) {
         tagsSeeded.current = true;
@@ -400,11 +406,14 @@ export function SkillEditor({ editId }: { editId: string | null }) {
               className={formTextareaClassName}
             />
           </FormField>
+          <FormField label={t("skill.cover.label")} hint={t("skill.cover.hint")} id="skill-cover">
+            <SkillCoverField userId={user.id} skillId={skillId} coverPath={coverPath} onChange={setCoverPath} ensureDraft={ensureDraft} disabled={isSaving} />
+          </FormField>
           <FormField label={t("skill.categoryLabel")} required hint={t("skill.categoryHint")} error={attempted && categoryError ? t("skill.errorCategory") : null} id="skill-category">
             <ChipRow aria-label={t("skill.categoryLabel")}>
-              {SKILL_CATEGORY_IDS.map((id) => (
+              {skillCategoryIds(categoryRows).map((id) => (
                 <Chip key={id} selected={category === id} onClick={() => setCategory(id)} data-skill-category={id}>
-                  {t(SKILL_CATEGORY_LABEL[id])}
+                  {skillCategoryName(id, language, t, categoryRows)}
                 </Chip>
               ))}
             </ChipRow>
