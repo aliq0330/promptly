@@ -567,7 +567,8 @@ await scenario("14. Keşfet → Etiketler: etiketler gerçek kullanım sayısıy
 await scenario("15. Keşfet → Topluluklar: gözat listesi gömülü, ikinci bir arama kutusu yok (üstteki kutu topluluk arar)", async ({ page, state }) => {
   await page.goto(`${BASE}/discover`);
   await openSection(page, "Topluluklar");
-  await page.getByText(/Henüz|topluluk/i).first().waitFor();
+  // Gizli duran gezinme etiketi ("Topluluklar", rayda/kenar çubuğunda) .first()'i yakalar: yalnız görünür eşleşme beklenir.
+  await page.getByText(/Henüz|topluluk/i).filter({ visible: true }).first().waitFor();
   await waitFor(() => state.requests.some((u) => u.includes("rpc/browse_communities")));
   assert.equal(await page.locator('main input[type="search"]').count(), 0, "bölümde ikinci arama kutusu yok");
   assert.equal(await page.getByTestId("all-search").count(), 0);

@@ -38,10 +38,10 @@ insert into public.prompt_tags (prompt_id, tag_slug) values
 -- alice bob'u engelledi
 insert into public.blocks (blocker_id, blocked_id) values (:alice, :bob);
 
--- 1) Politikalar yeni ifadeyi kullanıyor (6 tablo) ve eski satır-başına is_blocked çağrısı kalmadı.
+-- 1) Politikalar yeni ifadeyi kullanıyor (7 tablo: prompts, prompt_requests, prompt_comments, community_posts, workflows, presets, skills) ve eski satır-başına is_blocked çağrısı kalmadı.
 select count(*) as n from pg_policy where polname like '%\_hide\_blocked' and pg_get_expr(polqual, polrelid) like '%blocked_user_ids%' \gset p1_
 select count(*) as n from pg_policy where polname like '%\_hide\_blocked' and pg_get_expr(polqual, polrelid) like '%is\_blocked(%' \gset p2_
-select public._check(1, '6 hide_blocked politikası blocked_user_ids kullanıyor, hiçbiri is_blocked çağırmıyor', :p1_n = 6 and :p2_n = 0, :p1_n || '/' || :p2_n);
+select public._check(1, '7 hide_blocked politikası blocked_user_ids kullanıyor, hiçbiri is_blocked çağırmıyor', :p1_n = 7 and :p2_n = 0, :p1_n || '/' || :p2_n);
 
 -- 2) Görünürlük: engelleyen alice bob'un promptunu görmez; engellenen bob alice'inkini görmez; üçüncü kişi carol hepsini görür; ziyaretçi hepsini görür.
 select public._as_user(:alice);

@@ -44,3 +44,11 @@ listesine ekle, ben peyderpey tamamlarım" dedi. Bu not yalnız **çekirdek dili
 - Migration canlıya deploy hattıyla uygulanır (`schema_migrations`'a bak); bu oturumda canlıya uygulanmadı.
 - Beğeni/yorum/kaydet/İstatistik/Paylaş, dosya/ZIP, sürüm geçmişi, arama RPC'si, Keşfet bölümü, profil bölümü, bildirim, moderasyon, API/MCP: hepsi
   `docs/yapilacaklar.md` → "Skill için yapılacaklar". Taslaklar listede görünmez (yalnız detay adresinden açılır).
+
+## Sonradan düzeltme (CI'da yakalandı)
+- `skills_hide_blocked` politikası ilk yazımda `is_blocked(auth.uid(), author_id)` kullanıyordu; projenin performans kuralı (CLAUDE.md §8.13c) engel kümesini
+  `(select public.blocked_user_ids()) @> array[yazar]` ile sorgu başına bir kez hesaplamaktır. `supabase/tests/perf-rls.sql` bunu denetler ("6/1" ile düştü, CI `database` işi
+  kırmızı). Düzeltme **ayrı migration** (`20261126110000_skills_hide_blocked_initplan.sql`, yalnız `alter policy`; ilk migration canlıya uygulandığı için düzenlenmedi) ve testin
+  beklenen sayısı 6 → 7. Ders: yeni içerik tablosunda yalnız kendi SQL testini değil **tüm `supabase/tests/*.sql` paketini** yerelde koş (`perf-rls`, `rls-initplan`, `anon-hardening`).
+- Aynı koşuda `ui` işi `run-feed-filters` 15 ile düştü; bu Skill'den bağımsızdır (birleşmeden önceki `main`'de de düşüyor, gizli bir "Topluluklar" etiketi `getByText(...).first()`'i yakalıyor).
+
