@@ -5,7 +5,7 @@ import { BarChart3 } from "@/components/icons/bar-chart-3";
 import { MessageCircleQuestion } from "@/components/icons/message-circle-question";
 import { Video } from "@/components/icons/video";
 import { StorageImg, StorageVideo } from "@/components/ui/storage-media";
-import { SharedPresetCard, SharedPromptCard, SharedRequestCard, SharedWorkflowCard } from "@/features/messages/shared-content-card";
+import { SharedPresetCard, SharedPromptCard, SharedRequestCard, SharedSkillCard, SharedWorkflowCard } from "@/features/messages/shared-content-card";
 import { cn } from "@/lib/utils";
 import type { StoryBackground, StoryKind, StoryLayout, StoryLinkedType, StorySticker, StoryTextColor, StoryTextLayer, StoryTextSize } from "@/types";
 
@@ -227,6 +227,7 @@ function LinkedContentCard({ type, id }: { type: StoryLinkedType; id: string }) 
   if (type === "prompt") return <SharedPromptCard promptId={id} />;
   if (type === "request") return <SharedRequestCard requestId={id} />;
   if (type === "workflow") return <SharedWorkflowCard workflowId={id} />;
+  if (type === "skill") return <SharedSkillCard skillId={id} />;
   return <SharedPresetCard presetId={id} />;
 }
 

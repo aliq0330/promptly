@@ -645,16 +645,19 @@ export async function fetchLinkableContent(ownerId: string, query: string): Prom
   const prompts = supabase.from("prompts").select("id, title, description").eq("status", "published").eq("visibility", "public").is("community_id", null).is("team_file_id", null).is("deleted_at", null);
   const requests = supabase.from("prompt_requests").select("id, title, description").eq("is_draft", false).eq("visibility", "public").is("community_id", null).is("team_file_id", null).is("deleted_at", null);
   const workflows = supabase.from("workflows").select("id, title, description").eq("status", "published").eq("visibility", "public").is("community_id", null).is("team_file_id", null);
+  const skills = supabase.from("skills").select("id, title, summary").eq("status", "published").eq("visibility", "public");
   const presets = supabase.from("presets").select("id, title, description").eq("status", "published").eq("visibility", "public").is("community_id", null).is("team_file_id", null);
   const scoped = <T extends { eq: (c: string, v: string) => T; ilike: (c: string, v: string) => T }>(builder: T, ownerColumn: string) =>
     mine ? builder.eq(ownerColumn, ownerId) : builder.ilike("title", `%${q}%`);
-  const [p, r, w, s] = await Promise.all([
+  const [p, r, w, s, k] = await Promise.all([
     scoped(prompts, "author_id").order("created_at", { ascending: false }).limit(limit),
     scoped(requests, "author_id").order("created_at", { ascending: false }).limit(limit),
     scoped(workflows, "creator_id").order("created_at", { ascending: false }).limit(limit),
     scoped(presets, "creator_id").order("created_at", { ascending: false }).limit(limit),
+    scoped(skills, "author_id").order("created_at", { ascending: false }).limit(limit),
   ]);
   const pick = (type: StoryLinkedType, rows: unknown) =>
     ((rows ?? []) as Array<{ id: string; title: string; description: string | null }>).map((row) => ({ type, id: row.id, title: row.title, description: row.description ?? "" }));
-  return [...pick("prompt", p.data), ...pick("workflow", w.data), ...pick("preset", s.data), ...pick("request", r.data)];
+  const skillRows = ((k.data ?? []) as Array<{ id: string; title: string; summary: string | null }>).map((row) => ({ type: "skill" as StoryLinkedType, id: row.id, title: row.title, description: row.summary ?? "" }));
+  return [...pick("prompt", p.data), ...pick("workflow", w.data), ...pick("preset", s.data), ...pick("request", r.data), ...skillRows];
 }

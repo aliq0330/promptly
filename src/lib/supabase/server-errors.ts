@@ -106,6 +106,8 @@ const OPTIONAL_COLUMNS = [
   "pinned_at",
   // Ortak koleksiyon (docs/history/386-*): sütunlar yoksa koleksiyonlar yine açılır, yalnız "Ortak" etiketi ve ekleyen görünmez.
   "is_shared", "member_count", "added_by",
+  // Skill kapak görseli (docs/history/399-*): sütun yoksa Skill yine açılır, yalnız kapak görünmez.
+  "cover_path",
 ] as const;
 const missingOptional = new Set<string>();
 

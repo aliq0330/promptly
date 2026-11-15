@@ -280,7 +280,7 @@ export function skillHref(skill: { id: string }): string {
  * `?type=&id=`, same idea as `promptHref`. `kind` is prompt |
  * workflow | request.
  */
-export function relationMapHref(target: { kind: "prompt" | "workflow" | "request"; id: string }): string {
+export function relationMapHref(target: { kind: "prompt" | "workflow" | "request" | "skill"; id: string }): string {
   return `/relations?type=${target.kind}&id=${target.id}`;
 }
 

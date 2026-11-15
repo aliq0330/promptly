@@ -10,12 +10,14 @@ import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { LoadMore } from "@/features/feed/load-more";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { SKILL_CATEGORY_IDS, SKILL_CATEGORY_LABEL, SKILL_COMPAT_IDS, SKILL_COMPAT_LABEL, skillLabelText } from "@/lib/skills/categories";
+import { SKILL_COMPAT_IDS, SKILL_COMPAT_LABEL, skillLabelText } from "@/lib/skills/categories";
 import { fetchSkillFeedPage, type SkillMatchSource, type SkillSort } from "@/lib/supabase/skill-discovery";
 import type { SearchCursor } from "@/lib/supabase/search";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { Skill, SkillCategory, SkillCompat } from "@/types";
 import { SkillCard } from "./skill-card";
+import { useSkillCategories } from "./use-skill-categories";
+import { skillCategoryIds, skillCategoryName } from "@/lib/skills/categories";
 
 const SORTS: { key: SkillSort; labelKey: TranslationKey }[] = [
   { key: "recommended", labelKey: "skill.discover.sortRecommended" },
@@ -38,7 +40,8 @@ const MATCH_LABEL: Record<SkillMatchSource, TranslationKey> = {
  * Skill'ler karma akışa (`feed_page`) GİRMEZ — ayrı bir bölümdür.
  */
 export function SkillDiscoverSection() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const categoryRows = useSkillCategories();
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   useEffect(() => {
@@ -125,9 +128,9 @@ export function SkillDiscoverSection() {
         <Chip selected={category === null} onClick={() => setCategory(null)} data-skill-category="all">
           {t("common.all")}
         </Chip>
-        {SKILL_CATEGORY_IDS.map((id) => (
+        {skillCategoryIds(categoryRows).map((id) => (
           <Chip key={id} selected={category === id} onClick={() => setCategory(category === id ? null : id)} data-skill-category={id}>
-            {t(SKILL_CATEGORY_LABEL[id])}
+            {skillCategoryName(id, language, t, categoryRows)}
           </Chip>
         ))}
       </ChipRow>

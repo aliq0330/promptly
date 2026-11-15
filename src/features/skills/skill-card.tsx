@@ -14,8 +14,10 @@ import { useToast } from "@/features/groups/use-toast";
 import { postMeta } from "@/features/prompts/post-header";
 import { TextArt, TextArtTitle } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { SKILL_CATEGORY_LABEL, SKILL_COMPAT_LABEL, skillLabelText } from "@/lib/skills/categories";
+import { SKILL_COMPAT_LABEL, skillCategoryName, skillLabelText } from "@/lib/skills/categories";
 import { skillHref } from "@/lib/utils";
+import { useSkillCategories } from "./use-skill-categories";
+import { SkillCoverCard } from "./skill-cover-card";
 import type { Skill } from "@/types";
 
 /**
@@ -25,7 +27,8 @@ import type { Skill } from "@/types";
 export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collectionRemoval?: { onRemove: () => Promise<void> } }) {
   const { t, language } = useTranslation();
   const href = skillHref(skill);
-  const category = skill.category ? t(SKILL_CATEGORY_LABEL[skill.category]) : null;
+  const categoryRows = useSkillCategories();
+  const category = skill.category ? skillCategoryName(skill.category, language, t, categoryRows) : null;
   const tools = skill.compat.map((id) => skillLabelText(SKILL_COMPAT_LABEL[id], t)).join(", ");
 
   const { node, show } = useToast();
@@ -58,8 +61,11 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
           skill.status === "draft" ? <Badge variant="warning">{t("skill.draftBadge")}</Badge> : skill.visibility === "private" ? <Badge variant="neutral">{t("skill.privateBadge")}</Badge> : undefined
         }
         badges={<ContentTypePill icon={GraduationCap} label={t("skill.singular")} detail={category} />}
-        titleInArt
+        titleInArt={!skill.coverPath}
         art={
+          skill.coverPath ? (
+            <SkillCoverCard path={skill.coverPath} fallback={<TextArt seed={skill.id}><TextArtTitle>{skill.title || t("skill.untitled")}</TextArtTitle></TextArt>} />
+          ) : (
           <TextArt seed={skill.id}>
             <TextArtTitle>{skill.title || t("skill.untitled")}</TextArtTitle>
             {skill.summary && <p className="line-clamp-3 break-words font-sans text-small leading-relaxed opacity-90">{skill.summary}</p>}
@@ -68,6 +74,7 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
               {tools ? ` · ${tools}` : ""}
             </p>
           </TextArt>
+          )
         }
         title={<ContentCardTitle href={href} title={skill.title || t("skill.untitled")} />}
         menu={menu}

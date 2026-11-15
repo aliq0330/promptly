@@ -62,3 +62,26 @@ export async function setSkillWorksTool(skillId: string, tool: WorksTool | null)
   const { error } = await supabase.rpc("set_skill_works_tool", { p_skill_id: skillId, p_tool: tool });
   if (error) throw new Error(error.message);
 }
+
+export interface WorksVersionRow {
+  version: string;
+  yes: number;
+  no: number;
+}
+
+/** Sürüm etiketli oyların sürüm başına toplamı (herkese açık Skill'de ziyaretçiye de açık); hata/eski veritabanı = boş liste. */
+export async function fetchSkillWorksByVersion(skillId: string): Promise<WorksVersionRow[]> {
+  try {
+    const { data, error } = await supabase.rpc("skill_works_by_version", { p_skill_id: skillId });
+    if (error || !Array.isArray(data)) return [];
+    return (data as Record<string, unknown>[]).filter((row) => typeof row.version === "string").map((row) => ({ version: row.version as string, yes: n(row.yes_count), no: n(row.no_count) }));
+  } catch {
+    return [];
+  }
+}
+
+/** Kendi oyuna "hangi sürümde denedin" etiketi yazar (yayınlanmış bir sürüm olmalı; oy yoksa sunucu `no_vote` der). */
+export async function setSkillWorksVersion(skillId: string, version: string | null): Promise<void> {
+  const { error } = await supabase.rpc("set_skill_works_version", { p_skill_id: skillId, p_version: version });
+  if (error) throw new Error(error.message);
+}

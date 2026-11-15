@@ -12,7 +12,7 @@ export const SKILL_COMPAT_IDS: readonly SkillCompat[] = ["claude-code", "codex",
 export const SKILL_LICENSE_IDS: readonly SkillLicense[] = ["mit", "apache-2.0", "cc0-1.0", "cc-by-4.0", "cc-by-sa-4.0", "proprietary"];
 
 /** Veritabanında saklanan değer çevrilmez; yalnız görünen ad bu haritalarla çevrilir (CLAUDE.md §4.5). */
-export const SKILL_CATEGORY_LABEL: Record<SkillCategory, TranslationKey> = {
+export const SKILL_CATEGORY_LABEL: Record<string, TranslationKey> = {
   software: "skills.category.software",
   design: "skills.category.design",
   research: "skills.category.research",
@@ -50,4 +50,20 @@ export function skillLabelText(label: SkillLabel, t: (key: TranslationKey) => st
 
 export function isSkillCategory(value: unknown): value is SkillCategory {
   return typeof value === "string" && (SKILL_CATEGORY_IDS as readonly string[]).includes(value);
+}
+
+/**
+ * Bir uzmanlık alanının görünen adı: kodda çevirisi olan sekiz alan çeviri anahtarıyla, tabloya sonradan eklenenler tablodaki dil sütunuyla, hiçbiri yoksa kimlikle.
+ * `rows`: `fetchSkillCategories()` sonucu (yoksa `null`).
+ */
+export function skillCategoryName(id: string, language: "tr" | "en", t: (key: TranslationKey) => string, rows: readonly { id: string; labelTr: string; labelEn: string }[] | null): string {
+  const key = SKILL_CATEGORY_LABEL[id];
+  if (key) return t(key);
+  const row = rows?.find((item) => item.id === id);
+  return row ? (language === "tr" ? row.labelTr : row.labelEn) : id;
+}
+
+/** Seçilebilir alan kimlikleri: tablo varsa onun sırasıyla, yoksa bilinen sekiz alan. */
+export function skillCategoryIds(rows: readonly { id: string }[] | null): string[] {
+  return rows && rows.length > 0 ? rows.map((row) => row.id) : [...SKILL_CATEGORY_IDS];
 }

@@ -101,7 +101,7 @@ select pg_temp.check(4, 'slug must be lowercase/digits/hyphens',
 select pg_temp.check(4, 'slug cannot start with a hyphen',
   pg_temp.raises(format($$insert into public.skills (author_id, slug) values (%L, '-x')$$, '11111111-1111-4111-8111-111111111111'), 'skills_slug_check'));
 select pg_temp.check(4, 'unknown category is rejected',
-  pg_temp.raises(format($$insert into public.skills (author_id, slug, category) values (%L, 'c1', 'weapons')$$, '11111111-1111-4111-8111-111111111111'), 'skills_category_check'));
+  pg_temp.raises(format($$insert into public.skills (author_id, slug, category) values (%L, 'c1', 'weapons')$$, '11111111-1111-4111-8111-111111111111'), 'skills_category_fkey'));
 select pg_temp.check(4, 'unknown compat target is rejected',
   pg_temp.raises(format($$insert into public.skills (author_id, slug, compat) values (%L, 'c2', '{vim}')$$, '11111111-1111-4111-8111-111111111111'), 'skills_compat_check'));
 select pg_temp.check(4, 'version must be MAJOR.MINOR.PATCH',

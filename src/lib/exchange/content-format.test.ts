@@ -204,7 +204,8 @@ test("skill zarfı gidiş-dönüş: yalnız içerik alanları taşınır, durum/
 test("skill kuralları: başlık zorunlu, alan/lisans/araç geçerli olmalı; dosyadaki durum/yazar alanları yok sayılır", () => {
   const codes = (row: object) => parseSkills("skill", JSON.stringify([row])).issues.map((issue) => issue.code);
   assert.deepEqual(codes({ summary: "x" }), ["required"]);
-  assert.deepEqual(codes({ title: "x", category: "cooking" }), ["invalid_category"]);
+  assert.deepEqual(codes({ title: "x", category: "Mutfak!" }), ["invalid_category"]);
+  assert.deepEqual(codes({ title: "x", category: "cooking" }), [], "tabloya sonradan eklenmiş bir alan biçim olarak geçerlidir; kararı veritabanı verir");
   assert.deepEqual(codes({ title: "x", license: "wtfpl" }), ["invalid_license"]);
   assert.deepEqual(codes({ title: "x", compat: ["emacs"] }), ["invalid_compat"]);
   assert.deepEqual(codes({ title: "x".repeat(121) }), ["too_long"]);

@@ -49,7 +49,7 @@ export const STORY_TEXT_COLORS: readonly StoryTextColor[] = ["white", "black", "
 export const STORY_TEXT_SIZES: readonly StoryTextSize[] = ["s", "m", "l", "xl"];
 export const STORY_TEXT_ALIGNS: readonly StoryTextAlign[] = ["left", "center", "right"];
 export const STORY_REACTIONS = ["❤️", "🔥", "😂", "😮", "😢", "👏", "💡", "🙌"] as const;
-export const STORY_LINKED_TYPES: readonly StoryLinkedType[] = ["prompt", "request", "workflow", "preset"];
+export const STORY_LINKED_TYPES: readonly StoryLinkedType[] = ["prompt", "request", "workflow", "preset", "skill"];
 export const STORY_AUDIENCES: readonly StoryAudience[] = ["public", "followers", "community"];
 
 export const VIDEO_MIME_TYPES = ["video/mp4", "video/webm", "video/quicktime"] as const;
