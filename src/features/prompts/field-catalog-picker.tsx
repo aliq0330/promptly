@@ -169,18 +169,18 @@ export function FieldCatalogPicker({
     const extra = optionLabels.length - shown.length;
     return (
       <span className="mt-1 flex flex-wrap items-center gap-1">
-        <span className="rounded-full bg-surface px-2 py-0.5 text-micro font-medium text-text-secondary">{t(GENERATOR_FIELD_TYPE_LABELS[field.type])}</span>
+        <span className="rounded-full bg-surface px-2 py-0.5 text-caption font-medium text-text-secondary">{t(GENERATOR_FIELD_TYPE_LABELS[field.type])}</span>
         {shown.map((label, index) => (
-          <span key={`${label}-${index}`} className="max-w-[9rem] truncate rounded-full bg-surface px-2 py-0.5 text-micro text-text-muted">
+          <span key={`${label}-${index}`} className="max-w-[9rem] truncate rounded-full bg-surface px-2 py-0.5 text-caption text-text-muted">
             {label}
           </span>
         ))}
-        {extra > 0 && <span className="text-micro text-text-muted">+{extra}</span>}
+        {extra > 0 && <span className="text-caption text-text-muted">+{extra}</span>}
         {optionLabels.length === 0 && field.min !== undefined && field.max !== undefined && (
-          <span className="rounded-full bg-surface px-2 py-0.5 text-micro text-text-muted">{field.min}–{field.max}</span>
+          <span className="rounded-full bg-surface px-2 py-0.5 text-caption text-text-muted">{field.min}–{field.max}</span>
         )}
         {optionLabels.length === 0 && field.min === undefined && (
-          <span className="text-micro text-text-muted">{t("fieldCatalog.freeText")}</span>
+          <span className="text-caption text-text-muted">{t("fieldCatalog.freeText")}</span>
         )}
       </span>
     );
@@ -378,7 +378,7 @@ export function FieldCatalogPicker({
                                   </button>
                                   <label
                                     className={cn(
-                                      "flex shrink-0 items-center gap-1 pr-2 text-micro font-medium",
+                                      "flex shrink-0 items-center gap-1 pr-2 text-caption font-medium",
                                       selectableFields.length === 0 ? "cursor-not-allowed text-text-muted/50" : "cursor-pointer text-text-muted hover:text-primary",
                                     )}
                                   >
@@ -434,7 +434,7 @@ export function FieldCatalogPicker({
                       type="button"
                       onClick={() => removeSelected(field.id)}
                       aria-label={t("fieldCatalog.removeField", { name: catalogText(field.label, language) })}
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                     >
                       <X size={14} />
                     </button>

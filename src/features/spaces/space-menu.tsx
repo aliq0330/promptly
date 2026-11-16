@@ -131,7 +131,7 @@ export function SpaceMenu({ items, label, align = "right", trigger, className }:
                 }}
                 className={cn(
                   "flex w-full items-center gap-2 px-3 py-2.5 text-left text-small focus-visible:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-                  item.danger ? "text-danger hover:bg-danger/10" : "text-text hover:bg-surface-soft",
+                  item.danger ? "text-danger hover:bg-danger-soft" : "text-text hover:bg-surface-soft",
                 )}
               >
                 <item.icon size={16} aria-hidden />

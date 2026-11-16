@@ -1519,7 +1519,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   const rootClass = cn(
     "relative flex scroll-mt-3 flex-col overflow-hidden rounded-lg border border-border-soft bg-surface-soft",
     fullscreen
-      ? "fixed inset-0 z-[45] rounded-none border-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
+      ? "fixed inset-0 z-(--z-fullscreen) rounded-none border-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
       : teamMode
         ? overviewOpen
           ? // Genel bakış sayfa uzunluğuna göre uzar, iç kaydırma yok: sayfa kendisi kayar (docs/history/370-*).
@@ -1610,7 +1610,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   const composerBody = draftPin && (
     <div className="space-y-3" data-testid="board-comment-composer">
       <div className="flex items-center gap-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-micro font-bold text-primary-foreground">{initialsOf(ownProfile?.displayName || ownProfile?.username || "?")}</span>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-caption font-bold text-primary-foreground">{initialsOf(ownProfile?.displayName || ownProfile?.username || "?")}</span>
         <div className="min-w-0 flex-1 space-y-0.5">
           <p className="text-small font-bold leading-none text-text">{t("tb.comments.newTitle")}</p>
           <CommentTargetChip item={draftPin.itemId ? (items.find((entry) => entry.id === draftPin.itemId) ?? null) : null} itemTitle={itemTitle} />
@@ -2204,7 +2204,7 @@ function ToolButton({ icon: Icon, label, onClick, active, disabled, danger, clas
       aria-pressed={active}
       className={cn(
         "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-50",
-        active ? "bg-primary-soft text-primary" : danger ? "text-danger hover:bg-danger/10" : "text-text-secondary hover:bg-surface-soft hover:text-text",
+        active ? "bg-primary-soft text-primary" : danger ? "text-danger hover:bg-danger-soft" : "text-text-secondary hover:bg-surface-soft hover:text-text",
         className,
       )}
     >

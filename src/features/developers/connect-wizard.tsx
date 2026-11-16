@@ -113,7 +113,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
           )}
         </div>
         {last && (
-          <p role="status" className="rounded-lg bg-success/10 px-4 py-3 text-small leading-relaxed text-text">
+          <p role="status" className="rounded-lg bg-success-soft px-4 py-3 text-small leading-relaxed text-text">
             {t(method === "oauth" ? "guide.oauth.done" : "guide.key.done")}
           </p>
         )}

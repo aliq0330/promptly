@@ -123,7 +123,7 @@ export function SkillMenu({ skill, isOwn, signedIn, onDelete }: { skill: Skill; 
                   setOpen(false);
                   onDelete();
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger/10"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger-soft"
               >
                 <Trash2 size={14} />
                 {t("common.delete")}

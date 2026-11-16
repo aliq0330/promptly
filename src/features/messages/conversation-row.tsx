@@ -103,7 +103,7 @@ export function ConversationRow({
             {showKindTag && group && (
               <span
                 data-kind-tag={team ? "team" : "community"}
-                className={cn("shrink-0 rounded-full px-2 py-0.5 text-micro font-bold uppercase tracking-[0.04em]", team ? "bg-primary-soft text-primary" : "bg-success/10 text-success")}
+                className={cn("shrink-0 rounded-full px-2 py-0.5 text-caption font-bold uppercase tracking-[0.04em]", team ? "bg-primary-soft text-primary" : "bg-success-soft text-success")}
               >
                 {t(team ? "rooms.filter.team" : "rooms.filter.community")}
               </span>
@@ -135,7 +135,7 @@ export function ConversationRow({
           {unread && (
             <span
               className={cn(
-                "mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-micro font-semibold",
+                "mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-caption font-semibold",
                 muted ? "bg-border-strong text-text" : "bg-primary text-primary-foreground",
               )}
             >

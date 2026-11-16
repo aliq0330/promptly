@@ -201,7 +201,7 @@ function TeamPageInner() {
         </div>
       )}
       {isGuest && team.guestUntil && !hideChrome && (
-        <p className="rounded-lg bg-warning/10 px-3 py-2 text-small text-warning">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>
+        <p className="rounded-lg bg-warning-soft px-3 py-2 text-small text-warning">{t("tm.guest.banner", { date: new Date(team.guestUntil).toLocaleDateString() })}</p>
       )}
       <div data-team-tab={tab}>
         {body}

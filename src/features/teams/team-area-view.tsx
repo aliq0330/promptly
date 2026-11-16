@@ -275,7 +275,7 @@ function AreaBody({
         </p>
       )}
       {uploadErrors.length > 0 && (
-        <ul role="alert" className="space-y-1 rounded-xl bg-danger/10 px-3 py-2 text-small text-danger">
+        <ul role="alert" className="space-y-1 rounded-xl bg-danger-soft px-3 py-2 text-small text-danger">
           {uploadErrors.map((message) => (
             <li key={message}>{message}</li>
           ))}
@@ -704,7 +704,7 @@ function AreaCard({ row, reviewOn, groupName, select }: { row: AreaRow; reviewOn
           <Check size={14} />
         </span>
       )}
-      <span className={cn("relative block overflow-hidden rounded-lg md:rounded-xl", select?.checked && "ring-[3px] ring-primary ring-offset-2 ring-offset-background", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning/10 text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" || row.kind === "group" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
+      <span className={cn("relative block overflow-hidden rounded-lg md:rounded-xl", select?.checked && "ring-[3px] ring-primary ring-offset-2 ring-offset-background", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning-soft text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" || row.kind === "group" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
         {row.kind === "image" && row.mediaUrl && <StorageImg src={row.mediaUrl} alt={row.title} className="absolute inset-0 h-full w-full object-cover" />}
         {(row.kind === "prompt" || row.kind === "note") && <span className={cn("block p-4 pb-14 text-caption leading-relaxed", row.kind === "prompt" && "font-mono")}>{(row.body || "").slice(0, 260)}</span>}
         {row.kind === "palette" && (
@@ -720,7 +720,7 @@ function AreaCard({ row, reviewOn, groupName, select }: { row: AreaRow; reviewOn
           </span>
         )}
         <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-3 pb-2.5 pt-7 text-white">
-          <span className="block text-micro font-bold uppercase tracking-[0.06em] opacity-90">{t(ROW_KIND_KEY[row.kind])}{row.sub ? ` · ${row.sub}` : ""}{groupName ? ` · ${groupName}` : ""}</span>
+          <span className="block text-caption font-bold uppercase tracking-[0.06em] opacity-90">{t(ROW_KIND_KEY[row.kind])}{row.sub ? ` · ${row.sub}` : ""}{groupName ? ` · ${groupName}` : ""}</span>
           <span className="block truncate text-small font-bold leading-snug">{row.title}</span>
         </span>
         {showState && row.state && (
@@ -819,7 +819,7 @@ function AreaReviewPanel({ role, reviewHref, onChanged }: { role: ProjectRole | 
           </Button>
         )}
         {pendingForLead > 0 && reviewHref && (
-          <Link href={reviewHref} className="inline-flex h-8 items-center rounded-full bg-warning/10 px-3 text-caption font-semibold text-warning" data-review-open-queue>
+          <Link href={reviewHref} className="inline-flex h-8 items-center rounded-full bg-warning-soft px-3 text-caption font-semibold text-warning" data-review-open-queue>
             {t("tp.review.openQueue", { count: pendingForLead })}
           </Link>
         )}
@@ -830,7 +830,7 @@ function AreaReviewPanel({ role, reviewHref, onChanged }: { role: ProjectRole | 
             <span className="min-w-0 flex-1">
               <span className="block truncate text-small font-semibold text-text">{item.title || t(KIND_KEY[item.kind])}</span>
               <span className="block text-caption text-text-muted">{t(KIND_KEY[item.kind])}</span>
-              {item.revState === "changes" && item.revNote && <span className="mt-1 block rounded-md bg-danger/10 px-2 py-1 text-caption text-danger">{item.revNote}</span>}
+              {item.revState === "changes" && item.revNote && <span className="mt-1 block rounded-md bg-danger-soft px-2 py-1 text-caption text-danger">{item.revNote}</span>}
             </span>
             <ReviewChip state={item.revState} />
             {canSubmitItem(role, subject(item), userId) && (

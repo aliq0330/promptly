@@ -40,6 +40,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // MCP paketi: kendi bağımlılıkları/derlemesi (`mcp/`); üretilmiş tek dosyalık paket lint edilmez.
     "mcp/dist/**",
+    // Yerel ajan becerileri (.claude/skills/…): proje kaynağı değil.
+    ".claude/**",
     "mcp/node_modules/**",
   ]),
 ]);

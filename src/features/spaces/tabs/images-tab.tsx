@@ -206,7 +206,7 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
         ))}
 
       {uploadErrors.length > 0 && (
-        <div role="alert" className="space-y-1 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+        <div role="alert" className="space-y-1 rounded-md bg-danger-soft px-3 py-2 text-small text-danger">
           <p className="font-semibold">{t("spaces.images.uploadFailed")}</p>
           {uploadErrors.map((message) => (
             <p key={message} className="break-words">

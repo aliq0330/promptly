@@ -1,4 +1,4 @@
--- Skill "Sana özel"de (docs/history/403-*): `for_you_page` Skill adaylarını da puanlar. Yalnız işlev gövdesi yeniden yazılır (imza/dönüş/yetki aynı), veri değişmez.
+-- Skill "Sana özel"de (docs/history/406-*): `for_you_page` Skill adaylarını da puanlar. Yalnız işlev gövdesi yeniden yazılır (imza/dönüş/yetki aynı), veri değişmez.
 
 create or replace function public.for_you_page(p_as_of timestamp with time zone, p_kinds text[], p_content_type text, p_category text, p_subcategory text, p_limit integer, p_after_rank bigint, p_after_created_at timestamp with time zone, p_after_id uuid)
  RETURNS TABLE(kind text, id uuid, created_at timestamp with time zone, sort_rank bigint, reason_kind text, reason_ref text)
@@ -186,7 +186,7 @@ AS $function$
        and not exists (select 1 from public.content_interest ci where ci.preset_id = x.id and ci.user_id = pr.me)
        and not exists (select 1 from saved s where s.preset_id = x.id)
     union all
-    -- Skill (docs/history/403-*): yayında + herkese açık; etiketi takip/beğeni sinyali olur. İlgi alanı eşlemesi ve araç sinyali Skill'de yoktur (kendi katalogları var);
+    -- Skill (docs/history/406-*): yayında + herkese açık; etiketi takip/beğeni sinyali olur. İlgi alanı eşlemesi ve araç sinyali Skill'de yoktur (kendi katalogları var);
     -- "ilgimi çekmiyor" cevabı Skill için verilemez (content_interest hedefi değil). Beğendiğin ya da kaydettiğin Skill tekrar önüne çıkmaz.
     select 'skill'::text as kind, x.id, x.created_at, x.author_id as author_id, (x.like_count * 3 + x.save_count * 2 + x.comment_count * 2 + x.use_count * 2)::bigint as eng,
            (select min(tg.tag_slug) from public.skill_tags tg where tg.skill_id = x.id and tg.tag_slug in (select tag_slug from ftags)) as ft_tag,

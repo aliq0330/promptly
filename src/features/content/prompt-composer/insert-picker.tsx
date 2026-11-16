@@ -91,7 +91,7 @@ export function InsertPicker({
   }
 
   const pillClass =
-    tone === "field" ? "bg-secondary/15 text-secondary" : tone === "unknown" ? "bg-warning/15 text-warning" : "bg-primary-soft text-primary";
+    tone === "field" ? "bg-secondary/15 text-secondary" : tone === "unknown" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary";
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>

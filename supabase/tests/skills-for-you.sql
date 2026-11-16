@@ -1,4 +1,4 @@
--- Skill "Sana özel"de (docs/history/403-*): for_you_page skill adayları.
+-- Skill "Sana özel"de (docs/history/406-*): for_you_page skill adayları.
 \set ON_ERROR_STOP off
 \pset pager off
 insert into auth.users (id, email, raw_user_meta_data) values

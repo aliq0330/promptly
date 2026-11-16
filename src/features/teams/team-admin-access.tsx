@@ -84,7 +84,7 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
             {(selected.spaces ?? []).map((space) => (
               <li key={space.spaceId} className="flex items-center justify-between gap-3 py-2 text-small">
                 <span className="min-w-0 truncate font-bold">{space.title}</span>
-                <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-bold", space.level === "edit" ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary")}>
+                <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-bold", space.level === "edit" ? "bg-success-soft text-success" : "bg-surface-soft text-text-secondary")}>
                   {t(space.level === "edit" ? "tm.groups.canEdit" : "tm.groups.viewOnly")}
                 </span>
               </li>
@@ -196,7 +196,7 @@ function GroupMembersCard({ group, members }: { group: TeamGroup; members: TeamM
           <span key={m.userId} className="inline-flex items-center gap-1.5 rounded-full bg-surface-soft py-1 pl-1 pr-3 text-caption font-bold text-text">
             <Avatar src={m.avatarUrl} alt={m.displayName || m.username} size={24} />
             {m.displayName || m.username}
-            {group.leadId === m.userId && <span className="rounded-full bg-primary-soft px-1.5 text-micro text-primary">{t("tm.groups.leadBadge")}</span>}
+            {group.leadId === m.userId && <span className="rounded-full bg-primary-soft px-1.5 text-caption text-primary">{t("tm.groups.leadBadge")}</span>}
           </span>
         ))}
         {rest > 0 && <span className="inline-flex items-center rounded-full border border-border-soft px-3 py-1 text-caption font-bold text-text-muted">{t("tm.groups.more", { count: rest })}</span>}
@@ -346,8 +346,8 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
 
   const leftChip = (guest: TeamGuest) => {
     const left = daysLeft(guest);
-    if (guest.expired || left === null) return <span className="rounded-full bg-danger/10 px-2.5 py-0.5 text-caption font-bold text-danger">{t("tm.guests.expiredChip")}</span>;
-    return <span className={cn("whitespace-nowrap rounded-full px-2.5 py-0.5 text-caption font-bold", left <= 7 ? "bg-warning/10 text-warning" : "bg-success/10 text-success")}>{t("tm.guests.daysLeft", { count: Math.max(left, 0) })}</span>;
+    if (guest.expired || left === null) return <span className="rounded-full bg-danger-soft px-2.5 py-0.5 text-caption font-bold text-danger">{t("tm.guests.expiredChip")}</span>;
+    return <span className={cn("whitespace-nowrap rounded-full px-2.5 py-0.5 text-caption font-bold", left <= 7 ? "bg-warning-soft text-warning" : "bg-success-soft text-success")}>{t("tm.guests.daysLeft", { count: Math.max(left, 0) })}</span>;
   };
   const levelChip = (guest: TeamGuest) => {
     const canEdit = (guest.spaces ?? []).some((space) => space.role === "editor" || space.role === "owner");

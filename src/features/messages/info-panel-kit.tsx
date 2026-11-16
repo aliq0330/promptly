@@ -127,7 +127,7 @@ export function InfoTile({
       </span>
       {label}
       {badge !== undefined && badge > 0 && (
-        <span data-info-tile-badge className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold leading-none text-primary-foreground">
+        <span data-info-tile-badge className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold leading-none text-primary-foreground">
           {badge > 9 ? "9+" : badge}
         </span>
       )}

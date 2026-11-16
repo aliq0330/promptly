@@ -154,7 +154,7 @@ function ShowcaseCard({ prompt, active, open, onToggle }: { prompt: Prompt; acti
           )}
           onClick={onToggle}
         >
-          <p className="line-clamp-6 font-mono text-micro leading-relaxed text-white/90">{prompt.promptText}</p>
+          <p className="line-clamp-6 font-mono text-caption leading-relaxed text-white/90">{prompt.promptText}</p>
           {open && (
             <div className="flex items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
               <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="sm" variant="primary" className="h-8 min-w-0 rounded-full px-3" />

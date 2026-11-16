@@ -1,4 +1,4 @@
--- Skill Odak'ta (docs/history/403-*): `feed_page` Skill'i "Medya" süzgecinden geçirir (İstek ve Ayar paketi gibi: kendi özeti görselin yerini tutar). Yalnız işlev gövdesi yeniden yazılır, imza/yetki aynı.
+-- Skill Odak'ta (docs/history/406-*): `feed_page` Skill'i "Medya" süzgecinden geçirir (İstek ve Ayar paketi gibi: kendi özeti görselin yerini tutar). Yalnız işlev gövdesi yeniden yazılır, imza/yetki aynı.
 
 create or replace function public.feed_page(p_scope text, p_order text, p_kinds text[], p_content_type text, p_category text, p_subcategory text, p_limit integer, p_after_rank bigint, p_after_created_at timestamp with time zone, p_after_id uuid, p_open_only boolean, p_tag text, p_tool text, p_authors uuid[], p_tags text[], p_tools text[], p_has_media boolean)
  RETURNS TABLE(kind text, id uuid, created_at timestamp with time zone, sort_rank bigint)

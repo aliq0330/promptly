@@ -1,5 +1,6 @@
 import type { IconComponent } from "@/components/icons/icon";
 import { cn } from "@/lib/utils";
+import { SectionLabel } from "@/components/ui/section-label";
 
 /**
  * The small "what is this" line at the top of every card and detail page:
@@ -19,12 +20,7 @@ export function ContentTypeLabel({
   className?: string;
 }) {
   return (
-    <p
-      className={cn(
-        "flex min-w-0 items-center gap-1.5 text-micro font-semibold uppercase leading-none tracking-[0.07em] text-text-secondary",
-        className,
-      )}
-    >
+    <SectionLabel tone="secondary" className={className}>
       <Icon size={12} aria-hidden className="shrink-0 text-primary" />
       <span className="shrink-0">{label}</span>
       {detail && (
@@ -32,10 +28,10 @@ export function ContentTypeLabel({
           <span aria-hidden className="text-border-strong">
             /
           </span>
-          <span className="truncate font-medium normal-case tracking-normal text-text-muted">{detail}</span>
+          <span className="truncate font-medium text-text-muted">{detail}</span>
         </>
       )}
-    </p>
+    </SectionLabel>
   );
 }
 
@@ -45,12 +41,11 @@ export function ContentTypeLabel({
  */
 export function ContentTypePill({ icon: Icon, label, detail, className }: { icon: IconComponent; label: string; detail?: string | null; className?: string }) {
   return (
-    <span className={cn("inline-flex min-w-0 items-center gap-1.5 text-micro font-bold uppercase leading-none tracking-[0.08em] text-primary", className)}>
-      <Icon size={12} aria-hidden className="shrink-0" />
+    <SectionLabel as="span" tone="primary" icon={Icon} className={cn("inline-flex", className)}>
       <span className="truncate">
         {label}
-        {detail && <span className="font-semibold normal-case tracking-normal text-text-secondary"> · {detail}</span>}
+        {detail && <span className="font-medium text-text-secondary"> · {detail}</span>}
       </span>
-    </span>
+    </SectionLabel>
   );
 }

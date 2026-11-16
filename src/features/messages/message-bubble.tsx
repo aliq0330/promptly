@@ -454,7 +454,7 @@ export function MessageBubble({
                 data-announcement-card
                 className="flex w-fit max-w-full flex-col gap-1 self-start rounded-xl bg-surface-soft px-4 py-4 text-small text-text transition-colors hover:bg-surface-elevated"
               >
-                <span className="flex items-center gap-2 text-micro font-semibold uppercase tracking-[0.08em] text-primary">
+                <span className="flex items-center gap-2 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated">
                     <Megaphone size={14} aria-hidden />
                   </span>
@@ -478,7 +478,7 @@ export function MessageBubble({
                 <p className="min-w-0 break-words">{displayBody}</p>
                 <span
                   data-message-meta
-                  className={cn("ml-auto inline-flex shrink-0 items-center gap-1 pt-1 text-micro leading-none", isMe ? "text-primary-foreground/85" : "text-text-muted")}
+                  className={cn("ml-auto inline-flex shrink-0 items-center gap-1 pt-1 text-caption leading-none", isMe ? "text-primary-foreground/85" : "text-text-muted")}
                 >
                   {metaContent}
                 </span>
@@ -492,7 +492,7 @@ export function MessageBubble({
       </div>
 
       {!inlineMeta && !isEditingHere && (
-        <div data-message-meta className={cn("mt-1 flex items-center gap-1 px-1 text-micro text-text-muted", showSender && "ml-9")}>
+        <div data-message-meta className={cn("mt-1 flex items-center gap-1 px-1 text-caption text-text-muted", showSender && "ml-9")}>
           {metaContent}
         </div>
       )}

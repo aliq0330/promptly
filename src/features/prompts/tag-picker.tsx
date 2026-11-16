@@ -92,7 +92,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                 </span>
               )}
               <span>{tag.label}</span>
-              {source === "automatic" && <span className="text-micro font-normal opacity-80">· {t("tagPicker.automatic")}</span>}
+              {source === "automatic" && <span className="text-caption font-normal opacity-80">· {t("tagPicker.automatic")}</span>}
               {!disabled && (
                 <button
                   type="button"
@@ -133,7 +133,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                   >
                     <Plus size={12} />
                     {tag.label}
-                    {isAccepting && <span className="text-micro font-normal">{t("tagPicker.creating")}</span>}
+                    {isAccepting && <span className="text-caption font-normal">{t("tagPicker.creating")}</span>}
                   </button>
                   <button
                     type="button"

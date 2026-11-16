@@ -94,7 +94,7 @@ export function SuggestEditModal({
           <p className="px-5 py-4 text-small text-text-muted">{t("prompt.checking")}</p>
         ) : pendingCheck === "already-pending" ? (
           <div className="space-y-4 px-5 py-4">
-            <p className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-small text-warning">
+            <p className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-small text-warning">
               {t("prompt.alreadyHasPendingSuggestion")}
             </p>
             <div className="flex justify-end">
@@ -105,7 +105,7 @@ export function SuggestEditModal({
           </div>
         ) : sent ? (
           <div className="space-y-4 px-5 py-4">
-            <p className="rounded-md border border-success/30 bg-success/10 px-3 py-2 text-small text-success">
+            <p className="rounded-md border border-success/30 bg-success-soft px-3 py-2 text-small text-success">
               {t("prompt.suggestionSent")}
             </p>
             <div className="flex justify-end">

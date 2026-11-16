@@ -294,7 +294,7 @@ function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt; cover:
           loop
           playsInline
           preload={active ? "auto" : "metadata"}
-          className="absolute inset-0 z-[1] h-full w-full object-contain"
+          className="absolute inset-0 z-1 h-full w-full object-contain"
           {...events}
         />
       )}
@@ -311,7 +311,7 @@ function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt; cover:
       {kind && (
         <>
           {/* The whole picture is the play / pause target; the round button (the same one the post cards have) is its visible, labelled twin. No progress bar. */}
-          <button type="button" tabIndex={-1} aria-hidden onClick={toggle} className="absolute inset-0 z-[2] cursor-pointer" />
+          <button type="button" tabIndex={-1} aria-hidden onClick={toggle} className="absolute inset-0 z-2 cursor-pointer" />
           <MediaPlayButton playing={playing} onToggle={toggle} />
         </>
       )}
@@ -355,7 +355,7 @@ function WorkflowSteps({ workflow, near, onImage }: { workflow: Workflow; near: 
           return (
             <li key={step.id}>
               <div className={cn("flex min-w-0 items-center gap-3 rounded-md px-3 py-2 text-small", row)}>
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-micro font-bold leading-none text-primary-foreground">{index + 1}</span>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-bold leading-none text-primary-foreground">{index + 1}</span>
                 <StepIcon size={14} aria-hidden className="shrink-0 opacity-70" />
                 <span className="truncate">{label}</span>
               </div>

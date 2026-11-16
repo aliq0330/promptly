@@ -203,7 +203,7 @@ const REASON_ICON: Record<ForYouReason["kind"], IconComponent> = {
 /** The one-line reason above a "Sana özel" card — always the server's real signal (`for_you_page`). */
 export function ForYouReasonNote({ item, reason }: { item: FeedItem; reason: ForYouReason | undefined }) {
   const { t } = useTranslation();
-  // "Sana özel" never ranks a quote; the guard narrows the item to a content post (a Skill included, docs/history/403-*).
+  // "Sana özel" never ranks a quote; the guard narrows the item to a content post (a Skill included, docs/history/406-*).
   if (!reason || item.kind === "quote") return null;
   // A Skill's card carries no tag list (tags are read on its detail page): the reason shows the tag slug as is.
   const tagLabel = (slug: string | null) => (slug ? ((item.kind === "skill" ? undefined : item.data.tags.find((tag) => tag.slug === slug)?.label) ?? slug) : "");

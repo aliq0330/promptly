@@ -46,7 +46,7 @@ export function PresenceDot({
       aria-label={t("presence.online")}
       title={t("presence.online")}
       data-presence-dot
-      className={cn("pointer-events-none absolute z-[1] rounded-full bg-success ring-2 ring-surface", className)}
+      className={cn("pointer-events-none absolute z-1 rounded-full bg-success ring-2 ring-surface", className)}
       style={{ width: d, height: d, right: offset, bottom: offset }}
     />
   );

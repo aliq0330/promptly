@@ -181,7 +181,7 @@ export function PaletteCard({ palette }: { palette: SpacePalette }) {
               <Button variant="ghost" size="sm" onClick={() => setEditing(true)} aria-label={t("spaces.palette.edit")}>
                 <Pencil size={14} aria-hidden />
               </Button>
-              <Button variant="ghost" size="sm" className="text-danger hover:bg-danger/10" onClick={() => setConfirmDelete(true)} aria-label={t("spaces.palette.delete")}>
+              <Button variant="ghost" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => setConfirmDelete(true)} aria-label={t("spaces.palette.delete")}>
                 <TrashIcon size={14} />
               </Button>
             </>
@@ -262,7 +262,7 @@ export function PaletteCard({ palette }: { palette: SpacePalette }) {
               <Button
                 type="button"
                 variant="ghost"
-                className="text-danger hover:bg-danger/10"
+                className="text-danger hover:bg-danger-soft"
                 onClick={() => {
                   void saveColors(palette.colors.filter((_, i) => i !== selected));
                   setSelected(null);

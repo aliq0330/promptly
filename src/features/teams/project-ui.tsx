@@ -33,9 +33,9 @@ export const reviewLabelKey = (state: ReviewState): TranslationKey => REVIEW_KEY
 
 const TONE_CLASS = {
   neutral: "bg-surface-soft text-text-secondary",
-  warning: "bg-warning/10 text-warning",
-  success: "bg-success/10 text-success",
-  danger: "bg-danger/10 text-danger",
+  warning: "bg-warning-soft text-warning",
+  success: "bg-success-soft text-success",
+  danger: "bg-danger-soft text-danger",
 } as const;
 
 export function ReviewChip({ state, className }: { state: ReviewState; className?: string }) {

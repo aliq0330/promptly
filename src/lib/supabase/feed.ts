@@ -19,7 +19,7 @@ export type FeedEntry =
   | { kind: "skill"; data: Skill };
 
 export type FeedKind = FeedEntry["kind"];
-/** A feed slot that is a content post: prompt, request, workflow, preset or Skill (docs/history/403-*: Odak and "Sana özel" carry Skills). A quote is only a note about another post. */
+/** A feed slot that is a content post: prompt, request, workflow, preset or Skill (docs/history/406-*: Odak and "Sana özel" carry Skills). A quote is only a note about another post. */
 export type PostEntry = Exclude<FeedEntry, { kind: "quote" }>;
 export type FeedScope = "all" | "following";
 export type { FeedCursor, FeedOrder };

@@ -12,6 +12,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Language } from "@/lib/i18n/translations";
 import type { Tag, UserProfile } from "@/types";
+import { SectionLabel } from "@/components/ui/section-label";
 
 /*
  * Shared building blocks for the four detail pages (Prompt, Prompt İsteği, Workflow, Hazır Ayar) — the ALBÜM language
@@ -278,11 +279,11 @@ export function DetailSection({
   );
 }
 
-/** Small uppercase label — the same voice as the cards' ContentTypeLabel. */
+/** Small label above a title or group — the same voice as the cards' ContentTypeLabel (`SectionLabel`). */
 export function Eyebrow({
   children,
-  icon: Icon,
-  as: Tag = "p",
+  icon,
+  as = "p",
   id,
   tone = "muted",
   className,
@@ -295,17 +296,9 @@ export function Eyebrow({
   className?: string;
 }) {
   return (
-    <Tag
-      id={id}
-      className={cn(
-        "flex items-center gap-1.5 font-sans text-micro font-semibold uppercase leading-none tracking-[0.08em]",
-        tone === "primary" ? "text-primary" : "text-text-muted",
-        className,
-      )}
-    >
-      {Icon && <Icon size={12} aria-hidden className="shrink-0" />}
+    <SectionLabel as={as} id={id} tone={tone} icon={icon} className={className}>
       {children}
-    </Tag>
+    </SectionLabel>
   );
 }
 
@@ -424,7 +417,7 @@ export function DetailActionBar({
           data-detail-dock={dock.pinned ? "" : undefined}
           className={cn(
             dock.pinned &&
-              "fixed inset-x-0 bottom-0 z-30 border-t border-border-soft bg-surface/95 backdrop-blur-xl animate-fade-in [animation-fill-mode:backwards] md:left-[72px] lg:left-64",
+              "fixed inset-x-0 bottom-0 z-30 border-t border-border-soft bg-surface/95 backdrop-blur-xl animate-fade-in [animation-fill-mode:backwards] md:left-(--nav-rail-w) lg:left-(--sidebar-w)",
           )}
         >
           <div className={cn(dock.pinned && "mx-auto w-full max-w-6xl px-3 py-1.5 sm:px-6 lg:px-8")}>

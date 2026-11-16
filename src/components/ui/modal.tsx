@@ -360,7 +360,7 @@ export function Modal({
             "fixed inset-0 flex animate-fade-in bg-scrim " +
             coverOverlay +
             (keyboard ? "" : "backdrop-blur-[2px] ") +
-            (overLayers ? "z-(--z-toast) " : "z-50 ") +
+            (overLayers ? "z-(--z-toast) " : "z-(--z-overlay) ") +
             (isSide ? "justify-end" : "flex-col justify-end")
           }
           style={overlayStyle}
@@ -387,7 +387,7 @@ export function Modal({
       <Portal>
         <div
           ref={overlayRef}
-          className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim p-4 animate-fade-in " + coverOverlay + (keyboard ? "max-sm:!p-0 " : "") + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-50")}
+          className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim p-4 animate-fade-in " + coverOverlay + (keyboard ? "max-sm:!p-0 " : "") + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
           style={overlayStyle}
           role="dialog"
           aria-modal="true"
@@ -406,7 +406,7 @@ export function Modal({
     <Portal>
       <div
         ref={overlayRef}
-        className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim animate-fade-in sm:p-4 " + coverOverlay + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-50")}
+        className={"fixed inset-0 flex flex-col overflow-y-auto bg-scrim animate-fade-in sm:p-4 " + coverOverlay + (keyboard ? "" : "backdrop-blur-[2px] ") + (overLayers ? "z-(--z-toast)" : "z-(--z-overlay)")}
         style={overlayStyle}
         role="dialog"
         aria-modal="true"

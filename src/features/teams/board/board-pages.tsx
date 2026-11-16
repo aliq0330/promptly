@@ -543,7 +543,7 @@ export function PagesOverview({ team, actions, onClose }: { team: TeamBoardConfi
                     <span className="block truncate text-small font-bold text-text">{page.title}</span>
                     <span className="block truncate text-caption text-text-secondary">{pageMeta(page, t, language)}</span>
                   </span>
-                  {current && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-micro font-bold text-primary">{t("tb.overview.open.chip")}</span>}
+                  {current && <span className="shrink-0 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-bold text-primary">{t("tb.overview.open.chip")}</span>}
                   <PageMenu page={page} index={index} extrasCount={extrasCount} actions={actions} />
                 </div>
               </li>

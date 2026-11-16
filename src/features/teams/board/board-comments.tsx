@@ -30,6 +30,7 @@ import { formatRelativeTime, cn } from "@/lib/utils";
 import type { SpaceItem } from "@/lib/supabase/spaces";
 import type { ProjectPerson } from "@/lib/supabase/team-projects";
 import { InlineAlert } from "@/components/ui/inline-alert";
+import { SwitchRow } from "@/components/ui/switch";
 
 /**
  * Panoda konumlu yorumlar (docs/history/367-*): yükleme + yazma kancası, tuvaldeki pinler, yazma kutusu ve yorum paneli.
@@ -137,7 +138,7 @@ export function PinMarker({ comment, x, y, active, draft, replies, onSelect }: {
         onSelect?.();
       }}
       className={cn(
-        "pointer-events-auto absolute flex items-center justify-center rounded-[50%_50%_50%_0] border-2 border-surface text-micro font-bold text-primary-foreground shadow-card transition-[width,height,box-shadow]",
+        "pointer-events-auto absolute flex items-center justify-center rounded-[50%_50%_50%_0] border-2 border-surface text-caption font-bold text-primary-foreground shadow-card transition-[width,height,box-shadow]",
         resolved ? "bg-text-muted" : draft ? "bg-primary" : pinTone(comment?.authorId ?? null),
         active && "shadow-pop ring-4 ring-primary/30",
       )}
@@ -441,20 +442,15 @@ export function CommentsPanel({
           ))}
         </div>
         {onTogglePins && (
-          <button
-            type="button"
-            role="switch"
-            aria-checked={Boolean(pinsHidden)}
-            onClick={() => onTogglePins(!pinsHidden)}
+          <SwitchRow
+            checked={Boolean(pinsHidden)}
+            onChange={(next) => onTogglePins(next)}
             data-comment-hide-pins=""
-            className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-border-soft px-3 text-left text-small font-semibold text-text hover:bg-surface-soft"
+            className="min-h-11 rounded-xl border border-border-soft px-3 text-small font-semibold text-text hover:bg-surface-soft"
           >
             {pinsHidden ? <EyeOff size={18} className="shrink-0 text-text-secondary" aria-hidden /> : <Eye size={18} className="shrink-0 text-text-secondary" aria-hidden />}
             <span className="min-w-0 flex-1">{t("tb.comments.hidePins")}</span>
-            <span aria-hidden className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", pinsHidden ? "bg-primary" : "bg-border-strong")}>
-              <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-surface shadow-xs transition-[left]", pinsHidden ? "left-[1.125rem]" : "left-0.5")} />
-            </span>
-          </button>
+          </SwitchRow>
         )}
       </div>
       {error && (
@@ -482,7 +478,7 @@ export function CommentsPanel({
           return (
             <li key={root.id} data-comment-thread={root.id} data-comment-active={active ? "" : undefined} className={cn("space-y-2 rounded-lg p-3", active ? "border-2 border-primary bg-primary-soft/40" : "border border-border-soft bg-surface")}>
               <div className="flex items-center gap-3">
-                <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-micro font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
+                <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-caption font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
                 <div className="min-w-0 flex-1 leading-tight">
                   <p className="truncate text-small font-bold text-text">{authorName(root, t("tb.comments.someone"))}</p>
                   <p className="text-caption text-text-muted">
@@ -623,7 +619,7 @@ export function CommentPeek({
   return (
     <div data-testid="board-comment-peek" className="pointer-events-auto w-full space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-pop">
       <div className="flex items-center gap-3">
-        <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-micro font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
+        <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-caption font-bold text-primary-foreground", pinTone(root.authorId))}>{initialsOf(authorName(root, "?"))}</span>
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-small font-bold text-text">{authorName(root, t("tb.comments.someone"))}</p>
           <p className="text-caption text-text-muted">{formatRelativeTime(root.createdAt, language)}</p>

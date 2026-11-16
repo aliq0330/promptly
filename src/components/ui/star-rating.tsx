@@ -57,7 +57,7 @@ export function StarRatingInput({
           disabled={disabled}
           onMouseEnter={() => !disabled && setHover(n)}
           onClick={() => onChange(allowClear && n === value ? 0 : n)}
-          className="rounded-md p-0.5 transition-transform hover:scale-110 disabled:cursor-default disabled:hover:scale-100"
+          className="rounded-md p-0.5 transition-colors hover:bg-surface-soft disabled:cursor-default disabled:hover:bg-transparent"
         >
           <Star size={size} className={cn("transition-colors", n <= shown ? STAR_ON : STAR_OFF)} aria-hidden />
         </button>

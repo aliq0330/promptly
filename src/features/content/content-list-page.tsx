@@ -204,7 +204,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
                         <step.icon size={16} />
                       </span>
                       <span className="min-w-0 leading-tight">
-                        <span className="block text-micro font-semibold uppercase tracking-[0.07em] text-text-muted">
+                        <span className="block text-caption font-semibold uppercase tracking-[0.07em] text-text-muted">
                           {t("list.step")} {index + 1}
                         </span>
                         <span className="mt-1 block text-label font-semibold text-text">{t(step.titleKey)}</span>

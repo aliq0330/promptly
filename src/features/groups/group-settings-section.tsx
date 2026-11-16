@@ -412,7 +412,7 @@ function VisibilityResultDialog({ result, onClose }: { result: VisibilityChangeR
           <li>{t("groups.settings.resultMembers", { count: result.memberCount })}</li>
         </ul>
         {result.skippedCount > 0 && (
-          <div role="status" className="space-y-1.5 rounded-md bg-warning/10 px-3 py-2.5 text-small text-text">
+          <div role="status" className="space-y-1.5 rounded-md bg-warning-soft px-3 py-2.5 text-small text-text">
             <p className="font-medium">{t("groups.settings.resultSkipped", { count: result.skippedCount })}</p>
             <ul className="list-disc pl-5 text-text-secondary">
               {reasons.member_limit > 0 && <li>{t("groups.settings.resultSkipMemberLimit", { count: reasons.member_limit })}</li>}

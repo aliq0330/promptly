@@ -244,7 +244,7 @@ export function PromptFullscreenEditor({
         data-testid="prompt-fullscreen"
         role="dialog"
         aria-label={t("prompt.promptTextHeading")}
-        className="fixed inset-0 z-[49] overflow-hidden overscroll-none bg-background animate-fade-in"
+        className="fixed inset-0 z-(--z-compose) overflow-hidden overscroll-none bg-background animate-fade-in"
       >
         {/* İç alan görünür alana (klavyenin üstüne) oturur: başlık, sabit satır ve metin hep görünür. */}
         <div
@@ -304,13 +304,13 @@ export function PromptFullscreenEditor({
                 "inline-flex h-11 min-w-0 max-w-[62%] items-center gap-3 rounded-full border px-4 text-left transition-colors",
                 tone === "active" && "border-primary bg-primary text-primary-foreground hover:bg-primary-hover",
                 tone === "token" && "border-primary bg-surface text-primary hover:bg-primary-soft",
-                tone === "done" && "border-success bg-success/10 text-success",
+                tone === "done" && "border-success bg-success-soft text-success",
                 tone === "idle" && "cursor-default border-border bg-surface-soft text-text-muted",
               )}
             >
               <Icon size={18} className="shrink-0" aria-hidden />
               <span className="flex min-w-0 flex-col leading-tight">
-                <span className="whitespace-nowrap text-micro font-semibold opacity-90">{kindLine}</span>
+                <span className="whitespace-nowrap text-caption font-semibold opacity-90">{kindLine}</span>
                 <span className={cn("truncate text-label font-semibold", tone !== "idle" && "font-mono")} data-testid="fullscreen-convert-text">
                   {valueLine}
                 </span>

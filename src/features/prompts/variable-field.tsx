@@ -16,6 +16,7 @@ import {
 } from "@/lib/prompt-variable-types";
 import type { PromptVariableOption, PromptVariableSpec } from "@/types";
 import { fieldDenseInputClassName } from "@/components/ui/field";
+import { SwitchRow } from "@/components/ui/switch";
 
 const INPUT_CLASS = cn(fieldDenseInputClassName, "text-body");
 
@@ -288,30 +289,18 @@ function Control({
   if (variable.type === "toggle") {
     const on = isToggleOn(value, variable.config);
     return (
-      <button
+      <SwitchRow
         id={id}
-        type="button"
-        role="switch"
-        aria-checked={on}
-        aria-labelledby={labelId}
-        onClick={() => onChange(toggleValue(!on, variable.config))}
-        className="flex min-h-10 w-full items-center gap-3 rounded-lg border border-border bg-background px-3 text-left shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        checked={on}
+        labelledBy={labelId}
+        trackPosition="start"
+        onChange={(next) => onChange(toggleValue(next, variable.config))}
+        className="min-h-10 rounded-lg border border-border bg-background px-3 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
       >
-        <span
-          aria-hidden
-          className={cn("relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200", on ? "bg-primary" : "bg-border-strong")}
-        >
-          <span
-            className={cn(
-              "absolute top-0.5 h-4 w-4 rounded-full bg-background shadow-xs transition-[left] duration-200",
-              on ? "left-[18px]" : "left-0.5",
-            )}
-          />
-        </span>
         <span className="min-w-0 flex-1 break-words text-body text-text">
           {on ? variable.config.onText : variable.config.offText || t("variable.toggleOffEmpty")}
         </span>
-      </button>
+      </SwitchRow>
     );
   }
 

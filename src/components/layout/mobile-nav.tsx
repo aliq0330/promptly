@@ -66,7 +66,7 @@ export function MobileNav() {
       <span
         aria-hidden
         data-nav-indicator
-        className="pointer-events-none absolute left-0 top-0 flex h-[3px] w-1/5 justify-center transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.3,1.55,0.5,1)]"
+        className="pointer-events-none absolute left-0 top-0 flex h-[3px] w-1/5 justify-center transition-[transform,opacity] duration-300 ease-soft"
         style={{ transform: `translateX(${Math.max(activeIndex, 0) * 100}%)`, opacity: activeIndex >= 0 ? 1 : 0 }}
       >
         <span className="h-[3px] w-6 rounded-b-full bg-primary" />
@@ -81,30 +81,30 @@ export function MobileNav() {
           const label = t(item.labelKey);
           const isCreate = item.href === CREATE_HREF;
           const itemClassName = cn(
-            "relative flex flex-1 flex-col items-center justify-center gap-1 text-micro font-medium transition-colors",
-            active ? "text-text" : "text-text-muted",
+            "relative flex flex-1 flex-col items-center justify-center gap-1 text-caption font-medium transition-colors",
+            active ? "text-primary" : "text-text-muted",
           );
           const inner = (
             <>
             {isCreate ? (
               <span
                 className={cn(
-                  "flex h-10 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.18),0_6px_14px_-6px_rgb(var(--p-shadow)/calc(0.5*var(--p-sa)))] transition-transform active:scale-95",
+                  "flex h-10 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs transition-transform active:scale-95",
                   active && "ring-2 ring-primary/30 ring-offset-2 ring-offset-surface",
                 )}
               >
-                <PlusIcon open={createOpen} size={20} strokeWidth={2.4} />
+                <PlusIcon open={createOpen} size={20} />
               </span>
             ) : (
               <>
                 {MotionIcon ? (
-                  <MotionIcon size={22} strokeWidth={active ? 2.2 : 1.8} seq={iconSeq[item.href]} className={active ? "text-primary" : undefined} />
+                  <MotionIcon size={24} seq={iconSeq[item.href]} />
                 ) : (
-                  <Icon size={24} className={active ? "text-primary" : undefined} />
+                  <Icon size={24} />
                 )}
               </>
             )}
-            <span className={isCreate ? "sr-only" : undefined}>{label}</span>
+            <span className={isCreate ? "sr-only" : "max-w-full truncate px-0.5"}>{label}</span>
             </>
           );
           return (

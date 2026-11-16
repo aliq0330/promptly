@@ -112,7 +112,7 @@ export function HubAttentionStrip({
       // Şeridin boş yerine dokunmak da eylemi çalıştırır (düğme kendi tıklamasını zaten işler).
       onClick={onAction ? (event) => !(event.target as HTMLElement).closest("button,a") && onAction() : undefined}
     >
-      <span className="grid h-[2.125rem] w-[2.125rem] shrink-0 place-items-center rounded-[0.625rem] bg-warning/10 text-warning">
+      <span className="grid h-[2.125rem] w-[2.125rem] shrink-0 place-items-center rounded-[0.625rem] bg-warning-soft text-warning">
         <Icon size={18} aria-hidden />
       </span>
       <span className="min-w-0 flex-1 truncate text-small text-text-secondary [&_b]:font-semibold [&_b]:text-text">{children}</span>
@@ -249,8 +249,8 @@ export function HubBadge({ children, tone = "neutral" }: { children: ReactNode; 
       className={cn(
         "inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-caption font-semibold",
         tone === "primary" && "bg-primary-soft text-primary",
-        tone === "success" && "bg-success/10 text-success",
-        tone === "warning" && "bg-warning/10 text-warning",
+        tone === "success" && "bg-success-soft text-success",
+        tone === "warning" && "bg-warning-soft text-warning",
         tone === "neutral" && "bg-surface-soft text-text-secondary",
       )}
     >

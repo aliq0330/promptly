@@ -98,3 +98,24 @@ test("durum rengi zeminlerinde text-white yazılmaz (kontrast: *-foreground toke
   assert.equal(dark["danger-fg"], dark["primary-fg"]);
   assert.equal(light["danger-fg"], "#ffffff");
 });
+
+/** The soft status grounds (`--color-*-soft`, a tint of the status colour over the ground): status text must stay AA on them. */
+function mix(fg: string, ground: string, amount: number): string {
+  const ch = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+  const part = (i: number) => Math.round(ch(fg, i) * amount + ch(ground, i) * (1 - amount)).toString(16).padStart(2, "0");
+  return `#${part(0)}${part(1)}${part(2)}`;
+}
+
+for (const [mode, set] of [["açık", light], ["koyu", dark]] as const) {
+  test(`${mode} modda durum rengi metni, kendi yumuşak zemininde WCAG AA`, () => {
+    for (const status of ["success", "warning", "danger", "secondary"]) {
+      const declared = css.match(new RegExp(`--color-${status}-soft:\\s*color-mix\\(in srgb, var\\(--p-${status}\\) (\\d+)%, transparent\\)`));
+      assert.ok(declared, `--color-${status}-soft tanımlı değil`);
+      const amount = Number(declared[1]) / 100;
+      for (const ground of ["bg", "surface", "surface-soft"]) {
+        const ratio = contrast(set[status], mix(set[status], set[ground], amount));
+        assert.ok(ratio >= 4.5, `${mode}: ${status} metni / ${status}-soft üstü ${ground} = ${ratio.toFixed(2)}:1`);
+      }
+    }
+  });
+}

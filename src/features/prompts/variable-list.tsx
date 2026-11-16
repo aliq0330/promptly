@@ -101,7 +101,7 @@ export function VariableList({
                   <button
                     type="button"
                     onClick={() => onDelete(variable)}
-                    className="max-w-full whitespace-normal rounded-md bg-danger/10 px-2 py-1 text-left text-caption font-medium text-danger hover:bg-danger/20"
+                    className="max-w-full whitespace-normal rounded-md bg-danger-soft px-2 py-1 text-left text-caption font-medium text-danger hover:bg-danger/20"
                   >
                     {usageCount > 0
                       ? t("variable.deleteWithUsagesConfirm", { count: usageCount })
@@ -112,7 +112,7 @@ export function VariableList({
                     type="button"
                     onClick={() => setConfirmingId(variable.tempId)}
                     aria-label={t("variable.deleteAriaLabel", { name: variable.name })}
-                    className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                   >
                     <TrashIcon size={13} />
                   </button>

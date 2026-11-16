@@ -152,7 +152,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
                         <Pencil size={12} aria-hidden />
                         {t("common.edit")}
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-danger hover:bg-danger/10" onClick={() => setDeleting(note)}>
+                      <Button variant="ghost" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => setDeleting(note)}>
                         <TrashIcon size={13} />
                         {t("common.delete")}
                       </Button>

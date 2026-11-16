@@ -30,7 +30,7 @@ import { RoomIconTile } from "./rooms/room-icon";
 import { patchCachedRoom, refreshCommunityRooms, useCommunityRooms } from "./rooms/use-community-rooms";
 import { InlineAlert } from "@/components/ui/inline-alert";
 
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-micro font-bold uppercase tracking-[0.04em] text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold uppercase tracking-[0.04em] text-text-muted";
 
 /**
  * Mesajlar'dan açılan TOPLULUK oda listesi (docs/history/369-*, 381-*): topluluğun odaları sohbet listesinin YERİNE açılır (bilgisayarda sol sütun, telefonda sayfa)

@@ -64,7 +64,7 @@ export function ListControlRow<K extends string>({
         <button type="button" onClick={() => setSheetOpen(true)} aria-haspopup="dialog" aria-label={filterLabel} title={t("toolbar.filter")} data-list-filter className={cn(CONTROL_ICON_BUTTON, "relative")}>
           <Filter size={24} aria-hidden />
           {active > 0 && (
-            <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold tabular-nums text-primary-foreground">{active}</span>
+            <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold tabular-nums text-primary-foreground">{active}</span>
           )}
         </button>
       )}

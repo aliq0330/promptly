@@ -207,9 +207,9 @@ export function WorkflowImportModal({
           </div>
 
           {alreadyOnBoard && <p className="rounded-xl bg-primary-soft px-3 py-2 text-small text-text-secondary">{t("wfSpace.objects.alreadyHere")}</p>}
-          {tooMany && <p role="status" className="rounded-xl bg-warning/10 px-3 py-2 text-small text-text-secondary">{t("wfSpace.objects.tooMany")}</p>}
+          {tooMany && <p role="status" className="rounded-xl bg-warning-soft px-3 py-2 text-small text-text-secondary">{t("wfSpace.objects.tooMany")}</p>}
           {exposesPrivate && (
-            <p role="status" className="flex items-start gap-2 rounded-xl bg-warning/10 px-3 py-2 text-small text-text-secondary">
+            <p role="status" className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 text-small text-text-secondary">
               <Lock size={14} className="mt-0.5 shrink-0 text-warning" aria-hidden />
               {t("wfSpace.import.privateWarn")}
             </p>

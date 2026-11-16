@@ -243,12 +243,12 @@ export function ImageHelpPanel({
           </div>
 
           {promptStatus === "error" && promptError && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-caption text-danger">
+            <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-caption text-danger">
               {promptError}
             </p>
           )}
           {varStatus === "error" && varError && (
-            <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-caption text-danger">
+            <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-caption text-danger">
               {varError}
             </p>
           )}

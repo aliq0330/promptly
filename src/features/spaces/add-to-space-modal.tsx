@@ -287,7 +287,7 @@ export function AddToSpaceModal({
                           {space.imageCount} · {t(SPACE_KIND_LABEL[space.kind])}
                         </span>
                       </span>
-                      {already && <span className="shrink-0 rounded-full bg-warning/12 px-2 py-0.5 text-caption font-medium text-warning">{t("spaces.add.already")}</span>}
+                      {already && <span className="shrink-0 rounded-full bg-warning-soft px-2 py-0.5 text-caption font-medium text-warning">{t("spaces.add.already")}</span>}
                       {selected === space.id && <Check size={16} className="shrink-0 text-primary" aria-hidden />}
                     </button>
                   </li>

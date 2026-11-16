@@ -64,7 +64,7 @@ export function PendingMessageBubble({
           </div>
         )}
       </div>
-      <div className="mt-1 flex flex-wrap items-center justify-end gap-2 px-1 text-micro text-text-muted">
+      <div className="mt-1 flex flex-wrap items-center justify-end gap-2 px-1 text-caption text-text-muted">
         {pending.status === "sending" ? (
           <span>{t("messages.sendingEllipsis")}</span>
         ) : (

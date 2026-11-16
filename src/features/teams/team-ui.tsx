@@ -14,8 +14,8 @@ export const TEAM_TONES = ["primary", "secondary", "success", "warning", "plum",
 const TONE_CLASS: Record<string, string> = {
   primary: "bg-primary-soft text-primary",
   secondary: "bg-secondary/10 text-secondary",
-  success: "bg-success/10 text-success",
-  warning: "bg-warning/10 text-warning",
+  success: "bg-success-soft text-success",
+  warning: "bg-warning-soft text-warning",
   plum: "bg-surface-soft text-text-secondary",
   sky: "bg-primary-soft text-primary",
 };
@@ -57,7 +57,7 @@ export const roleLabelKey = (role: TeamRole): TranslationKey => ROLE_KEY[role];
 
 export function RoleChip({ role }: { role: TeamRole }) {
   const { t } = useTranslation();
-  const tone = role === "owner" ? "bg-primary-soft text-primary" : role === "admin" ? "bg-secondary/10 text-secondary" : role === "guest" ? "bg-warning/10 text-warning" : "bg-surface-soft text-text-secondary";
+  const tone = role === "owner" ? "bg-primary-soft text-primary" : role === "admin" ? "bg-secondary/10 text-secondary" : role === "guest" ? "bg-warning-soft text-warning" : "bg-surface-soft text-text-secondary";
   return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-caption font-medium", tone)}>{t(ROLE_KEY[role])}</span>;
 }
 
@@ -144,18 +144,5 @@ export function waitingText(t: (key: TranslationKey, params?: Record<string, str
   return t("tm.lib.waitMinutes", { count: Math.max(1, minutes) });
 }
 
-/** Hap biçimli aç/kapa anahtarı (mockup: Politikalar, Gruplar). */
-export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={cn("relative h-7 w-12 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2", checked ? "bg-primary" : "bg-border-strong")}
-    >
-      <span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-all", checked ? "left-[22px]" : "left-0.5")} />
-    </button>
-  );
-}
+/** Aç/kapa anahtarı: sitenin tek `Switch`'i (docs/history/406-*); ekip ekranları eski adresten almaya devam eder. */
+export { Switch } from "@/components/ui/switch";

@@ -79,8 +79,8 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
 
   const alerts = data
     ? [
-        { n: data.alerts.pending, tone: "bg-warning/10 text-warning", text: data.alerts.oldestPendingDays !== null && data.alerts.pending > 0 ? t("tm.panel.alertLine.pending", { days: data.alerts.oldestPendingDays }) : t("tm.panel.alertLine.pendingNoAge"), link: data.alerts.pending > 0 },
-        { n: data.alerts.changes, tone: "bg-danger/10 text-danger", text: t("tm.panel.alertLine.changes"), link: false },
+        { n: data.alerts.pending, tone: "bg-warning-soft text-warning", text: data.alerts.oldestPendingDays !== null && data.alerts.pending > 0 ? t("tm.panel.alertLine.pending", { days: data.alerts.oldestPendingDays }) : t("tm.panel.alertLine.pendingNoAge"), link: data.alerts.pending > 0 },
+        { n: data.alerts.changes, tone: "bg-danger-soft text-danger", text: t("tm.panel.alertLine.changes"), link: false },
       ]
     : [];
 
@@ -154,7 +154,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
                       <span className="w-8 text-right font-bold tabular-nums text-text" title={t("tm.panel.col.added")}>
                         {project.added}
                       </span>
-                      {project.pending > 0 && <span className="rounded-full bg-warning/10 px-2 text-caption font-bold text-warning">{t("tp.card.pending", { count: project.pending })}</span>}
+                      {project.pending > 0 && <span className="rounded-full bg-warning-soft px-2 text-caption font-bold text-warning">{t("tp.card.pending", { count: project.pending })}</span>}
                     </Link>
                   </li>
                 ))}

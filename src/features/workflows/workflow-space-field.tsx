@@ -187,7 +187,7 @@ export function WorkflowSpaceField({
             </div>
 
             {note && (
-              <p role="status" className={cn("flex items-start gap-2 rounded-xl px-3 py-2 text-small text-text-secondary", note.warn ? "bg-warning/10" : "bg-primary-soft")}>
+              <p role="status" className={cn("flex items-start gap-2 rounded-xl px-3 py-2 text-small text-text-secondary", note.warn ? "bg-warning-soft" : "bg-primary-soft")}>
                 {note.warn ? <Lock size={14} className="mt-0.5 shrink-0 text-warning" aria-hidden /> : <Globe size={14} className="mt-0.5 shrink-0 text-primary" aria-hidden />}
                 {note.text}
               </p>

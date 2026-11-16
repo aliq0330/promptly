@@ -93,7 +93,7 @@ export function CommunityCoverPicker({
               data-cover-swatch={swatch}
               // The swatch IS the colour the community can choose (user content), not a design token.
               style={{ backgroundColor: swatch }}
-              className="relative flex h-9 w-9 items-center justify-center rounded-full ring-offset-2 ring-offset-background transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 aria-pressed:ring-2 aria-pressed:ring-text"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full ring-offset-2 ring-offset-background transition-shadow hover:ring-2 hover:ring-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 aria-pressed:ring-2 aria-pressed:ring-text"
             >
               {normalized === swatch && <Check size={16} className="text-white" aria-hidden />}
             </button>

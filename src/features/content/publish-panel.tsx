@@ -274,7 +274,7 @@ export const PublishPanel = forwardRef<
               type="button"
               data-publish-problem={problem.key}
               onClick={() => problem.onFix?.()}
-              className="flex w-full items-center gap-3 rounded-xl border border-danger/35 bg-danger/10 px-3 py-2.5 text-left text-small font-semibold text-text"
+              className="flex w-full items-center gap-3 rounded-xl border border-danger/35 bg-danger-soft px-3 py-2.5 text-left text-small font-semibold text-text"
             >
               <AlertCircle size={16} aria-hidden className="shrink-0 text-danger" />
               <span className="min-w-0 flex-1">{problem.label}</span>

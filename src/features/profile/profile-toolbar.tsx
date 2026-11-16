@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "@/components/icons/search";
-import { X } from "@/components/icons/x";
 import { Filter } from "@/components/icons/filter";
 import { Chip } from "@/components/ui/chip";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
@@ -12,6 +10,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 import type { PromptContentType } from "@/types";
+import { SearchField } from "@/components/ui/search-field";
 
 export type ProfileSortKey = "newest" | "oldest" | "most-liked";
 
@@ -65,7 +64,7 @@ export function ProfileFilterControl({
       >
         <Filter size={24} aria-hidden />
         {activeCount > 0 && (
-          <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold tabular-nums text-primary-foreground">
+          <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold tabular-nums text-primary-foreground">
             {activeCount}
           </span>
         )}
@@ -99,22 +98,13 @@ export function ProfileFilterControl({
                 </SheetChips>
               </SheetSection>
               {showSearch && (
-                <div className="flex h-10 items-center gap-2 rounded-md border border-border-soft bg-surface px-3 focus-within:border-primary">
-                  <Search size={14} className="shrink-0 text-text-muted" aria-hidden />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(event) => onSearchChange(event.target.value)}
-                    placeholder={t("profile.searchPlaceholder")}
-                    aria-label={t("profile.searchPlaceholder")}
-                    className="h-full w-full bg-transparent text-small text-text outline-none placeholder:text-text-muted"
-                  />
-                  {search && (
-                    <button type="button" onClick={() => onSearchChange("")} aria-label={t("profile.clearFilters")} className="text-text-muted hover:text-text">
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
+                <SearchField
+                  dense
+                  value={search}
+                  onChange={onSearchChange}
+                  placeholder={t("profile.searchPlaceholder")}
+                  clearLabel={t("profile.clearFilters")}
+                />
               )}
             </>
           }

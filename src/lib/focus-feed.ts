@@ -39,7 +39,7 @@ export function focusFeedCover(entry: PostEntry): FocusFeedCover | null {
     }
     case "preset":
       return entry.data.coverUrl ? { url: entry.data.coverUrl, alt: entry.data.title } : null;
-    // A Skill's cover lives in the private `skill-files` bucket (its own signing, `SkillDetailCover`); the slide shows the Skill's own summary + icon instead (docs/history/403-*).
+    // A Skill's cover lives in the private `skill-files` bucket (its own signing, `SkillDetailCover`); the slide shows the Skill's own summary + icon instead (docs/history/406-*).
     case "skill":
       return null;
   }

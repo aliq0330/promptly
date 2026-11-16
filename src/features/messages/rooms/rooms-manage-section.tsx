@@ -237,7 +237,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
       {loading && rooms.length === 0 ? (
         <div className="space-y-2" aria-hidden>{[0, 1, 2].map((i) => <div key={i} className="h-16 skeleton-shimmer rounded-xl" />)}</div>
       ) : error && rooms.length === 0 ? (
-        <div role="alert" className="flex flex-col items-start gap-2 rounded-lg bg-danger/10 px-3 py-3 text-small text-danger">
+        <div role="alert" className="flex flex-col items-start gap-2 rounded-lg bg-danger-soft px-3 py-3 text-small text-danger">
           {t("rooms.hub.loadFailed")}
           <Button type="button" size="sm" variant="outline" onClick={() => void reload()}>{t("common.retry")}</Button>
         </div>

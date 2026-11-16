@@ -173,7 +173,7 @@ export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose:
     return (
       <SpaceDialog title={t("spaces.create.title")} onClose={() => finish(createdWithoutCover)}>
         <div className="space-y-4">
-          <p role="alert" className="rounded-md bg-warning/12 px-3 py-2 text-small text-text">
+          <p role="alert" className="rounded-md bg-warning-soft px-3 py-2 text-small text-text">
             {t("spaces.create.coverFailed")}
           </p>
           <div className="flex justify-end">

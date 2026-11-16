@@ -187,7 +187,7 @@ export function JoinCommunityPage() {
         </div>
       </div>
       {preview.description && <p className="break-words text-small text-text-secondary">{preview.description}</p>}
-      {preview.closed && <p role="status" className="rounded-md bg-warning/10 px-3 py-2 text-small text-text">{t("communities.join.closedNote")}</p>}
+      {preview.closed && <p role="status" className="rounded-md bg-warning-soft px-3 py-2 text-small text-text">{t("communities.join.closedNote")}</p>}
 
       {preview.myStatus === "member" ? (
         <div className="space-y-3">

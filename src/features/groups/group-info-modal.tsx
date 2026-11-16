@@ -236,7 +236,7 @@ export function GroupInfoModal({
                         ? t("rooms.row.readOnlyStaff")
                         : (room.description ?? "");
                 return (
-                  <div key={room.id} role="listitem" className={cn("flex items-center gap-1 pr-2", current && "bg-success/10")}>
+                  <div key={room.id} role="listitem" className={cn("flex items-center gap-1 pr-2", current && "bg-success-soft")}>
                     <button
                       type="button"
                       onClick={() => onSelectRoom?.(room.id)}

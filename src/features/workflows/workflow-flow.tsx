@@ -176,7 +176,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
           {c?.thumbnailUrl ? (
             <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface shadow-pop">
               <StorageImg src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-              <span className="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-micro font-bold text-primary-foreground">{index + 1}</span>
+              <span className="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-bold text-primary-foreground">{index + 1}</span>
             </span>
           ) : (
             <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface font-display text-[1.5rem] font-extrabold text-primary shadow-pop">

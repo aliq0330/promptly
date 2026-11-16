@@ -191,7 +191,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
                 type="button"
                 onClick={() => addEmoji(emoji)}
                 aria-label={t("focusComments.addEmoji", { emoji })}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[1.6rem] leading-none transition-transform duration-150 ease-soft hover:scale-110 active:scale-95"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[1.6rem] leading-none transition-[background-color,transform] duration-150 ease-soft hover:bg-surface-soft active:scale-95"
               >
                 {emoji}
               </button>
@@ -236,7 +236,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
                   title={t("common.send")}
                   className={cn(
                     "ml-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,transform] duration-200 ease-soft disabled:opacity-0",
-                    posting && "animate-pulse",
+                    posting && "opacity-60",
                   )}
                 >
                   <SendArrowIcon size={18} strokeWidth={2.4} seq={sendSeq} />
