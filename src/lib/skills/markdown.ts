@@ -97,12 +97,22 @@ export function parseInline(text: string, depth = 0): Inline[] {
   return out;
 }
 
-const HEADING = /^(#{1,6})\s+(.*?)\s*#*\s*$/;
-const FENCE = /^\s{0,3}(`{3,}|~{3,})\s*([A-Za-z0-9_+-]*)\s*$/;
+// Her kalıp tek satıra uygulanır ve DOĞRUSAL zamanlıdır (docs/history/413-*): `\s*` / `.*?` gibi birbirine geri izleyen iki belirsiz parça YOKTUR; sondaki `#` ve boşluklar kodla kırpılır.
+const HEADING = /^(#{1,6})\s+([\s\S]*)$/;
+const FENCE = /^\s{0,3}(`{3,}|~{3,})[ \t]*(?:([A-Za-z0-9_+-]+)[ \t]*)?$/;
 const HR = /^\s{0,3}([-*_])(\s*\1){2,}\s*$/;
 const UL = /^\s{0,3}[-*+]\s+(.*)$/;
 const OL = /^\s{0,3}\d{1,9}[.)]\s+(.*)$/;
 const QUOTE = /^\s{0,3}>\s?(.*)$/;
+
+/** Başlığın sonundaki boşlukları ve kapanış `#` işaretlerini kırpar (`# Ad ##` → `Ad`). Regex değil döngü: doğrusal. */
+function stripClosingHashes(text: string): string {
+  let end = text.length;
+  while (end > 0 && /\s/.test(text[end - 1])) end -= 1;
+  while (end > 0 && text[end - 1] === "#") end -= 1;
+  while (end > 0 && /\s/.test(text[end - 1])) end -= 1;
+  return text.slice(0, end);
+}
 
 export function parseMarkdown(source: string): Block[] {
   const lines = source.slice(0, MARKDOWN_MAX_CHARS).replace(/\r\n?/g, "\n").split("\n");
@@ -124,12 +134,12 @@ export function parseMarkdown(source: string): Block[] {
         i += 1;
       }
       i += 1; // kapanış çiti (yoksa metnin sonu)
-      blocks.push({ t: "code", lang: fence[2], v: body.join("\n") });
+      blocks.push({ t: "code", lang: fence[2] ?? "", v: body.join("\n") });
       continue;
     }
     const heading = HEADING.exec(line);
     if (heading) {
-      blocks.push({ t: "h", level: heading[1].length as 1 | 2 | 3 | 4 | 5 | 6, c: parseInline(heading[2]) });
+      blocks.push({ t: "h", level: heading[1].length as 1 | 2 | 3 | 4 | 5 | 6, c: parseInline(stripClosingHashes(heading[2])) });
       i += 1;
       continue;
     }
