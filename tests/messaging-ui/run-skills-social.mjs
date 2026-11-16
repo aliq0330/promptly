@@ -23,6 +23,17 @@ const pubOf = (u) => Object.fromEntries(PUBLIC_COLS.map((c) => [c, u[c]]));
 const json = (route, body, status = 200, headers = {}) =>
   route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*", "access-control-expose-headers": "*", ...headers }, body: JSON.stringify(body) });
 
+// Bağlı içerik (Prompt · İstek · Workflow · Ayar paketi) çok uzun başlıklı: telefonda sayfayı taşırmamalı (docs/history/410-*).
+const LONG = "Çok uzun bir başlık ".repeat(6) + "ve_hiç_boşluk_içermeyen_çok_uzun_bir_kelime_".repeat(3);
+const owner = { display_name: "Alice Uzun Görünen Ad" };
+const RELATED = [
+  { type: "prompt", id: "e1000000-0000-4000-8000-000000000001", row: { id: "e1000000-0000-4000-8000-000000000001", title: LONG, status: "published", visibility: "public", community_id: null, deleted_at: null, profiles: owner, prompt_media: [] } },
+  { type: "request", id: "e1000000-0000-4000-8000-000000000002", row: { id: "e1000000-0000-4000-8000-000000000002", title: LONG, status: "open", is_draft: false, visibility: "public", community_id: null, deleted_at: null, profiles: owner, prompt_request_media: [] } },
+  { type: "workflow", id: "e1000000-0000-4000-8000-000000000003", row: { id: "e1000000-0000-4000-8000-000000000003", title: LONG, cover_url: null, status: "published", visibility: "public", community_id: null, profiles: owner, workflow_steps: [{ count: 12 }], workflow_media: [] } },
+  { type: "preset", id: "e1000000-0000-4000-8000-000000000004", row: { id: "e1000000-0000-4000-8000-000000000004", title: LONG, cover_url: null, status: "published", visibility: "public", community_id: null, profiles: owner } },
+];
+const RELATED_TABLES = { prompts: "prompt", prompt_requests: "request", workflows: "workflow", presets: "preset" };
+
 const skillRow = (id, over = {}) => ({
   id, author_id: U.alice.id, slug: `skill-${id.slice(-1)}`, title: `Skill ${id.slice(-1)}`, summary: "Kısa açıklama burada.", instructions: "# Rol\n\nYardımcı ol.", category: "software", compat: ["claude-code"],
   license: "mit", version: "1.0.0", status: "published", visibility: "public", use_count: 0, like_count: 3, comment_count: 2, save_count: 0,
@@ -32,7 +43,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], spaceInserts: [], forYouCalls: [], skillSpaceCalls: [], interestCalls: [], searchCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], spaceInserts: [], forYouCalls: [], skillSpaceCalls: [], interestCalls: [], searchCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null, related: false };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -52,7 +63,14 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
           : [],
       );
     }
-    if (table === "skill_relations" && method === "GET") return ctx.rows([]);
+    if (table === "skill_relations" && method === "GET") {
+      if (!state.related || (q.get("skill_id") ?? "") !== `eq.${S_PUB}`) return ctx.rows([]);
+      return ctx.rows(RELATED.map((r, i) => ({ id: `r-${i}`, target_type: r.type, target_id: r.id, position: i })));
+    }
+    if (state.related && method === "GET" && RELATED_TABLES[table]) {
+      const wanted = (q.get("id") ?? "").replace(/^in\.\(|\)$/g, "").split(",");
+      return ctx.rows(RELATED.filter((r) => RELATED_TABLES[table] === r.type && wanted.includes(r.id)).map((r) => r.row));
+    }
     if (table === "skill_links" && method === "GET") return ctx.rows((q.get("skill_id") ?? "") === `eq.${S_PUB}` ? [{ id: "l-1", linked_skill_id: S_PUB2, position: 0 }] : []);
     return null;
   };
@@ -688,6 +706,19 @@ await scenario("9. Telefonda detay taşmaz", async ({ page }) => {
   await openDetail(page);
   await page.locator("#comments").waitFor();
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1));
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("9b. Telefonda bağlı içerik (uzun başlıklı) varken detay taşmaz", async ({ page, state }) => {
+  state.related = true;
+  await openDetail(page);
+  await page.locator("#comments").waitFor();
+  await page.locator("[data-skill-related]").waitFor();
+  assert.equal(await page.locator("[data-skill-related] li").count(), 4);
+  const overflow = await page.evaluate(() => {
+    const limit = document.documentElement.clientWidth;
+    return { scroll: document.documentElement.scrollWidth, limit, wide: [...document.querySelectorAll("body *")].filter((el) => el.getBoundingClientRect().right > limit + 1).slice(0, 6).map((el) => `${el.tagName}.${String(el.className).slice(0, 60)}`) };
+  });
+  assert.ok(overflow.scroll <= overflow.limit + 1, `sayfa sağa taşıyor: ${JSON.stringify(overflow)}`);
 }, { viewport: { width: 390, height: 844 } });
 
 await browser.close();

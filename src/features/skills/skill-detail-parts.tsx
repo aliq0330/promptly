@@ -101,7 +101,7 @@ export function SkillVersionsSection({
   }
 
   return (
-    <DetailSection title={t("skill.detail.versionsTitle")} id="skill-versions">
+    <section id="skill-versions" aria-label={t("skill.detail.versionsTitle")} className="scroll-mt-24 space-y-4">
       {versions.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("skill.detail.noVersions")}</p>
       ) : (
@@ -146,7 +146,7 @@ export function SkillVersionsSection({
           {error}
         </p>
       )}
-    </DetailSection>
+    </section>
   );
 }
 

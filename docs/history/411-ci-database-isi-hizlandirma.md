@@ -1,4 +1,4 @@
-# 410 — CI `database` işi: ~30 dk → ~3 dk (şablon veritabanı + ANALYZE)
+# 411 — CI `database` işi: ~30 dk → ~3 dk (şablon veritabanı + ANALYZE)
 
 **Durum:** uygulandı (yalnız `supabase/tests/run-local.sh`, iki test dosyası, `ci.yml`'e zaman sınırı). Yerel PostgreSQL 16'da 112 test dosyasının tamamı yeşil: 7 dk 54 sn → 2 dk 50 sn
 (yalnız şablon) ve CI'daki ~30 dk'nın yerine hedef ~3–5 dk (CI makinesi yerelden ~1,5× yavaş; GitHub Actions'ta gerçek süre bu PR'ın kendi koşusunda görülür).

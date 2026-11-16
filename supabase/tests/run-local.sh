@@ -7,7 +7,7 @@ TESTS=()
 for t in "$@"; do TESTS+=("$(realpath "$t")"); done
 cd "$(dirname "$0")/.."
 DB=${DB:-promptly_test}
-# Şablon veritabanı (docs/history/410-*): stub'lar + tüm migration'lar YALNIZ BİR KEZ oynatılır; her test `createdb -T` ile (~0,1 sn) o şablondan
+# Şablon veritabanı (docs/history/411-*): stub'lar + tüm migration'lar YALNIZ BİR KEZ oynatılır; her test `createdb -T` ile (~0,1 sn) o şablondan
 # klonlanır. Eskiden her test dosyası migration'ları baştan oynatıyordu (~10–16 sn × 112 dosya ≈ 30 dk). Şablon adı stub + migration
 # içeriğinin özetini taşır → migration değişince eski şablon kendiliğinden kullanılmaz. PROMPTLY_NO_TEMPLATE=1 eski davranışı (her seferinde baştan) verir.
 if [ "${PROMPTLY_NO_TEMPLATE:-}" = 1 ]; then
