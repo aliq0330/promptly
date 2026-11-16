@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 /** The plain big page title of the sade pages (Spaces, Topluluklar, listeler, Bildirimler, Mesajlar — docs/history/231-*, 234-*). */
 export function SadeTitle({ children, className }: { children: ReactNode; className?: string }) {
-  return <h1 className={cn("font-display text-[2.375rem] font-bold leading-[1.1] tracking-[-0.02em] text-text", className)}>{children}</h1>;
+  return <h1 className={cn("font-display text-display font-bold leading-[1.1] tracking-[-0.02em] text-text", className)}>{children}</h1>;
 }
 
 export interface ListFilterConfig {

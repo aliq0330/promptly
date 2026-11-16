@@ -73,7 +73,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
   return (
     <Modal onClose={onClose} labelledBy="edit-result-modal-title">
       <div
-        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-4">
@@ -84,9 +84,9 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
@@ -101,11 +101,11 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                 rows={4}
                 value={textContent}
                 onChange={(event) => setTextContent(event.target.value)}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
             </div>
           ) : (
-            <p className="rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-caption text-text-muted">
+            <p className="rounded-md card-soft px-3 py-2 text-caption text-text-muted">
               {t(RESULT_MEDIA_TYPE_LABELS[result.mediaType])} {t("result.mediaFileLocked")}
             </p>
           )}
@@ -121,7 +121,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
               value={tool}
               onChange={(event) => setTool(event.target.value)}
               placeholder={t("result.toolFieldPlaceholder")}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             <datalist id="edit-result-tool-suggestions">
               {TOOL_SUGGESTIONS.map((suggestion) => (
@@ -134,7 +134,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
             <>
               <div>
                 <p className="mb-1.5 text-small font-medium text-text">{t("result.didYouModifyPrompt")}</p>
-                <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
+                <div className="flex gap-1 rounded-md card-soft p-1">
                   {([false, true] as const).map((value) => (
                     <button
                       key={String(value)}
@@ -151,7 +151,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
               </div>
 
               {hasModification && (
-                <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3">
+                <div className="space-y-3 rounded-md card-soft p-3">
                   <div>
                     <label htmlFor="edit-result-mod-summary" className="mb-1.5 block text-small font-medium text-text">
                       {t("result.modificationSummaryLabel")} <span className="text-text-muted">({t("result.modificationSummaryShort")})</span>
@@ -162,13 +162,13 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                       value={modificationSummary}
                       onChange={(event) => setModificationSummary(event.target.value)}
                       placeholder={t("result.modificationSummaryPlaceholder")}
-                      className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                   {result.originalPrompt && (
                     <div>
-                      <p className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("result.originalPromptText")}</p>
-                      <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-background px-3 py-2 font-mono text-caption text-text-muted">
+                      <p className="mb-1.5 text-caption font-semibold text-text-muted">{t("result.originalPromptText")}</p>
+                      <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md card-inset px-3 py-2 font-mono text-caption text-text-muted">
                         {result.originalPrompt.promptText}
                       </p>
                     </div>
@@ -182,7 +182,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                       rows={4}
                       value={modifiedPromptText}
                       onChange={(event) => setModifiedPromptText(event.target.value)}
-                      className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="w-full resize-none rounded-lg card-inset px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                 </div>

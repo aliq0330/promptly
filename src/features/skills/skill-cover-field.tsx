@@ -66,7 +66,7 @@ export function SkillCoverField({
   return (
     <div className="space-y-2" data-skill-cover-field="">
       {coverPath && (
-        <div className="relative aspect-[4/3] w-full max-w-xs overflow-hidden rounded-xl border border-border-soft bg-surface-soft">
+        <div className="relative aspect-[4/3] w-full max-w-xs overflow-hidden rounded-lg card-soft">
           <SkillCoverImage path={coverPath} className="absolute inset-0 h-full w-full object-cover" alt={t("skill.cover.alt")} />
         </div>
       )}

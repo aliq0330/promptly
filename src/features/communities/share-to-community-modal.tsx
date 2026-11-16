@@ -59,7 +59,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
   return (
     <>
       <Modal onClose={busy ? () => undefined : onClose} labelledBy="share-community-title">
-        <DialogShell className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+        <DialogShell className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop">
           <div className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-5">
             <div className="min-w-0 space-y-1">
               <h2 id="share-community-title" className="text-body font-semibold text-text">
@@ -67,8 +67,8 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
               </h2>
               <p className="text-small text-text-muted">{t("communities.feed.shareHelp")}</p>
             </div>
-            <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
-              <X size={18} aria-hidden />
+            <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+              <X size={20} aria-hidden />
             </button>
           </div>
           <div className="px-5">
@@ -127,7 +127,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
 
       {selected && noteOpen && (
         <Modal onClose={busy ? () => undefined : () => setNoteOpen(false)} labelledBy="share-note-title" overLayers>
-          <DialogShell data-share-note-dialog="" className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
+          <DialogShell data-share-note-dialog="" className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-lg card-flat shadow-pop">
             <div className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-5">
               <div className="min-w-0">
                 <h2 id="share-note-title" className="text-body font-semibold text-text">
@@ -135,8 +135,8 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                 </h2>
                 <p className="truncate text-small text-text-muted">{selected.title}</p>
               </div>
-              <button type="button" onClick={() => setNoteOpen(false)} disabled={busy} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
-                <X size={18} aria-hidden />
+              <button type="button" onClick={() => setNoteOpen(false)} disabled={busy} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+                <X size={20} aria-hidden />
               </button>
             </div>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
@@ -158,7 +158,7 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                 {t("common.cancel")}
               </Button>
               <Button type="button" size="sm" onClick={() => void submit()} disabled={busy}>
-                {busy ? <Loader2 size={14} className="animate-spin" /> : null}
+                {busy ? <Loader2 size={16} className="animate-spin" /> : null}
                 {t("communities.feed.shareSubmit")}
               </Button>
             </div>

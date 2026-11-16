@@ -123,7 +123,7 @@ export function EditSuggestionsPanel({
   const resolved = suggestions.filter((s) => s.status !== "pending");
 
   return (
-    <section className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+    <section className="space-y-3 rounded-lg card-flat p-4 sm:p-5">
       <h2 className="text-label font-semibold text-text">
         {t("editSuggestion.title")} {pending.length > 0 && <span className="text-primary">({pending.length})</span>}
       </h2>
@@ -165,15 +165,15 @@ export function EditSuggestionsPanel({
               </button>
 
               {isExpanded && (
-                <div className="mt-2 space-y-2 rounded-md border border-border-soft bg-background p-3">
+                <div className="mt-2 space-y-2 rounded-md card-inset p-3">
                   {suggestion.proposedPromptText ? (
                     <>
-                      <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("editSuggestion.currentToProposed")}</p>
+                      <p className="text-caption font-semibold text-text-muted">{t("editSuggestion.currentToProposed")}</p>
                       <DiffText before={currentPromptText} after={suggestion.proposedPromptText} />
                     </>
                   ) : (
                     <>
-                      <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("prompt.currentPromptText")}</p>
+                      <p className="text-caption font-semibold text-text-muted">{t("prompt.currentPromptText")}</p>
                       <p className="prompt-text whitespace-pre-wrap break-words text-small text-text-muted">{currentPromptText}</p>
                       <p className="text-caption text-text-muted">{t("editSuggestion.noteOnlyHint")}</p>
                     </>
@@ -190,11 +190,11 @@ export function EditSuggestionsPanel({
                         rows={4}
                         value={draftText}
                         onChange={(event) => setDraftText(event.target.value)}
-                        className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-caption text-text shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                        className="w-full resize-none rounded-lg card-inset px-3 py-2 font-mono text-caption text-text shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                       />
                       <div className="flex flex-wrap items-center gap-2">
                         <Button type="button" size="sm" onClick={() => confirmAccept(suggestion)} disabled={isBusy || !draftText.trim()}>
-                          {isBusy ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                          {isBusy ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                           {t("editSuggestion.acceptAndPublish")}
                         </Button>
                         <Button type="button" size="sm" variant="ghost" onClick={() => setAcceptDraftId(null)} disabled={isBusy}>
@@ -205,11 +205,11 @@ export function EditSuggestionsPanel({
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" onClick={() => startAccept(suggestion)} disabled={isBusy}>
-                        <Check size={14} />
+                        <Check size={16} />
                         {t("editSuggestion.accept")}
                       </Button>
                       <Button type="button" size="sm" variant="danger" onClick={() => handleReject(suggestion)} disabled={isBusy}>
-                        {isBusy ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                        {isBusy ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
                         {confirmingRejectId === suggestion.id ? t("common.confirmDelete") : t("editSuggestion.reject")}
                       </Button>
                     </div>

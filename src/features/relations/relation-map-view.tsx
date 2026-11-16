@@ -175,7 +175,7 @@ export function RelationMapView() {
             <Eyebrow icon={Network}>{t("relations.title")}</Eyebrow>
             <h1 className="break-words font-display text-h1 text-text">{t("relations.title")}</h1>
             <p className="flex min-w-0 items-center gap-1.5 text-small text-text-secondary">
-              <CenterIcon size={14} className="shrink-0 text-text-muted" aria-hidden />
+              <CenterIcon size={16} className="shrink-0 text-text-muted" aria-hidden />
               <span className="shrink-0 text-text-muted">{kindLabel(center.kind)}:</span>
               <span className="truncate font-medium text-text">{center.title}</span>
             </p>
@@ -247,7 +247,7 @@ export function RelationMapView() {
 
       {graph.edges.length === 0 ? (
         <div className="mt-6">
-          <EmptyState
+          <EmptyState scene="search"
             icon={Network}
             title={t("relations.empty.title")}
             description={t("relations.empty.body")}
@@ -257,7 +257,7 @@ export function RelationMapView() {
       ) : (
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-2">
-            <div className="relative overflow-hidden rounded-lg border border-border-soft bg-surface-soft shadow-card" data-relation-stage>
+            <div className="relative overflow-hidden rounded-lg card-soft shadow-card" data-relation-stage>
               {viewMode === "map" ? (
                 <div className="h-[68dvh] min-h-[420px] lg:h-[640px]">
                   {visibleEdges.length === 0 ? (
@@ -284,7 +284,7 @@ export function RelationMapView() {
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 text-label font-medium text-text shadow-card"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg card-flat px-4 text-label font-medium text-text shadow-card"
               >
                 <PanelBottomOpen size={16} aria-hidden />
                 {t("relations.openDetails")}

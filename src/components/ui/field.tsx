@@ -58,7 +58,7 @@ export function ChoiceCard({ children, className }: { children: ReactNode; class
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-start gap-3 rounded-lg border border-border-soft bg-background px-4 py-3 text-small text-text transition-colors duration-200 ease-soft hover:border-border-strong has-checked:border-primary/50 has-checked:bg-primary-soft/40",
+        "flex cursor-pointer items-start gap-3 rounded-lg card-inset px-4 py-3 text-small text-text transition-colors duration-200 ease-soft hover:border-border-strong has-checked:border-primary/50 has-checked:bg-primary-soft/40",
         className,
       )}
     >

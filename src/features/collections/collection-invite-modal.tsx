@@ -44,7 +44,7 @@ export function CollectionInviteModal({ collectionId, onClose, onInvited }: { co
             {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={!clean || busy} data-collection-invite-send="">
-            {busy && <Loader2 size={14} className="animate-spin" />}
+            {busy && <Loader2 size={16} className="animate-spin" />}
             {t("collab.inviteSend")}
           </Button>
         </>

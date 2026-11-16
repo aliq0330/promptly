@@ -56,7 +56,7 @@ export function PinnedMessagesBar({
           aria-label={`${t("chat.pin.barLabel")}: ${messagePreviewText(current.message, t)}`}
           className="group flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-xl py-1 pl-2 pr-1 text-left transition-colors hover:bg-surface-soft"
         >
-          <Pin size={14} className="shrink-0 text-primary" aria-hidden />
+          <Pin size={16} className="shrink-0 text-primary" aria-hidden />
           <span className="flex min-w-0 items-baseline gap-1.5 text-small">
             <span className="shrink-0 font-semibold text-text">
               {t("chat.pin.barLabel")}
@@ -71,7 +71,7 @@ export function PinnedMessagesBar({
             onClick={() => handleUnpin(current.message)}
             aria-label={t("chat.pin.unpin")}
             title={t("chat.pin.unpin")}
-            className={iconButtonClassName(false, "h-8 w-8")}
+            className={iconButtonClassName(false, "h-9 w-9")}
           >
             <X size={16} />
           </button>
@@ -82,7 +82,7 @@ export function PinnedMessagesBar({
           aria-label={t("chat.pin.showAll")}
           title={t("chat.pin.showAll")}
           aria-haspopup="dialog"
-          className={iconButtonClassName(false, "h-8 w-8")}
+          className={iconButtonClassName(false, "h-9 w-9")}
         >
           <List size={16} />
         </button>
@@ -100,7 +100,7 @@ export function PinnedMessagesBar({
                 aria-label={t("common.close")}
                 className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
             <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-5 pt-1">

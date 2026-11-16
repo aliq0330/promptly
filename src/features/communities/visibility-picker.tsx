@@ -109,7 +109,7 @@ export function VisibilityPicker({
                 />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-1.5 font-medium">
-                    <Icon size={14} aria-hidden />
+                    <Icon size={16} aria-hidden />
                     <span id={`${baseId}-${option}-title`}>{t(VISIBILITY_LABEL_KEYS[option])}</span>
                     {selected && <Badge variant="accent">{currentLabel ?? t("communities.visibility.selected")}</Badge>}
                   </span>

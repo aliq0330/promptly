@@ -288,7 +288,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           kicker={
             <>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">
-                <SpacesIcon size={13} strokeWidth={2.25} aria-hidden />
+                <SpacesIcon size={16} aria-hidden />
                 Space · {t(SPACE_KIND_LABEL[space.kind])}
               </span>
               <VisibilityBadge visibility={space.visibility} />
@@ -317,7 +317,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                   className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface px-3 py-1 text-caption font-semibold tabular-nums text-text hover:border-border-strong"
                   data-space-rating-chip=""
                 >
-                  <StarRatingDisplay value={space.ratingAvg} size={14} />
+                  <StarRatingDisplay value={space.ratingAvg} size={16} />
                   {formatRating(space.ratingAvg, language)}
                   <span className="font-normal text-text-muted">· {t("spaces.rating.count", { count: space.ratingCount })}</span>
                 </button>
@@ -325,7 +325,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
               {leadPalette && (
                 <div className="flex max-w-xl items-center gap-3 pt-1" data-space-band-palette="">
                   <span className="inline-flex min-w-0 max-w-[40%] shrink-0 items-center gap-1.5 text-caption font-semibold text-text-secondary">
-                    <Palette size={14} aria-hidden />
+                    <Palette size={16} aria-hidden />
                     <span className="truncate">{leadPalette.name || t("spaces.tab.palette")}</span>
                   </span>
                   <PaletteStrip colors={leadPalette.colors} copyable className="min-w-0 flex-1" />
@@ -338,13 +338,13 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
             tab !== "board" ? (
               <div className="flex w-full flex-wrap items-center gap-2" data-space-actions="">
                 <Button className="max-sm:flex-1" onClick={() => goTo("board")}>
-                  {caps.edit ? <LayoutDashboard size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+                  {caps.edit ? <LayoutDashboard size={20} aria-hidden /> : <Eye size={20} aria-hidden />}
                   {caps.edit ? t("spaces.page.openBoard") : t("spaces.page.viewBoard")}
                 </Button>
                 <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} />
                 {canShare && (
                   <Button variant="outline" className="h-10 w-10 rounded-full bg-surface/80 p-0" onClick={share} aria-label={t("spaces.card.share")} title={t("spaces.card.share")}>
-                    <Share2 size={18} aria-hidden />
+                    <Share2 size={20} aria-hidden />
                   </Button>
                 )}
                 <span data-detail-menu="">
@@ -366,7 +366,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
             <span>{t("spaces.page.archivedNotice")}</span>
             {caps.archive && (
               <Button size="sm" variant="outline" onClick={() => void toggleArchive()}>
-                <ArchiveRestore size={14} aria-hidden />
+                <ArchiveRestore size={16} aria-hidden />
                 {t("spaces.card.unarchive")}
               </Button>
             )}

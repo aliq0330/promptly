@@ -98,7 +98,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                   type="button"
                   onClick={() => picker.removeAccepted(tag.slug)}
                   aria-label={t("tagPicker.removeTagAriaLabel", { label: tag.label })}
-                  className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full hover:bg-black/10"
+                  className="tap-area ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full hover:bg-black/10"
                 >
                   <X size={12} />
                 </button>
@@ -139,9 +139,9 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                     type="button"
                     onClick={() => picker.dismissSuggested(tag.slug)}
                     aria-label={t("tagPicker.dismissSuggestionAriaLabel", { label: tag.label })}
-                    className={iconButtonClassName(false, "h-5 w-5")}
+                    className={iconButtonClassName(false, "tap-area h-5 w-5")}
                   >
-                    <X size={10} />
+                    <X size={12} />
                   </button>
                 </span>
               );
@@ -161,10 +161,10 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               setCreateError(null);
             }}
             placeholder={t("tagPicker.searchOrCreatePlaceholder")}
-            className="h-9 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-9 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
           {normalizedQuery && (
-            <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-border bg-surface shadow-lg">
+            <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md card-flat shadow-lg">
               {matches.map((tag) => (
                 <button
                   key={tag.slug}

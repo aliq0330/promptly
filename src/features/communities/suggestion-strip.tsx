@@ -9,7 +9,6 @@ import { Sparkle } from "@/components/icons/sparkle";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { CardBandBackdrop } from "@/features/content/content-card";
 import { Eyebrow } from "@/features/content/detail-parts";
-import { CommunityCover } from "./community-cover";
 import { CommunityJoinButton, type JoinState } from "./community-join-button";
 import { VisibilityLabel } from "./visibility-label";
 import { applyJoinState } from "./home-shared";
@@ -93,7 +92,7 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="suggestion-strip-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-            <Sparkle size={14} className="text-primary" aria-hidden /> {t("communities.strip.title")}
+            <Sparkle size={16} className="text-primary" aria-hidden /> {t("communities.strip.title")}
           </h2>
           <p className="text-caption text-text-muted">{t("communities.strip.help")}</p>
         </div>
@@ -112,19 +111,19 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
             key={community.id}
             data-testid="suggestion-card"
             data-community-id={community.id}
-            className="relative flex w-[72%] shrink-0 snap-start flex-col rounded-xl border border-border-soft bg-surface shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:w-64"
+            className="relative flex w-[72%] shrink-0 snap-start flex-col rounded-lg card-flat shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:w-64"
           >
             {/* Albüm kartı (docs/history/203-*): the band takes the community picture's colours. */}
             <div className="relative flex-1 rounded-t-xl p-3 pb-4">
-              <CardBandBackdrop backdrop={<CommunityCover coverUrl={null} coverColor={null} avatarUrl={community.avatarUrl} className="h-full sm:h-full" />} />
+              <CardBandBackdrop />
               <div className="relative space-y-2">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex shrink-0 rounded-[0.95rem] border-[3px] border-surface bg-surface shadow-pop">
-                    <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={40} className="[&>span:first-child]:rounded-[0.75rem]" />
+                  <span className="inline-flex shrink-0 rounded-lg border-[3px] border-surface bg-surface shadow-card">
+                    <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={40} className="[&>span:first-child]:rounded-md" />
                   </span>
                   <div className="min-w-0 flex-1 space-y-0.5">
                     <Eyebrow tone="primary">{t(CATEGORY_LABEL_KEYS[community.category])}</Eyebrow>
-                    <h3 className="break-words font-display text-[1.0625rem] font-extrabold leading-tight tracking-[-0.015em] text-text">
+                    <h3 className="break-words font-display text-h3 font-extrabold leading-tight tracking-[-0.015em] text-text">
                       <Link href={communityHref(community.id)} className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
                         {community.name}
                       </Link>

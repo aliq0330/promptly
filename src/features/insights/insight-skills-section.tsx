@@ -18,7 +18,7 @@ export function InsightSkillsSection({ period }: { period: number }) {
   if (state.status === "loading") return null;
   if (state.status === "error") {
     return (
-      <section className="rounded-lg border border-border-soft bg-surface p-4" data-insights-skills="">
+      <section className="rounded-lg card-flat p-4" data-insights-skills="">
         <p role="alert" className="text-small text-danger">{state.message}</p>
         <button type="button" onClick={retry} className="mt-2 text-small font-semibold text-primary">{t("common.retry")}</button>
       </section>
@@ -26,7 +26,7 @@ export function InsightSkillsSection({ period }: { period: number }) {
   }
   if (state.data.length === 0) return null;
   return (
-    <section className="rounded-lg border border-border-soft bg-surface p-4 sm:p-5" aria-labelledby="insights-skills-title" data-insights-skills="">
+    <section className="rounded-lg card-flat p-4 sm:p-5" aria-labelledby="insights-skills-title" data-insights-skills="">
       <h2 id="insights-skills-title" className="mb-2 flex items-center gap-2 text-h2 font-bold text-text">
         <GraduationCap size={20} aria-hidden /> {t("insights.skills.title")}
       </h2>

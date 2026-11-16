@@ -47,7 +47,7 @@ function ReactorRow({ reactor, mine, onRemove, onNavigate }: { reactor: Reactor;
     return (
       <li className="flex items-center gap-3 px-1 py-2.5">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-muted">
-          <UserX size={18} aria-hidden />
+          <UserX size={20} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-small font-semibold text-text-secondary">{t("statistics.deletedUser")}</p>
@@ -117,7 +117,7 @@ export function ReactionSheet({
   return (
     <Modal onClose={onClose} labelledBy="reaction-sheet-title" overLayers={overLayers}>
       <div
-        className="flex h-[640px] max-h-[75dvh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+        className="flex h-[640px] max-h-[75dvh] w-full max-w-md flex-col overflow-hidden rounded-lg card-flat shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between gap-2 px-4 pb-2 pt-4">
@@ -133,7 +133,7 @@ export function ReactionSheet({
             aria-label={t("common.close")}
             className="rounded-md p-1.5 text-text-muted hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 

@@ -31,11 +31,7 @@ export function buttonClassName({
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  // Primary carries a faint top light-catch (inset highlight) + hairline
-  // shadow: the small detail that makes a filled button feel pressed-glass
-  // rather than flat paint.
-  primary:
-    "bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.16),0_1px_2px_rgb(var(--p-shadow)/calc(0.12*var(--p-sa)))] hover:bg-primary-hover",
+  primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
   secondary: "bg-primary-soft text-primary hover:bg-primary-soft/70",
   ghost: "bg-transparent text-text-secondary hover:bg-surface-soft hover:text-text",
   outline: "border border-border bg-surface text-text shadow-xs hover:border-border-strong hover:bg-surface-soft",

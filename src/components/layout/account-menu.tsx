@@ -75,7 +75,7 @@ const ITEM_CLASS =
 function MenuGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div role="group" aria-label={label} className="px-1 py-1 md:px-1.5 md:py-1.5">
-      <p className="hidden px-3 pb-1 pt-1.5 text-caption md:block font-semibold uppercase tracking-[0.08em] text-text-muted">{label}</p>
+      <p className="hidden px-3 pb-1 pt-1.5 text-caption md:block font-semibold text-text-muted">{label}</p>
       {children}
     </div>
   );
@@ -183,7 +183,7 @@ function ShortcutGrid({ items, onNavigate }: { items: NavItem[]; onNavigate: () 
   const { t } = useTranslation();
   return (
     <div className="px-5 pb-2">
-      <p className="mb-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("nav.shortcuts")}</p>
+      <p className="mb-2 text-caption font-semibold text-text-muted">{t("nav.shortcuts")}</p>
       <ul className="grid grid-cols-3 gap-2">
         {items.map((item) => {
           const Icon = item.icon;
@@ -193,7 +193,7 @@ function ShortcutGrid({ items, onNavigate }: { items: NavItem[]; onNavigate: () 
                 href={item.href}
                 role="menuitem"
                 onClick={onNavigate}
-                className="flex min-h-21 flex-col items-center justify-center gap-1 rounded-lg border border-border-soft bg-background px-1 text-center text-label font-semibold text-text transition-colors duration-200 hover:bg-surface-soft"
+                className="flex min-h-21 flex-col items-center justify-center gap-1 rounded-lg card-inset px-1 text-center text-label font-semibold text-text transition-colors duration-200 hover:bg-surface-soft"
               >
                 <Icon size={24} className="text-primary" />
                 <span className="max-w-full truncate">{t(item.tileLabelKey ?? item.labelKey)}</span>
@@ -420,7 +420,7 @@ export function SidebarAccount() {
       >
         <Avatar src={profile.avatarUrl} alt={profile.displayName} size={32} badge={<OwnPresenceDot avatarSize={32} />} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-body font-bold text-text">{profile.displayName}</span>
+          <span className="block truncate text-body font-semibold text-text">{profile.displayName}</span>
           <span className="block truncate text-caption text-text-muted">{t("nav.accountHint")}</span>
         </span>
         <ChevronUp size={16} className={cn("shrink-0 text-text-muted transition-transform duration-200", !open && "rotate-180")} />
@@ -449,7 +449,7 @@ export function GuestAuthMenu() {
       <div className="ml-1.5 hidden shrink-0 items-center gap-1.5 sm:flex">
         <Link
           href="/login"
-          className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-label font-semibold text-text transition-colors duration-200 hover:bg-surface-soft"
+          className="flex h-9 items-center gap-1.5 rounded-md card-flat px-3 text-label font-semibold text-text transition-colors duration-200 hover:bg-surface-soft"
         >
           <LogIn size={16} />
           {t("header.login")}

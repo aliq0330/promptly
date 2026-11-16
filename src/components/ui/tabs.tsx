@@ -92,7 +92,7 @@ export function Tabs<K extends string>({
           ? "gap-1 border-b border-border-soft"
           : variant === "pill"
             ? "gap-2 py-0.5"
-            : "w-fit max-w-full gap-0.5 rounded-lg border border-border-soft bg-surface-soft p-0.5",
+            : "w-fit max-w-full gap-0.5 rounded-lg card-soft p-0.5",
       )}
     >
       {indicator && variant !== "pill" && (
@@ -122,10 +122,10 @@ export function Tabs<K extends string>({
                 : variant === "pill"
                   ? cn(
                       "h-9 rounded-full px-4 font-semibold",
-                      selected ? "bg-text text-background" : "bg-surface-soft text-text-secondary hover:bg-border-soft hover:text-text",
+                      selected ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary hover:bg-border-soft hover:text-text",
                     )
                   : cn(
-                    "h-8 rounded-md px-3",
+                    "h-9 rounded-md px-3",
                     selected
                       ? cn("text-text", !indicator && "bg-surface shadow-sm ring-1 ring-border-soft")
                       : "text-text-muted hover:text-text",

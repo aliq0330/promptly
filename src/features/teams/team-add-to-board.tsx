@@ -168,10 +168,10 @@ export function AddToBoardDialog({
                     className={cn("flex min-h-14 w-full items-center gap-3 rounded-lg border px-3 text-left transition-colors disabled:opacity-50", on ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft")}
                   >
                     <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
-                      <Presentation size={18} />
+                      <Presentation size={20} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-small font-bold text-text">{board.title}</span>
+                      <span className="block truncate text-small font-semibold text-text">{board.title}</span>
                       <span className="block truncate text-caption text-text-secondary">{here ? t("tf.addToBoard.already") : t("tp.addToBoard.items", { count: board.itemCount })}</span>
                     </span>
                     <span aria-hidden className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-md border-2", on ? "border-primary bg-primary text-primary-foreground" : "border-border-strong")}>
@@ -193,9 +193,9 @@ export function AddToBoardDialog({
             className={cn("flex min-h-14 w-full items-center gap-3 rounded-lg border border-dashed px-3 text-left transition-colors", creating ? "border-primary bg-primary-soft" : "border-border hover:bg-surface-soft")}
           >
             <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
-              <Plus size={18} />
+              <Plus size={20} />
             </span>
-            <span className="text-small font-bold text-text">{t("tp.board.new")}</span>
+            <span className="text-small font-semibold text-text">{t("tp.board.new")}</span>
           </button>
           {creating && (
             <div>

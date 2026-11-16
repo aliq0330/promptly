@@ -110,9 +110,9 @@ function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item:
       <div className="relative h-full w-full overflow-hidden rounded-lg bg-surface-soft shadow-card">
         <SpaceImage url={item.mediaUrl} alt={resolved.title} available={!reason} reason={reason && !lowDetail ? t(reason) : undefined} className="absolute inset-0" />
         {!lowDetail && (resolved.title || item.note) && (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2.5 pb-2 pt-6">
-            {resolved.title && <p className="truncate text-caption font-semibold text-white">{resolved.title}</p>}
-            {item.note && <p className="truncate text-caption text-white/80">{item.note}</p>}
+          <div className="absolute inset-x-0 bottom-0 art-scrim px-2.5 pb-2 pt-6">
+            {resolved.title && <p className="truncate text-caption font-semibold text-on-art">{resolved.title}</p>}
+            {item.note && <p className="truncate text-caption text-on-art-muted">{item.note}</p>}
           </div>
         )}
       </div>
@@ -122,8 +122,8 @@ function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item:
   if (item.kind === "prompt") {
     const text = item.isDraft ? item.body : (resolved.prompt?.promptText ?? "");
     return (
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border border-border-soft bg-surface p-3 shadow-card">
-        <p className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-[0.08em] text-primary">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-lg card-flat p-3 shadow-card">
+        <p className="flex items-center gap-1.5 text-caption font-semibold text-primary">
           <SquareTerminal size={12} aria-hidden />
           {item.isDraft ? t("spaces.prompts.sourceDraft") : t("spaces.item.prompt")}
         </p>
@@ -150,7 +150,7 @@ function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item:
     return (
       <div className="flex h-full w-full flex-col gap-2 overflow-hidden rounded-xl border border-primary/50 bg-surface p-3 shadow-card" data-step-card="">
         <div className="flex items-start gap-2">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[12px] font-bold text-primary-foreground">{item.sourceStepNo ?? "·"}</span>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-semibold text-primary-foreground">{item.sourceStepNo ?? "·"}</span>
           <p className="line-clamp-2 min-w-0 flex-1 text-small font-semibold leading-5 text-text">{item.title || t("wfSpace.objects.untitledStep")}</p>
         </div>
         {!lowDetail && (
@@ -185,7 +185,7 @@ function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item:
 
   if (item.kind === "palette") {
     return (
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border border-border-soft bg-surface p-2.5 shadow-card">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-lg card-flat p-2.5 shadow-card">
         <p className="flex items-center gap-1.5 truncate text-caption font-semibold text-text-secondary">
           <Palette size={12} aria-hidden />
           {palette?.name ?? t("spaces.item.palette")}
@@ -209,14 +209,14 @@ function StepChips({ label, values }: { label: string; values: string[] }) {
   const shown = values.slice(0, 3);
   return (
     <div className="grid grid-cols-[48px_minmax(0,1fr)] items-start gap-1.5">
-      <span className="pt-0.5 text-caption font-bold uppercase tracking-[0.07em] text-text-muted">{label}</span>
+      <span className="pt-0.5 text-caption font-semibold text-text-muted">{label}</span>
       <div className="flex min-w-0 flex-wrap gap-1">
         {shown.map((value, index) => (
-          <span key={index} className="max-w-full truncate rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 font-mono text-caption leading-4 text-text-secondary">
+          <span key={index} className="max-w-full truncate rounded-md card-soft px-1.5 py-0.5 font-mono text-caption leading-4 text-text-secondary">
             {value}
           </span>
         ))}
-        {values.length > shown.length && <span className="rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 text-caption leading-4 text-text-muted">+{values.length - shown.length}</span>}
+        {values.length > shown.length && <span className="rounded-md card-soft px-1.5 py-0.5 text-caption leading-4 text-text-muted">+{values.length - shown.length}</span>}
       </div>
     </div>
   );
@@ -226,9 +226,9 @@ function StepChips({ label, values }: { label: string; values: string[] }) {
 function WorkflowFlowItem({ item, fallback, lowDetail }: { item: SpaceItem; fallback: ReactNode; lowDetail: boolean }) {
   const { data, state } = useWorkflowFlow(item.contentId);
   if (state === "failed") return <>{fallback}</>;
-  if (!data) return <div className="skeleton-shimmer h-full w-full rounded-lg border border-border-soft bg-surface-soft" aria-hidden />;
+  if (!data) return <div className="skeleton-shimmer h-full w-full rounded-lg card-soft" aria-hidden />;
   return (
-    <div className="h-full w-full overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card">
+    <div className="h-full w-full overflow-hidden rounded-lg card-flat shadow-card">
       <WorkflowFlowDiagram data={data} options={{ showIo: item.flowShowIo, showLinks: item.flowShowLinks, showRelations: item.flowShowRelations }} fit={{ mode: "box" }} lowDetail={lowDetail} />
     </div>
   );
@@ -238,8 +238,8 @@ function ContentCard({ item, resolved, reason, lowDetail }: { item: SpaceItem; r
   const { t } = useTranslation();
   const Icon = item.contentType === "workflow" ? Workflow : item.contentType === "preset" ? SlidersHorizontal : item.contentType === "skill" ? GraduationCap : Sparkles;
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border border-border-soft bg-surface p-3 shadow-card">
-      <p className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-[0.08em] text-primary">
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-lg card-flat p-3 shadow-card">
+      <p className="flex items-center gap-1.5 text-caption font-semibold text-primary">
         <Icon size={12} aria-hidden />
         {t(item.contentType === "workflow" ? "spaces.content.workflow" : item.contentType === "preset" ? "spaces.content.preset" : item.contentType === "skill" ? "spaces.content.skill" : "spaces.content.request")}
       </p>

@@ -9,6 +9,7 @@ import { Button, buttonClassName } from "@/components/ui/button";
 import { CARD_SURFACE_CLASS } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * Hub düzeni (docs/history/379-*): Spaces, Topluluklar ve Ekipler'in ana sayfaları ile iç sayfaları TEK iskeleti paylaşır.
@@ -70,7 +71,7 @@ export function HubCreateButton({
 }) {
   return (
     <Button type="button" onClick={onClick} title={label} aria-label={label} data-testid={testId} className="h-10 shrink-0 rounded-full px-4 sm:px-5" {...attr}>
-      <Plus size={18} aria-hidden />
+      <Plus size={20} aria-hidden />
       <span className="max-sm:hidden">{label}</span>
       <span className="sm:hidden">{shortLabel ?? label}</span>
     </Button>
@@ -106,14 +107,14 @@ export function HubAttentionStrip({
   const action = buttonClassName({ variant: "outline", size: "sm", className: "shrink-0" });
   return (
     <div
-      className={cn("flex h-[3.75rem] items-center gap-3 rounded-lg border border-border-soft bg-surface pl-4 pr-3 shadow-card", onAction && "cursor-pointer")}
+      className={cn("flex h-[3.75rem] items-center gap-3 rounded-lg card-flat pl-4 pr-3 shadow-card", onAction && "cursor-pointer")}
       data-testid={testId}
       data-hub-attention=""
       // Şeridin boş yerine dokunmak da eylemi çalıştırır (düğme kendi tıklamasını zaten işler).
       onClick={onAction ? (event) => !(event.target as HTMLElement).closest("button,a") && onAction() : undefined}
     >
-      <span className="grid h-[2.125rem] w-[2.125rem] shrink-0 place-items-center rounded-[0.625rem] bg-warning-soft text-warning">
-        <Icon size={18} aria-hidden />
+      <span className="grid h-[2.125rem] w-[2.125rem] shrink-0 place-items-center rounded-md bg-warning-soft text-warning">
+        <Icon size={20} aria-hidden />
       </span>
       <span className="min-w-0 flex-1 truncate text-small text-text-secondary [&_b]:font-semibold [&_b]:text-text">{children}</span>
       {href ? (
@@ -130,7 +131,7 @@ export function HubAttentionStrip({
 }
 
 /** Kart ızgarası: telefonda 1, tablette 2, geniş masaüstünde 3 sütun (12 / 16 / 20 px aralık). */
-export const HUB_GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 xl:gap-5";
+export const HUB_GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3";
 
 export function HubGrid({ children, className, ...rest }: { children: ReactNode; className?: string; [data: `data-${string}`]: string | undefined }) {
   return (
@@ -203,7 +204,7 @@ export function HubCard({
         {coverOverlay && <div className="absolute inset-x-2.5 bottom-2 z-10 flex items-center gap-1.5">{coverOverlay}</div>}
       </div>
       <div className={cn(HUB_CARD_BODY_CLASS, "flex min-w-0 flex-col px-4 py-3")}>
-        <h3 className="min-w-0 truncate font-display text-[1.0625rem] font-bold leading-tight tracking-[-0.01em] text-text">
+        <h3 className="min-w-0 truncate font-display text-h3 font-bold leading-tight tracking-[-0.01em] text-text">
           <Link href={href} className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
             {title}
           </Link>
@@ -222,7 +223,7 @@ export function HubCard({
 /** Yüklenirken kartın yerini tutan iskelet (aynı 16:9 kapak + sabit gövde: kayma yok). */
 export function HubCardSkeleton() {
   return (
-    <li aria-hidden className="overflow-hidden rounded-lg border border-border-soft bg-surface">
+    <li aria-hidden className="overflow-hidden rounded-lg card-flat">
       <Skeleton className="aspect-video w-full rounded-none" />
       <div className={cn(HUB_CARD_BODY_CLASS, "space-y-2 px-4 py-3")}>
         <Skeleton className="h-4 w-2/3" />
@@ -245,17 +246,9 @@ export function HubFaces({ children, more }: { children: ReactNode; more?: numbe
 /** Durum rozeti (kartın sağ altı). */
 export function HubBadge({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "primary" | "success" | "warning" }) {
   return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-caption font-semibold",
-        tone === "primary" && "bg-primary-soft text-primary",
-        tone === "success" && "bg-success-soft text-success",
-        tone === "warning" && "bg-warning-soft text-warning",
-        tone === "neutral" && "bg-surface-soft text-text-secondary",
-      )}
-    >
+    <Badge variant={tone === "primary" ? "default" : tone} className="shrink-0 whitespace-nowrap">
       {children}
-    </span>
+    </Badge>
   );
 }
 
@@ -303,14 +296,14 @@ export function HubDetailBand({
         </div>
       )}
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 p-4 md:gap-x-5 md:p-5 xl:grid-cols-[auto_minmax(0,1fr)_auto]">
-        <div className="relative aspect-square w-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-surface shadow-pop md:aspect-video md:w-32 xl:w-44" data-hub-band-art="">
+        <div className="relative aspect-square w-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-surface shadow-card md:aspect-video md:w-32 xl:w-44" data-hub-band-art="">
           {art}
         </div>
         <div className="min-w-0 space-y-1.5">
           {(backHref || kicker) && (
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
               {backHref && (
-                <Link href={backHref} aria-label={backLabel} className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-surface/70 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-hub-back="" {...backAttrs}>
+                <Link href={backHref} aria-label={backLabel} className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface/70 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-hub-back="" {...backAttrs}>
                   <ArrowLeft size={16} aria-hidden />
                 </Link>
               )}
@@ -335,7 +328,7 @@ export function HubDetailBand({
 /** İç sayfa gövdesi: içerik + `xl`+ sağ "Hakkında" sütunu (300 px). Yan sütun yoksa içerik tam genişlik. */
 export function HubDetailLayout({ children, aside, asideLabel }: { children: ReactNode; aside?: ReactNode; asideLabel?: string }) {
   return (
-    <div className={cn("min-w-0", aside && "xl:grid xl:grid-cols-[minmax(0,1fr)_18.75rem] xl:items-start xl:gap-7")}>
+    <div className={cn("min-w-0", aside && "xl:grid xl:grid-cols-[minmax(0,1fr)_var(--aside-w)] xl:items-start xl:gap-7")}>
       <div className="min-w-0 space-y-4 sm:space-y-5">{children}</div>
       {aside && (
         <aside className="hidden space-y-3 xl:sticky xl:top-20 xl:block" aria-label={asideLabel} data-testid="hub-aside">

@@ -158,7 +158,7 @@ export function PromptDnaEditor({
           )}
         </div>
         <Button type="button" variant="outline" size="sm" onClick={generate} disabled={!promptText.trim()}>
-          <WandSparkles size={14} />
+          <WandSparkles size={16} />
           {t("dna.generate")}
         </Button>
       </div>
@@ -168,11 +168,11 @@ export function PromptDnaEditor({
         <div className="space-y-2 rounded-md border border-primary/30 bg-primary-soft/40 p-3" role="region" aria-label={t("dna.detectedHeading")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="flex items-center gap-1.5 text-label font-semibold text-text">
-              <Dna size={14} className="text-primary" />
+              <Dna size={16} className="text-primary" />
               {t("dna.detectedHeading")} ({diff.newSections.length})
             </p>
             <Button type="button" size="sm" onClick={() => onChange(applyDiff(sections, diff))}>
-              <Check size={14} />
+              <Check size={16} />
               {t("dna.addAll")}
             </Button>
           </div>
@@ -180,7 +180,7 @@ export function PromptDnaEditor({
             {diff.newSections.map((detected) => {
               const Icon = DNA_ICONS[detected.type];
               return (
-                <li key={detected.type} className="rounded-md border border-border-soft bg-surface p-2.5">
+                <li key={detected.type} className="rounded-md card-flat p-2.5">
                   <div className="flex items-start gap-3">
                     <Icon size={16} className="mt-0.5 shrink-0 text-text-muted" aria-hidden="true" />
                     <div className="min-w-0 flex-1">
@@ -246,7 +246,7 @@ export function PromptDnaEditor({
                 {isEditing && editing ? (
                   <div className="space-y-2">
                     <p className="flex items-center gap-1.5 text-label font-semibold text-text">
-                      <Icon size={14} className="text-text-muted" aria-hidden="true" />
+                      <Icon size={16} className="text-text-muted" aria-hidden="true" />
                       {section.type === "custom" ? t("dna.section.custom") : heading}
                     </p>
                     {section.type === "custom" && (
@@ -256,7 +256,7 @@ export function PromptDnaEditor({
                         maxLength={60}
                         placeholder={t("dna.customLabelPlaceholder")}
                         aria-label={t("dna.customLabel")}
-                        className="h-9 w-full rounded-md border border-border bg-surface px-3 text-small text-text"
+                        className="h-9 w-full rounded-md card-flat px-3 text-small text-text"
                       />
                     )}
                     <textarea
@@ -267,7 +267,7 @@ export function PromptDnaEditor({
                       autoFocus
                       placeholder={t("dna.contentPlaceholder")}
                       aria-label={t("dna.contentLabel")}
-                      className="w-full resize-y rounded-md border border-border bg-surface px-3 py-2 text-small text-text"
+                      className="w-full resize-y rounded-md card-flat px-3 py-2 text-small text-text"
                     />
                     <div className="flex justify-end gap-1.5">
                       <Button type="button" variant="ghost" size="sm" onClick={cancelEdit}>
@@ -304,7 +304,7 @@ export function PromptDnaEditor({
                         aria-label={t("dna.removeAria", { label: heading })}
                         className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger"
                       >
-                        <TrashIcon size={15} />
+                        <TrashIcon size={16} />
                       </button>
                     </div>
                   </div>
@@ -324,9 +324,9 @@ export function PromptDnaEditor({
           aria-controls="dna-add-menu"
           className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-label font-medium text-primary hover:bg-primary-soft"
         >
-          <Plus size={14} />
+          <Plus size={16} />
           {t("dna.addSection")}
-          <ChevronDown size={14} className={cn("transition-transform duration-200", menuOpen && "rotate-180")} />
+          <ChevronDown size={16} className={cn("transition-transform duration-200", menuOpen && "rotate-180")} />
         </button>
         <Collapsible open={menuOpen} id="dna-add-menu">
           <div className="flex flex-wrap gap-1.5 pt-2">
@@ -339,7 +339,7 @@ export function PromptDnaEditor({
                   type="button"
                   disabled={taken}
                   onClick={() => startAdd(type)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-label font-medium text-text-secondary transition-colors hover:border-border-strong hover:text-text disabled:pointer-events-none disabled:opacity-50"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-label font-medium text-text-secondary transition-colors hover:border-border-strong hover:text-text disabled:pointer-events-none disabled:opacity-50"
                 >
                   <Icon size={12} aria-hidden="true" />
                   {label(type)}

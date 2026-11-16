@@ -10,7 +10,7 @@ import type { ContentSummary } from "@/features/communities/content-summary";
 const TONES = [
   "bg-primary-soft",
   "bg-[color-mix(in_srgb,var(--color-secondary)_14%,var(--color-surface))]",
-  "bg-gradient-to-br from-primary-soft to-[color-mix(in_srgb,var(--color-secondary)_16%,var(--color-surface))]",
+  "bg-[color-mix(in_srgb,var(--color-heart)_8%,var(--color-surface-soft))]",
   "bg-surface-soft",
   "bg-[color-mix(in_srgb,var(--color-primary)_7%,var(--color-surface-soft))]",
 ] as const;

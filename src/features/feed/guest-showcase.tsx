@@ -54,10 +54,10 @@ export function GuestShowcase({ onUnavailable }: { onUnavailable: () => void }) 
   return (
     <section
       aria-labelledby="guest-showcase-title"
-      className="relative grid overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]"
+      className="relative grid overflow-hidden rounded-lg card-flat shadow-card md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]"
     >
       <div className="relative z-10 space-y-3 self-center px-5 pb-5 pt-6 sm:px-8 sm:py-9">
-        <p className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("nav.tagline")}</p>
+        <p className="text-caption font-semibold text-primary">{t("nav.tagline")}</p>
         <h1 id="guest-showcase-title" className="text-h1 font-bold text-text">
           {t("showcase.title")}
         </h1>
@@ -95,7 +95,7 @@ export function GuestShowcase({ onUnavailable }: { onUnavailable: () => void }) 
           <div className="min-w-0 flex-1">
             {current ? (
               <>
-                <p className="truncate text-caption font-semibold uppercase tracking-[0.07em] text-text-muted">
+                <p className="truncate text-caption font-semibold text-text-muted">
                   {current.tool ? `${current.author.displayName} · ${current.tool}` : current.author.displayName}
                 </p>
                 <p className="truncate font-display text-body font-bold text-text">{current.title}</p>
@@ -138,7 +138,7 @@ function ShowcaseCard({ prompt, active, open, onToggle }: { prompt: Prompt; acti
         />
         <span
           className={cn(
-            "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8 font-display text-[0.8125rem] font-bold leading-tight text-white transition-opacity duration-300",
+            "absolute inset-x-0 bottom-0 art-scrim px-3 pb-2.5 pt-8 font-display text-label font-semibold leading-tight text-on-art transition-opacity duration-300",
             open && "opacity-0",
           )}
         >
@@ -149,12 +149,12 @@ function ShowcaseCard({ prompt, active, open, onToggle }: { prompt: Prompt; acti
       {active && (
         <div
           className={cn(
-            "absolute inset-0 flex flex-col justify-end gap-2 bg-black/80 p-3 text-white transition-[transform,visibility] duration-500 ease-soft",
+            "absolute inset-0 flex flex-col justify-end gap-2 bg-black/80 p-3 text-on-art transition-[transform,visibility] duration-500 ease-soft",
             open ? "visible translate-y-0" : "invisible translate-y-full",
           )}
           onClick={onToggle}
         >
-          <p className="line-clamp-6 font-mono text-caption leading-relaxed text-white/90">{prompt.promptText}</p>
+          <p className="line-clamp-6 font-mono text-caption leading-relaxed text-on-art">{prompt.promptText}</p>
           {open && (
             <div className="flex items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
               <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="sm" variant="primary" className="h-8 min-w-0 rounded-full px-3" />
@@ -162,7 +162,7 @@ function ShowcaseCard({ prompt, active, open, onToggle }: { prompt: Prompt; acti
                 href={promptHref(prompt)}
                 aria-label={t("showcase.open")}
                 title={t("showcase.open")}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-on-art transition-colors hover:bg-white/25"
               >
                 <ArrowUpRight size={16} aria-hidden />
               </Link>

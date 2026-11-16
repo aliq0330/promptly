@@ -617,8 +617,8 @@ export function StudioView() {
               {t("studio.runTitle")}
             </h2>
             <div role="radiogroup" aria-label={t("studio.runTitle")} className="grid gap-2 sm:grid-cols-2">
-              <RunModeOption selected={runMode === "run"} onSelect={() => setRunMode("run")} icon={<Play size={18} aria-hidden />} title={t("studio.optionRun")} hint={t("studio.optionRunHint")} />
-              <RunModeOption selected={runMode === "api"} onSelect={() => setRunMode("api")} icon={<KeyRound size={18} aria-hidden />} title={t("studio.optionApi")} hint={t("studio.optionApiHint")} />
+              <RunModeOption selected={runMode === "run"} onSelect={() => setRunMode("run")} icon={<Play size={20} aria-hidden />} title={t("studio.optionRun")} hint={t("studio.optionRunHint")} />
+              <RunModeOption selected={runMode === "api"} onSelect={() => setRunMode("api")} icon={<KeyRound size={20} aria-hidden />} title={t("studio.optionApi")} hint={t("studio.optionApiHint")} />
             </div>
 
             {runMode === "run" && (
@@ -726,7 +726,7 @@ export function StudioView() {
                   const rowModel = extraModel(row);
                   const needsKey = row.provider !== provider && !(extraKeys[row.provider] ?? loadKey(row.provider).key);
                   return (
-                    <div key={row.uid} className="space-y-2 rounded-lg border border-border-soft bg-surface-soft p-3">
+                    <div key={row.uid} className="space-y-2 rounded-lg card-soft p-3">
                       <div className="flex items-center justify-between gap-2">
                         <ChipRow>
                           {AI_PROVIDERS.map((p) => (
@@ -741,7 +741,7 @@ export function StudioView() {
                           aria-label={t("studio.compareRemove")}
                           className="shrink-0 rounded-md p-1.5 text-text-muted hover:bg-surface hover:text-text"
                         >
-                          <X size={14} aria-hidden />
+                          <X size={16} aria-hidden />
                         </button>
                       </div>
                       <Select
@@ -791,18 +791,18 @@ export function StudioView() {
               </p>
             )}
             <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" onClick={onGenerate} disabled={running} className="h-12 px-8 text-[1rem] font-bold">
+              <Button type="button" onClick={onGenerate} disabled={running} className="h-12 px-8 text-body font-semibold">
                 {running ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <WandSparkles size={16} aria-hidden />}
                 {running ? t("generate.running") : t("generate.run")}
               </Button>
               {running && (
                 <Button type="button" variant="outline" onClick={onStop}>
-                  <Square size={14} aria-hidden /> {t("generate.stop")}
+                  <Square size={16} aria-hidden /> {t("generate.stop")}
                 </Button>
               )}
               {extra.length < MAX_EXTRA && (
                 <button type="button" onClick={addExtra} className="inline-flex min-h-9 items-center gap-1.5 text-small font-medium text-primary hover:underline">
-                  <Plus size={14} aria-hidden /> {t("studio.compareAdd")}
+                  <Plus size={16} aria-hidden /> {t("studio.compareAdd")}
                 </button>
               )}
             </div>
@@ -912,8 +912,8 @@ function RunModeOption({ selected, onSelect, icon, title, hint }: { selected: bo
   );
 }
 
-const STUDIO_CARD = "rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5";
-const STUDIO_LABEL = "text-caption font-bold uppercase tracking-[0.06em] text-text-muted";
+const STUDIO_CARD = "rounded-lg card-flat p-4 shadow-card sm:p-5";
+const STUDIO_LABEL = "text-caption font-semibold text-text-muted";
 
 /** An empty source slot: a dashed pill that opens the picker (`subtle` = the optional preset slot). */
 function SourceSlot({ onClick, subtle = false, children }: { onClick: () => void; subtle?: boolean; children: React.ReactNode }) {
@@ -929,7 +929,7 @@ function SourceSlot({ onClick, subtle = false, children }: { onClick: () => void
       )}
     >
       <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-primary">
-        <Plus size={14} />
+        <Plus size={16} />
       </span>
       {children}
     </button>
@@ -943,7 +943,7 @@ function SourceLoading({ onRemove }: { onRemove: () => void }) {
     <div className="flex min-h-14 items-center justify-between gap-3 rounded-lg border border-border-soft px-4">
       <p className="min-w-0 truncate text-small font-medium text-text-muted">{t("studio.loading")}</p>
       <button type="button" onClick={onRemove} className="inline-flex items-center gap-1 text-small font-medium text-text-secondary hover:text-text">
-        <X size={14} aria-hidden /> {t("studio.remove")}
+        <X size={16} aria-hidden /> {t("studio.remove")}
       </button>
     </div>
   );
@@ -971,11 +971,11 @@ function ResultBody({ output, index, meta, onPublish, onEdit }: { output: AiOutp
       <div className="space-y-2 border-t border-border-soft p-3">
         {meta && <p className="truncate text-caption text-text-muted">{meta}</p>}
         <Button type="button" onClick={onPublish} className="h-11 w-full">
-          <Upload size={14} aria-hidden /> {t("generate.publish")}
+          <Upload size={16} aria-hidden /> {t("generate.publish")}
         </Button>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" onClick={onEdit} className="h-11 min-w-0 flex-1">
-            <Pencil size={14} aria-hidden /> {t("studio.editRetry")}
+            <Pencil size={16} aria-hidden /> {t("studio.editRetry")}
           </Button>
           {output.text && (
             <Button type="button" variant="outline" onClick={copy} className="h-11">
@@ -984,7 +984,7 @@ function ResultBody({ output, index, meta, onPublish, onEdit }: { output: AiOutp
           )}
           {output.imageUrl && (
             <a href={output.imageUrl} download={`promptly-${index + 1}.png`} className={buttonClassName({ variant: "outline", className: "h-11" })}>
-              <Download size={14} aria-hidden /> {t("generate.download")}
+              <Download size={16} aria-hidden /> {t("generate.download")}
             </a>
           )}
         </div>

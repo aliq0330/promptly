@@ -38,7 +38,7 @@ export function PresetSaveCta({
   const [modalOpen, setModalOpen] = useState(false);
   const [toast, setToast] = useState<"saved" | "removed" | "failed" | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const iconSize = size === "sm" ? 14 : 18;
+  const iconSize = size === "sm" ? 16 : 20;
 
   useEffect(() => {
     return () => {

@@ -129,7 +129,7 @@ export function TopicPage({
           backdrop={images[0] ? <StorageImage src={images[0].url} alt="" fill sizes="100vw" className="object-cover" /> : undefined}
           art={<CollageArt compact images={images} icon={icon} />}
           kicker={kicker}
-          title={<DetailTitle className="text-[1.625rem] sm:text-[2.5rem]">{title}</DetailTitle>}
+          title={<DetailTitle className="text-h2 sm:text-display">{title}</DetailTitle>}
           byline={
             <div className="space-y-1">
               <p className="text-small text-text-secondary sm:text-body" data-topic-count="">

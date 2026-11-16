@@ -38,9 +38,9 @@ export function UndoBar({ placement, aboveNav = true }: { placement: "inline" | 
           ),
       )}
     >
-      <Check size={18} aria-hidden />
+      <Check size={20} aria-hidden />
       <span className="min-w-0 flex-1 text-small font-medium">{undoNotice.text}</span>
-      <button type="button" onClick={() => void runUndo()} data-action="undo" className="h-11 shrink-0 rounded-full px-4 text-small font-bold text-background underline underline-offset-4 hover:bg-background/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background">
+      <button type="button" onClick={() => void runUndo()} data-action="undo" className="h-11 shrink-0 rounded-full px-4 text-small font-semibold text-background underline underline-offset-4 hover:bg-background/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background">
         {t("nc.undo")}
       </button>
     </div>

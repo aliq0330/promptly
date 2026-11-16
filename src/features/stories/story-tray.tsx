@@ -114,7 +114,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
               >
                 {/* Görünen rozet 24px; dokunma alanı 36px. */}
                 <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground">
-                  <Plus size={14} aria-hidden />
+                  <Plus size={16} aria-hidden />
                 </span>
               </Link>
             )}

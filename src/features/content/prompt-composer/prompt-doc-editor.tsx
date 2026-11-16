@@ -35,7 +35,7 @@ const TONE_CLASS: Record<TokenTone, string> = {
   variable:
     "bg-primary-soft text-primary [box-shadow:0_0_0_2px_var(--color-primary-soft)]",
   field:
-    "bg-secondary/15 text-secondary [box-shadow:0_0_0_2px_color-mix(in_srgb,var(--color-secondary)_15%,transparent)]",
+    "bg-secondary-soft text-secondary [box-shadow:0_0_0_2px_color-mix(in_srgb,var(--color-secondary)_15%,transparent)]",
   unknown:
     "bg-warning-soft text-warning [box-shadow:0_0_0_2px_color-mix(in_srgb,var(--color-warning)_15%,transparent)]",
 };
@@ -297,13 +297,13 @@ export const PromptDocEditor = forwardRef<
   );
 
   // Ayna ve textarea AYNI ölçüleri paylaşmalı (jeton çipleri metinle hizalı kalsın).
-  const metricsClass = fill ? "px-4 py-3 text-[16px] leading-7" : "px-3 py-2 text-small leading-6 max-lg:text-[16px]";
+  const metricsClass = fill ? "px-4 py-3 text-body leading-7" : "px-3 py-2 text-small leading-6 max-lg:text-body";
 
   return (
     <div
       className={cn(
         "relative",
-        !fill && "rounded-lg border border-border bg-background shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60",
+        !fill && "rounded-lg card-inset shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60",
         hidden && "hidden",
         className,
       )}
@@ -323,7 +323,7 @@ export const PromptDocEditor = forwardRef<
               data-s={segment.start}
               data-e={segment.end}
               data-token={segment.name}
-              className={cn("rounded-[5px] box-decoration-clone", TONE_CLASS[tokenTone(segment.name)])}
+              className={cn("rounded-xs box-decoration-clone", TONE_CLASS[tokenTone(segment.name)])}
             >
               {value.slice(segment.start, segment.end)}
             </span>
@@ -375,7 +375,7 @@ export const PromptDocEditor = forwardRef<
           syncSelection();
         }}
         className={cn(
-          "relative block w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent font-mono text-transparent caret-text outline-none placeholder:text-text-muted selection:bg-primary/25 selection:text-transparent",
+          "relative block w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent font-mono text-transparent caret-text focus-ring-inset placeholder:text-text-muted selection:bg-primary/25 selection:text-transparent",
           metricsClass,
         )}
       />

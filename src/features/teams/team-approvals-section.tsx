@@ -132,7 +132,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
               onClick={() => setProject(entry.id)}
               aria-pressed={project === entry.id}
               data-board-project={entry.id}
-              className={cn("h-9 rounded-full border px-4 text-small font-semibold", project === entry.id ? "border-text bg-text text-background" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
+              className={cn("h-9 rounded-full border px-4 text-small font-semibold", project === entry.id ? "border-transparent bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
             >
               {entry.title}
               {entry.count > 0 && <span className="ml-1.5 tabular-nums opacity-70">{entry.count}</span>}
@@ -148,7 +148,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
       )}
 
       {empty ? (
-        <EmptyState icon={ListChecks} title={t("tc.appr.empty")} description={t("tc.appr.emptyBody")} />
+        <EmptyState scene="inbox" icon={ListChecks} title={t("tc.appr.empty")} description={t("tc.appr.emptyBody")} />
       ) : wide ? (
         <div className="grid grid-cols-3 gap-4" data-board-layout="columns">
           {(["pending", "changes", "approved"] as const).map((state) => (
@@ -156,7 +156,7 @@ export function TeamApprovalsSection({ ctx }: { ctx: TeamCtx }) {
               <h3 className="mb-2.5 flex items-center gap-2 px-1.5 font-display text-body font-bold text-text">
                 <span aria-hidden className={cn("h-2.5 w-2.5 rounded-full", COLUMN[state].dot)} />
                 {t(COLUMN[state].label)}
-                <span className="ml-auto font-sans text-small font-bold text-text-muted">{cardsOf(state).length}</span>
+                <span className="ml-auto font-sans text-small font-semibold text-text-muted">{cardsOf(state).length}</span>
               </h3>
               {renderColumn(state)}
             </div>
@@ -194,10 +194,10 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
     const p = card.proposal;
     return (
       <article className="space-y-2 rounded-lg bg-surface p-4" data-board-proposal={p.itemId}>
-        <span className="block text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
+        <span className="block text-caption font-semibold text-text-muted">
           {t("tc.appr.proposal")} · {p.fileTitle ?? p.projectTitle}
         </span>
-        <Link href={p.fileId ? projectLink(teamId, p.projectId, { file: p.fileId, item: p.itemId }) : projectLink(teamId, p.projectId, { board: p.spaceId, item: p.itemId })} className="block text-body font-bold text-text hover:text-primary">
+        <Link href={p.fileId ? projectLink(teamId, p.projectId, { file: p.fileId, item: p.itemId }) : projectLink(teamId, p.projectId, { board: p.spaceId, item: p.itemId })} className="block text-body font-semibold text-text hover:text-primary">
           {p.proposedTitle || p.currentTitle || t(kindKey(p.kind))}
         </Link>
         <p className="text-small text-text-secondary">{t("tp.review.proposedBy", { name: p.proposerName ?? "" })}</p>
@@ -210,10 +210,10 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
   const when = item.decidedAt ?? item.submittedAt;
   return (
     <article className="space-y-2 rounded-lg bg-surface p-4" data-board-card={item.id} data-board-state={item.state}>
-      <span className="block text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
+      <span className="block text-caption font-semibold text-text-muted">
         {item.unitCount > 1 ? t("tc.appr.package", { count: item.unitCount }) : t(kindKey(item.kind))} · {item.fileTitle ?? t("tp.area.projectWide")}
       </span>
-      <Link href={boardItemHref(teamId, item)} className="block text-body font-bold text-text hover:text-primary" data-board-open>
+      <Link href={boardItemHref(teamId, item)} className="block text-body font-semibold text-text hover:text-primary" data-board-open>
         {item.title || t(kindKey(item.kind))}
       </Link>
       <p className="text-small text-text-secondary">
@@ -222,7 +222,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
       {item.unitCount > 1 && <p className="text-caption text-text-muted">{t("tp.review.packageHint", { count: item.unitCount })}</p>}
       <Preview item={item} />
       {state === "changes" && item.note && <p className="rounded-lg bg-danger-soft px-2.5 py-2 text-small text-danger">{t("tc.appr.leadNote", { note: item.note })}</p>}
-      {state === "changes" && <p className="text-caption font-bold text-danger">{item.mine ? t("tc.appr.fixIt") : t("tc.appr.waitingAuthor", { name: item.authorName ?? "" })}</p>}
+      {state === "changes" && <p className="text-caption font-semibold text-danger">{item.mine ? t("tc.appr.fixIt") : t("tc.appr.waitingAuthor", { name: item.authorName ?? "" })}</p>}
       {state === "pending" && item.canDecide && <Actions busy={busy} onApprove={onApprove} onChanges={onChanges} />}
       {state === "pending" && !item.canDecide && <p className="text-caption text-text-muted">{t("tc.appr.leadOnly")}</p>}
     </article>
@@ -279,10 +279,10 @@ function ChangesDialog({ busy, onClose, onSubmit }: { busy: boolean; onClose: ()
         </>
       }
     >
-      <label className="block text-small font-bold text-text" htmlFor="board-changes-note">
+      <label className="block text-small font-semibold text-text" htmlFor="board-changes-note">
         {t("tp.review.noteLabel")}
       </label>
-      <textarea id="board-changes-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={4} placeholder={t("tp.review.notePlaceholder")} className="mt-2 w-full rounded-xl border border-border bg-background px-3 py-2 text-small" />
+      <textarea id="board-changes-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={4} placeholder={t("tp.review.notePlaceholder")} className="mt-2 w-full rounded-lg card-inset px-3 py-2 text-small" />
       {error && (
         <p role="alert" className="mt-2 text-small text-danger">
           {error}

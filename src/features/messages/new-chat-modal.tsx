@@ -181,7 +181,7 @@ export function NewChatModal({
   return (
     <Modal onClose={onClose} labelledBy="new-chat-title">
       <div
-        className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg"
+        className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg card-flat shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2 px-5 pb-3 pt-5">
@@ -194,7 +194,7 @@ export function NewChatModal({
             aria-label={t("common.close")}
             className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
         <div className="px-5 pb-3">
@@ -222,7 +222,7 @@ export function NewChatModal({
             <Link
               href="/communities"
               onClick={onClose}
-              className="mt-3 flex items-center gap-2 rounded-lg border border-border-soft bg-surface px-3 py-2.5 text-left text-small font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
+              className="mt-3 flex items-center gap-2 rounded-lg card-flat px-3 py-2.5 text-left text-small font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
             >
               <Users size={16} className="shrink-0 text-primary" aria-hidden />
               {t("communities.messages.link")}
@@ -318,7 +318,7 @@ function PeopleSection({
   if (people.length === 0) return null;
   return (
     <section className="mb-2" aria-label={heading}>
-      <h3 className="px-3 pb-1 pt-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{heading}</h3>
+      <h3 className="px-3 pb-1 pt-2 text-caption font-semibold text-text-muted">{heading}</h3>
       <ul>
         {ordered.map((person) => (
           <li key={person.id}>

@@ -26,8 +26,8 @@ type PreviewableResult = PromptResultSummary & Partial<Pick<PromptResult, "media
 /** A card's media-kind mark (docs/history/281-*): a small translucent disc in the top-right corner instead of a play button over the picture. */
 function MediaBadge({ icon: Icon }: { icon: typeof Video }) {
   return (
-    <span aria-hidden className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white">
-      <Icon size={14} />
+    <span aria-hidden className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-art-chip text-on-art">
+      <Icon size={16} />
     </span>
   );
 }
@@ -106,7 +106,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
         size === "card" ? "aspect-square w-full p-3 pb-14" : "w-full rounded-lg border border-border-soft p-4",
       )}
     >
-      <FileText size={size === "card" ? 15 : 18} className="shrink-0 text-text-muted" />
+      <FileText size={size === "card" ? 16 : 20} className="shrink-0 text-text-muted" />
       <p
         className={cn(
           "prompt-text whitespace-pre-wrap break-words text-text-secondary",

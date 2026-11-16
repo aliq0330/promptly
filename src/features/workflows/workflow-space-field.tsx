@@ -117,7 +117,7 @@ export function WorkflowSpaceField({
         <SwitchRow
           checked={choice.enabled}
           onChange={(enabled) => onChange({ ...choice, enabled })}
-          icon={<Plus size={18} />}
+          icon={<Plus size={20} />}
           title={choice.enabled ? t("wfSpace.field.on") : t("wfSpace.field.off")}
           description={t("wfSpace.field.switchHint")}
           ariaLabel={t("wfSpace.field.label")}
@@ -171,7 +171,7 @@ export function WorkflowSpaceField({
             </div>
 
             <div>
-              <p className="mb-1 text-caption font-bold uppercase tracking-[0.06em] text-text-secondary">{t("wfSpace.objects.options")}</p>
+              <p className="mb-1 text-caption font-semibold text-text-secondary">{t("wfSpace.objects.options")}</p>
               <p className="mb-2 text-caption text-text-muted">{t("wfSpace.objects.optStepsHint")}</p>
               <div className="space-y-2">
                 {layers.map((row) => (
@@ -188,7 +188,7 @@ export function WorkflowSpaceField({
 
             {note && (
               <p role="status" className={cn("flex items-start gap-2 rounded-xl px-3 py-2 text-small text-text-secondary", note.warn ? "bg-warning-soft" : "bg-primary-soft")}>
-                {note.warn ? <Lock size={14} className="mt-0.5 shrink-0 text-warning" aria-hidden /> : <Globe size={14} className="mt-0.5 shrink-0 text-primary" aria-hidden />}
+                {note.warn ? <Lock size={16} className="mt-0.5 shrink-0 text-warning" aria-hidden /> : <Globe size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden />}
                 {note.text}
               </p>
             )}

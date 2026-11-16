@@ -66,7 +66,7 @@ export function InsightTrendChart({ days, periodDays }: { days: InsightDay[]; pe
             return (
               <g key={tick}>
                 <line x1={0} x2={innerW} y1={y} y2={y} className="stroke-border-soft" strokeWidth={1} />
-                <text x={-8} y={y + 4} textAnchor="end" className="fill-text-muted text-[12px]">
+                <text x={-8} y={y + 4} textAnchor="end" className="fill-text-muted text-caption">
                   {formatInsightNumber(tick, language)}
                 </text>
               </g>
@@ -86,7 +86,7 @@ export function InsightTrendChart({ days, periodDays }: { days: InsightDay[]; pe
                 <text x={12} y={17} className="fill-surface-soft text-caption">
                   {formatInsightDay(peakDay.day, language)}
                 </text>
-                <text x={12} y={34} className="fill-surface text-[12px] font-semibold">
+                <text x={12} y={34} className="fill-surface text-caption font-semibold">
                   {t("insights.chart.peakCopies", { count: formatInsightNumber(peakDay.copies, language) })}
                 </text>
               </g>
@@ -99,7 +99,7 @@ export function InsightTrendChart({ days, periodDays }: { days: InsightDay[]; pe
               x={days.length > 1 ? (i * innerW) / (days.length - 1) : 0}
               y={innerH + 20}
               textAnchor={n === 0 ? "start" : n === all.length - 1 ? "end" : "middle"}
-              className="fill-text-muted text-[12px]"
+              className="fill-text-muted text-caption"
             >
               {formatInsightDay(days[i].day, language)}
             </text>

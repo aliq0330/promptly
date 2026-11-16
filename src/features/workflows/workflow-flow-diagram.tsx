@@ -89,27 +89,27 @@ function StepNode({ step, index, steps, box, options, lowDetail }: { step: Workf
   return (
     <div
       data-flow-node={index}
-      className="absolute flex flex-col gap-2 overflow-hidden rounded-xl border border-border bg-surface p-3 shadow-card"
+      className="absolute flex flex-col gap-2 overflow-hidden rounded-lg card-flat p-3 shadow-card"
       style={{ left: box.x, top: box.y, width: box.w, height: box.h }}
     >
       <div className="flex items-start gap-2">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[12px] font-bold text-primary-foreground">{index + 1}</span>
-        <p className="line-clamp-2 min-w-0 flex-1 text-[14px] font-semibold leading-5 text-text">{step.title || t("wfSpace.flow.untitledStep")}</p>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-semibold text-primary-foreground">{index + 1}</span>
+        <p className="line-clamp-2 min-w-0 flex-1 text-small font-semibold leading-5 text-text">{step.title || t("wfSpace.flow.untitledStep")}</p>
       </div>
       {!lowDetail &&
         (options.showIo ? (
           <>
             <div className="grid grid-cols-[46px_minmax(0,1fr)] items-start gap-1.5">
-              <span className="pt-0.5 text-caption font-bold uppercase tracking-[0.07em] text-text-muted">{t("wfSpace.flow.input")}</span>
+              <span className="pt-0.5 text-caption font-semibold text-text-muted">{t("wfSpace.flow.input")}</span>
               {inputs.length > 0 ? <ChipRow chips={inputs} /> : <span className="text-caption text-text-muted">—</span>}
             </div>
             <div className="grid grid-cols-[46px_minmax(0,1fr)] items-start gap-1.5">
-              <span className="pt-0.5 text-caption font-bold uppercase tracking-[0.07em] text-text-muted">{t("wfSpace.flow.output")}</span>
+              <span className="pt-0.5 text-caption font-semibold text-text-muted">{t("wfSpace.flow.output")}</span>
               {outputs.length > 0 ? <ChipRow chips={outputs} /> : <span className="text-caption text-text-muted">—</span>}
             </div>
           </>
         ) : (
-          step.description && <p className="line-clamp-4 break-words text-[12px] leading-4 text-text-secondary">{step.description}</p>
+          step.description && <p className="line-clamp-4 break-words text-caption leading-4 text-text-secondary">{step.description}</p>
         ))}
     </div>
   );
@@ -130,14 +130,14 @@ function LinkCard({ step, box, lowDetail }: { step: WorkflowStep; box: FlowBox; 
     >
       {!lowDetail && (
         <>
-          <p className={cn("flex items-center gap-1.5 text-caption font-bold uppercase tracking-[0.07em]", content ? "text-primary" : "text-text-muted")}>
+          <p className={cn("flex items-center gap-1.5 text-caption font-semibold", content ? "text-primary" : "text-text-muted")}>
             {content ? <Icon size={12} aria-hidden /> : <Link2Off size={12} aria-hidden />}
             {content ? t(step.stepType === "request" ? "spaces.content.request" : "spaces.item.prompt") : t(step.contentMissing ? "spaces.source.unavailable" : "wfSpace.flow.noContent")}
           </p>
           {content && (
             <div className="flex min-h-0 flex-1 items-start gap-2">
               <div className="min-w-0 flex-1">
-                <p className="line-clamp-3 break-words text-[13px] font-semibold leading-[1.25] text-text">{content.title}</p>
+                <p className="line-clamp-3 break-words text-label font-semibold leading-[1.25] text-text">{content.title}</p>
                 <p className="mt-1 truncate text-caption text-text-muted">@{content.authorUsername}</p>
               </div>
               {content.thumbnailUrl && <StorageImg src={content.thumbnailUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />}
@@ -197,14 +197,14 @@ export const WorkflowFlowDiagram = memo(function WorkflowFlowDiagram({
       style={fit.mode === "width" ? { height: Math.round(layout.height * scale) } : undefined}
     >
       <div className="absolute left-0 top-0 origin-top-left" style={{ width: layout.width, height: layout.height, transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})` }}>
-        <div className="absolute inset-2 rounded-[28px] border-2 border-dashed border-border-strong bg-surface/60" aria-hidden />
+        <div className="absolute inset-2 rounded-xl border-2 border-dashed border-border-strong bg-surface/60" aria-hidden />
         <div className="absolute flex items-center gap-3" style={{ left: FLOW_PAD_X, right: FLOW_PAD_X, top: 18, height: 32 }}>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-caption font-bold uppercase tracking-[0.07em] text-primary">
-            <WorkflowIcon size={13} aria-hidden />
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-caption font-semibold text-primary">
+            <WorkflowIcon size={16} aria-hidden />
             {t("workflow.singular")}
           </span>
-          <p className="min-w-0 flex-1 truncate font-display text-[17px] font-bold text-text">{workflow.title}</p>
-          <span className="hidden shrink-0 text-[12px] text-text-muted sm:inline">{t("workflow.stepCount", { count: steps.length })}</span>
+          <p className="min-w-0 flex-1 truncate font-display text-h3 font-bold text-text">{workflow.title}</p>
+          <span className="hidden shrink-0 text-caption text-text-muted sm:inline">{t("workflow.stepCount", { count: steps.length })}</span>
         </div>
 
         <svg className="pointer-events-none absolute left-0 top-0 overflow-visible" width={layout.width} height={layout.height} aria-hidden>

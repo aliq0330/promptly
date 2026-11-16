@@ -181,8 +181,8 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           below={<EngageReactionSummary id={preset.id} likeCount={preset.likeCount} contentType="preset" />}
           primary={
             <div className="flex flex-wrap items-center gap-2">
-              <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
-                <WandSparkles size={18} aria-hidden /> {t("studio.openInStudio")}
+              <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-md" })}>
+                <WandSparkles size={20} aria-hidden /> {t("studio.openInStudio")}
               </Link>
               {/* "Bir promptla dene" (docs/history/228-*): pick a prompt that fits this preset, Studio opens with both. */}
               <button

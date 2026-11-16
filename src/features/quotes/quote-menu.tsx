@@ -78,7 +78,7 @@ export function QuoteMenu({ quote, onDeleted }: { quote: Quote; onDeleted: () =>
           {(close) =>
             mine ? (
               <MenuItem
-                icon={<TrashIcon size={14} />}
+                icon={<TrashIcon size={16} />}
                 label={t("quotes.menu.delete")}
                 danger
                 onClick={() => {

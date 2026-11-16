@@ -152,7 +152,7 @@ export function useHubSelection(actions: HubBulkActions, options: { word: (selec
     <>
       {confirmDelete && selected.length > 0 && (
         <Modal onClose={busy ? () => undefined : () => setConfirmDelete(false)} labelledBy="hub-bulk-delete-title">
-          <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+          <DialogShell className="w-full max-w-sm space-y-4 rounded-lg card-flat p-5 shadow-pop">
             <h2 id="hub-bulk-delete-title" className="text-body font-semibold text-text">
               {t("th.sel.deleteTitle", { count: selected.length })}
             </h2>

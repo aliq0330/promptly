@@ -250,7 +250,7 @@ export function FieldCatalogPicker({
             aria-label={t("common.close")}
             className={iconButtonClassName(false, "h-9 w-9")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
@@ -270,7 +270,7 @@ export function FieldCatalogPicker({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">
           {query.trim() ? (
             <div className="space-y-1.5">
-              <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("fieldCatalog.resultsCount", { count: searchResults.length })}</p>
+              <p className="mb-1 text-caption font-semibold text-text-muted">{t("fieldCatalog.resultsCount", { count: searchResults.length })}</p>
               {searchResults.length === 0 && <p className="rounded-xl bg-surface-soft p-5 text-center text-small text-text-muted">{t("fieldCatalog.noFieldMatch")}</p>}
               {searchResults.map((field) => {
                 const category = CATALOG_CATEGORIES.find((c) => c.id === field.categoryId);
@@ -281,7 +281,7 @@ export function FieldCatalogPicker({
           ) : (
             <div className="space-y-6">
               <div>
-                <p className="mb-2 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("fieldCatalog.readyPackages")}</p>
+                <p className="mb-2 text-caption font-semibold text-text-muted">{t("fieldCatalog.readyPackages")}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {CATALOG_PACKAGES.map((pkg) => {
                     const fields = packageFields(pkg);
@@ -308,16 +308,16 @@ export function FieldCatalogPicker({
                   <div ref={previewRef} className="mt-3 animate-fade-in scroll-mb-4 rounded-lg bg-primary-soft/50 p-3 ring-1 ring-primary/15">
                     <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2">
                       <p className="flex items-center gap-1.5 text-small font-semibold text-text">
-                        <Eye size={14} className="text-primary" aria-hidden /> {catalogText(previewPackage.label, language)}
+                        <Eye size={16} className="text-primary" aria-hidden /> {catalogText(previewPackage.label, language)}
                         <span className="text-caption font-normal text-text-secondary">· {t("fieldCatalog.packagePreview")}</span>
                       </p>
                       <button
                         type="button"
                         onClick={() => setPreviewPackageId(null)}
                         aria-label={t("fieldCatalog.hidePreview")}
-                        className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text"
                       >
-                        <X size={14} />
+                        <X size={16} />
                       </button>
                     </div>
                     <div className="space-y-1.5">{previewPackageFields.map((field) => renderFieldRow(field))}</div>
@@ -339,7 +339,7 @@ export function FieldCatalogPicker({
               </div>
 
               <div className="space-y-1.5">
-                <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("fieldCatalog.categories")}</p>
+                <p className="mb-1 text-caption font-semibold text-text-muted">{t("fieldCatalog.categories")}</p>
                 {CATALOG_CATEGORIES.map((category) => {
                   const isCategoryOpen = expandedCategoryId === category.id;
                   return (
@@ -434,9 +434,9 @@ export function FieldCatalogPicker({
                       type="button"
                       onClick={() => removeSelected(field.id)}
                       aria-label={t("fieldCatalog.removeField", { name: catalogText(field.label, language) })}
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                     >
-                      <X size={14} />
+                      <X size={16} />
                     </button>
                   </li>
                 ))}
@@ -448,7 +448,7 @@ export function FieldCatalogPicker({
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft px-5 py-4">
           {onCreateCustom ? (
             <button type="button" onClick={onCreateCustom} className="inline-flex items-center gap-1.5 text-small font-medium text-primary hover:underline">
-              <Plus size={14} /> {t("fieldCatalog.createCustomField")}
+              <Plus size={16} /> {t("fieldCatalog.createCustomField")}
             </button>
           ) : (
             <span className="text-caption text-text-muted">{selectedCount > 0 ? t("fieldCatalog.fieldsSelectedCount", { count: selectedCount }) : t("fieldCatalog.noFieldsSelected")}</span>

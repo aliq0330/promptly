@@ -171,7 +171,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
       <DialogShell
         ref={frameRef}
         data-report-modal=""
-        className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop"
+        className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-pop"
       >
         {phase === "success" ? (
           <div role="status" data-report-success="" className="flex flex-1 flex-col items-center justify-center gap-4 px-7 py-9 text-center">
@@ -210,20 +210,20 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                 aria-label={t("common.close")}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
             <div data-report-preview="" className="mx-5 flex shrink-0 items-center gap-3 rounded-lg bg-surface-soft px-3 py-2.5 sm:mx-6">
               <div className="min-w-0 flex-1">
-                <span className="inline-block rounded-full bg-primary-soft px-2 text-caption font-bold uppercase leading-5 tracking-wide text-primary">{t(REPORT_TYPE_LABEL[target.type])}</span>
+                <span className="inline-block rounded-full bg-primary-soft px-2 text-caption font-semibold leading-5 text-primary">{t(REPORT_TYPE_LABEL[target.type])}</span>
                 {previewTitle && <p className="mt-0.5 truncate text-small font-semibold text-text">{previewTitle}</p>}
                 {previewSub && <p className="truncate text-caption text-text-muted">{previewSub}</p>}
               </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-2 pt-4 sm:px-6">
-              <p id={`${titleId}-reasons`} className="mb-2 text-caption font-bold uppercase tracking-[0.05em] text-text-muted">
+              <p id={`${titleId}-reasons`} className="mb-2 text-caption font-semibold text-text-muted">
                 {t("report.modal.reasonsLabel")}
               </p>
               <div
@@ -261,7 +261,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                       )}
                     >
                       <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", on ? "bg-primary text-primary-foreground" : "bg-surface text-text-secondary")} aria-hidden>
-                        <Icon size={18} />
+                        <Icon size={20} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-body font-semibold leading-snug text-text">{t(REPORT_REASON_TITLE[reason])}</span>
@@ -281,7 +281,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                     <label htmlFor={noteId} className="text-small font-semibold text-text">
                       {t("report.modal.noteLabel")} {!noteRequired && <span className="font-normal text-text-muted">{t("report.modal.optional")}</span>}
                     </label>
-                    {noteRequired && <span className="rounded-full bg-danger-soft px-2 text-caption font-bold leading-5 text-danger">{t("report.modal.required")}</span>}
+                    {noteRequired && <span className="rounded-full bg-danger-soft px-2 text-caption font-semibold leading-5 text-danger">{t("report.modal.required")}</span>}
                   </div>
                   <textarea
                     id={noteId}
@@ -343,7 +343,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                     submitting && "opacity-80",
                   )}
                 >
-                  {submitting && <Loader2 size={18} className="animate-spin" aria-hidden />}
+                  {submitting && <Loader2 size={20} className="animate-spin" aria-hidden />}
                   {submitting ? t("report.modal.sending") : phase === "error" ? t("report.modal.retry") : t("report.modal.submit")}
                 </button>
               </div>

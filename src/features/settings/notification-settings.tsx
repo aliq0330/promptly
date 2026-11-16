@@ -139,7 +139,7 @@ export function NotificationSettings() {
                   <span className="block text-caption text-text-muted">{t(mute.kind === "actor" ? "nc.settings.mutedPerson" : "nc.settings.mutedContent")}</span>
                 </span>
                 <Button variant="outline" size="sm" className="h-9" onClick={() => void unmute(mute)} aria-label={t("nc.settings.unmute", { name: mute.label || mute.target })}>
-                  <TrashIcon size={14} />
+                  <TrashIcon size={16} />
                   {t("nc.settings.unmuteShort")}
                 </Button>
               </li>
@@ -150,7 +150,7 @@ export function NotificationSettings() {
 
       <SettingsCard title={t("nc.settings.snoozed")} hint={t("nc.settings.snoozedHint")}>
         <div className="flex items-center gap-3">
-          <Clock size={18} className="text-text-secondary" aria-hidden />
+          <Clock size={20} className="text-text-secondary" aria-hidden />
           <span className="flex-1 text-small text-text" data-snoozed-count="">{t("nc.settings.snoozedCount", { count: snoozedCount })}</span>
           <Link href="/notifications?view=snoozed" className="text-small font-semibold text-primary hover:underline">
             {t("nc.settings.snoozedOpen")}

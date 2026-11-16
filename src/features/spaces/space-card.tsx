@@ -150,11 +150,11 @@ export function SpaceCard({
       className={cn(
         "relative z-10 inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-full text-caption font-semibold transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         space.isFavorite ? "px-2.5 text-primary" : "w-9 text-text-muted hover:text-text",
-        layout === "grid" && "h-8 bg-surface/90 shadow-xs",
-        layout === "grid" && !space.isFavorite && "w-8",
+        layout === "grid" && "h-9 bg-surface/90 shadow-xs",
+        layout === "grid" && !space.isFavorite && "w-9",
       )}
     >
-      <PinIcon pinned={space.isFavorite} size={15} strokeWidth={space.isFavorite ? 2.25 : 1.75} />
+      <PinIcon pinned={space.isFavorite} size={16} />
       {space.isFavorite && <span aria-hidden>{t("spaces.card.pinned")}</span>}
     </button>
   );
@@ -192,7 +192,7 @@ export function SpaceCard({
 
   if (layout === "list") {
     return (
-      <li data-space-card={space.id} className="relative flex items-center gap-3 rounded-lg border border-border-soft bg-surface p-2.5 shadow-xs">
+      <li data-space-card={space.id} className="relative flex items-center gap-3 rounded-lg card-flat p-2.5 shadow-xs">
         <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <SpaceCoverArt urls={art} iconSize={22} className="h-16 w-16 shrink-0 overflow-hidden rounded-md" />
           <span className="min-w-0 flex-1 space-y-1">

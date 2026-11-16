@@ -47,7 +47,7 @@ export function TeamChannelsInbox() {
 
   if (failed) return <EmptyState icon={Briefcase} title={t("tm.chat.failed")} compact />;
   if (!groups) return <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>;
-  if (groups.length === 0) return <EmptyState icon={Briefcase} title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.title"), href: "/teams" }} />;
+  if (groups.length === 0) return <EmptyState scene="chat" icon={Briefcase} title={t("tm.empty.title")} description={t("tm.empty.body")} action={{ label: t("tm.title"), href: "/teams" }} />;
 
   return (
     <div className="space-y-5" data-testid="messages-team-channels">

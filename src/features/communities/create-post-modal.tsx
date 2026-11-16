@@ -36,13 +36,13 @@ export function CreatePostModal({ communityId, onClose, onApply }: { communityId
   const { t } = useTranslation();
   const [step, setStep] = useState<"choose" | "new">("choose");
   const optionClass = cn(
-    "flex w-full items-start gap-3 rounded-lg border border-border-soft bg-background p-4 text-left transition-colors",
+    "flex w-full items-start gap-3 rounded-lg card-inset p-4 text-left transition-colors",
     "hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
   );
 
   return (
     <Modal onClose={onClose} labelledBy="create-post-title">
-      <DialogShell className="w-full max-w-md space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+      <DialogShell className="w-full max-w-md space-y-4 rounded-lg card-flat p-5 shadow-pop">
         {step === "choose" ? (
           <>
             <div className="space-y-1">

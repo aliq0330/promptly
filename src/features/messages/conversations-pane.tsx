@@ -253,7 +253,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           <SelectionHeader count={selectedList.length} onDone={exitSelection} embedded={embedded} />
         ) : (
           <>
-        {embedded ? <h1 className="mb-3 font-display text-[1.875rem] font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("header.messagesAriaLabel")}</h1> : <SadeTitle className="mb-4">{t("header.messagesAriaLabel")}</SadeTitle>}
+        {embedded ? <h1 className="mb-3 font-display text-h1 font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("header.messagesAriaLabel")}</h1> : <SadeTitle className="mb-4">{t("header.messagesAriaLabel")}</SadeTitle>}
         {/* Sade düzen (docs/history/234-*): tek "Sohbetler ▾" menüsü (istekler sayaçlı, arşiv, yıldızlı, topluluk sohbetleri) + arama simgesi + `⋯` (Sohbet seç · Tümü okundu) + yeni sohbet. */}
         <div className="mb-3">
           <ListControlRow
@@ -421,12 +421,12 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                   href={kindFilter === "team" ? "/teams" : "/communities/all"}
                   data-kind-cta={kindFilter}
                   className={cn(
-                    "mt-3 flex h-14 items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed text-small font-bold transition-colors",
+                    "mt-3 flex h-14 items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed text-small font-semibold transition-colors",
                     embedded && "mx-4",
                     kindFilter === "team" ? "border-primary/30 text-primary hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success-soft",
                   )}
                 >
-                  {kindFilter === "team" ? <Plus size={18} aria-hidden /> : <Search size={18} aria-hidden />}
+                  {kindFilter === "team" ? <Plus size={20} aria-hidden /> : <Search size={20} aria-hidden />}
                   {t(kindFilter === "team" ? "tm.create" : "tm.list.discoverCommunities")}
                 </Link>
               )}
@@ -463,7 +463,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
       )}
       {confirmDelete && selectedList.length > 0 && (
         <Modal onClose={bulkBusy ? () => undefined : () => setConfirmDelete(false)} labelledBy="bulk-delete-title">
-          <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+          <DialogShell className="w-full max-w-sm space-y-4 rounded-lg card-flat p-5 shadow-pop">
             <h2 id="bulk-delete-title" className="text-body font-semibold text-text">
               {t("messages.bulkDeleteTitle", { count: selectedList.length })}
             </h2>

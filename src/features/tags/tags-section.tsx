@@ -65,7 +65,7 @@ export function TagRows({ tags, emptyMessage }: { tags: Tag[]; emptyMessage: str
   return (
     <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {tags.map((tag) => (
-        <li key={tag.slug} className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface p-3 shadow-card">
+        <li key={tag.slug} className="flex items-center gap-3 rounded-lg card-flat p-3 shadow-card">
           <Link href={tagHref(tag)} className="min-w-0 flex-1 rounded-lg leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <span className="block truncate font-semibold text-text">#{tag.label}</span>
             {tag.usageCount !== undefined && (

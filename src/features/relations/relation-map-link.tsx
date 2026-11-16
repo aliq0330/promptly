@@ -39,7 +39,7 @@ export function RelationMapRow({ kind, id }: { kind: RelatableKind; id: string }
       data-relation-map-link
       className="flex min-h-11 basis-full items-center gap-3 border-t border-border-soft pt-2 text-label font-semibold text-text transition-colors hover:text-primary"
     >
-      <Network size={18} aria-hidden />
+      <Network size={20} aria-hidden />
       {t("relations.open")}
     </Link>
   );
@@ -56,7 +56,7 @@ export function RelationMapMenu({ kind, id, extras = [], children }: { kind: Rel
   const items: PostMenuExtra[] = [
     ...inherited,
     ...extras,
-    { key: "relation-map", label: t("relations.open"), icon: <Network size={14} />, onSelect: () => router.push(relationMapHref({ kind, id })) },
+    { key: "relation-map", label: t("relations.open"), icon: <Network size={16} />, onSelect: () => router.push(relationMapHref({ kind, id })) },
   ];
   return <PostMenuExtras items={items}>{children}</PostMenuExtras>;
 }

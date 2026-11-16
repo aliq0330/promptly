@@ -22,7 +22,8 @@ import {
 import type { TeamRole } from "@/lib/teams";
 import { absoluteUrl } from "@/lib/utils";
 import type { TeamCtx } from "./team-page";
-import { Panel, PersonRow, PillChoice, RoleChip, formatShortDate, roleLabelKey } from "./team-ui";
+import { Panel, PersonRow, RoleChip, formatShortDate, roleLabelKey } from "./team-ui";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /** Davet edilebilecek roller: sahip atanmaz; konuk yalnız `invite_guests` yetkisiyle (sunucu de denetler). */
@@ -97,7 +98,7 @@ export function InviteDialog({ ctx, onClose, onDone, initial = "user", initialRo
       }
     >
       <div className="space-y-4">
-        <PillChoice<"user" | "link">
+        <ChoiceGroup<"user" | "link">
           ariaLabel={t("tm.invite.title")}
           value={mode}
           onChange={(next) => {
@@ -121,7 +122,7 @@ export function InviteDialog({ ctx, onClose, onDone, initial = "user", initialRo
         )}
         <div>
           <span className={fieldLabelClassName}>{t("tm.invite.role")}</span>
-          <PillChoice<TeamRole> ariaLabel={t("tm.invite.role")} value={role} onChange={setRole} options={roles.map((key) => ({ key, label: t(roleLabelKey(key)) }))} />
+          <ChoiceGroup<TeamRole> ariaLabel={t("tm.invite.role")} value={role} onChange={setRole} options={roles.map((key) => ({ key, label: t(roleLabelKey(key)) }))} />
           <p className="mt-1.5 text-caption text-text-muted">{t(`tm.invite.roleHint.${role}` as "tm.invite.roleHint.member")}</p>
         </div>
         {role === "guest" && mode === "user" && (
@@ -167,9 +168,9 @@ export function InviteDialog({ ctx, onClose, onDone, initial = "user", initialRo
           <div className="space-y-2 rounded-lg bg-primary-soft/40 p-3">
             <p className="text-caption text-text-secondary">{t("tm.invite.linkOnce")}</p>
             <div className="flex gap-2">
-              <input readOnly value={created} aria-label={t("tm.invite.byLink")} className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-caption" onFocus={(e) => e.currentTarget.select()} />
+              <input readOnly value={created} aria-label={t("tm.invite.byLink")} className="h-10 min-w-0 flex-1 rounded-lg card-inset px-3 text-caption" onFocus={(e) => e.currentTarget.select()} />
               <Button type="button" variant="outline" onClick={() => void navigator.clipboard?.writeText(created)}>
-                <Copy size={14} aria-hidden />
+                <Copy size={16} aria-hidden />
                 {t("common.copy")}
               </Button>
             </div>
@@ -220,7 +221,7 @@ export function InviteCard({ ctx, onDone }: { ctx: TeamCtx; onDone: () => void }
     }
   };
   return (
-    <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-invite-card">
+    <section className="rounded-lg card-flat p-4" data-testid="team-invite-card">
       <h3 className="font-display text-body font-bold text-text">{t("tm.invite.title")}</h3>
       <p className="mb-3 text-small text-text-secondary">{t("tc.members.inviteHint")}</p>
       <form onSubmit={(event) => void submit(event)} className="space-y-3">
@@ -307,8 +308,8 @@ export function InvitesPanel({ ctx }: { ctx: TeamCtx }) {
                 right={
                   <>
                     <RoleChip role={invite.role} />
-                    <button type="button" onClick={() => void run(() => cancelInvitation(invite.id))} aria-label={t("tm.admin.invites.cancel")} className={iconButtonClassName(false, "h-8 w-8")}>
-                      <X size={14} aria-hidden />
+                    <button type="button" onClick={() => void run(() => cancelInvitation(invite.id))} aria-label={t("tm.admin.invites.cancel")} className={iconButtonClassName(false, "h-9 w-9")}>
+                      <X size={16} aria-hidden />
                     </button>
                   </>
                 }

@@ -39,14 +39,14 @@ export function Header() {
   const inChat = pathname.startsWith("/messages/local");
 
   return (
-    <header data-app-chrome data-app-header className={cn("sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-soft bg-surface/90 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5 lg:px-8", inChat && "max-md:hidden")}>
+    <header data-app-chrome data-app-header className={cn("sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-soft bg-surface px-3 sm:px-6 lg:px-8", inChat && "max-md:hidden")}>
       <Link
         href="/"
         aria-label={t("header.homeAriaLabel")}
-        className="flex shrink-0 items-center gap-2 rounded-md md:hidden"
+        className="flex h-10 shrink-0 items-center gap-2 rounded-md md:hidden"
       >
         <BrandMark size={30} />
-        <BrandWordmark className="text-[1.4rem] max-[359px]:hidden" />
+        <BrandWordmark className="text-h2 max-[359px]:hidden" />
       </Link>
 
       <div className="hidden min-w-0 flex-1 items-center md:flex">

@@ -51,7 +51,7 @@ import { GraduationCap } from "@/components/icons/graduation-cap";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { fetchProfileSkillCount } from "@/lib/supabase/skills";
 import type { Collection, Prompt, PromptContentType, UserProfile } from "@/types";
-import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns, GRID_COLUMNS_ASIDE } from "@/features/content/content-card";
 import { ProfileSpacesPanel, usePublicSpaces, type PublicSpaces } from "@/features/spaces/public-spaces";
 import { ProfileQuotesPanel } from "@/features/quotes/profile-quotes-panel";
 import { ProfileResultsPanel } from "./profile-results-panel";
@@ -265,7 +265,7 @@ export function ProfileView({
 
   return (
     // Sade (docs/history/243-*, 272-*): header · rail (stories + collections) · [section menu pill + tools] · list.
-    <ContentGridColumns value="sm:columns-2">
+    <ContentGridColumns value={GRID_COLUMNS_ASIDE}>
       <div className="w-full animate-rise-in pb-16">
         <ProfileHeader
           user={user}

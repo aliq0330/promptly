@@ -121,7 +121,7 @@ export function SelectionToolbar({
               }
             }}
             aria-label={t("composer.editTextAria")}
-            className="h-9 w-56 max-w-[60vw] rounded-md border border-border bg-background px-2.5 text-small text-text focus:border-primary/60"
+            className="h-9 w-56 max-w-[60vw] rounded-md card-inset px-2.5 text-small text-text focus:border-primary/60"
           />
           <button
             type="button"
@@ -151,7 +151,7 @@ export function SelectionToolbar({
               action.primary ? "bg-primary text-primary-foreground hover:bg-primary-hover" : "text-text-secondary hover:bg-surface-soft hover:text-text",
             )}
           >
-            <action.icon size={14} /> {action.label}
+            <action.icon size={16} /> {action.label}
           </button>
         ))
       )}

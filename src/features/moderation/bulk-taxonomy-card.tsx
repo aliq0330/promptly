@@ -140,9 +140,9 @@ export function BulkTaxonomyCard() {
   } as const;
 
   return (
-    <section className="space-y-3 rounded-lg border border-border bg-surface p-4" data-testid="bulk-taxonomy">
+    <section className="space-y-3 rounded-lg card-flat p-4" data-testid="bulk-taxonomy">
       <div className="flex items-start gap-3">
-        <Tags size={18} className="mt-0.5 shrink-0 text-text-muted" />
+        <Tags size={20} className="mt-0.5 shrink-0 text-text-muted" />
         <div className="min-w-0">
           <h2 className="text-small font-semibold text-text">{t("exchange.taxonomy.title")}</h2>
           <p className="text-small text-text-secondary">{t("exchange.taxonomy.hint")}</p>
@@ -163,7 +163,7 @@ export function BulkTaxonomyCard() {
           }}
         />
         <Button type="button" size="sm" variant="outline" onClick={() => fileInput.current?.click()} disabled={busy}>
-          {phase === "loading" ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+          {phase === "loading" ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
           {phase === "loading" ? t("exchange.taxonomy.reading") : t("exchange.taxonomy.chooseFile")}
         </Button>
         {fileName && <span className="min-w-0 truncate">{fileName}</span>}
@@ -260,7 +260,7 @@ export function BulkTaxonomyCard() {
               </>
             )}
             <Button type="button" size="sm" variant="outline" onClick={() => downloadBackup(plan.changes)} disabled={busy || plan.changes.length === 0} data-testid="taxonomy-backup">
-              <Download size={14} />
+              <Download size={16} />
               {t("exchange.taxonomy.backup")}
             </Button>
             {phase === "running" && (
@@ -300,7 +300,7 @@ export function BulkTaxonomyCard() {
           )}
           {run.kind === "apply" && applied && applied.length > 0 && (
             <Button type="button" size="sm" variant="outline" onClick={() => void execute("undo")} disabled={busy} data-testid="taxonomy-undo">
-              <Undo2 size={14} />
+              <Undo2 size={16} />
               {t("exchange.taxonomy.undo", { count: applied.length })}
             </Button>
           )}

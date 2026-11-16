@@ -19,7 +19,7 @@ function Section({ id, n, total, title, children }: { id: string; n: number; tot
   return (
     <section id={id} data-dev-section={id} aria-labelledby={`${id}-title`} className="scroll-mt-24 space-y-4">
       <div className="space-y-1">
-        <p className="text-caption font-bold uppercase tracking-wider text-primary">{t("devSec.eyebrow", { n, total })}</p>
+        <p className="text-caption font-semibold text-primary">{t("devSec.eyebrow", { n, total })}</p>
         <h2 id={`${id}-title`} className="text-h2 text-text">
           {title}
         </h2>
@@ -46,13 +46,13 @@ function StartCard({ target, title, desc }: { target: string; title: string; des
       type="button"
       onClick={() => scrollToSection(target)}
       data-dev-start={target}
-      className="group flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group flex w-full items-center gap-3 rounded-lg card-flat p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <span className="min-w-0 flex-1">
         <span className="block text-body font-semibold text-text">{title}</span>
         <span className="block text-small leading-relaxed text-text-secondary">{desc}</span>
       </span>
-      <ArrowRight size={18} className="shrink-0 text-text-muted transition-transform duration-200 ease-soft group-hover:translate-x-0.5" aria-hidden />
+      <ArrowRight size={20} className="shrink-0 text-text-muted transition-transform duration-200 ease-soft group-hover:translate-x-0.5" aria-hidden />
     </button>
   );
 }

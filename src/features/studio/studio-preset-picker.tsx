@@ -35,15 +35,15 @@ export function StudioPresetPicker({ contentType, onPick, onClose }: { contentTy
       <Modal onClose={onClose} labelledBy="generate-preset-picker-title">
         <DialogShell
           role="document"
-          className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop"
+          className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop"
         >
           <div className="flex items-center gap-2 border-b border-border-soft px-4 py-3">
-            <SlidersHorizontal size={18} className="shrink-0 text-primary" aria-hidden />
+            <SlidersHorizontal size={20} className="shrink-0 text-primary" aria-hidden />
             <h2 id="generate-preset-picker-title" className="min-w-0 flex-1 text-h3 font-bold text-text">
               {t("generate.presetBrowse")}
             </h2>
             <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
-              <X size={18} />
+              <X size={20} />
             </button>
           </div>
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">

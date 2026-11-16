@@ -176,7 +176,7 @@ function TagResultsSection({ title, tags, emptyMessage }: { title?: string; tags
       {tags.length === 0 ? (
         <p className="py-6 text-center text-small text-text-muted">{emptyMessage}</p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border bg-surface">
+        <div className="overflow-hidden rounded-lg card-flat">
           {tags.map((tag) => (
             <Link
               key={tag.slug}

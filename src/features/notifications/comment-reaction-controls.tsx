@@ -50,7 +50,7 @@ export function CardReactionButton({ card, list }: { card: NotificationCard; lis
 
 function CardReactionButtonInner({ card, commentId, likeCount, label }: { card: NotificationCard; commentId: string; likeCount: number; label: string }) {
   const onResult = useReactionUndo(card, commentId, likeCount);
-  return <ReactionButton tone="action" contentType="comment" id={commentId} likeCount={likeCount} size={18} labelText={label} onResult={onResult} />;
+  return <ReactionButton tone="action" contentType="comment" id={commentId} likeCount={likeCount} size={20} labelText={label} onResult={onResult} />;
 }
 
 /** Ayrıntı'nın tepki bölümü: açık emoji seçici + ipucu + tepki özeti. */
@@ -58,7 +58,7 @@ export function DetailReactionSection({ card, list, showHint }: { card: Notifica
   const commentId = notificationCommentId(card);
   if (!commentId) return null;
   const comment = list.context.comments.get(commentId);
-  if (!comment) return <div aria-hidden className="skeleton-shimmer h-[7.5rem] rounded-[28px]" data-reaction-loading="" />;
+  if (!comment) return <div aria-hidden className="skeleton-shimmer h-[7.5rem] rounded-xl" data-reaction-loading="" />;
   if (comment.deleted) return null;
   return <DetailReactionSectionInner card={card} commentId={commentId} likeCount={comment.likeCount} showHint={showHint} />;
 }
@@ -69,7 +69,7 @@ function DetailReactionSectionInner({ card, commentId, likeCount, showHint }: { 
   const { reaction } = useLikeState(commentId, likeCount, "comment");
   return (
     <div data-reaction-section="">
-      <p className="mb-2 text-label font-bold text-text-secondary">{t("nc.quickReaction")}</p>
+      <p className="mb-2 text-label font-semibold text-text-secondary">{t("nc.quickReaction")}</p>
       <InlineReactionPicker id={commentId} likeCount={likeCount} contentType="comment" onResult={onResult} />
       {showHint && (
         <p className="mt-2 text-caption text-text-muted" data-reaction-hint="">

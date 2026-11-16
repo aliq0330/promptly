@@ -41,7 +41,7 @@ export function BoardMinimap({
   };
 
   return (
-    <div data-board-minimap="" className="pointer-events-auto absolute bottom-3 right-3 z-20 hidden overflow-hidden rounded-xl border border-border-soft bg-surface/95 shadow-card sm:block" onPointerDown={(event) => event.stopPropagation()}>
+    <div data-board-minimap="" className="pointer-events-auto absolute bottom-3 right-3 z-20 hidden overflow-hidden rounded-lg card-flat shadow-card sm:block" onPointerDown={(event) => event.stopPropagation()}>
       <svg
         width={W}
         height={H}

@@ -80,7 +80,7 @@ export function SavedItemsView() {
         {user && <CollectionInvitesStrip onJoined={() => setShelfVersion((n) => n + 1)} />}
         {collections.length > 0 && (
           <section aria-labelledby="saved-collections" data-saved-collections="" className="space-y-2">
-            <h2 id="saved-collections" className="px-1 text-label font-semibold uppercase tracking-[0.08em] text-text-muted">
+            <h2 id="saved-collections" className="px-1 text-label font-semibold text-text-muted">
               {t("saved.myCollections")}
             </h2>
             <ScrollRow className="gap-3">

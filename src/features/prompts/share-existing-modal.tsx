@@ -53,7 +53,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
   return (
     <>
       <Modal onClose={onClose} labelledBy="share-existing-title">
-        <DialogShell className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop" data-share-existing="">
+        <DialogShell className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop" data-share-existing="">
           <div className="space-y-1 px-5 pb-2 pt-5">
             <h2 id="share-existing-title" className="text-body font-semibold text-text">
               {t("create.shareExistingTitle")}
@@ -128,7 +128,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
           extra={
             <Link href={hrefOf(type, selected.id)} onClick={onClose} className={buttonClassName({ size: "sm", variant: "outline", className: "gap-1.5" })}>
               {t("shareExisting.open")}
-              <ArrowUpRight size={14} aria-hidden />
+              <ArrowUpRight size={16} aria-hidden />
             </Link>
           }
         />

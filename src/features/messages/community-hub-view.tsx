@@ -30,7 +30,7 @@ import { RoomIconTile } from "./rooms/room-icon";
 import { patchCachedRoom, refreshCommunityRooms, useCommunityRooms } from "./rooms/use-community-rooms";
 import { InlineAlert } from "@/components/ui/inline-alert";
 
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold uppercase tracking-[0.04em] text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-muted";
 
 /**
  * Mesajlar'dan açılan TOPLULUK oda listesi (docs/history/369-*, 381-*): topluluğun odaları sohbet listesinin YERİNE açılır (bilgisayarda sol sütun, telefonda sayfa)
@@ -202,7 +202,7 @@ export function CommunityHubView({ communityId, embedded = false }: { communityI
                 key={room.id}
                 testKey={room.name}
                 href={roomHref(communityId, room.id)}
-                tile={<RoomIconTile icon={room.icon} size={44} />}
+                tile={<RoomIconTile icon={room.icon} size={40} />}
                 title={room.name}
                 tags={room.isDefault ? <span className={TAG_CLASS}>{t("th.default")}</span> : undefined}
                 muteScope={room.muted ? "channel" : null}
@@ -211,7 +211,7 @@ export function CommunityHubView({ communityId, embedded = false }: { communityI
                 unread={unread}
                 pinned={pins.has(room.id)}
                 active={openRoomId === room.id}
-                trailing={room.readPolicy === "staff" || readOnly ? <Lock size={14} className="shrink-0 text-text-muted" aria-hidden /> : undefined}
+                trailing={room.readPolicy === "staff" || readOnly ? <Lock size={16} className="shrink-0 text-text-muted" aria-hidden /> : undefined}
                 selection={selection.rowSelection(room.id)}
               />
             );

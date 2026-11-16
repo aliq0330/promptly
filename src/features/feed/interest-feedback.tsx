@@ -175,8 +175,8 @@ export function InterestCardFrame({ interest, item, index, children }: { interes
 
   const toggle = (value: InterestValue) => interest.answer(target, status === value ? null : value);
   const extras: PostMenuExtra[] = [
-    { key: "interest-yes", label: t("interest.yes"), icon: <Check size={14} aria-hidden />, selected: status === "interested", onSelect: () => toggle("interested") },
-    { key: "interest-no", label: t("interest.no"), icon: <X size={14} aria-hidden />, selected: status === "not_interested", onSelect: () => toggle("not_interested") },
+    { key: "interest-yes", label: t("interest.yes"), icon: <Check size={16} aria-hidden />, selected: status === "interested", onSelect: () => toggle("interested") },
+    { key: "interest-no", label: t("interest.no"), icon: <X size={16} aria-hidden />, selected: status === "not_interested", onSelect: () => toggle("not_interested") },
   ];
 
   return (
@@ -253,8 +253,8 @@ function InterestPromptStrip({ interest, target, answered }: { interest: Interes
  */
 function StripShell({ className, children, ...rest }: React.HTMLAttributes<HTMLElement> & { [data: `data-${string}`]: string | undefined }) {
   return (
-    <section {...rest} className={cn("relative mt-3 rounded-lg border border-border-soft bg-surface-soft", className)}>
-      <span aria-hidden data-interest-notch className="absolute -top-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 rounded-tl-[4px] border-l border-t border-border-soft bg-surface-soft" />
+    <section {...rest} className={cn("relative mt-3 rounded-lg card-soft", className)}>
+      <span aria-hidden data-interest-notch className="absolute -top-[7px] left-1/2 h-3.5 w-3.5 -translate-x-1/2 rotate-45 rounded-tl-2xs border-l border-t border-border-soft bg-surface-soft" />
       {children}
     </section>
   );

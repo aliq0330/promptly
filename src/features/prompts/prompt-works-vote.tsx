@@ -138,7 +138,7 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
   const showInvite = state.canVote && state.myVote !== null && invite !== null;
 
   return (
-    <section data-works-vote aria-labelledby="works-vote-title" className="mt-4 space-y-3 rounded-lg border border-border-soft bg-surface p-4">
+    <section data-works-vote aria-labelledby="works-vote-title" className="mt-4 space-y-3 rounded-lg card-flat p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="works-vote-title" className="text-small font-semibold text-text">
           {t("prompt.works.title")}
@@ -162,13 +162,13 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
         <div role="group" aria-label={t("prompt.works.groupAria")} className="flex flex-wrap items-center gap-2">
           <Button variant={state.myVote === true ? "primary" : "outline"} size="sm" aria-pressed={state.myVote === true} disabled={busy} onClick={() => void vote(true)}>
             <span key={`up-${state.myVote === true ? popSeq : 0}`} className={cn("inline-flex", state.myVote === true && popSeq > 0 && "mi-pop")}>
-              <ThumbsUp size={14} aria-hidden />
+              <ThumbsUp size={16} aria-hidden />
             </span>{" "}
             {t("prompt.works.yes")}
           </Button>
           <Button variant={state.myVote === false ? "primary" : "outline"} size="sm" aria-pressed={state.myVote === false} disabled={busy} onClick={() => void vote(false)}>
             <span key={`down-${state.myVote === false ? popSeq : 0}`} className={cn("inline-flex", state.myVote === false && popSeq > 0 && "mi-pop")}>
-              <ThumbsDown size={14} aria-hidden />
+              <ThumbsDown size={16} aria-hidden />
             </span>{" "}
             {t("prompt.works.no")}
           </Button>
@@ -189,7 +189,7 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
             </>
           ) : (
             <p className="flex items-center gap-1.5 text-caption text-text-secondary">
-              <Check size={14} className="shrink-0 text-success" aria-hidden />
+              <Check size={16} className="shrink-0 text-success" aria-hidden />
               {t(invite.primary === "result" ? "prompt.works.inviteYesResult" : "prompt.works.inviteYesComment")}
             </p>
           )}
@@ -204,7 +204,7 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={t(state.myVote === false ? "prompt.works.inviteNoPlaceholder" : "prompt.works.inviteYesPlaceholder")}
                 aria-label={t("prompt.works.inviteTextAria")}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
               <div className="flex items-center justify-end gap-2">
                 <Button type="button" variant="ghost" size="sm" onClick={dismissInvite} disabled={sending}>
@@ -220,7 +220,7 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
               {(invite.primary === "result" ? (["result", "comment"] as const) : (["comment", "result"] as const)).map((action, index) =>
                 action === "result" ? (
                   <Button key="result" type="button" size="sm" variant={index === 0 ? "outline" : "ghost"} onClick={() => requestAddResult(promptId)}>
-                    <ImagePlus size={14} aria-hidden /> {t("prompt.works.inviteShareResult")}
+                    <ImagePlus size={16} aria-hidden /> {t("prompt.works.inviteShareResult")}
                   </Button>
                 ) : (
                   <Button key="comment" type="button" size="sm" variant={index === 0 ? "outline" : "ghost"} onClick={() => setCommentOpen(true)}>
@@ -243,7 +243,7 @@ export function PromptWorksVote({ promptId, isOwn, contentType }: { promptId: st
 
       {sent && !showInvite && (
         <p role="status" className="flex items-center gap-1.5 border-t border-border-soft pt-3 text-caption text-text-secondary" data-works-invite-sent>
-          <Check size={14} className="shrink-0 text-success" aria-hidden />
+          <Check size={16} className="shrink-0 text-success" aria-hidden />
           {t("prompt.works.inviteSent")}
         </p>
       )}

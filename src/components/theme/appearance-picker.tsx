@@ -17,7 +17,7 @@ export function AppearancePicker() {
   return (
     <fieldset>
       <legend className="mb-2 text-label font-medium text-text-secondary">{t("settings.modeLabel")}</legend>
-      <div className="inline-flex gap-0.5 rounded-lg border border-border-soft bg-surface-soft p-0.5" role="radiogroup">
+      <div className="inline-flex gap-0.5 rounded-lg card-soft p-0.5" role="radiogroup">
         {(
           [
             { value: "light", label: t("settings.modeLight"), Icon: Sun },
@@ -31,13 +31,13 @@ export function AppearancePicker() {
             aria-checked={theme === value}
             onClick={() => setTheme(value)}
             className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-label font-medium transition-[color,background-color,box-shadow] duration-200 ease-soft",
+              "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-label font-medium transition-[color,background-color,box-shadow] duration-200 ease-soft",
               theme === value
                 ? "bg-surface text-text shadow-sm ring-1 ring-border-soft"
                 : "text-text-muted hover:text-text",
             )}
           >
-            <Icon size={14} />
+            <Icon size={16} />
             {label}
           </button>
         ))}

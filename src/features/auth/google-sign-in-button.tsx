@@ -1,5 +1,7 @@
 "use client";
 
+// Hex colours here are Google's own brand colours (the "G" mark); the brand guidelines forbid recolouring it, so they are not theme tokens (docs/history/406-*).
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase/client";

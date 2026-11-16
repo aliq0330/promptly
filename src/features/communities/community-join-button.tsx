@@ -130,9 +130,9 @@ export function CommunityJoinButton({
 
   const trigger = (label: string) => (
     <>
-      {action.busy ? <Loader2 size={14} className="animate-spin" aria-hidden /> : null}
+      {action.busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
       {label}
-      <ChevronDown size={14} aria-hidden />
+      <ChevronDown size={16} aria-hidden />
     </>
   );
 
@@ -147,12 +147,12 @@ export function CommunityJoinButton({
         {(close) =>
           outcomeIfLeave === "must_transfer" ? (
             <>
-              <MenuItem icon={<LogOut size={14} />} label={t("groups.about.leave")} onClick={close} disabled />
+              <MenuItem icon={<LogOut size={16} />} label={t("groups.about.leave")} onClick={close} disabled />
               <p className="max-w-56 px-4 pb-2 pt-1 text-caption text-text-muted">{t("communities.join.ownerCannotLeave")}</p>
             </>
           ) : (
             <MenuItem
-              icon={<LogOut size={14} />}
+              icon={<LogOut size={16} />}
               label={t("groups.about.leave")}
               danger
               onClick={() => {
@@ -174,7 +174,7 @@ export function CommunityJoinButton({
       >
         {(close) => (
           <MenuItem
-            icon={<Undo2 size={14} />}
+            icon={<Undo2 size={16} />}
             label={t("communities.join.withdraw")}
             onClick={() => {
               close();
@@ -193,14 +193,14 @@ export function CommunityJoinButton({
   } else if (mode === "join") {
     control = (
       <Button type="button" size={size} onClick={() => void start("join")} disabled={action.busy || full || target.closed} aria-label={t("groups.page.joinAria", { name: target.name })}>
-        {action.busy ? <Loader2 size={14} className="animate-spin" aria-hidden /> : null}
+        {action.busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
         {target.closed ? t("communities.join.closed") : full ? t("groups.page.full") : t("groups.page.join")}
       </Button>
     );
   } else if (mode === "request") {
     control = (
       <Button type="button" size={size} onClick={() => void start("request")} disabled={action.busy || full || target.closed} aria-label={t("communities.join.requestAria", { name: target.name })}>
-        {action.busy ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <Send size={14} aria-hidden />}
+        {action.busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
         {target.closed ? t("communities.join.closed") : full ? t("groups.page.full") : t("communities.join.request")}
       </Button>
     );

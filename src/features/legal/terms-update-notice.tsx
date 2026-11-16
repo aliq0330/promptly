@@ -71,7 +71,7 @@ export function TermsUpdateNotice() {
       aria-label={t("legal.noticeTitle")}
       data-app-chrome=""
       data-terms-notice=""
-      className="fixed inset-x-3 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-40 animate-fade-in rounded-xl border border-border-soft bg-surface p-4 shadow-pop md:inset-x-auto md:bottom-5 md:right-5 md:w-[22rem]"
+      className="fixed inset-x-3 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-40 animate-fade-in rounded-lg border border-border-soft bg-surface-elevated p-4 shadow-pop md:inset-x-auto md:bottom-5 md:right-5 md:w-[22rem]"
     >
       <p className="text-small font-semibold text-text">{t("legal.noticeTitle")}</p>
       <p className="mt-1 text-small text-text-secondary">{t("legal.noticeBody")}</p>

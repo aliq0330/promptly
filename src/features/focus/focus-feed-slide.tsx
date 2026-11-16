@@ -99,8 +99,8 @@ export function modelOf(item: PostFeedItem, t: ReturnType<typeof useTranslation>
 /** The author + "@user · time" line. */
 function AuthorLine({ author, createdAt, language, onImage }: { author: UserProfile; createdAt: string; language: Language; onImage: boolean }) {
   return (
-    <p className={cn("truncate text-small", onImage ? "text-white/85" : "text-text-muted")}>
-      <span className={cn("font-semibold", onImage ? "text-white" : "text-text")}>{author.displayName}</span>
+    <p className={cn("truncate text-small", onImage ? "text-on-art" : "text-text-muted")}>
+      <span className={cn("font-semibold", onImage ? "text-on-art" : "text-text")}>{author.displayName}</span>
       <span aria-hidden> · </span>
       {postMeta(author.username, createdAt, language)}
     </p>
@@ -118,12 +118,12 @@ function SlideByline({ author, createdAt, language, near }: { author: UserProfil
       </Link>
       <div className="min-w-0 leading-tight">
         <div className="flex min-w-0 items-center gap-2">
-          <Link href={href} className="min-w-0 truncate text-label font-semibold text-white hover:underline">
+          <Link href={href} className="min-w-0 truncate text-label font-semibold text-on-art hover:underline">
             {author.displayName}
           </Link>
           {near && user?.id !== author.id && <FollowButton user={author} size="sm" className="shrink-0" />}
         </div>
-        <p className="mt-0.5 truncate text-caption text-white/75">{postMeta(author.username, createdAt, language)}</p>
+        <p className="mt-0.5 truncate text-caption text-on-art-muted">{postMeta(author.username, createdAt, language)}</p>
       </div>
     </div>
   );
@@ -139,10 +139,10 @@ export function PromptDialog({ prompt, onClose }: { prompt: Prompt; onClose: () 
   const tool = resolveToolRefs(prompt.tools)[0]?.label ?? prompt.tool;
   return (
     <Modal onClose={onClose} labelledBy={titleId}>
-      <DialogShell className="w-full max-w-lg rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+      <DialogShell className="w-full max-w-lg rounded-lg card-flat p-5 shadow-pop">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-caption font-bold uppercase tracking-[0.08em] text-primary">{t("focusFeed.promptDialogTitle")}</p>
+            <p className="text-caption font-semibold text-primary">{t("focusFeed.promptDialogTitle")}</p>
             <h2 id={titleId} className="mt-1 text-h3 text-text">
               {prompt.title}
             </h2>
@@ -154,12 +154,12 @@ export function PromptDialog({ prompt, onClose }: { prompt: Prompt; onClose: () 
             aria-label={t("common.close")}
             className={iconButtonClassName(false, "h-9 w-9")}
           >
-            <X size={18} aria-hidden />
+            <X size={20} aria-hidden />
           </button>
         </div>
         <div className="mt-4 overflow-hidden rounded-xl bg-surface-soft">
-          <p className="px-4 pt-2.5 text-caption font-semibold uppercase tracking-[0.06em] text-text-secondary">
-            Prompt{tool ? <span className="normal-case tracking-normal text-text-muted"> · {tool}</span> : null}
+          <p className="px-4 pt-2.5 text-caption font-semibold text-text-secondary">
+            Prompt{tool ? <span className="text-text-muted"> · {tool}</span> : null}
           </p>
           <p className="prompt-text max-h-[45dvh] overflow-y-auto whitespace-pre-line break-words px-4 pb-4 pt-1.5 text-text-secondary">{prompt.promptText}</p>
         </div>
@@ -301,7 +301,7 @@ function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt; cover:
       {near && kind === "audio" && output?.mediaUrl && (
         <>
           {!cover && (
-            <div aria-hidden className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-soft via-surface-soft to-surface">
+            <div aria-hidden className="absolute inset-0 flex items-center justify-center bg-primary-soft">
               <Music size={72} className="text-primary/60" />
             </div>
           )}
@@ -329,7 +329,7 @@ function WorkflowSteps({ workflow, near, onImage }: { workflow: Workflow; near: 
   const { data: steps, loading } = useWorkflowFocusSteps(workflow.id, near);
   const listed = (steps ?? []).slice(0, onImage ? 3 : MAX_STEPS);
   const rest = (steps?.length ?? 0) - listed.length;
-  const row = onImage ? "bg-black/35 text-white/90 backdrop-blur-sm" : "bg-surface-soft text-text-secondary";
+  const row = onImage ? "bg-art-chip text-on-art backdrop-blur-sm" : "bg-surface-soft text-text-secondary";
 
   if (loading)
     return (
@@ -341,11 +341,11 @@ function WorkflowSteps({ workflow, near, onImage }: { workflow: Workflow; near: 
     );
   // Steps unreadable (or not fetched yet): only what the list row already knows.
   if (listed.length === 0)
-    return <p className={cn("text-label font-semibold", onImage ? "text-white/90" : "text-text")}>{t("workflow.stepCount", { count: String(workflow.stepCount) })}</p>;
+    return <p className={cn("text-label font-semibold", onImage ? "text-on-art" : "text-text")}>{t("workflow.stepCount", { count: String(workflow.stepCount) })}</p>;
 
   return (
     <div className="space-y-1.5">
-      <p className={cn("text-caption font-bold uppercase tracking-[0.07em]", onImage ? "text-white/80" : "text-text-muted")}>
+      <p className={cn("text-caption font-semibold", onImage ? "text-on-art-muted" : "text-text-muted")}>
         {t("focusFeed.steps")} · {t("workflow.stepCount", { count: String(steps?.length ?? workflow.stepCount) })}
       </p>
       <ol className="space-y-0.5">
@@ -355,12 +355,12 @@ function WorkflowSteps({ workflow, near, onImage }: { workflow: Workflow; near: 
           return (
             <li key={step.id}>
               <div className={cn("flex min-w-0 items-center gap-3 rounded-md px-3 py-2 text-small", row)}>
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-bold leading-none text-primary-foreground">{index + 1}</span>
-                <StepIcon size={14} aria-hidden className="shrink-0 opacity-70" />
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-semibold leading-none text-primary-foreground">{index + 1}</span>
+                <StepIcon size={16} aria-hidden className="shrink-0 opacity-70" />
                 <span className="truncate">{label}</span>
               </div>
               {index < listed.length - 1 && (
-                <span aria-hidden className={cn("flex h-3 items-center pl-4", onImage ? "text-white/60" : "text-text-muted")}>
+                <span aria-hidden className={cn("flex h-3 items-center pl-4", onImage ? "text-on-art-faint" : "text-text-muted")}>
                   <ArrowDown size={12} />
                 </span>
               )}
@@ -368,7 +368,7 @@ function WorkflowSteps({ workflow, near, onImage }: { workflow: Workflow; near: 
           );
         })}
       </ol>
-      {rest > 0 && <p className={cn("pl-1 text-caption font-semibold", onImage ? "text-white/75" : "text-text-muted")}>+{rest}</p>}
+      {rest > 0 && <p className={cn("pl-1 text-caption font-semibold", onImage ? "text-on-art-muted" : "text-text-muted")}>+{rest}</p>}
     </div>
   );
 }
@@ -386,15 +386,15 @@ function PresetParams({ preset, onImage }: { preset: Preset; onImage: boolean })
             key={entry.fieldId}
             className={cn(
               "flex min-w-0 items-baseline justify-between gap-3 rounded-md px-3 py-2 text-small",
-              onImage ? "bg-black/35 backdrop-blur-sm" : "bg-surface-soft",
+              onImage ? "bg-art-chip backdrop-blur-sm" : "bg-surface-soft",
             )}
           >
-            <dt className={cn("shrink-0", onImage ? "text-white/75" : "text-text-muted")}>{entry.fieldLabel}</dt>
-            <dd className={cn("min-w-0 truncate text-right font-semibold", onImage ? "text-white" : "text-text")}>{entry.valueLabel}</dd>
+            <dt className={cn("shrink-0", onImage ? "text-on-art-muted" : "text-text-muted")}>{entry.fieldLabel}</dt>
+            <dd className={cn("min-w-0 truncate text-right font-semibold", onImage ? "text-on-art" : "text-text")}>{entry.valueLabel}</dd>
           </div>
         ))}
       </dl>
-      <p className={cn("text-caption font-semibold", onImage ? "text-white/75" : "text-text-muted")}>
+      <p className={cn("text-caption font-semibold", onImage ? "text-on-art-muted" : "text-text-muted")}>
         {entries.length > shown.length ? `+${entries.length - shown.length} · ` : ""}
         {t("preset.paramCount", { count: entries.length })}
       </p>
@@ -407,8 +407,8 @@ function RequestBrief({ request, onImage }: { request: PromptRequest; onImage: b
   if (!request.creativeDirection) return null;
   return (
     <div className={cn("border-l-2 pl-3", onImage ? "border-white/60" : "border-primary/50")}>
-      <p className={cn("text-caption font-bold uppercase tracking-[0.07em]", onImage ? "text-white/75" : "text-text-muted")}>{t("request.creativeDirection")}</p>
-      <p className={cn("mt-0.5 line-clamp-3 break-words text-small", onImage ? "text-white/90" : "text-text-secondary")}>{request.creativeDirection}</p>
+      <p className={cn("text-caption font-semibold", onImage ? "text-on-art-muted" : "text-text-muted")}>{t("request.creativeDirection")}</p>
+      <p className={cn("mt-0.5 line-clamp-3 break-words text-small", onImage ? "text-on-art" : "text-text-secondary")}>{request.creativeDirection}</p>
     </div>
   );
 }
@@ -419,8 +419,8 @@ function SkillBrief({ skill, onImage }: { skill: Skill; onImage: boolean }) {
   if (skill.compat.length === 0) return null;
   return (
     <div className={cn("border-l-2 pl-3", onImage ? "border-white/60" : "border-primary/50")}>
-      <p className={cn("text-caption font-bold uppercase tracking-[0.07em]", onImage ? "text-white/75" : "text-text-muted")}>{t("skill.compatLabel")}</p>
-      <p className={cn("mt-0.5 line-clamp-2 break-words text-small", onImage ? "text-white/90" : "text-text-secondary")}>
+      <p className={cn("text-caption font-semibold", onImage ? "text-on-art-muted" : "text-text-muted")}>{t("skill.compatLabel")}</p>
+      <p className={cn("mt-0.5 line-clamp-2 break-words text-small", onImage ? "text-on-art" : "text-text-secondary")}>
         {skill.compat.map((tool) => skillLabelText(SKILL_COMPAT_LABEL[tool], t)).join(", ")} · v{skill.version}
       </p>
     </div>
@@ -465,9 +465,9 @@ function AlbumArtImage({ cover, active, near }: { cover: FocusFeedCover; active:
   return (
     <div className="relative flex h-full w-full items-center justify-center">
       {state !== "loaded" && (
-        <div aria-hidden className="absolute aspect-square w-[min(100%,22rem)] max-h-full overflow-hidden rounded-[26px] bg-white/10">
+        <div aria-hidden className="absolute aspect-square w-[min(100%,22rem)] max-h-full overflow-hidden rounded-xl bg-white/10">
           {state === "loading" ? <div className="skeleton-shimmer absolute inset-0 opacity-40" /> : (
-            <span className="absolute inset-0 flex items-center justify-center text-white/60">
+            <span className="absolute inset-0 flex items-center justify-center text-on-art-faint">
               <ImageOff size={36} />
             </span>
           )}
@@ -484,7 +484,7 @@ function AlbumArtImage({ cover, active, near }: { cover: FocusFeedCover; active:
           onError={() => setState("broken")}
           data-album-art
           className={cn(
-            "relative max-h-full max-w-full rounded-[26px] object-contain shadow-[0_30px_70px_rgb(0_0_0/0.5)] transition-opacity duration-500 ease-soft",
+            "relative max-h-full max-w-full rounded-xl object-contain shadow-[0_30px_70px_rgb(0_0_0/0.5)] transition-opacity duration-500 ease-soft",
             state === "loaded" ? "opacity-100" : "opacity-0",
           )}
         />
@@ -509,7 +509,7 @@ function AlbumArtFrame({ ratio, children }: { ratio: number; children: ReactNode
     <div className="flex h-full w-full items-center justify-center [container-type:size]">
       <div
         data-album-art
-        className="relative overflow-hidden rounded-[26px] bg-black shadow-[0_30px_70px_rgb(0_0_0/0.5)]"
+        className="relative overflow-hidden rounded-xl bg-black shadow-[0_30px_70px_rgb(0_0_0/0.5)]"
         style={{ aspectRatio: ratio, width: `min(100cqw, calc(100cqh * ${ratio}))` }}
       >
         {children}
@@ -525,19 +525,19 @@ function AlbumArtFrame({ ratio, children }: { ratio: number; children: ReactNode
 function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideModel; near: boolean }) {
   const { t, language } = useTranslation();
   const Icon = model.icon;
-  const frame = "flex max-h-full w-full max-w-[26rem] flex-col overflow-hidden rounded-[26px] p-5 shadow-[0_30px_70px_rgb(0_0_0/0.5)] sm:p-6";
+  const frame = "flex max-h-full w-full max-w-[26rem] flex-col overflow-hidden rounded-xl p-5 shadow-[0_30px_70px_rgb(0_0_0/0.5)] sm:p-6";
   if (item.kind === "request") {
     const request = item.data;
     return (
       <div data-album-art className={cn(frame, "gap-4 border border-white/15 bg-white/10 backdrop-blur-md")}>
-        <div className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-white/80">
+        <div className="flex items-center gap-2 text-caption font-semibold text-on-art-muted">
           <Icon size={16} aria-hidden />
           {t("request.title")}
           <span className="ml-auto">
             <RequestStatus request={request} />
           </span>
         </div>
-        <p className="line-clamp-6 whitespace-pre-line break-words font-display text-h3 font-bold leading-snug text-white">{model.description || model.title}</p>
+        <p className="line-clamp-6 whitespace-pre-line break-words font-display text-h3 font-bold leading-snug text-on-art">{model.description || model.title}</p>
         <RequestBrief request={request} onImage />
       </div>
     );
@@ -547,28 +547,28 @@ function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideM
     const shown = entries.slice(0, 4);
     return (
       <div data-album-art className={cn(frame, "gap-2 border border-white/15 bg-white/10 backdrop-blur-md")}>
-        <p className="mb-1 flex items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-white/80">
+        <p className="mb-1 flex items-center gap-2 text-caption font-semibold text-on-art-muted">
           <Icon size={16} aria-hidden />
           {t("preset.singular")} · {t("preset.paramCount", { count: entries.length })}
         </p>
         {shown.map((entry) => (
-          <div key={entry.fieldId} className="flex min-w-0 items-baseline justify-between gap-3 rounded-lg bg-black/35 px-4 py-2.5 text-small">
-            <span className="shrink-0 text-white/75">{entry.fieldLabel}</span>
-            <span className="min-w-0 truncate text-right font-semibold text-white">{entry.valueLabel}</span>
+          <div key={entry.fieldId} className="flex min-w-0 items-baseline justify-between gap-3 rounded-lg bg-art-chip px-4 py-2.5 text-small">
+            <span className="shrink-0 text-on-art-muted">{entry.fieldLabel}</span>
+            <span className="min-w-0 truncate text-right font-semibold text-on-art">{entry.valueLabel}</span>
           </div>
         ))}
-        {entries.length > shown.length && <p className="pl-1 pt-1 text-caption font-semibold text-white/75">+{entries.length - shown.length}</p>}
+        {entries.length > shown.length && <p className="pl-1 pt-1 text-caption font-semibold text-on-art-muted">+{entries.length - shown.length}</p>}
       </div>
     );
   }
   if (item.kind === "skill") {
     return (
       <div data-album-art className={cn(frame, "gap-4 border border-white/15 bg-white/10 backdrop-blur-md")}>
-        <div className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-white/80">
+        <div className="flex items-center gap-2 text-caption font-semibold text-on-art-muted">
           <Icon size={16} aria-hidden />
           {t("skill.singular")}
         </div>
-        <p className="line-clamp-6 whitespace-pre-line break-words font-display text-h3 font-bold leading-snug text-white">{model.description || model.title}</p>
+        <p className="line-clamp-6 whitespace-pre-line break-words font-display text-h3 font-bold leading-snug text-on-art">{model.description || model.title}</p>
         <SkillBrief skill={item.data} onImage />
       </div>
     );
@@ -652,10 +652,10 @@ function AlbumSlide({
       </div>
       <div className={cn(HIDE_WHILE_COMMENTS, "shrink-0 space-y-3 pt-4 md:space-y-3", PHONE_BOTTOM, "md:pb-8")}>
         <SlideByline author={model.author} createdAt={model.createdAt} language={language} near={near} />
-        <h2 id={titleId} className="line-clamp-2 break-words font-display text-[clamp(1.375rem,3.2vw,1.875rem)] font-extrabold leading-[1.1] tracking-[-0.03em] text-white">
+        <h2 id={titleId} className="line-clamp-2 break-words font-display text-[clamp(1.375rem,3.2vw,1.875rem)] font-extrabold leading-[1.1] tracking-[-0.03em] text-on-art">
           {model.title}
         </h2>
-        <p className="truncate text-caption font-bold uppercase tracking-[0.1em] text-white/75">{metaLine(item, model, t)}</p>
+        <p className="truncate text-caption font-semibold text-on-art-muted">{metaLine(item, model, t)}</p>
         <div className="flex items-center gap-1">
           <FocusFeedRail item={item} author={model.author} layout="compact" />
           <button
@@ -663,7 +663,7 @@ function AlbumSlide({
             onClick={() => openInfo(item)}
             aria-haspopup="dialog"
             data-focus-info-button=""
-            className="ml-auto inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-white/50 px-4 text-label font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="ml-auto inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-white/50 px-4 text-label font-semibold text-on-art transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             {t("focusFeed.info")}
             <ChevronUp size={16} aria-hidden />

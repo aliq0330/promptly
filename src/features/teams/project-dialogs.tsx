@@ -26,7 +26,8 @@ import {
 } from "@/lib/supabase/team-projects";
 import { addProjectChannel, type TeamActionError } from "@/lib/supabase/teams";
 import { ProjectAccessEditor } from "./project-access-editor";
-import { PillChoice, Switch } from "./team-ui";
+import { Switch } from "./team-ui";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 
 /** Proje/dosya/pano/değişken pencereleri (docs/history/362-*). Hepsi `SpaceDialog` iskeletidir (başlık + kayan gövde + sabit alt satır). */
 
@@ -87,9 +88,9 @@ export function NewFileDialog({ project, onClose, onDone }: { project: ProjectDe
       <div className="space-y-4">
         <TitleField value={title} onChange={setTitle} label={t("tp.name.file")} placeholder={t("tp.name.filePlaceholder")} autoFocus />
         <ReviewSwitchRow value={review} onChange={setReview} />
-        <div data-new-file-chat className="flex items-start gap-3 rounded-lg border border-border-soft bg-surface p-4">
+        <div data-new-file-chat className="flex items-start gap-3 rounded-lg card-flat p-4">
           <div className="min-w-0 flex-1">
-            <p className="text-small font-bold text-text">{t("th.newFile.chatTitle")}</p>
+            <p className="text-small font-semibold text-text">{t("th.newFile.chatTitle")}</p>
             <p className="text-caption text-text-secondary">{t("th.newFile.chatHint")}</p>
           </div>
           <span className={cn(created && "pointer-events-none opacity-60")}>
@@ -108,7 +109,7 @@ export function ReviewSwitchRow({ value, onChange }: { value: boolean; onChange:
   return (
     <div className="flex items-start gap-3 rounded-xl border border-border-soft px-4 py-3">
       <span className="min-w-0 flex-1">
-        <span className="block text-small font-bold text-text">{t(value ? "tp.review.switchOn" : "tp.review.switchOff")}</span>
+        <span className="block text-small font-semibold text-text">{t(value ? "tp.review.switchOn" : "tp.review.switchOff")}</span>
         <span className="block text-caption text-text-secondary">{t("tp.review.switchHint")}</span>
       </span>
       <Switch checked={value} onChange={onChange} label={t("tp.review.switchLabel")} />
@@ -252,7 +253,7 @@ export function ProjectAccessDialog({ project, onClose, onDone }: { project: Pro
     >
       <div className="space-y-4">
         <div>
-          <PillChoice
+          <ChoiceGroup
             ariaLabel={t("tp.create.whoSees")}
             value={mode}
             onChange={setMode}
@@ -265,7 +266,7 @@ export function ProjectAccessDialog({ project, onClose, onDone }: { project: Pro
           {mode === "all" && (
             <div className="mt-3">
               <span className="mb-1.5 block text-caption font-semibold text-text-secondary">{t("tp.access.baseRole")}</span>
-              <PillChoice
+              <ChoiceGroup
                 ariaLabel={t("tp.access.baseRole")}
                 value={baseRole}
                 onChange={setBaseRole}
@@ -371,7 +372,7 @@ export function ProjectSettingsDialog({ project, canManage, onClose, onDone, onD
                   onChange={(event) => setConfirm(event.target.value)}
                   aria-label={t("tp.settings.deleteConfirm")}
                   placeholder={project.project.title}
-                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small"
+                  className="h-10 w-full rounded-lg card-inset px-3 text-small"
                 />
                 <Button type="button" variant="outline" className="text-danger" disabled={busy || confirm.trim().toLowerCase() !== project.project.title.toLowerCase()} onClick={() => void remove()}>
                   {t("tp.settings.deleteConfirmButton")}
@@ -473,13 +474,13 @@ export function VariableDialog({ projectId, fileId, variable, onClose, onDone }:
             placeholder="musteri"
             autoCapitalize="none"
             autoCorrect="off"
-            className="h-11 w-full rounded-xl border border-border bg-background px-3 font-mono text-small disabled:opacity-50"
+            className="h-11 w-full rounded-lg card-inset px-3 font-mono text-small disabled:opacity-50"
           />
           <span className="mt-1 block text-caption text-text-muted">{t("tp.variable.nameHint")}</span>
         </label>
         <label className="block">
           <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.variable.value")}</span>
-          <input value={value} onChange={(event) => setValue(event.target.value)} maxLength={500} className="h-11 w-full rounded-xl border border-border bg-background px-3 text-small" />
+          <input value={value} onChange={(event) => setValue(event.target.value)} maxLength={500} className="h-11 w-full rounded-lg card-inset px-3 text-small" />
         </label>
         <FormError message={error} />
       </div>

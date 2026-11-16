@@ -91,7 +91,7 @@ export function InsertPicker({
   }
 
   const pillClass =
-    tone === "field" ? "bg-secondary/15 text-secondary" : tone === "unknown" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary";
+    tone === "field" ? "bg-secondary-soft text-secondary" : tone === "unknown" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary";
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
@@ -104,7 +104,7 @@ export function InsertPicker({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
             <X size={16} />
           </button>
@@ -131,7 +131,7 @@ export function InsertPicker({
                 onPick(visible[0]);
               }
             }}
-            className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-10 w-full rounded-lg card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
       </div>
@@ -180,9 +180,9 @@ export function InsertPicker({
               aria-label={t("composer.insertAria", { name: item.label })}
               className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:bg-surface-soft"
             >
-              {draggable && <GripVertical size={14} className="shrink-0 text-text-muted" aria-hidden />}
+              {draggable && <GripVertical size={16} className="shrink-0 text-text-muted" aria-hidden />}
               <span className="min-w-0 flex-1">
-                <span className={cn("inline-block max-w-full truncate rounded-[5px] px-1.5 py-0.5 font-mono text-caption font-medium", pillClass)}>
+                <span className={cn("inline-block max-w-full truncate rounded-xs px-1.5 py-0.5 font-mono text-caption font-medium", pillClass)}>
                   {item.label}
                 </span>
                 {item.description && <span className="mt-0.5 block truncate text-caption text-text-muted">{item.description}</span>}

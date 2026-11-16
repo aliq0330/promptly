@@ -30,7 +30,7 @@ export function NotificationBell() {
   const label = unreadCount > 0 ? t("nc.bellAriaUnread", { count: unreadCount }) : t("header.notificationsAriaLabel");
   const badge =
     unreadCount > 0 ? (
-      <span aria-hidden data-bell-badge="" className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-surface bg-secondary px-1 text-caption font-bold leading-none text-primary-foreground">
+      <span aria-hidden data-bell-badge="" className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-surface bg-secondary px-1 text-caption font-semibold leading-none text-primary-foreground">
         {unreadCount > 99 ? "99+" : unreadCount}
       </span>
     ) : null;
@@ -38,7 +38,7 @@ export function NotificationBell() {
   if (!wide) {
     return (
       <Link href="/notifications" aria-label={label} title={t("header.notificationsAriaLabel")} className={iconButtonClassName(false, "shrink-0 relative")}>
-        <BellIcon size={20} strokeWidth={2} seq={ringSeq} />
+        <BellIcon size={20} seq={ringSeq} />
         {badge}
       </Link>
     );
@@ -56,7 +56,7 @@ export function NotificationBell() {
         data-notification-bell=""
         className={iconButtonClassName(open, "shrink-0 relative")}
       >
-        <BellIcon size={20} strokeWidth={2} seq={ringSeq} />
+        <BellIcon size={20} seq={ringSeq} />
         {badge}
       </button>
       {open && <NotificationPopover anchor={anchor} onClose={close} />}

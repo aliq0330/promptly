@@ -82,7 +82,7 @@ export function PresetParametersBuilder({
       description={t("presetBuilder.fieldsHint")}
       action={
         <Button type="button" size="sm" onClick={() => setAdding(true)} data-builder-add-field>
-          <Plus size={14} aria-hidden />
+          <Plus size={16} aria-hidden />
           {t("presetField.addShort")}
         </Button>
       }
@@ -96,7 +96,7 @@ export function PresetParametersBuilder({
             const own = ownById.get(id);
             const catalog = own ? undefined : getCatalogField(id);
             return (
-              <li key={id} data-builder-field={id} className="rounded-lg border border-border-soft bg-surface-soft p-3">
+              <li key={id} data-builder-field={id} className="rounded-lg card-soft p-3">
                 {own ? (
                   <div className="flex items-start gap-2">
                     <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
@@ -160,7 +160,7 @@ export function PresetParametersBuilder({
 function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button type="button" aria-label={label} onClick={onClick} className={cn("grid h-9 w-8 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface hover:text-danger")}>
-      <TrashIcon size={15} />
+      <TrashIcon size={16} />
     </button>
   );
 }

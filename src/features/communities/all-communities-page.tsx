@@ -49,7 +49,7 @@ export function AllCommunitiesPage() {
     <CommunityLayout>
       <div className="space-y-2">
         <Link href="/communities" className="inline-flex items-center gap-1.5 text-small text-text-secondary hover:underline" data-testid="all-back">
-          <ArrowLeft size={14} aria-hidden /> {t("communities.page.title")}
+          <ArrowLeft size={16} aria-hidden /> {t("communities.page.title")}
         </Link>
         <h1 className="text-h1 font-bold text-text">{t("communities.all.title")}</h1>
       </div>
@@ -173,7 +173,7 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
       ) : current.error ? (
         <ErrorBox message={t("communities.page.loadError")} onRetry={() => setReloadKey((k) => k + 1)} />
       ) : current.items.length === 0 ? (
-        <EmptyState
+        <EmptyState scene={filtered ? "search" : "community"}
           icon={Compass}
           title={filtered ? t("groups.page.noResults") : t("communities.all.empty")}
           description={filtered ? t("communities.all.noResultsHelp") : t("communities.discover.emptyHelp")}

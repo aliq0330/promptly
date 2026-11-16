@@ -43,7 +43,7 @@ export function DeveloperSettings() {
 
       <TelegramSection />
 
-      <SettingsLinkRow href="/developers" icon={<Code2 size={18} className="text-text-secondary" />} title={t("devSettings.docsTitle")} hint={t("devSettings.docsHint")} />
+      <SettingsLinkRow href="/developers" icon={<Code2 size={20} className="text-text-secondary" />} title={t("devSettings.docsTitle")} hint={t("devSettings.docsHint")} />
     </SettingsSubpage>
   );
 }

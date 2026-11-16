@@ -65,7 +65,7 @@ export function ViewSegment({ view, onView, itemCount, groupCount }: { view: Gro
       aria-selected={view === key}
       onClick={() => onView(key)}
       data-area-view={key}
-      className={cn("h-10 flex-1 rounded-full text-small font-bold transition-colors", view === key ? "bg-surface text-text shadow-xs" : "text-text-secondary")}
+      className={cn("h-10 flex-1 rounded-full text-small font-semibold transition-colors", view === key ? "bg-surface text-text shadow-xs" : "text-text-secondary")}
     >
       {label} <span className="font-semibold opacity-60">{count}</span>
     </button>
@@ -115,7 +115,7 @@ export function FolderGrid({
           ))}
         </span>
         <span className="min-w-0">
-          <span className="flex items-center gap-2 text-body font-bold text-text">
+          <span className="flex items-center gap-2 text-body font-semibold text-text">
             <span aria-hidden className={cn("h-2.5 w-2.5 shrink-0 rounded-full", dot)} />
             <span className="truncate">{name}</span>
           </span>
@@ -130,7 +130,7 @@ export function FolderGrid({
       {(counts.get(NO_GROUP) ?? 0) > 0 && card(NO_GROUP, t("spaces.groups.none"), "bg-border-strong", counts.get(NO_GROUP) ?? 0, previews.get(NO_GROUP) ?? [], true)}
       {canAdd && (
         <li>
-          <button type="button" onClick={onNew} data-area-folder-new="" className="flex h-full min-h-[9.5rem] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface-soft/50 text-small font-bold text-primary transition-colors hover:bg-surface-soft">
+          <button type="button" onClick={onNew} data-area-folder-new="" className="flex h-full min-h-[9.5rem] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface-soft/50 text-small font-semibold text-primary transition-colors hover:bg-surface-soft">
             <FolderPlus size={24} aria-hidden />
             {t("tf.group.newTile")}
           </button>
@@ -169,7 +169,7 @@ export function EmptyFolder({ name, canAdd, onAdd, onPick }: { name: string; can
   return (
     <div className="mx-auto max-w-sm space-y-4 px-2 py-10 text-center" data-testid="area-folder-empty">
       <span aria-hidden className="mx-auto grid h-20 w-20 place-items-center rounded-xl bg-primary-soft text-primary">
-        <FolderPlus size={38} />
+        <FolderPlus size={40} />
       </span>
       <div className="space-y-1.5">
         <h3 className="font-display text-h2 font-bold text-text">{t("tf.folder.emptyTitle")}</h3>
@@ -236,7 +236,7 @@ export function NewGroupDialog({ onClose, onCreated }: { onClose: () => void; on
   };
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy="new-group-title" overLayers centered>
-      <form onSubmit={(event) => void submit(event)} className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5" data-testid="new-group-form">
+      <form onSubmit={(event) => void submit(event)} className="w-full max-w-sm space-y-4 rounded-lg card-flat p-5" data-testid="new-group-form">
         <div className="space-y-1">
           <h2 id="new-group-title" className="font-display text-h3 font-bold text-text">
             {t("tf.new.title")}
@@ -404,14 +404,14 @@ export function SelectionBar({ count, allSelected, onAll, onClose, actions }: { 
   const { t } = useTranslation();
   return (
     <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 pt-2 md:bottom-4" data-testid="area-select-bar" data-keyboard-hide="">
-      <div className="mx-auto max-w-xl space-y-2 rounded-lg border border-border-soft bg-surface p-2.5 shadow-pop">
+      <div className="mx-auto max-w-xl space-y-2 rounded-lg card-flat p-2.5 shadow-pop">
         <div className="flex items-center gap-1.5">
           <button type="button" onClick={onClose} aria-label={t("tf.select.close")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-surface-soft" data-select-close="">
             <span aria-hidden className="text-h3 leading-none">
               ×
             </span>
           </button>
-          <span className="min-w-0 flex-1 truncate text-small font-bold text-text" data-select-count="" aria-live="polite">
+          <span className="min-w-0 flex-1 truncate text-small font-semibold text-text" data-select-count="" aria-live="polite">
             {t("tf.select.count", { count })}
           </span>
           <Button type="button" variant="ghost" size="sm" onClick={onAll} data-select-all="">
@@ -427,7 +427,7 @@ export function SelectionBar({ count, allSelected, onAll, onClose, actions }: { 
               disabled={action.disabled}
               data-select-action={action.key}
               className={cn(
-                "flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg border px-1 text-caption font-bold transition-colors disabled:opacity-50",
+                "flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg border px-1 text-caption font-semibold transition-colors disabled:opacity-50",
                 action.tone === "primary" ? "border-primary bg-primary text-primary-foreground" : action.tone === "danger" ? "border-border-soft bg-surface text-danger hover:bg-danger-soft" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
               )}
             >

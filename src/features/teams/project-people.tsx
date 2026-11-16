@@ -65,7 +65,7 @@ export function ProjectPeopleList({ detail, lead, onChanged }: { detail: Project
                       data-project-person-remove
                       className="grid h-11 w-11 place-items-center rounded-full text-text-secondary hover:bg-danger-soft hover:text-danger"
                     >
-                      <UserMinus size={18} aria-hidden />
+                      <UserMinus size={20} aria-hidden />
                     </button>
                   )}
                 </>

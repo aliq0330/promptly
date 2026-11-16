@@ -111,7 +111,7 @@ export function AnchoredPopover({
           maxHeight: position?.maxHeight ?? 460,
           visibility: position ? "visible" : "hidden",
         }}
-        className="z-50 flex flex-col overflow-hidden rounded-xl border border-border bg-surface-elevated shadow-pop animate-pop-in"
+        className="z-50 flex flex-col overflow-hidden rounded-lg border border-border-soft bg-surface-elevated shadow-pop animate-pop-in"
       >
         {children}
       </div>

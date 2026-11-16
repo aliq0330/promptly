@@ -38,7 +38,7 @@ export function FilesList({ userId }: { userId: string }) {
             {url ? (
               <StorageImg src={url} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover" loading="lazy" />
             ) : (
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-surface-soft text-caption font-medium uppercase text-text-muted">{file.kind === "other" ? "…" : file.kind.slice(0, 3)}</span>
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-surface-soft text-caption font-medium text-text-muted">{file.kind === "other" ? "…" : file.kind.slice(0, 3)}</span>
             )}
             <div className="min-w-0 flex-1">
               <p className="truncate text-small font-medium text-text" title={file.name}>

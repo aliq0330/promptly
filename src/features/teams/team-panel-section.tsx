@@ -8,7 +8,8 @@ import { fetchTeamInsights, type TeamActionError, type TeamInsightsData } from "
 import { teamLink } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import type { TeamCtx } from "./team-page";
-import { Panel, PillChoice, SectionError } from "./team-ui";
+import { Panel, SectionError } from "./team-ui";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 
 function delta(now: number, prev: number): string | undefined {
   if (!prev && !now) return undefined;
@@ -21,12 +22,12 @@ function delta(now: number, prev: number): string | undefined {
 function Delta({ text, tone }: { text: string | undefined; tone: "good" | "bad" | "warn" | "plain" }) {
   if (!text) return null;
   const cls = { good: "text-success", bad: "text-danger", warn: "text-warning", plain: "text-text-muted" }[tone];
-  return <span className={cn("ml-1.5 text-caption font-bold", cls)}>{text}</span>;
+  return <span className={cn("ml-1.5 text-caption font-semibold", cls)}>{text}</span>;
 }
 
 function Stat({ label, value, children }: { label: string; value: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border-soft bg-surface p-4">
+    <div className="rounded-lg card-flat p-4">
       <p className="text-caption text-text-muted">{label}</p>
       <p className="mt-1 flex items-baseline font-display text-h2 font-bold tabular-nums">
         {value}
@@ -69,7 +70,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
   const approvalText = (hours: number) => (hours < 1 ? t("tm.panel.minutes", { count: Math.max(1, Math.round(hours * 60)) }) : t("tm.panel.hours", { count: Math.round(hours) }));
 
   const range = (
-    <PillChoice<"7" | "30" | "90">
+    <ChoiceGroup<"7" | "30" | "90">
       ariaLabel={t("tm.panel.range")}
       value={String(days) as "7" | "30" | "90"}
       onChange={(k) => setDays(Number(k) as 7 | 30 | 90)}
@@ -104,7 +105,7 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
             action={peak > 0 ? <span className="text-caption text-text-muted">{t("tm.panel.peak", { count: peak })}</span> : undefined}
           >
             <div className="mb-3 flex flex-wrap items-end gap-x-3 gap-y-1">
-              <span className="font-display text-[2.25rem] font-extrabold leading-none tabular-nums text-text" data-panel-added>
+              <span className="font-display text-display font-extrabold leading-none tabular-nums text-text" data-panel-added>
                 {data.added.toLocaleString(language === "en" ? "en-US" : "tr-TR")}
               </span>
               <Delta text={delta(data.added, data.addedPrev)} tone={data.added >= data.addedPrev ? "good" : "bad"} />
@@ -147,14 +148,14 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
                 {data.top.map((project) => (
                   <li key={project.id} data-panel-top-row>
                     <Link href={teamLink(team.id, "projects", { project: project.id })} className="flex min-h-11 items-center gap-3 text-small hover:text-primary">
-                      <b className="w-32 truncate font-bold text-text md:w-36">{project.title}</b>
+                      <b className="w-32 truncate font-semibold text-text md:w-36">{project.title}</b>
                       <span aria-hidden className="h-2.5 flex-1 overflow-hidden rounded-full bg-surface-soft">
                         <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.max(4, (project.added / maxTop) * 100)}%` }} />
                       </span>
-                      <span className="w-8 text-right font-bold tabular-nums text-text" title={t("tm.panel.col.added")}>
+                      <span className="w-8 text-right font-semibold tabular-nums text-text" title={t("tm.panel.col.added")}>
                         {project.added}
                       </span>
-                      {project.pending > 0 && <span className="rounded-full bg-warning-soft px-2 text-caption font-bold text-warning">{t("tp.card.pending", { count: project.pending })}</span>}
+                      {project.pending > 0 && <span className="rounded-full bg-warning-soft px-2 text-caption font-semibold text-warning">{t("tp.card.pending", { count: project.pending })}</span>}
                     </Link>
                   </li>
                 ))}
@@ -169,10 +170,10 @@ export function TeamPanelSection({ ctx }: { ctx: TeamCtx }) {
                 .filter((alert) => alert.n > 0)
                 .map((alert, index) => (
                   <li key={index} className="flex min-h-12 items-center gap-3 border-t border-border-soft first:border-t-0">
-                    <span className={cn("grid h-7 min-w-7 shrink-0 place-items-center rounded-md px-1.5 text-small font-bold tabular-nums", alert.tone)}>{alert.n}</span>
+                    <span className={cn("grid h-7 min-w-7 shrink-0 place-items-center rounded-md px-1.5 text-small font-semibold tabular-nums", alert.tone)}>{alert.n}</span>
                     <span className="flex-1 text-text-secondary">{alert.text}</span>
                     {alert.link && (
-                      <Link href={teamLink(team.id, "approvals")} className="font-bold text-primary hover:underline">
+                      <Link href={teamLink(team.id, "approvals")} className="font-semibold text-primary hover:underline">
                         {t("tm.panel.alert.review")}
                       </Link>
                     )}

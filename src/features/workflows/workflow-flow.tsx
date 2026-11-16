@@ -88,7 +88,7 @@ function FloatingPreview({
         onMouseEnter={onEnter}
         onMouseLeave={onLeave}
         style={pos ? { top: pos.top, left: pos.left, width: pos.width } : { top: 0, left: 0, width: POPOVER_WIDTH, visibility: "hidden" }}
-        className="fixed z-50 max-h-[70dvh] overflow-y-auto rounded-lg border border-border bg-surface-elevated p-4 shadow-pop animate-pop-in"
+        className="fixed z-50 max-h-[70dvh] overflow-y-auto rounded-lg border border-border-soft bg-surface-elevated p-4 shadow-pop animate-pop-in"
       >
         <button
           type="button"
@@ -96,7 +96,7 @@ function FloatingPreview({
           aria-label={t("workflow.flowPreviewClose")}
           className="absolute right-2 top-2 rounded-md p-1 text-text-muted hover:bg-surface-soft hover:text-text"
         >
-          <X size={14} />
+          <X size={16} />
         </button>
         <div className="pr-5">{children}</div>
       </div>
@@ -171,24 +171,24 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
   const body = (
     <>
       <span className="relative block rounded-t-xl px-4 pb-4 pt-4 sm:px-4 sm:pt-4" data-flow-step-band>
-        <CardBandBackdrop as="span" backdrop={c?.thumbnailUrl ? <StorageImg src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" /> : undefined} />
+        <CardBandBackdrop as="span" />
         <span className="relative flex items-start gap-4 pr-16">
           {c?.thumbnailUrl ? (
-            <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface shadow-pop">
+            <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface shadow-card">
               <StorageImg src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-              <span className="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-bold text-primary-foreground">{index + 1}</span>
+              <span className="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold text-primary-foreground">{index + 1}</span>
             </span>
           ) : (
-            <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface font-display text-[1.5rem] font-extrabold text-primary shadow-pop">
+            <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface font-display text-h2 font-extrabold text-primary shadow-card">
               {index + 1}
             </span>
           )}
           <span className="min-w-0 flex-1 space-y-1">
-            <span className="flex min-w-0 items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
+            <span className="flex min-w-0 items-center gap-1.5 text-caption font-semibold text-primary">
               <Icon size={12} className="shrink-0" aria-hidden />
               <span className="truncate">{[t("workflow.stepN", { n: String(index + 1) }), t(meta.labelKey), stepSubtitle(step, language)].filter(Boolean).join(" · ")}</span>
             </span>
-            <span className="block break-words font-display text-[1.25rem] font-extrabold leading-tight tracking-[-0.02em] text-text">{step.title || t("workflow.untitledStep")}</span>
+            <span className="block break-words font-display text-h2 font-extrabold leading-tight tracking-[-0.02em] text-text">{step.title || t("workflow.untitledStep")}</span>
             {step.description && <span className="block break-words text-small text-text-secondary">{step.description}</span>}
             {c ? (
               <span className="flex min-w-0 items-center gap-1.5 text-caption text-text">
@@ -207,8 +207,8 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
         {(step.inputs.length > 0 || step.outputs.length > 0) && (
           <span className={cn("mt-3 grid gap-2", step.inputs.length > 0 && step.outputs.length > 0 && "sm:grid-cols-2")}>
             {step.inputs.length > 0 && (
-              <span className="block min-w-0 rounded-md border border-border-soft bg-surface-soft p-2.5">
-                <span className="mb-1.5 block text-caption font-semibold uppercase tracking-[0.06em] text-text-muted">{t("workflow.inputLabel")}</span>
+              <span className="block min-w-0 rounded-md card-soft p-2.5">
+                <span className="mb-1.5 block text-caption font-semibold text-text-muted">{t("workflow.inputLabel")}</span>
                 <span className="block space-y-1">
                   {step.inputs.map((input) => {
                     const link = links.find((l) => l.input.id === input.id);
@@ -228,8 +228,8 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
               </span>
             )}
             {step.outputs.length > 0 && (
-              <span className="block min-w-0 rounded-md border border-border-soft bg-surface-soft p-2.5">
-                <span className="mb-1.5 block text-caption font-semibold uppercase tracking-[0.06em] text-text-muted">{t("workflow.outputLabel")}</span>
+              <span className="block min-w-0 rounded-md card-soft p-2.5">
+                <span className="mb-1.5 block text-caption font-semibold text-text-muted">{t("workflow.outputLabel")}</span>
                 <span className="block space-y-1">
                   {step.outputs.map((output) => (
                     <span key={output.id} className="flex min-w-0 items-start gap-1.5 text-caption font-medium text-text">
@@ -277,7 +277,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
               href={studioHref}
               aria-label={t("studio.openInStudio")}
               title={t("studio.openInStudio")}
-              className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
             >
               <WandSparkles size={16} />
             </Link>
@@ -286,7 +286,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
             href={c.href}
             aria-label={t("workflow.flowOpen")}
             title={t("workflow.flowOpen")}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
           >
             <ArrowUpRight size={16} />
           </Link>
@@ -307,15 +307,15 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
       {open && isPhone && (
         <Modal onClose={close} labelledBy={`step-preview-${step.id}`}>
           <div
-            className="flex max-h-[70dvh] w-full flex-col rounded-lg border border-border bg-surface p-4 shadow-lg"
+            className="flex max-h-[70dvh] w-full flex-col rounded-lg card-flat p-4 shadow-lg"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
               <h2 id={`step-preview-${step.id}`} className="min-w-0 truncate text-body font-semibold text-text">
                 {index + 1}. {step.title || t("workflow.untitledStep")}
               </h2>
-              <button type="button" onClick={close} aria-label={t("workflow.flowPreviewClose")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
-                <X size={18} />
+              <button type="button" onClick={close} aria-label={t("workflow.flowPreviewClose")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+                <X size={20} />
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -348,7 +348,7 @@ function Connector({ from, to }: { from: WorkflowStep; to: WorkflowStep }) {
         <span className="min-w-0 break-words text-center">
           {linked ? (
             <>
-              <span className="uppercase tracking-[0.06em]">{t("workflow.flowConnector")}</span>
+              <span className="">{t("workflow.flowConnector")}</span>
               <span className="font-medium"> · {carried.join(", ")}</span>
             </>
           ) : (

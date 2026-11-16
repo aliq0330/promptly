@@ -49,7 +49,7 @@ export function RelationDetailPanel({
 
   if (!node) {
     return (
-      <div className={cn("rounded-lg border border-border-soft bg-surface p-4 text-small text-text-muted", className)}>
+      <div className={cn("rounded-lg card-flat p-4 text-small text-text-muted", className)}>
         {t("relations.panel.hint")}
       </div>
     );
@@ -78,7 +78,7 @@ export function RelationDetailPanel({
   };
 
   return (
-    <div className={cn("flex min-h-0 flex-col rounded-lg border border-border-soft bg-surface shadow-card", className)} data-relation-panel>
+    <div className={cn("flex min-h-0 flex-col rounded-lg card-flat shadow-card", className)} data-relation-panel>
       <div className="flex items-start gap-3 border-b border-border-soft p-4">
         {node.imageUrl ? (
           <StorageImg src={node.imageUrl} alt="" className="h-14 w-14 shrink-0 rounded-md object-cover" />
@@ -88,7 +88,7 @@ export function RelationDetailPanel({
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <p className="flex flex-wrap items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+          <p className="flex flex-wrap items-center gap-1.5 text-caption font-semibold text-text-muted">
             <Icon size={12} aria-hidden />
             {kindLabel(node.kind)}
             {isCenter && <Badge variant="accent" className="whitespace-nowrap">{t("relations.panel.isCenter")}</Badge>}
@@ -103,7 +103,7 @@ export function RelationDetailPanel({
         </div>
         {onClose && (
           <button type="button" aria-label={t("relations.panel.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
-            <X size={18} />
+            <X size={20} />
           </button>
         )}
       </div>
@@ -113,18 +113,18 @@ export function RelationDetailPanel({
 
         {related.length > 0 && (
           <section aria-label={t("relations.panel.relations")} className="space-y-3">
-            <h3 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("relations.panel.relations")}</h3>
+            <h3 className="text-caption font-semibold text-text-muted">{t("relations.panel.relations")}</h3>
             <ul className="space-y-3">
               {related.map((edge) => {
                 const def = RELATION_TYPES[edge.type];
                 return (
-                  <li key={edge.id} data-relation-item={edge.type} className="space-y-2 rounded-lg border border-border-soft bg-surface-soft p-3">
+                  <li key={edge.id} data-relation-item={edge.type} className="space-y-2 rounded-lg card-soft p-3">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="accent">{typeLabel(edge.type)}</Badge>
                       {edge.level && <Badge variant="neutral">{levelLabel(edge.level)}</Badge>}
                     </div>
                     <p className="flex items-start gap-1.5 break-words text-small font-medium text-text">
-                      <ArrowRight size={14} className="mt-0.5 shrink-0 text-text-muted" aria-hidden />
+                      <ArrowRight size={16} className="mt-0.5 shrink-0 text-text-muted" aria-hidden />
                       {directionText(edge, titleOf)}
                     </p>
                     <p className="text-caption text-text-muted">{t(def.meaningKey)}</p>
@@ -149,7 +149,7 @@ export function RelationDetailPanel({
                         disabled={removingId === edge.id}
                         onClick={() => remove(edge)}
                       >
-                        <TrashIcon size={14} />
+                        <TrashIcon size={16} />
                         {removingId === edge.id ? t("relations.removing") : confirmId === edge.id ? t("relations.removeConfirm") : t("relations.remove")}
                       </Button>
                     )}
@@ -172,7 +172,7 @@ export function RelationDetailPanel({
         </Link>
         {canRecenter && (
           <Button type="button" size="sm" variant="outline" onClick={() => onRecenter(node)}>
-            <Crosshair size={14} />
+            <Crosshair size={16} />
             {t("relations.recenter")}
           </Button>
         )}

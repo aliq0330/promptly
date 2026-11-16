@@ -58,7 +58,7 @@ export function ViewerSheet({ title, onClose, children, labelId }: { title: stri
             {title}
           </h2>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
-            <X size={18} aria-hidden />
+            <X size={20} aria-hidden />
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">{children}</div>
@@ -261,7 +261,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
             <p className="mb-2 text-caption text-text-muted">{t("stories.question.shareHint")}</p>
             <ul className="space-y-2">
               {answerPages.items.map((answer) => (
-                <li key={answer.id} className="rounded-md border border-border-soft bg-surface-soft p-3">
+                <li key={answer.id} className="rounded-md card-soft p-3">
                   <p className="break-words text-small text-text">{answer.body}</p>
                   <div className="mt-2 flex items-center justify-between gap-2 text-caption text-text-muted">
                     <span className="truncate">
@@ -292,7 +292,7 @@ function SheetLoading() {
   const { t } = useTranslation();
   return (
     <p className="flex items-center justify-center gap-2 py-6 text-small text-text-muted">
-      <Loader2 size={15} className="animate-spin" aria-hidden /> {t("common.loading")}
+      <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
     </p>
   );
 }
@@ -346,7 +346,7 @@ export function ConfirmSheet({
             }
           }}
         >
-          {busy ? <Loader2 size={15} className="animate-spin" aria-hidden /> : confirmLabel}
+          {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : confirmLabel}
         </Button>
       </div>
     </ViewerSheet>
@@ -467,7 +467,7 @@ export function AddToHighlightSheet({ storyId, onClose, onDone }: { storyId: str
           maxLength={STORY_LIMITS.highlightTitleMax}
           placeholder={t("stories.highlight.newPlaceholder")}
           aria-label={t("stories.highlight.newPlaceholder")}
-          className="min-h-11 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+          className="min-h-11 min-w-0 flex-1 rounded-md card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
         <Button type="submit" disabled={busy || !title.trim()}>
           <Plus size={16} aria-hidden /> {t("stories.highlight.create")}

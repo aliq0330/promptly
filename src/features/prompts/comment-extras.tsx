@@ -243,7 +243,7 @@ export function CommentExtrasToolbar({ extras, userId, disabled = false, classNa
         data-comment-extra="gif"
         className={cn(TOOL_BUTTON, draftMediaKind(extras.media) === "gif" && TOOL_ON)}
       >
-        <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-caption font-extrabold leading-none tracking-[0.04em]">
+        <span aria-hidden className="rounded-xs border-[1.75px] border-current px-[3px] py-[2px] text-caption font-semibold leading-none">
           {t("gif.badge")}
         </span>
       </button>
@@ -317,11 +317,11 @@ export function CommentExtrasPreview({
               )}
               {media.kind === "photo" && !media.prepared && (
                 <span role="status" aria-label={t("commentExtras.preparing")} className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/60">
-                  <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden />
+                  <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden />
                 </span>
               )}
               <button type="button" onClick={extras.removeMedia} aria-label={t(draftMediaKind(media) === "photo" ? "commentExtras.removePhoto" : "commentExtras.removeGif")} data-comment-extra-remove="media" className={REMOVE_BUTTON}>
-                <X size={14} aria-hidden />
+                <X size={16} aria-hidden />
               </button>
             </div>
           )}
@@ -402,7 +402,7 @@ function CommentGif({ gifId, width, height, className }: { gifId: string; width:
         // eslint-disable-next-line @next/next/no-img-element -- GIPHY'nin kendi adresi; dış hareketli görsel
         <img src={src} alt={t("commentExtras.gifAlt")} loading="lazy" draggable={false} onError={() => setFailed(true)} className="h-full w-full object-cover" />
       )}
-      <span aria-hidden className="absolute bottom-1.5 left-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-caption font-bold tracking-[0.06em] text-white">
+      <span aria-hidden className="absolute bottom-1.5 left-1.5 rounded-md bg-art-chip px-1.5 py-0.5 text-caption font-semibold text-on-art">
         {t("gif.badge")}
       </span>
     </span>
@@ -429,7 +429,7 @@ function CommentPhoto({ path, width, height, className }: { path: string; width:
           <img src={url} alt={t("commentExtras.photoAlt")} loading="lazy" draggable={false} onError={() => setBroken(true)} className="h-full w-full object-cover" />
         ) : (
           <span className="flex h-full w-full items-center justify-center text-text-muted">
-            {failed || broken ? <ImageOff size={20} aria-hidden /> : <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden />}
+            {failed || broken ? <ImageOff size={20} aria-hidden /> : <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden />}
           </span>
         )}
       </button>
@@ -489,13 +489,13 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
 
   return (
     <Modal onClose={onClose} labelledBy="comment-content-title">
-      <DialogShell data-comment-content-picker className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell data-comment-content-picker className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-pop">
         <div className="flex shrink-0 items-center justify-between gap-2 px-5 pb-1 pt-4">
           <h2 id="comment-content-title" className="font-display text-h3 font-bold text-text">
             {t("commentExtras.picker.title")}
           </h2>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
-            <X size={18} aria-hidden />
+            <X size={20} aria-hidden />
           </button>
         </div>
         <div className="shrink-0 space-y-3 px-5 pb-2 pt-2">
@@ -555,7 +555,7 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
                         <span className="block truncate text-small text-text-muted">{t(`communities.feed.type.${type}`)}</span>
                       </span>
                       <span aria-hidden className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2", isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border-strong")}>
-                        {isSelected && <Check size={14} />}
+                        {isSelected && <Check size={16} />}
                       </span>
                     </button>
                   </li>

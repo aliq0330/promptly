@@ -3,33 +3,35 @@
 import type { ReactNode } from "react";
 import { AlertCircle } from "@/components/icons/alert-circle";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { TeamRole } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
-export const TEAM_TONES = ["primary", "secondary", "success", "warning", "plum", "sky"] as const;
+/**
+ * Ekip imi/bandı rengi (docs/history/406-*): DB `teams.tone` altı değeri kabul eder (CHECK; değişmedi), ama arayüz YALNIZ üç sakin görünüm sunar —
+ * mavi (`primary`), pus (`sky`), nötr (`plum`). Eski kayıtlardaki `secondary` (turuncu = "senin olan"), `success` ve `warning` (durum renkleri)
+ * artık ekip rengi olarak çizilmez: en yakın sakin görünüme eşlenir.
+ */
+export const TEAM_TONES = ["primary", "sky", "plum"] as const;
+type TeamLook = (typeof TEAM_TONES)[number];
+const TONE_ALIAS: Record<string, TeamLook> = { primary: "primary", sky: "sky", plum: "plum", secondary: "primary", success: "sky", warning: "plum" };
+export const resolveTeamTone = (tone: string | null | undefined): TeamLook => TONE_ALIAS[tone ?? "primary"] ?? "primary";
 
-const TONE_CLASS: Record<string, string> = {
+const TONE_CLASS: Record<TeamLook, string> = {
   primary: "bg-primary-soft text-primary",
-  secondary: "bg-secondary/10 text-secondary",
-  success: "bg-success-soft text-success",
-  warning: "bg-warning-soft text-warning",
+  sky: "bg-[color-mix(in_srgb,var(--color-primary)_6%,var(--color-surface-soft))] text-text-secondary",
   plum: "bg-surface-soft text-text-secondary",
-  sky: "bg-primary-soft text-primary",
 };
 
-const SOLID_TONE_CLASS: Record<string, string> = {
+const SOLID_TONE_CLASS: Record<TeamLook, string> = {
   primary: "bg-primary text-primary-foreground",
-  secondary: "bg-secondary text-secondary-foreground",
-  success: "bg-success text-success-foreground",
-  warning: "bg-warning text-warning-foreground",
-  plum: "bg-text-secondary text-background",
-  sky: "bg-primary text-primary-foreground",
+  sky: "bg-text-secondary text-background",
+  plum: "bg-text text-background",
 };
 
-export const toneClass = (tone: string | null | undefined) => TONE_CLASS[tone ?? "primary"] ?? TONE_CLASS.primary;
+export const toneClass = (tone: string | null | undefined) => TONE_CLASS[resolveTeamTone(tone)];
 
 /** Ekibin kare "logosu": renk tonu + adın baş harfleri. Kullanıcı içeriği olan ad çevrilmez. */
 export function TeamMark({ name, tone, size = 40, className, solid = false }: { name: string; tone?: string | null; size?: number; className?: string; /** Dolu zemin + beyaz harf (ekip sayfası başlığı, Ekipler kartları — mockup). */ solid?: boolean }) {
@@ -37,7 +39,7 @@ export function TeamMark({ name, tone, size = 40, className, solid = false }: { 
   return (
     <span
       aria-hidden
-      className={cn("inline-grid shrink-0 place-items-center rounded-xl font-display font-bold", solid ? (SOLID_TONE_CLASS[tone ?? "primary"] ?? SOLID_TONE_CLASS.primary) : toneClass(tone), className)}
+      className={cn("inline-grid shrink-0 place-items-center rounded-xl font-display font-bold", solid ? SOLID_TONE_CLASS[resolveTeamTone(tone)] : toneClass(tone), className)}
       style={{ width: size, height: size, fontSize: size * 0.38 }}
     >
       {initials}
@@ -57,8 +59,12 @@ export const roleLabelKey = (role: TeamRole): TranslationKey => ROLE_KEY[role];
 
 export function RoleChip({ role }: { role: TeamRole }) {
   const { t } = useTranslation();
-  const tone = role === "owner" ? "bg-primary-soft text-primary" : role === "admin" ? "bg-secondary/10 text-secondary" : role === "guest" ? "bg-warning-soft text-warning" : "bg-surface-soft text-text-secondary";
-  return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-caption font-medium", tone)}>{t(ROLE_KEY[role])}</span>;
+  const variant = role === "owner" ? "default" : role === "admin" ? "secondary" : role === "guest" ? "warning" : "neutral";
+  return (
+    <Badge variant={variant} size="sm">
+      {t(ROLE_KEY[role])}
+    </Badge>
+  );
 }
 
 export { PersonRow } from "@/components/ui/person-row";
@@ -66,7 +72,7 @@ export { PersonRow } from "@/components/ui/person-row";
 /** Bölüm kutusu: başlık + açıklama + içerik; Yönetim sayfalarının ortak iskeleti. */
 export function Panel({ title, hint, action, children, className }: { title: string; hint?: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={cn("rounded-lg border border-border-soft bg-surface p-4 shadow-xs sm:p-5", className)}>
+    <section className={cn("rounded-lg card-flat p-4 shadow-xs sm:p-5", className)}>
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="text-h3">{title}</h3>
@@ -81,7 +87,7 @@ export function Panel({ title, hint, action, children, className }: { title: str
 
 export function StatTile({ label, value, delta }: { label: string; value: ReactNode; delta?: ReactNode }) {
   return (
-    <div className="rounded-lg border border-border-soft bg-surface p-4">
+    <div className="rounded-lg card-flat p-4">
       <p className="text-caption text-text-muted">{label}</p>
       <p className="mt-1 font-display text-h2 font-bold tabular-nums">{value}</p>
       {delta && <p className="mt-0.5 text-caption text-text-secondary">{delta}</p>}
@@ -94,39 +100,6 @@ export function SectionError({ message, onRetry }: { message: string; onRetry?: 
   return <EmptyState icon={AlertCircle} title={message} compact action={onRetry ? { label: t("common.retry"), onClick: onRetry } : undefined} />;
 }
 
-/** Seçenek hapları (rol, süre, mod): radyo grubu gibi çalışır. */
-export function PillChoice<K extends string>({
-  value,
-  options,
-  onChange,
-  ariaLabel,
-}: {
-  value: K;
-  options: { key: K; label: string; hint?: string }[];
-  onChange: (key: K) => void;
-  ariaLabel: string;
-}) {
-  return (
-    <ScrollRow role="radiogroup" aria-label={ariaLabel} className="gap-2 md:flex-wrap">
-      {options.map((option) => (
-        <button
-          key={option.key}
-          type="button"
-          role="radio"
-          aria-checked={value === option.key}
-          title={option.hint}
-          onClick={() => onChange(option.key)}
-          className={cn(
-            "min-h-9 shrink-0 whitespace-nowrap rounded-full border px-4 text-small transition-colors",
-            value === option.key ? "border-primary bg-primary-soft font-medium text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft",
-          )}
-        >
-          {option.label}
-        </button>
-      ))}
-    </ScrollRow>
-  );
-}
 
 export function formatShortDate(iso: string | null | undefined, language: string): string {
   if (!iso) return "";

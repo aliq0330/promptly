@@ -93,7 +93,7 @@ export function PromptTryButton({ prompt, text, className }: { prompt: Prompt; t
         <SlidersHorizontal size={16} aria-hidden className="text-primary" />
         {t("promptTry.title")}
         {matches > 0 && (
-          <span data-fit-count aria-label={t("promptTry.countAria", { count: matches })} className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-caption font-bold text-primary-foreground">
+          <span data-fit-count aria-label={t("promptTry.countAria", { count: matches })} className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-caption font-semibold text-primary-foreground">
             {matches}
           </span>
         )}
@@ -152,14 +152,14 @@ function PromptTrySheet({
 
   return (
     <Modal onClose={onClose} labelledBy="prompt-try-title">
-      <DialogShell role="document" className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell role="document" className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop">
         <div className="px-4 pb-1 pt-3">
           <div className="flex items-center gap-2">
             <h2 id="prompt-try-title" className="min-w-0 flex-1 text-h3 font-bold text-text">
               {t("promptTry.title")}
             </h2>
             <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-10 w-10 rounded-md")}>
-              <X size={18} />
+              <X size={20} />
             </button>
           </div>
           <p className="text-small text-text-secondary">{t("promptTry.hint")}</p>
@@ -210,7 +210,7 @@ function PromptTrySheet({
                         <StorageImg src={item.coverUrl} alt="" className="h-12 w-12 shrink-0 rounded-md bg-surface-soft object-cover" />
                       ) : (
                         <span aria-hidden className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
-                          <SlidersHorizontal size={18} />
+                          <SlidersHorizontal size={20} />
                         </span>
                       )}
                       <span className="min-w-0 flex-1">

@@ -63,7 +63,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-2">
                   <span className="text-small font-semibold text-text">{t(`guide.method.${id}.title` as "guide.method.oauth.title")}</span>
-                  {id === "oauth" && <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-caption font-bold text-secondary">{t("guide.method.oauth.badge")}</span>}
+                  {id === "oauth" && <span className="rounded-full bg-secondary-soft px-2 py-0.5 text-caption font-semibold text-secondary">{t("guide.method.oauth.badge")}</span>}
                 </span>
                 <span className="block text-caption text-text-secondary">{t(`guide.method.${id}.desc` as "guide.method.oauth.desc")}</span>
               </span>
@@ -72,13 +72,13 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
         })}
       </div>
 
-      <div className="space-y-4 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5" data-guide-card="">
+      <div className="space-y-4 rounded-lg card-flat p-4 shadow-card sm:p-5" data-guide-card="">
         <div className="flex gap-1.5" aria-hidden>
           {steps.map((item, i) => (
             <span key={item.id} className={cn("h-1.5 flex-1 rounded-full", i < filledSegments(index, steps.length) ? "bg-primary" : "bg-border")} />
           ))}
         </div>
-        <p className="text-caption font-bold uppercase tracking-wider text-primary" data-guide-step="">
+        <p className="text-caption font-semibold text-primary" data-guide-step="">
           {t("guide.stepOf", { n: index + 1, total: steps.length })}
         </p>
         <Heading className="break-words font-display text-h3 text-text">{t(step.title)}</Heading>
@@ -119,7 +119,7 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
         )}
       </div>
 
-      <ol aria-label={t("guide.allSteps")} className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-4">
+      <ol aria-label={t("guide.allSteps")} className="divide-y divide-border-soft rounded-lg card-flat px-4">
         {steps.map((item, i) => {
           const state = stepState(i, index);
           return (
@@ -134,13 +134,13 @@ export function ConnectWizard({ mcpMeUrl, keysHref, headingLevel = "h4" }: { mcp
                 <span
                   aria-hidden
                   className={cn(
-                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-caption font-bold",
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-caption font-semibold",
                     state === "done" && "bg-success text-success-foreground",
                     state === "current" && "bg-primary text-primary-foreground",
                     state === "todo" && "border-2 border-border-strong text-text-muted",
                   )}
                 >
-                  {state === "done" ? <Check size={14} /> : i + 1}
+                  {state === "done" ? <Check size={16} /> : i + 1}
                 </span>
                 <span className={cn("min-w-0 flex-1 break-words text-small", state === "todo" ? "text-text-secondary" : "font-medium text-text")}>{t(item.title)}</span>
               </button>
@@ -166,15 +166,15 @@ function ConnectorSketch() {
         <p className="text-small font-semibold text-text-secondary">{t("guide.sketch.title")}</p>
         <div className="space-y-1">
           <p className="text-caption text-text-muted">{t("guide.sketch.name")}</p>
-          <div className="flex h-8 items-center rounded-md border border-border bg-surface px-2.5 text-caption text-text-muted">Promptly</div>
+          <div className="flex h-8 items-center rounded-md card-flat px-2.5 text-caption text-text-muted">Promptly</div>
         </div>
         <div className="space-y-1">
           <p className="text-caption text-text-muted">{t("guide.sketch.url")}</p>
           <div className="flex h-8 items-center rounded-md border-2 border-primary bg-surface px-2.5 text-caption font-semibold text-primary ring-4 ring-primary/15">
             {t("guide.sketch.paste")}
           </div>
-          <p className="flex items-center justify-end gap-1 text-caption font-bold text-primary">
-            <ArrowUp size={14} />
+          <p className="flex items-center justify-end gap-1 text-caption font-semibold text-primary">
+            <ArrowUp size={16} />
             {t("guide.sketch.onlyThis")}
           </p>
         </div>

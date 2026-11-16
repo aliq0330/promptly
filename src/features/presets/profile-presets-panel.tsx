@@ -80,7 +80,7 @@ export function ProfilePresetsPanel({ ownerId, isOwn }: { ownerId: string; isOwn
       ) : (
         <PagedListState list={savedPages} skeleton={<p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>}>
           {saved.length === 0 ? (
-            <EmptyState
+            <EmptyState scene="preset"
               icon={Bookmark}
               title={t("preset.noSavedTitle")}
               description={t("preset.noSavedBody")}

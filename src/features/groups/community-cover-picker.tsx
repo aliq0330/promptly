@@ -95,7 +95,7 @@ export function CommunityCoverPicker({
               style={{ backgroundColor: swatch }}
               className="relative flex h-9 w-9 items-center justify-center rounded-full ring-offset-2 ring-offset-background transition-shadow hover:ring-2 hover:ring-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 aria-pressed:ring-2 aria-pressed:ring-text"
             >
-              {normalized === swatch && <Check size={16} className="text-white" aria-hidden />}
+              {normalized === swatch && <Check size={16} className="text-on-art" aria-hidden />}
             </button>
           ))}
           <label className="ml-1 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border border-border-soft px-3 text-label font-medium text-text-secondary hover:border-border">

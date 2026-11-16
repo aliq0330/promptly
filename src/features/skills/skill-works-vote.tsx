@@ -97,7 +97,7 @@ export function SkillWorksVote({ skillId, isOwn, justDownloaded }: { skillId: st
   }
 
   return (
-    <section data-skill-works aria-labelledby="skill-works-title" className="space-y-3 rounded-lg border border-border-soft bg-surface p-4">
+    <section data-skill-works aria-labelledby="skill-works-title" className="space-y-3 rounded-lg card-flat p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="skill-works-title" className="text-small font-semibold text-text">
           {t("skill.works.title")}
@@ -119,10 +119,10 @@ export function SkillWorksVote({ skillId, isOwn, justDownloaded }: { skillId: st
       {state.canVote ? (
         <div role="group" aria-label={t("prompt.works.groupAria")} className="flex flex-wrap items-center gap-2">
           <Button variant={state.myVote === true ? "primary" : "outline"} size="sm" aria-pressed={state.myVote === true} disabled={busy} onClick={() => void vote(true)} data-skill-works-yes="">
-            <ThumbsUp size={14} aria-hidden /> {t("prompt.works.yes")}
+            <ThumbsUp size={16} aria-hidden /> {t("prompt.works.yes")}
           </Button>
           <Button variant={state.myVote === false ? "primary" : "outline"} size="sm" aria-pressed={state.myVote === false} disabled={busy} onClick={() => void vote(false)} data-skill-works-no="">
-            <ThumbsDown size={14} aria-hidden /> {t("prompt.works.no")}
+            <ThumbsDown size={16} aria-hidden /> {t("prompt.works.no")}
           </Button>
           {state.myVote !== null && <span className="text-caption text-text-muted">{t("prompt.works.undoHint")}</span>}
         </div>

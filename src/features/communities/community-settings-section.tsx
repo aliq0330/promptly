@@ -138,7 +138,7 @@ export function CommunitySettingsSection({ group, onChanged, onToast }: { group:
           </h3>
           <p className="text-small text-text-secondary">{group.closedAt ? t("communities.settings.reopenHelp") : t("communities.settings.closeHelp")}</p>
           <Button type="button" size="sm" variant="outline" onClick={() => { closeAction.setError(null); setConfirmClose(true); }}>
-            {group.closedAt ? <LockOpen size={14} /> : <Lock size={14} />}
+            {group.closedAt ? <LockOpen size={16} /> : <Lock size={16} />}
             {group.closedAt ? t("communities.settings.reopen") : t("communities.settings.close")}
           </Button>
         </section>

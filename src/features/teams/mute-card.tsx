@@ -5,6 +5,7 @@ import { BellOff } from "@/components/icons/bell-off";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { Switch } from "./team-ui";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * Ekip / proje sessize alma kartı (docs/history/369-*): ekip ve proje sayfalarında AYNI görünüm. Sessizlik ekip → proje → kanal birleşimidir; bu kart
@@ -57,10 +58,10 @@ export function MuteCard({
     <div data-mute-card={scope} data-muted={muted ? "true" : "false"} className={cn("rounded-lg border px-4 py-3", effective ? "border-warning/40 bg-warning/5" : "border-border-soft bg-surface")}>
       <div className="flex items-center gap-3">
         <span aria-hidden className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", effective ? "bg-warning-soft text-warning" : "bg-surface-soft text-text-secondary")}>
-          {effective ? <BellOff size={18} /> : <Bell size={18} />}
+          {effective ? <BellOff size={20} /> : <Bell size={20} />}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-body font-bold text-text">{t(`${prefix}.title` as "th.mute.team.title")}</p>
+          <p className="text-body font-semibold text-text">{t(`${prefix}.title` as "th.mute.team.title")}</p>
           <p className="text-caption text-text-secondary">{t(`${prefix}.${muted ? "on" : "off"}` as "th.mute.team.on")}</p>
         </div>
         <span className={cn(busy && "pointer-events-none opacity-60")}>
@@ -82,9 +83,9 @@ export function MuteChip({ scope }: { scope: "team" | "project" | "channel" | nu
   const { t } = useTranslation();
   if (!scope) return null;
   return (
-    <span data-mute-chip={scope} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold uppercase tracking-[0.04em] text-text-muted">
-      <BellOff size={10} aria-hidden />
+    <Badge variant="neutral" size="sm" data-mute-chip={scope} className="shrink-0 text-text-muted">
+      <BellOff size={12} aria-hidden />
       {t(`th.chip.${scope}` as "th.chip.team")}
-    </span>
+    </Badge>
   );
 }

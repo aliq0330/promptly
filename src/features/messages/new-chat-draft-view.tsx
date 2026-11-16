@@ -151,7 +151,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
   }
 
   if (state === "unavailable" || !target) {
-    const backClass = "inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
+    const backClass = "inline-flex h-9 items-center rounded-lg card-flat px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <p role="alert" className="mb-4 text-small text-text-secondary">
@@ -185,7 +185,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
           <span className="flex min-w-0 items-center gap-3" data-dock-chat-title="">
             <PresenceAvatar userId={target.id} src={target.avatarUrl} alt={target.displayName} size={34} />
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-[1rem] font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>
+              <span className="block truncate font-display text-body font-semibold tracking-[-0.01em] text-text">{target.displayName}</span>
               <PresenceStatusText userId={target.id} fallback={`@${target.username}`} showDot={false} className="flex max-w-full text-caption text-text-muted" />
             </span>
           </span>

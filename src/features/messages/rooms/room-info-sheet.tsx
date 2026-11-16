@@ -8,7 +8,7 @@ import { Search } from "@/components/icons/search";
 import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
-import { SegmentedChoice } from "@/features/messages/segmented-choice";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { communityHref } from "@/lib/communities";
 import { archiveCommunityRoom, setRoomMuted } from "@/lib/supabase/community-rooms";
@@ -99,7 +99,7 @@ export function RoomInfoSheet({
       <Modal onClose={busy ? () => undefined : onClose} labelledBy="room-info-title">
         <DialogShell data-room-info className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-xl border border-border-soft bg-surface shadow-pop sm:rounded-lg">
           <div className="flex shrink-0 items-center gap-3 px-5 pb-2 pt-5">
-            <RoomIconTile icon={room.icon} size={44} />
+            <RoomIconTile icon={room.icon} size={40} />
             <div className="min-w-0 flex-1 leading-tight">
               <h2 id="room-info-title" className="truncate font-display text-h3 font-bold text-text">
                 {room.name}
@@ -107,7 +107,7 @@ export function RoomInfoSheet({
               <p className="truncate text-small text-text-muted">{t("rooms.info.title", { community: community.name })}</p>
             </div>
             <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <X size={18} aria-hidden />
+              <X size={20} aria-hidden />
             </button>
           </div>
 
@@ -124,8 +124,8 @@ export function RoomInfoSheet({
             </dl>
 
             <div className="space-y-1.5">
-              <p className="text-caption font-bold text-text-muted">{t("rooms.info.notifyHeading")}</p>
-              <SegmentedChoice<RoomNotify>
+              <p className="text-caption font-semibold text-text-muted">{t("rooms.info.notifyHeading")}</p>
+              <ChoiceGroup<RoomNotify> variant="segmented"
                 value={room.muted ? "none" : "all"}
                 ariaLabel={t("rooms.info.notifyHeading")}
                 testId="room-notify"
@@ -158,13 +158,13 @@ export function RoomInfoSheet({
 
             {canManage && (
               <div className="space-y-2" data-room-admin>
-                <p className="text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("rooms.info.adminHeading")}</p>
+                <p className="text-caption font-semibold text-text-muted">{t("rooms.info.adminHeading")}</p>
                 <div className="flex gap-2">
-                  <button type="button" data-room-edit onClick={() => setEditing(true)} className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-bold text-text hover:bg-surface-soft">
+                  <button type="button" data-room-edit onClick={() => setEditing(true)} className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft">
                     {t("rooms.info.edit")}
                   </button>
                   {!room.isDefault && (
-                    <button type="button" data-room-archive onClick={() => setConfirmArchive(true)} className={cn("flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-bold text-text hover:bg-surface-soft")}>
+                    <button type="button" data-room-archive onClick={() => setConfirmArchive(true)} className={cn("flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft")}>
                       {t("rooms.manage.archive")}
                     </button>
                   )}

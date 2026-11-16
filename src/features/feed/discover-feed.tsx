@@ -242,7 +242,7 @@ export function DiscoverFeed() {
           ) : creatorPages.failed && creatorPages.creators.length === 0 ? (
             <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: creatorPages.retry }} />
           ) : creatorPages.creators.length === 0 ? (
-            <EmptyState icon={UsersRound} title={t("discover.noCreatorsYet")} />
+            <EmptyState scene="community" icon={UsersRound} title={t("discover.noCreatorsYet")} />
           ) : (
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
@@ -274,7 +274,7 @@ export function DiscoverFeed() {
         )}
       </div>
       {!highlights.loading && (
-        <aside className="hidden w-[300px] shrink-0 xl:sticky xl:top-24 xl:block">
+        <aside className="hidden w-(--aside-w) shrink-0 xl:sticky xl:top-24 xl:block">
           <DiscoverAside creators={highlights.creators} tags={highlights.tags} onSeeAllCreators={() => setSection("creators")} />
         </aside>
       )}

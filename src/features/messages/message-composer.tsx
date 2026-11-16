@@ -276,14 +276,14 @@ export function MessageComposer({
               />
               {image.status === "preparing" && (
                 <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/60" role="status" aria-label={t("messages.preparingPhoto")}>
-                  <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden />
+                  <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden />
                 </span>
               )}
               <button
                 type="button"
                 onClick={() => onRemoveImage(image.key)}
                 aria-label={t("messages.removePhoto")}
-                className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface text-text shadow-sm hover:bg-surface-soft focus-visible:outline-2 focus-visible:outline-primary"
+                className="tap-area absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface text-text shadow-sm hover:bg-surface-soft focus-visible:outline-2 focus-visible:outline-primary"
               >
                 <X size={12} aria-hidden />
               </button>
@@ -379,7 +379,7 @@ export function MessageComposer({
           title={t("common.send")}
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,background-color] duration-200 ease-soft hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
         >
-          {isSending ? <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <SendArrowIcon size={22} strokeWidth={2.2} seq={sendSeq} />}
+          {isSending ? <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <SendArrowIcon size={24} seq={sendSeq} />}
         </button>
       </div>
       {emojiPanel && (

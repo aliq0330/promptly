@@ -145,7 +145,7 @@ export function ResultDetailView() {
           primary={
             result.originalPrompt ? (
               <Link href={promptHref(result.originalPrompt)} className={buttonClassName({ size: "lg", className: BAND_PRIMARY_CLASS })}>
-                <SquareTerminal size={18} aria-hidden />
+                <SquareTerminal size={20} aria-hidden />
                 {t("result.openPrompt")}
               </Link>
             ) : undefined
@@ -166,7 +166,7 @@ export function ResultDetailView() {
             <AsideSection id="result-origin-title" title={t("result.madeWithWhichPrompt")}>
               <Link href={promptHref(result.originalPrompt)} className="group block space-y-1 p-4 transition-colors hover:bg-surface-soft" data-result-origin>
                 <span className="flex items-center gap-1.5 text-label font-semibold text-text group-hover:text-primary">
-                  <SquareTerminal size={14} className="shrink-0 text-primary" aria-hidden />
+                  <SquareTerminal size={16} className="shrink-0 text-primary" aria-hidden />
                   <span className="truncate">{result.originalPrompt.title}</span>
                 </span>
                 {result.originalPrompt.description && <span className="line-clamp-2 block text-caption text-text-muted">{result.originalPrompt.description}</span>}
@@ -191,7 +191,7 @@ export function ResultDetailView() {
         )}
 
         {result.hasModification && result.originalPrompt && (
-          <section className="rounded-lg border border-border-soft bg-surface">
+          <section className="rounded-lg card-flat">
             <button
               type="button"
               onClick={() => setIsModificationOpen((open) => !open)}
@@ -211,14 +211,14 @@ export function ResultDetailView() {
                 {result.modifiedPromptText ? (
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("result.original")}</p>
-                      <div className="max-h-40 overflow-y-auto rounded-md border border-border-soft bg-surface-soft p-2.5">
+                      <p className="mb-1 text-caption font-semibold text-text-muted">{t("result.original")}</p>
+                      <div className="max-h-40 overflow-y-auto rounded-md card-soft p-2.5">
                         <DiffText before={result.originalPrompt.promptText} after={result.modifiedPromptText} />
                       </div>
                     </div>
                     <div>
-                      <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("result.userModification")}</p>
-                      <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-border-soft bg-surface-soft p-2.5 font-mono text-caption text-text">
+                      <p className="mb-1 text-caption font-semibold text-text-muted">{t("result.userModification")}</p>
+                      <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-md card-soft p-2.5 font-mono text-caption text-text">
                         {result.modifiedPromptText}
                       </p>
                     </div>

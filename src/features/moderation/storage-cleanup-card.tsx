@@ -49,9 +49,9 @@ export function StorageCleanupCard() {
   const rows = report ? Object.entries(report.buckets) : [];
 
   return (
-    <section className="space-y-3 rounded-lg border border-border bg-surface p-4">
+    <section className="space-y-3 rounded-lg card-flat p-4">
       <div className="flex items-start gap-3">
-        <HardDrive size={18} className="mt-0.5 shrink-0 text-text-muted" />
+        <HardDrive size={20} className="mt-0.5 shrink-0 text-text-muted" />
         <div className="min-w-0">
           <h2 className="text-small font-semibold text-text">{t("moderation.storageTitle")}</h2>
           <p className="text-small text-text-secondary">{t("moderation.storageHint")}</p>

@@ -131,7 +131,7 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
         />
         {canManage && (
           <Button type="button" size="sm" onClick={() => setEditing("new")}>
-            <Plus size={14} /> {t("communities.events.create")}
+            <Plus size={16} /> {t("communities.events.create")}
           </Button>
         )}
       </div>
@@ -143,7 +143,7 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
       )}
 
       {loadError ? (
-        <div className="space-y-3 rounded-lg border border-border-soft bg-surface px-6 py-10 text-center">
+        <div className="space-y-3 rounded-lg card-flat px-6 py-10 text-center">
           <p role="alert" className="text-small text-danger">
             {t("communities.events.loadError")}
           </p>
@@ -158,7 +158,7 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
           ))}
         </ul>
       ) : events.length === 0 ? (
-        <EmptyState
+        <EmptyState scene="community"
           icon={CalendarDays}
           title={scope === "upcoming" ? t("communities.events.emptyUpcoming") : t("communities.events.emptyPast")}
           description={scope === "upcoming" && canManage ? t("communities.events.emptyHelpManage") : undefined}
@@ -240,12 +240,12 @@ function EventCard({
   const { t, language } = useTranslation();
   const phase = eventPhase(event);
   const options: { status: RsvpStatus; label: string; icon: React.ReactNode }[] = [
-    { status: "going", label: t("communities.events.going"), icon: <Check size={14} /> },
-    { status: "maybe", label: t("communities.events.maybe"), icon: <CircleHelp size={14} /> },
-    { status: "not_going", label: t("communities.events.notGoing"), icon: <X size={14} /> },
+    { status: "going", label: t("communities.events.going"), icon: <Check size={16} /> },
+    { status: "maybe", label: t("communities.events.maybe"), icon: <CircleHelp size={16} /> },
+    { status: "not_going", label: t("communities.events.notGoing"), icon: <X size={16} /> },
   ];
   return (
-    <li className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card">
+    <li className="space-y-3 rounded-lg card-flat p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <h3 className="flex flex-wrap items-center gap-2 break-words text-small font-semibold text-text">
@@ -255,34 +255,34 @@ function EventCard({
             {phase === "past" && <Badge variant="neutral">{t("communities.events.ended")}</Badge>}
           </h3>
           <p className="flex items-center gap-1.5 text-small text-text-secondary">
-            <CalendarDays size={14} aria-hidden /> {formatEventRange(event.startsAt, event.endsAt, event.timezone, language)}
+            <CalendarDays size={16} aria-hidden /> {formatEventRange(event.startsAt, event.endsAt, event.timezone, language)}
             <span className="text-caption text-text-muted">({event.timezone})</span>
           </p>
           {event.location && (
             <p className="flex items-center gap-1.5 text-small text-text-secondary">
-              <MapPin size={14} aria-hidden /> <span className="break-words">{event.location}</span>
+              <MapPin size={16} aria-hidden /> <span className="break-words">{event.location}</span>
             </p>
           )}
           {event.onlineUrl && (
             <a href={event.onlineUrl} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 break-all text-small text-primary hover:underline">
-              <ExternalLink size={14} aria-hidden /> {t("communities.events.joinOnline")}
+              <ExternalLink size={16} aria-hidden /> {t("communities.events.joinOnline")}
             </a>
           )}
         </div>
         {canManage && phase !== "past" && (
           <div className="flex shrink-0 gap-1">
             {phase !== "cancelled" && (
-              <button type="button" onClick={onEdit} aria-label={t("common.edit")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
+              <button type="button" onClick={onEdit} aria-label={t("common.edit")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
                 <Pencil size={16} />
               </button>
             )}
             {phase !== "cancelled" && (
-              <button type="button" onClick={onCancel} aria-label={t("communities.events.cancelConfirm")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
+              <button type="button" onClick={onCancel} aria-label={t("communities.events.cancelConfirm")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
                 <CalendarX size={16} />
               </button>
             )}
-            <button type="button" onClick={onDelete} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger-soft hover:text-danger">
-              <TrashIcon size={15} />
+            <button type="button" onClick={onDelete} aria-label={t("common.delete")} className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-danger-soft hover:text-danger">
+              <TrashIcon size={16} />
             </button>
           </div>
         )}
@@ -327,7 +327,7 @@ function EventCard({
                 aria-pressed={event.myRsvp === option.status}
                 onClick={() => onRsvp(option.status)}
                 className={cn(
-                  "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-label font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50",
+                  "inline-flex h-9 items-center gap-1.5 rounded-md border px-2.5 text-label font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50",
                   event.myRsvp === option.status ? "border-primary/50 bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong",
                 )}
               >
@@ -386,7 +386,7 @@ function EventFormModal({ groupId, event, onClose, onSaved }: { groupId: string;
 
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy="event-form-title">
-      <form onSubmit={submit} noValidate className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop" onClick={(e) => e.stopPropagation()}>
+      <form onSubmit={submit} noValidate className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop" onClick={(e) => e.stopPropagation()}>
         <div className="px-5 pb-2 pt-5">
           <h2 id="event-form-title" className="text-body font-semibold text-text">
             {event ? t("communities.events.editTitle") : t("communities.events.newTitle")}

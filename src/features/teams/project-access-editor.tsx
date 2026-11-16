@@ -57,7 +57,7 @@ export function ProjectAccessEditor({
 
   return (
     <div className="space-y-3" data-testid="project-access-editor">
-      <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">{t("tp.access.heading", { count: entries.length })}</p>
+      <p className="text-caption font-semibold text-text-muted">{t("tp.access.heading", { count: entries.length })}</p>
       <ul className="divide-y divide-border-soft overflow-hidden rounded-xl border border-border-soft">
         {entries.length === 0 && <li className="px-3 py-3 text-small text-text-muted">{t("tp.access.none")}</li>}
         {entries.map((entry) => {
@@ -75,7 +75,7 @@ export function ProjectAccessEditor({
                       value={entry.role}
                       disabled={locked}
                       onChange={(event) => setRole(entry, event.target.value as ProjectRole)}
-                      className="h-8 rounded-full border border-border bg-background px-3 text-caption font-semibold disabled:opacity-50"
+                      className="h-9 rounded-full border border-border bg-background px-3 text-caption font-semibold disabled:opacity-50"
                     >
                       {roleChoices(entry).map((role) => (
                         <option key={role} value={role}>
@@ -84,8 +84,8 @@ export function ProjectAccessEditor({
                       ))}
                     </select>
                     {!locked && (
-                      <button type="button" onClick={() => remove(entry)} aria-label={t("tp.access.remove")} className={iconButtonClassName(false, "h-8 w-8")}>
-                        <X size={14} aria-hidden />
+                      <button type="button" onClick={() => remove(entry)} aria-label={t("tp.access.remove")} className={iconButtonClassName(false, "h-9 w-9")}>
+                        <X size={16} aria-hidden />
                       </button>
                     )}
                   </>
@@ -102,7 +102,7 @@ export function ProjectAccessEditor({
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("tp.access.addPlaceholder")}
           aria-label={t("tm.access.search")}
-          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-small"
+          className="h-10 w-full rounded-lg card-inset px-3 text-small"
         />
         <ul className={`mt-2 max-h-56 divide-y divide-border-soft overflow-y-auto rounded-lg border border-border-soft ${candidatePeople.length + candidateGroups.length === 0 ? "hidden" : ""}`}>
           {candidateGroups.map((group) => (
@@ -111,7 +111,7 @@ export function ProjectAccessEditor({
                 name={group.name}
                 sub={t("tm.access.groupSub", { count: group.memberCount })}
                 right={
-                  <button type="button" onClick={() => add({ type: "group", id: group.id, role: "edit", name: group.name, sub: String(group.memberCount) })} className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary">
+                  <button type="button" onClick={() => add({ type: "group", id: group.id, role: "edit", name: group.name, sub: String(group.memberCount) })} className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary">
                     <Plus size={12} aria-hidden />
                     {t("tm.access.add")}
                   </button>
@@ -129,7 +129,7 @@ export function ProjectAccessEditor({
                   <button
                     type="button"
                     onClick={() => add({ type: "member", id: person.userId, role: "edit", name: person.displayName || person.username, username: person.username, sub: person.role })}
-                    className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
+                    className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
                   >
                     <Plus size={12} aria-hidden />
                     {t("tm.access.add")}

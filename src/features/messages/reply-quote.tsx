@@ -88,7 +88,7 @@ export function ReplyThumb({ thumb, size }: { thumb: Thumb | null; size: number 
   return (
     <span
       data-reply-thumb
-      className="relative block shrink-0 overflow-hidden rounded-md border border-border-soft bg-background"
+      className="relative block shrink-0 overflow-hidden rounded-md card-inset"
       style={{ width: size, height: size }}
     >
       {thumb.kind === "photo" ? (
@@ -131,7 +131,7 @@ export function ComposerReplyBar({
         type="button"
         onClick={onCancel}
         aria-label={t("messages.cancelReplyAriaLabel")}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text"
       >
         <X size={16} />
       </button>

@@ -112,7 +112,7 @@ export function MembersTab() {
           </p>
         )}
         {caps.manageMembers && (
-          <form onSubmit={invite} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4" data-testid="invite-member">
+          <form onSubmit={invite} className="space-y-3 rounded-lg card-flat p-4" data-testid="invite-member">
             <h2 className="text-h3 font-bold text-text">{t("spaces.members.inviteTitle")}</h2>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <div className="min-w-0 flex-1">
@@ -131,7 +131,7 @@ export function MembersTab() {
                 </select>
               </div>
               <Button type="submit" disabled={busy || !username.trim()} className="h-11">
-                {busy ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <UserPlus size={16} aria-hidden />}
+                {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <UserPlus size={16} aria-hidden />}
                 {t("spaces.members.invite")}
               </Button>
             </div>
@@ -151,7 +151,7 @@ export function MembersTab() {
           ) : members === null ? (
             <p className="text-small text-text-muted">{t("common.loading")}</p>
           ) : (
-            <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface">
+            <ul className="divide-y divide-border-soft rounded-lg card-flat">
               {members.map((member) => {
                 const Icon = ROLE_ICON[member.role];
                 const name = member.profile?.displayName ?? "—";
@@ -222,7 +222,7 @@ export function MembersTab() {
                       }
                     }}
                   >
-                    <X size={14} aria-hidden />
+                    <X size={16} aria-hidden />
                     {t("spaces.members.revokeInvite")}
                   </Button>
                 </li>
@@ -240,19 +240,19 @@ export function MembersTab() {
       </div>
 
       <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-        <section className="space-y-2 rounded-lg border border-border-soft bg-surface p-4">
-          <h2 className="text-label font-semibold uppercase tracking-[0.08em] text-text-muted">{t("spaces.members.access")}</h2>
+        <section className="space-y-2 rounded-lg card-flat p-4">
+          <h2 className="text-label font-semibold text-text-muted">{t("spaces.members.access")}</h2>
           <VisibilityBadge visibility={space.visibility} />
           <p className="text-small text-text-secondary">{t(SPACE_VISIBILITY_LABEL[space.visibility])}</p>
           {caps.share && (
             <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
-              <Share2 size={14} aria-hidden />
+              <Share2 size={16} aria-hidden />
               {t("spaces.members.shareSettings")}
             </Button>
           )}
         </section>
-        <section className="space-y-2 rounded-lg border border-border-soft bg-surface p-4 text-small text-text-secondary">
-          <h2 className="text-label font-semibold uppercase tracking-[0.08em] text-text-muted">{t("spaces.members.rolesTitle")}</h2>
+        <section className="space-y-2 rounded-lg card-flat p-4 text-small text-text-secondary">
+          <h2 className="text-label font-semibold text-text-muted">{t("spaces.members.rolesTitle")}</h2>
           {(["owner", "editor", "viewer"] as const).map((key) => {
             const Icon = ROLE_ICON[key];
             return (

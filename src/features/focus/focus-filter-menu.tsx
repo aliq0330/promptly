@@ -92,7 +92,7 @@ export function FocusFilterMenu({
 
   const row =
     "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-label font-medium text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
-  const heading = "px-3 pb-1 pt-2 text-caption font-bold uppercase tracking-[0.08em] text-text-muted";
+  const heading = "px-3 pb-1 pt-2 text-caption font-semibold text-text-muted";
 
   return (
     <div ref={wrapRef} className="relative min-w-0">
@@ -103,11 +103,11 @@ export function FocusFilterMenu({
         aria-expanded={open}
         aria-label={t("focusFeed.filter")}
         title={t("focusFeed.filter")}
-        className="inline-flex h-11 max-w-full items-center gap-1.5 rounded-full border border-white/15 bg-white/10 pl-4 pr-3 text-label font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="inline-flex h-11 max-w-full items-center gap-1.5 rounded-full border border-white/15 bg-white/10 pl-4 pr-3 text-label font-semibold text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <span className="truncate">{t(CHANNEL_META[channel].label)}</span>
-        {contentType && <span className="truncate font-medium text-white/65">· {t(CONTENT_TYPE_LABEL[contentType])}</span>}
-        <span className="truncate font-medium text-white/65">· {t(TAB_META[tab].label)}</span>
+        {contentType && <span className="truncate font-medium text-on-art-faint">· {t(CONTENT_TYPE_LABEL[contentType])}</span>}
+        <span className="truncate font-medium text-on-art-faint">· {t(TAB_META[tab].label)}</span>
         <ChevronDown size={16} aria-hidden className={cn("shrink-0 transition-transform duration-200 ease-soft", open && "rotate-180")} />
       </button>
       {open && (
@@ -132,7 +132,7 @@ export function FocusFilterMenu({
                 }}
                 className={cn(row, selected && "bg-surface-soft font-semibold")}
               >
-                <Icon size={18} aria-hidden className="text-text-secondary" />
+                <Icon size={20} aria-hidden className="text-text-secondary" />
                 {t(CHANNEL_META[key].label)}
                 {selected && <Check size={16} aria-hidden className="ml-auto text-primary" />}
               </button>
@@ -176,7 +176,7 @@ export function FocusFilterMenu({
                 }}
                 className={cn(row, selected && "bg-surface-soft font-semibold")}
               >
-                <Icon size={18} aria-hidden className="text-text-secondary" />
+                <Icon size={20} aria-hidden className="text-text-secondary" />
                 {t(TAB_META[key].label)}
                 {selected && <Check size={16} aria-hidden className="ml-auto text-primary" />}
               </button>

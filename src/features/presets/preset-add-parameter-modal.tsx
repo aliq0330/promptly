@@ -113,7 +113,7 @@ export function PresetAddParameterModal({
     const taken = isTaken(field.id);
     const isOpen = open === field.id;
     return (
-      <li key={field.id} data-add-field-row={field.id} className="overflow-hidden rounded-md border border-border-soft bg-surface">
+      <li key={field.id} data-add-field-row={field.id} className="overflow-hidden rounded-md card-flat">
         <button
           type="button"
           disabled={taken}
@@ -124,7 +124,7 @@ export function PresetAddParameterModal({
           <span className="min-w-0 flex-1 truncate text-label font-semibold text-text">{fieldName(field, language)}</span>
           {taken ? (
             <span className="inline-flex items-center gap-1 text-caption text-text-muted">
-              <Check size={14} aria-hidden />
+              <Check size={16} aria-hidden />
               {t("presetField.added")}
             </span>
           ) : (
@@ -148,7 +148,7 @@ export function PresetAddParameterModal({
 
   return (
     <Modal onClose={onClose} labelledBy="add-parameter-title">
-      <DialogShell className="flex max-h-[92dvh] w-full max-w-xl flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell className="flex max-h-[92dvh] w-full max-w-xl flex-col rounded-lg card-flat shadow-pop">
         <div className="flex items-start justify-between gap-3 border-b border-border-soft px-4 py-3">
           <div>
             <h2 id="add-parameter-title" className="text-h3 font-bold text-text">
@@ -156,7 +156,7 @@ export function PresetAddParameterModal({
             </h2>
             <p className="text-caption text-text-secondary">{t("presetBuilder.addHint")}</p>
           </div>
-          <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
+          <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
             <X size={16} />
           </button>
         </div>
@@ -173,7 +173,7 @@ export function PresetAddParameterModal({
             />
           </div>
           {creating ? (
-            <form onSubmit={handleCreate} className="space-y-2 rounded-md border border-border-soft bg-surface-soft p-3" data-new-field-form>
+            <form onSubmit={handleCreate} className="space-y-2 rounded-md card-soft p-3" data-new-field-form>
               <p className="text-label font-semibold text-text">{t("presetField.createNew")}</p>
               <input value={newName} maxLength={60} onChange={(event) => setNewName(event.target.value)} placeholder={t("presetBuilder.newFieldName")} aria-label={t("presetBuilder.newFieldName")} className={INPUT} data-new-field-name />
               <input value={newOption} maxLength={120} onChange={(event) => setNewOption(event.target.value)} placeholder={t("presetBuilder.newFieldOption")} aria-label={t("presetBuilder.newFieldOption")} className={INPUT} data-new-field-option />
@@ -194,7 +194,7 @@ export function PresetAddParameterModal({
             </form>
           ) : (
             <Button type="button" variant="secondary" size="sm" onClick={() => setCreating(true)} data-create-field>
-              <Plus size={14} aria-hidden />
+              <Plus size={16} aria-hidden />
               {t("presetField.createNew")}
             </Button>
           )}
@@ -203,13 +203,13 @@ export function PresetAddParameterModal({
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
           {recommended.length > 0 && (
             <section aria-label={t("presetField.recommended")}>
-              <h3 className="mb-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("presetField.recommended")}</h3>
+              <h3 className="mb-2 text-caption font-semibold text-text-muted">{t("presetField.recommended")}</h3>
               <ul className="space-y-1.5">{recommended.map(renderRow)}</ul>
             </section>
           )}
           {others.length > 0 && (
             <section aria-label={t("presetBuilder.otherParams")}>
-              <h3 className="mb-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("presetBuilder.otherParams")}</h3>
+              <h3 className="mb-2 text-caption font-semibold text-text-muted">{t("presetBuilder.otherParams")}</h3>
               <ul className="space-y-1.5">{others.map(renderRow)}</ul>
             </section>
           )}

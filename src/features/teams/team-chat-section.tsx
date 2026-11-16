@@ -42,7 +42,7 @@ import { AccessEditor } from "./access-editor";
 import { MuteCard, MuteChip } from "./mute-card";
 import { useTeamMutes } from "./team-chat-data";
 import type { TeamCtx } from "./team-page";
-import { PillChoice } from "./team-ui";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { CountBadge } from "@/components/ui/badge";
 
 /**
@@ -120,10 +120,10 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
           aria-current={current ? "true" : undefined}
           className={cn(
             "flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-small transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-            current ? "bg-primary-soft font-bold text-primary" : cn("text-text-secondary hover:bg-surface-soft", unread && "font-bold text-text"),
+            current ? "bg-primary-soft font-semibold text-primary" : cn("text-text-secondary hover:bg-surface-soft", unread && "font-semibold text-text"),
           )}
         >
-          {channel.mode === "private" ? <Lock size={14} aria-hidden /> : isProject ? <FolderOpen size={14} aria-hidden /> : <Hash size={14} aria-hidden />}
+          {channel.mode === "private" ? <Lock size={16} aria-hidden /> : isProject ? <FolderOpen size={16} aria-hidden /> : <Hash size={16} aria-hidden />}
           <span className="min-w-0 flex-1 truncate">{channelLabel(channel)}</span>
           <MuteChip scope={channel.muteScope ?? (channel.muted ? "channel" : null)} />
           {unread && <CountBadge>{formatUnread(channel.unreadCount)}</CountBadge>}
@@ -141,9 +141,9 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
       <aside className="space-y-3 md:hidden" data-testid="team-channel-list-phone">
         <MuteCard scope="team" muted={mutes.teamMuted} busy={mutes.busy || !mutes.loaded} error={mutes.error} onToggle={(next) => void mutes.setTeamMuted(next)} />
         <div className="flex items-center">
-          <h2 className="flex-1 text-label font-semibold uppercase tracking-wide text-text-muted">{t("tm.chat.channels")}</h2>
+          <h2 className="flex-1 text-label font-semibold text-text-muted">{t("tm.chat.channels")}</h2>
           {can("manage_channels") && (
-            <button type="button" onClick={() => setNewOpen(true)} aria-label={t("tm.chat.newChannel")} className="grid h-8 w-8 place-items-center rounded-lg bg-surface-soft text-text-secondary hover:text-text lg:h-[26px] lg:w-[26px]" data-channel-new>
+            <button type="button" onClick={() => setNewOpen(true)} aria-label={t("tm.chat.newChannel")} className="grid h-9 w-9 place-items-center rounded-lg bg-surface-soft text-text-secondary hover:text-text lg:h-[26px] lg:w-[26px]" data-channel-new>
               <Plus size={16} aria-hidden />
             </button>
           )}
@@ -153,7 +153,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
         </ul>
         {visible.some((channel) => channel.mode === "project") && (
           <>
-            <h3 className="px-3 pt-2 text-caption font-semibold uppercase tracking-wide text-text-muted lg:px-2" data-testid="team-project-channels-heading">
+            <h3 className="px-3 pt-2 text-caption font-semibold text-text-muted lg:px-2" data-testid="team-project-channels-heading">
               {t("tp.chat.projects")}
             </h3>
             <ul className="space-y-0.5" data-testid="team-project-channel-list">
@@ -191,7 +191,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
         <ChannelAside muteCard={<MuteCard scope="team" muted={mutes.teamMuted} busy={mutes.busy || !mutes.loaded} error={mutes.error} onToggle={(next) => void mutes.setTeamMuted(next)} />} channel={active} members={members} online={online} controls={controls} archived={can("manage_channels") ? archived : []} onUnarchive={(id) => void archiveTeamChannel(id, false).then(load)} projectTitle={active.mode === "project" ? channelLabel(active) : null} />
         </>
       ) : (
-        <EmptyState icon={Hash} title={t("tm.chat.empty.title")} description={t("tm.chat.empty.body")} />
+        <EmptyState scene="chat" icon={Hash} title={t("tm.chat.empty.title")} description={t("tm.chat.empty.body")} />
       )}
 
       {newVisible && (
@@ -253,7 +253,7 @@ function ChannelAside({
   return (
     <aside className="hidden space-y-4 lg:row-start-1 lg:block lg:col-start-2" data-testid="team-channel-aside">
       {muteCard}
-      <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-channel-info-card">
+      <section className="rounded-lg card-flat p-4" data-testid="team-channel-info-card">
         <h3 className="font-display text-body font-bold text-text"># {projectTitle ?? channel.name}</h3>
         <p className="mt-1 text-small text-text-secondary">
           {channel.description || t(channel.mode === "private" ? "tm.chat.modePrivate" : channel.mode === "project" ? "tp.chat.modeProject" : channel.mode === "space" ? "tm.chat.modeSpace" : "tm.chat.modeOpen")}
@@ -262,7 +262,7 @@ function ChannelAside({
           {t("tc.chat.notifyAndInfo")}
         </button>
       </section>
-      <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-online">
+      <section className="rounded-lg card-flat p-4" data-testid="team-online">
         <h3 className="mb-2 font-display text-body font-bold text-text">
           {t("tm.chat.onlineCount", { count: onlineMembers.length })} <span className="font-sans text-small font-normal text-text-muted">· {t("tm.chat.memberCount", { count: channel.memberCount })}</span>
         </h3>
@@ -276,7 +276,7 @@ function ChannelAside({
         </ul>
       </section>
       {archived.length > 0 && (
-        <details className="rounded-lg border border-border-soft bg-surface p-4 text-caption text-text-muted">
+        <details className="rounded-lg card-flat p-4 text-caption text-text-muted">
           <summary className="cursor-pointer font-semibold">{t("tm.chat.archived", { count: archived.length })}</summary>
           <ul className="mt-2 space-y-1">
             {archived.map((entry) => (
@@ -320,7 +320,7 @@ function ChannelView({
   const iconButton = "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-border-soft bg-surface md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
+    <div className="flex flex-col overflow-hidden rounded-lg card-flat md:h-[calc(100dvh-20rem)] md:min-h-[32rem]" data-testid="team-channel-view" data-channel-id={channel.id}>
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border-soft px-5">
         <div className="min-w-0 flex-1 leading-tight">
           <h3 className="flex items-center gap-1.5 truncate font-display text-h3 font-bold text-text">
@@ -358,7 +358,7 @@ function ChannelView({
           <span className="hidden text-small lg:inline">{t("tm.chat.searchHint")}</span>
         </button>
         <button type="button" onClick={() => controls.current?.openChannelInfo()} aria-label={`${t("tm.info.channelInfo")}: #${channel.name}`} title={t("tm.info.channelInfo")} data-channel-info-open className={cn(iconButton, "bg-primary-soft text-primary hover:bg-border-soft")}>
-          <Info size={18} aria-hidden />
+          <Info size={20} aria-hidden />
         </button>
       </header>
       <ScrollRow className="shrink-0 gap-2 border-b border-border-soft px-4 py-2 max-md:hidden" data-testid="team-channel-chips">
@@ -370,17 +370,17 @@ function ChannelView({
             aria-current={c.id === channel.id ? "true" : undefined}
             data-channel-chip={c.name}
             className={cn(
-              "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-small font-semibold",
+              "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-small font-semibold",
               c.id === channel.id ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary",
             )}
           >
-            {c.mode === "private" ? <Lock size={12} aria-hidden /> : c.mode === "project" ? <span aria-hidden className="h-2.5 w-2.5 rounded-[3px] bg-primary" /> : <Hash size={12} aria-hidden />}
+            {c.mode === "private" ? <Lock size={12} aria-hidden /> : c.mode === "project" ? <span aria-hidden className="h-2.5 w-2.5 rounded-2xs bg-primary" /> : <Hash size={12} aria-hidden />}
             {labelOf ? labelOf(c) : c.name}
             {c.unreadCount > 0 && !c.muted && c.id !== channel.id && <CountBadge>{formatUnread(c.unreadCount)}</CountBadge>}
           </button>
         ))}
         {onNew && (
-          <button type="button" onClick={onNew} aria-label={t("tm.chat.newChannel")} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text">
+          <button type="button" onClick={onNew} aria-label={t("tm.chat.newChannel")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text">
             <Plus size={16} aria-hidden />
           </button>
         )}
@@ -481,7 +481,7 @@ function NewChannelDialog({ ctx, onClose, onCreated }: { ctx: TeamCtx; onClose: 
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.chat.whoJoins")}</span>
-          <PillChoice<ChannelMode>
+          <ChoiceGroup<ChannelMode>
             ariaLabel={t("tm.chat.whoJoins")}
             value={mode}
             onChange={setMode}
@@ -506,11 +506,11 @@ function NewChannelDialog({ ctx, onClose, onCreated }: { ctx: TeamCtx; onClose: 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <span className={fieldLabelClassName}>{t("tm.chat.posting")}</span>
-            <PillChoice<"members" | "admins"> ariaLabel={t("tm.chat.posting")} value={posting} onChange={setPosting} options={[{ key: "members", label: t("tm.chat.posting.members") }, { key: "admins", label: t("tm.chat.posting.admins") }]} />
+            <ChoiceGroup<"members" | "admins"> ariaLabel={t("tm.chat.posting")} value={posting} onChange={setPosting} options={[{ key: "members", label: t("tm.chat.posting.members") }, { key: "admins", label: t("tm.chat.posting.admins") }]} />
           </div>
           <div>
             <span className={fieldLabelClassName}>{t("tm.chat.notify")}</span>
-            <PillChoice<"all" | "mentions" | "none"> ariaLabel={t("tm.chat.notify")} value={notify} onChange={setNotify} options={[{ key: "all", label: t("tm.chat.notify.all") }, { key: "mentions", label: t("tm.chat.notify.mentions") }, { key: "none", label: t("tm.chat.notify.none") }]} />
+            <ChoiceGroup<"all" | "mentions" | "none"> ariaLabel={t("tm.chat.notify")} value={notify} onChange={setNotify} options={[{ key: "all", label: t("tm.chat.notify.all") }, { key: "mentions", label: t("tm.chat.notify.mentions") }, { key: "none", label: t("tm.chat.notify.none") }]} />
           </div>
         </div>
         {error && (
@@ -605,7 +605,7 @@ function ChannelSettingsDialog({ ctx, channel, onClose, onChanged }: { ctx: Team
           </div>
           <div>
             <span className={fieldLabelClassName}>{t("tm.chat.posting")}</span>
-            <PillChoice<"members" | "admins"> ariaLabel={t("tm.chat.posting")} value={posting} onChange={setPosting} options={[{ key: "members", label: t("tm.chat.posting.members") }, { key: "admins", label: t("tm.chat.posting.admins") }]} />
+            <ChoiceGroup<"members" | "admins"> ariaLabel={t("tm.chat.posting")} value={posting} onChange={setPosting} options={[{ key: "members", label: t("tm.chat.posting.members") }, { key: "admins", label: t("tm.chat.posting.admins") }]} />
           </div>
           {channel.mode === "private" && loaded && (
             <div>

@@ -3,6 +3,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { GRID_COLUMNS } from "@/lib/grid-columns";
 
 /** Mirrors the visual card (`ContentCardPost`): a rounded picture, then the author row with the counters on the right. */
 export function PromptCardSkeleton() {
@@ -19,17 +20,17 @@ export function PromptCardSkeleton() {
   );
 }
 
-export function PromptCardSkeletonGrid({ count = 6, columns = "sm:columns-2 xl:columns-3" }: { count?: number; columns?: string }) {
+export function PromptCardSkeletonGrid({ count = 6, columns = GRID_COLUMNS }: { count?: number; columns?: string }) {
   const { t } = useTranslation();
   return (
     // Same layout as ContentGrid: boxes, one column on a phone and CSS columns from `sm`.
     <div
-      className={cn("sm:gap-5", columns)}
+      className={cn("sm:gap-4", columns)}
       role="status"
       aria-label={t("common.loadingAriaLabel")}
     >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="break-inside-avoid pb-5 sm:pb-6">
+        <div key={i} className="break-inside-avoid pb-3 sm:pb-4">
           <PromptCardSkeleton />
         </div>
       ))}

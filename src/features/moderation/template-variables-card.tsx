@@ -105,9 +105,9 @@ export function TemplateVariablesCard() {
   const percent = progress && progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
 
   return (
-    <section className="space-y-3 rounded-lg border border-border bg-surface p-4" data-testid="template-vars">
+    <section className="space-y-3 rounded-lg card-flat p-4" data-testid="template-vars">
       <div className="flex items-start gap-3">
-        <Braces size={18} className="mt-0.5 shrink-0 text-text-muted" />
+        <Braces size={20} className="mt-0.5 shrink-0 text-text-muted" />
         <div className="min-w-0">
           <h2 className="text-small font-semibold text-text">{t("exchange.template.title")}</h2>
           <p className="text-small text-text-secondary">{t("exchange.template.hint")}</p>
@@ -133,7 +133,7 @@ export function TemplateVariablesCard() {
       </fieldset>
 
       <Button type="button" size="sm" variant="outline" onClick={() => void runScan()} disabled={busy} data-testid="template-scan">
-        {scanning && <Loader2 size={14} className="animate-spin" />}
+        {scanning && <Loader2 size={16} className="animate-spin" />}
         {scanning ? t("exchange.template.scanning") : t("exchange.template.scan")}
       </Button>
 
@@ -221,7 +221,7 @@ export function TemplateVariablesCard() {
                 ) : (
                   <div className="flex flex-wrap items-center gap-2">
                     <Button type="button" size="sm" onClick={start} disabled={busy || selectedIds.length === 0} data-testid="template-convert">
-                      {running && <Loader2 size={14} className="animate-spin" />}
+                      {running && <Loader2 size={16} className="animate-spin" />}
                       {t("exchange.template.convert", { count: selectedIds.length })}
                     </Button>
                     {running && (

@@ -297,7 +297,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   const showControls = (active || !idle) && (showTabMenu || showPosts);
 
   const peopleList = (people: UserProfile[]) => (
-    <div className="overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card">
+    <div className="overflow-hidden rounded-lg card-flat shadow-card">
       {people.map((user) => (
         <Link
           key={user.id}
@@ -531,7 +531,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
                           key={tokenKey(token)}
                           type="button"
                           onClick={() => setTokens(toggleToken(tokens, token))}
-                          className="flex min-h-11 items-center gap-2 rounded-lg border border-border-soft bg-surface px-4 text-left text-label text-text hover:border-primary"
+                          className="flex min-h-11 items-center gap-2 rounded-lg card-flat px-4 text-left text-label text-text hover:border-primary"
                         >
                           <Icon size={16} className="shrink-0 text-primary" aria-hidden />
                           <span className="min-w-0 flex-1 truncate">{t("search.removeNamed", { label })}</span>
@@ -555,7 +555,7 @@ function ResultsHeading({ children, count }: { children: ReactNode; count: numbe
   return (
     <Eyebrow as="h2" className="px-1">
       {children}
-      <span className="rounded-xs bg-surface-soft px-1.5 py-0.5 tabular-nums tracking-normal text-text-muted">{count}</span>
+      <span className="rounded-xs bg-surface-soft px-1.5 py-0.5 tabular-nums text-text-muted">{count}</span>
     </Eyebrow>
   );
 }

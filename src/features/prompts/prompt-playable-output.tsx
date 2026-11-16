@@ -70,13 +70,13 @@ export function PromptPlayableOutput({ prompt }: { prompt: Prompt }) {
     const ratio = poster.width / poster.height;
     return (
       <figure
-        className="relative w-full overflow-hidden rounded-xl bg-surface-soft shadow-pop [--hero-h:240px] md:[--hero-h:300px] lg:w-[460px]"
+        className="relative w-full overflow-hidden rounded-xl bg-surface-soft shadow-card [--hero-h:240px] md:[--hero-h:300px] lg:w-[460px]"
         style={{ aspectRatio: ratio, maxWidth: `min(100%, calc(var(--hero-h) * ${ratio}))` }}
       >
         <StorageImage src={poster.url} alt={poster.alt} fill sizes="(min-width: 768px) 520px, 100vw" className="object-cover" />
         {loading && (
           <span className="absolute inset-0 flex items-center justify-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-art-chip text-on-art">
               <Play size={20} fill="currentColor" />
             </span>
           </span>

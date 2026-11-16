@@ -78,7 +78,7 @@ export function GroupOwnerSettings({
       {chatScope && (
       <section aria-labelledby="owner-history-title" className="space-y-3">
         <h3 id="owner-history-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-          <History size={14} aria-hidden /> {t("groups.owner.historyTitle")}
+          <History size={16} aria-hidden /> {t("groups.owner.historyTitle")}
         </h3>
         <p className="text-caption text-text-muted">{t("groups.owner.historyHelp")}</p>
         <fieldset className="space-y-2" disabled={save.busy}>
@@ -104,7 +104,7 @@ export function GroupOwnerSettings({
       {chatScope && (
       <section aria-labelledby="owner-pin-title" className="space-y-3">
         <h3 id="owner-pin-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-          <Pin size={14} aria-hidden /> {t("groups.owner.pinTitle")}
+          <Pin size={16} aria-hidden /> {t("groups.owner.pinTitle")}
         </h3>
         <SwitchRow
           checked={membersCanPin}
@@ -125,7 +125,7 @@ export function GroupOwnerSettings({
       <section aria-labelledby="owner-permissions-title" className="space-y-4">
         <div className="space-y-1">
           <h3 id="owner-permissions-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-            <ShieldCheck size={14} aria-hidden /> {t("groups.owner.permissionsTitle")}
+            <ShieldCheck size={16} aria-hidden /> {t("groups.owner.permissionsTitle")}
           </h3>
           <p className="text-caption text-text-muted">{t("groups.owner.permissionsHelp")}</p>
         </div>
@@ -156,7 +156,7 @@ export function GroupOwnerSettings({
         <p className="text-caption text-text-muted">{t("groups.owner.fixedHelp")}</p>
         <div>
           <Button type="button" variant="ghost" size="sm" disabled={save.busy || atDefaults} onClick={() => setPerms(DEFAULT_ROLE_PERMISSIONS)}>
-            <RotateCcw size={14} /> {t("groups.owner.resetDefaults")}
+            <RotateCcw size={16} /> {t("groups.owner.resetDefaults")}
           </Button>
         </div>
       </section>

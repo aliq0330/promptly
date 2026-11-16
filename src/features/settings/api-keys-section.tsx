@@ -119,7 +119,7 @@ export function ApiKeysSection() {
             <p className="text-small font-semibold text-text">{t("apiKeys.revealTitle")}</p>
             <p className="text-caption leading-relaxed text-text-secondary">{t("apiKeys.revealBody")}</p>
           </div>
-          <div className="relative rounded-lg border border-border-soft bg-surface">
+          <div className="relative rounded-lg card-flat">
             <pre aria-label={t("apiKeys.revealLabel")} className="prompt-text overflow-x-auto whitespace-pre-wrap break-all px-3 py-3 pr-12 text-small text-text">{created.token}</pre>
             <button
               type="button"
@@ -190,7 +190,7 @@ export function ApiKeysSection() {
         {formError && <p role="alert" className="text-small text-danger">{formError}</p>}
         {rows !== null && !canCreate && <p className="text-caption text-text-muted">{t("apiKeys.limitReached")}</p>}
         <Button type="submit" size="sm" disabled={creating || !canCreate || !isValidApiTokenName(name)}>
-          <KeyRound size={14} />
+          <KeyRound size={16} />
           {creating ? t("apiKeys.creating") : t("apiKeys.create")}
         </Button>
       </form>

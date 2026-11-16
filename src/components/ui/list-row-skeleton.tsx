@@ -14,7 +14,7 @@ export function ListRowSkeleton() {
 
 export function ListRowSkeletonGroup({ count = 5 }: { count?: number }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-surface">
+    <div className="overflow-hidden rounded-lg card-flat">
       {Array.from({ length: count }).map((_, i) => (
         <ListRowSkeleton key={i} />
       ))}

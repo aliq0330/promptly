@@ -17,7 +17,7 @@ import { InterestCardFrame, type InterestFeedback } from "./interest-feedback";
 import { CreatorStripSlot, type CreatorStrips } from "./creator-suggestions";
 import { creatorStripOrdinal, isCreatorStripSlot } from "@/lib/creator-suggestions";
 import { Reveal } from "@/components/ui/reveal";
-import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid, GRID_COLUMNS_ASIDE } from "@/features/content/content-card";
 import { prefersReducedMotion } from "@/lib/motion";
 import { FEED_PAGE_SIZE } from "@/lib/supabase/feed";
 import { chunk } from "@/lib/supabase/paged";
@@ -95,7 +95,7 @@ export function FeedGrid({
   return (
     <div ref={gridRef}>
       {blocks.map((block, blockIndex) => (
-        <ContentGrid key={`block-${blockIndex}`} columns={layout === "home" ? "sm:columns-2" : undefined}>
+        <ContentGrid key={`block-${blockIndex}`} columns={layout === "home" ? GRID_COLUMNS_ASIDE : undefined}>
           {block.map((item, offset) => {
             const index = blockIndex * FEED_PAGE_SIZE + offset;
             return (

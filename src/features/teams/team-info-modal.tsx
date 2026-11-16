@@ -8,7 +8,7 @@ import { Info } from "@/components/icons/info";
 import { Lock } from "@/components/icons/lock";
 import { Search } from "@/components/icons/search";
 import { InfoCard, InfoIdentity, InfoPanelShell, InfoTile, InfoTiles } from "@/features/messages/info-panel-kit";
-import { SegmentedChoice } from "@/features/messages/segmented-choice";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { setChannelNotify, type TeamChannel, type TeamSummary } from "@/lib/supabase/teams";
 import { channelLabel } from "@/lib/team-chat";
@@ -79,7 +79,7 @@ export function TeamInfoModal({
   return (
     <InfoPanelShell title={t("tm.info.title")} titleId="team-info-title" onClose={onClose} attrs={{ "data-team-info": "" }}>
       <InfoIdentity
-        media={<TeamMark name={team.name} tone={team.tone} size={104} className="rounded-[30px]" />}
+        media={<TeamMark name={team.name} tone={team.tone} size={104} className="rounded-xl" />}
         name={team.name}
         nameAttr="data-team-info-name"
         sub={
@@ -106,7 +106,7 @@ export function TeamInfoModal({
             {t("tm.info.channels")}
           </h3>
           {canManageChannels && (
-            <Link href={teamLink(team.slug, "chat", { new: "1" })} data-info-add-channel className="text-small font-bold text-primary hover:underline">
+            <Link href={teamLink(team.slug, "chat", { new: "1" })} data-info-add-channel className="text-small font-semibold text-primary hover:underline">
               {t("tm.info.addChannel")}
             </Link>
           )}
@@ -137,7 +137,7 @@ export function TeamInfoModal({
                     {channel.mode === "private" ? <Lock size={16} /> : <Hash size={16} />}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className={cn("flex items-center gap-1.5 text-body", current || unread ? "font-bold text-text" : "font-semibold text-text")}>
+                    <span className={cn("flex items-center gap-1.5 text-body", current || unread ? "font-semibold text-text" : "font-semibold text-text")}>
                       <span className="truncate">{channelLabel(channel)}</span>
                       <MuteChip scope={channel.muteScope ?? (channel.muted ? "channel" : null)} />
                     </span>
@@ -165,7 +165,7 @@ export function TeamInfoModal({
           <h3 id="team-info-notify" className="font-display text-body font-bold text-text">
             {t("tm.info.notifications")}
           </h3>
-          <SegmentedChoice<NotifyLevel>
+          <ChoiceGroup<NotifyLevel> variant="segmented"
             value={level}
             onChange={(next) => void applyLevel(next)}
             disabled={busy || channels.length === 0}
@@ -192,7 +192,7 @@ export function TeamInfoModal({
         className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-body font-bold text-primary">{t("tm.info.openTeam")}</span>
+          <span className="block text-body font-semibold text-primary">{t("tm.info.openTeam")}</span>
           <span className="block text-caption text-text-secondary">{t("tm.info.openTeamHint")}</span>
         </span>
         <ArrowUpRight size={20} className="shrink-0 text-primary" aria-hidden />

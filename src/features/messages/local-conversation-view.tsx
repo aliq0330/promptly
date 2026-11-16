@@ -15,7 +15,6 @@ import { LogOut } from "@/components/icons/log-out";
 import { Search } from "@/components/icons/search";
 import { X } from "@/components/icons/x";
 import { UsersRound } from "@/components/icons/users-round";
-import { Portal } from "@/components/ui/portal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useBlockState } from "@/features/moderation/use-block-state";
 import { ProfileMoreMenu } from "@/features/profile/profile-more-menu";
@@ -105,6 +104,7 @@ import { ContactInfoPanel } from "./contact-info-panel";
 import { ImportPromptsModal } from "@/features/exchange/import-prompts-modal";
 import { composeCommunityPostShareBody } from "./community-post-share-format";
 import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
+import { ToastBar } from "@/components/ui/toast";
 
 /** Used only to give `useBlockState` a stable, always-defined target before the real conversation/participant has loaded — hooks must run unconditionally, and `canBlock` inside it is false until a real user session exists anyway, so this placeholder never actually reaches a query with a meaningful id. */
 const EMPTY_PARTICIPANT: UserProfile = {
@@ -1225,7 +1225,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
 
   // Hata/boş ekranlardaki "Mesajlara dön": sayfada bağlantı, dock'ta paneli listeye döndüren düğme.
   const backToMessagesClass =
-    "inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
+    "inline-flex h-9 items-center rounded-lg card-flat px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong";
   const backToMessages = dock ? (
     <button type="button" onClick={dock.onBack} className={backToMessagesClass}>
       {t("messages.backToMessages")}
@@ -1245,7 +1245,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
         </p>
         <Link
           href="/login"
-          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong"
+          className="inline-flex h-9 items-center rounded-lg card-flat px-4 text-small font-medium text-text shadow-xs transition-colors hover:border-border-strong"
         >
           {t("common.login")}
         </Link>
@@ -1341,7 +1341,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               data-chat-search-toggle
               className={cn(DOCK_ICON_BUTTON, searchOpen && "bg-primary-soft text-primary")}
             >
-              <Search size={18} aria-hidden />
+              <Search size={20} aria-hidden />
             </button>
           }
         >
@@ -1352,7 +1352,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               <PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={34} />
             )}
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-[1rem] font-semibold tracking-[-0.01em] text-text">{group ? group.name : participant.displayName}</span>
+              <span className="block truncate font-display text-body font-semibold tracking-[-0.01em] text-text">{group ? group.name : participant.displayName}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
                   {typingText}
@@ -1389,7 +1389,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface"
           >
             <span className="relative shrink-0">
-              {teamChannel ? <TeamMark name={teamChannel.name} tone={teamChannel.tone} size={42} className="rounded-[14px]" /> : <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={42} badge />}
+              {teamChannel ? <TeamMark name={teamChannel.name} tone={teamChannel.tone} size={42} className="rounded-md" /> : <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={42} badge />}
               {pendingRequestsForMe > 0 && (
                 <span
                   data-community-link-badge
@@ -1401,7 +1401,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               )}
             </span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{teamChannel ? teamChannel.name : group.name}</span>
+              <span className="block truncate font-display text-h3 font-semibold tracking-[-0.01em] text-text">{teamChannel ? teamChannel.name : group.name}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
                   {typingText}
@@ -1449,7 +1449,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           >
             <PresenceAvatar userId={participant.id} src={participant.avatarUrl} alt={participant.displayName} size={42} />
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-[1.0625rem] font-semibold tracking-[-0.01em] text-text">{participant.displayName}</span>
+              <span className="block truncate font-display text-h3 font-semibold tracking-[-0.01em] text-text">{participant.displayName}</span>
               {typingText ? (
                 <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
                   {typingText}
@@ -1501,7 +1501,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft"
                 >
-                  <Info size={14} /> {teamChannel ? t("tm.info.title") : t("groups.chat.info")}
+                  <Info size={16} /> {teamChannel ? t("tm.info.title") : t("groups.chat.info")}
                 </button>
                 {teamChannel && (
                   <button
@@ -1514,7 +1514,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                     }}
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft"
                   >
-                    <Hash size={14} /> {t("tm.info.channelInfo")}
+                    <Hash size={16} /> {t("tm.info.channelInfo")}
                   </button>
                 )}
                 <button
@@ -1527,7 +1527,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft disabled:opacity-50"
                 >
-                  {conversation.mutedAt ? <Bell size={14} /> : <BellOff size={14} />}
+                  {conversation.mutedAt ? <Bell size={16} /> : <BellOff size={16} />}
                   {conversation.mutedAt ? t("groups.chat.unmute") : t("groups.chat.mute")}
                 </button>
                 {activeRoom && !teamChannel && (
@@ -1541,7 +1541,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                     }}
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft"
                   >
-                    <Info size={14} /> {t("rooms.info.roomInfoMenu")}
+                    <Info size={16} /> {t("rooms.info.roomInfoMenu")}
                   </button>
                 )}
                 {activeRoom && (
@@ -1555,7 +1555,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                     }}
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft"
                   >
-                    {activeRoom.muted ? <Bell size={14} /> : <BellOff size={14} />}
+                    {activeRoom.muted ? <Bell size={16} /> : <BellOff size={16} />}
                     {activeRoom.muted ? t("rooms.chat.unmute") : t("rooms.chat.mute")}
                   </button>
                 )}
@@ -1583,7 +1583,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-danger hover:bg-surface-soft"
                 >
-                  <LogOut size={14} /> {t("groups.about.leave")}
+                  <LogOut size={16} /> {t("groups.about.leave")}
                 </button>
                 )}
               </>
@@ -1759,7 +1759,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           title={t("chat.jump.latest")}
           className="absolute bottom-24 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface text-primary shadow-card transition-colors hover:border-border-strong"
         >
-          <ChevronsDown size={18} />
+          <ChevronsDown size={20} />
         </button>
       )}
       {confirmKind && (
@@ -1775,16 +1775,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           }}
         />
       )}
-      {toast && (
-        <Portal>
-          <div
-            role="status"
-            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-(--z-popover) flex justify-center px-4 md:bottom-6"
-          >
-            <div className="animate-pop-in rounded-md bg-text px-4 py-2 text-small text-background shadow-pop">{toast}</div>
-          </div>
-        </Portal>
-      )}
+      {toast && <ToastBar>{toast}</ToastBar>}
       <MessageComposer
         draft={draft}
         onDraftChange={(value) => {
@@ -1839,7 +1830,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       />
     )}
     {pendingShare && (
-      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-caption text-text-muted">
+      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg card-soft px-3 py-1.5 text-caption text-text-muted">
         <span className="truncate">
           {t("messages.sharingPrefix")} {pendingShare.title} — {t("messages.sharingSuffix")}
         </span>
@@ -1851,7 +1842,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           }}
           aria-label={t("messages.cancelShareAriaLabel")}
         >
-          <X size={14} />
+          <X size={16} />
         </button>
       </div>
     )}

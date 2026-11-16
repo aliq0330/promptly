@@ -100,15 +100,15 @@ export function QuotePage() {
 
   // Alıntı işleri içeriğin NORMAL ⋮ menüsüne eklenir (ikinci menü yok); içeriğin kendi yönetimi orijinalin sayfasında kalır.
   const extras: PostMenuExtra[] = [];
-  if (user && mine) extras.push({ key: "delete", label: t("quotes.menu.delete"), icon: <TrashIcon size={14} />, danger: true, onSelect: () => setDialog("delete") });
-  if (user && !mine) extras.push({ key: "report", label: t("messages.reportAction"), icon: <Flag size={14} />, onSelect: () => setDialog("report") });
+  if (user && mine) extras.push({ key: "delete", label: t("quotes.menu.delete"), icon: <TrashIcon size={16} />, danger: true, onSelect: () => setDialog("delete") });
+  if (user && !mine) extras.push({ key: "report", label: t("messages.reportAction"), icon: <Flag size={16} />, onSelect: () => setDialog("report") });
 
   return (
     <div data-quote-page={quote.id}>
       <section aria-label={t(quoteVerbKey(quote) === "quotes.card.shared" ? "quotes.page.titleForShared" : "quotes.page.titleFor", { name: quote.author.displayName })} className="border-b border-border-soft bg-surface">
         <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-10">
           <button type="button" onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
-            <ArrowLeft size={14} aria-hidden /> {t("quotes.page.back")}
+            <ArrowLeft size={16} aria-hidden /> {t("quotes.page.back")}
           </button>
           <div className="mt-3 flex items-start gap-3">
             <Avatar src={quote.author.avatarUrl} alt={quote.author.displayName} size={40} />
@@ -148,7 +148,7 @@ export function QuotePage() {
             {originalHref && (
               <Link href={originalHref} data-open-original className={buttonClassName({ size: "sm", variant: "outline", className: "ml-auto shrink-0 gap-1.5" })}>
                 {t("quotes.page.openOriginal")}
-                <ArrowUpRight size={14} aria-hidden />
+                <ArrowUpRight size={16} aria-hidden />
               </Link>
             )}
           </div>

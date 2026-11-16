@@ -6,6 +6,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { MoreVertical } from "@/components/icons/more-vertical";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { MENU_PANEL_CLASS } from "@/components/ui/menu";
 
 export interface SpaceMenuItem {
   key: string;
@@ -101,7 +102,7 @@ export function SpaceMenu({ items, label, align = "right", trigger, className }:
         }}
         className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        {trigger ?? <MoreVertical size={18} aria-hidden />}
+        {trigger ?? <MoreVertical size={20} aria-hidden />}
       </button>
       {open &&
         createPortal(
@@ -117,7 +118,7 @@ export function SpaceMenu({ items, label, align = "right", trigger, className }:
               nodes[(index + (event.key === "ArrowDown" ? 1 : -1) + nodes.length) % nodes.length]?.focus();
             }}
             style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, width: MENU_WIDTH, maxWidth: `calc(100vw - ${EDGE * 2}px)` }}
-            className="fixed z-(--z-popover) overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in"
+            className={cn(MENU_PANEL_CLASS, "fixed z-(--z-popover)")}
           >
             {visible.map((item) => (
               <button

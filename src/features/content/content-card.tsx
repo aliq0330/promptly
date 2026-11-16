@@ -11,6 +11,7 @@ import { cn, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 import { splitSourceNotes } from "@/lib/source-notes";
+import { GRID_COLUMNS, GRID_COLUMNS_ASIDE } from "@/lib/grid-columns";
 
 /**
  * Shared shell of every content card on the platform —
@@ -36,6 +37,9 @@ import { splitSourceNotes } from "@/lib/source-notes";
  */
 type CardExit = (commit?: () => void | Promise<void>) => Promise<void>;
 const CardExitContext = createContext<CardExit | null>(null);
+/** True inside a card's picture overlay: titles and kickers draw in the light on-art ink there (`text-on-art`), never by a CSS descendant hack. */
+const OnArtContext = createContext(false);
+
 export function useCardExit(): CardExit {
   return useContext(CardExitContext) ?? (async (commit) => void (await commit?.()));
 }
@@ -89,7 +93,7 @@ export function ContentCard({
         variant === "visual"
           ? "group relative flex flex-col"
           : [
-              "group relative flex flex-col rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
+              "group relative flex flex-col rounded-lg card-flat shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
               // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
               "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-1 before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
             ],
@@ -106,6 +110,8 @@ export function ContentCard({
   );
 }
 
+export { GRID_COLUMNS, GRID_COLUMNS_ASIDE };
+
 /**
  * Every list of posts (Ana Sayfa, Topluluklar and a community's feed, Keşfet, type lists, profile, search,
  * saved/collections, my content — Meydan, docs/history/190-*): the same boxed cards on EVERY screen (a phone is one column with the
@@ -121,9 +127,9 @@ export function ContentGrid({
   ...rest
 }: React.HTMLAttributes<HTMLElement> & { as?: "div" | "ul"; columns?: string; [data: `data-${string}`]: string | undefined }) {
   const pageColumns = useContext(ContentGridColumnsContext);
-  columns ??= pageColumns ?? "sm:columns-2 xl:columns-3";
+  columns ??= pageColumns ?? GRID_COLUMNS;
   return (
-    <Tag {...rest} className={cn("sm:gap-5", columns, className)}>
+    <Tag {...rest} className={cn("sm:gap-4", columns, className)}>
       {children}
     </Tag>
   );
@@ -137,23 +143,20 @@ const ContentGridColumnsContext = createContext<string | null>(null);
 export const ContentGridColumns = ContentGridColumnsContext.Provider;
 
 /** One cell of a `ContentGrid`: never split across columns; the gap between cards (20px on a phone, 24px from `sm`). */
-export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-5 sm:pb-6";
+export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-3 sm:pb-4";
 
 /**
- * The tinted layer behind an Albüm card's band: `backdrop` (a picture filling its box) enlarged and blurred under a veil of
- * the page colour, else the quiet brand tint. Put it first inside a `relative rounded-t-xl` band; the band's content goes
+ * The tinted layer behind an Albüm card's band: the picture's average colour, else the quiet brand tint. Put it first inside a `relative rounded-t-xl` band; the band's content goes
  * after it in a `relative` box. Shared by the content cards and the community / collection / creator cards (docs/history/203-*).
  */
 export function CardBandBackdrop({
-  backdrop,
   tint,
   className,
   as: Tag = "div",
 }: {
-  backdrop?: React.ReactNode;
   /**
-   * The picture's stored average colour (`PromptMedia.color`, docs/history/209-*). When known it tints the band directly —
-   * the same look without drawing an enlarged, blurred copy of the picture behind every card, and there before the picture loads.
+   * The picture's stored average colour (`PromptMedia.color`, docs/history/209-*). When known it tints the band directly; else the quiet brand tint.
+   * (The enlarged, blurred copy of the picture that used to sit behind the band is gone, docs/history/406-*: it cost a decoded image per card for a colour wash.)
    */
   tint?: string | null;
   className?: string;
@@ -163,16 +166,7 @@ export function CardBandBackdrop({
   if (tint) {
     return <Tag aria-hidden className={cn("absolute inset-0 overflow-hidden rounded-t-xl", className)} style={{ backgroundColor: bandTint(tint) }} />;
   }
-  return (
-    <Tag aria-hidden className={cn("absolute inset-0 overflow-hidden rounded-t-xl bg-primary-soft", className)}>
-      {backdrop && (
-        <>
-          <Tag className="absolute inset-0 scale-150 opacity-70 blur-2xl saturate-150">{backdrop}</Tag>
-          <Tag className="absolute inset-0 bg-background/55" />
-        </>
-      )}
-    </Tag>
-  );
+  return <Tag aria-hidden className={cn("absolute inset-0 overflow-hidden rounded-t-xl bg-primary-soft", className)} />;
 }
 
 /** A band colour from a picture's average colour: about a third of it over the page colour (the blurred backdrop's strength). */
@@ -240,19 +234,21 @@ export function ContentCardPost({
       <div data-card-media className="relative overflow-hidden rounded-xl bg-primary-soft">
         {art ?? (
           <div aria-hidden className="flex aspect-[4/3] w-full items-center justify-center text-primary/40">
-            {TypeIcon && <TypeIcon size={44} />}
+            {TypeIcon && <TypeIcon size={40} />}
           </div>
         )}
         {status && <div className="absolute bottom-2.5 right-2.5 z-3 flex flex-wrap items-center justify-end gap-1.5">{status}</div>}
         {art && TypeIcon && TypeIcon !== ImageIcon && (
-          <span aria-hidden className="absolute right-2.5 top-2.5 z-1 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
-            <TypeIcon size={18} />
+          <span aria-hidden className="absolute right-2.5 top-2.5 z-1 flex h-9 w-9 items-center justify-center rounded-full bg-art-chip text-on-art">
+            <TypeIcon size={20} />
           </span>
         )}
         {/* Kicker (type · tool) + title over the picture, ALWAYS visible (docs/history/277-*). The overlay lets clicks through to the stretched link; the title link inside it is the keyboard way in. */}
-        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-2 space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-4 pb-3 pt-12 [&_a]:pointer-events-auto [&_h2]:text-white [&_span]:text-white", status && "pr-24", titleInArt && "sr-only")}>
-          {badges && <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">{badges}</div>}
-          {title}
+        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-2 space-y-1.5 art-scrim px-4 pb-3 pt-10 [&_a]:pointer-events-auto", status && "pr-24", titleInArt && "sr-only")}>
+          <OnArtContext.Provider value>
+            {badges && <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">{badges}</div>}
+            {title}
+          </OnArtContext.Provider>
           {/* "@user · time" is not drawn on the picture (the author row below says who); it stays for assistive tech. */}
           {meta && <p className="sr-only">{meta}</p>}
         </div>
@@ -297,9 +293,10 @@ export function ContentCardTitle({
   // Credit lines ("Kaynak: …") belong on the detail page, not in the preview. The Albüm card passes no description
   // (title + author only); a caller that does gets two clamped lines.
   const cardBody = splitSourceNotes(description).body;
+  const onArt = useContext(OnArtContext);
   return (
     <div className="space-y-1">
-      <h2 className="font-display text-[1.3125rem] font-extrabold leading-[1.1] tracking-[-0.02em] text-text">
+      <h2 className={cn("font-display text-h2 font-extrabold leading-[1.1] tracking-[-0.02em]", onArt ? "text-on-art" : "text-text")}>
         <Link
           href={href}
           data-card-link

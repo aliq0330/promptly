@@ -55,7 +55,7 @@ export function ConnectionBar({
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center px-3">
-      <div role="toolbar" aria-label={t("spaces.connect.selected")} data-board-connection-bar={connection.id} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border-soft bg-surface px-2 py-1 shadow-pop">
+      <div role="toolbar" aria-label={t("spaces.connect.selected")} data-board-connection-bar={connection.id} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border-soft bg-surface px-2 py-1 shadow-md">
         {editable ? (
           <>
             <input
@@ -73,7 +73,7 @@ export function ConnectionBar({
               }}
               placeholder={t("spaces.connect.labelPlaceholder")}
               aria-label={t("spaces.connect.labelField")}
-              className="h-8 w-36 shrink-0 rounded-full border border-border bg-surface-soft px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+              className="h-9 w-36 shrink-0 rounded-full border border-border bg-surface-soft px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
             />
             <SpaceMenu
               label={t("spaces.connect.style")}
@@ -104,7 +104,7 @@ export function ConnectionBar({
                   aria-label={t(`spaces.color.${color}`)}
                   title={t(`spaces.color.${color}`)}
                   onClick={() => onPatch({ color })}
-                  className={cn("flex h-6 w-6 items-center justify-center rounded-full ring-offset-2 ring-offset-surface", SPACE_COLOR_CLASS[color].dot, connection.color === color && "ring-2 ring-primary")}
+                  data-small-target="" className={cn("flex h-6 w-6 items-center justify-center rounded-full ring-offset-2 ring-offset-surface", SPACE_COLOR_CLASS[color].dot, connection.color === color && "ring-2 ring-primary")}
                 >
                   {connection.color === color && <Check size={12} className="text-background" aria-hidden />}
                 </button>

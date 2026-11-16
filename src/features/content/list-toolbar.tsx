@@ -105,7 +105,7 @@ export function ListFilterSheet({
   const titleId = useId();
   return (
     <Modal onClose={onClose} labelledBy={titleId}>
-      <DialogShell className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg card-flat shadow-pop">
         <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
           <h2 id={titleId} className="text-h3 font-bold text-text">
             {t("toolbar.filterTitle")}
@@ -116,7 +116,7 @@ export function ListFilterSheet({
             aria-label={t("common.close")}
             className={iconButtonClassName(false, "h-10 w-10")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 

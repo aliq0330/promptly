@@ -117,7 +117,7 @@ export function FollowedFilterSections({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("feed.filterPeopleSearch")}
                 aria-label={t("feed.filterPeopleSearch")}
-                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-small text-text outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-primary"
+                className="h-10 w-full rounded-md card-flat px-3 text-small text-text outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-primary"
               />
             )}
             {shownPeople.length === 0 ? (
@@ -207,10 +207,10 @@ export function FollowedFilterSummary({
           type="button"
           onClick={pill.remove}
           aria-label={t("feed.removeFilter", { name: pill.label })}
-          className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           {pill.label}
-          <X size={14} aria-hidden />
+          <X size={16} aria-hidden />
         </button>
       ))}
       <button type="button" onClick={onClear} className="px-1 text-label font-medium text-text-muted underline-offset-2 hover:text-text hover:underline">

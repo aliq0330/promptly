@@ -90,8 +90,8 @@ export function CommunityCard({
         <>
           <CommunityCover coverUrl={null} coverColor={null} avatarUrl={community.avatarUrl} className="h-full sm:h-full" />
           <span className="absolute inset-0 grid place-items-center">
-            <span className="inline-flex rounded-[1.15rem] border-[3px] border-surface bg-surface shadow-pop">
-              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={56} className="[&>span:first-child]:rounded-[0.95rem]" />
+            <span className="inline-flex rounded-lg border-[3px] border-surface bg-surface shadow-card">
+              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={56} className="[&>span:first-child]:rounded-lg" />
             </span>
           </span>
         </>
@@ -99,7 +99,7 @@ export function CommunityCard({
       chip={<span className={HUB_CARD_CHIP_CLASS}>{t(CATEGORY_LABEL_KEYS[community.category])}</span>}
       coverOverlay={
         unseen > 0 ? (
-          <span data-shelf-unseen={unseen} className="ml-auto rounded-full bg-primary px-2 py-0.5 text-caption font-bold text-primary-foreground shadow-xs">
+          <span data-shelf-unseen={unseen} className="ml-auto rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground shadow-xs">
             {t("communities.shelf.unseen", { count: unseen >= 99 ? "99+" : unseen })}
           </span>
         ) : undefined

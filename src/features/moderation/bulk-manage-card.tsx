@@ -174,9 +174,9 @@ export function BulkManageCard() {
   const doneKey: Record<Action, TranslationKey> = { publish: "exchange.manage.donePublished", hide: "exchange.manage.doneHidden", delete: "exchange.manage.doneDeleted" };
 
   return (
-    <section className="space-y-3 rounded-lg border border-border bg-surface p-4" data-testid="bulk-manage">
+    <section className="space-y-3 rounded-lg card-flat p-4" data-testid="bulk-manage">
       <div className="flex items-start gap-3">
-        <ListChecks size={18} className="mt-0.5 shrink-0 text-text-muted" />
+        <ListChecks size={20} className="mt-0.5 shrink-0 text-text-muted" />
         <div className="min-w-0">
           <h2 className="text-small font-semibold text-text">{t("exchange.manage.title")}</h2>
           <p className="text-small text-text-secondary">{t("exchange.manage.hint")}</p>
@@ -195,11 +195,11 @@ export function BulkManageCard() {
             onChange={(event) => setTag(event.target.value)}
             disabled={busy}
             maxLength={80}
-            className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-small text-text sm:max-w-xs"
+            className="h-10 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text sm:max-w-xs"
             data-testid="manage-tag"
           />
           <Button type="button" size="sm" variant="outline" onClick={() => void load()} disabled={busy || !user} data-testid="manage-load">
-            {loading && <Loader2 size={14} className="animate-spin" />}
+            {loading && <Loader2 size={16} className="animate-spin" />}
             {loading ? t("exchange.manage.loading") : t("exchange.manage.load")}
           </Button>
         </div>
@@ -226,7 +226,7 @@ export function BulkManageCard() {
                   value={status}
                   onChange={(event) => (setStatus(event.target.value as StatusFilter), setShown(SHOW_STEP))}
                   aria-label={t("exchange.manage.statusAria")}
-                  className="h-9 rounded-md border border-border bg-background px-2 text-small text-text"
+                  className="h-9 rounded-md card-inset px-2 text-small text-text"
                   data-testid="manage-status"
                 >
                   <option value="all">{t("exchange.manage.statusAll")}</option>
@@ -240,7 +240,7 @@ export function BulkManageCard() {
                   onChange={(event) => (setQuery(event.target.value), setShown(SHOW_STEP))}
                   placeholder={t("exchange.manage.search")}
                   aria-label={t("exchange.manage.search")}
-                  className="h-9 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-small text-text sm:max-w-xs"
+                  className="h-9 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text sm:max-w-xs"
                   data-testid="manage-search"
                 />
               </div>
@@ -258,7 +258,7 @@ export function BulkManageCard() {
                     value={firstN}
                     onChange={(event) => setFirstN(Math.max(1, Math.min(10000, Number(event.target.value) || 1)))}
                     aria-label={t("exchange.manage.firstN")}
-                    className="h-9 w-20 rounded-md border border-border bg-background px-2 text-small text-text"
+                    className="h-9 w-20 rounded-md card-inset px-2 text-small text-text"
                     data-testid="manage-first-n"
                   />
                   <Button type="button" size="sm" variant="outline" disabled={busy || filtered.length === 0} onClick={() => setSelected(new Set(filtered.slice(0, firstN).map((r) => r.id)))} data-testid="manage-select-first">
@@ -344,19 +344,19 @@ export function BulkManageCard() {
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <Button type="button" size="sm" onClick={() => request("publish")} disabled={busy || selectedIds.length === 0} data-testid="manage-publish">
-                        <Eye size={14} />
+                        <Eye size={16} />
                         {t("exchange.manage.publish", { count: selectedIds.length })}
                       </Button>
                       <Button type="button" size="sm" variant="outline" onClick={() => request("hide")} disabled={busy || selectedIds.length === 0} data-testid="manage-hide">
-                        <EyeOff size={14} />
+                        <EyeOff size={16} />
                         {t("exchange.manage.hide")}
                       </Button>
                       <Button type="button" size="sm" variant="outline" onClick={() => setTagPanel((open) => !open)} disabled={busy || selectedIds.length === 0} aria-expanded={tagPanel} data-testid="manage-tag-open">
-                        <Tags size={14} />
+                        <Tags size={16} />
                         {t("exchange.autotag.open")}
                       </Button>
                       <Button type="button" size="sm" variant="outline" onClick={() => request("delete")} disabled={busy || selectedIds.length === 0} data-testid="manage-delete" className="text-danger">
-                        <TrashIcon size={14} />
+                        <TrashIcon size={16} />
                         {t("exchange.manage.delete")}
                       </Button>
                       {running && (
@@ -370,7 +370,7 @@ export function BulkManageCard() {
                         <AutoTagOptionsField value={tagOptions} onChange={setTagOptions} disabled={busy} testId="manage-autotag" />
                         <p className="text-caption text-text-muted">{t(autoTagsEnabled(tagOptions) ? "exchange.autotag.existingKept" : "exchange.autotag.pickOne")}</p>
                         <Button type="button" size="sm" onClick={() => void runAutoTag()} disabled={busy || selectedIds.length === 0 || !autoTagsEnabled(tagOptions)} data-testid="manage-tag-run">
-                          {running === "tag" && <Loader2 size={14} className="animate-spin" />}
+                          {running === "tag" && <Loader2 size={16} className="animate-spin" />}
                           {t("exchange.autotag.run", { count: selectedIds.length })}
                         </Button>
                       </div>

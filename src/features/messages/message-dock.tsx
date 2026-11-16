@@ -60,7 +60,7 @@ function DockPill({ pillRef }: { pillRef: React.RefObject<HTMLButtonElement | nu
       aria-expanded={false}
       data-app-chrome=""
       data-message-dock-pill=""
-      className="fixed bottom-4 right-6 z-40 flex h-12 animate-fade-in items-center gap-3 rounded-full border border-border-soft bg-surface py-1 pl-1.5 pr-4 text-small font-semibold text-text shadow-pop transition-transform duration-200 ease-soft hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="fixed bottom-4 right-6 z-40 flex h-12 animate-fade-in items-center gap-3 rounded-full border border-border-soft bg-surface py-1 pl-1.5 pr-4 text-small font-semibold text-text shadow-md transition-transform duration-200 ease-soft hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {recent.length > 0 && (
         <span aria-hidden className="flex">
@@ -77,7 +77,7 @@ function DockPill({ pillRef }: { pillRef: React.RefObject<HTMLButtonElement | nu
       )}
       <span className={recent.length > 0 ? undefined : "pl-2.5"}>{t("header.messagesAriaLabel")}</span>
       {unread > 0 && (
-        <span aria-hidden data-dock-badge="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-caption font-bold leading-none text-primary-foreground">
+        <span aria-hidden data-dock-badge="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-caption font-semibold leading-none text-primary-foreground">
           {formatUnread(unread)}
         </span>
       )}
@@ -124,7 +124,7 @@ function DockPanel() {
       aria-label={t("header.messagesAriaLabel")}
       data-app-chrome=""
       data-message-dock=""
-      className="fixed bottom-4 right-6 z-40 flex h-[min(36rem,calc(100dvh-6rem))] w-[24rem] origin-bottom-right animate-pop-in flex-col overflow-hidden rounded-xl border border-border-soft bg-surface shadow-pop focus:outline-none"
+      className="fixed bottom-4 right-6 z-40 flex h-[min(36rem,calc(100dvh-6rem))] w-[24rem] origin-bottom-right animate-pop-in flex-col overflow-hidden rounded-lg card-flat shadow-pop focus:outline-none"
     >
       {view.kind === "chat" ? (
         <LocalConversationView

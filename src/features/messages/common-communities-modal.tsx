@@ -30,7 +30,7 @@ export function CommonCommunitiesModal({ communities, name, onClose }: { communi
             aria-label={t("common.close")}
             className={iconButtonClassName(false, "h-9 w-9")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
         <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-5">

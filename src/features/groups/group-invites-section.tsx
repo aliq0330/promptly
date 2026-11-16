@@ -176,7 +176,7 @@ export function GroupInvitesSection({
         <div className="flex items-center justify-between gap-3">
           <p className="text-caption text-text-muted">{t("groups.invite.help")}</p>
           <Button type="button" size="sm" onClick={() => void sendInvites()} disabled={invite.busy || selected.length === 0}>
-            {invite.busy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            {invite.busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             {invite.busy ? t("common.sending") : t("groups.invite.send", { count: selected.length })}
           </Button>
         </div>
@@ -261,7 +261,7 @@ export function GroupInvitesSection({
 
           <section aria-labelledby="links-title" className="space-y-3">
             <h3 id="links-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-              <Link2 size={14} aria-hidden /> {t("groups.link.title")}
+              <Link2 size={16} aria-hidden /> {t("groups.link.title")}
             </h3>
             <p className="text-caption text-text-muted">{group.visibility === "public" ? t("groups.link.helpPublic") : t("groups.link.helpPrivate")}</p>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -291,7 +291,7 @@ export function GroupInvitesSection({
               </div>
             </div>
             <Button type="button" size="sm" variant="outline" onClick={() => void createLink()} disabled={link.busy}>
-              {link.busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
+              {link.busy ? <Loader2 size={16} className="animate-spin" /> : <Link2 size={16} />}
               {link.busy ? t("common.creating") : t("groups.link.create")}
             </Button>
             {link.error && (
@@ -305,7 +305,7 @@ export function GroupInvitesSection({
                 <div className="flex gap-2">
                   <input readOnly value={freshLink.url} aria-label={t("groups.link.title")} onFocus={(event) => event.currentTarget.select()} className={`${fieldControlClassName} h-10 min-w-0 flex-1 font-mono text-caption`} />
                   <Button type="button" size="sm" onClick={() => void copyFresh()}>
-                    <Copy size={14} /> {t("common.copy")}
+                    <Copy size={16} /> {t("common.copy")}
                   </Button>
                 </div>
               </div>
@@ -327,7 +327,7 @@ export function GroupInvitesSection({
                       disabled={rowAction.busy}
                       onClick={() => void runRow(() => revokeChatGroupLink(item.id), t("groups.link.revokedToast"))}
                     >
-                      <TrashIcon size={14} /> {t("groups.link.revoke")}
+                      <TrashIcon size={16} /> {t("groups.link.revoke")}
                     </Button>
                   </li>
                 ))}
@@ -356,7 +356,7 @@ export function GroupInvitesSection({
                         disabled={rowAction.busy}
                         onClick={() => void runRow(() => unbanChatGroupMember(group.id, ban.userId), t("groups.bans.unbannedToast"))}
                       >
-                        <UserCheck size={14} /> {t("groups.bans.unban")}
+                        <UserCheck size={16} /> {t("groups.bans.unban")}
                       </Button>
                     )}
                   </li>

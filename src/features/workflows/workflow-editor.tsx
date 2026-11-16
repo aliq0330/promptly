@@ -49,7 +49,7 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 type LoadState = "loading" | "ready" | "notfound" | "forbidden";
 type AddTarget = { stepId: string | null; initialMode: "existing" | "scratch" } | null;
 
-const card = "rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-6";
+const card = "rounded-lg card-flat p-4 shadow-card sm:p-6";
 
 /**
  * The workflow editor: a compact header (type pill, title, description, cover) on top, then the step list and the selected step's
@@ -420,7 +420,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         <p className="flex items-start justify-between gap-2 rounded-md bg-primary-soft p-2.5 text-caption text-primary">
           {notice}
           <button type="button" onClick={() => setNotice(null)} aria-label={t("common.close")}>
-            <X size={14} />
+            <X size={16} />
           </button>
         </p>
       )}
@@ -500,13 +500,13 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
 
       {mode === "mobile" && sheetOpen && selected && (
         <Modal onClose={() => setSheetOpen(false)} labelledBy="workflow-step-sheet-title">
-          <DialogShell className="flex max-h-[92dvh] w-full flex-col rounded-lg border border-border-soft bg-surface p-4 shadow-pop">
+          <DialogShell className="flex max-h-[92dvh] w-full flex-col rounded-lg card-flat p-4 shadow-pop">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h2 id="workflow-step-sheet-title" className="min-w-0 truncate text-body font-semibold text-text">
                 {selectedIndex + 1}. {selected.title || t("workflow.untitledStep")}
               </h2>
-              <button type="button" onClick={() => setSheetOpen(false)} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
-                <X size={18} />
+              <button type="button" onClick={() => setSheetOpen(false)} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+                <X size={20} />
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">{detailTabs}</div>
@@ -586,7 +586,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           {attempted && warnings.length > 0 && (
             <div role="status" className="rounded-md border border-warning/40 bg-warning/5 p-3">
               <p className="mb-1 flex items-center gap-1.5 text-small font-semibold text-text">
-                <TriangleAlert size={14} className="text-warning" />
+                <TriangleAlert size={16} className="text-warning" />
                 {t("workflow.issuesHeading")}
               </p>
               <ul className="list-disc space-y-0.5 pl-5 text-caption text-text-secondary">

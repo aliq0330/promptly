@@ -104,7 +104,7 @@ export function ExtraSettingsSection({
         aria-haspopup="dialog"
         className="flex w-full items-center gap-3 rounded-md border border-dashed border-border-strong bg-surface-soft px-3 py-2.5 text-left transition-colors hover:border-primary hover:bg-primary-soft"
       >
-        <Settings size={18} className="shrink-0 text-primary" aria-hidden />
+        <Settings size={20} className="shrink-0 text-primary" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
           <span className="block text-caption text-text-secondary">{t("extra.hint")}</span>
@@ -116,8 +116,8 @@ export function ExtraSettingsSection({
       {count > 0 && (
         <div className="space-y-2">
           <SelectionSummary fields={allFields} selection={applied} onChange={onChange} />
-          <div className="rounded-md border border-border-soft bg-surface-soft p-3">
-            <p className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("extra.savedPrompt")}</p>
+          <div className="rounded-md card-soft p-3">
+            <p className="mb-1 text-caption font-semibold text-text-muted">{t("extra.savedPrompt")}</p>
             <p data-extra-composed className="prompt-text whitespace-pre-wrap break-words text-small text-text">
               {composed || t("extra.emptyBase")}
             </p>
@@ -239,10 +239,10 @@ function ExtraSettingsPanel({
         <DialogShell
           role="document"
           data-extra-panel
-          className="flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-lg border border-border-soft bg-surface shadow-pop"
+          className="flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-lg card-flat shadow-pop"
         >
           <div className="flex items-start gap-3 border-b border-border-soft px-4 py-3">
-            <Settings size={18} className="mt-0.5 shrink-0 text-primary" aria-hidden />
+            <Settings size={20} className="mt-0.5 shrink-0 text-primary" aria-hidden />
             <div className="min-w-0 flex-1">
               <h2 id="extra-settings-title" className="text-h3 font-bold text-text">
                 {t("extra.title")}
@@ -250,15 +250,15 @@ function ExtraSettingsPanel({
               <p className="text-caption text-text-secondary">{t("extra.hint")}</p>
             </div>
             <button type="button" aria-label={t("extra.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
-              <X size={18} />
+              <X size={20} />
             </button>
           </div>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
-            <SelectionSummary fields={fields} selection={clean} onChange={setDraft} className="rounded-md border border-border-soft bg-surface-soft p-3" />
+            <SelectionSummary fields={fields} selection={clean} onChange={setDraft} className="rounded-md card-soft p-3" />
 
             {language === "tr" && (
-              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border-soft bg-surface-soft px-3 py-2.5">
+              <label className="flex cursor-pointer items-start gap-3 rounded-md card-soft px-3 py-2.5">
                 <input type="checkbox" data-english-fragments checked={englishFragments} onChange={(e) => onEnglishFragmentsChange(e.target.checked)} className="mt-0.5" />
                 <span>
                   <span className="block text-label font-semibold text-text">{t("extra.englishFragments")}</span>
@@ -273,7 +273,7 @@ function ExtraSettingsPanel({
 
             {tab === "fields" ? (
               <section aria-labelledby="extra-fields-title" className="space-y-3">
-                <h3 id="extra-fields-title" className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+                <h3 id="extra-fields-title" className="text-caption font-semibold text-text-muted">
                   {t("presetField.fieldsHeading")} <span className="tabular-nums">({topFields.length})</span>
                 </h3>
                 <PresetFieldList
@@ -317,8 +317,8 @@ function ExtraSettingsPanel({
               />
             )}
 
-            <section className="rounded-md border border-border-soft bg-surface-soft p-3">
-              <h3 className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("extra.preview")}</h3>
+            <section className="rounded-md card-soft p-3">
+              <h3 className="mb-1 text-caption font-semibold text-text-muted">{t("extra.preview")}</h3>
               <p data-extra-preview className="prompt-text whitespace-pre-wrap break-words text-small text-text">
                 {composed || t("extra.emptyBase")}
               </p>

@@ -136,7 +136,7 @@ export function PromptsTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: str
       )}
 
       {rows.length === 0 ? (
-        <EmptyState
+        <EmptyState scene="spaces"
           icon={SquareTerminal}
           title={t("spaces.prompts.empty")}
           description={caps.edit ? t("spaces.prompts.emptyEditor") : undefined}
@@ -151,7 +151,7 @@ export function PromptsTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: str
             const reason = rowSource === "draft" ? null : sourceReasonKey(resolved.state);
             const text = rowSource === "draft" ? item.body : (resolved.prompt?.promptText ?? "");
             return (
-              <li key={`${rowSource}-${item.id}`} data-prompt-row={rowSource} className="rounded-lg border border-border-soft bg-surface p-4 shadow-xs">
+              <li key={`${rowSource}-${item.id}`} data-prompt-row={rowSource} className="rounded-lg card-flat p-4 shadow-xs">
                 <div className="flex items-start gap-3">
                   {rowSource === "image" && <SpaceImage url={item.mediaUrl} alt="" available={!reason} className="h-14 w-14 shrink-0 rounded-md" />}
                   <div className="min-w-0 flex-1 space-y-1">
@@ -176,20 +176,20 @@ export function PromptsTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: str
                 <div className="mt-3 flex flex-wrap gap-2">
                   {text && !reason && <CopyTextButton text={text} />}
                   {resolved.href && rowSource !== "draft" && (
-                    <Link href={resolved.href} className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-label font-semibold text-text-secondary hover:bg-surface-soft hover:text-text">
-                      <ArrowUpRight size={14} aria-hidden />
+                    <Link href={resolved.href} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-label font-semibold text-text-secondary hover:bg-surface-soft hover:text-text">
+                      <ArrowUpRight size={16} aria-hidden />
                       {t("spaces.source.open")}
                     </Link>
                   )}
                   {caps.edit && rowSource === "draft" && (
                     <Button variant="ghost" size="sm" onClick={() => setEditing(item)}>
-                      <Pencil size={14} aria-hidden />
+                      <Pencil size={16} aria-hidden />
                       {t("spaces.prompts.editDraft")}
                     </Button>
                   )}
                   {caps.edit && rowSource !== "draft" && resolved.prompt && (
                     <Button variant="ghost" size="sm" onClick={() => void copyAsDraft(item)}>
-                      <Pencil size={14} aria-hidden />
+                      <Pencil size={16} aria-hidden />
                       {t("spaces.prompts.copyAsDraft")}
                     </Button>
                   )}

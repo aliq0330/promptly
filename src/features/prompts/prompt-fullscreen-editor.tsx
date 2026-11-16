@@ -275,7 +275,7 @@ export function PromptFullscreenEditor({
               aria-label={t("fullscreen.undo")}
               className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
             >
-              <Undo2 size={18} aria-hidden />
+              <Undo2 size={20} aria-hidden />
             </button>
             <button
               type="button"
@@ -284,7 +284,7 @@ export function PromptFullscreenEditor({
               aria-label={t("fullscreen.redo")}
               className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
             >
-              <Redo2 size={18} aria-hidden />
+              <Redo2 size={20} aria-hidden />
             </button>
             <Button type="button" size="sm" onClick={onClose} data-testid="fullscreen-done">
               {t("fullscreen.done")}
@@ -308,7 +308,7 @@ export function PromptFullscreenEditor({
                 tone === "idle" && "cursor-default border-border bg-surface-soft text-text-muted",
               )}
             >
-              <Icon size={18} className="shrink-0" aria-hidden />
+              <Icon size={20} className="shrink-0" aria-hidden />
               <span className="flex min-w-0 flex-col leading-tight">
                 <span className="whitespace-nowrap text-caption font-semibold opacity-90">{kindLine}</span>
                 <span className={cn("truncate text-label font-semibold", tone !== "idle" && "font-mono")} data-testid="fullscreen-convert-text">
@@ -320,12 +320,12 @@ export function PromptFullscreenEditor({
             <div className="ml-auto flex shrink-0 items-center">
               {doneActive ? (
                 <Button type="button" size="sm" variant="outline" onMouseDown={keep} onClick={undoConvert} data-testid="fullscreen-undo-convert">
-                  <Undo2 size={14} aria-hidden /> {t("fullscreen.undo")}
+                  <Undo2 size={16} aria-hidden /> {t("fullscreen.undo")}
                 </Button>
               ) : (
                 onOpenPresets && (
                   <Button type="button" size="sm" variant="outline" onClick={onOpenPresets} aria-haspopup="dialog" data-testid="fullscreen-presets">
-                    <SlidersHorizontal size={14} aria-hidden /> {t("fullscreen.presets")}
+                    <SlidersHorizontal size={16} aria-hidden /> {t("fullscreen.presets")}
                     {presetCount > 0 && (
                       <span className="rounded-full bg-primary px-1.5 text-caption font-semibold tabular-nums text-primary-foreground">{presetCount}</span>
                     )}

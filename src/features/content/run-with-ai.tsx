@@ -67,12 +67,12 @@ export function RunButton({
         className={cn(
           "relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft font-medium text-primary transition-colors duration-200 ease-soft hover:border-primary/60",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
-          size === "sm" ? "h-7 px-2 text-caption" : "h-9 px-3 text-label",
-          segment && "h-11 flex-1 justify-center gap-2 rounded-none border-0 bg-primary-hover px-5 font-bold text-primary-foreground hover:bg-primary-hover hover:brightness-95 focus-visible:ring-inset focus-visible:ring-offset-0",
+          size === "sm" ? "h-9 px-2 text-caption" : "h-9 px-3 text-label",
+          segment && "h-11 flex-1 justify-center gap-2 rounded-none border-0 bg-primary-hover px-5 font-semibold text-primary-foreground hover:bg-primary-hover hover:brightness-95 focus-visible:ring-inset focus-visible:ring-offset-0",
           className,
         )}
       >
-        <Play size={segment ? 14 : size === "sm" ? 12 : 14} aria-hidden />
+        <Play size={size === "sm" && !segment ? 12 : 16} aria-hidden />
         {t("run.button")}
       </button>
       {open && <RunModal text={text} recommendedRefs={recommendedRefs} promptId={promptId} preview={preview} onClose={() => setOpen(false)} />}
@@ -127,7 +127,7 @@ function RunModal({
   return (
     <Modal onClose={onClose} labelledBy="run-modal-title">
       <div
-        className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="w-full max-w-md space-y-4 rounded-lg card-flat p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
@@ -138,9 +138,9 @@ function RunModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
@@ -150,8 +150,8 @@ function RunModal({
           <>
             {preview ? (
               <div>
-                <p className="mb-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("run.generatedPrompt")}</p>
-                <div className="prompt-text max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-text-secondary">
+                <p className="mb-1.5 text-caption font-semibold text-text-muted">{t("run.generatedPrompt")}</p>
+                <div className="prompt-text max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-md card-soft px-3 py-2 text-text-secondary">
                   {text}
                 </div>
               </div>
@@ -160,7 +160,7 @@ function RunModal({
             )}
 
             <div>
-              {preview && <p className="mb-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("run.pickTool")}</p>}
+              {preview && <p className="mb-1.5 text-caption font-semibold text-text-muted">{t("run.pickTool")}</p>}
               <ul className="space-y-1.5">
                 {visible.map(({ tool, recommended }) => {
                   const selected = preview && selectedId === tool.id;
@@ -188,7 +188,7 @@ function RunModal({
                             </span>
                           )}
                         </span>
-                        {selected ? <Check size={16} className="shrink-0 text-primary" /> : !preview && <ExternalLink size={14} className="shrink-0 text-text-muted" aria-hidden />}
+                        {selected ? <Check size={16} className="shrink-0 text-primary" /> : !preview && <ExternalLink size={16} className="shrink-0 text-text-muted" aria-hidden />}
                       </button>
                     </li>
                   );
@@ -201,7 +201,7 @@ function RunModal({
                   aria-expanded={showMore}
                   className="mt-2 inline-flex items-center gap-1 text-label font-medium text-primary hover:underline"
                 >
-                  <ChevronDown size={14} className={cn("transition-transform", showMore && "rotate-180")} aria-hidden />
+                  <ChevronDown size={16} className={cn("transition-transform", showMore && "rotate-180")} aria-hidden />
                   {showMore ? t("run.fewerTools") : t("run.moreTools")}
                 </button>
               )}
@@ -210,7 +210,7 @@ function RunModal({
             {preview && (
               <div className="flex justify-end">
                 <Button type="button" onClick={() => selectedId && void run(selectedId)} disabled={!selectedId || running}>
-                  <Play size={14} aria-hidden />
+                  <Play size={16} aria-hidden />
                   {t("run.button")}
                 </Button>
               </div>
@@ -262,7 +262,7 @@ function RunOutcome({
           value={text}
           aria-label={t("run.manualCopyLabel")}
           onFocus={(event) => event.currentTarget.select()}
-          className="prompt-text w-full resize-none rounded-lg border border-border bg-surface-soft px-3 py-2 text-text-secondary shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="prompt-text w-full resize-none rounded-lg card-soft px-3 py-2 text-text-secondary shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       )}
 
@@ -274,7 +274,7 @@ function RunOutcome({
             rel="noopener noreferrer"
             className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary hover:border-primary/60"
           >
-            <ExternalLink size={14} aria-hidden />
+            <ExternalLink size={16} aria-hidden />
             {t("run.openManually", { tool: toolName })}
           </a>
         )}

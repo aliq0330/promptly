@@ -29,8 +29,8 @@ const TONES: Record<CommunityRoomIcon, string> = {
   message: "bg-primary-soft text-primary",
   prompt: "bg-primary-soft text-primary",
   image: "bg-success-soft text-success",
-  megaphone: "bg-secondary/10 text-secondary",
-  sparkles: "bg-secondary/10 text-secondary",
+  megaphone: "bg-secondary-soft text-secondary",
+  sparkles: "bg-secondary-soft text-secondary",
   help: "bg-surface-soft text-text-secondary",
   shield: "bg-surface-soft text-text-secondary",
   palette: "bg-success-soft text-success",
@@ -46,7 +46,7 @@ export function RoomIconTile({ icon, size = 44, selected = false, className }: {
   return (
     <span
       aria-hidden
-      className={cn("flex shrink-0 items-center justify-center rounded-[14px]", selected ? "bg-surface text-primary" : TONES[icon] ?? TONES.message, className)}
+      className={cn("flex shrink-0 items-center justify-center rounded-md", selected ? "bg-surface text-primary" : TONES[icon] ?? TONES.message, className)}
       style={{ width: size, height: size }}
     >
       <RoomIcon icon={icon} size={Math.round(size * 0.5)} />

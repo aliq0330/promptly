@@ -31,6 +31,7 @@ import { cn, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
 import { iconButtonClassName } from "@/components/ui/icon-button";
+import { MENU_PANEL_CLASS } from "@/components/ui/menu";
 
 type Pending =
   | { kind: "remove"; member: GroupMember }
@@ -255,17 +256,17 @@ export function GroupMembersSection({
                         <MoreVertical size={16} />
                       </button>
                       {menuFor === member.userId && (
-                        <div role="menu" className="absolute right-0 top-10 z-30 w-56 overflow-hidden rounded-lg border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in">
+                        <div role="menu" className={cn(MENU_PANEL_CLASS, "absolute right-0 top-10 z-30 w-56")}>
                           {roles.map((role) => (
                             <MenuButton
                               key={role}
-                              icon={<ShieldCheck size={14} />}
+                              icon={<ShieldCheck size={16} />}
                               label={t(`groups.members.makeRole.${role}`)}
                               onClick={() => ask({ kind: "role", member, role })}
                             />
                           ))}
-                          {canTransfer && <MenuButton icon={<UserRound size={14} />} label={t("groups.members.transferOwnership")} onClick={() => ask({ kind: "transfer", member })} />}
-                          {canRemove && <MenuButton icon={<UserMinus size={14} />} label={t("groups.members.remove")} danger onClick={() => ask({ kind: "remove", member })} />}
+                          {canTransfer && <MenuButton icon={<UserRound size={16} />} label={t("groups.members.transferOwnership")} onClick={() => ask({ kind: "transfer", member })} />}
+                          {canRemove && <MenuButton icon={<UserMinus size={16} />} label={t("groups.members.remove")} danger onClick={() => ask({ kind: "remove", member })} />}
                         </div>
                       )}
                     </div>
@@ -314,7 +315,7 @@ export function GroupMembersSection({
           onCancel={() => setPending(null)}
         >
           {pending.kind === "remove" && canBanMember(viewerRole, pending.member.role, group.rolePermissions) && (
-            <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border-soft bg-background px-3 py-2 text-small text-text">
+            <label className="flex cursor-pointer items-start gap-2 rounded-md card-inset px-3 py-2 text-small text-text">
               <input type="checkbox" checked={ban} onChange={(event) => setBan(event.target.checked)} disabled={action.busy} className="mt-0.5 accent-[var(--color-primary)]" />
               <span>
                 <span className="flex items-center gap-1 font-medium">

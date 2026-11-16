@@ -15,9 +15,8 @@ import { Tabs } from "@/components/ui/tabs";
 import { CollectionAddContent } from "./collection-add-content";
 import { CollectionMembersTab } from "./collection-members-tab";
 import { BAND_PRIMARY_CLASS, BandActionRow, DetailShell } from "@/features/content/detail-parts";
-import { ContentGridColumns } from "@/features/content/content-card";
+import { ContentGridColumns, GRID_COLUMNS_ASIDE } from "@/features/content/content-card";
 import { ShareButton } from "@/features/prompts/share-button";
-import { Portal } from "@/components/ui/portal";
 import { CollectionFormModal } from "./collection-form-modal";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { CollectionFollowButton } from "./collection-follow-button";
@@ -36,6 +35,7 @@ import { canAddItems, canFollowCollection, canManageCollection, canRemoveItem, c
 import { collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
+import { ToastBar } from "@/components/ui/toast";
 
 /**
  * `/collections/local?id=` — every collection is a real Supabase row, same
@@ -166,19 +166,19 @@ export function CollectionDetailView() {
 
   return (
     // Albüm (docs/history/203-*): band (collage art) · actions row · [the list | Hakkında + the owner's other collections from `lg`].
-    <ContentGridColumns value="sm:columns-2">
+    <ContentGridColumns value={GRID_COLUMNS_ASIDE}>
       <DetailShell
         band={<CollectionBand collection={collection} items={items} members={members} />}
         actions={
           <BandActionRow label={t("collection.actionsAria")} data-collection-actions="">
             {isOwner ? (
               <Button type="button" size="lg" className={BAND_PRIMARY_CLASS} onClick={() => setEditing(true)}>
-                <Pencil size={18} aria-hidden />
+                <Pencil size={20} aria-hidden />
                 {t("collection.editTitle")}
               </Button>
             ) : role === "member" && canAddItems(role, collection.isShared) ? (
               <Button type="button" size="lg" className={BAND_PRIMARY_CLASS} onClick={() => setAdding(true)} data-collection-add="">
-                <Plus size={18} aria-hidden />
+                <Plus size={20} aria-hidden />
                 {t("collab.addContent")}
               </Button>
             ) : (
@@ -194,11 +194,11 @@ export function CollectionDetailView() {
             {isOwner && collection.isShared && (
               <>
                 <Button type="button" size="lg" variant="outline" className="rounded-full" onClick={() => setAdding(true)} data-collection-add="">
-                  <Plus size={18} aria-hidden />
+                  <Plus size={20} aria-hidden />
                   {t("collab.addContent")}
                 </Button>
                 <Button type="button" size="lg" variant="outline" className="rounded-full" onClick={() => openTab("members")} data-collection-manage-partners="">
-                  <Users size={18} aria-hidden />
+                  <Users size={20} aria-hidden />
                   {t("collab.managePartners")}
                 </Button>
               </>
@@ -282,16 +282,7 @@ export function CollectionDetailView() {
           />
         )}
 
-        {toast && (
-          <Portal>
-            <div
-              role="status"
-              className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-(--z-popover) flex justify-center px-4 md:bottom-6"
-            >
-              <div className="animate-pop-in rounded-md bg-text px-4 py-2 text-small text-background shadow-pop">{toast}</div>
-            </div>
-          </Portal>
-        )}
+        {toast && <ToastBar>{toast}</ToastBar>}
       </DetailShell>
     </ContentGridColumns>
   );

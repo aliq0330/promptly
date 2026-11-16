@@ -56,10 +56,10 @@ export function StudioSourceCard({
         {imageUrl ? <StorageImg src={imageUrl} alt="" className="h-full w-full object-cover" /> : <Icon size={24} className="text-text-muted" aria-hidden />}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
+        <p className="truncate text-caption font-semibold text-text-muted">
           {t(label)} · {detail}
         </p>
-        <p className="line-clamp-2 break-words font-display text-[1.0625rem] font-bold leading-snug text-text">{item.title}</p>
+        <p className="line-clamp-2 break-words font-display text-h3 font-bold leading-snug text-text">{item.title}</p>
         <p className="truncate text-small text-text-muted">
           @{creator.username}
           {item.createdAt && ` · ${formatRelativeTime(item.createdAt, language)}`}

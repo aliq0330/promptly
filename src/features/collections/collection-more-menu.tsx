@@ -10,7 +10,7 @@ import { deleteCollection } from "@/lib/supabase/collections";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
-import { MENU_ITEM_CLASS } from "@/components/ui/menu";
+import { MENU_ITEM_CLASS, MENU_PANEL_CLASS } from "@/components/ui/menu";
 
 const MENU_WIDTH = 208; // w-52
 const VIEWPORT_MARGIN = 8;
@@ -131,11 +131,11 @@ export function CollectionMoreMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         className={cn(
-          "flex h-7 w-7 items-center justify-center rounded-full bg-surface/90 text-text-muted shadow-sm transition-colors hover:bg-surface-soft hover:text-text",
+          "flex h-9 w-9 items-center justify-center rounded-full bg-surface/90 text-text-muted shadow-sm transition-colors hover:bg-surface-soft hover:text-text",
           triggerClassName,
         )}
       >
-        <MoreVertical size={triggerClassName ? 18 : 16} />
+        <MoreVertical size={triggerClassName ? 20 : 16} />
       </button>
 
       {open && position && (
@@ -144,7 +144,7 @@ export function CollectionMoreMenu({
             ref={menuRef}
             role="menu"
             style={{ position: "fixed", top: position.top, left: position.left, width: MENU_WIDTH }}
-            className="z-50 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in"
+            className={cn(MENU_PANEL_CLASS, "z-50")}
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -158,7 +158,7 @@ export function CollectionMoreMenu({
               }}
               className={MENU_ITEM_CLASS}
             >
-              <Pencil size={14} />
+              <Pencil size={16} />
               {t("collection.editTitle")}
             </button>
             <button
@@ -168,7 +168,7 @@ export function CollectionMoreMenu({
               disabled={isDeleting}
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger-soft"
             >
-              {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <TrashIcon size={14} />}
+              {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <TrashIcon size={16} />}
               {confirmingDelete ? t("common.confirmDelete") : t("collection.delete")}
             </button>
             {confirmingDelete && collection.isShared && collection.memberCount > 0 && <p className="px-3 py-1 text-caption text-text-muted">{t("collab.deleteWarn")}</p>}

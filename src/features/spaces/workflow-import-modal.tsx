@@ -153,7 +153,7 @@ export function WorkflowImportModal({
                           <Check size={12} aria-hidden /> {t("wfSpace.import.onBoard")}
                         </span>
                       )}
-                      {workflow.visibility === "private" && !on && <Lock size={14} className="shrink-0 text-text-muted" aria-label={t("visibility.private")} />}
+                      {workflow.visibility === "private" && !on && <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("visibility.private")} />}
                     </button>
                   </li>
                 );
@@ -169,11 +169,11 @@ export function WorkflowImportModal({
       {selected && (
         <div className="mt-5 space-y-4 border-t border-border-soft pt-4">
           <div>
-            <p className="mb-2 text-caption font-bold uppercase tracking-[0.06em] text-text-secondary">{t("wfSpace.import.preview")}</p>
+            <p className="mb-2 text-caption font-semibold text-text-secondary">{t("wfSpace.import.preview")}</p>
             {plan && loaded?.value ? (
               <WorkflowPlanPreview plan={plan} steps={loaded.value.steps} />
             ) : (
-              <div className={cn("h-40 rounded-lg border border-border-soft bg-surface-soft", !loaded && "skeleton-shimmer")} aria-hidden />
+              <div className={cn("h-40 rounded-lg card-soft", !loaded && "skeleton-shimmer")} aria-hidden />
             )}
             {loaded && !loaded.value && <p className="mt-2 text-caption text-danger">{t("wfSpace.import.loadFailed")}</p>}
             {plan && (
@@ -185,7 +185,7 @@ export function WorkflowImportModal({
           </div>
 
           <div>
-            <p className="mb-2 text-caption font-bold uppercase tracking-[0.06em] text-text-secondary">{t("wfSpace.objects.options")}</p>
+            <p className="mb-2 text-caption font-semibold text-text-secondary">{t("wfSpace.objects.options")}</p>
             <p className="mb-2 text-caption text-text-muted">{t("wfSpace.objects.optStepsHint")}</p>
             <div className="space-y-2">
               {optionRows.map((row) => (
@@ -210,7 +210,7 @@ export function WorkflowImportModal({
           {tooMany && <p role="status" className="rounded-xl bg-warning-soft px-3 py-2 text-small text-text-secondary">{t("wfSpace.objects.tooMany")}</p>}
           {exposesPrivate && (
             <p role="status" className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 text-small text-text-secondary">
-              <Lock size={14} className="mt-0.5 shrink-0 text-warning" aria-hidden />
+              <Lock size={16} className="mt-0.5 shrink-0 text-warning" aria-hidden />
               {t("wfSpace.import.privateWarn")}
             </p>
           )}

@@ -1517,7 +1517,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
 
   const overviewOpen = Boolean(team && pagesUi.overview);
   const rootClass = cn(
-    "relative flex scroll-mt-3 flex-col overflow-hidden rounded-lg border border-border-soft bg-surface-soft",
+    "relative flex scroll-mt-3 flex-col overflow-hidden rounded-lg card-soft",
     fullscreen
       ? "fixed inset-0 z-(--z-fullscreen) rounded-none border-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
       : teamMode
@@ -1548,16 +1548,16 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         ...teamContentRows,
         { key: "image", icon: <ImagePlus size={20} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
         { key: "note", icon: <StickyNote size={20} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
-        { key: "palette", icon: <PaletteIcon size={19} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
-        ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={19} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
+        { key: "palette", icon: <PaletteIcon size={20} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
+        ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={20} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
       ]
     : [
       { key: "draft", icon: <SquareTerminal size={20} aria-hidden />, label: t("tb.add.prompt"), hint: t("tb.add.promptHint"), run: () => setDialog({ kind: "draft", near: viewCenter() }) },
       { key: "image", icon: <ImagePlus size={20} aria-hidden />, label: t("tb.add.image"), hint: t("tb.add.imageHint"), run: () => fileRef.current?.click() },
       { key: "note", icon: <StickyNote size={20} aria-hidden />, label: t("tb.add.note"), hint: t("tb.add.noteHint"), run: () => setDialog({ kind: "note", near: viewCenter() }) },
-      { key: "palette", icon: <PaletteIcon size={19} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
-      ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={19} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
-      { key: "workflow", icon: <WorkflowIcon size={19} aria-hidden />, label: t("tb.add.workflow"), hint: t("tb.add.workflowHint"), run: () => setDialog({ kind: "importWorkflow" }) },
+      { key: "palette", icon: <PaletteIcon size={20} aria-hidden />, label: t("tb.add.palette"), hint: t("tb.add.paletteHint"), run: () => setDialog({ kind: "palette" }) },
+      ...boardPalettes.slice(0, 4).map((palette) => ({ key: `palette-${palette.id}`, icon: <PaletteIcon size={20} aria-hidden />, label: palette.name, hint: t("tb.add.paletteExisting"), run: () => void addFromBoard([{ spaceId: space.id, kind: "palette" as const, paletteId: palette.id }]) })),
+      { key: "workflow", icon: <WorkflowIcon size={20} aria-hidden />, label: t("tb.add.workflow"), hint: t("tb.add.workflowHint"), run: () => setDialog({ kind: "importWorkflow" }) },
       { key: "preset", icon: <SlidersHorizontal size={20} aria-hidden />, label: t("tb.add.preset"), hint: t("tb.add.presetHint"), run: () => setDialog({ kind: "content", type: "preset" }) },
       { key: "request", icon: <Sparkles size={20} aria-hidden />, label: t("tb.add.request"), hint: t("tb.add.requestHint"), run: () => setDialog({ kind: "content", type: "request" }) },
     ];
@@ -1566,7 +1566,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
     { key: "frame", icon: <Frame size={20} aria-hidden />, label: t("tb.kind.frame"), hint: t("tb.add.frameHint"), tag: t("tb.add.new"), run: () => setToolMode("frame"), hidden: !canDraw },
     { key: "pencil", icon: <Pencil size={20} aria-hidden />, label: t("tb.tool.pencil"), hint: t("tb.add.pencilHint"), tag: t("tb.add.new"), run: () => setToolMode("pencil"), hidden: !canDraw },
     { key: "shape", icon: <Square size={20} aria-hidden />, label: t("tb.tool.shape"), hint: t("tb.add.shapeHint"), tag: t("tb.add.new"), run: () => { setShape("rect"); setToolMode("rect"); }, hidden: !canDraw },
-    { key: "arrow", icon: <MinusLine size={19} className="-rotate-45" aria-hidden />, label: t("tb.add.lineArrow"), hint: t("tb.add.lineHint"), tag: t("tb.add.new"), run: () => { setShape("arrow"); setToolMode("arrow"); }, hidden: !canDraw },
+    { key: "arrow", icon: <MinusLine size={20} className="-rotate-45" aria-hidden />, label: t("tb.add.lineArrow"), hint: t("tb.add.lineHint"), tag: t("tb.add.new"), run: () => { setShape("arrow"); setToolMode("arrow"); }, hidden: !canDraw },
     { key: "connect", icon: <Spline size={20} aria-hidden />, label: t("tb.add.connect"), hint: t("tb.add.connectHint"), run: () => setToolMode("connect") },
   ];
   const zoomProps = {
@@ -1610,13 +1610,13 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
   const composerBody = draftPin && (
     <div className="space-y-3" data-testid="board-comment-composer">
       <div className="flex items-center gap-3">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-caption font-bold text-primary-foreground">{initialsOf(ownProfile?.displayName || ownProfile?.username || "?")}</span>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-caption font-semibold text-primary-foreground">{initialsOf(ownProfile?.displayName || ownProfile?.username || "?")}</span>
         <div className="min-w-0 flex-1 space-y-0.5">
-          <p className="text-small font-bold leading-none text-text">{t("tb.comments.newTitle")}</p>
+          <p className="text-small font-semibold leading-none text-text">{t("tb.comments.newTitle")}</p>
           <CommentTargetChip item={draftPin.itemId ? (items.find((entry) => entry.id === draftPin.itemId) ?? null) : null} itemTitle={itemTitle} />
         </div>
         <button type="button" onClick={() => setDraftPin(null)} aria-label={t("common.cancel")} className="grid h-9 w-9 place-items-center rounded-full text-text-secondary hover:bg-surface-soft">
-          <X size={18} aria-hidden />
+          <X size={20} aria-hidden />
         </button>
       </div>
       <CommentInput people={team?.people ?? []} placeholder={t("tb.comments.placeholder")} submitLabel={t("tb.comments.send")} autoFocus={!phoneBar} onSubmit={submitDraft} onCancel={() => setDraftPin(null)} />
@@ -1675,7 +1675,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       <div className="relative flex min-w-0 flex-1 flex-col">
       {!teamMode && (
         <ScrollRow role="toolbar" aria-label={t("spaces.board.toolbar")} wrapperClassName="z-20 shrink-0 border-b border-border-soft bg-surface" className="items-center gap-1 px-2 py-1.5" data-board-toolbar={phoneBar ? "phone" : "full"}>
-          {editable && <SpaceMenu align="left" label={t("spaces.board.add")} trigger={<Plus size={18} aria-hidden />} items={addMenuItems} />}
+          {editable && <SpaceMenu align="left" label={t("spaces.board.add")} trigger={<Plus size={20} aria-hidden />} items={addMenuItems} />}
           {phoneBar ? (
             <>
               <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
@@ -1693,7 +1693,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
               </button>
               <SpaceMenu
                 label={t("spaces.board.moreTools")}
-                trigger={<Ellipsis size={18} aria-hidden />}
+                trigger={<Ellipsis size={20} aria-hidden />}
                 items={[
                   { key: "groups", label: t("spaces.groups.manage"), icon: Layers, onSelect: () => setDialog({ kind: "groups" }), hidden: !editable },
                   { key: "zoomIn", label: t("spaces.board.zoomIn"), icon: Plus, onSelect: () => zoomBy(1.2) },
@@ -1852,7 +1852,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
           })}
           {teamMode && commentMode && hoverId && geoms[hoverId] && (
             <div aria-hidden data-board-hover={hoverId} className="pointer-events-none absolute rounded-lg border-2 border-dashed border-primary bg-primary/5" style={{ left: geoms[hoverId].x - 4, top: geoms[hoverId].y - 4, width: geoms[hoverId].w + 8, height: geoms[hoverId].h + 8, zIndex: 8000 }}>
-              <span className="absolute -top-7 left-0 inline-flex h-6 items-center whitespace-nowrap rounded-md bg-primary px-2 text-caption font-bold text-primary-foreground" style={{ transform: `scale(${1 / vp.zoom})`, transformOrigin: "left bottom" }}>
+              <span className="absolute -top-7 left-0 inline-flex h-6 items-center whitespace-nowrap rounded-md bg-primary px-2 text-caption font-semibold text-primary-foreground" style={{ transform: `scale(${1 / vp.zoom})`, transformOrigin: "left bottom" }}>
                 {(() => {
                   const target = items.find((entry) => entry.id === hoverId);
                   return target ? `${itemKindName(target)} · ${itemTitle(target)}` : "";
@@ -1873,7 +1873,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
                 </div>
               );
             }
-            return <div aria-hidden data-board-draw-preview="" className={cn("pointer-events-none absolute border-2 border-dashed border-primary bg-primary/5", drawPreview.tool === "oval" ? "rounded-[50%]" : "rounded-md")} style={{ left: box.x, top: box.y, width: box.w, height: box.h, zIndex: 8000 }} />;
+            return <div aria-hidden data-board-draw-preview="" className={cn("pointer-events-none absolute border-2 border-dashed border-primary bg-primary/5", drawPreview.tool === "oval" ? "rounded-full" : "rounded-md")} style={{ left: box.x, top: box.y, width: box.w, height: box.h, zIndex: 8000 }} />;
           })()}
           {pencilPoints.length > 1 && (
             <svg aria-hidden className="pointer-events-none absolute left-0 top-0 overflow-visible" width={1} height={1} style={{ zIndex: 8000 }}>
@@ -1919,8 +1919,8 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         )}
         {tool === "connect" && (
           <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center px-3">
-            <div role="status" data-board-connect-hint="" className="pointer-events-auto flex max-w-full items-center gap-2 rounded-full bg-text px-4 py-1.5 text-small text-background shadow-pop">
-              <Spline size={14} aria-hidden />
+            <div role="status" data-board-connect-hint="" className="pointer-events-auto flex max-w-full items-center gap-2 rounded-full bg-text px-4 py-1.5 text-small text-background shadow-md">
+              <Spline size={16} aria-hidden />
               <span className="min-w-0 truncate">{activeFrom ? t("spaces.connect.hintTo") : t("spaces.connect.hintFrom")}</span>
               <button type="button" onClick={() => setToolMode("select")} className="shrink-0 font-semibold underline underline-offset-2">
                 {t("spaces.connect.exit")}
@@ -1943,7 +1943,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       {/* Bildirimler */}
       {(error || layoutNotice || undoNotice) && (
         <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex justify-center px-3">
-          <div role={error ? "alert" : "status"} className={cn("pointer-events-auto flex max-w-lg items-center gap-2 rounded-full px-4 py-2 text-small shadow-pop", error ? "bg-danger text-danger-foreground" : "bg-text text-background")}>
+          <div role={error ? "alert" : "status"} className={cn("pointer-events-auto flex max-w-lg items-center gap-2 rounded-full px-4 py-2 text-small shadow-md", error ? "bg-danger text-danger-foreground" : "bg-text text-background")}>
             <span className="min-w-0 break-words">{error ?? layoutNotice ?? undoNotice}</span>
             {!error && undoNotice && editable && (
               <button type="button" onClick={() => void undo()} className="shrink-0 font-semibold underline underline-offset-2">
@@ -1960,7 +1960,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
               }}
               className="shrink-0 rounded-full p-0.5 opacity-80 hover:opacity-100"
             >
-              <X size={14} />
+              <X size={16} />
             </button>
           </div>
         </div>
@@ -1976,7 +1976,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
               : undefined
           }
         >
-          <div role="toolbar" aria-label={t("spaces.board.selectionToolbar")} data-board-selection={selectedItems.length} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full border border-border-soft bg-surface px-1.5 py-1 shadow-pop">
+          <div role="toolbar" aria-label={t("spaces.board.selectionToolbar")} data-board-selection={selectedItems.length} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full border border-border-soft bg-surface px-1.5 py-1 shadow-md">
             <span className="shrink-0 px-2 text-caption font-semibold text-text-secondary">{t("spaces.board.selected", { count: selectedItems.length })}</span>
             {single && single.kind !== "palette" && single.kind !== "shape" && <ToolButton icon={ArrowUpRight} label={t("spaces.board.open")} onClick={() => openItem(single.id)} />}
             {teamMode && editable && single && single.kind === "content" && single.contentType === "workflow" && <ToolButton icon={WorkflowIcon} label={t("tf.board.expandWorkflow")} onClick={() => void expandWorkflow(single)} />}
@@ -2021,7 +2021,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
                     aria-haspopup="dialog"
                     aria-expanded={moveOpen}
                     data-board-move-button=""
-                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-caption font-bold text-primary"
+                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-caption font-semibold text-primary"
                   >
                     {t(size === "desktop" ? "tb.move.button" : "tb.move.buttonShort")}
                   </button>
@@ -2105,10 +2105,10 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       {/* Ekip modu katmanları (docs/history/367-*) */}
       {commentMode && !draftPin && (
         <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center px-3">
-          <div role="status" data-board-comment-hint="" className="pointer-events-auto flex max-w-md items-center gap-3 rounded-full bg-text py-2 pl-5 pr-2 text-small text-background shadow-pop">
+          <div role="status" data-board-comment-hint="" className="pointer-events-auto flex max-w-md items-center gap-3 rounded-full bg-text py-2 pl-5 pr-2 text-small text-background shadow-md">
             <span className="min-w-0 flex-1">{t("tb.comments.hint")}</span>
             <button type="button" onClick={() => setToolMode("select")} aria-label={t("tb.comments.exitMode")} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-background/15">
-              <X size={18} aria-hidden />
+              <X size={20} aria-hidden />
             </button>
           </div>
         </div>
@@ -2119,7 +2119,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
         const left = Math.max(8, Math.min(at.x + 20, view.w - 344));
         const top = Math.max(8, Math.min(at.y - 44, view.h - 270));
         return (
-          <div className="absolute z-40 w-[21rem] rounded-lg border border-border-soft bg-surface p-4 shadow-pop animate-pop-in" style={{ left, top }}>
+          <div className="absolute z-40 w-[21rem] rounded-lg card-flat p-4 shadow-pop animate-pop-in" style={{ left, top }}>
             {composerBody}
           </div>
         );
@@ -2243,7 +2243,7 @@ function ShortcutsDialog({ onClose }: { onClose: () => void }) {
         {rows.map(([keys, label]) => (
           <div key={keys} className="contents">
             <dt>
-              <kbd className="rounded-md border border-border bg-surface-soft px-1.5 py-0.5 font-mono text-caption text-text">{keys}</kbd>
+              <kbd className="rounded-md card-soft px-1.5 py-0.5 font-mono text-caption text-text">{keys}</kbd>
             </dt>
             <dd className="text-text-secondary">{label}</dd>
           </div>

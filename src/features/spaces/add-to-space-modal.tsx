@@ -221,7 +221,7 @@ export function AddToSpaceModal({
   return (
     <SpaceDialog title={t("spaces.add.title")} onClose={onClose} busy={busy} overLayers={overLayers} wide>
       <div className="space-y-4" data-testid="add-to-space">
-        {target.type === "prompt" && prompt === undefined && <Loader2 size={18} className="animate-spin text-text-muted" aria-label={t("common.loading")} />}
+        {target.type === "prompt" && prompt === undefined && <Loader2 size={20} className="animate-spin text-text-muted" aria-label={t("common.loading")} />}
         {target.type === "prompt" && prompt === null && <p className="text-small text-danger">{t("spaces.source.unavailable")}</p>}
         {prompt && (
           <fieldset className="space-y-2">
@@ -261,7 +261,7 @@ export function AddToSpaceModal({
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("spaces.add.search")} aria-label={t("spaces.add.search")} className={cn(fieldInputClassName, "h-10 pl-9")} />
           </div>
           {spaces === null ? (
-            <Loader2 size={18} className="animate-spin text-text-muted" aria-label={t("common.loading")} />
+            <Loader2 size={20} className="animate-spin text-text-muted" aria-label={t("common.loading")} />
           ) : spaces.length === 0 ? (
             <p className="text-small text-text-muted">{t("spaces.add.noSpaces")}</p>
           ) : (
@@ -322,7 +322,7 @@ export function AddToSpaceModal({
             {t("common.cancel")}
           </Button>
           <Button onClick={() => selected && void add(selected, spaces?.find((space) => space.id === selected)?.title ?? "")} disabled={busy || !selected || (target.type === "prompt" && !prompt)} data-testid="add-to-space-submit">
-            {busy && <Loader2 size={14} className="animate-spin" aria-hidden />}
+            {busy && <Loader2 size={16} className="animate-spin" aria-hidden />}
             {t("spaces.add.submit")}
           </Button>
         </div>

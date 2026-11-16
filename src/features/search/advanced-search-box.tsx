@@ -214,7 +214,7 @@ export function AdvancedSearchBox({
       <div
         role="search"
         onClick={() => inputRef.current?.focus()}
-        className="flex h-[3.25rem] w-full items-center rounded-[1.625rem] border border-transparent bg-surface-soft pl-12 pr-1.5 transition-colors focus-within:border-primary focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/20"
+        className="flex h-[3.25rem] w-full items-center rounded-xl border border-transparent bg-surface-soft pl-12 pr-1.5 transition-colors focus-within:border-primary focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/20"
       >
         <Search size={20} className="pointer-events-none absolute left-4 top-[1.0625rem] text-text-muted" />
         <input
@@ -272,7 +272,7 @@ export function AdvancedSearchBox({
                   isPending && "ring-2 ring-primary",
                 )}
               >
-                <Icon size={14} className="text-primary" aria-hidden />
+                <Icon size={16} className="text-primary" aria-hidden />
                 <span>{label}</span>
                 <button
                   type="button"
@@ -281,9 +281,9 @@ export function AdvancedSearchBox({
                     event.stopPropagation();
                     removeToken(tokenKey(token));
                   }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text"
                 >
-                  <X size={14} />
+                  <X size={16} />
                 </button>
               </span>
             );
@@ -315,7 +315,7 @@ export function AdvancedSearchBox({
                 <li key={entry.id} role="presentation">
                   {showHeading && (
                     <div className="flex items-center justify-between px-2.5 pb-1 pt-2">
-                      <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t(GROUP_LABEL[entry.group])}</p>
+                      <p className="text-caption font-semibold text-text-muted">{t(GROUP_LABEL[entry.group])}</p>
                       {entry.group === "recent" && (
                         <button
                           type="button"

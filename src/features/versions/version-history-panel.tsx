@@ -133,7 +133,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
   const pair = comparison ? orderComparison(byId.get(comparison.olderId)!, byId.get(comparison.newerId)!) : null;
 
   return (
-    <section className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+    <section className="space-y-3 rounded-lg card-flat p-4 sm:p-5">
       <h2 className="flex items-center gap-1.5 text-label font-semibold text-text">
         <History size={16} />
         {title}
@@ -150,7 +150,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
           const isComparing = comparison?.openedFor === version.id;
           const name = suggesterName?.(version) ?? null;
           return (
-            <li key={version.id} className="rounded-md border border-border-soft bg-surface-soft p-3">
+            <li key={version.id} className="rounded-md card-soft p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-small font-medium text-text">
                   v{version.versionNumber}
@@ -203,7 +203,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
               </div>
 
               {isComparing && comparison && (
-                <div className="mt-3 space-y-3 rounded-md border border-border-soft bg-background p-3">
+                <div className="mt-3 space-y-3 rounded-md card-inset p-3">
                   <div className="grid gap-2 sm:grid-cols-2">
                     <VersionPicker
                       label={t("history.oldVersion")}
@@ -229,7 +229,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
       {restoreTarget && (
         <Modal onClose={() => !restoring && setRestoreTarget(null)} labelledBy="restore-version-title">
           <div
-            className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
+            className="w-full max-w-md space-y-4 rounded-lg card-flat p-5 shadow-lg"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="space-y-2">
@@ -250,7 +250,7 @@ export function VersionHistoryPanel<V extends HistoryVersion>({
                 {t("common.cancel")}
               </Button>
               <Button type="button" onClick={confirmRestore} disabled={restoring}>
-                {restoring && <Loader2 size={14} className="animate-spin" aria-hidden />}
+                {restoring && <Loader2 size={16} className="animate-spin" aria-hidden />}
                 {restoring ? t("history.restoring") : t("common.confirm")}
               </Button>
             </div>
@@ -278,7 +278,7 @@ function VersionPicker<V extends HistoryVersion>({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 rounded-md border border-border bg-surface px-2 text-small font-normal text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="h-9 rounded-md card-flat px-2 text-small font-normal text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {versions.map((version) => (
           <option key={version.id} value={version.id}>

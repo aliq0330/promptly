@@ -84,20 +84,20 @@ export function SpaceDialog({
         className={
           drawer
             ? "flex h-full min-h-0 w-full flex-col overflow-hidden bg-surface max-md:rounded-t-xl md:w-[32.5rem] md:max-w-full md:border-l md:border-border"
-            : cn("flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg", wide ? "max-w-xl" : "max-w-md")
+            : cn("flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-lg card-flat shadow-lg", wide ? "max-w-xl" : "max-w-md")
         }
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-soft px-5 py-4">
           {leading}
           <div className="min-w-0 flex-1">
-            {eyebrow && <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">{eyebrow}</p>}
+            {eyebrow && <p className="text-caption font-semibold text-text-muted">{eyebrow}</p>}
             <h2 id={id} className="truncate text-h3 font-bold text-text">
               {title}
             </h2>
           </div>
           <button type="button" onClick={onClose} disabled={busy} aria-label={t("common.close")} className="rounded-full p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
         {onSubmit ? (
@@ -504,7 +504,7 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
         {canFeed && (
           <label
             data-space-feed-toggle={quoteId ? "on" : "off"}
-            className="flex cursor-pointer items-center gap-3 rounded-lg border border-border-soft bg-background px-3 py-2.5 has-[:checked]:border-primary/50 has-[:checked]:bg-primary-soft"
+            className="flex cursor-pointer items-center gap-3 rounded-lg card-inset px-3 py-2.5 has-[:checked]:border-primary/50 has-[:checked]:bg-primary-soft"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-soft text-text-secondary">
               <House size={16} aria-hidden />
@@ -525,9 +525,9 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
 
         {current.visibility === "public" && (
           <div className="flex items-center gap-2">
-            <input readOnly value={publicUrl} aria-label={t("spaces.share.publicUrl")} className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-small text-text" />
+            <input readOnly value={publicUrl} aria-label={t("spaces.share.publicUrl")} className="h-10 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text" />
             <Button type="button" variant="outline" size="sm" onClick={() => void copy(publicUrl)}>
-              {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
+              {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
               {copied ? t("common.copied") : t("common.copyLink")}
             </Button>
           </div>
@@ -539,9 +539,9 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
               <>
                 <p className="text-small font-medium text-text">{t("spaces.share.linkReady")}</p>
                 <div className="flex items-center gap-2">
-                  <input readOnly value={freshUrl} aria-label={t("spaces.share.linkLabel")} data-testid="space-link-url" className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-small text-text" />
+                  <input readOnly value={freshUrl} aria-label={t("spaces.share.linkLabel")} data-testid="space-link-url" className="h-10 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text" />
                   <Button type="button" variant="outline" size="sm" onClick={() => void copy(freshUrl)}>
-                    {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
+                    {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
                     {copied ? t("common.copied") : t("common.copy")}
                   </Button>
                 </div>
@@ -559,7 +559,7 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
             <p className="text-caption text-text-muted">{t("spaces.share.linkRules")}</p>
             <div className="flex flex-wrap gap-2">
               <Button type="button" size="sm" onClick={() => void makeLink()} disabled={busy}>
-                <Link2 size={14} aria-hidden />
+                <Link2 size={16} aria-hidden />
                 {link ? t("spaces.share.newLink") : t("spaces.share.createLink")}
               </Button>
               {link && (

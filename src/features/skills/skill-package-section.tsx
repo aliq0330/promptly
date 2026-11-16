@@ -141,7 +141,7 @@ export function SkillPackageSection({
       </div>
 
       {importIssues.length > 0 && (
-        <div className="space-y-2 rounded-xl border border-border-soft bg-surface-soft px-3 py-3" role="status" data-skill-import-report="">
+        <div className="space-y-2 rounded-lg card-soft px-3 py-3" role="status" data-skill-import-report="">
           <p className="text-small font-semibold text-text">{t("skill.pkg.importReport")}</p>
           <SkillIssueList issues={importIssues} />
         </div>
@@ -150,13 +150,13 @@ export function SkillPackageSection({
       {uploads.tasks.length > 0 && (
         <ul className="space-y-2" aria-label={t("skill.pkg.uploads")} data-skill-uploads="">
           {uploads.tasks.map((task) => (
-            <li key={task.id} className="rounded-xl border border-border-soft bg-surface-soft px-3 py-2" data-upload-status={task.status}>
+            <li key={task.id} className="rounded-lg card-soft px-3 py-2" data-upload-status={task.status}>
               <div className="flex items-center gap-2 text-small">
                 <code className="min-w-0 flex-1 truncate font-mono text-caption text-text">{task.path}</code>
                 <span className="shrink-0 text-caption text-text-muted">{formatBytes(task.size)}</span>
                 {task.status === "uploading" && (
                   <button type="button" onClick={() => uploads.cancel(task.id)} aria-label={t("skill.pkg.cancelUpload")} className="rounded-full p-1 text-text-muted hover:bg-surface hover:text-text">
-                    <X size={14} />
+                    <X size={16} />
                   </button>
                 )}
                 {task.status === "error" && (
@@ -167,7 +167,7 @@ export function SkillPackageSection({
                       </button>
                     )}
                     <button type="button" onClick={() => uploads.dismiss(task.id)} aria-label={t("common.close")} className="rounded-full p-1 text-text-muted hover:bg-surface hover:text-text">
-                      <X size={14} />
+                      <X size={16} />
                     </button>
                   </>
                 )}

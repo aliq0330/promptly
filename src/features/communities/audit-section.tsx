@@ -67,7 +67,7 @@ export function AuditSection({ groupId }: { groupId: string }) {
         <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.audit.empty")}</p>
       ) : (
         <>
-          <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface">
+          <ul className="divide-y divide-border-soft rounded-lg card-flat">
             {entries.map((entry) => (
               <li key={entry.id} className="flex items-start gap-3 px-4 py-3">
                 {entry.actor ? <Avatar src={entry.actor.avatarUrl} alt={entry.actor.displayName} size={32} /> : <span className="h-7 w-7 shrink-0 rounded-full bg-surface-soft" aria-hidden />}

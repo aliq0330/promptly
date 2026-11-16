@@ -13,7 +13,7 @@ export function CreatorList({ users, emptyMessage }: { users: UserProfile[]; emp
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-surface">
+    <div className="overflow-hidden rounded-lg card-flat">
       {users.map((user) => (
         <CreatorRow key={user.id} user={user} />
       ))}

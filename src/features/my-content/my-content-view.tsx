@@ -282,11 +282,11 @@ export function MyContentView() {
       {kind === "prompts" && (
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => setImportOpen(true)} data-testid="my-content-import">
-            <Upload size={14} />
+            <Upload size={16} />
             {t("exchange.import.menu")}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setExportOpen(true)} data-testid="my-content-export">
-            <Download size={14} />
+            <Download size={16} />
             {t("exchange.export.menu")}
           </Button>
         </div>
@@ -294,11 +294,11 @@ export function MyContentView() {
       {(kind === "requests" || kind === "presets" || kind === "workflows" || kind === "skills") && (
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => setContentExchange({ mode: "import", kind: kind === "requests" ? "request" : kind === "presets" ? "preset" : kind === "skills" ? "skill" : "workflow" })} data-testid="my-content-import">
-            <Upload size={14} />
+            <Upload size={16} />
             {t("exchange.import.menu")}
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => setContentExchange({ mode: "export", kind: kind === "requests" ? "request" : kind === "presets" ? "preset" : kind === "skills" ? "skill" : "workflow" })} data-testid="my-content-export">
-            <Download size={14} />
+            <Download size={16} />
             {t("exchange.export.menu")}
           </Button>
         </div>
@@ -340,7 +340,7 @@ export function MyContentView() {
             </div>
           ) : visible.length === 0 ? (
             total === 0 ? (
-              <EmptyState
+              <EmptyState scene="drafts"
                 icon={FileText}
                 title={t("myContent.emptyTitle")}
                 description={t("myContent.emptyBody")}

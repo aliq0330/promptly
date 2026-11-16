@@ -82,11 +82,11 @@ export function HomeFeedItem({
             <Link href={communityHref(post.communityId)} className="min-w-0 truncate font-medium text-text-secondary hover:underline">
               {community.name}
             </Link>
-            <VisibilityLabel visibility={community.visibility} size={11} />
+            <VisibilityLabel visibility={community.visibility} size={12} />
           </>
         ) : (
           <>
-            <Users size={14} aria-hidden />
+            <Users size={16} aria-hidden />
             <Link href={communityHref(post.communityId)} className="font-medium text-text-secondary hover:underline">
               {t("communities.home.openCommunity")}
             </Link>

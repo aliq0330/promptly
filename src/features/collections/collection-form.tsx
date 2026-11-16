@@ -108,7 +108,7 @@ export function CollectionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
-        <label htmlFor="collection-name" className="text-caption font-semibold uppercase tracking-wide text-text-muted">
+        <label htmlFor="collection-name" className="text-caption font-semibold text-text-muted">
           {t("collection.nameLabel")}
         </label>
         <input
@@ -118,7 +118,7 @@ export function CollectionForm({
           maxLength={NAME_MAX}
           placeholder={t("collection.namePlaceholder")}
           autoFocus
-          className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
         <p className="text-right text-caption text-text-muted">
           {trimmed.length}/{NAME_MAX}
@@ -126,7 +126,7 @@ export function CollectionForm({
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("collection.privacyLabel")}</p>
+        <p className="text-caption font-semibold text-text-muted">{t("collection.privacyLabel")}</p>
         <div className="space-y-2">
           <VisibilityOption
             icon={Globe}
@@ -152,7 +152,7 @@ export function CollectionForm({
             onChange={setShared}
             className={cn("rounded-md border p-3 transition-colors", shared ? "border-primary bg-accent-surface" : "border-border hover:bg-accent-surface/50")}
           >
-            <Users size={18} className="shrink-0 text-text-secondary" aria-hidden />
+            <Users size={20} className="shrink-0 text-text-secondary" aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block text-small font-medium text-text">{t("collab.sharedLabel")}</span>
               <span className="block text-caption text-text-muted">{t("collab.sharedHint")}</span>
@@ -234,7 +234,7 @@ function VisibilityOption({
       </span>
       <span className="flex-1">
         <span className="flex items-center gap-1.5 text-small font-medium text-text">
-          <Icon size={14} />
+          <Icon size={16} />
           {title}
         </span>
         <span className="mt-0.5 block text-caption text-text-muted">{description}</span>

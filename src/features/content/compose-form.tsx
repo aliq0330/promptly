@@ -23,7 +23,7 @@ export const formTextareaClassName = cn(formInputClassName, "resize-none py-3");
 export function ComposeSection({ title, children, ...rest }: { title: string; children: ReactNode } & Omit<HTMLAttributes<HTMLElement>, "title">) {
   return (
     <section className="border-t border-border-soft pt-6 first:border-t-0 first:pt-0" {...rest}>
-      <h2 className="mb-4 font-sans text-caption font-bold uppercase tracking-[0.06em] text-text-secondary">{title}</h2>
+      <h2 className="mb-4 font-sans text-caption font-semibold text-text-secondary">{title}</h2>
       <div className="space-y-5">{children}</div>
     </section>
   );
@@ -142,12 +142,12 @@ export function FormDisclosure({
           {hint && <span className="block truncate text-caption text-text-muted">{hint}</span>}
         </span>
         {badge ? (
-          <span aria-hidden className="shrink-0 rounded-full bg-secondary px-1.5 text-caption font-bold leading-4 text-background">
+          <span aria-hidden className="shrink-0 rounded-full bg-secondary px-1.5 text-caption font-semibold leading-4 text-background">
             {badge}
           </span>
         ) : null}
         <span className="max-w-[40%] shrink-0 truncate text-small text-text-muted">{value || t("compose.notChosen")}</span>
-        <ChevronDown size={18} aria-hidden className={cn("shrink-0 text-text-muted transition-transform", open && "rotate-180")} />
+        <ChevronDown size={20} aria-hidden className={cn("shrink-0 text-text-muted transition-transform", open && "rotate-180")} />
       </button>
       {open && (
         <div id={panelId} className="border-t border-border-soft p-4">
@@ -163,7 +163,7 @@ export function ComposeAudienceLine({ profile, label, onClick }: { profile: User
   return (
     <div className="mb-5 flex items-center gap-3">
       <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? ""} size={32} className="shrink-0" />
-      <p className="min-w-0 truncate text-body font-bold text-text">
+      <p className="min-w-0 truncate text-body font-semibold text-text">
         {profile?.displayName ?? ""}
         <span className="font-normal text-text-muted"> · </span>
         <button type="button" onClick={onClick} data-compose-audience="" className="font-medium text-text-muted underline-offset-2 hover:text-text hover:underline">

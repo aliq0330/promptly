@@ -51,7 +51,7 @@ export function ChatActionItems({
         }}
         className={cn(itemClass, "text-text")}
       >
-        {archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+        {archived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
         {archived ? t("messages.unarchive") : t("messages.archive")}
       </button>
       <button
@@ -64,7 +64,7 @@ export function ChatActionItems({
         }}
         className={cn(itemClass, "text-text")}
       >
-        <Eraser size={14} />
+        <Eraser size={16} />
         {t("messages.clearHistory")}
       </button>
       <button
@@ -77,7 +77,7 @@ export function ChatActionItems({
         }}
         className={cn(itemClass, "text-danger")}
       >
-        <TrashIcon size={14} />
+        <TrashIcon size={16} />
         {conversation.kind === "group" ? t("groups.chat.hideFromList") : t("messages.deleteChat")}
       </button>
     </>
@@ -113,7 +113,7 @@ export function ChatConfirmModal({
         : t("messages.clearHistoryConfirm");
   return (
     <Modal onClose={busy ? () => undefined : onCancel} labelledBy="chat-confirm-title">
-      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg card-flat p-5 shadow-pop">
         <h2 id="chat-confirm-title" className="text-body font-semibold text-text">
           {title}
         </h2>

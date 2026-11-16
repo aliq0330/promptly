@@ -174,7 +174,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
         )}
         <RoomIconTile icon={room.icon} size={40} />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-body font-bold text-text">{room.name}</div>
+          <div className="truncate text-body font-semibold text-text">{room.name}</div>
           <div className={cn("truncate text-caption", dragging ? "font-semibold text-primary" : "text-text-muted")}>{dragging ? t("rooms.manage.dragging") : room.archivedAt ? t("rooms.row.archived") : subtitle(room)}</div>
         </div>
         {room.isDefault && <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("rooms.manage.defaultRoom")} />}
@@ -227,7 +227,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
           <p className="text-small text-text-secondary">{t("rooms.manage.intro")}</p>
           {!isOwner && <p className="mt-1 text-caption text-text-muted">{t("rooms.manage.deleteOwnerOnly")}</p>}
         </div>
-        <span data-rooms-count className="shrink-0 rounded-full bg-surface-soft px-3 py-1.5 text-small font-bold tabular-nums text-text-secondary">
+        <span data-rooms-count className="shrink-0 rounded-full bg-surface-soft px-3 py-1.5 text-small font-semibold tabular-nums text-text-secondary">
           {t("rooms.manage.count", { count: active.length, max: ROOM_LIMIT })}
         </span>
       </div>
@@ -245,7 +245,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
         <div className="space-y-4">
           {groupRoomsBySection(orderedActive, t("rooms.sectionDefault")).map((section) => (
             <section key={section.key || "default"} aria-label={section.label} className="space-y-2">
-              <h3 className="px-1 text-[12px] font-bold uppercase tracking-[0.08em] text-text-muted">{section.label}</h3>
+              <h3 className="px-1 text-caption font-semibold text-text-muted">{section.label}</h3>
               {section.rooms.map((room, index) => renderRow(room, index, section.rooms))}
             </section>
           ))}
@@ -262,7 +262,7 @@ export function RoomsManageSection({ group, onToast }: { group: ChatGroup; onToa
                 <span>{t("rooms.manage.archived")}</span>
                 <span className="flex items-center gap-1.5">
                   {archived.length}
-                  <ChevronDown size={18} className={cn("transition-transform", archivedOpen && "rotate-180")} aria-hidden />
+                  <ChevronDown size={20} className={cn("transition-transform", archivedOpen && "rotate-180")} aria-hidden />
                 </span>
               </button>
               {archivedOpen && <div className="mt-2 space-y-2">{archived.map((room, index) => renderRow(room, index, archived))}</div>}

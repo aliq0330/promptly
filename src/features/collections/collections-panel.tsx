@@ -95,7 +95,7 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
 
       {followed.length > 0 && (
         <section aria-labelledby="followed-collections-heading" className="space-y-3 pt-4">
-          <h3 id="followed-collections-heading" className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+          <h3 id="followed-collections-heading" className="text-caption font-semibold text-text-muted">
             {t("collection.followedHeading")}
           </h3>
           <div className="grid grid-cols-2 gap-x-3 gap-y-5 pt-2 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
@@ -142,7 +142,7 @@ function SavedShortcutCard() {
   return (
     <Link
       href="/saved"
-      className="group block min-w-0 overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group block min-w-0 overflow-hidden rounded-lg card-flat shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <div className="flex aspect-[4/3] w-full items-center justify-center bg-surface-soft text-primary">
         <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary-soft">

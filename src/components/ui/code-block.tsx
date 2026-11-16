@@ -19,7 +19,7 @@ export function CodeBlock({ text, label }: { text: string; label: string }) {
   }
 
   return (
-    <div className="relative rounded-lg border border-border-soft bg-surface-soft">
+    <div className="relative rounded-lg card-soft">
       <pre className="prompt-text overflow-x-auto whitespace-pre-wrap break-all px-3 py-3 pr-12 text-small text-text">{text}</pre>
       <button
         type="button"

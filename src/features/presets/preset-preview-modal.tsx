@@ -44,7 +44,7 @@ export function PresetPreviewModal({
       <DialogShell
         role="document"
         data-preset-preview={preset.id}
-        className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop"
+        className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop"
       >
         <div className="flex items-start gap-3 border-b border-border-soft px-4 py-3">
           <div className="min-w-0 flex-1">
@@ -56,15 +56,15 @@ export function PresetPreviewModal({
             </p>
           </div>
           <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {preset.description && <p className="whitespace-pre-wrap break-words text-small text-text-secondary">{preset.description}</p>}
 
-          <section aria-labelledby="preset-preview-contents" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
-            <h3 id="preset-preview-contents" className="flex items-center gap-1.5 border-b border-border-soft px-3 py-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+          <section aria-labelledby="preset-preview-contents" className="overflow-hidden rounded-lg card-soft">
+            <h3 id="preset-preview-contents" className="flex items-center gap-1.5 border-b border-border-soft px-3 py-2 text-caption font-semibold text-text-muted">
               <SlidersHorizontal size={12} aria-hidden />
               {t("preset.contentsTitle")}
             </h3>
@@ -99,7 +99,7 @@ export function PresetPreviewModal({
             aria-label={t("preset.openInNewTab", { name: preset.title })}
             className="mr-auto inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-small text-text-muted hover:bg-surface-soft hover:text-text"
           >
-            <ArrowUpRight size={14} aria-hidden />
+            <ArrowUpRight size={16} aria-hidden />
             <span className="max-sm:sr-only">{t("preset.openPage")}</span>
           </Link>
           {!isOwn && <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} size="sm" onChange={onSavedChange} />}

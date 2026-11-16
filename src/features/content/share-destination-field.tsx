@@ -84,7 +84,7 @@ export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedI
 
   return (
     <Modal onClose={onClose} labelledBy="share-destination-title">
-      <DialogShell className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-lg card-flat shadow-pop">
         <div className="space-y-1 border-b border-border-soft p-4">
           <h2 id="share-destination-title" className="text-body font-semibold text-text">
             {t("home.destination.label")}
@@ -97,10 +97,10 @@ export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedI
               <span className="block truncate text-label font-semibold text-text">{t("home.destination.feed")}</span>
               <span className="block truncate text-caption text-text-muted">{t("home.destination.feedHint")}</span>
             </span>
-            {selectedId === null && <Check size={18} aria-hidden className="shrink-0 text-primary" />}
+            {selectedId === null && <Check size={20} aria-hidden className="shrink-0 text-primary" />}
           </button>
 
-          <p className="px-1 pt-2 text-caption font-semibold uppercase tracking-[0.06em] text-text-muted">{t("home.destination.myCommunities")}</p>
+          <p className="px-1 pt-2 text-caption font-semibold text-text-muted">{t("home.destination.myCommunities")}</p>
 
           {communities === null && !failed && <p className="px-1 py-4 text-small text-text-muted">{t("common.loading")}</p>}
           {failed && (
@@ -140,7 +140,7 @@ export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedI
                   {communityHint(community, t)}
                 </span>
               </span>
-              {selectedId === community.id && <Check size={18} aria-hidden className="shrink-0 text-primary" />}
+              {selectedId === community.id && <Check size={20} aria-hidden className="shrink-0 text-primary" />}
             </button>
           ))}
         </div>

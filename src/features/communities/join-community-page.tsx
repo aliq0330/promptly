@@ -131,7 +131,7 @@ export function JoinCommunityPage() {
   }
   if (status === "unauthenticated") {
     return shell(
-      <div className="space-y-4 rounded-lg border border-border-soft bg-surface p-6 text-center shadow-card">
+      <div className="space-y-4 rounded-lg card-flat p-6 text-center shadow-card">
         <h1 className="text-h3 font-bold text-text">{t("groups.join.loginTitle")}</h1>
         <p className="text-small text-text-muted">{t("groups.join.loginBody")}</p>
         <Link href={authHref("/login", "/communities/join")} className={buttonClassName({ size: "md" })}>
@@ -151,7 +151,7 @@ export function JoinCommunityPage() {
   }
   if (current.error) {
     return shell(
-      <div className="space-y-3 rounded-lg border border-border-soft bg-surface px-6 py-10 text-center">
+      <div className="space-y-3 rounded-lg card-flat px-6 py-10 text-center">
         <p role="alert" className="text-small text-danger">
           {t("groups.join.loadError")}
         </p>
@@ -171,7 +171,7 @@ export function JoinCommunityPage() {
   const isPrivate = preview.visibility !== "public";
 
   return shell(
-    <div className="space-y-5 rounded-lg border border-border-soft bg-surface p-6 shadow-card">
+    <div className="space-y-5 rounded-lg card-flat p-6 shadow-card">
       <div className="flex items-start gap-3">
         <GroupAvatar name={preview.name} avatarUrl={preview.avatarUrl} size={56} badge />
         <div className="min-w-0 space-y-1">
@@ -228,7 +228,7 @@ export function JoinCommunityPage() {
             ) : (
               <div className="space-y-1.5">
                 <h3 className="text-label font-semibold text-text">{t("communities.rules.title")}</h3>
-                <div className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-border-soft bg-background px-4 py-3 text-small text-text-secondary">{preview.rules}</div>
+                <div className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-lg card-inset px-4 py-3 text-small text-text-secondary">{preview.rules}</div>
               </div>
             )
           )}

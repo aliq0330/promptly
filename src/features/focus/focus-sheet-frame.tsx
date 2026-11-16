@@ -99,7 +99,7 @@ export function FocusSheetFrame({
     >
       <div
         className={cn(
-          "flex h-full flex-col rounded-t-[28px] border-t border-border-soft bg-surface text-text shadow-pop",
+          "flex h-full flex-col rounded-t-xl border-t border-border-soft bg-surface text-text shadow-pop",
           "animate-sheet-up motion-reduce:animate-none md:animate-panel-in md:rounded-none md:rounded-l-xl md:border-l md:border-t-0",
         )}
       >
@@ -118,7 +118,7 @@ export function FocusSheetFrame({
             title={closeLabel}
             className="absolute right-2.5 top-2.5 inline-flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
           >
-            <X size={18} aria-hidden />
+            <X size={20} aria-hidden />
           </button>
         </div>
         {children}

@@ -100,8 +100,8 @@ export function DraftsButton({
           data-drafts-button=""
           className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
         >
-          <FileText size={18} aria-hidden />
-          {count > 0 && <span className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-caption font-bold leading-4 text-primary-foreground">{count}</span>}
+          <FileText size={20} aria-hidden />
+          {count > 0 && <span className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-caption font-semibold leading-4 text-primary-foreground">{count}</span>}
         </button>
       ) : (
         <Button
@@ -122,15 +122,15 @@ export function DraftsButton({
       {open && (
         <Modal onClose={() => setOpen(false)} labelledBy="drafts-modal-title">
           <div
-            className="max-h-[80dvh] w-full max-w-md space-y-3 overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
+            className="max-h-[80dvh] w-full max-w-md space-y-3 overflow-y-auto rounded-lg card-flat p-5 shadow-lg"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-2">
               <h2 id="drafts-modal-title" className="text-body font-semibold text-text">
                 {t("draft.drawerTitle")}
               </h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
-                <X size={18} />
+              <button type="button" onClick={() => setOpen(false)} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+                <X size={20} />
               </button>
             </div>
 
@@ -144,7 +144,7 @@ export function DraftsButton({
                   <li key={item.id}>
                   <ExitMotion leaving={isLeaving(item.id)}>
                   <div className="pb-2">
-                  <div className="rounded-md border border-border-soft bg-surface-soft p-3">
+                  <div className="rounded-md card-soft p-3">
                     <p className="truncate text-small font-medium text-text">{item.title.trim() || t("draft.untitled")}</p>
                     <p className="mb-2 text-caption text-text-muted">{t("draft.lastEdited", { time: formatRelativeTime(item.updatedAt, language) })}</p>
                     {confirmId === item.id && <p className="mb-2 text-caption text-danger">{t("draft.deleteConfirm")}</p>}
@@ -153,7 +153,7 @@ export function DraftsButton({
                         {t("draft.continue")}
                       </Link>
                       <Button type="button" variant="ghost" size="sm" disabled={busyId === item.id} onClick={() => void handleDelete(item.id)}>
-                        <TrashIcon size={14} seq={busyId === item.id ? 1 : 0} />
+                        <TrashIcon size={16} seq={busyId === item.id ? 1 : 0} />
                         {t("common.delete")}
                       </Button>
                       {confirmId === item.id && (

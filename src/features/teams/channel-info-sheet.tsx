@@ -10,7 +10,7 @@ import { Search } from "@/components/icons/search";
 import { X } from "@/components/icons/x";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
-import { SegmentedChoice } from "@/features/messages/segmented-choice";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { archiveTeamChannel, deleteTeamChannel, setChannelNotify, setTeamMute, type TeamActionError, type TeamChannel, type TeamSummary } from "@/lib/supabase/teams";
 import { channelParam } from "@/lib/team-chat";
@@ -105,7 +105,7 @@ export function ChannelInfoSheet({
               <p className="truncate text-small text-text-muted">{t("tm.chan.title", { team: team.name })}</p>
             </div>
             <button type="button" onClick={onClose} aria-label={t("common.close")} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <X size={18} aria-hidden />
+              <X size={20} aria-hidden />
             </button>
           </div>
 
@@ -122,7 +122,7 @@ export function ChannelInfoSheet({
             </dl>
 
             <div className="space-y-1.5" data-channel-notify-block>
-              <p className="text-caption font-bold text-text-muted">{t("th.notify.heading")}</p>
+              <p className="text-caption font-semibold text-text-muted">{t("th.notify.heading")}</p>
               {inherited && (
                 <div data-channel-inherited={inherited} className="space-y-1.5 rounded-xl border border-warning/40 bg-warning/5 px-3 py-2.5">
                   <p className="text-small font-semibold text-text">{t(inherited === "team" ? "th.inherit.team" : "th.inherit.project")}</p>
@@ -132,13 +132,13 @@ export function ChannelInfoSheet({
                     data-channel-unmute-parent
                     disabled={busy}
                     onClick={() => void run(() => setTeamMute(team.id, inherited === "project" ? (channel.projectId ?? null) : null, false), onChanged)}
-                    className="text-small font-bold text-primary hover:underline disabled:opacity-50"
+                    className="text-small font-semibold text-primary hover:underline disabled:opacity-50"
                   >
                     {t(inherited === "team" ? "th.inherit.unmuteTeam" : "th.inherit.unmuteProject")}
                   </button>
                 </div>
               )}
-              <SegmentedChoice<NotifyLevel>
+              <ChoiceGroup<NotifyLevel> variant="segmented"
                 value={channel.notifyLevel}
                 ariaLabel={t("th.notify.heading")}
                 testId="channel-notify"
@@ -181,18 +181,18 @@ export function ChannelInfoSheet({
 
             {canManage && (
               <div className="space-y-2" data-channel-admin>
-                <p className="text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tm.chan.adminHeading")}</p>
+                <p className="text-caption font-semibold text-text-muted">{t("tm.chan.adminHeading")}</p>
                 <div className="flex gap-2">
-                  <Link href={teamLink(team.slug, "chat", { channel: channel.name, settings: "1" })} data-channel-edit className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-bold text-text hover:bg-surface-soft">
+                  <Link href={teamLink(team.slug, "chat", { channel: channel.name, settings: "1" })} data-channel-edit className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft">
                     {t("tm.chan.edit")}
                   </Link>
                   {!locked && (
-                    <button type="button" data-channel-archive onClick={() => setConfirm("archive")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-bold text-text hover:bg-surface-soft">
+                    <button type="button" data-channel-archive onClick={() => setConfirm("archive")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-border text-small font-semibold text-text hover:bg-surface-soft">
                       {t("tm.chan.archive")}
                     </button>
                   )}
                   {!locked && (
-                    <button type="button" data-channel-delete onClick={() => setConfirm("delete")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-danger/40 text-small font-bold text-danger hover:bg-danger-soft">
+                    <button type="button" data-channel-delete onClick={() => setConfirm("delete")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-danger/40 text-small font-semibold text-danger hover:bg-danger-soft">
                       {t("tm.chan.delete")}
                     </button>
                   )}

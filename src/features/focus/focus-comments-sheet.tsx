@@ -191,7 +191,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
                 type="button"
                 onClick={() => addEmoji(emoji)}
                 aria-label={t("focusComments.addEmoji", { emoji })}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[1.6rem] leading-none transition-[background-color,transform] duration-150 ease-soft hover:bg-surface-soft active:scale-95"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-h2 leading-none transition-[background-color,transform] duration-150 ease-soft hover:bg-surface-soft active:scale-95"
               >
                 {emoji}
               </button>
@@ -202,7 +202,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
             <div className="mx-3 mb-2 flex items-center justify-between gap-2 rounded-lg bg-surface-soft px-3 py-1.5 text-caption text-text-secondary">
               <span className="truncate">{t("focusComments.replyingTo", { name: replyTarget.author.username })}</span>
               <button type="button" onClick={baseTree.onCancelReply} aria-label={t("focusComments.cancelReply")} className="shrink-0 rounded-full p-1 text-text-muted hover:text-text">
-                <X size={14} aria-hidden />
+                <X size={16} aria-hidden />
               </button>
             </div>
           )}
@@ -239,7 +239,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
                     posting && "opacity-60",
                   )}
                 >
-                  <SendArrowIcon size={18} strokeWidth={2.4} seq={sendSeq} />
+                  <SendArrowIcon size={20} seq={sendSeq} />
                 </button>
               </div>
             </form>

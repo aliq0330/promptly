@@ -73,7 +73,7 @@ export function SuggestEditModal({
   return (
     <Modal onClose={onClose} labelledBy="suggest-edit-modal-title">
       <div
-        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-4">
@@ -84,9 +84,9 @@ export function SuggestEditModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
@@ -117,8 +117,8 @@ export function SuggestEditModal({
         ) : (
           <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
             <div>
-              <p className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("prompt.currentPromptText")}</p>
-              <p className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface-soft px-3 py-2 font-mono text-caption text-text-muted">
+              <p className="mb-1.5 text-caption font-semibold text-text-muted">{t("prompt.currentPromptText")}</p>
+              <p className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md card-soft px-3 py-2 font-mono text-caption text-text-muted">
                 {promptText}
               </p>
             </div>
@@ -134,7 +134,7 @@ export function SuggestEditModal({
                 onChange={(event) => setSuggestionText(event.target.value)}
                 maxLength={2000}
                 placeholder={t("prompt.suggestEditPlaceholder")}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                 autoFocus
               />
             </div>
@@ -150,7 +150,7 @@ export function SuggestEditModal({
                   value={proposedPromptText}
                   onChange={(event) => setProposedPromptText(event.target.value)}
                   placeholder={t("prompt.proposedNewTextPlaceholder")}
-                  className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                  className="w-full resize-none rounded-lg card-inset px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                 />
               </div>
             ) : (

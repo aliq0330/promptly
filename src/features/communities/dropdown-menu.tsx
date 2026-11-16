@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MoreVertical } from "@/components/icons/more-vertical";
+import { MENU_PANEL_CLASS } from "@/components/ui/menu";
+import { cn } from "@/lib/utils";
 
 /**
  * Küçük "⋮" açılır menüsü (dışarı tıklama ve Escape ile kapanır). `children(close)` menü öğelerini çizer.
@@ -50,7 +52,7 @@ export function DropdownMenu({
         {trigger ?? <MoreVertical size={16} />}
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-30 mt-1 min-w-48 animate-pop-in overflow-hidden rounded-lg border border-border-soft bg-surface-elevated py-1 shadow-pop">
+        <div role="menu" className={cn(MENU_PANEL_CLASS, "absolute right-0 top-full z-30 mt-1 min-w-48")}>
           {children(() => setOpen(false))}
         </div>
       )}

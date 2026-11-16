@@ -23,7 +23,7 @@ import { archiveChallenge, fetchChallenges, saveChallenge } from "@/lib/supabase
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-const CARD = "rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5";
+const CARD = "rounded-lg card-flat p-4 shadow-card sm:p-5";
 
 const STATUS_KEY: Record<ChallengeStatus, TranslationKey> = {
   active: "admin.challenge.statusActive",
@@ -156,7 +156,7 @@ export function ChallengesPanel() {
                 setFormError(null);
               }}
             >
-              <Plus size={14} className="mr-1.5" aria-hidden />
+              <Plus size={16} className="mr-1.5" aria-hidden />
               {t("admin.challenge.new")}
             </Button>
           )}

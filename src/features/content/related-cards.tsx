@@ -27,14 +27,14 @@ export function RelatedCards({ items }: { items: RelatedCardItem[] }) {
         <li key={item.id} className="min-w-0">
           <Link
             href={item.href}
-            className="group block overflow-hidden rounded-md border border-border-soft bg-surface transition-colors duration-200 ease-soft hover:border-border-strong"
+            className="group block overflow-hidden rounded-md card-flat transition-colors duration-200 ease-soft hover:border-border-strong"
           >
             <span className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-surface-soft">
               {item.image ? (
                 <StorageImage src={item.image.url} alt={item.image.alt} fill sizes="(min-width: 1024px) 140px, 45vw" className="object-cover" />
               ) : (
                 <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary">
-                  <item.icon size={18} />
+                  <item.icon size={20} />
                 </span>
               )}
             </span>

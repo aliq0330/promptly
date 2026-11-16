@@ -27,7 +27,7 @@ export function PageHeader({
     <header className={cn("flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between", className)}>
       <div className="min-w-0 space-y-1.5">
         {eyebrow && (
-          <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
+          <p className="flex items-center gap-1.5 text-caption font-semibold text-primary">
             {Icon && <Icon size={12} />}
             {eyebrow}
           </p>
@@ -68,7 +68,7 @@ export function SectionHeader({
           className="inline-flex shrink-0 items-center gap-1 text-label font-medium text-text-secondary transition-colors hover:text-primary"
         >
           {resolvedLinkLabel}
-          <ArrowRight size={14} />
+          <ArrowRight size={16} />
         </Link>
       )}
     </div>

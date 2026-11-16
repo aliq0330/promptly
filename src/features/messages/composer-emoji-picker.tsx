@@ -163,7 +163,7 @@ export function ComposerEmojiPicker({
         ref={pickerRef}
         role="dialog"
         aria-label={t("emoji.pickerTitle")}
-        className="absolute bottom-full right-0 z-30 mb-2 w-[20rem] animate-pop-in overflow-hidden rounded-lg border border-border bg-surface-elevated shadow-pop"
+        className="absolute bottom-full right-0 z-30 mb-2 w-[20rem] animate-pop-in overflow-hidden rounded-lg border border-border-soft bg-surface-elevated shadow-pop"
       >
         <PickerBody onPick={onPick} compact={false} />
       </div>

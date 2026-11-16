@@ -99,13 +99,13 @@ export function AddRelationModal({
 
   return (
     <Modal onClose={onClose} labelledBy="add-relation-title">
-      <DialogShell role="document" className="flex max-h-[88dvh] w-full max-w-xl flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell role="document" className="flex max-h-[88dvh] w-full max-w-xl flex-col rounded-lg card-flat shadow-pop">
         <div className="flex items-center gap-3 border-b border-border-soft px-4 py-3">
           <h2 id="add-relation-title" className="min-w-0 flex-1 text-h3 font-bold text-text">
             {t("relations.add.title")}
           </h2>
           <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
@@ -146,7 +146,7 @@ export function AddRelationModal({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("relations.add.searchPlaceholder")}
                 aria-label={t("relations.add.searchPlaceholder")}
-                className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-small text-text shadow-xs placeholder:text-text-muted hover:border-border-strong focus:border-primary focus:outline-none"
+                className="h-11 w-full rounded-lg card-inset pl-9 pr-3 text-small text-text shadow-xs placeholder:text-text-muted hover:border-border-strong focus:border-primary focus:outline-none"
               />
             </div>
             {!query.trim() && <p className="text-caption text-text-muted">{t("relations.add.searchHint")}</p>}
@@ -185,7 +185,7 @@ export function AddRelationModal({
           </div>
 
           {target && (
-            <div className="space-y-3 rounded-lg border border-border-soft bg-surface-soft p-3" data-relation-summary>
+            <div className="space-y-3 rounded-lg card-soft p-3" data-relation-summary>
               <p className="text-label font-semibold text-text">{t("relations.add.directionTitle")}</p>
               <p className="break-words text-small text-text">
                 {directed
@@ -195,7 +195,7 @@ export function AddRelationModal({
               <p className="text-caption text-text-muted">{t(RELATION_TYPES[type].meaningKey)}</p>
               {canSwap && (
                 <Button type="button" size="sm" variant="outline" onClick={() => setSwapped((v) => !v)}>
-                  <ArrowLeftRight size={14} />
+                  <ArrowLeftRight size={16} />
                   {t("relations.add.swap")}
                 </Button>
               )}
@@ -211,7 +211,7 @@ export function AddRelationModal({
                   onChange={(event) => setNote(event.target.value.slice(0, 200))}
                   placeholder={t("relations.add.notePlaceholder")}
                   rows={2}
-                  className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text shadow-xs placeholder:text-text-muted hover:border-border-strong focus:border-primary focus:outline-none"
+                  className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text shadow-xs placeholder:text-text-muted hover:border-border-strong focus:border-primary focus:outline-none"
                 />
               </label>
             </div>

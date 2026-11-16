@@ -62,13 +62,13 @@ export function StoryContentPicker({ onPick, onClose }: { onPick: (item: Linkabl
 
   return (
     <Modal onClose={onClose} labelledBy="story-content-picker-title">
-      <DialogShell className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-lg card-flat shadow-pop">
         <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-3">
           <h2 id="story-content-picker-title" className="text-h3 font-bold text-text">
             {t("stories.link.pickTitle")}
           </h2>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
-            <X size={18} aria-hidden />
+            <X size={20} aria-hidden />
           </button>
         </div>
         <div className="px-4 pt-3">
@@ -88,7 +88,7 @@ export function StoryContentPicker({ onPick, onClose }: { onPick: (item: Linkabl
         <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
           {results === null ? (
             <p className="flex items-center justify-center gap-2 py-8 text-small text-text-muted">
-              <Loader2 size={15} className="animate-spin" aria-hidden /> {t("common.loading")}
+              <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
             </p>
           ) : results.length === 0 ? (
             <p className="px-3 py-8 text-center text-small text-text-muted">{failed ? t("stories.error.generic") : t("stories.link.none")}</p>

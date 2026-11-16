@@ -86,14 +86,14 @@ export function MultiImagePicker({
       )}
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         {items.map((item, index) => (
-          <figure key={item.key} className="relative aspect-square overflow-hidden rounded-md border border-border bg-surface-soft">
+          <figure key={item.key} className="relative aspect-square overflow-hidden rounded-md card-soft">
             <StorageImg src={item.url} alt="" className="h-full w-full object-cover" draggable={false} />
             <button
               type="button"
               onClick={() => remove(item.key)}
               disabled={disabled}
               aria-label={t("media.removeImage")}
-              className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-black/85 disabled:opacity-50"
+              className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-art-chip text-on-art transition-colors hover:bg-black/85 disabled:opacity-50"
             >
               <X size={16} />
             </button>
@@ -104,7 +104,7 @@ export function MultiImagePicker({
                   onClick={() => move(item.key, -1)}
                   disabled={disabled || index === 0}
                   aria-label={t("media.moveLeft")}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black/85 disabled:pointer-events-none disabled:opacity-50"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-art-chip text-on-art hover:bg-black/85 disabled:pointer-events-none disabled:opacity-50"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -113,14 +113,14 @@ export function MultiImagePicker({
                   onClick={() => move(item.key, 1)}
                   disabled={disabled || index === items.length - 1}
                   aria-label={t("media.moveRight")}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black/85 disabled:pointer-events-none disabled:opacity-50"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-art-chip text-on-art hover:bg-black/85 disabled:pointer-events-none disabled:opacity-50"
                 >
                   <ChevronRight size={16} />
                 </button>
               </div>
             )}
             {index === 0 && items.length > 1 && (
-              <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-caption font-medium text-white">
+              <span className="absolute left-1 top-1 rounded bg-art-chip px-1.5 py-0.5 text-caption font-medium text-on-art">
                 {t("media.coverBadge")}
               </span>
             )}
@@ -131,7 +131,7 @@ export function MultiImagePicker({
             htmlFor={inputId}
             className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border-strong bg-surface-soft text-text-secondary hover:border-primary"
           >
-            <ImagePlus size={18} />
+            <ImagePlus size={20} />
             <span className="text-caption font-medium">{t("media.addImages")}</span>
             <input
               id={inputId}

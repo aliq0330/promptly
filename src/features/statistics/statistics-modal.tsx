@@ -100,7 +100,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
   return (
     <Modal onClose={onClose} labelledBy="statistics-title">
       <DialogShell
-        className="flex h-[640px] max-h-[75dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop"
+        className="flex h-[640px] max-h-[75dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-pop"
       >
         <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3 pt-5">
           <h2 id="statistics-title" className="font-display text-h2 font-bold text-text">
@@ -112,7 +112,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
             aria-label={t("common.close")}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 

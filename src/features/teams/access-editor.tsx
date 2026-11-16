@@ -71,7 +71,7 @@ export function AccessEditor({
   return (
     <div className="space-y-3" data-testid="access-editor">
       {spaceVariant && (
-        <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">
+        <p className="text-caption font-semibold text-text-muted">
           {t(elevateOnly ? "tm.access.elevate.heading" : "tm.access.listHeading", { count: entries.length })}
         </p>
       )}
@@ -90,7 +90,7 @@ export function AccessEditor({
                     aria-label={t("tm.access.level")}
                     value={entry.level}
                     onChange={(event) => (event.target.value === "remove" ? remove(entry) : setLevel(entry, event.target.value as TeamSpaceLevel))}
-                    className="h-8 rounded-full border border-border bg-background px-3 text-caption font-semibold"
+                    className="h-9 rounded-full border border-border bg-background px-3 text-caption font-semibold"
                   >
                     {levelChoices(entry).map((level) => (
                       <option key={level} value={level}>
@@ -106,14 +106,14 @@ export function AccessEditor({
                         aria-label={t("tm.access.level")}
                         value={entry.level}
                         onChange={(event) => setLevel(entry, event.target.value as TeamSpaceLevel)}
-                        className="h-8 rounded-lg border border-border bg-background px-2 text-caption"
+                        className="h-9 rounded-lg card-inset px-2 text-caption"
                       >
                         <option value="edit">{t("tm.access.edit")}</option>
                         <option value="view">{t("tm.access.view")}</option>
                       </select>
                     )}
-                    <button type="button" onClick={() => remove(entry)} aria-label={t("tm.access.remove")} className={iconButtonClassName(false, "h-8 w-8")}>
-                      <X size={14} aria-hidden />
+                    <button type="button" onClick={() => remove(entry)} aria-label={t("tm.access.remove")} className={iconButtonClassName(false, "h-9 w-9")}>
+                      <X size={16} aria-hidden />
                     </button>
                   </>
                 )
@@ -141,7 +141,7 @@ export function AccessEditor({
                   <button
                     type="button"
                     onClick={() => add({ type: "group", id: group.id, level: defaultLevel, name: group.name, sub: String(group.memberCount) })}
-                    className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
+                    className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
                   >
                     <Plus size={12} aria-hidden />
                     {t("tm.access.add")}
@@ -160,7 +160,7 @@ export function AccessEditor({
                   <button
                     type="button"
                     onClick={() => add({ type: "member", id: person.userId, level: roleCanHoldSpaceLevel(person.role as TeamRole, defaultLevel) ? defaultLevel : "edit", name: person.displayName || person.username, username: person.username, sub: person.role })}
-                    className="inline-flex h-8 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
+                    className="inline-flex h-9 items-center gap-1 rounded-full bg-primary-soft px-3 text-caption font-medium text-primary"
                   >
                     <Plus size={12} aria-hidden />
                     {t("tm.access.add")}

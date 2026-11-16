@@ -1,5 +1,7 @@
 "use client";
 
+// Hex literals here are USER DATA defaults (the colour a palette swatch starts from), not interface colours (docs/history/406-*).
+
 import { TrashIcon } from "@/components/ui/motion-icons";
 import { useId, useState } from "react";
 import { ChevronLeft } from "@/components/icons/chevron-left";
@@ -55,7 +57,7 @@ export function PaletteTab({ autoAdd }: { autoAdd?: boolean } = {}) {
         </div>
       )}
       {palettes.length === 0 ? (
-        <EmptyState icon={Palette} title={t("spaces.palette.empty")} description={caps.edit ? t("spaces.palette.emptyEditor") : undefined} />
+        <EmptyState scene="spaces" icon={Palette} title={t("spaces.palette.empty")} description={caps.edit ? t("spaces.palette.emptyEditor") : undefined} />
       ) : (
         <ul className="space-y-4">
           {palettes.map((palette) => (
@@ -154,7 +156,7 @@ export function PaletteCard({ palette }: { palette: SpacePalette }) {
   }
 
   return (
-    <li className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-xs" data-palette={palette.name}>
+    <li className="space-y-3 rounded-lg card-flat p-4 shadow-xs" data-palette={palette.name}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="truncate text-h3 font-bold text-text">{palette.name}</h3>
@@ -166,23 +168,23 @@ export function PaletteCard({ palette }: { palette: SpacePalette }) {
         <div className="flex flex-wrap gap-1.5">
           {palette.colors.length > 0 && (
             <Button variant="ghost" size="sm" onClick={() => void copy(palette.colors.join(", "))}>
-              <Copy size={14} aria-hidden />
+              <Copy size={16} aria-hidden />
               {copied === palette.colors.join(", ") ? t("common.copied") : t("spaces.palette.copyAll")}
             </Button>
           )}
           {caps.edit && !onBoard && (
             <Button variant="ghost" size="sm" onClick={() => void addToBoard()}>
-              <LayoutDashboard size={14} aria-hidden />
+              <LayoutDashboard size={16} aria-hidden />
               {t("spaces.palette.addToBoard")}
             </Button>
           )}
           {caps.edit && (
             <>
               <Button variant="ghost" size="sm" onClick={() => setEditing(true)} aria-label={t("spaces.palette.edit")}>
-                <Pencil size={14} aria-hidden />
+                <Pencil size={16} aria-hidden />
               </Button>
               <Button variant="ghost" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => setConfirmDelete(true)} aria-label={t("spaces.palette.delete")}>
-                <TrashIcon size={14} />
+                <TrashIcon size={16} />
               </Button>
             </>
           )}
@@ -231,7 +233,7 @@ export function PaletteCard({ palette }: { palette: SpacePalette }) {
                   setHex(event.target.value);
                 }}
                 aria-label={t("spaces.palette.picker")}
-                className="h-10 w-12 cursor-pointer rounded-md border border-border bg-surface p-1"
+                className="h-10 w-12 cursor-pointer rounded-md card-flat p-1"
               />
               <input
                 id={hexId}
@@ -269,7 +271,7 @@ export function PaletteCard({ palette }: { palette: SpacePalette }) {
                   setHex("");
                 }}
               >
-                <TrashIcon size={14} />
+                <TrashIcon size={16} />
                 {t("spaces.palette.removeColor")}
               </Button>
               <Button type="button" variant="ghost" size="icon" onClick={() => setSelected(null)} aria-label={t("common.cancel")}>
@@ -382,7 +384,7 @@ function PaletteFormModal({ palette, onClose, onSubmit }: { palette?: SpacePalet
             {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={busy}>
-            {busy && <Loader2 size={14} className="animate-spin" aria-hidden />}
+            {busy && <Loader2 size={16} className="animate-spin" aria-hidden />}
             {t("common.save")}
           </Button>
         </div>

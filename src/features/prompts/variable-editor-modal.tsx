@@ -95,7 +95,7 @@ export function VariableEditorModal({
   return (
     <Modal onClose={onClose} labelledBy="variable-editor-modal-title">
       <div
-        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-4">
@@ -106,9 +106,9 @@ export function VariableEditorModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
@@ -125,7 +125,7 @@ export function VariableEditorModal({
               onChange={(event) => setName(event.target.value)}
               onBlur={() => setTouched(true)}
               placeholder={t("variable.namePlaceholder")}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             {normalizedName && (
               <p className="mt-1.5 font-mono text-caption text-primary">{`{${normalizedName}}`}</p>
@@ -153,7 +153,7 @@ export function VariableEditorModal({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder={t("variable.descriptionPlaceholder")}
-              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
           </div>
 

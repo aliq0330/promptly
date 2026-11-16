@@ -53,7 +53,7 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
   const list = groups ?? [];
   const selected = list.find((g) => g.id === selectedId) ?? list[0] ?? null;
 
-  const card = "rounded-lg border border-border-soft bg-surface p-4";
+  const card = "rounded-lg card-flat p-4";
   const detail = selected && (
     <div className="space-y-3" data-group-detail={selected.id}>
       <div className="flex flex-wrap items-center gap-2">
@@ -76,15 +76,15 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
       </div>
       <GroupMembersCard group={selected} members={members} />
       <section className={card} data-group-spaces>
-        <h4 className="mb-2 text-small font-bold">{t("tm.groups.spaceAccess", { count: selected.spaces?.length ?? 0 })}</h4>
+        <h4 className="mb-2 text-small font-semibold">{t("tm.groups.spaceAccess", { count: selected.spaces?.length ?? 0 })}</h4>
         {(selected.spaces ?? []).length === 0 ? (
           <p className="text-small text-text-muted">{t("tm.groups.noSpaces")}</p>
         ) : (
           <ul className="divide-y divide-border-soft">
             {(selected.spaces ?? []).map((space) => (
               <li key={space.spaceId} className="flex items-center justify-between gap-3 py-2 text-small">
-                <span className="min-w-0 truncate font-bold">{space.title}</span>
-                <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-bold", space.level === "edit" ? "bg-success-soft text-success" : "bg-surface-soft text-text-secondary")}>
+                <span className="min-w-0 truncate font-semibold">{space.title}</span>
+                <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-semibold", space.level === "edit" ? "bg-success-soft text-success" : "bg-surface-soft text-text-secondary")}>
                   {t(space.level === "edit" ? "tm.groups.canEdit" : "tm.groups.viewOnly")}
                 </span>
               </li>
@@ -119,7 +119,7 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
                 >
                   <TeamMark name={group.name} tone={group.tone} size={40} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-small font-bold">{group.name}</span>
+                    <span className="block truncate text-small font-semibold">{group.name}</span>
                     <span className="block truncate text-caption text-text-muted">
                       {t("tm.card.members", { count: group.memberCount })}
                       {group.leadName && <span className="md:hidden">{` · ${t("tm.groups.leadFull", { name: group.leadName })}`}</span>}
@@ -132,7 +132,7 @@ export function AdminGroupsSection({ ctx }: { ctx: TeamCtx }) {
             );
           })}
           <li>
-            <button type="button" onClick={() => setEditing("new")} data-group-new className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong text-small font-bold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <button type="button" onClick={() => setEditing("new")} data-group-new className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong text-small font-semibold text-text-secondary hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <Plus size={16} aria-hidden />
               {t("tm.groups.new")}
             </button>
@@ -189,17 +189,17 @@ function GroupMembersCard({ group, members }: { group: TeamGroup; members: TeamM
   const shown = inGroup.slice(0, 8);
   const rest = Math.max(0, group.memberCount - shown.length);
   return (
-    <section className="rounded-lg border border-border-soft bg-surface p-4" data-group-members>
-      <h4 className="mb-2 text-small font-bold">{t("tm.groups.membersHeading")}</h4>
+    <section className="rounded-lg card-flat p-4" data-group-members>
+      <h4 className="mb-2 text-small font-semibold">{t("tm.groups.membersHeading")}</h4>
       <div className="flex flex-wrap gap-2">
         {shown.map((m) => (
-          <span key={m.userId} className="inline-flex items-center gap-1.5 rounded-full bg-surface-soft py-1 pl-1 pr-3 text-caption font-bold text-text">
+          <span key={m.userId} className="inline-flex items-center gap-1.5 rounded-full bg-surface-soft py-1 pl-1 pr-3 text-caption font-semibold text-text">
             <Avatar src={m.avatarUrl} alt={m.displayName || m.username} size={24} />
             {m.displayName || m.username}
             {group.leadId === m.userId && <span className="rounded-full bg-primary-soft px-1.5 text-caption text-primary">{t("tm.groups.leadBadge")}</span>}
           </span>
         ))}
-        {rest > 0 && <span className="inline-flex items-center rounded-full border border-border-soft px-3 py-1 text-caption font-bold text-text-muted">{t("tm.groups.more", { count: rest })}</span>}
+        {rest > 0 && <span className="inline-flex items-center rounded-full border border-border-soft px-3 py-1 text-caption font-semibold text-text-muted">{t("tm.groups.more", { count: rest })}</span>}
       </div>
     </section>
   );
@@ -346,19 +346,19 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
 
   const leftChip = (guest: TeamGuest) => {
     const left = daysLeft(guest);
-    if (guest.expired || left === null) return <span className="rounded-full bg-danger-soft px-2.5 py-0.5 text-caption font-bold text-danger">{t("tm.guests.expiredChip")}</span>;
-    return <span className={cn("whitespace-nowrap rounded-full px-2.5 py-0.5 text-caption font-bold", left <= 7 ? "bg-warning-soft text-warning" : "bg-success-soft text-success")}>{t("tm.guests.daysLeft", { count: Math.max(left, 0) })}</span>;
+    if (guest.expired || left === null) return <span className="rounded-full bg-danger-soft px-2.5 py-0.5 text-caption font-semibold text-danger">{t("tm.guests.expiredChip")}</span>;
+    return <span className={cn("whitespace-nowrap rounded-full px-2.5 py-0.5 text-caption font-semibold", left <= 7 ? "bg-warning-soft text-warning" : "bg-success-soft text-success")}>{t("tm.guests.daysLeft", { count: Math.max(left, 0) })}</span>;
   };
   const levelChip = (guest: TeamGuest) => {
     const canEdit = (guest.spaces ?? []).some((space) => space.role === "editor" || space.role === "owner");
-    return <span className="whitespace-nowrap rounded-full bg-surface-soft px-2.5 py-0.5 text-caption font-bold text-text-secondary">{t(canEdit ? "tm.groups.canEdit" : "tm.groups.viewOnly")}</span>;
+    return <span className="whitespace-nowrap rounded-full bg-surface-soft px-2.5 py-0.5 text-caption font-semibold text-text-secondary">{t(canEdit ? "tm.groups.canEdit" : "tm.groups.viewOnly")}</span>;
   };
   const extend = (guest: TeamGuest) => (
     <select
       aria-label={t("tm.guests.extend")}
       value=""
       onChange={(event) => event.target.value && void run(() => extendGuest(ctx.team.id, guest.userId, Number(event.target.value)), t("tm.guests.extended"))}
-      className="h-9 rounded-full border border-border bg-surface px-3 text-caption font-bold text-primary"
+      className="h-9 rounded-full border border-border bg-surface px-3 text-caption font-semibold text-primary"
       data-guest-extend
     >
       <option value="">{t("tm.guests.extend")}</option>
@@ -397,11 +397,11 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
       {guests && guests.length === 0 && <p className="text-small text-text-muted">{t("tm.guests.empty")}</p>}
       {list.length > 0 && (
         <>
-          <table className="hidden w-full overflow-hidden rounded-lg border border-border-soft bg-surface text-small md:table" data-testid="team-guests">
-            <thead className="bg-surface-soft text-caption uppercase tracking-[0.06em] text-text-muted">
+          <table className="hidden w-full overflow-hidden rounded-lg card-flat text-small md:table" data-testid="team-guests">
+            <thead className="bg-surface-soft text-caption text-text-muted">
               <tr className="text-left">
                 {(["tm.guests.col.guest", "tm.guests.col.spaces", "tm.guests.col.level", "tm.guests.col.until", "tm.guests.col.lastSeen", "tm.guests.col.actions"] as const).map((key) => (
-                  <th key={key} className="px-4 py-2.5 font-bold">
+                  <th key={key} className="px-4 py-2.5 font-semibold">
                     {key === "tm.guests.col.actions" ? <span className="sr-only">{t(key)}</span> : t(key)}
                   </th>
                 ))}
@@ -426,7 +426,7 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
           </table>
           <ul className="space-y-2 md:hidden" data-testid="team-guests-cards">
             {list.map((guest) => (
-              <li key={guest.userId} className="rounded-lg border border-border-soft bg-surface p-4" data-guest-card>
+              <li key={guest.userId} className="rounded-lg card-flat p-4" data-guest-card>
                 <div className="flex items-center gap-3">
                   <PersonRow name={guest.displayName || guest.username} avatarUrl={guest.avatarUrl} sub={guest.guestOrg ?? undefined} className="flex-1" />
                   {leftChip(guest)}
@@ -449,11 +449,11 @@ export function AdminGuestsSection({ ctx }: { ctx: TeamCtx }) {
           {t("tm.guests.prune", { count: expiredCount })}
         </Button>
       )}
-      <section className="rounded-lg border border-border-soft bg-surface p-4" data-guest-hidden>
+      <section className="rounded-lg card-flat p-4" data-guest-hidden>
         <h3 className="mb-2 text-small font-bold">{t("tm.guests.cannotSee")}</h3>
         <div className="flex flex-wrap gap-2">
           {hidden.map((key) => (
-            <span key={key} className="inline-flex items-center gap-1.5 rounded-full bg-surface-soft px-3 py-1 text-caption font-bold text-text-secondary">
+            <span key={key} className="inline-flex items-center gap-1.5 rounded-full bg-surface-soft px-3 py-1 text-caption font-semibold text-text-secondary">
               <Lock size={12} aria-hidden />
               {t(key)}
             </span>

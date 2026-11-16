@@ -12,6 +12,7 @@ import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import type { PostFeedItem } from "@/features/feed/types";
 import type { UserProfile } from "@/types";
+import { SectionLabel } from "@/components/ui/section-label";
 
 /** Shared building blocks of every Focus card — kept small and presentational. */
 
@@ -28,7 +29,7 @@ export function FocusCreator({ user, onImage = false }: { user: UserProfile; onI
       href={profileHref(user)}
       className={cn(
         "relative z-10 inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full py-0.5 pr-2.5 outline-none focus-visible:ring-2 focus-visible:ring-primary",
-        onImage ? "bg-black/50 pl-0.5 text-white hover:bg-black/65" : "-ml-0.5 pl-0.5 text-text-secondary hover:text-primary",
+        onImage ? "bg-art-chip pl-0.5 text-on-art hover:bg-art-chip" : "-ml-0.5 pl-0.5 text-text-secondary hover:text-primary",
       )}
     >
       <Avatar src={user.avatarUrl} alt="" size={24} />
@@ -40,23 +41,16 @@ export function FocusCreator({ user, onImage = false }: { user: UserProfile; onI
 /** The small "what is this" tag: ICON · TÜR. */
 export function FocusTypeBadge({ icon: Icon, label, onImage = false, className }: { icon: IconComponent; label: string; onImage?: boolean; className?: string }) {
   return (
-    <span
-      className={cn(
-        "inline-flex min-w-0 items-center gap-1 text-caption font-semibold uppercase tracking-[0.08em]",
-        onImage ? "text-white/90" : "text-text-muted",
-        className,
-      )}
-    >
-      <Icon size={12} aria-hidden className="shrink-0" />
+    <SectionLabel as="span" tone={onImage ? "overlay" : "muted"} icon={Icon} className={cn("inline-flex", className)}>
       <span className="truncate">{label}</span>
-    </span>
+    </SectionLabel>
   );
 }
 
 /** The card title — a real link (the full-card link behind it is mouse-only). */
 export function FocusTitle({ href, title, onImage = false, className }: { href: string; title: string; onImage?: boolean; className?: string }) {
   return (
-    <h3 className={cn("font-semibold leading-snug", onImage ? "text-label text-white sm:text-small" : "text-small text-text sm:text-body", className)}>
+    <h3 className={cn("font-semibold leading-snug", onImage ? "text-label text-on-art sm:text-small" : "text-small text-text sm:text-body", className)}>
       <Link
         href={href}
         data-card-link

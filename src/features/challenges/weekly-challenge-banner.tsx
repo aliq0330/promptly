@@ -28,11 +28,11 @@ export function WeeklyChallengeBanner() {
       <CardBandBackdrop className="rounded-xl" />
       <div className="relative flex flex-wrap items-start gap-x-4 gap-y-3 p-4 sm:p-5">
         <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-surface text-primary shadow-pop">
-          <Trophy size={26} />
+          <Trophy size={24} />
         </span>
         <div className="min-w-0 flex-1 basis-40 space-y-1">
           <Eyebrow tone="primary">{t("challenge.eyebrow")}</Eyebrow>
-          <h2 className="break-words font-display text-[1.375rem] font-extrabold leading-tight tracking-[-0.02em] text-text">{copy.title}</h2>
+          <h2 className="break-words font-display text-h2 font-extrabold leading-tight tracking-[-0.02em] text-text">{copy.title}</h2>
           <p className="text-caption text-text-muted">{t("challenge.endsIn", { time: formatRelativeTime(challenge.endsAt, language) })}</p>
         </div>
         {copy.description && <p className="w-full break-words text-small text-text-secondary">{copy.description}</p>}

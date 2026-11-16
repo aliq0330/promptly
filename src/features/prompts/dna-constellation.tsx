@@ -94,7 +94,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
     <div className="space-y-3">
       <div
         ref={stageRef}
-        className="relative w-full overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card"
+        className="relative w-full overflow-hidden rounded-lg card-flat shadow-card"
         style={{ height: height || 280 }}
         data-dna-constellation
       >
@@ -131,7 +131,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
               style={{ left: cx, top: cy }}
               data-dna-center
             >
-              <Dna size={14} className="shrink-0" aria-hidden />
+              <Dna size={16} className="shrink-0" aria-hidden />
               <span className="truncate">{centerTitle}</span>
             </div>
 
@@ -172,7 +172,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
                       animationDelay: `${i * STAGGER_MS}ms`,
                     }}
                   >
-                    <Icon size={18} aria-hidden />
+                    <Icon size={20} aria-hidden />
                   </span>
                   {(labelled || isLit || isSelected) && (
                     <span
@@ -199,12 +199,12 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
           data-dna-show-all
           className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-surface px-4 text-label font-medium text-text shadow-xs transition-colors hover:border-border-strong"
         >
-          <Plus size={14} aria-hidden />
+          <Plus size={16} aria-hidden />
           {t("dna.constellationMore", { count: hidden })}
         </button>
       )}
 
-      <div aria-live="polite" className="min-h-[3.25rem] rounded-lg border border-border-soft bg-surface-soft px-3 py-2.5" data-dna-readout>
+      <div aria-live="polite" className="min-h-[3.25rem] rounded-lg card-soft px-3 py-2.5" data-dna-readout>
         {selected ? (
           <div key={selected.id} className="animate-fade-in">
             <p className="text-label font-semibold text-text">{dnaSectionLabel(selected, t)}</p>
@@ -217,7 +217,7 @@ export function DnaConstellation({ sections, centerTitle, mapHref }: { sections:
 
       {mapHref && (
         <Link href={mapHref} className="inline-flex items-center gap-1.5 text-label font-medium text-primary hover:underline">
-          <Network size={14} aria-hidden />
+          <Network size={16} aria-hidden />
           {t("dna.constellationOpenMap")}
         </Link>
       )}

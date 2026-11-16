@@ -41,7 +41,7 @@ export function ToolLine({ label, refs, legacy }: { label: string; refs: string[
       {hasKnown ? (
         <ToolChips refs={refs} linked />
       ) : (
-        <Link href={`/discover?q=${encodeURIComponent(legacy ?? "")}`} className="inline-flex h-6 items-center rounded-full bg-primary-soft px-2.5 text-caption font-medium text-text-secondary transition-colors hover:bg-primary/15 hover:text-primary">{legacy}</Link>
+        <Link href={`/discover?q=${encodeURIComponent(legacy ?? "")}`} className="tap-area inline-flex h-6 items-center rounded-full bg-primary-soft px-2.5 text-caption font-medium text-text-secondary transition-colors hover:bg-primary/15 hover:text-primary">{legacy}</Link>
       )}
     </div>
   );

@@ -19,7 +19,7 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
       <aside className="relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden border-r border-border-soft bg-surface p-10 lg:flex">
         <Link href="/" className="flex items-center gap-2" aria-label="Promptly">
           <BrandMark size={34} />
-          <BrandWordmark className="text-[1.6rem]" />
+          <BrandWordmark className="text-h2" />
         </Link>
         <div className="space-y-5">
           <h2 className="max-w-md text-display text-text">{t("home.heroTitle")}</h2>
@@ -38,9 +38,9 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
       <main id="main-content" className="flex flex-1 flex-col items-center justify-center px-4 py-12">
         <Link href="/" className="mb-8 flex items-center gap-2 lg:hidden" aria-label="Promptly">
           <BrandMark size={32} />
-          <BrandWordmark className="text-[1.5rem]" />
+          <BrandWordmark className="text-h2" />
         </Link>
-        <div className="w-full max-w-sm animate-rise-in rounded-lg border border-border-soft bg-surface p-6 shadow-card sm:p-8">{children}</div>
+        <div className="w-full max-w-sm animate-rise-in rounded-lg card-flat p-6 shadow-card sm:p-8">{children}</div>
       </main>
     </div>
   );

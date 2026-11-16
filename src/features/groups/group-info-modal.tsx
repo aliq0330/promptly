@@ -200,7 +200,7 @@ export function GroupInfoModal({
           data-info-requests-link
           className="mx-4 mt-3 flex shrink-0 items-center gap-3 rounded-xl bg-primary-soft px-4 py-3 text-small text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <UserCog size={18} className="shrink-0 text-primary" aria-hidden />
+          <UserCog size={20} className="shrink-0 text-primary" aria-hidden />
           <span className="min-w-0 flex-1">
             <span className="font-medium">{t("groups.info.pendingRequests", { count: pendingRequests })}</span>
             <span className="block text-caption text-text-muted">{t("groups.info.pendingRequestsHelp")}</span>
@@ -215,7 +215,7 @@ export function GroupInfoModal({
               {t("rooms.info.rooms")}
             </h3>
             {canManageRooms && onAddRoom && (
-              <button type="button" onClick={onAddRoom} data-info-add-room className="text-small font-bold text-primary hover:underline">
+              <button type="button" onClick={onAddRoom} data-info-add-room className="text-small font-semibold text-primary hover:underline">
                 {t("rooms.info.addRoom")}
               </button>
             )}
@@ -246,7 +246,7 @@ export function GroupInfoModal({
                     >
                       <RoomIconTile icon={room.icon} size={36} />
                       <span className="min-w-0 flex-1">
-                        <span className={cn("block truncate text-body", current || unread ? "font-bold text-text" : "font-semibold text-text")}>{room.name}</span>
+                        <span className={cn("block truncate text-body", current || unread ? "font-semibold text-text" : "font-semibold text-text")}>{room.name}</span>
                         {sub && <span className={cn("block truncate text-caption", current ? "font-semibold text-success" : "text-text-muted")}>{sub}</span>}
                       </span>
                       {room.readPolicy === "staff" && <Lock size={16} className="shrink-0 text-text-muted" aria-hidden />}
@@ -324,13 +324,13 @@ export function GroupInfoModal({
       <InfoSharedRows conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
 
       <InfoCard>
-        <InfoRow icon={<Pin size={18} />} onClick={pinnedCount > 0 ? onShowPinned : undefined} value={pinnedCount > 0 ? pinnedCount : t("messages.contact.none")} testId="pinned">
+        <InfoRow icon={<Pin size={20} />} onClick={pinnedCount > 0 ? onShowPinned : undefined} value={pinnedCount > 0 ? pinnedCount : t("messages.contact.none")} testId="pinned">
           {t("messages.contact.pinned")}
         </InfoRow>
-        <InfoRow icon={<Star size={18} />} href="/messages/starred" value={starredCount > 0 ? starredCount : t("messages.contact.none")} testId="starred">
+        <InfoRow icon={<Star size={20} />} href="/messages/starred" value={starredCount > 0 ? starredCount : t("messages.contact.none")} testId="starred">
           {t("messages.contact.starred")}
         </InfoRow>
-        <InfoRow icon={<Bell size={18} />} href={communityHref(group.id, "about")} value={t("groups.info.communityNotifyValue")} testId="notify">
+        <InfoRow icon={<Bell size={20} />} href={communityHref(group.id, "about")} value={t("groups.info.communityNotifyValue")} testId="notify">
           {t("groups.about.notifications")}
         </InfoRow>
       </InfoCard>
@@ -353,7 +353,7 @@ export function GroupInfoModal({
               className="flex h-14 w-full items-center gap-4 px-4 text-left text-body text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary" aria-hidden>
-                <Settings size={18} />
+                <Settings size={20} />
               </span>
               <span id="info-settings-title" className="min-w-0 flex-1">
                 {t("groups.info.chatSettings")}

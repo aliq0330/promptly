@@ -70,7 +70,7 @@ export function ImageLightbox({
         aria-label={t("media.imageGalleryLabel")}
         onClick={onClose}
       >
-        <div className="flex items-center justify-between px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white/90" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-on-art" onClick={(event) => event.stopPropagation()}>
           {hasMultiple ? (
             <span className="text-small tabular-nums">
               {index + 1} / {images.length}
@@ -82,7 +82,7 @@ export function ImageLightbox({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded-full p-2 text-white hover:bg-white/10"
+            className="rounded-full p-2 text-on-art hover:bg-white/10"
           >
             <X size={24} />
           </button>
@@ -110,7 +110,7 @@ export function ImageLightbox({
               type="button"
               onClick={() => setIndex((prev) => (prev - 1 + images.length) % images.length)}
               aria-label={t("media.previousImage")}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60 sm:left-4"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-on-art hover:bg-black/60 sm:left-4"
             >
               <ChevronLeft size={24} />
             </button>
@@ -121,7 +121,7 @@ export function ImageLightbox({
               type="button"
               onClick={() => setIndex((prev) => (prev + 1) % images.length)}
               aria-label={t("media.nextImage")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white hover:bg-black/60 sm:right-4"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-on-art hover:bg-black/60 sm:right-4"
             >
               <ChevronRight size={24} />
             </button>

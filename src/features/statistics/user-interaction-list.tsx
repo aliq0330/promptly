@@ -45,7 +45,7 @@ function EngagerRow({ item, kind, onNavigate }: { item: ContentEngager; kind: St
     return (
       <li className="flex items-center gap-3 px-5 py-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-muted">
-          <UserX size={18} aria-hidden />
+          <UserX size={20} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-small font-semibold text-text-secondary">{t("statistics.deletedUser")}</p>

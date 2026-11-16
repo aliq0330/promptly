@@ -102,7 +102,7 @@ export function KindField({ value, onChange, kinds = SPACE_KINDS }: { value: Spa
           return (
             <label
               key={kind}
-              className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-border-soft bg-background px-3 py-2 text-small text-text transition-colors hover:border-border-strong has-checked:border-primary/50 has-checked:bg-primary-soft/40"
+              className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg card-inset px-3 py-2 text-small text-text transition-colors hover:border-border-strong has-checked:border-primary/50 has-checked:bg-primary-soft/40"
             >
               <input type="radio" name="space-kind" value={kind} checked={value === kind} onChange={() => onChange(kind)} className="sr-only" />
               <Icon size={16} className="shrink-0 text-primary" aria-hidden />
@@ -178,7 +178,7 @@ export function CoverPicker({ file, onChange }: { file: File | null; onChange: (
         {t("spaces.form.cover")} <span className="font-normal text-text-muted">{t("spaces.form.optional")}</span>
       </span>
       <div className="flex items-center gap-3">
-        <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border-soft bg-surface-soft">
+        <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md card-soft">
           {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
           {preview ? <img src={preview} alt="" className="h-full w-full object-cover" /> : <ImagePlus size={20} className="absolute inset-0 m-auto text-text-muted" aria-hidden />}
         </span>
@@ -188,7 +188,7 @@ export function CoverPicker({ file, onChange }: { file: File | null; onChange: (
           </Button>
           {file && (
             <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}>
-              <X size={14} aria-hidden />
+              <X size={16} aria-hidden />
               {t("spaces.form.coverRemove")}
             </Button>
           )}
@@ -226,7 +226,7 @@ export function FormError({ message }: { message: string | null }) {
 export function SubmitButton({ busy, children, disabled }: { busy: boolean; children: React.ReactNode; disabled?: boolean }) {
   return (
     <Button type="submit" disabled={busy || disabled}>
-      {busy && <Loader2 size={14} className="animate-spin" aria-hidden />}
+      {busy && <Loader2 size={16} className="animate-spin" aria-hidden />}
       {children}
     </Button>
   );

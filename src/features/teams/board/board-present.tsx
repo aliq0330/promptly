@@ -10,11 +10,11 @@ export function PresentBar({ index, total, title, onPrev, onNext, onExit }: { in
   const { t } = useTranslation();
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 flex justify-center px-3" data-testid="board-present-bar">
-      <div role="toolbar" aria-label={t("tb.present.bar")} className="pointer-events-auto flex max-w-full items-center gap-1 rounded-full border border-border-soft bg-surface p-1.5 shadow-pop">
+      <div role="toolbar" aria-label={t("tb.present.bar")} className="pointer-events-auto flex max-w-full items-center gap-1 rounded-full border border-border-soft bg-surface p-1.5 shadow-md">
         <button type="button" onClick={onPrev} disabled={index <= 0} aria-label={t("tb.present.prev")} data-present-prev="" className="grid h-11 w-11 place-items-center rounded-full hover:bg-surface-soft disabled:opacity-50">
           <ChevronLeft size={20} aria-hidden />
         </button>
-        <span className="min-w-0 px-2 text-small font-bold tabular-nums text-text" aria-live="polite">
+        <span className="min-w-0 px-2 text-small font-semibold tabular-nums text-text" aria-live="polite">
           <span data-present-counter="">
             {index + 1} / {total}
           </span>
@@ -24,7 +24,7 @@ export function PresentBar({ index, total, title, onPrev, onNext, onExit }: { in
           <ChevronRight size={20} aria-hidden />
         </button>
         <button type="button" onClick={onExit} aria-label={t("tb.present.exit")} data-present-exit="" className="grid h-11 w-11 place-items-center rounded-full bg-text text-background">
-          <X size={18} aria-hidden />
+          <X size={20} aria-hidden />
         </button>
       </div>
     </div>

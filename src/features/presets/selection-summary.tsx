@@ -26,7 +26,7 @@ export function SelectionSummary({
   return (
     <section aria-label={t("presetField.selected")} className={className} data-selection-summary>
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <h3 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+        <h3 className="text-caption font-semibold text-text-muted">
           {t("presetField.selected")} <span className="tabular-nums">({entries.length})</span>
         </h3>
         <button type="button" onClick={() => onChange({})} className="rounded px-1.5 py-0.5 text-caption font-medium text-text-muted underline hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
@@ -46,7 +46,7 @@ export function SelectionSummary({
               type="button"
               aria-label={t("extra.removeAria", { name: entry.label })}
               onClick={() => onChange(removeEntry(selection, entry))}
-              className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-text-muted hover:bg-surface hover:text-text"
+              className="tap-area grid h-5 w-5 shrink-0 place-items-center rounded-full text-text-muted hover:bg-surface hover:text-text"
             >
               <X size={12} />
             </button>

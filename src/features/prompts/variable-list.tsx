@@ -47,8 +47,8 @@ export function VariableList({
   if (variables.length === 0) return null;
 
   return (
-    <div className="space-y-2 rounded-md border border-border bg-surface p-3">
-      <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">
+    <div className="space-y-2 rounded-md card-flat p-3">
+      <p className="text-caption font-semibold text-text-muted">
         {t("variable.sectionHeading", { count: variables.length })}
       </p>
       <ul className="space-y-1.5">
@@ -58,7 +58,7 @@ export function VariableList({
           return (
             <li
               key={variable.tempId}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-small"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md card-inset px-3 py-2 text-small"
             >
               <div className="min-w-0 flex-1 basis-40 break-words">
                 <span className="font-mono text-primary">{`{${variable.name}}`}</span>
@@ -93,7 +93,7 @@ export function VariableList({
                     onEdit(variable);
                   }}
                   aria-label={t("variable.editAriaLabel", { name: variable.name })}
-                  className={iconButtonClassName(false, "h-7 w-7 rounded-md")}
+                  className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
                 >
                   <Pencil size={12} />
                 </button>
@@ -112,9 +112,9 @@ export function VariableList({
                     type="button"
                     onClick={() => setConfirmingId(variable.tempId)}
                     aria-label={t("variable.deleteAriaLabel", { name: variable.name })}
-                    className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+                    className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                   >
-                    <TrashIcon size={13} />
+                    <TrashIcon size={16} />
                   </button>
                 )}
               </div>

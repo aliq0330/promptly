@@ -93,7 +93,7 @@ export function AnnouncePicker({
   if (status === "loading" || status === "idle") {
     return (
       <p className="flex items-center gap-2 px-1 py-2 text-small text-text-muted">
-        <Loader2 size={14} className="animate-spin" aria-hidden /> {t("common.loading")}
+        <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
       </p>
     );
   }
@@ -164,7 +164,7 @@ export function AnnouncePicker({
             disabled={disabled}
             placeholder={t("share.announce.notePlaceholder")}
             data-announce-note=""
-            className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+            className="w-full resize-none rounded-lg card-flat px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
           />
         </label>
       )}
@@ -269,7 +269,7 @@ export function AnnounceReportNotice() {
     <div
       role="status"
       data-announce-report=""
-      className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md animate-pop-in rounded-lg border border-border bg-surface-elevated p-4 shadow-pop md:bottom-6"
+      className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md animate-pop-in rounded-lg border border-border-soft bg-surface-elevated p-4 shadow-pop md:bottom-6"
     >
       <div className="flex items-start gap-3">
         <span className={cn("mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full", failed.length > 0 ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary")}>

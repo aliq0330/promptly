@@ -84,7 +84,7 @@ export function PollSticker({
                 <span aria-hidden className={cn("absolute inset-y-0 left-0", mine ? "bg-story-cobalt/20" : "bg-story-black/8")} style={{ width: `${percent}%` }} />
               )}
               <span className="relative flex min-w-0 items-center gap-1.5">
-                {mine && <Check size={14} className="shrink-0 text-story-cobalt" aria-hidden />}
+                {mine && <Check size={16} className="shrink-0 text-story-cobalt" aria-hidden />}
                 <span className="truncate">{option}</span>
               </span>
               {percent !== null && <span className="relative shrink-0 tabular-nums">{percent}%</span>}

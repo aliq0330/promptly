@@ -414,11 +414,11 @@ export function RelationGraph({
                   <StorageImg src={node.imageUrl} alt="" draggable={false} className={cn("shrink-0 rounded-md object-cover", isCenter ? "h-14 w-14" : "h-9 w-9")} />
                 ) : (
                   <span className={cn("grid shrink-0 place-items-center rounded-md bg-surface-soft text-text-muted", isCenter ? "h-14 w-14" : "h-9 w-9")}>
-                    <Icon size={isCenter ? 22 : 18} aria-hidden />
+                    <Icon size={isCenter ? 24 : 20} aria-hidden />
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+                  <span className="flex items-center gap-1 text-caption font-semibold text-text-muted">
                     <Icon size={12} aria-hidden />
                     <span className="truncate">{isCenter ? t("relations.centerLabel") : kindLabel(node.kind)}</span>
                   </span>
@@ -442,12 +442,12 @@ export function RelationGraph({
           data-relation-show-all
           className="absolute bottom-3 left-3 z-10 inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-surface px-4 text-label font-medium text-text shadow-card transition-colors hover:border-border-strong"
         >
-          <Plus size={14} aria-hidden />
+          <Plus size={16} aria-hidden />
           {t("relations.showMoreNodes", { count: hiddenCount })}
         </button>
       )}
 
-      <div className="absolute right-3 top-3 flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-card">
+      <div className="absolute right-3 top-3 flex flex-col overflow-hidden rounded-lg card-flat shadow-card">
         <ToolButton label={t("relations.zoomIn")} onClick={() => zoomCenter(1.25)}>
           <Plus size={16} />
         </ToolButton>

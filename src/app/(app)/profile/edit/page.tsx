@@ -151,7 +151,7 @@ export default function EditProfilePage() {
                 onClick={() => fileInputRef.current?.click()}
                 className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-transparent px-3 text-small font-medium text-text transition-colors hover:bg-accent-surface"
               >
-                <Camera size={14} />
+                <Camera size={16} />
                 {t("profile.changePhoto")}
               </button>
               {avatarUrl && (
@@ -163,7 +163,7 @@ export default function EditProfilePage() {
                   }}
                   className="flex h-9 items-center gap-1.5 rounded-md px-2 text-small font-medium text-text-muted transition-colors hover:text-text"
                 >
-                  <X size={14} />
+                  <X size={16} />
                   {t("common.remove")}
                 </button>
               )}
@@ -230,7 +230,7 @@ export default function EditProfilePage() {
             value={bio}
             onChange={(event) => setBio(event.target.value)}
             placeholder={t("profile.bioPlaceholder")}
-            className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
 
@@ -244,7 +244,7 @@ export default function EditProfilePage() {
             value={website}
             onChange={(event) => setWebsite(event.target.value)}
             placeholder={t("profile.websitePlaceholder")}
-            className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
 

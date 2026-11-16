@@ -123,7 +123,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
   if (created) {
     return (
       <Modal onClose={() => onCreated(created.groupId)} labelledBy="create-community-title">
-        <DialogShell className="w-full max-w-md space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+        <DialogShell className="w-full max-w-md space-y-4 rounded-lg card-flat p-5 shadow-pop">
           <h2 id="create-community-title" className="text-body font-semibold text-text">
             {t("communities.create.doneTitle")}
           </h2>
@@ -150,7 +150,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
       <form
         onSubmit={handleSubmit}
         noValidate
-        className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2 px-5 pb-3 pt-5">
@@ -164,7 +164,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
             aria-label={t("common.close")}
             className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-50"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 

@@ -105,7 +105,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
       </ChipRow>
 
       {total === 0 ? (
-        <EmptyState
+        <EmptyState scene="spaces"
           icon={StickyNote}
           title={t("spaces.notes.empty")}
           description={caps.edit ? t("spaces.notes.emptyEditor") : undefined}
@@ -153,7 +153,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
                         {t("common.edit")}
                       </Button>
                       <Button variant="ghost" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => setDeleting(note)}>
-                        <TrashIcon size={13} />
+                        <TrashIcon size={16} />
                         {t("common.delete")}
                       </Button>
                     </>

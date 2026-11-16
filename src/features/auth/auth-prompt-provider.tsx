@@ -77,7 +77,7 @@ function AuthPromptDialog({ reason, onClose }: { reason: AuthPromptReason; onClo
           type="button"
           onClick={onClose}
           aria-label={t("common.close")}
-          className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+          className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
         >
           <X size={16} />
         </button>

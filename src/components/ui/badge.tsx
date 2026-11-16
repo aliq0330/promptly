@@ -53,7 +53,7 @@ const COUNT_TONES = {
 export function CountBadge({ tone = "secondary", className, ...props }: HTMLAttributes<HTMLSpanElement> & { tone?: keyof typeof COUNT_TONES }) {
   return (
     <span
-      className={cn("inline-grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-micro font-bold leading-none tabular-nums", COUNT_TONES[tone], className)}
+      className={cn("inline-grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-micro font-semibold leading-none tabular-nums", COUNT_TONES[tone], className)}
       {...props}
     />
   );

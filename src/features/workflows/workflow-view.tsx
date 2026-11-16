@@ -213,14 +213,14 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
             steps.length > 0 && (
               <Button
                 size="lg"
-                className="h-14 rounded-full px-7 shadow-pop"
+                className="h-14 rounded-full px-7 shadow-md"
                 onClick={() => {
                   setTab("workflow");
                   setView("run");
                   requestAnimationFrame(() => stepsRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
                 }}
               >
-                <Play size={18} aria-hidden /> {t("workflow.run.start")}
+                <Play size={20} aria-hidden /> {t("workflow.run.start")}
               </Button>
             )
           }
