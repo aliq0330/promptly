@@ -4817,6 +4817,7 @@ const dictionary: Record<string, string> = {
   "skill.detail.deprecate": "Deprecate",
   "skill.detail.undeprecate": "Restore",
   "skill.detail.packageMeta": "{{files}} files · {{size}}",
+  "skill.detail.noPackageYet": "No packaged version yet; downloading gives you the SKILL.md file.",
   "skill.detail.sha": "SHA-256: {{sha}}",
   "skill.detail.filesTitle": "Package files",
   "skill.detail.filesHint": "Files in version {{version}}. SKILL.md, metadata.json and LICENSE are in every package.",

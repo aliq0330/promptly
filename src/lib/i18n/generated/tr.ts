@@ -4817,6 +4817,7 @@ const dictionary: Record<string, string> = {
   "skill.detail.deprecate": "Kullanımdan kaldır",
   "skill.detail.undeprecate": "Geri al",
   "skill.detail.packageMeta": "{{files}} dosya · {{size}}",
+  "skill.detail.noPackageYet": "Henüz paketlenmiş sürüm yok; indirme SKILL.md dosyasını verir.",
   "skill.detail.sha": "SHA-256: {{sha}}",
   "skill.detail.filesTitle": "Paket dosyaları",
   "skill.detail.filesHint": "{{version}} sürümündeki dosyalar. SKILL.md, metadata.json ve LICENSE her pakette vardır.",
