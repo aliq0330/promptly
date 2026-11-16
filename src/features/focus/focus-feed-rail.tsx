@@ -60,7 +60,9 @@ export function FocusFeedRail({ item, author, layout = "column" }: { item: PostF
         ? { contentType: "workflow", workflow: item.data }
         : item.kind === "preset"
           ? { contentType: "preset", preset: item.data }
-          : { contentType: "request", request: item.data };
+          : item.kind === "skill"
+            ? { contentType: "skill", skill: item.data }
+            : { contentType: "request", request: item.data };
 
   const compact = layout === "compact";
   const row = layout === "row" || compact;
@@ -94,6 +96,12 @@ export function FocusFeedRail({ item, author, layout = "column" }: { item: PostF
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="preset" size={iconSize} className={RAIL_ACTION} />
           <FocusCommentButton item={item} size={iconSize} className={RAIL_ACTION} />
           <SaveButton presetId={item.data.id} saveCount={item.data.saveCount} size={iconSize} className={RAIL_ACTION} />
+        </>
+      ) : item.kind === "skill" ? (
+        <>
+          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="skill" size={iconSize} className={RAIL_ACTION} />
+          <FocusCommentButton item={item} size={iconSize} className={RAIL_ACTION} />
+          <SaveButton skillId={item.data.id} saveCount={item.data.saveCount} size={iconSize} className={RAIL_ACTION} />
         </>
       ) : (
         <>

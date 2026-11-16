@@ -409,3 +409,6 @@ Her dosya adı `NNN-konu.md` biçimindedir; `NNN` eski bölüm numarasıdır (ö
 | 9.400 | **Skill karma akışta** — `feed_page`'e `skill_part`, `feed_count` Skill'i sayar; istemcide `FeedEntry` `skill` kolu, Odak/"Sana özel" Skill almaz. | uygulandı |
 | 9.401 | **Skill detay sayfası prompt düzeniyle hizalandı** — bölünmüş İndir ▾ düğmesi, prompttaki ⋮ menüsü (bağlantı, harita, Düzenle/Sil, Şikâyet), sade eylem satırı, etiketli Hakkında kartı. | uygulandı |
 | 9.402 | **Skill `search_content`'e girdi** — `p_kind='skill'` (başlık/özet/talimat/etiket, süzgeçler, keyset); genel aramanın Skill grubu aynı motoru kullanır. 392'deki karar tersine çevrildi. | uygulandı |
+| 9.403 | **Skill "Sana özel"de ve Odak'ta** — `for_you_page` Skill adayı (aynı puan formülü, etiket sinyali), `feed_page` Medya süzgecini geçer; Odak Skill slaytı/Bilgi/yorum/ray, tür süzgecinde "Skill'ler". 400'deki karar tersine çevrildi. | uygulandı |
+| 9.404 | **Skill Space'e eklenebilir** — `space_items.content_type='skill'` (kopyalanmaz, başvurulur; RLS'li okunabilirlik), panoda Skill kartı; giriş noktaları: detay/kart ⋮ menüsü, Paylaş, Odak, hikâye. | uygulandı |
+| 9.405 | **Yazı tipleri kendi dosyalarımızdan** — DM Sans / Bricolage Grotesque / JetBrains Mono değişken woff2 (latin + latin-ext) `src/app/fonts/`, `fonts.css`; `next/font/google` kalktı (CI derleme ağı bağımlılığı). | uygulandı |

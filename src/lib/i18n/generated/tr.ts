@@ -3658,6 +3658,7 @@ const dictionary: Record<string, string> = {
   "spaces.content.request": "İstek",
   "spaces.content.workflow": "Workflow",
   "spaces.content.preset": "Ayar paketi",
+  "spaces.content.skill": "Skill",
   "spaces.group.references": "Referanslar",
   "spaces.group.colorStyle": "Renk ve stil",
   "spaces.group.done": "Tamamlanan çalışmalar",

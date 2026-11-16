@@ -247,7 +247,7 @@ function burstSprite(R: () => number, warm: boolean): Sprite {
     c.fill();
   });
 }
-/** Sitenin başlık yazı tipi (Bricolage Grotesque, `next/font` değişkeni); yoksa kalın sistem yazı tipi. */
+/** Sitenin başlık yazı tipi (Bricolage Grotesque, `fonts.css` değişkeni); yoksa kalın sistem yazı tipi. */
 function wordFont(size: number): string {
   const family = getComputedStyle(document.documentElement).getPropertyValue("--font-display-face").trim();
   return `700 ${size}px ${family ? `${family}, ` : ""}"Arial Black", system-ui, sans-serif`;

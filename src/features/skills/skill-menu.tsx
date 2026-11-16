@@ -7,9 +7,11 @@ import { Link2 } from "@/components/icons/link-2";
 import { MoreVertical } from "@/components/icons/more-vertical";
 import { Network } from "@/components/icons/network";
 import { Pencil } from "@/components/icons/pencil";
+import { Shapes } from "@/components/icons/shapes";
 import { Trash2 } from "@/components/icons/trash-2";
 import { MENU_ITEM_CLASS } from "@/components/ui/menu";
 import { ReportButton } from "@/features/moderation/report-button";
+import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { shareLinkForHref } from "@/lib/share-link";
 import { absoluteUrl, cn, relationMapHref, skillHref } from "@/lib/utils";
@@ -18,13 +20,14 @@ import type { Skill } from "@/types";
 /**
  * Skill sayfasının bant köşesindeki ⋮ menüsü (docs/history/401-*): normal prompt sayfasındaki `PostMenu` ile AYNI satırlar ve görünüm —
  * bağlantıyı kopyala, İlişki haritasını aç, sahibe Düzenle / Sil, başkasına Şikâyet et. İndirme seçenekleri burada DEĞİL, ayrı "İndir ▾" düğmesindedir.
- * "Space'e ekle" Skill için yoktur (Space öğesi türü değil).
+ * "Space'e ekle" oturumlu kullanıcıya (docs/history/404-*): Skill kopyalanmaz, Space'e başvurulur.
  */
 export function SkillMenu({ skill, isOwn, signedIn, onDelete }: { skill: Skill; isOwn: boolean; signedIn: boolean; onDelete: () => void }) {
   const { t } = useTranslation();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [spaceOpen, setSpaceOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const mapped = skill.status === "published" && skill.visibility === "public";
 
@@ -91,6 +94,21 @@ export function SkillMenu({ skill, isOwn, signedIn, onDelete }: { skill: Skill; 
               {t("relations.open")}
             </button>
           )}
+          {signedIn && (
+            <button
+              type="button"
+              role="menuitem"
+              data-add-to-space=""
+              onClick={() => {
+                setOpen(false);
+                setSpaceOpen(true);
+              }}
+              className={MENU_ITEM_CLASS}
+            >
+              <Shapes size={14} />
+              {t("spaces.add.menu")}
+            </button>
+          )}
           {isOwn && (
             <>
               <Link href={`/skills/create?edit=${skill.id}`} role="menuitem" data-skill-edit="" className={MENU_ITEM_CLASS}>
@@ -119,6 +137,7 @@ export function SkillMenu({ skill, isOwn, signedIn, onDelete }: { skill: Skill; 
           )}
         </div>
       )}
+      {spaceOpen && <AddToSpaceModal target={{ type: "skill", id: skill.id }} onClose={() => setSpaceOpen(false)} />}
     </span>
   );
 }
