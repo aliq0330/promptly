@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Bricolage_Grotesque, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider, themeInitScript } from "@/components/theme/theme-provider";
 import { LanguageProvider, languageInitScript } from "@/lib/i18n/language-provider";
 import { AuthProvider } from "@/features/auth/auth-provider";
@@ -9,29 +8,11 @@ import { PreferencesSync } from "@/features/auth/preferences-sync";
 import { KeyboardState } from "@/components/layout/keyboard-state";
 import { PageTitle } from "@/components/layout/page-title";
 import { TaxonomyHydrator } from "@/features/content/taxonomy-hydrator";
+import "./fonts.css";
 import "./globals.css";
 
-// Meydan (docs/history/190-*): a friendly, legible sans for UI and body text.
-const body = DM_Sans({
-  variable: "--font-body-face",
-  subsets: ["latin", "latin-ext"],
-  axes: ["opsz"],
-});
-
-// Headings, page titles and the wordmark (globals.css `--font-display`):
-// a characterful grotesque that gives the social feed its voice.
-const display = Bricolage_Grotesque({
-  variable: "--font-display-face",
-  subsets: ["latin", "latin-ext"],
-  weight: ["500", "600", "700", "800"],
-});
-
-// The literal prompt text (`prompt-text` utility) — the thing users copy.
-const mono = JetBrains_Mono({
-  variable: "--font-mono-face",
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500"],
-});
+// Yazı tipleri kendi dosyalarımızdan gelir (`fonts.css`, docs/history/405-*): gövde DM Sans (Meydan, docs/history/190-*), başlıklar ve wordmark
+// Bricolage Grotesque, prompt metni JetBrains Mono. Derleme Google Fonts'a gitmez.
 
 const SITE_URL = "https://aliq0330.github.io/promptly";
 const SITE_DESCRIPTION =
@@ -76,7 +57,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="tr" className={`${body.variable} ${display.variable} ${mono.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="tr" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-text">
         {/* Run at parse time, before first paint (no light/dark, palette or language flash). They sit in <body>, not in a
             hand-written <head>: inline scripts in <head> made React #418-recover the whole document on repeat
