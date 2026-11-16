@@ -1,30 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePageTitle } from "@/components/layout/page-title";
 import { Download } from "@/components/icons/download";
 import { GraduationCap } from "@/components/icons/graduation-cap";
-import { Pencil } from "@/components/icons/pencil";
-import { Trash2 } from "@/components/icons/trash-2";
 import { Badge } from "@/components/ui/badge";
-import { buttonClassName } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/ui/code-block";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
-import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTitle } from "@/features/content/detail-parts";
+import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
+import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
-import { DropdownMenu, MenuItem } from "@/features/communities/dropdown-menu";
+import { MenuItem } from "@/features/communities/dropdown-menu";
 import { Copy } from "@/components/icons/copy";
 import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
-import { ReportButton } from "@/features/moderation/report-button";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILL_COMPAT_LABEL, SKILL_LICENSE_LABEL, skillCategoryName, skillLabelText } from "@/lib/skills/categories";
+import { fetchSkillTags } from "@/lib/supabase/skills";
 import { fetchSkillVersions, recordSkillUse, type SkillVersion } from "@/lib/supabase/skill-package";
 import { deleteSkill, fetchSkillById } from "@/lib/supabase/skills";
 import { formatRelativeTime } from "@/lib/utils";
@@ -38,8 +34,10 @@ import { SkillLinkedSkills } from "./skill-links-section";
 import { SkillInstallSection } from "./skill-install-section";
 import { downloadSkillExchange, downloadSkillMd, downloadSkillMetadata, skillMdFor } from "./skill-download";
 import { downloadSkillPackage, pickLatestVersion, SkillFilesSection, SkillRelatedSection, SkillVersionsSection } from "./skill-detail-parts";
+import { SkillDownloadButton } from "./skill-download-button";
+import { SkillMenu } from "./skill-menu";
 import { useSkillCategories } from "./use-skill-categories";
-import type { Skill } from "@/types";
+import type { Skill, Tag } from "@/types";
 
 /**
  * `/skills/local?id=…` — Skill detay sayfası (Albüm düzeni). Yayınlanmış bir sürüm varsa birincil eylem "ZIP indir" (değişmez paket, imzalı adres);
@@ -64,6 +62,7 @@ export function SkillDetailView() {
   const [rawView, setRawView] = useState(false);
   const [reload, setReload] = useState(0);
   const [downloads, setDownloads] = useState(0);
+  const [tags, setTags] = useState<Pick<Tag, "slug" | "label">[]>([]);
   usePageTitle(skill?.title);
 
   useEffect(() => {
@@ -85,6 +84,17 @@ export function SkillDetailView() {
       cancelled = true;
     };
   }, [id, reload]);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    fetchSkillTags(id)
+      .then((list) => !cancelled && setTags(list))
+      .catch(() => !cancelled && setTags([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   if (!id) return <NotFoundBlock title={t("skill.notFoundTitle")} description={t("common.brokenLinkHint")} />;
   if (skill === undefined) return <DetailSkeleton />;
@@ -128,19 +138,24 @@ export function SkillDetailView() {
 
   const aside = (
     <DetailAside>
+      <AsideSection id="detail-about-title" title={t("profile.tabAbout")} bare>
+        <DetailMetaCard
+          toolLabel={t("skill.compat")}
+          toolRefs={null}
+          fallbackTool={tools || undefined}
+          hasChips={Boolean(category) || tags.length > 0}
+          footer={skill.status === "published" && skill.visibility === "public" ? <RelationMapRow kind="skill" id={skill.id} /> : undefined}
+        >
+          {category && <span className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{category}</span>}
+          <DetailTags className="contents" tags={tags.map((tag) => ({ ...tag }) as Tag)} />
+        </DetailMetaCard>
+      </AsideSection>
       <AsideSection id="skill-info-title" title={t("skill.aboutTitle")}>
         <dl className="divide-y divide-border-soft text-small">
           <InfoRow label={t("skill.version")} value={skill.version} />
           <InfoRow label={t("skill.license")} value={skillLabelText(SKILL_LICENSE_LABEL[skill.license], t)} />
-          {category && <InfoRow label={t("skill.category")} value={category} />}
-          {tools && <InfoRow label={t("skill.compat")} value={tools} />}
           <InfoRow label={t("skill.updated")} value={formatRelativeTime(skill.updatedAt, language)} />
         </dl>
-        {skill.status === "published" && skill.visibility === "public" && (
-          <div className="mt-2 flex flex-wrap">
-            <RelationMapRow kind="skill" id={skill.id} />
-          </div>
-        )}
       </AsideSection>
       <SimilarSkills skillId={skill.id} />
     </DetailAside>
@@ -159,19 +174,7 @@ export function SkillDetailView() {
           }
           title={<DetailTitle>{skill.title || t("skill.untitled")}</DetailTitle>}
           byline={<DetailByline person={skill.creator} createdAt={skill.createdAt} language={language} follow={!isOwn && <FollowButton user={skill.creator} />} />}
-          menu={
-            !isOwn && user ? (
-              <span data-skill-menu="" className="relative z-10">
-                <DropdownMenu label={t("skill.menu")}>
-                  {() => (
-                    <div className="px-4 py-2">
-                      <ReportButton targetType="skill" targetId={skill.id} title={skill.title} subtitle={`@${skill.creator.username}`} />
-                    </div>
-                  )}
-                </DropdownMenu>
-              </span>
-            ) : undefined
-          }
+          menu={<SkillMenu skill={skill} isOwn={isOwn} signedIn={Boolean(user)} onDelete={() => setConfirmDelete(true)} />}
         />
       }
       aside={aside}
@@ -187,20 +190,7 @@ export function SkillDetailView() {
             ) : undefined
           }
           primary={
-            <button type="button" onClick={() => void primaryDownload()} data-skill-download="" className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
-              <Download size={18} aria-hidden /> {latest ? t("skill.detail.downloadZip", { version: latest.version }) : t("skill.download")}
-            </button>
-          }
-        >
-          {skill.status === "published" && skill.visibility === "public" && (
-            <>
-              <EngageLike id={skill.id} likeCount={skill.likeCount} contentType="skill" size={20} />
-              <EngageCommentCount skillId={skill.id} baseCount={skill.commentCount} size={20} />
-              <EngageSave skillId={skill.id} saveCount={skill.saveCount} size={20} />
-            </>
-          )}
-          <span data-skill-download-menu="">
-            <DropdownMenu label={t("skill.detail.moreDownloads")}>
+            <SkillDownloadButton label={latest ? t("skill.detail.downloadZip", { version: latest.version }) : t("skill.download")} onPrimary={() => void primaryDownload()}>
               {(close) => (
                 <>
                   <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadMd")} onClick={() => { close(); downloadSkillMd(skill); void recordSkillUse(skill.id); }} />
@@ -209,19 +199,15 @@ export function SkillDetailView() {
                   <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadExchange")} onClick={() => { close(); downloadSkillExchange(skill); }} />
                 </>
               )}
-            </DropdownMenu>
-          </span>
-          {isOwn ? (
+            </SkillDownloadButton>
+          }
+        >
+          {skill.status === "published" && skill.visibility === "public" && (
             <>
-              <Link href={`/skills/create?edit=${skill.id}`} data-skill-edit="" className={buttonClassName({ variant: "outline", size: "sm", className: "rounded-full" })}>
-                <Pencil size={16} aria-hidden /> {t("skill.edit")}
-              </Link>
-              <button type="button" onClick={() => setConfirmDelete(true)} data-skill-delete="" className={buttonClassName({ variant: "outline", size: "sm", className: "rounded-full" })}>
-                <Trash2 size={16} aria-hidden /> {t("skill.delete")}
-              </button>
+              <EngageLike id={skill.id} likeCount={skill.likeCount} contentType="skill" size={20} />
+              <EngageCommentCount skillId={skill.id} baseCount={skill.commentCount} size={20} />
+              <EngageSave skillId={skill.id} saveCount={skill.saveCount} size={20} />
             </>
-          ) : (
-            <span className="text-small text-text-muted">{t("skill.cardVersion", { version: skill.version })}</span>
           )}
         </DetailActionBar>
       }
