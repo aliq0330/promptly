@@ -34,7 +34,7 @@ export function ResultCard({ result, label = "creator", worksVote }: { result: P
     <div className="group relative overflow-hidden rounded-xl bg-surface-soft">
       <ResultTypePreview result={result} size="card" />
       {label === "prompt" && !result.promptId && (
-        <span className="absolute left-2 top-2 z-10 inline-flex h-[26px] items-center gap-1.5 rounded-full bg-black/55 px-2.5 text-caption font-semibold text-white">
+        <span className="absolute left-2 top-2 z-10 inline-flex h-[26px] items-center gap-1.5 rounded-full bg-art-chip px-2.5 text-caption font-semibold text-on-art">
           <Lock size={12} aria-hidden />
           {t("result.onlyYou")}
         </span>
@@ -44,27 +44,27 @@ export function ResultCard({ result, label = "creator", worksVote }: { result: P
           <WorksBadge works={worksVote} tone="overlay" />
         </div>
       )}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-20 art-scrim" />
       <div className="absolute inset-x-2 bottom-2 z-10 flex items-center justify-between gap-1.5">
         {label === "prompt" ? (
           result.promptId ? (
-            <span className="flex min-w-0 items-center gap-1.5 text-label font-semibold text-white" data-result-prompt="">
-              <SquareTerminal size={14} className="shrink-0" aria-hidden />
+            <span className="flex min-w-0 items-center gap-1.5 text-label font-semibold text-on-art" data-result-prompt="">
+              <SquareTerminal size={16} className="shrink-0" aria-hidden />
               <span className="truncate">{result.promptTitle}</span>
             </span>
           ) : (
-            <span className="flex min-w-0 items-center gap-1.5 text-label font-semibold italic text-white/85" data-result-prompt-deleted="">
-              <Ban size={14} className="shrink-0" aria-hidden />
+            <span className="flex min-w-0 items-center gap-1.5 text-label font-semibold italic text-on-art" data-result-prompt-deleted="">
+              <Ban size={16} className="shrink-0" aria-hidden />
               <span className="truncate">{t("result.promptDeleted")}</span>
             </span>
           )
         ) : (
-          <Link href={profileHref(result.creator)} className="relative z-10 flex min-w-0 items-center gap-1.5 text-label font-semibold text-white">
+          <Link href={profileHref(result.creator)} className="relative z-10 flex min-w-0 items-center gap-1.5 text-label font-semibold text-on-art">
             <Avatar src={result.creator.avatarUrl} alt={result.creator.displayName} size={24} className="ring-2 ring-white/80" />
             <span className="truncate">@{result.creator.username}</span>
           </Link>
         )}
-        <LikeButton id={result.id} likeCount={result.likeCount} contentType="prompt_result" size={18} tone="overlay" />
+        <LikeButton id={result.id} likeCount={result.likeCount} contentType="prompt_result" size={20} tone="overlay" />
       </div>
       <Link href={resultHref(result)} className="absolute inset-0 z-0" aria-label={t("result.cardAriaLabel", { name: result.creator.displayName })} />
     </div>

@@ -41,7 +41,7 @@ import { WorkflowAutoRun } from "./workflow-auto-run";
 import { fieldControlClassName } from "@/components/ui/field";
 
 const FIELD_CLASS = cn(fieldControlClassName, "resize-y py-2");
-const BLOCK_CLASS = "prompt-text max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-border-soft bg-surface-soft p-3 text-text";
+const BLOCK_CLASS = "prompt-text max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg card-soft p-3 text-text";
 
 function loadSavedRun(workflowId: string, steps: WorkflowStep[]): WorkflowRunState {
   try {
@@ -144,7 +144,7 @@ export function WorkflowRunner({ workflowId, steps }: { workflowId: string; step
                           : "border-border-soft bg-surface text-text-secondary hover:border-border",
                     )}
                   >
-                    {done && !current ? <Check size={14} aria-hidden /> : itemIndex + 1}
+                    {done && !current ? <Check size={16} aria-hidden /> : itemIndex + 1}
                   </button>
                 </li>
               );
@@ -228,7 +228,7 @@ function StepPrompt({ step }: { step: WorkflowStep }) {
         <p className="text-small text-text-muted">{t("workflow.run.requestHint")}</p>
         {ref.published && (
           <Link href={ref.href} className={buttonClassName({ variant: "outline", size: "sm" })}>
-            <ArrowUpRight size={14} aria-hidden /> {t("workflow.flowOpen")}
+            <ArrowUpRight size={16} aria-hidden /> {t("workflow.flowOpen")}
           </Link>
         )}
       </div>
@@ -261,7 +261,7 @@ function StepPrompt({ step }: { step: WorkflowStep }) {
         <RunButton text={text} recommendedRefs={prompt.tools} promptId={prompt.id} />
         <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
         <Link href={ref.href} className={buttonClassName({ variant: "ghost", size: "sm" })}>
-          <ArrowUpRight size={14} aria-hidden /> {t("workflow.flowOpen")}
+          <ArrowUpRight size={16} aria-hidden /> {t("workflow.flowOpen")}
         </Link>
       </div>
     </div>
@@ -293,7 +293,7 @@ function StepPanel({
   const inputs = resolveInputs(steps, index, state);
 
   return (
-    <section aria-labelledby={`run-step-${step.id}`} className="space-y-4 rounded-lg border border-border-soft bg-surface pb-4 shadow-card sm:pb-5">
+    <section aria-labelledby={`run-step-${step.id}`} className="space-y-4 rounded-lg card-flat pb-4 shadow-card sm:pb-5">
       {/* Albüm (docs/history/203-*): the step opens with a small band — its type as the art, "Adım 2 / 3", the big title. */}
       <header data-run-step-band className="relative rounded-t-xl px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
         <CardBandBackdrop />
@@ -302,10 +302,10 @@ function StepPanel({
             <Icon size={24} />
           </span>
           <div className="min-w-0 flex-1 space-y-1">
-            <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
+            <p className="flex items-center gap-1.5 text-caption font-semibold text-primary">
               {t("workflow.run.stepOf", { n: String(index + 1), total: String(steps.length) })}
             </p>
-            <h3 id={`run-step-${step.id}`} className="break-words font-display text-[1.375rem] font-extrabold leading-tight tracking-[-0.02em] text-text">
+            <h3 id={`run-step-${step.id}`} className="break-words font-display text-h2 font-extrabold leading-tight tracking-[-0.02em] text-text">
               {step.title || t("workflow.untitledStep")}
             </h3>
             {step.description && <p className="break-words text-small text-text-secondary">{step.description}</p>}
@@ -316,14 +316,14 @@ function StepPanel({
 
         {step.instructions && (
           <div className="space-y-1">
-            <h4 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.instructionsLabel")}</h4>
+            <h4 className="text-caption font-semibold text-text-muted">{t("workflow.instructionsLabel")}</h4>
             <p className="whitespace-pre-wrap break-words text-small text-text">{step.instructions}</p>
           </div>
         )}
 
         {inputs.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.run.inputsHeading")}</h4>
+            <h4 className="text-caption font-semibold text-text-muted">{t("workflow.run.inputsHeading")}</h4>
             <ul className="space-y-3">
               {inputs.map((resolved) => (
                 <li key={resolved.input.id} className="space-y-1.5">
@@ -372,7 +372,7 @@ function StepPanel({
 
         {step.outputs.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.run.outputsHeading")}</h4>
+            <h4 className="text-caption font-semibold text-text-muted">{t("workflow.run.outputsHeading")}</h4>
             {step.outputs.map((output) => (
               <label key={output.id} className="block space-y-1.5">
                 <span className="text-label font-medium text-text">{output.label || t("workflow.outputLabel")}</span>
@@ -391,7 +391,7 @@ function StepPanel({
 
         <div>
           <Button variant={done ? "secondary" : "outline"} size="sm" onClick={onToggleDone} aria-pressed={done}>
-            <Check size={14} aria-hidden /> {done ? t("workflow.run.markedDone") : t("workflow.run.markDone")}
+            <Check size={16} aria-hidden /> {done ? t("workflow.run.markedDone") : t("workflow.run.markDone")}
           </Button>
         </div>
       </div>
@@ -404,7 +404,7 @@ function RunSummary({ steps, state, onBack }: { steps: WorkflowStep[]; state: Wo
   const results = collectResults(steps, state);
   const progress = runProgress(steps, state);
   return (
-    <section aria-labelledby="run-summary-title" className="space-y-4 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5">
+    <section aria-labelledby="run-summary-title" className="space-y-4 rounded-lg card-flat p-4 shadow-card sm:p-5">
       <header className="space-y-1">
         <h3 id="run-summary-title" className="text-h3 font-bold text-text">
           {t("workflow.run.summaryTitle")}

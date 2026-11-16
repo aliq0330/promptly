@@ -64,7 +64,7 @@ export function CommunityGate({ group, gate, onChanged, onToast, compact = false
             {t("groups.invites.decline")}
           </Button>
           <Button type="button" size="sm" onClick={() => (needsRules ? setRulesOpen(true) : void respond(true, false))} disabled={action.busy}>
-            {action.busy ? <Loader2 size={14} className="animate-spin" /> : null}
+            {action.busy ? <Loader2 size={16} className="animate-spin" /> : null}
             {t("groups.invites.accept")}
           </Button>
         </div>
@@ -111,10 +111,10 @@ export function CommunityGate({ group, gate, onChanged, onToast, compact = false
   return (
     <section
       aria-label={t("communities.gate.aria")}
-      className={cn("flex flex-col gap-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:flex-row sm:items-center", !compact && "p-5")}
+      className={cn("flex flex-col gap-3 rounded-lg card-flat p-4 shadow-card sm:flex-row sm:items-center", !compact && "p-5")}
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
-        <Icon size={18} aria-hidden />
+        <Icon size={20} aria-hidden />
       </span>
       {body}
       {action.error && !rulesOpen && (

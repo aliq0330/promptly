@@ -93,7 +93,7 @@ export function AnnouncementsSection({
         </h2>
         {canManage && (
           <Button type="button" size="sm" variant="outline" onClick={() => setEditing("new")}>
-            <Plus size={14} /> {t("communities.announcements.publish")}
+            <Plus size={16} /> {t("communities.announcements.publish")}
           </Button>
         )}
       </div>
@@ -116,11 +116,11 @@ export function AnnouncementsSection({
               key={item.id}
               className={
                 // Meydan (docs/history/190-* Faz 6): in the feed's summary a pinned announcement is the warm card at the top.
-                highlight && item.pinned ? "space-y-2 rounded-lg border border-secondary/25 bg-secondary/10 p-4" : "space-y-2 rounded-lg border border-border-soft bg-surface p-4"
+                highlight && item.pinned ? "space-y-2 rounded-lg border border-secondary/25 bg-secondary-soft p-4" : "space-y-2 rounded-lg card-flat p-4"
               }
             >
               {highlight && item.pinned && (
-                <p className="text-caption font-bold uppercase tracking-[0.08em] text-secondary">{t("communities.announcements.pinnedEyebrow")}</p>
+                <p className="text-caption font-semibold text-secondary">{t("communities.announcements.pinnedEyebrow")}</p>
               )}
               <div className="flex items-start justify-between gap-3">
                 <h3 className="flex min-w-0 items-center gap-1.5 break-words text-small font-semibold text-text">
@@ -129,11 +129,11 @@ export function AnnouncementsSection({
                 </h3>
                 {canManage && (
                   <div className="flex shrink-0 gap-1">
-                    <button type="button" onClick={() => setEditing(item)} aria-label={t("common.edit")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
+                    <button type="button" onClick={() => setEditing(item)} aria-label={t("common.edit")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
                       <Pencil size={16} />
                     </button>
-                    <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger-soft hover:text-danger">
-                      <TrashIcon size={15} />
+                    <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted hover:bg-danger-soft hover:text-danger">
+                      <TrashIcon size={16} />
                     </button>
                   </div>
                 )}
@@ -228,7 +228,7 @@ function AnnouncementFormModal({
 
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy="announcement-form-title">
-      <form onSubmit={submit} noValidate className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop" onClick={(event) => event.stopPropagation()}>
+      <form onSubmit={submit} noValidate className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop" onClick={(event) => event.stopPropagation()}>
         <div className="px-5 pb-2 pt-5">
           <h2 id="announcement-form-title" className="text-body font-semibold text-text">
             {announcement ? t("communities.announcements.editTitle") : t("communities.announcements.newTitle")}

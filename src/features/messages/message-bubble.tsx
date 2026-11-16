@@ -282,7 +282,7 @@ export function MessageBubble({
             setEmojiOpen((prev) => !prev);
             setSheetOpen(false);
           }}
-          className={iconButtonClassName(false, "h-8 w-8")}
+          className={iconButtonClassName(false, "h-9 w-9")}
         >
           <SmilePlus size={16} />
         </button>
@@ -300,7 +300,7 @@ export function MessageBubble({
             event.stopPropagation();
             openSheet();
           }}
-          className={iconButtonClassName(false, "h-8 w-8")}
+          className={iconButtonClassName(false, "h-9 w-9")}
         >
           <MoreVertical size={16} />
         </button>
@@ -341,7 +341,7 @@ export function MessageBubble({
           title={readState === "read" ? t("chat.read.read") : t("chat.read.sent")}
           className={cn("inline-flex items-center", readState === "read" ? "text-primary-foreground" : undefined)}
         >
-          {readState === "read" ? <CheckCheck size={14} aria-hidden /> : <Check size={14} aria-hidden />}
+          {readState === "read" ? <CheckCheck size={16} aria-hidden /> : <Check size={16} aria-hidden />}
           <span className="sr-only">{readState === "read" ? t("chat.read.read") : t("chat.read.sent")}</span>
         </span>
       )}
@@ -454,13 +454,13 @@ export function MessageBubble({
                 data-announcement-card
                 className="flex w-fit max-w-full flex-col gap-1 self-start rounded-xl bg-surface-soft px-4 py-4 text-small text-text transition-colors hover:bg-surface-elevated"
               >
-                <span className="flex items-center gap-2 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
+                <span className="flex items-center gap-2 text-caption font-semibold text-primary">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-elevated">
-                    <Megaphone size={14} aria-hidden />
+                    <Megaphone size={16} aria-hidden />
                   </span>
                   {t("communities.chat.announcement")}
                 </span>
-                <span className="mt-1 block break-words font-display text-[1.0625rem] font-semibold">{displayBody}</span>
+                <span className="mt-1 block break-words font-display text-h3 font-semibold">{displayBody}</span>
                 <span className="inline-flex items-center gap-0.5 text-small text-primary">
                   {t("communities.chat.announcementOpen")} <ChevronRight size={16} aria-hidden />
                 </span>
@@ -469,7 +469,7 @@ export function MessageBubble({
             {displayBody && !message.announcementId && (
               <div
                 className={cn(
-                  "flex w-fit max-w-full flex-wrap items-end gap-x-3 rounded-xl px-4 py-2 text-[15px] leading-[1.4]",
+                  "flex w-fit max-w-full flex-wrap items-end gap-x-3 rounded-xl px-4 py-2 text-body leading-[1.4]",
                   isMe ? "self-end bg-primary text-primary-foreground" : "self-start bg-surface-soft text-text",
                   groupEnd && (isMe ? "rounded-br-md" : "rounded-bl-md"),
                 )}

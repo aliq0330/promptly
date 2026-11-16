@@ -66,7 +66,7 @@ export function ComposeShell({
 
   return (
     <div data-compose="" className="min-h-dvh">
-      <div className="sticky top-0 z-30 border-b border-border-soft bg-background/95 backdrop-blur-xl">
+      <div className="sticky top-0 z-30 border-b border-border-soft bg-background">
         <div className={cn("mx-auto flex h-14 items-center gap-2 px-2 sm:px-4", "max-w-5xl")}>
           <button
             type="button"
@@ -118,13 +118,13 @@ export function ComposeShell({
 /** "Kim görsün?" bölümündeki küçük önizleme (yanda canlı önizleme olmayan ekranlarda): kapak + tür + başlık + alt satır. */
 export function PublishPreview({ thumbnail, icon: Icon, typeLabel, title, meta }: { thumbnail?: string | null; icon: IconComponent; typeLabel: string; title: string; meta: string }) {
   return (
-    <div data-publish-preview="" className="flex items-center gap-3 rounded-xl border border-border-soft bg-gradient-to-b from-primary-soft to-surface p-3">
+    <div data-publish-preview="" className="flex items-center gap-3 rounded-lg card-soft p-3">
       <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-soft text-primary">
         {thumbnail ? <StorageImg src={thumbnail} alt="" className="h-full w-full object-cover" /> : <Icon size={24} />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-caption font-bold uppercase tracking-[0.06em] text-primary">{typeLabel}</span>
-        <span className="block truncate text-body font-bold text-text">{title}</span>
+        <span className="block truncate text-caption font-semibold text-primary">{typeLabel}</span>
+        <span className="block truncate text-body font-semibold text-text">{title}</span>
         <span className="block truncate text-caption text-text-muted">{meta}</span>
       </span>
     </div>
@@ -194,12 +194,12 @@ export function useComposeLeave({ dirty, saveDraft }: { dirty: boolean; saveDraf
                 leave();
               } else setAsking(false);
             }}
-            className="block w-full border-t border-border px-4 py-4 text-body font-bold text-primary disabled:opacity-50"
+            className="block w-full border-t border-border px-4 py-4 text-body font-semibold text-primary disabled:opacity-50"
           >
             {saving ? t("createActions.savingDraft") : t("createActions.saveDraft")}
           </button>
         )}
-        <button type="button" disabled={saving} data-leave-discard="" onClick={leave} className="block w-full border-t border-border px-4 py-4 text-body font-bold text-danger">
+        <button type="button" disabled={saving} data-leave-discard="" onClick={leave} className="block w-full border-t border-border px-4 py-4 text-body font-semibold text-danger">
           {saveDraft ? t("compose.leaveDiscard") : t("compose.leaveExit")}
         </button>
         <button type="button" disabled={saving} data-leave-continue="" onClick={() => setAsking(false)} className="block w-full border-t border-border px-4 py-4 text-body font-semibold text-text-secondary">

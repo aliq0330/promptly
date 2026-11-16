@@ -160,20 +160,20 @@ export function ContactInfoPanel({
       <InfoSharedRows conversationId={conversation.id} onJumpToMessage={onJumpToMessage} />
 
       <InfoCard>
-        <InfoRow icon={<Users size={18} />} onClick={common && common.length > 0 ? () => setCommonOpen(true) : undefined} value={common ? (common.length > 0 ? common.length : t("messages.contact.none")) : "…"} testId="common-communities">
+        <InfoRow icon={<Users size={20} />} onClick={common && common.length > 0 ? () => setCommonOpen(true) : undefined} value={common ? (common.length > 0 ? common.length : t("messages.contact.none")) : "…"} testId="common-communities">
           {t("messages.contact.commonCommunities")}
         </InfoRow>
-        <InfoRow icon={<Star size={18} />} href="/messages/starred" value={starredCount > 0 ? starredCount : t("messages.contact.none")} testId="starred">
+        <InfoRow icon={<Star size={20} />} href="/messages/starred" value={starredCount > 0 ? starredCount : t("messages.contact.none")} testId="starred">
           {t("messages.contact.starred")}
         </InfoRow>
-        <InfoRow icon={<Pin size={18} />} onClick={pinnedCount > 0 ? onShowPinned : undefined} value={pinnedCount > 0 ? pinnedCount : t("messages.contact.none")} testId="pinned">
+        <InfoRow icon={<Pin size={20} />} onClick={pinnedCount > 0 ? onShowPinned : undefined} value={pinnedCount > 0 ? pinnedCount : t("messages.contact.none")} testId="pinned">
           {t("messages.contact.pinned")}
         </InfoRow>
       </InfoCard>
 
       <InfoCard>
         {blockState.canBlock && (
-          <InfoRow icon={<Ban size={18} />} onClick={() => void handleBlock()} danger={!blockState.isBlocked} testId="block">
+          <InfoRow icon={<Ban size={20} />} onClick={() => void handleBlock()} danger={!blockState.isBlocked} testId="block">
             {blockState.isBlocked ? t("profile.unblock") : confirmingBlock ? t("common.confirmDelete") : t("profile.block")}
           </InfoRow>
         )}

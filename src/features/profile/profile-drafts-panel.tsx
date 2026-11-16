@@ -133,7 +133,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
               <li key={`${row.kind}-${row.id}`}>
               <ExitMotion leaving={isLeaving(row.id)}>
               <div className="pb-2">
-              <div className="rounded-md border border-border-soft bg-surface-soft p-3">
+              <div className="rounded-md card-soft p-3">
                 <div className="flex items-center gap-1.5 text-caption font-medium text-text-muted">
                   <Icon size={12} aria-hidden />
                   {t(KIND_META[row.kind].labelKey)}
@@ -149,7 +149,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
                     {t("draft.continue")}
                   </Link>
                   <Button type="button" variant="ghost" size="sm" disabled={busyId === row.id} onClick={() => void handleDelete(row)}>
-                    <TrashIcon size={14} seq={busyId === row.id ? 1 : 0} />
+                    <TrashIcon size={16} seq={busyId === row.id ? 1 : 0} />
                     {t("common.delete")}
                   </Button>
                   {confirmId === row.id && (

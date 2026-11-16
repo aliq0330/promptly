@@ -25,7 +25,7 @@ function ContextBox({ href, children }: { href: string; children: React.ReactNod
   return (
     <Link
       href={href}
-      className="group/ctx relative z-10 block space-y-1 rounded-md border border-border-soft bg-surface-soft px-3 py-2.5 transition-colors duration-200 hover:border-border"
+      className="group/ctx relative z-10 block space-y-1 rounded-md card-soft px-3 py-2.5 transition-colors duration-200 hover:border-border"
     >
       {children}
     </Link>

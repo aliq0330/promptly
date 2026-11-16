@@ -295,7 +295,7 @@ function Control({
         labelledBy={labelId}
         trackPosition="start"
         onChange={(next) => onChange(toggleValue(next, variable.config))}
-        className="min-h-10 rounded-lg border border-border bg-background px-3 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
+        className="min-h-10 rounded-lg card-inset px-3 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
       >
         <span className="min-w-0 flex-1 break-words text-body text-text">
           {on ? variable.config.onText : variable.config.offText || t("variable.toggleOffEmpty")}

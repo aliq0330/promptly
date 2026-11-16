@@ -367,7 +367,7 @@ export function SkillEditor({ editId }: { editId: string | null }) {
       onSaveDraft={() => void save(true)}
       aside={
         <>
-          <p className="mb-2 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
+          <p className="mb-2 text-caption font-semibold text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <SkillCard skill={previewSkill} />
           </div>

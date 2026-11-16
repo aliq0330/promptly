@@ -177,7 +177,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
   if (state.failed) {
     return (
       <DetailSection id="workflow-space" title={t("wfSpace.preview.heading")}>
-        <div role="status" className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-soft px-3 py-3 text-small text-text-secondary">
+        <div role="status" className="flex flex-wrap items-center gap-3 rounded-lg card-soft px-3 py-3 text-small text-text-secondary">
           <span className="min-w-0 flex-1">{t("wfSpace.preview.linksFailed")}</span>
           <button
             type="button"
@@ -185,7 +185,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
               setLoaded(null);
               setAttempt((n) => n + 1);
             }}
-            className="inline-flex h-8 items-center rounded-full border border-border bg-surface px-3 font-semibold text-text hover:bg-surface-soft"
+            className="inline-flex h-9 items-center rounded-full border border-border bg-surface px-3 font-semibold text-text hover:bg-surface-soft"
           >
             {t("wfSpace.preview.retry")}
           </button>
@@ -200,7 +200,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
 
   return (
     <DetailSection id="workflow-space" title={t("wfSpace.preview.heading")}>
-      <div className="overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="overflow-hidden rounded-lg card-flat">
         <div className="space-y-2 border-b border-border-soft bg-surface-soft px-3 py-2.5">
           {links.length > 1 && (
             <div role="group" aria-label={t("wfSpace.preview.spacesAria")} className="flex flex-wrap gap-1.5">
@@ -211,7 +211,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
                   aria-pressed={link.spaceId === current.spaceId}
                   onClick={() => setPickedId(link.spaceId)}
                   className={cn(
-                    "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-3 text-small font-semibold transition-colors",
+                    "inline-flex h-9 max-w-full items-center gap-1.5 rounded-full border px-3 text-small font-semibold transition-colors",
                     link.spaceId === current.spaceId ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:bg-surface-soft",
                   )}
                 >
@@ -233,7 +233,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
             <span className="text-caption text-text-muted">{t("wfSpace.preview.readOnly")}</span>
             <Link
               href={`${spaceHref(current.spaceId, "board")}&focus=${encodeURIComponent(current.itemId)}`}
-              className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-small font-semibold text-text hover:bg-surface-soft"
+              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-small font-semibold text-text hover:bg-surface-soft"
             >
               {t("wfSpace.preview.open")}
               <ArrowUpRight size={12} aria-hidden />

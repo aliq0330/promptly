@@ -9,7 +9,7 @@ export function DetailSkeleton() {
   const { t } = useTranslation();
   return (
     <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10" role="status" aria-label={t("common.loadingAriaLabel")}>
-      <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_18.75rem] xl:gap-7">
+      <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_var(--aside-w)] xl:gap-7">
         <div className="space-y-6">
           <Skeleton className="h-3 w-32" />
           <Skeleton className="h-9 w-3/4" />

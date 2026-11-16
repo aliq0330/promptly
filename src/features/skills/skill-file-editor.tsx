@@ -164,7 +164,7 @@ export function SkillFileEditor({
 
   return (
     <Modal onClose={requestClose} labelledBy={titleId}>
-      <div className="flex h-[min(92dvh,52rem)] w-full max-w-6xl flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg" data-skill-file-editor="" onClick={(event) => event.stopPropagation()}>
+      <div className="flex h-[min(92dvh,52rem)] w-full max-w-6xl flex-col overflow-hidden rounded-lg card-flat shadow-lg" data-skill-file-editor="" onClick={(event) => event.stopPropagation()}>
         <div className="flex shrink-0 items-center gap-2 border-b border-border-soft px-4 py-3">
           <div className="min-w-0 flex-1">
             <h2 id={titleId} className="truncate text-h3 font-bold text-text">
@@ -179,7 +179,7 @@ export function SkillFileEditor({
             {saving ? <Loader2 size={16} className="animate-spin motion-reduce:animate-none" aria-hidden /> : null} {saving ? t("common.saving") : t("common.save")}
           </Button>
           <button type="button" onClick={requestClose} aria-label={t("common.close")} className="rounded-full p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
@@ -195,7 +195,7 @@ export function SkillFileEditor({
           </select>
           <div className="grid grid-cols-2 gap-1 rounded-full bg-surface-soft p-1" role="group" aria-label={t("skill.pkg.view")}>
             {(["edit", "preview"] as const).map((value) => (
-              <button key={value} type="button" aria-pressed={pane === value} onClick={() => setPane(value)} className={`h-8 rounded-full text-small font-semibold ${pane === value ? "bg-surface text-text shadow-xs" : "text-text-muted"}`}>
+              <button key={value} type="button" aria-pressed={pane === value} onClick={() => setPane(value)} className={`h-9 rounded-full text-small font-semibold ${pane === value ? "bg-surface text-text shadow-xs" : "text-text-muted"}`}>
                 {value === "edit" ? t("skill.pkg.tabEdit") : t("skill.pkg.tabPreview")}
               </button>
             ))}
@@ -207,8 +207,8 @@ export function SkillFileEditor({
           <div ref={treeRef} role="tree" aria-label={t("skill.pkg.treeLabel")} onKeyDown={onTreeKey} className="hidden min-h-0 overflow-y-auto border-r border-border-soft p-2 lg:block" data-skill-tree="">
             {groups.map((group) => (
               <div key={group.folder || "root"} role="treeitem" aria-expanded="true" aria-selected="false" className="mb-1">
-                <div className="flex items-center gap-1.5 px-2 py-1 text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
-                  <Folder size={14} aria-hidden /> {group.label}
+                <div className="flex items-center gap-1.5 px-2 py-1 text-caption font-semibold text-text-muted">
+                  <Folder size={16} aria-hidden /> {group.label}
                 </div>
                 <div role="group">
                   {group.items.map((path) => {
@@ -223,7 +223,7 @@ export function SkillFileEditor({
                         onClick={() => select(path)}
                         className={`flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-small ${path === active ? "bg-primary-soft font-semibold text-primary" : "text-text hover:bg-surface-soft"}`}
                       >
-                        <FileText size={14} className="shrink-0" aria-hidden />
+                        <FileText size={16} className="shrink-0" aria-hidden />
                         <span className="min-w-0 flex-1 truncate font-mono text-caption">{path.slice(path.indexOf("/") + 1)}</span>
                         {isDirty && <Badge variant="warning">{t("skill.pkg.unsavedShort")}</Badge>}
                       </button>
@@ -237,7 +237,7 @@ export function SkillFileEditor({
           <div className={`min-h-0 flex-col ${pane === "edit" ? "flex" : "hidden"} lg:flex lg:border-r lg:border-border-soft`}>
             {buffer?.state === "loading" || !buffer ? (
               <div className="flex flex-1 items-center justify-center text-small text-text-muted" role="status">
-                <Loader2 size={18} className="mr-2 animate-spin motion-reduce:animate-none" aria-hidden /> {t("common.loading")}
+                <Loader2 size={20} className="mr-2 animate-spin motion-reduce:animate-none" aria-hidden /> {t("common.loading")}
               </div>
             ) : buffer.state === "error" ? (
               <p role="alert" className="m-4 rounded-xl border border-dashed border-border px-4 py-6 text-center text-small text-danger">
@@ -251,7 +251,7 @@ export function SkillFileEditor({
                   aria-label={active}
                   spellCheck={false}
                   data-skill-editor-textarea=""
-                  className="prompt-text min-h-0 flex-1 resize-none bg-surface px-4 py-3 text-small text-text focus:outline-none"
+                  className="prompt-text min-h-0 flex-1 resize-none bg-surface px-4 py-3 text-small text-text focus-ring-inset"
                 />
                 {(liveIssues.length > 0 || saveIssues.length > 0 || saveError || tooLarge) && (
                   <div className="max-h-40 shrink-0 space-y-2 overflow-y-auto border-t border-border-soft px-4 py-2">

@@ -43,7 +43,7 @@ export function InlineReactionPicker({
   }
 
   return (
-    <div data-inline-reaction-picker="" className={cn("rounded-[28px] border border-border-soft bg-surface p-2", className)}>
+    <div data-inline-reaction-picker="" className={cn("rounded-lg card-flat p-2", className)}>
       <ReactionGrid current={reaction} onChoose={choose} playOnChoose />
     </div>
   );

@@ -11,7 +11,7 @@ export function FinalPromptPreview({ parts, label, className, heading = false }:
   return (
     <div className={className}>
       <p className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-caption font-medium text-text-muted">
-        <span className={cn(heading && "font-bold uppercase tracking-[0.06em]")}>{label}</span>
+        <span className={cn(heading && "font-semibold")}>{label}</span>
         {fromPreset && (
           <span className="flex items-center gap-3">
             <span className="flex items-center gap-1.5">
@@ -25,7 +25,7 @@ export function FinalPromptPreview({ parts, label, className, heading = false }:
           </span>
         )}
       </p>
-      <p data-final-prompt className="prompt-text break-words rounded-lg border border-border-soft bg-surface-soft p-3 text-small text-text-secondary">
+      <p data-final-prompt className="prompt-text break-words rounded-lg card-soft p-3 text-small text-text-secondary">
         {parts.map((part, index) => (
           <span key={index} data-from={part.from} className={cn(part.from === "preset" ? "rounded-sm bg-primary/20 text-text [box-decoration-break:clone]" : "text-text-secondary")}>
             {part.text}

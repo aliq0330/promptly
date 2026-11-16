@@ -84,9 +84,9 @@ export function SpacePreview({ space }: { space: SpaceFeedCard }) {
             />
           }
           kicker={
-            <p className="flex flex-wrap items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-primary">
+            <p className="flex flex-wrap items-center gap-2 text-caption font-semibold text-primary">
               <span className="inline-flex items-center gap-1.5">
-                <SpacesIcon size={13} strokeWidth={2.25} aria-hidden />
+                <SpacesIcon size={16} aria-hidden />
                 Space · {t(SPACE_KIND_LABEL[space.kind])}
               </span>
             </p>
@@ -124,8 +124,8 @@ export function SpacePreview({ space }: { space: SpaceFeedCard }) {
         <DetailActionBar
           primary={
             <div className="flex flex-wrap items-center gap-2">
-              <Link href={`${href}&tab=board`} data-space-preview-board className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
-                <Eye size={18} aria-hidden /> {t("spaces.page.viewBoard")}
+              <Link href={`${href}&tab=board`} data-space-preview-board className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-md" })}>
+                <Eye size={20} aria-hidden /> {t("spaces.page.viewBoard")}
               </Link>
               <Link href={href} data-post-space={space.id} className={buttonClassName({ variant: "outline", size: "lg", className: "h-14 rounded-full px-6" })}>
                 {t("spaces.preview.open")}

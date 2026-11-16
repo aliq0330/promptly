@@ -30,7 +30,7 @@ import { BoardPopover, PopoverRow } from "./board-popover";
 export type BoardTool = "select" | "pan" | "connect" | "comment" | "text" | "frame" | "rect" | "oval" | "line" | "arrow" | "pencil";
 export type PillShape = Extract<ShapeKind, "rect" | "oval" | "line" | "arrow">;
 
-const PILL = "pointer-events-auto flex items-center gap-0.5 rounded-lg border border-border-soft bg-surface p-[5px] shadow-card";
+const PILL = "pointer-events-auto flex items-center gap-0.5 rounded-lg card-flat p-[5px] shadow-card";
 
 function TbButton({ icon, label, active, onClick, chev, buttonRef, testId, disabled }: { icon: ReactNode; label: string; active?: boolean; onClick: () => void; chev?: boolean; buttonRef?: React.Ref<HTMLButtonElement>; testId?: string; disabled?: boolean }) {
   return (
@@ -43,7 +43,7 @@ function TbButton({ icon, label, active, onClick, chev, buttonRef, testId, disab
       disabled={disabled}
       data-testid={testId}
       onClick={onClick}
-      className={cn("flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 rounded-[11px] px-2 transition-colors disabled:opacity-50", active ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft hover:text-text")}
+      className={cn("flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 rounded-md px-2 transition-colors disabled:opacity-50", active ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft hover:text-text")}
     >
       {icon}
       {chev && <ChevronDown size={12} aria-hidden />}
@@ -127,7 +127,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
         {!phone && canDraw && <TbButton icon={<Frame size={20} aria-hidden />} label={t("tb.kind.frame")} active={tool === "frame"} onClick={() => onTool("frame")} testId="board-tool-frame" />}
         {!phone && editable && <TbButton icon={<StickyNote size={20} aria-hidden />} label={t("spaces.board.addNote")} onClick={props.onAddNote} testId="board-tool-note" />}
         {size === "desktop" && canDraw && <TbButton buttonRef={pencilRef} icon={<Pencil size={20} aria-hidden />} chev label={t("tb.tool.pencil")} active={tool === "pencil"} onClick={() => { onTool("pencil"); toggle("pencil"); }} testId="board-tool-pencil" />}
-        {size === "desktop" && canDraw && <TbButton buttonRef={shapeRef} icon={<ShapeIcon size={19} aria-hidden />} chev label={t("tb.tool.shape")} active={shapeTool} onClick={() => { onTool(props.shape); toggle("shape"); }} testId="board-tool-shape" />}
+        {size === "desktop" && canDraw && <TbButton buttonRef={shapeRef} icon={<ShapeIcon size={20} aria-hidden />} chev label={t("tb.tool.shape")} active={shapeTool} onClick={() => { onTool(props.shape); toggle("shape"); }} testId="board-tool-shape" />}
         {!phone && editable && <TbButton icon={<Spline size={20} aria-hidden />} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => onTool(tool === "connect" ? "select" : "connect")} testId="board-tool-connect" />}
         {editable && <Sep />}
         {editable &&
@@ -141,11 +141,11 @@ export function BoardToolbar(props: BoardToolbarProps) {
               aria-expanded={menu === "add"}
               onClick={() => toggle("add")}
               data-testid="board-add-button"
-              className="flex h-10 shrink-0 items-center gap-1.5 rounded-[11px] bg-primary pl-2.5 pr-3 text-small font-bold text-primary-foreground hover:bg-primary-hover"
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-md bg-primary pl-2.5 pr-3 text-small font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               <Plus size={20} aria-hidden />
               {t("tb.toolbar.add")}
-              <ChevronDown size={14} aria-hidden />
+              <ChevronDown size={16} aria-hidden />
             </button>
           ))}
       </div>
@@ -162,7 +162,7 @@ export function BoardToolbar(props: BoardToolbarProps) {
           onClick={() => toggle("zoom")}
           data-testid="board-zoom-button"
           data-board-zoom={props.zoomPercent}
-          className={cn("flex h-10 shrink-0 items-center gap-1 rounded-[11px] px-2.5 text-small font-semibold tabular-nums text-text hover:bg-surface-soft", menu === "zoom" && "bg-surface-soft")}
+          className={cn("flex h-10 shrink-0 items-center gap-1 rounded-md px-2.5 text-small font-semibold tabular-nums text-text hover:bg-surface-soft", menu === "zoom" && "bg-surface-soft")}
         >
           {props.zoomPercent}%
           <ChevronDown size={12} className="text-text-muted" aria-hidden />

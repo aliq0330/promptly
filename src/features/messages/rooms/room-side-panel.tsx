@@ -43,7 +43,7 @@ export function RoomSidePanel({
       <h2 className="font-display text-h3 font-bold text-text">{t("rooms.panel.title")}</h2>
 
       <section aria-label={t("rooms.panel.pinned")}>
-        <h3 className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-text-muted">{t("rooms.panel.pinned")}</h3>
+        <h3 className="mb-2 text-caption font-semibold text-text-muted">{t("rooms.panel.pinned")}</h3>
         {firstPin ? (
           <button
             type="button"
@@ -60,9 +60,9 @@ export function RoomSidePanel({
 
       {enabled && (
         <section aria-label={t("rooms.panel.online", { count: members.length })} data-room-panel-online>
-          <h3 className="mb-2 flex items-center justify-between text-[12px] font-bold uppercase tracking-[0.08em] text-text-muted">
+          <h3 className="mb-2 flex items-center justify-between text-caption font-semibold text-text-muted">
             <span>{t("rooms.panel.online", { count: members.length })}</span>
-            <Link href={communityHref(group.id, "members")} className="text-small font-bold normal-case tracking-normal text-primary hover:underline">{t("rooms.panel.all")}</Link>
+            <Link href={communityHref(group.id, "members")} className="text-small font-semibold text-primary hover:underline">{t("rooms.panel.all")}</Link>
           </h3>
           {members.length === 0 ? (
             <p className="text-small text-text-muted">{t("rooms.panel.onlineNone")}</p>
@@ -85,12 +85,12 @@ export function RoomSidePanel({
       <div className="mt-auto flex flex-col gap-1.5">
         <Link href={pageHref} className={link}>
           {t("rooms.panel.communityPage")}
-          <ChevronRight size={18} aria-hidden />
+          <ChevronRight size={20} aria-hidden />
         </Link>
         {canManage && (
           <Link href={communityHref(group.id, "manage", "rooms")} className={link} data-room-panel-settings>
             {t("rooms.panel.roomSettings")}
-            <ChevronRight size={18} aria-hidden />
+            <ChevronRight size={20} aria-hidden />
           </Link>
         )}
       </div>

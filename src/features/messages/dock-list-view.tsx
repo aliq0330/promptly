@@ -48,7 +48,7 @@ export function DockListView({ kind, onExpand }: { kind: "list" | "requests"; on
               data-dock-new-chat=""
               className={DOCK_ICON_BUTTON}
             >
-              <SquarePen size={18} aria-hidden />
+              <SquarePen size={20} aria-hidden />
             </button>
           )
         }
@@ -56,7 +56,7 @@ export function DockListView({ kind, onExpand }: { kind: "list" | "requests"; on
         expandLabel={t("dock.openPage")}
         onMinimize={dock.minimize}
       >
-        <h2 className="truncate font-display text-[1.25rem] font-bold leading-none tracking-[-0.02em] text-text">
+        <h2 className="truncate font-display text-h2 font-bold leading-none tracking-[-0.02em] text-text">
           {inRequests ? t("messages.messageRequestsHeading") : t("header.messagesAriaLabel")}
         </h2>
       </DockHeader>

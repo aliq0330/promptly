@@ -229,7 +229,7 @@ export function FeedTab(props: CommunityTabProps) {
       )}
 
       {loadError ? (
-        <div className="space-y-3 rounded-lg border border-border-soft bg-surface px-6 py-10 text-center">
+        <div className="space-y-3 rounded-lg card-flat px-6 py-10 text-center">
           <p role="alert" className="text-small text-danger">
             {t("communities.feed.loadError")}
           </p>
@@ -246,7 +246,7 @@ export function FeedTab(props: CommunityTabProps) {
           ))}
         </ContentGrid>
       ) : pinned.length === 0 && posts.length === 0 ? (
-        <EmptyState
+        <EmptyState scene="community"
           icon={SquareStack}
           title={t("communities.feed.empty")}
           description={canPost ? t("communities.feed.emptyHelpMember") : t("communities.feed.emptyHelp")}
@@ -371,9 +371,9 @@ function PostItem({
   if (native && post.content) {
     const c = post.content;
     const extras: PostMenuExtra[] = [];
-    if (canPin) extras.push({ key: "pin", label: post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin"), icon: post.pinnedAt ? <PinOff size={14} /> : <Pin size={14} />, onSelect: () => onPin(post) });
-    if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={14} />, onSelect: () => onAction({ kind: "report", post }) });
-    if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={14} />, danger: true, onSelect: () => onAction({ kind: "moderate", post }) });
+    if (canPin) extras.push({ key: "pin", label: post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin"), icon: post.pinnedAt ? <PinOff size={16} /> : <Pin size={16} />, onSelect: () => onPin(post) });
+    if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={16} />, onSelect: () => onAction({ kind: "report", post }) });
+    if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={16} />, danger: true, onSelect: () => onAction({ kind: "moderate", post }) });
     return (
       <li data-community-post={post.id} data-post-kind="native" className={CONTENT_GRID_ITEM_CLASS}>
         {post.pinnedAt && (
@@ -401,7 +401,7 @@ function PostItem({
           {canPin && <MenuItem icon={post.pinnedAt ? <PinOff size={16} /> : <Pin size={16} />} label={post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin")} onClick={() => { close(); onPin(post); }} />}
           {role && !mine && <MenuItem icon={<Flag size={16} />} label={t("communities.report.menu")} onClick={() => { close(); onAction({ kind: "report", post }); }} />}
           {canModerate && !mine && <MenuItem icon={<ShieldAlert size={16} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); onAction({ kind: "moderate", post }); }} />}
-          {mine && <MenuItem icon={<TrashIcon size={15} />} label={t("communities.feed.deleteMine")} danger onClick={() => { close(); onAction({ kind: "delete", post }); }} />}
+          {mine && <MenuItem icon={<TrashIcon size={16} />} label={t("communities.feed.deleteMine")} danger onClick={() => { close(); onAction({ kind: "delete", post }); }} />}
         </>
       )}
     </DropdownMenu>
@@ -426,7 +426,7 @@ export function EditNoteModal({ post, onClose, onSaved }: { post: CommunityPost;
   }
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy="edit-note-title">
-      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg card-flat p-5 shadow-pop">
         <h2 id="edit-note-title" className="text-body font-semibold text-text">
           {t("communities.feed.editNote")}
         </h2>

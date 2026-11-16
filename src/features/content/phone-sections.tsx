@@ -66,7 +66,7 @@ export interface PhoneSectionItem {
 /** Bölüm listesi: simge dairesi + ad + sağda meta + ›. Her satır gerçek bağlantıdır (adres = bölüm). */
 export function PhoneSectionList({ items, ariaLabel, className }: { items: PhoneSectionItem[]; ariaLabel: string; className?: string }) {
   return (
-    <nav aria-label={ariaLabel} className={cn("overflow-hidden rounded-lg border border-border-soft bg-surface md:hidden", className)} data-phone-section-list>
+    <nav aria-label={ariaLabel} className={cn("overflow-hidden rounded-lg card-flat md:hidden", className)} data-phone-section-list>
       <ul className="divide-y divide-border-soft">
         {items.map((item) => {
           const Icon = item.icon;
@@ -81,12 +81,12 @@ export function PhoneSectionList({ items, ariaLabel, className }: { items: Phone
                 )}
               >
                 <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", item.danger ? "bg-danger-soft text-danger" : "bg-primary-soft text-primary")}>
-                  <Icon size={18} aria-hidden />
+                  <Icon size={20} aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
                 {item.badge ? <CountBadge>{item.badge}</CountBadge> : null}
                 {item.meta !== undefined && item.meta !== "" && <span className="shrink-0 text-small text-text-muted">{item.meta}</span>}
-                <ChevronRight size={18} className="shrink-0 text-text-muted" aria-hidden />
+                <ChevronRight size={20} className="shrink-0 text-text-muted" aria-hidden />
               </Link>
             </li>
           );

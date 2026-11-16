@@ -41,7 +41,7 @@ export function HomePostsTab({ onToast }: { onToast: (message: string) => void }
         onToast={onToast}
         viewerIsMember={() => true}
         empty={
-          <EmptyState
+          <EmptyState scene="community"
             icon={memberOfAny ? SquareStack : Compass}
             title={memberOfAny ? t("communities.home.posts.emptyMember") : t("communities.home.posts.emptyNone")}
             description={memberOfAny ? t("communities.home.posts.emptyMemberHelp") : t("communities.home.posts.emptyNoneHelp")}

@@ -41,7 +41,7 @@ export function CommentReactions({
 
   return (
     <span className={cn("inline-flex items-center", layout === "column" ? "flex-col gap-0.5" : "gap-0.5", className)} data-comment-reactions={id}>
-      <ReactionButton contentType="comment" id={id} likeCount={likeCount} size={size} className={cn("h-7 min-w-0 px-1.5 text-caption", buttonClassName)} />
+      <ReactionButton contentType="comment" id={id} likeCount={likeCount} size={size} className={cn("h-9 min-w-0 px-1.5 text-caption", buttonClassName)} />
       {entry.count > 0 && stack.length > 0 && (
         <button
           type="button"

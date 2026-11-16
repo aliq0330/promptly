@@ -51,7 +51,7 @@ export function OwnProfileActions({ user }: { user: UserProfile }) {
         aria-label={t("settings.pageTitle")}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft"
       >
-        <Settings size={18} />
+        <Settings size={20} />
       </Link>
     </ProfileActionsRow>
   );

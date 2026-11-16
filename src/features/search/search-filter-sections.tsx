@@ -148,7 +148,7 @@ function FinderInput({ value, onChange, placeholder, label }: { value: string; o
         placeholder={placeholder}
         aria-label={label}
         autoComplete="off"
-        className="h-11 w-full rounded-md border border-border bg-surface pl-10 pr-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        className="h-11 w-full rounded-md card-flat pl-10 pr-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       />
     </div>
   );
@@ -223,15 +223,15 @@ function TokenFinder({
             const { icon: Icon, label } = tokenChip(token, t);
             return (
               <span key={tokenKey(token)} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary-soft pl-3 pr-1 text-label font-medium text-text">
-                <Icon size={14} className="text-primary" aria-hidden />
+                <Icon size={16} className="text-primary" aria-hidden />
                 {label}
                 <button
                   type="button"
                   aria-label={`${t("search.removeFilter")}: ${label}`}
                   onClick={() => onToggle(token)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted hover:bg-surface hover:text-text"
                 >
-                  <X size={14} />
+                  <X size={16} />
                 </button>
               </span>
             );
@@ -240,7 +240,7 @@ function TokenFinder({
       )}
       <FinderInput value={text} onChange={setText} placeholder={placeholder} label={placeholder} />
       {kind === "user" && options.length > 0 && (
-        <ul className="overflow-hidden rounded-md border border-border-soft bg-surface">
+        <ul className="overflow-hidden rounded-md card-flat">
           {options.map((token) =>
             token.kind === "user" ? (
               <li key={tokenKey(token)} className="border-b border-border-soft last:border-0">

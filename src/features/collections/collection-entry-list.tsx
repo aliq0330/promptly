@@ -138,7 +138,7 @@ export function CollectionEntryList({
         ))}
 
       {items.length > 0 && visibleItems.length === 0 ? (
-        <EmptyState
+        <EmptyState scene="search"
           icon={SearchX}
           title={t("collection.searchNoResultsTitle")}
           description={t("collection.searchNoResultsDescription", { query: query.trim() })}

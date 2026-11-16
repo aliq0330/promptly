@@ -55,7 +55,7 @@ export function ProfileHeader({
   const hasChips = (user.interests && user.interests.length > 0) || postCounts.prompts > 0;
 
   return (
-    <header data-profile-band="" className="mx-auto w-full max-w-6xl px-4 pt-5 sm:px-6 lg:px-10 lg:pt-9">
+    <header data-profile-band="" className="mx-auto w-full max-w-6xl px-3 pt-5 sm:px-6 lg:px-8 lg:pt-9">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
         <div className="flex min-w-0 flex-1 basis-64 items-center gap-4 sm:gap-5">
           {/* Hikâye halkası (docs/history/198-*): etkin hikâye varsa avatar onu açar; görülmemişse sıcak vurgu, görülmüşse sakin. */}
@@ -80,7 +80,7 @@ export function ProfileHeader({
             )}
           </span>
           <div className="min-w-0">
-            <h1 className="break-words font-display text-[1.75rem] font-extrabold leading-[1.05] tracking-[-0.03em] text-text sm:text-[2.125rem]">
+            <h1 className="break-words font-display text-h1 font-extrabold text-text">
               {user.displayName}
             </h1>
             <div className="mt-1 flex max-w-full flex-wrap items-center gap-2">

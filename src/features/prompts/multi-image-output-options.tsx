@@ -30,7 +30,7 @@ export function OutputThumbnailStrip({ media }: { media: PromptMedia[] }) {
     <figure className={FRAME_CLASS} style={{ aspectRatio: clampedAspectRatio(cover.width, cover.height) }}>
       <StorageAppearanceImage src={cover.url} alt={cover.alt} color={cover.color} placeholder={cover.placeholder} sizes={SIZES} className="object-cover" />
       {media.length > 1 && (
-        <span className="absolute left-2.5 top-2.5 rounded-full bg-black/55 px-2 py-0.5 text-caption font-semibold text-white backdrop-blur-sm">
+        <span className="absolute left-2.5 top-2.5 rounded-full bg-art-chip px-2 py-0.5 text-caption font-semibold text-on-art">
           {t("media.moreImagesBadge", { count: media.length - 1 })}
         </span>
       )}

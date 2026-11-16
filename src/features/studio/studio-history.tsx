@@ -43,7 +43,7 @@ export function StudioHistory({
       <p className="text-caption text-text-muted">{t("generate.historyNote")}</p>
       <ul className="grid gap-3 sm:grid-cols-2" data-generate-history>
         {entries.map((entry) => (
-          <li key={entry.id} data-history-entry={entry.id} className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card">
+          <li key={entry.id} data-history-entry={entry.id} className="flex min-w-0 flex-col overflow-hidden rounded-lg card-flat shadow-card">
             {entry.output.imageUrl ? (
               <button type="button" onClick={() => onOpen(entry)} aria-label={t("generate.historyOpen")} className="block w-full bg-surface-soft text-left">
                 {/* eslint-disable-next-line @next/next/no-img-element -- local base64 thumbnail */}
@@ -69,7 +69,7 @@ export function StudioHistory({
                   </Button>
                 </div>
                 <button type="button" onClick={() => onDelete(entry)} aria-label={t("generate.historyDelete")} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger">
-                  <TrashIcon size={14} />
+                  <TrashIcon size={16} />
                 </button>
               </div>
             </div>

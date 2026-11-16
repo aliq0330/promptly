@@ -75,7 +75,7 @@ export function SearchSkills({ query, onCount }: { query: string; onCount: (coun
     <section className="space-y-3" data-search-skills="">
       <Eyebrow as="h2" className="px-1">
         {t("skill.pageTitle")}
-        <span className="rounded-xs bg-surface-soft px-1.5 py-0.5 tabular-nums tracking-normal text-text-muted">{skills.length}</span>
+        <span className="rounded-xs bg-surface-soft px-1.5 py-0.5 tabular-nums text-text-muted">{skills.length}</span>
       </Eyebrow>
       <ContentGrid>
         {skills.map((skill) => (

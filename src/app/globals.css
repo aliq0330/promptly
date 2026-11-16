@@ -81,6 +81,8 @@
   /* Gezinme genişlikleri (docs/history/406-*): ray, kenar çubuğu ve onlara yaslanan sabit konumlu öğeler (Mesajlar paneli, detay eylem çubuğu) bunu okur — 84/248 px. */
   --nav-rail-w: 5.25rem;
   --sidebar-w: 15.5rem;
+  /* Right-hand helper column of Ana Sayfa, Keşfet, Hub and detail pages (xl+): one width everywhere. */
+  --aside-w: 18.75rem;
   --z-sticky: 30;
   --z-nav: 40;
   --z-fullscreen: 45;
@@ -145,6 +147,41 @@
 /* ---------------------------------------------------------------------------
  * Semantic tokens → Tailwind utilities
  * ------------------------------------------------------------------------- */
+/* Card surfaces (docs/history/406-*): border + ground of every boxed panel, ONE border tone. Radius and shadow stay at the call site
+ * (`rounded-lg` for a panel, `rounded-md` for a box nested inside one — inner radius = outer − padding). `Card` composes them. */
+@utility card-flat {
+  border: 1px solid var(--color-border-soft);
+  background-color: var(--color-surface);
+}
+@utility card-soft {
+  border: 1px solid var(--color-border-soft);
+  background-color: var(--color-surface-soft);
+}
+@utility card-inset {
+  border: 1px solid var(--color-border-soft);
+  background-color: var(--color-background);
+}
+
+/* Visible keyboard focus INSIDE a field's own box (docs/history/406-*): for a transparent input/textarea whose wrapper cannot draw `focus-within`,
+ * and for an editor that clips its overflow. Replaces `outline-none` on such fields. */
+@utility focus-ring-inset {
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+}
+
+/* A small control (a 16–24 px icon button, a chip link) keeps its look but gets a ≥ 36 px touch target (docs/history/406-*): an invisible box around it.
+ * Do not use on elements that clip their overflow. */
+@utility tap-area {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -8px -6px;
+  }
+}
+
 @theme inline {
   /* Surfaces */
   --color-background: var(--p-bg);
@@ -191,7 +228,7 @@
   /* Text and chips drawn ON a picture or on a dark stage (docs/history/406-*): always light ink over a dark scrim, in both modes.
    * Never write `text-white` / `bg-black/55` by hand on an image; `.art-scrim` is the one gradient behind such text. */
   --color-on-art: #ffffff;
-  --color-on-art-muted: rgb(255 255 255 / 0.8);
+  --color-on-art-muted: rgb(255 255 255 / 0.85);
   --color-on-art-faint: rgb(255 255 255 / 0.6);
   --color-art-chip: rgb(0 0 0 / 0.55);
 
@@ -218,6 +255,7 @@
   --color-story-scrim: rgb(0 0 0 / 0.5);
 
   /* Radius — Meydan's softer, friendlier corners (cards 16px); never pill-shaped cards */
+  --radius-2xs: 0.125rem;
   --radius-xs: 0.375rem;
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -225,11 +263,11 @@
   --radius-xl: 1.375rem;
 
   /* Shadows — tinted by the palette, layered (hairline + soft ambient), with
-   * a 1px top highlight in dark mode (`--p-highlight`). */
+   * a 1px top highlight in dark mode (`--p-highlight`) — only on the floating shadows (`lg`, `pop`): a resting card is a hairline, not glass. */
   --shadow-xs: 0 1px 2px rgb(var(--p-shadow) / calc(0.05 * var(--p-sa)));
-  --shadow-sm: 0 1px 2px rgb(var(--p-shadow) / calc(0.06 * var(--p-sa))), 0 1px 1px rgb(var(--p-shadow) / calc(0.03 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
-  --shadow-card: 0 1px 1px rgb(var(--p-shadow) / calc(0.03 * var(--p-sa))), 0 2px 6px -2px rgb(var(--p-shadow) / calc(0.05 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
-  --shadow-card-hover: 0 1px 2px rgb(var(--p-shadow) / calc(0.04 * var(--p-sa))), 0 14px 32px -16px rgb(var(--p-shadow) / calc(0.24 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
+  --shadow-sm: 0 1px 2px rgb(var(--p-shadow) / calc(0.06 * var(--p-sa))), 0 1px 1px rgb(var(--p-shadow) / calc(0.03 * var(--p-sa)));
+  --shadow-card: 0 1px 1px rgb(var(--p-shadow) / calc(0.03 * var(--p-sa))), 0 2px 6px -2px rgb(var(--p-shadow) / calc(0.05 * var(--p-sa)));
+  --shadow-card-hover: 0 1px 2px rgb(var(--p-shadow) / calc(0.04 * var(--p-sa))), 0 14px 32px -16px rgb(var(--p-shadow) / calc(0.24 * var(--p-sa)));
   --shadow-md: 0 6px 20px -8px rgb(var(--p-shadow) / calc(0.16 * var(--p-sa)));
   --shadow-lg: 0 18px 44px -14px rgb(var(--p-shadow) / calc(0.24 * var(--p-sa))), 0 2px 6px rgb(var(--p-shadow) / calc(0.06 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
   --shadow-pop: 0 24px 56px -18px rgb(var(--p-shadow) / calc(0.28 * var(--p-sa))), 0 3px 10px -2px rgb(var(--p-shadow) / calc(0.08 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
@@ -250,6 +288,10 @@
   --text-display: clamp(2.125rem, 1.55rem + 2vw, 3rem);
   --text-display--line-height: 1.04;
   --text-display--letter-spacing: -0.032em;
+  /* The big title of an Albüm band (detail pages): one step above `display`. */
+  --text-display-xl: clamp(2rem, 1.5rem + 3vw, 3.5rem);
+  --text-display-xl--line-height: 1.02;
+  --text-display-xl--letter-spacing: -0.035em;
   --text-h1: clamp(1.75rem, 1.5rem + 0.9vw, 2.25rem);
   --text-h1--line-height: 1.1;
   --text-h1--letter-spacing: -0.028em;
@@ -1163,18 +1205,7 @@
   to { transform: scale(1.55); opacity: 0; }
 }
 .mi-empty-tile {
-  animation: mi-badge-in 480ms var(--mi-spring) 80ms both;
-}
-.mi-empty-spark {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--color-secondary);
-  animation: mi-spark-pop 380ms var(--mi-spring) both;
-  animation-delay: calc(480ms + var(--i) * 90ms);
-}
-@keyframes mi-spark-pop {
-  from { transform: scale(0); }
-  to { transform: scale(1); }
+  animation: mi-badge-in 320ms var(--ease-soft) 40ms both;
 }
 .mi-badge-in {
   animation: mi-badge-in 420ms var(--mi-spring) both;
@@ -1287,7 +1318,12 @@
 }
 
 
-/* The scrim behind text drawn on a picture (card art, Odak, vitrin): black 60% at the bottom edge fading to nothing. Height comes from the padding. */
+/* The scrim behind text drawn on a picture (card art, Odak, vitrin): black 72% at the bottom edge fading to nothing. Height comes from the padding. */
 .art-scrim {
-  background-image: linear-gradient(to top, rgb(0 0 0 / 0.6), rgb(0 0 0 / 0.3) 55%, transparent);
+  background-image: linear-gradient(to top, rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.48) 55%, transparent);
+}
+
+/* Same scrim from the top edge (Odak's top bar over a picture). */
+.art-scrim-top {
+  background-image: linear-gradient(to bottom, rgb(0 0 0 / 0.55), transparent);
 }

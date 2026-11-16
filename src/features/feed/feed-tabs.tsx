@@ -45,6 +45,7 @@ import { SkillDiscoverSection } from "@/features/skills/skill-discover-section";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { GRID_COLUMNS_ASIDE } from "@/lib/grid-columns";
 
 /**
  * Home is the viewer's own feed (docs/history/221-*; Keşfet is where new things are found). Two views, both real server queries
@@ -243,14 +244,14 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       {skillMode ? (
         <SkillDiscoverSection />
       ) : needsLogin ? (
-        <EmptyState
+        <EmptyState scene="inbox"
           icon={isForYou ? UserStar : UserCheck}
           title={isForYou ? t("feed.emptyForYouLoginTitle") : t("feed.emptyFollowingTitle")}
           description={isForYou ? t("feed.emptyForYouLoginDescription") : t("feed.emptyFollowingDescription")}
           action={{ label: t("common.login"), href: "/login" }}
         />
       ) : feed.loading || waitingForAuth ? (
-        <PromptCardSkeletonGrid count={layout === "home" ? 4 : 6} columns={layout === "home" ? "sm:columns-2" : undefined} />
+        <PromptCardSkeletonGrid count={layout === "home" ? 4 : 6} columns={layout === "home" ? GRID_COLUMNS_ASIDE : undefined} />
       ) : feed.failed && feed.items.length === 0 ? (
         <EmptyState
           icon={Clock}

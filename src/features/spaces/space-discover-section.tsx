@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link2 } from "@/components/icons/link-2";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
-import { CONTENT_GRID_ITEM_CLASS, ContentCard, ContentCardPost, ContentCardTitle, ContentGrid } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentCard, ContentCardPost, ContentCardTitle, ContentGrid, GRID_COLUMNS_ASIDE } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { LoadMore } from "@/features/feed/load-more";
 import { postMeta } from "@/features/prompts/post-header";
@@ -60,7 +60,7 @@ export function SpaceDiscoverCard({ space, palette, stats }: { space: SpaceSumma
           <>
             {stats && stats.ratingCount > 0 && (
               <span className="inline-flex items-center gap-1 text-caption font-semibold tabular-nums text-text-secondary" data-space-card-rating="">
-                <StarRatingDisplay value={stats.ratingAvg} size={13} />
+                <StarRatingDisplay value={stats.ratingAvg} size={16} />
                 {formatRating(stats.ratingAvg, language)}
                 <span className="font-normal text-text-muted">({stats.ratingCount})</span>
               </span>
@@ -158,10 +158,10 @@ export function SpaceDiscoverSection() {
   if (pages.failed && pages.spaces.length === 0) {
     return <EmptyState icon={SpacesIcon} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: pages.retry }} />;
   }
-  if (pages.spaces.length === 0) return <EmptyState icon={SpacesIcon} title={t("discover.noSpacesYet")} />;
+  if (pages.spaces.length === 0) return <EmptyState scene="spaces" icon={SpacesIcon} title={t("discover.noSpacesYet")} />;
   return (
     <>
-      <ContentGrid columns="sm:columns-2">
+      <ContentGrid columns={GRID_COLUMNS_ASIDE}>
         {pages.spaces.map((space) => (
           <div key={space.id} className={CONTENT_GRID_ITEM_CLASS}>
             <SpaceDiscoverCard space={space} palette={pages.palettes.get(space.id) ?? []} stats={pages.stats.get(space.id)} />

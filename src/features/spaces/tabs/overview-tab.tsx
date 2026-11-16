@@ -83,7 +83,7 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
                 {t("spaces.overview.lastEdited", { title: itemTitle(lastTouched), time: formatRelativeTime(lastTouched.updatedAt, language) })}
               </span>
             </span>
-            <ArrowRight size={18} className="shrink-0 text-text-muted" aria-hidden />
+            <ArrowRight size={20} className="shrink-0 text-text-muted" aria-hidden />
           </button>
         )}
 
@@ -100,13 +100,13 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
                 type="button"
                 onClick={() => onNavigate(tab)}
                 data-overview-stat={tab}
-                className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface p-4 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex w-full items-center gap-3 rounded-lg card-flat p-4 text-left shadow-card transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
                   <Icon size={20} aria-hidden />
                 </span>
                 <span className="min-w-0">
-                  <span className="block font-display text-[1.4rem] font-extrabold leading-none tabular-nums text-text">{count}</span>
+                  <span className="block font-display text-h2 font-extrabold leading-none tabular-nums text-text">{count}</span>
                   <span className="block truncate text-caption text-text-muted">{t(SPACE_TAB_LABEL[tab])}</span>
                 </span>
               </button>
@@ -139,7 +139,7 @@ export function OverviewTab({ onNavigate }: { onNavigate: (tab: SpaceTab, focus?
                 const source = resolveSource(item, sources, readable);
                 const text = item.isDraft ? item.body : (source.prompt?.promptText ?? "");
                 return (
-                  <li key={item.id} className="rounded-md border border-border-soft bg-surface p-3">
+                  <li key={item.id} className="rounded-md card-flat p-3">
                     <p className="truncate text-small font-semibold text-text">{itemTitle(item)}</p>
                     {text && <p className="prompt-text mt-1 line-clamp-2 break-words text-caption text-text-secondary">{text}</p>}
                   </li>
@@ -193,7 +193,7 @@ function OverviewSection({ title, onMore, children }: { title: string; onMore: (
         <h2 className="text-h3 font-bold text-text">{title}</h2>
         <button type="button" onClick={onMore} className="inline-flex items-center gap-1 text-label font-medium text-text-secondary hover:text-primary">
           {t("common.viewAll")}
-          <ArrowRight size={14} aria-hidden />
+          <ArrowRight size={16} aria-hidden />
         </button>
       </div>
       {children}
@@ -213,8 +213,8 @@ function OverviewAside({ groupsCount }: { groupsCount?: number }) {
   ];
   return (
     <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-      <section className="rounded-lg border border-border-soft bg-surface p-4">
-        <h2 className="mb-3 text-label font-semibold uppercase tracking-[0.08em] text-text-muted">{t("spaces.overview.about")}</h2>
+      <section className="rounded-lg card-flat p-4">
+        <h2 className="mb-3 text-label font-semibold text-text-muted">{t("spaces.overview.about")}</h2>
         <ul className="space-y-2 text-small text-text-secondary">
           {stats.map(({ icon: Icon, label }) => (
             <li key={label} className="flex items-center gap-2">
@@ -233,7 +233,7 @@ function OverviewAside({ groupsCount }: { groupsCount?: number }) {
       </section>
       {groups.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-label font-semibold uppercase tracking-[0.08em] text-text-muted">{t("spaces.groups.title")}</h2>
+          <h2 className="text-label font-semibold text-text-muted">{t("spaces.groups.title")}</h2>
           <ul className="flex flex-wrap gap-1.5">
             {groups.map((group) => (
               <li key={group.id} className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-caption font-medium", SPACE_COLOR_CLASS[group.color].surface, SPACE_COLOR_CLASS[group.color].text)}>
@@ -270,8 +270,8 @@ function ActivityList() {
 
   return (
     <section className="space-y-2" data-testid="space-activity">
-      <h2 className="flex items-center gap-1.5 text-label font-semibold uppercase tracking-[0.08em] text-text-muted">
-        <History size={14} aria-hidden />
+      <h2 className="flex items-center gap-1.5 text-label font-semibold text-text-muted">
+        <History size={16} aria-hidden />
         {t("spaces.activity.title")}
       </h2>
       {failed ? (

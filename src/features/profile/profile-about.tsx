@@ -58,7 +58,7 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
 
       {user.interests && user.interests.length > 0 && (
         <div className="space-y-2">
-          <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">
+          <p className="text-caption font-semibold text-text-muted">
             {t("profile.creativeInterests")}
           </p>
           <div className="flex flex-wrap gap-1.5">

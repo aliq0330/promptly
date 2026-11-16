@@ -53,7 +53,7 @@ export function ChatSharedModal({
             aria-label={t("common.close")}
             className={iconButtonClassName(false, "h-9 w-9")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
         {mode === "media" && (
@@ -67,7 +67,7 @@ export function ChatSharedModal({
                 onClick={() => setTab(kind)}
                 className={cn(
                   "h-9 rounded-full px-4 text-small font-medium transition-colors",
-                  tab === kind ? "bg-text text-background" : "bg-surface-soft text-text-secondary hover:text-text",
+                  tab === kind ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary hover:text-text",
                 )}
               >
                 {kind === "photos" ? t("messages.shared.tabPhotos") : t("messages.shared.tabLinks")}

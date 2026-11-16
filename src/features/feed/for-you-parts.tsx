@@ -27,6 +27,7 @@ import type { ForYouReason } from "@/lib/supabase/feed";
 import type { FeedItem } from "./types";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { iconButtonClassName } from "@/components/ui/icon-button";
+import { Banner } from "@/components/ui/banner";
 
 function interestLabel(value: string, t: ReturnType<typeof useTranslation>["t"]): string {
   return (INTEREST_OPTIONS as readonly string[]).includes(value) ? t(INTEREST_OPTION_LABELS[value as InterestOption]) : value;
@@ -95,7 +96,7 @@ export function ForYouSettingsModal({ onClose, onChanged }: { onClose: () => voi
   const titleId = useId();
   return (
     <Modal onClose={onClose} labelledBy={titleId} overLayers>
-      <DialogShell className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg card-flat shadow-pop">
         <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
           <h2 id={titleId} className="text-h3 font-bold text-text">
             {t("forYou.settingsTitle")}
@@ -106,7 +107,7 @@ export function ForYouSettingsModal({ onClose, onChanged }: { onClose: () => voi
             aria-label={t("common.close")}
             className={iconButtonClassName(false, "h-10 w-10")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
@@ -135,11 +136,11 @@ export function ForYouSheetSection({ onRefresh, onOpenSettings, refreshing }: { 
     <SheetSection title={t("home.tabForYou")}>
       <div className="flex flex-wrap gap-2" data-for-you-toolbar>
         <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing} className="gap-1.5">
-          <RefreshCw size={14} aria-hidden className={refreshing ? "animate-spin" : undefined} />
+          <RefreshCw size={16} aria-hidden className={refreshing ? "animate-spin" : undefined} />
           {t("forYou.refresh")}
         </Button>
         <Button variant="outline" size="sm" onClick={onOpenSettings} aria-haspopup="dialog" className="gap-1.5">
-          <Settings size={14} aria-hidden />
+          <Settings size={16} aria-hidden />
           {t("forYou.settings")}
         </Button>
       </div>
@@ -174,20 +175,12 @@ export function ForYouSetupBanner({ onOpen }: { onOpen: () => void }) {
     }
   }
   return (
-    <section aria-label={t("forYou.settingsTitle")} data-for-you-setup className="flex min-h-12 items-center gap-1 rounded-lg bg-primary-soft pl-4 pr-1">
+    <Banner aria-label={t("forYou.settingsTitle")} data-for-you-setup onDismiss={dismiss} dismissLabel={t("common.close")}>
       <button type="button" onClick={onOpen} aria-haspopup="dialog" className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-left text-label font-semibold text-primary">
         <span className="truncate">{t("forYou.setupBanner")}</span>
         <ChevronRight size={16} aria-hidden className="shrink-0" />
       </button>
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label={t("common.close")}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary hover:bg-surface/60 hover:text-text"
-      >
-        <X size={16} aria-hidden />
-      </button>
-    </section>
+    </Banner>
   );
 }
 

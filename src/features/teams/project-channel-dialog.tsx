@@ -7,7 +7,7 @@ import { FormError, SubmitButton } from "@/features/spaces/space-forms";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { addProjectChannel, type TeamActionError } from "@/lib/supabase/teams";
-import { PillChoice } from "./team-ui";
+import { ChoiceGroup } from "@/components/ui/choice-group";
 
 /**
  * Projeye adlı ek kanal ekle (docs/history/369-*): "duyurular" gibi. Proje ana kanalı projeyle birlikte doğar, dosya kanalı dosya oluştururken sorulur;
@@ -73,7 +73,7 @@ export function NewProjectChannelDialog({ projectId, onClose, onCreated }: { pro
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("th.newChannel.posting")}</span>
-          <PillChoice<"members" | "admins">
+          <ChoiceGroup<"members" | "admins">
             ariaLabel={t("th.newChannel.posting")}
             value={posting}
             onChange={setPosting}

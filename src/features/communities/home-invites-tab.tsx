@@ -82,10 +82,10 @@ export function HomeInvitesTab({
           event.preventDefault();
           openLink();
         }}
-        className="space-y-1.5 rounded-lg border border-border-soft bg-surface px-4 py-3"
+        className="space-y-1.5 rounded-lg card-flat px-4 py-3"
       >
         <label htmlFor="community-link-input" className="flex items-center gap-1.5 text-label font-medium text-text">
-          <Link2 size={14} aria-hidden /> {t("groups.page.haveLink")}
+          <Link2 size={16} aria-hidden /> {t("groups.page.haveLink")}
         </label>
         <div className="flex gap-2">
           <input
@@ -97,7 +97,7 @@ export function HomeInvitesTab({
             }}
             placeholder={t("groups.page.linkPlaceholder")}
             aria-invalid={linkError}
-            className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted hover:border-border-strong focus:border-primary/60"
+            className="h-10 min-w-0 flex-1 rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted hover:border-border-strong focus:border-primary/60"
           />
           <Button type="submit" size="sm" variant="outline" disabled={!linkInput.trim()}>
             {t("groups.page.openLink")}
@@ -139,9 +139,9 @@ export function HomeInvitesTab({
 function IncomingRequestsView({ managed }: { managed: CommunitySummary[] }) {
   const { t } = useTranslation();
   const pending = managed.filter((c) => c.pendingRequestCount > 0);
-  if (pending.length === 0) return <EmptyState icon={ShieldCheck} title={t("communities.invitesTab.incomingEmpty")} description={t("communities.invitesTab.incomingEmptyHelp")} />;
+  if (pending.length === 0) return <EmptyState scene="inbox" icon={ShieldCheck} title={t("communities.invitesTab.incomingEmpty")} description={t("communities.invitesTab.incomingEmptyHelp")} />;
   return (
-    <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface" data-testid="incoming-requests">
+    <ul className="divide-y divide-border-soft rounded-lg card-flat" data-testid="incoming-requests">
       {pending.map((community) => (
         <li key={community.id} className="flex items-center gap-3 px-4 py-3">
           <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={40} />
@@ -241,7 +241,7 @@ export function InvitesView({
     );
   }
   if (current.error) return <ErrorBox message={t("groups.invites.loadError")} onRetry={() => setReloadKey((k) => k + 1)} />;
-  if (current.invitations.length === 0) return hideWhenEmpty ? null : <EmptyState icon={Mail} title={t("groups.invites.empty")} description={t("groups.invites.emptyHelp")} />;
+  if (current.invitations.length === 0) return hideWhenEmpty ? null : <EmptyState scene="inbox" icon={Mail} title={t("groups.invites.empty")} description={t("groups.invites.emptyHelp")} />;
 
   return (
     <div className="space-y-3">
@@ -252,7 +252,7 @@ export function InvitesView({
       )}
       <ul className="space-y-3">
         {current.invitations.map((invitation) => (
-          <li key={invitation.id} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card">
+          <li key={invitation.id} className="space-y-3 rounded-lg card-flat p-4 shadow-card">
             <div className="flex items-start gap-3">
               <GroupAvatar name={invitation.group?.name ?? ""} avatarUrl={invitation.group?.avatarUrl ?? null} size={48} badge />
               <div className="min-w-0 flex-1 space-y-0.5">
@@ -286,7 +286,7 @@ export function InvitesView({
                 onClick={() => (invitation.group?.rulesRequired && invitation.group.rules ? setRulesFor(invitation) : void respond(invitation, true, false))}
                 disabled={action.busy}
               >
-                {busyId === invitation.id && action.busy ? <Loader2 size={14} className="animate-spin" /> : null}
+                {busyId === invitation.id && action.busy ? <Loader2 size={16} className="animate-spin" /> : null}
                 {t("groups.invites.accept")}
               </Button>
             </div>
@@ -355,7 +355,7 @@ export function RequestsView({ userId, onCount, onToast }: { userId: string; onC
     );
   }
   if (current.error) return <ErrorBox message={t("groups.invites.loadError")} onRetry={() => setReloadKey((k) => k + 1)} />;
-  if (current.requests.length === 0) return <EmptyState icon={Send} title={t("communities.requests.empty")} description={t("communities.requests.emptyHelp")} />;
+  if (current.requests.length === 0) return <EmptyState scene="inbox" icon={Send} title={t("communities.requests.empty")} description={t("communities.requests.emptyHelp")} />;
 
   return (
     <div className="space-y-3">
@@ -364,7 +364,7 @@ export function RequestsView({ userId, onCount, onToast }: { userId: string; onC
           {action.error}
         </InlineAlert>
       )}
-      <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface">
+      <ul className="divide-y divide-border-soft rounded-lg card-flat">
         {current.requests.map((request) => (
           <li key={request.id} className="flex items-center gap-3 px-4 py-3">
             <GroupAvatar name={request.groupName} avatarUrl={request.groupAvatarUrl} size={40} />
@@ -375,7 +375,7 @@ export function RequestsView({ userId, onCount, onToast }: { userId: string; onC
               </span>
             </span>
             <Button type="button" size="sm" variant="ghost" onClick={() => void cancel(request)} disabled={action.busy}>
-              {busyId === request.id && action.busy ? <Loader2 size={14} className="animate-spin" /> : null}
+              {busyId === request.id && action.busy ? <Loader2 size={16} className="animate-spin" /> : null}
               {t("groups.invites.cancelRequest")}
             </Button>
           </li>

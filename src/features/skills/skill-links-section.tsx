@@ -110,7 +110,7 @@ export function SkillLinksEditor({ skillId, ensureDraft, disabled }: { skillId: 
       ) : (
         <ul className="space-y-2">
           {links.map((link) => (
-            <li key={link.id} className="flex items-center gap-2 rounded-xl border border-border-soft bg-surface px-3 py-2" data-skill-link={link.linkedSkillId}>
+            <li key={link.id} className="flex items-center gap-2 rounded-lg card-flat px-3 py-2" data-skill-link={link.linkedSkillId}>
               <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{skills.get(link.linkedSkillId)?.title ?? t("skill.links.unavailable")}</span>
               <button type="button" onClick={() => void remove(link)} aria-label={t("skill.links.remove")} className="rounded-full p-1.5 text-text-muted hover:bg-surface-soft hover:text-text">
                 <X size={16} aria-hidden />
@@ -147,7 +147,7 @@ function SkillLinkPicker({ excludeIds, onPick, onClose }: { excludeIds: Set<stri
   }, [query]);
   return (
     <Modal onClose={onClose} labelledBy="skill-link-picker-title">
-      <div data-skill-link-picker="" className="flex max-h-[80dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
+      <div data-skill-link-picker="" className="flex max-h-[80dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-pop">
         <div className="shrink-0 space-y-3 px-5 pb-2 pt-4">
           <h2 id="skill-link-picker-title" className="font-display text-h3 font-bold text-text">
             {t("skill.links.pickTitle")}

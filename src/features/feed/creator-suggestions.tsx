@@ -210,7 +210,7 @@ function CreatorCard({ candidate, onDismiss }: { candidate: SuggestedCreator; on
       data-creator-card
       data-creator-id={profile.id}
       data-reason={reason.kind}
-      className="relative flex w-[46%] shrink-0 snap-start flex-col items-center rounded-lg border border-border-soft bg-surface px-3 pb-3 pt-4 text-center shadow-card sm:w-44"
+      className="relative flex w-[46%] shrink-0 snap-start flex-col items-center rounded-lg card-flat px-3 pb-3 pt-4 text-center shadow-card sm:w-44"
     >
       <button
         type="button"

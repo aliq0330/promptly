@@ -57,12 +57,12 @@ export const ScrollRow = forwardRef<HTMLElement, ScrollRowProps>(function Scroll
       </Tag>
       {arrows && canPrev && (
         <button type="button" onClick={() => scrollPage(-1)} aria-label={t("scrollRow.prev")} className={cn(ARROW, "left-1")}>
-          <ChevronLeft size={18} aria-hidden />
+          <ChevronLeft size={20} aria-hidden />
         </button>
       )}
       {arrows && canNext && (
         <button type="button" onClick={() => scrollPage(1)} aria-label={t("scrollRow.next")} className={cn(ARROW, "right-1")}>
-          <ChevronRight size={18} aria-hidden />
+          <ChevronRight size={20} aria-hidden />
         </button>
       )}
     </div>

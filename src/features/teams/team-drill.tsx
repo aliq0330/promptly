@@ -83,12 +83,12 @@ export function DrillHeader({
       </div>
       {markName ? (
         <div className="flex items-center gap-3 px-2">
-          <TeamMark name={markName} tone={tone} solid size={52} className="rounded-[15px]" />
+          <TeamMark name={markName} tone={tone} solid size={52} className="rounded-md" />
           <div className="min-w-0">
-            <h1 className="truncate font-display text-[1.375rem] font-extrabold leading-tight text-text" data-drill-title>
+            <h1 className="truncate font-display text-h2 font-extrabold leading-tight text-text" data-drill-title>
               {title}
             </h1>
-            {sub && <div className="text-caption font-bold text-primary">{sub}</div>}
+            {sub && <div className="text-caption font-semibold text-primary">{sub}</div>}
           </div>
         </div>
       ) : (

@@ -18,7 +18,7 @@ import {
 function DiffBlock({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{title}</p>
+      <p className="text-caption font-semibold text-text-muted">{title}</p>
       {children}
     </div>
   );
@@ -33,9 +33,9 @@ function NoDifference() {
 function Change({ before, after }: { before: string; after: string }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5 text-small text-text">
-      <span className="rounded-[2px] bg-danger-soft px-1 text-danger line-through decoration-danger/60">{before}</span>
+      <span className="rounded-2xs bg-danger-soft px-1 text-danger line-through decoration-danger/60">{before}</span>
       <ArrowRight size={12} className="text-text-muted" aria-hidden />
-      <span className="rounded-[2px] bg-success-soft px-1 text-success">{after}</span>
+      <span className="rounded-2xs bg-success-soft px-1 text-success">{after}</span>
     </span>
   );
 }
@@ -87,7 +87,7 @@ export function WorkflowDiffView({ older, newer }: { older: WorkflowVersionConte
         <DiffBlock title={t("history.stepsAdded")}>
           <BulletList>
             {diff.added.map((step) => (
-              <li key={step.key} className="rounded-[2px] bg-success-soft px-1.5 py-0.5 text-success">
+              <li key={step.key} className="rounded-2xs bg-success-soft px-1.5 py-0.5 text-success">
                 {t("history.stepPosition", { n: step.position })} · {stepName(step.title, step.position)}
               </li>
             ))}
@@ -98,7 +98,7 @@ export function WorkflowDiffView({ older, newer }: { older: WorkflowVersionConte
         <DiffBlock title={t("history.stepsRemoved")}>
           <BulletList>
             {diff.removed.map((step) => (
-              <li key={step.key} className="rounded-[2px] bg-danger-soft px-1.5 py-0.5 text-danger line-through decoration-danger/60">
+              <li key={step.key} className="rounded-2xs bg-danger-soft px-1.5 py-0.5 text-danger line-through decoration-danger/60">
                 {t("history.stepPosition", { n: step.position })} · {stepName(step.title, step.position)}
               </li>
             ))}
@@ -147,7 +147,7 @@ export function WorkflowDiffView({ older, newer }: { older: WorkflowVersionConte
         <DiffBlock title={t("history.connectionsAdded")}>
           <BulletList>
             {diff.connectionsAdded.map((c, index) => (
-              <li key={index} className="rounded-[2px] bg-success-soft px-1.5 py-0.5 text-success">
+              <li key={index} className="rounded-2xs bg-success-soft px-1.5 py-0.5 text-success">
                 {t("history.connection", { from: c.fromTitle, output: c.outputLabel, to: c.toTitle, input: c.inputLabel })}
               </li>
             ))}
@@ -158,7 +158,7 @@ export function WorkflowDiffView({ older, newer }: { older: WorkflowVersionConte
         <DiffBlock title={t("history.connectionsRemoved")}>
           <BulletList>
             {diff.connectionsRemoved.map((c, index) => (
-              <li key={index} className="rounded-[2px] bg-danger-soft px-1.5 py-0.5 text-danger line-through decoration-danger/60">
+              <li key={index} className="rounded-2xs bg-danger-soft px-1.5 py-0.5 text-danger line-through decoration-danger/60">
                 {t("history.connection", { from: c.fromTitle, output: c.outputLabel, to: c.toTitle, input: c.inputLabel })}
               </li>
             ))}
@@ -212,7 +212,7 @@ function PresetFieldChangeView({ change }: { change: PresetFieldChange }) {
           <p className="text-caption text-text-muted">{t("history.optionsAdded")}</p>
           <BulletList>
             {change.optionsAdded.map((option) => (
-              <li key={option.key} className="rounded-[2px] bg-success-soft px-1.5 py-0.5 text-success">
+              <li key={option.key} className="rounded-2xs bg-success-soft px-1.5 py-0.5 text-success">
                 {option.label}
               </li>
             ))}
@@ -224,7 +224,7 @@ function PresetFieldChangeView({ change }: { change: PresetFieldChange }) {
           <p className="text-caption text-text-muted">{t("history.optionsRemoved")}</p>
           <BulletList>
             {change.optionsRemoved.map((option) => (
-              <li key={option.key} className="rounded-[2px] bg-danger-soft px-1.5 py-0.5 text-danger line-through decoration-danger/60">
+              <li key={option.key} className="rounded-2xs bg-danger-soft px-1.5 py-0.5 text-danger line-through decoration-danger/60">
                 {option.label}
               </li>
             ))}
@@ -267,7 +267,7 @@ export function PresetDiffView({ older, newer }: { older: PresetVersionContent; 
         <DiffBlock title={t("history.fieldsAdded")}>
           <BulletList>
             {diff.fieldsAdded.map((field) => (
-              <li key={field.key} className="rounded-[2px] bg-success-soft px-1.5 py-0.5 text-success">
+              <li key={field.key} className="rounded-2xs bg-success-soft px-1.5 py-0.5 text-success">
                 {field.name} · {fieldTypeLabel(field.type, t)}
               </li>
             ))}
@@ -278,7 +278,7 @@ export function PresetDiffView({ older, newer }: { older: PresetVersionContent; 
         <DiffBlock title={t("history.fieldsRemoved")}>
           <BulletList>
             {diff.fieldsRemoved.map((field) => (
-              <li key={field.key} className="rounded-[2px] bg-danger-soft px-1.5 py-0.5 text-danger line-through decoration-danger/60">
+              <li key={field.key} className="rounded-2xs bg-danger-soft px-1.5 py-0.5 text-danger line-through decoration-danger/60">
                 {field.name} · {fieldTypeLabel(field.type, t)}
               </li>
             ))}

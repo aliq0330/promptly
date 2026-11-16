@@ -176,7 +176,7 @@ export function ImageHelpPanel({
   const hasVarResult = matched.length > 0 || suggestions.length > 0;
 
   return (
-    <div className={cn(!bare && "rounded-lg border border-border bg-surface-soft/60")} data-image-help>
+    <div className={cn(!bare && "rounded-lg card-soft")} data-image-help>
       <button
         type="button"
         hidden={bare}
@@ -195,7 +195,7 @@ export function ImageHelpPanel({
           <p className="text-caption text-text-secondary">{t("vision.helpIntro")}</p>
 
           {file ? (
-            <div className="flex items-center gap-3 rounded-md border border-border bg-surface p-2.5">
+            <div className="flex items-center gap-3 rounded-md card-flat p-2.5">
               {previewUrl && (
                 // eslint-disable-next-line @next/next/no-img-element -- a local object URL, nothing for next/image to optimise
                 <img src={previewUrl} alt="" className="h-12 w-12 shrink-0 rounded object-cover" />
@@ -254,10 +254,10 @@ export function ImageHelpPanel({
           )}
 
           {promptResult && (
-            <div className="space-y-3 rounded-md border border-border bg-surface p-3">
+            <div className="space-y-3 rounded-md card-flat p-3">
               {analysisEntries.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.imageAnalysis")}</p>
+                  <p className="text-caption font-semibold text-text-muted">{t("vision.imageAnalysis")}</p>
                   <dl className="space-y-0.5 text-small text-text">
                     {analysisEntries.map(([key, value]) => (
                       <div key={key} className="flex gap-1.5">
@@ -270,7 +270,7 @@ export function ImageHelpPanel({
               )}
               {promptResult.prompt && (
                 <div className="space-y-1.5">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.generatedPrompt")}</p>
+                  <p className="text-caption font-semibold text-text-muted">{t("vision.generatedPrompt")}</p>
                   <p className="whitespace-pre-wrap rounded-md bg-surface-soft p-2.5 text-small text-text">{promptResult.prompt}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" size="sm" onClick={() => onApplyPrompt(promptResult.prompt, "replace")}>
@@ -284,7 +284,7 @@ export function ImageHelpPanel({
               )}
               {promptResult.negativePrompt && (
                 <div className="space-y-1">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.avoidThese")}</p>
+                  <p className="text-caption font-semibold text-text-muted">{t("vision.avoidThese")}</p>
                   <p className="whitespace-pre-wrap rounded-md bg-surface-soft p-2.5 font-mono text-caption text-text-muted">{promptResult.negativePrompt}</p>
                   <button
                     type="button"
@@ -304,10 +304,10 @@ export function ImageHelpPanel({
           )}
 
           {hasVarResult && (
-            <div className="space-y-3 rounded-md border border-border bg-surface p-3">
+            <div className="space-y-3 rounded-md card-flat p-3">
               {matched.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.variableMatched")}</p>
+                  <p className="text-caption font-semibold text-text-muted">{t("vision.variableMatched")}</p>
                   {matched.map((row) => (
                     <label key={row.name} className="flex cursor-pointer items-start gap-2 text-small text-text">
                       <input type="checkbox" checked={checkedNames.has(row.name)} onChange={() => toggle(setCheckedNames, row.name)} className="mt-0.5 h-4 w-4 rounded border-border text-primary" />
@@ -320,7 +320,7 @@ export function ImageHelpPanel({
               )}
               {suggestions.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.variableSuggested")}</p>
+                  <p className="text-caption font-semibold text-text-muted">{t("vision.variableSuggested")}</p>
                   {suggestions.map((item) => (
                     <label key={item.label} className="flex cursor-pointer items-start gap-2 text-small text-text">
                       <input type="checkbox" checked={checkedLabels.has(item.label)} onChange={() => toggle(setCheckedLabels, item.label)} className="mt-0.5 h-4 w-4 rounded border-border text-primary" />

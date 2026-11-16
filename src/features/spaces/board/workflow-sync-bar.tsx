@@ -115,7 +115,7 @@ export function WorkflowSyncBar({
       {pending.map(({ id, title, plan }) => (
         <div key={id} role="status" className="pointer-events-auto rounded-lg border border-primary/40 bg-surface p-3 shadow-pop">
           <p className="flex items-center gap-2 text-small font-semibold text-text">
-            <RefreshCw size={14} className="shrink-0 text-primary" aria-hidden />
+            <RefreshCw size={16} className="shrink-0 text-primary" aria-hidden />
             <span className="min-w-0 break-words">{t("wfSpace.sync.changed", { title })}</span>
           </p>
           <p className="mt-1 text-caption text-text-secondary">{t("wfSpace.sync.summary", { added: plan.counts.added, removed: plan.counts.removed, changed: plan.counts.changed })}</p>
@@ -125,12 +125,12 @@ export function WorkflowSyncBar({
               type="button"
               disabled={busy !== null}
               onClick={() => void apply(id, plan)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
             >
-              {busy === id && <Loader2 size={13} className="animate-spin" aria-hidden />}
+              {busy === id && <Loader2 size={16} className="animate-spin" aria-hidden />}
               {busy === id ? t("wfSpace.sync.updating") : t("wfSpace.sync.update")}
             </button>
-            <button type="button" disabled={busy !== null} onClick={() => setDismissed((prev) => new Set(prev).add(id))} className="inline-flex h-8 items-center rounded-full px-3 text-small font-semibold text-text-secondary hover:bg-surface-soft">
+            <button type="button" disabled={busy !== null} onClick={() => setDismissed((prev) => new Set(prev).add(id))} className="inline-flex h-9 items-center rounded-full px-3 text-small font-semibold text-text-secondary hover:bg-surface-soft">
               {t("wfSpace.sync.dismiss")}
             </button>
           </div>
@@ -139,7 +139,7 @@ export function WorkflowSyncBar({
       {convertible.map(({ id, frame, title, input }) => (
         <div key={`legacy:${id}`} role="status" data-workflow-legacy="" className="pointer-events-auto rounded-lg border border-primary/40 bg-surface p-3 shadow-pop">
           <p className="flex items-center gap-2 text-small font-semibold text-text">
-            <Workflow size={14} className="shrink-0 text-primary" aria-hidden />
+            <Workflow size={16} className="shrink-0 text-primary" aria-hidden />
             <span className="min-w-0 break-words">{t("wfSpace.legacy.title", { title })}</span>
           </p>
           <p className="mt-1 text-caption text-text-muted">{t("wfSpace.legacy.hint")}</p>
@@ -148,12 +148,12 @@ export function WorkflowSyncBar({
               type="button"
               disabled={busy !== null}
               onClick={() => void convert(id, frame, title, input)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
             >
-              {busy === `legacy:${id}` && <Loader2 size={13} className="animate-spin" aria-hidden />}
+              {busy === `legacy:${id}` && <Loader2 size={16} className="animate-spin" aria-hidden />}
               {busy === `legacy:${id}` ? t("wfSpace.legacy.converting") : t("wfSpace.legacy.convert")}
             </button>
-            <button type="button" disabled={busy !== null} onClick={() => setDismissed((prev) => new Set(prev).add(`legacy:${id}`))} className="inline-flex h-8 items-center rounded-full px-3 text-small font-semibold text-text-secondary hover:bg-surface-soft">
+            <button type="button" disabled={busy !== null} onClick={() => setDismissed((prev) => new Set(prev).add(`legacy:${id}`))} className="inline-flex h-9 items-center rounded-full px-3 text-small font-semibold text-text-secondary hover:bg-surface-soft">
               {t("wfSpace.sync.dismiss")}
             </button>
           </div>

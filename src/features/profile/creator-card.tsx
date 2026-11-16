@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { CardBandBackdrop } from "@/features/content/content-card";
@@ -16,15 +15,15 @@ import type { UserProfile } from "@/types";
 export function CreatorCard({ creator }: { creator: UserProfile }) {
   const { t } = useTranslation();
   return (
-    <article className="group relative flex flex-col rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover">
+    <article className="group relative flex flex-col rounded-lg card-flat shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover">
       <div className="relative rounded-t-xl px-4 pb-4 pt-4">
-        <CardBandBackdrop backdrop={creator.avatarUrl ? <Image src={creator.avatarUrl} alt="" fill sizes="240px" className="object-cover" /> : undefined} />
+        <CardBandBackdrop />
         <div className="relative flex items-center gap-3">
-          <span className="inline-flex shrink-0 rounded-full border-[3px] border-surface bg-surface shadow-pop">
+          <span className="inline-flex shrink-0 rounded-full border-[3px] border-surface bg-surface shadow-md">
             <Avatar src={creator.avatarUrl} alt={creator.displayName} size={56} />
           </span>
           <div className="min-w-0 flex-1 leading-tight">
-            <h3 className="truncate font-display text-[1.125rem] font-extrabold tracking-[-0.015em] text-text">
+            <h3 className="truncate font-display text-h3 font-extrabold tracking-[-0.015em] text-text">
               <Link href={profileHref(creator)} className="relative z-10 hover:text-primary">
                 {creator.displayName}
               </Link>

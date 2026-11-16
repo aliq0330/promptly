@@ -33,7 +33,7 @@ function renderInline(nodes: Inline[]): ReactNode[] {
 const HEADING_CLASS: Record<number, string> = {
   1: "mt-6 text-h2 font-bold text-text first:mt-0",
   2: "mt-6 text-h3 font-bold text-text first:mt-0",
-  3: "mt-5 text-body font-bold text-text first:mt-0",
+  3: "mt-5 text-body font-semibold text-text first:mt-0",
   4: "mt-4 text-body font-semibold text-text first:mt-0",
   5: "mt-4 text-small font-semibold text-text first:mt-0",
   6: "mt-4 text-small font-semibold text-text-secondary first:mt-0",
@@ -57,7 +57,7 @@ function renderBlock(block: Block, index: number): ReactNode {
       );
     case "code":
       return (
-        <pre key={index} className="overflow-x-auto rounded-lg border border-border-soft bg-surface-soft px-4 py-3 text-small text-text">
+        <pre key={index} className="overflow-x-auto rounded-lg card-soft px-4 py-3 text-small text-text">
           <code className="prompt-text whitespace-pre">{block.v}</code>
         </pre>
       );

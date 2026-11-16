@@ -91,13 +91,13 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
 
   return (
     <Modal onClose={onClose} labelledBy="gif-picker-title">
-      <DialogShell data-gif-picker className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell data-gif-picker className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-pop">
         <div className="flex shrink-0 items-center justify-between gap-2 px-5 pb-1 pt-4">
           <h2 id="gif-picker-title" className="font-display text-h3 font-bold text-text">
             {t("gif.title")}
           </h2>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
-            <X size={18} aria-hidden />
+            <X size={20} aria-hidden />
           </button>
         </div>
 
@@ -119,7 +119,7 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
                 type="button"
                 onClick={() => setInput("")}
                 aria-label={t("gif.clearSearch")}
-                className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+                className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
               >
                 <X size={16} aria-hidden />
               </button>
@@ -159,7 +159,7 @@ export function GifPicker({ onPick, onClose }: { onPick: (gif: GifItem) => void;
             </div>
           ) : loading ? (
             <div className="flex justify-center py-12" role="status" aria-busy="true">
-              <Loader2 size={22} className="animate-spin text-text-muted motion-reduce:animate-none" aria-hidden />
+              <Loader2 size={24} className="animate-spin text-text-muted motion-reduce:animate-none" aria-hidden />
             </div>
           ) : items.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-small text-text-muted">{t("gif.empty")}</p>

@@ -108,11 +108,11 @@ function Cell({
         />
       ) : (
         <span className="flex h-full w-full items-center justify-center text-text-muted">
-          {failed ? <ImageOff size={20} aria-hidden /> : <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden />}
+          {failed ? <ImageOff size={20} aria-hidden /> : <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden />}
         </span>
       )}
       {isGif && (
-        <span aria-hidden data-message-gif-badge className="absolute left-1.5 top-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-caption font-bold tracking-[0.06em] text-white">
+        <span aria-hidden data-message-gif-badge className="absolute left-1.5 top-1.5 rounded-md bg-art-chip px-1.5 py-0.5 text-caption font-semibold text-on-art">
           {t("gif.badge")}
         </span>
       )}
@@ -171,7 +171,7 @@ export function MessageImageGrid({
           <div key={image.key} className="relative">
             <Cell image={image} index={i} total={total} onOpen={onOpen} className="rounded-xl" />
             {i === 3 && extra > 0 && (
-              <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/50 text-lg font-semibold text-white">
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-art-chip text-lg font-semibold text-on-art">
                 +{extra}
               </span>
             )}
@@ -205,7 +205,7 @@ export function SendStateOverlay({
         aria-label={t("messages.uploadingPhotos")}
         className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-background/55 backdrop-blur-[1px]"
       >
-        <Loader2 size={26} className="animate-spin text-text motion-reduce:animate-none" aria-hidden />
+        <Loader2 size={24} className="animate-spin text-text motion-reduce:animate-none" aria-hidden />
       </span>
     );
   }

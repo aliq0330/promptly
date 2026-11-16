@@ -65,7 +65,7 @@ export function StatsSection({ groupId }: { groupId: string }) {
           ))}
         </div>
       ) : current.error || !current.stats ? (
-        <div className="space-y-3 rounded-lg border border-border-soft bg-surface px-4 py-6 text-center">
+        <div className="space-y-3 rounded-lg card-flat px-4 py-6 text-center">
           <p role="alert" className="text-small text-danger">
             {current.error ?? t("communities.stats.loadError")}
           </p>
@@ -98,7 +98,7 @@ function StatsBody({ stats }: { stats: CommunityStats }) {
     <div className="space-y-5">
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-lg border border-border-soft bg-surface px-3 py-3">
+          <div key={card.label} className="rounded-lg card-flat px-3 py-3">
             <dt className="flex items-center gap-1.5 text-caption text-text-muted">
               {card.icon} {card.label}
             </dt>
@@ -125,7 +125,7 @@ function MiniBars({ label, values }: { label: string; values: number[] }) {
   const max = Math.max(1, ...values);
   const total = values.reduce((sum, v) => sum + v, 0);
   return (
-    <figure className="rounded-lg border border-border-soft bg-surface p-3" aria-label={`${label}: ${total}`}>
+    <figure className="rounded-lg card-flat p-3" aria-label={`${label}: ${total}`}>
       <figcaption className="mb-2 flex items-baseline justify-between gap-2 text-caption text-text-muted">
         <span>{label}</span>
         <span className="font-medium text-text">{total}</span>

@@ -794,7 +794,7 @@ export function CreatePromptForm() {
       onSaveDraft={canSaveDraft && !communityId ? () => void handleSaveDraft() : undefined}
       aside={
         <>
-          <p className="mb-2 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
+          <p className="mb-2 text-caption font-semibold text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <PromptCard prompt={previewPrompt} />
           </div>
@@ -816,9 +816,9 @@ export function CreatePromptForm() {
               <Link
                 href="/create"
                 title={t("prompt.exitAnswerMode")}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-text-muted hover:text-text"
+                className="tap-area flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-text-muted hover:text-text"
               >
-                <X size={14} />
+                <X size={16} />
               </Link>
             </div>
             <div className="flex items-center gap-2">
@@ -1005,7 +1005,7 @@ export function CreatePromptForm() {
                   <SwitchRow
                     checked={showOnProfile}
                     onChange={setShowOnProfile}
-                    icon={showOnProfile ? <Eye size={18} /> : <EyeOff size={18} />}
+                    icon={showOnProfile ? <Eye size={20} /> : <EyeOff size={20} />}
                     title={showOnProfile ? t("prompt.shareOnProfile") : t("prompt.dontShareOnProfile")}
                     description={showOnProfile ? t("prompt.shareOnProfileHint") : t("prompt.dontShareOnProfileHint")}
                     ariaLabel={t("prompt.showOnProfileQuestion")}

@@ -2,18 +2,19 @@
 
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { GRID_COLUMNS, GRID_COLUMNS_ASIDE } from "@/features/content/content-card";
 
 /**
  * Topluluk sayfalarının ORTAK yerleşimi (docs/history/186-*). Tek kaynak burasıdır: sayfa genişliği, ana sütun + sağ yardımcı sütun,
  * gönderi akışı ve kompakt başlık. Akış Ana Sayfa ve Keşfet'inkiyle aynı listedir (`ContentGrid`).
  *
  * Genişlik kuralı: sayfa ≤ 1120px (uygulamanın `PageContainer` 1400px'inden bilerek dar — içerik akışı okunur kalsın). `xl`+ (≥1280px)
- * ekranda yardımcı sütun (16.5rem) ana sütunun yanına gelir; daha dar ekranda hiç çizilmez (ana içerik genişliğini bozmaz).
+ * ekranda yardımcı sütun (`--aside-w`) ana sütunun yanına gelir; daha dar ekranda hiç çizilmez (ana içerik genişliğini bozmaz).
  */
 export function CommunityLayout({ children, aside, asideLabel, className }: { children: ReactNode; aside?: ReactNode; asideLabel?: string; className?: string }) {
   return (
     <div className={cn("mx-auto w-full max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8", className)}>
-      <div className={cn(aside && "xl:grid xl:grid-cols-[minmax(0,1fr)_16.5rem] xl:items-start xl:gap-6")}>
+      <div className={cn(aside && "xl:grid xl:grid-cols-[minmax(0,1fr)_var(--aside-w)] xl:items-start xl:gap-6")}>
         <div className="min-w-0 space-y-4 sm:space-y-5">{children}</div>
         {aside && (
           <aside className="hidden space-y-3 xl:sticky xl:top-20 xl:block" aria-label={asideLabel} data-testid="community-aside">
@@ -31,12 +32,12 @@ export function CommunityReadingColumn({ children, className }: { children: Reac
 }
 
 /**
- * Gönderi akışı (Meydan, docs/history/190-*): Keşfet ile AYNI liste — `ContentGrid` (telefonda kenardan kenara çizgili satırlar, `sm`+ kutulu
- * kartlar); yanında xl'de yardımcı sütun durduğu için en çok iki sütun.
+ * Gönderi akışı (Meydan, docs/history/190-*): Keşfet ile AYNI liste — `ContentGrid` (her ekranda kutulu kartlar, `sm`+ sütunlar);
+ * yanında xl'de yardımcı sütun durduğu için en çok iki sütun.
  */
-export const FEED_GRID_COLUMNS = "sm:columns-2";
+export const FEED_GRID_COLUMNS = GRID_COLUMNS_ASIDE;
 /** Ana sayfa akışları (Gönderiler · Keşfet): yan sütun yok, geniş masaüstünde (xl) üç sütun — kart ızgarasıyla aynı sütun sayısı (docs/history/379-*). */
-export const HOME_FEED_GRID_COLUMNS = "sm:columns-2 xl:columns-3";
+export const HOME_FEED_GRID_COLUMNS = GRID_COLUMNS;
 /**
  * Gönderinin üstündeki bağlam satırı (topluluk adı, "Sabit"): telefonda satırın içinde kartın iç boşluğuna hizalı, `sm`+ kutunun hemen
  * üstünde. Öğe (`li`) `CONTENT_GRID_ITEM_CLASS` taşır, böylece satır ve kart aynı sütunda birlikte kalır.

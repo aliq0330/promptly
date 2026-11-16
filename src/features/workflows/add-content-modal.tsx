@@ -46,15 +46,15 @@ export function AddContentModal({
   return (
     <Modal onClose={onClose} labelledBy="workflow-add-content-title">
       <div
-        className="flex max-h-[90dvh] w-full max-w-xl flex-col rounded-lg border border-border bg-surface p-4 shadow-lg sm:p-5"
+        className="flex max-h-[90dvh] w-full max-w-xl flex-col rounded-lg card-flat p-4 shadow-lg sm:p-5"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 id="workflow-add-content-title" className="text-body font-semibold text-text">
             {t("workflow.pickerTitle")}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
-            <X size={18} />
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+            <X size={20} />
           </button>
         </div>
         <div className="mb-3 flex gap-2">
@@ -116,14 +116,14 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
   return (
     <div className="space-y-3">
       <div className="relative">
-        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
         <input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("workflow.pickerSearch")}
           aria-label={t("workflow.pickerSearch")}
-          className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="h-10 w-full rounded-lg card-inset pl-9 pr-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
       {list === null ? (
@@ -150,7 +150,7 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
                     <StorageImg src={ref.thumbnailUrl} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
                   ) : (
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
-                      <Icon size={18} />
+                      <Icon size={20} />
                     </span>
                   )}
                   <span className="min-w-0 flex-1">
@@ -165,7 +165,7 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
                     </span>
                   </span>
                   <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full", isAdded ? "bg-success text-success-foreground" : "bg-primary-soft text-primary")}>
-                    {isAdded ? <Check size={14} aria-label={t("workflow.pickerAdded")} /> : <Plus size={14} />}
+                    {isAdded ? <Check size={16} aria-label={t("workflow.pickerAdded")} /> : <Plus size={16} />}
                   </span>
                 </button>
               </li>
@@ -240,7 +240,7 @@ function ScratchForm({ onSelect }: { onSelect: (ref: WorkflowContentRef) => void
           value={body}
           onChange={(event) => setBody(event.target.value)}
           aria-invalid={errors.body}
-          className={cn("w-full rounded-md border border-border bg-background px-3 py-2 text-small text-text prompt-text")}
+          className={cn("w-full rounded-md card-inset px-3 py-2 text-small text-text prompt-text")}
         />
         {errors.body && <p className="mt-1 text-caption text-danger">{t("workflow.fieldRequired")}</p>}
       </div>

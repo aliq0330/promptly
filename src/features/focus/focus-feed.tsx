@@ -295,8 +295,8 @@ function FocusStrip({ items, active, onGo }: { items: PostFeedItem[]; active: nu
               {cover ? (
                 <StorageImg src={cover.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
               ) : (
-                <span className="flex h-full w-full items-center justify-center text-white/80">
-                  <Icon size={14} aria-hidden />
+                <span className="flex h-full w-full items-center justify-center text-on-art-muted">
+                  <Icon size={16} aria-hidden />
                 </span>
               )}
             </button>
@@ -354,7 +354,7 @@ function FocusMenu({ mediaOnly, onToggleMedia, muted, onToggleMuted }: { mediaOn
         aria-expanded={open}
         aria-label={t("focusFeed.menu")}
         title={t("focusFeed.menu")}
-        className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <MoreVertical size={20} aria-hidden />
         {!muted && <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />}
@@ -362,12 +362,12 @@ function FocusMenu({ mediaOnly, onToggleMedia, muted, onToggleMuted }: { mediaOn
       {open && (
         <div role="menu" className="absolute right-0 top-full z-40 mt-2 w-60 rounded-lg border border-border-soft bg-surface-elevated p-1.5 shadow-pop animate-pop-in">
           <button type="button" role="menuitemcheckbox" aria-checked={mediaOnly} title={t("focusFeed.mediaOnlyTitle")} onClick={onToggleMedia} className={item}>
-            <Images size={18} aria-hidden className="text-text-secondary" />
+            <Images size={20} aria-hidden className="text-text-secondary" />
             {t("focusFeed.mediaOnly")}
             <MenuSwitch on={mediaOnly} />
           </button>
           <button type="button" role="menuitemcheckbox" aria-checked={!muted} onClick={onToggleMuted} className={item}>
-            {muted ? <VolumeX size={18} aria-hidden className="text-text-secondary" /> : <Volume2 size={18} aria-hidden className="text-text-secondary" />}
+            {muted ? <VolumeX size={20} aria-hidden className="text-text-secondary" /> : <Volume2 size={20} aria-hidden className="text-text-secondary" />}
             {muted ? t("focusFeed.soundOn") : t("focusFeed.soundOff")}
             <MenuSwitch on={!muted} />
           </button>
@@ -607,7 +607,7 @@ function FocusScreen() {
   const backdropUrl = activeItem && !loading ? (focusFeedCover(activeItem)?.url ?? null) : null;
   // Albüm (docs/history/203-*): one roomy row — round 44px buttons on the ends, the two feeds as a capsule between them.
   const barButton =
-    "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+    "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
   // Rendered into <body>, over the whole app (client only — see `FocusPage`).
   return createPortal(
@@ -618,11 +618,11 @@ function FocusScreen() {
         <FocusFeedBackdrop url={backdropUrl} />
 
         {/* Floating bar: over the posts on a phone (a soft scrim keeps it legible), the same from `md`. */}
-        <div className={cn(HIDE_WHILE_COMMENTS, "md:group-data-[comments-open]/stage:right-[420px]", "absolute inset-x-0 top-0 z-30 flex min-w-0 items-center gap-2 bg-gradient-to-b from-black/50 to-transparent px-3 pb-7 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:gap-3 sm:px-5")}>
+        <div className={cn(HIDE_WHILE_COMMENTS, "md:group-data-[comments-open]/stage:right-[420px]", "absolute inset-x-0 top-0 z-30 flex min-w-0 items-center gap-2 art-scrim-top px-3 pb-7 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:gap-3 sm:px-5")}>
           <button type="button" onClick={close} aria-label={t("focusFeed.close")} title={t("focusFeed.close")} className={cn(barButton, "w-11")}>
             <X size={20} aria-hidden />
           </button>
-          <span className="hidden shrink-0 font-display text-h3 font-bold tracking-[-0.03em] text-white sm:inline">{t("nav.focus")}</span>
+          <span className="hidden shrink-0 font-display text-h3 font-bold tracking-[-0.03em] text-on-art sm:inline">{t("nav.focus")}</span>
           <div className="flex min-w-0 flex-1 justify-center">
             <FocusFilterMenu
               channel={channel}
@@ -643,11 +643,11 @@ function FocusScreen() {
           </div>
           {total > 0 && !loading && (
             <span
-              className="hidden shrink-0 rounded-full border border-white/15 bg-black/35 px-2.5 py-1 text-caption font-semibold tabular-nums text-white/85 backdrop-blur-md md:inline"
+              className="hidden shrink-0 rounded-full border border-white/15 bg-art-chip px-2.5 py-1 text-caption font-semibold tabular-nums text-on-art backdrop-blur-md md:inline"
               aria-label={t("focusFeed.position", { current: Math.min(active + 1, total), total })}
             >
               {String(Math.min(active + 1, total)).padStart(2, "0")}
-              <span aria-hidden className="px-1 text-white/50">/</span>
+              <span aria-hidden className="px-1 text-on-art-faint">/</span>
               {String(total).padStart(2, "0")}
               {hasMore ? "+" : ""}
             </span>

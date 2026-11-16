@@ -117,8 +117,8 @@ function LinkedContent({ card, list }: { card: NotificationCard; list: List }) {
         {linked.thumbnailUrl && <StorageImage src={linked.thumbnailUrl} alt="" fill sizes="80px" className="object-cover" />}
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <p className="text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t(`communities.feed.type.${linked.type}` as const)}</p>
-        <p className="mt-0.5 line-clamp-2 font-display text-[1.0625rem] font-bold leading-snug text-text">{linked.title}</p>
+        <p className="text-caption font-semibold text-text-muted">{t(`communities.feed.type.${linked.type}` as const)}</p>
+        <p className="mt-0.5 line-clamp-2 font-display text-h3 font-bold leading-snug text-text">{linked.title}</p>
       </div>
       <Link href={attachmentHref(item.type, item.id)} className={buttonClassName({ variant: "secondary", className: "h-11 self-center" })}>
         {t(`nc.open.${item.type}` as const)}
@@ -172,8 +172,8 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         <p className="text-small font-semibold text-primary">
           {t(cardKindKey(card))} <span className="font-medium text-text-muted">· {new Date(card.sortAt).toLocaleString(language === "tr" ? "tr-TR" : "en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
         </p>
-        <h2 className="mt-1 font-display text-[1.375rem] font-bold leading-snug tracking-[-0.01em] text-text">
-          <CardHeadline card={card} as="span" plain className="!text-[1.375rem] !font-bold" />
+        <h2 className="mt-1 font-display text-h2 font-bold leading-snug tracking-[-0.01em] text-text">
+          <CardHeadline card={card} as="span" plain className="!text-h2 !font-semibold" />
         </h2>
       </div>
       <div className="flex gap-1.5">
@@ -192,7 +192,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
       {kind === "comment" && (
         <div className="space-y-3" data-detail-body="">
           {(!comment || comment.deleted || comment.body.trim()) && (
-            <p className="max-w-[66ch] whitespace-pre-line break-words text-[1.0625rem] leading-relaxed text-text [overflow-wrap:anywhere]">
+            <p className="max-w-[66ch] whitespace-pre-line break-words text-h3 leading-relaxed text-text [overflow-wrap:anywhere]">
               {comment ? (comment.deleted ? t("nc.commentDeleted") : comment.body) : "…"}
             </p>
           )}
@@ -210,7 +210,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         <div className="flex flex-wrap items-center gap-4 rounded-lg bg-surface-soft p-4.5" data-profile-card="">
           <Avatar src={actor.avatarUrl} alt={actor.displayName} size={56} />
           <div className="min-w-0 flex-1 basis-52">
-            <p className="text-[1.0625rem] font-bold text-text">{actor.displayName}</p>
+            <p className="text-h3 font-semibold text-text">{actor.displayName}</p>
             <p className="mt-0.5 text-small text-text-muted">
               @{actor.username}
               {actor.bio ? ` · ${actor.bio}` : ""}
@@ -263,8 +263,8 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         </div>
       )}
       {kind === "milestone" && milestone && (
-        <div className="flex flex-wrap items-center gap-5 rounded-lg border border-secondary/30 bg-secondary/10 p-5" data-milestone="">
-          <p className="font-display text-[3.5rem] font-extrabold leading-none tracking-[-0.03em] text-secondary">{milestone.count}</p>
+        <div className="flex flex-wrap items-center gap-5 rounded-lg border border-secondary/30 bg-secondary-soft p-5" data-milestone="">
+          <p className="font-display text-display-xl font-extrabold leading-none tracking-[-0.03em] text-secondary">{milestone.count}</p>
           <p className="min-w-0 flex-1 basis-60 text-body leading-relaxed text-text-secondary">{t(milestone.kind === "copies" ? "nc.milestone.copiesBody" : "nc.milestone.reactionsBody", { count: milestone.count, title: milestone.title })}</p>
           <Link href={card.targetHref} className={buttonClassName({ variant: "primary", className: "h-11 !bg-secondary" })}>
             {t("nc.viewStats")}
@@ -319,9 +319,9 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
       {/* Yanıt kutusu içeriğin AKIŞINDA (sabit çubuk değil): telefonda altındaki Sessize al / Yarın hatırlat satırını örtmez. */}
       {actions.replyTarget && user && (
         <div data-reply-composer="">
-          <label htmlFor="detail-reply" className="mb-2 block text-label font-bold text-text-secondary">{t("nc.replyLabel")}</label>
-          <div className="space-y-3 rounded-lg border border-border bg-surface p-3 pl-4">
-            <textarea id="detail-reply" rows={variant === "panel" ? 3 : 2} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} placeholder={t("nc.replyPlaceholder", { name: actor?.displayName ?? "" })} className="w-full resize-none bg-transparent text-body text-text outline-none placeholder:text-text-muted" />
+          <label htmlFor="detail-reply" className="mb-2 block text-label font-semibold text-text-secondary">{t("nc.replyLabel")}</label>
+          <div className="space-y-3 rounded-lg card-flat p-3 pl-4">
+            <textarea id="detail-reply" rows={variant === "panel" ? 3 : 2} value={draft} maxLength={2000} onChange={(event) => setDraft(event.target.value)} placeholder={t("nc.replyPlaceholder", { name: actor?.displayName ?? "" })} className="w-full resize-none bg-transparent text-body text-text focus-ring-inset placeholder:text-text-muted" />
             <CommentExtrasPreview extras={extras} />
             <div className="flex flex-wrap items-center gap-1.5">
               <CommentExtrasToolbar extras={extras} userId={user.id} disabled={actions.busy === "reply"} />
@@ -349,7 +349,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
 
   if (variant === "panel") {
     return (
-      <article aria-label={t("nc.selectedAria")} data-notification-detail={card.key} className="rounded-lg border border-border-soft bg-surface p-7 shadow-card">
+      <article aria-label={t("nc.selectedAria")} data-notification-detail={card.key} className="rounded-lg card-flat p-7 shadow-card">
         {content}
       </article>
     );
@@ -361,7 +361,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         <button type="button" onClick={onBack} aria-label={t("nc.backToList")} className="grid size-11 place-items-center rounded-full bg-surface-soft text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-action="back">
           <ArrowLeft size={20} aria-hidden />
         </button>
-        <p className="min-w-0 flex-1 truncate font-display text-[1.25rem] font-bold tracking-[-0.01em]">{t(cardKindKey(card))}</p>
+        <p className="min-w-0 flex-1 truncate font-display text-h2 font-bold tracking-[-0.01em]">{t(cardKindKey(card))}</p>
         <span className="grid size-11 place-items-center text-text-muted" aria-hidden>
           <MoreVertical size={20} />
         </span>

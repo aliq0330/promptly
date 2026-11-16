@@ -243,7 +243,7 @@ export function SaveToCollectionModal({
   return (
     <Modal onClose={requestClose} labelledBy="save-modal-title">
       <div
-        className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg card-flat p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
@@ -255,8 +255,8 @@ export function SaveToCollectionModal({
               <p className="text-caption text-text-muted">{isSaved ? t("collection.manageHint") : t("collection.pickToSaveHint")}</p>
             )}
           </div>
-          <button type="button" onClick={requestClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
-            <X size={18} />
+          <button type="button" onClick={requestClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+            <X size={20} />
           </button>
         </div>
 
@@ -273,7 +273,7 @@ export function SaveToCollectionModal({
                 <p className="py-8 text-center text-small text-danger">{t("common.actionFailedRetry")}</p>
               ) : collections.length === 0 ? (
                 <div className="space-y-3 py-4 text-center">
-                  <FolderPlus size={28} className="mx-auto text-text-muted" />
+                  <FolderPlus size={24} className="mx-auto text-text-muted" />
                   <p className="text-small text-text-muted">{t("collection.noneYetHint")}</p>
                 </div>
               ) : (
@@ -317,7 +317,7 @@ export function SaveToCollectionModal({
                           isMember ? "border-primary bg-primary text-primary-foreground" : "border-border text-text-muted",
                         )}
                       >
-                        {isMember ? <Check size={14} /> : <Plus size={14} />}
+                        {isMember ? <Check size={16} /> : <Plus size={16} />}
                       </span>
                     </button>
                   );
@@ -357,7 +357,7 @@ export function SaveToCollectionModal({
                 {t("common.cancel")}
               </Button>
               <Button type="button" onClick={handleCommit} disabled={!isDirty || saving || loading || loadFailed}>
-                {saving && <Loader2 size={14} className="animate-spin" />}
+                {saving && <Loader2 size={16} className="animate-spin" />}
                 {saving ? t("common.saving") : t("common.save")}
               </Button>
             </div>

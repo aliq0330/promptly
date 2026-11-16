@@ -46,7 +46,7 @@ export function UserActions({ user, onChanged, onDeleted }: { user: AdminUser; o
   }
 
   if (user.role === "moderator") {
-    return <p className="rounded-lg border border-border-soft bg-surface p-4 text-small text-text-muted">{t("admin.actions.cannotModerator")}</p>;
+    return <p className="rounded-lg card-flat p-4 text-small text-text-muted">{t("admin.actions.cannotModerator")}</p>;
   }
 
   const reasonInput = (
@@ -60,7 +60,7 @@ export function UserActions({ user, onChanged, onDeleted }: { user: AdminUser; o
   );
 
   return (
-    <section className="space-y-5 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5" data-admin-actions>
+    <section className="space-y-5 rounded-lg card-flat p-4 shadow-card sm:p-5" data-admin-actions>
       <h3 className="text-small font-semibold text-text">{t("admin.actions.title")}</h3>
 
       <div className="space-y-2">
@@ -95,7 +95,7 @@ export function UserActions({ user, onChanged, onDeleted }: { user: AdminUser; o
               <label className="text-caption text-text-muted" htmlFor="admin-suspend-days">
                 {t("admin.actions.duration")}
               </label>
-              <select id="admin-suspend-days" value={days} onChange={(event) => setDays(Number(event.target.value))} className="h-10 rounded-lg border border-border bg-surface px-2 text-small text-text">
+              <select id="admin-suspend-days" value={days} onChange={(event) => setDays(Number(event.target.value))} className="h-10 rounded-lg card-flat px-2 text-small text-text">
                 {DAYS.map((d) => (
                   <option key={d.days} value={d.days}>
                     {t(d.key)}

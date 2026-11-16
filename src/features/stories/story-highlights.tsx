@@ -243,13 +243,13 @@ export function HighlightEditor({
 
   return (
     <Modal onClose={onClose} labelledBy="highlight-editor-title">
-      <DialogShell className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell className="flex max-h-[88dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop">
         <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-3">
           <h2 id="highlight-editor-title" className="text-h3 font-bold text-text">
             {highlight ? t("stories.highlight.editTitle") : t("stories.highlight.newTitle")}
           </h2>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
-            <X size={18} aria-hidden />
+            <X size={20} aria-hidden />
           </button>
         </div>
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
@@ -259,7 +259,7 @@ export function HighlightEditor({
               value={title}
               maxLength={STORY_LIMITS.highlightTitleMax}
               onChange={(event) => setTitle(event.target.value)}
-              className="min-h-11 w-full rounded-md border border-border bg-surface px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="min-h-11 w-full rounded-md card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
           </label>
           <p className="text-caption text-text-muted">{t("stories.highlight.privacyNote")}</p>
@@ -297,7 +297,7 @@ export function HighlightEditor({
           )}
           {loading && (
             <p className="flex items-center justify-center gap-2 py-3 text-small text-text-muted">
-              <Loader2 size={15} className="animate-spin" aria-hidden /> {t("common.loading")}
+              <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
             </p>
           )}
           {hasMore && !loading && (
@@ -308,13 +308,13 @@ export function HighlightEditor({
         <div className="flex items-center justify-between gap-2 border-t border-border-soft px-4 py-3">
           {highlight ? (
             <Button type="button" variant="ghost" size="sm" className="text-danger" onClick={() => void remove()} disabled={busy}>
-              <TrashIcon size={14} /> {t("stories.highlight.delete")}
+              <TrashIcon size={16} /> {t("stories.highlight.delete")}
             </Button>
           ) : (
             <span />
           )}
           <Button type="button" onClick={() => void save()} disabled={busy || !title.trim() || selected.length === 0}>
-            {busy ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Check size={16} aria-hidden />} {t("common.save")}
+            {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Check size={16} aria-hidden />} {t("common.save")}
           </Button>
         </div>
       </DialogShell>

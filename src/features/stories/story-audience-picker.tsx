@@ -74,10 +74,10 @@ export function StoryAudiencePicker({
       </div>
       <p className="text-caption text-text-muted">{t(OPTIONS.find((o) => o.value === audience)!.hint)}</p>
       {needsCommunities && (
-        <div className="max-h-56 space-y-1 overflow-y-auto rounded-md border border-border-soft bg-surface p-1.5">
+        <div className="max-h-56 space-y-1 overflow-y-auto rounded-md card-flat p-1.5">
           {communities === null ? (
             <p className="flex items-center gap-2 px-2 py-3 text-small text-text-muted">
-              <Loader2 size={14} className="animate-spin" aria-hidden /> {t("common.loading")}
+              <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
             </p>
           ) : communities.length === 0 ? (
             <p className="px-2 py-3 text-small text-text-muted">{failed ? t("stories.error.generic") : t("stories.audience.noCommunities")}</p>

@@ -42,14 +42,14 @@ export function PhoneHomeIdentity({
 }) {
   return (
     <div className="space-y-3 md:hidden" data-phone-home-identity data-testid={testId}>
-      <Link href={backHref} className="-ml-1 inline-flex h-8 items-center gap-0.5 rounded-full pr-2 text-small font-medium text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-phone-back {...backProps}>
-        <ArrowLeft size={18} aria-hidden />
+      <Link href={backHref} className="-ml-1 inline-flex h-9 items-center gap-0.5 rounded-full pr-2 text-small font-medium text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-phone-back {...backProps}>
+        <ArrowLeft size={20} aria-hidden />
         {backLabel}
       </Link>
       <div className="flex items-center gap-3">
         <span className="shrink-0 [&>*]:!rounded-lg">{mark}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-caption font-bold uppercase tracking-[0.08em] text-primary">{eyebrow}</p>
+          <p className="text-caption font-semibold text-primary">{eyebrow}</p>
           <h1 className="font-display text-h2 font-bold leading-tight text-text [overflow-wrap:anywhere]">{title}</h1>
           <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-small text-text-secondary">{meta}</div>
         </div>
@@ -75,13 +75,13 @@ export function PhoneTileGrid({ items, ariaLabel, className }: { items: PhoneSec
             key={item.key}
             href={item.href}
             data-phone-section={item.key}
-            className="relative flex h-[62px] items-center gap-3 rounded-lg border border-border-soft bg-surface px-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="relative flex h-[62px] items-center gap-3 rounded-lg card-flat px-3 transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
-              <Icon size={18} aria-hidden />
+              <Icon size={20} aria-hidden />
             </span>
             <span className="min-w-0 flex-1 leading-tight">
-              <span className="block truncate text-body font-bold text-text">{item.label}</span>
+              <span className="block truncate text-body font-semibold text-text">{item.label}</span>
               {(item.sub ?? item.meta) !== undefined && (item.sub ?? item.meta) !== "" && <span className="block truncate text-caption text-text-muted">{item.sub ?? item.meta}</span>}
             </span>
             {item.badge ? (
@@ -103,7 +103,7 @@ export function PhoneHomeSection({ title, href, linkLabel, children, testId }: {
       <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
         <h2 className="font-display text-body font-bold text-text">{title}</h2>
         {href && linkLabel && (
-          <Link href={href} className="text-small font-bold text-primary hover:underline">
+          <Link href={href} className="text-small font-semibold text-primary hover:underline">
             {linkLabel}
           </Link>
         )}
@@ -114,7 +114,7 @@ export function PhoneHomeSection({ title, href, linkLabel, children, testId }: {
 }
 
 export function PhoneHomeCard({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface", className)}>{children}</div>;
+  return <div className={cn("divide-y divide-border-soft overflow-hidden rounded-lg card-flat", className)}>{children}</div>;
 }
 
 /** Önizleme satırı: küçük görsel/simge + iki satır metin (bağlantı) + (varsa) sağda eylem. Eylem bağlantının DIŞINDA durur (iç içe bağlantı olmaz). */
@@ -123,7 +123,7 @@ export function PhoneHomeRow({ thumb, title, sub, href, action, testId }: { thum
     <>
       <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-primary-soft text-primary">{thumb}</span>
       <span className="min-w-0 flex-1 leading-tight">
-        <span className="block truncate text-body font-bold text-text">{title}</span>
+        <span className="block truncate text-body font-semibold text-text">{title}</span>
         {sub && <span className="mt-0.5 block truncate text-caption text-text-muted">{sub}</span>}
       </span>
     </>
@@ -143,5 +143,5 @@ export function PhoneHomeRow({ thumb, title, sub, href, action, testId }: { thum
 }
 
 /** Küçük hap düğme sınıfı (önizleme satırlarındaki "İncele" / "Katıl"). */
-export const PHONE_HOME_PILL = "inline-flex h-8 shrink-0 items-center rounded-full bg-primary px-4 text-small font-bold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
-export const PHONE_HOME_PILL_OUTLINE = "inline-flex h-8 shrink-0 items-center rounded-full border border-border-strong bg-surface px-4 text-small font-bold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+export const PHONE_HOME_PILL = "inline-flex h-8 shrink-0 items-center rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+export const PHONE_HOME_PILL_OUTLINE = "inline-flex h-8 shrink-0 items-center rounded-full border border-border-strong bg-surface px-4 text-small font-semibold text-text hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";

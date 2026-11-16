@@ -616,21 +616,21 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                     </button>
                   </div>
                 ) : (
-                  <Loader2 size={28} className="animate-spin text-story-white/70" aria-label={t("common.loading")} />
+                  <Loader2 size={24} className="animate-spin text-story-white/70" aria-label={t("common.loading")} />
                 )}
               </div>
             )}
 
             {story && !mediaReady && !mediaFailed && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <Loader2 size={28} className="animate-spin text-story-white/70" aria-label={t("common.loading")} />
+                <Loader2 size={24} className="animate-spin text-story-white/70" aria-label={t("common.loading")} />
               </div>
             )}
             {story && mediaFailed && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-story-scrim px-6 text-center" data-story-interactive>
                 <p role="alert" className="text-small">{t("stories.error.media")}</p>
                 <button type="button" onClick={() => setMediaAttempt((n) => n + 1)} className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-story-white/15 px-4 text-small font-semibold">
-                  <RefreshCw size={14} aria-hidden /> {t("common.retry")}
+                  <RefreshCw size={16} aria-hidden /> {t("common.retry")}
                 </button>
               </div>
             )}
@@ -675,14 +675,14 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                 <span className="ml-auto flex shrink-0 items-center">
                   {story.kind === "video" && (
                     <IconButton label={muted ? t("stories.viewer.unmute") : t("stories.viewer.mute")} onClick={() => setMuted((m) => !m)}>
-                      {muted ? <VolumeX size={18} aria-hidden /> : <Volume2 size={18} aria-hidden />}
+                      {muted ? <VolumeX size={20} aria-hidden /> : <Volume2 size={20} aria-hidden />}
                     </IconButton>
                   )}
                   <IconButton label={paused ? t("stories.viewer.play") : t("stories.viewer.pause")} onClick={() => setPaused((p) => !p)} pressed={paused}>
-                    {paused ? <Play size={18} aria-hidden /> : <Pause size={18} aria-hidden />}
+                    {paused ? <Play size={20} aria-hidden /> : <Pause size={20} aria-hidden />}
                   </IconButton>
                   <IconButton label={t("stories.viewer.more")} onClick={() => setMenuOpen((open) => !open)} expanded={menuOpen}>
-                    <MoreVertical size={18} aria-hidden />
+                    <MoreVertical size={20} aria-hidden />
                   </IconButton>
                   <IconButton label={t("common.close")} onClick={close}>
                     <X size={20} aria-hidden />
@@ -846,7 +846,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                 onClick={() => setSheet({ kind: "activity", tab: "viewers" })}
                 className="inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-small font-semibold hover:bg-story-white/10"
               >
-                <Eye size={18} aria-hidden /> {t("stories.viewers.button", { count: story.viewerCount })}
+                <Eye size={20} aria-hidden /> {t("stories.viewers.button", { count: story.viewerCount })}
                 {story.reactionCount > 0 && <span className="text-story-white/70">· {t("stories.viewers.reactions", { count: story.reactionCount })}</span>}
               </button>
               <button type="button" onClick={() => setSheet({ kind: "highlight" })} className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-small font-semibold hover:bg-story-white/10">
@@ -1012,7 +1012,7 @@ function ReplyBar({
           aria-label={t("stories.reply.send")}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-story-white text-story-black disabled:opacity-50"
         >
-          {sending ? <Loader2 size={17} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
+          {sending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
         </button>
       </form>
       <p className="min-h-4 text-center text-caption text-story-white/75" aria-live="polite">

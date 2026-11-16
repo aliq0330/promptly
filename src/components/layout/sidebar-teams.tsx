@@ -43,7 +43,7 @@ function MyTeams() {
   const current = pathname.startsWith("/teams/local") ? params.get("id") : null;
   return (
     <div data-testid="sidebar-teams" className="hidden lg:block">
-      <p className="mb-1.5 px-3 text-caption font-semibold uppercase tracking-[0.1em] text-text-muted">{t("tm.sidebar.title")}</p>
+      <p className="mb-1.5 px-3 text-caption font-semibold text-text-muted">{t("tm.sidebar.title")}</p>
       <ul className="space-y-0.5">
         {teams.slice(0, 6).map((team) => {
           const active = current === team.id || current === team.slug;

@@ -121,7 +121,7 @@ export function SkillVersionsSection({
                 <span className="ml-auto flex items-center gap-1">
                   {canPin && (
                     <Button type="button" variant="ghost" size="sm" disabled={busy === `pin:${version.id}`} aria-pressed={pinned === version.version} onClick={() => void togglePin(version)} data-skill-pin="">
-                      <Pin size={14} aria-hidden /> {pinned === version.version ? t("skill.detail.unpin") : t("skill.detail.pin")}
+                      <Pin size={16} aria-hidden /> {pinned === version.version ? t("skill.detail.unpin") : t("skill.detail.pin")}
                     </Button>
                   )}
                   {isOwn && (
@@ -130,7 +130,7 @@ export function SkillVersionsSection({
                     </Button>
                   )}
                   <Button type="button" variant="outline" size="sm" onClick={() => void download(version)} data-skill-version-download="">
-                    <Download size={14} aria-hidden /> ZIP
+                    <Download size={16} aria-hidden /> ZIP
                   </Button>
                 </span>
               </div>

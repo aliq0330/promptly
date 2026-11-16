@@ -52,7 +52,7 @@ export function HubHeader({
           href={backHref}
           data-hub-back
           aria-label={t("hub.backTo", { name: backLabel })}
-          className="-ml-2 inline-flex h-10 min-w-0 items-center gap-0.5 rounded-full pl-1 pr-3 text-small font-bold text-primary transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="-ml-2 inline-flex h-10 min-w-0 items-center gap-0.5 rounded-full pl-1 pr-3 text-small font-semibold text-primary transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ChevronLeft size={20} aria-hidden className="shrink-0" />
           <span className="truncate">{backLabel}</span>
@@ -119,7 +119,7 @@ export function HubBody({ embedded, selecting, children }: { embedded: boolean; 
 export function HubSection({ title, hint, children, testId }: { title: string; hint?: string; children: ReactNode; testId?: string }) {
   return (
     <section data-testid={testId} className="space-y-0.5 pb-1">
-      <h2 className="px-4 pb-0.5 pt-2 text-label font-bold uppercase tracking-wide text-text-muted">{title}</h2>
+      <h2 className="px-4 pb-0.5 pt-2 text-label font-semibold text-text-muted">{title}</h2>
       {hint && <p className="px-4 pb-1 text-caption text-text-muted">{hint}</p>}
       <div>{children}</div>
     </section>
@@ -182,7 +182,7 @@ export function HubRow({
       <span className="flex min-h-[68px] min-w-0 flex-1 flex-col justify-center gap-0.5 border-b border-border-soft py-2 pr-4">
         <span className="flex items-baseline justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1.5">
-            <span className={cn("truncate text-body tracking-[-0.01em] text-text", shownUnread > 0 ? "font-bold" : "font-semibold")}>{title}</span>
+            <span className={cn("truncate text-body tracking-[-0.01em] text-text", shownUnread > 0 ? "font-semibold" : "font-semibold")}>{title}</span>
             {tags}
             <MuteChip scope={muteScope} />
           </span>
@@ -198,7 +198,7 @@ export function HubRow({
               {formatUnread(shownUnread)}
             </span>
           )}
-          {muteScope && <BellOff size={14} className="shrink-0 text-text-muted" aria-hidden />}
+          {muteScope && <BellOff size={16} className="shrink-0 text-text-muted" aria-hidden />}
           {trailing}
           {chevron && !selecting && <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />}
         </span>
@@ -240,8 +240,8 @@ export function HubTile({ children, tone = "plain", square = false }: { children
     <span
       aria-hidden
       className={cn(
-        "grid h-11 w-11 shrink-0 place-items-center font-display text-[1.125rem] font-bold",
-        square ? "rounded-[14px]" : "rounded-full",
+        "grid h-11 w-11 shrink-0 place-items-center font-display text-h3 font-bold",
+        square ? "rounded-md" : "rounded-full",
         tone === "primary" ? "bg-primary-soft text-primary" : tone === "success" ? "bg-success-soft text-success" : "bg-surface-soft text-text-secondary",
       )}
     >

@@ -62,7 +62,7 @@ export function SearchQuotes({ query, onCount }: { query: string; onCount: (coun
     <section className="space-y-3" data-search-quotes="">
       <Eyebrow as="h2" className="px-1">
         {t("quotes.search.title")}
-        <span className="rounded-xs bg-surface-soft px-1.5 py-0.5 tabular-nums tracking-normal text-text-muted">{quotes.length}</span>
+        <span className="rounded-xs bg-surface-soft px-1.5 py-0.5 tabular-nums text-text-muted">{quotes.length}</span>
       </Eyebrow>
       <ContentGrid>
         {quotes.map((quote) => (

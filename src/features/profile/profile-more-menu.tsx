@@ -94,7 +94,7 @@ export function ProfileMoreMenu({
         aria-expanded={open}
         className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text", triggerClassName)}
       >
-        <MoreVertical size={18} />
+        <MoreVertical size={20} />
       </button>
 
       {open && (
@@ -111,7 +111,7 @@ export function ProfileMoreMenu({
             </div>
           )}
           <button type="button" role="menuitem" onClick={() => void handleMuteClick()} disabled={!mute.loaded} data-action={mute.muted ? "profile-unmute" : "profile-mute"} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-small text-text hover:bg-surface-soft disabled:opacity-50">
-            {mute.muted ? <Bell size={14} aria-hidden /> : <BellOff size={14} aria-hidden />}
+            {mute.muted ? <Bell size={16} aria-hidden /> : <BellOff size={16} aria-hidden />}
             <span className="min-w-0">
               <span className="block">{mute.muted ? t("nc.profile.unmute") : t("nc.profile.mute")}</span>
               <span className="block text-caption text-text-muted">{mute.muted ? t("nc.profile.unmuteHint") : t("nc.profile.muteHint")}</span>
@@ -126,7 +126,7 @@ export function ProfileMoreMenu({
               blockState.isBlocked ? "text-text" : "text-danger",
             )}
           >
-            <Ban size={14} />
+            <Ban size={16} />
             {blockState.isBlocked ? t("profile.unblock") : confirmingBlock ? t("common.confirmDelete") : t("profile.block")}
           </button>
           <div className="border-t border-border pt-3">

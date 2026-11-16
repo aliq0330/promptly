@@ -114,7 +114,7 @@ export function StoryArchiveView() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/stories/create" className={buttonClassName({ variant: "outline", size: "sm" })}>
-            <Plus size={14} aria-hidden /> {t("stories.tray.add")}
+            <Plus size={16} aria-hidden /> {t("stories.tray.add")}
           </Link>
           <Button
             type="button"
@@ -126,12 +126,12 @@ export function StoryArchiveView() {
               setSelected([]);
             }}
           >
-            <Highlighter size={14} aria-hidden /> {selecting ? t("common.cancelAction") : t("stories.archive.selectForHighlight")}
+            <Highlighter size={16} aria-hidden /> {selecting ? t("common.cancelAction") : t("stories.archive.selectForHighlight")}
           </Button>
         </div>
       </header>
 
-      <label className="flex items-start gap-3 rounded-lg border border-border-soft bg-surface p-3">
+      <label className="flex items-start gap-3 rounded-lg card-flat p-3">
         <input
           type="checkbox"
           checked={archiveEnabled ?? true}
@@ -149,7 +149,7 @@ export function StoryArchiveView() {
 
       {stories === null ? (
         <p className="flex items-center gap-2 text-small text-text-muted">
-          <Loader2 size={15} className="animate-spin" aria-hidden /> {t("common.loading")}
+          <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
         </p>
       ) : stories.length === 0 ? (
         <EmptyState icon={Archive} title={t("stories.archive.empty")} description={t("stories.archive.emptyHint")} />

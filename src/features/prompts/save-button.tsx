@@ -115,7 +115,7 @@ export function SaveButton({
         aria-label={isSaved ? t("prompt.addToCollection") : t("prompt.saveAria", { count })}
         className={sharedClassName}
       >
-        <BookmarkIcon filled={isSaved} popSeq={popSeq} size={size} strokeWidth={1.75} />
+        <BookmarkIcon filled={isSaved} popSeq={popSeq} size={size} />
         <span aria-hidden>{formatCount(count)}</span>
       </button>
 

@@ -106,7 +106,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
   // Rarely-used actions live in the band's ⋮ menu (docs/history/279-*); RelationMapMenu adds the relation-map row after these.
   const menuExtras = useMemo<PostMenuExtra[]>(
-    () => (user && !isOwn ? [{ key: "suggest-edit", label: t("prompt.suggestEdit"), icon: <PenLine size={14} />, onSelect: () => setIsSuggestModalOpen(true) }] : []),
+    () => (user && !isOwn ? [{ key: "suggest-edit", label: t("prompt.suggestEdit"), icon: <PenLine size={16} />, onSelect: () => setIsSuggestModalOpen(true) }] : []),
     [user, isOwn, t],
   );
 
@@ -292,7 +292,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             >
               <div data-prompt-block className="relative overflow-hidden rounded-xl bg-surface-soft">
                 {variables.length > 0 && <AssembleStatus filled={assemble.filled} total={assemble.total} complete={assemble.complete} />}
-                <ScrollablePrompt className="px-5 py-5 text-[0.875rem] text-text">
+                <ScrollablePrompt className="px-5 py-5 text-small text-text">
                   {variables.length > 0 ? (
                     <AssembledPromptText template={livePromptText} values={variableValues} visible={variableVisible} settled={assemble.complete} />
                   ) : (

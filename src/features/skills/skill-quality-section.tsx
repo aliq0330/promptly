@@ -27,7 +27,7 @@ export function SkillQualitySection({ skill, hasPackage }: { skill: Skill; hasPa
   const passed = checks.filter((check) => check.ok).length;
   return (
     <DetailSection title={t("skill.quality.title")}>
-      <div data-skill-quality="" className="rounded-xl border border-border-soft bg-surface px-4 py-3">
+      <div data-skill-quality="" className="rounded-lg card-flat px-4 py-3">
         <p className="text-small font-semibold text-text" data-skill-quality-score="">
           {t("skill.quality.score", { done: passed, total: checks.length })}
         </p>

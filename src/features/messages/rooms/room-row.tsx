@@ -54,7 +54,7 @@ export function RoomRow({
     <>
       <RoomIconTile icon={room.icon} size={compact ? 36 : 44} selected={current} />
       <span className="min-w-0 flex-1">
-        <span className={cn("block truncate text-body tracking-[-0.01em]", unread || current ? "font-bold text-text" : "font-semibold text-text")}>{room.name}</span>
+        <span className={cn("block truncate text-body tracking-[-0.01em]", unread || current ? "font-semibold text-text" : "font-semibold text-text")}>{room.name}</span>
         {subtitle && <span className={cn("block truncate text-caption", current ? "font-semibold text-primary" : "text-text-muted")}>{subtitle}</span>}
       </span>
       {readOnly && <Lock size={16} className="shrink-0 text-text-muted" aria-label={t("rooms.row.readOnly")} />}
@@ -62,7 +62,7 @@ export function RoomRow({
       {room.muted && <BellOff size={16} className="shrink-0 text-text-muted" aria-label={t("rooms.row.muted")} />}
       {showDot && <span role="img" aria-label={t("rooms.row.unreadDot")} className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />}
       {unread && !showDot && (
-        <span data-room-unread className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[12px] font-bold text-primary-foreground">
+        <span data-room-unread className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-caption font-semibold text-primary-foreground">
           {formatUnread(room.unreadCount)}
         </span>
       )}

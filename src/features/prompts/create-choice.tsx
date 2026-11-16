@@ -73,7 +73,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
                 <span className="block text-body font-semibold text-text">{t(option.titleKey)}</span>
                 {option.hintKey && <span className="block truncate text-caption text-text-muted">{t(option.hintKey)}</span>}
               </span>
-              <ChevronRight size={18} aria-hidden className="shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
+              <ChevronRight size={20} aria-hidden className="shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
             </Link>
           </li>
         ))}
@@ -106,7 +106,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
           <span className="block text-body font-semibold text-text">{t("create.shareExistingTitle")}</span>
           <span className="block text-caption text-text-muted">{t("create.shareExistingBody")}</span>
         </span>
-        <ChevronRight size={18} aria-hidden className="shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
+        <ChevronRight size={20} aria-hidden className="shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
       </button>
       {shareExisting && user && <ShareExistingModal userId={user.id} onClose={() => setShareExisting(false)} />}
     </div>

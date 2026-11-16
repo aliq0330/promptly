@@ -46,7 +46,7 @@ export function SortSelect({
       className={
         quiet
           ? "h-10 min-w-0 max-w-full shrink cursor-pointer rounded-full bg-transparent pl-1 pr-2 text-body font-semibold text-text hover:bg-surface-soft"
-          : "h-8 shrink-0 rounded-md border border-border bg-surface px-2 text-label font-medium text-text max-md:h-11 max-md:min-w-0 max-md:max-w-40 max-md:shrink max-md:flex-1 max-md:rounded-lg max-md:px-3"
+          : "h-9 shrink-0 rounded-md card-flat px-2 text-label font-medium text-text max-md:h-11 max-md:min-w-0 max-md:max-w-40 max-md:shrink max-md:flex-1 max-md:rounded-lg max-md:px-3"
       }
     >
       {keys.map((key) => (

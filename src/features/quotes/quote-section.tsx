@@ -118,7 +118,7 @@ export function QuoteSection({
           disabled={busy}
           placeholder={t("quotes.section.notePlaceholder")}
           data-quote-note-input=""
-          className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+          className="w-full resize-none rounded-lg card-flat px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
       </label>
 
@@ -170,7 +170,7 @@ export function QuoteSection({
     <>
       {nothing && !feedResult && !results && <span className="text-caption text-text-muted">{t("quotes.section.noDestination")}</span>}
       <Button size="sm" onClick={() => void submit()} disabled={busy || nothing} data-quote-submit="">
-        {busy && <Loader2 size={14} className="animate-spin" aria-hidden />}
+        {busy && <Loader2 size={16} className="animate-spin" aria-hidden />}
         {t("quotes.section.submit")}
       </Button>
     </>
@@ -189,7 +189,7 @@ export function QuoteSection({
             className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-accent-surface/50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-              <QuoteIcon size={18} />
+              <QuoteIcon size={20} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-semibold text-text">{t("quotes.section.title")}</span>
@@ -207,7 +207,7 @@ export function QuoteSection({
       )}
       {popup && open && !blockedReason && (
         <Modal onClose={busy ? () => undefined : () => setOpen(false)} labelledBy={titleId} overLayers>
-          <DialogShell data-quote-popup="" className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
+          <DialogShell data-quote-popup="" className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-lg card-flat shadow-pop">
             <div className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-5">
               <div className="min-w-0">
                 <h2 id={titleId} className="text-body font-semibold text-text">
@@ -215,8 +215,8 @@ export function QuoteSection({
                 </h2>
                 {contextTitle && <p className="truncate text-small text-text-muted">{contextTitle}</p>}
               </div>
-              <button type="button" onClick={() => setOpen(false)} disabled={busy} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
-                <X size={18} aria-hidden />
+              <button type="button" onClick={() => setOpen(false)} disabled={busy} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+                <X size={20} aria-hidden />
               </button>
             </div>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">

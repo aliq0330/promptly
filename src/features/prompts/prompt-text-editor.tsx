@@ -257,7 +257,7 @@ export function PromptTextEditor({
       title={t("fullscreen.open")}
       data-testid="open-fullscreen"
     >
-      <Maximize2 size={14} aria-hidden /> <span className="max-sm:sr-only">{t("fullscreen.open")}</span>
+      <Maximize2 size={16} aria-hidden /> <span className="max-sm:sr-only">{t("fullscreen.open")}</span>
     </Button>
   );
 
@@ -338,7 +338,7 @@ export function PromptTextEditor({
       )}
 
       {activeTab === "preview" && (
-        <div className="space-y-3 rounded-md border border-border bg-background p-3">
+        <div className="space-y-3 rounded-md card-inset p-3">
           <div className="whitespace-pre-wrap break-words font-mono text-small text-text">{previewText}</div>
           <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
             {variables.filter((variable) => previewVisible[variable.name] !== false).map((variable) => (

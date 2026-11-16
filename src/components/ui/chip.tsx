@@ -13,16 +13,16 @@ export const Chip = forwardRef<
     type="button"
     aria-pressed={selected}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-label font-medium whitespace-nowrap",
+      "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-label font-medium whitespace-nowrap",
       "transition-[background-color,border-color,color,transform] duration-200 ease-soft active:scale-[0.96]",
       selected
-        ? "border-text bg-text text-background shadow-xs"
+        ? "border-transparent bg-primary-soft text-primary"
         : "border-border bg-surface text-text-secondary hover:border-border-strong hover:bg-surface-soft/60 hover:text-text",
       className,
     )}
     {...props}
   >
-    {Icon && <Icon size={14} />}
+    {Icon && <Icon size={16} />}
     {children}
   </button>
 ));

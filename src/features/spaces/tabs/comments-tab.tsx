@@ -46,10 +46,10 @@ export function CommentsTab() {
   return (
     <div className="max-w-3xl space-y-6" data-space-comments="">
       <p className="text-small text-text-muted">{t("spaces.comments.intro")}</p>
-      <section className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-6 rounded-lg border border-border-soft bg-surface p-4 sm:p-5" aria-label={t("spaces.rating.count", { count: total })} data-space-rating-summary="">
+      <section className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-6 rounded-lg card-flat p-4 sm:p-5" aria-label={t("spaces.rating.count", { count: total })} data-space-rating-summary="">
         <div className="text-center">
-          <strong className="block font-display text-[2.75rem] font-extrabold leading-none tabular-nums text-text">{total > 0 ? formatRating(space.ratingAvg, language) : "–"}</strong>
-          <StarRatingDisplay value={space.ratingAvg} size={18} className="mt-1.5" />
+          <strong className="block font-display text-display font-extrabold leading-none tabular-nums text-text">{total > 0 ? formatRating(space.ratingAvg, language) : "–"}</strong>
+          <StarRatingDisplay value={space.ratingAvg} size={20} className="mt-1.5" />
           <p className="mt-1 text-caption text-text-muted">{total > 0 ? t("spaces.rating.count", { count: total }) : t("spaces.rating.none")}</p>
         </div>
         <div className="grid min-w-0 gap-1.5">

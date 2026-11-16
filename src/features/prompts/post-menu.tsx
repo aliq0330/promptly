@@ -30,7 +30,7 @@ import { ExportPromptsModal } from "@/features/exchange/export-prompts-modal";
 import { fetchPromptForExport } from "@/lib/supabase/prompt-exchange";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { useCardExit } from "@/features/content/content-card";
-import { MENU_ITEM_CLASS } from "@/components/ui/menu";
+import { MENU_ITEM_CLASS, MENU_PANEL_CLASS } from "@/components/ui/menu";
 
 /**
  * Every post card's three-dot menu (header, top-right) — not just the
@@ -264,7 +264,7 @@ export function PostMenu({
         aria-label={t("common.postOptions")}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
+        className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
       >
         <MoreVertical size={16} />
       </button>
@@ -272,8 +272,7 @@ export function PostMenu({
       {open && (
         <div
           role="menu"
-          className={cn(
-            "absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-lg border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
+          className={cn(MENU_PANEL_CLASS, "absolute right-0 top-8 z-30 w-52",
           )}
         >
           {!communityId && !postScope && (
@@ -283,7 +282,7 @@ export function PostMenu({
               onClick={handleCopyLink}
               className={MENU_ITEM_CLASS}
             >
-              <Link2 size={14} />
+              <Link2 size={16} />
               {copied ? t("common.copied") : t("common.copyLink")}
             </button>
           )}
@@ -300,7 +299,7 @@ export function PostMenu({
               }}
               className={MENU_ITEM_CLASS}
             >
-              <Shapes size={14} />
+              <Shapes size={16} />
               {t("spaces.add.menu")}
             </button>
           )}
@@ -317,7 +316,7 @@ export function PostMenu({
               }}
               className={MENU_ITEM_CLASS}
             >
-              <Download size={14} />
+              <Download size={16} />
               {t("exchange.export.menu")}
             </button>
           )}
@@ -340,7 +339,7 @@ export function PostMenu({
             >
               {extra.icon}
               {extra.label}
-              {extra.selected && <Check size={14} aria-hidden className="ml-auto" />}
+              {extra.selected && <Check size={16} aria-hidden className="ml-auto" />}
             </button>
           ))}
           {collectionRemoval && (
@@ -352,7 +351,7 @@ export function PostMenu({
                 disabled={isRemoving}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger-soft"
               >
-                {isRemoving ? <Loader2 size={14} className="animate-spin" /> : <FolderMinus size={14} />}
+                {isRemoving ? <Loader2 size={16} className="animate-spin" /> : <FolderMinus size={16} />}
                 {confirmingRemove ? t("common.confirmDelete") : t("common.removeFromCollection")}
               </button>
               {removeError && <p className="px-3 py-1 text-caption text-danger">{removeError}</p>}
@@ -373,7 +372,7 @@ export function PostMenu({
                     }}
                     className={MENU_ITEM_CLASS}
                   >
-                    <Pencil size={14} />
+                    <Pencil size={16} />
                     {t("common.edit")}
                   </button>
                 )
@@ -384,7 +383,7 @@ export function PostMenu({
                   onClick={(event) => event.stopPropagation()}
                   className={MENU_ITEM_CLASS}
                 >
-                  <Pencil size={14} />
+                  <Pencil size={16} />
                   {t("common.edit")}
                 </Link>
               )}
@@ -395,7 +394,7 @@ export function PostMenu({
                   onClick={(event) => event.stopPropagation()}
                   className={MENU_ITEM_CLASS}
                 >
-                  <Copy size={14} />
+                  <Copy size={16} />
                   {t("common.duplicate")}
                 </Link>
               )}
@@ -406,7 +405,7 @@ export function PostMenu({
                 disabled={isDeleting}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger-soft"
               >
-                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <TrashIcon size={14} />}
+                {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <TrashIcon size={16} />}
                 {confirmingDelete && !asksInDialog ? t("common.confirmDelete") : t("common.delete")}
               </button>
             </>

@@ -18,8 +18,8 @@ export default function LegalSettingsPage() {
         <h2 id="settings-legal" className="sr-only">
           {t("legal.groupTitle")}
         </h2>
-        <SettingsLinkRow href="/terms" icon={<FileText size={18} className="text-text-secondary" />} title={t("legal.termsTitle")} hint={t("legal.termsHint")} />
-        <SettingsLinkRow href="/privacy" icon={<Lock size={18} className="text-text-secondary" />} title={t("legal.privacyTitle")} hint={t("legal.privacyHint")} />
+        <SettingsLinkRow href="/terms" icon={<FileText size={20} className="text-text-secondary" />} title={t("legal.termsTitle")} hint={t("legal.termsHint")} />
+        <SettingsLinkRow href="/privacy" icon={<Lock size={20} className="text-text-secondary" />} title={t("legal.privacyTitle")} hint={t("legal.privacyHint")} />
       </section>
     </SettingsSubpage>
   );

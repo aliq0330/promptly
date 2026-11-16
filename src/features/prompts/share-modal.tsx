@@ -345,7 +345,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
   return (
     <Modal onClose={onClose} labelledBy="share-modal-title">
       <div
-        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg card-flat p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
         data-share-modal={target.contentType}
       >
@@ -357,13 +357,13 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="mt-4 flex items-center gap-3 rounded-md border border-border-soft bg-surface-soft p-3">
+        <div className="mt-4 flex items-center gap-3 rounded-md card-soft p-3">
           <StorageBackground
             as="span"
             url={preview.thumbnailUrl}
@@ -401,7 +401,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
               className="flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-                <Send size={18} />
+                <Send size={20} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-small font-semibold text-text">{t("share.sendAsMessage")}</span>
@@ -418,7 +418,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
               className="flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-                <CircleFadingPlus size={18} />
+                <CircleFadingPlus size={20} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-small font-semibold text-text">{t("share.toStory")}</span>
@@ -434,7 +434,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
             className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
-              <Share2 size={18} />
+              <Share2 size={20} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-semibold text-text">
@@ -448,11 +448,11 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
 
         {(selfOptions.space || selfOptions.save) && (
           <div className="mt-4 space-y-2">
-            <p className="px-1 text-label font-semibold uppercase tracking-[0.08em] text-text-muted">{t("share.forYourself")}</p>
+            <p className="px-1 text-label font-semibold text-text-muted">{t("share.forYourself")}</p>
             {selfOptions.space && (
               <button type="button" onClick={() => setSelf("space")} data-share-add-to-space className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
-                  <Shapes size={18} />
+                  <Shapes size={20} />
                 </span>
                 <span className="min-w-0 flex-1 text-small font-semibold text-text">{t("share.addToSpace")}</span>
                 <ChevronRight size={16} className="shrink-0 text-text-muted" />
@@ -461,7 +461,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
             {selfOptions.save && (
               <button type="button" onClick={() => setSelf("save")} data-share-save className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
-                  <Bookmark size={18} />
+                  <Bookmark size={20} />
                 </span>
                 <span className="min-w-0 flex-1 text-small font-semibold text-text">{t("share.saveToCollection")}</span>
                 <ChevronRight size={16} className="shrink-0 text-text-muted" />

@@ -95,7 +95,7 @@ function Inbox() {
             <Filter size={24} aria-hidden />
           </Link>
           <button type="button" onClick={() => setConfirmClear(true)} disabled={list.cards.length === 0} aria-label={t("notifications.clearAll")} title={t("notifications.clearAll")} data-action="clear-all" className={cn(CONTROL_ICON_BUTTON, "disabled:cursor-not-allowed disabled:opacity-50")}>
-            <TrashIcon size={22} strokeWidth={1.75} />
+            <TrashIcon size={24} />
           </button>
         </>
       }
@@ -158,7 +158,7 @@ function Inbox() {
 
       {wide ? (
         <div className="flex items-start gap-5">
-          <div ref={listRef} className="w-[23.75rem] shrink-0 space-y-3 rounded-lg border border-border-soft bg-surface p-2" data-notification-list="">
+          <div ref={listRef} className="w-[23.75rem] shrink-0 space-y-3 rounded-lg card-flat p-2" data-notification-list="">
             {states}
             {list.status === "ready" &&
               grouped.map(({ group, items }) => (
@@ -176,7 +176,7 @@ function Inbox() {
             {list.status === "ready" && <LoadMore failed={list.moreFailed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={() => void list.loadMore()} auto />}
           </div>
           <div className="min-w-0 flex-1 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto">
-            {selected ? <NotificationDetail key={selected.key} card={selected} list={list} variant="panel" /> : list.status === "ready" ? <p className="rounded-lg border border-border-soft bg-surface p-10 text-center text-small text-text-muted">{t("nc.selectOne")}</p> : null}
+            {selected ? <NotificationDetail key={selected.key} card={selected} list={list} variant="panel" /> : list.status === "ready" ? <p className="rounded-lg card-flat p-10 text-center text-small text-text-muted">{t("nc.selectOne")}</p> : null}
           </div>
         </div>
       ) : (

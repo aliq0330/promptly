@@ -181,7 +181,7 @@ export function AddResultModal({
   return (
     <Modal onClose={onClose} labelledBy="add-result-modal-title">
       <div
-        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-4">
@@ -195,15 +195,15 @@ export function AddResultModal({
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className={iconButtonClassName(false, "h-8 w-8 rounded-md")}
+            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
         <p className="px-5 pt-3 text-small text-text-muted">{t("result.sharePromptHint")}</p>
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
-          <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
+          <div className="flex gap-1 rounded-md card-soft p-1">
             {(["file", "text"] as const).map((option) => (
               <button
                 key={option}
@@ -263,7 +263,7 @@ export function AddResultModal({
                 value={textContent}
                 onChange={(event) => setTextContent(event.target.value)}
                 placeholder={t("result.textFieldPlaceholder")}
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
             </div>
           )}
@@ -283,7 +283,7 @@ export function AddResultModal({
               value={tool}
               onChange={(event) => setTool(event.target.value)}
               placeholder={t("result.toolFieldPlaceholder")}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             <datalist id="result-tool-suggestions">
               {TOOL_SUGGESTIONS.map((suggestion) => (
@@ -301,7 +301,7 @@ export function AddResultModal({
                 <p className="mb-1.5 text-small font-medium text-text">
                   {t("result.didYouModifyPrompt")}
                 </p>
-                <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
+                <div className="flex gap-1 rounded-md card-soft p-1">
                   {([false, true] as const).map((value) => (
                     <button
                       key={String(value)}
@@ -320,7 +320,7 @@ export function AddResultModal({
               </div>
 
               {hasModification && (
-                <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3">
+                <div className="space-y-3 rounded-md card-soft p-3">
                   <div>
                     <label
                       htmlFor="result-mod-summary"
@@ -339,14 +339,14 @@ export function AddResultModal({
                         setModificationSummary(event.target.value)
                       }
                       placeholder={t("result.modificationSummaryPlaceholder")}
-                      className="h-10 w-full rounded-lg border border-border bg-background px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="h-10 w-full rounded-lg card-inset px-3 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                   <div>
-                    <p className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-text-muted">
+                    <p className="mb-1.5 text-caption font-semibold text-text-muted">
                       {t("result.originalPromptText")}
                     </p>
-                    <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-background px-3 py-2 font-mono text-caption text-text-muted">
+                    <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md card-inset px-3 py-2 font-mono text-caption text-text-muted">
                       {target.promptText}
                     </p>
                   </div>
@@ -368,7 +368,7 @@ export function AddResultModal({
                         setModifiedPromptText(event.target.value)
                       }
                       placeholder={t("result.fullModifiedTextPlaceholder")}
-                      className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                      className="w-full resize-none rounded-lg card-inset px-3 py-2 font-mono text-caption text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                 </div>
@@ -377,7 +377,7 @@ export function AddResultModal({
           }
 
           {works?.myVote === null && works.canVote && (
-            <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border-soft bg-surface-soft p-3" data-works-mark>
+            <label className="flex cursor-pointer items-start gap-3 rounded-md card-soft p-3" data-works-mark>
               <input type="checkbox" checked={markWorked} onChange={(event) => setMarkWorked(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-primary" />
               <span className="space-y-0.5">
                 <span className="block text-small font-medium text-text">{t("result.markWorked")}</span>

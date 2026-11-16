@@ -42,7 +42,7 @@ export function SourceNotes({ notes }: { notes: string[] }) {
         <span className="min-w-0 truncate">{t("source.heading")}</span>
         <ChevronDown size={16} aria-hidden className={cn("shrink-0 text-text-muted transition-transform duration-200", open && "rotate-180")} />
         {license && (
-          <span className="ml-auto inline-flex shrink-0 items-center rounded-md border border-border-soft bg-surface px-1.5 py-0.5 text-caption font-medium text-text-secondary">{license}</span>
+          <span className="ml-auto inline-flex shrink-0 items-center rounded-md card-flat px-1.5 py-0.5 text-caption font-medium text-text-secondary">{license}</span>
         )}
       </button>
       {open && (

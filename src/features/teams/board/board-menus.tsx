@@ -28,7 +28,7 @@ export function BoardSheet({ title, onClose, children }: { title?: string; onClo
   return (
     <Modal variant="sheet" onClose={onClose} labelledBy={id}>
       <div data-board-sheet="" className="flex w-full flex-col overflow-hidden rounded-t-xl border border-border-soft bg-surface pb-[max(1rem,env(safe-area-inset-bottom))] pt-5">
-        <h2 id={id} className={title ? "px-5 pb-2 text-caption font-bold uppercase tracking-[0.06em] text-text-muted" : "sr-only"}>
+        <h2 id={id} className={title ? "px-5 pb-2 text-caption font-semibold text-text-muted" : "sr-only"}>
           {title ?? "·"}
         </h2>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3">{children}</div>
@@ -55,7 +55,7 @@ export function AddMenuBody({ promptly, drawing, onDone, columns }: { promptly: 
   const { t } = useTranslation();
   const group = (title: string, rows: AddRow[]) => (
     <div className="min-w-0 flex-1 space-y-0.5">
-      <p className="px-2.5 pb-1 pt-1 text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{title}</p>
+      <p className="px-2.5 pb-1 pt-1 text-caption font-semibold text-text-muted">{title}</p>
       {rows
         .filter((row) => !row.hidden)
         .map((row) => (
@@ -139,7 +139,7 @@ export function ZoomMenuBody({ props, onDone }: { props: ZoomMenuProps; onDone: 
       {row("fit", <Maximize size={20} aria-hidden />, t("tb.zoom.fitAll"), props.onFit)}
       {row("selection", <Crosshair size={20} aria-hidden />, t("tb.zoom.fitSelection"), props.onFitSelection, { disabled: !props.hasSelection })}
       {divider}
-      <p className="px-3 pb-1 pt-0.5 text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tb.zoom.now", { percent: Math.round(props.zoom * 100) })}</p>
+      <p className="px-3 pb-1 pt-0.5 text-caption font-semibold text-text-muted">{t("tb.zoom.now", { percent: Math.round(props.zoom * 100) })}</p>
       <div className="grid grid-cols-3 gap-2 px-2 pb-1">
         {PRESETS.map((preset) => (
           <button
@@ -159,7 +159,7 @@ export function ZoomMenuBody({ props, onDone }: { props: ZoomMenuProps; onDone: 
       </div>
       {divider}
       {row("guides", <LayoutGrid size={20} aria-hidden />, t("tb.zoom.guides"), props.onGuides, { checked: props.guides, keep: true })}
-      {row("minimap", <MapIcon size={19} aria-hidden />, t("spaces.board.minimap"), props.onMinimap, { checked: props.minimap, keep: true })}
+      {row("minimap", <MapIcon size={20} aria-hidden />, t("spaces.board.minimap"), props.onMinimap, { checked: props.minimap, keep: true })}
       {row("search", <Search size={20} aria-hidden />, t("tb.zoom.search"), props.onSearch)}
       {row("shortcuts", <Keyboard size={20} aria-hidden />, t("spaces.board.shortcuts"), props.onShortcuts)}
       {row("fullscreen", props.fullscreen ? <Minimize2 size={20} aria-hidden /> : <Maximize2 size={20} aria-hidden />, props.fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen"), props.onFullscreen)}
@@ -213,7 +213,7 @@ export function MovePopover({
   };
   return (
     <BoardPopover anchorRef={anchorRef} onClose={onClose} width={276} label={t("tb.move.title", { count })} className="space-y-0.5">
-      <p className="px-2.5 pb-1 pt-1 text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tb.move.title", { count })}</p>
+      <p className="px-2.5 pb-1 pt-1 text-caption font-semibold text-text-muted">{t("tb.move.title", { count })}</p>
       {targets.map((page) => (
         <button
           key={page.id}
@@ -225,7 +225,7 @@ export function MovePopover({
         >
           <BoardThumb spaceId={page.id} className="h-9 w-14 shrink-0" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-small font-bold text-text">{page.title}</span>
+            <span className="block truncate text-small font-semibold text-text">{page.title}</span>
             <span className="block text-caption text-text-secondary">{t("tb.pages.itemCount", { count: page.itemCount })}</span>
           </span>
         </button>
@@ -238,7 +238,7 @@ export function MovePopover({
         disabled={busy}
         data-board-move-new=""
         onClick={() => void run(() => (currentPage && !currentPage.isMain ? createBoardInGroup(team.currentId, t("tb.pages.newDefaultName")) : createBoard(team.projectId, t("tb.pages.newDefaultName"), team.fileId ?? "")).then((id) => { team.reload(); return id; }))}
-        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-bold text-primary hover:bg-surface-soft disabled:opacity-50"
+        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 text-small font-semibold text-primary hover:bg-surface-soft disabled:opacity-50"
       >
         <Plus size={20} aria-hidden />
         {t("tb.move.new")}

@@ -100,7 +100,7 @@ export function PresetLists({
     const summary = entries.slice(0, 3);
     const isOwn = user?.id === preset.creator.id;
     return (
-      <li key={preset.id} data-preset-row={preset.id} className="flex items-center gap-2 rounded-md border border-border-soft bg-surface p-1.5 pl-1.5">
+      <li key={preset.id} data-preset-row={preset.id} className="flex items-center gap-2 rounded-md card-flat p-1.5 pl-1.5">
         <button
           type="button"
           data-preset-open={preset.id}

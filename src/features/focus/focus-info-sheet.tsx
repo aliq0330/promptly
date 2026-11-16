@@ -48,7 +48,7 @@ export function FocusInfoSheet({ item, onClose }: { item: PostFeedItem; onClose:
     <FocusSheetFrame kind="info" titleId={titleId} title={t("focusFeed.info")} closeLabel={t("focusFeed.infoClose")} onClose={onClose}>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain border-t border-border-soft px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="flex min-w-0 items-center gap-1.5 text-caption font-bold uppercase tracking-[0.1em] text-text-secondary">
+          <p className="flex min-w-0 items-center gap-1.5 text-caption font-semibold text-text-secondary">
             <Icon size={12} aria-hidden className="shrink-0" />
             <span className="truncate">
               {model.typeLabel}

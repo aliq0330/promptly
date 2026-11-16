@@ -67,10 +67,10 @@ function RolesMatrix({ ctx }: { ctx: TeamCtx }) {
       <p className="mb-3 text-small text-text-secondary">{t("tm.matrix.hint")}</p>
       <table className="w-full text-small">
         <thead>
-          <tr className="text-caption font-bold text-text-muted">
-            <th className="pb-2 text-left font-bold" />
+          <tr className="text-caption font-semibold text-text-muted">
+            <th className="pb-2 text-left font-semibold" />
             {MATRIX_ROLES.map((r) => (
-              <th key={r.role} className="w-10 pb-2 text-center font-bold">
+              <th key={r.role} className="w-10 pb-2 text-center font-semibold">
                 {t(r.key)}
               </th>
             ))}
@@ -170,7 +170,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
     <section className="space-y-4" data-testid="team-members">
       <div className="flex items-center gap-2">
         <button type="button" onClick={() => setSearchOpen((o) => !o)} aria-label={t("tm.members.search")} aria-pressed={searchOpen} data-members-search className="ml-auto grid h-11 w-11 place-items-center rounded-full bg-surface-soft text-text-secondary md:ml-0 md:order-last">
-          <Search size={18} aria-hidden />
+          <Search size={20} aria-hidden />
         </button>
       </div>
       {searchOpen && <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("tm.members.search")} aria-label={t("tm.members.search")} autoFocus className="h-11 w-full rounded-full border border-border bg-surface px-4 text-small" />}
@@ -185,7 +185,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               aria-selected={view === v.key}
               onClick={() => setView(v.key)}
               data-members-view={v.key}
-              className={cn("inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-small transition-colors", view === v.key ? "border-primary bg-primary-soft font-bold text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
+              className={cn("inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-small transition-colors", view === v.key ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-soft bg-surface text-text-secondary hover:bg-surface-soft")}
             >
               {v.label}
               {v.count !== null && <span className="tabular-nums">{v.count}</span>}
@@ -210,7 +210,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                     >
                       <PresenceAvatar userId={member.userId} src={member.avatarUrl} alt={name} size={40} />
                       <span className="min-w-0 flex-1 md:w-full md:flex-none">
-                        <span className="block truncate text-body font-bold text-text">{name}</span>
+                        <span className="block truncate text-body font-semibold text-text">{name}</span>
                         <span className="block truncate text-caption text-text-muted">
                           @{member.username}{" "}
                           <PresenceStatusText userId={member.userId} className="before:mr-1 before:content-['·']" />
@@ -222,7 +222,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                             aria-label={t("tm.members.changeRole")}
                             value={member.role}
                             onChange={(event) => void changeRole(member, event.target.value as TeamRole)}
-                            className={cn("h-8 appearance-none rounded-full border-0 px-3 text-caption font-bold", ROLE_CHIP_TONE[member.role])}
+                            className={cn("h-9 appearance-none rounded-full border-0 px-3 text-caption font-semibold", ROLE_CHIP_TONE[member.role])}
                           >
                             {(["admin", "editor", "member", "guest"] as TeamRole[])
                               .filter((role) => teamRank(role) < myRank)
@@ -233,14 +233,14 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                               ))}
                           </select>
                         ) : (
-                          <span className={cn("inline-flex h-8 items-center rounded-full px-3 text-caption font-bold max-lg:text-[16px]", ROLE_CHIP_TONE[member.role])}>{t(roleLabelKey(member.role))}</span>
+                          <span className={cn("inline-flex h-8 items-center rounded-full px-3 text-caption font-semibold max-lg:text-body", ROLE_CHIP_TONE[member.role])}>{t(roleLabelKey(member.role))}</span>
                         )}
                       </span>
                       <span className="hidden w-full border-t border-border-soft pt-2 text-caption text-text-secondary md:block" data-member-projects>
                         {summary.length > 0 ? summary.map((entry) => t(`tc.members.in.${entry.role}` as "tc.members.in.lead", { count: entry.count })).join(" · ") : member.groupNames?.join(", ") || t("tc.members.noProject")}
                       </span>
                       {manageable && (
-                        <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden h-8 items-center rounded-full border border-border px-3 text-caption font-semibold text-text-secondary hover:border-danger/40 hover:bg-danger-soft hover:text-danger md:inline-flex">
+                        <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden h-9 items-center rounded-full border border-border px-3 text-caption font-semibold text-text-secondary hover:border-danger/40 hover:bg-danger-soft hover:text-danger md:inline-flex">
                           {t("tm.members.remove")}
                         </button>
                       )}
@@ -256,7 +256,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
             </PagedListState>
           )}
           {view === "guests" && (
-            <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-4" data-members-guests>
+            <ul className="divide-y divide-border-soft rounded-lg card-flat px-4" data-members-guests>
               {guests.length === 0 && <li className="py-5 text-small text-text-muted">{t("tm.guests.empty")}</li>}
               {guests.map((g) => (
                 <li key={g.userId}>
@@ -266,7 +266,7 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
             </ul>
           )}
           {view === "invites" && (
-            <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-4" data-members-invites>
+            <ul className="divide-y divide-border-soft rounded-lg card-flat px-4" data-members-invites>
               {pending.length === 0 && <li className="py-5 text-small text-text-muted">{t("tm.admin.invites.none")}</li>}
               {pending.map((p) => (
                 <li key={p.id}>
@@ -276,11 +276,11 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
             </ul>
           )}
           {view === "groups" && (
-            <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-4" data-members-groups>
+            <ul className="divide-y divide-border-soft rounded-lg card-flat px-4" data-members-groups>
               {groups.length === 0 && <li className="py-5 text-small text-text-muted">{t("tm.groups.empty")}</li>}
               {groups.map((g) => (
                 <li key={g.id} className="flex items-center justify-between py-3 text-small">
-                  <span className="font-bold text-text">{g.name}</span>
+                  <span className="font-semibold text-text">{g.name}</span>
                   <span className="text-text-muted">{t("tm.members.groupCount", { count: g.memberCount })}</span>
                 </li>
               ))}
@@ -294,19 +294,19 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               </Button>
             </div>
           )}
-          <button type="button" onClick={() => setMatrixOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-4 text-left lg:hidden" data-roles-open>
+          <button type="button" onClick={() => setMatrixOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-lg card-flat px-4 py-4 text-left lg:hidden" data-roles-open>
             <span className="min-w-0 flex-1">
-              <span className="block text-small font-bold text-text">{t("tm.matrix.title")}</span>
+              <span className="block text-small font-semibold text-text">{t("tm.matrix.title")}</span>
               <span className="block text-caption text-text-secondary">{t("tm.matrix.subtitle")}</span>
             </span>
-            <ChevronRight size={18} className="text-text-muted" aria-hidden />
+            <ChevronRight size={20} className="text-text-muted" aria-hidden />
           </button>
         </div>
 
         <aside className="space-y-4 max-lg:hidden" data-testid="team-members-aside">
           {canManage && <InviteCard ctx={ctx} onDone={refresh} />}
           {canManage && pending.length > 0 && (
-            <section className="rounded-lg border border-border-soft bg-surface p-4" data-testid="team-members-pending">
+            <section className="rounded-lg card-flat p-4" data-testid="team-members-pending">
               <h3 className="mb-1 font-display text-body font-bold text-text">{t("tc.members.pending", { count: pending.length })}</h3>
               <ul>
                 {pending.map((invite) => (
@@ -317,19 +317,19 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
               </ul>
             </section>
           )}
-          <button type="button" onClick={() => setMatrixOpen(true)} className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-4 text-left" data-roles-open-aside>
+          <button type="button" onClick={() => setMatrixOpen(true)} className="flex w-full items-center gap-3 rounded-lg card-flat px-4 py-4 text-left" data-roles-open-aside>
             <span className="min-w-0 flex-1">
-              <span className="block text-small font-bold text-text">{t("tm.matrix.title")}</span>
+              <span className="block text-small font-semibold text-text">{t("tm.matrix.title")}</span>
               <span className="block text-caption text-text-secondary">{t("tm.matrix.subtitle")}</span>
             </span>
-            <ChevronRight size={18} className="text-text-muted" aria-hidden />
+            <ChevronRight size={20} className="text-text-muted" aria-hidden />
           </button>
           {groups.length > 0 && (
-            <section className="rounded-lg border border-border-soft bg-surface p-4" data-members-groups-card>
+            <section className="rounded-lg card-flat p-4" data-members-groups-card>
               <h2 className="mb-3 font-display text-body font-bold">{t("tm.members.viewGroups")}</h2>
               <div className="flex flex-wrap gap-2">
                 {groups.map((g) => (
-                  <span key={g.id} className="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-soft px-3 text-caption font-bold text-text">
+                  <span key={g.id} className="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-soft px-3 text-caption font-semibold text-text">
                     {g.name}
                     <span className="font-medium text-text-muted">{g.memberCount}</span>
                   </span>
@@ -417,7 +417,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
     <SpaceDialog
       eyebrow={t("tm.members.removeEyebrow")}
       leading={
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-secondary/10 text-body font-bold text-secondary" aria-hidden>
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-secondary-soft text-body font-semibold text-secondary" aria-hidden>
           {initialsOf(name)}
         </span>
       }
@@ -451,7 +451,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
           </div>
         </div>
         <div className="space-y-2" role="radiogroup" aria-label={t("tm.members.contentFate")}>
-          <p className="text-small font-bold text-text">{t("tm.members.contentFate")}</p>
+          <p className="text-small font-semibold text-text">{t("tm.members.contentFate")}</p>
           {modes.map((m) => {
             const on = mode === m.key;
             return (
@@ -461,9 +461,9 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
                     {on && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
                   </span>
                   <span className="min-w-0">
-                    <span className="flex flex-wrap items-center gap-2 text-small font-bold text-text">
+                    <span className="flex flex-wrap items-center gap-2 text-small font-semibold text-text">
                       {t(m.title)}
-                      {m.badge && <span className="rounded-full bg-success-soft px-2 py-0.5 text-caption font-bold text-success">{t("tm.members.recommended")}</span>}
+                      {m.badge && <span className="rounded-full bg-success-soft px-2 py-0.5 text-caption font-semibold text-success">{t("tm.members.recommended")}</span>}
                     </span>
                     <span className="block text-caption text-text-secondary">{m.hint}</span>
                   </span>
@@ -477,7 +477,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
                     }}
                     aria-label={t("tm.members.pickOwner")}
                     data-remove-owner
-                    className="h-9 max-w-[9.5rem] shrink-0 rounded-full border border-border bg-background px-3 text-caption font-bold text-text"
+                    className="h-9 max-w-[9.5rem] shrink-0 rounded-full border border-border bg-background px-3 text-caption font-semibold text-text"
                   >
                     <option value="">{t("tm.members.pickShort")}</option>
                     {candidates.map((c) => (

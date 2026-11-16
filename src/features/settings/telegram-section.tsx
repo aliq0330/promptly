@@ -150,19 +150,19 @@ export function TelegramSection() {
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => (
-            <li key={row.id} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card" data-telegram-link={row.id}>
+            <li key={row.id} className="space-y-3 rounded-lg card-flat p-4 shadow-card" data-telegram-link={row.id}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
                     <Send size={16} />
                   </span>
-                  <p className="break-words text-[0.9375rem] font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{telegramLinkLabel(row)}</p>
+                  <p className="break-words text-body font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{telegramLinkLabel(row)}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-caption font-bold text-success">{t("tg.linkedBadge")}</span>
+                <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-caption font-semibold text-success">{t("tg.linkedBadge")}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {row.scopes.map((scope) => (
-                  <span key={scope} className={cn("rounded-full px-2.5 py-0.5 text-caption font-bold", scope === "write" ? "bg-secondary/10 text-secondary" : "bg-primary-soft text-primary")}>
+                  <span key={scope} className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scope === "write" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary")}>
                     {scope === "write" ? t("apps.scope.write") : t("apps.scope.read")}
                   </span>
                 ))}
@@ -171,8 +171,8 @@ export function TelegramSection() {
                 {t("apps.grantedAt", { when: formatRelativeTime(row.createdAt, language) })} · {row.lastUsedAt ? t("apps.lastUsed", { when: formatRelativeTime(row.lastUsedAt, language) }) : t("apps.neverUsed")}
               </p>
               <div className="space-y-2">
-                <SwitchRow checked={row.notifyWeekly} disabled={busyId === row.id} onChange={(next) => void toggle(row, "weekly", next)} icon={<BarChart3 size={18} />} title={t("tg.weekly")} description={t("tg.weeklyHint")} ariaLabel={t("tg.weekly")} />
-                <SwitchRow checked={row.notifyActivity} disabled={busyId === row.id} onChange={(next) => void toggle(row, "activity", next)} icon={<Bell size={18} />} title={t("tg.activity")} description={t("tg.activityHint")} ariaLabel={t("tg.activity")} />
+                <SwitchRow checked={row.notifyWeekly} disabled={busyId === row.id} onChange={(next) => void toggle(row, "weekly", next)} icon={<BarChart3 size={20} />} title={t("tg.weekly")} description={t("tg.weeklyHint")} ariaLabel={t("tg.weekly")} />
+                <SwitchRow checked={row.notifyActivity} disabled={busyId === row.id} onChange={(next) => void toggle(row, "activity", next)} icon={<Bell size={20} />} title={t("tg.activity")} description={t("tg.activityHint")} ariaLabel={t("tg.activity")} />
               </div>
               {confirmId === row.id ? (
                 <div className="space-y-3 rounded-lg bg-danger-soft p-3">
@@ -193,16 +193,16 @@ export function TelegramSection() {
       )}
 
       {handle && (
-        <div className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card" data-telegram-connect="">
-          <p className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">{t("tg.connectTitle")}</p>
+        <div className="space-y-3 rounded-lg card-flat p-4 shadow-card" data-telegram-connect="">
+          <p className="text-body font-semibold tracking-[-0.01em] text-text">{t("tg.connectTitle")}</p>
           {atLimit ? (
             <p className="text-small text-text-muted">{t("tg.limit")}</p>
           ) : code ? (
             <div className="space-y-3">
               <div className="space-y-1">
-                <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("tg.codeTitle")}</p>
+                <p className="text-caption font-semibold text-text-muted">{t("tg.codeTitle")}</p>
                 <div className="flex flex-wrap items-center gap-2">
-                  <code data-telegram-code="" className="prompt-text rounded-lg bg-surface-soft px-3 py-2 text-lg font-bold tracking-[0.2em] text-text">{formatLinkCode(code.code)}</code>
+                  <code data-telegram-code="" className="prompt-text rounded-lg bg-surface-soft px-3 py-2 text-lg font-semibold text-text">{formatLinkCode(code.code)}</code>
                   <Button
                     type="button"
                     size="sm"
@@ -214,7 +214,7 @@ export function TelegramSection() {
                       }
                     }}
                   >
-                    {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? t("common.copied") : t("tg.copyCode")}
+                    {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? t("common.copied") : t("tg.copyCode")}
                   </Button>
                 </div>
                 <p className="text-caption text-text-muted">{t("tg.codeValid")}</p>
@@ -238,7 +238,7 @@ export function TelegramSection() {
             </div>
           ) : (
             <div className="space-y-3">
-              <SwitchRow checked={write} onChange={setWrite} icon={<Send size={18} />} title={t("tg.writeLabel")} description={t("tg.writeHint")} ariaLabel={t("tg.writeLabel")} />
+              <SwitchRow checked={write} onChange={setWrite} icon={<Send size={20} />} title={t("tg.writeLabel")} description={t("tg.writeHint")} ariaLabel={t("tg.writeLabel")} />
               {expired && <p className="text-small text-text-muted">{t("tg.codeExpired")}</p>}
               <Button type="button" className="w-full sm:w-auto" disabled={creating} onClick={() => void createCode()}>
                 {creating ? t("tg.creating") : t("tg.createCode")}

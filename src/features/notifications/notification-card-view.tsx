@@ -105,7 +105,7 @@ function QuickActionsRow({
           </span>
           {actions.replyTarget && (
             <ActionButton variant="outline" aria-expanded={replyOpen} onClick={onOpenReply} data-action="reply">
-              <Reply size={18} aria-hidden />
+              <Reply size={20} aria-hidden />
               <span>{t("nc.reply")}</span>
             </ActionButton>
           )}
@@ -272,7 +272,7 @@ export function NotificationCardView({
       }}
       data-notification-card={card.key}
       data-unread={unread ? "true" : "false"}
-      className={cn("rounded-lg border p-4", isMilestone ? "border-secondary/30 bg-secondary/10" : unread ? "border-primary/25 bg-primary-soft/60" : "border-border-soft bg-surface")}
+      className={cn("rounded-lg border p-4", isMilestone ? "border-secondary/30 bg-secondary-soft" : unread ? "border-primary/25 bg-primary-soft/60" : "border-border-soft bg-surface")}
     >
       {variant === "page" ? (
         <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
@@ -306,7 +306,7 @@ export function NotificationCardView({
 
           {replyOpen && !local?.reply && (
             <form
-              className="mt-2.5 flex items-end gap-2 rounded-lg border border-border bg-surface p-1.5 pl-4"
+              className="mt-2.5 flex items-end gap-2 rounded-lg card-flat p-1.5 pl-4"
               onSubmit={async (event) => {
                 event.preventDefault();
                 if (await actions.reply(draft)) {
@@ -325,7 +325,7 @@ export function NotificationCardView({
                 maxLength={2000}
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={t("nc.replyPlaceholder", { name: replyName })}
-                className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-body text-text outline-none placeholder:text-text-muted"
+                className="min-w-0 flex-1 resize-none bg-transparent py-1.5 text-body text-text focus-ring-inset placeholder:text-text-muted"
               />
               <Button type="submit" size="md" className="h-11 shrink-0" disabled={actions.busy === "reply" || !draft.trim()} data-action="reply-send">
                 <SendIcon size={16} seq={replySeq} />

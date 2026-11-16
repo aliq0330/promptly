@@ -137,7 +137,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
               type="button"
               onClick={() => setFileFilter(file.id)}
               aria-pressed={fileFilter === file.id}
-              className={cn("h-8 rounded-full border px-3 text-small", fileFilter === file.id ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-soft bg-surface text-text-secondary")}
+              className={cn("h-9 rounded-full border px-3 text-small", fileFilter === file.id ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-soft bg-surface text-text-secondary")}
             >
               {file.title}
             </button>
@@ -147,7 +147,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
 
       {failed && <SectionError message={t("tp.error.load")} onRetry={load} />}
       {!failed && queue === null && <Skeleton className="h-48 w-full rounded-xl" />}
-      {queue !== null && rows.length === 0 && proposals.length === 0 && <EmptyState icon={ListChecks} title={t("tp.review.inboxEmpty")} description={t("tp.review.inboxEmptyBody")} />}
+      {queue !== null && rows.length === 0 && proposals.length === 0 && <EmptyState scene="inbox" icon={ListChecks} title={t("tp.review.inboxEmpty")} description={t("tp.review.inboxEmptyBody")} />}
 
       {queue !== null && rows.length > 0 && (
         <div className="grid gap-5 lg:grid-cols-[22rem_minmax(0,1fr)]">
@@ -166,7 +166,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
                   className={cn("flex w-full items-center gap-3 rounded-xl border p-3 text-left", current?.id === item.id ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft")}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-small font-bold text-text">{item.title || t(kindKey(item.kind))}</span>
+                    <span className="block truncate text-small font-semibold text-text">{item.title || t(kindKey(item.kind))}</span>
                     <span className="block truncate text-caption text-text-muted">
                       {[item.authorName, item.fileTitle ?? t("tp.area.projectWide"), item.submittedAt ? formatRelativeTime(item.submittedAt, language) : null].filter(Boolean).join(" · ")}
                     </span>
@@ -178,9 +178,9 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
           </ul>
 
           {current && (
-            <section className="min-w-0 space-y-4 rounded-lg border border-border-soft bg-surface p-5" data-testid="review-detail" data-review-detail={current.id}>
+            <section className="min-w-0 space-y-4 rounded-lg card-flat p-5" data-testid="review-detail" data-review-detail={current.id}>
               <div className="space-y-1">
-                <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">
+                <p className="text-caption font-semibold text-text-muted">
                   {t(kindKey(current.kind))} · {current.fileTitle ?? t("tp.area.projectWide")}
                 </p>
                 <h2 className="break-words text-h2 font-display font-bold text-text">{current.title || t(kindKey(current.kind))}</h2>
@@ -189,7 +189,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
               {current.unitCount > 1 && <p className="rounded-lg bg-surface-soft px-3 py-2 text-small text-text-secondary">{t("tp.review.packageHint", { count: current.unitCount })}</p>}
               <ReviewPreview item={current} />
               <div className="space-y-2">
-                <label htmlFor="review-note" className="block text-small font-bold text-text">
+                <label htmlFor="review-note" className="block text-small font-semibold text-text">
                   {t("tp.review.noteLabel")} <span className="font-normal text-text-muted">{t("tp.review.noteLabelHint")}</span>
                 </label>
                 <textarea
@@ -199,7 +199,7 @@ export function TeamReviewInbox({ ctx, detail, onChanged }: { ctx: TeamCtx; deta
                   maxLength={500}
                   rows={3}
                   placeholder={t("tp.review.notePlaceholder")}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-small"
+                  className="w-full rounded-lg card-inset px-3 py-2 text-small"
                 />
               </div>
               {error && (
@@ -253,9 +253,9 @@ function ProposalCard({ proposal, busy, onDecide }: { proposal: ReviewQueuePropo
   const [note, setNote] = useState("");
   const [open, setOpen] = useState(false);
   return (
-    <li className="space-y-3 rounded-lg border border-border-soft bg-surface p-4" data-review-proposal={proposal.itemId}>
+    <li className="space-y-3 rounded-lg card-flat p-4" data-review-proposal={proposal.itemId}>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="min-w-0 flex-1 text-small font-bold text-text">
+        <span className="min-w-0 flex-1 text-small font-semibold text-text">
           {proposal.proposed.title || proposal.current.title || t(kindKey(proposal.kind))}
           <span className="ml-2 font-normal text-text-muted">{t("tp.review.proposedBy", { name: proposal.proposerName ?? "" })}</span>
         </span>
@@ -272,7 +272,7 @@ function ProposalCard({ proposal, busy, onDecide }: { proposal: ReviewQueuePropo
       </div>
       {open && (
         <div className="flex items-center gap-2">
-          <input value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} aria-label={t("tp.review.noteLabel")} placeholder={t("tp.review.notePlaceholder")} className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-small" />
+          <input value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} aria-label={t("tp.review.noteLabel")} placeholder={t("tp.review.notePlaceholder")} className="h-10 min-w-0 flex-1 rounded-lg card-inset px-3 text-small" />
           <Button type="button" size="sm" disabled={busy || !note.trim()} onClick={() => onDecide("changes", note.trim())}>
             {t("tp.review.send")}
           </Button>
@@ -285,7 +285,7 @@ function ProposalCard({ proposal, busy, onDecide }: { proposal: ReviewQueuePropo
 function DiffBlock({ label, value, highlight = false }: { label: string; value: { title: string; body: string; note: string }; highlight?: boolean }) {
   return (
     <div className={cn("space-y-1 rounded-lg p-3 text-small", highlight ? "bg-success-soft" : "bg-surface-soft")}>
-      <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">{label}</p>
+      <p className="text-caption font-semibold text-text-muted">{label}</p>
       {value.title && <p className="font-semibold text-text">{value.title}</p>}
       {value.body && <p className="whitespace-pre-wrap break-words font-mono text-caption text-text">{value.body}</p>}
       {value.note && <p className="whitespace-pre-wrap break-words text-caption text-text-secondary">{value.note}</p>}

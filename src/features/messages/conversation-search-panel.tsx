@@ -133,7 +133,7 @@ export function ConversationSearchPanel({
               type="button"
               onClick={() => setInput("")}
               aria-label={t("chat.search.clear")}
-              className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+              className="tap-area absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
             >
               <X size={12} />
             </button>
@@ -154,7 +154,7 @@ export function ConversationSearchPanel({
               type="button"
               onClick={() => void step(-1)}
               aria-label={t("chat.search.prev")}
-              className={iconButtonClassName(false, "h-8 w-8")}
+              className={iconButtonClassName(false, "h-9 w-9")}
             >
               <ChevronUp size={16} />
             </button>
@@ -162,7 +162,7 @@ export function ConversationSearchPanel({
               type="button"
               onClick={() => void step(1)}
               aria-label={t("chat.search.next")}
-              className={iconButtonClassName(false, "h-8 w-8")}
+              className={iconButtonClassName(false, "h-9 w-9")}
             >
               <ChevronDown size={16} />
             </button>
@@ -172,7 +172,7 @@ export function ConversationSearchPanel({
           type="button"
           onClick={onClose}
           aria-label={t("chat.search.close")}
-          className={iconButtonClassName(false, "h-8 w-8")}
+          className={iconButtonClassName(false, "h-9 w-9")}
         >
           <X size={16} />
         </button>

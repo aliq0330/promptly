@@ -29,7 +29,7 @@ import { RoomFormModal } from "./rooms/room-form-modal";
 import { RoomIconTile } from "./rooms/room-icon";
 import { useCommunityRooms } from "./rooms/use-community-rooms";
 
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold uppercase tracking-[0.04em] text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-semibold text-text-muted";
 const mutedScopeOf = (channel: TeamChannel) => channel.muteScope ?? (channel.muted ? "channel" : null);
 
 /** Dock'taki kanal/oda listesinin satırı (arama bunun adına ve önizlemesine bakar). */
@@ -96,7 +96,7 @@ function DockChannelList({
         onMinimize={dock.minimize}
       >
         <span className="min-w-0 pl-1" data-dock-hub-title="">
-          <span className="block truncate font-display text-[1.0625rem] font-extrabold leading-tight tracking-[-0.02em] text-text">{title}</span>
+          <span className="block truncate font-display text-h3 font-extrabold leading-tight tracking-[-0.02em] text-text">{title}</span>
           <span className="block truncate text-caption text-text-muted">{subtitle}</span>
         </span>
       </DockHeader>
@@ -374,7 +374,7 @@ function DockCommunityList({ communityId }: { communityId: string }) {
         <HubRow
           testKey={room.name}
           onOpen={() => dock.openChat(communityId, room.id)}
-          tile={<RoomIconTile icon={room.icon} size={44} />}
+          tile={<RoomIconTile icon={room.icon} size={40} />}
           title={room.name}
           tags={room.isDefault ? <span className={TAG_CLASS}>{t("th.default")}</span> : undefined}
           muteScope={room.muted ? "channel" : null}
@@ -382,7 +382,7 @@ function DockCommunityList({ communityId }: { communityId: string }) {
           subtitle={room.description ?? ""}
           unread={room.muted ? 0 : room.unreadCount}
           active={activeRoomId === room.id}
-          trailing={room.readPolicy === "staff" || readOnly ? <Lock size={14} className="shrink-0 text-text-muted" aria-hidden /> : undefined}
+          trailing={room.readPolicy === "staff" || readOnly ? <Lock size={16} className="shrink-0 text-text-muted" aria-hidden /> : undefined}
         />
       ),
     };

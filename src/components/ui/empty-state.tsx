@@ -39,14 +39,8 @@ export function EmptyState({
       {scene ? (
         <LineArtScene kind={scene} className={cn("w-full rounded-xl border border-border-soft", compact ? "max-w-[16rem]" : "max-w-sm")} />
       ) : (
-      /* İlk karşılaşmada ikon karosu yaylanarak gelir, üç pırıltı sırayla belirir (bir kez; docs/history/335-*). */
-      <div className="relative">
-        <div className="mi-empty-tile flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary">
-          <Icon size={20} />
-        </div>
-        <span aria-hidden className="mi-empty-spark left-[-9px] top-[-4px] h-1.5 w-1.5" style={{ ["--i" as string]: 0 }} />
-        <span aria-hidden className="mi-empty-spark bottom-[-3px] right-[-10px] h-1 w-1" style={{ ["--i" as string]: 1 }} />
-        <span aria-hidden className="mi-empty-spark right-[-6px] top-[-9px] h-[5px] w-[5px]" style={{ ["--i" as string]: 2 }} />
+      <div className="mi-empty-tile flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary">
+        <Icon size={20} />
       </div>
       )}
       <div className="space-y-1">

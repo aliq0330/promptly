@@ -69,7 +69,7 @@ export function PresetFieldList({
                 <span className="block truncate text-label font-semibold text-text">{fieldName(field, language)}</span>
                 <span className={cn("block truncate text-caption", summary ? "text-primary" : "text-text-muted")}>{summary || t("presetField.notSet")}</span>
               </span>
-              <ChevronDown size={18} className={cn("shrink-0 text-text-muted transition-transform duration-200", isOpen && "rotate-180")} aria-hidden />
+              <ChevronDown size={20} className={cn("shrink-0 text-text-muted transition-transform duration-200", isOpen && "rotate-180")} aria-hidden />
             </button>
             <Collapsible open={isOpen} id={panelId}>
               <div className="space-y-3 border-t border-border-soft px-3 py-3">

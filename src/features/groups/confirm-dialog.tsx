@@ -42,7 +42,7 @@ export function ConfirmDialog({
   const { t } = useTranslation();
   return (
     <Modal onClose={busy ? () => undefined : onCancel} labelledBy={id} overLayers={overLayers}>
-      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg card-flat p-5 shadow-pop">
         <h2 id={id} className="text-body font-semibold text-text">
           {title}
         </h2>

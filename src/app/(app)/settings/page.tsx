@@ -54,19 +54,19 @@ export default function SettingsPage() {
       </header>
 
       <nav aria-label={t("settings.sectionsNav")} className="space-y-3" data-settings-hub="">
-        {isModerator && <SettingsLinkRow href="/moderation" icon={<ShieldCheck size={18} className="text-primary" />} title={t("nav.moderation")} hint={t("settings.hub.moderationDesc")} />}
-        <SettingsLinkRow href="/settings/account" icon={<UserRound size={18} className={iconClass} />} title={t("settings.groupAccount")} hint={t("settings.hub.accountDesc")} />
-        <SettingsLinkRow href="/settings/privacy" icon={<Lock size={18} className={iconClass} />} title={t("settings.privacyTitle")} hint={t("settings.hub.privacyDesc")} />
-        <SettingsLinkRow href="/settings/notifications" icon={<Bell size={18} className={iconClass} />} title={t("nc.settings.title")} hint={t("nc.settings.hubDesc")} />
-        <SettingsLinkRow href="/settings/preferences" icon={<Palette size={18} className={iconClass} />} title={t("settings.groupPreferences")} hint={t("settings.hub.preferencesDesc")} />
-        <SettingsLinkRow href="/settings/developer" icon={<Code2 size={18} className={iconClass} />} title={t("settings.groupDeveloper")} hint={t("settings.hub.developerDesc")} />
-        <SettingsLinkRow href="/settings/legal" icon={<FileText size={18} className={iconClass} />} title={t("legal.groupTitle")} hint={t("settings.hub.legalDesc")} />
-        <SettingsLinkRow href="/settings/danger" icon={<TriangleAlert size={18} className="text-danger" />} title={t("settings.groupDanger")} hint={t("settings.hub.dangerDesc")} />
+        {isModerator && <SettingsLinkRow href="/moderation" icon={<ShieldCheck size={20} className="text-primary" />} title={t("nav.moderation")} hint={t("settings.hub.moderationDesc")} />}
+        <SettingsLinkRow href="/settings/account" icon={<UserRound size={20} className={iconClass} />} title={t("settings.groupAccount")} hint={t("settings.hub.accountDesc")} />
+        <SettingsLinkRow href="/settings/privacy" icon={<Lock size={20} className={iconClass} />} title={t("settings.privacyTitle")} hint={t("settings.hub.privacyDesc")} />
+        <SettingsLinkRow href="/settings/notifications" icon={<Bell size={20} className={iconClass} />} title={t("nc.settings.title")} hint={t("nc.settings.hubDesc")} />
+        <SettingsLinkRow href="/settings/preferences" icon={<Palette size={20} className={iconClass} />} title={t("settings.groupPreferences")} hint={t("settings.hub.preferencesDesc")} />
+        <SettingsLinkRow href="/settings/developer" icon={<Code2 size={20} className={iconClass} />} title={t("settings.groupDeveloper")} hint={t("settings.hub.developerDesc")} />
+        <SettingsLinkRow href="/settings/legal" icon={<FileText size={20} className={iconClass} />} title={t("legal.groupTitle")} hint={t("settings.hub.legalDesc")} />
+        <SettingsLinkRow href="/settings/danger" icon={<TriangleAlert size={20} className="text-danger" />} title={t("settings.groupDanger")} hint={t("settings.hub.dangerDesc")} />
       </nav>
 
       <div className="border-t border-border-soft pt-6">
         <Button type="button" variant="outline" onClick={handleSignOut} disabled={isSigningOut}>
-          <LogOut size={14} />
+          <LogOut size={16} />
           {isSigningOut ? t("settings.signingOut") : t("settings.signOut")}
         </Button>
       </div>

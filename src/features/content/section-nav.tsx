@@ -29,7 +29,7 @@ function CountBadge({ count }: { count: number }) {
   return (
     <span
       data-section-count=""
-      className="pointer-events-none absolute -top-1.5 left-[calc(50%+1.125rem)] flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-bold leading-none text-primary-foreground ring-2 ring-background"
+      className="pointer-events-none absolute -top-1.5 left-[calc(50%+1.125rem)] flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold leading-none text-primary-foreground ring-2 ring-background"
     >
       {count > 99 ? "99+" : count}
     </span>
@@ -241,8 +241,8 @@ function SectionTile<K extends string>({
     >
       <span
         className={cn(
-          "relative grid aspect-square w-full max-w-[3.75rem] place-items-center rounded-[1.25rem] transition-[background-color,color,box-shadow,transform] duration-200 ease-soft group-active:scale-[0.95]",
-          selected ? "bg-text text-background shadow-card" : "bg-surface-soft text-text-secondary group-hover:bg-border-soft group-hover:text-text",
+          "relative grid aspect-square w-full max-w-[3.75rem] place-items-center rounded-xl transition-[background-color,color,box-shadow,transform] duration-200 ease-soft group-active:scale-[0.95]",
+          selected ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary group-hover:bg-border-soft group-hover:text-text",
         )}
       >
         <Icon size={24} aria-hidden />
@@ -289,12 +289,12 @@ function SectionTabs<K extends string>({
               className={cn(
                 "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-4 text-body transition-colors duration-200 ease-soft",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-                selected ? "border-primary font-bold text-text" : "border-transparent font-medium text-text-muted hover:text-text",
+                selected ? "border-primary font-semibold text-text" : "border-transparent font-medium text-text-muted hover:text-text",
               )}
             >
               {item.label}
               {item.count ? (
-                <span data-section-count="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-bold leading-none text-primary-foreground">
+                <span data-section-count="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold leading-none text-primary-foreground">
                   {item.count > 99 ? "99+" : item.count}
                 </span>
               ) : null}

@@ -68,7 +68,7 @@ export function CompactContentCard({
     return (
       <div className={cn(SHELL, "h-[4.5rem]", className)} role="status" aria-label={t("commentExtras.attachmentLoading")} data-comment-attachment-state="loading">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary/60">
-          <Loader2 size={18} className="animate-spin motion-reduce:animate-none" aria-hidden />
+          <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden />
         </span>
         <span className="min-w-0 flex-1 space-y-1.5" aria-hidden>
           <span className="block h-2.5 w-16 rounded bg-border-soft" />
@@ -152,9 +152,9 @@ function RemoveButton({ onRemove }: { onRemove: () => void }) {
       onClick={onRemove}
       aria-label={t("commentExtras.removeContent")}
       data-comment-extra-remove="attachment"
-      className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-surface bg-text text-background shadow-xs hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <X size={14} aria-hidden />
+      <X size={16} aria-hidden />
     </button>
   );
 }

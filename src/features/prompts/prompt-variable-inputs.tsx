@@ -34,9 +34,9 @@ export function PromptVariableInputs({
   const { t } = useTranslation();
 
   return (
-    <section className={cn("space-y-3 rounded-lg border border-border-soft bg-surface px-4 py-3", className)}>
+    <section className={cn("space-y-3 rounded-lg card-flat px-4 py-3", className)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+        <h3 className="font-sans text-caption font-semibold text-text-muted">
           {t("variable.sectionHeading", { count: variables.length })}
         </h3>
         {isCustomized && (

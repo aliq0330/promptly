@@ -20,7 +20,7 @@ export function PlaceholderPage({ icon: Icon, title, description }: PlaceholderP
   return (
     <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-3 px-6 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-surface text-primary">
-        <Icon size={28} />
+        <Icon size={24} />
       </div>
       <h1 className="text-h1 font-bold text-text">{title}</h1>
       <p className="max-w-sm text-small text-text-muted">{description}</p>

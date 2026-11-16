@@ -181,7 +181,7 @@ export function SendArrowIcon(props: MotionIconProps) {
 }
 
 /** Kişi+ ↔ tik: `done` olunca kişi küçülüp çıkar, tik çizilir (Takip Et). */
-export function FollowIcon({ done, size = 16, strokeWidth = 1.9, className }: Omit<MotionIconProps, "seq"> & { done: boolean }) {
+export function FollowIcon({ done, size = 16, strokeWidth = 1.5, className }: Omit<MotionIconProps, "seq"> & { done: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden focusable="false" className={cn("mi mi-follow", className)} data-done={done}>
       <g className="mi-person">
@@ -276,7 +276,7 @@ export function FocusIcon(props: MotionIconProps) {
 }
 
 /** Oluştur "+": `open` olunca 135° dönüp ✕ olur. */
-export function PlusIcon({ open = false, size = 24, strokeWidth = 2.4, className }: Omit<MotionIconProps, "seq"> & { open?: boolean }) {
+export function PlusIcon({ open = false, size = 24, strokeWidth = 1.5, className }: Omit<MotionIconProps, "seq"> & { open?: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden focusable="false" data-open={open} className={cn("mi mi-plus", className)}>
       <path d="M12 5v14M5 12h14" />

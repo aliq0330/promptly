@@ -211,12 +211,12 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
   const primary = showManagementAction ? (
     isOwnRequest ? (
       <Button type="button" variant="outline" size="lg" className="h-14 rounded-full px-7" onClick={handleToggleStatus}>
-        <MessageSquareOff size={18} />
+        <MessageSquareOff size={20} />
         {isClosed ? t("request.markAsOpen") : t("request.closeRequest")}
       </Button>
     ) : (
-      <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
-        <Reply size={18} />
+      <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-md" })}>
+        <Reply size={20} />
         {t("request.reply")}
       </Link>
     )
@@ -311,14 +311,14 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         {activeTab === "request" && (<>
         <DetailSection title={t("detail.requestBrief")}>
           <div className="overflow-hidden rounded-xl bg-surface-soft">
-            <ScrollablePrompt className="px-5 py-5 text-[0.875rem] text-text">{live.description}</ScrollablePrompt>
+            <ScrollablePrompt className="px-5 py-5 text-small text-text">{live.description}</ScrollablePrompt>
           </div>
           {live.creativeDirection && (
             <blockquote className="m-0 border-l-[3px] border-primary pl-4">
               <Eyebrow tone="primary" className="mb-2">
                 {t("request.creativeDirection")}
               </Eyebrow>
-              <p className="text-[1.0625rem] leading-relaxed text-text sm:text-lg">
+              <p className="text-h3 leading-relaxed text-text sm:text-lg">
                 <MentionText text={live.creativeDirection} />
               </p>
             </blockquote>

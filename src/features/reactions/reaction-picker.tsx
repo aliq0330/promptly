@@ -34,7 +34,7 @@ export function ReactionPicker({
       style={style}
       // The panel is a React child of the card it was opened from (a portal keeps the tree): its clicks must not reach the card.
       onClick={(event) => event.stopPropagation()}
-      className="z-(--z-picker) w-[min(calc(100vw-16px),400px)] animate-pop-in rounded-[28px] border border-border-soft bg-surface p-2 shadow-pop"
+      className="z-(--z-picker) w-[min(calc(100vw-16px),400px)] animate-pop-in rounded-lg card-flat p-2 shadow-pop"
     >
       <ReactionGrid current={current} onChoose={(key) => onChoose(key)} />
     </div>

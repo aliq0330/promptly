@@ -56,7 +56,7 @@ export function VariableConditionEditor({
   const noControllers = controllers.length === 0;
 
   return (
-    <div className="space-y-3 rounded-lg border border-border-soft bg-surface-soft/50 p-3">
+    <div className="space-y-3 rounded-lg card-soft p-3">
       <label className={cn("flex items-start gap-2 text-label font-medium text-text", noControllers && !enabled && "opacity-60")}>
         <input
           type="checkbox"

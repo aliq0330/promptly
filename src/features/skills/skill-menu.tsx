@@ -9,7 +9,7 @@ import { Network } from "@/components/icons/network";
 import { Pencil } from "@/components/icons/pencil";
 import { Shapes } from "@/components/icons/shapes";
 import { Trash2 } from "@/components/icons/trash-2";
-import { MENU_ITEM_CLASS } from "@/components/ui/menu";
+import { MENU_ITEM_CLASS, MENU_PANEL_CLASS } from "@/components/ui/menu";
 import { ReportButton } from "@/features/moderation/report-button";
 import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -67,15 +67,15 @@ export function SkillMenu({ skill, isOwn, signedIn, onDelete }: { skill: Skill; 
         aria-label={t("skill.menu")}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
+        className="flex h-9 w-9 items-center justify-center rounded-md text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
       >
         <MoreVertical size={16} />
       </button>
       {open && (
-        <div role="menu" className={cn("absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-lg border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in")}>
+        <div role="menu" className={cn(MENU_PANEL_CLASS, "absolute right-0 top-8 z-30 w-52")}>
           {mapped && (
             <button type="button" role="menuitem" data-skill-copy-link="" onClick={copyLink} className={MENU_ITEM_CLASS}>
-              <Link2 size={14} />
+              <Link2 size={16} />
               {copied ? t("common.copied") : t("common.copyLink")}
             </button>
           )}
@@ -90,7 +90,7 @@ export function SkillMenu({ skill, isOwn, signedIn, onDelete }: { skill: Skill; 
               }}
               className={MENU_ITEM_CLASS}
             >
-              <Network size={14} />
+              <Network size={16} />
               {t("relations.open")}
             </button>
           )}
@@ -105,14 +105,14 @@ export function SkillMenu({ skill, isOwn, signedIn, onDelete }: { skill: Skill; 
               }}
               className={MENU_ITEM_CLASS}
             >
-              <Shapes size={14} />
+              <Shapes size={16} />
               {t("spaces.add.menu")}
             </button>
           )}
           {isOwn && (
             <>
               <Link href={`/skills/create?edit=${skill.id}`} role="menuitem" data-skill-edit="" className={MENU_ITEM_CLASS}>
-                <Pencil size={14} />
+                <Pencil size={16} />
                 {t("common.edit")}
               </Link>
               <button
@@ -125,7 +125,7 @@ export function SkillMenu({ skill, isOwn, signedIn, onDelete }: { skill: Skill; 
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger-soft"
               >
-                <Trash2 size={14} />
+                <Trash2 size={16} />
                 {t("common.delete")}
               </button>
             </>

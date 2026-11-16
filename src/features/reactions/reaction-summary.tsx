@@ -59,7 +59,7 @@ export function ReactionSummary({ contentType, id, likeCount, className, overLay
           setOpen(true);
         }}
         className={cn(
-          "relative z-10 flex min-h-8 max-w-full items-center gap-2 rounded-md py-1 pr-1.5 text-left text-caption text-text-muted transition-colors duration-200 ease-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+          "relative z-10 flex min-h-9 max-w-full items-center gap-2 rounded-md py-1 pr-1.5 text-left text-caption text-text-muted transition-colors duration-200 ease-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
           className,
         )}
       >
@@ -73,7 +73,7 @@ export function ReactionSummary({ contentType, id, likeCount, className, overLay
         <span className="min-w-0 truncate" aria-hidden>
           {text}
         </span>
-        <ChevronRight size={14} className="shrink-0" aria-hidden />
+        <ChevronRight size={16} className="shrink-0" aria-hidden />
       </button>
       {open && <ReactionSheet contentType={contentType} id={id} likeCount={likeCount} counts={breakdown.counts} overLayers={overLayers} onClose={() => setOpen(false)} />}
     </>

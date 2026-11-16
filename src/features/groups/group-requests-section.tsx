@@ -102,11 +102,11 @@ export function GroupRequestsSection({
             </Link>
             <div className="flex shrink-0 items-center gap-1.5">
               <Button type="button" size="sm" onClick={() => void decide(request, true)} disabled={busyId !== null} aria-label={t("groups.requests.acceptFor", { name: request.user.displayName })}>
-                {busyId === request.id ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                {busyId === request.id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 <span className="hidden sm:inline">{t("groups.requests.accept")}</span>
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={() => void decide(request, false)} disabled={busyId !== null} aria-label={t("groups.requests.rejectFor", { name: request.user.displayName })}>
-                <X size={14} />
+                <X size={16} />
                 <span className="hidden sm:inline">{t("groups.requests.reject")}</span>
               </Button>
             </div>

@@ -41,7 +41,7 @@ export default function BlockedUsersPage() {
   return (
     <div className="mx-auto w-full max-w-xl animate-rise-in space-y-5 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
       <Link href="/settings/privacy" className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text">
-        <ArrowLeft size={14} />
+        <ArrowLeft size={16} />
         {t("settings.backToSettings")}
       </Link>
       <h1 className="text-h1 text-text">{t("settings.blockedUsers")}</h1>
@@ -50,7 +50,7 @@ export default function BlockedUsersPage() {
         {blocked.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border-soft py-10 text-center text-small text-text-muted">{t("settings.blockedEmpty")}</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card">
+          <div className="overflow-hidden rounded-lg card-flat shadow-card">
             {blocked.map((profile) => (
               <div key={profile.id} className="flex items-center gap-3 border-b border-border-soft px-4 py-3 last:border-0">
                 <Link href={profileHref(profile)} className="flex min-w-0 flex-1 items-center gap-3">

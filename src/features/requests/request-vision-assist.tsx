@@ -121,7 +121,7 @@ export function RequestVisionAssist({
           </p>
 
           {previewUrl ? (
-            <div className="flex items-center gap-3 rounded-md border border-border bg-surface p-2.5">
+            <div className="flex items-center gap-3 rounded-md card-flat p-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={previewUrl} alt="" className="h-14 w-14 shrink-0 rounded object-cover" />
               <div className="min-w-0 flex-1 text-caption text-text-muted">
@@ -188,10 +188,10 @@ export function RequestVisionAssist({
           )}
 
           {result && (
-            <div className="space-y-3 rounded-md border border-border bg-surface p-3">
+            <div className="space-y-3 rounded-md card-flat p-3">
               {analysisEntries.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.imageAnalysis")}</p>
+                  <p className="text-caption font-semibold text-text-muted">{t("vision.imageAnalysis")}</p>
                   <dl className="space-y-0.5 text-small text-text">
                     {analysisEntries.map(([key, value]) => (
                       <div key={key} className="flex gap-1.5">
@@ -205,7 +205,7 @@ export function RequestVisionAssist({
 
               {fieldsLine && (
                 <div className="space-y-1.5">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.suggestedDirection")}</p>
+                  <p className="text-caption font-semibold text-text-muted">{t("vision.suggestedDirection")}</p>
                   <p className="rounded-md bg-accent-surface/40 p-2.5 text-small text-text">{fieldsLine}</p>
                   <Button type="button" size="sm" variant="outline" onClick={() => onApplyCreativeDirection(fieldsLine)}>
                     {t("vision.addToCreativeDirection")}
@@ -215,7 +215,7 @@ export function RequestVisionAssist({
 
               {result.suggestedDescription && (
                 <div className="space-y-1.5">
-                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">{t("vision.suggestedDescription")}</p>
+                  <p className="text-caption font-semibold text-text-muted">{t("vision.suggestedDescription")}</p>
                   <p className="whitespace-pre-wrap rounded-md bg-accent-surface/40 p-2.5 text-small text-text">
                     {result.suggestedDescription}
                   </p>

@@ -129,10 +129,10 @@ export function CommunityPostPage() {
 
   // Gönderi işleri, içeriğin NORMAL ⋮ menüsüne eklenir (ikinci menü yok); içeriğin kendi yönetimi (düzenle/sil) orijinalin sayfasında kalır.
   const extras: PostMenuExtra[] = [];
-  if (mine) extras.push({ key: "edit-note", label: t("communities.feed.editNote"), icon: <Pencil size={14} />, onSelect: () => setDialog("edit") });
-  if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={14} />, onSelect: () => setDialog("report") });
-  if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={14} />, danger: true, onSelect: () => setDialog("moderate") });
-  if (mine) extras.push({ key: "delete", label: t("communities.feed.deleteMine"), icon: <TrashIcon size={14} />, danger: true, onSelect: () => setDialog("delete") });
+  if (mine) extras.push({ key: "edit-note", label: t("communities.feed.editNote"), icon: <Pencil size={16} />, onSelect: () => setDialog("edit") });
+  if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={16} />, onSelect: () => setDialog("report") });
+  if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={16} />, danger: true, onSelect: () => setDialog("moderate") });
+  if (mine) extras.push({ key: "delete", label: t("communities.feed.deleteMine"), icon: <TrashIcon size={16} />, danger: true, onSelect: () => setDialog("delete") });
 
   const content = post.content;
   const originalHref = content ? summarizeContent(content).href : null;
@@ -143,7 +143,7 @@ export function CommunityPostPage() {
       <section aria-label={t("communities.post.linked.appliedLabel")} className="border-b border-border-soft bg-surface">
         <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-10">
           <Link href={feedHref} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
-            <ArrowLeft size={14} aria-hidden /> {group ? t("communities.post.page.back", { name: group.name }) : t("communities.post.page.backGeneric")}
+            <ArrowLeft size={16} aria-hidden /> {group ? t("communities.post.page.back", { name: group.name }) : t("communities.post.page.backGeneric")}
           </Link>
           <div className="mt-3 flex items-start gap-3">
             {post.author && <Avatar src={post.author.avatarUrl} alt={post.author.displayName} size={40} />}
@@ -181,7 +181,7 @@ export function CommunityPostPage() {
             {originalHref && (
               <Link href={originalHref} data-open-original className={buttonClassName({ size: "sm", variant: "outline", className: "ml-auto shrink-0 gap-1.5" })}>
                 {t("communities.post.linked.openOriginal")}
-                <ArrowUpRight size={14} aria-hidden />
+                <ArrowUpRight size={16} aria-hidden />
               </Link>
             )}
           </div>

@@ -116,7 +116,7 @@ export function DiscoverHighlightsSkeleton() {
         <Skeleton className="h-7 w-40 rounded-md" />
         <div className={cn(STRIP_CLASS, "flex overflow-hidden")}>
           {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="aspect-square w-32 shrink-0 rounded-[14px]" />
+            <Skeleton key={i} className="aspect-square w-32 shrink-0 rounded-md" />
           ))}
         </div>
       </div>
@@ -128,7 +128,7 @@ export function DiscoverHighlightsSkeleton() {
 function StripHeader({ id, children, action }: { id: string; children: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <h2 id={id} className="flex items-center gap-1.5 font-display text-[1.125rem] font-bold text-text">
+      <h2 id={id} className="flex items-center gap-1.5 font-display text-h3 font-bold text-text">
         {children}
       </h2>
       {action}
@@ -190,7 +190,7 @@ export function TopicStrip({ sample, tags }: { sample: Prompt[]; tags: { trendin
           title={tag.recentCount !== undefined ? t("home.railTrendCount", { count: tag.recentCount }) : undefined}
           className={cn(TOPIC_CHIP, "bg-surface-soft text-text hover:bg-primary-soft hover:text-primary xl:hidden")}
         >
-          <TrendingUp size={14} className="text-secondary" aria-hidden />
+          <TrendingUp size={16} className="text-secondary" aria-hidden />
           #{tag.label}
           {tag.recentCount !== undefined && <span className="text-caption font-semibold tabular-nums text-secondary">{formatCount(tag.recentCount)}</span>}
         </Link>
@@ -227,7 +227,7 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
           const cover = prompt.media[0];
           return (
             <li key={prompt.id} className="w-32 shrink-0">
-              <Link href={promptHref(prompt)} className="group relative block aspect-square overflow-hidden rounded-[14px] border border-border-soft bg-surface-soft">
+              <Link href={promptHref(prompt)} className="group relative block aspect-square overflow-hidden rounded-md card-soft">
                 {cover ? (
                   <StorageAppearanceImage
                     src={cover.url}
@@ -246,7 +246,7 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
                     <Icon size={24} aria-hidden />
                   </span>
                 )}
-                <span className="absolute inset-x-0 bottom-0 block bg-gradient-to-t from-black/75 to-transparent px-2 pb-1.5 pt-6 text-white">
+                <span className="absolute inset-x-0 bottom-0 block art-scrim px-2 pb-1.5 pt-6 text-on-art">
                   <span className="block truncate text-caption font-semibold leading-snug">{prompt.title}</span>
                   <span className="block text-caption leading-tight opacity-90">{t("discover.likesCount", { count: formatCount(prompt.likeCount) })}</span>
                 </span>
@@ -264,7 +264,7 @@ function AsideCard({ id, title, action, children }: { id: string; title: ReactNo
   return (
     <section aria-labelledby={id} className="rounded-xl bg-surface-soft p-4">
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 id={id} className="flex items-center gap-1.5 font-display text-[1.1875rem] font-bold tracking-[-0.02em] text-text">
+        <h2 id={id} className="flex items-center gap-1.5 font-display text-h3 font-bold tracking-[-0.02em] text-text">
           {title}
         </h2>
         {action}

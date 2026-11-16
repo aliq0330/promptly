@@ -108,8 +108,8 @@ export function SectionMenu<K extends string>({
             {Icon && <Icon size={20} aria-hidden className="shrink-0 text-text-muted" />}
             <span className="flex-1">{item.label}</span>
             {item.meta ? <span data-section-meta className="text-small tabular-nums text-text-muted">{item.meta}</span> : null}
-            {item.count ? <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-caption font-bold text-primary-foreground">{item.count}</span> : null}
-            {selected && <Check size={18} className="text-primary" aria-hidden />}
+            {item.count ? <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-caption font-semibold text-primary-foreground">{item.count}</span> : null}
+            {selected && <Check size={20} className="text-primary" aria-hidden />}
           </button>
         );
       })}
@@ -140,7 +140,7 @@ export function SectionMenu<K extends string>({
         {pending > 0 && <span aria-hidden data-section-dot className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />}
       </button>
       {open && wide && (
-        <div className={cn("absolute top-full z-40 mt-2 w-72 rounded-xl border border-border-soft bg-surface p-2 shadow-pop animate-pop-in", align === "end" ? "right-0" : "left-0")}>{list}</div>
+        <div className={cn("absolute top-full z-40 mt-2 w-72 rounded-lg card-flat p-2 shadow-pop animate-pop-in", align === "end" ? "right-0" : "left-0")}>{list}</div>
       )}
       {open && !wide && (
         <Modal onClose={() => setOpen(false)} labelledBy="section-menu-title" variant="sheet">

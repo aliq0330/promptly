@@ -71,7 +71,7 @@ export function ReferenceRequirementsField({
   const kinds = applicableReferenceKinds(contentType);
   if (kinds.length === 0) return null;
   return (
-    <fieldset className="space-y-2 rounded-lg border border-border bg-surface-soft p-3">
+    <fieldset className="space-y-2 rounded-lg card-soft p-3">
       <legend className="sr-only">{t("prompt.requiresReferenceTitle")}</legend>
       <p className="text-caption text-text-muted">{t("prompt.requiresReferenceHint")}</p>
       {kinds.map((kind) => {
@@ -111,7 +111,7 @@ export function ReferenceRequirementNotes({
         return (
           <p
             key={kind}
-            className="flex items-start gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-2 text-small text-text-secondary"
+            className="flex items-start gap-2 rounded-lg card-soft px-3 py-2 text-small text-text-secondary"
           >
             <Icon size={16} className="mt-0.5 shrink-0 text-primary" />
             <span className="min-w-0 break-words">{t(NOTE_KEYS[kind])}</span>

@@ -218,7 +218,7 @@ export function WorkflowAutoRun({
   if (runnableCount === 0 && plan.stopsAt === null) return null;
 
   return (
-    <section data-auto-run className="rounded-lg border border-border-soft bg-surface shadow-card">
+    <section data-auto-run className="rounded-lg card-flat shadow-card">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -227,13 +227,13 @@ export function WorkflowAutoRun({
         className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
-          <WandSparkles size={18} />
+          <WandSparkles size={20} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-small font-semibold text-text">{t("workflow.auto.title")}</span>
           <span className="block truncate text-caption text-text-muted">{t("workflow.auto.subtitle")}</span>
         </span>
-        <ChevronDown size={18} aria-hidden className={cn("shrink-0 text-text-muted transition-transform duration-200", open && "rotate-180")} />
+        <ChevronDown size={20} aria-hidden className={cn("shrink-0 text-text-muted transition-transform duration-200", open && "rotate-180")} />
       </button>
 
       {open && (
@@ -315,16 +315,16 @@ export function WorkflowAutoRun({
           <div className="flex flex-wrap items-center gap-2">
             {running ? (
               <Button variant="outline" onClick={() => abortRef.current?.abort()}>
-                <Square size={14} aria-hidden /> {t("workflow.auto.stop")}
+                <Square size={16} aria-hidden /> {t("workflow.auto.stop")}
               </Button>
             ) : (
               <Button onClick={() => void start(false)} disabled={!canRun}>
-                <Play size={14} aria-hidden /> {hasProgress ? t("workflow.auto.resume") : t("workflow.auto.run")}
+                <Play size={16} aria-hidden /> {hasProgress ? t("workflow.auto.resume") : t("workflow.auto.run")}
               </Button>
             )}
             {!running && hasProgress && (
               <Button variant="outline" onClick={() => void start(true)} disabled={key.trim() === ""}>
-                <RefreshCw size={14} aria-hidden /> {t("workflow.auto.rerun")}
+                <RefreshCw size={16} aria-hidden /> {t("workflow.auto.rerun")}
               </Button>
             )}
             {key.trim() === "" && <span className="text-caption text-text-muted">{t("generate.needKey")}</span>}
@@ -338,7 +338,7 @@ export function WorkflowAutoRun({
                 return (
                   <li key={step.id} data-status={status.kind} className="flex items-start gap-2 text-small">
                     <span className="mt-0.5 shrink-0 text-text-muted" aria-hidden>
-                      {status.kind === "running" ? <Loader2 size={15} className="animate-spin" /> : status.kind === "done" || status.kind === "kept" ? <Check size={16} className="text-success" /> : status.kind === "blocked" ? <CircleDashed size={16} /> : <AlertCircle size={16} className="text-danger" />}
+                      {status.kind === "running" ? <Loader2 size={16} className="animate-spin" /> : status.kind === "done" || status.kind === "kept" ? <Check size={16} className="text-success" /> : status.kind === "blocked" ? <CircleDashed size={16} /> : <AlertCircle size={16} className="text-danger" />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="font-medium text-text">{t("workflow.stepN", { n: String(index + 1) })}</span>

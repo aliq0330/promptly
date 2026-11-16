@@ -125,7 +125,7 @@ export function TaxonomyPicker({
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface" data-taxonomy-path>
+      <div className="rounded-lg card-flat" data-taxonomy-path>
         <div className="flex items-center gap-2 pr-2">
           <button
             type="button"
@@ -150,7 +150,7 @@ export function TaxonomyPicker({
               )}
             </span>
             <span className="shrink-0 text-caption font-medium text-primary">{treeOpen ? t("vision.hide") : pathParts.length > 0 ? t("taxonomy.change") : t("vision.show")}</span>
-            <ChevronRight size={18} className={cn("shrink-0 text-text-muted transition-transform duration-200", treeOpen && "rotate-90")} aria-hidden />
+            <ChevronRight size={20} className={cn("shrink-0 text-text-muted transition-transform duration-200", treeOpen && "rotate-90")} aria-hidden />
           </button>
           {value.category && (
             <button
@@ -270,7 +270,7 @@ function CategoryRow({
           {value.subcategory ? 1 : <Check size={12} aria-hidden />}
         </span>
       )}
-      <ChevronRight size={18} className={cn("shrink-0 text-text-muted transition-transform duration-200", open && "rotate-90")} aria-hidden />
+      <ChevronRight size={20} className={cn("shrink-0 text-text-muted transition-transform duration-200", open && "rotate-90")} aria-hidden />
     </button>
   );
 }

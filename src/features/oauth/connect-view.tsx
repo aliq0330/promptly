@@ -82,7 +82,7 @@ function ConnectInner() {
     <PageContainer className="mx-auto max-w-md space-y-5 py-8">
       <header data-oauth-connect="" className="space-y-4 text-center">
         <div aria-hidden className="flex items-center justify-center gap-3">
-          <span className="flex h-14 w-14 items-center justify-center rounded-lg border border-border-soft bg-secondary/10 font-display text-2xl font-bold text-secondary">{initial}</span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-lg border border-border-soft bg-secondary-soft font-display text-2xl font-bold text-secondary">{initial}</span>
           <span className="flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-border-strong" />
             <span className="h-1.5 w-1.5 rounded-full bg-border-strong" />
@@ -105,7 +105,7 @@ function ConnectInner() {
         </dl>
       </header>
 
-      <div className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface shadow-card">
+      <div className="divide-y divide-border-soft rounded-lg card-flat shadow-card">
         <div className="flex items-start gap-3 p-4">
           <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success-soft text-success">
             <Check size={16} />

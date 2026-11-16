@@ -98,10 +98,10 @@ const KIND_TONE: Record<DetailKind | "workflow" | "preset" | "request", string> 
   prompt: "bg-primary-soft text-primary",
   image: "bg-success-soft text-success",
   note: "bg-warning-soft text-warning",
-  palette: "bg-secondary/10 text-secondary",
+  palette: "bg-secondary-soft text-secondary",
   content: "bg-surface-soft text-text-secondary",
   workflow: "bg-primary-soft text-primary",
-  preset: "bg-secondary/10 text-secondary",
+  preset: "bg-secondary-soft text-secondary",
   request: "bg-surface-soft text-text-secondary",
 };
 const KIND_LABEL: Record<DetailKind | "workflow" | "preset" | "request", TranslationKey> = {
@@ -115,7 +115,7 @@ const KIND_LABEL: Record<DetailKind | "workflow" | "preset" | "request", Transla
   request: "tp.kind.request",
 };
 
-const CARD = "rounded-lg border border-border-soft bg-surface";
+const CARD = "rounded-lg card-flat";
 
 export function AreaItemDetail({ ctx, role, onChanged }: { ctx: AreaItemContext; role: ProjectRole | null; onChanged: () => void }) {
   const { t } = useTranslation();
@@ -278,7 +278,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
   const drawerHeader = (
     <div className="flex items-start gap-1 pr-11">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
+        <p className="truncate text-caption font-semibold text-text-muted">
           {t(KIND_LABEL[kind])} · {ctx.crumbs.slice(-2).map((crumb) => crumb.label).join(" › ")}
         </p>
         <h3 className="mt-0.5 break-words font-display text-h2 font-extrabold leading-tight text-text" data-item-title>
@@ -308,7 +308,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
         </h1>
         <div className="flex flex-wrap items-center gap-2 text-small text-text-secondary">
           <span className={cn("inline-flex items-center gap-1.5 rounded-full py-1 pl-2 pr-2.5 font-semibold", KIND_TONE[kind])}>
-            <Icon size={14} aria-hidden />
+            <Icon size={16} aria-hidden />
             {t(KIND_LABEL[kind])}
           </span>
           {state !== "approved" && <ReviewChip state={state} />}
@@ -347,7 +347,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
 
       {ctx.placement && canonicalId && boardIds !== null && (
         <div className="flex flex-wrap items-center gap-1.5" data-item-boards>
-          <span className="text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t("tf.item.boards")}</span>
+          <span className="text-caption font-semibold text-text-muted">{t("tf.item.boards")}</span>
           {boardIds.length === 0 ? (
             <span className="text-small text-text-secondary" data-item-boards-empty>
               {t("tf.item.noBoards")}
@@ -367,7 +367,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
 
       {place && (
         <Button type="button" variant="outline" onClick={() => setMenu("board")} className="h-11 w-full gap-2 rounded-full" data-item-add-to-board-button>
-          <Presentation size={18} aria-hidden />
+          <Presentation size={20} aria-hidden />
           {t("tp.item.addToBoard")}
         </Button>
       )}
@@ -512,7 +512,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
 function StickyBar({ children, testId }: { children: ReactNode; testId: string }) {
   const drawer = useContext(DrawerContext);
   return (
-    <div className={cn("sticky z-10 space-y-2 rounded-lg border border-border-soft bg-surface p-3 shadow-pop", drawer ? "bottom-0" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-4")} data-testid={testId}>
+    <div className={cn("sticky z-10 space-y-2 rounded-lg card-flat p-3 shadow-pop", drawer ? "bottom-0" : "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-4")} data-testid={testId}>
       {children}
     </div>
   );
@@ -570,7 +570,7 @@ function ReviewBar({ item, role, onChanged, extra }: { item: SpaceItem; role: Pr
               rows={2}
               maxLength={2000}
               placeholder={t("tp.item.askPlaceholder")}
-              className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-small"
+              className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small"
               data-item-change-note
             />
           </label>
@@ -664,7 +664,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
                 if (!token.variable) return <span key={index}>{token.text}</span>;
                 const found = values.get(token.variable.toLowerCase());
                 return (
-                  <span key={index} className="rounded bg-secondary/10 px-0.5 font-medium text-secondary" data-item-token={token.variable}>
+                  <span key={index} className="rounded bg-secondary-soft px-0.5 font-medium text-secondary" data-item-token={token.variable}>
                     {filled && found ? found.value : token.text}
                   </span>
                 );
@@ -674,7 +674,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
 
           <div className={cn(CARD, "flex items-center gap-3 px-4 py-3")}>
             <span className="min-w-0 flex-1">
-              <span className="block text-small font-bold text-text">{t("tp.item.fillTitle")}</span>
+              <span className="block text-small font-semibold text-text">{t("tp.item.fillTitle")}</span>
               <span className="block text-caption text-text-secondary">{t("tp.item.fillHint")}</span>
             </span>
             <Switch
@@ -689,7 +689,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
           </div>
 
           <section className={cn(CARD, "overflow-hidden")} data-item-variables>
-            <h2 className="px-4 pb-1.5 pt-3 text-caption font-bold uppercase tracking-wider text-text-secondary">{t("tp.item.vars")}</h2>
+            <h2 className="px-4 pb-1.5 pt-3 text-caption font-semibold text-text-secondary">{t("tp.item.vars")}</h2>
             {names.length === 0 ? (
               <p className="border-t border-border-soft px-4 py-3 text-small text-text-muted">{t("tp.item.varsNone")}</p>
             ) : (
@@ -717,7 +717,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
       {resolved.href && !item.isDraft && (
         <Link href={resolved.href} className="inline-flex items-center gap-1 text-small font-semibold text-primary hover:underline">
           {t("spaces.source.open")}
-          <ArrowUpRight size={14} aria-hidden />
+          <ArrowUpRight size={16} aria-hidden />
         </Link>
       )}
 
@@ -728,7 +728,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
         extra={
           text ? (
             <Button type="button" className="h-12 w-full gap-2" onClick={() => void copy()} data-item-copy>
-              {copyState === "copied" ? <Check size={18} aria-hidden /> : <Copy size={18} aria-hidden />}
+              {copyState === "copied" ? <Check size={20} aria-hidden /> : <Copy size={20} aria-hidden />}
               {copyLabel}
             </Button>
           ) : undefined
@@ -772,7 +772,7 @@ function ImageSection({ ctx, item, title, creator }: { ctx: AreaItemContext; ite
       >
         <SpaceImage url={item.mediaUrl} alt={title} available={available} reason={reason ? t(reason) : undefined} className="h-full w-full" imgClassName="object-cover" />
         {available && (
-          <span className="absolute bottom-3 right-3 inline-flex h-9 items-center gap-1.5 rounded-full bg-black/70 px-3 text-small font-semibold text-white">
+          <span className="absolute bottom-3 right-3 inline-flex h-9 items-center gap-1.5 rounded-full bg-art-chip px-3 text-small font-semibold text-on-art">
             <Maximize2 size={16} aria-hidden />
             {t("tp.item.enlarge")}
           </span>
@@ -783,15 +783,15 @@ function ImageSection({ ctx, item, title, creator }: { ctx: AreaItemContext; ite
           {rows.map(([label, value], index) => (
             <div key={label} className={cn("flex justify-between gap-3 px-4 py-2.5", index > 0 && "border-t border-border-soft")}>
               <dt className="text-text-secondary">{label}</dt>
-              <dd className="min-w-0 truncate font-bold text-text">{value}</dd>
+              <dd className="min-w-0 truncate font-semibold text-text">{value}</dd>
             </div>
           ))}
         </dl>
       )}
       {item.note && <p className="break-words rounded-xl bg-surface-soft px-3 py-2 text-small text-text-secondary">{item.note}</p>}
       {ctx.onBoard && (
-        <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-border bg-surface text-small font-semibold text-text hover:bg-surface-soft" data-item-show-on-board-button>
-          <Presentation size={18} aria-hidden />
+        <Link href={ctx.boardHref(item.id)} className="flex min-h-12 items-center justify-center gap-2 rounded-lg card-flat text-small font-semibold text-text hover:bg-surface-soft" data-item-show-on-board-button>
+          <Presentation size={20} aria-hidden />
           {t("tp.item.showOnBoard")}
         </Link>
       )}
@@ -816,11 +816,11 @@ function NoteSection({ item }: { item: SpaceItem }) {
       <dl className={cn(CARD, "overflow-hidden text-small")}>
         <div className="flex justify-between gap-3 px-4 py-2.5">
           <dt className="text-text-secondary">{t("tp.item.noteLinked")}</dt>
-          <dd className="min-w-0 truncate font-bold text-text">{attached ? itemTitle(attached) : t("tp.item.noteNoLink")}</dd>
+          <dd className="min-w-0 truncate font-semibold text-text">{attached ? itemTitle(attached) : t("tp.item.noteNoLink")}</dd>
         </div>
         <div className="flex justify-between gap-3 border-t border-border-soft px-4 py-2.5">
           <dt className="text-text-secondary">{t("tp.item.noteVisibility")}</dt>
-          <dd className="min-w-0 truncate text-right font-bold text-text">{t(item.isPrivate ? "tp.item.noteVisPrivate" : "tp.item.noteVisAll")}</dd>
+          <dd className="min-w-0 truncate text-right font-semibold text-text">{t(item.isPrivate ? "tp.item.noteVisPrivate" : "tp.item.noteVisAll")}</dd>
         </div>
       </dl>
     </>
@@ -856,7 +856,7 @@ function PaletteSection({ palette }: { palette: SpacePalette }) {
         {palette.colors.map((hex, index) => (
           <li key={`${hex}-${index}`} className={cn(index > 0 && "border-t border-border-soft")}>
             <button type="button" onClick={() => void copy(hex)} aria-label={t("tp.item.copyColor", { hex })} className="flex min-h-[3.5rem] w-full items-center gap-3 px-4 py-2 text-left hover:bg-surface-soft" data-item-color={hex}>
-              <span aria-hidden className="h-9 w-9 shrink-0 rounded-[10px] border border-border" style={{ backgroundColor: hex }} />
+              <span aria-hidden className="h-9 w-9 shrink-0 rounded-md border border-border" style={{ backgroundColor: hex }} />
               <span className="prompt-text min-w-0 flex-1 text-body font-semibold text-text">{hex}</span>
               <span className={cn("shrink-0 text-small font-semibold", copied === hex ? "text-success" : "text-primary")}>{copied === hex ? t("common.copied") : t("common.copy")}</span>
             </button>

@@ -31,7 +31,7 @@ export function MentionSuggestions({
       role="listbox"
       aria-label={t("mentions.suggestionsAria")}
       className={cn(
-        "absolute left-0 right-0 z-30 max-h-60 overflow-y-auto rounded-md border border-border bg-surface-elevated py-1 shadow-pop animate-pop-in",
+        "absolute left-0 right-0 z-30 max-h-60 overflow-y-auto rounded-lg border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
         placement === "above" ? "bottom-full mb-1" : "top-full mt-1",
       )}
     >

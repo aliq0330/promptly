@@ -49,7 +49,7 @@ export function FeedHighlights({ group, role, viewerId, membership, reload, onTo
     <div className="space-y-4 empty:hidden">
       {needsRulesAck && (
         <div role="status" className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary-soft/50 p-4 sm:flex-row sm:items-center">
-          <ScrollText size={18} className="shrink-0 text-primary" aria-hidden />
+          <ScrollText size={20} className="shrink-0 text-primary" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="text-small font-medium text-text">{t("communities.rules.updatedTitle")}</p>
             <p className="text-caption text-text-muted">{t("communities.rules.updatedHelp")}</p>
@@ -92,11 +92,11 @@ function NextEventCard({ event, onOpen }: { event: CommunityEvent; onOpen: () =>
       type="button"
       data-feed-next-event
       onClick={onOpen}
-      className="flex w-full items-center gap-4 rounded-lg border border-border-soft bg-surface px-4 py-3 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="flex w-full items-center gap-4 rounded-lg card-flat px-4 py-3 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <span aria-hidden className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-primary-soft leading-none text-primary">
-        <span className="text-caption font-bold tracking-[0.06em]">{date.month}</span>
-        <span className="mt-0.5 font-display text-[1.25rem] font-bold">{date.day}</span>
+        <span className="text-caption font-semibold">{date.month}</span>
+        <span className="mt-0.5 font-display text-h2 font-bold">{date.day}</span>
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-caption text-text-muted">{t("communities.feed.nextEvent")}</span>

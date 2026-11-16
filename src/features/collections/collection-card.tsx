@@ -9,7 +9,7 @@ import { CollectionMoreMenu } from "./collection-more-menu";
 import { cn, collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
-import { StorageBackground, StorageImage } from "@/components/ui/storage-media";
+import { StorageBackground } from "@/components/ui/storage-media";
 import { CardBandBackdrop } from "@/features/content/content-card";
 
 /** One collection in the profile "Koleksiyonlar" grid — cover, name, item count, visibility, and (owner-only) manage menu. */
@@ -28,16 +28,16 @@ export function CollectionCard({
   const { t } = useTranslation();
   return (
     // Albüm kartı (docs/history/203-*): the band takes the cover picture's colours; the cover as its art, the name big.
-    <article className="group relative min-w-0 rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover">
+    <article className="group relative min-w-0 rounded-lg card-flat shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover">
       <Link href={collectionHref(collection)} className="block rounded-xl">
         <div className="relative rounded-t-xl p-2.5 pb-3">
           <CardBandBackdrop
-            backdrop={collection.coverImage?.url ? <StorageImage src={collection.coverImage.url} alt="" fill sizes="240px" className="object-cover" /> : undefined}
+           
           />
           <div className="relative space-y-3">
             <CollectionCover collection={collection} className="aspect-[4/3] w-full overflow-hidden rounded-lg shadow-pop" />
             <div className="min-w-0 space-y-0.5 px-1">
-              <p className="truncate font-display text-[1.0625rem] font-extrabold leading-tight tracking-[-0.015em] text-text">{collection.name}</p>
+              <p className="truncate font-display text-h3 font-extrabold leading-tight tracking-[-0.015em] text-text">{collection.name}</p>
             </div>
           </div>
         </div>

@@ -47,7 +47,7 @@ export function DetailShell({
       {band}
       <div className="mx-auto w-full max-w-6xl px-3 sm:px-6 lg:px-8">
         {actions}
-        <div className={cn("pt-6 lg:pt-8", aside && "xl:grid xl:grid-cols-[minmax(0,1fr)_18.75rem] xl:gap-7")}>
+        <div className={cn("pt-6 lg:pt-8", aside && "xl:grid xl:grid-cols-[minmax(0,1fr)_var(--aside-w)] xl:gap-7")}>
           <div className="min-w-0">{children}</div>
           {aside}
         </div>
@@ -169,7 +169,7 @@ export function DetailArt({
   );
 }
 
-const ART_FRAME_CLASS = "relative block w-full overflow-hidden rounded-xl bg-surface-soft shadow-pop [--art-h:240px] md:[--art-h:300px]";
+const ART_FRAME_CLASS = "relative block w-full overflow-hidden rounded-xl bg-surface-soft shadow-card [--art-h:240px] md:[--art-h:300px]";
 
 /** One thumbnail under the art (opens the lightbox at that image). */
 export function DetailArtThumb({ onOpen, children }: { onOpen: () => void; children: ReactNode }) {
@@ -179,7 +179,7 @@ export function DetailArtThumb({ onOpen, children }: { onOpen: () => void; child
       type="button"
       onClick={onOpen}
       aria-label={t("media.viewFullscreen")}
-      className="h-12 w-12 overflow-hidden rounded-[12px] border border-border-soft opacity-85 transition-opacity hover:opacity-100"
+      className="h-12 w-12 overflow-hidden rounded-md border border-border-soft opacity-85 transition-opacity hover:opacity-100"
     >
       {children}
     </button>
@@ -204,7 +204,7 @@ export function CollageArt({
   [data: `data-${string}`]: string | undefined;
 }) {
   const tile = cn(
-    "relative overflow-hidden bg-surface shadow-pop lg:h-[248px] lg:w-[248px] lg:rounded-xl",
+    "relative overflow-hidden bg-surface shadow-card lg:h-[248px] lg:w-[248px] lg:rounded-xl",
     compact ? "h-24 w-24 rounded-lg" : "h-[200px] w-[200px] rounded-xl",
   );
   if (images.length === 0) {
@@ -226,7 +226,7 @@ export function CollageArt({
       {[0, 1, 2, 3].map((index) => (
         <span
           key={index}
-          className="relative overflow-hidden rounded-[6px] bg-surface-soft first:rounded-tl-lg last:rounded-br-lg [&:nth-child(2)]:rounded-tr-lg [&:nth-child(3)]:rounded-bl-lg"
+          className="relative overflow-hidden rounded-xs bg-surface-soft first:rounded-tl-lg last:rounded-br-lg [&:nth-child(2)]:rounded-tr-lg [&:nth-child(3)]:rounded-bl-lg"
         >
           {images[index] && <StorageImg src={images[index].url} alt="" className="absolute inset-0 h-full w-full object-cover" />}
         </span>
@@ -238,7 +238,7 @@ export function CollageArt({
 /** Art for a post without a picture: its type's icon on a soft tile, so every band has the same rhythm. */
 export function DetailArtPlaceholder({ icon: Icon }: { icon: IconComponent }) {
   return (
-    <span aria-hidden className="flex h-36 w-36 items-center justify-center rounded-xl bg-surface/80 text-primary shadow-pop lg:h-48 lg:w-48">
+    <span aria-hidden className="flex h-36 w-36 items-center justify-center rounded-xl bg-surface/80 text-primary shadow-card lg:h-48 lg:w-48">
       <Icon size={56} />
     </span>
   );
@@ -269,7 +269,7 @@ export function DetailSection({
   return (
     <section ref={ref} id={id} aria-labelledby={headingId} className={cn("scroll-mt-24 space-y-4", className)}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 id={headingId} className="min-w-0 flex-1 font-display text-[1.375rem] font-bold leading-tight text-text">
+        <h2 id={headingId} className="min-w-0 flex-1 font-display text-h2 font-bold leading-tight text-text">
           {title}
         </h2>
         {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
@@ -307,7 +307,7 @@ export function DetailTitle({ children, className }: { children: ReactNode; clas
   return (
     <h1
       className={cn(
-        "break-words font-display text-[2rem] font-extrabold leading-[1.02] tracking-[-0.035em] text-text sm:text-[2.5rem] xl:text-[3.5rem]",
+        "break-words font-display text-display-xl font-extrabold text-text",
         className,
       )}
     >
@@ -319,7 +319,7 @@ export function DetailTitle({ children, className }: { children: ReactNode; clas
 /** The description under the title. */
 export function DetailLede({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p className={cn("whitespace-pre-line break-words [overflow-wrap:anywhere] text-body leading-relaxed text-text-secondary sm:text-[1.0625rem]", className)}>
+    <p className={cn("whitespace-pre-line break-words [overflow-wrap:anywhere] text-body leading-relaxed text-text-secondary sm:text-h3", className)}>
       {children}
     </p>
   );
@@ -350,7 +350,7 @@ export function DetailByline({
       </Link>
       <div className="min-w-0 leading-tight">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <Link href={href} data-detail-author className="min-w-0 truncate text-label font-semibold text-text transition-colors hover:text-primary">
+          <Link href={href} data-detail-author className="-mx-1.5 -my-2.5 min-w-0 truncate px-1.5 py-2.5 text-label font-semibold text-text transition-colors hover:text-primary">
             {person.displayName}
           </Link>
           {person.isDemo && <DemoAccountBadge />}
@@ -417,7 +417,7 @@ export function DetailActionBar({
           data-detail-dock={dock.pinned ? "" : undefined}
           className={cn(
             dock.pinned &&
-              "fixed inset-x-0 bottom-0 z-30 border-t border-border-soft bg-surface/95 backdrop-blur-xl animate-fade-in [animation-fill-mode:backwards] md:left-(--nav-rail-w) lg:left-(--sidebar-w)",
+              "fixed inset-x-0 bottom-0 z-30 border-t border-border-soft bg-surface animate-fade-in [animation-fill-mode:backwards] md:left-(--nav-rail-w) lg:left-(--sidebar-w)",
           )}
         >
           <div className={cn(dock.pinned && "mx-auto w-full max-w-6xl px-3 py-1.5 sm:px-6 lg:px-8")}>
@@ -448,7 +448,7 @@ export function BandActionRow({ label, children, ...rest }: { label: string; chi
 }
 
 /** The big primary pill of a `BandActionRow` (a `Button`/`Link` class, merged after `buttonClassName`). */
-export const BAND_PRIMARY_CLASS = "h-12 gap-2 rounded-full px-7 text-body font-semibold shadow-pop";
+export const BAND_PRIMARY_CLASS = "h-12 gap-2 rounded-full px-7 text-body font-semibold shadow-md";
 
 /** A raised content card (comments, side-column blocks, info lists). */
 export function DetailCard({
@@ -465,7 +465,7 @@ export function DetailCard({
   "aria-labelledby"?: string;
 }) {
   return (
-    <Tag className={cn("rounded-xl border border-border-soft bg-surface", className)} {...rest}>
+    <Tag className={cn("rounded-lg card-flat", className)} {...rest}>
       {children}
     </Tag>
   );
@@ -534,7 +534,7 @@ export function AsideLinkRow({
   return (
     <Link href={href} className="group flex items-start gap-3 px-4 py-3 transition-colors duration-200 hover:bg-surface-soft">
       <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
-        <Icon size={14} />
+        <Icon size={16} />
       </span>
       <span className="min-w-0 leading-tight">
         <span className="line-clamp-2 text-label font-semibold text-text transition-colors group-hover:text-primary">{title}</span>
@@ -553,7 +553,7 @@ export function DetailTags({ tags, className }: { tags: Tag[]; className?: strin
         <Link
           key={tag.slug}
           href={tagHref(tag)}
-          className="inline-flex h-7 items-center rounded-full border border-primary/25 bg-primary-soft px-2.5 text-caption font-medium text-primary transition-colors hover:border-primary/50"
+          className="inline-flex h-9 items-center rounded-full border border-primary/25 bg-primary-soft px-2.5 text-caption font-medium text-primary transition-colors hover:border-primary/50"
         >
           {tag.label}
         </Link>

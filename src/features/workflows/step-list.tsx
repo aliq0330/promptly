@@ -127,7 +127,7 @@ export function StepList({
                         onClick={() => onReorder(index, index - 1)}
                         className="rounded p-1 text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-50"
                       >
-                        <ChevronUp size={14} />
+                        <ChevronUp size={16} />
                       </button>
                       <button
                         type="button"
@@ -136,7 +136,7 @@ export function StepList({
                         onClick={() => onReorder(index, index + 1)}
                         className="rounded p-1 text-text-muted hover:bg-surface-soft hover:text-text disabled:opacity-50"
                       >
-                        <ChevronDown size={14} />
+                        <ChevronDown size={16} />
                       </button>
                     </span>
                   )}

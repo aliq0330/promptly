@@ -68,7 +68,7 @@ export function PromptInsightsView() {
   return (
     <PageContainer className="flex flex-col gap-6 lg:max-w-6xl">
       <Link href="/insights" className="inline-flex min-h-9 w-fit items-center gap-1 rounded-md text-small font-medium text-text-secondary hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <ChevronLeft size={18} aria-hidden />
+        <ChevronLeft size={20} aria-hidden />
         {t("insights.detail.back")}
       </Link>
 
@@ -80,7 +80,7 @@ export function PromptInsightsView() {
             <div className="min-w-0 flex-1 space-y-1.5">
               {summary ? (
                 <>
-                  <SadeTitle className="break-words text-[2rem] sm:text-[2.375rem]">{summary.title}</SadeTitle>
+                  <SadeTitle className="break-words text-display sm:text-display">{summary.title}</SadeTitle>
                   <p className="text-small text-text-secondary">
                     {meta ? t(meta.labelKey) : ""}
                     {tool ? ` · ${tool}` : ""}

@@ -140,7 +140,7 @@ export function CopyTextButton({ text, label, className, size = "sm" }: { text: 
         setTimeout(() => setState("idle"), 1500);
       }}
     >
-      {state === "copied" ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
+      {state === "copied" ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
       {state === "copied" ? t("common.copied") : state === "failed" ? t("spaces.share.copyFailed") : (label ?? t("common.copy"))}
     </Button>
   );
@@ -207,7 +207,7 @@ function GroupPicker({ value, onChange, canManage, id }: { value: string | null;
         <form onSubmit={(event) => void create(event)} className="flex gap-2" data-testid="group-picker-new">
           <input value={name} onChange={(event) => setName(event.target.value)} maxLength={SPACE_GROUP_NAME_MAX} aria-label={t("spaces.groups.nameLabel")} placeholder={t("spaces.groups.newPlaceholder")} className={cn(fieldInputClassName, "h-10 min-w-0 flex-1")} />
           <Button type="submit" size="sm" className="h-10" disabled={busy || !name.trim()}>
-            {busy ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <Plus size={14} aria-hidden />}
+            {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Plus size={16} aria-hidden />}
             {t("spaces.groups.add")}
           </Button>
           <Button type="button" size="sm" variant="ghost" className="h-10" onClick={() => { setCreating(false); setName(""); setError(null); }} disabled={busy}>
@@ -319,7 +319,7 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard, drawer }: { it
             )}
             <Link href={source.href} className="inline-flex items-center gap-1 text-small font-semibold text-primary hover:underline">
               {t("spaces.source.open")}
-              <ArrowUpRight size={14} aria-hidden />
+              <ArrowUpRight size={16} aria-hidden />
             </Link>
           </div>
         )}
@@ -331,7 +331,7 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard, drawer }: { it
               <div className="flex gap-2">
                 {caps.edit && (
                   <Button type="button" variant="ghost" size="sm" onClick={() => void copyAsDraft()} disabled={busy}>
-                    <Pencil size={14} aria-hidden />
+                    <Pencil size={16} aria-hidden />
                     {t("spaces.prompts.copyAsDraft")}
                   </Button>
                 )}
@@ -429,20 +429,20 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard, drawer }: { it
           <div className="flex flex-wrap gap-2">
             {onShowOnBoard && (
               <Button type="button" variant="outline" size="sm" onClick={() => onShowOnBoard(item.id)}>
-                <MapPin size={14} aria-hidden />
+                <MapPin size={16} aria-hidden />
                 {t("spaces.detail.showOnBoard")}
               </Button>
             )}
             {caps.edit && (
               <Button type="button" variant="ghost" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => setConfirmRemove(true)}>
-                <TrashIcon size={14} />
+                <TrashIcon size={16} />
                 {t("spaces.detail.remove")}
               </Button>
             )}
           </div>
           {caps.edit && (
             <Button type="button" onClick={() => void save()} disabled={busy || !dirty}>
-              {busy ? <Loader2 size={14} className="animate-spin" aria-hidden /> : saved ? <Check size={14} aria-hidden /> : null}
+              {busy ? <Loader2 size={16} className="animate-spin" aria-hidden /> : saved ? <Check size={16} aria-hidden /> : null}
               {saved ? t("spaces.detail.saved") : t("common.save")}
             </Button>
           )}
@@ -760,7 +760,7 @@ export function GroupsManagerModal({ onClose }: { onClose: () => void }) {
                         value={group.color}
                         onChange={(event) => void recolor(group.id, event.target.value as SpaceColor)}
                         aria-label={t("spaces.notes.color")}
-                        className="h-9 rounded-md border border-border bg-surface px-2 text-caption text-text"
+                        className="h-9 rounded-md card-flat px-2 text-caption text-text"
                       >
                         {SPACE_COLORS.map((color) => (
                           <option key={color} value={color}>
@@ -780,7 +780,7 @@ export function GroupsManagerModal({ onClose }: { onClose: () => void }) {
                         <Pencil size={16} />
                       </button>
                       <button type="button" onClick={() => setConfirmDelete(group.id)} aria-label={t("spaces.groups.delete", { name: group.name })} className="rounded-full p-2 text-text-muted hover:bg-danger-soft hover:text-danger">
-                        <TrashIcon size={15} />
+                        <TrashIcon size={16} />
                       </button>
                     </>
                   )}
@@ -796,7 +796,7 @@ export function GroupsManagerModal({ onClose }: { onClose: () => void }) {
             </label>
             <input id={inputId} value={name} onChange={(event) => setName(event.target.value)} maxLength={SPACE_GROUP_NAME_MAX} placeholder={t("spaces.groups.newPlaceholder")} className={cn(fieldInputClassName, "h-10")} />
             <Button type="submit" disabled={busy || !name.trim()}>
-              <Plus size={14} aria-hidden />
+              <Plus size={16} aria-hidden />
               {t("spaces.groups.add")}
             </Button>
           </form>

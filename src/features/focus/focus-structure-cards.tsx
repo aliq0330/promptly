@@ -66,7 +66,7 @@ function StructureShell({
             <span className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary sm:flex">
               <Icon size={16} aria-hidden />
             </span>
-            <span className="flex min-w-0 items-center gap-1 text-caption font-semibold uppercase tracking-[0.04em] text-text-muted sm:tracking-[0.08em]">
+            <span className="flex min-w-0 items-center gap-1 text-caption font-semibold text-text-muted">
               <Icon size={12} aria-hidden className="shrink-0 text-primary sm:hidden" />
               <span className="truncate">{badge}</span>
               {detail && (
@@ -171,7 +171,7 @@ export function FocusWorkflowCard({ workflow }: { workflow: Workflow }) {
               const TypeIcon = CONTENT_TYPE_META[type].icon;
               return (
                 <span key={type} className="inline-flex h-5 items-center gap-1 rounded-full bg-surface-soft px-2 text-caption font-medium text-text-secondary">
-                  <TypeIcon size={10} aria-hidden />
+                  <TypeIcon size={12} aria-hidden />
                   {t(CONTENT_TYPE_META[type].labelKey)}
                 </span>
               );

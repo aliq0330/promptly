@@ -20,8 +20,8 @@ export function PromptDnaDisplay({ sections, promptTitle, mapHref }: { sections:
   return (
     <section aria-labelledby="prompt-dna-title" className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="prompt-dna-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-          <Dna size={14} />
+        <h2 id="prompt-dna-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold text-text-muted">
+          <Dna size={16} />
           {t("dna.title")}
         </h2>
         <span className="text-caption text-text-muted">{t("dna.sectionsCount", { count: sections.length })}</span>
@@ -31,9 +31,9 @@ export function PromptDnaDisplay({ sections, promptTitle, mapHref }: { sections:
         {sections.map((section) => {
           const Icon = DNA_ICONS[section.type];
           return (
-            <li key={section.id} className="min-w-0 rounded-md border border-border-soft bg-surface p-3">
+            <li key={section.id} className="min-w-0 rounded-md card-flat p-3">
               <p className="flex items-center gap-1.5 text-label font-semibold text-text">
-                <Icon size={14} className="shrink-0 text-text-muted" aria-hidden="true" />
+                <Icon size={16} className="shrink-0 text-text-muted" aria-hidden="true" />
                 <span className="min-w-0 truncate">{dnaSectionLabel(section, t)}</span>
               </p>
               <p className="mt-1 break-words text-small text-text-secondary">{section.content}</p>

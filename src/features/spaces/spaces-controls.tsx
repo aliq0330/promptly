@@ -48,13 +48,13 @@ export function SpacesFilterSheet({
   const dirty = sort !== "updated" || kind !== null || visibility !== null;
   return (
     <Modal onClose={onClose} labelledBy="spaces-filter-title">
-      <DialogShell role="document" className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell role="document" className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg card-flat shadow-pop">
         <div className="flex items-center gap-2 px-5 pb-1 pt-4">
           <h2 id="spaces-filter-title" className="min-w-0 flex-1 text-h3 font-bold text-text">
             {t("spaces.home.filterTitle")}
           </h2>
           <button type="button" aria-label={t("common.close")} onClick={onClose} className={iconButtonClassName(false, "h-10 w-10 rounded-md")}>
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-5 pt-2">

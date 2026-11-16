@@ -96,7 +96,7 @@ export function CollectionMembersTab({
       <p className="text-caption text-text-muted">{t("collab.partnersHint")}</p>
       {error && <InlineAlert>{error}</InlineAlert>}
 
-      <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-3">
+      <ul className="divide-y divide-border-soft rounded-lg card-flat px-3">
         {people.map((member) => {
           const isSelf = member.userId === userId;
           return (
@@ -118,7 +118,7 @@ export function CollectionMembersTab({
                     <Badge variant="success">{t("collab.roleOwner")}</Badge>
                   ) : isOwner ? (
                     <Button type="button" variant="ghost" size="icon" aria-label={`${t("collab.removeMember")}: ${member.displayName}`} onClick={() => setRemoving(member)} data-collection-member-remove="">
-                      <UserMinus size={18} aria-hidden />
+                      <UserMinus size={20} aria-hidden />
                     </Button>
                   ) : isSelf && canLeaveCollection(role) ? (
                     <Button type="button" variant="outline" size="sm" onClick={() => setRemoving(member)} data-collection-leave="">
@@ -134,13 +134,13 @@ export function CollectionMembersTab({
       </ul>
 
       {partners.length === 0 && pending.length === 0 && isOwner && (
-        <EmptyState icon={Users} title={t("collab.noPartnersYet")} description={t("collab.inviteHint")} className="border-0" />
+        <EmptyState scene="collection" icon={Users} title={t("collab.noPartnersYet")} description={t("collab.inviteHint")} className="border-0" />
       )}
 
       {pending.length > 0 && (
         <div className="space-y-2 pt-2">
-          <h3 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("collab.pendingTitle")}</h3>
-          <ul className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface px-3">
+          <h3 className="text-caption font-semibold text-text-muted">{t("collab.pendingTitle")}</h3>
+          <ul className="divide-y divide-border-soft rounded-lg card-flat px-3">
             {pending.map((member) => (
               <li key={member.invitationId ?? member.userId}>
                 <PersonRow

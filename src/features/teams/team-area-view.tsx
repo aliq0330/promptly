@@ -484,7 +484,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
   return (
     <div className="space-y-4" data-testid="area-folder-list">
       {(reviewOn || pendingN > 0 || changesN > 0) && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border-soft bg-surface px-4 py-3" data-testid="area-review-summary">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg card-flat px-4 py-3" data-testid="area-review-summary">
           {add?.reviewSwitch ? (
             <label className="flex min-h-9 items-center gap-2 text-small font-semibold text-text" data-area-review-switch>
               <input type="checkbox" checked={reviewOn} disabled={add.reviewSwitch.busy} onChange={(event) => add.reviewSwitch?.onChange(event.target.checked)} aria-label={t("tp.review.switchLabel")} className="h-5 w-5 accent-[var(--color-primary)]" />
@@ -566,8 +566,8 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
                 aria-pressed={effectiveFilter === key}
                 data-area-filter={key}
                 className={cn(
-                  "h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-small font-semibold md:h-8 md:px-4",
-                  effectiveFilter === key ? "border-text bg-text text-background" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
+                  "h-11 shrink-0 whitespace-nowrap rounded-full border px-4 text-small font-semibold md:h-9 md:px-4",
+                  effectiveFilter === key ? "border-transparent bg-primary-soft text-primary" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
                   key === "waiting" && effectiveFilter !== key && "text-warning",
                 )}
               >
@@ -645,7 +645,7 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
       {deleting && <BulkDeleteDialog count={selected.length} busy={deleteBusy} error={deleteError} onConfirm={() => void deleteSelected()} onCancel={() => setDeleting(false)} />}
       {nothingYet && effectiveFilter === "all" && nav.view === "items" && (
         <div className="rounded-lg border border-dashed border-border bg-surface-soft/40 px-5 py-7 text-center" data-testid="area-empty">
-          <p className="text-body font-bold text-text">{t("tp.area.list.emptyTitle")}</p>
+          <p className="text-body font-semibold text-text">{t("tp.area.list.emptyTitle")}</p>
           <p className="mx-auto mt-1 max-w-xs text-small text-text-secondary">{t(canAdd ? "tp.area.list.emptyBody" : "tp.area.list.emptyViewer")}</p>
         </div>
       )}
@@ -667,8 +667,8 @@ function AreaCardGrid({ boards, hrefFor, itemHref, canAdd, onAdd, add, reviewHre
       )}
       {canAdd && !selecting && (
         <div className="pointer-events-none sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 flex justify-end pt-2 md:hidden" data-keyboard-hide="">
-          <Button type="button" onClick={onAdd} className="pointer-events-auto h-12 gap-2 rounded-full px-5 shadow-pop" data-area-add-phone>
-            <Plus size={18} aria-hidden />
+          <Button type="button" onClick={onAdd} className="pointer-events-auto h-12 gap-2 rounded-full px-5 shadow-md" data-area-add-phone>
+            <Plus size={20} aria-hidden />
             {folderGroup ? t("tf.group.addHere", { name: folderGroup.name }) : t("tp.add.button")}
           </Button>
         </div>
@@ -701,7 +701,7 @@ function AreaCard({ row, reviewOn, groupName, select }: { row: AreaRow; reviewOn
     >
       {select?.on && (
         <span aria-hidden className={cn("pointer-events-none absolute left-2.5 top-2.5 z-10 grid h-6 w-6 place-items-center rounded-full border-2 shadow-xs", select.checked ? "border-primary bg-primary text-primary-foreground" : "border-white bg-black/30 text-transparent")}>
-          <Check size={14} />
+          <Check size={16} />
         </span>
       )}
       <span className={cn("relative block overflow-hidden rounded-lg md:rounded-xl", select?.checked && "ring-[3px] ring-primary ring-offset-2 ring-offset-background", CARD_HEIGHT[row.kind], row.kind === "note" ? "bg-warning-soft text-text" : row.kind === "image" ? "bg-surface-soft" : row.kind === "board" || row.kind === "group" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text")}>
@@ -716,12 +716,12 @@ function AreaCard({ row, reviewOn, groupName, select }: { row: AreaRow; reviewOn
         )}
         {(row.kind === "board" || row.kind === "group" || row.kind === "workflow" || row.kind === "preset" || row.kind === "request") && (
           <span className="absolute inset-0 grid place-items-center opacity-70">
-            <Icon size={30} aria-hidden />
+            <Icon size={32} aria-hidden />
           </span>
         )}
-        <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-3 pb-2.5 pt-7 text-white">
-          <span className="block text-caption font-bold uppercase tracking-[0.06em] opacity-90">{t(ROW_KIND_KEY[row.kind])}{row.sub ? ` · ${row.sub}` : ""}{groupName ? ` · ${groupName}` : ""}</span>
-          <span className="block truncate text-small font-bold leading-snug">{row.title}</span>
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 art-scrim px-3 pb-2.5 pt-7 text-on-art">
+          <span className="block text-caption font-semibold opacity-90">{t(ROW_KIND_KEY[row.kind])}{row.sub ? ` · ${row.sub}` : ""}{groupName ? ` · ${groupName}` : ""}</span>
+          <span className="block truncate text-small font-semibold leading-snug">{row.title}</span>
         </span>
         {showState && row.state && (
           <span className="absolute right-2 top-2 rounded-full bg-surface shadow-xs">
@@ -754,11 +754,11 @@ function AddMenuDialog({ reviewOn, onClose, onPick, onNewBoard, onNewVariable, o
           const Icon = option.icon;
           return (
             <li key={option.key}>
-              <button type="button" onClick={option.run} data-area-add-option={option.key} className="flex h-full w-full flex-col gap-2 rounded-lg border border-border-soft bg-surface p-4 text-left transition-colors hover:bg-surface-soft">
+              <button type="button" onClick={option.run} data-area-add-option={option.key} className="flex h-full w-full flex-col gap-2 rounded-lg card-flat p-4 text-left transition-colors hover:bg-surface-soft">
                 <span aria-hidden className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
                   <Icon size={20} />
                 </span>
-                <span className="text-small font-bold text-text">{t(option.label)}</span>
+                <span className="text-small font-semibold text-text">{t(option.label)}</span>
                 <span className="text-caption text-text-secondary">{t(option.hint)}</span>
               </button>
             </li>
@@ -810,7 +810,7 @@ function AreaReviewPanel({ role, reviewHref, onChanged }: { role: ProjectRole | 
   const pendingForLead = role === "lead" ? open.filter((item) => item.revState === "pending").length : 0;
 
   return (
-    <section className="space-y-3 rounded-lg border border-border-soft bg-surface p-4" data-testid="area-review-panel">
+    <section className="space-y-3 rounded-lg card-flat p-4" data-testid="area-review-panel">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="min-w-0 flex-1 text-body font-bold text-text">{t("tp.review.panelTitle")}</h3>
         {submittable.length > 0 && (
@@ -819,7 +819,7 @@ function AreaReviewPanel({ role, reviewHref, onChanged }: { role: ProjectRole | 
           </Button>
         )}
         {pendingForLead > 0 && reviewHref && (
-          <Link href={reviewHref} className="inline-flex h-8 items-center rounded-full bg-warning-soft px-3 text-caption font-semibold text-warning" data-review-open-queue>
+          <Link href={reviewHref} className="inline-flex h-9 items-center rounded-full bg-warning-soft px-3 text-caption font-semibold text-warning" data-review-open-queue>
             {t("tp.review.openQueue", { count: pendingForLead })}
           </Link>
         )}

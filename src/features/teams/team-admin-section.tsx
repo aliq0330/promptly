@@ -142,7 +142,7 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
               className={cn(
                 "inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:h-9",
                 active === item.key
-                  ? "border-text bg-text text-background"
+                  ? "border-transparent bg-primary-soft text-primary"
                   : item.key === "danger"
                     ? "border-border-soft bg-surface text-danger hover:bg-danger-soft"
                     : "border-border-soft bg-surface text-text hover:bg-surface-soft",
@@ -256,7 +256,7 @@ function GeneralSection({ ctx }: { ctx: TeamCtx }) {
           <label htmlFor="team-set-desc" className={fieldLabelClassName}>
             {t("tm.create.description")}
           </label>
-          <textarea id="team-set-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-small" />
+          <textarea id="team-set-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg card-inset px-4 py-2.5 text-small" />
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.create.tone")}</span>
@@ -282,7 +282,7 @@ function PolicyRow({ label, hint, children }: { label: string; hint?: string; ch
   return (
     <div className="flex items-center justify-between gap-4 py-3" data-policy-row>
       <span className="min-w-0">
-        <span className="block text-small font-bold text-text">{label}</span>
+        <span className="block text-small font-semibold text-text">{label}</span>
         {hint && <span className="block text-caption text-text-muted">{hint}</span>}
       </span>
       <span className="shrink-0">{children}</span>
@@ -292,7 +292,7 @@ function PolicyRow({ label, hint, children }: { label: string; hint?: string; ch
 
 function PillSelect<K extends string>({ label, value, options, onChange }: { label: string; value: K; options: { key: K; label: string }[]; onChange: (key: K) => void }) {
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value as K)} aria-label={label} className="h-9 max-w-[11rem] rounded-full border border-border bg-background pl-4 pr-2 text-caption font-bold text-text">
+    <select value={value} onChange={(event) => onChange(event.target.value as K)} aria-label={label} className="h-9 max-w-[11rem] rounded-full border border-border bg-background pl-4 pr-2 text-caption font-semibold text-text">
       {options.map((option) => (
         <option key={option.key} value={option.key}>
           {option.label}
@@ -339,8 +339,8 @@ function PoliciesSection({ ctx, stacked = false }: { ctx: TeamCtx; stacked?: boo
   };
   const num = (key: "inviteLinkTtlDays") => String(value(key));
   const roleOptions = <R extends "owner" | "admin" | "editor">(keys: R[]) => keys.map((key) => ({ key, label: t(`tm.role.${key}` as "tm.role.owner") }));
-  const card = "rounded-lg border border-border-soft bg-surface px-4 pb-1 pt-3";
-  const cardTitle = "mb-1 border-b border-border-soft pb-2 text-body font-bold text-text";
+  const card = "rounded-lg card-flat px-4 pb-1 pt-3";
+  const cardTitle = "mb-1 border-b border-border-soft pb-2 text-body font-semibold text-text";
   return (
     <div className="space-y-4" data-testid="team-policies">
       <div className="flex items-start gap-3">
@@ -413,7 +413,7 @@ const AUDIT_TAG_TONE: Record<string, string> = {
   library: "bg-danger-soft text-danger",
   channel: "bg-surface-soft text-text-secondary",
   policy: "bg-surface-soft text-text-secondary",
-  integration: "bg-secondary/10 text-secondary",
+  integration: "bg-secondary-soft text-secondary",
 };
 
 /** "Bugün 10:18" / "Dün 17:42" / "3 Kas" (mockup: sol zaman sütunu). */
@@ -511,7 +511,7 @@ function AuditSection({ ctx }: { ctx: TeamCtx }) {
   return (
     <div className="space-y-4" data-testid="team-audit">
       <div className="flex items-center gap-2 md:flex-wrap">
-        <h2 className="mr-auto font-display text-h2 font-bold max-md:hidden">{t("tm.admin.audit")}</h2>
+        <h2 className="mr-auto font-display text-h2 font-semibold max-md:hidden">{t("tm.admin.audit")}</h2>
         <SectionMenu items={categoryItems} active={category} onChange={setCategory} ariaLabel={t("tm.admin.audit.category")} title={t("tm.admin.audit.category")} align="end" />
         <SectionMenu items={dayItems} active={String(days) as "7" | "30" | "90"} onChange={(key) => setDays(Number(key) as 7 | 30 | 90)} ariaLabel={t("tm.panel.range")} title={t("tm.panel.range")} align="end" />
         <Button type="button" variant="secondary" size="sm" onClick={() => void exportCsv()} disabled={exporting} data-audit-csv>
@@ -525,12 +525,12 @@ function AuditSection({ ctx }: { ctx: TeamCtx }) {
         <StatTile label={t("tm.admin.audit.deletes")} value={stats?.deletes ?? "–"} />
       </div>
       {error && <p role="alert" className="text-small text-danger">{error}</p>}
-      <ul className="rounded-lg border border-border-soft bg-surface md:divide-y md:divide-border-soft max-md:space-y-2 max-md:border-0 max-md:bg-transparent" data-audit-list>
+      <ul className="rounded-lg card-flat md:divide-y md:divide-border-soft max-md:space-y-2 max-md:border-0 max-md:bg-transparent" data-audit-list>
         {entries.length === 0 && !error && <li className="px-4 py-6 text-center text-small text-text-muted">{t("tm.admin.audit.empty")}</li>}
         {entries.map((entry) => {
           const name = entry.actorName || entry.actorUsername || t("tm.admin.audit.system");
           const tag = (
-            <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-bold", AUDIT_TAG_TONE[entry.category] ?? "bg-surface-soft text-text-secondary")} data-audit-tag={entry.category}>
+            <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-semibold", AUDIT_TAG_TONE[entry.category] ?? "bg-surface-soft text-text-secondary")} data-audit-tag={entry.category}>
               {t(`tm.audit.tag.${entry.category}` as "tm.audit.tag.member")}
             </span>
           );
@@ -540,7 +540,7 @@ function AuditSection({ ctx }: { ctx: TeamCtx }) {
               <span className="w-24 shrink-0 text-caption text-text-muted max-md:hidden">{time}</span>
               <Avatar src={entry.actorAvatarUrl} alt={name} size={32} />
               <span className="min-w-0 flex-1">
-                <span className="font-bold text-text">{name}</span> <span className="text-text-secondary">{auditSentence(t, entry)}</span>
+                <span className="font-semibold text-text">{name}</span> <span className="text-text-secondary">{auditSentence(t, entry)}</span>
                 <span className="mt-1.5 flex items-center gap-2 md:hidden">
                   {tag}
                   <span className="text-caption text-text-muted">{time}</span>
@@ -619,7 +619,7 @@ function DangerSection({ ctx }: { ctx: TeamCtx }) {
         </Button>
         {transferOpen && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <select value={target} onChange={(e) => setTarget(e.target.value)} aria-label={t("tm.admin.transferPick")} className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-small">
+            <select value={target} onChange={(e) => setTarget(e.target.value)} aria-label={t("tm.admin.transferPick")} className="h-10 min-w-0 flex-1 rounded-lg card-inset px-3 text-small">
               <option value="">{t("tm.admin.transferPick")}</option>
               {candidates.map((m) => (
                 <option key={m.userId} value={m.userId}>

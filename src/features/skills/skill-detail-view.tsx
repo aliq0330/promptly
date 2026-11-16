@@ -235,9 +235,9 @@ export function SkillDetailView() {
         >
           {skill.instructions.trim() ? (
             rawView ? (
-              <pre className="prompt-text whitespace-pre-wrap break-words rounded-xl border border-border-soft bg-surface-soft px-5 py-4 text-small text-text">{skill.instructions}</pre>
+              <pre className="prompt-text whitespace-pre-wrap break-words rounded-lg card-soft px-5 py-4 text-small text-text">{skill.instructions}</pre>
             ) : (
-              <div className="rounded-xl border border-border-soft bg-surface px-5 py-4" data-skill-instructions="">
+              <div className="rounded-lg card-flat px-5 py-4" data-skill-instructions="">
                 <MarkdownView source={skill.instructions} />
               </div>
             )

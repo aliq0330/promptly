@@ -85,7 +85,7 @@ function ActivityList() {
             type="button"
             aria-pressed={filter === f.key}
             onClick={() => setFilter(f.key)}
-            className={cn("rounded-full border px-4 py-1.5 text-small font-medium transition-colors", filter === f.key ? "border-text bg-text text-background" : "border-border bg-surface text-text-secondary hover:border-border-strong")}
+            className={cn("rounded-full border px-4 py-1.5 text-small font-medium transition-colors", filter === f.key ? "border-transparent bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong")}
           >
             {t(f.label)}
           </button>
@@ -99,13 +99,13 @@ function ActivityList() {
           <Skeleton className="h-24 w-full rounded-lg" />
         </div>
       ) : shown.length === 0 ? (
-        <EmptyState icon={History} title={t("spaces.activity.empty")} />
+        <EmptyState scene="spaces" icon={History} title={t("spaces.activity.empty")} />
       ) : (
         <ul className="space-y-3">
           {shown.map((entry) => (
             <li key={entry.id} data-activity={entry.action} data-activity-id={entry.id} className="flex gap-3">
               <Actor entry={entry} />
-              <div className="min-w-0 flex-1 rounded-lg border border-border-soft bg-surface p-4">
+              <div className="min-w-0 flex-1 rounded-lg card-flat p-4">
                 <p className="text-small text-text">
                   <span className="font-semibold">{entry.actor?.displayName ?? t("spaces.activity.someone")}</span> {activityText(entry)}
                   <span className="text-caption text-text-muted"> · {formatRelativeTime(entry.createdAt, language)}</span>
@@ -115,13 +115,13 @@ function ActivityList() {
                 </div>
                 {entry.authorNote && (
                   <p className="mt-2.5 rounded-xl bg-surface-soft px-3 py-2 text-small text-text">
-                    <span className="block text-label font-semibold uppercase tracking-[0.06em] text-text-muted">{t("spaces.activity.noteBy", { name: entry.actor?.displayName ?? t("spaces.activity.someone") })}</span>
+                    <span className="block text-label font-semibold text-text-muted">{t("spaces.activity.noteBy", { name: entry.actor?.displayName ?? t("spaces.activity.someone") })}</span>
                     {entry.authorNote}
                   </p>
                 )}
                 <div className="mt-2.5 flex flex-wrap items-center gap-4">
                   <Link href={spaceActivityHref(space.id, entry.id)} className="inline-flex items-center gap-1.5 text-small font-semibold text-primary hover:underline" data-activity-open="">
-                    <MessageCircle size={14} aria-hidden />
+                    <MessageCircle size={16} aria-hidden />
                     {entry.commentCount > 0 ? t("spaces.activity.comments", { count: entry.commentCount }) : t("spaces.activity.writeComment")}
                   </Link>
                   <Link href={spaceActivityHref(space.id, entry.id)} className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text">
@@ -191,7 +191,7 @@ function ActivityEventPage({ eventId }: { eventId: string }) {
 
   const back = (
     <Link href={spaceHref(space.id, "activity")} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text" data-activity-back="">
-      <ArrowLeft size={14} aria-hidden /> {t("spaces.activity.backToList")}
+      <ArrowLeft size={16} aria-hidden /> {t("spaces.activity.backToList")}
     </Link>
   );
 
@@ -211,9 +211,9 @@ function ActivityEventPage({ eventId }: { eventId: string }) {
     <article className="max-w-3xl space-y-5" data-activity-page={event.id}>
       {back}
       <header className="flex gap-3">
-        <Actor entry={event} size={44} />
+        <Actor entry={event} size={40} />
         <div className="min-w-0">
-          <p className="text-label font-semibold uppercase tracking-[0.08em] text-text-muted">{t("spaces.activity.summaryTitle")}</p>
+          <p className="text-label font-semibold text-text-muted">{t("spaces.activity.summaryTitle")}</p>
           <h2 className="text-h3 font-bold text-text">
             {event.actor?.displayName ?? t("spaces.activity.someone")} {activityText(event)}
           </h2>
@@ -240,7 +240,7 @@ function ActivityEventPage({ eventId }: { eventId: string }) {
               autoFocus
               placeholder={t("spaces.activity.notePlaceholder")}
               data-activity-note-input=""
-              className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="w-full resize-none rounded-lg card-flat px-3 py-2 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
             <div className="flex items-center gap-2">
               <Button type="submit" size="sm" disabled={noteBusy}>
@@ -257,7 +257,7 @@ function ActivityEventPage({ eventId }: { eventId: string }) {
           <>
             {event.authorNote && (
               <p className="rounded-xl bg-surface-soft px-4 py-3 text-small text-text" data-activity-note="">
-                <span className="block text-label font-semibold uppercase tracking-[0.06em] text-text-muted">{t("spaces.activity.noteBy", { name: event.actor?.displayName ?? t("spaces.activity.someone") })}</span>
+                <span className="block text-label font-semibold text-text-muted">{t("spaces.activity.noteBy", { name: event.actor?.displayName ?? t("spaces.activity.someone") })}</span>
                 {event.authorNote}
               </p>
             )}
@@ -274,10 +274,10 @@ function ActivityEventPage({ eventId }: { eventId: string }) {
 
       <nav aria-label={t("spaces.tab.activity")} className="flex flex-wrap items-center justify-between gap-2 border-y border-border-soft py-3">
         <Button type="button" variant="outline" size="sm" disabled={!previous} onClick={() => previous && go(previous.id)} data-activity-prev="">
-          <ArrowLeft size={14} aria-hidden /> {t("spaces.activity.previous")}
+          <ArrowLeft size={16} aria-hidden /> {t("spaces.activity.previous")}
         </Button>
         <Button type="button" variant="outline" size="sm" disabled={!next} onClick={() => next && go(next.id)} data-activity-next="">
-          {t("spaces.activity.next")} <ArrowRight size={14} aria-hidden />
+          {t("spaces.activity.next")} <ArrowRight size={16} aria-hidden />
         </Button>
       </nav>
 

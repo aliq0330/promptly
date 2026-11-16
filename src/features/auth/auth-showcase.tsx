@@ -41,7 +41,7 @@ export function AuthShowcase() {
         {SAMPLE_LINES.map((line, index) => (
           <div
             key={line}
-            className="prompt-text flex max-w-sm items-center gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-2 text-text-muted shadow-xs"
+            className="prompt-text flex max-w-sm items-center gap-2 rounded-lg card-soft px-3 py-2 text-text-muted shadow-xs"
             style={{ opacity: 1 - index * 0.25 }}
           >
             <span className="text-primary">›</span>

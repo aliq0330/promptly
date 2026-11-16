@@ -91,7 +91,7 @@ export function DetailFooterActions({ card, list, onAfterHide }: { card: Notific
           >
             {allMuted ? <Bell size={16} aria-hidden /> : <BellOff size={16} aria-hidden />}
             {allMuted ? t("nc.unmute") : t("nc.mute")}
-            {!singleChoice && <ChevronDown size={14} aria-hidden className={cn("transition-transform", open === "mute" && "rotate-180")} />}
+            {!singleChoice && <ChevronDown size={16} aria-hidden className={cn("transition-transform", open === "mute" && "rotate-180")} />}
           </Button>
         )}
         <div className="inline-flex">
@@ -100,7 +100,7 @@ export function DetailFooterActions({ card, list, onAfterHide }: { card: Notific
             {t("nc.snooze")}
           </Button>
           <Button variant="outline" className={cn(FOOTER_BUTTON, "rounded-l-none px-2.5")} aria-label={t("nc.snoozeMore")} aria-expanded={open === "snooze"} onClick={() => setOpen(open === "snooze" ? null : "snooze")} data-action="snooze-more">
-            <ChevronDown size={14} aria-hidden className={cn("transition-transform", open === "snooze" && "rotate-180")} />
+            <ChevronDown size={16} aria-hidden className={cn("transition-transform", open === "snooze" && "rotate-180")} />
           </Button>
         </div>
         {prefKey && (

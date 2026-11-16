@@ -22,11 +22,12 @@ import { TeamMark } from "./team-ui";
  */
 export const BAND_TONE: Record<string, string> = {
   primary: "bg-primary-soft",
-  secondary: "bg-secondary/10",
-  success: "bg-success-soft",
-  warning: "bg-warning-soft",
+  sky: "bg-[color-mix(in_srgb,var(--color-primary)_6%,var(--color-surface-soft))]",
   plum: "bg-surface-soft",
-  sky: "bg-primary-soft",
+  // Eski kayıtlar (DB'de duran `secondary` / `success` / `warning`): sakin görünüme eşlenir (`resolveTeamTone`, team-ui.tsx).
+  secondary: "bg-primary-soft",
+  success: "bg-[color-mix(in_srgb,var(--color-primary)_6%,var(--color-surface-soft))]",
+  warning: "bg-surface-soft",
 };
 
 export interface TeamTabItem {
@@ -96,7 +97,7 @@ export function TeamBand({
       backAttrs={{ "data-team-back-phone": "" }}
       art={
         <span aria-hidden className={cn("absolute inset-0 grid place-items-center", BAND_TONE[team.tone] ?? BAND_TONE.primary)}>
-          <TeamMark name={team.name} tone={team.tone} solid size={52} className="rounded-[15px]" />
+          <TeamMark name={team.name} tone={team.tone} solid size={52} className="rounded-md" />
         </span>
       }
       kicker={<span className="rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">{t("tc.band.kicker")}</span>}
@@ -124,7 +125,7 @@ export function TeamBand({
                 </span>
               ))}
               {Math.max(0, team.memberCount - Math.min(3, faces.length)) > 0 && (
-                <span className="-ml-1.5 grid h-8 min-w-8 place-items-center rounded-full bg-surface px-1.5 text-caption font-bold text-text ring-2 ring-surface">+{Math.max(0, team.memberCount - Math.min(3, faces.length))}</span>
+                <span className="-ml-1.5 grid h-8 min-w-8 place-items-center rounded-full bg-surface px-1.5 text-caption font-semibold text-text ring-2 ring-surface">+{Math.max(0, team.memberCount - Math.min(3, faces.length))}</span>
               )}
             </div>
           )}
@@ -136,7 +137,7 @@ export function TeamBand({
               aria-label={t("tm.invite.title")}
               className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover md:px-5"
             >
-              <UserPlus size={18} aria-hidden />
+              <UserPlus size={20} aria-hidden />
               <span>{t("tm.invite.title")}</span>
             </button>
           )}

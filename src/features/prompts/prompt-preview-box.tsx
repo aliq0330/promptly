@@ -35,8 +35,8 @@ export function PromptPreviewBox({ prompt, lines = 4, variant = "panel" }: { pro
   return (
     <div className="relative overflow-hidden rounded-xl bg-surface-soft">
       <div className="flex items-center gap-2 pl-4 pr-1.5 pt-2">
-        <span className="min-w-0 flex-1 truncate text-caption font-semibold uppercase tracking-[0.06em] text-text-secondary">
-          Prompt{tool ? <span className="normal-case tracking-normal text-text-muted"> · {tool}</span> : null}
+        <span className="min-w-0 flex-1 truncate text-caption font-semibold text-text-secondary">
+          Prompt{tool ? <span className="text-text-muted"> · {tool}</span> : null}
         </span>
         {prompt.copyCount > 0 && (
           <span className="shrink-0 text-caption tabular-nums text-text-muted">{t("prompt.usesShort", { count: formatCount(prompt.copyCount) })}</span>

@@ -17,7 +17,7 @@ function MessagesPageInner() {
       </div>
       <div className="hidden h-full flex-col items-center justify-center gap-2 px-6 text-center md:flex">
         <span className="mb-2 flex h-14 w-14 items-center justify-center rounded-lg border border-border-soft bg-primary-soft text-primary shadow-xs">
-          <MessagesSquare size={26} />
+          <MessagesSquare size={24} />
         </span>
         <h2 className="text-h2 text-text">{t("messages.selectConversationTitle")}</h2>
         <p className="max-w-xs text-small text-text-muted">{t("messages.selectConversationBody")}</p>

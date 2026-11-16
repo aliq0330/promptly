@@ -114,7 +114,7 @@ function CommunityPageInner() {
           {t("communities.page.loadError")}
         </p>
         <Button type="button" variant="outline" size="sm" onClick={() => void reload()}>
-          <RefreshCw size={14} /> {t("common.retry")}
+          <RefreshCw size={16} /> {t("common.retry")}
         </Button>
       </div>
     );
@@ -177,7 +177,7 @@ function CommunityPageInner() {
           <>
             <CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} className="absolute inset-0 h-full sm:h-full" />
             <span className="absolute inset-0 grid place-items-center">
-              <GroupAvatar name={g.name} avatarUrl={g.avatarUrl} size={56} className="[&>span:first-child]:rounded-[1rem]" />
+              <GroupAvatar name={g.name} avatarUrl={g.avatarUrl} size={56} className="[&>span:first-child]:rounded-lg" />
             </span>
           </>
         }
@@ -204,7 +204,7 @@ function CommunityPageInner() {
           <div className="flex w-full flex-wrap items-center gap-2" data-community-actions="">
             {role && (
               <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg" })}>
-                <MessagesSquare size={18} aria-hidden /> {t("communities.detail.openChat")}
+                <MessagesSquare size={20} aria-hidden /> {t("communities.detail.openChat")}
                 {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground px-1.5 text-caption text-primary">{unread}</span>}
               </Link>
             )}

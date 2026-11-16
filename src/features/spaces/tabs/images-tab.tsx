@@ -139,7 +139,7 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
                 onClick={() => setView(key)}
                 aria-pressed={view === key}
                 aria-label={t(key === "grid" ? "spaces.home.viewGrid" : "spaces.home.viewList")}
-                className={cn("flex h-9 w-10 items-center justify-center rounded-full", view === key ? "bg-text text-background" : "text-text-muted hover:text-text")}
+                className={cn("flex h-9 w-10 items-center justify-center rounded-full", view === key ? "bg-primary-soft text-primary" : "text-text-muted hover:text-text")}
               >
                 {key === "grid" ? <Grid2x2 size={16} aria-hidden /> : <List size={16} aria-hidden />}
               </button>
@@ -217,7 +217,7 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
       )}
 
       {total === 0 ? (
-        <EmptyState
+        <EmptyState scene="spaces"
           icon={ImageIcon}
           title={t("spaces.images.empty")}
           description={caps.edit ? t("spaces.images.emptyEditor") : undefined}
@@ -255,7 +255,7 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
             const reason = sourceReasonKey(source.state);
             return (
               <li key={item.id} data-image-item={item.id}>
-                <button type="button" onClick={() => setOpenId(item.id)} className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface p-2 text-left hover:bg-surface-soft">
+                <button type="button" onClick={() => setOpenId(item.id)} className="flex w-full items-center gap-3 rounded-lg card-flat p-2 text-left hover:bg-surface-soft">
                   <SpaceImage url={item.mediaUrl} alt="" available={!reason} className="h-16 w-16 shrink-0 rounded-md" />
                   <span className="min-w-0 flex-1 space-y-0.5">
                     <span className="block truncate text-small font-semibold text-text">{itemTitle(item)}</span>

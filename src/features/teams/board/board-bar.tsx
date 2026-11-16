@@ -41,7 +41,7 @@ export function TeamBoardBar({
       </Link>
       <div className="min-w-0 flex-1 leading-tight">
         <p className="truncate text-caption text-text-secondary">{team.fileTitle ? `${team.projectTitle} › ${team.teamName}` : team.teamName}</p>
-        <h1 className="truncate font-display text-[1.125rem] font-extrabold text-text md:text-[1.25rem]" data-board-title="">
+        <h1 className="truncate font-display text-h3 font-extrabold text-text md:text-h2" data-board-title="">
           {team.fileTitle ?? team.projectTitle}
         </h1>
       </div>
@@ -50,7 +50,7 @@ export function TeamBoardBar({
           {shown.map((person, index) => (
             <Avatar key={person.id} src={person.avatarUrl} alt="" size={32} className={cn("border-2 border-surface", index > 0 && "-ml-2")} />
           ))}
-          {more > 0 && <span className="-ml-2 grid h-[30px] min-w-[30px] place-items-center rounded-full border-2 border-surface bg-text-secondary px-1 text-caption font-bold text-background">+{more}</span>}
+          {more > 0 && <span className="-ml-2 grid h-[30px] min-w-[30px] place-items-center rounded-full border-2 border-surface bg-text-secondary px-1 text-caption font-semibold text-background">+{more}</span>}
         </div>
       )}
       <button
@@ -59,13 +59,13 @@ export function TeamBoardBar({
         aria-pressed={commentsActive}
         aria-label={t("tb.comments.title")}
         data-testid="board-comments-toggle"
-        className={cn("flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-small font-bold", commentsActive ? "border-warning/40 bg-warning-soft text-text" : "border-border-soft bg-surface text-text hover:bg-surface-soft")}
+        className={cn("flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-small font-semibold", commentsActive ? "border-warning/40 bg-warning-soft text-text" : "border-border-soft bg-surface text-text hover:bg-surface-soft")}
       >
         <MessageCircle size={20} aria-hidden />
         <span className="tabular-nums" data-board-comment-count="">{commentCount}</span>
       </button>
-      <button type="button" onClick={onShare} data-testid="board-share-button" className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-bold text-primary-foreground hover:bg-primary-hover max-sm:w-10 max-sm:justify-center max-sm:px-0" aria-label={t("tb.share.button")}>
-        <Share2 size={18} aria-hidden />
+      <button type="button" onClick={onShare} data-testid="board-share-button" className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover max-sm:w-10 max-sm:justify-center max-sm:px-0" aria-label={t("tb.share.button")}>
+        <Share2 size={20} aria-hidden />
         <span className="max-sm:hidden">{t("tb.share.button")}</span>
       </button>
       {team.role && <ProjectRoleChip role={team.role} className="hidden lg:inline-flex" />}

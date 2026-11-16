@@ -128,7 +128,7 @@ function CommentRating({ comment, tree, isOwn }: { comment: PromptComment; tree:
       {isOwn && tree.onRate ? (
         <StarRatingInput value={rating} size={16} allowClear={false} onChange={(value) => value > 0 && tree.onRate?.(comment.id, value)} />
       ) : (
-        <StarRatingDisplay value={rating} size={14} />
+        <StarRatingDisplay value={rating} size={16} />
       )}
       <span className="text-caption font-semibold tabular-nums text-text-secondary">{rating}/5</span>
     </div>
@@ -178,7 +178,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
       )}
     >
       <div className="flex gap-3">
-        <Link href={profileHref(comment.author)} className="shrink-0 hover:opacity-80" aria-label={comment.author.displayName}>
+        <Link href={profileHref(comment.author)} className="shrink-0 py-2 -my-2 px-0.5 -mx-0.5 hover:opacity-80" aria-label={comment.author.displayName}>
           <Avatar src={comment.author.avatarUrl} alt={comment.author.displayName} size={depth === 0 ? 32 : 28} />
         </Link>
         <div className="min-w-0 flex-1">
@@ -198,7 +198,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 onChange={tree.onEditDraftChange}
                 rows={2}
                 autoFocus
-                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-small text-text focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg card-flat px-3 py-1.5 text-small text-text focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
               <div className="flex items-center gap-2">
                 <Button
@@ -253,12 +253,12 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 {formatRelativeTime(comment.createdAt, language)}
                 {comment.editedAt && ` · ${t("comments.edited")}`}
               </span>
-              <CommentReactions id={comment.id} likeCount={comment.likeCount} size={13} className="-my-0.5" />
+              <CommentReactions id={comment.id} likeCount={comment.likeCount} size={16} className="-my-0.5" />
               {tree.canInteract && (
                 <button
                   type="button"
                   onClick={() => (isReplyingHere ? tree.onCancelReply() : tree.onStartReply(comment.id))}
-                  className="font-medium hover:text-text"
+                  className="-my-2.5 py-2.5 font-medium hover:text-text"
                 >
                   {t("request.reply")}
                 </button>
@@ -308,7 +308,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 rows={2}
                 autoFocus
                 placeholder={t("comments.writeAReply")}
-                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+                className="w-full resize-none rounded-lg card-flat px-3 py-1.5 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
               <CommentExtrasPreview extras={tree.replyExtras} />
               <div className="flex items-center gap-2">
@@ -418,7 +418,7 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
                 onChange={tree.onEditDraftChange}
                 rows={2}
                 autoFocus
-                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                className="w-full resize-none rounded-lg card-flat px-3 py-1.5 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
               <div className="flex items-center gap-2">
                 <Button type="button" size="sm" disabled={!(tree.editDraft.trim() || tree.editExtras.hasExtras) || tree.editExtras.isPreparing || tree.isSavingEdit} onClick={() => tree.onSubmitEdit(comment.id)}>

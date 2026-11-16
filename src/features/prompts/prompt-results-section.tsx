@@ -113,7 +113,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
       action={
         user && (
           <Button type="button" size="sm" variant="outline" onClick={() => setIsAddOpen(true)}>
-            <Plus size={14} />
+            <Plus size={16} />
             {t("result.addResult")}
           </Button>
         )
@@ -145,7 +145,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
           {results.length < total && (
             <div className="flex justify-center">
               <Button type="button" size="sm" variant="ghost" onClick={handleLoadMore} disabled={loadingMore}>
-                {loadingMore && <Loader2 size={14} className="animate-spin" />}
+                {loadingMore && <Loader2 size={16} className="animate-spin" />}
                 {t("result.loadMoreCount", { count: total - results.length })}
               </Button>
             </div>

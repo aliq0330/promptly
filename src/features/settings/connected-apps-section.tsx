@@ -96,23 +96,23 @@ export function ConnectedAppsSection() {
       ) : (
         <ul className="space-y-3">
           {grants.map((grant) => (
-            <li key={grant.key} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 shadow-card" data-connected-app={grant.key}>
+            <li key={grant.key} className="space-y-3 rounded-lg card-flat p-4 shadow-card" data-connected-app={grant.key}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="break-words text-[0.9375rem] font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{grant.name}</p>
+                  <p className="break-words text-body font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{grant.name}</p>
                   {grant.host && <p className="break-all text-caption text-text-muted">{grant.host}</p>}
                 </div>
-                <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-caption font-bold text-success">{t("apps.connected")}</span>
+                <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-caption font-semibold text-success">{t("apps.connected")}</span>
               </div>
 
               <div className="flex flex-wrap gap-1.5">
                 {grant.source === "legacy" ? (
-                  <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-caption font-bold text-warning">{t("apps.legacy")}</span>
+                  <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-caption font-semibold text-warning">{t("apps.legacy")}</span>
                 ) : (
                   grant.scopes.map((scope) => (
                     <span
                       key={scope}
-                      className={cn("rounded-full px-2.5 py-0.5 text-caption font-bold", scope === "write" ? "bg-secondary/10 text-secondary" : "bg-primary-soft text-primary")}
+                      className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scope === "write" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary")}
                     >
                       {scope === "write" ? t("apps.scope.write") : t("apps.scope.read")}
                     </span>

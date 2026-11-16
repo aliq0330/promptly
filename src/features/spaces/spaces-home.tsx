@@ -301,7 +301,7 @@ export function SpacesHome() {
 
       {showRecent && (
         <section aria-labelledby="spaces-recent" className="space-y-2">
-          <h2 id="spaces-recent" className="px-1 text-label font-semibold uppercase tracking-[0.08em] text-text-muted">
+          <h2 id="spaces-recent" className="px-1 text-label font-semibold text-text-muted">
             {t("spaces.home.recent")}
           </h2>
           <ScrollRow as="ul" className="-mx-3 gap-3 px-3 pb-1 sm:mx-0 sm:px-0" data-testid="spaces-recent">
@@ -310,7 +310,7 @@ export function SpacesHome() {
                 <Link href={spaceHref(space.id)} className="group block space-y-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                   <SpaceCoverArt
                     urls={summaryArt(space)}
-                    className="aspect-square w-full overflow-hidden rounded-[1.1rem] shadow-card transition-transform duration-200 ease-soft group-active:scale-[0.97]"
+                    className="aspect-square w-full overflow-hidden rounded-lg shadow-card transition-transform duration-200 ease-soft group-active:scale-[0.97]"
                     iconSize={28}
                   />
                   <span className="block truncate text-small font-semibold text-text">{space.title}</span>
@@ -416,7 +416,7 @@ function InvitationList({ invites, onAnswered }: { invites: MySpaceInvitation[];
 
   return (
     <section aria-labelledby="space-invites" className="space-y-2" data-testid="space-invitations">
-      <h2 id="space-invites" className="text-label font-semibold uppercase tracking-[0.08em] text-text-muted">
+      <h2 id="space-invites" className="text-label font-semibold text-text-muted">
         {t("spaces.invites.title", { count: invites.length })}
       </h2>
       <ul className="space-y-2">
@@ -438,7 +438,7 @@ function InvitationList({ invites, onAnswered }: { invites: MySpaceInvitation[];
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={() => void answer(invite, true)} disabled={busy !== null}>
-                {busy === invite.id ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <Check size={14} aria-hidden />}
+                {busy === invite.id ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Check size={16} aria-hidden />}
                 {t("spaces.invites.accept")}
               </Button>
               <Button size="sm" variant="outline" onClick={() => void answer(invite, false)} disabled={busy !== null}>
@@ -474,20 +474,20 @@ function FirstSpaceEmpty({ onCreate }: { onCreate: () => void }) {
           {t("spaces.empty.firstAction")}
         </Button>
       </div>
-      <figure aria-label={t("spaces.empty.exampleLabel")} className="relative rounded-lg border border-border-soft bg-surface-soft p-4">
+      <figure aria-label={t("spaces.empty.exampleLabel")} className="relative rounded-lg card-soft p-4">
         <figcaption className="absolute right-3 top-3 rounded-full bg-surface px-2 py-0.5 text-caption font-semibold text-text-muted">{t("spaces.empty.exampleBadge")}</figcaption>
         <div aria-hidden className="grid grid-cols-3 gap-2 pt-6">
           <span className="col-span-2 row-span-2 flex aspect-square items-center justify-center rounded-md bg-primary-soft text-primary">
-            <ImageIcon size={28} />
+            <ImageIcon size={24} />
           </span>
-          <span className="flex aspect-square items-center justify-center rounded-md bg-secondary/15 text-secondary">
-            <ImageIcon size={18} />
+          <span className="flex aspect-square items-center justify-center rounded-md bg-secondary-soft text-secondary">
+            <ImageIcon size={20} />
           </span>
           <span className="flex aspect-square items-center justify-center rounded-md bg-warning-soft text-warning">
-            <StickyNote size={18} />
+            <StickyNote size={20} />
           </span>
           <span className="col-span-2 flex items-center gap-2 rounded-md bg-surface px-3 py-2 font-mono text-caption text-text-secondary">
-            <SquareTerminal size={14} />
+            <SquareTerminal size={16} />
             <span className="truncate">…</span>
           </span>
           <span className="flex gap-1 rounded-md bg-surface p-2">

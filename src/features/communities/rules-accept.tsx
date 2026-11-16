@@ -15,9 +15,9 @@ export function RulesAcceptBox({ rules, accepted, onChange, disabled }: { rules:
   return (
     <div className="space-y-2">
       <h3 className="flex items-center gap-1.5 text-label font-semibold text-text">
-        <ScrollText size={14} aria-hidden /> {t("communities.rules.title")}
+        <ScrollText size={16} aria-hidden /> {t("communities.rules.title")}
       </h3>
-      <div className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-border-soft bg-background px-4 py-3 text-small text-text-secondary" tabIndex={0}>
+      <div className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-lg card-inset px-4 py-3 text-small text-text-secondary" tabIndex={0}>
         {rules}
       </div>
       <label className="flex cursor-pointer items-start gap-2 text-small text-text">
@@ -50,7 +50,7 @@ export function RulesAcceptModal({
   const [accepted, setAccepted] = useState(false);
   return (
     <Modal onClose={onClose} labelledBy="rules-accept-title">
-      <DialogShell className="w-full max-w-md space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+      <DialogShell className="w-full max-w-md space-y-4 rounded-lg card-flat p-5 shadow-pop">
         <div className="space-y-1">
           <h2 id="rules-accept-title" className="break-words text-body font-semibold text-text">
             {t("communities.rules.modalTitle", { name })}
@@ -68,7 +68,7 @@ export function RulesAcceptModal({
             {t("common.cancel")}
           </Button>
           <Button type="button" size="sm" onClick={onConfirm} disabled={!accepted || busy}>
-            {busy ? <Loader2 size={14} className="animate-spin" /> : null}
+            {busy ? <Loader2 size={16} className="animate-spin" /> : null}
             {confirmLabel}
           </Button>
         </div>

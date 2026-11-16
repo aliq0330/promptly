@@ -78,18 +78,18 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
         </h2>
         <p className={`whitespace-pre-wrap break-words text-small ${group.description ? "text-text-secondary" : "text-text-muted"}`}>{group.description || t("groups.about.noDescription")}</p>
         <dl className="grid gap-2 text-small sm:grid-cols-3">
-          <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2">
+          <div className="rounded-lg card-soft px-3 py-2">
             <dt className="text-caption text-text-muted">{t("groups.visibility.label")}</dt>
             <dd className="mt-0.5 font-medium text-text">
-              <VisibilityLabel visibility={group.visibility} size={14} className="flex items-center gap-1.5" />
+              <VisibilityLabel visibility={group.visibility} size={16} className="flex items-center gap-1.5" />
             </dd>
           </div>
-          <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2">
+          <div className="rounded-lg card-soft px-3 py-2">
             <dt className="text-caption text-text-muted">{t("groups.about.members")}</dt>
             <dd className="mt-0.5 font-medium text-text">{t("groups.about.membersValue", { count: group.memberCount, max: group.memberLimit })}</dd>
           </div>
           {role && (
-            <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2">
+            <div className="rounded-lg card-soft px-3 py-2">
               <dt className="text-caption text-text-muted">{t("groups.about.yourRole")}</dt>
               <dd className="mt-0.5 flex items-center gap-1.5 font-medium text-text">{role === "member" ? t("groups.role.member") : <RoleBadge role={role} />}</dd>
             </div>
@@ -107,7 +107,7 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
           hint={t("presence.staffHint")}
           emptyText={t("presence.staffEmpty")}
           limit={8}
-          className="rounded-lg border border-border-soft bg-surface px-4 py-3"
+          className="rounded-lg card-flat px-4 py-3"
         />
       )}
 
@@ -120,7 +120,7 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
           {group.rules && <Badge variant="outline">{t("communities.rules.version", { version: group.rulesVersion })}</Badge>}
         </div>
         {group.rules ? (
-          <div className="whitespace-pre-wrap break-words rounded-lg border border-border-soft bg-surface px-4 py-3 text-small text-text-secondary">{group.rules}</div>
+          <div className="whitespace-pre-wrap break-words rounded-lg card-flat px-4 py-3 text-small text-text-secondary">{group.rules}</div>
         ) : (
           <p className="rounded-lg border border-dashed border-border px-4 py-5 text-center text-small text-text-muted">{t("communities.rules.none")}</p>
         )}
@@ -181,7 +181,7 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
               ) : (
                 <>
                   <Button type="button" size="sm" variant="outline" onClick={() => setMuteMenu((prev) => !prev)} aria-expanded={muteMenu}>
-                    <BellOff size={14} /> {t("communities.notify.muteFor")}
+                    <BellOff size={16} /> {t("communities.notify.muteFor")}
                   </Button>
                   {muteMenu && (
                     <div role="group" aria-label={t("communities.notify.muteFor")} className="flex flex-wrap gap-2">

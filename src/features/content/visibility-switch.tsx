@@ -38,7 +38,7 @@ export function SwitchRow({
       onChange={onChange}
       label={ariaLabel}
       disabled={disabled}
-      className="min-h-16 rounded-lg border border-border bg-surface p-3 transition-colors duration-200 ease-soft hover:border-border-strong sm:px-4"
+      className="min-h-16 rounded-lg card-flat p-3 transition-colors duration-200 ease-soft hover:border-border-strong sm:px-4"
     >
       <span
         aria-hidden
@@ -86,7 +86,7 @@ export function VisibilitySwitch({
         checked={isPublic}
         onChange={(next) => onChange(next ? "public" : "private")}
         disabled={disabled}
-        icon={isPublic ? <Globe size={18} /> : <Lock size={18} />}
+        icon={isPublic ? <Globe size={20} /> : <Lock size={20} />}
         title={title}
         description={isPublic ? t("visibility.publicHint") : t("visibility.privateHint")}
         ariaLabel={t("visibility.switchAria", { state: title })}

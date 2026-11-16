@@ -49,7 +49,7 @@ const ROW_ACTION = cn(
  * Albüm A (docs/history/239-*): bare icons with their counts, in one quiet row under the title — beğeni · yorum · kaydet · paylaş.
  * No round frames: on the dark stage the icon + number is enough, and a phone row must fit beside "Bilgi".
  */
-const COMPACT_ACTION = "h-9 min-w-9 flex-row gap-1.5 rounded-md bg-transparent px-2 text-label font-semibold text-white/90 hover:bg-white/10 hover:text-white";
+const COMPACT_ACTION = "h-9 min-w-9 flex-row gap-1.5 rounded-md bg-transparent px-2 text-label font-semibold text-on-art hover:bg-white/10 hover:text-on-art";
 
 export function FocusFeedRail({ item, author, layout = "column" }: { item: PostFeedItem; author: UserProfile; layout?: "column" | "row" | "compact" }) {
   const { t } = useTranslation();
@@ -67,7 +67,7 @@ export function FocusFeedRail({ item, author, layout = "column" }: { item: PostF
   const compact = layout === "compact";
   const row = layout === "row" || compact;
   const RAIL_ACTION = compact ? COMPACT_ACTION : row ? ROW_ACTION : RAIL_ACTION_COLUMN;
-  const iconSize = compact ? 22 : ICON_SIZE;
+  const iconSize = compact ? 24 : ICON_SIZE;
   return (
     <div className={compact ? "flex items-center gap-1" : row ? "flex items-center gap-1.5 sm:gap-3" : "flex w-12 flex-col items-center gap-4 sm:w-14 sm:gap-4"}>
       {!row && <Link

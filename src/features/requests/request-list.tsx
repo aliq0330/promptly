@@ -23,7 +23,7 @@ export function RequestList({ requests }: { requests: PromptRequest[] }) {
   }
 
   return (
-    <ContentGrid columns="md:columns-2 2xl:columns-3">
+    <ContentGrid>
       {requests.map((request, index) => (
         <Reveal key={request.id} index={index} className={CONTENT_GRID_ITEM_CLASS}>
           <RequestCard request={request} />

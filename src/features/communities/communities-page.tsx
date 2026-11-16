@@ -475,14 +475,14 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
         })}
       </ul>
       {current.items.some((c) => conversations.find((x) => x.id === c.id && (x.deletedAt || x.archivedAt))) && (
-        <ul className="space-y-1 rounded-lg border border-border-soft bg-surface px-4 py-3">
+        <ul className="space-y-1 rounded-lg card-flat px-4 py-3">
           {current.items
             .filter((c) => conversations.find((x) => x.id === c.id && (x.deletedAt || x.archivedAt)))
             .map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 text-small text-text-secondary">
                 <span className="min-w-0 truncate">{c.name}</span>
                 <Button type="button" size="sm" variant="secondary" onClick={() => void restoreChat(c.id)} disabled={action.busy}>
-                  {busyId === c.id && action.busy ? <Loader2 size={14} className="animate-spin" /> : null}
+                  {busyId === c.id && action.busy ? <Loader2 size={16} className="animate-spin" /> : null}
                   {t("communities.card.restoreChat")}
                 </Button>
               </li>

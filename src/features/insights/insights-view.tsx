@@ -115,7 +115,7 @@ function ReadyBody({ data, period }: { data: CreatorInsights; period: InsightPer
     <div className="flex flex-col gap-5">
       {summary.copies >= 100 && (
         // docs/history/374-*: a round number of copies gets a small celebration; the number on the board is the real one.
-        <div className="grid items-center gap-4 rounded-lg border border-border-soft bg-surface p-3 sm:grid-cols-[minmax(0,17rem)_1fr] sm:p-4" data-insights-milestone="">
+        <div className="grid items-center gap-4 rounded-lg card-flat p-3 sm:grid-cols-[minmax(0,17rem)_1fr] sm:p-4" data-insights-milestone="">
           <LineArtScene kind="milestone" value={String(summary.copies)} className="w-full rounded-lg border border-border-soft" />
           <div className="space-y-1">
             <p className="text-h3 font-bold text-text">{t("insights.milestone.title", { count: summary.copies.toLocaleString() })}</p>
@@ -147,7 +147,7 @@ function ReadyBody({ data, period }: { data: CreatorInsights; period: InsightPer
       </div>
 
       <aside className="flex items-start gap-3 rounded-lg bg-surface-soft p-4 text-small leading-relaxed text-text-secondary">
-        <Info size={18} className="mt-0.5 shrink-0" aria-hidden />
+        <Info size={20} className="mt-0.5 shrink-0" aria-hidden />
         <p>
           <strong className="font-semibold text-text">{t("insights.note.title")}</strong> {t("insights.note.body")}
         </p>

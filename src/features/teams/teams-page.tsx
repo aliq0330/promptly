@@ -42,6 +42,7 @@ import { cn, formatRelativeTime } from "@/lib/utils";
 import { TEAM_TONES, TeamMark, roleLabelKey } from "./team-ui";
 import { ProjectMini } from "./team-phone-home";
 import { CountBadge } from "@/components/ui/badge";
+import { BAND_TONE } from "./team-band";
 
 /**
  * `/teams`: Ekipler (docs/history/353-*). Ekip artık topluluktan bağımsız bir sistemdir: bu sayfa üyesi olduğum ekiplerin günlük kapısı —
@@ -170,7 +171,7 @@ function TeamsPageInner() {
       {activeTab === "teams" && invites.length > 0 && (
         <ul className="space-y-2" data-testid="team-invites">
           {invites.map((invite) => (
-            <li key={invite.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border-soft bg-surface p-4 max-md:p-3">
+            <li key={invite.id} className="flex flex-wrap items-center gap-3 rounded-lg card-flat p-4 max-md:p-3">
               <TeamMark name={invite.teamName} tone={invite.teamTone} size={40} className="rounded-xl" />
               <div className="min-w-0 flex-1 max-md:basis-[calc(100%-3.5rem)]">
                 <p className="text-small text-text-secondary">
@@ -226,7 +227,7 @@ function TeamsPageInner() {
                     </span>
                   </span>
                   <span className="flex h-[6.5rem] flex-col items-center justify-start gap-0.5 px-5">
-                    <span className="text-body font-bold text-text">{t("tm.card.new")}</span>
+                    <span className="text-body font-semibold text-text">{t("tm.card.new")}</span>
                     <span className="text-small text-text-secondary">{t("tm.card.newHint")}</span>
                   </span>
                 </button>
@@ -263,7 +264,7 @@ function TeamsPageInner() {
 /** "{{inviter}} seni {{team}} ekibine davet etti" kalıbında iki adı kalın yazar (iki dilde söz dizimi farklı olduğundan işaretçiyle bölünür). */
 function richParts(template: string, inviter: string, team: string): React.ReactNode[] {
   return template.split(/(\u0001|\u0002)/).map((part, index) =>
-    part === "\u0001" ? <strong key={index} className="font-bold text-text">{inviter}</strong> : part === "\u0002" ? <strong key={index} className="font-bold text-text">{team}</strong> : <span key={index}>{part}</span>,
+    part === "\u0001" ? <strong key={index} className="font-semibold text-text">{inviter}</strong> : part === "\u0002" ? <strong key={index} className="font-semibold text-text">{team}</strong> : <span key={index}>{part}</span>,
   );
 }
 
@@ -277,12 +278,12 @@ function TodoList({ todos }: { todos: TeamTodo[] }) {
           const Icon = todo.kind === "unread" ? MessageCircle : todo.kind === "project_review" ? Eye : Check;
           const tone = todo.kind === "unread" ? "bg-success-soft text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary" : "bg-warning-soft text-warning";
           return (
-            <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-3">
+            <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-lg card-flat px-4 py-3">
               <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", tone)} aria-hidden>
                 <Icon size={16} />
               </span>
               <span className="min-w-0 flex-1 text-small text-text-secondary">
-                <strong className="font-bold text-text">{todo.teamName}</strong> · {todoTitle(t, todo)}
+                <strong className="font-semibold text-text">{todo.teamName}</strong> · {todoTitle(t, todo)}
               </span>
               <Link href={todo.href} className={buttonClassName({ size: "sm", variant: "outline", className: "shrink-0" })}>
                 {t(todo.kind === "unread" ? "tm.todos.openChat" : "tm.todos.review.action")}
@@ -314,14 +315,7 @@ function todoTitle(t: ReturnType<typeof useTranslation>["t"], todo: TeamTodo): s
   }
 }
 
-const CARD_BAND: Record<string, string> = {
-  primary: "bg-primary-soft",
-  secondary: "bg-secondary/10",
-  success: "bg-success-soft",
-  warning: "bg-warning-soft",
-  plum: "bg-text-secondary/10",
-  sky: "bg-primary/10",
-};
+const CARD_BAND: Record<string, string> = BAND_TONE;
 
 /** Kartın son etkinlik cümlesi (yalnız herkese açık olay türleri, bkz. `my_teams_preview`). */
 function recentLine(t: ReturnType<typeof useTranslation>["t"], language: string, recent: NonNullable<TeamSummary["recent"]>): string {
@@ -364,7 +358,7 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
       footerEnd={
         <>
           {approvals > 0 && (
-            <Link href={teamLink(team.id, "projects")} className="inline-flex h-6 items-center rounded-full bg-warning-soft px-2.5 text-caption font-semibold text-warning" data-team-chip="approvals">
+            <Link href={teamLink(team.id, "projects")} className="tap-area inline-flex h-6 items-center rounded-full bg-warning-soft px-2.5 text-caption font-semibold text-warning" data-team-chip="approvals">
               {t("tm.home.pendingApprovals", { count: approvals })}
             </Link>
           )}
@@ -439,7 +433,7 @@ export function CreateTeamModal({ onClose, onCreated }: { onClose: () => void; o
           <label htmlFor="team-desc" className={fieldLabelClassName}>
             {t("tm.create.description")}
           </label>
-          <textarea id="team-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-small" />
+          <textarea id="team-desc" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} rows={3} className="w-full rounded-lg card-inset px-4 py-2.5 text-small" />
         </div>
         <div>
           <span className={fieldLabelClassName}>{t("tm.create.tone")}</span>

@@ -148,7 +148,7 @@ export function CommentSection({
               type="button"
               onClick={() => setShowAll((prev) => !prev)}
               aria-expanded={showAll}
-              className="inline-flex items-center gap-1 text-caption font-medium text-primary transition-opacity hover:opacity-80"
+              className="-my-2.5 inline-flex items-center gap-1 py-2.5 text-caption font-medium text-primary transition-opacity hover:opacity-80"
             >
               {showAll ? t("common.showLess") : t("comments.viewAllThread")}
               {!showAll && <ArrowRight size={12} aria-hidden />}
@@ -164,7 +164,7 @@ export function CommentSection({
           data-new-comments
           className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-small font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
-          <ArrowUp size={14} aria-hidden />
+          <ArrowUp size={16} aria-hidden />
           {newCount === 1 ? t("comments.newOne") : t("comments.newMany", { count: newCount })}
         </button>
       )}
@@ -204,7 +204,7 @@ export function CommentSection({
                   <p className="text-caption text-text-muted">{t("spaces.rating.yours", { rating: myRatedComment.rating ?? 0 })}</p>
                 ) : (
                   <>
-                    <StarRatingInput value={draftRating} onChange={setDraftRating} size={26} />
+                    <StarRatingInput value={draftRating} onChange={setDraftRating} size={24} />
                     <span className="min-w-20 text-caption text-text-secondary">
                       {draftRating > 0 ? `${draftRating} · ${t(`spaces.rating.label${draftRating}` as TranslationKey)}` : t("spaces.rating.pick")}
                     </span>
@@ -218,7 +218,7 @@ export function CommentSection({
               onChange={setDraft}
               placeholder={placeholder ?? t("comments.writeAComment")}
               maxLength={2000}
-              className="h-9 w-full min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-9 w-full min-w-0 flex-1 rounded-md card-flat px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <Button type="submit" size="sm" disabled={!(draft.trim() || composerExtras.hasExtras) || composerExtras.isPreparing || isPosting}>
               {isPosting ? t("common.sending") : t("common.send")}

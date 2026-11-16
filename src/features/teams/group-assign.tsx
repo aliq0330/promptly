@@ -125,7 +125,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
               <>
                 <span className="flex items-center gap-2">
                   <span aria-hidden className={cn("h-3 w-3 shrink-0 rounded-full", SPACE_COLOR_CLASS[group.color].dot)} />
-                  <span className="min-w-0 flex-1 truncate text-small font-bold text-text">{group.name}</span>
+                  <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{group.name}</span>
                   {choice === group.id && <Check size={16} aria-hidden className="shrink-0 text-primary" />}
                 </span>
                 <span className="text-caption text-text-secondary">{t("spaces.groups.count", { count: countIn(group.id) })}</span>
@@ -143,7 +143,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
             <>
               <span className="flex items-center gap-2">
                 <span aria-hidden className="h-3 w-3 shrink-0 rounded-full bg-border-strong" />
-                <span className="min-w-0 flex-1 truncate text-small font-bold text-text">{t("spaces.groups.none")}</span>
+                <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("spaces.groups.none")}</span>
                 {choice === null && <Check size={16} aria-hidden className="shrink-0 text-primary" />}
               </span>
               <span className="text-caption text-text-secondary">{t("tf.group.noneHint")}</span>
@@ -159,7 +159,7 @@ export function GroupAssignDialog({ itemIds, onClose, onDone }: { itemIds: strin
               disabled={busy}
               aria-expanded={creating}
               data-group-tile="new"
-              className={cn("flex min-h-[6.5rem] flex-col items-center justify-center gap-1.5 rounded-lg border-[1.5px] border-dashed p-4 text-small font-bold text-primary transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
+              className={cn("flex min-h-[6.5rem] flex-col items-center justify-center gap-1.5 rounded-lg border-[1.5px] border-dashed p-4 text-small font-semibold text-primary transition-colors", creating ? "border-primary bg-primary-soft" : "border-border bg-surface-soft/50 hover:bg-surface-soft")}
             >
               <FolderPlus size={24} aria-hidden />
               {t("tf.group.newTile")}

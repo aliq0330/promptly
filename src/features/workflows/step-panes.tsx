@@ -55,7 +55,7 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
           value={step.description}
           onChange={(event) => onChange({ description: event.target.value })}
           placeholder={t("workflow.stepDescriptionPlaceholder")}
-          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
       <div>
@@ -68,7 +68,7 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
           value={step.instructions}
           onChange={(event) => onChange({ instructions: event.target.value })}
           placeholder={t("workflow.instructionsPlaceholder")}
-          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+          className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
     </div>
@@ -94,7 +94,7 @@ export function ContentPane({
     <div className="space-y-3">
       <p className="text-small font-medium text-text">{t("workflow.contentUsed")}</p>
       {c ? (
-        <div className="flex items-start gap-3 rounded-lg border border-border-soft bg-surface-soft p-3">
+        <div className="flex items-start gap-3 rounded-lg card-soft p-3">
           {c.thumbnailUrl ? (
             <StorageImg src={c.thumbnailUrl} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover" />
           ) : (
@@ -122,7 +122,7 @@ export function ContentPane({
       <div className="flex flex-wrap gap-2">
         {c && (
           <Link href={c.href} target="_blank" className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-label font-medium text-text hover:bg-surface-soft">
-            <ArrowUpRight size={14} />
+            <ArrowUpRight size={16} />
             {t("workflow.viewContent")}
           </Link>
         )}
@@ -170,7 +170,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-small font-semibold text-text">{t("workflow.inputsHeading")}</h3>
           <Button type="button" variant="ghost" size="sm" onClick={() => onChange({ inputs: [...step.inputs, { id: newId(), label: "", source: null }] })}>
-            <Plus size={14} />
+            <Plus size={16} />
             {t("workflow.addInput")}
           </Button>
         </div>
@@ -201,7 +201,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
                 aria-label={t("workflow.useFromPrevious")}
                 value={input.source ? `${input.source.stepId}::${input.source.outputId}` : ""}
                 onChange={(event) => setInput(input.id, { source: event.target.value })}
-                className="h-10 w-full rounded-md border border-border bg-background px-2 text-small text-text"
+                className="h-10 w-full rounded-md card-inset px-2 text-small text-text"
               >
                 <option value="">{sources.length ? t("workflow.noLink") : t("workflow.noSourcesBefore")}</option>
                 {sources.map(({ step: from, stepIndex, output }) => (
@@ -219,7 +219,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-small font-semibold text-text">{t("workflow.outputsHeading")}</h3>
           <Button type="button" variant="ghost" size="sm" onClick={() => onChange({ outputs: [...step.outputs, { id: newId(), label: "" }] })}>
-            <Plus size={14} />
+            <Plus size={16} />
             {t("workflow.addOutput")}
           </Button>
         </div>
@@ -270,15 +270,15 @@ export function SettingsPane({
       <h3 className="text-small font-semibold text-text">{t("workflow.settingsHeading")}</h3>
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" disabled={index === 0} onClick={() => onMove(-1)}>
-          <ChevronUp size={14} />
+          <ChevronUp size={16} />
           {t("workflow.moveUp")}
         </Button>
         <Button type="button" variant="outline" size="sm" disabled={index === count - 1} onClick={() => onMove(1)}>
-          <ChevronDown size={14} />
+          <ChevronDown size={16} />
           {t("workflow.moveDown")}
         </Button>
         <Button type="button" variant="outline" size="sm" onClick={onDuplicate}>
-          <Copy size={14} />
+          <Copy size={16} />
           {t("workflow.duplicate")}
         </Button>
         <Button
@@ -293,7 +293,7 @@ export function SettingsPane({
           }}
           onBlur={() => setConfirm(false)}
         >
-          <TrashIcon size={14} />
+          <TrashIcon size={16} />
           {confirm ? t("workflow.confirmDelete") : t("workflow.delete")}
         </Button>
       </div>
@@ -320,13 +320,13 @@ export function StepActions({
   return (
     <div className="flex shrink-0 items-center gap-1.5" data-step-actions="">
       <Button type="button" variant="outline" size="sm" disabled={index === 0} onClick={() => onMove(-1)} aria-label={t("workflow.moveUp")} title={t("workflow.moveUp")}>
-        <ChevronUp size={14} />
+        <ChevronUp size={16} />
       </Button>
       <Button type="button" variant="outline" size="sm" disabled={index === count - 1} onClick={() => onMove(1)} aria-label={t("workflow.moveDown")} title={t("workflow.moveDown")}>
-        <ChevronDown size={14} />
+        <ChevronDown size={16} />
       </Button>
       <Button type="button" variant="outline" size="sm" onClick={onDuplicate} aria-label={t("workflow.duplicate")} title={t("workflow.duplicate")}>
-        <Copy size={14} />
+        <Copy size={16} />
       </Button>
       <Button
         type="button"
@@ -342,7 +342,7 @@ export function StepActions({
         aria-label={confirm ? t("workflow.confirmDelete") : t("workflow.delete")}
         title={confirm ? t("workflow.confirmDelete") : t("workflow.delete")}
       >
-        <TrashIcon size={14} />
+        <TrashIcon size={16} />
         {confirm && t("workflow.confirmDelete")}
       </Button>
     </div>
@@ -356,8 +356,8 @@ export function StepPreview({ step, steps, index }: Omit<PaneProps, "onChange">)
   const Icon = meta.icon;
   const isLast = index === steps.length - 1;
   return (
-    <div className="space-y-3 rounded-lg border border-border-soft bg-surface-soft p-3">
-      <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.previewHeading")}</p>
+    <div className="space-y-3 rounded-lg card-soft p-3">
+      <p className="text-caption font-semibold text-text-muted">{t("workflow.previewHeading")}</p>
       <p className="flex items-center gap-2 text-small font-semibold text-text">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-caption text-primary-foreground">{index + 1}</span>
         <span className="truncate">{step.title || t("workflow.untitledStep")}</span>
@@ -378,7 +378,7 @@ export function StepPreview({ step, steps, index }: Omit<PaneProps, "onChange">)
               {step.inputs.map((input) => (
                 <li key={input.id} className="truncate text-text">
                   • {input.label || "…"}
-                  {input.source && <ArrowRight size={10} className="ml-1 inline text-primary" aria-hidden />}
+                  {input.source && <ArrowRight size={12} className="ml-1 inline text-primary" aria-hidden />}
                 </li>
               ))}
             </ul>

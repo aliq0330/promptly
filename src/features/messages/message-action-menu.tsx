@@ -36,7 +36,7 @@ function ReportMessageMenuItem({ messageId, preview, onClose }: { messageId: str
       }}
       className={MENU_ITEM_CLASS}
     >
-      <Flag size={14} />
+      <Flag size={16} />
       {t("messages.reportAction")}
     </button>
   );
@@ -115,16 +115,16 @@ export function MessageActionMenu({
       role="menu"
       aria-label={t("messages.messageOptionsAriaLabel")}
       className={cn(
-        "w-60 max-w-full origin-top overflow-hidden rounded-xl bg-surface-elevated/90 py-1.5 shadow-pop backdrop-blur-xl animate-pop-in",
+        "w-60 max-w-full origin-top overflow-hidden rounded-lg bg-surface-elevated/90 py-1.5 shadow-pop backdrop-blur-xl animate-pop-in",
         // Larger touch targets than the old small popover: rows and icons are sized here once, not per item.
         "[&_[role=menuitem]]:gap-4 [&_[role=menuitem]]:px-4 [&_[role=menuitem]]:py-3 [&_[role=menuitem]]:text-body [&_[role=menuitem]_svg]:size-5",
       )}
     >
-      <div className="px-4 pb-1 pt-2 text-caption font-medium uppercase tracking-wide text-text-muted">
+      <div className="px-4 pb-1 pt-2 text-caption font-medium text-text-muted">
         {formatMessageStamp(message.createdAt, language)}
       </div>
       <MenuItem
-        icon={<Reply size={14} />}
+        icon={<Reply size={16} />}
         label={t("request.reply")}
         onClick={() => {
           onReply();
@@ -133,7 +133,7 @@ export function MessageActionMenu({
       />
       {actions.onToggleStar && (
         <MenuItem
-          icon={<Star size={14} className={actions.isStarred?.(message.id) ? "fill-current text-warning" : undefined} />}
+          icon={<Star size={16} className={actions.isStarred?.(message.id) ? "fill-current text-warning" : undefined} />}
           label={actions.isStarred?.(message.id) ? t("chat.star.unstar") : t("chat.star.star")}
           onClick={() => {
             actions.onToggleStar?.(message);
@@ -143,7 +143,7 @@ export function MessageActionMenu({
       )}
       {actions.canPin && actions.onTogglePin && (
         <MenuItem
-          icon={actions.isPinned?.(message.id) ? <PinOff size={14} /> : <Pin size={14} />}
+          icon={actions.isPinned?.(message.id) ? <PinOff size={16} /> : <Pin size={16} />}
           label={actions.isPinned?.(message.id) ? t("chat.pin.unpin") : t("chat.pin.pin")}
           onClick={() => {
             actions.onTogglePin?.(message);
@@ -153,7 +153,7 @@ export function MessageActionMenu({
       )}
       {actions.onCopy && message.body && (
         <MenuItem
-          icon={<Copy size={14} />}
+          icon={<Copy size={16} />}
           label={t("common.copy")}
           onClick={() => {
             actions.onCopy?.(message);
@@ -163,7 +163,7 @@ export function MessageActionMenu({
       )}
       {isMe && actions.onShowInfo && (
         <MenuItem
-          icon={<CheckCheck size={14} />}
+          icon={<CheckCheck size={16} />}
           label={t("chat.msgInfo.action")}
           onClick={() => {
             actions.onShowInfo?.(message);
@@ -176,7 +176,7 @@ export function MessageActionMenu({
         <>
           {canEditOrDelete && (
             <MenuItem
-              icon={<Pencil size={14} />}
+              icon={<Pencil size={16} />}
               label={t("common.edit")}
               onClick={() => {
                 actions.onStartEdit(message);
@@ -185,7 +185,7 @@ export function MessageActionMenu({
             />
           )}
           <MenuItem
-            icon={<TrashIcon size={14} />}
+            icon={<TrashIcon size={16} />}
             label={isDeletingHere && actions.deleteConfirm?.mode === "me" ? t("messages.deletingEllipsis") : isConfirmingDeleteMe ? t("common.confirmDelete") : t("messages.deleteForMe")}
             onClick={() => requestDelete("me")}
             onBlur={actions.onCancelDeleteConfirm}
@@ -193,7 +193,7 @@ export function MessageActionMenu({
           />
           {canEditOrDelete && (
             <MenuItem
-              icon={<TrashIcon size={14} />}
+              icon={<TrashIcon size={16} />}
               label={
                 isDeletingHere && actions.deleteConfirm?.mode === "everyone"
                   ? t("messages.deletingEllipsis")
@@ -219,7 +219,7 @@ export function MessageActionMenu({
           <ReportMessageMenuItem messageId={message.id} preview={message.body ? message.body.slice(0, 120) : null} onClose={onClose} />
           {actions.onReportToStaff && !message.deletedAt && (
             <MenuItem
-              icon={<Flag size={14} />}
+              icon={<Flag size={16} />}
               label={t("communities.report.toStaff")}
               onClick={() => {
                 actions.onReportToStaff?.(message);
@@ -228,7 +228,7 @@ export function MessageActionMenu({
             />
           )}
           <MenuItem
-            icon={<TrashIcon size={14} />}
+            icon={<TrashIcon size={16} />}
             label={isDeletingHere && actions.deleteConfirm?.mode === "me" ? t("messages.deletingEllipsis") : isConfirmingDeleteMe ? t("common.confirmDelete") : t("messages.deleteForMe")}
             onClick={() => requestDelete("me")}
             onBlur={actions.onCancelDeleteConfirm}
@@ -236,7 +236,7 @@ export function MessageActionMenu({
           />
           {actions.canModerate?.(message) && (
             <MenuItem
-              icon={<ShieldAlert size={14} />}
+              icon={<ShieldAlert size={16} />}
               label={
                 isDeletingHere && actions.deleteConfirm?.mode === "moderator"
                   ? t("messages.deletingEllipsis")

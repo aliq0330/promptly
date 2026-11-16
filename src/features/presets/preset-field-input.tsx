@@ -1,5 +1,7 @@
 "use client";
 
+// Hex literals here are USER DATA defaults (a colour parameter's starting value), not interface colours (docs/history/406-*).
+
 import { useState } from "react";
 import { Plus } from "@/components/icons/plus";
 import { X } from "@/components/icons/x";
@@ -44,15 +46,15 @@ function CreateOptionControl({ fieldName: name, onCreate }: { fieldName: string;
         onClick={() => setOpen(true)}
         aria-label={t("presetField.createOptionAria", { name })}
         data-create-option
-        className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-dashed border-border-strong px-3 text-label font-medium text-text-secondary transition-colors hover:border-primary hover:bg-primary-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-dashed border-border-strong px-3 text-label font-medium text-text-secondary transition-colors hover:border-primary hover:bg-primary-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        <Plus size={14} aria-hidden />
+        <Plus size={16} aria-hidden />
         {t("presetField.createOption")}
       </button>
     );
   }
   return (
-    <div className="flex w-full flex-col gap-1.5 rounded-md border border-border-soft bg-surface-soft p-2" data-create-option-form>
+    <div className="flex w-full flex-col gap-1.5 rounded-md card-soft p-2" data-create-option-form>
       <div className="flex gap-2">
         <input
           autoFocus
@@ -94,7 +96,7 @@ function CreateOptionControl({ fieldName: name, onCreate }: { fieldName: string;
           }}
           className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface hover:text-text"
         >
-          <X size={14} aria-hidden />
+          <X size={16} aria-hidden />
         </button>
       </div>
       <p className="text-caption text-text-muted">{t("presetField.createOptionHint")}</p>
@@ -273,7 +275,7 @@ export function PresetFieldInput({
             aria-label={label}
             value={hex ?? "#3b5be2"}
             onChange={(event) => onChange(event.target.value)}
-            className="h-10 w-14 cursor-pointer rounded-md border border-border bg-background p-1"
+            className="h-10 w-14 cursor-pointer rounded-md card-inset p-1"
             data-field-input={field.id}
           />
           <span className="text-small tabular-nums text-text-secondary">{hex ?? t("presetField.notSet")}</span>

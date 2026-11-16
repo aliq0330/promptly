@@ -30,15 +30,15 @@ export function CollectionFormModal({
   return (
     <Modal onClose={onClose} labelledBy="collection-form-modal-title">
       <div
-        className="max-h-[90dvh] w-full max-w-md space-y-4 overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="max-h-[90dvh] w-full max-w-md space-y-4 overflow-y-auto rounded-lg card-flat p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="collection-form-modal-title" className="min-w-0 text-body font-semibold text-text">
             {isEdit ? t("collection.editTitle") : t("collection.createNewTitle")}
           </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
-            <X size={18} />
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+            <X size={20} />
           </button>
         </div>
 

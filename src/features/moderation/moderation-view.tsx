@@ -252,7 +252,7 @@ function ReportCard({ report, onDone }: { report: ModerationReport; onDone: () =
   }
 
   return (
-    <li data-report-id={report.id} className="space-y-3 rounded-lg border border-border bg-surface p-4">
+    <li data-report-id={report.id} className="space-y-3 rounded-lg card-flat p-4">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={report.status === "open" ? "warning" : "neutral"}>{t(STATUS_KEY[report.status])}</Badge>
         <Badge variant="neutral">{t(TYPE_KEY[report.targetType] ?? "moderation.type.prompt")}</Badge>
@@ -280,7 +280,7 @@ function ReportCard({ report, onDone }: { report: ModerationReport; onDone: () =
       </div>
 
       <div>
-        <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+        <p className="text-caption font-semibold text-text-muted">
           {t("moderation.reason")} · {t("moderation.reportedBy")} @{report.reporterUsername}
         </p>
         {report.reasonCode ? (
@@ -310,7 +310,7 @@ function ReportCard({ report, onDone }: { report: ModerationReport; onDone: () =
             onChange={(event) => setNote(event.target.value)}
             placeholder={t("moderation.notePlaceholder")}
             maxLength={300}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+            className="w-full rounded-lg card-flat px-3 py-1.5 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" disabled={busy} onClick={() => run("dismissed")}>

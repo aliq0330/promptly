@@ -391,7 +391,7 @@ export const PromptComposer = forwardRef<
           aria-expanded={Boolean(picker)}
           title={t("composer.shortcutHint")}
         >
-          <Plus size={14} /> {triggerLabel}
+          <Plus size={16} /> {triggerLabel}
         </Button>
       </div>
 
@@ -421,7 +421,7 @@ export const PromptComposer = forwardRef<
 
       {picker?.surface === "sheet" && (
         <Modal variant="sheet" onClose={closePicker} labelledBy="insert-picker-title">
-          <div className="flex h-[min(34rem,78dvh)] w-full max-w-lg flex-col rounded-t-lg border border-b-0 border-border bg-surface-elevated pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-pop">
+          <div className="flex h-[min(34rem,78dvh)] w-full max-w-lg flex-col rounded-t-lg border border-b-0 border-border-soft bg-surface-elevated pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-pop">
             <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border-strong" aria-hidden />
             {pickerContent("sheet")}
           </div>

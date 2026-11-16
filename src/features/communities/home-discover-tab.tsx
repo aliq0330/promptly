@@ -34,7 +34,7 @@ export function HomeDiscoverTab({ onToast, onGoInvites }: { onToast: (message: s
       <section aria-labelledby="discover-feed-title" className="space-y-3">
         <div>
           <h2 id="discover-feed-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
-            <Flame size={14} className="text-primary" aria-hidden /> {t("communities.home.discover.title")}
+            <Flame size={16} className="text-primary" aria-hidden /> {t("communities.home.discover.title")}
           </h2>
           <p className="text-caption text-text-muted">{t("communities.home.discover.help")}</p>
         </div>
@@ -43,7 +43,7 @@ export function HomeDiscoverTab({ onToast, onGoInvites }: { onToast: (message: s
           onToast={onToast}
           viewerIsMember={(source) => source === "member"}
           empty={
-            <EmptyState
+            <EmptyState scene="community"
               icon={Compass}
               title={t("communities.home.discover.empty")}
               description={t("communities.home.discover.emptyHelp")}

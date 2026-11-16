@@ -470,7 +470,7 @@ export function StoryCreator() {
         <input ref={videoInput} type="file" accept="video/mp4,video/webm,video/quicktime" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => { void onFileChosen(e.target.files?.[0]); e.target.value = ""; }} />
         {busy?.kind === "preparing" && (
           <p role="status" className="flex items-center gap-2 text-small text-text-muted">
-            <Loader2 size={15} className="animate-spin" aria-hidden /> {t("stories.create.preparing")}
+            <Loader2 size={16} className="animate-spin" aria-hidden /> {t("stories.create.preparing")}
           </p>
         )}
         {error && <p role="alert" className="text-small text-danger">{error}</p>}
@@ -502,7 +502,7 @@ export function StoryCreator() {
                       }}
                       className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-surface-soft hover:text-danger"
                     >
-                      <TrashIcon size={14} />
+                      <TrashIcon size={16} />
                     </button>
                   </div>
                 </li>
@@ -700,7 +700,7 @@ export function StoryCreator() {
                 <Button type="button" onClick={() => void onPublish()} disabled={Boolean(busy)} data-story-publish>
                   {busy?.kind === "publishing" || busy?.kind === "uploading" ? (
                     <>
-                      <Loader2 size={15} className="animate-spin" aria-hidden /> {t("stories.create.publishing")}
+                      <Loader2 size={16} className="animate-spin" aria-hidden /> {t("stories.create.publishing")}
                     </>
                   ) : (
                     <>
@@ -712,7 +712,7 @@ export function StoryCreator() {
             ) : (
               <>
                 <Button type="button" variant="outline" onClick={() => void onSaveDraft()} disabled={Boolean(busy)}>
-                  {busy?.kind === "saving" || (busy?.kind === "uploading" && busy.purpose === "draft") ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Save size={16} aria-hidden />}
+                  {busy?.kind === "saving" || (busy?.kind === "uploading" && busy.purpose === "draft") ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Save size={16} aria-hidden />}
                   {t("stories.draft.save")}
                 </Button>
                 <Button
@@ -756,7 +756,7 @@ function ChoiceTile({ icon: Icon, label, hint, onClick }: { icon: typeof Type; l
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-28 flex-col items-start justify-between gap-3 rounded-lg border border-border-soft bg-surface p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong"
+      className="flex min-h-28 flex-col items-start justify-between gap-3 rounded-lg card-flat p-4 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong"
     >
       <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-soft text-primary">
         <Icon size={20} aria-hidden />
@@ -789,14 +789,14 @@ function ToolButton({ icon: Icon, label, onClick, pressed }: { icon: typeof Type
 function LayerPanel({ layer, onChange, onRemove, onDone }: { layer: StoryTextLayer; onChange: (patch: Partial<StoryTextLayer>) => void; onRemove: () => void; onDone: () => void }) {
   const { t } = useTranslation();
   return (
-    <section className="space-y-3 rounded-lg border border-border-soft bg-surface p-3" aria-label={t("stories.editor.layerPanel")}>
+    <section className="space-y-3 rounded-lg card-flat p-3" aria-label={t("stories.editor.layerPanel")}>
       <textarea
         value={layer.text}
         onChange={(event) => onChange({ text: event.target.value.slice(0, STORY_LIMITS.layerTextMax) })}
         rows={2}
         autoFocus
         aria-label={t("stories.editor.layerText")}
-        className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+        className="w-full resize-none rounded-md card-flat px-3 py-2 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
       />
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex gap-1" role="group" aria-label={t("stories.editor.align")}>
@@ -833,7 +833,7 @@ function LayerPanel({ layer, onChange, onRemove, onDone }: { layer: StoryTextLay
       </div>
       <div className="flex justify-between">
         <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="text-danger">
-          <TrashIcon size={14} /> {t("stories.editor.removeLayer")}
+          <TrashIcon size={16} /> {t("stories.editor.removeLayer")}
         </Button>
         <Button type="button" variant="secondary" size="sm" onClick={onDone}>
           {t("stories.editor.done")}
@@ -847,7 +847,7 @@ function StickerPanel({ sticker, onChange, onRemove }: { sticker: StorySticker; 
   const { t } = useTranslation();
   const isPoll = sticker.kind === "poll";
   return (
-    <section className="space-y-2 rounded-lg border border-border-soft bg-surface p-3" aria-label={isPoll ? t("stories.editor.poll") : t("stories.editor.question")}>
+    <section className="space-y-2 rounded-lg card-flat p-3" aria-label={isPoll ? t("stories.editor.poll") : t("stories.editor.question")}>
       <label className="block text-label font-semibold text-text" htmlFor="story-sticker-question">
         {isPoll ? t("stories.editor.pollQuestion") : t("stories.editor.questionText")}
       </label>
@@ -857,7 +857,7 @@ function StickerPanel({ sticker, onChange, onRemove }: { sticker: StorySticker; 
         maxLength={isPoll ? STORY_LIMITS.pollQuestionMax : STORY_LIMITS.questionMax}
         onChange={(event) => onChange({ ...sticker, question: event.target.value })}
         placeholder={isPoll ? t("stories.editor.pollQuestionPlaceholder") : t("stories.editor.questionPlaceholder")}
-        className="min-h-10 w-full rounded-md border border-border bg-surface px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+        className="min-h-10 w-full rounded-md card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
       />
       {sticker.kind === "poll" && (
         <div className="space-y-1.5">
@@ -869,7 +869,7 @@ function StickerPanel({ sticker, onChange, onRemove }: { sticker: StorySticker; 
                 aria-label={t("stories.editor.pollOption", { n: index + 1 })}
                 placeholder={t("stories.editor.pollOption", { n: index + 1 })}
                 onChange={(event) => onChange({ ...sticker, options: sticker.options.map((o, i) => (i === index ? event.target.value : o)) })}
-                className="min-h-10 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                className="min-h-10 min-w-0 flex-1 rounded-md card-flat px-3 text-small text-text focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
               />
               {sticker.options.length > STORY_LIMITS.pollOptionsMin && (
                 <button type="button" aria-label={t("stories.editor.removeOption")} onClick={() => onChange({ ...sticker, options: sticker.options.filter((_, i) => i !== index) })} className="flex h-10 w-10 items-center justify-center rounded-md text-text-muted hover:bg-surface-soft hover:text-danger">
@@ -880,7 +880,7 @@ function StickerPanel({ sticker, onChange, onRemove }: { sticker: StorySticker; 
           ))}
           {sticker.options.length < STORY_LIMITS.pollOptionsMax && (
             <Button type="button" variant="ghost" size="sm" onClick={() => onChange({ ...sticker, options: [...sticker.options, ""] })}>
-              <Plus size={14} aria-hidden /> {t("stories.editor.addOption")}
+              <Plus size={16} aria-hidden /> {t("stories.editor.addOption")}
             </Button>
           )}
           <p className="text-caption text-text-muted">{t("stories.editor.pollPolicy")}</p>
@@ -888,7 +888,7 @@ function StickerPanel({ sticker, onChange, onRemove }: { sticker: StorySticker; 
       )}
       {sticker.kind === "question" && <p className="text-caption text-text-muted">{t("stories.editor.questionPolicy")}</p>}
       <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="text-danger">
-        <TrashIcon size={14} /> {t("stories.editor.removeSticker")}
+        <TrashIcon size={16} /> {t("stories.editor.removeSticker")}
       </Button>
     </section>
   );
@@ -904,11 +904,11 @@ function PreviewSummary({ audience, kind, hasLink, sticker }: { audience: StoryA
   if (hasLink) rows.push(t("stories.create.withLink"));
   if (sticker) rows.push(sticker.kind === "poll" ? t("stories.editor.poll") : t("stories.editor.question"));
   return (
-    <section className="space-y-3 rounded-lg border border-border-soft bg-surface p-4" aria-label={t("stories.create.summary")}>
+    <section className="space-y-3 rounded-lg card-flat p-4" aria-label={t("stories.create.summary")}>
       <ul className="space-y-1.5 text-small text-text-secondary">
         {rows.map((row) => (
           <li key={row} className="flex items-center gap-2">
-            <Check size={14} className="text-success" aria-hidden /> {row}
+            <Check size={16} className="text-success" aria-hidden /> {row}
           </li>
         ))}
       </ul>

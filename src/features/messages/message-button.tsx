@@ -39,7 +39,7 @@ export function MessageButton({ user, compact = false }: { user: UserProfile; co
         aria-label={t("messages.sendMessage")}
         className={className}
       >
-        <MessagesSquare size={18} aria-hidden />
+        <MessagesSquare size={20} aria-hidden />
         <span className={LABEL_CLASS}>{t("messages.sendMessage")}</span>
       </button>
     );
@@ -61,7 +61,7 @@ export function MessageButton({ user, compact = false }: { user: UserProfile; co
   return (
     <div className="flex flex-col items-center gap-1">
       <button type="button" onClick={handleClick} disabled={isStarting} aria-label={t("messages.sendMessage")} className={className}>
-        <MessagesSquare size={18} aria-hidden />
+        <MessagesSquare size={20} aria-hidden />
         <span className={LABEL_CLASS}>{isStarting ? t("messages.startingEllipsis") : t("messages.sendMessage")}</span>
       </button>
       {error && <p className="text-caption text-danger">{error}</p>}

@@ -81,7 +81,7 @@ export function CollectionAddContent({
               className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left text-small font-medium text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary-soft text-primary">
-                <row.icon size={18} aria-hidden />
+                <row.icon size={20} aria-hidden />
               </span>
               {t(row.label)}
             </button>

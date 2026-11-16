@@ -50,23 +50,23 @@ export function FocusVisualCard({
 
         {playable && (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-art-chip text-on-art backdrop-blur-sm">
               <Play size={20} fill="currentColor" />
             </span>
           </span>
         )}
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/55 to-transparent p-2 pb-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 art-scrim-top p-2 pb-8">
           <div className="pointer-events-auto flex max-w-full">
             <FocusCreator user={creator} onImage />
           </div>
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-1 bg-gradient-to-t from-black/75 via-black/35 to-transparent p-2.5 pt-12">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-1 art-scrim p-2.5 pt-12">
           <div className="flex items-center gap-2">
             <FocusTypeBadge icon={badgeIcon} label={badgeLabel} onImage />
-            {badgeDetail && <span className="hidden truncate text-caption font-medium text-white/80 sm:inline">· {badgeDetail}</span>}
-            {moreImages > 0 && <span className="text-caption font-medium text-white/80">+{moreImages}</span>}
+            {badgeDetail && <span className="hidden truncate text-caption font-medium text-on-art-muted sm:inline">· {badgeDetail}</span>}
+            {moreImages > 0 && <span className="text-caption font-medium text-on-art-muted">+{moreImages}</span>}
           </div>
           <div className="pointer-events-auto">
             <FocusTitle href={href} title={title} onImage />

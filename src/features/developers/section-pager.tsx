@@ -105,7 +105,7 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
       className="fixed right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 md:right-6 md:bottom-6 [html:has([data-message-dock-pill])_&]:bottom-[4.75rem]"
     >
       {open && (
-        <ul data-dev-pager-list="" className="absolute bottom-full right-0 mb-2 w-72 max-w-[calc(100vw-1.5rem)] animate-pop-in space-y-0.5 rounded-xl border border-border-soft bg-surface p-1.5 shadow-pop">
+        <ul data-dev-pager-list="" className="absolute bottom-full right-0 mb-2 w-72 max-w-[calc(100vw-1.5rem)] animate-pop-in space-y-0.5 rounded-lg card-flat p-1.5 shadow-pop">
           {sections.map((section, i) => (
             <li key={section.id}>
               <button
@@ -119,7 +119,7 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
               >
                 <span
                   aria-hidden
-                  className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-caption font-bold", i === index ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary")}
+                  className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-caption font-semibold", i === index ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary")}
                 >
                   {i + 1}
                 </span>
@@ -130,9 +130,9 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
           ))}
         </ul>
       )}
-      <div className="relative flex h-[3.125rem] w-[16.5rem] max-w-[calc(100vw-1.5rem)] items-center gap-1.5 overflow-hidden rounded-full border border-border-soft bg-surface px-1.5 shadow-pop">
+      <div className="relative flex h-[3.125rem] w-[16.5rem] max-w-[calc(100vw-1.5rem)] items-center gap-1.5 overflow-hidden rounded-full border border-border-soft bg-surface px-1.5 shadow-md">
         <button type="button" aria-label={t("devNav.prev")} disabled={index === 0} onClick={() => goTo(neighborSection(index, total, -1))} className={arrowClassName}>
-          <ChevronUp size={18} />
+          <ChevronUp size={20} />
         </button>
         <button
           type="button"
@@ -142,11 +142,11 @@ export function SectionPager({ sections }: { sections: PagerSection[] }) {
           onClick={() => setOpen((value) => !value)}
           className="min-w-0 flex-1 rounded-full px-1 text-center leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <span className="block truncate text-label font-bold text-text">{current.label}</span>
+          <span className="block truncate text-label font-semibold text-text">{current.label}</span>
           <span className="block text-caption text-text-muted">{t("devNav.position", { n: index + 1, total })}</span>
         </button>
         <button type="button" aria-label={t("devNav.next")} disabled={index === total - 1} onClick={() => goTo(neighborSection(index, total, 1))} className={arrowClassName}>
-          <ChevronDown size={18} />
+          <ChevronDown size={20} />
         </button>
         <span aria-hidden className="absolute bottom-0 left-0 h-[3px] bg-primary transition-[width] duration-200 ease-soft" style={{ width: `${pagerProgress(index, total) * 100}%` }} />
       </div>

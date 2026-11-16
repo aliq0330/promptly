@@ -94,7 +94,7 @@ export function ChatAttachSheet({
         {onGif && (
           <button type="button" onClick={onGif} className={rowClass} data-attach-gif>
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-              <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-caption font-extrabold leading-none tracking-[0.04em]">
+              <span aria-hidden className="rounded-xs border-[1.75px] border-current px-[3px] py-[2px] text-caption font-semibold leading-none">
                 {t("gif.badge")}
               </span>
             </span>
@@ -174,13 +174,13 @@ export function ChatLibraryPicker({
 
   return (
     <Modal onClose={onClose} labelledBy="chat-library-title">
-      <DialogShell data-chat-library className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border-soft bg-surface shadow-pop">
+      <DialogShell data-chat-library className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg card-flat shadow-pop">
         <div className="flex shrink-0 items-center justify-between gap-2 px-5 pb-1 pt-4">
           <h2 id="chat-library-title" className="font-display text-h3 font-bold text-text">
             {t("messages.library.title")}
           </h2>
           <button type="button" onClick={onClose} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9")}>
-            <X size={18} aria-hidden />
+            <X size={20} aria-hidden />
           </button>
         </div>
         <div className="shrink-0 px-5 pb-1 pt-2">
@@ -240,7 +240,7 @@ export function ChatLibraryPicker({
                           isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border-strong",
                         )}
                       >
-                        {isSelected && <Check size={14} />}
+                        {isSelected && <Check size={16} />}
                       </span>
                     </button>
                   </li>

@@ -26,7 +26,7 @@ export const SpacesIcon: IconComponent = Shapes;
 export const SPACE_KIND_ICON: Record<SpaceKind, IconComponent> = { moodboard: LayoutDashboard, character: UserRound, brand: BadgeCheck, game_world: Swords, interior: Sofa, free: Shapes, team_area: Shapes };
 export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
   moodboard: "bg-primary-soft text-primary",
-  character: "bg-secondary/15 text-secondary",
+  character: "bg-secondary-soft text-secondary",
   brand: "bg-warning-soft text-warning",
   game_world: "bg-success-soft text-success",
   interior: "bg-danger-soft text-danger",
@@ -54,7 +54,7 @@ export function VisibilityBadge({ visibility, className }: { visibility: SpaceVi
 export const SPACE_COLOR_CLASS: Record<SpaceColor, { surface: string; border: string; dot: string; text: string }> = {
   neutral: { surface: "bg-surface", border: "border-border", dot: "bg-text-muted", text: "text-text-secondary" },
   primary: { surface: "bg-primary-soft", border: "border-primary/40", dot: "bg-primary", text: "text-primary" },
-  secondary: { surface: "bg-secondary/12", border: "border-secondary/40", dot: "bg-secondary", text: "text-secondary" },
+  secondary: { surface: "bg-secondary-soft", border: "border-secondary/40", dot: "bg-secondary", text: "text-secondary" },
   success: { surface: "bg-success-soft", border: "border-success/40", dot: "bg-success", text: "text-success" },
   warning: { surface: "bg-warning-soft", border: "border-warning/40", dot: "bg-warning", text: "text-warning" },
   danger: { surface: "bg-danger-soft", border: "border-danger/40", dot: "bg-danger", text: "text-danger" },
@@ -132,12 +132,12 @@ export function PaletteStrip({ colors, copyable, max = 8, className }: { colors:
           onClick={() => void copy(color)}
           aria-label={t("spaces.palette.copyColor", { hex: color })}
           title={copied === color ? t("common.copied") : color}
-          className="relative h-7 min-w-0 flex-1 rounded-[0.6rem] shadow-xs ring-1 ring-inset ring-text/10 transition-transform duration-200 ease-soft hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="relative h-9 min-w-0 flex-1 rounded-md shadow-xs ring-1 ring-inset ring-text/10 transition-transform duration-200 ease-soft hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           style={{ backgroundColor: color }}
         >
           {copied === color && (
-            <span className="absolute inset-0 flex items-center justify-center rounded-[0.6rem] bg-text/50 text-background">
-              <Check size={14} aria-hidden />
+            <span className="absolute inset-0 flex items-center justify-center rounded-md bg-text/50 text-background">
+              <Check size={16} aria-hidden />
             </span>
           )}
         </button>
@@ -154,7 +154,7 @@ export function SpaceCoverArt({ urls, className, iconSize = 32 }: { urls: string
   if (list.length === 0) {
     return (
       <span aria-hidden className={cn("flex items-center justify-center bg-primary-soft text-primary", className)}>
-        <SpacesIcon size={iconSize} strokeWidth={1.4} />
+        <SpacesIcon size={iconSize} />
       </span>
     );
   }

@@ -76,7 +76,7 @@ export function InfoIdentity({
   return (
     <div className="flex shrink-0 flex-col items-center px-7 pt-1 text-center">
       {media}
-      <p className="mt-4 break-words font-display text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-text" {...(nameAttr ? { [nameAttr]: "" } : {})}>
+      <p className="mt-4 break-words font-display text-h2 font-bold leading-tight tracking-[-0.02em] text-text" {...(nameAttr ? { [nameAttr]: "" } : {})}>
         {name}
       </p>
       {sub && (
@@ -91,7 +91,7 @@ export function InfoIdentity({
 }
 
 const TILE =
-  "relative flex min-h-[4.75rem] flex-1 flex-col items-center justify-center gap-2 rounded-xl bg-surface px-1 py-3 text-center text-[0.78rem] font-medium leading-tight text-text shadow-xs transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50";
+  "relative flex min-h-[4.75rem] flex-1 flex-col items-center justify-center gap-2 rounded-xl bg-surface px-1 py-3 text-center text-caption font-medium leading-tight text-text shadow-xs transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50";
 
 /** Kimliğin altındaki hızlı eylem karoları (Profil · Ara · Sessize al gibi). */
 export function InfoTiles({ children }: { children: ReactNode }) {

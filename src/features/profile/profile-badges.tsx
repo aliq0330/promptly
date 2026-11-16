@@ -5,6 +5,7 @@ import { Sparkle } from "@/components/icons/sparkle";
 import type { IconComponent } from "@/components/icons/icon";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { Badge } from "@/components/ui/badge";
 
 interface BadgeDefinition {
   key: string;
@@ -55,14 +56,10 @@ export function ProfileBadges({
         const Icon = badge.icon;
         const label = t(badge.labelKey);
         return (
-          <span
-            key={badge.key}
-            title={label}
-            className="flex items-center gap-1 rounded-xs bg-primary-soft px-2 py-0.5 text-caption font-medium text-primary"
-          >
-            <Icon size={12} />
+          <Badge key={badge.key} title={label}>
+            <Icon size={12} aria-hidden />
             {label}
-          </span>
+          </Badge>
         );
       })}
     </>

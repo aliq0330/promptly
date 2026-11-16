@@ -13,7 +13,7 @@ export function SaveIndicator({ status, onRetry, className }: { status: "idle" |
   if (status === "idle") return null;
   return (
     <span role="status" aria-live="polite" data-save-status={status} className={cn("ml-auto inline-flex items-center gap-1.5 text-caption", status === "error" ? "text-danger" : "text-text-muted", className)}>
-      {status === "saving" && <Loader2 size={13} className="animate-spin" aria-hidden />}
+      {status === "saving" && <Loader2 size={16} className="animate-spin" aria-hidden />}
       {status === "saved" && <Check size={12} aria-hidden />}
       {status === "error" && <CloudOff size={12} aria-hidden />}
       {status === "saving" ? t("spaces.save.saving") : status === "saved" ? t("spaces.save.saved") : t("spaces.save.failed")}

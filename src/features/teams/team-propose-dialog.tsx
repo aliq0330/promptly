@@ -52,15 +52,15 @@ export function ProposeChangeDialog({ item, onClose, onDone }: { item: SpaceItem
       <div className="space-y-4">
         <label className="block">
           <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.review.fieldTitle")}</span>
-          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} className="h-11 w-full rounded-xl border border-border bg-background px-3 text-small" />
+          <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} className="h-11 w-full rounded-lg card-inset px-3 text-small" />
         </label>
         <label className="block">
           <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.review.fieldBody")}</span>
-          <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={8000} rows={6} className="w-full rounded-xl border border-border bg-background px-3 py-2 font-mono text-small" />
+          <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={8000} rows={6} className="w-full rounded-lg card-inset px-3 py-2 font-mono text-small" />
         </label>
         <label className="block">
           <span className="mb-1.5 block text-label font-semibold text-text">{t("tp.review.fieldNote")}</span>
-          <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} rows={3} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-small" />
+          <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} rows={3} className="w-full rounded-lg card-inset px-3 py-2 text-small" />
         </label>
         <FormError message={error} />
       </div>

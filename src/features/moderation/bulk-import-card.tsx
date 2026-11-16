@@ -188,9 +188,9 @@ export function BulkImportCard() {
   const percent = progress && progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
 
   return (
-    <section className="space-y-3 rounded-lg border border-border bg-surface p-4" data-testid="bulk-import">
+    <section className="space-y-3 rounded-lg card-flat p-4" data-testid="bulk-import">
       <div className="flex items-start gap-3">
-        <PackagePlus size={18} className="mt-0.5 shrink-0 text-text-muted" />
+        <PackagePlus size={20} className="mt-0.5 shrink-0 text-text-muted" />
         <div className="min-w-0">
           <h2 className="text-small font-semibold text-text">{t("exchange.admin.title")}</h2>
           <p className="text-small text-text-secondary">{t("exchange.admin.hint")}</p>
@@ -208,11 +208,11 @@ export function BulkImportCard() {
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             disabled={busy}
-            className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-small text-text"
+            className="h-10 min-w-0 flex-1 rounded-md card-inset px-3 text-small text-text"
             data-testid="bulk-url"
           />
           <Button type="button" size="sm" variant="outline" onClick={() => void fromUrl()} disabled={busy || url.trim() === ""} data-testid="bulk-fetch">
-            {phase === "loading" ? <Loader2 size={14} className="animate-spin" /> : null}
+            {phase === "loading" ? <Loader2 size={16} className="animate-spin" /> : null}
             {phase === "loading" ? t("exchange.admin.fetching") : t("exchange.admin.fetch")}
           </Button>
         </div>
@@ -231,7 +231,7 @@ export function BulkImportCard() {
             }}
           />
           <Button type="button" size="sm" variant="outline" onClick={() => fileInput.current?.click()} disabled={busy}>
-            <Upload size={14} />
+            <Upload size={16} />
             {t("exchange.import.chooseFile")}
           </Button>
           {fileName && <span className="min-w-0 truncate">{fileName}</span>}
@@ -275,7 +275,7 @@ export function BulkImportCard() {
               onChange={(event) => setTag(event.target.value)}
               disabled={busy}
               maxLength={80}
-              className="h-10 w-full max-w-xs rounded-md border border-border bg-background px-3 text-small text-text"
+              className="h-10 w-full max-w-xs rounded-md card-inset px-3 text-small text-text"
               data-testid="bulk-tag"
             />
             <p className={`text-caption ${tagInvalid ? "text-danger" : "text-text-muted"}`}>{tagInvalid ? t("exchange.admin.tagInvalid") : t("exchange.admin.tagHint")}</p>

@@ -351,7 +351,7 @@ export function GroupSettingsSection({
           </h3>
           <p className="text-small text-text-secondary">{t("groups.settings.deleteHelp")}</p>
           <Button type="button" variant="danger" size="sm" onClick={() => { deleteAction.setError(null); setDeleteConfirmName(""); setDeleting(true); }}>
-            <TrashIcon size={14} /> {t("groups.settings.deleteGroup")}
+            <TrashIcon size={16} /> {t("groups.settings.deleteGroup")}
           </Button>
         </section>
       )}
@@ -402,9 +402,9 @@ function VisibilityResultDialog({ result, onClose }: { result: VisibilityChangeR
   const reasons = countSkippedByReason(result);
   return (
     <Modal onClose={onClose} labelledBy="visibility-result-title">
-      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg border border-border-soft bg-surface p-5 shadow-pop">
+      <DialogShell className="w-full max-w-sm space-y-4 rounded-lg card-flat p-5 shadow-pop">
         <h2 id="visibility-result-title" className="flex items-center gap-2 text-body font-semibold text-text">
-          <CircleCheck size={18} className="text-success" aria-hidden /> {t("groups.settings.resultTitle")}
+          <CircleCheck size={20} className="text-success" aria-hidden /> {t("groups.settings.resultTitle")}
         </h2>
         <ul className="space-y-1.5 text-small text-text-secondary">
           <li>{t("groups.settings.resultAccepted", { count: result.acceptedCount })}</li>

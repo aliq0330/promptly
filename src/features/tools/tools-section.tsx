@@ -61,7 +61,7 @@ export function ToolsSection({ query = "" }: { query?: string }) {
 export function ToolRow({ tool, postCount }: { tool: AiTool; postCount: number | null }) {
   const { t } = useTranslation();
   return (
-    <li className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface p-3 shadow-card">
+    <li className="flex items-center gap-3 rounded-lg card-flat p-3 shadow-card">
       <Link href={toolHref(tool.id)} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
           <Bot size={20} aria-hidden />

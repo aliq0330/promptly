@@ -54,12 +54,12 @@ export function InsightStatTile({
 }) {
   const { t, language } = useTranslation();
   return (
-    <div className={cn("flex min-w-0 flex-col gap-2 rounded-lg border border-border-soft bg-surface p-4 shadow-card", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-2 rounded-lg card-flat p-4 shadow-card", className)}>
       <div className="flex items-center gap-2 text-small font-medium text-text-secondary">
         <Icon size={16} aria-hidden />
         <span className="truncate">{label}</span>
       </div>
-      <p className="font-display text-[2rem] font-bold leading-none tabular-nums text-text">{formatInsightNumber(current, language)}</p>
+      <p className="font-display text-display font-bold leading-none tabular-nums text-text">{formatInsightNumber(current, language)}</p>
       <p className="flex flex-wrap items-baseline gap-x-2 text-caption">
         <InsightTrend current={current} previous={previous} />
         <span className="text-text-muted">{t("insights.trend.vsPrev", { days })}</span>

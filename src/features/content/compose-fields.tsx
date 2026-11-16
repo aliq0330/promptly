@@ -34,7 +34,7 @@ export function ContentTypePicker({ value, onChange, locked = false }: { value: 
             className={cn(
               chipClassName,
               "min-h-11 px-3 text-body font-medium disabled:opacity-50 sm:px-4",
-              selected ? "border-primary bg-primary-soft font-bold text-primary" : "border-border-strong bg-surface text-text-secondary hover:border-primary/50 hover:text-text",
+              selected ? "border-primary bg-primary-soft font-semibold text-primary" : "border-border-strong bg-surface text-text-secondary hover:border-primary/50 hover:text-text",
             )}
           >
             <option.icon size={16} aria-hidden />

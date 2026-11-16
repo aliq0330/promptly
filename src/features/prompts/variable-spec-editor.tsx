@@ -1,5 +1,7 @@
 "use client";
 
+// Hex literals here are USER DATA defaults (a colour variable's starting value), not interface colours (docs/history/406-*).
+
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus } from "@/components/icons/image-plus";
 import { Palette } from "@/components/icons/palette";
@@ -293,7 +295,7 @@ export function VariableSpecEditor({
                     type="button"
                     onClick={() => removeOption(index)}
                     aria-label={t("variable.optionRemoveAria", { n: index + 1 })}
-                    className="mt-1.5 grid h-8 w-8 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
+                    className="mt-1.5 grid h-9 w-9 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                   >
                     <X size={16} />
                   </button>
@@ -314,7 +316,7 @@ export function VariableSpecEditor({
             onClick={() => setOptions([...spec.options, { label: "", value: "" }])}
             className="inline-flex items-center gap-1 text-label font-medium text-primary hover:underline disabled:opacity-50"
           >
-            <Plus size={14} /> {t("variable.addOption")}
+            <Plus size={16} /> {t("variable.addOption")}
           </button>
         </div>
       )}
@@ -433,7 +435,7 @@ function OptionMedia({
         {/* eslint-disable-next-line @next/next/no-img-element -- a small user-supplied data URL */}
         <img src={option.image} alt="" className="h-10 w-10 rounded-md border border-border object-cover" />
         <button type="button" onClick={onPickImage} disabled={busy} className={linkButton}>
-          <ImagePlus size={14} /> {t("variable.optionChangeImage")}
+          <ImagePlus size={16} /> {t("variable.optionChangeImage")}
         </button>
         <button type="button" onClick={onClear} className="text-label font-medium text-text-muted hover:text-danger hover:underline">
           {t("variable.optionRemoveImage")}
@@ -450,7 +452,7 @@ function OptionMedia({
           value={option.color}
           onChange={(event) => onColor(event.target.value)}
           aria-label={t("variable.optionColorAria", { n })}
-          className="h-10 w-12 cursor-pointer rounded-md border border-border bg-background p-1"
+          className="h-10 w-12 cursor-pointer rounded-md card-inset p-1"
         />
         <span className="font-mono text-caption text-text-muted">{option.color}</span>
         <button type="button" onClick={onClear} className="text-label font-medium text-text-muted hover:text-danger hover:underline">
@@ -463,10 +465,10 @@ function OptionMedia({
   return (
     <div className="flex flex-wrap items-center gap-4">
       <button type="button" onClick={onPickImage} disabled={busy} className={linkButton}>
-        <ImagePlus size={14} /> {t("variable.optionAddImage")}
+        <ImagePlus size={16} /> {t("variable.optionAddImage")}
       </button>
       <button type="button" onClick={() => onColor("#868899")} className={linkButton}>
-        <Palette size={14} /> {t("variable.optionAddColor")}
+        <Palette size={16} /> {t("variable.optionAddColor")}
       </button>
     </div>
   );

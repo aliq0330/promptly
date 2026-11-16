@@ -102,14 +102,14 @@ export function StepPreviewBody({ step }: { step: WorkflowStep }) {
         <>
           {description && <p className="line-clamp-3 break-words text-small text-text-secondary">{description}</p>}
           {data.kind === "prompt" && data.promptText && (
-            <p className="prompt-text line-clamp-4 break-words rounded-md border border-border-soft bg-surface-soft p-2.5 text-caption text-text">{data.promptText}</p>
+            <p className="prompt-text line-clamp-4 break-words rounded-md card-soft p-2.5 text-caption text-text">{data.promptText}</p>
           )}
         </>
       )}
 
       {ref.published && (
         <Link href={ref.href} className="inline-flex items-center gap-1.5 text-label font-medium text-primary hover:underline">
-          <ArrowUpRight size={14} />
+          <ArrowUpRight size={16} />
           {t("workflow.flowOpen")}
         </Link>
       )}

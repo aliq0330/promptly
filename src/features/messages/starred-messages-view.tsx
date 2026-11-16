@@ -139,7 +139,7 @@ export function StarredMessagesView() {
         {status === "ready" && items.length > 0 && (
           <ul className="space-y-2">
             {items.map((item) => (
-              <li key={item.messageId} data-starred-item={item.messageId} className="flex items-stretch gap-1 rounded-lg border border-border-soft bg-surface shadow-xs">
+              <li key={item.messageId} data-starred-item={item.messageId} className="flex items-stretch gap-1 rounded-lg card-flat shadow-xs">
                 <Link
                   href={`${messageHref({ id: item.conversationId })}&hl=message:${item.messageId}`}
                   aria-label={t("chat.starred.openChatAria", { name: item.chatName })}

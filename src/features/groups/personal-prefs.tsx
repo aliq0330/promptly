@@ -68,7 +68,7 @@ export function ChatMuteToggle({
         disabled={mute.busy}
         className="rounded-lg border border-border-soft px-3 py-3 transition-colors hover:border-border-strong hover:bg-surface-soft"
       >
-        <BellOff size={18} className="shrink-0 text-text-muted" aria-hidden />
+        <BellOff size={20} className="shrink-0 text-text-muted" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-small font-medium text-text">{t("groups.about.muteLabel")}</span>
           <span className="block text-caption text-text-muted">{t("groups.about.muteHelp")}</span>
@@ -121,7 +121,7 @@ export function LeaveCommunitySection({
             className="flex h-14 w-full items-center gap-4 px-4 text-left text-body text-danger transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft" aria-hidden>
-              <LogOut size={18} />
+              <LogOut size={20} />
             </span>
             {t("groups.about.leave")}
           </button>
@@ -151,7 +151,7 @@ export function LeaveCommunitySection({
           <p className="text-small text-text-secondary">{outcome === "closes_group" ? t("groups.about.leaveClosesGroup") : t("groups.about.leaveHelp")}</p>
           <p className="text-caption text-text-muted">{t("groups.about.leaveAlsoChat")}</p>
           <Button type="button" variant="outline" size="sm" className="text-danger" onClick={() => setConfirm(true)}>
-            <LogOut size={14} /> {t("groups.about.leave")}
+            <LogOut size={16} /> {t("groups.about.leave")}
           </Button>
         </>
       )}

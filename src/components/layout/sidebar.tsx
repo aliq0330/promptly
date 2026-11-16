@@ -39,7 +39,7 @@ export function Sidebar() {
           href={item.href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex h-11 items-center gap-3 rounded-xl px-3 text-body transition-colors duration-200",
+            "flex h-10 items-center gap-3 rounded-xl px-3 text-body transition-colors duration-200",
             // Meydan: the active entry is a soft brand pill — no edge bar.
             active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
           )}
@@ -56,7 +56,7 @@ export function Sidebar() {
       <div className="flex h-16 items-center px-1">
         <Link href="/" className="flex items-center gap-3 rounded-md" aria-label="Promptly">
           <BrandMark size={32} />
-          <BrandWordmark className="block text-[1.55rem]" />
+          <BrandWordmark className="block text-h2" />
         </Link>
       </div>
 
@@ -67,9 +67,9 @@ export function Sidebar() {
           onClick={() => (status === "unauthenticated" ? requireAuth("create") : setCreateOpen(true))}
           aria-haspopup="dialog"
           data-nav-create=""
-          className={buttonClassName({ className: "h-11 w-full text-body font-bold" })}
+          className={buttonClassName({ size: "md", className: "w-full" })}
         >
-          <Plus size={18} />
+          <Plus size={20} />
           {t("nav.createShort")}
         </button>
         {createOpen && <CreateMenuSheet onClose={() => setCreateOpen(false)} />}
@@ -78,7 +78,7 @@ export function Sidebar() {
       <nav aria-label={t("nav.primaryLabel")} className="flex flex-1 flex-col gap-5 overflow-y-auto py-3">
         {visibleGroups.map((group, index) => (
           <div key={group.labelKey ?? `group-${index}`}>
-            {group.labelKey && <p className="mb-1.5 px-3 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t(group.labelKey)}</p>}
+            {group.labelKey && <p className="mb-1.5 px-3 text-caption font-semibold text-text-muted">{t(group.labelKey)}</p>}
             <ul className="space-y-0.5">{group.items.map(renderItem)}</ul>
           </div>
         ))}

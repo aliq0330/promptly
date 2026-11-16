@@ -166,7 +166,7 @@ export function InviteePicker({
           </p>
         ) : (
           <ul>
-            {!searching && <li className="px-3 pb-1 pt-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("messages.newChatFollowing")}</li>}
+            {!searching && <li className="px-3 pb-1 pt-2 text-caption font-semibold text-text-muted">{t("messages.newChatFollowing")}</li>}
             {list.map((person) => {
               const isSelected = selectedIds.has(person.id);
               const member = isMember(person.id);

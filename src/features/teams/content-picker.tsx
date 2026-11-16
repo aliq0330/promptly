@@ -206,10 +206,10 @@ export function ContentPickerDialog({
           >
             <Filter size={16} aria-hidden />
             {t("tf.pick.filter")}
-            {activeFilters > 0 && <span className="rounded-full bg-primary px-1.5 text-caption font-bold text-primary-foreground">{activeFilters}</span>}
+            {activeFilters > 0 && <span className="rounded-full bg-primary px-1.5 text-caption font-semibold text-primary-foreground">{activeFilters}</span>}
           </button>
           {filtersOpen && (
-            <div className="mt-2 space-y-3 rounded-lg border border-border-soft bg-surface-soft/50 p-3" data-picker-filter-panel="">
+            <div className="mt-2 space-y-3 rounded-lg card-soft p-3" data-picker-filter-panel="">
               <SearchFilterSections tokens={tokens} onTokensChange={setTokens} hideKinds sort={sort} onSortChange={setSort} />
             </div>
           )}
@@ -257,7 +257,7 @@ export function ContentPickerDialog({
                   </span>
                 ) : (
                   <Button type="button" size="sm" disabled={busy !== null} data-picker-add={row.id} onClick={() => void pick(row)}>
-                    {busy === row.id ? <Loader2 size={15} className="animate-spin" aria-hidden /> : t("tf.pick.add")}
+                    {busy === row.id ? <Loader2 size={16} className="animate-spin" aria-hidden /> : t("tf.pick.add")}
                   </Button>
                 )}
               </li>

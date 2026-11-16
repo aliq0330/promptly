@@ -170,7 +170,7 @@ export const PublishPanel = forwardRef<
                   )}
                 >
                   <span aria-hidden className={cn("h-5 w-5 shrink-0 rounded-full border-2", selected ? "border-[6px] border-primary" : "border-border-strong")} />
-                  <option.icon size={18} aria-hidden className="shrink-0" />
+                  <option.icon size={20} aria-hidden className="shrink-0" />
                   <span className="min-w-0 flex-1 text-body font-semibold">{option.label}</span>
                 </button>
               );
@@ -182,7 +182,7 @@ export const PublishPanel = forwardRef<
               onClick={() => setPickerOpen(true)}
               disabled={busy}
               data-audience-community={community.communityId ?? ""}
-              className="flex w-full items-center gap-3 rounded-xl border border-border-soft bg-background px-3 py-2 text-left"
+              className="flex w-full items-center gap-3 rounded-lg card-inset px-3 py-2 text-left"
             >
               <GroupAvatar name={community.name ?? ""} avatarUrl={community.avatarUrl} size={32} />
               <span className="min-w-0 flex-1">
@@ -212,7 +212,7 @@ export const PublishPanel = forwardRef<
             <p className="text-small text-danger">{t("communities.feed.pickLoadError")}</p>
           ) : communities.status !== "ready" ? (
             <p className="flex items-center gap-2 text-small text-text-muted">
-              <Loader2 size={14} className="animate-spin" aria-hidden /> {t("common.loading")}
+              <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
             </p>
           ) : communities.list.length === 0 ? (
             <p className="text-small text-text-muted">{t("share.announce.noCommunities")}</p>
@@ -237,7 +237,7 @@ export const PublishPanel = forwardRef<
                     >
                       <GroupAvatar name={item.name} avatarUrl={item.avatarUrl} size={24} />
                       <span className="max-w-[10rem] truncate">{item.name}</span>
-                      {on && <Check size={14} aria-hidden />}
+                      {on && <Check size={16} aria-hidden />}
                     </button>
                   );
                 })}
@@ -252,7 +252,7 @@ export const PublishPanel = forwardRef<
                   placeholder={t("share.announce.notePlaceholder")}
                   aria-label={t("communities.feed.noteLabel")}
                   data-announce-note=""
-                  className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  className="w-full resize-none rounded-lg card-inset px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
                 />
               )}
             </>

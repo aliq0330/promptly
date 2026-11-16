@@ -59,7 +59,7 @@ export function WorkflowPlanPreview({ plan, steps }: { plan: WorkflowImportPlan;
   const promptTitle = useMemo(() => new Map(steps.flatMap((step) => (step.content ? [[step.content.id, step.content.title] as const] : []))), [steps]);
 
   return (
-    <div ref={hostRef} data-plan-preview="" className="relative w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft" style={{ height: Math.round(world.h * scale) }}>
+    <div ref={hostRef} data-plan-preview="" className="relative w-full overflow-hidden rounded-lg card-soft" style={{ height: Math.round(world.h * scale) }}>
       <div className="absolute left-0 top-0 origin-top-left" style={{ width: world.w, height: world.h, transform: `scale(${scale})` }}>
         <BoardConnectors connections={connections} boxes={boxes} zoom={scale} selectedId={null} interactive={false} lowDetail={scale < 0.4} />
         {plan.items.map((item) => {
@@ -69,8 +69,8 @@ export function WorkflowPlanPreview({ plan, steps }: { plan: WorkflowImportPlan;
             return (
               <div key={item.id} data-plan-step="" className="absolute overflow-hidden rounded-xl border border-primary/50 bg-surface p-3 shadow-card" style={{ ...style, zIndex: 10 }}>
                 <div className="flex items-start gap-2">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[12px] font-bold text-primary-foreground">{item.sourceStepNo}</span>
-                  <p className="line-clamp-2 min-w-0 flex-1 text-[14px] font-semibold leading-5 text-text">{item.title || t("wfSpace.objects.untitledStep")}</p>
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-semibold text-primary-foreground">{item.sourceStepNo}</span>
+                  <p className="line-clamp-2 min-w-0 flex-1 text-small font-semibold leading-5 text-text">{item.title || t("wfSpace.objects.untitledStep")}</p>
                 </div>
                 {item.body && <p className="mt-2 line-clamp-3 whitespace-pre-line break-words font-mono text-caption leading-4 text-text-muted">{item.body.replace(/^>> /gm, "→ ").replace(/^<< /gm, "← ")}</p>}
               </div>
@@ -78,18 +78,18 @@ export function WorkflowPlanPreview({ plan, steps }: { plan: WorkflowImportPlan;
           }
           if (item.kind === "image") {
             return (
-              <div key={item.id} data-plan-image="" className="absolute overflow-hidden rounded-lg border border-border bg-surface-soft" style={{ ...style, zIndex: 10 }}>
+              <div key={item.id} data-plan-image="" className="absolute overflow-hidden rounded-lg card-soft" style={{ ...style, zIndex: 10 }}>
                 {item.mediaUrl && <StorageImg src={item.mediaUrl} alt="" className="h-full w-full object-cover" />}
               </div>
             );
           }
           return (
-            <div key={item.id} data-plan-prompt="" className={cn("absolute overflow-hidden rounded-xl border border-border bg-surface p-3")} style={{ ...style, zIndex: 10 }}>
-              <p className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-[0.08em] text-primary">
+            <div key={item.id} data-plan-prompt="" className={cn("absolute overflow-hidden rounded-lg card-flat p-3")} style={{ ...style, zIndex: 10 }}>
+              <p className="flex items-center gap-1.5 text-caption font-semibold text-primary">
                 <SquareTerminal size={12} aria-hidden />
                 {t("spaces.item.prompt")}
               </p>
-              <p className="mt-1 line-clamp-3 break-words text-[13px] font-semibold leading-[1.25] text-text">{(item.promptId ? promptTitle.get(item.promptId) : item.contentId ? promptTitle.get(item.contentId) : "") ?? ""}</p>
+              <p className="mt-1 line-clamp-3 break-words text-label font-semibold leading-[1.25] text-text">{(item.promptId ? promptTitle.get(item.promptId) : item.contentId ? promptTitle.get(item.contentId) : "") ?? ""}</p>
             </div>
           );
         })}

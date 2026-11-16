@@ -199,12 +199,12 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
                 <p className="text-small text-text-muted">{description}</p>
                 <ol aria-label={t("list.howItWorks")} className="space-y-2">
                   {steps.map((step, index) => (
-                    <li key={step.titleKey} className="flex items-start gap-3 rounded-lg border border-border-soft bg-surface p-3">
+                    <li key={step.titleKey} className="flex items-start gap-3 rounded-lg card-flat p-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
                         <step.icon size={16} />
                       </span>
                       <span className="min-w-0 leading-tight">
-                        <span className="block text-caption font-semibold uppercase tracking-[0.07em] text-text-muted">
+                        <span className="block text-caption font-semibold text-text-muted">
                           {t("list.step")} {index + 1}
                         </span>
                         <span className="mt-1 block text-label font-semibold text-text">{t(step.titleKey)}</span>

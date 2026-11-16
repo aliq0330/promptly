@@ -78,12 +78,12 @@ export function DeletePromptDialog({
               <div className="flex items-start gap-3 rounded-lg bg-surface-soft px-4 py-3" data-delete-results="">
                 <div className="mt-0.5 flex shrink-0 items-center">
                   {impact?.resultThumbnails.map((url, index) => (
-                    <span key={index} className={cn("h-[30px] w-[30px] overflow-hidden rounded-[9px] bg-border-soft ring-2 ring-surface-soft", index > 0 && "-ml-2.5")}>
+                    <span key={index} className={cn("h-[30px] w-[30px] overflow-hidden rounded-md bg-border-soft ring-2 ring-surface-soft", index > 0 && "-ml-2.5")}>
                       {url && <StorageImg src={url} alt="" className="h-full w-full object-cover" />}
                     </span>
                   ))}
                   {resultCount > 3 && (
-                    <span className="-ml-2.5 flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-border-soft text-caption font-bold text-text-secondary ring-2 ring-surface-soft">
+                    <span className="-ml-2.5 flex h-[30px] w-[30px] items-center justify-center rounded-md bg-border-soft text-caption font-semibold text-text-secondary ring-2 ring-surface-soft">
                       +{resultCount - 3}
                     </span>
                   )}

@@ -8,7 +8,7 @@ import { cn, formatCount } from "@/lib/utils";
 import { ADMIN_CONTENT_TYPES, CONTENT_TYPE_KEY, formatBytes, kindKey } from "./format";
 import { TypeFilter } from "./type-filter";
 
-const CARD = "rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5";
+const CARD = "rounded-lg card-flat p-4 shadow-card sm:p-5";
 const CONTENT_KINDS = ["prompts", "requests", "workflows", "presets"] as const;
 const KIND_OF: Record<(typeof CONTENT_KINDS)[number], string> = { prompts: "prompt", requests: "request", workflows: "workflow", presets: "preset" };
 
@@ -231,13 +231,13 @@ export function SiteStatsPanel() {
         </p>
         <div className="mt-4 grid gap-5 md:grid-cols-2">
           <div className="space-y-3">
-            <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("admin.stats.byBucket")}</p>
+            <p className="text-caption font-semibold text-text-muted">{t("admin.stats.byBucket")}</p>
             {stats.storage.by_bucket.map((b) => (
               <Bar key={b.bucket} label={bucketLabel(b.bucket)} value={b.bytes} max={bucketMax} right={`${formatBytes(b.bytes)} · ${t("admin.stats.files", { count: b.files })}`} />
             ))}
           </div>
           <div className="space-y-3">
-            <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("admin.stats.byKind")}</p>
+            <p className="text-caption font-semibold text-text-muted">{t("admin.stats.byKind")}</p>
             {stats.storage.by_kind.map((b) => (
               <Bar key={b.kind} label={kindLabel(b.kind)} value={b.bytes} max={kindMax} right={`${formatBytes(b.bytes)} · ${t("admin.stats.files", { count: b.files })}`} />
             ))}
