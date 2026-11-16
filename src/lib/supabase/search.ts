@@ -1,7 +1,9 @@
 import { supabase } from "./client";
 import { hasSearchFilter, sanitizeSearchText, type ContentSearchFilters } from "./taxonomy-query";
 
-export type SearchKind = "prompt" | "request" | "workflow" | "preset";
+export type SearchKind = "prompt" | "request" | "workflow" | "preset" | "skill";
+/** The four post kinds the general search groups by (Skill is a fifth kind searched by the same RPC, docs/history/402-*, but is drawn as its own group). */
+export type PostSearchKind = Exclude<SearchKind, "skill">;
 
 /** Keyset position of the last row of a search page: `(sort_rank, created_at, id)` of `public.search_content`. */
 export interface SearchCursor {

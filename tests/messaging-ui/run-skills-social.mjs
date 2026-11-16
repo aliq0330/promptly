@@ -32,7 +32,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], searchCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -129,6 +129,14 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     const body = JSON.parse(route.request().postData() || "{}");
     state.mixedFeedCalls.push(body);
     return json(route, [{ kind: "skill", id: S_PUB, created_at: "2026-11-15T10:00:00Z", sort_rank: 0 }, { kind: "skill", id: "d6000000-0000-4000-8000-0000000000ff", created_at: "2026-11-14T10:00:00Z", sort_rank: 0 }]);
+  });
+  await context.route(/\/rest\/v1\/rpc\/search_content/, (route) => {
+    const body = JSON.parse(route.request().postData() || "{}");
+    state.searchCalls.push(body);
+    if (body.p_kind !== "skill") return json(route, []);
+    const q = (body.p_query ?? "").toLowerCase();
+    const rows = state.skills.filter((s) => s.status === "published" && s.visibility === "public" && (!q || s.title.toLowerCase().includes(q))).map((s) => ({ id: s.id, created_at: s.created_at, sort_rank: 0 }));
+    return json(route, rows);
   });
   await context.route(/\/rest\/v1\/rpc\/create_quote/, (route) => {
     state.quoteCalls.push(JSON.parse(route.request().postData() || "{}"));
@@ -495,12 +503,13 @@ await scenario("24. Oy sonrası araç etiketi: 'Hangi araçta denedin?' Cursor s
   assert.deepEqual(state.toolCalls[1], { p_skill_id: S_PUB, p_tool: null });
 });
 
-await scenario("25. Genel arama: metin aramasında 'Skill'ler' grubu skill_feed_page'den gelir", async ({ page, state }) => {
+await scenario("25. Genel arama: metin aramasında 'Skill'ler' grubu search_content (p_kind=skill) ile gelir", async ({ page, state }) => {
   await page.goto(`${BASE}/search?q=logo`);
   const group = page.locator("[data-search-skills]");
   await group.waitFor();
   assert.match(await group.innerText(), /Logo Skill/);
-  assert.ok(state.feedCalls.some((call) => call.p_query === "logo"));
+  assert.ok(state.searchCalls.some((call) => call.p_kind === "skill" && call.p_query === "logo"), "search_content skill türüyle çağrıldı");
+  assert.equal(state.feedCalls.some((call) => call.p_query === "logo"), false, "skill_feed_page artık çağrılmaz");
 });
 
 await scenario("26. Oy sonrası sürüm etiketi: 'Hangi sürümde denedin?' v1.0.0 seçilince set_skill_works_version çağrılır; sürüm başına toplam görünür", async ({ page, state }) => {
