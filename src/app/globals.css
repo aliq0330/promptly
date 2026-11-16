@@ -147,19 +147,22 @@
 /* ---------------------------------------------------------------------------
  * Semantic tokens → Tailwind utilities
  * ------------------------------------------------------------------------- */
-/* Card surfaces (docs/history/406-*): border + ground of every boxed panel, ONE border tone. Radius and shadow stay at the call site
- * (`rounded-lg` for a panel, `rounded-md` for a box nested inside one — inner radius = outer − padding). `Card` composes them. */
-@utility card-flat {
-  border: 1px solid var(--color-border-soft);
-  background-color: var(--color-surface);
-}
-@utility card-soft {
-  border: 1px solid var(--color-border-soft);
-  background-color: var(--color-surface-soft);
-}
-@utility card-inset {
-  border: 1px solid var(--color-border-soft);
-  background-color: var(--color-background);
+/* Card surfaces (docs/history/406-*): border + ground of every boxed panel, ONE border tone. They live in the `components` layer so any utility
+ * (`bg-primary-soft`, `border-border`) on the same element still wins, exactly like the hand-written classes they replace.
+ * Radius and shadow stay at the call site (`rounded-lg` for a panel, `rounded-md` for a box nested inside one — inner radius = outer − padding). `Card` composes them. */
+@layer components {
+  .card-flat {
+    border: 1px solid var(--color-border-soft);
+    background-color: var(--color-surface);
+  }
+  .card-soft {
+    border: 1px solid var(--color-border-soft);
+    background-color: var(--color-surface-soft);
+  }
+  .card-inset {
+    border: 1px solid var(--color-border-soft);
+    background-color: var(--color-background);
+  }
 }
 
 /* Visible keyboard focus INSIDE a field's own box (docs/history/406-*): for a transparent input/textarea whose wrapper cannot draw `focus-within`,
