@@ -2,7 +2,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { cn } from "@/lib/utils";
 
 /**
- * The one small label above a group (docs/history/403-*): sidebar group names, form section labels, a card's "type · tool" kicker,
+ * The one small label above a group (docs/history/406-*): sidebar group names, form section labels, a card's "type · tool" kicker,
  * table headings. 12 px, semibold, sentence case, no letter spacing — the hierarchy comes from size and colour, never from
  * capitals. `tone="overlay"` is for labels drawn on a picture or the dark Odak stage (`text-on-art-muted`).
  */

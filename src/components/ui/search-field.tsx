@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
 /**
- * The one search box (docs/history/403-*): the `Input` look (control border, 44 px / `dense` 40 px) with the magnifier inside and a clear
+ * The one search box (docs/history/406-*): the `Input` look (control border, 44 px / `dense` 40 px) with the magnifier inside and a clear
  * button once there is text. The focus ring is the input's own. `data-*` attributes go to the wrapper (tests and anchors); everything
  * else goes to the `<input>`. Boxes that parse chips (`AdvancedSearchBox`) or live on a canvas (`board-search`) are different tools.
  */

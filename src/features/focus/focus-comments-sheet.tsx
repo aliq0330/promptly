@@ -43,6 +43,8 @@ function targetOf(item: PostFeedItem): CommentTarget {
       return { workflowId: item.data.id };
     case "preset":
       return { presetId: item.data.id };
+    case "skill":
+      return { skillId: item.data.id };
   }
 }
 

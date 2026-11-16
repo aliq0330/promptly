@@ -730,13 +730,13 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                         if (await copyTextToClipboard(absoluteUrl(storyHref(story.id)))) setNotice(t("common.linkCopied"));
                       }}
                     />
-                    {user && story.linkedType && story.linkedType !== "skill" && story.linkedId && (
+                    {user && story.linkedType && story.linkedId && (
                       <MenuButton
                         icon={Shapes}
                         label={t("spaces.add.fromStory")}
                         onClick={() => {
                           setMenuOpen(false);
-                          setSpaceTarget({ type: story.linkedType as Exclude<StoryLinkedType, "skill">, id: story.linkedId! });
+                          setSpaceTarget({ type: story.linkedType as StoryLinkedType, id: story.linkedId! });
                         }}
                       />
                     )}

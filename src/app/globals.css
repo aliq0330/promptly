@@ -78,7 +78,7 @@
   --p-scrim: 10 8 20;
   /* Space left at the bottom of a page for the 64 px mobile tab bar + the home-indicator inset. */
   --nav-clearance: calc(5.5rem + env(safe-area-inset-bottom));
-  /* Gezinme genişlikleri (docs/history/403-*): ray, kenar çubuğu ve onlara yaslanan sabit konumlu öğeler (Mesajlar paneli, detay eylem çubuğu) bunu okur — 84/248 px. */
+  /* Gezinme genişlikleri (docs/history/406-*): ray, kenar çubuğu ve onlara yaslanan sabit konumlu öğeler (Mesajlar paneli, detay eylem çubuğu) bunu okur — 84/248 px. */
   --nav-rail-w: 5.25rem;
   --sidebar-w: 15.5rem;
   --z-sticky: 30;
@@ -178,7 +178,7 @@
   --color-danger-foreground: var(--p-danger-fg);
   --color-secondary-foreground: var(--p-secondary-fg);
   --color-success-foreground: var(--p-success-fg);
-  /* Soft status grounds (docs/history/403-*): one tint of the status colour over whatever it sits on — chips, banners, danger rows.
+  /* Soft status grounds (docs/history/406-*): one tint of the status colour over whatever it sits on — chips, banners, danger rows.
    * Never write `bg-success/10`-style alphas by hand; `brand-tokens.test.ts` checks the status text on these grounds in both modes. */
   --color-success-soft: color-mix(in srgb, var(--p-success) 10%, transparent);
   --color-warning-soft: color-mix(in srgb, var(--p-warning) 10%, transparent);
@@ -188,7 +188,7 @@
   --color-control-border: var(--p-control-border);
   --color-scrim: rgb(var(--p-scrim) / 0.45);
 
-  /* Text and chips drawn ON a picture or on a dark stage (docs/history/403-*): always light ink over a dark scrim, in both modes.
+  /* Text and chips drawn ON a picture or on a dark stage (docs/history/406-*): always light ink over a dark scrim, in both modes.
    * Never write `text-white` / `bg-black/55` by hand on an image; `.art-scrim` is the one gradient behind such text. */
   --color-on-art: #ffffff;
   --color-on-art-muted: rgb(255 255 255 / 0.8);

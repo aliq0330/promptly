@@ -8,13 +8,13 @@ import type { FeedEntry } from "@/lib/supabase/feed";
 export type FeedItem = FeedEntry;
 
 /**
- * A content post (prompt, request, workflow, preset) — every feed slot except a quote (docs/history/217-*) and a Skill (docs/history/400-*, a card-only entry). Odak draws
+ * A content post (prompt, request, workflow, preset) — every feed slot except a quote (docs/history/217-*); a Skill (docs/history/406-*) is a post too. Odak draws
  * posts only: a quote is a note about another post (a Space included, docs/history/241-*), not a single output to play full screen.
  */
-export type PostFeedItem = Exclude<FeedItem, { kind: "quote" | "skill" }>;
+export type PostFeedItem = Exclude<FeedItem, { kind: "quote" }>;
 
 export function isPostItem(item: FeedItem): item is PostFeedItem {
-  return item.kind !== "quote" && item.kind !== "skill";
+  return item.kind !== "quote";
 }
 
 export function feedItemKey(item: FeedItem): string {

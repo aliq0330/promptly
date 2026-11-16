@@ -95,6 +95,12 @@ export function FocusActions({ item }: { item: PostFeedItem }) {
           <CommentCountLink presetId={item.data.id} baseCount={item.data.commentCount} />
           <SaveButton presetId={item.data.id} saveCount={item.data.saveCount} />
         </>
+      ) : item.kind === "skill" ? (
+        <>
+          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="skill" />
+          <CommentCountLink skillId={item.data.id} baseCount={item.data.commentCount} />
+          <SaveButton skillId={item.data.id} saveCount={item.data.saveCount} />
+        </>
       ) : (
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="request" />

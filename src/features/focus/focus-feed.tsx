@@ -11,6 +11,7 @@ import { Focus } from "@/components/icons/focus";
 import { Images } from "@/components/icons/images";
 import { Inbox } from "@/components/icons/inbox";
 import { MoreVertical } from "@/components/icons/more-vertical";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { UserCheck } from "@/components/icons/user-check";
@@ -247,6 +248,8 @@ function thumbIcon(item: PostFeedItem): IconComponent {
       return SlidersHorizontal;
     case "request":
       return Sparkles;
+    case "skill":
+      return GraduationCap;
   }
 }
 

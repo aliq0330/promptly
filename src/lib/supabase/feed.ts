@@ -19,11 +19,8 @@ export type FeedEntry =
   | { kind: "skill"; data: Skill };
 
 export type FeedKind = FeedEntry["kind"];
-/**
- * A feed slot that is a full-screen-playable content post: prompt, request, workflow, preset. A quote is a note about another post and a Skill
- * (docs/history/400-*) is a card-only entry — neither goes to Odak or "Sana özel".
- */
-export type PostEntry = Exclude<FeedEntry, { kind: "quote" | "skill" }>;
+/** A feed slot that is a content post: prompt, request, workflow, preset or Skill (docs/history/406-*: Odak and "Sana özel" carry Skills). A quote is only a note about another post. */
+export type PostEntry = Exclude<FeedEntry, { kind: "quote" }>;
 export type FeedScope = "all" | "following";
 export type { FeedCursor, FeedOrder };
 
@@ -183,7 +180,7 @@ export interface ForYouReason {
 }
 
 export interface ForYouPage {
-  /** "Sana özel" ranks content posts only (`for_you_page` never returns a quote or a Skill). */
+  /** "Sana özel" ranks content posts only (`for_you_page` never returns a quote). */
   items: PostEntry[];
   /** `${kind}-${id}` → reason. */
   reasons: Record<string, ForYouReason>;
@@ -223,7 +220,7 @@ export async function fetchForYouPage(params: {
   if (error) throw new Error(error.message);
 
   const rows = (data ?? []) as ForYouRow[];
-  const items = (await hydrateFeedRows(rows)).filter((item): item is PostEntry => item.kind !== "quote" && item.kind !== "skill");
+  const items = (await hydrateFeedRows(rows)).filter((item): item is PostEntry => item.kind !== "quote");
   const reasons: Record<string, ForYouReason> = {};
   for (const row of rows) reasons[`${row.kind}-${row.id}`] = { kind: row.reason_kind, ref: row.reason_ref };
   return { items, reasons, nextCursor: nextFeedCursor(rows, limit) };

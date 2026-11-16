@@ -1,5 +1,5 @@
 /**
- * Floating layers (docs/history/403-*): the only places `shadow-pop` is drawn by hand. A menu, popover, dialog card or sheet that
+ * Floating layers (docs/history/406-*): the only places `shadow-pop` is drawn by hand. A menu, popover, dialog card or sheet that
  * lifts off the page uses one of these; the radius follows the layer's size (16 panel · 22 dialog/sheet · 12 tooltip), the ground is
  * always `surface-elevated`, the border `border-soft`. A floating pill (the Mesajlar dock button, a pager) takes a lighter shadow.
  * Add width + position at the call site; menus add `MENU_PANEL_CLASS` (`menu.tsx`), which builds on `FLOATING_PANEL_CLASS`.

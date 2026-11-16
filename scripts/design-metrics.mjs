@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Tasarım sistemi ölçümü (docs/history/403-*): kural dışı kalıpları `src/` altında sayar. Yalnız okur, hiçbir dosyayı değiştirmez.
+// Tasarım sistemi ölçümü (docs/history/406-*): kural dışı kalıpları `src/` altında sayar. Yalnız okur, hiçbir dosyayı değiştirmez.
 //   node scripts/design-metrics.mjs            → tablo
 //   node scripts/design-metrics.mjs --json     → JSON
 //   node scripts/design-metrics.mjs --check    → hedefi aşan sayaç varsa çıkış kodu 1 (CI kilidi)

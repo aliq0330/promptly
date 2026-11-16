@@ -1,4 +1,4 @@
-// Tasarım denetimi (docs/history/403-*): ana sayfaların ekran görüntüsünü alır — önce/sonra karşılaştırması için.
+// Tasarım denetimi (docs/history/406-*): ana sayfaların ekran görüntüsünü alır — önce/sonra karşılaştırması için.
 // Ağ taklitli (tests/messaging-ui/mock.mjs); gerçek Supabase'e KARŞI DENENMEDİ. Çıktı: SHOTS klasörü (varsayılan /tmp/promptly-shots).
 //   NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 //   SHOTS=/tmp/after CHROMIUM_PATH=... node tests/design/screens.mjs

@@ -144,5 +144,5 @@ export function waitingText(t: (key: TranslationKey, params?: Record<string, str
   return t("tm.lib.waitMinutes", { count: Math.max(1, minutes) });
 }
 
-/** Aç/kapa anahtarı: sitenin tek `Switch`'i (docs/history/403-*); ekip ekranları eski adresten almaya devam eder. */
+/** Aç/kapa anahtarı: sitenin tek `Switch`'i (docs/history/406-*); ekip ekranları eski adresten almaya devam eder. */
 export { Switch } from "@/components/ui/switch";

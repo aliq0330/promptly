@@ -10,7 +10,7 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 /**
- * The one small label (content type, category, tag, status, role, review state — docs/history/403-*): `rounded-full`,
+ * The one small label (content type, category, tag, status, role, review state — docs/history/406-*): `rounded-full`,
  * 12 px, medium. Status colours come from the `*-soft` tokens, so they stay legible in every mode; `overlay` is for a chip
  * drawn on a picture (`bg-art-chip`). Role / review / mute / dock badges are thin wrappers that only pick the label and tone.
  */

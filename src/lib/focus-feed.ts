@@ -13,7 +13,7 @@
  */
 import type { PostEntry } from "@/lib/supabase/feed";
 
-export type FocusFeedLayout = "visual" | "playable" | "text" | "workflow" | "preset" | "request";
+export type FocusFeedLayout = "visual" | "playable" | "text" | "workflow" | "preset" | "request" | "skill";
 
 export interface FocusFeedCover {
   /** Identity URL as stored (private media is signed by `StorageImg` / `useStorageSrc`). */
@@ -39,12 +39,15 @@ export function focusFeedCover(entry: PostEntry): FocusFeedCover | null {
     }
     case "preset":
       return entry.data.coverUrl ? { url: entry.data.coverUrl, alt: entry.data.title } : null;
+    // A Skill's cover lives in the private `skill-files` bucket (its own signing, `SkillDetailCover`); the slide shows the Skill's own summary + icon instead (docs/history/406-*).
+    case "skill":
+      return null;
   }
 }
 
 /** How many further pictures the entry has beyond its cover (a quiet "+N"; browsing them is the detail page's job). */
 export function focusFeedExtraImages(entry: PostEntry): number {
-  if (entry.kind === "preset") return 0;
+  if (entry.kind === "preset" || entry.kind === "skill") return 0;
   if (entry.kind === "prompt" && entry.data.contentType !== "image") return 0;
   return Math.max(0, entry.data.media.length - 1);
 }
@@ -70,16 +73,16 @@ export function focusFeedHasMedia(entry: PostEntry): boolean {
 
 /**
  * The "Medya" switch (on by default, docs/history/239-*): it hides the prompts and workflows that have nothing to look at —
- * no picture, no video / audio. Requests and presets are never hidden by it: without a picture their own text / parameter
+ * no picture, no video / audio. Requests, presets and Skills are never hidden by it: without a picture their own text / parameter
  * summary takes the picture's place.
  */
 export function focusFeedShown(entry: PostEntry, mediaOnly: boolean): boolean {
-  if (!mediaOnly || entry.kind === "request" || entry.kind === "preset") return true;
+  if (!mediaOnly || entry.kind === "request" || entry.kind === "preset" || entry.kind === "skill") return true;
   return focusFeedHasMedia(entry);
 }
 
 /** Odak's post types (docs/history/239-*, 245-*): picked in the bar's filter menu; sideways moves between the posts of one. */
-export const FOCUS_CHANNELS = ["all", "prompt", "request", "workflow", "preset"] as const;
+export const FOCUS_CHANNELS = ["all", "prompt", "request", "workflow", "preset", "skill"] as const;
 export type FocusChannel = (typeof FOCUS_CHANNELS)[number];
 
 /** Where the feed opens: the post last open in this feed during the session (if it is still in the list), else the top. */

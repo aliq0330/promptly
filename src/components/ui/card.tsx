@@ -18,7 +18,7 @@ export const CARD_TONE = {
  * Base surface: soft border, faint shadow. `interactive` adds the shared
  * hover treatment used by every clickable content card (border + shadow
  * transition and a 1px lift) — see features/content/content-card.tsx.
- * `tone` and `padding` are the only knobs (docs/history/403-*): never rebuild a card from `rounded-* border bg-*`.
+ * `tone` and `padding` are the only knobs (docs/history/406-*): never rebuild a card from `rounded-* border bg-*`.
  */
 export function Card({
   as: Tag = "div",

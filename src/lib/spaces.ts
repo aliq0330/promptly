@@ -13,7 +13,7 @@ export type SpaceVisibility = "private" | "link" | "public";
 export type SpaceRole = "owner" | "editor" | "viewer";
 /** `frame`/`text`/`shape`: ekip panosunun çizim öğeleri (docs/history/367-*) — kaynak başvurusu yoktur, onaya tabi değildir. */
 export type SpaceItemKind = "image" | "prompt" | "note" | "palette" | "content" | "frame" | "text" | "shape";
-export type SpaceContentType = "request" | "workflow" | "preset";
+export type SpaceContentType = "request" | "workflow" | "preset" | "skill";
 /** Not/grup rengi: palet token'ına eşlenir (hex DEĞİL — tema ve paletle birlikte değişir). */
 export type SpaceColor = "primary" | "secondary" | "success" | "warning" | "danger" | "neutral";
 export type SpaceTab = "overview" | "board" | "images" | "prompts" | "palette" | "notes" | "comments" | "activity" | "members";

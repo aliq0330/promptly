@@ -16,6 +16,8 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const results = [];
 const ONLY = process.env.ONLY ?? "";
 const SHOTS = process.env.SHOTS ?? "";
+// The "Skills" post type is listed only in a build with NEXT_PUBLIC_SKILLS_ENABLED=true (docs/history/406-*).
+const SKILLS_ON = process.env.NEXT_PUBLIC_SKILLS_ENABLED === "true";
 
 const author = (u) => ({ id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 3, following_count: 2, created_at: "2026-01-01T00:00:00Z", interests: [] });
 const pid = (n) => `f0000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -470,7 +472,7 @@ await scenario("15. İngilizce", async ({ page }) => {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
   await filterChip(page).click();
-  assert.deepEqual(await stage(page).getByRole("menuitemradio").allInnerTexts(), ["All", "Prompts", "Requests", "Workflows", "Presets", "All", "Image", "Text", "Audio", "Video", "Newest", "Following"]);
+  assert.deepEqual(await stage(page).getByRole("menuitemradio").allInnerTexts(), ["All", "Prompts", "Requests", "Workflows", "Presets", ...(SKILLS_ON ? ["Skills"] : []), "All", "Image", "Text", "Audio", "Video", "Newest", "Following"]);
 }, { lang: "en" });
 
 await scenario("16. Açık temada da koyu sahne; hareket azaltmada geçiş yok", async ({ page }) => {
@@ -716,7 +718,7 @@ await scenario("28. Süzgeç menüsü (docs/history/245-*): üstte tek 'Tümü �
   assert.equal(db.feedCalls.at(-1).p_kinds, null, "Tümü = every kind");
   assert.equal(db.feedCalls.at(-1).p_scope, "all");
   await filterChip(page).click();
-  assert.equal(await stage(page).getByRole("menuitemradio").count(), 12, "5 post types + 5 content types + 2 sources");
+  assert.equal(await stage(page).getByRole("menuitemradio").count(), 12 + (SKILLS_ON ? 1 : 0), "5 (+ Skills) post types + 5 content types + 2 sources");
   assert.equal(await stage(page).getByRole("menuitemradio", { name: "Tümü" }).first().getAttribute("aria-checked"), "true");
   assert.equal(await stage(page).getByRole("menuitemradio", { name: "En yeni" }).getAttribute("aria-checked"), "true");
   await shot(page, "28-filter-menu");

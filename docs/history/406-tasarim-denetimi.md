@@ -1,4 +1,4 @@
-# 403 — Tasarım denetimi: sistemi uygulanır hale getirmek
+# 406 — Tasarım denetimi: sistemi uygulanır hale getirmek
 
 Kullanıcı Promptly'yi "unslop" çerçevesiyle baştan sona denetletti; kimlik (Meydan, Bricolage/DM Sans/JetBrains Mono, Phosphor, hap düğmeler,
 mavi/turuncu rol ayrımı) KORUNDU. Bulgular sistemin kendi kurallarının uygulanmamasıydı: ortak bileşen varken elle yazılmış yüzeyler,

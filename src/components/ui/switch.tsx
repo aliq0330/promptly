@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * The one on/off switch (docs/history/403-*): 44×24 track, 20 px thumb, the thumb moves with `transform` (never `left`).
+ * The one on/off switch (docs/history/406-*): 44×24 track, 20 px thumb, the thumb moves with `transform` (never `left`).
  * Off = `border-strong`, on = `primary`; the thumb is the surface colour in both modes. Three pieces:
  *   - `SwitchTrack`  — the drawn track + thumb (decorative, `aria-hidden`), for a row that is itself the control.
  *   - `Switch`       — a standalone `role="switch"` button around the track.

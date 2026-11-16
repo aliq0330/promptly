@@ -5,6 +5,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { Check } from "@/components/icons/check";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { Clock } from "@/components/icons/clock";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { LayoutGrid } from "@/components/icons/layout-grid";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
@@ -13,6 +14,7 @@ import { UserCheck } from "@/components/icons/user-check";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { FOCUS_CHANNELS, type FocusChannel } from "@/lib/focus-feed";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
@@ -31,6 +33,7 @@ export const CHANNEL_META: Record<FocusChannel, { icon: IconComponent; label: Tr
   request: { icon: Sparkles, label: "nav.requestsShort" },
   workflow: { icon: WorkflowIcon, label: "nav.workflows" },
   preset: { icon: SlidersHorizontal, label: "nav.presets" },
+  skill: { icon: GraduationCap, label: "skill.pageTitle" },
 };
 
 const TAB_META: Record<FocusTab, { icon: IconComponent; label: TranslationKey }> = {
@@ -114,7 +117,7 @@ export function FocusFilterMenu({
           className="absolute left-1/2 top-full z-40 mt-2 max-h-[calc(100dvh-6rem)] w-[min(18rem,calc(100vw-1.5rem))] -translate-x-1/2 overflow-y-auto rounded-lg border border-border-soft bg-surface-elevated p-1.5 shadow-pop animate-pop-in"
         >
           <p className={heading}>{t("toolbar.postKind")}</p>
-          {FOCUS_CHANNELS.map((key) => {
+          {FOCUS_CHANNELS.filter((key) => key !== "skill" || SKILLS_MENU_ENABLED).map((key) => {
             const Icon = CHANNEL_META[key].icon;
             const selected = key === channel;
             return (

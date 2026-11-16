@@ -6,6 +6,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { ArrowDown } from "@/components/icons/arrow-down";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { ChevronUp } from "@/components/icons/chevron-up";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { ImageOff } from "@/components/icons/image-off";
 import { Music } from "@/components/icons/music";
 import { Shapes } from "@/components/icons/shapes";
@@ -32,8 +33,9 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language } from "@/lib/i18n/translations";
 import { presetParameterEntries } from "@/lib/preset-utils";
 import { splitSourceNotes } from "@/lib/source-notes";
-import { cn, presetHref, profileHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
-import type { Preset, Prompt, PromptRequest, UserProfile, Workflow } from "@/types";
+import { SKILL_COMPAT_LABEL, skillLabelText } from "@/lib/skills/categories";
+import { cn, presetHref, profileHref, promptHref, requestHref, skillHref, workflowHref } from "@/lib/utils";
+import type { Preset, Prompt, PromptRequest, Skill, UserProfile, Workflow } from "@/types";
 import { FollowButton } from "@/features/profile/follow-button";
 import { FocusFeedRail } from "./focus-feed-rail";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -80,6 +82,17 @@ export function modelOf(item: PostFeedItem, t: ReturnType<typeof useTranslation>
       return { href: presetHref(item.data), author: item.data.creator, createdAt: item.data.createdAt, icon: SlidersHorizontal, typeLabel: t("preset.singular"), title: item.data.title, ...base(item.data.description, item.data.tools) };
     case "request":
       return { href: requestHref(item.data), author: item.data.author, createdAt: item.data.createdAt, icon: Sparkles, typeLabel: t("request.title"), title: item.data.title, ...base(item.data.description, item.data.tools, item.data.preferredTool) };
+    case "skill":
+      return {
+        href: skillHref(item.data),
+        author: item.data.creator,
+        createdAt: item.data.createdAt,
+        icon: GraduationCap,
+        typeLabel: t("skill.singular"),
+        title: item.data.title,
+        description: item.data.summary,
+        tool: item.data.compat[0] ? skillLabelText(SKILL_COMPAT_LABEL[item.data.compat[0]], t) : null,
+      };
   }
 }
 
@@ -400,6 +413,20 @@ function RequestBrief({ request, onImage }: { request: PromptRequest; onImage: b
   );
 }
 
+/** A Skill's quiet facts under its summary: the tools it is written for + its version (the instructions themselves stay on the detail page). */
+function SkillBrief({ skill, onImage }: { skill: Skill; onImage: boolean }) {
+  const { t } = useTranslation();
+  if (skill.compat.length === 0) return null;
+  return (
+    <div className={cn("border-l-2 pl-3", onImage ? "border-white/60" : "border-primary/50")}>
+      <p className={cn("text-caption font-bold uppercase tracking-[0.07em]", onImage ? "text-white/75" : "text-text-muted")}>{t("skill.compatLabel")}</p>
+      <p className={cn("mt-0.5 line-clamp-2 break-words text-small", onImage ? "text-white/90" : "text-text-secondary")}>
+        {skill.compat.map((tool) => skillLabelText(SKILL_COMPAT_LABEL[tool], t)).join(", ")} · v{skill.version}
+      </p>
+    </div>
+  );
+}
+
 export function RequestStatus({ request }: { request: PromptRequest }) {
   const { t } = useTranslation();
   return (
@@ -419,6 +446,8 @@ export function StructureBlock({ item, near, onImage }: { item: PostFeedItem; ne
       return <PresetParams preset={item.data} onImage={onImage} />;
     case "request":
       return <RequestBrief request={item.data} onImage={onImage} />;
+    case "skill":
+      return <SkillBrief skill={item.data} onImage={onImage} />;
     case "prompt":
       // A text-first prompt shows its own words in the signature mono block (with the shared Kopyala + use count).
       return !onImage && item.data.promptText.trim() ? <PromptPreviewBox prompt={item.data} lines={6} /> : null;
@@ -532,6 +561,18 @@ function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideM
       </div>
     );
   }
+  if (item.kind === "skill") {
+    return (
+      <div data-album-art className={cn(frame, "gap-4 border border-white/15 bg-white/10 backdrop-blur-md")}>
+        <div className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-white/80">
+          <Icon size={16} aria-hidden />
+          {t("skill.singular")}
+        </div>
+        <p className="line-clamp-6 whitespace-pre-line break-words font-display text-h3 font-bold leading-snug text-white">{model.description || model.title}</p>
+        <SkillBrief skill={item.data} onImage />
+      </div>
+    );
+  }
   const words = item.kind === "prompt" && item.data.promptText.trim() ? item.data.promptText : null;
   const structure = item.kind !== "prompt" ? <StructureBlock item={item} near={near} onImage={false} /> : null;
   return (
@@ -554,7 +595,7 @@ export function FocusAddToSpace({ item, className }: { item: PostFeedItem; class
   const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  if (!user || item.data.communityId) return null;
+  if (!user || ("communityId" in item.data && item.data.communityId)) return null;
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={className} data-focus-add-to-space="">

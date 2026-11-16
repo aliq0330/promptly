@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
@@ -9,13 +10,18 @@ import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CARD_SAVE_CLASS } from "@/features/content/action-styles";
 import { FolderMinus } from "@/components/icons/folder-minus";
+import { Link2 } from "@/components/icons/link-2";
+import { Shapes } from "@/components/icons/shapes";
+import { useAuth } from "@/features/auth/auth-provider";
+import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
+import { shareLinkForHref } from "@/lib/share-link";
 import { DropdownMenu, MenuItem } from "@/features/communities/dropdown-menu";
 import { useToast } from "@/features/groups/use-toast";
 import { postMeta } from "@/features/prompts/post-header";
 import { TextArt, TextArtTitle } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILL_COMPAT_LABEL, skillCategoryName, skillLabelText } from "@/lib/skills/categories";
-import { skillHref } from "@/lib/utils";
+import { absoluteUrl, skillHref } from "@/lib/utils";
 import { useSkillCategories } from "./use-skill-categories";
 import { SkillCoverCard } from "./skill-cover-card";
 import type { Skill } from "@/types";
@@ -32,24 +38,53 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
   const tools = skill.compat.map((id) => skillLabelText(SKILL_COMPAT_LABEL[id], t)).join(", ");
 
   const { node, show } = useToast();
-  const menu = collectionRemoval ? (
-    <DropdownMenu label={t("skill.menu")}>
-      {(close) => (
-        <MenuItem
-          icon={<FolderMinus size={16} />}
-          label={t("common.removeFromCollection")}
-          danger
-          onClick={() => {
-            close();
-            collectionRemoval.onRemove().catch((err) => {
-              console.error("collectionRemoval", err);
-              show(t("common.removeFailed"));
-            });
-          }}
-        />
-      )}
-    </DropdownMenu>
-  ) : undefined;
+  const { user } = useAuth();
+  const [spaceOpen, setSpaceOpen] = useState(false);
+  const shareable = skill.status === "published" && skill.visibility === "public";
+  // Kartın ⋮ menüsü normal prompt kartıyla aynı satırları taşır (docs/history/404-*): bağlantıyı kopyala, Space'e ekle (oturumlu), koleksiyon sayfasında "Koleksiyondan kaldır".
+  const menu =
+    shareable || user || collectionRemoval ? (
+      <DropdownMenu label={t("skill.menu")}>
+        {(close) => (
+          <>
+            {shareable && (
+              <MenuItem
+                icon={<Link2 size={16} />}
+                label={t("common.copyLink")}
+                onClick={() => {
+                  close();
+                  void navigator.clipboard?.writeText(absoluteUrl(shareLinkForHref(href))).catch(() => undefined);
+                }}
+              />
+            )}
+            {user && (
+              <MenuItem
+                icon={<Shapes size={16} />}
+                label={t("spaces.add.menu")}
+                onClick={() => {
+                  close();
+                  setSpaceOpen(true);
+                }}
+              />
+            )}
+            {collectionRemoval && (
+              <MenuItem
+                icon={<FolderMinus size={16} />}
+                label={t("common.removeFromCollection")}
+                danger
+                onClick={() => {
+                  close();
+                  collectionRemoval.onRemove().catch((err) => {
+                    console.error("collectionRemoval", err);
+                    show(t("common.removeFailed"));
+                  });
+                }}
+              />
+            )}
+          </>
+        )}
+      </DropdownMenu>
+    ) : undefined;
   return (
     <>
     <ContentCard variant="visual" href={href}>
@@ -90,6 +125,7 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
       />
     </ContentCard>
     {node}
+    {spaceOpen && <AddToSpaceModal target={{ type: "skill", id: skill.id }} onClose={() => setSpaceOpen(false)} />}
     </>
   );
 }
