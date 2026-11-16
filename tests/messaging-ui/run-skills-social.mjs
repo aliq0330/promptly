@@ -260,9 +260,15 @@ await scenario("5. ⋮ menüsünde Şikâyet: başkasının Skill'inde var, kend
   assert.match(await page.getByRole("dialog").innerText(), /Skill/);
 });
 
-await scenario("5b. Sahibi kendi Skill'ini şikâyet edemez (menü çizilmez)", async ({ page }) => {
+await scenario("5b. Sahibi kendi Skill'ini şikâyet edemez; ⋮ menüsünde Düzenle ve Sil var, bant dışında ayrı düğme yok", async ({ page }) => {
   await openDetail(page);
-  assert.equal(await page.locator("[data-skill-menu]").count(), 0);
+  const menu = page.locator("[data-skill-menu]");
+  await menu.waitFor();
+  assert.equal(await page.locator("[data-detail-actions] [data-skill-edit], [data-detail-actions] [data-skill-delete]").count(), 0, "Düzenle/Sil eylem satırında değil");
+  await menu.getByRole("button").first().click();
+  await page.locator("[data-skill-edit]").waitFor();
+  await page.locator("[data-skill-delete]").waitFor();
+  assert.equal(await page.getByRole("menuitem", { name: /Şikayet/i }).count(), 0);
 }, { me: U.alice });
 
 await scenario("6. Liste kartında beğeni + yorum sayacı görünür", async ({ page }) => {
@@ -520,6 +526,24 @@ await scenario("28. Karma akış: Keşfet 'Tümü' akışında feed_page'in dön
   await page.getByText("Skill 1").first().waitFor();
   assert.ok(state.mixedFeedCalls.length >= 1, "feed_page çağrıldı");
   assert.equal(await page.getByText("Skill 1").count() >= 1, true);
+});
+
+await scenario("29. Prompt sayfasıyla aynı düzen: bölünmüş İndir düğmesi, tam ⋮ menüsü, sade eylem satırı", async ({ page }) => {
+  await openDetail(page);
+  await page.locator("[data-skill-download-split]").waitFor();
+  // Eylem satırında ikinci bir ⋮ ya da Düzenle/Sil yok: yalnız tepki/yorum/kaydet + İstatistik/Paylaş.
+  assert.equal(await page.locator("[data-detail-actions] [data-skill-menu], [data-detail-actions] [data-skill-edit], [data-detail-actions] [data-skill-delete]").count(), 0);
+  // İndirme seçenekleri ok parçasında.
+  await page.locator("[data-skill-download-menu] button").click();
+  assert.equal(await page.getByRole("menuitem").count(), 4);
+  await page.keyboard.press("Escape");
+  // ⋮ menüsü: bağlantıyı kopyala + ilişki haritası + Şikâyet (başkasının Skill'i).
+  await page.locator("[data-skill-menu]").getByRole("button").first().click();
+  await page.locator("[data-skill-copy-link]").waitFor();
+  await page.locator("[data-skill-relation-map]").waitFor();
+  await page.getByRole("menuitem", { name: /Şikayet/i }).waitFor();
+  // Hakkında kartı: uyumlu araç + kategori çipi.
+  await page.locator('[data-testid="detail-meta"]').waitFor();
 });
 
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {

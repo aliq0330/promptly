@@ -248,11 +248,7 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 - [x] (oy `393-*`; araç etiketli değerlendirme `397-*` YAPILDI [sürüm etiketi yok]) "Çalıştı mı?" oyu (`prompt_works_votes` kalıbı; kopyalama şartı yerine indirme kaydı), kullanım değerlendirmesi (araç + sürüm etiketli yorum)
 - [x] (kalite göstergeleri `395-*`; sürüm güncelleme bildirimi `391-*`; betik risk taraması [bilgilendirici] ve Skill ↔ Skill bağları `397-*` YAPILDI)
 
-### Çekirdeğin bilinen sınırları (bilerek yapılmadı)
-- Gerçek Supabase'e, Storage'a ve cihaza karşı **denenmedi**; SQL testi yerel PostgreSQL'de, arayüz yalnız tip/lint/derleme ile doğrulandı (Skill için ağ taklitli Playwright paketi henüz yok → `tests/messaging-ui/run-skills.mjs`).
-- Kart ve detayda beğeni/yorum/kaydet/İstatistik/Paylaş yok; sayaç sütunları var ama yazılmıyor (hep 0).
-- Skill menü girişi bayrak arkasında; `/skills` adresleri bayraksız da açılır (yalnız menü satırı gizlenir).
-- Sürüm elle verilir, geçmişi tutulmaz; `SKILL.md` her indirmede o anki alanlardan derlenir (değişmez paket yok).
-- Arama `created_at` imleciyle çalışır (aynı anda eklenen satırlar nadiren atlanabilir) ve talimatı `ilike` ile tarar.
-- Moderatör kuyruğu/sayaçları, hesap silme dışındaki silme yan etkileri (`orphan_storage_objects`) henüz Skill'i bilmiyor.
-
+### Çekirdeğin ilk sınırları — GÜNCEL DURUM (388'deki liste eskidi; bu liste 2026-11-16'da yeniden yazıldı)
+- Hâlâ doğru: gerçek Supabase/Storage/cihaza karşı **denenmedi** (testler yerel PostgreSQL + ağ taklitli Playwright); Edge `skill-package`/`api`/`mcp` canlıya elle deploy edilecek; paket limitlerinin Edge'deki süre/bellek davranışı ölçülmedi; Skill menü girişi bayrak (`NEXT_PUBLIC_SKILLS_ENABLED`) arkasında ve bayrak KAPALI; hukuk metni danışmandan geçmedi.
+- Artık yanlış (YAPILDI): beğeni/yorum/kaydet/İstatistik/Paylaş (390-391), değişmez sürümler ve paket (389), moderatör sayaçları ve silme yan etkileri (395, `orphan_storage_objects`), ağ taklitli Skill UI paketleri (`run-skills-social`, `run-skills-package`), arama imleci (`skill_feed_page` üçlü keyset, 392).
+- Bilerek yapılmadı/ayrı karar: Skill `search_content`'e ve Odak/"Sana özel"e girmez; Skill'e "Space'e ekle" yok.
