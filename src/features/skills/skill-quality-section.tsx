@@ -2,7 +2,7 @@
 
 import { Check } from "@/components/icons/check";
 import { Minus } from "@/components/icons/minus";
-import { DetailSection } from "@/features/content/detail-parts";
+import { AsideSection, DetailSection } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { skillQualityChecks, type SkillQualityKey } from "@/lib/skills/quality";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -21,17 +21,16 @@ const LABEL: Record<SkillQualityKey, TranslationKey> = {
 /**
  * Kalite göstergeleri (docs/history/395-*): detayda zaten görünen veriden hesaplanan 7 açık ölçüt. Puan ya da güvenlik onayı DEĞİLDİR; "bilgisi tam mı" sorusunu yanıtlar.
  */
-export function SkillQualitySection({ skill, hasPackage }: { skill: Skill; hasPackage: boolean }) {
+export function SkillQualitySection({ skill, hasPackage, aside = false }: { skill: Skill; hasPackage: boolean; aside?: boolean }) {
   const { t } = useTranslation();
   const checks = skillQualityChecks(skill, hasPackage);
   const passed = checks.filter((check) => check.ok).length;
-  return (
-    <DetailSection title={t("skill.quality.title")}>
+  const body = (
       <div data-skill-quality="" className="rounded-lg card-flat px-4 py-3">
         <p className="text-small font-semibold text-text" data-skill-quality-score="">
           {t("skill.quality.score", { done: passed, total: checks.length })}
         </p>
-        <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+        <ul className={aside ? "mt-2 grid gap-1.5" : "mt-2 grid gap-1.5 sm:grid-cols-2"}>
           {checks.map((check) => (
             <li key={check.key} data-quality-check={check.key} data-ok={check.ok ? "true" : "false"} className="flex items-center gap-2 text-small text-text-secondary">
               {check.ok ? <Check size={16} className="shrink-0 text-success" aria-hidden /> : <Minus size={16} className="shrink-0 text-text-muted" aria-hidden />}
@@ -41,6 +40,13 @@ export function SkillQualitySection({ skill, hasPackage }: { skill: Skill; hasPa
         </ul>
         <p className="mt-2 text-caption text-text-muted">{t("skill.quality.note")}</p>
       </div>
-    </DetailSection>
+  );
+  // Yan sütun kartı (docs/history/409-*): prompt sayfasında yan sütun "ilgili bilgi"dir; ana sütun metne ayrılır.
+  return aside ? (
+    <AsideSection id="skill-quality-title" title={t("skill.quality.title")}>
+      {body}
+    </AsideSection>
+  ) : (
+    <DetailSection title={t("skill.quality.title")}>{body}</DetailSection>
   );
 }

@@ -9,7 +9,7 @@ import { MENU_PANEL_CLASS } from "@/components/ui/menu";
 import { cn } from "@/lib/utils";
 
 /**
- * Skill sayfasının birincil indirme düğmesi (docs/history/401-*): bölünmüş düğme. Sol parça asıl eylemdir (paket varsa ZIP, yoksa SKILL.md);
+ * Skill sayfasının birincil indirme düğmesi (docs/history/401-*, 409-*): bölünmüş düğme, Talimat bloğunun altındaki eylem satırında (prompt'taki Kopyala · Çalıştır gibi). Sol parça asıl eylemdir (paket varsa ZIP, yoksa SKILL.md);
  * ok parçası diğer biçimleri açar (kopyala, özet JSON, dışa aktarma). İndirme seçenekleri ⋮ menüsünde DEĞİL, burada durur.
  */
 export function SkillDownloadButton({ label, onPrimary, children }: { label: string; onPrimary: () => void; children: (close: () => void) => ReactNode }) {
@@ -34,9 +34,9 @@ export function SkillDownloadButton({ label, onPrimary, children }: { label: str
   }, [open]);
 
   return (
-    <span ref={ref} data-skill-download-split="" className="relative inline-flex shadow-pop [border-radius:9999px]">
-      <button type="button" onClick={onPrimary} data-skill-download="" className={buttonClassName({ size: "lg", className: "h-14 rounded-l-full rounded-r-none pl-7 pr-5" })}>
-        <Download size={20} aria-hidden /> {label}
+    <span ref={ref} data-skill-download-split="" className="relative inline-flex [border-radius:9999px]">
+      <button type="button" onClick={onPrimary} data-skill-download="" className={buttonClassName({ className: "h-11 rounded-l-full rounded-r-none pl-5 pr-4" })}>
+        <Download size={16} aria-hidden /> {label}
       </button>
       <span data-skill-download-menu="" className="inline-flex">
         <button
@@ -45,9 +45,9 @@ export function SkillDownloadButton({ label, onPrimary, children }: { label: str
           aria-label={t("skill.detail.moreDownloads")}
           aria-haspopup="menu"
           aria-expanded={open}
-          className={buttonClassName({ size: "lg", className: "h-14 rounded-l-none rounded-r-full border-l border-primary-foreground/25 px-4" })}
+          className={buttonClassName({ className: "h-11 rounded-l-none rounded-r-full border-l border-primary-foreground/25 px-3" })}
         >
-          <ChevronDown size={20} aria-hidden />
+          <ChevronDown size={16} aria-hidden />
         </button>
       </span>
       {open && (

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { Modal } from "@/components/ui/modal";
-import { DetailSection } from "@/features/content/detail-parts";
+import { AsideSection, DetailSection } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchSkillFeedPage } from "@/lib/supabase/skill-discovery";
 import { addSkillLink, fetchLinkedSkills, fetchSkillLinks, removeSkillLink, SKILL_LINK_MAX, type SkillLink } from "@/lib/supabase/skill-links";
@@ -17,7 +17,7 @@ import type { Skill } from "@/types";
 import { SkillCard } from "./skill-card";
 
 /** Okuma tarafı: bu Skill ile birlikte kullanılan Skill'ler. Liste boşsa ya da hiçbiri okunamıyorsa bölüm hiç çizilmez. */
-export function SkillLinkedSkills({ skillId }: { skillId: string }) {
+export function SkillLinkedSkills({ skillId, aside = false }: { skillId: string; aside?: boolean }) {
   const { t } = useTranslation();
   const [skills, setSkills] = useState<Skill[]>([]);
   useEffect(() => {
@@ -34,15 +34,22 @@ export function SkillLinkedSkills({ skillId }: { skillId: string }) {
     };
   }, [skillId]);
   if (skills.length === 0) return null;
-  return (
+  const list = (
+    <ul className={aside ? "grid gap-3" : "grid gap-3 sm:grid-cols-2"} data-skill-linked="">
+      {skills.map((skill) => (
+        <li key={skill.id}>
+          <SkillCard skill={skill} />
+        </li>
+      ))}
+    </ul>
+  );
+  return aside ? (
+    <AsideSection id="skill-links" title={t("skill.links.title")}>
+      {list}
+    </AsideSection>
+  ) : (
     <DetailSection title={t("skill.links.title")} id="skill-links">
-      <ul className="grid gap-3 sm:grid-cols-2" data-skill-linked="">
-        {skills.map((skill) => (
-          <li key={skill.id}>
-            <SkillCard skill={skill} />
-          </li>
-        ))}
-      </ul>
+      {list}
     </DetailSection>
   );
 }

@@ -639,8 +639,11 @@ async function withTeamIds(list: SpaceSummary[]): Promise<SpaceSummary[]> {
  * Vitrin (docs/history/214-*): yalnız herkese açık + arşivlenmemiş Space'ler, bir sahibe (profil "Spaces" sekmesi) ya da bir
  * prompt'a (detaydaki "Bu prompt şu Space'lerde") göre. Okuma çağıranın RLS'inden geçer (engel iki yönlü).
  */
-export async function listPublicSpaces({ ownerId, promptId, limit = SPACE_PAGE_SIZE }: { ownerId?: string; promptId?: string; limit?: number }): Promise<SpaceSummary[]> {
-  const rows = await rpc<SummaryRow[]>("list_public_spaces", { p_owner: ownerId ?? null, p_prompt: promptId ?? null, p_limit: limit, p_offset: 0 });
+export async function listPublicSpaces({ ownerId, promptId, skillId, limit = SPACE_PAGE_SIZE }: { ownerId?: string; promptId?: string; skillId?: string; limit?: number }): Promise<SpaceSummary[]> {
+  // Skill ayrı işlevdir (docs/history/409-*): `list_public_spaces` aşırı yüklenmedi, eski çağıranlar etkilenmez.
+  const rows = skillId
+    ? await rpc<SummaryRow[]>("list_public_spaces_for_skill", { p_skill: skillId, p_limit: limit, p_offset: 0 })
+    : await rpc<SummaryRow[]>("list_public_spaces", { p_owner: ownerId ?? null, p_prompt: promptId ?? null, p_limit: limit, p_offset: 0 });
   return (rows ?? []).map(mapSpaceSummary);
 }
 

@@ -32,7 +32,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], spaceInserts: [], forYouCalls: [], interestCalls: [], searchCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], spaceInserts: [], forYouCalls: [], skillSpaceCalls: [], interestCalls: [], searchCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -152,6 +152,10 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   await context.route(/\/rest\/v1\/rpc\/list_spaces/, (route) =>
     json(route, [{ id: SPACE_ID, owner_id: me.id, owner_username: me.username, owner_display_name: me.display_name, owner_avatar_url: null, title: "Skill panosu", description: "", kind: "free", visibility: "private", cover_url: null, cover_item_id: null, cover_item_url: null, preview_urls: [], image_count: 0, prompt_count: 0, note_count: 0, member_count: 1, my_role: "owner", is_favorite: false, last_opened_at: null, created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-01T10:00:00Z", archived_at: null }]),
   );
+  await context.route(/\/rest\/v1\/rpc\/list_public_spaces_for_skill/, (route) => {
+    state.skillSpaceCalls.push(JSON.parse(route.request().postData() || "{}"));
+    return json(route, [{ id: SPACE_ID, owner_id: me.id, owner_username: me.username, owner_display_name: me.display_name, owner_avatar_url: null, title: "Skill panosu", description: "", kind: "free", visibility: "public", cover_url: null, cover_item_id: null, cover_item_url: null, preview_urls: [], image_count: 0, prompt_count: 0, note_count: 0, member_count: null, my_role: null, is_favorite: false, last_opened_at: null, created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-01T10:00:00Z", archived_at: null }]);
+  });
   await context.route(/\/rest\/v1\/space_items/, (route) => {
     const req = route.request();
     if (req.method() === "POST") {
@@ -228,6 +232,8 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   }
 }
 
+/** Detay sekmeleri prompt sayfasındaki gibidir (Talimat · Dosyalar · Sürümler; docs/history/409-*). */
+const openTab = (page, name) => page.getByRole("tab", { name }).click();
 const openDetail = async (page, id = S_PUB) => {
   await page.goto(`${BASE}/skills/local?id=${id}`);
   await page.getByRole("heading", { level: 1 }).waitFor();
@@ -392,6 +398,7 @@ await scenario("14. Skill detayında 'Benzer Skill'ler' yan bölümü çizilir",
 
 await scenario("15. Sürüm sabitleme: okuyucu bir sürümü sabitler (upsert skill_pins), rozet çıkar, tekrar basınca kaldırılır; sahibi sabitleyemez", async ({ page, state }) => {
   await openDetail(page);
+  await openTab(page, /Sürümler/);
   const btn = page.locator("[data-skill-pin]").first();
   await btn.waitFor();
   await btn.click();
@@ -404,15 +411,16 @@ await scenario("15. Sürüm sabitleme: okuyucu bir sürümü sabitler (upsert sk
 
 await scenario("15b. Sahibi kendi Skill'ini sabitleyemez (düğme yok)", async ({ page }) => {
   await openDetail(page);
+  await openTab(page, /Sürümler/);
   await page.locator("#skill-versions").waitFor();
   assert.equal(await page.locator("[data-skill-pin]").count(), 0);
 }, { me: U.alice });
 
-await scenario("16. İndirme menüsü: SKILL.md indir · kopyala · özet (JSON) indir seçenekleri", async ({ page }) => {
+await scenario("16. Talimat bloğunun altında: bölünmüş İndir menüsü (SKILL.md indir · özet JSON · Promptly dosyası) + ayrı 'SKILL.md'yi kopyala' düğmesi", async ({ page }) => {
   await openDetail(page);
+  assert.match(await page.locator("[data-skill-copy]").innerText(), /SKILL\.md'yi kopyala/);
   await page.locator("[data-skill-download-menu] button").first().click();
   const items = await page.getByRole("menuitem").allInnerTexts();
-  assert.ok(items.some((x) => /SKILL\.md'yi kopyala/.test(x)), items.join("|"));
   assert.ok(items.some((x) => /JSON/.test(x)));
   assert.ok(items.some((x) => /SKILL\.md/.test(x)));
 });
@@ -499,14 +507,16 @@ await scenario("22. Ana Sayfa: Filtre penceresinde 'Skill'ler' çipi; seçilince
 
 await scenario("23. Detay: betik risk rozetleri (otomatik tarama notu), birlikte kullanılan Skill kartı ve araç başına 'çalıştı' toplamı", async ({ page }) => {
   await openDetail(page);
+  const linked0 = page.locator("[data-skill-linked]");
+  await linked0.waitFor();
+  assert.match(await linked0.innerText(), /Logo Skill/, "birlikte kullanılan Skill yan sütunda");
+  await openTab(page, /Dosyalar/);
   const scan = page.locator("[data-skill-scan]");
   await scan.waitFor();
   assert.match(await scan.innerText(), /kesin değildir/);
   await page.locator('[data-skill-risk="pipe_to_shell"]').waitFor();
   await page.locator('[data-skill-risk="network"]').waitFor();
-  const linked = page.locator("[data-skill-linked]");
-  await linked.waitFor();
-  assert.match(await linked.innerText(), /Logo Skill/);
+  await openTab(page, /Talimat/);
   const row = page.locator('[data-skill-works-tool-row="cursor"]');
   await row.waitFor();
   assert.match(await row.innerText(), /Cursor.*2 çalıştı · 1 çalışmadı/);
@@ -564,11 +574,12 @@ await scenario("28. Karma akış: Keşfet 'Tümü' akışında feed_page'in dön
 await scenario("29. Prompt sayfasıyla aynı düzen: bölünmüş İndir düğmesi, tam ⋮ menüsü, sade eylem satırı", async ({ page }) => {
   await openDetail(page);
   await page.locator("[data-skill-download-split]").waitFor();
-  // Eylem satırında ikinci bir ⋮ ya da Düzenle/Sil yok: yalnız tepki/yorum/kaydet + İstatistik/Paylaş.
-  assert.equal(await page.locator("[data-detail-actions] [data-skill-menu], [data-detail-actions] [data-skill-edit], [data-detail-actions] [data-skill-delete]").count(), 0);
-  // İndirme seçenekleri ok parçasında.
+  // Eylem satırında (prompt sayfası gibi) büyük birincil düğme, ⋮ ya da Düzenle/Sil yok: yalnız tepki/yorum/kaydet + İstatistik/Paylaş; İndir bloğun altındadır.
+  assert.equal(await page.locator("[data-detail-actions] [data-skill-download-split], [data-detail-actions] [data-skill-menu], [data-detail-actions] [data-skill-edit], [data-detail-actions] [data-skill-delete]").count(), 0);
+  assert.equal(await page.locator("[data-skill-text-block] ~ [data-skill-actions] [data-skill-download-split], [data-skill-actions] [data-skill-download-split]").count(), 1);
+  // İndirme seçenekleri ok parçasında (kopyalama ayrı düğme olduğundan üç seçenek).
   await page.locator("[data-skill-download-menu] button").click();
-  assert.equal(await page.getByRole("menuitem").count(), 4);
+  assert.equal(await page.getByRole("menuitem").count(), 3);
   await page.keyboard.press("Escape");
   // ⋮ menüsü: bağlantıyı kopyala + ilişki haritası + Şikâyet (başkasının Skill'i).
   await page.locator("[data-skill-menu]").getByRole("button").first().click();
@@ -598,6 +609,34 @@ await scenario("34. Sana özel: Skill kartının ⋮ menüsünde 'İlgimi çekiy
   assert.equal(state.interestCalls.length, 1);
   assert.deepEqual([state.interestCalls[0].p_kind, state.interestCalls[0].p_id, state.interestCalls[0].p_value], ["skill", S_PUB2, "interested"]);
 }, { me: U.bob });
+
+await scenario("35. Prompt sayfasıyla aynı düzen (docs/history/409-*): Talimat bloğu + altında İndir/Kopyala, sekmeler, yan sütunda Kalite/Space, bantta kullanım sayısı", async ({ page, state }) => {
+  state.skills.find((x) => x.id === S_PUB).use_count = 5;
+  await openDetail(page);
+  // Talimat bloğu: varsayılan ham SKILL.md (üst bilgi + gövde), altında bilgi satırı; Önizleme gövdeyi işler.
+  const block = page.locator("[data-skill-text-block]");
+  await block.waitFor();
+  assert.match(await block.innerText(), /name: skill-1/);
+  assert.match(await block.innerText(), /v1\.0\.0/);
+  await block.getByRole("radio", { name: "Biçimli" }).click();
+  await page.locator("[data-skill-instructions]").waitFor();
+  // İndir ve Kopyala bloğun altındaki eylem satırında; "Araca kur" ve "Çalıştı mı?" aynı sekmede.
+  await page.locator("[data-skill-actions] [data-skill-download-split]").waitFor();
+  await page.locator("[data-skill-actions] [data-skill-copy]").waitFor();
+  await page.locator("[data-skill-install-card]").waitFor();
+  // Bant: kullanım sayısı (prompt'taki "N kez kullanıldı").
+  assert.match(await page.locator("[data-detail-band]").innerText(), /5 kez kullanıldı/);
+  // Yan sütun: Hakkında + bilgi satırları, Kalite, "Bu Skill şu Space'lerde".
+  const aside = page.locator("aside");
+  await aside.locator("[data-skill-info]").waitFor();
+  await aside.locator("[data-skill-quality]").waitFor();
+  const spaces = page.locator('[data-testid="skill-in-spaces"]');
+  await spaces.waitFor();
+  assert.match(await spaces.innerText(), /Skill panosu/);
+  assert.equal(state.skillSpaceCalls[0].p_skill, S_PUB);
+  // Ana sütunda ayrı Kalite / eski "Skill bilgisi" bölümü yok.
+  assert.equal(await page.locator("article [data-skill-quality]").count(), 0);
+});
 
 await scenario("31. Odak: Skill slaytı (özet + araç), Bilgi sayfası, beğeni/yorum/kaydet düğmeleri; Space'e ekle de var", async ({ page, state }) => {
   await page.goto(`${BASE}/focus`);
