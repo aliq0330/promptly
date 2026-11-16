@@ -5,9 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { ChipRow, Chip } from "@/components/ui/chip";
-import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/field";
-import { InlineAlert } from "@/components/ui/inline-alert";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
@@ -31,8 +29,7 @@ import { isValidSkillSlug, slugifySkillName } from "@/lib/skills/skill-md";
 import { skillHref } from "@/lib/utils";
 import type { ContentVisibility, Skill, SkillCategory, SkillCompat, SkillLicense } from "@/types";
 import { SkillCard } from "./skill-card";
-import { SkillFileEditor } from "./skill-file-editor";
-import { SkillPackageSection } from "./skill-package-section";
+import { SkillFilesWorkspace } from "./skill-files-workspace";
 import { SkillPublishDialog } from "./skill-publish-dialog";
 import { SkillRelationsSection } from "./skill-relations-section";
 import { SkillLinksEditor } from "./skill-links-section";
@@ -41,7 +38,6 @@ import { useSkillUploads } from "./use-skill-uploads";
 
 const SUMMARY_MIN = 10;
 const INSTRUCTIONS_MIN = 20;
-const INSTRUCTIONS_MAX = 60000;
 
 /**
  * Skill oluşturma / düzenleme (`/skills/create`, `?edit=<id>`). KOLAY mod (çekirdek, docs/history/388-*): ad, kısa açıklama, uzmanlık alanı, talimat
@@ -68,7 +64,6 @@ export function SkillEditor({ editId }: { editId: string | null }) {
   // Gelişmiş mod (docs/history/389-*)
   const [skillId, setSkillId] = useState<string | null>(editId);
   const [currentStatus, setCurrentStatus] = useState<"draft" | "published">("draft");
-  const [advanced, setAdvanced] = useState(false);
   // Klasör adı (slug): yeni Skill'de addan türer ve sahibi değiştirmedikçe addan izlenir; düzenlemede mevcut değer gelir. Değişince yeni sürümler yeni adla paketlenir (docs/history/398-*).
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -79,7 +74,7 @@ export function SkillEditor({ editId }: { editId: string | null }) {
   const tagsSeeded = useRef(false);
   const [files, setFiles] = useState<SkillFile[]>([]);
   const [versions, setVersions] = useState<SkillVersion[]>([]);
-  const [editorTarget, setEditorTarget] = useState<{ path: string; isNew: boolean } | null>(null);
+  const [dirtyFiles, setDirtyFiles] = useState(0);
   const [publishOpen, setPublishOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importIssues, setImportIssues] = useState<SkillIssue[]>([]);
@@ -109,7 +104,6 @@ export function SkillEditor({ editId }: { editId: string | null }) {
       if (cancelled) return;
       setFiles(loadedFiles);
       setVersions(loadedVersions);
-      setAdvanced(loadedFiles.length > 0 || loadedVersions.length > 0);
       setCurrentStatus(skill.status);
       setTitle(skill.title);
       setSummary(skill.summary);
@@ -138,10 +132,11 @@ export function SkillEditor({ editId }: { editId: string | null }) {
   const summaryError = summary.trim().length < SUMMARY_MIN;
   const categoryError = category === null;
   const instructionsError = instructions.trim().length < INSTRUCTIONS_MIN;
-  // Gelişmiş modda sürüm numarasını yayın penceresi verir (alan gizlidir); kolay modda form alanıdır.
+  // Paketli Skill (dosyası ya da yayınlanmış sürümü var): sürüm numarasını yayın bölümü verir (alan gizlidir). Dosyasız Skill'de sürüm form alanıdır.
+  // Mod seçimi yoktur (docs/history/407-*): dosya eklemek Skill'i kendiliğinden paketli yapar.
+  const advanced = files.length > 0 || versions.length > 0;
   const versionError = !advanced && !isValidSkillVersion(version.trim());
   const latestVersion = latestSemver(versions.map((item) => item.version));
-  const locked = files.length > 0 || versions.length > 0;
 
   const effectiveSlug = slugTouched ? slug : slugifySkillName(title);
   const slugError = slugTouched && slug !== "" && !isValidSkillSlug(slug);
@@ -188,11 +183,6 @@ export function SkillEditor({ editId }: { editId: string | null }) {
     setFiles((prev) => [...prev.filter((item) => item.id !== file.id), file].sort((a, b) => (a.path < b.path ? -1 : 1)));
   }, []);
   const uploads = useSkillUploads({ ensureDraft, files, onSaved: onFileSaved });
-
-  async function openEditor(path: string, isNew: boolean) {
-    const id = await ensureDraft();
-    if (id) setEditorTarget({ path, isNew });
-  }
 
   /** ZIP içe aktarma: alanları doldurur, taslağı (içe aktarılan alanlarla) açar, dosyaları yükleme kuyruğuna alır. Sorunlar listelenir; hata taşıyan dosya atlanır. */
   async function importZip(file: File) {
@@ -261,8 +251,12 @@ export function SkillEditor({ editId }: { editId: string | null }) {
       return false;
     }
     if (!asDraft && (summaryError || categoryError || instructionsError)) return false;
-    if (advanced && uploads.busy) {
+    if (uploads.busy) {
       setError(t("skill.pkg.uploadsBusy"));
+      return false;
+    }
+    if (!asDraft && dirtyFiles > 0) {
+      setError(t("skill.pkg.unsavedFilesBlock", { count: String(dirtyFiles) }));
       return false;
     }
     setIsSaving(true);
@@ -420,62 +414,38 @@ export function SkillEditor({ editId }: { editId: string | null }) {
           </FormField>
         </ComposeSection>
 
-        <ComposeSection title={t("skill.sectionInstructions")}>
-          <FormField
-            label={t("skill.instructionsLabel")}
-            htmlFor="skill-instructions"
-            required
-            hint={`${t("skill.instructionsHint")} · ${instructions.length} / ${INSTRUCTIONS_MAX}`}
-            error={attempted && instructionsError ? t("skill.errorInstructions") : null}
-          >
-            <textarea
-              id="skill-instructions"
-              value={instructions}
-              onChange={(event) => setInstructions(event.target.value)}
-              maxLength={INSTRUCTIONS_MAX}
-              rows={14}
-              placeholder={t("skill.instructionsPlaceholder")}
-              aria-invalid={attempted && instructionsError}
-              className={`${formTextareaClassName} prompt-text min-h-72 resize-y`}
-            />
-          </FormField>
-          <InlineAlert tone="info">{t("skill.skillMdNotice")}</InlineAlert>
+        <ComposeSection title={t("skill.sectionFiles")}>
+          <p className="-mt-1 text-small text-text-secondary">{t("skill.filesIntro")}</p>
+          <SkillFilesWorkspace
+            files={files}
+            uploads={uploads}
+            slug={effectiveSlug}
+            summary={summary}
+            license={license}
+            version={advanced ? (latestVersion ?? version) : version}
+            instructions={instructions}
+            onInstructionsChange={setInstructions}
+            instructionsError={attempted && instructionsError ? t("skill.errorInstructions") : null}
+            ensureDraft={ensureDraft}
+            importing={importing}
+            importIssues={importIssues}
+            onImportZip={(file) => void importZip(file)}
+            onImportFolder={(picked) => void importFolder(picked)}
+            onFileSaved={onFileSaved}
+            onFileRemoved={(file) => setFiles((prev) => prev.filter((item) => item.id !== file.id))}
+            onDirtyCountChange={setDirtyFiles}
+            disabled={isSaving}
+          />
         </ComposeSection>
 
-        {advanced && (
-          <>
-            <ComposeSection title={t("skill.pkg.sectionTitle")}>
-              <SkillPackageSection
-                files={files}
-                uploads={uploads}
-                importing={importing}
-                importIssues={importIssues}
-                onImportZip={(file) => void importZip(file)}
-                onImportFolder={(files) => void importFolder(files)}
-                onEdit={(path, isNew) => void openEditor(path, isNew)}
-                onFileRemoved={(file) => setFiles((prev) => prev.filter((item) => item.id !== file.id))}
-                disabled={isSaving}
-              />
-            </ComposeSection>
-            <ComposeSection title={t("skill.rel.sectionTitle")}>
-              <SkillRelationsSection skillId={skillId} ensureDraft={ensureDraft} disabled={isSaving} />
-            </ComposeSection>
-            <ComposeSection title={t("skill.links.sectionTitle")}>
-              <SkillLinksEditor skillId={skillId} ensureDraft={ensureDraft} disabled={isSaving} />
-            </ComposeSection>
-          </>
-        )}
+        <ComposeSection title={t("skill.rel.sectionTitle")}>
+          <SkillRelationsSection skillId={skillId} ensureDraft={ensureDraft} disabled={isSaving} />
+        </ComposeSection>
+        <ComposeSection title={t("skill.links.sectionTitle")}>
+          <SkillLinksEditor skillId={skillId} ensureDraft={ensureDraft} disabled={isSaving} />
+        </ComposeSection>
 
         <ComposeSection title={t("compose.sectionDetails")}>
-          <FormDisclosure id="advanced" label={t("skill.advanced.label")} hint={t("skill.advanced.hint")} value={advanced ? t("skill.advanced.on") : t("skill.advanced.off")}>
-            <div className="space-y-3">
-              <p className="text-small text-text-secondary">{t("skill.advanced.body")}</p>
-              <Button type="button" variant="outline" size="sm" onClick={() => setAdvanced((prev) => !prev)} disabled={locked && advanced} data-skill-advanced-toggle="">
-                {advanced ? t("skill.advanced.turnOff") : t("skill.advanced.turnOn")}
-              </Button>
-              {locked && advanced && <p className="text-caption text-text-muted">{t("skill.advanced.locked")}</p>}
-            </div>
-          </FormDisclosure>
           <FormDisclosure
             id="tags"
             label={t("forms.tags")}
@@ -559,9 +529,6 @@ export function SkillEditor({ editId }: { editId: string | null }) {
         </ComposeSection>
       </form>
       {leave.dialog}
-      {editorTarget && skillId && (
-        <SkillFileEditor skillId={skillId} files={files} initialPath={editorTarget.path} isNew={editorTarget.isNew} onClose={() => setEditorTarget(null)} onSaved={onFileSaved} />
-      )}
       {publishOpen && skillId && (
         <SkillPublishDialog
           skillId={skillId}

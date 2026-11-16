@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useMediaQuery } from "@/lib/use-media-query";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { SKILL_LIMITS } from "@/lib/skills/limits";
 import type { SkillIssue } from "@/lib/skills/package-validate";
@@ -41,6 +42,7 @@ const PUBLISH_ERRORS: Record<string, TranslationKey> = {
  * Sürüm yayını (docs/history/389-*): ilk yayında `1.0.0`; sonrakilerde sürüm önerisi (düzeltme / yeni özellik / kalıp değişikliği) + ZORUNLU değişiklik
  * notu. Paketi sunucu (Edge Function `skill-package`) yeniden doğrular ve DEĞİŞMEZ bir ZIP olarak yazar; gizli anahtar UYARILARI açık onay ister.
  * Aynı pencere açıkken yapılan her deneme aynı `client_token`'ı kullanır: ağ kesilip yeniden denenirse ikinci sürüm oluşmaz.
+ * Pencere YALNIZ telefondadır (alt kart); masaüstü ve tablette editör sayfasının "Yayın" bölümü olarak sayfa içinde açılır (docs/history/407-*).
  */
 export function SkillPublishDialog({
   skillId,
@@ -65,6 +67,11 @@ export function SkillPublishDialog({
   const [error, setError] = useState<string | null>(null);
   const [attempted, setAttempted] = useState(false);
   const [token] = useState(() => crypto.randomUUID());
+  const phone = useMediaQuery("(max-width: 767.98px)");
+  const inlineRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!phone) inlineRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [phone]);
 
   const versionError = !isValidSemver(version) ? t("skill.errorVersion") : latest && compareSemver(version, latest) <= 0 ? t("skill.publish.versionNotNewer", { latest }) : null;
   const changelogError = latest && changelog.trim().length < 3 ? t("skill.publish.changelogRequired") : null;
@@ -96,68 +103,77 @@ export function SkillPublishDialog({
     }
   }
 
-  return (
-    <SpaceDialog
-      title={t("skill.publish.title")}
-      onClose={onClose}
-      onSubmit={(event) => void submit(event)}
-      busy={busy}
-      wide
-      footer={
-        <>
-          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
-            {t("common.cancel")}
-          </Button>
-          <Button type="submit" disabled={busy || (needsAck && !acknowledged)} data-skill-publish-confirm="">
-            {busy ? t("skill.publish.publishing") : t("skill.publish.confirm", { version })}
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-5" data-skill-publish-dialog="">
-        <p className="text-small text-text-secondary">{latest ? t("skill.publish.introNext", { latest }) : t("skill.publish.introFirst")}</p>
-        {latest && (
-          <FormField label={t("skill.publish.bumpLabel")} hint={t(BUMPS.find((item) => item.id === bump)?.hint ?? "skill.publish.bumpPatchHint")}>
-            <ChipRow aria-label={t("skill.publish.bumpLabel")}>
-              {BUMPS.map((item) => (
-                <Chip key={item.id} selected={bump === item.id} onClick={() => chooseBump(item.id)} data-skill-bump={item.id}>
-                  {t(item.label)}
-                </Chip>
-              ))}
-            </ChipRow>
-          </FormField>
-        )}
-        <FormField label={t("skill.versionLabel")} htmlFor="skill-publish-version" required error={attempted ? versionError : null}>
-          <input id="skill-publish-version" value={version} onChange={(event) => setVersion(event.target.value)} maxLength={32} inputMode="decimal" aria-invalid={attempted && Boolean(versionError)} className={formTextInputClassName} />
+  const body = (
+    <div className="space-y-5" data-skill-publish-dialog="">
+      <p className="text-small text-text-secondary">{latest ? t("skill.publish.introNext", { latest }) : t("skill.publish.introFirst")}</p>
+      {latest && (
+        <FormField label={t("skill.publish.bumpLabel")} hint={t(BUMPS.find((item) => item.id === bump)?.hint ?? "skill.publish.bumpPatchHint")}>
+          <ChipRow aria-label={t("skill.publish.bumpLabel")}>
+            {BUMPS.map((item) => (
+              <Chip key={item.id} selected={bump === item.id} onClick={() => chooseBump(item.id)} data-skill-bump={item.id}>
+                {t(item.label)}
+              </Chip>
+            ))}
+          </ChipRow>
         </FormField>
-        <FormField
-          label={t("skill.publish.changelogLabel")}
-          htmlFor="skill-publish-changelog"
-          required={Boolean(latest)}
-          optional={!latest}
-          hint={`${t("skill.publish.changelogHint")} · ${changelog.length} / ${SKILL_LIMITS.maxChangelog}`}
-          error={attempted ? changelogError : null}
-        >
-          <textarea id="skill-publish-changelog" value={changelog} onChange={(event) => setChangelog(event.target.value)} maxLength={SKILL_LIMITS.maxChangelog} rows={4} className={formTextareaClassName} />
-        </FormField>
-        <InlineAlert tone="info">{t("skill.publish.immutableNotice")}</InlineAlert>
-        {issues.length > 0 && (
-          <div className="space-y-2" role="alert">
-            <SkillIssueList issues={issues} />
-            {needsAck && (
-              <label className="flex items-start gap-2 text-small text-text">
-                <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} className="mt-1" data-skill-ack="" />
-                <span>{t("skill.publish.ackWarnings")}</span>
-              </label>
-            )}
-          </div>
-        )}
-        {error && (
-          <p role="alert" className="text-small text-danger" data-skill-publish-error="">
-            {error}
-          </p>
-        )}
+      )}
+      <FormField label={t("skill.versionLabel")} htmlFor="skill-publish-version" required error={attempted ? versionError : null}>
+        <input id="skill-publish-version" value={version} onChange={(event) => setVersion(event.target.value)} maxLength={32} inputMode="decimal" aria-invalid={attempted && Boolean(versionError)} className={formTextInputClassName} />
+      </FormField>
+      <FormField
+        label={t("skill.publish.changelogLabel")}
+        htmlFor="skill-publish-changelog"
+        required={Boolean(latest)}
+        optional={!latest}
+        hint={`${t("skill.publish.changelogHint")} · ${changelog.length} / ${SKILL_LIMITS.maxChangelog}`}
+        error={attempted ? changelogError : null}
+      >
+        <textarea id="skill-publish-changelog" value={changelog} onChange={(event) => setChangelog(event.target.value)} maxLength={SKILL_LIMITS.maxChangelog} rows={4} className={formTextareaClassName} />
+      </FormField>
+      <InlineAlert tone="info">{t("skill.publish.immutableNotice")}</InlineAlert>
+      {issues.length > 0 && (
+        <div className="space-y-2" role="alert">
+          <SkillIssueList issues={issues} />
+          {needsAck && (
+            <label className="flex items-start gap-2 text-small text-text">
+              <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} className="mt-1" data-skill-ack="" />
+              <span>{t("skill.publish.ackWarnings")}</span>
+            </label>
+          )}
+        </div>
+      )}
+      {error && (
+        <p role="alert" className="text-small text-danger" data-skill-publish-error="">
+          {error}
+        </p>
+      )}
       </div>
-    </SpaceDialog>
+  );
+  const actions = (
+    <>
+      <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+        {t("common.cancel")}
+      </Button>
+      <Button type="submit" disabled={busy || (needsAck && !acknowledged)} data-skill-publish-confirm="">
+        {busy ? t("skill.publish.publishing") : t("skill.publish.confirm", { version })}
+      </Button>
+    </>
+  );
+
+  if (phone) {
+    return (
+      <SpaceDialog title={t("skill.publish.title")} onClose={onClose} onSubmit={(event) => void submit(event)} busy={busy} wide footer={actions}>
+        {body}
+      </SpaceDialog>
+    );
+  }
+  return (
+    <section ref={inlineRef} id="skill-publish" className="min-w-0 space-y-3" data-skill-publish-inline="">
+      <h2 className="text-h2 font-bold text-text">{t("skill.publish.title")}</h2>
+      <form onSubmit={(event) => void submit(event)} className="space-y-5 rounded-lg card-flat p-4 md:p-5">
+        {body}
+        <div className="flex justify-end gap-2 border-t border-border-soft pt-4">{actions}</div>
+      </form>
+    </section>
   );
 }

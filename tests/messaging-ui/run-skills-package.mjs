@@ -173,7 +173,7 @@ async function installSkillRoutes(context, world) {
     }
     if (req.method() === "GET") {
       world.signGets.push(new URL(req.url()).pathname);
-      return route.fulfill({ status: 200, contentType: "application/zip", headers: cors, body: Buffer.from("PK") });
+      return route.fulfill({ status: 200, contentType: "application/zip", headers: cors, body: world.zipBody ?? Buffer.from("PK") });
     }
     return route.fallback();
   });
@@ -214,49 +214,61 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 const openEditor = (page, id = "") => page.goto(`${BASE}/skills/create${id ? `?edit=${id}` : ""}`);
 const openDetail = (page, id) => page.goto(`${BASE}/skills/local?id=${id}`);
 const disclosure = (page, id) => page.locator(`[data-form-row="${id}"]`);
-async function openFolder(page, folder) {
-  const row = disclosure(page, `skill-folder-${folder}`);
-  await row.waitFor();
-  if ((await row.getByRole("button").first().getAttribute("aria-expanded")) !== "true") await row.getByRole("button").first().click();
-  return page.locator(`[data-skill-folder="${folder}"]`);
+const leaf = (page, path) => page.locator(`[data-tree-leaf="${path}"]`);
+/** Ağaçtaki "Yeni dosya" düğmesi → klasör seç + ad yaz → "Oluştur ve aç". */
+async function newFile(page, folder, name) {
+  await page.locator("[data-skill-new-file]").click();
+  await page.locator(`[data-skill-folder-choice="${folder}"]`).click();
+  await page.locator("#skill-new-file-name").fill(name);
+  await page.getByRole("button", { name: /Oluştur ve aç|Create and open/ }).click();
 }
-async function enableAdvanced(page) {
-  await disclosure(page, "advanced").getByRole("button").first().click();
-  await page.locator("[data-skill-advanced-toggle]").click();
-  await page.locator("[data-skill-package]").waitFor();
+/** Ağaçtaki "Dosya yükle" düğmesi → klasör seç + dosya(lar) seç → "Yükle". */
+async function uploadFiles(page, folder, files) {
+  await page.locator("[data-skill-upload]").click();
+  await page.locator(`[data-skill-folder-choice="${folder}"]`).click();
+  await page.locator("[data-skill-file-input]").setInputFiles(files);
+  await page.getByRole("button", { name: /^(Yükle|Upload)$/ }).click();
 }
 
 // ====================================================================================================================
-await scenario("1. Kolay mod değişmedi: gelişmiş bölümler gizli, sürüm alanı form alanı", async ({ page }) => {
+await scenario("1. Mod anahtarı yok: dosya gezgini her zaman var; dosyasız Skill'de sürüm alanı form alanı", async ({ page }) => {
   await openEditor(page);
   await page.locator("#skill-title").waitFor();
-  assert.equal(await page.locator("[data-skill-package]").count(), 0, "paket bölümü yalnız gelişmiş modda");
+  assert.equal(await page.locator("[data-skill-package]").count(), 1, "dosya gezgini bölümü her zaman");
+  assert.equal(await disclosure(page, "advanced").count(), 0, "Kolay/Gelişmiş anahtarı kalktı");
+  assert.equal(await page.getByRole("tab").count(), 0, "editörde sekme yok");
   await disclosure(page, "version").getByRole("button").first().click();
   await page.locator("#skill-version").waitFor();
   assert.equal(await page.locator("#skill-version").inputValue(), "1.0.0");
-  assert.ok(await disclosure(page, "advanced").isVisible(), "gelişmiş mod anahtarı bir ayrıntı satırı");
 });
 
-await scenario("2. Gelişmiş mod açılır: beş klasör + kök + ZIP içe aktarma; sürüm alanı yayına ertelenir", async ({ page }) => {
+await scenario("2. Dosya gezgini: ağaç (role=tree) ilk dosyası SKILL.md, SKILL.md düzenlenir, ZIP içe aktarma; dosya eklenince sürüm alanı yayına ertelenir", async ({ page }) => {
   await openEditor(page);
-  await enableAdvanced(page);
-  for (const folder of ["rules", "references", "examples", "scripts", "tools", "root"]) assert.ok(await disclosure(page, `skill-folder-${folder}`).isVisible(), folder);
+  await page.locator("#skill-title").fill("Kod Gözden Geçirici");
+  assert.equal(await page.locator("[data-skill-tree]").getAttribute("role"), "tree");
+  assert.ok(await leaf(page, "SKILL.md").isVisible());
+  assert.ok(await page.locator("#skill-instructions").isVisible(), "SKILL.md gövdesi düzenleyicide");
+  assert.ok(await page.locator("[data-skill-frontmatter]").isVisible(), "üst bilgi satırları ürettiriliyor");
+  assert.match(await page.locator("[data-skill-frontmatter]").innerText(), /name: kod-gozden-gecirici/);
   assert.ok(await page.locator("[data-skill-import-zip]").isVisible());
-  assert.equal(await page.locator("#skill-version").count(), 0, "gelişmiş modda sürüm numarasını yayın penceresi verir");
   assert.match(await page.locator("[data-skill-package]").innerText(), /0 dosya/);
+  await disclosure(page, "version").getByRole("button").first().click();
+  assert.equal(await page.locator("#skill-version").count(), 1, "dosyasız Skill'de sürüm form alanı");
+  await uploadFiles(page, "rules", { name: "a.md", mimeType: "text/markdown", buffer: enc("# A") });
+  await leaf(page, "rules/a.md").waitFor();
+  await page.waitForFunction(() => !document.querySelector("#skill-version"));
+  assert.equal(await page.locator("#skill-version").count(), 0, "dosya eklenince sürüm numarasını yayın bölümü verir");
 });
 
 await scenario("3. Ad yokken dosya yüklenmez ('önce ad ver'); ad verilince taslak kendiliğinden oluşur ve dosya Storage'a yazılır", async ({ page, world }) => {
   await openEditor(page);
-  await enableAdvanced(page);
-  const rules = await openFolder(page, "rules");
-  await rules.locator("[data-skill-file-input]").setInputFiles({ name: "Stil Kuralları.md", mimeType: "text/markdown", buffer: enc("# Stil\n\nKüçük fonksiyonlar.") });
+  await uploadFiles(page, "rules", { name: "Stil Kuralları.md", mimeType: "text/markdown", buffer: enc("# Stil\n\nKüçük fonksiyonlar.") });
   await page.locator('[data-skill-uploads] li[data-upload-status="error"], #skill-title[aria-invalid="true"]').first().waitFor();
   assert.equal(world.uploads.length, 0, "ad yokken hiçbir şey yüklenmez");
   assert.equal(world.skills.filter((s) => s.author_id === ALICE).length, 2, "taslak açılmadı");
   await page.locator("#skill-title").fill("Kod Gözden Geçirici");
-  await rules.locator("[data-skill-file-input]").setInputFiles({ name: "Stil Kuralları.md", mimeType: "text/markdown", buffer: enc("# Stil\n\nKüçük fonksiyonlar.") });
-  await page.locator('[data-skill-file="rules/Stil-Kurallari.md"]').waitFor();
+  await uploadFiles(page, "rules", { name: "Stil Kuralları.md", mimeType: "text/markdown", buffer: enc("# Stil\n\nKüçük fonksiyonlar.") });
+  await leaf(page, "rules/Stil-Kurallari.md").waitFor();
   assert.equal(world.uploads.length, 1);
   assert.match(world.uploads[0].key, /^skill-files\/[0-9a-f-]{36}\/draft\/[0-9a-f-]{36}\.md$/, "yol sunucu kalıbında: {skill}/draft/{uuid}.{uzantı}");
   assert.equal(world.uploads[0].type, "text/markdown");
@@ -268,9 +280,7 @@ await scenario("3. Ad yokken dosya yüklenmez ('önce ad ver'); ad verilince tas
 await scenario("4. Kötü dosyalar yüklenmeden reddedilir: ELF, iç içe ZIP, geçersiz JSON; satırda sebep görünür", async ({ page, world }) => {
   await openEditor(page);
   await page.locator("#skill-title").fill("Kod Gözden Geçirici");
-  await enableAdvanced(page);
-  const refs = await openFolder(page, "references");
-  await refs.locator("[data-skill-file-input]").setInputFiles([
+  await uploadFiles(page, "references", [
     { name: "ince.md", mimeType: "text/markdown", buffer: Buffer.from([0x7f, 0x45, 0x4c, 0x46, 1, 2, 3, 4]) },
     { name: "ic-ice.md", mimeType: "text/markdown", buffer: Buffer.from([0x50, 0x4b, 0x03, 0x04, 0, 0]) },
     { name: "bozuk.json", mimeType: "application/json", buffer: enc("{not json") },
@@ -284,33 +294,25 @@ await scenario("4. Kötü dosyalar yüklenmeden reddedilir: ELF, iç içe ZIP, g
   assert.equal(world.files.filter((f) => f.skill_id !== S_DRAFT).length, 0);
 });
 
-await scenario("5. Uzantısı izinli olmayan dosya seçilemez/yüklenemez; betik klasöründe uyarı + 'Betik' rozeti", async ({ page, world }) => {
+await scenario("5. Uzantısı izinli olmayan dosya yüklenemez; betik: 'Betik' rozeti + çalıştırılmaz uyarısı", async ({ page, world }) => {
   await openEditor(page);
   await page.locator("#skill-title").fill("Kod Gözden Geçirici");
-  await enableAdvanced(page);
-  const scripts = await openFolder(page, "scripts");
-  assert.match(await scripts.locator("xpath=..").innerText(), /çalıştırılmaz/i, "betik uyarısı");
-  await scripts.locator("[data-skill-file-input]").setInputFiles({ name: "kur.exe", mimeType: "application/octet-stream", buffer: Buffer.from([1, 2, 3]) });
+  await uploadFiles(page, "scripts", { name: "kur.exe", mimeType: "application/octet-stream", buffer: Buffer.from([1, 2, 3]) });
   await page.locator('[data-skill-uploads] li[data-upload-status="error"]').first().waitFor();
   assert.match(await page.locator("[data-skill-uploads]").innerText(), /Çalıştırılabilir dosyalar/);
-  await scripts.locator("[data-skill-file-input]").setInputFiles({ name: "lint.sh", mimeType: "text/x-sh", buffer: enc("#!/bin/sh\necho ok\n") });
-  await page.locator('[data-skill-file="scripts/lint.sh"]').waitFor();
-  assert.match(await page.locator('[data-skill-file="scripts/lint.sh"]').innerText(), /Betik/);
+  await uploadFiles(page, "scripts", { name: "lint.sh", mimeType: "text/x-sh", buffer: enc("#!/bin/sh\necho ok\n") });
+  await leaf(page, "scripts/lint.sh").waitFor();
+  assert.match(await leaf(page, "scripts/lint.sh").innerText(), /Betik/);
+  assert.match(await page.locator("[data-skill-package]").innerText(), /çalıştırılmaz/i, "betik uyarısı");
   assert.equal(world.files.find((f) => f.path === "scripts/lint.sh").is_script, true, "satıra is_script bayrağı yazıldı");
   assert.equal(world.files.find((f) => f.path === "scripts/lint.sh").kind, "script");
 });
 
-await scenario("6. Yeni metin dosyası → tam ekran düzenleyici: yazdıkça önizleme (Markdown güvenli), kaydet → Storage + satır", async ({ page, world }) => {
+await scenario("6. Yeni metin dosyası: yazdıkça önizleme (Markdown güvenli), kaydet → Storage + satır", async ({ page, world }) => {
   await openEditor(page);
   await page.locator("#skill-title").fill("Kod Gözden Geçirici");
-  await enableAdvanced(page);
-  const rules = await openFolder(page, "rules");
-  await rules.locator("[data-skill-new-file]").click();
-  await page.locator("#skill-new-file-name").fill("tarz");
-  await page.getByRole("button", { name: "Oluştur ve aç" }).click();
-  const editor = page.locator("[data-skill-file-editor]");
-  await editor.waitFor();
-  assert.equal(await page.locator("[data-skill-editor-path]").innerText().then((x) => x.trim()), "rules/tarz.md");
+  await newFile(page, "rules", "tarz");
+  assert.equal(await page.locator("[data-skill-frame-path]").innerText().then((x) => x.trim()), "rules/tarz.md");
   await page.locator("[data-skill-editor-textarea]").fill('# Tarz\n\n<script>window.__xss=1</script>\n\n[kötü](javascript:window.__xss=2)\n\n**önemli** `kod`');
   const preview = page.locator("[data-skill-editor-preview]");
   await preview.locator("h2").waitFor();
@@ -320,48 +322,39 @@ await scenario("6. Yeni metin dosyası → tam ekran düzenleyici: yazdıkça ö
   assert.equal(await preview.locator("strong").innerText(), "önemli");
   assert.equal(await page.evaluate(() => window.__xss), undefined, "hiçbir betik çalışmadı");
   await page.locator("[data-skill-editor-save]").click();
-  await page.waitForFunction(() => !/kaydedilmedi/.test(document.querySelector("[data-skill-editor-path]")?.textContent ?? ""));
+  for (let i = 0; i < 80 && !world.files.some((f) => f.path === "rules/tarz.md"); i += 1) await page.waitForTimeout(100);
   assert.equal(world.uploads.length, 1);
   assert.match(world.uploads[0].key, /\.md$/);
   assert.equal(world.storage.get(world.uploads[0].key).toString("utf8").startsWith("# Tarz"), true);
   assert.ok(world.files.some((f) => f.path === "rules/tarz.md"));
-  await page.locator("[data-skill-file-editor] button[aria-label='Kapat']").click();
-  await page.locator('[data-skill-file="rules/tarz.md"]').waitFor();
+  await leaf(page, "rules/tarz.md").waitFor();
 });
 
-await scenario("7. Düzenleyici: JSON hata verirse Kaydet kapalı, düzgünse açılır; kapatırken kaydedilmemiş değişiklik sorulur", async ({ page }) => {
+await scenario("7. JSON hata verirse Kaydet kapalı, düzgünse açılır; kaydedilmemiş dosya sayısı görünür ve yayını engeller", async ({ page }) => {
   await openEditor(page);
   await page.locator("#skill-title").fill("Kod Gözden Geçirici");
-  await enableAdvanced(page);
-  const tools = await openFolder(page, "tools");
-  await tools.locator("[data-skill-new-file]").click();
-  await page.locator("#skill-new-file-name").fill("manifest");
-  await page.getByRole("button", { name: "Oluştur ve aç" }).click();
-  await page.locator("[data-skill-file-editor]").waitFor();
-  assert.match(await page.locator("[data-skill-editor-path]").innerText(), /tools\/manifest\.json/, "tools klasöründe varsayılan uzantı .json");
+  await newFile(page, "tools", "manifest");
+  assert.match(await page.locator("[data-skill-frame-path]").innerText(), /tools\/manifest\.json/, "tools klasöründe varsayılan uzantı .json");
   const textarea = page.locator("[data-skill-editor-textarea]");
   await textarea.fill("{ bozuk");
   await page.waitForFunction(() => /Geçerli bir JSON değil/.test(document.body.textContent ?? ""));
   assert.equal(await page.locator("[data-skill-editor-save]").isDisabled(), true, "geçersiz JSON kaydedilemez");
   await textarea.fill('{ "name": "arac" }');
   await page.waitForFunction(() => !document.querySelector("[data-skill-editor-save]")?.hasAttribute("disabled"));
-  await page.locator("[data-skill-file-editor] button[aria-label='Kapat']").click();
-  await page.getByRole("dialog").filter({ hasText: "Kaydedilmemiş değişiklikler" }).waitFor();
-  await page.getByRole("button", { name: "Vazgeç" }).click();
-  assert.ok(await page.locator("[data-skill-file-editor]").isVisible(), "vazgeçince düzenleyici açık kalır");
+  assert.match(await page.locator("[data-skill-package]").innerText(), /1 dosyada kaydedilmemiş değişiklik/);
 });
 
-await scenario("8. Var olan dosya düzenleyicide açılır (içerik Storage'dan), değiştirilince eski nesne silinir ve yol aynı kalır", async ({ page, world }) => {
+await scenario("8. Var olan dosya ağaçtan açılır (içerik Storage'dan), değiştirilince eski nesne silinir ve yol aynı kalır", async ({ page, world }) => {
   await openEditor(page, S_DRAFT);
   await page.locator("#skill-title").waitFor();
-  const rules = await openFolder(page, "rules");
-  await rules.locator('[data-skill-file="rules/style.md"] [data-skill-file-edit]').click();
+  await leaf(page, "rules/style.md").click();
   const textarea = page.locator("[data-skill-editor-textarea]");
   await textarea.waitFor();
-  assert.equal(await textarea.inputValue(), "# Stil\n\nKüçük fonksiyonlar yaz.");
+  await page.waitForFunction(() => document.querySelector("[data-skill-editor-textarea]")?.value === "# Stil\n\nKüçük fonksiyonlar yaz.");
   await textarea.fill("# Stil\n\nGüncel kural.");
+  const before = world.files.find((f) => f.path === "rules/style.md").storage_path;
   await page.locator("[data-skill-editor-save]").click();
-  await page.waitForFunction(() => !/kaydedilmedi/.test(document.querySelector("[data-skill-editor-path]")?.textContent ?? ""));
+  for (let i = 0; i < 80 && world.files.find((f) => f.path === "rules/style.md").storage_path === before; i += 1) await page.waitForTimeout(100);
   assert.equal(world.uploads.length, 1, "yeni nesne yüklendi");
   assert.equal(world.files.filter((f) => f.path === "rules/style.md").length, 1, "aynı yolda tek satır");
   assert.notEqual(world.files.find((f) => f.path === "rules/style.md").storage_path, `${S_DRAFT}/draft/rulesstylemd.md`, "satır yeni nesneyi gösterir");
@@ -369,11 +362,11 @@ await scenario("8. Var olan dosya düzenleyicide açılır (içerik Storage'dan)
 
 await scenario("9. Dosya silme: onay penceresi, satır kalkar", async ({ page, world }) => {
   await openEditor(page, S_DRAFT);
-  const scripts = await openFolder(page, "scripts");
-  await scripts.locator('[data-skill-file="scripts/run.sh"] [data-skill-file-remove]').click();
+  await leaf(page, "scripts/run.sh").click();
+  await page.locator("[data-skill-file-remove]").click();
   await page.getByRole("dialog").filter({ hasText: "Dosya silinsin mi?" }).waitFor();
   await page.getByRole("button", { name: "Sil", exact: true }).click();
-  await scripts.locator('[data-skill-file="scripts/run.sh"]').waitFor({ state: "detached" });
+  await leaf(page, "scripts/run.sh").waitFor({ state: "detached" });
   assert.equal(world.files.some((f) => f.path === "scripts/run.sh"), false);
 });
 
@@ -490,8 +483,8 @@ await scenario("14. Detay (sahip): ZIP birincil eylem, güvenli Markdown (XSS yo
   assert.match(await versions.first().innerText(), /1\.1\.0/);
   assert.match(await versions.first().innerText(), /Son/);
   const manifest = await page.locator("[data-skill-manifest]").innerText();
-  assert.match(manifest, /rules\/style\.md/);
-  assert.match(manifest, /scripts\/lint\.sh/);
+  assert.match(manifest, /style\.md/);
+  assert.match(manifest, /lint\.sh/);
   assert.match(await page.locator("#skill-files").innerText(), /Bu pakette betik var/);
   await page.locator('[data-skill-version="1.0.0"] [data-skill-deprecate]').click();
   await page.locator('[data-skill-version="1.0.0"]', { hasText: "Kullanımdan kaldırıldı" }).waitFor();
@@ -535,11 +528,9 @@ await scenario("18. ZIP içe aktarma: alanlar dolar, dosyalar yüklenir, kötü 
     "../evil.md": enc("x"),
   }));
   await openEditor(page);
-  await enableAdvanced(page);
   await page.locator("[data-skill-zip-input]").setInputFiles({ name: "skill.zip", mimeType: "application/zip", buffer: zip });
   await page.locator('[data-upload-status="done"], [data-skill-import-report]').first().waitFor();
-  const imported = await openFolder(page, "rules");
-  await imported.locator('[data-skill-file="rules/stil.md"]').waitFor();
+  await leaf(page, "rules/stil.md").waitFor();
   assert.equal(await page.locator("#skill-title").inputValue(), "Kod Gözden Geçirici");
   assert.equal(await page.locator("#skill-summary").inputValue().then((x) => x.startsWith("Kodu gözden geçirir")), true);
   assert.match(await page.locator("#skill-instructions").inputValue(), /Titiz ol/);
@@ -558,46 +549,49 @@ await scenario("18. ZIP içe aktarma: alanlar dolar, dosyalar yüklenir, kötü 
 await scenario("19. İngilizce: paket bölümü, doğrulama sorunları ve yayın penceresi çevrilmiş", async ({ page }) => {
   await openEditor(page);
   await page.locator("#skill-title").fill("Code Reviewer");
-  await enableAdvanced(page);
   assert.match(await page.locator("[data-skill-package]").innerText(), /Promptly never runs any file/);
-  const refs = await openFolder(page, "references");
-  await refs.locator("[data-skill-file-input]").setInputFiles({ name: "x.md", mimeType: "text/markdown", buffer: Buffer.from([0x7f, 0x45, 0x4c, 0x46, 1, 2]) });
+  await uploadFiles(page, "references", { name: "x.md", mimeType: "text/markdown", buffer: Buffer.from([0x7f, 0x45, 0x4c, 0x46, 1, 2]) });
   await page.locator('[data-skill-uploads] li[data-upload-status="error"]').first().waitFor();
   assert.match(await page.locator("[data-skill-uploads]").innerText(), /Executable files/);
 }, { lang: "en" });
 
-await scenario("20. Telefon: taşma yok; düzenleyici tek sütun (dosya seçici + Düzenle/Önizle sekmeleri)", async ({ page }) => {
+await scenario("20. Telefon: taşma yok; ağaç ayrı kart değil, ☰ ile aynı kartta açılır; dosya seçilince geri döner", async ({ page }) => {
   await openEditor(page, S_DRAFT);
   await page.locator("#skill-title").waitFor();
-  const rules = await openFolder(page, "rules");
-  await rules.locator('[data-skill-file="rules/style.md"] [data-skill-file-edit]').click();
-  await page.locator("[data-skill-file-editor]").waitFor();
-  assert.equal(await page.locator("[data-skill-tree]").isVisible(), false, "ağaç yalnız masaüstünde");
-  await page.getByRole("button", { name: "Önizleme", exact: true }).click();
-  await page.locator("[data-skill-editor-preview]").waitFor({ state: "visible" });
-  await page.getByRole("button", { name: "Düzenle", exact: true }).click();
-  assert.ok(await page.locator("[data-skill-editor-textarea]").isVisible());
+  assert.equal(await page.locator("[data-skill-tree]").isVisible(), false, "ağaç ☰ ile açılır");
+  assert.ok(await page.locator("#skill-instructions").isVisible(), "kartta dosya görünümü (SKILL.md)");
+  await page.locator("[data-skill-tree-open]").click();
+  await page.locator("[data-skill-tree]").waitFor({ state: "visible" });
+  assert.equal(await page.locator("#skill-instructions").isVisible(), false, "ağaç dosya görünümünün yerini alır");
+  await leaf(page, "rules/style.md").click();
+  await page.locator("[data-skill-editor-textarea]").waitFor();
+  assert.equal(await page.locator("[data-skill-tree]").isVisible(), false, "dosya seçilince ağaç kapanır");
+  assert.equal(await page.locator("[data-skill-editor-preview]").isVisible(), false, "önizleme telefonda yok");
+  await page.locator("[data-skill-tree-open]").click();
+  await page.locator("[data-skill-tree-close]").click();
+  assert.ok(await page.locator("[data-skill-editor-textarea]").isVisible(), "✕ ile dosya görünümü geri gelir");
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   assert.ok(overflow <= 1, `yatay taşma yok (${overflow}px)`);
 }, { viewport: { width: 390, height: 800 } });
 
-await scenario("21. Masaüstü düzenleyici: dosya ağacı (role=tree) + düzenleyici + önizleme yan yana; ağaçtan dosya değiştirmek yazılanı kaybettirmez", async ({ page, world }) => {
+await scenario("21. Masaüstü: dosya ağacı (role=tree) + düzenleyici + önizleme yan yana; ağaçtan dosya değiştirmek yazılanı kaybettirmez", async ({ page, world }) => {
   world.files.push(fileRow(S_DRAFT, "rules/ikinci.md", 10, { storage_path: `${S_DRAFT}/draft/ikinci.md` }));
   world.storage.set(`skill-files/${S_DRAFT}/draft/ikinci.md`, enc("İkinci dosya"));
   await openEditor(page, S_DRAFT);
-  const rules = await openFolder(page, "rules");
-  await rules.locator('[data-skill-file="rules/style.md"] [data-skill-file-edit]').click();
   const tree = page.locator("[data-skill-tree]");
   await tree.waitFor();
   assert.equal(await tree.getAttribute("role"), "tree");
-  assert.ok(await page.locator("[data-skill-editor-preview]").isVisible() && await page.locator("[data-skill-editor-textarea]").isVisible(), "üç bölme birlikte");
+  await leaf(page, "rules/style.md").click();
   const textarea = page.locator("[data-skill-editor-textarea]");
   await textarea.waitFor();
+  assert.ok(await page.locator("[data-skill-editor-preview]").isVisible() && await textarea.isVisible() && await tree.isVisible(), "üç bölme birlikte");
+  await page.waitForFunction(() => document.querySelector("[data-skill-editor-textarea]")?.value.includes("Küçük fonksiyonlar"));
   await textarea.fill("# Stil\n\nDeğişti ama kaydedilmedi.");
-  await tree.locator("[role=treeitem][data-tree-leaf]", { hasText: "ikinci.md" }).click();
+  await leaf(page, "rules/ikinci.md").click();
   await page.waitForFunction(() => document.querySelector("[data-skill-editor-textarea]")?.value === "İkinci dosya");
-  await tree.locator("[role=treeitem][data-tree-leaf]", { hasText: "style.md" }).click();
+  await leaf(page, "rules/style.md").click();
   await page.waitForFunction(() => document.querySelector("[data-skill-editor-textarea]")?.value.includes("Değişti ama kaydedilmedi."));
+  assert.equal(await page.getByRole("tab").count(), 0, "sekme yok");
 });
 
 await scenario("22. Bağlı içerik: Skill'e bir Prompt bağlanır (Seç penceresi), kart görünür; kimliği yalnız taslak açıldıktan sonra yazılır", async ({ page, db, world }) => {
@@ -619,28 +613,25 @@ await scenario("22. Bağlı içerik: Skill'e bir Prompt bağlanır (Seç pencere
   };
   await openEditor(page, S_DRAFT);
   await page.locator("#skill-title").waitFor();
-  assert.ok(await page.locator("[data-skill-relations]").isVisible(), "bağlı içerik bölümü gelişmiş modda");
+  assert.ok(await page.locator("[data-skill-relations]").isVisible(), "bağlı içerik bölümü her zaman");
   await page.locator('[data-skill-relation-add="prompt"]').click();
   await page.getByRole("dialog").first().waitFor();
   assert.equal(inserted.length, 0, "seçmeden hiçbir şey yazılmadı");
 });
 
-await scenario("23. Dosyayı değiştir: aynı yola yazılır (satır sayısı artmaz), eski nesne yerini yeniye bırakır", async ({ page, world }) => {
+await scenario("23. Dosyayı değiştir: aynı adlı dosya yüklenince aynı yola yazılır (satır sayısı artmaz), eski nesne yerini yeniye bırakır", async ({ page, world }) => {
   await openEditor(page, S_DRAFT);
-  const rules = await openFolder(page, "rules");
+  await page.locator("#skill-title").waitFor();
   const before = world.files.find((f) => f.path === "rules/style.md").storage_path;
-  const chooser = page.waitForEvent("filechooser");
-  await rules.locator('[data-skill-file="rules/style.md"] button[aria-label*="değiştir"]').click();
-  await (await chooser).setFiles({ name: "baska-ad.md", mimeType: "text/markdown", buffer: enc("# Yeni içerik") });
+  await uploadFiles(page, "rules", { name: "style.md", mimeType: "text/markdown", buffer: enc("# Yeni içerik") });
   const expected = `${enc("# Yeni içerik").length} B`;
-  await page.waitForFunction((text) => document.querySelector('[data-skill-file="rules/style.md"]')?.textContent?.includes(text), expected);
+  await page.waitForFunction((text) => document.querySelector('[data-tree-leaf="rules/style.md"]')?.textContent?.includes(text), expected);
   assert.equal(world.files.filter((f) => f.path === "rules/style.md").length, 1, "aynı yolda tek satır");
-  assert.equal(world.files.some((f) => f.path === "rules/baska-ad.md"), false, "yol seçilen dosyanın adından değil, değiştirilenden gelir");
   assert.notEqual(world.files.find((f) => f.path === "rules/style.md").storage_path, before);
 });
 
 // ====================================================================================================================
-await scenario("24. Klasör adı (slug) ve etiketler: slug addan türer, elle değiştirilebilir ve geçersiz biçim uyarılır; Etiketler satırı vardır; gelişmiş modda 'Klasörden içe aktar'", async ({ page }) => {
+await scenario("24. Klasör adı (slug) ve etiketler: slug addan türer, elle değiştirilebilir ve geçersiz biçim uyarılır; Etiketler satırı vardır; 'Klasörden içe aktar' her zaman var", async ({ page }) => {
   await openEditor(page);
   await page.locator("#skill-title").fill("Logo Tasarımı");
   await disclosure(page, "slug").getByRole("button").first().click();
@@ -652,7 +643,6 @@ await scenario("24. Klasör adı (slug) ve etiketler: slug addan türer, elle de
   await slug.fill("-kotu-");
   await page.getByText("tire ile başlayıp bitemez").waitFor();
   assert.ok(await disclosure(page, "tags").isVisible(), "Etiketler satırı");
-  await enableAdvanced(page);
   assert.ok(await page.locator("[data-skill-import-folder]").isVisible());
   assert.equal(await page.locator("[data-skill-folder-input]").getAttribute("webkitdirectory"), "");
 });
@@ -665,6 +655,65 @@ await scenario("25. Uzmanlık alanı çipleri tablodan: sonradan eklenen 'Mutfak
   await chip.click();
   assert.equal(await chip.getAttribute("aria-pressed"), "true");
 });
+
+const packageZip = () =>
+  Buffer.from(zipSync({
+    "SKILL.md": enc("---\nname: skill-1\n---\n\n# Rol\n"),
+    "rules/style.md": enc("# Stil\n\nKüçük fonksiyonlar yaz.\n"),
+    "scripts/lint.sh": enc("#!/bin/sh\necho ok\n"),
+  }));
+
+await scenario("26. Detay: paket dosyaları gezgini — ağaç + dosya görüntüleyici; SKILL.md hemen, diğerleri paketten okunur; betikte uyarı", async ({ page, world }) => {
+  world.zipBody = packageZip();
+  await openDetail(page, S_PUB);
+  const frame = page.locator("[data-skill-file-frame]");
+  await frame.waitFor();
+  assert.equal(await page.locator("[data-skill-tree]").getAttribute("role"), "tree");
+  assert.match(await page.locator("[data-skill-code]").innerText(), /name: skill-1/, "SKILL.md varsayılan olarak açık");
+  assert.equal(await page.getByRole("tab", { name: /Claude Code/ }).count() <= 1, true);
+  await leaf(page, "rules/style.md").click();
+  await page.waitForFunction(() => /Küçük fonksiyonlar yaz\./.test(document.querySelector("[data-skill-code]")?.textContent ?? ""));
+  assert.equal(await page.locator("[data-skill-frame-path]").innerText().then((x) => x.trim()), "rules/style.md");
+  await leaf(page, "scripts/lint.sh").click();
+  await page.waitForFunction(() => /echo ok/.test(document.querySelector("[data-skill-code]")?.textContent ?? ""));
+  assert.match(await frame.innerText(), /Bu pakette betik var/, "betik dosyasında uyarı");
+  assert.equal(world.signPosts.filter((x) => x.includes("/packages/")).length, 1, "paket yalnız bir kez imzalandı");
+});
+
+await scenario("27. Detay: Claude Code / Codex / Cursor tek kartta sekme; araç ve kapsam komutu değiştirir", async ({ page, world }) => {
+  world.skills.find((x) => x.id === S_PUB).compat = ["claude-code", "codex", "cursor"];
+  await openDetail(page, S_PUB);
+  const card = page.locator("[data-skill-install-card]");
+  await card.waitFor();
+  assert.equal(await page.locator("[data-skill-install-card]").count(), 1, "kurulum tek kart");
+  assert.match(await card.innerText(), /\.claude\/skills/, "ilk sekme Claude Code");
+  await card.getByRole("tab", { name: "Codex" }).click();
+  assert.match(await card.innerText(), /\.agents\/skills/);
+  await card.getByRole("tab", { name: "Cursor" }).click();
+  assert.match(await card.innerText(), /~\/\.cursor\/skills/, "kişisel kapsam");
+  await card.getByRole("radio", { name: "Proje" }).click();
+  const text = await card.innerText();
+  assert.match(text, /\.cursor\/skills/);
+  assert.doesNotMatch(text, /~\/\.cursor\/skills/, "proje kapsamında ev dizini yok");
+});
+
+await scenario("28. Detay (telefon): ağaç ☰ ile aynı kartta açılır, dosya seçilince geri döner; taşma yok", async ({ page, world }) => {
+  world.zipBody = packageZip();
+  await openDetail(page, S_PUB);
+  const frame = page.locator("[data-skill-file-frame]");
+  await frame.waitFor();
+  assert.equal(await frame.getAttribute("data-tree-open"), "false");
+  assert.equal(await page.locator("[data-skill-tree]").isVisible(), false);
+  await page.locator("[data-skill-tree-open]").click();
+  await page.locator("[data-skill-tree]").waitFor({ state: "visible" });
+  assert.equal(await frame.getAttribute("data-tree-open"), "true");
+  assert.equal(await page.locator("[data-skill-code]").count() === 0 || !(await page.locator("[data-skill-code]").isVisible()), true, "dosya görünümü ağacın altında kalır");
+  await leaf(page, "rules/style.md").click();
+  await page.waitForFunction(() => /Küçük fonksiyonlar yaz\./.test(document.querySelector("[data-skill-code]")?.textContent ?? ""));
+  assert.equal(await frame.getAttribute("data-tree-open"), "false");
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  assert.ok(overflow <= 1, `yatay taşma yok (${overflow}px)`);
+}, { viewport: { width: 390, height: 800 } });
 
 await browser.close();
 server.close();
