@@ -115,7 +115,7 @@ function ConnectInner() {
             <p className="text-caption leading-relaxed text-text-muted">{t("connect.canRead")}</p>
           </div>
         </div>
-        <SwitchRow checked={write} onChange={setWrite} disabled={busy} className="cursor-pointer p-4">
+        <SwitchRow checked={write} onChange={setWrite} disabled={busy} label={t("connect.writeLabel")} className="cursor-pointer p-4">
           <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
             <Plus size={16} />
           </span>
