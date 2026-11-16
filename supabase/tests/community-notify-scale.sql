@@ -39,6 +39,8 @@ update public.conversation_members set last_read_at = now() where conversation_i
   and user_id in ('90000000-0000-4000-8000-000000021000', '90000000-0000-4000-8000-000000020999', '90000000-0000-4000-8000-000000020998');
 update public.conversation_members set notify_level = 'none' where conversation_id = (select v::uuid from public._ctx where k = 'g') and user_id = '90000000-0000-4000-8000-000000020998';
 update public.conversation_members set notify_muted_until = now() + interval '1 day' where conversation_id = (select v::uuid from public._ctx where k = 'g') and user_id = '90000000-0000-4000-8000-000000020999';
+-- Toplu kurulumdan sonra istatistik (canlıda autovacuum yapar); yoksa planlayıcı kör kalır (docs/history/411-*).
+analyze;
 select set_config('promptly.t0', clock_timestamp()::text, false);
 
 -- 1. Duyuru ('important'): tek çağrı, sorgu zaman aşımı içinde.

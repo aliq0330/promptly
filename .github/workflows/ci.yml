@@ -29,6 +29,7 @@ jobs:
         run: node scripts/apply-migrations.mjs --check
 
   database:
+    timeout-minutes: 20
     # Bütün migration'lar temiz bir PostgreSQL'e baştan oynatılır ve supabase/tests/*.sql çalışır (hepsi FAILED=0 olmalı).
     runs-on: ubuntu-latest
     services:
@@ -53,7 +54,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      # Yalnızca arayüz/belge değişen PR'larda SQL testleri (~9 dk) koşmaz. İş yine çalışıp başarı bildirir (atlanmış sayılmaz), yalnız aşağıdaki
+      # Yalnızca arayüz/belge değişen PR'larda SQL testleri koşmaz. İş yine çalışıp başarı bildirir (atlanmış sayılmaz), yalnız aşağıdaki
       # adım koşullu. Fark okunamazsa güvenli yol: testler KOŞAR. `supabase/` (migration, test, seed, fonksiyon) ya da bu dosya değişince koşar.
       - name: Decide whether SQL tests are needed
         id: changes
