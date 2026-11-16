@@ -52,7 +52,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className="sticky top-0 hidden h-dvh w-62 shrink-0 flex-col border-r border-border-soft bg-surface px-4 lg:flex">
+    <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className="sticky top-0 hidden h-dvh w-(--sidebar-w) shrink-0 flex-col border-r border-border-soft bg-surface px-4 lg:flex">
       <div className="flex h-16 items-center px-1">
         <Link href="/" className="flex items-center gap-3 rounded-md" aria-label="Promptly">
           <BrandMark size={32} />

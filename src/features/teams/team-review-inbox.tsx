@@ -284,7 +284,7 @@ function ProposalCard({ proposal, busy, onDecide }: { proposal: ReviewQueuePropo
 
 function DiffBlock({ label, value, highlight = false }: { label: string; value: { title: string; body: string; note: string }; highlight?: boolean }) {
   return (
-    <div className={cn("space-y-1 rounded-lg p-3 text-small", highlight ? "bg-success/10" : "bg-surface-soft")}>
+    <div className={cn("space-y-1 rounded-lg p-3 text-small", highlight ? "bg-success-soft" : "bg-surface-soft")}>
       <p className="text-caption font-bold uppercase tracking-[0.08em] text-text-muted">{label}</p>
       {value.title && <p className="font-semibold text-text">{value.title}</p>}
       {value.body && <p className="whitespace-pre-wrap break-words font-mono text-caption text-text">{value.body}</p>}

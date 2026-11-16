@@ -19,13 +19,13 @@ export function DiffText({ before, after, className }: { before: string; after: 
         if (token.type === "same") return <span key={index}>{token.text}</span>;
         if (token.type === "removed") {
           return (
-            <span key={index} className="rounded-[2px] bg-danger/10 text-danger line-through decoration-danger/60">
+            <span key={index} className="rounded-[2px] bg-danger-soft text-danger line-through decoration-danger/60">
               {token.text}
             </span>
           );
         }
         return (
-          <span key={index} className="rounded-[2px] bg-success/15 text-success">
+          <span key={index} className="rounded-[2px] bg-success-soft text-success">
             {token.text}
           </span>
         );

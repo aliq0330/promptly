@@ -127,7 +127,7 @@ export function WelcomeTour() {
         <div className="mt-5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5" aria-hidden>
             {STEPS.map((_, index) => (
-              <span key={index} className={cn("h-1.5 rounded-full transition-all duration-200", index === step ? "w-5 bg-primary" : "w-1.5 bg-border-strong")} />
+              <span key={index} className={cn("h-1.5 rounded-full transition-[width,background-color] duration-200", index === step ? "w-5 bg-primary" : "w-1.5 bg-border-strong")} />
             ))}
           </div>
           <div className="flex items-center gap-2">

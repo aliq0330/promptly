@@ -91,7 +91,7 @@ export function ContentCard({
           : [
               "group relative flex flex-col rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
               // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
-              "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-[1] before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
+              "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-1 before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
             ],
         leaving && "pointer-events-none scale-90 opacity-0 transition-[transform,opacity] duration-[240ms] ease-soft",
         className,
@@ -100,7 +100,7 @@ export function ContentCard({
       {children}
       {/* Mouse/touch convenience only: hidden from assistive tech and the tab
           order — the card title (ContentCardTitle) is the accessible link. */}
-      <Link href={href} data-card-link className="absolute inset-0 z-0 rounded-xl" aria-hidden tabIndex={-1} />
+      <Link href={href} data-card-link className={cn("absolute inset-0 z-0", variant === "visual" ? "rounded-xl" : "rounded-lg")} aria-hidden tabIndex={-1} />
     </article>
     </CardExitContext.Provider>
   );
@@ -243,14 +243,14 @@ export function ContentCardPost({
             {TypeIcon && <TypeIcon size={44} />}
           </div>
         )}
-        {status && <div className="absolute bottom-2.5 right-2.5 z-[3] flex flex-wrap items-center justify-end gap-1.5">{status}</div>}
+        {status && <div className="absolute bottom-2.5 right-2.5 z-3 flex flex-wrap items-center justify-end gap-1.5">{status}</div>}
         {art && TypeIcon && TypeIcon !== ImageIcon && (
-          <span aria-hidden className="absolute right-2.5 top-2.5 z-[1] flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
+          <span aria-hidden className="absolute right-2.5 top-2.5 z-1 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
             <TypeIcon size={18} />
           </span>
         )}
         {/* Kicker (type · tool) + title over the picture, ALWAYS visible (docs/history/277-*). The overlay lets clicks through to the stretched link; the title link inside it is the keyboard way in. */}
-        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-[2] space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-4 pb-3 pt-12 [&_a]:pointer-events-auto [&_h2]:text-white [&_span]:text-white", status && "pr-24", titleInArt && "sr-only")}>
+        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-2 space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-4 pb-3 pt-12 [&_a]:pointer-events-auto [&_h2]:text-white [&_span]:text-white", status && "pr-24", titleInArt && "sr-only")}>
           {badges && <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">{badges}</div>}
           {title}
           {/* "@user · time" is not drawn on the picture (the author row below says who); it stays for assistive tech. */}
@@ -258,7 +258,7 @@ export function ContentCardPost({
         </div>
       </div>
       {children && <div className="space-y-2 px-0.5 pt-2 empty:hidden">{children}</div>}
-      <div className="relative z-10 flex items-center gap-2 pb-0.5 pl-0.5 pt-0.5">
+      <div className="relative z-10 flex items-center gap-2 pt-1">
         {author ? (
           <Link href={profileHref(author)} className="flex min-w-0 flex-1 items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <Avatar src={author.avatarUrl} alt="" size={24} className="shrink-0" />
@@ -271,7 +271,7 @@ export function ContentCardPost({
           </span>
         )}
         {(footer || menu) && (
-          <div data-card-actions className="-mr-1.5 flex shrink-0 items-center gap-0">
+          <div data-card-actions className="-mr-2 flex shrink-0 items-center">
             {footer}
             {menu && <div className="relative z-20 focus-within:z-30">{menu}</div>}
           </div>

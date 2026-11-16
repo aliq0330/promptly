@@ -293,7 +293,7 @@ export function VariableSpecEditor({
                     type="button"
                     onClick={() => removeOption(index)}
                     aria-label={t("variable.optionRemoveAria", { n: index + 1 })}
-                    className="mt-1.5 grid h-8 w-8 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                    className="mt-1.5 grid h-8 w-8 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-danger-soft hover:text-danger"
                   >
                     <X size={16} />
                   </button>

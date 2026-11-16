@@ -29,7 +29,7 @@ import { useRealMessages } from "./real-messages-provider";
 import { InlineAlert } from "@/components/ui/inline-alert";
 
 const channelHref = (channel: { id: string }) => `/messages/local?id=${channel.id}`;
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-micro font-bold uppercase tracking-[0.04em] text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold uppercase tracking-[0.04em] text-text-muted";
 
 /**
  * Mesajlar'dan açılan EKİP kanal listesi (docs/history/369-*, 381-*): ekibin kanalları ve projeleri sohbet listesinin YERİNE açılır (bilgisayarda sol sütun, telefonda sayfa)

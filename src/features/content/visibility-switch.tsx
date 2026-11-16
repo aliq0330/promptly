@@ -6,10 +6,11 @@ import { Lock } from "@/components/icons/lock";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { ContentVisibility } from "@/types";
+import { SwitchRow as SwitchControl } from "@/components/ui/switch";
 
 /**
  * One labelled on/off row: icon, the CURRENT state's title + short hint, and a
- * switch on the right. The whole row is the (single) `role="switch"` control,
+ * switch on the right. The whole row is the (single) switch rolü control,
  * so the tap target is large on mobile and there is nothing else to focus.
  * `VisibilitySwitch` is the Görünürlük use of it; the Prompt form's "show on
  * profile" choice for an answer reuses it so both read the same.
@@ -32,17 +33,12 @@ export function SwitchRow({
   disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
+    <SwitchControl
+      checked={checked}
+      onChange={onChange}
+      label={ariaLabel}
       disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        "flex min-h-16 w-full items-center gap-3 rounded-lg border bg-surface p-3 text-left transition-colors duration-200 ease-soft sm:px-4",
-        "border-border hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50",
-      )}
+      className="min-h-16 rounded-lg border border-border bg-surface p-3 transition-colors duration-200 ease-soft hover:border-border-strong sm:px-4"
     >
       <span
         aria-hidden
@@ -57,16 +53,7 @@ export function SwitchRow({
         <span className="block text-label font-semibold text-text">{title}</span>
         <span className="block text-caption text-text-secondary">{description}</span>
       </span>
-      <span
-        aria-hidden
-        className={cn(
-          "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors duration-200",
-          checked ? "border-primary bg-primary" : "border-border-strong bg-surface-soft",
-        )}
-      >
-        <span className={cn("inline-block h-5 w-5 rounded-full bg-white shadow-xs transition-transform duration-200", checked ? "translate-x-6" : "translate-x-1")} />
-      </span>
-    </button>
+    </SwitchControl>
   );
 }
 

@@ -50,7 +50,7 @@ export function NavRail() {
   }
 
   return (
-    <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className="sticky top-0 z-(--z-nav) hidden h-dvh w-21 shrink-0 flex-col items-center border-r border-border-soft bg-surface px-1.5 pb-4 md:flex lg:hidden">
+    <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className="sticky top-0 z-(--z-nav) hidden h-dvh w-(--nav-rail-w) shrink-0 flex-col items-center border-r border-border-soft bg-surface px-1.5 pb-4 md:flex lg:hidden">
       <div className="flex h-16 items-center justify-center">
         <Link href="/" className="rounded-md" aria-label="Promptly">
           <BrandMark size={34} />

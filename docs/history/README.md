@@ -409,3 +409,4 @@ Her dosya adı `NNN-konu.md` biçimindedir; `NNN` eski bölüm numarasıdır (ö
 | 9.400 | **Skill karma akışta** — `feed_page`'e `skill_part`, `feed_count` Skill'i sayar; istemcide `FeedEntry` `skill` kolu, Odak/"Sana özel" Skill almaz. | uygulandı |
 | 9.401 | **Skill detay sayfası prompt düzeniyle hizalandı** — bölünmüş İndir ▾ düğmesi, prompttaki ⋮ menüsü (bağlantı, harita, Düzenle/Sil, Şikâyet), sade eylem satırı, etiketli Hakkında kartı. | uygulandı |
 | 9.402 | **Skill `search_content`'e girdi** — `p_kind='skill'` (başlık/özet/talimat/etiket, süzgeçler, keyset); genel aramanın Skill grubu aynı motoru kullanır. 392'deki karar tersine çevrildi. | uygulandı |
+| 9.403 | **Tasarım denetimi (PR-1: Faz 0–2)** — ölçüm betiği + ekran görüntüsü betiği, nav genişlik değişkenleri, 11px metin kalktı, tek `Switch`, `SearchField`, `SectionLabel`, `Card` tone/padding, `floating` sınıfları, `Badge` v2, `*-soft` durum token'ları (AA testli), ham z-index kalktı. | uygulandı |

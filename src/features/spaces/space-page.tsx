@@ -292,7 +292,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                 Space · {t(SPACE_KIND_LABEL[space.kind])}
               </span>
               <VisibilityBadge visibility={space.visibility} />
-              {space.archivedAt && <span className="rounded-full bg-warning/12 px-2 py-0.5 text-warning">{t("spaces.page.archivedBadge")}</span>}
+              {space.archivedAt && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-warning">{t("spaces.page.archivedBadge")}</span>}
             </>
           }
           title={<h1>{space.title}</h1>}
@@ -362,7 +362,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
 
       <div className="w-full">
         {space.archivedAt && (
-          <div role="status" className="mt-4 flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-small text-text sm:flex-row sm:items-center sm:justify-between">
+          <div role="status" className="mt-4 flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning-soft p-3 text-small text-text sm:flex-row sm:items-center sm:justify-between">
             <span>{t("spaces.page.archivedNotice")}</span>
             {caps.archive && (
               <Button size="sm" variant="outline" onClick={() => void toggleArchive()}>

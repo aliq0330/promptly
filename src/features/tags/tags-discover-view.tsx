@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Flame } from "@/components/icons/flame";
 import { Hash } from "@/components/icons/hash";
-import { Search } from "@/components/icons/search";
 import { TrendingUp } from "@/components/icons/trending-up";
 import { Badge } from "@/components/ui/badge";
 import { fetchAllTagsWithStats, fetchPopularTags, fetchTrendingTags, type TrendingTag } from "@/lib/supabase/tags";
@@ -13,6 +12,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { useFollowedTags } from "./followed-tags-store";
 import type { Tag } from "@/types";
+import { SearchField } from "@/components/ui/search-field";
 
 type SortMode = "popular" | "newest" | "az";
 
@@ -69,16 +69,7 @@ export function TagsDiscoverView() {
         </p>
       </div>
 
-      <div className="flex h-11 items-center gap-2 rounded-md border border-border bg-surface px-3">
-        <Search size={18} className="shrink-0 text-text-muted" />
-        <input
-          type="text"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("tag.searchPlaceholder")}
-          className="h-full w-full bg-transparent text-small text-text outline-none placeholder:text-text-muted"
-        />
-      </div>
+      <SearchField value={query} onChange={setQuery} placeholder={t("tag.searchPlaceholder")} clearLabel={t("common.clear")} />
 
       {!loaded ? (
         <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>

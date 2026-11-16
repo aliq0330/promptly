@@ -80,7 +80,7 @@ export function PhoneSectionList({ items, ariaLabel, className }: { items: Phone
                   item.danger ? "text-danger" : "text-text",
                 )}
               >
-                <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", item.danger ? "bg-danger/10 text-danger" : "bg-primary-soft text-primary")}>
+                <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", item.danger ? "bg-danger-soft text-danger" : "bg-primary-soft text-primary")}>
                   <Icon size={18} aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>

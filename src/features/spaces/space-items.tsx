@@ -432,7 +432,7 @@ export function ItemDetailModal({ itemId, onClose, onShowOnBoard, drawer }: { it
               </Button>
             )}
             {caps.edit && (
-              <Button type="button" variant="ghost" size="sm" className="text-danger hover:bg-danger/10" onClick={() => setConfirmRemove(true)}>
+              <Button type="button" variant="ghost" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => setConfirmRemove(true)}>
                 <TrashIcon size={14} />
                 {t("spaces.detail.remove")}
               </Button>
@@ -777,7 +777,7 @@ export function GroupsManagerModal({ onClose }: { onClose: () => void }) {
                       >
                         <Pencil size={16} />
                       </button>
-                      <button type="button" onClick={() => setConfirmDelete(group.id)} aria-label={t("spaces.groups.delete", { name: group.name })} className="rounded-full p-2 text-text-muted hover:bg-danger/10 hover:text-danger">
+                      <button type="button" onClick={() => setConfirmDelete(group.id)} aria-label={t("spaces.groups.delete", { name: group.name })} className="rounded-full p-2 text-text-muted hover:bg-danger-soft hover:text-danger">
                         <TrashIcon size={15} />
                       </button>
                     </>

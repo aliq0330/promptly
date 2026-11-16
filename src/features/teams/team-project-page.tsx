@@ -417,7 +417,7 @@ function ProjectHome({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: Project
           {project.description && <p className="max-w-2xl whitespace-pre-wrap break-words px-1 text-small text-text-secondary">{project.description}</p>}
 
           {archived && (
-            <p role="status" className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-small text-text">
+            <p role="status" className="rounded-lg border border-warning/40 bg-warning-soft px-3 py-2 text-small text-text">
               {t("tp.page.archivedNotice")}
             </p>
           )}
@@ -562,7 +562,7 @@ function FileCard({ href, title, meta, tone, chip, chipTone, attrs }: { href: st
         <span className="block truncate text-body font-bold text-text">{title}</span>
         <span className="block text-small text-text-secondary max-sm:line-clamp-2 sm:truncate">{meta}</span>
         {chip && (
-          <span className={cn("mt-2 inline-flex h-6 items-center rounded-full px-2.5 text-caption font-bold", chipTone === "warning" ? "bg-warning/10 text-warning" : chipTone === "primary" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary")}>
+          <span className={cn("mt-2 inline-flex h-6 items-center rounded-full px-2.5 text-caption font-bold", chipTone === "warning" ? "bg-warning-soft text-warning" : chipTone === "primary" ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-secondary")}>
             {chip}
           </span>
         )}

@@ -158,7 +158,7 @@ export function TelegramSection() {
                   </span>
                   <p className="break-words text-[0.9375rem] font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{telegramLinkLabel(row)}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-success/10 px-2.5 py-0.5 text-caption font-bold text-success">{t("tg.linkedBadge")}</span>
+                <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-caption font-bold text-success">{t("tg.linkedBadge")}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {row.scopes.map((scope) => (
@@ -175,7 +175,7 @@ export function TelegramSection() {
                 <SwitchRow checked={row.notifyActivity} disabled={busyId === row.id} onChange={(next) => void toggle(row, "activity", next)} icon={<Bell size={18} />} title={t("tg.activity")} description={t("tg.activityHint")} ariaLabel={t("tg.activity")} />
               </div>
               {confirmId === row.id ? (
-                <div className="space-y-3 rounded-lg bg-danger/10 p-3">
+                <div className="space-y-3 rounded-lg bg-danger-soft p-3">
                   <p className="text-caption leading-relaxed text-text-secondary">{t("tg.removeConfirm")}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" size="sm" variant="danger" disabled={busyId === row.id} onClick={() => void remove(row.id)}>{t("tg.removeYes")}</Button>
@@ -183,7 +183,7 @@ export function TelegramSection() {
                   </div>
                 </div>
               ) : (
-                <Button type="button" variant="outline" className="w-full border-danger/30 bg-danger/10 text-danger hover:border-danger/50 hover:bg-danger/15" onClick={() => setConfirmId(row.id)}>
+                <Button type="button" variant="outline" className="w-full border-danger/30 bg-danger-soft text-danger hover:border-danger/50 hover:bg-danger-soft" onClick={() => setConfirmId(row.id)}>
                   {t("tg.remove")}
                 </Button>
               )}

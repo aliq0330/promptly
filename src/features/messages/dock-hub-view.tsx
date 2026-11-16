@@ -29,7 +29,7 @@ import { RoomFormModal } from "./rooms/room-form-modal";
 import { RoomIconTile } from "./rooms/room-icon";
 import { useCommunityRooms } from "./rooms/use-community-rooms";
 
-const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-micro font-bold uppercase tracking-[0.04em] text-text-muted";
+const TAG_CLASS = "shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-bold uppercase tracking-[0.04em] text-text-muted";
 const mutedScopeOf = (channel: TeamChannel) => channel.muteScope ?? (channel.muted ? "channel" : null);
 
 /** Dock'taki kanal/oda listesinin satırı (arama bunun adına ve önizlemesine bakar). */

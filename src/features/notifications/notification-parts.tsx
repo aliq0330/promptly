@@ -62,7 +62,7 @@ export function StackedAvatars({ card, size = 28 }: { card: NotificationCard; si
         </span>
       ))}
       {extra > 0 && (
-        <span className="-ml-2 flex items-center justify-center rounded-full border-2 border-surface bg-surface-soft text-micro font-bold text-text-secondary" style={{ width: size, height: size }}>
+        <span className="-ml-2 flex items-center justify-center rounded-full border-2 border-surface bg-surface-soft text-caption font-bold text-text-secondary" style={{ width: size, height: size }}>
           +{extra}
         </span>
       )}

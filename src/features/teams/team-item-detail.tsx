@@ -47,6 +47,7 @@ import { AddToBoardDialog, type BoardChoice } from "./team-add-to-board";
 import { GroupAssignDialog } from "./group-assign";
 import { deleteFileItem, fetchPlacements } from "@/lib/supabase/team-board";
 import { paletteItemId, splitPromptTokens } from "@/lib/team-item-kit";
+import { Switch } from "@/components/ui/switch";
 
 /**
  * Öğe detay sayfası (docs/history/364-*, mockup "Gezgin — öğe detay sayfaları"): alan listesinde bir satıra dokununca o öğenin kendi sayfası
@@ -95,8 +96,8 @@ const KIND_ICON: Record<DetailKind | "workflow" | "preset" | "request", IconComp
 };
 const KIND_TONE: Record<DetailKind | "workflow" | "preset" | "request", string> = {
   prompt: "bg-primary-soft text-primary",
-  image: "bg-success/10 text-success",
-  note: "bg-warning/10 text-warning",
+  image: "bg-success-soft text-success",
+  note: "bg-warning-soft text-warning",
   palette: "bg-secondary/10 text-secondary",
   content: "bg-surface-soft text-text-secondary",
   workflow: "bg-primary-soft text-primary",
@@ -318,7 +319,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
       )}
 
       {item?.revState === "changes" && item.revNote && (
-        <div role="note" className="rounded-lg border border-danger/30 bg-danger/10 p-4 text-small leading-relaxed text-danger" data-item-lead-note>
+        <div role="note" className="rounded-lg border border-danger/30 bg-danger-soft p-4 text-small leading-relaxed text-danger" data-item-lead-note>
           <b className="mb-0.5 block">{t("tp.item.leadNote")}</b>
           {item.revNote}
         </div>
@@ -424,7 +425,7 @@ function ItemBody({ ctx, role, item, palette, onChanged }: { ctx: AreaItemContex
             )}
             {mayDelete && (
               <li>
-                <button type="button" onClick={() => setMenu(isMirror ? "deleteFile" : "delete")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-danger hover:bg-danger/10" data-item-delete>
+                <button type="button" onClick={() => setMenu(isMirror ? "deleteFile" : "delete")} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-left text-body font-semibold text-danger hover:bg-danger-soft" data-item-delete>
                   <Trash2 size={20} aria-hidden />
                   {t(isMirror || ctx.placement ? "tf.board.deleteFromFile" : "tp.item.delete")}
                 </button>
@@ -676,20 +677,15 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
               <span className="block text-small font-bold text-text">{t("tp.item.fillTitle")}</span>
               <span className="block text-caption text-text-secondary">{t("tp.item.fillHint")}</span>
             </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={filled}
-              aria-label={t("tp.item.fillTitle")}
-              onClick={() => {
+            <Switch
+              checked={filled}
+              label={t("tp.item.fillTitle")}
+              onChange={() => {
                 setFilled((value) => !value);
                 setCopyState("idle");
               }}
-              className={cn("flex h-8 w-[3.25rem] shrink-0 items-center rounded-full p-[3px] transition-colors", filled ? "justify-end bg-primary" : "justify-start bg-border-strong")}
-              data-item-fill-switch
-            >
-              <span className="h-[1.625rem] w-[1.625rem] rounded-full bg-white shadow-xs" />
-            </button>
+              data-item-fill-switch=""
+            />
           </div>
 
           <section className={cn(CARD, "overflow-hidden")} data-item-variables>
@@ -704,7 +700,7 @@ function PromptSection({ ctx, item, role, onChanged }: { ctx: AreaItemContext; i
                     <li key={name} className="flex items-center gap-3 border-t border-border-soft px-4 py-2.5 text-small" data-item-variable={name}>
                       <span className="prompt-text text-secondary">{`{${found?.name ?? name}}`}</span>
                       <span className={cn("min-w-0 flex-1 truncate font-semibold", found ? "text-text" : "text-text-muted")}>{found ? found.value : "—"}</span>
-                      <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-semibold", found ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
+                      <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-caption font-semibold", found ? "bg-success-soft text-success" : "bg-warning-soft text-warning")}>
                         {t(found ? "tp.item.varFile" : "tp.item.varMissing")}
                       </span>
                     </li>
@@ -814,7 +810,7 @@ function NoteSection({ item }: { item: SpaceItem }) {
   const attached = item.attachedItemId ? items.find((entry) => entry.id === item.attachedItemId) : null;
   return (
     <>
-      <div className="whitespace-pre-wrap break-words rounded-lg border border-warning/30 bg-warning/10 p-4 text-body leading-relaxed text-text" data-item-note>
+      <div className="whitespace-pre-wrap break-words rounded-lg border border-warning/30 bg-warning-soft p-4 text-body leading-relaxed text-text" data-item-note>
         {item.body || item.note}
       </div>
       <dl className={cn(CARD, "overflow-hidden text-small")}>

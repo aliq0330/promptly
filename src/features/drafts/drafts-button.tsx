@@ -101,7 +101,7 @@ export function DraftsButton({
           className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
         >
           <FileText size={18} aria-hidden />
-          {count > 0 && <span className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-micro font-bold leading-4 text-primary-foreground">{count}</span>}
+          {count > 0 && <span className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-caption font-bold leading-4 text-primary-foreground">{count}</span>}
         </button>
       ) : (
         <Button

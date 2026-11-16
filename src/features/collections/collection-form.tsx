@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { fetchUnshareableItems, removeCollectionItemById, type UnshareableItem } from "@/lib/supabase/collection-members";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { SwitchRow } from "@/components/ui/switch";
 
 const NAME_MAX = 80;
 
@@ -146,25 +147,20 @@ export function CollectionForm({
 
       {showSharing && (
         <div className="space-y-2" data-collection-sharing="">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={shared}
-            onClick={() => setShared((prev) => !prev)}
-            className={cn("flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors", shared ? "border-primary bg-accent-surface" : "border-border hover:bg-accent-surface/50")}
+          <SwitchRow
+            checked={shared}
+            onChange={setShared}
+            className={cn("rounded-md border p-3 transition-colors", shared ? "border-primary bg-accent-surface" : "border-border hover:bg-accent-surface/50")}
           >
             <Users size={18} className="shrink-0 text-text-secondary" aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block text-small font-medium text-text">{t("collab.sharedLabel")}</span>
               <span className="block text-caption text-text-muted">{t("collab.sharedHint")}</span>
             </span>
-            <span aria-hidden className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", shared ? "bg-primary" : "bg-border-strong")}>
-              <span className={cn("absolute top-1 h-4 w-4 rounded-full bg-primary-foreground transition-[left]", shared ? "left-5" : "left-1")} />
-            </span>
-          </button>
+          </SwitchRow>
           {checking && <p className="text-caption text-text-muted">{t("collab.checking")}</p>}
           {unshareable.length > 0 && (
-            <div role="alert" className="space-y-2 rounded-md bg-warning/10 p-3 text-small text-text" data-collection-unshareable="">
+            <div role="alert" className="space-y-2 rounded-md bg-warning-soft p-3 text-small text-text" data-collection-unshareable="">
               <p className="flex items-center gap-2 font-semibold text-warning">
                 <TriangleAlert size={16} aria-hidden />
                 {t("collab.unshareableTitle", { count: unshareable.length })}
@@ -184,7 +180,7 @@ export function CollectionForm({
               <p className="text-caption text-text-secondary">{t("collab.unshareableHint")}</p>
             </div>
           )}
-          {!shared && initialShared && memberCount > 0 && <p className="rounded-md bg-warning/10 px-3 py-2 text-caption text-text">{t("collab.turnOffWarn", { count: memberCount })}</p>}
+          {!shared && initialShared && memberCount > 0 && <p className="rounded-md bg-warning-soft px-3 py-2 text-caption text-text">{t("collab.turnOffWarn", { count: memberCount })}</p>}
         </div>
       )}
 

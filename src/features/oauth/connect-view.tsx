@@ -13,6 +13,7 @@ import { RequireAuth } from "@/features/auth/require-auth";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { buildReturnUrl, parseConnectInfo, parseConnectRequest, type ConnectInfo } from "@/lib/oauth-connect";
 import { decideOauthRequest, fetchOauthRequestInfo } from "@/lib/supabase/oauth-grants";
+import { SwitchRow } from "@/components/ui/switch";
 
 type State = { kind: "loading" } | { kind: "ready"; info: ConnectInfo } | { kind: "working"; info: ConnectInfo } | { kind: "error" } | { kind: "leaving" };
 
@@ -106,7 +107,7 @@ function ConnectInner() {
 
       <div className="divide-y divide-border-soft rounded-lg border border-border-soft bg-surface shadow-card">
         <div className="flex items-start gap-3 p-4">
-          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success-soft text-success">
             <Check size={16} />
           </span>
           <div className="min-w-0">
@@ -114,7 +115,7 @@ function ConnectInner() {
             <p className="text-caption leading-relaxed text-text-muted">{t("connect.canRead")}</p>
           </div>
         </div>
-        <label className="flex cursor-pointer items-center gap-3 p-4">
+        <SwitchRow checked={write} onChange={setWrite} disabled={busy} className="cursor-pointer p-4">
           <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
             <Plus size={16} />
           </span>
@@ -122,14 +123,9 @@ function ConnectInner() {
             <span className="block text-small font-semibold text-text">{t("connect.writeLabel")}</span>
             <span className="block text-caption leading-relaxed text-text-muted">{t("connect.writeHint")}</span>
           </span>
-          <input type="checkbox" role="switch" className="peer sr-only" checked={write} disabled={busy} onChange={(event) => setWrite(event.target.checked)} />
-          <span
-            aria-hidden
-            className="relative h-7 w-12 shrink-0 rounded-full bg-border-strong transition-colors duration-200 ease-soft after:absolute after:left-0.5 after:top-0.5 after:h-6 after:w-6 after:rounded-full after:bg-surface-elevated after:shadow-sm after:transition-transform after:duration-200 peer-checked:bg-primary peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background peer-disabled:opacity-50"
-          />
-        </label>
+        </SwitchRow>
         <div className="flex items-start gap-3 p-4">
-          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-danger/10 text-danger">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-danger-soft text-danger">
             <X size={16} />
           </span>
           <div className="min-w-0">
@@ -139,7 +135,7 @@ function ConnectInner() {
         </div>
       </div>
 
-      <div className="space-y-1.5 rounded-lg border border-warning/40 bg-warning/10 p-4">
+      <div className="space-y-1.5 rounded-lg border border-warning/40 bg-warning-soft p-4">
         <p className="flex items-center gap-2 text-small font-semibold text-text">
           <ShieldAlert size={16} className="shrink-0 text-warning" />
           {t("connect.warnTitle")}

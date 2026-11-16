@@ -175,7 +175,7 @@ export function StoryArchiveView() {
                         className={cn("relative block w-full overflow-hidden rounded-md ring-1 ring-border-soft", order >= 0 && "ring-2 ring-primary")}
                       >
                         <StoryCanvas mode="thumb" story={story} />
-                        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-story-black/70 to-transparent px-1.5 pb-1 pt-4 text-left text-micro font-medium text-story-white">
+                        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-story-black/70 to-transparent px-1.5 pb-1 pt-4 text-left text-caption font-medium text-story-white">
                           {story.moderationStatus === "removed"
                             ? t("stories.archive.removed")
                             : live

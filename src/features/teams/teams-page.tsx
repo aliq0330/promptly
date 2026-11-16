@@ -275,7 +275,7 @@ function TodoList({ todos }: { todos: TeamTodo[] }) {
       <ul className="space-y-3">
         {todos.map((todo, index) => {
           const Icon = todo.kind === "unread" ? MessageCircle : todo.kind === "project_review" ? Eye : Check;
-          const tone = todo.kind === "unread" ? "bg-success/10 text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary" : "bg-warning/10 text-warning";
+          const tone = todo.kind === "unread" ? "bg-success-soft text-success" : todo.kind === "project_review" ? "bg-primary-soft text-primary" : "bg-warning-soft text-warning";
           return (
             <li key={`${todo.teamId}-${todo.kind}-${index}`} className="flex items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-3">
               <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", tone)} aria-hidden>
@@ -317,8 +317,8 @@ function todoTitle(t: ReturnType<typeof useTranslation>["t"], todo: TeamTodo): s
 const CARD_BAND: Record<string, string> = {
   primary: "bg-primary-soft",
   secondary: "bg-secondary/10",
-  success: "bg-success/10",
-  warning: "bg-warning/10",
+  success: "bg-success-soft",
+  warning: "bg-warning-soft",
   plum: "bg-text-secondary/10",
   sky: "bg-primary/10",
 };
@@ -364,7 +364,7 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
       footerEnd={
         <>
           {approvals > 0 && (
-            <Link href={teamLink(team.id, "projects")} className="inline-flex h-6 items-center rounded-full bg-warning/10 px-2.5 text-caption font-semibold text-warning" data-team-chip="approvals">
+            <Link href={teamLink(team.id, "projects")} className="inline-flex h-6 items-center rounded-full bg-warning-soft px-2.5 text-caption font-semibold text-warning" data-team-chip="approvals">
               {t("tm.home.pendingApprovals", { count: approvals })}
             </Link>
           )}

@@ -130,7 +130,7 @@ function BarButton({ icon: Icon, label, onClick, danger }: { icon: IconComponent
       onClick={onClick}
       aria-label={label}
       title={label}
-      className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors", danger ? "text-danger hover:bg-danger/10" : "text-text-secondary hover:bg-surface-soft hover:text-text")}
+      className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors", danger ? "text-danger hover:bg-danger-soft" : "text-text-secondary hover:bg-surface-soft hover:text-text")}
     >
       <Icon size={16} aria-hidden />
     </button>

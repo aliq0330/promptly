@@ -1394,7 +1394,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
                 <span
                   data-community-link-badge
                   aria-label={t("groups.info.pendingRequests", { count: pendingRequestsForMe })}
-                  className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-micro font-semibold leading-none text-primary-foreground ring-2 ring-background"
+                  className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold leading-none text-primary-foreground ring-2 ring-background"
                 >
                   {pendingRequestsForMe > 9 ? "9+" : pendingRequestsForMe}
                 </span>
@@ -1823,7 +1823,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       </div>
     )}
     {blockState.isBlocked && (
-      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-danger/10 px-3 py-1.5 text-caption text-danger">
+      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-danger-soft px-3 py-1.5 text-caption text-danger">
         <span>{t("messages.youBlockedCantSend")}</span>
         <button type="button" onClick={() => blockState.toggle()} className="font-medium hover:underline">
           {t("profile.unblock")}

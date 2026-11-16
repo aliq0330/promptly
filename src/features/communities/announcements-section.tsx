@@ -120,7 +120,7 @@ export function AnnouncementsSection({
               }
             >
               {highlight && item.pinned && (
-                <p className="text-micro font-bold uppercase tracking-[0.08em] text-secondary">{t("communities.announcements.pinnedEyebrow")}</p>
+                <p className="text-caption font-bold uppercase tracking-[0.08em] text-secondary">{t("communities.announcements.pinnedEyebrow")}</p>
               )}
               <div className="flex items-start justify-between gap-3">
                 <h3 className="flex min-w-0 items-center gap-1.5 break-words text-small font-semibold text-text">
@@ -132,7 +132,7 @@ export function AnnouncementsSection({
                     <button type="button" onClick={() => setEditing(item)} aria-label={t("common.edit")} className={iconButtonClassName(false, "h-8 w-8 rounded-md")}>
                       <Pencil size={16} />
                     </button>
-                    <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger/10 hover:text-danger">
+                    <button type="button" onClick={() => setDeleting(item)} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger-soft hover:text-danger">
                       <TrashIcon size={15} />
                     </button>
                   </div>

@@ -235,10 +235,10 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
                     color={cover.color}
                     placeholder={cover.placeholder}
                     sizes="128px"
-                    className="object-cover transition-transform duration-200 ease-soft group-hover:scale-[1.03]"
+                    className="object-cover"
                   />
                 ) : prompt.promptText.trim() ? (
-                  <span className="prompt-text block p-2.5 text-micro leading-relaxed text-text-secondary">
+                  <span className="prompt-text block p-2.5 text-caption leading-relaxed text-text-secondary">
                     <span className="line-clamp-5">{prompt.promptText}</span>
                   </span>
                 ) : (
@@ -248,7 +248,7 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
                 )}
                 <span className="absolute inset-x-0 bottom-0 block bg-gradient-to-t from-black/75 to-transparent px-2 pb-1.5 pt-6 text-white">
                   <span className="block truncate text-caption font-semibold leading-snug">{prompt.title}</span>
-                  <span className="block text-micro leading-tight opacity-90">{t("discover.likesCount", { count: formatCount(prompt.likeCount) })}</span>
+                  <span className="block text-caption leading-tight opacity-90">{t("discover.likesCount", { count: formatCount(prompt.likeCount) })}</span>
                 </span>
               </Link>
             </li>

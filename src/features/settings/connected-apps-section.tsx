@@ -102,12 +102,12 @@ export function ConnectedAppsSection() {
                   <p className="break-words text-[0.9375rem] font-semibold tracking-[-0.01em] text-text [overflow-wrap:anywhere]">{grant.name}</p>
                   {grant.host && <p className="break-all text-caption text-text-muted">{grant.host}</p>}
                 </div>
-                <span className="shrink-0 rounded-full bg-success/10 px-2.5 py-0.5 text-caption font-bold text-success">{t("apps.connected")}</span>
+                <span className="shrink-0 rounded-full bg-success-soft px-2.5 py-0.5 text-caption font-bold text-success">{t("apps.connected")}</span>
               </div>
 
               <div className="flex flex-wrap gap-1.5">
                 {grant.source === "legacy" ? (
-                  <span className="rounded-full bg-warning/10 px-2.5 py-0.5 text-caption font-bold text-warning">{t("apps.legacy")}</span>
+                  <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-caption font-bold text-warning">{t("apps.legacy")}</span>
                 ) : (
                   grant.scopes.map((scope) => (
                     <span
@@ -127,7 +127,7 @@ export function ConnectedAppsSection() {
               </p>
 
               {confirmKey === grant.key ? (
-                <div className="space-y-3 rounded-lg bg-danger/10 p-3">
+                <div className="space-y-3 rounded-lg bg-danger-soft p-3">
                   <p className="text-caption leading-relaxed text-text-secondary">{t("apps.revokeConfirm")}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" size="sm" variant="danger" disabled={busyKey === grant.key} onClick={() => void revoke(grant)}>
@@ -142,7 +142,7 @@ export function ConnectedAppsSection() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full border-danger/30 bg-danger/10 text-danger hover:border-danger/50 hover:bg-danger/15"
+                  className="w-full border-danger/30 bg-danger-soft text-danger hover:border-danger/50 hover:bg-danger-soft"
                   onClick={() => setConfirmKey(grant.key)}
                 >
                   {t("apps.revoke")}

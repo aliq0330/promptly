@@ -175,7 +175,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
       >
         {phase === "success" ? (
           <div role="status" data-report-success="" className="flex flex-1 flex-col items-center justify-center gap-4 px-7 py-9 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success/12 text-success" aria-hidden>
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success" aria-hidden>
               <CircleCheck size={32} />
             </span>
             <h2 id={titleId} className="font-display text-h2 font-bold text-text">
@@ -194,7 +194,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
         ) : (
           <>
             <div className="flex shrink-0 items-start gap-4 px-5 pb-3 pt-5 sm:px-6">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-danger/12 text-danger" aria-hidden>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-danger-soft text-danger" aria-hidden>
                 <Flag size={24} />
               </span>
               <div className="min-w-0 flex-1 pt-px">
@@ -281,7 +281,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
                     <label htmlFor={noteId} className="text-small font-semibold text-text">
                       {t("report.modal.noteLabel")} {!noteRequired && <span className="font-normal text-text-muted">{t("report.modal.optional")}</span>}
                     </label>
-                    {noteRequired && <span className="rounded-full bg-danger/12 px-2 text-caption font-bold leading-5 text-danger">{t("report.modal.required")}</span>}
+                    {noteRequired && <span className="rounded-full bg-danger-soft px-2 text-caption font-bold leading-5 text-danger">{t("report.modal.required")}</span>}
                   </div>
                   <textarea
                     id={noteId}
@@ -311,7 +311,7 @@ export function ReportModal({ target, onClose, onReported }: { target: ReportTar
 
             <div data-dialog-footer="" className="shrink-0 border-t border-border-soft px-5 pb-4 pt-3 sm:px-6">
               {phase === "error" && error && (
-                <div role="alert" data-report-error="" className="mb-3 flex items-start gap-3 rounded-md bg-danger/10 px-3 py-2.5 text-small text-danger">
+                <div role="alert" data-report-error="" className="mb-3 flex items-start gap-3 rounded-md bg-danger-soft px-3 py-2.5 text-small text-danger">
                   <span className="mt-px shrink-0" aria-hidden>
                     <TriangleAlert size={16} />
                   </span>

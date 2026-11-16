@@ -289,11 +289,11 @@ function ProjectCard({ team, project, changes }: { team: string; project: Projec
         <span className="flex flex-wrap items-center gap-1.5">
           {project.archivedAt && <span className="inline-flex h-6 items-center rounded-full bg-surface-soft px-2.5 text-caption font-semibold text-text-muted">{t("tp.card.archived")}</span>}
           {pending > 0 && (
-            <span className="inline-flex h-6 items-center rounded-full bg-warning/10 px-2.5 text-caption font-bold text-warning" data-project-pending={pending}>
+            <span className="inline-flex h-6 items-center rounded-full bg-warning-soft px-2.5 text-caption font-bold text-warning" data-project-pending={pending}>
               {t("tp.card.pending", { count: pending })}
             </span>
           )}
-          {changes > 0 && <span className="inline-flex h-6 items-center rounded-full bg-danger/10 px-2.5 text-caption font-bold text-danger">{t("tc.over.changesChip", { count: changes })}</span>}
+          {changes > 0 && <span className="inline-flex h-6 items-center rounded-full bg-danger-soft px-2.5 text-caption font-bold text-danger">{t("tc.over.changesChip", { count: changes })}</span>}
           {project.myRole && <ProjectRoleChip role={project.myRole} />}
         </span>
       </span>

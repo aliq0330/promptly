@@ -37,7 +37,7 @@ const TONE_CLASS: Record<TokenTone, string> = {
   field:
     "bg-secondary/15 text-secondary [box-shadow:0_0_0_2px_color-mix(in_srgb,var(--color-secondary)_15%,transparent)]",
   unknown:
-    "bg-warning/15 text-warning [box-shadow:0_0_0_2px_color-mix(in_srgb,var(--color-warning)_15%,transparent)]",
+    "bg-warning-soft text-warning [box-shadow:0_0_0_2px_color-mix(in_srgb,var(--color-warning)_15%,transparent)]",
 };
 
 /**

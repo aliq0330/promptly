@@ -94,7 +94,7 @@ export function ChatAttachSheet({
         {onGif && (
           <button type="button" onClick={onGif} className={rowClass} data-attach-gif>
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-              <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-micro font-extrabold leading-none tracking-[0.04em]">
+              <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-caption font-extrabold leading-none tracking-[0.04em]">
                 {t("gif.badge")}
               </span>
             </span>

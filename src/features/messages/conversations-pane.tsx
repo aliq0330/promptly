@@ -423,7 +423,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
                   className={cn(
                     "mt-3 flex h-14 items-center justify-center gap-2 rounded-lg border-[1.5px] border-dashed text-small font-bold transition-colors",
                     embedded && "mx-4",
-                    kindFilter === "team" ? "border-primary/30 text-primary hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success/10",
+                    kindFilter === "team" ? "border-primary/30 text-primary hover:bg-primary-soft" : "border-success/40 text-success hover:bg-success-soft",
                   )}
                 >
                   {kindFilter === "team" ? <Plus size={18} aria-hidden /> : <Search size={18} aria-hidden />}

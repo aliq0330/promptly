@@ -50,7 +50,7 @@ export function TeamBoardBar({
           {shown.map((person, index) => (
             <Avatar key={person.id} src={person.avatarUrl} alt="" size={32} className={cn("border-2 border-surface", index > 0 && "-ml-2")} />
           ))}
-          {more > 0 && <span className="-ml-2 grid h-[30px] min-w-[30px] place-items-center rounded-full border-2 border-surface bg-text-secondary px-1 text-micro font-bold text-background">+{more}</span>}
+          {more > 0 && <span className="-ml-2 grid h-[30px] min-w-[30px] place-items-center rounded-full border-2 border-surface bg-text-secondary px-1 text-caption font-bold text-background">+{more}</span>}
         </div>
       )}
       <button
@@ -59,7 +59,7 @@ export function TeamBoardBar({
         aria-pressed={commentsActive}
         aria-label={t("tb.comments.title")}
         data-testid="board-comments-toggle"
-        className={cn("flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-small font-bold", commentsActive ? "border-warning/40 bg-warning/12 text-text" : "border-border-soft bg-surface text-text hover:bg-surface-soft")}
+        className={cn("flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-small font-bold", commentsActive ? "border-warning/40 bg-warning-soft text-text" : "border-border-soft bg-surface text-text hover:bg-surface-soft")}
       >
         <MessageCircle size={20} aria-hidden />
         <span className="tabular-nums" data-board-comment-count="">{commentCount}</span>

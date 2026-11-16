@@ -15,6 +15,7 @@ import {
 } from "@/lib/preset-fields";
 import { cn } from "@/lib/utils";
 import { fieldControlClassName } from "@/components/ui/field";
+import { Switch } from "@/components/ui/switch";
 
 const INPUT = fieldControlClassName;
 
@@ -260,20 +261,7 @@ export function PresetFieldInput({
     case "toggle": {
       const on = value === true;
       return (
-        <button
-          type="button"
-          role="switch"
-          aria-checked={on}
-          aria-label={label}
-          onClick={() => onChange(on ? undefined : true)}
-          data-field-input={field.id}
-          className={cn(
-            "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-            on ? "border-primary bg-primary" : "border-border-strong bg-surface-soft",
-          )}
-        >
-          <span className={cn("inline-block h-5 w-5 rounded-full bg-white shadow-xs transition-transform duration-200", on ? "translate-x-6" : "translate-x-1")} />
-        </button>
+        <Switch checked={on} onChange={() => onChange(on ? undefined : true)} label={label} data-field-input={field.id} />
       );
     }
     case "color": {

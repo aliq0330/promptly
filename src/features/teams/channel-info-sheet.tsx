@@ -95,7 +95,7 @@ export function ChannelInfoSheet({
       <Modal onClose={busy ? () => undefined : onClose} labelledBy="channel-info-title">
         <DialogShell data-channel-info className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-t-xl border border-border-soft bg-surface shadow-pop sm:rounded-lg">
           <div className="flex shrink-0 items-center gap-3 px-5 pb-2 pt-5">
-            <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-lg", channel.mode === "private" ? "bg-warning/10 text-warning" : "bg-primary-soft text-primary")} aria-hidden>
+            <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-lg", channel.mode === "private" ? "bg-warning-soft text-warning" : "bg-primary-soft text-primary")} aria-hidden>
               {channel.mode === "private" ? <Lock size={20} /> : <Hash size={20} />}
             </span>
             <div className="min-w-0 flex-1 leading-tight">
@@ -192,7 +192,7 @@ export function ChannelInfoSheet({
                     </button>
                   )}
                   {!locked && (
-                    <button type="button" data-channel-delete onClick={() => setConfirm("delete")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-danger/40 text-small font-bold text-danger hover:bg-danger/10">
+                    <button type="button" data-channel-delete onClick={() => setConfirm("delete")} className="flex h-11 flex-1 items-center justify-center rounded-full border border-danger/40 text-small font-bold text-danger hover:bg-danger-soft">
                       {t("tm.chan.delete")}
                     </button>
                   )}

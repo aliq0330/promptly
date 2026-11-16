@@ -350,7 +350,7 @@ export function PostMenu({
                 role="menuitem"
                 onClick={handleRemoveFromCollection}
                 disabled={isRemoving}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger/10"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger-soft"
               >
                 {isRemoving ? <Loader2 size={14} className="animate-spin" /> : <FolderMinus size={14} />}
                 {confirmingRemove ? t("common.confirmDelete") : t("common.removeFromCollection")}
@@ -404,7 +404,7 @@ export function PostMenu({
                 role="menuitem"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger/10"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger-soft"
               >
                 {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <TrashIcon size={14} />}
                 {confirmingDelete && !asksInDialog ? t("common.confirmDelete") : t("common.delete")}

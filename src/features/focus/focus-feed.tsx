@@ -136,7 +136,7 @@ function Stage({ children, className, commentsOpen = false }: { children: ReactN
     <div
       data-focus-feed
       data-comments-open={commentsOpen ? "" : undefined}
-      className={cn("group/stage dark fixed inset-0 z-[45] flex flex-col overflow-hidden bg-background text-text", className)}
+      className={cn("group/stage dark fixed inset-0 z-(--z-fullscreen) flex flex-col overflow-hidden bg-background text-text", className)}
     >
       {children}
     </div>

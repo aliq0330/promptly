@@ -92,7 +92,7 @@ export function RequestResponseContext({
       </span>
 
       {isSelected && (
-        <span className="mt-1 flex w-fit items-center gap-1 rounded-xs bg-success/12 px-2 py-0.5 text-caption font-medium text-success">
+        <span className="mt-1 flex w-fit items-center gap-1 rounded-xs bg-success-soft px-2 py-0.5 text-caption font-medium text-success">
           <CircleCheck size={12} />
           {t("request.thisReplyWasSelected")}
         </span>

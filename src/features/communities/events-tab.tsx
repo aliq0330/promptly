@@ -281,7 +281,7 @@ function EventCard({
                 <CalendarX size={16} />
               </button>
             )}
-            <button type="button" onClick={onDelete} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger/10 hover:text-danger">
+            <button type="button" onClick={onDelete} aria-label={t("common.delete")} className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-danger-soft hover:text-danger">
               <TrashIcon size={15} />
             </button>
           </div>

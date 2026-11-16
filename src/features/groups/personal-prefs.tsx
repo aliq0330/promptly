@@ -10,8 +10,8 @@ import { setChatGroupMuted } from "@/lib/supabase/chat-groups";
 import { leaveOutcome } from "@/lib/chat-groups";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn } from "@/lib/utils";
 import type { ChatGroup } from "@/types";
+import { SwitchRow } from "@/components/ui/switch";
 
 /** Kişisel sessize alma eylemi (anahtar da karo da aynı yolu kullanır): kendi `conversation_members.muted_at` satırını değiştirir. */
 export function useChatMute({
@@ -62,23 +62,18 @@ export function ChatMuteToggle({
 
   return (
     <div className="space-y-1.5">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={muted}
-        onClick={() => void toggle()}
+      <SwitchRow
+        checked={muted}
+        onChange={() => void toggle()}
         disabled={mute.busy}
-        className="flex w-full items-center gap-3 rounded-lg border border-border-soft px-3 py-3 text-left transition-colors hover:border-border-strong hover:bg-surface-soft disabled:opacity-50"
+        className="rounded-lg border border-border-soft px-3 py-3 transition-colors hover:border-border-strong hover:bg-surface-soft"
       >
         <BellOff size={18} className="shrink-0 text-text-muted" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-small font-medium text-text">{t("groups.about.muteLabel")}</span>
           <span className="block text-caption text-text-muted">{t("groups.about.muteHelp")}</span>
         </span>
-        <span aria-hidden className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", muted ? "bg-primary" : "bg-border-strong")}>
-          <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-background shadow-xs transition-all", muted ? "left-[1.125rem]" : "left-0.5")} />
-        </span>
-      </button>
+      </SwitchRow>
       {mute.error && (
         <p role="alert" className="text-caption text-danger">
           {mute.error}

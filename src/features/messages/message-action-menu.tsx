@@ -66,7 +66,7 @@ function MenuItem({
       disabled={disabled}
       className={cn(
         "flex w-full items-center gap-2 px-3 py-2 text-left text-small hover:bg-surface-soft disabled:pointer-events-none disabled:opacity-50",
-        danger ? "text-danger hover:bg-danger/10" : "text-text",
+        danger ? "text-danger hover:bg-danger-soft" : "text-text",
       )}
     >
       {icon}

@@ -9,7 +9,6 @@ import { Loader2 } from "@/components/icons/loader-2";
 import { Search } from "@/components/icons/search";
 import { ShieldCheck } from "@/components/icons/shield-check";
 import { Users } from "@/components/icons/users";
-import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
@@ -45,6 +44,7 @@ import { cn } from "@/lib/utils";
 import type { CommunityCategory } from "@/types";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { ScrollRow } from "@/components/ui/scroll-row";
+import { SearchField } from "@/components/ui/search-field";
 
 const SORTS: CommunitySort[] = ["popular", "newest", "active"];
 
@@ -148,29 +148,16 @@ export function CommunitiesPage() {
 
       {/* Tek kontrol satırı: arama (Tüm topluluklar'da açılır) · "Tüm topluluklar" bağlantısı. */}
       {user && searchOpen ? (
-        <form role="search" onSubmit={search} className="relative">
-          <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-          <input
-            type="search"
+        <form role="search" onSubmit={search}>
+          <SearchField
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={setQuery}
             placeholder={t("communities.all.searchPlaceholder")}
-            aria-label={t("communities.all.searchPlaceholder")}
-            enterKeyHint="search"
+            clearLabel={t("common.clear")}
+            alwaysClear
+            onClear={() => setSearchOpen(false)}
             autoFocus
-            className="h-12 w-full rounded-xl border-2 border-primary bg-surface pl-11 pr-12 text-body text-text placeholder:text-text-muted focus:outline-none"
           />
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setSearchOpen(false);
-            }}
-            aria-label={t("common.clear")}
-            className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg text-text hover:bg-surface-soft"
-          >
-            <X size={20} />
-          </button>
         </form>
       ) : (
         user && (

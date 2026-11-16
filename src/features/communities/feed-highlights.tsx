@@ -71,7 +71,7 @@ export function FeedHighlights({ group, role, viewerId, membership, reload, onTo
       )}
 
       {group.closedAt && (
-        <p role="status" className="rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-small text-text">
+        <p role="status" className="rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-small text-text">
           {t("communities.detail.closedNotice")}
         </p>
       )}
@@ -95,7 +95,7 @@ function NextEventCard({ event, onOpen }: { event: CommunityEvent; onOpen: () =>
       className="flex w-full items-center gap-4 rounded-lg border border-border-soft bg-surface px-4 py-3 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <span aria-hidden className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-primary-soft leading-none text-primary">
-        <span className="text-micro font-bold tracking-[0.06em]">{date.month}</span>
+        <span className="text-caption font-bold tracking-[0.06em]">{date.month}</span>
         <span className="mt-0.5 font-display text-[1.25rem] font-bold">{date.day}</span>
       </span>
       <span className="min-w-0 flex-1">

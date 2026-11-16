@@ -72,7 +72,7 @@ export function FocusFeedRail({ item, author, layout = "column" }: { item: PostF
         href={profileHref(author)}
         aria-label={author.displayName}
         title={author.displayName}
-        className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background transition-transform duration-200 ease-soft hover:scale-105"
+        className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background transition-opacity duration-200 ease-soft hover:opacity-80"
       >
         <Avatar src={author.avatarUrl} alt={author.displayName} size={40} />
       </Link>}

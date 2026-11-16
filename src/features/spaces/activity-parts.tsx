@@ -73,7 +73,7 @@ function asColors(value: unknown): string[] {
 
 function Side({ tone, title, children }: { tone: "before" | "after"; title: string; children: React.ReactNode }) {
   return (
-    <div className={cn("min-w-0 rounded-xl px-3 py-2.5", tone === "before" ? "bg-danger/10" : "bg-success/10")} data-activity-side={tone}>
+    <div className={cn("min-w-0 rounded-xl px-3 py-2.5", tone === "before" ? "bg-danger-soft" : "bg-success-soft")} data-activity-side={tone}>
       <h4 className={cn("mb-2 text-label font-semibold uppercase tracking-[0.08em]", tone === "before" ? "text-danger" : "text-success")}>{title}</h4>
       {children}
     </div>

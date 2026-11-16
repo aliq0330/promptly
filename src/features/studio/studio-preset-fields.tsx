@@ -8,6 +8,7 @@ import { fieldName, optionLabel, type PresetField, type PresetSelection, type Pr
 import { fieldToolOnly } from "@/lib/preset-fit";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 /**
  * A preset's fields in Studio as a two-column grid (docs/history/228-*, the canvas design): each cell has the field's name with an
@@ -55,21 +56,7 @@ export function StudioPresetFields({
               <label htmlFor={simpleSelect ? controlId : undefined} className="min-w-0 truncate text-caption font-semibold text-text-secondary">
                 {name}
               </label>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={on}
-                aria-label={t("studio.useField", { name })}
-                disabled={blocked}
-                onClick={() => onToggle(field.id)}
-                className={cn(
-                  "relative h-5 w-[2.125rem] shrink-0 rounded-full transition-colors duration-200 disabled:cursor-not-allowed",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
-                  on ? "bg-primary" : "bg-border-strong",
-                )}
-              >
-                <span aria-hidden className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-surface transition-[left] duration-200", on ? "left-[1.125rem]" : "left-0.5")} />
-              </button>
+              <Switch checked={on} onChange={() => onToggle(field.id)} label={t("studio.useField", { name })} disabled={blocked} />
             </div>
             <div className={cn(!on && "opacity-50")}>
               {simpleSelect ? (

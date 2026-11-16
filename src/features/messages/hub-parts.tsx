@@ -194,7 +194,7 @@ export function HubRow({
         <span className="flex items-center justify-between gap-2">
           <span className={cn("min-w-0 flex-1 truncate text-small", shownUnread > 0 ? "font-medium text-text" : "text-text-muted")}>{subtitle}</span>
           {shownUnread > 0 && (
-            <span data-hub-unread className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-micro font-semibold text-primary-foreground">
+            <span data-hub-unread className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-caption font-semibold text-primary-foreground">
               {formatUnread(shownUnread)}
             </span>
           )}
@@ -242,7 +242,7 @@ export function HubTile({ children, tone = "plain", square = false }: { children
       className={cn(
         "grid h-11 w-11 shrink-0 place-items-center font-display text-[1.125rem] font-bold",
         square ? "rounded-[14px]" : "rounded-full",
-        tone === "primary" ? "bg-primary-soft text-primary" : tone === "success" ? "bg-success/10 text-success" : "bg-surface-soft text-text-secondary",
+        tone === "primary" ? "bg-primary-soft text-primary" : tone === "success" ? "bg-success-soft text-success" : "bg-surface-soft text-text-secondary",
       )}
     >
       {children}

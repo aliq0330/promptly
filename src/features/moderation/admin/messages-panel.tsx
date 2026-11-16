@@ -55,7 +55,7 @@ export function MessagesPanel({ userId }: { userId: string }) {
   }
 
   const notice = (
-    <p className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-caption text-text-secondary">
+    <p className="flex items-start gap-2 rounded-lg bg-warning-soft p-3 text-caption text-text-secondary">
       <Lock size={14} className="mt-0.5 shrink-0 text-warning" aria-hidden /> {t("admin.user.messagesNotice")}
     </p>
   );

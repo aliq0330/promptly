@@ -336,7 +336,7 @@ function MenuButton({ icon, label, onClick, danger }: { icon: React.ReactNode; l
       type="button"
       role="menuitem"
       onClick={onClick}
-      className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-small hover:bg-surface-soft", danger ? "text-danger hover:bg-danger/10" : "text-text")}
+      className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-small hover:bg-surface-soft", danger ? "text-danger hover:bg-danger-soft" : "text-text")}
     >
       {icon}
       {label}

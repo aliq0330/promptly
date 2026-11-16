@@ -176,7 +176,7 @@ export function MembersTab() {
                           <option value="viewer">{t(SPACE_ROLE_LABEL.viewer)}</option>
                           <option value="editor">{t(SPACE_ROLE_LABEL.editor)}</option>
                         </select>
-                        <button type="button" onClick={() => setConfirm({ kind: "remove", member })} aria-label={t("spaces.members.remove", { name })} className="rounded-full p-2 text-text-muted hover:bg-danger/10 hover:text-danger">
+                        <button type="button" onClick={() => setConfirm({ kind: "remove", member })} aria-label={t("spaces.members.remove", { name })} className="rounded-full p-2 text-text-muted hover:bg-danger-soft hover:text-danger">
                           <UserMinus size={16} />
                         </button>
                       </>

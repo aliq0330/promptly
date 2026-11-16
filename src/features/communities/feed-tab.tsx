@@ -184,7 +184,7 @@ export function FeedTab(props: CommunityTabProps) {
       {/* Topluluk hikâyeleri (docs/history/198-*): yalnız üyelere; paylaşma hakkı akışla aynı kurala bağlı. */}
       {role && <StoryTray communityId={group.id} canAdd={canPost} />}
       <FeedHighlights {...props} />
-      {justShared && <p role="status" className="rounded-md bg-success/10 px-3 py-2 text-small text-text">{t("communities.feed.sharedBanner")}</p>}
+      {justShared && <p role="status" className="rounded-md bg-success-soft px-3 py-2 text-small text-text">{t("communities.feed.sharedBanner")}</p>}
       {pinAction.error && (
         <InlineAlert>
           {pinAction.error}

@@ -483,7 +483,7 @@ function FirstSpaceEmpty({ onCreate }: { onCreate: () => void }) {
           <span className="flex aspect-square items-center justify-center rounded-md bg-secondary/15 text-secondary">
             <ImageIcon size={18} />
           </span>
-          <span className="flex aspect-square items-center justify-center rounded-md bg-warning/15 text-warning">
+          <span className="flex aspect-square items-center justify-center rounded-md bg-warning-soft text-warning">
             <StickyNote size={18} />
           </span>
           <span className="col-span-2 flex items-center gap-2 rounded-md bg-surface px-3 py-2 font-mono text-caption text-text-secondary">

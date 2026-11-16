@@ -146,7 +146,7 @@ export function FocusWorkflowCard({ workflow }: { workflow: Workflow }) {
             return (
               <li key={step.id}>
                 <Row as="div">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-micro font-semibold leading-none text-primary-foreground">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-caption font-semibold leading-none text-primary-foreground">
                     {index + 1}
                   </span>
                   <StepIcon size={12} aria-hidden className="shrink-0 text-text-muted" />

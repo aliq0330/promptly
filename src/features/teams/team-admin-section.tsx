@@ -144,7 +144,7 @@ export function TeamAdminSection({ ctx }: { ctx: TeamCtx }) {
                 active === item.key
                   ? "border-text bg-text text-background"
                   : item.key === "danger"
-                    ? "border-border-soft bg-surface text-danger hover:bg-danger/10"
+                    ? "border-border-soft bg-surface text-danger hover:bg-danger-soft"
                     : "border-border-soft bg-surface text-text hover:bg-surface-soft",
               )}
             >
@@ -406,11 +406,11 @@ const AUDIT_CATEGORIES = ["all", "member", "role", "access", "approval", "librar
 type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
 
 const AUDIT_TAG_TONE: Record<string, string> = {
-  approval: "bg-success/10 text-success",
+  approval: "bg-success-soft text-success",
   role: "bg-primary-soft text-primary",
-  access: "bg-warning/10 text-warning",
+  access: "bg-warning-soft text-warning",
   member: "bg-primary-soft text-primary",
-  library: "bg-danger/10 text-danger",
+  library: "bg-danger-soft text-danger",
   channel: "bg-surface-soft text-text-secondary",
   policy: "bg-surface-soft text-text-secondary",
   integration: "bg-secondary/10 text-secondary",

@@ -110,7 +110,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
       <p
         className={cn(
           "prompt-text whitespace-pre-wrap break-words text-text-secondary",
-          size === "card" ? "line-clamp-5 text-micro" : "max-h-[60dvh] overflow-y-auto text-small text-text",
+          size === "card" ? "line-clamp-5 text-caption" : "max-h-[60dvh] overflow-y-auto text-small text-text",
         )}
       >
         {result.textContent}

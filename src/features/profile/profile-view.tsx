@@ -57,6 +57,7 @@ import { ProfileQuotesPanel } from "@/features/quotes/profile-quotes-panel";
 import { ProfileResultsPanel } from "./profile-results-panel";
 import { fetchProfileResultCount } from "@/lib/supabase/prompt-results";
 import { fetchProfileQuoteCount } from "@/lib/supabase/quotes";
+import { SearchField } from "@/components/ui/search-field";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -319,17 +320,13 @@ export function ProfileView({
             )}
           </div>
           {searchable && searchOpen && (
-            <label className="mt-2 flex h-11 items-center gap-2 rounded-full bg-surface-soft px-4 focus-within:ring-2 focus-within:ring-primary" data-profile-search-field="">
-              <Search size={16} className="shrink-0 text-text-muted" aria-hidden />
-              <input
-                type="text"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={t("profile.searchPlaceholder")}
-                aria-label={t("profile.searchPlaceholder")}
-                className="h-full w-full bg-transparent text-body text-text outline-none placeholder:text-text-muted"
-              />
-            </label>
+            <SearchField
+              value={search}
+              onChange={setSearch}
+              placeholder={t("profile.searchPlaceholder")}
+              wrapperClassName="mt-2"
+              data-profile-search-field=""
+            />
           )}
 
           <div className="mt-4 space-y-4">

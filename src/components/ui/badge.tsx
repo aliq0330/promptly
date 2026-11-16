@@ -1,35 +1,40 @@
 import { type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "default" | "accent" | "outline" | "neutral" | "success" | "warning" | "danger";
+type BadgeVariant = "default" | "accent" | "outline" | "neutral" | "secondary" | "success" | "warning" | "danger" | "overlay";
+type BadgeSize = "sm" | "md";
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
+  size?: BadgeSize;
 }
 
 /**
- * Small, quiet labels (content type, category, tag, status). Status colors
- * come from the theme's `success`/`warning`/`danger` tokens, so they stay
- * legible in every palette and in dark mode.
+ * The one small label (content type, category, tag, status, role, review state — docs/history/403-*): `rounded-full`,
+ * 12 px, medium. Status colours come from the `*-soft` tokens, so they stay legible in every mode; `overlay` is for a chip
+ * drawn on a picture (`bg-art-chip`). Role / review / mute / dock badges are thin wrappers that only pick the label and tone.
  */
 const variantClasses: Record<BadgeVariant, string> = {
   default: "bg-primary-soft text-primary",
   accent: "bg-primary text-primary-foreground",
   outline: "border border-border text-text-secondary",
   neutral: "bg-surface-soft text-text-secondary",
-  success: "bg-success/12 text-success",
-  warning: "bg-warning/12 text-warning",
-  danger: "bg-danger/12 text-danger",
+  secondary: "bg-secondary-soft text-secondary",
+  success: "bg-success-soft text-success",
+  warning: "bg-warning-soft text-warning",
+  danger: "bg-danger-soft text-danger",
+  overlay: "bg-art-chip text-on-art",
 };
 
-export function Badge({ className, variant = "default", ...props }: BadgeProps) {
+const sizeClasses: Record<BadgeSize, string> = {
+  md: "gap-1 px-2.5 py-0.5",
+  sm: "gap-1 px-2 py-0.5",
+};
+
+export function Badge({ className, variant = "default", size = "md", ...props }: BadgeProps) {
   return (
     <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-caption font-medium",
-        variantClasses[variant],
-        className,
-      )}
+      className={cn("inline-flex items-center rounded-full text-caption font-medium", sizeClasses[size], variantClasses[variant], className)}
       {...props}
     />
   );

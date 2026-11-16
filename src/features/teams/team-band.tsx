@@ -23,8 +23,8 @@ import { TeamMark } from "./team-ui";
 export const BAND_TONE: Record<string, string> = {
   primary: "bg-primary-soft",
   secondary: "bg-secondary/10",
-  success: "bg-success/10",
-  warning: "bg-warning/10",
+  success: "bg-success-soft",
+  warning: "bg-warning-soft",
   plum: "bg-surface-soft",
   sky: "bg-primary-soft",
 };
@@ -171,7 +171,7 @@ export function TeamBand({
                         onLeave();
                       }}
                       data-team-menu-leave
-                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-small font-medium text-danger hover:bg-danger/10"
+                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-small font-medium text-danger hover:bg-danger-soft"
                     >
                       <LogOut size={16} aria-hidden />
                       {t("tm.members.leave")}

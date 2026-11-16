@@ -13,9 +13,9 @@ import { fetchDisabledNotificationPrefs, fetchNotificationMutes, setNotification
 import { NOTIFICATION_PREF_KEYS, type NotificationPrefKeyName } from "@/lib/notification-mirror";
 import { announceNotice } from "@/lib/app-notice";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn } from "@/lib/utils";
 import { applyMute } from "@/features/notifications/mute-store";
 import type { NotificationMute } from "@/types";
+import { SwitchRow } from "@/components/ui/switch";
 
 /**
  * Ayarlar → Bildirimler (docs/history/326-*). Tür anahtarları `notification_type_prefs` (satırı olmayan tür AÇIKTIR); kapalı tür için bildirim hiç yazılmaz
@@ -102,23 +102,18 @@ export function NotificationSettings() {
             const on = !disabled.has(key);
             return (
               <li key={key}>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={on}
+                <SwitchRow
+                  checked={on}
+                  onChange={() => void toggle(key)}
                   disabled={busyKey === key}
-                  onClick={() => void toggle(key)}
                   data-pref={key}
-                  className="flex min-h-14 w-full items-center gap-3 rounded-lg border border-border-soft px-3 py-2.5 text-left transition-colors hover:border-border-strong hover:bg-surface-soft disabled:opacity-50"
+                  className="min-h-14 rounded-lg border border-border-soft px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-soft"
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block text-small font-medium text-text">{t(`nc.pref.${key}.title` as const)}</span>
                     <span className="block text-caption text-text-muted">{t(`nc.pref.${key}.hint` as const)}</span>
                   </span>
-                  <span aria-hidden className={cn("relative h-6 w-11 shrink-0 rounded-full transition-colors", on ? "bg-primary" : "bg-border-strong")}>
-                    <span className={cn("absolute top-0.5 size-5 rounded-full bg-white shadow transition-[left]", on ? "left-[1.375rem]" : "left-0.5")} />
-                  </span>
-                </button>
+                </SwitchRow>
               </li>
             );
           })}

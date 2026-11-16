@@ -221,7 +221,7 @@ function BoardCard({ teamId, card, state, busy, onApprove, onChanges }: { teamId
       </p>
       {item.unitCount > 1 && <p className="text-caption text-text-muted">{t("tp.review.packageHint", { count: item.unitCount })}</p>}
       <Preview item={item} />
-      {state === "changes" && item.note && <p className="rounded-lg bg-danger/10 px-2.5 py-2 text-small text-danger">{t("tc.appr.leadNote", { note: item.note })}</p>}
+      {state === "changes" && item.note && <p className="rounded-lg bg-danger-soft px-2.5 py-2 text-small text-danger">{t("tc.appr.leadNote", { note: item.note })}</p>}
       {state === "changes" && <p className="text-caption font-bold text-danger">{item.mine ? t("tc.appr.fixIt") : t("tc.appr.waitingAuthor", { name: item.authorName ?? "" })}</p>}
       {state === "pending" && item.canDecide && <Actions busy={busy} onApprove={onApprove} onChanges={onChanges} />}
       {state === "pending" && !item.canDecide && <p className="text-caption text-text-muted">{t("tc.appr.leadOnly")}</p>}

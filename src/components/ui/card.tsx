@@ -7,21 +7,31 @@ export const CARD_SURFACE_CLASS = "rounded-lg border border-border-soft bg-surfa
 /** Card padding scale (audit §10/§11): 12 compact · 16 default · 20 roomy. */
 export const CARD_PADDING = { sm: "p-3", md: "p-4", lg: "p-5" } as const;
 
+/** Card tones: `default` raised (border + faint shadow) · `soft` a quiet nested box (no shadow) · `inset` a field-like panel on the page ground. One radius, one border tone. */
+export const CARD_TONE = {
+  default: CARD_SURFACE_CLASS,
+  soft: "rounded-lg border border-border-soft bg-surface-soft",
+  inset: "rounded-lg border border-border-soft bg-background",
+} as const;
+
 /**
  * Base surface: soft border, faint shadow. `interactive` adds the shared
  * hover treatment used by every clickable content card (border + shadow
  * transition and a 1px lift) — see features/content/content-card.tsx.
+ * `tone` and `padding` are the only knobs (docs/history/403-*): never rebuild a card from `rounded-* border bg-*`.
  */
 export function Card({
+  as: Tag = "div",
   className,
   interactive,
   padding,
+  tone = "default",
   ...props
-}: HTMLAttributes<HTMLDivElement> & { interactive?: boolean; padding?: keyof typeof CARD_PADDING }) {
+}: HTMLAttributes<HTMLElement> & { as?: "div" | "section" | "article" | "li" | "aside"; interactive?: boolean; padding?: keyof typeof CARD_PADDING; tone?: keyof typeof CARD_TONE }) {
   return (
-    <div
+    <Tag
       className={cn(
-        CARD_SURFACE_CLASS,
+        CARD_TONE[tone],
         padding && CARD_PADDING[padding],
         interactive &&
           "transition-[border-color,box-shadow,transform] duration-200 ease-soft hover:-translate-y-px hover:border-border hover:shadow-card-hover",

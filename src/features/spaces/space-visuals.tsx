@@ -27,9 +27,9 @@ export const SPACE_KIND_ICON: Record<SpaceKind, IconComponent> = { moodboard: La
 export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
   moodboard: "bg-primary-soft text-primary",
   character: "bg-secondary/15 text-secondary",
-  brand: "bg-warning/15 text-warning",
-  game_world: "bg-success/15 text-success",
-  interior: "bg-danger/10 text-danger",
+  brand: "bg-warning-soft text-warning",
+  game_world: "bg-success-soft text-success",
+  interior: "bg-danger-soft text-danger",
   free: "bg-surface-soft text-text-secondary",
   team_area: "bg-surface-soft text-primary",
 };
@@ -55,9 +55,9 @@ export const SPACE_COLOR_CLASS: Record<SpaceColor, { surface: string; border: st
   neutral: { surface: "bg-surface", border: "border-border", dot: "bg-text-muted", text: "text-text-secondary" },
   primary: { surface: "bg-primary-soft", border: "border-primary/40", dot: "bg-primary", text: "text-primary" },
   secondary: { surface: "bg-secondary/12", border: "border-secondary/40", dot: "bg-secondary", text: "text-secondary" },
-  success: { surface: "bg-success/12", border: "border-success/40", dot: "bg-success", text: "text-success" },
-  warning: { surface: "bg-warning/12", border: "border-warning/40", dot: "bg-warning", text: "text-warning" },
-  danger: { surface: "bg-danger/12", border: "border-danger/40", dot: "bg-danger", text: "text-danger" },
+  success: { surface: "bg-success-soft", border: "border-success/40", dot: "bg-success", text: "text-success" },
+  warning: { surface: "bg-warning-soft", border: "border-warning/40", dot: "bg-warning", text: "text-warning" },
+  danger: { surface: "bg-danger-soft", border: "border-danger/40", dot: "bg-danger", text: "text-danger" },
 };
 
 /**

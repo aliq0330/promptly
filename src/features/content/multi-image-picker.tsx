@@ -120,7 +120,7 @@ export function MultiImagePicker({
               </div>
             )}
             {index === 0 && items.length > 1 && (
-              <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-micro font-medium text-white">
+              <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-caption font-medium text-white">
                 {t("media.coverBadge")}
               </span>
             )}
@@ -132,7 +132,7 @@ export function MultiImagePicker({
             className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border-strong bg-surface-soft text-text-secondary hover:border-primary"
           >
             <ImagePlus size={18} />
-            <span className="text-micro font-medium">{t("media.addImages")}</span>
+            <span className="text-caption font-medium">{t("media.addImages")}</span>
             <input
               id={inputId}
               type="file"

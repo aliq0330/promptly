@@ -117,7 +117,7 @@ function LinkedContent({ card, list }: { card: NotificationCard; list: List }) {
         {linked.thumbnailUrl && <StorageImage src={linked.thumbnailUrl} alt="" fill sizes="80px" className="object-cover" />}
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <p className="text-micro font-bold uppercase tracking-[0.06em] text-text-muted">{t(`communities.feed.type.${linked.type}` as const)}</p>
+        <p className="text-caption font-bold uppercase tracking-[0.06em] text-text-muted">{t(`communities.feed.type.${linked.type}` as const)}</p>
         <p className="mt-0.5 line-clamp-2 font-display text-[1.0625rem] font-bold leading-snug text-text">{linked.title}</p>
       </div>
       <Link href={attachmentHref(item.type, item.id)} className={buttonClassName({ variant: "secondary", className: "h-11 self-center" })}>
@@ -180,7 +180,7 @@ export function NotificationDetail({ card, list, variant, onBack }: { card: Noti
         <button type="button" onClick={() => void (unread ? markRead(card) : markUnread(card))} aria-label={unread ? t("nc.markRead") : t("nc.markUnread")} title={unread ? t("nc.markRead") : t("nc.markUnread")} data-action="toggle-read" className="grid size-11 place-items-center rounded-full bg-primary-soft text-primary hover:bg-primary-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           {unread ? <Check size={20} aria-hidden /> : <Undo2 size={20} aria-hidden />}
         </button>
-        <button type="button" onClick={() => { remove(card); onBack?.(); }} aria-label={t("notifications.deleteNotification")} title={t("notifications.deleteNotification")} data-action="delete" className="grid size-11 place-items-center rounded-full bg-danger/10 text-danger hover:bg-danger/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger">
+        <button type="button" onClick={() => { remove(card); onBack?.(); }} aria-label={t("notifications.deleteNotification")} title={t("notifications.deleteNotification")} data-action="delete" className="grid size-11 place-items-center rounded-full bg-danger-soft text-danger hover:bg-danger-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger">
           <TrashIcon size={20} />
         </button>
       </div>

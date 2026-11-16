@@ -208,14 +208,14 @@ function StepChips({ label, values }: { label: string; values: string[] }) {
   const shown = values.slice(0, 3);
   return (
     <div className="grid grid-cols-[48px_minmax(0,1fr)] items-start gap-1.5">
-      <span className="pt-0.5 text-micro font-bold uppercase tracking-[0.07em] text-text-muted">{label}</span>
+      <span className="pt-0.5 text-caption font-bold uppercase tracking-[0.07em] text-text-muted">{label}</span>
       <div className="flex min-w-0 flex-wrap gap-1">
         {shown.map((value, index) => (
-          <span key={index} className="max-w-full truncate rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 font-mono text-micro leading-4 text-text-secondary">
+          <span key={index} className="max-w-full truncate rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 font-mono text-caption leading-4 text-text-secondary">
             {value}
           </span>
         ))}
-        {values.length > shown.length && <span className="rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 text-micro leading-4 text-text-muted">+{values.length - shown.length}</span>}
+        {values.length > shown.length && <span className="rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 text-caption leading-4 text-text-muted">+{values.length - shown.length}</span>}
       </div>
     </div>
   );

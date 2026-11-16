@@ -292,7 +292,7 @@ export function MessageComposer({
         </ul>
       )}
       {imageNotice && (
-        <p role="alert" className="mb-2 flex items-start justify-between gap-2 rounded-lg bg-warning/10 px-3 py-1.5 text-caption text-warning">
+        <p role="alert" className="mb-2 flex items-start justify-between gap-2 rounded-lg bg-warning-soft px-3 py-1.5 text-caption text-warning">
           <span>{imageNotice}</span>
           <button type="button" onClick={onDismissNotice} aria-label={t("common.close")} className="shrink-0">
             <X size={12} aria-hidden />

@@ -117,7 +117,7 @@ function ConsentInner() {
         </dl>
       </header>
 
-      <div className="space-y-2 rounded-lg border border-warning/40 bg-warning/10 p-4">
+      <div className="space-y-2 rounded-lg border border-warning/40 bg-warning-soft p-4">
         <p className="flex items-center gap-2 text-small font-semibold text-text">
           <ShieldAlert size={16} className="text-warning" />
           {t("oauth.warnTitle")}

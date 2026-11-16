@@ -100,9 +100,9 @@ function RolesMatrix({ ctx }: { ctx: TeamCtx }) {
 const ROLE_CHIP_TONE: Record<TeamRole, string> = {
   owner: "bg-primary-soft text-primary",
   admin: "bg-primary-soft text-primary",
-  editor: "bg-success/10 text-success",
+  editor: "bg-success-soft text-success",
   member: "bg-surface-soft text-text-secondary",
-  guest: "bg-warning/10 text-warning",
+  guest: "bg-warning-soft text-warning",
 };
 
 /**
@@ -240,12 +240,12 @@ export function TeamMembersSection({ ctx }: { ctx: TeamCtx }) {
                         {summary.length > 0 ? summary.map((entry) => t(`tc.members.in.${entry.role}` as "tc.members.in.lead", { count: entry.count })).join(" · ") : member.groupNames?.join(", ") || t("tc.members.noProject")}
                       </span>
                       {manageable && (
-                        <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden h-8 items-center rounded-full border border-border px-3 text-caption font-semibold text-text-secondary hover:border-danger/40 hover:bg-danger/10 hover:text-danger md:inline-flex">
+                        <button type="button" onClick={() => setRemoving(member)} data-member-remove className="hidden h-8 items-center rounded-full border border-border px-3 text-caption font-semibold text-text-secondary hover:border-danger/40 hover:bg-danger-soft hover:text-danger md:inline-flex">
                           {t("tm.members.remove")}
                         </button>
                       )}
                       {manageable && (
-                        <button type="button" onClick={() => setRemoving(member)} data-member-remove-phone aria-label={t("tm.members.remove")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-danger/10 hover:text-danger md:hidden">
+                        <button type="button" onClick={() => setRemoving(member)} data-member-remove-phone aria-label={t("tm.members.remove")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-text-secondary hover:bg-danger-soft hover:text-danger md:hidden">
                           <UserMinus size={20} aria-hidden />
                         </button>
                       )}
@@ -463,7 +463,7 @@ function RemoveMemberDialog({ ctx, member, onClose, onDone }: { ctx: TeamCtx; me
                   <span className="min-w-0">
                     <span className="flex flex-wrap items-center gap-2 text-small font-bold text-text">
                       {t(m.title)}
-                      {m.badge && <span className="rounded-full bg-success/10 px-2 py-0.5 text-caption font-bold text-success">{t("tm.members.recommended")}</span>}
+                      {m.badge && <span className="rounded-full bg-success-soft px-2 py-0.5 text-caption font-bold text-success">{t("tm.members.recommended")}</span>}
                     </span>
                     <span className="block text-caption text-text-secondary">{m.hint}</span>
                   </span>

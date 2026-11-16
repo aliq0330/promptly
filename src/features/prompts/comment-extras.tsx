@@ -243,7 +243,7 @@ export function CommentExtrasToolbar({ extras, userId, disabled = false, classNa
         data-comment-extra="gif"
         className={cn(TOOL_BUTTON, draftMediaKind(extras.media) === "gif" && TOOL_ON)}
       >
-        <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-micro font-extrabold leading-none tracking-[0.04em]">
+        <span aria-hidden className="rounded-[5px] border-[1.75px] border-current px-[3px] py-[2px] text-caption font-extrabold leading-none tracking-[0.04em]">
           {t("gif.badge")}
         </span>
       </button>
@@ -402,7 +402,7 @@ function CommentGif({ gifId, width, height, className }: { gifId: string; width:
         // eslint-disable-next-line @next/next/no-img-element -- GIPHY'nin kendi adresi; dış hareketli görsel
         <img src={src} alt={t("commentExtras.gifAlt")} loading="lazy" draggable={false} onError={() => setFailed(true)} className="h-full w-full object-cover" />
       )}
-      <span aria-hidden className="absolute bottom-1.5 left-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-micro font-bold tracking-[0.06em] text-white">
+      <span aria-hidden className="absolute bottom-1.5 left-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-caption font-bold tracking-[0.06em] text-white">
         {t("gif.badge")}
       </span>
     </span>

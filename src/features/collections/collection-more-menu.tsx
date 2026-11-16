@@ -166,7 +166,7 @@ export function CollectionMoreMenu({
               role="menuitem"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger/10"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-small text-danger hover:bg-danger-soft"
             >
               {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <TrashIcon size={14} />}
               {confirmingDelete ? t("common.confirmDelete") : t("collection.delete")}

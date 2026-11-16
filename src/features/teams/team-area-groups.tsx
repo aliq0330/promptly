@@ -49,7 +49,7 @@ export interface FolderPreview {
 const PREVIEW_TONE: Record<FolderPreview["kind"], string> = {
   image: "bg-surface-soft",
   prompt: "bg-primary-soft",
-  note: "bg-warning/15",
+  note: "bg-warning-soft",
   palette: "bg-surface-soft",
   other: "bg-surface-soft",
 };
@@ -327,7 +327,7 @@ export function GroupMenuDialog({
 
   const row = (key: string, icon: ReactNode, label: string, hint: string | null, onClick: () => void, danger = false) => (
     <li key={key}>
-      <button type="button" onClick={onClick} disabled={busy} data-group-menu-item={key} className={cn("flex min-h-14 w-full items-center gap-4 rounded-xl px-2 text-left text-body font-semibold hover:bg-surface-soft disabled:opacity-50", danger ? "text-danger hover:bg-danger/10" : "text-text")}>
+      <button type="button" onClick={onClick} disabled={busy} data-group-menu-item={key} className={cn("flex min-h-14 w-full items-center gap-4 rounded-xl px-2 text-left text-body font-semibold hover:bg-surface-soft disabled:opacity-50", danger ? "text-danger hover:bg-danger-soft" : "text-text")}>
         <span aria-hidden className="shrink-0">
           {icon}
         </span>
@@ -428,7 +428,7 @@ export function SelectionBar({ count, allSelected, onAll, onClose, actions }: { 
               data-select-action={action.key}
               className={cn(
                 "flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg border px-1 text-caption font-bold transition-colors disabled:opacity-50",
-                action.tone === "primary" ? "border-primary bg-primary text-primary-foreground" : action.tone === "danger" ? "border-border-soft bg-surface text-danger hover:bg-danger/10" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
+                action.tone === "primary" ? "border-primary bg-primary text-primary-foreground" : action.tone === "danger" ? "border-border-soft bg-surface text-danger hover:bg-danger-soft" : "border-border-soft bg-surface text-text hover:bg-surface-soft",
               )}
             >
               <span aria-hidden>{action.icon}</span>

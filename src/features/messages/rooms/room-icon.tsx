@@ -28,12 +28,12 @@ export const ROOM_ICON_COMPONENTS: Record<CommunityRoomIcon, IconComponent> = {
 const TONES: Record<CommunityRoomIcon, string> = {
   message: "bg-primary-soft text-primary",
   prompt: "bg-primary-soft text-primary",
-  image: "bg-success/10 text-success",
+  image: "bg-success-soft text-success",
   megaphone: "bg-secondary/10 text-secondary",
   sparkles: "bg-secondary/10 text-secondary",
   help: "bg-surface-soft text-text-secondary",
   shield: "bg-surface-soft text-text-secondary",
-  palette: "bg-success/10 text-success",
+  palette: "bg-success-soft text-success",
 };
 
 export function RoomIcon({ icon, size = 20, className }: { icon: CommunityRoomIcon; size?: number; className?: string }) {
