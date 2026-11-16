@@ -462,11 +462,17 @@ await scenario("13. Sonraki sürüm: sürüm önerisi (düzeltme/yeni özellik/k
   assert.ok(world.skillWrites.filter((w) => w.op === "update").every((w) => w.body.status === "published"), "yayınlanmış Skill kaydedilirken taslağa düşmez");
 });
 
+/** Detay sekmeleri (Talimat · Dosyalar · Sürümler; docs/history/409-*). */
+const openTab = (page, name) => page.getByRole("tab", { name }).click();
+
 await scenario("14. Detay (sahip): ZIP birincil eylem, güvenli Markdown (XSS yok), sürümler, dosya listesi + betik uyarısı, kullanımdan kaldır", async ({ page, world }) => {
   await openDetail(page, S_PUB);
   const download = page.locator("[data-skill-download]");
   await download.waitFor();
   assert.match(await download.innerText(), /ZIP indir \(1\.1\.0\)/);
+  const textBlock = page.locator("[data-skill-text-block]");
+  await textBlock.waitFor();
+  await textBlock.getByRole("radio", { name: "Biçimli" }).click();
   const body = page.locator("[data-skill-instructions]");
   await body.waitFor();
   assert.equal(await body.locator("h2").innerText(), "Başlık");
@@ -476,16 +482,18 @@ await scenario("14. Detay (sahip): ZIP birincil eylem, güvenli Markdown (XSS yo
   const hrefs = await body.locator("a").evaluateAll((els) => els.map((a) => a.getAttribute("href")));
   assert.deepEqual(hrefs, ["https://example.com/ok"], "javascript: bağlantısı yok, https var");
   assert.equal(await page.evaluate(() => window.__xss), undefined, "hiçbir betik çalışmadı");
-  await page.locator("[data-skill-raw-toggle]").click();
-  assert.match(await page.locator("pre").first().innerText(), /\*\*kalın\*\*/, "ham görünümde işaretleme olduğu gibi");
-  const versions = page.locator("[data-skill-versions] li");
-  assert.equal(await versions.count(), 2);
-  assert.match(await versions.first().innerText(), /1\.1\.0/);
-  assert.match(await versions.first().innerText(), /Son/);
+  await textBlock.getByRole("radio", { name: "Ham metin" }).click();
+  assert.match(await textBlock.innerText(), /\*\*kalın\*\*/, "ham görünümde işaretleme olduğu gibi");
+  await openTab(page, /Dosyalar/);
   const manifest = await page.locator("[data-skill-manifest]").innerText();
   assert.match(manifest, /style\.md/);
   assert.match(manifest, /lint\.sh/);
   assert.match(await page.locator("#skill-files").innerText(), /Bu pakette betik var/);
+  await openTab(page, /Sürümler/);
+  const versions = page.locator("[data-skill-versions] li");
+  assert.equal(await versions.count(), 2);
+  assert.match(await versions.first().innerText(), /1\.1\.0/);
+  assert.match(await versions.first().innerText(), /Son/);
   await page.locator('[data-skill-version="1.0.0"] [data-skill-deprecate]').click();
   await page.locator('[data-skill-version="1.0.0"]', { hasText: "Kullanımdan kaldırıldı" }).waitFor();
   assert.ok(world.versions.find((v) => v.version === "1.0.0" && v.skill_id === S_PUB).deprecated_at, "RPC çağrıldı");
@@ -494,6 +502,7 @@ await scenario("14. Detay (sahip): ZIP birincil eylem, güvenli Markdown (XSS yo
 await scenario("15. ZIP indirme: imzalı adres istenir ve tarayıcı oraya gider (eski sürüm de indirilebilir)", async ({ page, world }) => {
   await openDetail(page, S_PUB);
   await page.locator("[data-skill-download]").waitFor();
+  await openTab(page, /Sürümler/);
   const signedRequest = page.waitForRequest((request) => request.method() === "GET" && request.url().includes("/object/sign/skill-files/"));
   await page.locator('[data-skill-version="1.0.0"] [data-skill-version-download]').click();
   await signedRequest;
@@ -516,6 +525,7 @@ await scenario("17. Sürümsüz Skill: birincil eylem SKILL.md indir (kolay mod 
   await download.waitFor();
   assert.match(await download.innerText(), /SKILL\.md|İndir/);
   await page.locator("[data-skill-download-menu]").waitFor();
+  await openTab(page, /Sürümler/);
   assert.match(await page.locator("#skill-versions").innerText(), /Henüz paketlenmiş sürüm yok/);
 });
 
@@ -666,6 +676,7 @@ const packageZip = () =>
 await scenario("26. Detay: paket dosyaları gezgini — ağaç + dosya görüntüleyici; SKILL.md hemen, diğerleri paketten okunur; betikte uyarı", async ({ page, world }) => {
   world.zipBody = packageZip();
   await openDetail(page, S_PUB);
+  await openTab(page, /Dosyalar/);
   const frame = page.locator("[data-skill-file-frame]");
   await frame.waitFor();
   assert.equal(await page.locator("[data-skill-tree]").getAttribute("role"), "tree");
@@ -683,6 +694,7 @@ await scenario("26. Detay: paket dosyaları gezgini — ağaç + dosya görünt�
 await scenario("29. Detay: SKILL.md tek yerde (paketli Skill'de sayfa sonu bloğu yok); gezgin taslağı yayınlanan sürümden farklıysa bunu söyler ve ZIP'teki hâli gösterebilir", async ({ page, world }) => {
   world.zipBody = packageZip();
   await openDetail(page, S_PUB);
+  await openTab(page, /Dosyalar/);
   await page.locator("[data-skill-file-frame]").waitFor();
   assert.equal(await page.getByRole("heading", { name: "SKILL.md", exact: true }).count(), 0, "paketli Skill'de ayrı SKILL.md bölümü yok");
   assert.equal(await page.locator("[data-skill-md-differs]").count(), 0, "paket henüz okunmadı: fark bilinmiyor");
@@ -718,6 +730,7 @@ await scenario("27. Detay: Claude Code / Codex / Cursor tek kartta sekme; araç 
 await scenario("28. Detay (telefon): ağaç ☰ ile aynı kartta açılır, dosya seçilince geri döner; taşma yok", async ({ page, world }) => {
   world.zipBody = packageZip();
   await openDetail(page, S_PUB);
+  await openTab(page, /Dosyalar/);
   const frame = page.locator("[data-skill-file-frame]");
   await frame.waitFor();
   assert.equal(await frame.getAttribute("data-tree-open"), "false");

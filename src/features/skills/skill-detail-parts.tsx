@@ -5,7 +5,7 @@ import { Download } from "@/components/icons/download";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CompactContentCard, type AttachmentState } from "@/features/content/compact-content-card";
-import { DetailSection } from "@/features/content/detail-parts";
+import { AsideSection, DetailSection } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatBytes } from "@/lib/skills/paths";
 import { attachmentKey, fetchAttachmentCards, type AttachmentCard } from "@/lib/supabase/comment-attachments";
@@ -153,7 +153,7 @@ export function SkillVersionsSection({
 export { SkillFilesSection } from "./skill-files-explorer";
 
 /** Bağlı içerik (Prompt / Workflow / Ayar paketi) kartları; okuyucunun göremediği içerik "gizli veya kaldırılmış" olur (RLS). Liste boşsa bölüm çizilmez. */
-export function SkillRelatedSection({ skillId }: { skillId: string }) {
+export function SkillRelatedSection({ skillId, aside = false }: { skillId: string; aside?: boolean }) {
   const { t } = useTranslation();
   const [relations, setRelations] = useState<SkillRelation[]>([]);
   const [cards, setCards] = useState<Map<string, AttachmentCard>>(new Map());
@@ -177,8 +177,7 @@ export function SkillRelatedSection({ skillId }: { skillId: string }) {
   }, [skillId]);
 
   if (relations.length === 0) return null;
-  return (
-    <DetailSection title={t("skill.detail.relatedTitle")} id="skill-related">
+  const list = (
       <ul className="space-y-2" data-skill-related="">
         {relations.map((relation) => {
           const card = cards.get(attachmentKey({ type: relation.type, id: relation.targetId }));
@@ -190,6 +189,14 @@ export function SkillRelatedSection({ skillId }: { skillId: string }) {
           );
         })}
       </ul>
+  );
+  return aside ? (
+    <AsideSection id="skill-related" title={t("skill.detail.relatedTitle")}>
+      {list}
+    </AsideSection>
+  ) : (
+    <DetailSection title={t("skill.detail.relatedTitle")} id="skill-related">
+      {list}
     </DetailSection>
   );
 }

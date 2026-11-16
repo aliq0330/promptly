@@ -46,5 +46,20 @@ select pg_temp.as_user('22222222-2222-4222-8222-222222222222'); set role authent
 select pg_temp.check(5, 'another reader of the public space sees the skill item', (select count(*) from public.space_items where content_type = 'skill' and content_id = '5d000000-0000-4000-8000-00000000000a') = 1);
 reset role;
 
+-- "Bu Skill şu Space'lerde" (docs/history/409-*): list_public_spaces_for_skill
+select pg_temp.as_user(''); set role anon;
+select pg_temp.check(6, 'a visitor sees the public Space that holds the skill', (select count(*) from public.list_public_spaces_for_skill('5d000000-0000-4000-8000-00000000000a')) = 1);
+select pg_temp.check(6, 'a skill that no Space holds returns nothing', (select count(*) from public.list_public_spaces_for_skill('5d000000-0000-4000-8000-0000000000ee')) = 0);
+select pg_temp.check(6, 'a null skill returns nothing', (select count(*) from public.list_public_spaces_for_skill(null)) = 0);
+reset role;
+update public.spaces set visibility = 'private' where id = current_setting('t.space')::uuid;
+select pg_temp.as_user(''); set role anon;
+select pg_temp.check(7, 'a Space made private no longer lists the skill', (select count(*) from public.list_public_spaces_for_skill('5d000000-0000-4000-8000-00000000000a')) = 0);
+reset role;
+update public.spaces set visibility = 'public', archived_at = now() where id = current_setting('t.space')::uuid;
+select pg_temp.as_user(''); set role anon;
+select pg_temp.check(7, 'an archived Space does not list the skill', (select count(*) from public.list_public_spaces_for_skill('5d000000-0000-4000-8000-00000000000a')) = 0);
+reset role;
+
 select n, case when ok then 'PASS' else 'FAIL' end as result, name, detail from pg_temp.results order by n, name;
 select 'FAILED=' || count(*) filter (where not ok) from pg_temp.results;

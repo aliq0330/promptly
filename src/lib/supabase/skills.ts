@@ -31,13 +31,14 @@ export interface SkillRow {
   like_count: number | null;
   comment_count: number | null;
   save_count: number | null;
+  quote_count?: number | null;
   created_at: string;
   updated_at: string;
   cover_path?: string | null;
   profiles: ProfileRow;
 }
 
-const SKILL_LIST_COLUMNS = "id, author_id, slug, title, summary, category, compat, license, version, status, visibility, use_count, like_count, comment_count, save_count, created_at, updated_at, cover_path";
+const SKILL_LIST_COLUMNS = "id, author_id, slug, title, summary, category, compat, license, version, status, visibility, use_count, like_count, comment_count, save_count, quote_count, created_at, updated_at, cover_path";
 export const SKILL_LIST_SELECT = `${SKILL_LIST_COLUMNS}, profiles:author_id ( ${PROFILE_SELECT} )`;
 export const SKILL_DETAIL_SELECT = `${SKILL_LIST_COLUMNS}, instructions, profiles:author_id ( ${PROFILE_SELECT} )`;
 
@@ -59,6 +60,7 @@ export function mapSkillRow(row: SkillRow): Skill {
     likeCount: row.like_count ?? 0,
     commentCount: row.comment_count ?? 0,
     saveCount: row.save_count ?? 0,
+    quoteCount: row.quote_count ?? 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     coverPath: row.cover_path ?? null,

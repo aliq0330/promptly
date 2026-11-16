@@ -1031,6 +1031,8 @@ export interface Skill {
   likeCount: number;
   commentCount: number;
   saveCount: number;
+  /** "N kez alıntılandı" (docs/history/394-*); korumalı sayaç. */
+  quoteCount?: number;
   createdAt: string;
   updatedAt: string;
 }

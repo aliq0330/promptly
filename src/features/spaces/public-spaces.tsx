@@ -25,11 +25,12 @@ export interface PublicSpaces {
 }
 
 /** `null` = yükleniyor. Hata sessizce boş liste olur: vitrin bir ek bilgi, sayfanın geri kalanını bozmaz. */
-export function usePublicSpaces(by: { ownerId: string } | { promptId: string }, limit = 24): PublicSpaces | null {
+export function usePublicSpaces(by: { ownerId: string } | { promptId: string } | { skillId: string }, limit = 24): PublicSpaces | null {
   const ownerId = "ownerId" in by ? by.ownerId : undefined;
   const promptId = "promptId" in by ? by.promptId : undefined;
+  const skillId = "skillId" in by ? by.skillId : undefined;
   const [state, setState] = useState<{ key: string; value: PublicSpaces } | null>(null);
-  const key = `${ownerId ?? ""}:${promptId ?? ""}:${limit}`;
+  const key = `${ownerId ?? ""}:${promptId ?? ""}:${skillId ?? ""}:${limit}`;
 
   useEffect(() => {
     let alive = true;
@@ -37,7 +38,7 @@ export function usePublicSpaces(by: { ownerId: string } | { promptId: string }, 
       let spaces: SpaceSummary[] = [];
       let palettes = new Map<string, string[]>();
       try {
-        spaces = await listPublicSpaces({ ownerId, promptId, limit });
+        spaces = await listPublicSpaces({ ownerId, promptId, skillId, limit });
         palettes = await fetchLeadPalettes(spaces.map((space) => space.id)).catch(() => new Map<string, string[]>());
       } catch {
         spaces = [];
@@ -47,7 +48,7 @@ export function usePublicSpaces(by: { ownerId: string } | { promptId: string }, 
     return () => {
       alive = false;
     };
-  }, [key, ownerId, promptId, limit]);
+  }, [key, ownerId, promptId, skillId, limit]);
 
   return state?.key === key ? state.value : null;
 }
@@ -75,11 +76,22 @@ export function ProfileSpacesPanel({ data, onChange }: { data: PublicSpaces; onC
 /** Prompt detayının "Hakkında" sütunu: bu prompt'u içeren herkese açık Space'ler. Hiç yoksa hiçbir şey çizilmez. */
 export function PromptSpacesAside({ promptId }: { promptId: string }) {
   const { t } = useTranslation();
-  const data = usePublicSpaces({ promptId }, 6);
+  return <ContentSpacesAside by={{ promptId }} titleKey="spaces.discover.inSpaces" testId="prompt-in-spaces" title={t("spaces.discover.inSpaces")} />;
+}
+
+/** Skill detayının yan sütunu (docs/history/409-*): bu Skill'i içeren herkese açık Space'ler; prompt'unkiyle AYNI liste, kaynak `list_public_spaces_for_skill`. */
+export function SkillSpacesAside({ skillId }: { skillId: string }) {
+  const { t } = useTranslation();
+  return <ContentSpacesAside by={{ skillId }} titleKey="spaces.discover.inSpacesSkill" testId="skill-in-spaces" title={t("spaces.discover.inSpacesSkill")} />;
+}
+
+function ContentSpacesAside({ by, testId, title }: { by: { promptId: string } | { skillId: string }; titleKey?: string; testId: string; title: string }) {
+  const { t } = useTranslation();
+  const data = usePublicSpaces(by, 6);
   if (!data || data.spaces.length === 0) return null;
   return (
-    <AsideSection id="detail-in-spaces-title" title={t("spaces.discover.inSpaces")}>
-        <ul data-testid="prompt-in-spaces" className="divide-y divide-border-soft">
+    <AsideSection id="detail-in-spaces-title" title={title}>
+        <ul data-testid={testId} className="divide-y divide-border-soft">
           {data.spaces.map((space) => {
             const palette = data.palettes.get(space.id);
             return (

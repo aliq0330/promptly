@@ -5,10 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { usePageTitle } from "@/components/layout/page-title";
 import { Download } from "@/components/icons/download";
 import { GraduationCap } from "@/components/icons/graduation-cap";
+import { Button } from "@/components/ui/button";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CodeBlock } from "@/components/ui/code-block";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
-import { InlineAlert } from "@/components/ui/inline-alert";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
@@ -20,11 +20,14 @@ import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, 
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILL_COMPAT_LABEL, SKILL_LICENSE_LABEL, skillCategoryName, skillLabelText } from "@/lib/skills/categories";
+import { formatBytes } from "@/lib/skills/paths";
+import { SkillSpacesAside } from "@/features/spaces/public-spaces";
+import { SkillTextBlock } from "./skill-text-block";
+import { SkillCoverImage } from "./skill-cover";
 import { fetchSkillTags } from "@/lib/supabase/skills";
 import { fetchSkillVersions, recordSkillUse, type SkillVersion } from "@/lib/supabase/skill-package";
 import { deleteSkill, fetchSkillById } from "@/lib/supabase/skills";
-import { copyTextToClipboard, formatRelativeTime } from "@/lib/utils";
-import { MarkdownView } from "./markdown-view";
+import { copyTextToClipboard, formatCount, formatRelativeTime } from "@/lib/utils";
 import { SimilarSkills } from "./skill-aside-blocks";
 import { SkillWorksVote } from "./skill-works-vote";
 import { SkillQualitySection } from "./skill-quality-section";
@@ -38,6 +41,8 @@ import { SkillDownloadButton } from "./skill-download-button";
 import { SkillMenu } from "./skill-menu";
 import { useSkillCategories } from "./use-skill-categories";
 import type { Skill, Tag } from "@/types";
+
+type SkillTab = "text" | "files" | "versions";
 
 /**
  * `/skills/local?id=…` — Skill detay sayfası (Albüm düzeni). Yayınlanmış bir sürüm varsa birincil eylem "ZIP indir" (değişmez paket, imzalı adres);
@@ -61,7 +66,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
   const [versions, setVersions] = useState<SkillVersion[]>([]);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [copyNote, setCopyNote] = useState<string | null>(null);
-  const [rawView, setRawView] = useState(false);
+  const [tab, setTab] = useState<SkillTab>("text");
   const [reload, setReload] = useState(0);
   const [downloads, setDownloads] = useState(0);
   const [tags, setTags] = useState<Pick<Tag, "slug" | "label">[]>([]);
@@ -107,6 +112,23 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
   const tools = skill.compat.map((tool) => skillLabelText(SKILL_COMPAT_LABEL[tool], t)).join(", ");
 
   const latest = pickLatestVersion(versions);
+  const published = skill.status === "published" && skill.visibility === "public";
+  const fileCount = latest?.manifest?.files?.length ?? 0;
+  // Sekmeler prompt sayfasındaki gibidir (Prompt · Geçmiş · DNA): Talimat her zaman; Dosyalar paket varsa; Sürümler sürüm varsa (sahibine yeni sürüm için hep).
+  const tabItems: TabItem<SkillTab>[] = [
+    { key: "text", label: t("skill.tabs.text") },
+    ...(fileCount > 0 ? [{ key: "files" as const, label: t("skill.tabs.files"), count: fileCount }] : []),
+    ...(versions.length > 0 || isOwn ? [{ key: "versions" as const, label: t("skill.tabs.versions"), count: versions.length }] : []),
+  ];
+  const activeTab: SkillTab = tabItems.some((item) => item.key === tab) ? tab : "text";
+  const infoLine = [
+    tools || null,
+    `v${skill.version}`,
+    skillLabelText(SKILL_LICENSE_LABEL[skill.license], t),
+    latest ? t("skill.detail.packageMeta", { files: String(latest.fileCount), size: formatBytes(latest.packageSize) }) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   async function primaryDownload() {
     if (!skill) return;
@@ -146,20 +168,24 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
           toolRefs={null}
           fallbackTool={tools || undefined}
           hasChips={Boolean(category) || tags.length > 0}
-          footer={skill.status === "published" && skill.visibility === "public" ? <RelationMapRow kind="skill" id={skill.id} /> : undefined}
+          quoteCount={skill.quoteCount ?? 0}
+          footer={published ? <RelationMapRow kind="skill" id={skill.id} /> : undefined}
         >
           {category && <span className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{category}</span>}
           <DetailTags className="contents" tags={tags.map((tag) => ({ ...tag }) as Tag)} />
         </DetailMetaCard>
-      </AsideSection>
-      <AsideSection id="skill-info-title" title={t("skill.aboutTitle")}>
-        <dl className="divide-y divide-border-soft text-small">
+        {/* "Skill bilgisi" kartı Hakkında'ya katıldı (docs/history/409-*): prompt sayfasında ikinci bir bilgi kartı yoktur. */}
+        <dl className="divide-y divide-border-soft border-t border-border-soft text-small" data-skill-info="">
           <InfoRow label={t("skill.version")} value={skill.version} />
           <InfoRow label={t("skill.license")} value={skillLabelText(SKILL_LICENSE_LABEL[skill.license], t)} />
           <InfoRow label={t("skill.updated")} value={formatRelativeTime(skill.updatedAt, language)} />
         </dl>
       </AsideSection>
+      <SkillQualitySection skill={skill} hasPackage={Boolean(latest)} aside />
+      <SkillLinkedSkills skillId={skill.id} aside />
+      <SkillRelatedSection skillId={skill.id} aside />
       <SimilarSkills skillId={skill.id} />
+      {published && <SkillSpacesAside skillId={skill.id} />}
     </DetailAside>
   );
 
@@ -167,6 +193,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
     <DetailShell
       band={
         <DetailBand
+          backdrop={skill.coverPath ? <SkillCoverImage path={skill.coverPath} className="h-full w-full object-cover" /> : undefined}
           art={skill.coverPath ? <SkillDetailCover path={skill.coverPath} fallback={<DetailArtPlaceholder icon={GraduationCap} />} /> : <DetailArtPlaceholder icon={GraduationCap} />}
           kicker={
             <div className="flex flex-wrap items-center gap-2">
@@ -175,7 +202,15 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
             </div>
           }
           title={<DetailTitle>{skill.title || t("skill.untitled")}</DetailTitle>}
-          byline={<DetailByline person={skill.creator} createdAt={skill.createdAt} language={language} follow={!isOwn && <FollowButton user={skill.creator} />} />}
+          byline={
+            <DetailByline
+              person={skill.creator}
+              createdAt={skill.createdAt}
+              language={language}
+              meta={skill.useCount > 0 ? (skill.useCount === 1 ? t("prompt.usedOnce") : t("prompt.usedCount", { count: formatCount(skill.useCount) })) : undefined}
+              follow={!isOwn && <FollowButton user={skill.creator} />}
+            />
+          }
           menu={<SkillMenu skill={skill} isOwn={isOwn} signedIn={Boolean(user)} onDelete={() => setConfirmDelete(true)} />}
         />
       }
@@ -191,18 +226,6 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
               </>
             ) : undefined
           }
-          primary={
-            <SkillDownloadButton label={latest ? t("skill.detail.downloadZip", { version: latest.version }) : t("skill.download")} onPrimary={() => void primaryDownload()}>
-              {(close) => (
-                <>
-                  <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadMd")} onClick={() => { close(); downloadSkillMd(skill); void recordSkillUse(skill.id); }} />
-                  <MenuItem icon={<Copy size={16} />} label={t("skill.detail.copyMd")} onClick={() => { close(); void copyTextToClipboard(skillMdFor(skill)).then((ok) => setCopyNote(ok ? t("common.copied") : t("skill.detail.copyFailed"))); }} />
-                  <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadJson")} onClick={() => { close(); downloadSkillMetadata(skill); }} />
-                  <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadExchange")} onClick={() => { close(); downloadSkillExchange(skill); }} />
-                </>
-              )}
-            </SkillDownloadButton>
-          }
         >
           {skill.status === "published" && skill.visibility === "public" && (
             <>
@@ -215,68 +238,57 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
       }
     >
       <article className="min-w-0 space-y-8">
-        {skill.summary && <DetailLede>{skill.summary}</DetailLede>}
-
-        <InlineAlert tone="info">{t("skill.noRunNotice")}</InlineAlert>
-
-        {copyNote && (
-          <p role="status" className="text-small text-text-muted" data-skill-copy-note="">
-            {copyNote}
+        <div className="space-y-3 empty:hidden">
+          {skill.summary && <DetailLede>{skill.summary}</DetailLede>}
+          <p className="text-caption text-text-muted" data-skill-no-run="">
+            {t("skill.noRunNotice")}
           </p>
-        )}
+        </div>
 
-        {downloadError && (
-          <p role="alert" className="text-small text-danger">
-            {downloadError}
-          </p>
-        )}
+        {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setTab} ariaLabel={t("skill.tabs.aria")} />}
 
-        <DetailSection
-          title={t("skill.instructionsTitle")}
-          action={
-            skill.instructions.trim() ? (
-              <button type="button" onClick={() => setRawView((prev) => !prev)} aria-pressed={rawView} data-skill-raw-toggle="" className="rounded-full px-3 py-1 text-caption font-semibold text-primary hover:bg-primary-soft">
-                {rawView ? t("skill.detail.renderedToggle") : t("skill.detail.rawToggle")}
-              </button>
-            ) : undefined
-          }
-        >
-          {skill.instructions.trim() ? (
-            rawView ? (
-              <pre className="prompt-text whitespace-pre-wrap break-words rounded-lg card-soft px-5 py-4 text-small text-text">{skill.instructions}</pre>
-            ) : (
-              <div className="rounded-lg card-flat px-5 py-4" data-skill-instructions="">
-                <MarkdownView source={skill.instructions} />
+        {activeTab === "text" && (
+          <>
+            <DetailSection id="skill-text" title={t("skill.instructionsTitle")}>
+              <SkillTextBlock skillMd={skillMdFor(skill)} instructions={skill.instructions} info={infoLine} />
+              {/* Eylemler bloğun altında, prompt'taki Kopyala · Çalıştır satırı gibi (docs/history/409-*). */}
+              <div className="mt-4 flex flex-wrap items-center gap-2" data-skill-actions="">
+                <SkillDownloadButton label={latest ? t("skill.detail.downloadZip", { version: latest.version }) : t("skill.download")} onPrimary={() => void primaryDownload()}>
+                  {(close) => (
+                    <>
+                      <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadMd")} onClick={() => { close(); downloadSkillMd(skill); void recordSkillUse(skill.id); }} />
+                      <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadJson")} onClick={() => { close(); downloadSkillMetadata(skill); }} />
+                      <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadExchange")} onClick={() => { close(); downloadSkillExchange(skill); }} />
+                    </>
+                  )}
+                </SkillDownloadButton>
+                <Button type="button" variant="outline" className="h-11" data-skill-copy="" onClick={() => void copyTextToClipboard(skillMdFor(skill)).then((ok) => setCopyNote(ok ? t("common.copied") : t("skill.detail.copyFailed")))}>
+                  <Copy size={16} aria-hidden /> {t("skill.detail.copyMd")}
+                </Button>
               </div>
-            )
-          ) : (
-            <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("skill.noInstructions")}</p>
-          )}
-        </DetailSection>
+              {copyNote && (
+                <p role="status" className="mt-2 text-small text-text-muted" data-skill-copy-note="">
+                  {copyNote}
+                </p>
+              )}
+              {downloadError && (
+                <p role="alert" className="mt-2 text-small text-danger">
+                  {downloadError}
+                </p>
+              )}
+            </DetailSection>
 
-        {skill.status === "published" && skill.visibility === "public" && <SkillWorksVote skillId={skill.id} isOwn={isOwn} justDownloaded={downloads} />}
+            {published && <SkillInstallSection skill={skill} zipFileName={latest ? `${skill.slug}-${latest.version}.zip` : null} />}
 
-        <SkillQualitySection skill={skill} hasPackage={Boolean(latest)} />
-
-        {latest && <SkillFilesSection key={latest.id} version={latest} skillMd={skillMdFor(skill)} onDownload={() => void primaryDownload()} />}
-
-        {skill.status === "published" && skill.visibility === "public" && <SkillInstallSection skill={skill} zipFileName={latest ? `${skill.slug}-${latest.version}.zip` : null} />}
-
-        <SkillRelatedSection skillId={skill.id} />
-
-        <SkillLinkedSkills skillId={skill.id} />
-
-        <SkillVersionsSection skillId={skill.id} slug={skill.slug} versions={versions} isOwn={isOwn} onChanged={() => setReload((value) => value + 1)} />
-
-        {/* Paketli Skill'de SKILL.md "Paket dosyaları" gezgininde; ayrı kod bloğu yalnız paketsiz (kolay mod) Skill'de kalır. */}
-        {!latest && (
-          <DetailSection title={t("skill.skillMdTitle")}>
-            <p className="mb-3 text-small text-text-muted">{t("skill.skillMdHint")}</p>
-            <CodeBlock text={skillMdFor(skill)} label={t("skill.skillMdLabel")} />
-          </DetailSection>
+            {published && <SkillWorksVote skillId={skill.id} isOwn={isOwn} justDownloaded={downloads} />}
+          </>
         )}
 
-        {skill.status === "published" && skill.visibility === "public" ? (
+        {activeTab === "files" && latest && <SkillFilesSection key={latest.id} version={latest} skillMd={skillMdFor(skill)} onDownload={() => void primaryDownload()} />}
+
+        {activeTab === "versions" && <SkillVersionsSection skillId={skill.id} slug={skill.slug} versions={versions} isOwn={isOwn} onChanged={() => setReload((value) => value + 1)} />}
+
+        {published ? (
           <DetailComments>
             <EngageComments target={{ skillId: skill.id }} ownerId={skill.creator.id} highlightCommentId={highlightCommentId} headless />
           </DetailComments>
