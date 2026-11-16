@@ -266,6 +266,8 @@ reset role;
 -- === 7. 5000 satır sınırı ======================================================================================================================
 insert into public.notifications (recipient_id, actor_id, type, message, target_href, created_at)
 select :dave, :carol, 'comment', 'm' || g, '/prompts/local?id=bulk' || g, now() - (g || ' seconds')::interval from generate_series(1, 5010) g;
+-- Toplu eklemeden sonra istatistik yok → planlayıcı yanlış plan seçip 50 sayfalık taramayı ~170 sn'ye çıkarıyordu (ANALYZE ile ~1 sn, docs/history/410-*).
+analyze public.notifications;
 set role authenticated;
 select public._as_user(:dave);
 select public._check(37, 'tarama kullanıcı başına en yeni 5000 satırla sınırlı',
