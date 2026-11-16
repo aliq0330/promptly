@@ -32,7 +32,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], searchCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], forYouCalls: [], searchCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -137,6 +137,11 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     const q = (body.p_query ?? "").toLowerCase();
     const rows = state.skills.filter((s) => s.status === "published" && s.visibility === "public" && (!q || s.title.toLowerCase().includes(q))).map((s) => ({ id: s.id, created_at: s.created_at, sort_rank: 0 }));
     return json(route, rows);
+  });
+  await context.route(/\/rest\/v1\/rpc\/for_you_page/, (route) => {
+    const body = JSON.parse(route.request().postData() || "{}");
+    state.forYouCalls.push(body);
+    return json(route, [{ kind: "skill", id: S_PUB2, created_at: "2026-11-15T10:00:00Z", sort_rank: 100, reason_kind: "creator", reason_ref: null }]);
   });
   await context.route(/\/rest\/v1\/rpc\/create_quote/, (route) => {
     state.quoteCalls.push(JSON.parse(route.request().postData() || "{}"));
@@ -553,6 +558,28 @@ await scenario("29. Prompt sayfasıyla aynı düzen: bölünmüş İndir düğme
   await page.getByRole("menuitem", { name: /Şikayet/i }).waitFor();
   // Hakkında kartı: uyumlu araç + kategori çipi.
   await page.locator('[data-testid="detail-meta"]').waitFor();
+});
+
+await scenario("30. Sana özel: Skill, nedeniyle birlikte (takip edilen kişi) Skill kartı olarak çıkar; 'ilgimi çekiyor' sorusu Skill'de sorulmaz", async ({ page, state }) => {
+  await page.goto(`${BASE}/`);
+  await page.getByText("Logo Skill").first().waitFor();
+  assert.ok(state.forYouCalls.length >= 1, "for_you_page çağrıldı");
+  await page.getByText(/takip ettiğin|Takip ettiğin|you follow|You follow/i).first().waitFor();
+  assert.equal(await page.locator("[data-interest-card]").count(), 0);
+});
+
+await scenario("31. Odak: Skill slaytı (özet + araç), Bilgi sayfası, beğeni/yorum/kaydet düğmeleri; Space'e ekle yok", async ({ page, state }) => {
+  await page.goto(`${BASE}/focus`);
+  const slide = page.locator("[data-album-slide]").first();
+  await slide.waitFor();
+  assert.match(await slide.innerText(), /Skill 1/);
+  assert.ok(state.mixedFeedCalls.length >= 1, "Odak feed_page'i çağırdı");
+  await page.locator("[data-focus-info-button]").first().click();
+  const info = page.locator("[data-focus-info]");
+  await info.waitFor();
+  assert.match(await info.innerText(), /Skill 1/);
+  assert.equal(await info.locator("[data-focus-add-to-space]").count(), 0, "Skill'de Space'e ekle yok");
+  assert.match((await info.getByRole("link", { name: /Ayrıntıları aç/ }).getAttribute("href")) ?? "", /skills\/local\/?\?id=/);
 });
 
 await scenario("8. İngilizce: Skill detayında yorum başlığı ve rozetler çevrilir", async ({ page }) => {

@@ -251,4 +251,4 @@ Her madde için çalışma kuralları (yukarıda) geçerlidir: önce mevcut dese
 ### Çekirdeğin ilk sınırları — GÜNCEL DURUM (388'deki liste eskidi; bu liste 2026-11-16'da yeniden yazıldı)
 - Hâlâ doğru: gerçek Supabase/Storage/cihaza karşı **denenmedi** (testler yerel PostgreSQL + ağ taklitli Playwright); Edge `skill-package`/`api`/`mcp` canlıya elle deploy edilecek; paket limitlerinin Edge'deki süre/bellek davranışı ölçülmedi; Skill menü girişi bayrak (`NEXT_PUBLIC_SKILLS_ENABLED`) arkasında ve bayrak KAPALI; hukuk metni danışmandan geçmedi.
 - Artık yanlış (YAPILDI): beğeni/yorum/kaydet/İstatistik/Paylaş (390-391), değişmez sürümler ve paket (389), moderatör sayaçları ve silme yan etkileri (395, `orphan_storage_objects`), ağ taklitli Skill UI paketleri (`run-skills-social`, `run-skills-package`), arama imleci (`skill_feed_page` üçlü keyset, 392).
-- Bilerek yapılmadı/ayrı karar kalanlar: Odak/"Sana özel" ve "Space'e ekle" (bu turda ayrı PR'larla yapılıyor). Skill `search_content`'e GİRDİ (`402-*`).
+- Bilerek yapılmadı/ayrı karar kalanlar: "Space'e ekle" (bu turda ayrı PR'la yapılıyor). Skill `search_content`'e (`402-*`) ve Odak/"Sana özel"e (`403-*`) GİRDİ.

@@ -105,7 +105,7 @@ export function TopicPage({
     fetchFeedPage({ scope: "all", order: "popular", kind: "all", ...base, limit: 12 })
       .then((page) => {
         if (cancelled) return;
-        const images = page.items.filter(isPostItem).map((item) => contentImage(item)).filter((media): media is PromptMedia => media !== null).slice(0, 4);
+        const images = page.items.filter(isPostItem).flatMap((item) => (item.kind === "skill" ? [] : [contentImage(item)])).filter((media): media is PromptMedia => media !== null).slice(0, 4);
         setCover({ key: filterKey, images });
       })
       .catch(() => !cancelled && setCover({ key: filterKey, images: [] }));
