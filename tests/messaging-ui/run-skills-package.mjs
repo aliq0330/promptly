@@ -629,6 +629,58 @@ await scenario("22. Bağlı içerik: Skill'e bir Prompt bağlanır (Seç pencere
   assert.equal(inserted.length, 0, "seçmeden hiçbir şey yazılmadı");
 });
 
+await scenario("21b. Telefonda ☰ ağacı açar, formu GÖNDERMEZ (IconButton type=button): adres değişmez, Skill yazılmaz", async ({ page, world }) => {
+  await openEditor(page, S_DRAFT);
+  await page.locator("#skill-title").waitFor();
+  const writesBefore = world.skillWrites.length;
+  // Formun `submit` olayı sayılır: ☰ çıplak <button> gibi davranırsa form gönderilir (sayfa geçerliyse kaydedip detaya atar, değilse hata gösterir).
+  await page.evaluate(() => {
+    window.__submits = 0;
+    document.querySelector("form")?.addEventListener("submit", () => (window.__submits += 1), true);
+  });
+  await page.locator("[data-skill-tree-open]").click();
+  await page.locator("[data-skill-tree]").waitFor();
+  assert.ok(await page.locator("[data-skill-tree]").isVisible(), "ağaç açıldı");
+  await page.locator("[data-skill-tree-close]").click();
+  await page.locator("[data-skill-tree-open]").waitFor();
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => window.__submits), 0, "☰/✕ formu göndermedi");
+  assert.match(page.url(), /\/skills\/create/, "editörden çıkılmadı");
+  assert.equal(world.skillWrites.length, writesBefore, "hiçbir kayıt yazılmadı");
+}, { viewport: { width: 390, height: 800 } });
+
+await scenario("21c. Telefonda editörde bağlı içerik (uzun başlık) varken sayfa sağa taşmaz", async ({ page, db, world }) => {
+  const P1 = "e5000000-0000-4000-8000-000000000009";
+  world.relations.push({ id: "r9", skill_id: S_DRAFT, target_type: "prompt", target_id: P1, position: 0 });
+  const previous = db.extraRoutes;
+  db.extraRoutes = async (ctx) => {
+    if (ctx.table === "prompts" && ctx.method === "GET" && /in\.\(/.test(ctx.q.get("id") ?? "")) {
+      const title = "Çok uzun bir başlık ".repeat(6) + "ve_hiç_boşluk_içermeyen_çok_uzun_bir_kelime_".repeat(3);
+      return ctx.rows([{ id: P1, title, status: "published", visibility: "public", community_id: null, deleted_at: null, profiles: { display_name: "Alice Uzun Görünen Ad" }, prompt_media: [] }]);
+    }
+    return previous(ctx);
+  };
+  await openEditor(page, S_DRAFT);
+  await page.locator("#skill-title").waitFor();
+  await page.locator("[data-skill-relations] [data-comment-attachment-state=ready]").waitFor();
+  const overflow = await page.evaluate(() => {
+    const limit = document.documentElement.clientWidth;
+    return { scroll: document.documentElement.scrollWidth, limit, wide: [...document.querySelectorAll("body *")].filter((el) => el.getBoundingClientRect().right > limit + 1).slice(0, 6).map((el) => `${el.tagName}.${String(el.className).slice(0, 70)}`) };
+  });
+  assert.ok(overflow.scroll <= overflow.limit + 1, `sayfa sağa taşıyor: ${JSON.stringify(overflow)}`);
+}, { viewport: { width: 390, height: 800 } });
+
+await scenario("14b. Yalnız SKILL.md'li Skill (paket/sürüm yok): Dosyalar sekmesi ve ağaç var; sekme gövdelerinde ayrı başlık yok", async ({ page }) => {
+  await openDetail(page, S_DRAFT);
+  await page.locator("[data-skill-text-block]").waitFor();
+  assert.equal(await page.locator("#skill-text h2").count(), 0, "Talimat sekmesinde ayrı 'Talimat' başlığı yok");
+  await openTab(page, /Dosyalar/);
+  await page.locator("[data-skill-manifest]").waitFor();
+  assert.equal(await page.locator('[data-tree-leaf="SKILL.md"]').count(), 1, "ağaçta SKILL.md var");
+  assert.equal(await page.locator("#skill-files h2").count(), 0, "Dosyalar sekmesinde ayrı başlık yok");
+  assert.match(await page.locator("#skill-files").innerText(), /name: skill-2|---/, "SKILL.md içeriği görünür");
+});
+
 await scenario("23. Dosyayı değiştir: aynı adlı dosya yüklenince aynı yola yazılır (satır sayısı artmaz), eski nesne yerini yeniye bırakır", async ({ page, world }) => {
   await openEditor(page, S_DRAFT);
   await page.locator("#skill-title").waitFor();

@@ -15,11 +15,13 @@ export const iconButtonClassName = (active?: boolean, className?: string) =>
     className,
   );
 
+/** `type` varsayılanı "button": çıplak <button> bir <form> içinde gönderim yapar (Skill editöründe ☰ formu kaydedip sayfadan atıyordu). Gönderen simge düğmesi `type="submit"` verir. */
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ className, label, active, ...props }, ref) => {
     return (
       <button
         ref={ref}
+        type="button"
         aria-label={label}
         title={label}
         className={iconButtonClassName(active, className)}

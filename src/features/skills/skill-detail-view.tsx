@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
-import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
+import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { MenuItem } from "@/features/communities/dropdown-menu";
@@ -114,10 +114,11 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
   const latest = pickLatestVersion(versions);
   const published = skill.status === "published" && skill.visibility === "public";
   const fileCount = latest?.manifest?.files?.length ?? 0;
-  // Sekmeler prompt sayfasındaki gibidir (Prompt · Geçmiş · DNA): Talimat her zaman; Dosyalar paket varsa; Sürümler sürüm varsa (sahibine yeni sürüm için hep).
+  // Sekmeler prompt sayfasındaki gibidir (Prompt · Geçmiş · DNA): Talimat ve Dosyalar her zaman; Sürümler sürüm varsa (sahibine yeni sürüm için hep).
   const tabItems: TabItem<SkillTab>[] = [
     { key: "text", label: t("skill.tabs.text") },
-    ...(fileCount > 0 ? [{ key: "files" as const, label: t("skill.tabs.files"), count: fileCount }] : []),
+    // Dosyalar her zaman var: yalnız SKILL.md olsa da ağaç görünür (docs/history/410-*). Sayı SKILL.md'yi de sayar (ağaçtaki dosya sayısı).
+    { key: "files" as const, label: t("skill.tabs.files"), count: fileCount + 1 },
     ...(versions.length > 0 || isOwn ? [{ key: "versions" as const, label: t("skill.tabs.versions"), count: versions.length }] : []),
   ];
   const activeTab: SkillTab = tabItems.some((item) => item.key === tab) ? tab : "text";
@@ -247,9 +248,10 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
 
         {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setTab} ariaLabel={t("skill.tabs.aria")} />}
 
+        {/* Talimat sekmesinde başlık yok: sekme adı zaten bu (docs/history/410-*). */}
         {activeTab === "text" && (
           <>
-            <DetailSection id="skill-text" title={t("skill.instructionsTitle")}>
+            <section id="skill-text" aria-label={t("skill.instructionsTitle")} className="scroll-mt-24 space-y-4">
               <SkillTextBlock skillMd={skillMdFor(skill)} instructions={skill.instructions} info={infoLine} />
               {/* Eylemler bloğun altında, prompt'taki Kopyala · Çalıştır satırı gibi (docs/history/409-*). */}
               <div className="mt-4 flex flex-wrap items-center gap-2" data-skill-actions="">
@@ -276,7 +278,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
                   {downloadError}
                 </p>
               )}
-            </DetailSection>
+            </section>
 
             {published && <SkillInstallSection skill={skill} zipFileName={latest ? `${skill.slug}-${latest.version}.zip` : null} />}
 
@@ -284,7 +286,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
           </>
         )}
 
-        {activeTab === "files" && latest && <SkillFilesSection key={latest.id} version={latest} skillMd={skillMdFor(skill)} onDownload={() => void primaryDownload()} />}
+        {activeTab === "files" && <SkillFilesSection key={latest?.id ?? "draft"} version={latest} skillMd={skillMdFor(skill)} onDownload={() => void primaryDownload()} />}
 
         {activeTab === "versions" && <SkillVersionsSection skillId={skill.id} slug={skill.slug} versions={versions} isOwn={isOwn} onChanged={() => setReload((value) => value + 1)} />}
 

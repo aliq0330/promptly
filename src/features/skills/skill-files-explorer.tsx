@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { InlineAlert } from "@/components/ui/inline-alert";
-import { DetailSection } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { decodeUtf8, type ScriptRiskCode } from "@/lib/skills/package-validate";
@@ -34,16 +33,16 @@ const RISK_LABEL: Record<ScriptRiskCode, TranslationKey> = {
 type PackageState = { status: "idle" | "loading" | "ready" | "error"; files: Map<string, Uint8Array>; skillMd: string | null };
 
 /** Paketin ZIP'ini (imzalı adres) bir kez, ilk dosya açılınca indirir ve bellekte okur. Hiçbir dosya çalıştırılmaz. SKILL.md ZIP'siz de görünür. */
-function usePackageContents(version: SkillVersion) {
+function usePackageContents(packagePath: string | null) {
   const [state, setState] = useState<PackageState>({ status: "idle", files: new Map(), skillMd: null });
   const started = useRef(false);
   const load = useCallback(() => {
-    if (started.current) return;
+    if (started.current || !packagePath) return;
     started.current = true;
     setState((prev) => ({ ...prev, status: "loading" }));
     void (async () => {
       try {
-        const url = await getSkillPackageUrl(version.packagePath);
+        const url = await getSkillPackageUrl(packagePath);
         const response = await fetch(url);
         if (!response.ok) throw new Error("fetch_failed");
         const { readSkillZip } = await import("@/lib/skills/zip");
@@ -54,7 +53,7 @@ function usePackageContents(version: SkillVersion) {
         setState({ status: "error", files: new Map(), skillMd: null });
       }
     })();
-  }, [version.packagePath]);
+  }, [packagePath]);
   return { ...state, load };
 }
 
@@ -70,17 +69,18 @@ function saveTextFile(name: string, text: string) {
 }
 
 /**
- * Son sürümün "Paket dosyaları" bölümü (docs/history/407-*): solda dosya ağacı, sağda seçili dosyanın içeriği; telefonda ☰ ile ağaç.
+ * "Dosyalar" sekmesi (docs/history/407-*, 410-*): solda dosya ağacı, sağda seçili dosyanın içeriği; telefonda ☰ ile ağaç. Yalnız SKILL.md olsa da (manifest boş
+ * ya da henüz sürüm yok → `version` null) ağaç çizilir; ZIP düğmesi yalnız sürüm varsa çıkar.
  * Dosya listesi sürümün manifest'inden gelir; SKILL.md hemen, diğer dosyalar paketin ZIP'i ilk kez istenince okunur. Betik dosyasında uyarı
  * gösterilir (Promptly hiçbir dosyayı çalıştırmaz); otomatik risk işaretleri bilgilendiricidir.
  */
-export function SkillFilesSection({ version, skillMd, onDownload }: { version: SkillVersion; skillMd: string; onDownload: () => void }) {
+export function SkillFilesSection({ version, skillMd, onDownload }: { version: SkillVersion | null; skillMd: string; onDownload: () => void }) {
   const { t } = useTranslation();
-  const files = useMemo(() => version.manifest?.files ?? [], [version.manifest]);
+  const files = useMemo(() => version?.manifest?.files ?? [], [version?.manifest]);
   const [selected, setSelected] = useState(SKILL_MD);
   const [treeOpen, setTreeOpen] = useState(false);
   const [showPublished, setShowPublished] = useState(false);
-  const pkg = usePackageContents(version);
+  const pkg = usePackageContents(version?.packagePath ?? null);
   // SKILL.md ZIP'siz, çalışma kopyasından hemen gösterilir; paket okununca yayınlanan sürümdekinden farklıysa kullanıcıya söylenir (indirilen ZIP yayınlanan halini içerir).
   const differs = pkg.status === "ready" && pkg.skillMd !== null && pkg.skillMd !== skillMd;
 
@@ -92,7 +92,6 @@ export function SkillFilesSection({ version, skillMd, onDownload }: { version: S
     [files, skillMd, t],
   );
 
-  if (files.length === 0) return null;
   const hasScript = files.some((file) => file.script);
   const withRisks = files.filter((file) => (file.risks?.length ?? 0) > 0);
   const current = files.find((file) => file.path === selected) ?? null;
@@ -133,9 +132,9 @@ export function SkillFilesSection({ version, skillMd, onDownload }: { version: S
       <>
         {selected === SKILL_MD && differs && (
           <div className="space-y-2 px-3 pt-3" data-skill-md-differs="">
-            <InlineAlert tone="info">{t(showPublished ? "skill.pkg.showingPublished" : "skill.pkg.showingDraft", { version: version.version })}</InlineAlert>
+            <InlineAlert tone="info">{t(showPublished ? "skill.pkg.showingPublished" : "skill.pkg.showingDraft", { version: version?.version ?? "" })}</InlineAlert>
             <Button type="button" variant="outline" size="sm" onClick={() => setShowPublished((value) => !value)}>
-              {t(showPublished ? "skill.pkg.showDraft" : "skill.pkg.showPublished", { version: version.version })}
+              {t(showPublished ? "skill.pkg.showDraft" : "skill.pkg.showPublished", { version: version?.version ?? "" })}
             </Button>
           </div>
         )}
@@ -149,8 +148,9 @@ export function SkillFilesSection({ version, skillMd, onDownload }: { version: S
     );
   }
 
+  // Başlık yok: sekme adı ("Dosyalar") zaten bu (docs/history/410-*).
   return (
-    <DetailSection title={t("skill.detail.filesTitle")} id="skill-files">
+    <section id="skill-files" aria-label={t("skill.detail.filesTitle")} className="scroll-mt-24 space-y-4">
       <div className="space-y-3">
         {hasScript && <InlineAlert tone="warning">{t("skill.detail.scriptWarning")}</InlineAlert>}
         {withRisks.length > 0 && (
@@ -183,9 +183,9 @@ export function SkillFilesSection({ version, skillMd, onDownload }: { version: S
           onTreeOpenChange={setTreeOpen}
         />
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-caption text-text-muted">{t("skill.detail.packageMeta", { files: String(version.fileCount), size: formatBytes(version.packageSize) })}</p>
+          <p className="text-caption text-text-muted">{version ? t("skill.detail.packageMeta", { files: String(version.fileCount), size: formatBytes(version.packageSize) }) : t("skill.detail.noPackageYet")}</p>
           <Button type="button" variant="outline" size="sm" onClick={onDownload}>
-            <Download size={16} aria-hidden /> {t("skill.detail.downloadZip", { version: version.version })}
+            <Download size={16} aria-hidden /> {version ? t("skill.detail.downloadZip", { version: version.version }) : t("skill.download")}
           </Button>
         </div>
         {withRisks.length > 0 && (
@@ -203,6 +203,6 @@ export function SkillFilesSection({ version, skillMd, onDownload }: { version: S
           </ul>
         )}
       </div>
-    </DetailSection>
+    </section>
   );
 }

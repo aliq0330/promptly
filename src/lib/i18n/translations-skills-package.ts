@@ -212,6 +212,7 @@ export const skillPackageTranslations = {
   "skill.detail.deprecate": { tr: "Kullanımdan kaldır", en: "Deprecate" },
   "skill.detail.undeprecate": { tr: "Geri al", en: "Restore" },
   "skill.detail.packageMeta": { tr: "{{files}} dosya · {{size}}", en: "{{files}} files · {{size}}" },
+  "skill.detail.noPackageYet": { tr: "Henüz paketlenmiş sürüm yok; indirme SKILL.md dosyasını verir.", en: "No packaged version yet; downloading gives you the SKILL.md file." },
   "skill.detail.sha": { tr: "SHA-256: {{sha}}", en: "SHA-256: {{sha}}" },
   "skill.detail.filesTitle": { tr: "Paket dosyaları", en: "Package files" },
   "skill.detail.filesHint": { tr: "{{version}} sürümündeki dosyalar. SKILL.md, metadata.json ve LICENSE her pakette vardır.", en: "Files in version {{version}}. SKILL.md, metadata.json and LICENSE are in every package." },
