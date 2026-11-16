@@ -40,7 +40,7 @@ import { ToolsSection } from "@/features/tools/tools-section";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { findCategory, findSubcategory, isContentTypeId, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
-import type { SearchCursor, SearchKind } from "@/lib/supabase/search";
+import type { PostSearchKind, SearchCursor } from "@/lib/supabase/search";
 import { categoryHref, cn, formatCount, profileHref, tagHref, toolHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
@@ -111,8 +111,8 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   const { node: toastNode, show: showToast } = useToast();
   const [isSearching, setIsSearching] = useState(false);
   // Per-kind keyset cursor of the NEXT page (null = that group has no more results).
-  const [cursors, setCursors] = useState<Record<SearchKind, SearchCursor | null>>({ prompt: null, request: null, workflow: null, preset: null });
-  const [loadingMoreKind, setLoadingMoreKind] = useState<SearchKind | null>(null);
+  const [cursors, setCursors] = useState<Record<PostSearchKind, SearchCursor | null>>({ prompt: null, request: null, workflow: null, preset: null });
+  const [loadingMoreKind, setLoadingMoreKind] = useState<PostSearchKind | null>(null);
   // The query + filters the CURRENT results were fetched with, so "load more" continues that exact search.
   const searchedWith = useRef<{ query: string; filters: ContentSearchFilters } | null>(null);
   const normalized = text.trim();
@@ -249,7 +249,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   }
 
   /** Appends the next keyset page of ONE result group, continuing the exact search that produced it. */
-  async function loadMore(kind: SearchKind) {
+  async function loadMore(kind: PostSearchKind) {
     const last = searchedWith.current;
     const cursor = cursors[kind];
     if (!last || !cursor || loadingMoreKind) return;
@@ -281,7 +281,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
     }
   }
 
-  const loadMoreButton = (kind: SearchKind) =>
+  const loadMoreButton = (kind: PostSearchKind) =>
     cursors[kind] && (
       <LoadMoreButton wrapperClassName="flex justify-center pt-1" onLoadMore={() => void loadMore(kind)} loading={loadingMoreKind === kind} disabled={loadingMoreKind !== null} />
     );

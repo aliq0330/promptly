@@ -6,14 +6,24 @@ import { Eyebrow } from "@/features/content/detail-parts";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
-import { fetchSkillFeedPage } from "@/lib/supabase/skill-discovery";
-import type { SearchCursor } from "@/lib/supabase/search";
+import { searchContentIds, type SearchCursor } from "@/lib/supabase/search";
+import { fetchSkillsByIds } from "@/lib/supabase/skills";
 import type { Skill } from "@/types";
 import { SkillCard } from "./skill-card";
 
+const PAGE_SIZE = 12;
+
+/** One search page: ids from `search_content` in result order, then the cards (a row that vanished in between, e.g. a blocked author, is skipped). */
+async function fetchPage(query: string, cursor: SearchCursor | null): Promise<{ items: Skill[]; nextCursor: SearchCursor | null }> {
+  const { ids, nextCursor } = await searchContentIds("skill", query, {}, PAGE_SIZE, cursor);
+  const byId = new Map((await fetchSkillsByIds(ids)).map((skill) => [skill.id, skill]));
+  return { items: ids.flatMap((id) => byId.get(id) ?? []), nextCursor };
+}
+
 /**
- * Genel aramadaki "Skill'ler" grubu (docs/history/398-*): metin aramasında başlık/özet/etiket/araç/talimat eşleşen yayında + herkese açık Skill'ler (`skill_feed_page`),
- * gönderi gruplarının yanında. `search_content` değişmedi (Skill ayrı bir RPC'dir). Menü bayrağı kapalıyken grup yoktur. `onCount` "sonuç yok" metnini doğru tutar.
+ * Genel aramadaki "Skill'ler" grubu (docs/history/398-*, 402-*): metin aramasında başlık/özet/talimat/etiket eşleşen yayında + herkese açık Skill'ler, gönderi gruplarının yanında.
+ * Diğer türlerle AYNI arama motoru: `search_content` `p_kind='skill'` (keyset üçlüsü, alaka sırası); kartlar kimlik sırasıyla okunur. Menü bayrağı kapalıyken grup yoktur.
+ * `onCount` "sonuç yok" metnini doğru tutar.
  */
 export function SearchSkills({ query, onCount }: { query: string; onCount: (count: number) => void }) {
   const { t } = useTranslation();
@@ -25,7 +35,7 @@ export function SearchSkills({ query, onCount }: { query: string; onCount: (coun
   useEffect(() => {
     if (!SKILLS_MENU_ENABLED) return;
     const mine = ++generation.current;
-    fetchSkillFeedPage({ query, sort: "recommended" }, 12)
+    fetchPage(query, null)
       .then((page) => {
         if (mine !== generation.current) return;
         setSkills(page.items);
@@ -50,7 +60,7 @@ export function SearchSkills({ query, onCount }: { query: string; onCount: (coun
     const mine = generation.current;
     setLoadingMore(true);
     try {
-      const page = await fetchSkillFeedPage({ query, sort: "recommended" }, 12, cursor);
+      const page = await fetchPage(query, cursor);
       if (mine !== generation.current) return;
       setSkills((previous) => [...previous, ...page.items.filter((skill) => !previous.some((old) => old.id === skill.id))]);
       setCursor(page.nextCursor);

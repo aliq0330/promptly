@@ -581,7 +581,8 @@ await scenario("16. Arama seçili bölüme göre: Promptlar'da yalnız prompt ar
   // Tümü: dört tür + sekmeler.
   await page.getByPlaceholder("Prompt, kişi, etiket ara…").first().fill("kedi");
   await waitFor(() => (state.searchCalls ?? []).length >= 4);
-  assert.deepEqual([...new Set(state.searchCalls.map((c) => c.p_kind))].sort(), ["preset", "prompt", "request", "workflow"]);
+  // The four post kinds; a build with the Skills flag adds a fifth, `skill` (its own group, docs/history/402-*).
+  assert.deepEqual([...new Set(state.searchCalls.map((c) => c.p_kind))].filter((kind) => kind !== "skill").sort(), ["preset", "prompt", "request", "workflow"]);
   await page.locator("[data-section-menu]").filter({ hasText: "Tümü" }).waitFor(); // sonuç türü menüsü (docs/history/236-*)
   // Promptlar bölümü.
   await page.goto(`${BASE}/discover`);
