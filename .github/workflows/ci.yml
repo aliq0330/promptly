@@ -107,14 +107,6 @@ jobs:
           # Profilde "Skill'ler" bölümü (run-skills-social) bayrak arkasındadır; derleme bayrakla yapılmazsa bölüm hiç çizilmez.
           NEXT_PUBLIC_SKILLS_ENABLED: "true"
       - name: Run UI suites
+        # Paketler paralel koşar (her birinin kendi portu var, docs/history/412-*); en uzun paketler başta, iş dengesi için. Sonuçlar bu sırayla yazılır.
         run: |
-          set -o pipefail
-          status=0
-          for s in run-safety run-shared-cards run-detail-pages run-home-motion run-feed-filters run-search-notifications run-comment-extras run-telegram-settings run-save-collections run-collab-collections run-skills-package run-skills-social; do
-            echo "== $s"
-            out=$(node tests/messaging-ui/$s.mjs 2>&1) && ok=1 || { ok=0; status=1; }
-            echo "$out" | tail -3
-            # Düşen senaryonun adı ve hata ayrıntısı günlükte görünsün (son 3 satır yetmiyordu, #466).
-            [ "$ok" = 1 ] || echo "$out" | grep -A12 -E "^(✗|FAIL)" | head -60
-          done
-          exit $status
+          tests/messaging-ui/run-parallel.sh run-detail-pages run-skills-social run-comment-extras run-feed-filters run-skills-package run-shared-cards run-home-motion run-collab-collections run-safety run-search-notifications run-telegram-settings run-save-collections
