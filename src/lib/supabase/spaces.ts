@@ -3,6 +3,7 @@ import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { fetchRequestsByIds } from "./requests";
 import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
+import { fetchSkillsByIds } from "./skills";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { translateForRuntime } from "@/lib/i18n/runtime";
 import { resizeImageToBlob } from "@/lib/utils";
@@ -22,7 +23,7 @@ import {
   type SpaceVisibility,
 } from "@/lib/spaces";
 import type { ConnectorArrow, ConnectorRoute, ConnectorStyle } from "@/lib/space-connectors";
-import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
+import type { Preset, Prompt, PromptRequest, Skill, Workflow } from "@/types";
 
 /**
  * Promptly Spaces veri katmanı (docs/history/213-*). Okuma RLS'e dayanır (`can_read_space`: üye · herkese açık · açılmış bağlantı);
@@ -1341,10 +1342,11 @@ export interface SpaceSources {
   requests: Map<string, PromptRequest>;
   workflows: Map<string, Workflow>;
   presets: Map<string, Preset>;
+  skills: Map<string, Skill>;
 }
 
 export function emptySources(): SpaceSources {
-  return { prompts: new Map(), requests: new Map(), workflows: new Map(), presets: new Map() };
+  return { prompts: new Map(), requests: new Map(), workflows: new Map(), presets: new Map(), skills: new Map() };
 }
 
 /**
@@ -1353,13 +1355,13 @@ export function emptySources(): SpaceSources {
  */
 export async function fetchSpaceSources(items: SpaceItem[]): Promise<SpaceSources> {
   const promptIds = new Set<string>();
-  const ids: Record<SpaceContentType, Set<string>> = { request: new Set(), workflow: new Set(), preset: new Set() };
+  const ids: Record<SpaceContentType, Set<string>> = { request: new Set(), workflow: new Set(), preset: new Set(), skill: new Set() };
   for (const item of items) {
     if (item.promptId) promptIds.add(item.promptId);
     if (item.sourcePromptId) promptIds.add(item.sourcePromptId);
     if (item.kind === "content" && item.contentType && item.contentId) ids[item.contentType].add(item.contentId);
   }
-  const [prompts, requests, workflows, presets] = await Promise.all([
+  const [prompts, requests, workflows, presets, skills] = await Promise.all([
     promptIds.size
       ? supabase
           .from("prompts")
@@ -1373,12 +1375,14 @@ export async function fetchSpaceSources(items: SpaceItem[]): Promise<SpaceSource
     ids.request.size ? fetchRequestsByIds([...ids.request]) : Promise.resolve([] as PromptRequest[]),
     ids.workflow.size ? fetchWorkflowsByIds([...ids.workflow]) : Promise.resolve([] as Workflow[]),
     ids.preset.size ? fetchPresetsByIds([...ids.preset]) : Promise.resolve([] as Preset[]),
+    ids.skill.size ? fetchSkillsByIds([...ids.skill]) : Promise.resolve([] as Skill[]),
   ]);
   return {
     prompts: new Map(prompts.map((p) => [p.id, p])),
     requests: new Map(requests.map((r) => [r.id, r])),
     workflows: new Map(workflows.map((w) => [w.id, w])),
     presets: new Map(presets.map((p) => [p.id, p])),
+    skills: new Map(skills.map((s) => [s.id, s])),
   };
 }
 

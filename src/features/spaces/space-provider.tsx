@@ -131,6 +131,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
         requests: new Map([...prev.requests, ...next.requests]),
         workflows: new Map([...prev.workflows, ...next.workflows]),
         presets: new Map([...prev.presets, ...next.presets]),
+        skills: new Map([...prev.skills, ...next.skills]),
       }));
     } catch {
       // Kaynaklar okunamadıysa öğeler "erişilemiyor" görünür; bir sonraki eklemede yeniden denenir.

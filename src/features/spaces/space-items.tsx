@@ -19,7 +19,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn, formatRelativeTime, presetHref, profileHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { cn, formatRelativeTime, presetHref, profileHref, promptHref, requestHref, skillHref, workflowHref } from "@/lib/utils";
 import { boundsOf, placeMany, topZ } from "@/lib/space-board";
 import {
   defaultItemSize,
@@ -35,7 +35,7 @@ import {
 } from "@/lib/spaces";
 import { createSpaceGroup, deleteSpaceGroup, updateSpaceGroup, type NewSpaceItem, type SpaceItem, type SpaceSources } from "@/lib/supabase/spaces";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
+import type { Preset, Prompt, PromptRequest, Skill, Workflow } from "@/types";
 import { useSpaceContext } from "./space-provider";
 import { FormError, SubmitButton } from "./space-forms";
 import { DIALOG_FOOTER_CLASS, SpaceDialog } from "./space-modals";
@@ -52,6 +52,7 @@ export interface ResolvedSource {
   request: PromptRequest | null;
   workflow: Workflow | null;
   preset: Preset | null;
+  skill: Skill | null;
   /** Kaynağın detay adresi (yalnız okunabiliyorsa). */
   href: string | null;
   title: string;
@@ -63,9 +64,10 @@ export function resolveSource(item: SpaceItem, sources: SpaceSources, readable: 
   const request = item.contentType === "request" && item.contentId ? (sources.requests.get(item.contentId) ?? null) : null;
   const workflow = item.contentType === "workflow" && item.contentId ? (sources.workflows.get(item.contentId) ?? null) : null;
   const preset = item.contentType === "preset" && item.contentId ? (sources.presets.get(item.contentId) ?? null) : null;
-  const href = prompt ? promptHref(prompt) : request ? requestHref(request) : workflow ? workflowHref(workflow) : preset ? presetHref(preset) : null;
-  const title = item.title || prompt?.title || request?.title || workflow?.title || preset?.title || "";
-  return { state, prompt, request, workflow, preset, href, title };
+  const skill = item.contentType === "skill" && item.contentId ? (sources.skills.get(item.contentId) ?? null) : null;
+  const href = prompt ? promptHref(prompt) : request ? requestHref(request) : workflow ? workflowHref(workflow) : preset ? presetHref(preset) : skill ? skillHref(skill) : null;
+  const title = item.title || prompt?.title || request?.title || workflow?.title || preset?.title || skill?.title || "";
+  return { state, prompt, request, workflow, preset, skill, href, title };
 }
 
 const UNAVAILABLE_KEY: Record<SourceState, TranslationKey | null> = {

@@ -595,7 +595,7 @@ export function FocusAddToSpace({ item, className }: { item: PostFeedItem; class
   const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  if (!user || item.kind === "skill" || item.data.communityId) return null;
+  if (!user || ("communityId" in item.data && item.data.communityId)) return null;
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={className} data-focus-add-to-space="">

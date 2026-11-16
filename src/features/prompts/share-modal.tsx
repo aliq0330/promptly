@@ -278,9 +278,9 @@ function selfTargets(target: ShareModalTarget): { space: AddToSpaceTarget | null
     const x = target.preset;
     return { space: x.communityId ? null : { type: "preset", id: x.id }, save: { presetId: x.id } };
   }
-  // Skill: koleksiyona kaydedilir; Space'e eklenemez (Space içerik türleri arasında değil).
+  // Skill: Space'e eklenir (docs/history/404-*) ve koleksiyona kaydedilir.
   if (target.contentType === "skill") {
-    return { space: null, save: target.skill.status === "published" && target.skill.visibility === "public" ? { skillId: target.skill.id } : null };
+    return { space: { type: "skill", id: target.skill.id }, save: target.skill.status === "published" && target.skill.visibility === "public" ? { skillId: target.skill.id } : null };
   }
   return { space: null, save: null };
 }

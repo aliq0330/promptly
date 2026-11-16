@@ -6,5 +6,5 @@
 - **`feed_page`:** Skill artık "Medya" süzgecini İstek ve Ayar paketi gibi GEÇER (kendi özeti görselin yerini tutar; Odak'ın varsayılan Medya açık görünümünde de görünür). Taksonomi/araç süzgeçlerinde hâlâ girmez.
 - **İstemci:** `PostEntry`/`PostFeedItem` Skill'i içerir (yalnız alıntı dışarıda). Sana özel kartında neden satırı Skill için de çizilir (etiket adı yerine slug); "İlgimi çekiyor" sorusu Skill'de sorulmaz.
 - **Odak:** Skill slaytı = özet + uyumlu araçlar (görselsiz İstek/Ayar paketi gibi kendi metni görselin yerinde); ray (beğeni · yorum · kaydet · paylaş), yorum sayfası ve Bilgi sayfası (özet, "Ayrıntıları aç") çalışır; küçük resim şeridinde Skill simgesi; tür süzgecinde "Skill'ler" seçeneği YALNIZ `NEXT_PUBLIC_SKILLS_ENABLED=true` derlemesinde listelenir. Kullanılmayan eski `FocusCard` ailesine dokunulmadı.
-- **Sınır:** Space'e ekle Skill'de Odak'ta gizlidir (404-*'te Space'e eklenebilir olunca açılır). Skill kapağı (`skill-files` özel bucket) Odak slaytında kullanılmaz, simge + özet çizilir.
+- **Sınır:** Skill kapağı (`skill-files` özel bucket) Odak slaytında kullanılmaz, simge + özet çizilir.
 - Testler: SQL `skills-for-you` (11 kontrol), `skills-feed` (Medya beklentisi güncellendi); ağ taklitli `run-skills-social` 36/36 (yeni senaryo 30 Sana özel, 31 Odak), `run-focus-feed` 35/35 (bayrak duyarlı), `run-feed-filters` 18/18.

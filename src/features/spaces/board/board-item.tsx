@@ -5,6 +5,7 @@ import { Component, memo, type ReactNode } from "react";
 import { EyeOff } from "@/components/icons/eye-off";
 import { Lock } from "@/components/icons/lock";
 import { Palette } from "@/components/icons/palette";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
@@ -235,12 +236,12 @@ function WorkflowFlowItem({ item, fallback, lowDetail }: { item: SpaceItem; fall
 
 function ContentCard({ item, resolved, reason, lowDetail }: { item: SpaceItem; resolved: ResolvedSource; reason: ReturnType<typeof sourceReasonKey>; lowDetail: boolean }) {
   const { t } = useTranslation();
-  const Icon = item.contentType === "workflow" ? Workflow : item.contentType === "preset" ? SlidersHorizontal : Sparkles;
+  const Icon = item.contentType === "workflow" ? Workflow : item.contentType === "preset" ? SlidersHorizontal : item.contentType === "skill" ? GraduationCap : Sparkles;
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border border-border-soft bg-surface p-3 shadow-card">
       <p className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-[0.08em] text-primary">
         <Icon size={12} aria-hidden />
-        {t(item.contentType === "workflow" ? "spaces.content.workflow" : item.contentType === "preset" ? "spaces.content.preset" : "spaces.content.request")}
+        {t(item.contentType === "workflow" ? "spaces.content.workflow" : item.contentType === "preset" ? "spaces.content.preset" : item.contentType === "skill" ? "spaces.content.skill" : "spaces.content.request")}
       </p>
       {!lowDetail && <p className="mt-1 line-clamp-3 break-words text-small font-semibold text-text">{reason ? t(reason) : resolved.title}</p>}
     </div>
