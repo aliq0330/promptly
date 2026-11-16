@@ -188,6 +188,7 @@ const CHECKS = [
   { name: "skills.cover_path (Skill kapak görseli, docs/history/399-*)", get: () => `skills?select=${encodeURIComponent("id,cover_path")}&limit=1` },
   { name: "rpc skill_works_by_version ziyaretçiye açık (sürüm başına oy toplamı, docs/history/399-*)", rpc: "skill_works_by_version", body: { p_skill_id: "00000000-0000-4000-8000-000000000000" } },
   { name: "rpc set_skill_works_version ziyaretçiye KAPALI olmalı (docs/history/399-*)", rpc: "set_skill_works_version", body: { p_skill_id: "00000000-0000-4000-8000-000000000000", p_version: null }, mustBeDenied: true },
+  { name: "community_posts.skill_id (Skill topluluğa duyurulur, docs/history/408-*)", get: () => `community_posts?select=${encodeURIComponent("id,skill_id")}&limit=1` },
   { name: "skills (Skill çekirdeği, docs/history/388-*)", get: () => `skills?select=${encodeURIComponent("id,slug,title,version,status,visibility,use_count")}&limit=1` },
   { name: "skill_versions (değişmez sürüm + paket özeti, docs/history/389-*)", get: () => `skill_versions?select=${encodeURIComponent("id,skill_id,version,changelog,package_path,package_sha256,package_size,file_count,manifest,deprecated_at")}&limit=1` },
   { name: "skill_tags (Skill etiketleri, docs/history/389-*)", get: () => `skill_tags?select=skill_id,tag_slug&limit=1` },

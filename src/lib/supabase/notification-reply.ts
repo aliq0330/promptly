@@ -2,6 +2,7 @@ import {
   postCommentOnCommunityPost,
   postCommentOnPreset,
   postCommentOnPrompt,
+  postCommentOnSkill,
   postCommentOnQuote,
   postCommentOnRequest,
   postCommentOnResult,
@@ -30,6 +31,8 @@ export async function postNotificationReply(target: CommentReplyTarget, authorId
       return postCommentOnWorkflow(contentId, authorId, body, parentCommentId, extras);
     case "preset":
       return postCommentOnPreset(contentId, authorId, body, parentCommentId, extras);
+    case "skill":
+      return postCommentOnSkill(contentId, authorId, body, parentCommentId, extras);
     case "quote":
       return postCommentOnQuote(contentId, authorId, body, parentCommentId, extras);
     case "community_post":

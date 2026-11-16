@@ -4,7 +4,8 @@ import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { presetHref, promptHref, requestHref, skillHref, workflowHref } from "@/lib/utils";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import { spaceHref } from "@/lib/spaces";
 import { summaryArt } from "@/lib/supabase/spaces";
 import { SpacesIcon } from "@/features/spaces/space-visuals";
@@ -12,7 +13,7 @@ import type { CommunityPostContent, CommunityPostType } from "@/lib/supabase/com
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptMedia, Tag, UserProfile } from "@/types";
 
-/** Dört içerik türünün başvuru kartı ve başvuru sayfası için ortak özeti (kart/sayfa tür bilmeden çizilir). */
+/** Beş içerik türünün (Prompt · İstek · Workflow · Ayar paketi · Skill; Space ayrı) başvuru kartı ve başvuru sayfası için ortak özeti (kart/sayfa tür bilmeden çizilir). */
 export interface ContentSummary {
   type: CommunityPostType;
   /** İçeriğin kendi sayfası ("Orijinal içeriği aç"). */
@@ -46,6 +47,7 @@ const TYPE_LABEL: Record<CommunityPostType, TranslationKey> = {
   workflow: "communities.feed.type.workflow",
   preset: "communities.feed.type.preset",
   space: "communities.feed.type.space",
+  skill: "communities.feed.type.skill",
 };
 
 export function summarizeContent(content: CommunityPostContent): ContentSummary {
@@ -125,6 +127,23 @@ export function summarizeContent(content: CommunityPostContent): ContentSummary 
       detail: null,
       spaceArt: art,
       palette: x.palette,
+    };
+  }
+  if (content.type === "skill") {
+    const x = content.data;
+    return {
+      type: "skill",
+      href: skillHref(x),
+      title: x.title,
+      description: x.summary,
+      author: x.creator ?? null,
+      media: [],
+      playable: false,
+      tags: [],
+      tools: [],
+      typeIcon: GraduationCap,
+      typeLabelKey: TYPE_LABEL.skill,
+      detail: null,
     };
   }
   const x = content.data;

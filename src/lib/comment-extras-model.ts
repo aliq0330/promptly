@@ -15,7 +15,7 @@ export interface CommentExtrasColumns {
   attach_id?: string | null;
 }
 
-export const COMMENT_ATTACHMENT_TYPES: readonly CommentAttachmentType[] = ["prompt", "request", "workflow", "preset", "space"];
+export const COMMENT_ATTACHMENT_TYPES: readonly CommentAttachmentType[] = ["prompt", "request", "workflow", "preset", "space", "skill"];
 
 /** Fotoğraf yolu biçimi: `{yazar}/{uuid}.{uzantı}` (veritabanı CHECK'iyle AYNI; yazar kimliği ayrıca satırın `author_id`'sine eşit olmalıdır). */
 const PHOTO_PATH = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp|gif)$/;

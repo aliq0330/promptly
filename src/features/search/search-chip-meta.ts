@@ -9,6 +9,7 @@ import { Wrench } from "@/components/icons/wrench";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { findTool } from "@/lib/ai-tool-catalog";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import type { ContentKind, SearchToken } from "./search-tokens";
 
 /** The post-type icons are the site-wide ones (Prompt · İstek · Workflow · Hazır ayar). */
@@ -17,12 +18,14 @@ export const KIND_ICON: Record<ContentKind, IconComponent> = {
   request: Sparkles,
   workflow: WorkflowIcon,
   preset: SlidersHorizontal,
+  skill: GraduationCap,
 };
 export const KIND_LABEL: Record<ContentKind, TranslationKey> = {
   prompt: "search.kindPrompt",
   request: "request.title",
   workflow: "workflow.singular",
   preset: "preset.singular",
+  skill: "skill.singular",
 };
 
 /** Icon + visible label of one chip — shared by the chip strip, the suggestion list and the filter sheet. */

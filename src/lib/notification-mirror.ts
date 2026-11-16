@@ -84,6 +84,7 @@ export type NotificationTargetKind =
   | "result"
   | "workflow"
   | "preset"
+  | "skill"
   | "quote"
   | "community_post"
   | "space"
@@ -110,6 +111,7 @@ const PATH_KINDS: [prefix: string, kind: NotificationTargetKind][] = [
   ["/results/local", "result"],
   ["/workflows/local", "workflow"],
   ["/presets/local", "preset"],
+  ["/skills/local", "skill"],
   ["/quotes/local", "quote"],
   ["/communities/post/local", "community_post"],
   ["/spaces/local", "space"],

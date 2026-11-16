@@ -18,7 +18,8 @@ import { SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { AttachmentCard } from "@/lib/supabase/comment-attachments";
 import { spaceHref } from "@/lib/spaces";
-import { presetHref, promptHref, requestHref, workflowHref, cn } from "@/lib/utils";
+import { presetHref, promptHref, requestHref, skillHref, workflowHref, cn } from "@/lib/utils";
+import { GraduationCap } from "@/components/icons/graduation-cap";
 import type { CommentAttachment, CommentAttachmentType } from "@/types";
 
 export const ATTACHMENT_ICONS: Record<CommentAttachmentType, IconComponent> = {
@@ -27,6 +28,7 @@ export const ATTACHMENT_ICONS: Record<CommentAttachmentType, IconComponent> = {
   workflow: WorkflowIcon,
   preset: SlidersHorizontal,
   space: Shapes,
+  skill: GraduationCap,
 };
 
 export function attachmentHref(type: CommentAttachmentType, id: string): string {
@@ -35,6 +37,7 @@ export function attachmentHref(type: CommentAttachmentType, id: string): string 
     case "request": return requestHref({ id });
     case "workflow": return workflowHref({ id });
     case "preset": return presetHref({ id });
+    case "skill": return skillHref({ id });
     default: return spaceHref(id);
   }
 }

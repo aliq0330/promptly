@@ -31,11 +31,11 @@ const RISK_LABEL: Record<ScriptRiskCode, TranslationKey> = {
   obfuscation: "skill.scan.obfuscation",
 };
 
-type PackageState = { status: "idle" | "loading" | "ready" | "error"; files: Map<string, Uint8Array> };
+type PackageState = { status: "idle" | "loading" | "ready" | "error"; files: Map<string, Uint8Array>; skillMd: string | null };
 
 /** Paketin ZIP'ini (imzalı adres) bir kez, ilk dosya açılınca indirir ve bellekte okur. Hiçbir dosya çalıştırılmaz. SKILL.md ZIP'siz de görünür. */
 function usePackageContents(version: SkillVersion) {
-  const [state, setState] = useState<PackageState>({ status: "idle", files: new Map() });
+  const [state, setState] = useState<PackageState>({ status: "idle", files: new Map(), skillMd: null });
   const started = useRef(false);
   const load = useCallback(() => {
     if (started.current) return;
@@ -48,10 +48,10 @@ function usePackageContents(version: SkillVersion) {
         if (!response.ok) throw new Error("fetch_failed");
         const { readSkillZip } = await import("@/lib/skills/zip");
         const result = readSkillZip(new Uint8Array(await response.arrayBuffer()));
-        setState({ status: "ready", files: new Map(result.files.map((file) => [file.path, file.bytes])) });
+        setState({ status: "ready", files: new Map(result.files.map((file) => [file.path, file.bytes])), skillMd: result.skillMd });
       } catch {
         started.current = false;
-        setState({ status: "error", files: new Map() });
+        setState({ status: "error", files: new Map(), skillMd: null });
       }
     })();
   }, [version.packagePath]);
@@ -79,7 +79,10 @@ export function SkillFilesSection({ version, skillMd, onDownload }: { version: S
   const files = useMemo(() => version.manifest?.files ?? [], [version.manifest]);
   const [selected, setSelected] = useState(SKILL_MD);
   const [treeOpen, setTreeOpen] = useState(false);
+  const [showPublished, setShowPublished] = useState(false);
   const pkg = usePackageContents(version);
+  // SKILL.md ZIP'siz, çalışma kopyasından hemen gösterilir; paket okununca yayınlanan sürümdekinden farklıysa kullanıcıya söylenir (indirilen ZIP yayınlanan halini içerir).
+  const differs = pkg.status === "ready" && pkg.skillMd !== null && pkg.skillMd !== skillMd;
 
   const treeFiles: SkillTreeFile[] = useMemo(
     () => [
@@ -103,7 +106,7 @@ export function SkillFilesSection({ version, skillMd, onDownload }: { version: S
   let text: string | null = null;
   let body: React.ReactNode;
   if (selected === SKILL_MD) {
-    text = skillMd;
+    text = showPublished && differs ? pkg.skillMd : skillMd;
   } else if (pkg.status === "ready") {
     const bytes = pkg.files.get(selected);
     text = bytes ? decodeUtf8(bytes) : null;
@@ -128,6 +131,14 @@ export function SkillFilesSection({ version, skillMd, onDownload }: { version: S
     const shownText = text;
     body = (
       <>
+        {selected === SKILL_MD && differs && (
+          <div className="space-y-2 px-3 pt-3" data-skill-md-differs="">
+            <InlineAlert tone="info">{t(showPublished ? "skill.pkg.showingPublished" : "skill.pkg.showingDraft", { version: version.version })}</InlineAlert>
+            <Button type="button" variant="outline" size="sm" onClick={() => setShowPublished((value) => !value)}>
+              {t(showPublished ? "skill.pkg.showDraft" : "skill.pkg.showPublished", { version: version.version })}
+            </Button>
+          </div>
+        )}
         {current?.script && (
           <div className="px-3 pt-3">
             <InlineAlert tone="warning">{t("skill.detail.scriptWarning")}</InlineAlert>

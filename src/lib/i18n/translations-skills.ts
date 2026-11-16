@@ -124,6 +124,7 @@ export const skillsTranslations = {
   "skill.works.useFirst": { tr: "Oy vermek için Skill'i önce indir.", en: "Download the Skill first to vote." },
   // Dağıtım (docs/history/393-*)
   "skill.detail.moreDownloads": { tr: "Diğer indirme seçenekleri", en: "More download options" },
+  "skill.detail.copyFailed": { tr: "Kopyalanamadı. Tarayıcı panoya erişimi engelledi.", en: "Couldn't copy. The browser blocked clipboard access." },
   "skill.detail.copyMd": { tr: "SKILL.md'yi kopyala", en: "Copy SKILL.md" },
   "skill.detail.downloadJson": { tr: "Özet (JSON) indir", en: "Download summary (JSON)" },
   "skill.detail.pin": { tr: "Sabitle", en: "Pin" },

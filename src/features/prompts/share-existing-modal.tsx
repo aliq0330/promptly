@@ -13,16 +13,18 @@ import { spaceHref } from "@/lib/spaces";
 import { LoadMore } from "@/features/feed/load-more";
 import { useShareableContent } from "@/features/communities/use-shareable-content";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn, presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { cn, presetHref, promptHref, requestHref, skillHref, workflowHref } from "@/lib/utils";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 
-const TYPES: CommunityPostType[] = ["prompt", "request", "workflow", "preset", "space"];
+const TYPES: CommunityPostType[] = SKILLS_MENU_ENABLED ? ["prompt", "request", "workflow", "preset", "skill", "space"] : ["prompt", "request", "workflow", "preset", "space"];
 
 function hrefOf(type: CommunityPostType, id: string): string {
   if (type === "prompt") return promptHref({ id });
   if (type === "request") return requestHref({ id });
   if (type === "workflow") return workflowHref({ id });
   if (type === "preset") return presetHref({ id });
+  if (type === "skill") return skillHref({ id });
   return spaceHref(id);
 }
 

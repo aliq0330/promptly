@@ -183,7 +183,7 @@ export type CommentMedia =
   | { kind: "photo"; path: string; width: number | null; height: number | null }
   | { kind: "gif"; gifId: string; width: number | null; height: number | null };
 
-export type CommentAttachmentType = "prompt" | "request" | "workflow" | "preset" | "space";
+export type CommentAttachmentType = "prompt" | "request" | "workflow" | "preset" | "space" | "skill";
 
 export interface CommentAttachment {
   type: CommentAttachmentType;

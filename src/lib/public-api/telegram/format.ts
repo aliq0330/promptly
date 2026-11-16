@@ -90,5 +90,15 @@ export function splitKind(text: string): { kind: SearchKind; query: string } {
   return kind ? { kind, query: rest.join(" ") } : { kind: "prompt", query: text.trim() };
 }
 
+/**
+ * Skill (docs/history/408-*) bir "gönderi türü" değildir: kişisel komutlar (düzenle/taslak) onu bilmez, bu yüzden `SearchKind`'a girmez.
+ * `/ara skill sorgu` ve satır içi modda ilk sözcük bu adlardan biriyse Skill aranır.
+ */
+const SKILL_WORDS = new Set(["skill", "skills", "beceri", "beceriler"]);
+export function splitSkillQuery(text: string): { query: string } | null {
+  const [first, ...rest] = text.trim().split(/\s+/);
+  return first && SKILL_WORDS.has(first.toLowerCase()) ? { query: rest.join(" ") } : null;
+}
+
 export const KIND_CALLBACK: Record<Exclude<SearchKind, "prompt">, string> = { request: "r", preset: "a", workflow: "w" };
 export const CALLBACK_KIND: Record<string, Exclude<SearchKind, "prompt">> = { r: "request", a: "preset", w: "workflow" };

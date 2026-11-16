@@ -17,7 +17,8 @@ import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 import { KIND_ICON, KIND_LABEL, tokenChip } from "./search-chip-meta";
-import { ALL_KINDS, toggleToken, tokenKey, type SearchToken } from "./search-tokens";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
+import { ALL_KINDS, FILTER_KINDS, toggleToken, tokenKey, type SearchToken } from "./search-tokens";
 
 export type SearchSort = NonNullable<ContentSearchFilters["sort"]>;
 const SORTS: { key: SearchSort; label: TranslationKey }[] = [
@@ -73,7 +74,7 @@ export function SearchFilterSections({
       {!hideKinds && (
         <SheetSection title={t("search.groupKind")}>
           <SheetChips>
-            {ALL_KINDS.map((type) => {
+            {(SKILLS_MENU_ENABLED ? FILTER_KINDS : ALL_KINDS).map((type) => {
               const token: SearchToken = { kind: "content", type };
               return (
                 <Chip key={type} icon={KIND_ICON[type]} selected={has(token)} onClick={() => toggle(token)} className="h-10">

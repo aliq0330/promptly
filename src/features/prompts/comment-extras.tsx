@@ -14,15 +14,13 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { CompactContentCard, ATTACHMENT_ICONS, type AttachmentState } from "@/features/content/compact-content-card";
-import { LIBRARY_TYPES } from "@/features/messages/chat-attach";
+import { CHAT_LIBRARY_TYPES, useChatShareable, type ChatLibraryType } from "@/features/messages/chat-attach";
 import { GifPicker } from "@/features/gif/gif-picker";
 import { LoadMore } from "@/features/feed/load-more";
 import { useGrowingList } from "@/features/content/use-growing-list";
-import { useShareableContent } from "@/features/communities/use-shareable-content";
 import { getCachedCommentMediaUrl, removeCommentPhotos, resolveCommentMediaUrls, uploadCommentPhoto } from "@/lib/supabase/comment-media";
 import { fetchSavedPickableWindow, SAVED_SOURCE_TYPES, type PickableContent } from "@/lib/supabase/comment-attachments";
 import { ALLOWED_IMAGE_MIME, MessageImageError, prepareMessageImage, sniffImageMime, type PreparedMessageImage } from "@/lib/supabase/message-images";
-import type { CommunityPostType } from "@/lib/supabase/communities";
 import { giphyUrl, type GifItem } from "@/lib/giphy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { translateForRuntime } from "@/lib/i18n/runtime";
@@ -450,13 +448,13 @@ type Source = "mine" | "saved";
  */
 export function CommentContentPicker({ userId, onPick, onClose }: { userId: string; onPick: (item: PickableContent) => void; onClose: () => void }) {
   const { t } = useTranslation();
-  const [type, setType] = useState<CommunityPostType>("prompt");
+  const [type, setType] = useState<ChatLibraryType>("prompt");
   const [source, setSource] = useState<Source>("mine");
   const canSave = SAVED_SOURCE_TYPES.includes(type);
   const activeSource: Source = canSave ? source : "mine";
   const [selected, setSelected] = useState<PickableContent | null>(null);
 
-  const mine = useShareableContent(userId, type);
+  const mine = useChatShareable(userId, type);
   const [savedSearch, setSavedSearch] = useState("");
   const [savedDebounced, setSavedDebounced] = useState("");
   useEffect(() => {
@@ -465,7 +463,7 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
   }, [savedSearch]);
   const saved = useGrowingList<PickableContent>(
     `${userId}|${type}|${savedDebounced}|${activeSource === "saved"}`,
-    async (limit) => (activeSource === "saved" && canSave ? fetchSavedPickableWindow(userId, type as "prompt" | "workflow" | "preset", { search: savedDebounced, limit }) : { items: [], hasMore: false }),
+    async (limit) => (activeSource === "saved" && canSave ? fetchSavedPickableWindow(userId, type as "prompt" | "workflow" | "preset" | "skill", { search: savedDebounced, limit }) : { items: [], hasMore: false }),
     30,
   );
 
@@ -476,7 +474,7 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
   const loadError = list.failed && items !== null && items.length === 0;
   const Icon = ATTACHMENT_ICONS[type];
 
-  function changeType(next: CommunityPostType) {
+  function changeType(next: ChatLibraryType) {
     setType(next);
     setSelected(null);
     mine.setSearch("");
@@ -499,7 +497,7 @@ export function CommentContentPicker({ userId, onPick, onClose }: { userId: stri
           </button>
         </div>
         <div className="shrink-0 space-y-3 px-5 pb-2 pt-2">
-          <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={changeType} items={LIBRARY_TYPES.map(({ type: value }) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
+          <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={changeType} items={CHAT_LIBRARY_TYPES.map(({ type: value }) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
           {canSave && (
             <Tabs
               variant="underline"

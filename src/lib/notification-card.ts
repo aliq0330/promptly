@@ -33,6 +33,7 @@ const LIKED_OBJECT: Partial<Record<NotificationTargetKind, TranslationKey>> = {
   request: "nc.obj.request",
   workflow: "nc.obj.workflow",
   preset: "nc.obj.preset",
+  skill: "nc.obj.skill",
   result: "nc.obj.result",
   quote: "nc.obj.quote",
   space: "nc.obj.space",

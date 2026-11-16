@@ -30,6 +30,7 @@ import { searchProfiles } from "@/lib/supabase/profiles";
 import { searchRequestsPage } from "@/lib/supabase/requests";
 import { SearchQuotes } from "@/features/quotes/search-quotes";
 import { SearchSkills } from "@/features/skills/search-skills";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { searchWorkflowsPage } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { searchPresetsPage } from "@/lib/supabase/presets";
@@ -122,6 +123,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   const { filters: tokenFilters, kinds: tokenKinds } = useMemo(() => tokensToQuery(tokens), [tokens]);
   // A scope decides the kinds itself (a people / communities / tags / tools scope searches no posts at all).
   const kinds: ContentKind[] = scope ? (scope.kind === "content" ? [scope.content] : []) : tokenKinds;
+  const skillFilters = useMemo<ContentSearchFilters>(() => ({ ...tokenFilters, sort }), [tokenFilters, sort]);
   const scopeKey = scope ? (scope.kind === "content" ? `content:${scope.content}` : scope.kind) : "";
   const singleMedia = tokenFilters.contentTypes?.length === 1 ? tokenFilters.contentTypes[0] : null;
   const category = singleMedia ? subFilter.category : null;
@@ -287,7 +289,10 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
     );
 
   const textOnly = !hasTokens;
-  const quoteTotal = !scope && textOnly && normalized.length >= 2 ? quoteHits + skillHits : 0;
+  // Skill grubu: düz metin aramasında (eskisi gibi) ya da "Skill" türü çipi seçiliyse (çip yalnız Skill'i arar; yazar/etiket çipleri sunucuda uygulanır).
+  const skillChip = kinds.includes("skill");
+  const showSkills = !scope && SKILLS_MENU_ENABLED && (skillChip ? normalized.length >= 2 || hasTokens : textOnly && normalized.length >= 2);
+  const quoteTotal = (!scope && textOnly && normalized.length >= 2 ? quoteHits : 0) + (showSkills ? skillHits : 0);
   const noPosts = prompts.length === 0 && workflows.length === 0 && presets.length === 0 && requests.length === 0 && quoteTotal === 0;
   const nothingFound = noPosts && (!textOnly || (users.length === 0 && tags.length === 0 && communities.items.length === 0));
   const taxonomy: TaxonomyFilterValue = { contentType: singleMedia, category, subcategory };
@@ -515,7 +520,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
               </section>
             )}
             {!scope && textOnly && normalized.length >= 2 && <SearchQuotes query={normalized} onCount={setQuoteHits} />}
-            {!scope && textOnly && normalized.length >= 2 && <SearchSkills query={normalized} onCount={setSkillHits} />}
+            {showSkills && <SearchSkills query={normalized} filters={skillFilters} onCount={setSkillHits} />}
             {(tab === "posts" ? noPosts : nothingFound) && (
               <div className="space-y-3 py-6 text-center">
                 <LineArtScene kind="search" className="mx-auto w-full max-w-[16rem] rounded-xl border border-border-soft" />

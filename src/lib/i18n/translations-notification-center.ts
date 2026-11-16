@@ -17,6 +17,7 @@ export const notificationCenterTranslations = {
   "nc.obj.request": { tr: "isteğini", en: "request" },
   "nc.obj.workflow": { tr: "workflow'unu", en: "workflow" },
   "nc.obj.preset": { tr: "ayar paketini", en: "preset" },
+  "nc.obj.skill": { tr: "Skill'ini", en: "skill" },
   "nc.obj.result": { tr: "sonucunu", en: "result" },
   "nc.obj.quote": { tr: "alıntını", en: "quote" },
   "nc.obj.space": { tr: "Space'ini", en: "Space" },
@@ -68,6 +69,7 @@ export const notificationCenterTranslations = {
   "nc.open.prompt": { tr: "Promptu aç", en: "Open prompt" },
   "nc.open.request": { tr: "İsteği aç", en: "Open request" },
   "nc.open.workflow": { tr: "Workflow'u aç", en: "Open workflow" },
+  "nc.open.skill": { tr: "Skill'i aç", en: "Open skill" },
   "nc.open.preset": { tr: "Ayar paketini aç", en: "Open preset" },
   "nc.open.space": { tr: "Space'i aç", en: "Open Space" },
 

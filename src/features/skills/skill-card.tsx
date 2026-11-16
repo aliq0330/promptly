@@ -22,6 +22,7 @@ import { TextArt, TextArtTitle } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILL_COMPAT_LABEL, skillCategoryName, skillLabelText } from "@/lib/skills/categories";
 import { absoluteUrl, skillHref } from "@/lib/utils";
+import { usePostMenuExtras } from "@/features/prompts/post-menu-extras";
 import { useSkillCategories } from "./use-skill-categories";
 import { SkillCoverCard } from "./skill-cover-card";
 import type { Skill } from "@/types";
@@ -39,11 +40,13 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
 
   const { node, show } = useToast();
   const { user } = useAuth();
+  // Sana özel / Keşfet: "İlgimi çekiyor / çekmiyor" satırları alt ağaçtan gelir (docs/history/408-*; normal kartlarla aynı tek menü).
+  const extras = usePostMenuExtras();
   const [spaceOpen, setSpaceOpen] = useState(false);
   const shareable = skill.status === "published" && skill.visibility === "public";
   // Kartın ⋮ menüsü normal prompt kartıyla aynı satırları taşır (docs/history/404-*): bağlantıyı kopyala, Space'e ekle (oturumlu), koleksiyon sayfasında "Koleksiyondan kaldır".
   const menu =
-    shareable || user || collectionRemoval ? (
+    shareable || user || collectionRemoval || extras.length > 0 ? (
       <DropdownMenu label={t("skill.menu")}>
         {(close) => (
           <>
@@ -67,6 +70,18 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
                 }}
               />
             )}
+            {extras.map((extra) => (
+              <MenuItem
+                key={extra.key}
+                icon={extra.icon}
+                label={extra.selected ? `✓ ${extra.label}` : extra.label}
+                danger={extra.danger}
+                onClick={() => {
+                  close();
+                  extra.onSelect();
+                }}
+              />
+            ))}
             {collectionRemoval && (
               <MenuItem
                 icon={<FolderMinus size={16} />}

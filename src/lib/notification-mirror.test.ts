@@ -97,3 +97,8 @@ test("adres ayrıştırma: tür, kimlik, kullanıcı adı, hl", () => {
   assert.equal(parseNotificationHref("/nonsense").kind, "other");
   assert.equal(parseNotificationHref("/prompts/local/?id=P").kind, "prompt");
 });
+
+test("Skill bildirim adresi 'skill' türüdür (satır içi yanıt + hızlı eylemler için; docs/history/408-*)", () => {
+  assert.equal(parseNotificationHref("/skills/local?id=S&hl=comment:C").kind, "skill");
+  assert.deepEqual(parseNotificationHref("/skills/local?id=S&hl=comment:C"), { kind: "skill", id: "S", username: null, hlKind: "comment", hlId: "C" });
+});

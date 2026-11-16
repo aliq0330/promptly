@@ -32,7 +32,7 @@ const skillRow = (id, over = {}) => ({
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", me = U.bob } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], spaceInserts: [], forYouCalls: [], searchCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
+  const state = { skills: [skillRow(S_PUB), skillRow(S_DRAFT, { status: "draft", like_count: 0, comment_count: 0 }), skillRow(S_PUB2, { category: "design", title: "Logo Skill", slug: "skill-3" })], likes: [], comments: [], likeCalls: [], commentCalls: [], saveCalls: [], feedCalls: [], spaceInserts: [], forYouCalls: [], interestCalls: [], searchCalls: [], mixedFeedCalls: [], quoteCalls: [], pinCalls: [], pin: null, worksCalls: [], toolCalls: [], versionCalls: [], works: { yes: 0, no: 0, my: null, can: true }, savedIds: new Set(), mine: null };
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
     if (table === "skills" && method === "GET") {
@@ -142,6 +142,11 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     const body = JSON.parse(route.request().postData() || "{}");
     state.forYouCalls.push(body);
     return json(route, [{ kind: "skill", id: S_PUB2, created_at: "2026-11-15T10:00:00Z", sort_rank: 100, reason_kind: "creator", reason_ref: null }]);
+  });
+  await context.route(/\/rest\/v1\/rpc\/set_content_interest/, (route) => {
+    const body = JSON.parse(route.request().postData() || "{}");
+    state.interestCalls.push(body);
+    return json(route, body.p_value ?? null);
   });
   const SPACE_ID = "5ace0000-0000-4000-8000-000000000001";
   await context.route(/\/rest\/v1\/rpc\/list_spaces/, (route) =>
@@ -581,6 +586,18 @@ await scenario("30. Sana özel: Skill, nedeniyle birlikte (takip edilen kişi) S
   await page.getByText(/takip ettiğin|Takip ettiğin|you follow|You follow/i).first().waitFor();
   assert.equal(await page.locator("[data-interest-card]").count(), 0);
 });
+
+await scenario("34. Sana özel: Skill kartının ⋮ menüsünde 'İlgimi çekiyor / çekmiyor' vardır; cevap set_content_interest('skill') ile yazılır", async ({ page, state }) => {
+  await page.goto(`${BASE}/`);
+  await page.getByText("Logo Skill").first().waitFor();
+  await page.getByRole("button", { name: /Skill menüsü/ }).first().click();
+  await page.getByRole("menuitem", { name: /İlgimi çekmiyor/ }).waitFor();
+  await page.getByRole("menuitem", { name: /İlgimi çekiyor/ }).click();
+  const end = Date.now() + 4000;
+  while (Date.now() < end && state.interestCalls.length === 0) await new Promise((r) => setTimeout(r, 100));
+  assert.equal(state.interestCalls.length, 1);
+  assert.deepEqual([state.interestCalls[0].p_kind, state.interestCalls[0].p_id, state.interestCalls[0].p_value], ["skill", S_PUB2, "interested"]);
+}, { me: U.bob });
 
 await scenario("31. Odak: Skill slaytı (özet + araç), Bilgi sayfası, beğeni/yorum/kaydet düğmeleri; Space'e ekle de var", async ({ page, state }) => {
   await page.goto(`${BASE}/focus`);

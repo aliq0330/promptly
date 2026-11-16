@@ -94,6 +94,11 @@ export async function fetchReportPreview(type: ReportTargetType, id: string): Pr
       const row = data as { title?: string; creator?: Embedded } | null;
       return row ? { title: trim(row.title), subtitle: handle(row.creator) } : null;
     }
+    if (type === "skill") {
+      const { data } = await supabase.from("skills").select("title, author:author_id ( username )").eq("id", id).maybeSingle();
+      const row = data as { title?: string; author?: Embedded } | null;
+      return row ? { title: trim(row.title), subtitle: handle(row.author) } : null;
+    }
     if (type === "space") {
       const { data } = await supabase.from("spaces").select("title").eq("id", id).maybeSingle();
       return data ? { title: trim((data as { title?: string }).title), subtitle: null } : null;

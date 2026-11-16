@@ -85,13 +85,13 @@ export function createTelegramHttpHandler(options: TelegramHttpOptions): (reques
 const COMMANDS = {
   tr: [
     ["ara", "Prompt ara"], ["populer", "Popüler promptlar"], ["prompt", "Bir promptu göster"], ["doldur", "Değişkenleri doldur"],
-    ["istek", "Bir isteği göster"], ["hazirayar", "Bir ayar paketini göster"], ["workflow", "Bir workflow'u göster"],
+    ["istek", "Bir isteği göster"], ["hazirayar", "Bir ayar paketini göster"], ["workflow", "Bir workflow'u göster"], ["skill", "Bir Skill'i göster"],
     ["baglan", "Promptly hesabını bağla"], ["benim", "Promptların"], ["taslak", "Özel taslak ekle"], ["duzenle", "Taslağı düzenle"],
     ["bildirim", "Bildirim tercihleri"], ["ayril", "Bağlantıyı kaldır"], ["yardim", "Tüm komutlar"],
   ],
   en: [
     ["search", "Search prompts"], ["popular", "Popular prompts"], ["prompt", "Show a prompt"], ["fill", "Fill the variables"],
-    ["request", "Show a request"], ["preset", "Show a preset"], ["workflow", "Show a workflow"],
+    ["request", "Show a request"], ["preset", "Show a preset"], ["workflow", "Show a workflow"], ["skill", "Show a skill"],
     ["link", "Link your Promptly account"], ["mine", "Your prompts"], ["draft", "Add a private draft"], ["edit", "Edit a draft"],
     ["notify", "Notification settings"], ["unlink", "Remove the link"], ["help", "All commands"],
   ],

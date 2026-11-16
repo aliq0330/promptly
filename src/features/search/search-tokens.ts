@@ -3,7 +3,7 @@ import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import { findTool } from "@/lib/ai-tool-catalog";
 import type { Tag, UserProfile } from "@/types";
 
-export type ContentKind = "prompt" | "request" | "workflow" | "preset";
+export type ContentKind = "prompt" | "request" | "workflow" | "preset" | "skill";
 
 /** One chip in the advanced search box. */
 export type SearchToken =
@@ -13,7 +13,10 @@ export type SearchToken =
   | { kind: "content"; type: ContentKind }
   | { kind: "tool"; toolId: string };
 
+/** Aramada varsayılan gönderi türleri (çip seçilmezse bunlar aranır; Skill kendi grubudur). */
 export const ALL_KINDS: ContentKind[] = ["prompt", "request", "workflow", "preset"];
+/** Tür çipi olarak seçilebilenler: dört gönderi türü + Skill (docs/history/408-*; Skill çipi yalnız Skill menü bayrağı açıkken sunulur). */
+export const FILTER_KINDS: ContentKind[] = [...ALL_KINDS, "skill"];
 
 export function tokenKey(token: SearchToken): string {
   switch (token.kind) {
@@ -69,6 +72,6 @@ export function tokensToQuery(tokens: SearchToken[]): { filters: ContentSearchFi
       tagSlugs: uniq(tagSlugs),
       toolRefs: uniq(tools),
     },
-    kinds: kinds.length ? ALL_KINDS.filter((k) => kinds.includes(k)) : ALL_KINDS,
+    kinds: kinds.length ? FILTER_KINDS.filter((k) => kinds.includes(k)) : ALL_KINDS,
   };
 }

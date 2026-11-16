@@ -21,7 +21,7 @@ test("malformed or unknown media rows are treated as having no media (never turn
 
 test("attachments: only the five content types with an id", () => {
   assert.deepEqual(mapCommentAttachment({ attach_type: "workflow", attach_id: "w1" }), { type: "workflow", id: "w1" });
-  for (const type of ["prompt", "request", "preset", "space"]) assert.equal(mapCommentAttachment({ attach_type: type, attach_id: "x" })?.type, type);
+  for (const type of ["prompt", "request", "preset", "space", "skill"]) assert.equal(mapCommentAttachment({ attach_type: type, attach_id: "x" })?.type, type);
   assert.equal(mapCommentAttachment({ attach_type: "comment", attach_id: "x" }), null);
   assert.equal(mapCommentAttachment({ attach_type: "prompt", attach_id: null }), null);
   assert.equal(mapCommentAttachment({ attach_type: null, attach_id: "x" }), null);

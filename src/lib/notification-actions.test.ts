@@ -9,6 +9,7 @@ const c = (type: NotificationCard["type"], targetHref: string, over: Partial<Not
 test("hızlı eylem türü: yorum, beğeni, takip, öneri, mesaj isteği, kilometre taşı", () => {
   assert.equal(quickActionKind(c("comment", "/prompts/local?id=P&hl=comment:C")), "comment");
   assert.equal(quickActionKind(c("comment_reply", "/communities/post/local?id=Q&hl=comment:C")), "comment");
+  assert.equal(quickActionKind(c("comment", "/skills/local?id=S&hl=comment:C")), "comment", "Skill yorumuna zil panelinden yanıt yazılır (docs/history/408-*)");
   assert.equal(quickActionKind(c("comment", "/prompts/local?id=P")), "none");
   assert.equal(quickActionKind(c("comment", "/stories?id=S&hl=comment:C")), "none");
   assert.equal(quickActionKind(c("like", "/prompts/local?id=P&hl=post:P", { rowCount: 3 })), "members");
