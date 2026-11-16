@@ -2484,6 +2484,7 @@ export const translations = {
   "focusFeed.nextPost": { tr: "Sonraki gönderi", en: "Next post" },
   "focusFeed.backToTop": { tr: "Başa dön", en: "Back to top" },
   "draft.kindPreset": { tr: "Ayar Paketi", en: "Preset" },
+  "draft.kindSkill": { tr: "Skill", en: "Skill" },
   // ---- Hazır alanlar (preset fields) ----
   "presetBuilder.fieldsTitle": { tr: "Parametreler", en: "Parameters" },
   "presetBuilder.fieldsHint": { tr: "Her parametre için bu ayar paketinin vereceği tek bir değeri seç.", en: "For each parameter, pick the single value this preset sets." },

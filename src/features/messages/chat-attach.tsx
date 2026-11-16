@@ -48,7 +48,7 @@ export const LIBRARY_TYPES: { type: CommunityPostType; icon: IconComponent }[] =
 export const CHAT_LIBRARY_TYPES: { type: ChatLibraryType; icon: IconComponent }[] = [...LIBRARY_TYPES, { type: "skill", icon: GraduationCap }];
 
 /** Seçici listesi: Skill kendi sorgusundan, diğer türler topluluk paylaşımıyla AYNI kaynaktan (`useShareableContent`). */
-function useChatShareable(userId: string, type: ChatLibraryType) {
+export function useChatShareable(userId: string, type: ChatLibraryType) {
   const communityType: CommunityPostType = type === "skill" ? "prompt" : type;
   const community = useShareableContent(userId, communityType);
   const [skillSearch, setSkillSearch] = useState("");

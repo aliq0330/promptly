@@ -337,12 +337,14 @@ await scenario("10. Ortaklıktan ayrıl (Bob): onay penceresi, varsayılan 'içe
   assert.deepEqual(calls(db, "remove_collection_member").map((x) => x.body), [{ p_collection: C1, p_user: BOB, p_remove_items: false }]);
 }, { me: BOB });
 
-await scenario("11. 'İçerik ekle': Prompt / Workflow / Ayar paketi seçenekleri + herkese açık uyarısı", async ({ page }) => {
+await scenario("11. 'İçerik ekle': Prompt / Workflow / Ayar paketi (+ Skill, bayrak açıkken) seçenekleri + herkese açık uyarısı", async ({ page }) => {
   await open(page, C1);
   await page.locator("[data-collection-add]").first().click();
   const dlg = page.getByRole("dialog");
   await dlg.getByRole("heading", { name: "Koleksiyona içerik ekle" }).waitFor();
-  assert.equal(await dlg.locator("[data-collection-add-kind]").count(), 3);
+  // CI derlemesi Skill bayrağı açık (NEXT_PUBLIC_SKILLS_ENABLED=true): Skill dördüncü satırdır (docs/history/408-*).
+  assert.equal(await dlg.locator("[data-collection-add-kind]").count(), 4);
+  await dlg.locator('[data-collection-add-kind="skill"]').waitFor();
   await dlg.getByText("Ortak koleksiyona yalnız herkese açık, yayında içerik eklenebilir.").waitFor();
 }, { me: BOB });
 

@@ -43,6 +43,7 @@ interface PromptCardRow { id: string; title: string; status: string; visibility:
 interface RequestCardRow { id: string; title: string; status: "open" | "answered" | "closed"; is_draft: boolean; visibility: string; community_id: string | null; deleted_at: string | null; profiles: ProfileEmbed; prompt_request_media: { url: string; position: number }[] | null }
 interface WorkflowCardRow { id: string; title: string; cover_url: string | null; status: string; visibility: string; community_id: string | null; profiles: ProfileEmbed; workflow_steps: { count: number }[] | null; workflow_media: { url: string; position: number }[] | null }
 interface PresetCardRow { id: string; title: string; cover_url: string | null; status: string; visibility: string; community_id: string | null; profiles: ProfileEmbed }
+interface SkillCardRow { id: string; title: string; status: string; visibility: string; profiles: ProfileEmbed }
 interface SpaceCardRow { id: string; owner_id: string; title: string; cover_url: string | null; visibility: string; archived_at: string | null }
 
 /**
@@ -87,6 +88,12 @@ export async function fetchAttachmentCards(items: CommentAttachment[]): Promise<
             if (row.status !== "published" || row.visibility !== "public" || row.community_id) continue;
             put({ type, id: row.id, title: row.title, ownerName: ownerOf(row.profiles), thumbnailUrl: row.cover_url });
           }
+        } else if (type === "skill") {
+          const rows = await fetchRows<SkillCardRow>("skills", "id, title, status, visibility, profiles:author_id ( display_name )", ids);
+          for (const row of rows) {
+            if (row.status !== "published" || row.visibility !== "public") continue;
+            put({ type, id: row.id, title: row.title, ownerName: ownerOf(row.profiles), thumbnailUrl: null });
+          }
         } else {
           const rows = await fetchRows<SpaceCardRow>("spaces", "id, owner_id, title, cover_url, visibility, archived_at", ids);
           const visible = rows.filter((row) => row.visibility === "public" && !row.archived_at);
@@ -113,7 +120,7 @@ export async function fetchAttachmentCards(items: CommentAttachment[]): Promise<
 
 
 /** Kaydedilebilen türler (istek ve Space kaydedilmez — docs/history/184-*): "Kaydettiklerim" yalnız bunlarda vardır. */
-export const SAVED_SOURCE_TYPES: readonly CommentAttachmentType[] = ["prompt", "workflow", "preset"];
+export const SAVED_SOURCE_TYPES: readonly CommentAttachmentType[] = ["prompt", "workflow", "preset", "skill"];
 
 export interface PickableContent {
   id: string;
@@ -127,10 +134,10 @@ export interface PickableContent {
  */
 export async function fetchSavedPickableWindow(
   userId: string,
-  type: "prompt" | "workflow" | "preset",
+  type: "prompt" | "workflow" | "preset" | "skill",
   { search = "", limit = 30 }: { search?: string; limit?: number } = {},
 ): Promise<{ items: PickableContent[]; hasMore: boolean }> {
-  const table = type === "prompt" ? "prompts" : type === "workflow" ? "workflows" : "presets";
+  const table = type === "prompt" ? "prompts" : type === "workflow" ? "workflows" : type === "skill" ? "skills" : "presets";
   const text = sanitizeSearchText(search);
   let query = supabase
     .from("collection_items")
@@ -138,9 +145,9 @@ export async function fetchSavedPickableWindow(
     .eq("collections.owner_id", userId)
     .eq("collections.is_default", true)
     .eq(`${table}.visibility`, "public")
-    .eq(`${table}.status`, "published")
-    .is(`${table}.community_id`, null)
-    .is(`${table}.team_file_id`, null);
+    .eq(`${table}.status`, "published");
+  // Skill topluluğa/ekibe özgü olamaz (sütunları yok); diğer türlerde topluluk/ekip içeriği yoruma eklenmez.
+  if (type !== "skill") query = query.is(`${table}.community_id`, null).is(`${table}.team_file_id`, null);
   if (type === "prompt") query = query.is("prompts.deleted_at", null);
   if (text) query = query.ilike(`${table}.title`, `%${text}%`);
   const { data, error } = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);

@@ -18,6 +18,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import type { Tag, UserProfile } from "@/types";
 import { KIND_LABEL, tokenChip } from "./search-chip-meta";
 import { clearRecentSearches, readRecentSearches, rememberSearch } from "./search-recents";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { tokenKey, type ContentKind, type SearchToken } from "./search-tokens";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 
@@ -115,7 +116,7 @@ export function AdvancedSearchBox({
       if (!word.startsWith("@")) tags.forEach((tag) => add({ kind: "tag", tag }));
       if (!word.startsWith("@") && !word.startsWith("#")) {
         CONTENT_TYPE_IDS.filter((type) => matches(t(CONTENT_TYPE_META[type].labelKey))).forEach((type) => add({ kind: "media", type }));
-        (hideKindSuggestions ? [] : (["prompt", "request", "workflow", "preset"] as ContentKind[]))
+        (hideKindSuggestions ? [] : ((SKILLS_MENU_ENABLED ? ["prompt", "request", "workflow", "preset", "skill"] : ["prompt", "request", "workflow", "preset"]) as ContentKind[]))
           .filter((kind) => matches(t(KIND_LABEL[kind])))
           .forEach((kind) => add({ kind: "content", type: kind }));
         searchTools(AI_TOOLS.filter((tool) => tool.isActive), word).slice(0, 4).forEach((tool) => add({ kind: "tool", toolId: tool.id }));

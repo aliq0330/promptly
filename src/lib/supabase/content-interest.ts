@@ -3,11 +3,11 @@ import { chunk } from "./paged";
 
 /**
  * "İlgimi çekiyor / çekmiyor" (docs/history/275-*): the viewer's explicit answer about a post. It teaches "Sana özel" only (`for_you_page`) —
- * Keşfet's ranking is unchanged. A prompt, request, workflow or preset; one answer per person per post. Writes go through the
+ * Keşfet's ranking is unchanged. A prompt, request, workflow, preset or skill (docs/history/408-*); one answer per person per post. Writes go through the
  * `set_content_interest` RPC only (the table has no client write policy); `null` takes the answer back.
  */
 export type InterestValue = "interested" | "not_interested";
-export type InterestKind = "prompt" | "request" | "workflow" | "preset";
+export type InterestKind = "prompt" | "request" | "workflow" | "preset" | "skill";
 export interface InterestTarget {
   kind: InterestKind;
   id: string;
@@ -20,6 +20,7 @@ const TARGET_COLUMN: Record<InterestKind, string> = {
   request: "request_id",
   workflow: "workflow_id",
   preset: "preset_id",
+  skill: "skill_id",
 };
 
 /** Stores (or, with `null`, removes) the viewer's answer; resolves to the stored value. */

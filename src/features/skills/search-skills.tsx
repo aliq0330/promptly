@@ -8,14 +8,16 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { searchContentIds, type SearchCursor } from "@/lib/supabase/search";
 import { fetchSkillsByIds } from "@/lib/supabase/skills";
+import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import type { Skill } from "@/types";
 import { SkillCard } from "./skill-card";
 
 const PAGE_SIZE = 12;
+const EMPTY_FILTERS: ContentSearchFilters = {};
 
 /** One search page: ids from `search_content` in result order, then the cards (a row that vanished in between, e.g. a blocked author, is skipped). */
-async function fetchPage(query: string, cursor: SearchCursor | null): Promise<{ items: Skill[]; nextCursor: SearchCursor | null }> {
-  const { ids, nextCursor } = await searchContentIds("skill", query, {}, PAGE_SIZE, cursor);
+async function fetchPage(query: string, filters: ContentSearchFilters, cursor: SearchCursor | null): Promise<{ items: Skill[]; nextCursor: SearchCursor | null }> {
+  const { ids, nextCursor } = await searchContentIds("skill", query, filters, PAGE_SIZE, cursor);
   const byId = new Map((await fetchSkillsByIds(ids)).map((skill) => [skill.id, skill]));
   return { items: ids.flatMap((id) => byId.get(id) ?? []), nextCursor };
 }
@@ -25,7 +27,7 @@ async function fetchPage(query: string, cursor: SearchCursor | null): Promise<{ 
  * Diğer türlerle AYNI arama motoru: `search_content` `p_kind='skill'` (keyset üçlüsü, alaka sırası); kartlar kimlik sırasıyla okunur. Menü bayrağı kapalıyken grup yoktur.
  * `onCount` "sonuç yok" metnini doğru tutar.
  */
-export function SearchSkills({ query, onCount }: { query: string; onCount: (count: number) => void }) {
+export function SearchSkills({ query, filters = EMPTY_FILTERS, onCount }: { query: string; filters?: ContentSearchFilters; onCount: (count: number) => void }) {
   const { t } = useTranslation();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [cursor, setCursor] = useState<SearchCursor | null>(null);
@@ -35,7 +37,7 @@ export function SearchSkills({ query, onCount }: { query: string; onCount: (coun
   useEffect(() => {
     if (!SKILLS_MENU_ENABLED) return;
     const mine = ++generation.current;
-    fetchPage(query, null)
+    fetchPage(query, filters, null)
       .then((page) => {
         if (mine !== generation.current) return;
         setSkills(page.items);
@@ -53,14 +55,14 @@ export function SearchSkills({ query, onCount }: { query: string; onCount: (coun
     return () => {
       generation.current += 1;
     };
-  }, [query, onCount]);
+  }, [query, filters, onCount]);
 
   async function loadMore() {
     if (!cursor || loadingMore) return;
     const mine = generation.current;
     setLoadingMore(true);
     try {
-      const page = await fetchPage(query, cursor);
+      const page = await fetchPage(query, filters, cursor);
       if (mine !== generation.current) return;
       setSkills((previous) => [...previous, ...page.items.filter((skill) => !previous.some((old) => old.id === skill.id))]);
       setCursor(page.nextCursor);

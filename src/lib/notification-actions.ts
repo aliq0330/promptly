@@ -23,7 +23,7 @@ export type QuickActionKind =
   | "none";
 
 /** Yoruma yanıt yazılabilen hedefler (`postCommentOn*` ailesi); Space etkinliği ve bilinmeyenler dışarıda. */
-export const REPLYABLE_KINDS: readonly NotificationTargetKind[] = ["prompt", "request", "result", "workflow", "preset", "quote", "community_post", "space"];
+export const REPLYABLE_KINDS: readonly NotificationTargetKind[] = ["prompt", "request", "result", "workflow", "preset", "skill", "quote", "community_post", "space"];
 
 export function quickActionKind(card: Pick<NotificationCard, "type" | "targetHref" | "rowCount">): QuickActionKind {
   const href = parseNotificationHref(card.targetHref);
@@ -94,19 +94,19 @@ export function messageRequestConversationId(card: Pick<NotificationCard, "type"
 }
 
 /** Bağlı içerik önizlemesi (CompactContentCard) çizilebilen türler. */
-export type LinkedContentType = "prompt" | "request" | "workflow" | "preset" | "space";
+export type LinkedContentType = "prompt" | "request" | "workflow" | "preset" | "skill" | "space";
 
 export function linkedContent(card: Pick<NotificationCard, "targetHref">): { type: LinkedContentType; id: string } | null {
   const href = parseNotificationHref(card.targetHref);
   if (!href.id) return null;
-  if (href.kind === "prompt" || href.kind === "request" || href.kind === "workflow" || href.kind === "preset" || href.kind === "space") return { type: href.kind, id: href.id };
+  if (href.kind === "prompt" || href.kind === "request" || href.kind === "workflow" || href.kind === "preset" || href.kind === "skill" || href.kind === "space") return { type: href.kind, id: href.id };
   return null;
 }
 
 /** Sessize alma menüsünün seçenekleri: kişi (aktör varsa) ve/veya içerik (adresten bir içerik çıkıyorsa). */
 export function muteOptions(card: Pick<NotificationCard, "targetHref" | "type" | "latestActor" | "rowCount">): { person: boolean; content: boolean } {
   const href = parseNotificationHref(card.targetHref);
-  const contentKinds: NotificationTargetKind[] = ["prompt", "request", "result", "workflow", "preset", "quote", "community_post", "space", "insights"];
+  const contentKinds: NotificationTargetKind[] = ["prompt", "request", "result", "workflow", "preset", "skill", "quote", "community_post", "space", "insights"];
   return {
     person: card.type !== "system" && card.rowCount === 1 && card.latestActor != null,
     content: contentKinds.includes(href.kind) && Boolean(href.id),

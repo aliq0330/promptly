@@ -16,9 +16,10 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 
-const TYPES: CommunityPostType[] = ["prompt", "request", "workflow", "preset", "space"];
+const TYPES: CommunityPostType[] = SKILLS_MENU_ENABLED ? ["prompt", "request", "workflow", "preset", "skill", "space"] : ["prompt", "request", "workflow", "preset", "space"];
 
 /**
  * "Mevcut içeriğe başvur": kullanıcının KENDİ yayında ve herkese açık içeriklerinden biri seçilir; isteğe bağlı not eklenir. İçerik

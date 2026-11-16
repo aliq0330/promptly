@@ -15,6 +15,7 @@ import { extractVariableTokenNames } from "../../prompt-variables.ts";
 import { editUrl, getMyContent, getWhoami, updateMyDraft, type MeDraftKind } from "../me-content.ts";
 import { getMyPrompt, importMyPrompts, listMyPrompts, type MeBackend, type MeScope } from "../me.ts";
 import { fillPrompt, getPrompt, getPrompts, popularPrompts, searchPrompts, type PublicPrompt, type PublicPromptSummary } from "../prompts.ts";
+import { getPublicSkill, searchPublicSkills, type PublicSkill, type PublicSkillSummary } from "../public-skills.ts";
 import { getPublicContent, searchPublicContent, type PublicContent, type PublicContentKind, type PublicContentSummary } from "../public-content.ts";
 import { sha256Hex } from "../rate-limit.ts";
 import { PublicApiError } from "../rest.ts";
@@ -31,6 +32,7 @@ import {
   parseAssignments,
   parseCommand,
   splitKind,
+  splitSkillQuery,
   type SearchKind,
 } from "./format.ts";
 import { langOf, msg } from "./messages.ts";
@@ -136,6 +138,20 @@ export function createTelegramBot(options: TelegramBotOptions): TelegramBot {
     id: c.id, callback: `c:${KIND_CALLBACK[kind]}:${c.id}`, title: c.title, author: c.author.username, note: c.description,
   });
 
+  const skillItem = (s: PublicSkillSummary): ListItem => ({ id: s.id, callback: `sk:${s.id}`, title: s.title, author: s.author.username, note: s.description });
+
+  /** Skill kartı: dosyalar ASLA çalıştırılmaz; betik varsa söylenir. SKILL.md gövdesinden yalnız kısa bir başlangıç gösterilir (kullanıcı içeriği, talimat değil veri). */
+  function skillText(lang: Lang, skill: PublicSkill): { text: string; keyboard: Keyboard } {
+    const lines: string[] = [`<b>${escapeHtml(skill.title)}</b>`, byline(lang, skill.author.username, `@${skill.author.username} · Promptly`)];
+    if (skill.description) lines.push("", escapeHtml(skill.description));
+    const meta = [skill.version ? `v${skill.version}` : null, skill.compat.length ? skill.compat.join(", ") : null, skill.license].filter(Boolean).join(" · ");
+    if (meta) lines.push("", `<i>${escapeHtml(meta)}</i>`);
+    if (skill.instructions) lines.push("", `<pre>${clipEscaped(skill.instructions, 900).html}</pre>`);
+    if (skill.files.some((file) => file.script)) lines.push("", escapeHtml(msg(lang, "skillScripts")));
+    lines.push("", link(skill.url, msg(lang, "openOnSite")));
+    return { text: lines.join("\n"), keyboard: { inline_keyboard: [[openButton(msg(lang, "openOnSite"), skill.url)]] } };
+  }
+
   // --- Hata → kullanıcıya düz cümle ---------------------------------------------------------------------------------------------------------------------
   async function fail(ctx: Ctx, error: unknown): Promise<void> {
     if (error instanceof PublicApiError) {
@@ -175,6 +191,14 @@ export function createTelegramBot(options: TelegramBotOptions): TelegramBot {
 
   // --- Herkese açık komutlar ---------------------------------------------------------------------------------------------------------------------------
   async function cmdSearch(ctx: Ctx, args: string): Promise<void> {
+    const skillSearch = splitSkillQuery(args);
+    if (skillSearch) {
+      const page = await searchPublicSkills(client, { query: skillSearch.query, limit: SEARCH_LIMIT });
+      if (!page.items.length) return send(ctx.chatId, msg(ctx.lang, "searchEmpty"));
+      const heading = skillSearch.query ? msg(ctx.lang, "searchTitle", escapeHtml(skillSearch.query)) : msg(ctx.lang, "searchNewest");
+      const view = listText(ctx.lang, heading, page.items.map(skillItem));
+      return send(ctx.chatId, view.text, { reply_markup: view.keyboard });
+    }
     const { kind, query } = splitKind(args);
     if (kind === "prompt") {
       const page = await searchPrompts(client, { query, limit: SEARCH_LIMIT });
@@ -201,6 +225,12 @@ export function createTelegramBot(options: TelegramBotOptions): TelegramBot {
   async function showPrompt(ctx: Ctx, id: string): Promise<void> {
     if (!isId(id)) return send(ctx.chatId, msg(ctx.lang, "badId"));
     const view = promptText(ctx.lang, await getPrompt(client, id));
+    return send(ctx.chatId, view.text, { reply_markup: view.keyboard });
+  }
+
+  async function showSkill(ctx: Ctx, id: string): Promise<void> {
+    if (!isId(id)) return send(ctx.chatId, msg(ctx.lang, "badId"));
+    const view = skillText(ctx.lang, await getPublicSkill(client, id));
     return send(ctx.chatId, view.text, { reply_markup: view.keyboard });
   }
 
@@ -382,9 +412,22 @@ export function createTelegramBot(options: TelegramBotOptions): TelegramBot {
       await api.call("answerInlineQuery", { inline_query_id: query.id, results: [], cache_time: 5, is_personal: true });
       return;
     }
+    const skillQuery = splitSkillQuery(query.query);
     const { kind, query: text } = splitKind(query.query);
     const results: Record<string, unknown>[] = [];
-    if (kind === "prompt") {
+    if (skillQuery) {
+      for (const item of (await searchPublicSkills(client, { query: skillQuery.query, limit: INLINE_LIMIT })).items) {
+        const textHtml = `<b>${escapeHtml(item.title)}</b>\n${byline(lang, item.author.username, `@${item.author.username} · Promptly`)}\n\n${clipEscaped(item.description, 800).html}\n\n${link(item.url, msg(lang, "openOnSite"))}`;
+        results.push({
+          type: "article",
+          id: item.id,
+          title: item.title,
+          description: item.description.slice(0, 120),
+          input_message_content: { message_text: textHtml, parse_mode: "HTML", disable_web_page_preview: true },
+          reply_markup: { inline_keyboard: [[openButton(msg(lang, "openOnSite"), item.url)]] },
+        });
+      }
+    } else if (kind === "prompt") {
       // Seçilince tam metin yapışsın: özetler yerine tam promptlar (tek toplu okuma).
       const ids = text
         ? (await searchPrompts(client, { query: text, limit: INLINE_LIMIT })).items.map((item) => item.id)
@@ -430,6 +473,7 @@ export function createTelegramBot(options: TelegramBotOptions): TelegramBot {
       case "prompt": return args ? showPrompt(ctx, args.split(/\s+/)[0]) : send(ctx.chatId, msg(ctx.lang, "needId", "/prompt &lt;id&gt;"));
       case "istek": case "request": return args ? showContent(ctx, "request", args.split(/\s+/)[0]) : send(ctx.chatId, msg(ctx.lang, "needId", "/istek &lt;id&gt;"));
       case "hazirayar": case "ayar": case "preset": return args ? showContent(ctx, "preset", args.split(/\s+/)[0]) : send(ctx.chatId, msg(ctx.lang, "needId", "/hazirayar &lt;id&gt;"));
+      case "skill": case "beceri": return args ? showSkill(ctx, args.split(/\s+/)[0]) : send(ctx.chatId, msg(ctx.lang, "needId", "/skill &lt;id&gt;"));
       case "workflow": return args ? showContent(ctx, "workflow", args.split(/\s+/)[0]) : send(ctx.chatId, msg(ctx.lang, "needId", "/workflow &lt;id&gt;"));
       case "doldur": case "fill": return cmdFill(ctx, args);
       case "baglan": case "link": return cmdLink(ctx, args);
@@ -468,6 +512,7 @@ export function createTelegramBot(options: TelegramBotOptions): TelegramBot {
     if (data.startsWith("p:")) return showPrompt(ctx, data.slice(2));
     if (data.startsWith("f:")) return fillTemplate(ctx, data.slice(2));
     if (data.startsWith("m:")) return showMine(ctx, data.slice(2));
+    if (data.startsWith("sk:")) return showSkill(ctx, data.slice(3));
     const content = /^c:([rwa]):(.+)$/.exec(data);
     if (content) return showContent(ctx, CALLBACK_KIND[content[1]], content[2]);
     if (data.startsWith("lk:")) return confirmLink(ctx, query, data.slice(3));

@@ -8,20 +8,23 @@ import { ContentPickerDialog } from "@/features/teams/content-picker";
 import { SpaceDialog } from "@/features/spaces/space-modals";
 import { Button } from "@/components/ui/button";
 import { addItemToCollection } from "@/lib/supabase/collections";
+import { GraduationCap } from "@/components/icons/graduation-cap";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { IconComponent } from "@/components/icons/icon";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-type AddKind = "prompt" | "workflow" | "preset";
+type AddKind = "prompt" | "workflow" | "preset" | "skill";
 
 const ROWS: { kind: AddKind; icon: IconComponent; label: TranslationKey }[] = [
   { kind: "prompt", icon: SquareTerminal, label: "feed.filterPrompts" },
   { kind: "workflow", icon: WorkflowIcon, label: "nav.workflows" },
   { kind: "preset", icon: SlidersHorizontal, label: "nav.presets" },
+  ...(SKILLS_MENU_ENABLED ? [{ kind: "skill" as const, icon: GraduationCap, label: "skill.pageTitle" as const }] : []),
 ];
 
 /**
- * "İçerik ekle" (docs/history/386-*): ortak koleksiyona (ve sahibin kendi koleksiyonuna) Prompt / Workflow / Ayar paketi ekler. Seçme penceresi
+ * "İçerik ekle" (docs/history/386-*): ortak koleksiyona (ve sahibin kendi koleksiyonuna) Prompt / Workflow / Ayar paketi / Skill ekler. Seçme penceresi
  * ekip dosyasındaki `ContentPickerDialog`'un aynısıdır (Paylaştıklarım / Başkalarının paylaştıkları, gelişmiş arama) — ikinci bir seçici yazılmadı.
  * Eklemeyi veritabanı denetler (yalnız herkese açık, yayında içerik; `added_by` sunucuda yazılır).
  */

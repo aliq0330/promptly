@@ -680,6 +680,24 @@ await scenario("26. Detay: paket dosyaları gezgini — ağaç + dosya görünt�
   assert.equal(world.signPosts.filter((x) => x.includes("/packages/")).length, 1, "paket yalnız bir kez imzalandı");
 });
 
+await scenario("29. Detay: SKILL.md tek yerde (paketli Skill'de sayfa sonu bloğu yok); gezgin taslağı yayınlanan sürümden farklıysa bunu söyler ve ZIP'teki hâli gösterebilir", async ({ page, world }) => {
+  world.zipBody = packageZip();
+  await openDetail(page, S_PUB);
+  await page.locator("[data-skill-file-frame]").waitFor();
+  assert.equal(await page.getByRole("heading", { name: "SKILL.md", exact: true }).count(), 0, "paketli Skill'de ayrı SKILL.md bölümü yok");
+  assert.equal(await page.locator("[data-skill-md-differs]").count(), 0, "paket henüz okunmadı: fark bilinmiyor");
+  await leaf(page, "rules/style.md").click();
+  await page.waitForFunction(() => /Küçük fonksiyonlar yaz\./.test(document.querySelector("[data-skill-code]")?.textContent ?? ""));
+  await leaf(page, "SKILL.md").click();
+  const note = page.locator("[data-skill-md-differs]");
+  await note.waitFor();
+  assert.match(await note.innerText(), /güncel taslak/i);
+  await note.getByRole("button", { name: /sürümünü göster/ }).click();
+  await page.waitForFunction(() => /# Rol/.test(document.querySelector("[data-skill-code]")?.textContent ?? ""));
+  await note.getByRole("button", { name: /Güncel taslağı göster/ }).click();
+  assert.doesNotMatch(await page.locator("[data-skill-code]").innerText(), /# Rol/);
+});
+
 await scenario("27. Detay: Claude Code / Codex / Cursor tek kartta sekme; araç ve kapsam komutu değiştirir", async ({ page, world }) => {
   world.skills.find((x) => x.id === S_PUB).compat = ["claude-code", "codex", "cursor"];
   await openDetail(page, S_PUB);

@@ -52,6 +52,8 @@ function promptRow(id: string, overrides: Record<string, unknown> = {}) {
 const presetRow = { id: ID_A, title: "Sinematik", description: "d", category: null, subcategory: null, tools: [], like_count: 1, comment_count: 0, created_at: "2026-10-01T10:00:00Z", content_type: "image", selection: { lens: "135mm" }, save_count: 0, profiles: { username: "ayse", display_name: null }, preset_tags: [] };
 const workflowRow = { id: ID_A, title: "Zincir", description: "", category: null, subcategory: null, tools: [], like_count: 1, comment_count: 0, created_at: "2026-10-01T10:00:00Z", content_types: ["text"], save_count: 0, profiles: { username: "ayse", display_name: null }, workflow_tags: [], workflow_steps: [{ id: "s1", position: 1, title: "Yaz", description: "", instructions: "Yaz <şunu>", prompt_id: null, inputs: [], outputs: [], created_at: "2026-10-01T10:00:00Z" }] };
 
+const skillRow = { id: ID_A, title: "Kod <İncele>", summary: "Kodu gözden geçirir", instructions: "# Adımlar\n1. Oku & değerlendir", category: "software", compat: ["claude-code"], license: "mit", version: "1.0.0", like_count: 1, comment_count: 0, save_count: 0, use_count: 2, created_at: "2026-10-01T10:00:00Z", profiles: { username: "ayse", display_name: "Ayşe" }, skill_tags: [] };
+
 function fakeSupabase(options: { prompts?: unknown[]; variables?: unknown[]; fail?: boolean } = {}) {
   const calls: { path: string; body: Record<string, unknown> | null }[] = [];
   const impl = async (input: string | URL | Request, init?: RequestInit) => {
@@ -71,6 +73,10 @@ function fakeSupabase(options: { prompts?: unknown[]; variables?: unknown[]; fai
     if (path === "presets") return Response.json(pick([presetRow]));
     if (path === "workflows") return Response.json(pick([workflowRow]));
     if (path === "prompt_requests") return Response.json([]);
+    if (path === "rpc/skill_feed_page") return Response.json([{ id: ID_A, created_at: "2026-10-01T10:00:00Z", sort_rank: 0, match_source: "title" }]);
+    if (path === "skills") return Response.json(pick([skillRow]));
+    if (path === "skill_versions") return Response.json([{ version: "1.0.0", changelog: "", package_size: 10, file_count: 1, manifest: { files: [{ path: "scripts/run.sh", kind: "script", size: 5, script: true }] }, created_at: "2026-10-01T10:00:00Z", deprecated_at: null }]);
+    if (path === "skill_relations") return Response.json([]);
     return new Response("nope", { status: 404 });
   };
   return { calls, client: createRestClient({ url: "https://x.supabase.co", anonKey: "eyJ.k", fetch: impl as typeof fetch, siteUrl: SITE }) };
@@ -208,6 +214,28 @@ test("/ara <tür>: request / preset / workflow searches use search_content with 
   await t.bot.handleUpdate(message("/ara ayar sinema"));
   const keyboard = (t.tg.last().reply_markup as { inline_keyboard: { callback_data?: string }[][] }).inline_keyboard;
   assert.equal(keyboard[0][0].callback_data, `c:a:${ID_A}`);
+});
+
+test("/ara skill + /skill: Skill arama ve gösterim — kaçışlı, betik uyarılı, Skill'e özel callback (sk:)", async () => {
+  const search = setup();
+  await search.bot.handleUpdate(message("/ara skill kod"));
+  assert.equal(search.sb.calls.some((c) => c.path === "rpc/skill_feed_page"), true);
+  assert.equal(search.sb.calls.some((c) => c.path === "rpc/search_content"), false, "Skill search does not touch the post search");
+  const keyboard = (search.tg.last().reply_markup as { inline_keyboard: { callback_data?: string }[][] }).inline_keyboard;
+  assert.equal(keyboard[0][0].callback_data, `sk:${ID_A}`);
+  assert.match(String(search.tg.last().text), /Kod &lt;İncele&gt;/);
+
+  for (const entry of [message(`/skill ${ID_A}`), callback(`sk:${ID_A}`)]) {
+    const show = setup();
+    await show.bot.handleUpdate(entry);
+    const text = String(show.tg.last().text);
+    assert.match(text, /<b>Kod &lt;İncele&gt;<\/b>/);
+    assert.match(text, /Oku &amp; değerlendir/);
+    assert.match(text, /betik dosyaları içeriyor/, "a script file is called out; Promptly never runs it");
+  }
+  const none = setup();
+  await none.bot.handleUpdate(message("/skill"));
+  assert.match(String(none.tg.last().text), /skill &lt;id&gt;/);
 });
 
 test("/ara with nothing found, and an upstream failure → friendly messages, no crash", async () => {

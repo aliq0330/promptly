@@ -7,6 +7,8 @@ import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { FileText } from "@/components/icons/file-text";
 import { LayoutGrid } from "@/components/icons/layout-grid";
+import { GraduationCap } from "@/components/icons/graduation-cap";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
@@ -24,17 +26,18 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 type DraftFilter = "all" | DraftKind;
 type DraftRow = DraftItem & { kind: DraftKind };
 
-const KIND_ORDER: DraftKind[] = ["prompt", "request", "workflow", "preset"];
+const KIND_ORDER: DraftKind[] = SKILLS_MENU_ENABLED ? ["prompt", "request", "workflow", "preset", "skill"] : ["prompt", "request", "workflow", "preset"];
 const KIND_META: Record<DraftKind, { labelKey: TranslationKey; icon: IconComponent }> = {
   prompt: { labelKey: "draft.kindPrompt", icon: SquareTerminal },
   request: { labelKey: "draft.kindRequest", icon: Sparkles },
   workflow: { labelKey: "draft.kindWorkflow", icon: WorkflowIcon },
   preset: { labelKey: "draft.kindPreset", icon: SlidersHorizontal },
+  skill: { labelKey: "draft.kindSkill", icon: GraduationCap },
 };
 
 /**
- * The owner-only "Taslaklar" profile tab — all four content types' drafts
- * (prompt/request/workflow/preset) in one place, filterable by a
+ * The owner-only "Taslaklar" profile tab — all content types' drafts
+ * (prompt/request/workflow/preset + skill, docs/history/408-*) in one place, filterable by a
  * Tümü/Promptlar/.../Workflowlar sub-tab row. Reuses the exact same data
  * layer (`fetchOwnDrafts`/`deleteDraft`, `lib/supabase/drafts.ts`) and
  * continue/delete behavior as the per-page `DraftsButton` (CLAUDE.md Bölüm
@@ -70,7 +73,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
   }, [refresh]);
 
   const counts = useMemo(() => {
-    const base: Record<DraftKind, number> = { prompt: 0, request: 0, workflow: 0, preset: 0 };
+    const base: Record<DraftKind, number> = { prompt: 0, request: 0, workflow: 0, preset: 0, skill: 0 };
     rows?.forEach((row) => {
       base[row.kind] += 1;
     });
@@ -95,7 +98,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
     setBusyId(row.id);
     setError(null);
     try {
-      await deleteDraft(row.kind, row.id);
+      await deleteDraft(row.kind, row.id, userId);
       setConfirmId(null);
       exit(row.id, () => setRows((prev) => (prev ? prev.filter((item) => item.id !== row.id) : prev)));
     } catch {

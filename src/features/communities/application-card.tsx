@@ -24,6 +24,7 @@ const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
   workflow: "communities.feed.shared.workflow",
   preset: "communities.feed.shared.preset",
   space: "communities.feed.shared.space",
+  skill: "communities.feed.shared.skill",
 };
 
 /**

@@ -23,7 +23,7 @@ import { SKILL_COMPAT_LABEL, SKILL_LICENSE_LABEL, skillCategoryName, skillLabelT
 import { fetchSkillTags } from "@/lib/supabase/skills";
 import { fetchSkillVersions, recordSkillUse, type SkillVersion } from "@/lib/supabase/skill-package";
 import { deleteSkill, fetchSkillById } from "@/lib/supabase/skills";
-import { formatRelativeTime } from "@/lib/utils";
+import { copyTextToClipboard, formatRelativeTime } from "@/lib/utils";
 import { MarkdownView } from "./markdown-view";
 import { SimilarSkills } from "./skill-aside-blocks";
 import { SkillWorksVote } from "./skill-works-vote";
@@ -42,14 +42,15 @@ import type { Skill, Tag } from "@/types";
 /**
  * `/skills/local?id=…` — Skill detay sayfası (Albüm düzeni). Yayınlanmış bir sürüm varsa birincil eylem "ZIP indir" (değişmez paket, imzalı adres);
  * yoksa "SKILL.md indir" (alanlardan derlenir). Talimat güvenli Markdown görüntüleyicide (HTML üretmez) gösterilir, "Ham metin" ile düz görünür. Sürümler,
- * paket dosyaları (manifest) ve bağlı içerik bölümleri docs/history/389-*. Beğeni/yorum/kaydet/İstatistik/Paylaş çubuğu sonraki dilimdir (`docs/yapilacaklar.md`).
+ * paket dosyaları (manifest) ve bağlı içerik bölümleri docs/history/389-*, 407-*. Beğeni/tepki, yorum, kaydet, İstatistik ve Paylaş çubuğu yayında + herkese açık Skill'dedir (390-*, 391-*).
  */
-export function SkillDetailView() {
+export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
   const { t, language } = useTranslation();
   const categoryRows = useSkillCategories();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = searchParams.get("id");
+  // Topluluk gönderisi sayfası kimliği prop ile verir (`/communities/post/local?id=` adresindeki `id` gönderinin kimliğidir).
+  const id = skillId ?? searchParams.get("id");
   const highlight = searchParams.get("hl");
   const highlightCommentId = highlight?.startsWith("comment:") ? highlight.slice("comment:".length) : null;
   const { user } = useAuth();
@@ -59,6 +60,7 @@ export function SkillDetailView() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [versions, setVersions] = useState<SkillVersion[]>([]);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [copyNote, setCopyNote] = useState<string | null>(null);
   const [rawView, setRawView] = useState(false);
   const [reload, setReload] = useState(0);
   const [downloads, setDownloads] = useState(0);
@@ -194,7 +196,7 @@ export function SkillDetailView() {
               {(close) => (
                 <>
                   <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadMd")} onClick={() => { close(); downloadSkillMd(skill); void recordSkillUse(skill.id); }} />
-                  <MenuItem icon={<Copy size={16} />} label={t("skill.detail.copyMd")} onClick={() => { close(); void navigator.clipboard?.writeText(skillMdFor(skill)).catch(() => undefined); }} />
+                  <MenuItem icon={<Copy size={16} />} label={t("skill.detail.copyMd")} onClick={() => { close(); void copyTextToClipboard(skillMdFor(skill)).then((ok) => setCopyNote(ok ? t("common.copied") : t("skill.detail.copyFailed"))); }} />
                   <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadJson")} onClick={() => { close(); downloadSkillMetadata(skill); }} />
                   <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadExchange")} onClick={() => { close(); downloadSkillExchange(skill); }} />
                 </>
@@ -216,6 +218,12 @@ export function SkillDetailView() {
         {skill.summary && <DetailLede>{skill.summary}</DetailLede>}
 
         <InlineAlert tone="info">{t("skill.noRunNotice")}</InlineAlert>
+
+        {copyNote && (
+          <p role="status" className="text-small text-text-muted" data-skill-copy-note="">
+            {copyNote}
+          </p>
+        )}
 
         {downloadError && (
           <p role="alert" className="text-small text-danger">
@@ -260,10 +268,13 @@ export function SkillDetailView() {
 
         <SkillVersionsSection skillId={skill.id} slug={skill.slug} versions={versions} isOwn={isOwn} onChanged={() => setReload((value) => value + 1)} />
 
-        <DetailSection title={t("skill.skillMdTitle")}>
-          <p className="mb-3 text-small text-text-muted">{t("skill.skillMdHint")}</p>
-          <CodeBlock text={skillMdFor(skill)} label={t("skill.skillMdLabel")} />
-        </DetailSection>
+        {/* Paketli Skill'de SKILL.md "Paket dosyaları" gezgininde; ayrı kod bloğu yalnız paketsiz (kolay mod) Skill'de kalır. */}
+        {!latest && (
+          <DetailSection title={t("skill.skillMdTitle")}>
+            <p className="mb-3 text-small text-text-muted">{t("skill.skillMdHint")}</p>
+            <CodeBlock text={skillMdFor(skill)} label={t("skill.skillMdLabel")} />
+          </DetailSection>
+        )}
 
         {skill.status === "published" && skill.visibility === "public" ? (
           <DetailComments>

@@ -20,6 +20,8 @@ import { searchRequestsPage } from "@/lib/supabase/requests";
 import type { SearchCursor, SearchPage } from "@/lib/supabase/search";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import { searchWorkflowsPage } from "@/lib/supabase/workflows";
+import { searchContentIds } from "@/lib/supabase/search";
+import { fetchSkillsByIds } from "@/lib/supabase/skills";
 import type { TeamCreateKind } from "@/lib/team-create";
 import { cn } from "@/lib/utils";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -34,7 +36,11 @@ import { InlineAlert } from "@/components/ui/inline-alert";
 
 export type PickedContent = { id: string; title: string };
 
-const TITLE_KEY: Record<TeamCreateKind, TranslationKey> = {
+/** Ekip dosyasının dört türü + koleksiyon seçicisinde Skill (docs/history/408-*; Skill ekip dosyasına eklenmez, yalnız koleksiyona). */
+export type PickerKind = TeamCreateKind | "skill";
+
+const TITLE_KEY: Record<PickerKind, TranslationKey> = {
+  skill: "tf.pick.title.skill",
   prompt: "tf.pick.title.prompt",
   request: "tf.pick.title.request",
   workflow: "tf.pick.title.workflow",
@@ -60,11 +66,17 @@ interface Keyset {
 
 const PAGE = 20;
 
-async function fetchPage(kind: TeamCreateKind, text: string, filters: ContentSearchFilters, cursor: SearchCursor | null): Promise<SearchPage<Row>> {
+async function fetchPage(kind: PickerKind, text: string, filters: ContentSearchFilters, cursor: SearchCursor | null): Promise<SearchPage<Row>> {
   const map = <T extends { id: string; title: string }>(page: SearchPage<T>, by: (item: T) => string): SearchPage<Row> => ({
     nextCursor: page.nextCursor,
     items: page.items.map((item) => ({ id: item.id, title: item.title, by: by(item) })),
   });
+  if (kind === "skill") {
+    // Skill de aynı arama motorundan geçer (`search_content` p_kind='skill'); kartlar kimlik sırasıyla okunur.
+    const { ids, nextCursor } = await searchContentIds("skill", text, filters, PAGE, cursor);
+    const byId = new Map((await fetchSkillsByIds(ids)).map((skill) => [skill.id, skill]));
+    return { nextCursor, items: ids.flatMap((id) => byId.get(id) ?? []).map((skill) => ({ id: skill.id, title: skill.title, by: skill.creator.username })) };
+  }
   if (kind === "prompt") return map(await searchPromptsPage(text, filters, PAGE, cursor), (item) => item.author.username);
   if (kind === "request") return map(await searchRequestsPage(text, filters, PAGE, cursor), (item) => item.author.username);
   if (kind === "workflow") return map(await searchWorkflowsPage(text, filters, PAGE, cursor), (item) => item.creator.username);
@@ -78,7 +90,7 @@ export function ContentPickerDialog({
   alreadyIds,
   overLayers = true,
 }: {
-  kind: TeamCreateKind;
+  kind: PickerKind;
   onClose: () => void;
   /** Seçilen içeriği dosyaya/panoya ekler; hata fırlatırsa satırda gösterilir. */
   onPick: (item: PickedContent) => Promise<void>;

@@ -11,6 +11,7 @@ export const teamFileItemsTranslations = {
   "tf.pick.title.prompt": { tr: "Prompt seç", en: "Pick a prompt" },
   "tf.pick.title.request": { tr: "İstek seç", en: "Pick a request" },
   "tf.pick.title.workflow": { tr: "Workflow seç", en: "Pick a workflow" },
+  "tf.pick.title.skill": { tr: "Skill seç", en: "Pick a skill" },
   "tf.pick.title.preset": { tr: "Ayar paketi seç", en: "Pick a preset" },
   "tf.pick.tab.mine": { tr: "Paylaştıklarım", en: "My shares" },
   "tf.pick.tab.others": { tr: "Başkalarının paylaştıkları", en: "Shared by others" },

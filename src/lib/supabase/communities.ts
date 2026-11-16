@@ -7,6 +7,7 @@ import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import { callRpc, fetchCommunityCards, PROFILE_EMBED, toGroupError, type CommunityCard } from "./chat-groups";
 import { fetchSpaceFeedCards, type SpaceFeedCard } from "./spaces";
+import { fetchOwnShareableSkillsWindow, fetchSkillsByIds } from "./skills";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/lib/chat-groups";
 import type { ReportReasonCode } from "@/lib/report-reasons";
 import { isDiscoverFeedSource, orderByIds, type DiscoverFeedSource } from "@/lib/community-home";
@@ -29,6 +30,7 @@ import type {
   Preset,
   Prompt,
   PromptRequest,
+  Skill,
   UserProfile,
   Workflow,
 } from "@/types";
@@ -550,7 +552,7 @@ export async function setCommunityNotifyPrefs(groupId: string, userId: string, l
 // Gönderiler (içerik akışı)
 // ---------------------------------------------------------------------------------------------
 
-export type CommunityPostType = "prompt" | "request" | "workflow" | "preset" | "space";
+export type CommunityPostType = "prompt" | "request" | "workflow" | "preset" | "space" | "skill";
 
 /**
  * Gönderi türü: `native` = içerik bu toplulukta oluşturuldu; `application` = var olan içerikle başvuru;
@@ -565,7 +567,9 @@ export type CommunityPostContent =
   | { type: "workflow"; data: Workflow }
   | { type: "preset"; data: Preset }
   /** Toplulukta duyurulmuş bir Space (docs/history/215-*): canlı başvuru — kart Space'in güncel hâlini gösterir. */
-  | { type: "space"; data: SpaceFeedCard };
+  | { type: "space"; data: SpaceFeedCard }
+  /** Toplulukta duyurulmuş bir Skill (docs/history/408-*): canlı başvuru; içerik RLS'li tek çağrıyla gelir. */
+  | { type: "skill"; data: Skill };
 
 export interface CommunityPost {
   id: string;
@@ -601,9 +605,10 @@ interface PostRow {
   workflows: WorkflowRow | null;
   presets: PresetRow | null;
   space_id: string | null;
+  skill_id: string | null;
 }
 
-const POST_SELECT = `id, community_id, kind, like_count, comment_count, save_count, content_type, note, pinned_at, created_at, space_id, author:author_id ( ${PROFILE_EMBED} ),
+const POST_SELECT = `id, community_id, kind, like_count, comment_count, save_count, content_type, note, pinned_at, created_at, space_id, skill_id, author:author_id ( ${PROFILE_EMBED} ),
   prompts ( ${PROMPT_SELECT} ), prompt_requests ( ${REQUEST_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`;
 
 function mapPostRow(row: PostRow): CommunityPost {
@@ -635,11 +640,21 @@ function mapPostRow(row: PostRow): CommunityPost {
 async function mapPostRows(rows: PostRow[]): Promise<CommunityPost[]> {
   const posts = rows.map(mapPostRow);
   const spaceIds = rows.filter((row) => row.content_type === "space" && row.space_id).map((row) => row.space_id!);
-  if (spaceIds.length === 0) return posts;
-  const cards = new Map((await fetchSpaceFeedCards(spaceIds).catch(() => [])).map((card) => [card.id, card]));
+  const skillIds = rows.filter((row) => row.content_type === "skill" && row.skill_id).map((row) => row.skill_id!);
+  if (spaceIds.length === 0 && skillIds.length === 0) return posts;
+  const [spaceCards, skills] = await Promise.all([
+    spaceIds.length > 0 ? fetchSpaceFeedCards(spaceIds).catch(() => []) : Promise.resolve([]),
+    // Skill de aynı kural: okunamayan (özele çekilen/taslağa dönen) Skill içeriksiz kalır (RLS).
+    skillIds.length > 0 ? fetchSkillsByIds(skillIds).catch(() => []) : Promise.resolve([]),
+  ]);
+  const cards = new Map(spaceCards.map((card) => [card.id, card]));
+  const skillById = new Map(skills.map((skill) => [skill.id, skill]));
   return posts.map((post, index) => {
-    const card = rows[index].space_id ? cards.get(rows[index].space_id!) : undefined;
-    return card ? { ...post, content: { type: "space", data: card } } : post;
+    const row = rows[index];
+    const card = row.space_id ? cards.get(row.space_id) : undefined;
+    if (card) return { ...post, content: { type: "space", data: card } };
+    const skill = row.skill_id ? skillById.get(row.skill_id) : undefined;
+    return skill ? { ...post, content: { type: "skill", data: skill } } : post;
   });
 }
 
@@ -814,6 +829,9 @@ export interface ShareableContent {
 export async function fetchOwnShareableContentWindow(userId: string, type: CommunityPostType, { search = "", limit = 30 }: { search?: string; limit?: number } = {}): Promise<{ items: ShareableContent[]; hasMore: boolean }> {
   const text = sanitizeSearchText(search);
   let rows: { id: string; title: string }[];
+  if (type === "skill") {
+    return fetchOwnShareableSkillsWindow(userId, { search, limit });
+  }
   if (type === "space") {
     // Yalnız herkese açık + arşivsiz Space duyurulur (docs/history/215-*; sunucu da denetler).
     let query = supabase.from("spaces").select("id, title").eq("owner_id", userId).eq("visibility", "public").is("archived_at", null);
