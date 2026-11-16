@@ -250,7 +250,7 @@ export function SkillDetailView() {
 
         <SkillQualitySection skill={skill} hasPackage={Boolean(latest)} />
 
-        {latest && <SkillFilesSection version={latest} />}
+        {latest && <SkillFilesSection key={latest.id} version={latest} skillMd={skillMdFor(skill)} onDownload={() => void primaryDownload()} />}
 
         {skill.status === "published" && skill.visibility === "public" && <SkillInstallSection skill={skill} zipFileName={latest ? `${skill.slug}-${latest.version}.zip` : null} />}
 
