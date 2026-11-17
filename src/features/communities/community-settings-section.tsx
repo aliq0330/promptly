@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Lock } from "@/components/icons/lock";
 import { LockOpen } from "@/components/icons/lock-open";
 import { Button } from "@/components/ui/button";
-import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { ChoiceCard, fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { closeCommunity, reopenCommunity, updateCommunity, type UpdateCommunityPatch } from "@/lib/supabase/communities";
