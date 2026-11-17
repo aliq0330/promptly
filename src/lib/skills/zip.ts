@@ -7,7 +7,7 @@ import { validateSkillPath, type SkillFileInput, type SkillIssue } from "./packa
  *
  * Kayıtların hiçbiri çalıştırılmaz ve diske yazılmaz: baytlar belleğe okunur, yollar `validateSkillPath` ile denetlenir ve ZIP SIFIRDAN
  * yeniden kurulur — sembolik bağ/özel dosya üretilemez (girdi düz dosya baytı sayılır). Zip bombasına karşı AÇMADAN ÖNCE merkezi dizindeki
- * bildirilen boyutlara bakılır (sayı, dosya başına, toplam, sıkıştırma oranı); bildirilen ile gerçek boyut tutmuyorsa paket reddedilir.
+ * bildirilen boyutlara bakılır (sayı, dosya başına, toplam, sıkıştırma oranı); bildirilen boyuttan KÜÇÜK çıkan kayıt reddedilir; bildirilenden BÜYÜK çıkan kayıt fflate tarafından bildirilen boyuta kesilir (bellek güvenli kalır, kesik dosya sessizce kabul edilir — yalnız kullanıcının kendi dosyasıdır, `docs/history/416-*`).
  */
 export interface ReadZipResult {
   /** Yolu geçerli ve boyut denetimini geçen dosyalar (tek üst klasör soyulmuş). `SKILL.md` dahildir. */
@@ -90,7 +90,7 @@ export function readSkillZip(zip: Uint8Array): ReadZipResult {
   let metadata: Record<string, unknown> | null = null;
   for (const name of names) {
     const bytes = raw[name];
-    // Bildirilen boyut gerçek boyutla uyuşmalı: yalan söyleyen başlık = zip bombası ya da bozuk dosya.
+    // Bildirilen boyuttan küçük çıkan kayıt = yalan söyleyen başlık ya da bozuk dosya (büyük çıkan zaten bildirilene kesilmiştir).
     if (declared.get(name) !== bytes.length) {
       issues.push({ path: name, code: "zip_bomb", severity: "error" });
       continue;

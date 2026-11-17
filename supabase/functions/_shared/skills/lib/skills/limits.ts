@@ -1,6 +1,6 @@
 /**
- * Skill paketi sınırları (docs/skill-plani.md §4, docs/history/389-*). TASLAK rakamlardır: Edge'de ZIP açma/derleme süre-bellek ölçümü
- * yapılınca kesinleşir. Veritabanı (`20261127100000_skill_package_model.sql`) aynı rakamları zorlar; aynası `package-limits.test.ts`'te
+ * Skill paketi sınırları (docs/skill-plani.md §4, docs/history/389-*). TASLAK rakamlardır: Edge'de ZIP derleme süre-bellek ölçümü gerçek çalışma zamanında yapılınca kesinleşir
+ * (Node 22'de en kötü durum ölçüldü ve büyük paketlerde sıkıştırma seviyesi düşürüldü, `docs/history/416-*`; Edge'de ölçülmedi). Veritabanı (`20261127100000_skill_package_model.sql`) aynı rakamları zorlar; aynası `package-limits.test.ts`'te
  * migration metniyle karşılaştırılır — birini değiştirirsen ikisini birlikte değiştir.
  */
 export const SKILL_LIMITS = {

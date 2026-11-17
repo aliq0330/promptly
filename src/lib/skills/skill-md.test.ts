@@ -155,3 +155,14 @@ test("skillLicenseFromSpdx maps SPDX ids case-insensitively and rejects unknown 
   assert.equal(skillLicenseFromSpdx("GPL-3.0"), null);
   assert.equal(skillLicenseFromSpdx(null), null);
 });
+
+test("parseSkillMd: only an exact `---` line closes the frontmatter (docs/history/416-*)", () => {
+  const parsed = parseSkillMd("---\nname: a\ndescription: d\n----\nstill front\n---\nBody here\n");
+  assert.equal(parsed.hasFrontmatter, true);
+  assert.equal(parsed.name, "a");
+  assert.equal(parsed.body, "Body here");
+  const lookalike = parseSkillMd("---\nname: b\n---x\nnot closed\n");
+  assert.equal(lookalike.hasFrontmatter, false, "`---x` is not a fence, so there is no closed frontmatter");
+  assert.equal(parseSkillMd("---\n---\nonly body\n").body, "only body");
+  assert.equal(parseSkillMd("---\nname: c\n---   \nBody\n").body, "Body");
+});
