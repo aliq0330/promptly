@@ -176,9 +176,34 @@ export function decodeUtf8(bytes: Uint8Array): string | null {
 
 interface SecretRule {
   label: string;
-  pattern: RegExp;
+  /** Doğrusal zamanlı olmalıdır (docs/history/413-*): kullanıcı dosyası 5 MB'a kadar olabilir ve Edge'de çalışır. */
+  pattern: RegExp | ((text: string) => boolean);
   severity: "error" | "warning";
   code: SkillIssueCode;
+}
+
+const JWT_RUN = /[A-Za-z0-9_-]+/g;
+
+/**
+ * `eyJ….eyJ….…` biçimli JWT var mı. Regex yerine ardışık "koşu"lar (harf/rakam/_/- dizileri) üstünde tek geçiş: eski `\beyJ[…]{8,}\.eyJ[…]{8,}\.[…]{8,}` kalıbı `eyJ-eyJ-…`
+ * gibi girdilerde her başlangıçta koşunun sonuna kadar tarayıp ikinci dereceden büyüyordu. Anlam aynıdır: birinci parça `eyJ` + en az 8 karakter ve (koşu başında ya da `-`
+ * sonrası), ikinci `eyJ` ile başlayan en az 11 karakter, üçüncü en az 8 karakter; aralarda tek nokta.
+ */
+export function containsJwt(text: string): boolean {
+  if (!text.includes("eyJ")) return false;
+  let first: { index: number; end: number; value: string } | null = null;
+  let second: { index: number; end: number; value: string } | null = null;
+  for (const match of text.matchAll(JWT_RUN)) {
+    const current = { index: match.index ?? 0, end: (match.index ?? 0) + match[0].length, value: match[0] };
+    if (first && second && second.end + 1 === current.index && text[second.end] === "." && first.end + 1 === second.index && text[first.end] === "." && current.value.length >= 8 && second.value.length >= 11 && second.value.startsWith("eyJ")) {
+      for (let at = first.value.indexOf("eyJ"); at !== -1; at = first.value.indexOf("eyJ", at + 1)) {
+        if ((at === 0 || first.value[at - 1] === "-") && first.value.length - at >= 11) return true;
+      }
+    }
+    first = second;
+    second = current;
+  }
+  return false;
 }
 
 /**
@@ -187,7 +212,7 @@ interface SecretRule {
  */
 const SECRET_RULES: readonly SecretRule[] = [
   { label: "private key", pattern: /-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY(?: BLOCK)?-----/, severity: "error", code: "secret_private_key" },
-  { label: "JSON Web Token", pattern: /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/, severity: "error", code: "secret_jwt" },
+  { label: "JSON Web Token", pattern: containsJwt, severity: "error", code: "secret_jwt" },
   { label: "AWS access key", pattern: /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/, severity: "warning", code: "secret_warning" },
   { label: "GitHub token", pattern: /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{50,})\b/, severity: "warning", code: "secret_warning" },
   { label: "Anthropic / OpenAI key", pattern: /\bsk-(?:ant-)?[A-Za-z0-9_-]{24,}/, severity: "warning", code: "secret_warning" },
@@ -201,7 +226,7 @@ const SECRET_RULES: readonly SecretRule[] = [
 export function scanSecrets(text: string, path: string): SkillIssue[] {
   const found: SkillIssue[] = [];
   for (const rule of SECRET_RULES) {
-    if (rule.pattern.test(text)) found.push({ path, code: rule.code, severity: rule.severity, detail: rule.label });
+    if (typeof rule.pattern === "function" ? rule.pattern(text) : rule.pattern.test(text)) found.push({ path, code: rule.code, severity: rule.severity, detail: rule.label });
   }
   return found;
 }
@@ -213,21 +238,63 @@ export function scanSecrets(text: string, path: string): SkillIssue[] {
 export const SCRIPT_RISK_CODES = ["pipe_to_shell", "network", "destructive_delete", "dynamic_eval", "privilege", "credential_paths", "obfuscation"] as const;
 export type ScriptRiskCode = (typeof SCRIPT_RISK_CODES)[number];
 
-const SCRIPT_RISK_RULES: { code: ScriptRiskCode; pattern: RegExp }[] = [
-  { code: "pipe_to_shell", pattern: /\b(?:curl|wget)\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba|z|da|k)?sh\b/i },
-  { code: "network", pattern: /\b(?:curl|wget|nc|ncat|netcat|scp|ssh|ftp)\s|\bfetch\s*\(|\brequests\.(?:get|post|put|delete)\b|\burllib\b|\bhttp\.client\b|\baxios\b|\/dev\/tcp\/|\bXMLHttpRequest\b|\bnew\s+WebSocket\b/i },
-  { code: "destructive_delete", pattern: /\brm\s+-[a-z]*r[a-z]*f?[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/|~|\$HOME|\*)|\bshutil\.rmtree\b|\bdel\s+\/[sq]\b|\bRemove-Item\b[^\n]*-Recurse|\bmkfs\b|\bdd\s+if=/i },
-  { code: "dynamic_eval", pattern: /\beval\s*[(\s"'$]|\bexec\s*\(|\bos\.system\s*\(|\bsubprocess\.[a-z_]+\([^)]*shell\s*=\s*True|\bchild_process\b|\bbash\s+-c\b|\bsh\s+-c\b|\bnew\s+Function\s*\(|\bpickle\.loads?\b/i },
-  { code: "privilege", pattern: /\bsudo\b|\bchmod\s+(?:-R\s+)?[0-7]?777\b|\bchown\s|\bsetuid\b|\bdoas\b/i },
-  { code: "credential_paths", pattern: /~\/\.ssh|\$HOME\/\.ssh|\.aws\/credentials|\bid_rsa\b|\.npmrc\b|\.netrc\b|\.git-credentials|\bkeychain\b|\/etc\/(?:passwd|shadow)/i },
-  { code: "obfuscation", pattern: /\bbase64\s+(?:-d|--decode)\b|\batob\s*\(|\bFromBase64String\b|\\x[0-9a-f]{2}(?:\\x[0-9a-f]{2}){15,}|\bb64decode\s*\(/i },
+// Her kural DOĞRUSAL zamanlıdır (docs/history/413-*): eski `[^\n|]*` / `[a-z]*r[a-z]*f?[a-z]*` / `[^)]*` kalıpları uzun tek satırlarda ikinci–üçüncü dereceden büyüyüp Edge'de CPU yakıyordu.
+const DOWNLOADER = /\b(?:curl|wget)\b/i;
+const PIPE_TARGET = /^\s*(?:sudo\s+)?(?:ba|z|da|k)?sh\b/i;
+
+/** `curl … | sh` türü: bir `|` parçası kabuğa gidiyor ve bir önceki parça indiriyor. */
+function pipesDownloadToShell(text: string): boolean {
+  for (const line of text.split("\n")) {
+    if (!line.includes("|")) continue;
+    const parts = line.split("|");
+    for (let i = 1; i < parts.length; i += 1) if (PIPE_TARGET.test(parts[i]) && DOWNLOADER.test(parts[i - 1])) return true;
+  }
+  return false;
+}
+
+const RM_TARGET = /\brm\s+-([a-z]+)\s+(?:--no-preserve-root\s+)?(?:\/|~|\$HOME|\*)/gi;
+const SIMPLE_DELETE = /\bshutil\.rmtree\b|\bdel\s+\/[sq]\b|\bmkfs\b|\bdd\s+if=/i;
+
+function destructiveDelete(text: string): boolean {
+  if (SIMPLE_DELETE.test(text)) return true;
+  for (const match of text.matchAll(RM_TARGET)) if (/r/i.test(match[1])) return true; // `rm -rf /`, `rm -fr ~` …
+  for (const line of text.split("\n")) {
+    const lower = line.toLowerCase();
+    const at = lower.indexOf("remove-item");
+    if (at !== -1 && lower.indexOf("-recurse", at) !== -1) return true;
+  }
+  return false;
+}
+
+const SUBPROCESS_OPEN = /\bsubprocess\.[a-z_]+\(/gi;
+const EVAL_LIKE = /\beval\s*[(\s"'$]|\bexec\s*\(|\bos\.system\s*\(|\bchild_process\b|\bbash\s+-c\b|\bsh\s+-c\b|\bnew\s+Function\s*\(|\bpickle\.loads?\b/i;
+
+function dynamicEval(text: string): boolean {
+  if (EVAL_LIKE.test(text)) return true;
+  for (const match of text.matchAll(SUBPROCESS_OPEN)) {
+    const from = (match.index ?? 0) + match[0].length;
+    const args = text.slice(from, from + 300); // çağrının ilk 300 karakteri (daha uzunu taranmaz: bilgilendirici tarama)
+    const close = args.indexOf(")");
+    if (/shell\s*=\s*True/i.test(close === -1 ? args : args.slice(0, close))) return true;
+  }
+  return false;
+}
+
+const SCRIPT_RISK_RULES: { code: ScriptRiskCode; test: (text: string) => boolean }[] = [
+  { code: "pipe_to_shell", test: pipesDownloadToShell },
+  { code: "network", test: (text) => /\b(?:curl|wget|nc|ncat|netcat|scp|ssh|ftp)\s|\bfetch\s*\(|\brequests\.(?:get|post|put|delete)\b|\burllib\b|\bhttp\.client\b|\baxios\b|\/dev\/tcp\/|\bXMLHttpRequest\b|\bnew\s+WebSocket\b/i.test(text) },
+  { code: "destructive_delete", test: destructiveDelete },
+  { code: "dynamic_eval", test: dynamicEval },
+  { code: "privilege", test: (text) => /\bsudo\b|\bchmod\s+(?:-R\s+)?[0-7]?777\b|\bchown\s|\bsetuid\b|\bdoas\b/i.test(text) },
+  { code: "credential_paths", test: (text) => /~\/\.ssh|\$HOME\/\.ssh|\.aws\/credentials|\bid_rsa\b|\.npmrc\b|\.netrc\b|\.git-credentials|\bkeychain\b|\/etc\/(?:passwd|shadow)/i.test(text) },
+  { code: "obfuscation", test: (text) => /\bbase64\s+(?:-d|--decode)\b|\batob\s*\(|\bFromBase64String\b|\\x[0-9a-f]{2}(?:\\x[0-9a-f]{2}){15,}|\bb64decode\s*\(/i.test(text) },
 ];
 
 /** Betik metninde işaretlenen risk kodları (tekrarsız, kural sırasıyla). Boş metin / eşleşme yok → `[]`. */
 export function scanScriptRisks(text: string): ScriptRiskCode[] {
   const found: ScriptRiskCode[] = [];
   for (const rule of SCRIPT_RISK_RULES) {
-    if (rule.pattern.test(text)) found.push(rule.code);
+    if (rule.test(text)) found.push(rule.code);
   }
   return found;
 }

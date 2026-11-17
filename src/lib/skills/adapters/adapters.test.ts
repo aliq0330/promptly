@@ -7,8 +7,8 @@ test("claude-code: personal and project install commands (golden)", () => {
   assert.deepEqual(
     steps.map((step) => step.command),
     [
-      "mkdir -p ~/.claude/skills/kod-gozden-gecirici && unzip -o kod-gozden-gecirici-1.1.0.zip -d ~/.claude/skills/kod-gozden-gecirici",
-      "mkdir -p .claude/skills/kod-gozden-gecirici && unzip -o kod-gozden-gecirici-1.1.0.zip -d .claude/skills/kod-gozden-gecirici",
+      "mkdir -p ~/.claude/skills && unzip -o kod-gozden-gecirici-1.1.0.zip -d ~/.claude/skills",
+      "mkdir -p .claude/skills && unzip -o kod-gozden-gecirici-1.1.0.zip -d .claude/skills",
     ],
   );
   assert.deepEqual(steps.map((step) => step.noteKey), ["skill.install.personal", "skill.install.project"]);
@@ -38,8 +38,8 @@ test("all three adapters are verified, filtered by the skill's compatible tools"
 
 test("Codex and Cursor write to their documented folders and refuse unsafe names", () => {
   assert.deepEqual(CODEX_ADAPTER.steps({ slug: "ok", zipFileName: "ok-1.0.0.zip" }).map((s) => s.command), [
-    "mkdir -p ~/.agents/skills/ok && unzip -o ok-1.0.0.zip -d ~/.agents/skills/ok",
-    "mkdir -p .agents/skills/ok && unzip -o ok-1.0.0.zip -d .agents/skills/ok",
+    "mkdir -p ~/.agents/skills && unzip -o ok-1.0.0.zip -d ~/.agents/skills",
+    "mkdir -p .agents/skills && unzip -o ok-1.0.0.zip -d .agents/skills",
   ]);
   assert.deepEqual(CURSOR_ADAPTER.steps({ slug: "ok", zipFileName: null }).map((s) => s.command), [
     "mkdir -p ~/.cursor/skills/ok && mv SKILL.md ~/.cursor/skills/ok/SKILL.md",

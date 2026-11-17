@@ -42,14 +42,21 @@ function safeFile(name: string): boolean {
   return /^[a-z0-9][a-z0-9.-]*\.zip$/.test(name) && name.length <= 100;
 }
 
+/**
+ * Kurulum komutu. Yayın ZIP'inin İÇİNDE zaten `<slug>/` kök klasörü vardır (`createPackageZip`): ZIP doğrudan skill'ler klasörüne açılır, yoksa `<slug>/<slug>/SKILL.md`
+ * (çift klasör) oluşurdu (docs/history/413-*). ZIP'siz Skill'de yalnız indirilen `SKILL.md` klasöre taşınır.
+ */
+function unzipCommand(slug: string, zipFileName: string | null, target: string): string {
+  return zipFileName && safeFile(zipFileName) ? `mkdir -p ${target} && unzip -o ${zipFileName} -d ${target}` : `mkdir -p ${target}/${slug} && mv SKILL.md ${target}/${slug}/SKILL.md`;
+}
+
 export const CLAUDE_CODE_ADAPTER: SkillAdapter = {
   id: "claude-code",
   status: "verified",
   docsUrl: "https://code.claude.com/docs/en/skills",
   steps({ slug, zipFileName }) {
     if (!isInstallableSlug(slug)) return [];
-    const unzip = (target: string): string =>
-      zipFileName && safeFile(zipFileName) ? `mkdir -p ${target}/${slug} && unzip -o ${zipFileName} -d ${target}/${slug}` : `mkdir -p ${target}/${slug} && mv SKILL.md ${target}/${slug}/SKILL.md`;
+    const unzip = (target: string): string => unzipCommand(slug, zipFileName, target);
     return [
       { command: unzip("~/.claude/skills"), noteKey: "skill.install.personal" },
       { command: unzip(".claude/skills"), noteKey: "skill.install.project" },
@@ -59,8 +66,7 @@ export const CLAUDE_CODE_ADAPTER: SkillAdapter = {
 
 function installSteps(slug: string, zipFileName: string | null, personal: string, project: string): SkillInstallStep[] {
   if (!isInstallableSlug(slug)) return [];
-  const unzip = (target: string): string =>
-    zipFileName && safeFile(zipFileName) ? `mkdir -p ${target}/${slug} && unzip -o ${zipFileName} -d ${target}/${slug}` : `mkdir -p ${target}/${slug} && mv SKILL.md ${target}/${slug}/SKILL.md`;
+  const unzip = (target: string): string => unzipCommand(slug, zipFileName, target);
   return [
     { command: unzip(personal), noteKey: "skill.install.personal" },
     { command: unzip(project), noteKey: "skill.install.project" },
