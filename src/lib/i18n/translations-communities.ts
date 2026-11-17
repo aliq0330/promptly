@@ -324,6 +324,7 @@ export const communityTranslations = {
   "communities.post.new.help": { tr: "Seçtiğin türün oluşturma ekranı bu topluluk bağlamıyla açılır. Görünürlüğü orada seçersin.", en: "That type's creation screen opens in this community's context. You pick the visibility there." },
   "communities.post.new.skillSpaceHint": { tr: "Skill ve Space bir topluluğa özgü oluşturulmaz; kendi sayfasında hazırla, sonra buradan alıntıla.", en: "Skills and Spaces aren't created inside a community; build them on their own page, then quote them here." },
   "communities.aside.since": { tr: "{{date}} tarihinde kuruldu", en: "Created {{date}}" },
+  "communities.card.menu": { tr: "{{name}} menüsü", en: "{{name}} menu" },
   "communities.menu.label": { tr: "Topluluk menüsü", en: "Community menu" },
   "communities.menu.preferences": { tr: "Bildirim tercihleri", en: "Notification settings" },
   "communities.post.back": { tr: "Geri", en: "Back" },

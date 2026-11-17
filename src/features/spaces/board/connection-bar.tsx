@@ -15,7 +15,7 @@ import { CONNECTOR_ARROWS, CONNECTOR_ROUTES, CONNECTOR_STYLES } from "@/lib/spac
 import type { SpaceConnection, SpaceConnectionPatch } from "@/lib/supabase/spaces";
 import { SPACE_COLORS } from "@/lib/spaces";
 import { cn } from "@/lib/utils";
-import { SpaceMenu } from "../space-menu";
+import { PopoverMenu } from "@/components/ui/popover-menu";
 import { SPACE_COLOR_CLASS } from "../space-visuals";
 
 const STYLE_ICON: Record<(typeof CONNECTOR_STYLES)[number], IconComponent> = { solid: Minus, dashed: Ellipsis, dotted: Ellipsis };
@@ -75,19 +75,19 @@ export function ConnectionBar({
               aria-label={t("spaces.connect.labelField")}
               className="h-9 w-36 shrink-0 rounded-full border border-border bg-surface-soft px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
             />
-            <SpaceMenu
+            <PopoverMenu
               label={t("spaces.connect.style")}
               align="left"
               trigger={<Minus size={16} aria-hidden />}
               items={CONNECTOR_STYLES.map((style) => ({ key: style, label: `${connection.lineStyle === style ? "✓ " : ""}${t(`spaces.connect.style.${style}`)}`, icon: STYLE_ICON[style], onSelect: () => onPatch({ lineStyle: style }) }))}
             />
-            <SpaceMenu
+            <PopoverMenu
               label={t("spaces.connect.arrow")}
               align="left"
               trigger={<ArrowRight size={16} aria-hidden />}
               items={CONNECTOR_ARROWS.map((arrow) => ({ key: arrow, label: `${connection.arrow === arrow ? "✓ " : ""}${t(`spaces.connect.arrow.${arrow}`)}`, icon: ARROW_ICON[arrow], onSelect: () => onPatch({ arrow }) }))}
             />
-            <SpaceMenu
+            <PopoverMenu
               label={t("spaces.connect.route")}
               align="left"
               trigger={<Spline size={16} aria-hidden />}

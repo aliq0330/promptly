@@ -11,6 +11,7 @@ import { communityHref, membersSections, type MembersSection } from "@/lib/commu
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { GroupRole } from "@/types";
 import { ScrollRow } from "@/components/ui/scroll-row";
+import { Chip } from "@/components/ui/chip";
 
 /** "online" = şu an çevrimiçi üyeler (docs/history/329-*; kişi başına gizlilik sunucuda). */
 type MemberFilter = GroupRole | null | "online";
@@ -51,16 +52,7 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
         <>
           <ScrollRow className="flex gap-1.5 pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.members.filterAria")}>
             {FILTERS.map((value) => (
-              <button
-                key={value ?? "all"}
-                type="button"
-                onClick={() => setFilter(value)}
-                aria-pressed={filter === value}
-                className={
-                  "shrink-0 rounded-full border px-3 py-1.5 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary " +
-                  (filter === value ? "border-primary/50 bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
-                }
-              >
+              <Chip key={value ?? "all"} selected={filter === value} onClick={() => setFilter(value)}>
                 {value === "online" ? (
                   <span className="inline-flex items-center gap-1.5">
                     <span aria-hidden className="h-2 w-2 rounded-full bg-success" />
@@ -71,7 +63,7 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
                 ) : (
                   t("communities.filter.all")
                 )}
-              </button>
+              </Chip>
             ))}
           </ScrollRow>
           <GroupMembersSection

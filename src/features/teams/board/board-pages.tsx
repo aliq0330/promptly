@@ -16,7 +16,7 @@ import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/features/groups/use-toast";
 import { SpaceDialog } from "@/features/spaces/space-modals";
-import { SpaceMenu } from "@/features/spaces/space-menu";
+import { PopoverMenu } from "@/components/ui/popover-menu";
 import { NewBoardDialog } from "@/features/teams/project-dialogs";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { deleteBoard, renameBoard, renameBoardGroup } from "@/lib/supabase/team-projects";
@@ -342,7 +342,7 @@ function PageMenu({ page, index, extrasCount, actions }: { page: BoardPageInfo; 
     { key: "delete", label: t("tb.pages.delete"), icon: Trash2, danger: true, onSelect: () => actions.remove(page), hidden: !actions.canLead || page.isMain },
   ];
   if (items.every((item) => item.hidden)) return null;
-  return <SpaceMenu label={t("tb.pages.options")} trigger={<Ellipsis size={20} aria-hidden />} items={items} />;
+  return <PopoverMenu label={t("tb.pages.options")} trigger={<Ellipsis size={20} aria-hidden />} items={items} />;
 }
 
 export function PageRows({ team, actions, onPicked, thumbClass = "h-9 w-14" }: { team: TeamBoardConfig; actions: PageActions; onPicked?: () => void; thumbClass?: string }) {

@@ -58,7 +58,7 @@ export function BoardPopover({
     const onPointer = (event: PointerEvent) => {
       const target = event.target as Node;
       if (ref.current?.contains(target) || anchorRef.current?.contains(target)) return;
-      // Panelin içindeki ⋯ menüsü (SpaceMenu) `body`'ye taşınır: onun tıklaması "dışarı" sayılıp paneli kapatmamalı.
+      // Panelin içindeki ⋯ menüsü (PopoverMenu) `body`'ye taşınır: onun tıklaması "dışarı" sayılıp paneli kapatmamalı.
       if ((target as Element).closest?.('[role="menu"]')) return;
       onClose();
     };

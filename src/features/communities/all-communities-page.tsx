@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { Compass } from "@/components/icons/compass";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Chip } from "@/components/ui/chip";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionMenu } from "@/features/content/section-menu";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -146,18 +147,9 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <ScrollRow className="flex gap-1.5 pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
           {[null, ...COMMUNITY_CATEGORIES].map((value) => (
-            <button
-              key={value ?? "all"}
-              type="button"
-              onClick={() => setCategory(value)}
-              aria-pressed={category === value}
-              className={
-                "shrink-0 rounded-full border px-3 py-1.5 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary " +
-                (category === value ? "border-primary/50 bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
-              }
-            >
+            <Chip key={value ?? "all"} selected={category === value} onClick={() => setCategory(value)}>
               {value ? t(CATEGORY_LABEL_KEYS[value]) : t("communities.filter.all")}
-            </button>
+            </Chip>
           ))}
         </ScrollRow>
         <SectionMenu ariaLabel={t("groups.page.sortAria")} title={t("groups.page.sortAria")} active={sort} onChange={setSort} items={SORTS.map((value) => ({ key: value, label: t(SORT_LABEL[value]) }))} />

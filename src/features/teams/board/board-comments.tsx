@@ -15,7 +15,7 @@ import { Send } from "@/components/icons/send";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
 import { X } from "@/components/icons/x";
-import { SpaceMenu } from "@/features/spaces/space-menu";
+import { PopoverMenu } from "@/components/ui/popover-menu";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   createPinComment,
@@ -510,7 +510,7 @@ export function CommentsPanel({
                   </button>
                 )}
                 {(mine || canModerate) && (
-                  <SpaceMenu
+                  <PopoverMenu
                     label={t("tb.comments.more")}
                     items={[
                       { key: "edit", label: t("tb.comments.edit"), icon: StickyNote, onSelect: () => setEditing(root.id), hidden: !mine },

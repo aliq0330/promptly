@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Tabs } from "@/components/ui/tabs";
 import { HUB_BAND_MENU_BUTTON_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
 import { Button } from "@/components/ui/button";
+import { MENU_ITEM_CLASS, MENU_ITEM_DANGER_CLASS, MENU_PANEL_CLASS } from "@/components/ui/menu";
 import { Lock } from "@/components/icons/lock";
 import { VisibilityTag } from "@/components/ui/visibility-tag";
 import { focusMenuItem, menuKeyDown } from "@/components/ui/menu-keys";
@@ -164,10 +165,10 @@ export function TeamBand({
               <MoreVertical size={20} aria-hidden />
             </button>
             {menuOpen && (
-              <ul ref={listRef} role="menu" onKeyDown={(event) => menuKeyDown(event, listRef.current)} className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-lg border border-border-soft bg-surface-elevated p-1.5 shadow-pop" data-team-menu-list>
+              <ul ref={listRef} role="menu" onKeyDown={(event) => menuKeyDown(event, listRef.current)} className={cn(MENU_PANEL_CLASS, "absolute right-0 top-full z-30 mt-1.5 w-56")} data-team-menu-list>
                 {menuItems.map((item) => (
                   <li key={item.key} role="none">
-                    <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center rounded-lg px-3 text-small font-medium text-text hover:bg-surface-soft">
+                    <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className={MENU_ITEM_CLASS}>
                       {item.label}
                     </Link>
                   </li>
@@ -182,7 +183,7 @@ export function TeamBand({
                         onLeave();
                       }}
                       data-team-menu-leave
-                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-small font-medium text-danger hover:bg-danger-soft"
+                      className={cn(MENU_ITEM_CLASS, MENU_ITEM_DANGER_CLASS)}
                     >
                       <LogOut size={16} aria-hidden />
                       {t("tm.members.leave")}

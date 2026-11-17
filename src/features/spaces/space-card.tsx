@@ -25,7 +25,7 @@ import { removeSpaceMember, setSpaceFavorite, spaceFromSummary, summaryArt, upda
 import { SPACE_KIND_LABEL, spaceCapabilities, spaceHref } from "@/lib/spaces";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
 import { ShareModal } from "@/features/prompts/share-modal";
-import { SpaceMenu } from "./space-menu";
+import { PopoverMenu } from "@/components/ui/popover-menu";
 import { HUB_CARD_CHIP_CLASS, HubCard } from "@/features/hub/hub-kit";
 import { PaletteStrip, SpaceCoverArt, VisibilityBadge } from "./space-visuals";
 
@@ -86,7 +86,7 @@ export function SpaceCard({
     onChange({ ...space, title: saved.title, description: saved.description, kind: saved.kind, visibility: saved.visibility, coverUrl: saved.coverUrl, coverItemId: saved.coverItemId, updatedAt: saved.updatedAt });
 
   const menu = (
-    <SpaceMenu
+    <PopoverMenu
       label={t("spaces.card.menu", { title: space.title })}
       items={[
         { key: "open", label: t("spaces.card.open"), icon: ArrowUpRight, onSelect: () => router.push(href) },

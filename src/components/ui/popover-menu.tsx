@@ -6,10 +6,10 @@ import type { IconComponent } from "@/components/icons/icon";
 import { MoreVertical } from "@/components/icons/more-vertical";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
-import { MENU_PANEL_CLASS } from "@/components/ui/menu";
+import { MENU_ITEM_CLASS, MENU_ITEM_DANGER_CLASS, MENU_PANEL_CLASS } from "@/components/ui/menu";
 import { menuKeyDown } from "@/components/ui/menu-keys";
 
-export interface SpaceMenuItem {
+export interface PopoverMenuItem {
   key: string;
   label: string;
   icon: IconComponent;
@@ -26,7 +26,7 @@ const EDGE = 8;
  * olarak geçmesin diye olaylar durdurulur. Menü `body`'ye taşınır ve `position: fixed` ile düğmenin yanına konur — `overflow` kırpan
  * ataların (yatay kaydırmalı pano araç çubuğu, kart) içinde kesilmesin; yer yoksa düğmenin ÜSTÜNE açılır, kaydırma/boyut değişince yeniden konur.
  */
-export function SpaceMenu({ items, label, align = "right", trigger, className, triggerClassName }: { items: SpaceMenuItem[]; label?: string; align?: "left" | "right"; trigger?: ReactNode; className?: string; triggerClassName?: string }) {
+export function PopoverMenu({ items, label, align = "right", trigger, className, triggerClassName }: { items: PopoverMenuItem[]; label?: string; align?: "left" | "right"; trigger?: ReactNode; className?: string; triggerClassName?: string }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -125,10 +125,7 @@ export function SpaceMenu({ items, label, align = "right", trigger, className, t
                   setOpen(false);
                   item.onSelect();
                 }}
-                className={cn(
-                  "flex w-full items-center gap-2 px-3 py-2.5 text-left text-small focus-visible:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-                  item.danger ? "text-danger hover:bg-danger-soft" : "text-text hover:bg-surface-soft",
-                )}
+                className={cn(MENU_ITEM_CLASS, item.danger && MENU_ITEM_DANGER_CLASS)}
               >
                 <item.icon size={16} aria-hidden />
                 {item.label}

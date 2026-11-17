@@ -8,13 +8,18 @@ import { GroupAvatar } from "@/features/groups/group-avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { CommunityJoinButton, type JoinState } from "./community-join-button";
 import { CommunityCover } from "./community-cover";
-import { HUB_CARD_CHIP_CLASS, HubCard } from "@/features/hub/hub-kit";
+import { HUB_CARD_CHIP_CLASS, HUB_CARD_CORNER_BUTTON_CLASS, HubCard } from "@/features/hub/hub-kit";
+import { PopoverMenu } from "@/components/ui/popover-menu";
+import { Flag } from "@/components/icons/flag";
+import { Link2 } from "@/components/icons/link-2";
+import { useAuth } from "@/features/auth/auth-provider";
+import { useReport } from "@/features/moderation/report-provider";
 import { VisibilityLabel } from "./visibility-label";
 import { useCommunityPresenceCount } from "@/features/presence/community-presence";
 import { OnlineCountText } from "@/features/presence/presence-ui";
 import { CATEGORY_LABEL_KEYS, communityHref, REASON_LABEL_KEYS } from "@/lib/communities";
 import { memberCountText } from "@/lib/group-labels";
-import { formatUnread } from "@/lib/utils";
+import { absoluteUrl, formatUnread } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityReason, CommunitySummary } from "@/lib/supabase/communities";
 
@@ -45,6 +50,8 @@ export function CommunityCard({
   unseen?: number;
 }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const { openReport } = useReport();
   const full = community.memberCount >= community.memberLimit;
   const isMember = community.myStatus === "member";
   const showContentStats = community.visibility === "public" || isMember;
@@ -97,6 +104,29 @@ export function CommunityCard({
         </>
       }
       chip={<span className={HUB_CARD_CHIP_CLASS}>{t(CATEGORY_LABEL_KEYS[community.category])}</span>}
+      corner={
+        // Kart ⋮ menüsü (Space kartıyla aynı yer ve ortak `PopoverMenu`): bağlantıyı kopyala · şikâyet (sahibi hariç, oturumlu).
+        <PopoverMenu
+          label={t("communities.card.menu", { name: community.name })}
+          triggerClassName={HUB_CARD_CORNER_BUTTON_CLASS}
+          items={[
+            {
+              key: "copy",
+              label: t("common.copyLink"),
+              icon: Link2,
+              onSelect: () => void navigator.clipboard?.writeText(absoluteUrl(communityHref(community.id))).then(() => onToast(t("common.copied")), () => undefined),
+            },
+            {
+              key: "report",
+              label: t("communities.about.reportCommunity"),
+              icon: Flag,
+              danger: true,
+              hidden: !user || community.myRole === "owner",
+              onSelect: () => openReport({ type: "community", id: community.id, title: community.name }),
+            },
+          ]}
+        />
+      }
       coverOverlay={
         unseen > 0 ? (
           <span data-shelf-unseen={unseen} className="ml-auto rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground shadow-xs">
