@@ -18,8 +18,6 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 
 interface AppShellProps {
   children: ReactNode;
-  /** Optional right-hand helper panel, shown on wide desktop viewports only. */
-  aside?: ReactNode;
 }
 
 /**
@@ -34,7 +32,7 @@ interface AppShellProps {
  * Safari took the strip behind its toolbar from the fixed bottom nav even while it was hidden.)
  * From `lg` a signed-in member also gets the Messages dock (docs/history/328-*): a pill fixed to the bottom-right that opens a chat panel without leaving the page.
  */
-export function AppShell({ children, aside }: AppShellProps) {
+export function AppShell({ children }: AppShellProps) {
   const { t } = useTranslation();
   useChromeAutoHide();
   const bare = /^\/focus\/?$/.test(usePathname() ?? "");
@@ -68,9 +66,6 @@ export function AppShell({ children, aside }: AppShellProps) {
           <main id="main-content" className="min-w-0 flex-1 pb-(--nav-clearance) md:pb-10">
             {children}
           </main>
-          {aside ? (
-            <aside className="hidden w-80 shrink-0 border-l border-border-soft p-4 xl:block">{aside}</aside>
-          ) : null}
         </div>
       </div>
       <MobileNav />

@@ -446,7 +446,7 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
         scene="community"
         title={t(`communities.empty.${emptyKey}` as "communities.empty.mine")}
         description={t(`communities.empty.${emptyKey}Help` as "communities.empty.mineHelp")}
-        action={scope === "member" ? { label: t("communities.tab.discover"), href: "/communities" } : undefined}
+        action={scope === "member" ? { label: t("communities.tab.discover"), href: homeHref("discover") } : undefined}
       />
     );
   }

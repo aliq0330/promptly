@@ -9,6 +9,7 @@ import { Button, buttonClassName } from "@/components/ui/button";
 import { CARD_SURFACE_CLASS } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { PAGE_GUTTER_CLASS, PAGE_WIDTH_CLASS } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 
 /**
@@ -22,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
  */
 
 /** Sayfa kabuğu: telefonda 12, tablette 24, masaüstünde 32 px kenar boşluğu — üç alanda aynı genişlik. */
-export const HUB_PAGE_CLASS = "mx-auto w-full max-w-6xl px-3 pb-16 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-7";
+export const HUB_PAGE_CLASS = `mx-auto w-full ${PAGE_WIDTH_CLASS.hub} ${PAGE_GUTTER_CLASS} pb-16 pt-4 sm:pt-6 lg:pt-7`;
 
 /** Ana sayfa bandı. Telefonda düğme kısa etiketle aynı satırda kalır. */
 export function HubBand({

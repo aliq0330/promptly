@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { usePageTitle } from "@/components/layout/page-title";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RefreshCw } from "@/components/icons/refresh-cw";
@@ -80,6 +81,7 @@ function CommunityPageInner() {
 
   const role = state.status === "ready" ? (state.membership?.role ?? null) : null;
   const group = state.status === "ready" ? state.group : null;
+  usePageTitle(group?.name);
   const allowed = useMemo(() => (group ? accessibleTabs({ role, visibility: group.visibility, perms: group.rolePermissions }) : []), [group, role]);
   const { view, toChat } = resolveCommunityView(searchParams.get("tab"), searchParams.get("section"), allowed);
   const tab = view?.tab ?? null;
@@ -238,7 +240,7 @@ function CommunityPageInner() {
               aside={tab === "feed" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
               asideLabel={t("communities.aside.pageLabel")}
             >
-              <div role="tabpanel">
+              <div role="tabpanel" aria-label={tabLabels[tab]}>
                 {tab === "feed" && <FeedTab {...common} />}
                 {tab !== "feed" && (
                   <CommunityReadingColumn className={tab === "manage" ? "max-w-4xl" : undefined}>

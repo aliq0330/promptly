@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Download } from "@/components/icons/download";
+import { AlertCircle } from "@/components/icons/alert-circle";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageContainer } from "@/components/ui/page-header";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { PenLine } from "@/components/icons/pen-line";
 import { Share2 } from "@/components/icons/share-2";
@@ -26,22 +29,34 @@ export function SkillsListView() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
   const cursorRef = useRef<KeysetCursor | null>(null);
   const busyRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetchRecentSkills(PAGE_SIZE).then((page) => {
-      if (cancelled) return;
-      setSkills(page.items);
-      cursorRef.current = page.nextCursor;
-      setHasMore(page.nextCursor !== null);
-      setLoading(false);
-    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- yeniden deneme yeni bir yükleme başlatır
+    setLoading(true);
+    setFailed(false);
+    fetchRecentSkills(PAGE_SIZE)
+      .then((page) => {
+        if (cancelled) return;
+        setSkills(page.items);
+        cursorRef.current = page.nextCursor;
+        setHasMore(page.nextCursor !== null);
+      })
+      .catch((err) => {
+        console.error("SkillsListView", err);
+        if (!cancelled) setFailed(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retry]);
 
   const loadMore = useCallback(async () => {
     if (busyRef.current || !cursorRef.current) return;
@@ -55,11 +70,21 @@ export function SkillsListView() {
       });
       cursorRef.current = page.nextCursor;
       setHasMore(page.nextCursor !== null);
+    } catch (err) {
+      console.error("SkillsListView more", err);
     } finally {
       busyRef.current = false;
       setLoadingMore(false);
     }
   }, []);
+
+  if (failed && skills.length === 0) {
+    return (
+      <PageContainer>
+        <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: () => setRetry((n) => n + 1) }} />
+      </PageContainer>
+    );
+  }
 
   return (
     <ContentListPage

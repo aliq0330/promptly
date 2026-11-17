@@ -178,7 +178,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
           quoteCount={skill.quoteCount ?? 0}
           footer={published ? <RelationMapRow kind="skill" id={skill.id} /> : undefined}
         >
-          {category && <span className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{category}</span>}
+          {category && <span className="inline-flex items-center rounded-full py-1 border border-border-soft bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{category}</span>}
           <DetailTags className="contents" tags={tags.map((tag) => ({ ...tag }) as Tag)} />
         </DetailMetaCard>
         {/* "Skill bilgisi" kartı Hakkında'ya katıldı (docs/history/409-*): prompt sayfasında ikinci bir bilgi kartı yoktur. */}

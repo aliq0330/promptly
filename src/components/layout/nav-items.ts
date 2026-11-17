@@ -52,7 +52,7 @@ export const navGroups: NavGroup[] = [
   {
     items: [
       { href: "/", labelKey: "nav.home", icon: Home, rail: true },
-      { href: "/discover", labelKey: "nav.discover", icon: Compass, rail: true, alsoMatch: ["/prompts", "/requests", "/workflows", "/presets", "/tags", "/categories", "/tools", "/results", "/quotes"] },
+      { href: "/discover", labelKey: "nav.discover", icon: Compass, rail: true, alsoMatch: ["/prompts", "/requests", "/workflows", "/presets", "/skills", "/tags", "/categories", "/tools", "/results", "/quotes"] },
       { href: "/communities", labelKey: "nav.communities", icon: Users, rail: true },
     ],
   },

@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePageTitle } from "@/components/layout/page-title";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Briefcase } from "@/components/icons/briefcase";
@@ -85,6 +86,7 @@ function TeamPageInner() {
   }, [id, user, tick]);
 
   const teamId = team?.id ?? null;
+  usePageTitle(team?.name);
   const isGuest = team?.myRole === "guest";
   // Onay panosu: konuk yüklemez; okunamazsa (eski veritabanı) sayaç/şerit yok sayılır, sayfa çalışır.
   useEffect(() => {
@@ -150,7 +152,7 @@ function TeamPageInner() {
 
   if (state === "loading") {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-4 px-3 py-5 sm:px-5 lg:px-8" data-testid="team-loading">
+      <div className={cn(HUB_PAGE_CLASS, "space-y-4")} data-testid="team-loading">
         <Skeleton className="h-24 w-full rounded-lg" />
         <Skeleton className="h-64 w-full rounded-xl" />
       </div>
