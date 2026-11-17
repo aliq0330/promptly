@@ -82,6 +82,8 @@ export interface AdminUser {
   requests: number;
   workflows: number;
   presets: number;
+  /** Skill sayısı: `admin_users` çıktısında ayrı sütun YOKTUR (docs/history/417-*); `posts_total` içinden türetilir. */
+  skills: number;
   postsTotal: number;
   comments: number;
   likesGiven: number;
@@ -156,6 +158,7 @@ function mapUser(row: UserRow): AdminUser {
     requests: row.requests_n,
     workflows: row.workflows_n,
     presets: row.presets_n,
+    skills: Math.max(0, row.posts_total - row.prompts_n - row.requests_n - row.workflows_n - row.presets_n),
     postsTotal: row.posts_total,
     comments: row.comments_n,
     likesGiven: row.likes_given_n,

@@ -167,6 +167,7 @@ export const skillsTranslations = {
   "notifMsg.likedSkill": { tr: "Skill'ini beğendi: \"{{preview}}\"", en: "Liked your Skill: \"{{preview}}\"" },
   "notifMsg.commentedSkill": { tr: "Skill'ine yorum yaptı: \"{{preview}}\"", en: "Commented on your Skill: \"{{preview}}\"" },
   "notifMsg.commentedSkillNone": { tr: "Skill'ine yorum yaptı.", en: "Commented on your Skill." },
+  "admin.kind.skill": { tr: "Skill", en: "Skill" },
   "admin.skillStats.title": { tr: "Skill'ler", en: "Skills" },
   "admin.skillStats.total": { tr: "Toplam", en: "Total" },
   "admin.skillStats.published": { tr: "Yayında", en: "Published" },

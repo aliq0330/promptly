@@ -9,6 +9,8 @@ import { useMessageImageUrls } from "./message-image-grid";
 import { isGifOnly } from "@/lib/supabase/message-images";
 import { parseWorkflowShareBody } from "./workflow-share-format";
 import { parsePresetShareBody } from "./preset-share-format";
+import { parseSpaceShareBody } from "./space-share-format";
+import { parseSkillShareBody } from "./skill-share-format";
 import { parseCommunityPostShareBody } from "./community-post-share-format";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -18,18 +20,22 @@ type T = (key: TranslationKey, params?: Record<string, string | number>) => stri
 
 /**
  * What a replied-to message "is", in one short line — its text, else the shared item (prompt / request / workflow /
- * preset / community post: the plain-text share blocks are recognised, their raw block never shown) by its TITLE (the
+ * preset / skill / Space / community post: the plain-text share blocks are recognised, their raw block never shown) by its TITLE (the
  * generic "a prompt" only while the title is not known — e.g. still loading, or the viewer cannot read it), else "a photo".
  */
 export function describeReplied(message: Message, t: T, itemTitle?: string | null): string {
   if (message.deletedAt) return t("messages.deletedMessage");
   const shared = !message.sharedPromptId && !message.sharedRequestId;
-  const workflow = shared ? parseWorkflowShareBody(message.body) : null;
-  if (workflow) return workflow.note ?? workflow.title;
-  const preset = shared && !workflow ? parsePresetShareBody(message.body) : null;
-  if (preset) return preset.note ?? preset.title;
-  const post = shared && !workflow && !preset ? parseCommunityPostShareBody(message.body) : null;
-  if (post) return post.note ?? post.title;
+  if (shared) {
+    // Düz metin paylaşım blokları (workflow, hazır ayar, Space, Skill, topluluk gönderisi): ham başlık + bağlantı bloğu hiç gösterilmez (docs/history/417-*).
+    const block =
+      parseWorkflowShareBody(message.body) ??
+      parsePresetShareBody(message.body) ??
+      parseSpaceShareBody(message.body) ??
+      parseSkillShareBody(message.body) ??
+      parseCommunityPostShareBody(message.body);
+    if (block) return block.note ?? block.title;
+  }
   if (message.body) return message.body;
   if (message.sharedPromptId) return itemTitle ?? t("messages.aPrompt");
   if (message.sharedRequestId) return itemTitle ?? t("request.aRequest");

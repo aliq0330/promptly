@@ -167,6 +167,7 @@ test("helpers: language from Telegram, command parsing (bot suffix), link code n
   assert.equal(notificationUrl(SITE, "https://evil.example"), SITE);
   assert.equal(notificationText("en", 'Paylaşımına yorum yaptı: "merhaba"'), 'commented on your post: "merhaba"');
   assert.equal(notificationText("tr", "Paylaşımına yorum yaptı"), "Paylaşımına yorum yaptı");
+  assert.equal(notificationText("en", 'Skill\'ine yorum yaptı: "güzel"'), 'commented on your Skill: "güzel"');
   assert.equal(notificationText("en", "Bilinmeyen cümle"), "Bilinmeyen cümle");
 });
 

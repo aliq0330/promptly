@@ -51,5 +51,5 @@ export function hasInviteRoom(memberCount: number, pendingCount: number): boolea
   return memberCount + pendingCount < COLLECTION_MEMBER_LIMIT;
 }
 
-/** Ortak koleksiyona girebilecek içerik türleri (topluluk başvuru gönderisi girmez; İstek koleksiyona hiç girmez). */
-export const SHAREABLE_ENTRY_TYPES = ["prompt", "workflow", "preset"] as const;
+/** Ortak koleksiyona girebilecek içerik türleri (topluluk başvuru gönderisi girmez; İstek koleksiyona hiç girmez). SQL `collection_items_a_shared_guard` ile aynı küme. */
+export const SHAREABLE_ENTRY_TYPES = ["prompt", "workflow", "preset", "skill"] as const;
