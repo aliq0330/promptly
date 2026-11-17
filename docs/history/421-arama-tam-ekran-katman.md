@@ -39,3 +39,13 @@ kutunun hemen altındaki satırdaydı; ekran klavyesi de açılınca düğme pan
 - iOS'ta katman açılırken `autoFocus` jest zincirinden çıkarsa klavye ikinci dokunuşta gelebilir; gerçek cihazda **denenmedi**. Ağ taklitli Playwright'ta sınandı.
 - Masaüstü rayında kapsam daraltma (yalnız Kişiler / yalnız Etiketler) yok; öneriler gruplu tek listedir.
 - `ContentListPage` ve ekip içerik seçici de aynı kapıyı kullanır (seçicide Filtre modu yok; kendi satır içi Filtre bölümü durur).
+
+## Düzeltme (aynı gün): iOS'ta katman klavyeye göre kısa kalıyordu
+Gerçek iPhone ekran görüntüsünde katman klavyenin üstündeki alandan kısa açılıp altında sayfayı gösteriyordu (kendiliğinden bazen düzeliyordu). Neden: katmanın
+kendisi `visualViewport` ölçümüyle (`--kb-top`/`--kb-h`) boyutlanıyordu; iOS klavye kayarken görünür alanı adım adım bildirir ve açılışta odaklanan giriş ilk
+olayları kaçırır, eksik ölçüm kalıyordu.
+- Katmanın **kendisi** artık telefonda her zaman tüm ekranı opak zeminle örter; yalnız içindeki panel ölçülen görünür alana oturur (`max-md:absolute`, `--kb-top`/`--kb-h`).
+  Ölçüm yanlış olsa da altta sayfa görünmez.
+- `useKeyboardViewport` ölçümü sağlamlaştırıldı (tüm tüketiciler — `Modal`, sohbet paneli — yararlanır): açılışta ve `focusin/focusout/orientationchange/window resize`
+  sonrasında 120/350/800 ms'de yeniden ölçer.
+- Test: `run-search-notifications` 7g (kısa ölçüm taklidi: katman tam ekran + opak, panel ölçüye oturur). Gerçek iPhone'da yeniden **denenmedi**.

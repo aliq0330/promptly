@@ -351,11 +351,14 @@ export function SearchOverlay({
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) onClose();
         }}
-        className="fixed inset-0 z-(--z-picker) flex animate-fade-in max-md:top-[var(--kb-top,0px)] max-md:bottom-auto max-md:h-[var(--kb-h,100dvh)] max-md:bg-surface md:items-start md:justify-center md:bg-scrim md:p-6 md:pt-[8dvh]"
+        // The layer ITSELF always covers the whole screen with an opaque ground (phone), so a stale / half-finished keyboard measurement
+        // (iOS reports the visible area in steps while the keyboard slides in) can never show the page underneath; only the panel inside
+        // follows the visible area above the keyboard.
+        className="fixed inset-0 z-(--z-picker) flex animate-fade-in max-md:bg-surface md:items-start md:justify-center md:bg-scrim md:p-6 md:pt-[8dvh]"
       >
         <div
           ref={panelRef}
-          className="flex min-h-0 w-full flex-1 flex-col overflow-hidden pt-[env(safe-area-inset-top,0px)] md:max-w-3xl md:flex-none md:h-[min(34rem,78dvh)] md:rounded-xl md:border md:border-border-soft md:bg-surface-elevated md:pt-0 md:shadow-pop"
+          className="flex min-h-0 w-full flex-1 flex-col overflow-hidden pt-[env(safe-area-inset-top,0px)] max-md:absolute max-md:inset-x-0 max-md:top-[var(--kb-top,0px)] max-md:h-[var(--kb-h,100%)] md:max-w-3xl md:flex-none md:h-[min(34rem,78dvh)] md:rounded-xl md:border md:border-border-soft md:bg-surface-elevated md:pt-0 md:shadow-pop"
         >
           {/* Top: the input (always on md+, on the phone only in the search view) … */}
           <div className={cn("shrink-0 items-center gap-2 border-b border-border-soft px-2 py-2 md:flex md:px-4 md:py-3", filtering ? "max-md:hidden" : "flex")}>

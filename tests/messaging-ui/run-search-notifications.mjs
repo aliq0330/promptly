@@ -254,6 +254,22 @@ await scenario("7f. Arama katmanı (İngilizce, telefon): metinler çevrilmiş, 
   assert.ok(await overflowFree(page));
 }, { lang: "en", viewport: { width: 390, height: 844 } });
 
+await scenario("7g. Arama katmanı (telefon): klavye ölçümü eksik/yanlış gelse bile katman tüm ekranı opak örter (altta sayfa görünmez), panel görünür alana oturur", async ({ page }) => {
+  await page.goto(`${BASE}/search`);
+  await openSearch(page);
+  const vp = page.viewportSize();
+  // iOS'ta klavye açılırken görünür alan adım adım gelir: kısa bir ölçümü taklit et (panel 300 px, üstte 0).
+  await searchOverlay(page).evaluate((el) => { el.style.setProperty("--kb-top", "0px"); el.style.setProperty("--kb-h", "300px"); });
+  const layer = await searchOverlay(page).boundingBox();
+  assert.ok(layer.width >= vp.width - 1 && layer.height >= vp.height - 1, `katmanın kendisi tüm ekranı kaplar: ${JSON.stringify(layer)}`);
+  const ground = await searchOverlay(page).evaluate((el) => getComputedStyle(el).backgroundColor);
+  assert.ok(!/rgba\(.*,\s*0\)|transparent/.test(ground), `zemin opak: ${ground}`);
+  const panel = await searchOverlay(page).locator("> div").first().boundingBox();
+  assert.ok(Math.abs(panel.height - 300) <= 1, `panel ölçülen görünür alana oturur: ${panel.height}`);
+  const filter = await searchOverlay(page).locator("[data-search-overlay-filter]").boundingBox();
+  assert.ok(filter && filter.y + filter.height <= 300, "Filtre düğmesi kısa panelde de içeride");
+}, { viewport: { width: 390, height: 844 } });
+
 await browser.close(); server.close();
 let failed = 0;
 for (const [status, name] of results) { console.log(`${status === "PASS" ? "✓" : "✗"} ${name}`); if (status === "FAIL") failed += 1; }

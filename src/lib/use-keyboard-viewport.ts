@@ -20,12 +20,29 @@ export function useKeyboardViewport(): KeyboardViewport | null {
       const frame = keyboardFrame({ innerHeight: window.innerHeight, viewportHeight: visual.height, viewportOffsetTop: visual.offsetTop });
       setViewport((prev) => (prev && frame && prev.top === frame.top && prev.height === frame.height ? prev : frame));
     };
-    update();
+    // iOS reports the visible area in steps while the keyboard slides in, and a layer whose input was focused on mount misses the first
+    // events — so besides every `visualViewport` event the frame is measured again shortly after mount, on focus changes and on resize.
+    let timers: number[] = [];
+    const settle = () => {
+      update();
+      timers.forEach((id) => window.clearTimeout(id));
+      timers = [120, 350, 800].map((ms) => window.setTimeout(update, ms));
+    };
+    settle();
     visual.addEventListener("resize", update);
     visual.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", settle);
+    document.addEventListener("focusin", settle);
+    document.addEventListener("focusout", settle);
     return () => {
+      timers.forEach((id) => window.clearTimeout(id));
       visual.removeEventListener("resize", update);
       visual.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", settle);
+      document.removeEventListener("focusin", settle);
+      document.removeEventListener("focusout", settle);
     };
   }, []);
   return viewport;
