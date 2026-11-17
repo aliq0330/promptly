@@ -284,13 +284,13 @@ function CommunityPageInner() {
             <div ref={setActionsEl} className="flex items-center justify-end gap-1.5 empty:hidden" data-community-actions-slot />
             {!role && <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />}
             <HubDetailLayout
-              aside={tab === "feed" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
+              aside={tab === "feed" || tab === "events" || tab === "members" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
               asideLabel={t("communities.aside.pageLabel")}
             >
               <div role="tabpanel" aria-label={tabLabels[tab]}>
                 {tab === "feed" && <FeedTab {...common} />}
                 {tab !== "feed" && (
-                  <CommunityReadingColumn className={tab === "manage" ? "max-w-4xl" : undefined}>
+                  <CommunityReadingColumn className={tab === "manage" || tab === "about" ? "max-w-4xl" : undefined}>
                     {tab === "members" && role && <MembersTab {...common} />}
                     {tab === "events" && <EventsTab {...common} />}
                     {tab === "about" && <AboutTab {...common} />}
