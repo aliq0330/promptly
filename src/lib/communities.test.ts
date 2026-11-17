@@ -10,6 +10,8 @@ import {
   canSeeManageTab,
   canSharePost,
   CATEGORY_LABEL_KEYS,
+  COMMUNITY_PURPOSES,
+  communityTopicLabelKey,
   COMMUNITY_CATEGORIES,
   communityChatHref,
   communityHref,
@@ -45,6 +47,19 @@ test("kategori: bilinmeyen değer 'general'e düşer, her kategorinin etiket ana
   for (const category of COMMUNITY_CATEGORIES) assert.ok(CATEGORY_LABEL_KEYS[category]);
   assert.equal(normalizeFeedPolicy("admins"), "admins");
   assert.equal(normalizeFeedPolicy("x"), "members");
+});
+
+test("amaç ve konu: yeni seçenekler amaçtır, konu alan sözlüğündendir; eski ortam değerleri geçerli kalır ama sunulmaz", () => {
+  assert.deepEqual([...COMMUNITY_PURPOSES], ["general", "learning", "showcase"]);
+  for (const purpose of COMMUNITY_PURPOSES) assert.ok(COMMUNITY_CATEGORIES.includes(purpose));
+  for (const legacy of ["image", "text", "audio", "video", "workflow"] as const) {
+    assert.ok(COMMUNITY_CATEGORIES.includes(legacy), `${legacy} hâlâ geçerli`);
+    assert.ok(!COMMUNITY_PURPOSES.includes(legacy), `${legacy} yeni seçenek değil`);
+  }
+  assert.equal(communityTopicLabelKey({ category: "image", domain: "photography" }), "domain.photography", "alan varsa alanın adı");
+  assert.equal(communityTopicLabelKey({ category: "image", domain: null }), "communities.category.image", "alan yoksa eski kategori adı");
+  assert.equal(communityTopicLabelKey({ category: "learning" }), "communities.category.learning");
+  assert.equal(communityTopicLabelKey({ category: "general", domain: "nope" as never }), "communities.category.general", "bilinmeyen alan yok sayılır");
 });
 
 test("sekmeler: üye olmayan kapalı toplulukta sekme yok; açıkta yalnız okuma sekmeleri; üye Akış ilk olmak üzere beş sekme alır", () => {

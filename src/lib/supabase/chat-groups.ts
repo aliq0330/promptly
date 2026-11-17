@@ -14,6 +14,7 @@ import {
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
 import { normalizeCategory, normalizeFeedPolicy, normalizeVisibility } from "@/lib/communities";
+import { interestDomain, type DomainId } from "@/lib/domains";
 import type { ChatGroup, CommunityCategory, GroupCapability, GroupPostingPolicy, GroupRole, GroupVisibility, UserProfile } from "@/types";
 
 /**
@@ -157,6 +158,7 @@ export interface ChatGroupRow {
   role_permissions: unknown;
   created_at: string;
   category: string;
+  domain?: string | null;
   feed_policy: string;
   rules: string | null;
   rules_version: number;
@@ -167,7 +169,7 @@ export interface ChatGroupRow {
 }
 
 export const CHAT_GROUP_SELECT =
-  "id, name, description, avatar_url, cover_url, cover_color, visibility, posting_policy, member_limit, member_count, pending_request_count, history_visible, members_can_pin, role_permissions, created_at, category, feed_policy, rules, rules_version, rules_required, closed_at, post_count, origin";
+  "id, name, description, avatar_url, cover_url, cover_color, visibility, posting_policy, member_limit, member_count, pending_request_count, history_visible, members_can_pin, role_permissions, created_at, category, domain, feed_policy, rules, rules_version, rules_required, closed_at, post_count, origin";
 
 export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup {
   return {
@@ -188,6 +190,7 @@ export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup
     createdAt: row.created_at,
     myRole,
     category: normalizeCategory(row.category),
+    domain: interestDomain(row.domain),
     feedPolicy: normalizeFeedPolicy(row.feed_policy),
     rules: row.rules,
     rulesVersion: row.rules_version ?? 1,
@@ -658,6 +661,8 @@ export interface CommunityCard {
   description: string | null;
   avatarUrl: string | null;
   category: CommunityCategory;
+  /** Topluluğun konusu (ortak ALAN sözlüğü); `community_domains` ile eklenir, yoksa `null`. */
+  domain: DomainId | null;
   visibility: GroupVisibility;
   memberCount: number;
   memberLimit: number;
@@ -679,16 +684,45 @@ interface CardRow {
   rules: string | null; rules_required: boolean; rules_version: number; closed_at: string | null; origin: string; post_count: number | null; created_at: string;
 }
 
+/**
+ * Toplulukların konusu (ortak ALAN sözlüğü; docs/history/425-*). Liste RPC'lerinin dönüş şekli değişmediği için alan ayrı, tek toplu istekle gelir
+ * (`community_domains`: kartı görülebilen topluluklar). Sonuç modül önbelleğindedir (alanı olmayan da `null` olarak); RPC yoksa (eski veritabanı) hata
+ * fırlatmaz, alan yokmuş gibi davranır. Alan ayarlardan değişince `forgetCommunityDomain` ile unutulur.
+ */
+const domainCache = new Map<string, DomainId | null>();
+
+export function forgetCommunityDomain(groupId: string): void {
+  domainCache.delete(groupId);
+}
+
+export async function fetchCommunityDomains(ids: readonly string[]): Promise<Map<string, DomainId | null>> {
+  const unique = [...new Set(ids)];
+  const missing = unique.filter((id) => !domainCache.has(id));
+  for (let i = 0; i < missing.length; i += 100) {
+    const part = missing.slice(i, i + 100);
+    try {
+      const rows = await callRpc<{ id: string; domain: string | null }[]>("community_domains", { p_ids: part });
+      const found = new Map((rows ?? []).map((row) => [row.id, interestDomain(row.domain)] as const));
+      for (const id of part) domainCache.set(id, found.get(id) ?? null);
+    } catch {
+      // Alan bilgisi isteğe bağlıdır: okunamazsa listeler alansız çizilir, önbelleğe yazılmaz (sonraki açılışta yeniden denenir).
+    }
+  }
+  return new Map(unique.map((id) => [id, domainCache.get(id) ?? null] as const));
+}
+
 export async function fetchCommunityCards(ids: string[]): Promise<CommunityCard[]> {
   const unique = [...new Set(ids)].slice(0, 50);
   if (unique.length === 0) return [];
   const rows = await callRpc<CardRow[]>("community_cards", { p_ids: unique });
+  const domains = await fetchCommunityDomains((rows ?? []).map((row) => row.id));
   return (rows ?? []).map((row) => ({
     id: row.id,
     name: row.name,
     description: row.description,
     avatarUrl: row.avatar_url,
     category: normalizeCategory(row.category),
+    domain: domains.get(row.id) ?? null,
     visibility: normalizeVisibility(row.visibility),
     memberCount: row.member_count,
     memberLimit: row.member_limit,

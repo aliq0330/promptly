@@ -320,9 +320,9 @@ await scenario("18. Tüm topluluklar: kategori süzgeci + sıralama sunucuya gid
   await page.getByTestId("all-communities-list").locator("> li").first().waitFor();
   await loadUntil(page, '[data-testid="all-communities-list"] > li', 25);
   assert.equal(await page.getByTestId("all-communities-list").locator("> li").count(), 25, "exactly 25 communities, no duplicates");
-  await page.getByRole("button", { name: "Ses", exact: true }).click();
+  await page.getByRole("button", { name: "Müzik & Ses", exact: true }).click();
   await page.getByRole("heading", { name: "Ses Topluluğu" }).waitFor();
-  assert.ok(calls(db, "browse_communities").some((c) => c.body.p_category === "audio"));
+  assert.ok(calls(db, "browse_communities").some((c) => c.body.p_category === "music-audio"));
   await page.locator("[data-section-menu]").click();
   await page.getByRole("radio", { name: "En yeni" }).click();
   await page.waitForTimeout(300);
@@ -336,7 +336,7 @@ await scenario("18. Tüm topluluklar: kategori süzgeci + sıralama sunucuya gid
   delete db.rpc.browse_communities;
   await page.getByRole("button", { name: "Tekrar dene" }).click();
   await page.getByRole("heading", { name: "Ses Topluluğu" }).waitFor();
-}, { setup: (db) => { for (let i = 0; i < 24; i += 1) db.addCommunity(id(20 + i), { name: `Topluluk ${String(i).padStart(2, "0")}`, myRole: "none", members: [[U.bob, "owner"]] }); db.addCommunity(id(60), { name: "Ses Topluluğu", category: "audio", myRole: "none", members: [[U.bob, "owner"]] }); } });
+}, { setup: (db) => { for (let i = 0; i < 24; i += 1) db.addCommunity(id(20 + i), { name: `Topluluk ${String(i).padStart(2, "0")}`, myRole: "none", members: [[U.bob, "owner"]] }); db.addCommunity(id(60), { name: "Ses Topluluğu", category: "audio", domain: "music-audio", myRole: "none", members: [[U.bob, "owner"]] }); } });
 
 // 19
 await scenario("19. Tüm topluluklar: kapalı topluluğa kartın düğmesiyle istek gönderilir ve durum 'İstek gönderildi' olur", async ({ page, db }) => {

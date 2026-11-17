@@ -37,11 +37,11 @@ import {
   type CommunitySort,
   type MyCommunityScope,
 } from "@/lib/supabase/communities";
-import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, communityHref } from "@/lib/communities";
+import { communityHref } from "@/lib/communities";
+import { DOMAIN_IDS, DOMAIN_LABEL_KEYS, type DomainId } from "@/lib/domains";
 import { homeHref, isInvitesSection, resolveHomeView, type HomeTab, type InvitesSection } from "@/lib/community-home";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
-import type { CommunityCategory } from "@/types";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { SearchField } from "@/components/ui/search-field";
@@ -227,7 +227,7 @@ export function DiscoverView({
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [sort, setSort] = useState<CommunitySort>("popular");
-  const [category, setCategory] = useState<CommunityCategory | null>(null);
+  const [category, setCategory] = useState<DomainId | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<ListState | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -308,7 +308,7 @@ export function DiscoverView({
       </div>
 
       <ScrollRow className="flex gap-1.5 pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
-        {[null, ...COMMUNITY_CATEGORIES].map((value) => (
+        {[null, ...DOMAIN_IDS].map((value) => (
           <button
             key={value ?? "all"}
             type="button"
@@ -319,7 +319,7 @@ export function DiscoverView({
               (category === value ? "border-primary/50 bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
             }
           >
-            {value ? t(CATEGORY_LABEL_KEYS[value]) : t("communities.filter.all")}
+            {value ? t(DOMAIN_LABEL_KEYS[value]) : t("communities.filter.all")}
           </button>
         ))}
       </ScrollRow>

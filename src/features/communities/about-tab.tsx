@@ -17,7 +17,7 @@ import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import type { CommunityTabProps } from "./community-page";
 import { acceptCommunityRules, setCommunityNotifyPrefs } from "@/lib/supabase/communities";
-import { CATEGORY_LABEL_KEYS, effectiveNotifyLevel, isTemporarilyMuted, MUTE_DURATIONS_HOURS, muteUntilIso, NOTIFY_LEVELS } from "@/lib/communities";
+import { communityTopicLabelKey, effectiveNotifyLevel, isTemporarilyMuted, MUTE_DURATIONS_HOURS, muteUntilIso, NOTIFY_LEVELS } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { CommunityNotifyLevel } from "@/types";
@@ -116,7 +116,7 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
           <h2 id="about-rules-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
             <ScrollText size={16} aria-hidden /> {t("communities.rules.title")}
           </h2>
-          <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[group.category])}</Badge>
+          <Badge variant="neutral">{t(communityTopicLabelKey(group))}</Badge>
           {group.rules && <Badge variant="outline">{t("communities.rules.version", { version: group.rulesVersion })}</Badge>}
         </div>
         {group.rules ? (

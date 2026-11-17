@@ -185,6 +185,8 @@ const CHECKS = [
   { name: "rpc import_skills ziyaretçiye KAPALI olmalı (Skill içe aktarma, docs/history/397-*)", rpc: "import_skills", body: { p_items: [], p_dry_run: true }, mustBeDenied: true },
   { name: "rpc set_skill_works_tool ziyaretçiye KAPALI olmalı (docs/history/397-*)", rpc: "set_skill_works_tool", body: { p_skill_id: "00000000-0000-4000-8000-000000000000", p_tool: null }, mustBeDenied: true },
   { name: "skill_categories (uzmanlık alanı tablosu, docs/history/399-*)", get: () => `skill_categories?select=${encodeURIComponent("id,label_tr,label_en,position")}&limit=1` },
+  { name: "domains (ortak ALAN sözlüğü, docs/history/425-*)", get: () => `domains?select=${encodeURIComponent("id,label_tr,label_en,position")}&limit=1` },
+  { name: "community_domains ziyaretçiye de açık (topluluk konusu, docs/history/425-*)", rpc: "community_domains", body: { p_ids: [] } },
   { name: "skills.cover_path (Skill kapak görseli, docs/history/399-*)", get: () => `skills?select=${encodeURIComponent("id,cover_path")}&limit=1` },
   { name: "skill_versions.instructions (yayınlanan talimat anlık görüntüsü, docs/history/415-*)", get: () => `skill_versions?select=${encodeURIComponent("id,skill_id,version,instructions")}&limit=1` },
   { name: "rpc skill_object_count ziyaretçiye KAPALI olmalı (Skill taslak nesne sınırı, docs/history/416-*)", rpc: "skill_object_count", body: { p_skill: "00000000-0000-4000-8000-000000000000", p_folder: "draft" }, mustBeDenied: true },
