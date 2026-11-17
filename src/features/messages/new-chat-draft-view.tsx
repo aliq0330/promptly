@@ -20,6 +20,7 @@ import type { DockHandlers } from "./message-dock-provider";
 import { messageHref, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation, MessageAttachment, UserProfile } from "@/types";
+import { ChatLoadingSkeleton } from "./chat-load-state";
 
 /**
  * `/messages/local?to=<userId>` — the empty composer behind "Yeni sohbet".
@@ -147,7 +148,7 @@ export function NewChatDraftView({ userId, dock }: { userId: string; dock?: Dock
   }
 
   if (!user || state === "loading") {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>;
+    return <ChatLoadingSkeleton />;
   }
 
   if (state === "unavailable" || !target) {

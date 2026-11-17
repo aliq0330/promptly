@@ -46,6 +46,8 @@ import { useTyping } from "./use-typing";
 import { readShareParams, usePendingShare } from "./use-pending-share";
 import { useMessageReactions } from "./use-message-reactions";
 import { useRealMessages } from "./real-messages-provider";
+import { ChatLoadFailed, ChatLoadingSkeleton } from "./chat-load-state";
+import { withTimeout } from "@/lib/with-timeout";
 import { MessageBubble, type DeleteMode } from "./message-bubble";
 import { MessageComposer, useImageDrop } from "./message-composer";
 import { PendingMessageBubble, type PendingSend } from "./pending-message-bubble";
@@ -122,6 +124,8 @@ const EMPTY_PARTICIPANT: UserProfile = {
 
 /** Same fade timing as the comment-thread/response flash — one shared feel across the app for "you just jumped here from a notification". */
 const HIGHLIGHT_DURATION_MS = 2500;
+/** Sohbet açılış yüklemesi bu süreyi aşarsa (bağlantı koptu/asılı) "Sohbet yüklenemedi" + Tekrar dene çıkar; ekran sonsuza dek iskelette kalmaz. */
+export const CHAT_LOAD_TIMEOUT_MS = 20_000;
 
 /** The raw Postgres RLS-denial message for a blocked-either-direction send — translated into something a user can actually act on. */
 function translateSendError(message: string, isGroup = false): string {
@@ -185,6 +189,11 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   const [leftGroup, setLeftGroup] = useState<"left" | "deleted" | "removed" | null>(null);
   const panelParamHandled = useRef(false);
   const [checked, setChecked] = useState(false);
+  // Yükleme ağ/sunucu hatasıyla düştü ("bulunamadı" değil): "Yükleniyor…" sonsuza dek kalmasın, yeniden deneme sunulsun.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  // Oturum belirteci yenilenince `user` nesnesi değişir ama kişi aynıdır: sohbeti yeniden yükleyip "Yükleniyor…" göstermek için kimlik yeterlidir.
+  const userId = user?.id ?? null;
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -404,7 +413,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   useEffect(() => {
     let cancelled = false;
 
-    if (!id || !user) {
+    if (!id || !userId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- no id to look up, or not signed in — nothing to fetch
       setChecked(true);
       return;
@@ -412,47 +421,67 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
 
     const cached = getCached(id);
     setChecked(false);
+    setLoadFailed(false);
     lastAckedRef.current = null;
     setHasNewer(false);
     setSearchOpen(false);
     setPartnerReadAt(null);
     setStarredIds(new Set());
 
-    (cached ? Promise.resolve(cached) : fetchConversationForUser(id, user.id)).then(async (found) => {
-      if (cancelled) return;
-      setConversation(found);
-      if (!found) {
-        setChecked(true);
-        return;
-      }
+    // Yükleme VERİYİ döndürür, durumu burada değil aşağıda (zaman aşımı yarışını kazanınca) yazarız: süre dolduktan sonra geç dönen sonuç ekranı ezmesin.
+    const load = async () => {
+      const found = cached ?? (await fetchConversationForUser(id, userId, { strict: true }));
+      if (!found) return null;
       // Topluluk sohbeti: önce odalar (hangi odanın mesajları yükleneceği), sonra o odanın sayfası.
       let scope: MessageRoomScope | undefined;
+      let pickedRoomId: string | null = null;
       if (found.kind === "group") {
         const rooms = await refreshCommunityRooms(id).catch(() => getCachedRooms(id) ?? []);
         const picked = rooms.length > 0 ? pickRoom(rooms, requestedRoomRef.current, readLastRoomId(id)) : null;
         scope = picked ? { id: messageRoomId(picked) } : undefined;
-        loadedRoomRef.current = picked?.id ?? null;
+        pickedRoomId = picked?.id ?? null;
       }
       const [page, reactions, partnerRead, starred] = await Promise.all([
-        fetchMessagePage(id, user.id, { room: scope }),
+        fetchMessagePage(id, userId, { room: scope, strict: true }),
         fetchReactionsForConversation(id),
-        found.kind === "direct" ? fetchPartnerReadAt(id, user.id) : Promise.resolve(null),
+        found.kind === "direct" ? fetchPartnerReadAt(id, userId) : Promise.resolve(null),
         fetchStarredMessageIds(id),
       ]);
-      if (cancelled) return;
-      setMessages(page.messages);
-      setHasOlder(page.hasMore);
-      setReactionRows(reactions);
-      setPartnerReadAt(partnerRead);
-      setStarredIds(new Set(starred));
-      setChecked(true);
-    });
+      return { found, pickedRoomId, page, reactions, partnerRead, starred };
+    };
+
+    withTimeout(load(), CHAT_LOAD_TIMEOUT_MS).then(
+      (result) => {
+        if (cancelled) return;
+        if (!result) {
+          // Sunucu net cevap verdi: üyelik yok / konuşma yok.
+          setConversation(null);
+          setChecked(true);
+          return;
+        }
+        setConversation(result.found);
+        loadedRoomRef.current = result.pickedRoomId;
+        setMessages(result.page.messages);
+        setHasOlder(result.page.hasMore);
+        setReactionRows(result.reactions);
+        setPartnerReadAt(result.partnerRead);
+        setStarredIds(new Set(result.starred));
+        setChecked(true);
+      },
+      (err) => {
+        // Ağ/sunucu hatası ya da cevap hiç gelmedi: `checked` hiç true olmazsa ekran sonsuza dek "Yükleniyor…" kalırdı.
+        console.error("load conversation", err);
+        if (cancelled) return;
+        setLoadFailed(true);
+        setChecked(true);
+      },
+    );
 
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, user]);
+  }, [id, userId, loadAttempt]);
 
   // Oda değişince (oda çipi, adres, bildirim): yeni odanın mesajları yüklenir; başka odadan gelen "mesaja atla" yüklenince tamamlanır.
   const activeRoomId = activeRoom?.id ?? null;
@@ -1253,11 +1282,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     );
   }
 
-  if (!checked) {
-    return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center text-small text-text-muted">{t("common.loading")}</div>
-    );
-  }
+  if (!checked) return <ChatLoadingSkeleton />;
+
+  if (loadFailed) return <ChatLoadFailed onRetry={() => setLoadAttempt((n) => n + 1)} back={backToMessages} />;
 
   if (!conversation) {
     return (
