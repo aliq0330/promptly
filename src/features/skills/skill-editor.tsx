@@ -1,5 +1,6 @@
 "use client";
 
+import { SKILLS_LIST_HREF } from "@/lib/skills/flag";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -310,7 +311,7 @@ export function SkillEditor({ editId }: { editId: string | null }) {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-bold text-text">{loadState === "forbidden" ? t("skill.noEditPermissionTitle") : t("skill.notFoundTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{loadState === "forbidden" ? t("skill.noEditPermissionBody") : t("skill.notFoundBody")}</p>
-        <Link href="/skills" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
+        <Link href={SKILLS_LIST_HREF} className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
           {t("skill.backToSkills")}
         </Link>
       </div>

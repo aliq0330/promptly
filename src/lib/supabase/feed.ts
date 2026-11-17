@@ -5,6 +5,7 @@ import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
 import { fetchQuotesByIds, type Quote } from "./quotes";
 import { fetchSkillsByIds } from "./skills";
+import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { nextFeedCursor, type FeedCursor, type FeedOrder } from "@/lib/feed-cursor";
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { Preset, Prompt, PromptRequest, Skill, Workflow } from "@/types";
@@ -155,7 +156,8 @@ async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
     fetchPresetsByIds(idsOf("preset")),
     // A quote whose target can't be loaded (gone private) is skipped like any other vanished row.
     fetchQuotesByIds(idsOf("quote")).catch(() => [] as Quote[]),
-    fetchSkillsByIds(idsOf("skill")).catch(() => [] as Skill[]),
+    // Bayrak kapalıyken Skill hiçbir yüzeyde görünmez (menü girişleri gibi): kart akışa da sızmaz (docs/history/418-*).
+    SKILLS_MENU_ENABLED ? fetchSkillsByIds(idsOf("skill")).catch(() => [] as Skill[]) : Promise.resolve([] as Skill[]),
   ]);
   const byKey = new Map<string, FeedEntry>();
   for (const data of prompts) byKey.set(`prompt-${data.id}`, { kind: "prompt", data });

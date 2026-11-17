@@ -1,5 +1,6 @@
 "use client";
 
+import { SKILLS_LIST_HREF } from "@/lib/skills/flag";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePageTitle } from "@/components/layout/page-title";
@@ -160,7 +161,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
     setDeleteError(null);
     try {
       await deleteSkill(skill.id, user.id);
-      router.push("/skills");
+      router.push(SKILLS_LIST_HREF);
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : t("skill.error.delete"));
       setDeleting(false);

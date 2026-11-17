@@ -40,9 +40,6 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useFollowedTags } from "@/features/tags/followed-tags-store";
 import { useFollowedTools } from "@/features/tools/followed-tools-store";
-import { GraduationCap } from "@/components/icons/graduation-cap";
-import { SkillDiscoverSection } from "@/features/skills/skill-discover-section";
-import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { GRID_COLUMNS_ASIDE } from "@/lib/grid-columns";
@@ -62,7 +59,7 @@ import { GRID_COLUMNS_ASIDE } from "@/lib/grid-columns";
  * "Yenile" / "Sana özel'i ayarla" live in the Filtre sheet and the first-time hint is a one-line banner, so the first post starts high.
  */
 type TabKey = "forYou" | "following";
-type KindFilter = "all" | FeedItem["kind"] | "skill";
+type KindFilter = "all" | FeedItem["kind"];
 
 const TABS: { key: TabKey; labelKey: TranslationKey; icon: typeof Clock }[] = [
   { key: "forYou", labelKey: "home.tabForYou", icon: UserStar },
@@ -75,8 +72,6 @@ const KIND_FILTERS: { key: KindFilter; labelKey: TranslationKey; icon: typeof La
   { key: "request", labelKey: "nav.requestsShort", icon: Sparkles },
   { key: "workflow", labelKey: "nav.workflows", icon: WorkflowIcon },
   { key: "preset", labelKey: "nav.presets", icon: SlidersHorizontal },
-  // Skill (docs/history/396-*): karma akışa girmez; seçilince Keşfet → Skill'ler listesi (`skill_feed_page`) Ana Sayfa'da açılır. Menü bayrağı kapalıyken çip yok.
-  ...(SKILLS_MENU_ENABLED ? [{ key: "skill" as const, labelKey: "skill.pageTitle" as const, icon: GraduationCap }] : []),
 ];
 
 const TAB_MEMORY_KEY = "promptly-home-tab";
@@ -117,8 +112,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
 
   // Both views need a signed-in user: a guest gets the login prompt below and no request is made (while the session is
   // still being restored we wait instead of flashing that prompt).
-  const skillMode = kind === "skill";
-  const feedKind = skillMode ? "all" : kind;
+  const feedKind = kind;
   const isForYou = active === "forYou";
   const waitingForAuth = authLoading;
   const needsLogin = !authLoading && !user;
@@ -140,9 +134,9 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       tags: followedFilter.tags,
       tools: followedFilter.tools,
     },
-    !isForYou && enabled && !skillMode,
+    !isForYou && enabled,
   );
-  const forYou = useForYouPages({ kind: feedKind, taxonomy }, isForYou && enabled && !skillMode);
+  const forYou = useForYouPages({ kind: feedKind, taxonomy }, isForYou && enabled);
   const feed = isForYou ? { ...forYou, retry: forYou.refresh } : feedPages;
   // "İlgimi çekiyor / çekmiyor" (docs/history/275-*): Sana özel only (Takip Ettiklerim is the strictly chronological list of people they chose).
   // Sana özel never lists a post already answered, so there is nothing to read first; an answer of "çekmiyor" collapses the card with "Geri al".
@@ -241,9 +235,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       {coldStart && <ForYouSetupBanner onOpen={() => setForYouSettingsOpen(true)} />}
       {forYouSettingsOpen && <ForYouSettingsModal onClose={() => setForYouSettingsOpen(false)} onChanged={forYou.refresh} />}
 
-      {skillMode ? (
-        <SkillDiscoverSection />
-      ) : needsLogin ? (
+      {needsLogin ? (
         <EmptyState scene="inbox"
           icon={isForYou ? UserStar : UserCheck}
           title={isForYou ? t("feed.emptyForYouLoginTitle") : t("feed.emptyFollowingTitle")}
