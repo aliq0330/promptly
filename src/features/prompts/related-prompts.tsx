@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { AsideSection } from "@/features/content/detail-parts";
 import { RelatedCards, RelatedCardsSkeleton } from "@/features/content/related-cards";
 import { useRelated } from "@/features/content/use-related";
@@ -23,7 +24,7 @@ export function RelatedPrompts({ prompt, limit = 4 }: { prompt: Prompt; limit?: 
   if (failed || (!loading && items.length === 0)) return null;
 
   return (
-    <AsideSection id="related-prompts-title" title={t("prompt.relatedPrompts")} href={prompt.category ? `/search?${new URLSearchParams({ type: prompt.contentType, category: prompt.category }).toString()}` : "/prompts"}>
+    <AsideSection id="related-prompts-title" title={t("prompt.relatedPrompts")} href={prompt.category ? `/search?${new URLSearchParams({ type: prompt.contentType, category: prompt.category }).toString()}` : DISCOVER_SECTION_HREF.prompts}>
       {loading ? (
         <RelatedCardsSkeleton count={limit} />
       ) : (

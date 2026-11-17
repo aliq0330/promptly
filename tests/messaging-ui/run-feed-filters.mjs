@@ -632,27 +632,6 @@ await scenario("17. İngilizce + telefon: bölümler, sıralama ve süzgeç çev
 }, { lang: "en", viewport: { width: 390, height: 844 } });
 
 // ───────────────────── tür listeleri (docs/history/234-*) ─────────────────────
-await scenario("18. Tür listesi (/prompts): tek 'Tümü ▾' tür menüsü (Tümü · Görsel · Metin · Ses · Video), arama simgesi kutuyu açar, Filtre pencerede 'Nasıl çalışır', '+' oluşturmaya gider; sekme/chip satırı yok", async ({ page }) => {
-  await page.goto(`${BASE}/prompts`);
-  const menu = sectionMenu(page);
-  await menu.waitFor();
-  assert.match(await menu.textContent(), /Tümü/);
-  assert.equal(await page.getByRole("tablist").count(), 0, "sekme satırı yok");
-  await menu.click();
-  const names = (await page.getByRole("radio").allInnerTexts()).map((s) => s.trim());
-  assert.deepEqual(names, ["Tümü", "Görsel", "Metin", "Ses", "Video"]);
-  await page.getByRole("radio", { name: "Metin" }).click();
-  assert.match(await menu.textContent(), /Metin/);
-  assert.match((await page.locator("[data-list-create]").getAttribute("href")) ?? "", /\/create/);
-  await page.locator("[data-list-search]").click();
-  await page.getByRole("combobox").first().waitFor();
-  await page.locator("[data-list-search]").click();
-  await openFilter(page);
-  await page.getByRole("dialog").getByRole("heading", { name: "Nasıl çalışır" }).waitFor();
-  await closeFilter(page);
-  assert.equal(await overflowFree(page), true);
-}, { viewport: { width: 390, height: 844 } });
-
 await scenario("19. Ana Sayfa içerik türü (docs/history/245-*): Filtre'de Görsel · Metin · Ses · Video; iki görünümde de sunucuya p_content_type gider, sayaç + Temizle", async ({ page, state }) => {
   await gotoHome(page, state);
   await homeTab(page, "Sana özel").waitFor();

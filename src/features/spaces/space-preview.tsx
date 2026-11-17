@@ -7,7 +7,7 @@ import { Palette } from "@/components/icons/palette";
 import { Avatar } from "@/components/ui/avatar";
 import { StorageImg } from "@/components/ui/storage-media";
 import { buttonClassName } from "@/components/ui/button";
-import { DropdownMenu, MenuItem } from "@/features/communities/dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { EngageCommentCount, EngageComments, EngageLike, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import {
   AsideSection,

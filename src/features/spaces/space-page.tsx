@@ -27,6 +27,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { StorageImg } from "@/components/ui/storage-media";
+import { usePageTitle } from "@/components/layout/page-title";
 import { Tabs } from "@/components/ui/tabs";
 import { PhoneSubBar } from "@/features/content/phone-sections";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -188,6 +189,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const router = useRouter();
   const searchParams = useSearchParams();
   const { space, setSpace, caps, items, palettes, userId, layoutStatus, flushLayout, role } = useSpaceContext();
+  usePageTitle(space.title);
   const phone = useMediaQuery("(max-width: 767.98px)");
   const tabParam = searchParams.get("tab");
   const noteCount = items.filter((item) => item.kind === "note").length;

@@ -7,7 +7,7 @@ import { GripVertical } from "@/components/icons/grip-vertical";
 import { Lock } from "@/components/icons/lock";
 import { Plus } from "@/components/icons/plus";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu } from "@/features/communities/dropdown-menu";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { ROOM_LIMIT, activeRooms, archivedRooms, groupRoomsBySection } from "@/lib/community-rooms";
 import { useTranslation } from "@/lib/i18n/language-provider";

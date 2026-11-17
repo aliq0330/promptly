@@ -22,7 +22,7 @@ import { iconButtonClassName } from "@/components/ui/icon-button";
 const TYPES: CommunityPostType[] = SKILLS_MENU_ENABLED ? ["prompt", "request", "workflow", "preset", "skill", "space"] : ["prompt", "request", "workflow", "preset", "space"];
 
 /**
- * "Mevcut içeriğe başvur": kullanıcının KENDİ yayında ve herkese açık içeriklerinden biri seçilir; isteğe bağlı not eklenir. İçerik
+ * "Var olan içeriği alıntıla": kullanıcının KENDİ yayında ve herkese açık içeriklerinden biri seçilir; isteğe bağlı not eklenir. İçerik
  * kopyalanmaz — akışa kendi kimliği, beğenisi ve yorumları olan bağımsız bir BAŞVURU gönderisi eklenir (işaret edilen içeriğin
  * sayaçlarına dokunmaz). Özel ya da taslak içerik burada listelenmez — başvuru içeriği otomatik herkese açmaz. Yeni içerik için
  * `CreatePostModal` normal oluşturma ekranını topluluk bağlamıyla (`?community=`) açar. Bir içerik seçilince not + Paylaş ikinci bir pencerede

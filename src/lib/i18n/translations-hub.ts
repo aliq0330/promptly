@@ -9,7 +9,7 @@ export const hubTranslations = {
   "hub.count.spaces": { tr: "{{count}} Space", en: "{{count}} Spaces" },
   "hub.count.communities": { tr: "{{count}} topluluk", en: "{{count}} communities" },
   "hub.count.teams": { tr: "{{count}} ekip", en: "{{count}} teams" },
-  "hub.communities.attn": { tr: "{{count}} davet ve başvuru yanıtını bekliyor", en: "{{count}} invitations and requests are waiting for you" },
+  "hub.communities.attn": { tr: "{{count}} davet ve başvuru yanıtını bekliyor", en: "{{count}} invitations and join requests are waiting for you" },
   "hub.teams.attn": { tr: "Senden bekleyen {{count}} iş var", en: "{{count}} items are waiting for you" },
   "hub.back": { tr: "Geri", en: "Back" },
   "hub.about": { tr: "Hakkında", en: "About" },

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
-import { DropdownMenu, MenuItem } from "@/features/communities/dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { ReportButton } from "@/features/moderation/report-button";
 import { ReportModal } from "@/features/moderation/report-modal";
 import { useTranslation } from "@/lib/i18n/language-provider";

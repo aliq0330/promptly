@@ -15,7 +15,7 @@ import { Shapes } from "@/components/icons/shapes";
 import { useAuth } from "@/features/auth/auth-provider";
 import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
 import { shareLinkForHref } from "@/lib/share-link";
-import { DropdownMenu, MenuItem } from "@/features/communities/dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/features/groups/use-toast";
 import { postMeta } from "@/features/prompts/post-header";
 import { TextArt, TextArtTitle } from "@/features/content/text-art";

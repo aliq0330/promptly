@@ -117,7 +117,11 @@ export function DiscoverFeed() {
   const { t } = useTranslation();
   // "Tümünü gör" of Ana Sayfa's "Takip edilecek kişiler" strip (docs/history/285-*) opens this page on the creators section.
   const searchParams = useSearchParams();
-  const [section, setSection] = useState<Section>(() => (searchParams.get("section") === "creators" ? "creators" : "all"));
+  const [section, setSection] = useState<Section>(() => {
+    // Derin bağlantı: `?section=` bir bölüm anahtarıysa o bölümde açılır (Skill'ler yalnız bayrak açıkken).
+    const wanted = searchParams.get("section");
+    return SECTIONS.some((entry) => entry.key === wanted) ? (wanted as Section) : "all";
+  });
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [openOnly, setOpenOnly] = useState(false);
   const [tool, setTool] = useState<string | null>(null);

@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -88,7 +89,7 @@ export function ResultDetailView() {
   // show — head back to the real origin (the prompt) instead of
   // leaving the viewer stranded on a now-empty page.
   function handleDeleted() {
-    router.push(result!.originalPrompt ? promptHref(result!.originalPrompt) : "/prompts");
+    router.push(result!.originalPrompt ? promptHref(result!.originalPrompt) : DISCOVER_SECTION_HREF.prompts);
   }
 
   // Refetches rather than fabricating an updated object client-side —

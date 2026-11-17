@@ -5,7 +5,7 @@ import { AsideSection } from "@/features/content/detail-parts";
 import { RelatedCards, RelatedCardsSkeleton } from "@/features/content/related-cards";
 import { useRelated } from "@/features/content/use-related";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
+import { SKILLS_LIST_HREF, SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import { fetchRelatedSkills, fetchSkillsForContent } from "@/lib/supabase/skill-discovery";
 import { skillHref } from "@/lib/utils";
 import type { Skill } from "@/types";
@@ -32,7 +32,7 @@ export function SimilarSkills({ skillId, limit = 4 }: { skillId: string; limit?:
   const { loading, failed, items } = useRelated(skillId, () => fetchRelatedSkills(skillId, limit));
   if (failed || (!loading && items.length === 0)) return null;
   return (
-    <AsideSection id="skill-similar-title" title={t("skill.discover.related")} href="/skills">
+    <AsideSection id="skill-similar-title" title={t("skill.discover.related")} href={SKILLS_LIST_HREF}>
       <SkillCards items={loading ? null : items} limit={limit} />
     </AsideSection>
   );

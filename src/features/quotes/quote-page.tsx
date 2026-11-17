@@ -14,7 +14,7 @@ import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { summarizeContent } from "@/features/communities/content-summary";
-import { DropdownMenu, MenuItem } from "@/features/communities/dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { PromptDetailView } from "@/features/prompts/prompt-detail-view";
 import { RequestDetailView } from "@/features/requests/request-detail-view";

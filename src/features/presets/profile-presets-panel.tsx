@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { useState } from "react";
 import { Bookmark } from "@/components/icons/bookmark";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
@@ -84,7 +85,7 @@ export function ProfilePresetsPanel({ ownerId, isOwn }: { ownerId: string; isOwn
               icon={Bookmark}
               title={t("preset.noSavedTitle")}
               description={t("preset.noSavedBody")}
-              action={{ label: t("preset.discover"), href: "/presets" }}
+              action={{ label: t("preset.discover"), href: DISCOVER_SECTION_HREF.presets }}
             />
           ) : (
             <PresetGrid presets={saved} />

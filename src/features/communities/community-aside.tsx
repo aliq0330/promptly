@@ -6,7 +6,6 @@ import { ArrowRight } from "@/components/icons/arrow-right";
 import { Avatar } from "@/components/ui/avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { fetchCommunityMembers, type CommunityMember } from "@/lib/supabase/communities";
-import { memberCountText } from "@/lib/group-labels";
 import { formatCount, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
@@ -52,7 +51,7 @@ export function ruleLines(rules: string | null): string[] {
  * topluluk satırı sayfada zaten var, yönetici listesi üye listesinin ilk sayfasıdır.
  */
 export function CommunityAside({ group, people, onReadRules }: { group: ChatGroup; people: CommunityMember[]; onReadRules: () => void }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const rules = ruleLines(group.rules);
   const staff = people.filter((person) => person.role !== "member");
 
@@ -62,10 +61,10 @@ export function CommunityAside({ group, people, onReadRules }: { group: ChatGrou
         <h2 id="community-aside-about" className={ASIDE_TITLE}>
           {t("communities.aside.about")}
         </h2>
-        {group.description && <p className="mt-2 line-clamp-5 whitespace-pre-line break-words text-small text-text-secondary">{group.description}</p>}
-        <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-small text-text-secondary">
-          <span>{memberCountText(t, group.memberCount)}</span>
+        {/* Açıklama ve üye sayısı başlık bandında zaten var (tekrar etmez): burada yalnız bandın vermediği özet durur. */}
+        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-small text-text-secondary">
           <span>{t("communities.aside.postCount", { count: formatCount(group.postCount) })}</span>
+          <span>{t("communities.aside.since", { date: new Date(group.createdAt).toLocaleDateString(language) })}</span>
         </p>
       </section>
 

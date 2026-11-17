@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { AsideSection } from "@/features/content/detail-parts";
 import { RelatedCards, RelatedCardsSkeleton } from "@/features/content/related-cards";
@@ -23,7 +24,7 @@ export function RelatedPresets({ preset, limit = 4 }: { preset: Preset; limit?: 
   if (failed || (!loading && items.length === 0)) return null;
 
   return (
-    <AsideSection id="preset-similar-title" title={t("preset.similar")} href="/presets">
+    <AsideSection id="preset-similar-title" title={t("preset.similar")} href={DISCOVER_SECTION_HREF.presets}>
       {loading ? (
         <RelatedCardsSkeleton count={limit} />
       ) : (

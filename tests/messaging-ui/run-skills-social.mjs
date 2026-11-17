@@ -328,7 +328,7 @@ await scenario("5b. Sahibi kendi Skill'ini şikâyet edemez; ⋮ menüsünde Dü
 }, { me: U.alice });
 
 await scenario("6. Liste kartında beğeni + yorum sayacı görünür", async ({ page }) => {
-  await page.goto(`${BASE}/skills`);
+  await page.goto(`${BASE}/discover?section=skills`);
   const card = page.locator("article, [data-content-card]").filter({ hasText: "Skill 1" }).first();
   await card.waitFor();
   assert.match(await card.innerText(), /3/);
@@ -369,7 +369,7 @@ await scenario("10. Kaydet: detayda tek dokunuşla sistem koleksiyonuna skill_id
 });
 
 await scenario("11. Listedeki kartta Kaydet düğmesi vardır", async ({ page }) => {
-  await page.goto(`${BASE}/skills`);
+  await page.goto(`${BASE}/discover?section=skills`);
   const card = page.locator("article, [data-content-card]").filter({ hasText: "Skill 1" }).first();
   await card.waitFor();
   assert.ok(await card.locator("button[aria-pressed]").count() >= 1, "kart altbilgisinde kaydet düğmesi");
@@ -390,17 +390,25 @@ await scenario("13. Keşfet → Skill'ler: kartlar sunucudan gelir; uzmanlık al
   const root = page.locator("[data-skill-discover]");
   await root.waitFor();
   await root.getByText("Skill 1").first().waitFor();
-  await root.locator("[data-skill-category='design']").click();
+  const filterOpen = async () => root.locator("[data-skill-filter]").click();
+  const filterApply = async () => page.getByRole("button", { name: /Uygula/ }).click();
+  await filterOpen();
+  await page.locator("[data-skill-category='design']").click();
+  await filterApply();
   // "Logo Skill" ilk (süzgeçsiz) listede de var: süzgeçli yanıt gelene kadar bekle, yoksa yarış olur.
   await page.waitForFunction(() => !document.querySelector("[data-skill-discover]")?.textContent?.includes("Skill 1"), null, { timeout: 8000 });
   await root.getByText("Logo Skill").first().waitFor();
   assert.equal(state.feedCalls.at(-1).p_category, "design");
   assert.equal(await root.getByText("Skill 1").count(), 0, "süzgeç dışı kart kalkar");
-  await root.locator("[data-skill-category='all']").click();
+  await filterOpen();
+  await page.locator("[data-skill-category='all']").click();
+  await filterApply();
   await root.locator("[data-skill-search]").fill("logo");
   await root.locator("[data-skill-match='title']").first().waitFor();
   assert.equal(state.feedCalls.at(-1).p_query, "logo");
-  await root.locator("[data-skill-sort='popular']").click();
+  await filterOpen();
+  await page.locator("[data-skill-sort='popular']").click();
+  await filterApply();
   await page.waitForFunction(() => true);
   const end = Date.now() + 3000;
   while (Date.now() < end && state.feedCalls.at(-1).p_sort !== "popular") await new Promise((r) => setTimeout(r, 100));
@@ -515,12 +523,19 @@ await scenario("21. Mesajla paylaş: Skill'in Paylaş penceresinde 'Promptly'de 
   assert.match((await link.getAttribute("href")) ?? "", new RegExp(`/messages/?\\?shareSkillId=${S_PUB}`));
 });
 
-await scenario("22. Ana Sayfa: Filtre penceresinde 'Skill'ler' çipi; seçilince Skill listesi açılır", async ({ page }) => {
+await scenario("22. Ana Sayfa 'benim akışım' eksenindedir: Filtre penceresinde 'Skill'ler' çipi YOK (Skill keşfi yalnız Keşfet'te)", async ({ page }) => {
   await page.goto(`${BASE}/`);
-  await page.getByRole("button", { name: /Filtre/ }).first().click();
-  await page.getByText("Skill'ler", { exact: true }).click();
-  await page.locator("[data-skill-discover]").waitFor();
-  await page.locator("[data-skill-discover]").getByText("Skill 1").first().waitFor();
+  await page.getByRole("tab", { name: /Sana özel/ }).first().waitFor();
+  const sheet = page.getByRole("dialog");
+  // Hidrasyon yarışı: pencere açılmazsa düğmeye bir kez daha basılır.
+  for (let attempt = 0; attempt < 3 && !(await sheet.isVisible()); attempt++) {
+    await page.getByRole("button", { name: /Filtre/ }).first().click();
+    await sheet.waitFor({ timeout: 3000 }).catch(() => undefined);
+  }
+  await sheet.waitFor();
+  await sheet.getByRole("button", { name: /Filtreleri Uygula/ }).waitFor();
+  assert.equal(await page.getByText("Skill'ler", { exact: true }).count(), 0);
+  assert.equal(await page.locator("[data-skill-discover]").count(), 0);
 });
 
 await scenario("23. Detay: betik risk rozetleri (otomatik tarama notu), birlikte kullanılan Skill kartı ve araç başına 'çalıştı' toplamı", async ({ page }) => {
@@ -687,7 +702,7 @@ await scenario("32. Space'e ekle: Skill detayı ⋮ menüsünden eklenir; kopyal
 });
 
 await scenario("33. Skill kartının ⋮ menüsü normal kart gibi: bağlantıyı kopyala + Space'e ekle (oturumlu)", async ({ page }) => {
-  await page.goto(`${BASE}/skills`);
+  await page.goto(`${BASE}/discover?section=skills`);
   const menuButton = page.getByRole("button", { name: /Skill menüsü/ }).first();
   await menuButton.waitFor();
   await menuButton.click();

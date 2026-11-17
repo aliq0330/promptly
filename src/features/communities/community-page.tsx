@@ -1,11 +1,18 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { usePageTitle } from "@/components/layout/page-title";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RefreshCw } from "@/components/icons/refresh-cw";
 import { UserCog } from "@/components/icons/user-cog";
 import { MessagesSquare } from "@/components/icons/messages-square";
+import { Bell } from "@/components/icons/bell";
+import { Flag } from "@/components/icons/flag";
+import { Link2 } from "@/components/icons/link-2";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
+import { useReport } from "@/features/moderation/report-provider";
+import { absoluteUrl } from "@/lib/utils";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { HUB_PAGE_CLASS, HubDetailBand, HubDetailLayout } from "@/features/hub/hub-kit";
 import { Badge } from "@/components/ui/badge";
@@ -80,11 +87,13 @@ function CommunityPageInner() {
 
   const role = state.status === "ready" ? (state.membership?.role ?? null) : null;
   const group = state.status === "ready" ? state.group : null;
+  usePageTitle(group?.name);
   const allowed = useMemo(() => (group ? accessibleTabs({ role, visibility: group.visibility, perms: group.rolePermissions }) : []), [group, role]);
   const { view, toChat } = resolveCommunityView(searchParams.get("tab"), searchParams.get("section"), allowed);
   const tab = view?.tab ?? null;
   const unread = conversations.find((c) => c.id === id)?.unreadCount ?? 0;
   const people = useCommunityPeople(id ?? "", Boolean(id && role));
+  const { openReport } = useReport();
 
   function goTab(next: CommunityTab, section?: string) {
     if (id) router.replace(communityHref(id, next, section));
@@ -193,6 +202,46 @@ function CommunityPageInner() {
           </>
         }
         title={<h1>{g.name}</h1>}
+        menu={
+          // Topluluğun ⋮ menüsü (Space ve Ekip bandıyla aynı yer): bağlantı, bildirim tercihi (üye), şikâyet (sahibi hariç).
+          <span data-community-menu="">
+            <DropdownMenu label={t("communities.menu.label")} triggerClassName="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/80 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              {(close) => (
+                <>
+                  <MenuItem
+                    icon={<Link2 size={16} />}
+                    label={t("common.copyLink")}
+                    onClick={() => {
+                      close();
+                      void navigator.clipboard?.writeText(absoluteUrl(communityHref(g.id))).then(() => show(t("common.copied")), () => undefined);
+                    }}
+                  />
+                  {role && (
+                    <MenuItem
+                      icon={<Bell size={16} />}
+                      label={t("communities.menu.preferences")}
+                      onClick={() => {
+                        close();
+                        goTab("about");
+                      }}
+                    />
+                  )}
+                  {user && role !== "owner" && (
+                    <MenuItem
+                      icon={<Flag size={16} />}
+                      label={t("communities.about.reportCommunity")}
+                      danger
+                      onClick={() => {
+                        close();
+                        openReport({ type: "community", id: g.id, title: g.name });
+                      }}
+                    />
+                  )}
+                </>
+              )}
+            </DropdownMenu>
+          </span>
+        }
         byline={
           <span className="flex flex-wrap items-center gap-2">
             <MemberStack people={people} />
@@ -201,7 +250,7 @@ function CommunityPageInner() {
         }
         description={g.description ? <span data-community-description>{g.description}</span> : undefined}
         actions={
-          <div className="flex w-full flex-wrap items-center gap-2" data-community-actions="">
+          <div className="flex w-full flex-wrap items-center gap-2 xl:max-w-72" data-community-actions="">
             {role && (
               <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg" })}>
                 <MessagesSquare size={20} aria-hidden /> {t("communities.detail.openChat")}
@@ -235,13 +284,13 @@ function CommunityPageInner() {
             <div ref={setActionsEl} className="flex items-center justify-end gap-1.5 empty:hidden" data-community-actions-slot />
             {!role && <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />}
             <HubDetailLayout
-              aside={tab === "feed" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
+              aside={tab === "feed" || tab === "events" || tab === "members" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
               asideLabel={t("communities.aside.pageLabel")}
             >
-              <div role="tabpanel">
+              <div role="tabpanel" aria-label={tabLabels[tab]}>
                 {tab === "feed" && <FeedTab {...common} />}
                 {tab !== "feed" && (
-                  <CommunityReadingColumn className={tab === "manage" ? "max-w-4xl" : undefined}>
+                  <CommunityReadingColumn className={tab === "manage" || tab === "about" ? "max-w-4xl" : undefined}>
                     {tab === "members" && role && <MembersTab {...common} />}
                     {tab === "events" && <EventsTab {...common} />}
                     {tab === "about" && <AboutTab {...common} />}

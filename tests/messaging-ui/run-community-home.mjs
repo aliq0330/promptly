@@ -400,7 +400,7 @@ await scenario("23. Ziyaretçi (oturumsuz): yalnız Keşfet — herkese açık t
 await scenario("24. İngilizce: sekmeler, şerit, düğme, akış ve Tüm topluluklar çevrilmiş", async ({ page }) => {
   await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("heading", { name: "Posts from your communities" }).waitFor();
-  assert.deepEqual(await tabNames(page), ["My communities", "Posts", "Discover", "Invitations & requests"]);
+  assert.deepEqual(await tabNames(page), ["My communities", "Posts", "Discover", "Invitations & join requests"]);
   await pickTab(page, "Discover");
   await page.getByRole("heading", { name: "Communities for you" }).waitFor();
   await page.getByTestId("all-communities-button").getByText("All communities").waitFor();

@@ -3,7 +3,7 @@
 import { FolderMinus } from "@/components/icons/folder-minus";
 import { useToast } from "@/features/groups/use-toast";
 import { ApplicationCard } from "./application-card";
-import { DropdownMenu, MenuItem } from "./dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { useViewerEngageMode } from "./post-engagement";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityPost } from "@/lib/supabase/communities";

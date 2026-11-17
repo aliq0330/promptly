@@ -7,6 +7,7 @@ import { MoreVertical } from "@/components/icons/more-vertical";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { MENU_PANEL_CLASS } from "@/components/ui/menu";
+import { menuKeyDown } from "@/components/ui/menu-keys";
 
 export interface SpaceMenuItem {
   key: string;
@@ -110,13 +111,7 @@ export function SpaceMenu({ items, label, align = "right", trigger, className }:
             ref={menuRef}
             role="menu"
             onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => {
-              if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-              event.preventDefault();
-              const nodes = [...(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
-              const index = nodes.indexOf(document.activeElement as HTMLElement);
-              nodes[(index + (event.key === "ArrowDown" ? 1 : -1) + nodes.length) % nodes.length]?.focus();
-            }}
+            onKeyDown={(event) => menuKeyDown(event, menuRef.current)}
             style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, width: MENU_WIDTH, maxWidth: `calc(100vw - ${EDGE * 2}px)` }}
             className={cn(MENU_PANEL_CLASS, "fixed z-(--z-popover)")}
           >

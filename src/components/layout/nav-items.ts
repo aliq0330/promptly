@@ -52,7 +52,7 @@ export const navGroups: NavGroup[] = [
   {
     items: [
       { href: "/", labelKey: "nav.home", icon: Home, rail: true },
-      { href: "/discover", labelKey: "nav.discover", icon: Compass, rail: true, alsoMatch: ["/prompts", "/requests", "/workflows", "/presets", "/tags", "/categories", "/tools", "/results", "/quotes"] },
+      { href: "/discover", labelKey: "nav.discover", icon: Compass, rail: true, alsoMatch: ["/prompts", "/requests", "/workflows", "/presets", "/skills", "/tags", "/categories", "/tools", "/results", "/quotes"] },
       { href: "/communities", labelKey: "nav.communities", icon: Users, rail: true },
     ],
   },
@@ -102,7 +102,7 @@ export const mobileNavItems: NavItem[] = [
   { href: "/discover", labelKey: "nav.discover", icon: Compass },
   { href: CREATE_HREF, labelKey: "nav.createShort", icon: Plus },
   { href: "/communities", labelKey: "nav.communities", icon: Users },
-  { href: YOU_HREF, labelKey: "nav.you", icon: User, visibility: "authenticated", match: "/profile", alsoMatch: ["/settings", "/my-content"] },
+  { href: YOU_HREF, labelKey: "nav.you", icon: User, visibility: "authenticated", match: "/profile", alsoMatch: ["/settings", "/my-content", ...ACCOUNT_SHORTCUT_HREFS] },
 ];
 
 export function isNavItemActive(pathname: string, item: NavItem) {

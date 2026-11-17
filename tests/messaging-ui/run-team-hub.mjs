@@ -283,7 +283,7 @@ await scenario("15. Ekip başlığı (mockup): geri bağlantısı, Ekip rozeti, 
   await page.goto(`${BASE}/teams/local?id=atolye-mor&tab=spaces`);
   await page.getByTestId("team-page").waitFor();
   const band = page.getByTestId("team-band");
-  await band.getByText("EKİP").waitFor();
+  await band.getByText("Ekip", { exact: true }).waitFor();
   await band.getByRole("heading", { name: "Atölye Mor" }).waitFor();
   await band.getByText("Yalnızca davetle").waitFor();
   await page.getByTestId("team-tabs").waitFor();

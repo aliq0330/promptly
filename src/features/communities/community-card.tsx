@@ -56,6 +56,12 @@ export function CommunityCard({
     note
   ) : (
     <span className="inline-flex min-w-0 items-center gap-x-3 whitespace-nowrap">
+      {community.unreadCount > 0 && (
+        <span className="inline-flex items-center gap-1 text-primary">
+          <MessagesSquare size={12} aria-hidden /> {t("communities.card.unread", { count: formatUnread(community.unreadCount) })}
+        </span>
+      )}
+      {community.pendingRequestCount > 0 && <span className="text-primary">{t("communities.card.pendingRequests", { count: community.pendingRequestCount })}</span>}
       <span className="truncate">
         {memberCountText(t, community.memberCount)}
         {full && ` · ${t("groups.page.full")}`}
@@ -71,12 +77,6 @@ export function CommunityCard({
           <CalendarDays size={12} aria-hidden /> {t("communities.card.upcomingEvents", { count: community.upcomingEventCount })}
         </span>
       )}
-      {community.unreadCount > 0 && (
-        <span className="inline-flex items-center gap-1 text-primary">
-          <MessagesSquare size={12} aria-hidden /> {t("communities.card.unread", { count: formatUnread(community.unreadCount) })}
-        </span>
-      )}
-      {community.pendingRequestCount > 0 && <span className="text-primary">{t("communities.card.pendingRequests", { count: community.pendingRequestCount })}</span>}
     </span>
   );
 
@@ -105,7 +105,7 @@ export function CommunityCard({
         ) : undefined
       }
       footerStart={
-        <span className="flex min-w-0 flex-wrap items-center gap-1">
+        <span className="flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden">
           <VisibilityLabel visibility={community.visibility} />
           {community.myRole && <RoleBadge role={community.myRole} />}
           {community.closed && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}

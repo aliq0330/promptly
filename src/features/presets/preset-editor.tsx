@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { announcePublished } from "@/lib/publish-celebration";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -159,7 +160,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       );
       if (asDraft && leaving) return true;
       if (!asDraft && !editId) announcePublished();
-      router.push(asDraft ? (teamLeaveHref ?? "/presets") : ((await returnToTeam("preset", id)) ?? (await returnToCommunity("preset", id)) ?? presetHref({ id })));
+      router.push(asDraft ? (teamLeaveHref ?? DISCOVER_SECTION_HREF.presets) : ((await returnToTeam("preset", id)) ?? (await returnToCommunity("preset", id)) ?? presetHref({ id })));
       return true;
     } catch (err) {
       console.error("savePreset", err);
@@ -193,7 +194,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-bold text-text">{loadState === "forbidden" ? t("preset.noEditPermissionTitle") : t("preset.notFoundTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{loadState === "forbidden" ? t("preset.noEditPermissionBody") : t("preset.notFoundBody")}</p>
-        <Link href="/presets" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
+        <Link href={DISCOVER_SECTION_HREF.presets} className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface">
           {t("preset.backToPresets")}
         </Link>
       </div>

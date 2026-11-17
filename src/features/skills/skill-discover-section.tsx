@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { AlertCircle } from "@/components/icons/alert-circle";
-import { Chip, ChipRow } from "@/components/ui/chip";
+import { Chip } from "@/components/ui/chip";
+import { Filter as FilterIcon } from "@/components/icons/filter";
+import { CountBadge } from "@/components/ui/badge";
+import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
+import { ListFilterSheet, SheetChips, SheetSection } from "@/features/content/list-toolbar";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/field";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
@@ -37,7 +42,7 @@ const MATCH_LABEL: Record<SkillMatchSource, TranslationKey> = {
 /**
  * Keşfet → Skill'ler (docs/history/392-*): sunucu sorgusu `skill_feed_page` (keyset). Süzgeçler (uzmanlık alanı, uyumlu araç, paketli mi) ve sıralama
  * (Önerilen · En yeni · Popüler · En çok kullanılan) veritabanında uygulanır; metin araması varsa her kartın altında eşleşmenin nerede bulunduğu yazar.
- * Skill'ler karma akışa (`feed_page`) GİRMEZ — ayrı bir bölümdür.
+ * Bu, Skill'lerin TEK liste yüzeyidir (docs/history/419-*): eski `/skills` adresi buraya yönlenir, Ana Sayfa'da Skill çipi yoktur.
  */
 export function SkillDiscoverSection() {
   const { t, language } = useTranslation();
@@ -60,6 +65,7 @@ export function SkillDiscoverSection() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [filterOpen, setFilterOpen] = useState(false);
   const cursorRef = useRef<SearchCursor | null>(null);
   const busyRef = useRef(false);
 
@@ -119,38 +125,71 @@ export function SkillDiscoverSection() {
     }
   }, [params]);
 
+  const activeCount = (category ? 1 : 0) + compat.length + (hasPackage ? 1 : 0) + (sort !== "recommended" ? 1 : 0);
+  const clearFilters = () => {
+    setCategory(null);
+    setCompat([]);
+    setHasPackage(false);
+    setSort("recommended");
+  };
   const toggleCompat = (id: SkillCompat) => setCompat((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
     <div className="space-y-4" data-skill-discover="">
-      <Input type="search" dense value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={t("skill.searchPlaceholder")} aria-label={t("skill.searchPlaceholder")} data-skill-search="" />
-      <ChipRow aria-label={t("skill.discover.filtersAria")} scroll>
-        <Chip selected={category === null} onClick={() => setCategory(null)} data-skill-category="all">
-          {t("common.all")}
-        </Chip>
-        {skillCategoryIds(categoryRows).map((id) => (
-          <Chip key={id} selected={category === id} onClick={() => setCategory(category === id ? null : id)} data-skill-category={id}>
-            {skillCategoryName(id, language, t, categoryRows)}
-          </Chip>
-        ))}
-      </ChipRow>
-      <ChipRow aria-label={t("skill.discover.toolsAria")} scroll>
-        {SKILL_COMPAT_IDS.map((id) => (
-          <Chip key={id} selected={compat.includes(id)} onClick={() => toggleCompat(id)} data-skill-compat={id}>
-            {skillLabelText(SKILL_COMPAT_LABEL[id], t)}
-          </Chip>
-        ))}
-        <Chip selected={hasPackage} onClick={() => setHasPackage((value) => !value)} data-skill-has-package="">
-          {t("skill.discover.hasPackage")}
-        </Chip>
-      </ChipRow>
-      <ChipRow aria-label={t("skill.discover.sortAria")} scroll>
-        {SORTS.map((item) => (
-          <Chip key={item.key} selected={sort === item.key} onClick={() => setSort(item.key)} data-skill-sort={item.key}>
-            {t(item.labelKey)}
-          </Chip>
-        ))}
-      </ChipRow>
+      {/* Tek kontrol satırı (Keşfet'in öteki bölümleriyle aynı kalıp): arama + Filtre; süzgeçler ve sıralama Filtre penceresindedir. */}
+      <div className="flex items-center gap-2" data-skill-controls="">
+        <div className="min-w-0 flex-1">
+          <Input type="search" dense value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={t("skill.searchPlaceholder")} aria-label={t("skill.searchPlaceholder")} data-skill-search="" />
+        </div>
+        <button type="button" onClick={() => setFilterOpen(true)} aria-label={t("toolbar.filterTitle")} title={t("toolbar.filterTitle")} data-skill-filter="" className={cn(CONTROL_ICON_BUTTON, "relative")}>
+          <FilterIcon size={24} aria-hidden />
+          {activeCount > 0 && <CountBadge tone="primary" className="absolute -right-0.5 -top-0.5">{activeCount}</CountBadge>}
+        </button>
+      </div>
+      {filterOpen && (
+        <ListFilterSheet
+          onClose={() => setFilterOpen(false)}
+          activeCount={activeCount}
+          onClear={clearFilters}
+          sheetSections={
+            <>
+              <SheetSection title={t("skill.discover.filtersAria")}>
+                <SheetChips>
+                  <Chip selected={category === null} onClick={() => setCategory(null)} data-skill-category="all">
+                    {t("common.all")}
+                  </Chip>
+                  {skillCategoryIds(categoryRows).map((id) => (
+                    <Chip key={id} selected={category === id} onClick={() => setCategory(category === id ? null : id)} data-skill-category={id}>
+                      {skillCategoryName(id, language, t, categoryRows)}
+                    </Chip>
+                  ))}
+                </SheetChips>
+              </SheetSection>
+              <SheetSection title={t("skill.discover.toolsAria")}>
+                <SheetChips>
+                  {SKILL_COMPAT_IDS.map((id) => (
+                    <Chip key={id} selected={compat.includes(id)} onClick={() => toggleCompat(id)} data-skill-compat={id}>
+                      {skillLabelText(SKILL_COMPAT_LABEL[id], t)}
+                    </Chip>
+                  ))}
+                  <Chip selected={hasPackage} onClick={() => setHasPackage((value) => !value)} data-skill-has-package="">
+                    {t("skill.discover.hasPackage")}
+                  </Chip>
+                </SheetChips>
+              </SheetSection>
+              <SheetSection title={t("skill.discover.sortAria")}>
+                <SheetChips>
+                  {SORTS.map((item) => (
+                    <Chip key={item.key} selected={sort === item.key} onClick={() => setSort(item.key)} data-skill-sort={item.key}>
+                      {t(item.labelKey)}
+                    </Chip>
+                  ))}
+                </SheetChips>
+              </SheetSection>
+            </>
+          }
+        />
+      )}
 
       {loading ? (
         <PromptCardSkeletonGrid count={6} />

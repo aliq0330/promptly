@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { Sparkles } from "@/components/icons/sparkles";
 import { AsideSection } from "@/features/content/detail-parts";
 import { RelatedCards, RelatedCardsSkeleton } from "@/features/content/related-cards";
@@ -22,7 +23,7 @@ export function RelatedRequests({ request, limit = 4 }: { request: PromptRequest
   if (failed || (!loading && items.length === 0)) return null;
 
   return (
-    <AsideSection id="related-requests-title" title={t("request.relatedRequests")} href="/requests">
+    <AsideSection id="related-requests-title" title={t("request.relatedRequests")} href={DISCOVER_SECTION_HREF.requests}>
       {loading ? (
         <RelatedCardsSkeleton count={limit} />
       ) : (

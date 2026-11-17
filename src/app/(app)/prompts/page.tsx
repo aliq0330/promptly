@@ -1,41 +1,6 @@
-"use client";
-
-import { Copy } from "@/components/icons/copy";
-import { PenLine } from "@/components/icons/pen-line";
-import { SquareTerminal } from "@/components/icons/square-terminal";
-import { Send } from "@/components/icons/send";
-import { ContentListPage } from "@/features/content/content-list-page";
-import { PromptGrid } from "@/features/prompts/prompt-grid";
-import { useRealPromptsList } from "@/features/prompts/real-prompts-provider";
-import { useTranslation } from "@/lib/i18n/language-provider";
-import { searchPromptsPage } from "@/lib/supabase/prompts";
+import { RedirectTo } from "@/components/layout/redirect-to";
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 
 export default function PromptsPage() {
-  const { t } = useTranslation();
-  const { realPrompts, loading, hasMore, loadingMore, loadMore } = useRealPromptsList();
-  return (
-    <ContentListPage
-      icon={SquareTerminal}
-      title={t("prompts.pageTitle")}
-      description={t("prompts.pageDescription")}
-      createHref="/create?mode=prompt"
-      createLabel={t("create.promptTitle")}
-      steps={[
-        { icon: PenLine, titleKey: "prompts.step1Title", bodyKey: "prompts.step1Body" },
-        { icon: Send, titleKey: "prompts.step2Title", bodyKey: "prompts.step2Body" },
-        { icon: Copy, titleKey: "prompts.step3Title", bodyKey: "prompts.step3Body" },
-      ]}
-      baseItems={realPrompts}
-      loading={loading}
-      search={searchPromptsPage}
-      renderItems={(items) => <PromptGrid prompts={items} />}
-      searchPlaceholder={t("search.placeholder")}
-      emptyScene="drafts"
-      emptyTitle={t("prompts.emptyTitle")}
-      emptyBody={t("prompts.emptyBody")}
-      hasMore={hasMore}
-      loadingMore={loadingMore}
-      onLoadMore={loadMore}
-    />
-  );
+  return <RedirectTo href={DISCOVER_SECTION_HREF.prompts} />;
 }

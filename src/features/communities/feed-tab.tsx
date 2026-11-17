@@ -18,7 +18,7 @@ import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/fiel
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
-import { DropdownMenu, MenuItem } from "./dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { ReportModal } from "@/features/moderation/report-modal";
 import { communityPostReportTarget } from "./post-report";
 import { ShareToCommunityModal } from "./share-to-community-modal";
@@ -49,7 +49,6 @@ import { canSharePost, COMMUNITY_NOTE_MAX, postPageHref } from "@/lib/communitie
 import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { FEED_GRID_COLUMNS, FEED_ITEM_CONTEXT_CLASS } from "./community-layout";
-import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
@@ -196,16 +195,10 @@ export function FeedTab(props: CommunityTabProps) {
         createPortal(
           <>
             {canPost && (
-              <button
-                type="button"
-                onClick={() => setCreateOpen(true)}
-                data-create-post
-                aria-label={t("communities.feed.share")}
-                title={t("communities.feed.share")}
-                className={`${CONTROL_ICON_BUTTON} bg-surface-soft hover:bg-border-soft`}
-              >
-                <Plus size={24} aria-hidden />
-              </button>
+              <Button type="button" size="sm" onClick={() => setCreateOpen(true)} data-create-post aria-label={t("communities.feed.share")}>
+                <Plus size={20} aria-hidden />
+                {t("communities.feed.share")}
+              </Button>
             )}
           </>,
           actionsEl,
