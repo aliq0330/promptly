@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Compass } from "@/components/icons/compass";
+import { LayoutGrid } from "@/components/icons/layout-grid";
 import { Loader2 } from "@/components/icons/loader-2";
 import { Search } from "@/components/icons/search";
 import { ShieldCheck } from "@/components/icons/shield-check";
@@ -166,7 +166,7 @@ export function CommunitiesPage() {
               <Search size={24} aria-hidden />
             </button>
             <Link href="/communities/all" aria-label={t("communities.all.button")} title={t("communities.all.button")} className={CONTROL_ICON_BUTTON} data-testid="communities-all-link">
-              <Compass size={24} aria-hidden />
+              <LayoutGrid size={24} aria-hidden />
             </Link>
           </HubControlRow>
         )
@@ -332,7 +332,7 @@ export function DiscoverView({
         <ErrorBox message={t("communities.page.loadError")} onRetry={() => setReloadKey((k) => k + 1)} />
       ) : current.items.length === 0 ? (
         <EmptyState
-          icon={Compass}
+          icon={LayoutGrid}
           scene={searching || category ? "search" : "community"}
           title={searching || category ? t("groups.page.noResults") : t("communities.discover.empty")}
           description={searching || category ? t("groups.page.noResultsHelp") : t("communities.discover.emptyHelp")}

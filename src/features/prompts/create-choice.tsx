@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { CircleFadingPlus } from "@/components/icons/circle-fading-plus";
-import { Megaphone } from "@/components/icons/megaphone";
+import { Quote } from "@/components/icons/quote";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { SquareTerminal } from "@/components/icons/square-terminal";
@@ -100,7 +100,7 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
         className="group mt-2 flex min-h-16 w-full items-center gap-3 px-1 py-3 text-left"
       >
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-surface-soft text-text-secondary group-hover:text-primary">
-          <Megaphone size={20} />
+          <Quote size={20} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-body font-semibold text-text">{t("create.shareExistingTitle")}</span>

@@ -51,22 +51,22 @@ await scenario("1. 'Gönderi oluştur' iki yol sunar: yeni içerik (dört tür �
   await page.getByRole("button", { name: "Gönderi oluştur" }).click();
   const d = dlg(page);
   await d.getByRole("button", { name: /Yeni içerik oluştur/ }).waitFor();
-  await d.getByRole("button", { name: /Mevcut içeriğe başvur/ }).waitFor();
+  await d.getByRole("button", { name: /Var olan içeriği alıntıla/ }).waitFor();
   await d.getByRole("button", { name: /Yeni içerik oluştur/ }).click();
   const hrefs = await d.locator("a[data-post-new-type]").evaluateAll((els) => els.map((a) => [a.dataset.postNewType, a.getAttribute("href")]));
   assert.deepEqual(hrefs.map(([t]) => t), ["prompt", "request", "workflow", "preset"]);
   const expected = { prompt: "/create?mode=prompt", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
   for (const [type, href] of hrefs) assert.ok(href.replace("/promptly", "").replace(/\/\?/, "?") === `${expected[type]}${expected[type].includes("?") ? "&" : "?"}community=${C1}`, `${type} opens the EXISTING creation screen with the community context: ${href}`);
   await d.getByRole("button", { name: "Geri" }).click();
-  await d.getByRole("button", { name: /Mevcut içeriğe başvur/ }).click();
-  await dlg(page).getByText("Mevcut içeriğe başvur", { exact: true }).waitFor();
+  await d.getByRole("button", { name: /Var olan içeriği alıntıla/ }).click();
+  await dlg(page).getByText("Var olan içeriği alıntıla", { exact: true }).waitFor();
 }, { setup: (db) => { seed(db, { myRole: "member" }); own(db); } });
 
 // 2
 await scenario("2. Başvuru: kendi kimliğiyle gönderi olur; not varsa görünür; orijinal içeriğe belirgin bağlantı; not yoksa boş yer tutucu YOK", async ({ page, db }) => {
   await open(page, C1);
   await page.getByRole("button", { name: "Gönderi oluştur" }).click();
-  await dlg(page).getByRole("button", { name: /Mevcut içeriğe başvur/ }).click();
+  await dlg(page).getByRole("button", { name: /Var olan içeriği alıntıla/ }).click();
   await dlg(page).getByText("Açık Prompt").waitFor();
   assert.equal(await dlg(page).getByText("Özel Prompt").count(), 0, "private content is never offered");
   await dlg(page).getByRole("radio").first().click();
@@ -514,7 +514,7 @@ await scenario("17b. Alıcı gönderiyi okuyamıyorsa (topluluğa erişimi yok) 
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addConv(DM, U.carol, { texts: ["selam"] }); } });
 
 // 14 — i18n
-await scenario("14. İngilizce: Create post / Apply an existing item / Application / Community content / post engagement metinleri", async ({ page }) => {
+await scenario("14. İngilizce: Create post / Quote an existing item / Application / Community content / post engagement metinleri", async ({ page }) => {
   await open(page, C1);
   const app = post(page, "App post");
   await app.getByText("Quote", { exact: true }).waitFor();
@@ -523,7 +523,7 @@ await scenario("14. İngilizce: Create post / Apply an existing item / Applicati
   assert.equal(await nat.getByText("Community content").count(), 0);
   await page.getByRole("button", { name: "Create post" }).click();
   await dlg(page).getByRole("button", { name: /Create new content/ }).waitFor();
-  await dlg(page).getByRole("button", { name: /Apply an existing item/ }).waitFor();
+  await dlg(page).getByRole("button", { name: /Quote an existing item/ }).waitFor();
 }, { lang: "en", setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "App post", kind: "application" }); db.addPost(C1, { title: "Native post", kind: "native" }); } });
 
 // 15 — mobil / koyu tema / masaüstü

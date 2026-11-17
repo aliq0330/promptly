@@ -30,7 +30,7 @@ const TYPES: { type: Exclude<CommunityPostType, "space" | "skill">; icon: IconCo
  * "Gönderi oluştur": iki yol —
  *   1) Yeni içerik oluştur → türü seç → NORMAL oluşturma ekranı topluluk bağlamıyla açılır; yayınlanınca içerik bu toplulukta kendi
  *      gönderisi olur (yerel gönderi).
- *   2) Mevcut içeriğe başvur → var olan yayınlanmış içerik seçilir, isteğe bağlı not eklenir (başvuru gönderisi).
+ *   2) Var olan içeriği alıntıla → var olan yayınlanmış içerik seçilir, isteğe bağlı not eklenir (alıntı gönderisi).
  */
 export function CreatePostModal({ communityId, onClose, onApply }: { communityId: string; onClose: () => void; onApply: () => void }) {
   const { t } = useTranslation();
@@ -95,6 +95,13 @@ export function CreatePostModal({ communityId, onClose, onApply }: { communityId
                 </li>
               ))}
             </ul>
+            {/* Skill ve Space topluluğa özgü oluşturulmaz: kendi alanında yapılır, buradan alıntılanır. */}
+            <p className="text-caption text-text-muted" data-post-new-hint="">
+              {t("communities.post.new.skillSpaceHint")}{" "}
+              <button type="button" onClick={onApply} className="font-semibold text-primary hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
+                {t("communities.post.choose.applyTitle")}
+              </button>
+            </p>
           </>
         )}
       </DialogShell>

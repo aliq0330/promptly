@@ -196,16 +196,10 @@ export function FeedTab(props: CommunityTabProps) {
         createPortal(
           <>
             {canPost && (
-              <button
-                type="button"
-                onClick={() => setCreateOpen(true)}
-                data-create-post
-                aria-label={t("communities.feed.share")}
-                title={t("communities.feed.share")}
-                className={`${CONTROL_ICON_BUTTON} bg-surface-soft hover:bg-border-soft`}
-              >
-                <Plus size={24} aria-hidden />
-              </button>
+              <Button type="button" size="sm" onClick={() => setCreateOpen(true)} data-create-post aria-label={t("communities.feed.share")}>
+                <Plus size={20} aria-hidden />
+                {t("communities.feed.share")}
+              </Button>
             )}
           </>,
           actionsEl,

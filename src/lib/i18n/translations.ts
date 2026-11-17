@@ -2626,7 +2626,7 @@ export const translations = {
   "create.spaceTitle": { tr: "Space oluştur", en: "Create a Space" },
   "create.spaceBody": { tr: "Görselleri, promptları, notları ve paletleri bir yaratıcı projede topla; istersen akışta paylaş.", en: "Gather images, prompts, notes and palettes into a creative project; share it in the feed if you like." },
   "create.spaceHint": { tr: "Pano · Palet · Notlar", en: "Board · Palette · Notes" },
-  "create.shareExistingTitle": { tr: "Var olan içeriği paylaş", en: "Share existing content" },
+  "create.shareExistingTitle": { tr: "Var olan içeriği alıntıla", en: "Quote existing content" },
   "create.shareExistingBody": { tr: "Yayındaki bir içeriğini ya da Space'ini alıntıla: akışta ve topluluklarda.", en: "Quote one of your published posts or Spaces in the feed and in communities." },
   "createMenu.prompt": { tr: "Prompt", en: "Prompt" },
   "createMenu.request": { tr: "İstek", en: "Request" },

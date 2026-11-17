@@ -333,7 +333,7 @@ await scenario("13. Akış: sabit + normal gönderi; içerik kartı ve not gör�
 await scenario("13b. Paylaş: yalnız KENDİ herkese açık içerikler listelenir (özel olan yok); seçip paylaşınca tek istek; aynı içerik tekrar paylaşılamaz", async ({ page, db }) => {
   await open(page, C1, "feed");
   await page.getByRole("button", { name: "Gönderi oluştur" }).click();
-  await dlg(page).getByRole("button", { name: /Mevcut içeriğe başvur/ }).click();
+  await dlg(page).getByRole("button", { name: /Var olan içeriği alıntıla/ }).click();
   const d = dlg(page);
   await d.getByText("Açık Prompt").waitFor();
   assert.equal(await d.getByText("Özel Prompt").count(), 0, "private content is never offered");
@@ -346,7 +346,7 @@ await scenario("13b. Paylaş: yalnız KENDİ herkese açık içerikler listeleni
   assert.equal(shared[0].body.p_content_type, "prompt");
   assert.equal(shared[0].body.p_note, "Denemeni bekliyorum");
   await page.getByRole("button", { name: "Gönderi oluştur" }).click();
-  await dlg(page).getByRole("button", { name: /Mevcut içeriğe başvur/ }).click();
+  await dlg(page).getByRole("button", { name: /Var olan içeriği alıntıla/ }).click();
   await dlg(page).getByRole("radio").first().check();
   await dlg(page).getByRole("button", { name: "Paylaş", exact: true }).click();
   await dlg(page).getByText("Bu içerik bu toplulukta zaten paylaşılmış.").waitFor();
@@ -681,7 +681,7 @@ await scenario("21. Birebir sohbet etkilenmez: profil menüsü, engelle/şikayet
 await scenario("22. İngilizce: Topluluklar sayfası, detay sekmeleri, rapor/duyuru/etkinlik metinleri çevrilmiş", async ({ page }) => {
   await page.goto(`${BASE}/communities?tab=posts`);
   await page.getByRole("heading", { name: "Communities", level: 1 }).waitFor();
-  assert.deepEqual(await tabNames(page), ["My communities", "Posts", "Discover", "Managed", "Invitations & requests"]); // seed: owner → Managed tab visible
+  assert.deepEqual(await tabNames(page), ["My communities", "Posts", "Discover", "Managed", "Invitations & join requests"]); // seed: owner → Managed tab visible
   await page.goto(`${BASE}/communities/all`);
   await page.getByPlaceholder("Search communities, topics or tags…").waitFor();
   await open(page, C1);
