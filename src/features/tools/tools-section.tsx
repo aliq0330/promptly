@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Bot } from "@/components/icons/bot";
 import { Wrench } from "@/components/icons/wrench";
+import { ToolLogo } from "@/features/content/tool-logo";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AI_TOOLS, searchTools, type AiTool } from "@/lib/ai-tool-catalog";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -63,9 +63,7 @@ export function ToolRow({ tool, postCount }: { tool: AiTool; postCount: number |
   return (
     <li className="flex items-center gap-3 rounded-lg card-flat p-3 shadow-card">
       <Link href={toolHref(tool.id)} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
-          <Bot size={20} aria-hidden />
-        </span>
+        <ToolLogo toolId={tool.id} name={tool.name} size="lg" />
         <span className="min-w-0 leading-tight">
           <span className="block truncate font-semibold text-text">{tool.name}</span>
           <span className="block truncate text-caption text-text-muted">{tool.provider}</span>
