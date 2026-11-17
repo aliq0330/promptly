@@ -156,7 +156,7 @@ await scenario("3. Ekip oluştur: ad + renk → team_create(p_name, p_tone) ve e
   await page.waitForURL(/\/teams\/local\/?\?id=/);
   const body = called(db, "team_create")[0].body;
   assert.equal(body.p_name, "Yeni Atölye");
-  assert.equal(body.p_tone, "success");
+  assert.equal(body.p_tone, "plum");
 });
 
 await scenario("4c. Konuk: yalnız Space'ler ve Sohbet; süre bandı", async ({ page }) => {
