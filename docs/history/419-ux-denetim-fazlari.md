@@ -1,4 +1,4 @@
-# 418 — UX denetimi: 7 fazlı düzeltme
+# 419 — UX denetimi: 7 fazlı düzeltme
 
 Tarih: 2026-11-17. Kaynak: Topluluk / Space / Ekip / içerik türleri / Skill / erişilebilirlik için kod okuma denetimi (kod değişmeden önce
 çıkarılan bulgu listesi: P1-1…P3-10) ve fazlı çözüm planı. Yalnız istemci; migration YOK. Ağ taklitli Playwright ile denendi, gerçek Supabase/cihaza karşı DENENMEDİ.

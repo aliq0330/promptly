@@ -6,5 +6,5 @@
  */
 export const SKILLS_MENU_ENABLED = process.env.NEXT_PUBLIC_SKILLS_ENABLED === "true";
 
-/** Skill'lerin TEK liste yüzeyi: Keşfet → Skill'ler (docs/history/418-*). Eski `/skills` adresi buraya yönlenir. */
+/** Skill'lerin TEK liste yüzeyi: Keşfet → Skill'ler (docs/history/419-*). Eski `/skills` adresi buraya yönlenir. */
 export const SKILLS_LIST_HREF = "/discover?section=skills";

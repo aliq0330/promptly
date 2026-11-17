@@ -1,6 +1,6 @@
 # Güncel Durum ve Açık İşler
 
-> `CLAUDE.md` §9'dan taşındı (docs/history/418-*): bu içerik çabuk eskir ve her oturumda bağlama yüklenmemeli. Güncel olduğuna güvenmeden önce canlı şemaya/koda bak.
+> `CLAUDE.md` §9'dan taşındı (docs/history/419-*): bu içerik çabuk eskir ve her oturumda bağlama yüklenmemeli. Güncel olduğuna güvenmeden önce canlı şemaya/koda bak.
 
 ## Güncel Durum ve Açık İşler
 

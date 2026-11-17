@@ -300,7 +300,7 @@ export function Modal({
     onCloseRef.current = onClose;
   });
   const { overlayRef: setSheetOverlay, sheetRef } = useSheetDismiss(centered && variant === "dialog" ? "side" : variant, onCloseRef);
-  // Odak yönetimi (docs/history/418-*): açılışta odak pencereye girer, Tab pencerenin içinde döner, kapanınca açan öğeye geri verilir.
+  // Odak yönetimi (docs/history/419-*): açılışta odak pencereye girer, Tab pencerenin içinde döner, kapanınca açan öğeye geri verilir.
   const [overlayEl, setOverlayEl] = useState<HTMLDivElement | null>(null);
   const overlayElRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useCallback(

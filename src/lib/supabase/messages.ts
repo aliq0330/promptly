@@ -403,7 +403,11 @@ export async function fetchChannelPreviews(conversationIds: string[], viewerId: 
  * isn't a member of it (RLS hides the row either way) — indistinguishable
  * on purpose, same as every other "not found" in this app.
  */
-export async function fetchConversationForUser(conversationId: string, userId: string): Promise<Conversation | null> {
+/**
+ * `strict`: ağ/sunucu hatası "konuşma yok" (null) olarak YUTULMAZ, fırlatılır — açılış yüklemesi "Konuşma bulunamadı" ile "yüklenemedi"yi ayırsın diye.
+ * Varsayılan (liste/yenileme çağıranları) eskisi gibi null döner.
+ */
+export async function fetchConversationForUser(conversationId: string, userId: string, options: { strict?: boolean } = {}): Promise<Conversation | null> {
   try {
     const { data: membership, error } = await supabase
       .from("conversation_members")
@@ -411,6 +415,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
       .eq("conversation_id", conversationId)
       .eq("user_id", userId)
       .maybeSingle();
+    if (error && options.strict) throw error;
     if (error || !membership) return null;
 
     const row = membership as unknown as MembershipRow;
@@ -455,6 +460,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
     return { ...base, kind: "direct", group: null, participants: [mapProfileRow(otherProfile as ProfileRow)], lastMessage: previewTextFor(last) };
   } catch (err) {
     console.error("fetchConversationForUser", err);
+    if (options.strict) throw err;
     return null;
   }
 }
@@ -496,7 +502,7 @@ export const MESSAGE_PAGE_SIZE = 200;
 export async function fetchMessagePage(
   conversationId: string,
   viewerId: string,
-  options: { before?: string; room?: MessageRoomScope } = {},
+  options: { before?: string; room?: MessageRoomScope; /** Hata boş sayfa gibi YUTULMAZ, fırlatılır (açılış yüklemesi: boş sohbet görünmesin, "yüklenemedi" çıksın). */ strict?: boolean } = {},
 ): Promise<{ messages: Message[]; hasMore: boolean }> {
   try {
     const { data: membership, error: membershipError } = await supabase
@@ -505,7 +511,10 @@ export async function fetchMessagePage(
       .eq("conversation_id", conversationId)
       .eq("user_id", viewerId)
       .maybeSingle();
-    if (membershipError) return { messages: [], hasMore: false };
+    if (membershipError) {
+      if (options.strict) throw membershipError;
+      return { messages: [], hasMore: false };
+    }
     const clearedAt = (membership as { cleared_at: string | null } | null)?.cleared_at ?? null;
 
     let query = scopeToRoom(supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId), options.room);
@@ -515,7 +524,10 @@ export async function fetchMessagePage(
       query.order("created_at", { ascending: false }).limit(MESSAGE_PAGE_SIZE),
       supabase.from("message_hidden_for").select("message_id").eq("user_id", viewerId),
     ]);
-    if (error) return { messages: [], hasMore: false };
+    if (error) {
+      if (options.strict) throw error;
+      return { messages: [], hasMore: false };
+    }
     const hiddenIds = new Set((hidden ?? []).map((row) => row.message_id as string));
     const rows = data ?? [];
     return {
@@ -527,6 +539,7 @@ export async function fetchMessagePage(
     };
   } catch (err) {
     console.error("fetchMessages", err);
+    if (options.strict) throw err;
     return { messages: [], hasMore: false };
   }
 }

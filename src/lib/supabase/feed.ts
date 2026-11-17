@@ -156,7 +156,7 @@ async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
     fetchPresetsByIds(idsOf("preset")),
     // A quote whose target can't be loaded (gone private) is skipped like any other vanished row.
     fetchQuotesByIds(idsOf("quote")).catch(() => [] as Quote[]),
-    // Bayrak kapalıyken Skill hiçbir yüzeyde görünmez (menü girişleri gibi): kart akışa da sızmaz (docs/history/418-*).
+    // Bayrak kapalıyken Skill hiçbir yüzeyde görünmez (menü girişleri gibi): kart akışa da sızmaz (docs/history/419-*).
     SKILLS_MENU_ENABLED ? fetchSkillsByIds(idsOf("skill")).catch(() => [] as Skill[]) : Promise.resolve([] as Skill[]),
   ]);
   const byKey = new Map<string, FeedEntry>();

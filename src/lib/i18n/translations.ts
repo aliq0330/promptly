@@ -1623,6 +1623,8 @@ export const translations = {
   "messages.conversationNotFoundTitle": { tr: "Konuşma bulunamadı", en: "Conversation not found" },
   "messages.conversationNotFoundBody": { tr: "Bu konuşma silinmiş olabilir, ya da bu hesap bu konuşmanın bir üyesi değil.", en: "This conversation may have been deleted, or this account isn't a member of it." },
   "messages.backToMessages": { tr: "Mesajlara Dön", en: "Back to Messages" },
+  "messages.chatLoadFailedTitle": { tr: "Sohbet yüklenemedi", en: "Couldn't load the chat" },
+  "messages.chatLoadFailedBody": { tr: "Bağlantı kurulamadı ya da sunucu cevap vermedi. Tekrar deneyebilirsin.", en: "The connection failed or the server didn't respond. You can try again." },
   "messages.backToListAriaLabel": { tr: "Mesaj listesine dön", en: "Back to message list" },
   "messages.pendingRequestNotice": { tr: "Bu bir mesaj isteği — {{name}} seni takip etmiyor. Yanıtlarsan otomatik kabul edilir.", en: "This is a message request — {{name}} doesn't follow you. Replying accepts it automatically." },
   "messages.acceptAction": { tr: "Kabul Et", en: "Accept" },

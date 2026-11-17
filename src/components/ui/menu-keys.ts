@@ -2,7 +2,7 @@ import type { KeyboardEvent } from "react";
 import { nextRovingIndex } from "@/lib/modal-focus";
 
 /**
- * Menülerin ortak klavye davranışı (docs/history/418-*): ↑/↓ öğeler arasında döner, Home/End uçlara gider. Her ⋮ / seçim menüsü
+ * Menülerin ortak klavye davranışı (docs/history/419-*): ↑/↓ öğeler arasında döner, Home/End uçlara gider. Her ⋮ / seçim menüsü
  * kendi panelini çizer; gezinme tek yerdedir. Açılışta odağı ilk (ya da seçili) öğeye `focusMenuItem` alır.
  */
 export function menuItems(container: HTMLElement | null, selector: string): HTMLElement[] {

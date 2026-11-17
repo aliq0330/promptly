@@ -1,5 +1,5 @@
 /**
- * Pencere odak yönetiminin SAF kuralları (Modal, docs/history/418-*): Tab ile odak pencerenin içinde döner; DOM erişimi `Modal`'dadır.
+ * Pencere odak yönetiminin SAF kuralları (Modal, docs/history/419-*): Tab ile odak pencerenin içinde döner; DOM erişimi `Modal`'dadır.
  */
 
 /** Pencerenin içinde Tab ile gezilebilen öğeler. Görünürlüğü çağıran süzer (`getClientRects`). */

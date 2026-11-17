@@ -1363,6 +1363,8 @@ const dictionary: Record<string, string> = {
   "messages.conversationNotFoundTitle": "Konuşma bulunamadı",
   "messages.conversationNotFoundBody": "Bu konuşma silinmiş olabilir, ya da bu hesap bu konuşmanın bir üyesi değil.",
   "messages.backToMessages": "Mesajlara Dön",
+  "messages.chatLoadFailedTitle": "Sohbet yüklenemedi",
+  "messages.chatLoadFailedBody": "Bağlantı kurulamadı ya da sunucu cevap vermedi. Tekrar deneyebilirsin.",
   "messages.backToListAriaLabel": "Mesaj listesine dön",
   "messages.pendingRequestNotice": "Bu bir mesaj isteği — {{name}} seni takip etmiyor. Yanıtlarsan otomatik kabul edilir.",
   "messages.acceptAction": "Kabul Et",

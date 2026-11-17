@@ -1363,6 +1363,8 @@ const dictionary: Record<string, string> = {
   "messages.conversationNotFoundTitle": "Conversation not found",
   "messages.conversationNotFoundBody": "This conversation may have been deleted, or this account isn't a member of it.",
   "messages.backToMessages": "Back to Messages",
+  "messages.chatLoadFailedTitle": "Couldn't load the chat",
+  "messages.chatLoadFailedBody": "The connection failed or the server didn't respond. You can try again.",
   "messages.backToListAriaLabel": "Back to message list",
   "messages.pendingRequestNotice": "This is a message request — {{name}} doesn't follow you. Replying accepts it automatically.",
   "messages.acceptAction": "Accept",
