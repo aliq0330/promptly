@@ -113,6 +113,7 @@ export const skillPackageTranslations = {
   "skill.pkg.copyFile": { tr: "Dosyayı kopyala", en: "Copy file" },
   "skill.pkg.downloadFile": { tr: "Dosyayı indir", en: "Download file" },
   "skill.pkg.codeTruncated": { tr: "İlk {{count}} satır gösteriliyor. Tamamı için dosyayı indir.", en: "Showing the first {{count}} lines. Download the file for the rest." },
+  "skill.detail.unpublishedChanges": { tr: "Talimatta yayınlanmamış değişiklikler var. Okuyucular, indirenler ve API {{version}} sürümünün yayınlanan metnini görür; değişiklik yeni bir sürüm yayınlayınca geçerli olur.", en: "The instructions have unpublished changes. Readers, downloads and the API see the published text of {{version}}; your changes apply once you publish a new version." },
   "skill.pkg.showingDraft": { tr: "Bu SKILL.md güncel taslak; yayınlanan {{version}} sürümünden farklı. İndirdiğin ZIP yayınlanan sürümü içerir.", en: "This SKILL.md is the current draft and differs from published {{version}}. The ZIP you download contains the published version." },
   "skill.pkg.showingPublished": { tr: "{{version}} sürümünde yayınlanan SKILL.md gösteriliyor (ZIP'tekiyle aynı).", en: "Showing the SKILL.md published in {{version}} (same as the ZIP)." },
   "skill.pkg.showPublished": { tr: "{{version}} sürümünü göster", en: "Show {{version}}" },

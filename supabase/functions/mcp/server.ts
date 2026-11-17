@@ -318,12 +318,13 @@ export function createPromptlyServer({ client, version, log = () => {}, onPrompt
     {
       title: "Get one public Skill",
       description:
-        "One PUBLIC Skill: its SKILL.md body (`instructions`), license, compatible tools, the latest published version (changelog, file count, package size), that version's file list and " +
-        "linked public prompts/workflows/presets. File CONTENTS are not returned; files marked `script: true` are code — Promptly never runs them. Keep the author credit and respect the license.",
-      inputSchema: { id: z.string().describe("Id (UUID) from search_skills.") },
+        "One PUBLIC Skill: its SKILL.md body (`instructions`), license, compatible tools, the published version (changelog, file count, package size), that version's file list and " +
+        "linked public prompts/workflows/presets. `instructions` is the IMMUTABLE text of the published version (`instructionsSource: \"published\"`); an author's later edits to the working copy do not change it " +
+        "(`hasUnpublishedChanges` says they exist). Pass `version` to read a specific (pinned) version. File CONTENTS are not returned; files marked `script: true` are code — Promptly never runs them. Keep the author credit and respect the license.",
+      inputSchema: { id: z.string().describe("Id (UUID) from search_skills."), version: z.string().optional().describe("Version like 1.2.0; default latest.") },
       annotations: readOnly,
     },
-    (args: { id: string }) => run(() => getPublicSkill(client, args.id)),
+    (args: { id: string; version?: string }) => run(() => getPublicSkill(client, args.id, args.version)),
   );
   server.registerTool(
     "list_skill_files",

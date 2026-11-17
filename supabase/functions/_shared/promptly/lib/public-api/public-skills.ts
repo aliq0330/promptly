@@ -54,8 +54,14 @@ export interface PublicSkillVersion {
 }
 
 export type PublicSkill = PublicSkillSummary & {
-  /** SKILL.md gövdesi (Markdown). */
+  /**
+   * SKILL.md gövdesi (Markdown). Skill'in YAYINLANMIŞ bir sürümü varsa o sürümün yayın anındaki, DEĞİŞMEZ metnidir (`instructionsSource: "published"`); sahip çalışma kopyasını
+   * sonradan değiştirse de burası değişmez. Sürümde anlık görüntü yoksa (bu özellikten önceki sürüm ya da hiç sürüm yok) çalışma kopyasıdır (`"working_copy"`).
+   */
   instructions: string;
+  instructionsSource: "published" | "working_copy";
+  /** Yayınlanmış anlık görüntü var ve sahibin çalışma kopyası ondan farklı: değişiklik henüz yeni bir sürümle yayınlanmadı (okuyucu yine yayınlanmış metni görür). */
+  hasUnpublishedChanges: boolean;
   /** Yayınlanmış en son sürüm (paketi yoksa `null`: Skill yalnız SKILL.md'den ibarettir). */
   latestVersion: PublicSkillVersion | null;
   /** O sürümün dosya listesi (gövde değil). */
@@ -83,6 +89,7 @@ interface SkillRow {
 }
 interface VersionRow {
   version: string;
+  instructions?: string | null;
   changelog: string | null;
   package_size: number | null;
   file_count: number | null;
@@ -194,7 +201,7 @@ export async function searchPublicSkills(client: RestClient, input: SkillSearchP
 }
 
 async function latestVersion(client: RestClient, skillId: string, version?: string): Promise<VersionRow | null> {
-  const params = new URLSearchParams({ select: "version,changelog,package_size,file_count,manifest,created_at,deprecated_at" });
+  const params = new URLSearchParams({ select: "version,instructions,changelog,package_size,file_count,manifest,created_at,deprecated_at" });
   params.set("skill_id", `eq.${skillId}`);
   if (version) params.set("version", `eq.${version}`);
   params.set("order", "created_at.desc");
@@ -202,20 +209,32 @@ async function latestVersion(client: RestClient, skillId: string, version?: stri
   return (await client.select<VersionRow>("skill_versions", params))[0] ?? null;
 }
 
-/** Tek herkese açık Skill (SKILL.md gövdesi + son sürümün dosya listesi). Bulunamayan, taslak ya da özel → `not_found`. */
-export async function getPublicSkill(client: RestClient, id: string): Promise<PublicSkill> {
+/**
+ * Tek herkese açık Skill (SKILL.md gövdesi + sürümün dosya listesi). `version` verilmezse son sürüm, verilirse o sürüm (sabitlenmiş sürümü okumak için). Bulunamayan, taslak ya da özel → `not_found`.
+ * Gövde ve sürüm numarası YAYINLANMIŞ sürümden gelir (sahibin sonradan değiştirdiği çalışma kopyası okuyucuya yansımaz); anlık görüntüsü olmayan eski sürümde çalışma kopyası döner ve `instructionsSource` bunu söyler.
+ */
+export async function getPublicSkill(client: RestClient, id: string, version?: string | null): Promise<PublicSkill> {
   const key = id.trim();
   if (!isUuid(key)) bad("id must be a Skill UUID.");
+  const wanted = version?.trim();
+  if (wanted && !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(wanted)) bad("version must look like 1.2.3.");
   const [row] = await fetchRows(client, [key], DETAIL_COLUMNS);
   if (!row) throw new PublicApiError("not_found", "Skill not found.");
-  const version = await latestVersion(client, key);
+  const found = await latestVersion(client, key, wanted || undefined);
+  if (wanted && !found) throw new PublicApiError("not_found", "Version not found.");
   const relParams = new URLSearchParams({ select: "target_type,target_id,position", skill_id: `eq.${key}`, order: "position.asc", limit: "20" });
   const relations = await client.select<{ target_type: string; target_id: string }>("skill_relations", relParams).catch(() => []);
+  const workingCopy = row.instructions ?? "";
+  const snapshot = found && typeof found.instructions === "string" ? found.instructions : null;
   return {
     ...summaryOf(row, client.siteUrl),
-    instructions: row.instructions ?? "",
-    latestVersion: version ? versionOf(version) : null,
-    files: version ? filesOf(version.manifest) : [],
+    // Skill'in sürümü varsa gösterilen sürüm yayınlanan sürümdür (`skills.version` çalışma kopyası etiketidir).
+    ...(found ? { version: found.version } : {}),
+    instructions: snapshot ?? workingCopy,
+    instructionsSource: snapshot !== null ? "published" : "working_copy",
+    hasUnpublishedChanges: snapshot !== null && !wanted && snapshot !== workingCopy,
+    latestVersion: found ? versionOf(found) : null,
+    files: found ? filesOf(found.manifest) : [],
     related: relations.filter((r) => isUuid(r.target_id)).map((r) => ({ type: r.target_type, id: r.target_id, url: `${client.siteUrl}${sharePathFor(r.target_type as "prompt" | "workflow" | "preset", r.target_id)}` })),
   };
 }

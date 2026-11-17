@@ -175,7 +175,7 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
       if (segments[2] !== "files") return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
       return json(await listPublicSkillFiles(client, decodeURIComponent(segments[1]), url.searchParams.get("version")));
     }
-    if (segments.length === 2) return json(await getPublicSkill(client, decodeURIComponent(segments[1])));
+    if (segments.length === 2) return json(await getPublicSkill(client, decodeURIComponent(segments[1]), url.searchParams.get("version")));
     return json(
       await searchPublicSkills(client, {
         query: url.searchParams.get("q"),

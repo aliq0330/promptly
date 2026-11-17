@@ -186,6 +186,7 @@ const CHECKS = [
   { name: "rpc set_skill_works_tool ziyaretçiye KAPALI olmalı (docs/history/397-*)", rpc: "set_skill_works_tool", body: { p_skill_id: "00000000-0000-4000-8000-000000000000", p_tool: null }, mustBeDenied: true },
   { name: "skill_categories (uzmanlık alanı tablosu, docs/history/399-*)", get: () => `skill_categories?select=${encodeURIComponent("id,label_tr,label_en,position")}&limit=1` },
   { name: "skills.cover_path (Skill kapak görseli, docs/history/399-*)", get: () => `skills?select=${encodeURIComponent("id,cover_path")}&limit=1` },
+  { name: "skill_versions.instructions (yayınlanan talimat anlık görüntüsü, docs/history/415-*)", get: () => `skill_versions?select=${encodeURIComponent("id,skill_id,version,instructions")}&limit=1` },
   { name: "rpc skill_works_by_version ziyaretçiye açık (sürüm başına oy toplamı, docs/history/399-*)", rpc: "skill_works_by_version", body: { p_skill_id: "00000000-0000-4000-8000-000000000000" } },
   { name: "rpc set_skill_works_version ziyaretçiye KAPALI olmalı (docs/history/399-*)", rpc: "set_skill_works_version", body: { p_skill_id: "00000000-0000-4000-8000-000000000000", p_version: null }, mustBeDenied: true },
   { name: "rpc list_public_spaces_for_skill ziyaretçiye açık (Bu Skill şu Space'lerde, docs/history/409-*)", rpc: "list_public_spaces_for_skill", body: { p_skill: "00000000-0000-4000-8000-000000000000", p_limit: 1 } },

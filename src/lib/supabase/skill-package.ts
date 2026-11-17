@@ -35,6 +35,8 @@ export interface SkillVersion {
   packageSize: number;
   fileCount: number;
   manifest: SkillManifest | null;
+  /** Yayın anındaki talimat metni (DEĞİŞMEZ anlık görüntü); bu özellikten önceki sürümlerde `null` (docs/history/415-*). */
+  instructions: string | null;
   deprecatedAt: string | null;
   createdAt: string;
 }
@@ -70,12 +72,13 @@ interface VersionRow {
   package_size: number;
   file_count: number;
   manifest: SkillManifest | null;
+  instructions?: string | null;
   deprecated_at: string | null;
   created_at: string;
 }
 
 const FILE_COLUMNS = "id, skill_id, path, kind, size, sha256, storage_path, is_script, updated_at";
-const VERSION_COLUMNS = "id, skill_id, version, changelog, package_path, package_sha256, package_size, file_count, manifest, deprecated_at, created_at";
+const VERSION_COLUMNS = "id, skill_id, version, changelog, package_path, package_sha256, package_size, file_count, manifest, instructions, deprecated_at, created_at";
 
 export function mapSkillFileRow(row: FileRow): SkillFile {
   return { id: row.id, skillId: row.skill_id, path: row.path, kind: row.kind, size: row.size, sha256: row.sha256, storagePath: row.storage_path, isScript: row.is_script, updatedAt: row.updated_at };
@@ -92,6 +95,7 @@ export function mapSkillVersionRow(row: VersionRow): SkillVersion {
     packageSize: Number(row.package_size),
     fileCount: row.file_count,
     manifest: row.manifest && typeof row.manifest === "object" ? row.manifest : null,
+    instructions: typeof row.instructions === "string" ? row.instructions : null,
     deprecatedAt: row.deprecated_at,
     createdAt: row.created_at,
   };
