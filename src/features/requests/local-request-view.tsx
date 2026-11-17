@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -66,7 +67,7 @@ export function LocalRequestView() {
           {t("request.notFoundBody")}
         </p>
         <Link
-          href="/requests"
+          href={DISCOVER_SECTION_HREF.requests}
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.backToRequests")}
@@ -83,7 +84,7 @@ export function LocalRequestView() {
           {t("request.deletedButRepliesVisibleBody")}
         </p>
         <Link
-          href="/requests"
+          href={DISCOVER_SECTION_HREF.requests}
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("request.backToRequests")}

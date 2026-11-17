@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { SkillsUsingContent } from "@/features/skills/skill-aside-blocks";
 import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
@@ -198,7 +199,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
                 authorId={workflow.creator.id}
                 onDeleted={() => {
                   removeFromCache(workflow.id);
-                  router.push("/workflows");
+                  router.push(DISCOVER_SECTION_HREF.workflows);
                 }}
               />
             </RelationMapMenu>

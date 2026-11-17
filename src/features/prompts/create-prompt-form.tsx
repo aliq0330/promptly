@@ -1,4 +1,5 @@
 "use client";
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { announcePublished } from "@/lib/publish-celebration";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { useTeamCreateContext, useTeamReturn } from "@/features/teams/team-return";
@@ -712,7 +713,7 @@ export function CreatePromptForm() {
               : t("prompt.duplicateSourceGoneBody")}
         </p>
         <Link
-          href={isAnswerMode ? "/requests" : "/discover"}
+          href={isAnswerMode ? DISCOVER_SECTION_HREF.requests : "/discover"}
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {isAnswerMode ? t("common.backToRequests") : t("common.backToDiscover")}
@@ -727,7 +728,7 @@ export function CreatePromptForm() {
         <h1 className="mb-2 text-h2 font-bold text-text">{t("request.thisRequestDeletedTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{t("request.requestDeletedNoNewReplies")}</p>
         <Link
-          href="/requests"
+          href={DISCOVER_SECTION_HREF.requests}
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-small font-medium text-text hover:bg-accent-surface"
         >
           {t("common.backToRequests")}

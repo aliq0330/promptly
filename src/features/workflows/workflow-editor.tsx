@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { announcePublished } from "@/lib/publish-celebration";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -299,7 +300,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-bold text-text">{t("workflow.notFoundTitle")}</h1>
         <p className="mb-4 text-small text-text-muted">{loadState === "forbidden" ? t("workflow.notYours") : t("workflow.notFoundBody")}</p>
-        <Link href="/workflows" className="text-small font-medium text-primary hover:underline">
+        <Link href={DISCOVER_SECTION_HREF.workflows} className="text-small font-medium text-primary hover:underline">
           {t("workflow.pageTitle")}
         </Link>
       </div>

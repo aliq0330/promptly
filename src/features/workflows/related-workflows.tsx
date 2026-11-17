@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { AsideSection } from "@/features/content/detail-parts";
 import { RelatedCards, RelatedCardsSkeleton } from "@/features/content/related-cards";
@@ -22,7 +23,7 @@ export function RelatedWorkflows({ workflow, limit = 4 }: { workflow: Workflow; 
   if (failed || (!loading && items.length === 0)) return null;
 
   return (
-    <AsideSection id="workflow-similar-title" title={t("workflow.similar")} href="/workflows">
+    <AsideSection id="workflow-similar-title" title={t("workflow.similar")} href={DISCOVER_SECTION_HREF.workflows}>
       {loading ? (
         <RelatedCardsSkeleton count={limit} />
       ) : (

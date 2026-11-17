@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
@@ -160,7 +161,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
    */
   function handleDeleted() {
     removeFromCache(live.id);
-    router.push("/requests");
+    router.push(DISCOVER_SECTION_HREF.requests);
   }
 
   async function confirmSelection(promptId: string | null) {

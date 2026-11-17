@@ -1,5 +1,6 @@
 "use client";
 
+import { DISCOVER_SECTION_HREF } from "@/lib/list-routes";
 import { SkillsUsingContent } from "@/features/skills/skill-aside-blocks";
 import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
@@ -169,7 +170,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
               authorId={preset.creator.id}
               onDeleted={() => {
                 removeFromCache(preset.id);
-                router.push("/presets");
+                router.push(DISCOVER_SECTION_HREF.presets);
               }}
             />
           }
