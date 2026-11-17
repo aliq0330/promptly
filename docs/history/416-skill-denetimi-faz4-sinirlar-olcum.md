@@ -21,3 +21,7 @@ Kaynak: Skill üretim öncesi teknik denetimi (Faz 1 `413-*`, Faz 2 `414-*`, Faz
 ## Testler
 - `supabase/tests/skills-draft-cap.sql` (10), `package-zip.test.ts` (3, seviye seçimi + determinizm), `skill-md.test.ts` (+1). Tüm Skill SQL dosyaları (14) temiz DB'de 0 FAIL; `anon-hardening` 15 yeşil.
 - Edge `skill-package`'ın **elle yeniden deploy** edilmesi gerekir (`package-zip.ts` değişti).
+
+## Ek: `promptly-mcp` 0.3.1 (2026-11-17)
+
+Faz 3 `get_skill`'e `version` alanını/`?version=` parametresini ekledi ama `mcp/package.json` 0.3.0'da kaldı; "Publish MCP package" koşusu (#5) `You cannot publish over the previously published versions: 0.3.0` ile düştü (test ve derleme yeşildi). Sürüm 0.3.1'e çıkarıldı; Edge `mcp` işlevinin bildirdiği sürüm (`supabase/functions/mcp/index.ts`) aynı tutuldu. Kural: MCP araç şeması/davranışı değişince `mcp/package.json` sürümü de artar (aynı sürüm npm'e ikinci kez yayınlanamaz).
