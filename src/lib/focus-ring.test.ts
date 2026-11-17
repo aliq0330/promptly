@@ -16,6 +16,7 @@ const EXEMPT: Record<string, string> = {
   "features/stories/story-viewer-sheets.tsx": "sheet container, programmatic focus",
   "features/stories/story-viewer.tsx": "viewer stage, programmatic focus",
   "features/search/advanced-search-box.tsx": "input inside a wrapper that draws focus-within",
+  "features/search/search-overlay.tsx": "input inside a wrapper that draws focus-within",
   "features/prompts/dna-constellation.tsx": "node group; the node child draws the ring",
   "features/messages/message-dock.tsx": "dock panel, programmatic focus",
   "features/messages/rooms/room-form-modal.tsx": "input inside a wrapper that draws focus-within",

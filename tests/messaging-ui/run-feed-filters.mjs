@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
 import { createDb, installMock, U, ME } from "./mock.mjs";
 import { svg } from "./detail-fixtures.mjs";
+import { searchFor } from "./search-helpers.mjs";
 
 const BASE = "http://localhost:4191/promptly";
 const server = await serve(4191);
@@ -579,7 +580,7 @@ await scenario("16. Arama seçili bölüme göre: Promptlar'da yalnız prompt ar
   await page.goto(`${BASE}/discover`);
   const box = () => page.getByRole("combobox").or(page.locator('main input[type="text"], main input:not([type])')).first();
   // Tümü: dört tür + sekmeler.
-  await page.getByPlaceholder("Prompt, kişi, etiket ara…").first().fill("kedi");
+  await searchFor(page, "kedi", "Prompt, kişi, etiket ara…");
   await waitFor(() => (state.searchCalls ?? []).length >= 4);
   // The four post kinds; a build with the Skills flag adds a fifth, `skill` (its own group, docs/history/402-*).
   assert.deepEqual([...new Set(state.searchCalls.map((c) => c.p_kind))].filter((kind) => kind !== "skill").sort(), ["preset", "prompt", "request", "workflow"]);
@@ -588,8 +589,7 @@ await scenario("16. Arama seçili bölüme göre: Promptlar'da yalnız prompt ar
   await page.goto(`${BASE}/discover`);
   state.searchCalls = [];
   await openSection(page, "Promptlar");
-  const scoped = page.getByPlaceholder("Promptlar içinde ara").first();
-  await scoped.fill("kedi");
+  await searchFor(page, "kedi", "Promptlar içinde ara");
   await waitFor(() => (state.searchCalls ?? []).length >= 1);
   await page.waitForTimeout(500);
   assert.deepEqual([...new Set(state.searchCalls.map((c) => c.p_kind))], ["prompt"], "yalnız prompt aranır");
@@ -598,7 +598,7 @@ await scenario("16. Arama seçili bölüme göre: Promptlar'da yalnız prompt ar
   await page.goto(`${BASE}/discover`);
   state.searchCalls = [];
   await openSection(page, "AI Araçları");
-  await page.getByPlaceholder("AI Araçları içinde ara").first().fill("mid");
+  await searchFor(page, "mid", "AI Araçları içinde ara");
   const section = page.locator("[data-tools-section]");
   await section.locator("li").first().waitFor();
   assert.equal(await section.locator("li").count(), 1);
@@ -609,7 +609,7 @@ await scenario("16. Arama seçili bölüme göre: Promptlar'da yalnız prompt ar
   state.searchCalls = [];
   state.requests.length = 0;
   await openSection(page, "Yaratıcılar");
-  await page.getByPlaceholder("Yaratıcılar içinde ara").first().fill("bob");
+  await searchFor(page, "bob", "Yaratıcılar içinde ara");
   await waitFor(() => state.requests.some((u) => u.includes("/rest/v1/profiles") && u.includes("ilike")));
   assert.ok(state.requests.some((u) => u.includes("/rest/v1/profiles") && u.includes("ilike")), "profil araması yapıldı");
   assert.equal((state.searchCalls ?? []).length, 0, "gönderi araması yapılmadı");

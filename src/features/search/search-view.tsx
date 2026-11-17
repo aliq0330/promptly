@@ -355,6 +355,29 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
           onTextChange={setText}
           autoFocus={!idle}
           placeholder={scope ? t("discover.searchIn", { scope: scope.label }) : undefined}
+          // docs/history/421-*: the full-screen search layer has the SAME Filtre (groups as tabs / a left rail) — only for post results.
+          filters={
+            showPosts
+              ? {
+                  hideKinds: scope?.kind === "content",
+                  count: tokens.length + (category ? 1 : 0) + (subcategory ? 1 : 0),
+                  onClear: () => {
+                    setTokens([]);
+                    setSubFilter({ category: null, subcategory: null });
+                  },
+                  render: (section) => (
+                    <SearchFilterSections
+                      tokens={tokens}
+                      onTokensChange={setTokens}
+                      hideKinds={scope?.kind === "content"}
+                      sort={sort}
+                      onSortChange={setSort}
+                      section={section}
+                    />
+                  ),
+                }
+              : undefined
+          }
         />
         {singleMedia && (
           // Biçim lives in the chip strip / Filtre sheet; under ONE format the category (and subcategory) rows narrow it further.

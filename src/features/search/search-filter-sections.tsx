@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { Check } from "@/components/icons/check";
 import { Search } from "@/components/icons/search";
 import { X } from "@/components/icons/x";
@@ -31,6 +31,20 @@ const DEBOUNCE_MS = 250;
 const TOOL_PREVIEW = 8;
 
 /**
+ * The filter groups one at a time (docs/history/421-*): the full-screen search layer shows them as tabs (phone) or a left rail (desktop),
+ * the shared Filtre sheet keeps showing all of them. `tokenKind` = which chips the group edits (its count badge).
+ */
+export type SearchFilterSectionKey = "media" | "kind" | "user" | "tag" | "tool" | "sort";
+export const SEARCH_FILTER_SECTIONS: { key: SearchFilterSectionKey; labelKey: TranslationKey; tokenKind?: SearchToken["kind"] }[] = [
+  { key: "media", labelKey: "search.groupMedia", tokenKind: "media" },
+  { key: "kind", labelKey: "search.groupKind", tokenKind: "content" },
+  { key: "user", labelKey: "search.groupUsers", tokenKind: "user" },
+  { key: "tag", labelKey: "search.groupTags", tokenKind: "tag" },
+  { key: "tool", labelKey: "search.groupTools", tokenKind: "tool" },
+  { key: "sort", labelKey: "toolbar.sort" },
+];
+
+/**
  * The search's part of the shared Filtre sheet (`ListFilterSheet`, via `ListControlRow`): the same chips the box makes, picked from
  * groups — Biçim, Tür, Kişi, Etiket, AI aracı — plus Sıralama. It edits the SAME `tokens` list live, so the chip strip under the
  * search box and the sheet never disagree; the query logic (`tokensToQuery`: groups AND, inside a group OR, tags all) is untouched.
@@ -41,6 +55,7 @@ export function SearchFilterSections({
   hideKinds,
   sort,
   onSortChange,
+  section,
 }: {
   tokens: SearchToken[];
   onTokensChange: (next: SearchToken[]) => void;
@@ -48,8 +63,13 @@ export function SearchFilterSections({
   hideKinds?: boolean;
   sort: SearchSort;
   onSortChange: (sort: SearchSort) => void;
+  /** Only this group (the search layer's tabs); left out = every group, each under its own heading (the Filtre sheet). */
+  section?: SearchFilterSectionKey;
 }) {
   const { t } = useTranslation();
+  /** One group: under its heading in the full list, bare when it is shown alone. */
+  const group = (key: SearchFilterSectionKey, title: string, body: ReactNode) =>
+    section ? (section === key ? <div className="space-y-3">{body}</div> : null) : <SheetSection title={title}>{body}</SheetSection>;
   const has = (token: SearchToken) => tokens.some((existing) => tokenKey(existing) === tokenKey(token));
   const toggle = (token: SearchToken) => onTokensChange(toggleToken(tokens, token));
   const picked = (kind: SearchToken["kind"]) => tokens.filter((token) => token.kind === kind);
@@ -58,7 +78,9 @@ export function SearchFilterSections({
     <>
       <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-secondary">{t("search.filterLogic")}</p>
 
-      <SheetSection title={t("search.groupMedia")}>
+      {group(
+        "media",
+        t("search.groupMedia"),
         <SheetChips>
           {CONTENT_TYPE_IDS.map((type) => {
             const token: SearchToken = { kind: "media", type };
@@ -68,11 +90,13 @@ export function SearchFilterSections({
               </Chip>
             );
           })}
-        </SheetChips>
-      </SheetSection>
+        </SheetChips>,
+      )}
 
-      {!hideKinds && (
-        <SheetSection title={t("search.groupKind")}>
+      {!hideKinds &&
+        group(
+          "kind",
+          t("search.groupKind"),
           <SheetChips>
             {(SKILLS_MENU_ENABLED ? FILTER_KINDS : ALL_KINDS).map((type) => {
               const token: SearchToken = { kind: "content", type };
@@ -82,11 +106,12 @@ export function SearchFilterSections({
                 </Chip>
               );
             })}
-          </SheetChips>
-        </SheetSection>
-      )}
+          </SheetChips>,
+        )}
 
-      <SheetSection title={t("search.groupUsers")}>
+      {group(
+        "user",
+        t("search.groupUsers"),
         <TokenFinder
           kind="user"
           selected={picked("user")}
@@ -94,10 +119,12 @@ export function SearchFilterSections({
           placeholder={t("search.findPerson")}
           hint={t("search.hintAny")}
           find={async (text) => (await searchProfiles(text, 6)).map((user) => ({ kind: "user" as const, user }))}
-        />
-      </SheetSection>
+        />,
+      )}
 
-      <SheetSection title={t("search.groupTags")}>
+      {group(
+        "tag",
+        t("search.groupTags"),
         <TokenFinder
           kind="tag"
           selected={picked("tag")}
@@ -106,12 +133,14 @@ export function SearchFilterSections({
           hint={t("search.hintAll")}
           find={async (text) => (await searchTags(text, 8)).map((tag) => ({ kind: "tag" as const, tag }))}
           loadInitial={async () => (await fetchPopularTags(8)).map((tag) => ({ kind: "tag" as const, tag }))}
-        />
-      </SheetSection>
+        />,
+      )}
 
-      <ToolSection selected={picked("tool")} onToggle={toggle} has={has} />
+      {(!section || section === "tool") && <ToolSection selected={picked("tool")} onToggle={toggle} has={has} bare={Boolean(section)} />}
 
-      <SheetSection title={t("toolbar.sort")}>
+      {group(
+        "sort",
+        t("toolbar.sort"),
         <div role="radiogroup" aria-label={t("toolbar.sort")} className="space-y-1">
           {SORTS.map((item) => (
             <button
@@ -129,8 +158,8 @@ export function SearchFilterSections({
               {sort === item.key && <Check size={16} className="text-primary" aria-hidden />}
             </button>
           ))}
-        </div>
-      </SheetSection>
+        </div>,
+      )}
     </>
   );
 }
@@ -270,7 +299,7 @@ function TokenFinder({
 }
 
 /** AI tools: the first few as toggles, "Tümünü gör" opens the whole catalog with a filter field. */
-function ToolSection({ selected, onToggle, has }: { selected: SearchToken[]; onToggle: (token: SearchToken) => void; has: (token: SearchToken) => boolean }) {
+function ToolSection({ selected, onToggle, has, bare }: { selected: SearchToken[]; onToggle: (token: SearchToken) => void; has: (token: SearchToken) => boolean; bare?: boolean }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [text, setText] = useState("");
@@ -278,8 +307,7 @@ function ToolSection({ selected, onToggle, has }: { selected: SearchToken[]; onT
   const filtered = searchTools(tools, text);
   const selectedIds = new Set(selected.map((token) => (token.kind === "tool" ? token.toolId : "")));
   const shown = expanded ? filtered : tools.filter((tool, index) => index < TOOL_PREVIEW || selectedIds.has(tool.id));
-  return (
-    <SheetSection title={t("search.groupTools")}>
+  const body = (
       <div className="space-y-3">
         <p className="text-caption text-text-muted">{t("search.hintAny")}</p>
         {expanded && <FinderInput value={text} onChange={setText} placeholder={t("search.findTool")} label={t("search.findTool")} />}
@@ -300,6 +328,6 @@ function ToolSection({ selected, onToggle, has }: { selected: SearchToken[]; onT
           </button>
         )}
       </div>
-    </SheetSection>
   );
+  return bare ? body : <SheetSection title={t("search.groupTools")}>{body}</SheetSection>;
 }
