@@ -49,7 +49,6 @@ import { canSharePost, COMMUNITY_NOTE_MAX, postPageHref } from "@/lib/communitie
 import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { FEED_GRID_COLUMNS, FEED_ITEM_CONTEXT_CLASS } from "./community-layout";
-import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { DialogShell } from "@/components/ui/dialog-shell";
