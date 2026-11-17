@@ -525,8 +525,15 @@ await scenario("21. Mesajla paylaş: Skill'in Paylaş penceresinde 'Promptly'de 
 
 await scenario("22. Ana Sayfa 'benim akışım' eksenindedir: Filtre penceresinde 'Skill'ler' çipi YOK (Skill keşfi yalnız Keşfet'te)", async ({ page }) => {
   await page.goto(`${BASE}/`);
-  await page.getByRole("button", { name: /Filtre/ }).first().click();
-  await page.getByText("Promptlar", { exact: true }).first().waitFor();
+  await page.getByRole("tab", { name: /Sana özel/ }).first().waitFor();
+  const sheet = page.getByRole("dialog");
+  // Hidrasyon yarışı: pencere açılmazsa düğmeye bir kez daha basılır.
+  for (let attempt = 0; attempt < 3 && !(await sheet.isVisible()); attempt++) {
+    await page.getByRole("button", { name: /Filtre/ }).first().click();
+    await sheet.waitFor({ timeout: 3000 }).catch(() => undefined);
+  }
+  await sheet.waitFor();
+  await sheet.getByRole("button", { name: /Filtreleri Uygula/ }).waitFor();
   assert.equal(await page.getByText("Skill'ler", { exact: true }).count(), 0);
   assert.equal(await page.locator("[data-skill-discover]").count(), 0);
 });
