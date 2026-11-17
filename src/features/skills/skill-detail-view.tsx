@@ -7,6 +7,7 @@ import { Download } from "@/components/icons/download";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { Button } from "@/components/ui/button";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { InlineAlert } from "@/components/ui/inline-alert";
 import { Badge } from "@/components/ui/badge";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -112,6 +113,11 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
   const tools = skill.compat.map((tool) => skillLabelText(SKILL_COMPAT_LABEL[tool], t)).join(", ");
 
   const latest = pickLatestVersion(versions);
+  // Yayınlanan sürümün talimatı DEĞİŞMEZDİR (docs/history/415-*): okuyucu (indirme, kopyalama, sayfa) yayınlanan metni ve sürümü görür; sahibin sonradan değiştirdiği çalışma kopyası yalnız sahibine görünür.
+  // Anlık görüntüsü olmayan eski sürümde çalışma kopyasına düşülür.
+  const snapshot = latest?.instructions ?? null;
+  const hasPendingChanges = isOwn && snapshot !== null && snapshot.trim() !== skill.instructions.trim();
+  const shown: Skill = isOwn ? skill : { ...skill, instructions: snapshot ?? skill.instructions, version: latest?.version ?? skill.version };
   const published = skill.status === "published" && skill.visibility === "public";
   const fileCount = latest?.manifest?.files?.length ?? 0;
   // Sekmeler prompt sayfasındaki gibidir (Prompt · Geçmiş · DNA): Talimat ve Dosyalar her zaman; Sürümler sürüm varsa (sahibine yeni sürüm için hep).
@@ -124,7 +130,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
   const activeTab: SkillTab = tabItems.some((item) => item.key === tab) ? tab : "text";
   const infoLine = [
     tools || null,
-    `v${skill.version}`,
+    `v${shown.version}`,
     skillLabelText(SKILL_LICENSE_LABEL[skill.license], t),
     latest ? t("skill.detail.packageMeta", { files: String(latest.fileCount), size: formatBytes(latest.packageSize) }) : null,
   ]
@@ -135,7 +141,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
     if (!skill) return;
     setDownloadError(null);
     if (!latest) {
-      downloadSkillMd(skill);
+      downloadSkillMd(shown);
       void recordSkillUse(skill.id).then(() => setDownloads((n) => n + 1));
       return;
     }
@@ -177,7 +183,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
         </DetailMetaCard>
         {/* "Skill bilgisi" kartı Hakkında'ya katıldı (docs/history/409-*): prompt sayfasında ikinci bir bilgi kartı yoktur. */}
         <dl className="divide-y divide-border-soft border-t border-border-soft text-small" data-skill-info="">
-          <InfoRow label={t("skill.version")} value={skill.version} />
+          <InfoRow label={t("skill.version")} value={shown.version} />
           <InfoRow label={t("skill.license")} value={skillLabelText(SKILL_LICENSE_LABEL[skill.license], t)} />
           <InfoRow label={t("skill.updated")} value={formatRelativeTime(skill.updatedAt, language)} />
         </dl>
@@ -252,19 +258,24 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
         {activeTab === "text" && (
           <>
             <section id="skill-text" aria-label={t("skill.instructionsTitle")} className="scroll-mt-24 space-y-4">
-              <SkillTextBlock skillMd={skillMdFor(skill)} instructions={skill.instructions} info={infoLine} />
+              {hasPendingChanges && (
+                <InlineAlert tone="info" data-skill-pending-changes="">
+                  {t("skill.detail.unpublishedChanges", { version: latest?.version ?? "" })}
+                </InlineAlert>
+              )}
+              <SkillTextBlock skillMd={skillMdFor(shown)} instructions={shown.instructions} info={infoLine} />
               {/* Eylemler bloğun altında, prompt'taki Kopyala · Çalıştır satırı gibi (docs/history/409-*). */}
               <div className="mt-4 flex flex-wrap items-center gap-2" data-skill-actions="">
                 <SkillDownloadButton label={latest ? t("skill.detail.downloadZip", { version: latest.version }) : t("skill.download")} onPrimary={() => void primaryDownload()}>
                   {(close) => (
                     <>
-                      <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadMd")} onClick={() => { close(); downloadSkillMd(skill); void recordSkillUse(skill.id); }} />
-                      <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadJson")} onClick={() => { close(); downloadSkillMetadata(skill); }} />
-                      <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadExchange")} onClick={() => { close(); downloadSkillExchange(skill); }} />
+                      <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadMd")} onClick={() => { close(); downloadSkillMd(shown); void recordSkillUse(skill.id); }} />
+                      <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadJson")} onClick={() => { close(); downloadSkillMetadata(shown); }} />
+                      <MenuItem icon={<Download size={16} />} label={t("skill.detail.downloadExchange")} onClick={() => { close(); downloadSkillExchange(shown); }} />
                     </>
                   )}
                 </SkillDownloadButton>
-                <Button type="button" variant="outline" className="h-11" data-skill-copy="" onClick={() => void copyTextToClipboard(skillMdFor(skill)).then((ok) => setCopyNote(ok ? t("common.copied") : t("skill.detail.copyFailed")))}>
+                <Button type="button" variant="outline" className="h-11" data-skill-copy="" onClick={() => void copyTextToClipboard(skillMdFor(shown)).then((ok) => setCopyNote(ok ? t("common.copied") : t("skill.detail.copyFailed")))}>
                   <Copy size={16} aria-hidden /> {t("skill.detail.copyMd")}
                 </Button>
               </div>
@@ -286,7 +297,7 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
           </>
         )}
 
-        {activeTab === "files" && <SkillFilesSection key={latest?.id ?? "draft"} version={latest} skillMd={skillMdFor(skill)} onDownload={() => void primaryDownload()} />}
+        {activeTab === "files" && <SkillFilesSection key={latest?.id ?? "draft"} version={latest} skillMd={skillMdFor(shown)} onDownload={() => void primaryDownload()} />}
 
         {activeTab === "versions" && <SkillVersionsSection skillId={skill.id} slug={skill.slug} versions={versions} isOwn={isOwn} onChanged={() => setReload((value) => value + 1)} />}
 

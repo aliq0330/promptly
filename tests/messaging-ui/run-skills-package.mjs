@@ -798,6 +798,31 @@ await scenario("28. Detay (telefon): ağaç ☰ ile aynı kartta açılır, dosy
   assert.ok(overflow <= 1, `yatay taşma yok (${overflow}px)`);
 }, { viewport: { width: 390, height: 800 } });
 
+await scenario("30. Yayınlanan talimat DEĞİŞMEZ (docs/history/415-*): okuyucu yayınlanan metni ve sürümü görür, sahibin sonradan değiştirdiği çalışma kopyasını değil; sahip uyarı bandı görür", async ({ page, world }) => {
+  // Bob'un Skill'i: sahip yayından sonra çalışma kopyasını ve sürüm etiketini değiştirdi; yayınlanan sürümün anlık görüntüsü ayrı.
+  const bob = world.skills.find((x) => x.id === S_BOB);
+  bob.instructions = "# SESSİZCE DEĞİŞTİRİLDİ";
+  bob.version = "7.7.7";
+  world.versions.find((v) => v.skill_id === S_BOB && v.version === "1.0.0").instructions = "# Yayınlanan metin";
+  await openDetail(page, S_BOB);
+  await page.locator("[data-skill-text-block]").waitFor();
+  const body = await page.locator("[data-skill-text-block]").innerText();
+  assert.match(body, /Yayınlanan metin/);
+  assert.doesNotMatch(body, /SESSİZCE/);
+  assert.doesNotMatch(body, /7\.7\.7/, "SKILL.md çerçevesinde de yayınlanan sürüm yazılır");
+  assert.equal(await page.locator("[data-skill-pending-changes]").count(), 0, "okuyucuya sahibin bekleyen değişikliği gösterilmez");
+  assert.match(await page.locator("[data-skill-info]").innerText(), /1\.0\.0/, "gösterilen sürüm yayınlanan sürüm");
+  assert.doesNotMatch(await page.locator("[data-skill-info]").innerText(), /7\.7\.7/);
+  // Sahip kendi Skill'inde çalışma kopyasını ve uyarıyı görür.
+  const own = world.skills.find((x) => x.id === S_PUB);
+  own.instructions = "# Sahibin yeni taslağı";
+  world.versions.filter((v) => v.skill_id === S_PUB).forEach((v) => { v.instructions = "# Yayınlanan eski metin"; });
+  await openDetail(page, S_PUB);
+  await page.locator("[data-skill-pending-changes]").waitFor();
+  assert.match(await page.locator("[data-skill-pending-changes]").innerText(), /yayınlanmamış değişiklik/i);
+  assert.match(await page.locator("[data-skill-text-block]").innerText(), /Sahibin yeni taslağı/);
+});
+
 await browser.close();
 server.close();
 const failed = results.filter(([s]) => s === "FAIL");

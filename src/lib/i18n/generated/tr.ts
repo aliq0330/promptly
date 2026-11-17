@@ -4726,6 +4726,7 @@ const dictionary: Record<string, string> = {
   "skill.pkg.copyFile": "Dosyayı kopyala",
   "skill.pkg.downloadFile": "Dosyayı indir",
   "skill.pkg.codeTruncated": "İlk {{count}} satır gösteriliyor. Tamamı için dosyayı indir.",
+  "skill.detail.unpublishedChanges": "Talimatta yayınlanmamış değişiklikler var. Okuyucular, indirenler ve API {{version}} sürümünün yayınlanan metnini görür; değişiklik yeni bir sürüm yayınlayınca geçerli olur.",
   "skill.pkg.showingDraft": "Bu SKILL.md güncel taslak; yayınlanan {{version}} sürümünden farklı. İndirdiğin ZIP yayınlanan sürümü içerir.",
   "skill.pkg.showingPublished": "{{version}} sürümünde yayınlanan SKILL.md gösteriliyor (ZIP'tekiyle aynı).",
   "skill.pkg.showPublished": "{{version}} sürümünü göster",

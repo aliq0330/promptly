@@ -4,6 +4,7 @@ import { createApiHandler, createRestClient, getPublicSkill, listPublicSkillFile
 
 const ID_A = "11111111-1111-4111-8111-111111111111";
 const ID_B = "22222222-2222-4222-8222-222222222222";
+const ID_C = "55555555-5555-4555-8555-555555555555";
 const ID_PROMPT = "33333333-3333-4333-8333-333333333333";
 const author = { username: "ayse", display_name: "Ayşe" };
 
@@ -12,10 +13,14 @@ const skillRow = (id: string, over: Record<string, unknown> = {}) => ({
   like_count: 5, comment_count: 2, save_count: 3, use_count: 9, created_at: "2026-10-01T10:00:00.000Z", profiles: author, skill_tags: [{ tag_slug: "guvenlik" }], ...over,
 });
 const TABLES: Record<string, unknown[]> = {
-  skills: [skillRow(ID_A), skillRow(ID_B, { title: "Logo", category: "design" })],
+  // ID_A: sahip yayından sonra çalışma kopyasını ve sürüm etiketini DEĞİŞTİRDİ ("7.7.7", yeni talimat); yayınlanan sürümün anlık görüntüsü ayrıdır.
+  skills: [skillRow(ID_C, { title: "Eski sürümlü", instructions: "# Çalışma kopyası", version: "1.0.0" }), skillRow(ID_A, { instructions: "# SESSİZCE DEĞİŞTİRİLDİ", version: "7.7.7" }), skillRow(ID_B, { title: "Logo", category: "design" })],
   skill_versions: [
-    { skill_id: ID_A, version: "1.1.0", changelog: " Kurallar eklendi ", package_size: 2048, file_count: 2, created_at: "2026-10-02T10:00:00Z", deprecated_at: null,
+    { skill_id: ID_A, version: "1.1.0", instructions: "# Rol\n\nGüvenlik açıklarını bul.", changelog: " Kurallar eklendi ", package_size: 2048, file_count: 2, created_at: "2026-10-02T10:00:00Z", deprecated_at: null,
       manifest: { files: [{ path: "rules/style.md", kind: "rule", size: 20, script: false }, { path: "scripts/lint.sh", kind: "script", size: 40, script: true }, { path: 5, size: "x" }] } },
+    { skill_id: ID_A, version: "1.0.0", instructions: "# Rol\n\nİlk sürümün metni.", changelog: "", package_size: 1024, file_count: 1, created_at: "2026-09-01T10:00:00Z", deprecated_at: null, manifest: { files: [] } },
+    // Anlık görüntüden ÖNCEKİ bir sürüm (sütun NULL): çalışma kopyasına düşülür.
+    { skill_id: ID_C, version: "1.0.0", instructions: null, changelog: "", package_size: 10, file_count: 0, created_at: "2026-08-01T10:00:00Z", deprecated_at: null, manifest: { files: [] } },
   ],
   skill_relations: [{ skill_id: ID_A, target_type: "prompt", target_id: ID_PROMPT, position: 0 }],
 };
@@ -85,13 +90,42 @@ test("search: unknown enum values are refused before any request", async () => {
 test("get: the SKILL.md body, the latest version, its files (script flagged, junk entries dropped) and public relations", async () => {
   const fake = fakeFetch();
   const skill = await getPublicSkill(client(fake), ID_A);
-  assert.equal(skill.instructions, "# Rol\n\nGüvenlik açıklarını bul.");
+  assert.equal(skill.instructions, "# Rol\n\nGüvenlik açıklarını bul.", "the PUBLISHED text, not the owner's later edit");
   assert.equal(skill.latestVersion?.version, "1.1.0");
   assert.equal(skill.latestVersion?.changelog, "Kurallar eklendi");
   assert.equal(skill.latestVersion?.deprecated, false);
   assert.deepEqual(skill.files.map((f) => [f.path, f.script]), [["rules/style.md", false], ["scripts/lint.sh", true]]);
   assert.equal(skill.related[0].type, "prompt");
   assert.ok(skill.related[0].url.endsWith(`/share/prompt/${ID_PROMPT}/`));
+});
+
+test("get: readers see the immutable published text and version; the owner's later working-copy edits only raise hasUnpublishedChanges", async () => {
+  const skill = await getPublicSkill(client(fakeFetch()), ID_A);
+  assert.equal(skill.instructionsSource, "published");
+  assert.equal(skill.hasUnpublishedChanges, true);
+  assert.ok(!skill.instructions.includes("SESSİZCE"));
+  assert.equal(skill.version, "1.1.0", "the shown version is the published one, not the editable skills.version label (7.7.7)");
+});
+
+test("get: a version can be pinned; an older version returns its own text; an unknown or malformed version is refused", async () => {
+  const fake = fakeFetch();
+  const old = await getPublicSkill(client(fake), ID_A, "1.0.0");
+  assert.equal(old.instructions, "# Rol\n\nİlk sürümün metni.");
+  assert.equal(old.version, "1.0.0");
+  assert.equal(old.hasUnpublishedChanges, false, "pinned reads never claim a pending change");
+  await assert.rejects(() => getPublicSkill(client(fakeFetch()), ID_A, "9.9.9"), (error) => error instanceof PublicApiError && error.code === "not_found");
+  await assert.rejects(() => getPublicSkill(client(fakeFetch()), ID_A, "latest"), (error) => error instanceof PublicApiError && error.code === "bad_request");
+});
+
+test("get: a Skill without a snapshot (no version, or a pre-snapshot version) falls back to the working copy and says so", async () => {
+  const none = await getPublicSkill(client(fakeFetch()), ID_B);
+  assert.equal(none.instructionsSource, "working_copy");
+  assert.equal(none.hasUnpublishedChanges, false);
+  assert.equal(none.latestVersion, null);
+  const legacy = await getPublicSkill(client(fakeFetch()), ID_C);
+  assert.equal(legacy.instructions, "# Çalışma kopyası");
+  assert.equal(legacy.instructionsSource, "working_copy");
+  assert.equal(legacy.latestVersion?.version, "1.0.0");
 });
 
 test("get: a missing, draft or private Skill is not_found; a bad id is refused", async () => {

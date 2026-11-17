@@ -148,8 +148,10 @@ function publicSkillPaths(): Record<string, unknown> {
     "/skills/{id}": {
       get: {
         summary: "One public Skill",
-        description: "With its SKILL.md body (`instructions`), the latest published version and that version's file list. File contents are not included; script files are flagged `script: true` and are never executed by Promptly.",
-        parameters: [idParam],
+        description:
+          "With its SKILL.md body (`instructions`), the published version and that version's file list. `instructions` is the IMMUTABLE text of the published version (`instructionsSource: \"published\"`): the author's later edits to the working copy do not change it " +
+          "(`hasUnpublishedChanges` says they exist). Older versions without a stored text return the working copy (`instructionsSource: \"working_copy\"`). Pass `version` to read a specific version. File contents are not included; script files are flagged `script: true` and are never executed by Promptly.",
+        parameters: [idParam, { name: "version", in: "query", schema: { type: "string", pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$" } }],
         responses: { "200": { description: "The Skill", content: { "application/json": { schema: { type: "object" } } } }, "400": errorResponse, "404": errorResponse },
       },
     },

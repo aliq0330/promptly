@@ -4726,6 +4726,7 @@ const dictionary: Record<string, string> = {
   "skill.pkg.copyFile": "Copy file",
   "skill.pkg.downloadFile": "Download file",
   "skill.pkg.codeTruncated": "Showing the first {{count}} lines. Download the file for the rest.",
+  "skill.detail.unpublishedChanges": "The instructions have unpublished changes. Readers, downloads and the API see the published text of {{version}}; your changes apply once you publish a new version.",
   "skill.pkg.showingDraft": "This SKILL.md is the current draft and differs from published {{version}}. The ZIP you download contains the published version.",
   "skill.pkg.showingPublished": "Showing the SKILL.md published in {{version}} (same as the ZIP).",
   "skill.pkg.showPublished": "Show {{version}}",
