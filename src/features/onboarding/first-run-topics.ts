@@ -1,7 +1,7 @@
 import { DOMAIN_IDS, type DomainId } from "../../lib/domains.ts";
 
 /**
- * İlk giriş kurulumunun konu satırları (docs/history/424-*, 425-*). Kaydedilen değer ortak ALAN kimliğidir (`profiles.interests`, bkz. `@/lib/domains`);
+ * İlk giriş kurulumunun konu satırları (docs/history/424-*, 426-*). Kaydedilen değer ortak ALAN kimliğidir (`profiles.interests`, bkz. `@/lib/domains`);
  * yalnız görünen ad çevrilir. Sekiz alanın üç görseli `public/onboarding/` altındadır: sitenin kendi gönderileri DEĞİL, konu başlığına uyan, lisansı serbest
  * (CC0 / kamu malı) stok fotoğraflardır (kaynaklar `public/onboarding/CREDITS.txt`). Görseli olmayan alanlar (iş, eğitim…) fotoğraf yerine düz bir şerit alır.
  */

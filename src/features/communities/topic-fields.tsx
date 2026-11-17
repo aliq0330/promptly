@@ -7,7 +7,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityCategory } from "@/types";
 
 /**
- * Topluluğun KONUSU (ortak ALAN sözlüğü) ve AMACI (genel / öğrenme / vitrin) — oluşturma ve ayar ekranında aynı iki seçici (docs/history/425-*).
+ * Topluluğun KONUSU (ortak ALAN sözlüğü) ve AMACI (genel / öğrenme / vitrin) — oluşturma ve ayar ekranında aynı iki seçici (docs/history/426-*).
  * Eski ortam değerleri (görsel/metin/ses/video/workflow) seçenek olarak sunulmaz; ama topluluğun mevcut değeri buysa listede kalır ki ayar
  * ekranı onu sessizce değiştirmesin.
  */

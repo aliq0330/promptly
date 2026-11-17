@@ -376,14 +376,34 @@ await scenario("6. Sana özel: süzgeç bölümü yok, for_you_page'e yeni argü
   assert.deepEqual(lastFollowingCall(state).p_kinds, ["prompt"], "tür çipi iki görünümde ortak");
 });
 
-await scenario("7. Misafir: iki görünüm de giriş ister, hiçbir akış isteği yapılmaz", async ({ page, state }) => {
+await scenario("7. Misafir: sekme ve Filtre yok; herkese açık gönderiler (Önerilen sıra) + tek üyelik bandı; Sana özel / Takip akışı hiç istenmez", async ({ page, state }) => {
   await gotoHome(page, state, { guest: true });
-  await page.getByText("Sana özel akış için giriş yap").waitFor();
-  await selectHomeTab(page, "Takip Ettiklerim");
-  await page.getByText("Takip ettiklerin burada görünür").waitFor();
+  await page.locator("[data-guest-feed]").waitFor();
+  await page.getByRole("heading", { name: "Popüler gönderiler" }).waitFor();
+  await page.locator("main article").first().waitFor();
+  assert.equal(await page.getByRole("tablist", { name: /Akış görünümü|Feed view/ }).count(), 0, "misafirde sekme yok");
+  assert.equal(await page.locator("main").getByRole("button", { name: /^(Filtre|Filter)(,|$)/ }).count(), 0, "misafirde Filtre yok");
+  assert.equal(await page.getByText("Sana özel akış için giriş yap").count(), 0, "boş giriş kutusu kalktı");
+  const banner = page.locator("[data-guest-feed-banner]");
+  await banner.getByText(/Üye ol: takip ettiğin kişilere/).waitFor();
+  assert.match((await banner.getByRole("link", { name: "Kayıt ol" }).getAttribute("href")) ?? "", /\/signup\/?\?next=%2F/);
+  assert.match((await banner.getByRole("link", { name: "Giriş yap" }).getAttribute("href")) ?? "", /\/login\/?\?next=%2F/);
+  await page.waitForTimeout(500);
+  await page.locator("[data-guest-feed]").scrollIntoViewIfNeeded();
+  await shot(page, "7-guest-home");
+  assert.ok(state.feedCalls.some((c) => c.p_scope === "all" && c.p_order === "recommended"), "Keşfet'in herkese açık Önerilen sorgusu");
   assert.equal(state.feedCalls.filter((c) => c.p_scope === "following").length, 0, "takip akışı istenmez");
   assert.equal(state.forYouCalls.length, 0, "Sana özel istenmez");
 }, { guest: true });
+
+await scenario("7b. Misafir (İngilizce): başlık, bant ve düğmeler çevrili", async ({ page, state }) => {
+  await gotoHome(page, state, { guest: true });
+  await page.getByRole("heading", { name: "Popular posts" }).waitFor();
+  const banner = page.locator("[data-guest-feed-banner]");
+  await banner.getByText(/Sign up to get a feed built around/).waitFor();
+  await banner.getByRole("link", { name: "Sign up" }).waitFor();
+  await banner.getByRole("link", { name: "Log in" }).waitFor();
+}, { guest: true, lang: "en" });
 
 await scenario("8. İngilizce + telefon: sekmeler, süzgeç bölümleri ve özet çevrili; yatay taşma yok", async ({ page, state }) => {
   await gotoHome(page, state);

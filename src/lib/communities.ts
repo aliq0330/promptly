@@ -30,7 +30,7 @@ export const EVENT_REMINDER_WINDOW_HOURS = 24;
 export const COMMUNITY_CATEGORIES: readonly CommunityCategory[] = ["general", "image", "text", "audio", "video", "workflow", "learning", "showcase"];
 
 /**
- * Oluşturma/ayar ekranının sunduğu AMAÇlar (docs/history/425-*): topluluğun konusu artık ortak ALAN sözlüğündendir (`domain`); `category` yalnız amaçtır.
+ * Oluşturma/ayar ekranının sunduğu AMAÇlar (docs/history/426-*): topluluğun konusu artık ortak ALAN sözlüğündendir (`domain`); `category` yalnız amaçtır.
  * Ortam değerleri (görsel/metin/ses/video/workflow) eski kayıtlarda geçerli kalır ve gösterilir ama yeni seçenek olarak SUNULMAZ.
  */
 export const COMMUNITY_PURPOSES: readonly CommunityCategory[] = ["general", "learning", "showcase"];

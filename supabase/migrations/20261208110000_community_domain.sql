@@ -1,4 +1,4 @@
--- Topluluk "Alan" + "Amaç" (docs/history/425-*): topluluğun konusu ortak ALAN sözlüğündendir (`chat_groups.domain → domains.id`), kategori artık yalnız AMAÇtır
+-- Topluluk "Alan" + "Amaç" (docs/history/426-*): topluluğun konusu ortak ALAN sözlüğündendir (`chat_groups.domain → domains.id`), kategori artık yalnız AMAÇtır
 -- (genel / öğrenme / vitrin). Ortam değerleri (görsel/metin/ses/video/workflow) yeni istemcide sunulmaz ama veritabanı hâlâ kabul eder (genişle → daralt:
 -- eski istemci ve eski satırlar bozulmaz; CHECK sonraki bir "contract" migration'ında daraltılır).
 --   1) `chat_groups.domain` (boş olabilir) + eski ortam kategorilerinden TAHMİNİ geri doldurma (image→art, text→writing, audio→music-audio, video→video, workflow→productivity,

@@ -685,7 +685,7 @@ interface CardRow {
 }
 
 /**
- * Toplulukların konusu (ortak ALAN sözlüğü; docs/history/425-*). Liste RPC'lerinin dönüş şekli değişmediği için alan ayrı, tek toplu istekle gelir
+ * Toplulukların konusu (ortak ALAN sözlüğü; docs/history/426-*). Liste RPC'lerinin dönüş şekli değişmediği için alan ayrı, tek toplu istekle gelir
  * (`community_domains`: kartı görülebilen topluluklar). Sonuç modül önbelleğindedir (alanı olmayan da `null` olarak); RPC yoksa (eski veritabanı) hata
  * fırlatmaz, alan yokmuş gibi davranır. Alan ayarlardan değişince `forgetCommunityDomain` ile unutulur.
  */

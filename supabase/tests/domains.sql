@@ -1,4 +1,4 @@
--- Ortak ALAN sözlüğü (docs/history/425-*): domains, taxonomy_category_domains, interest_domain, for_you_page ilgi eşlemesi, topluluk ilgi terimleri.
+-- Ortak ALAN sözlüğü (docs/history/426-*): domains, taxonomy_category_domains, interest_domain, for_you_page ilgi eşlemesi, topluluk ilgi terimleri.
 -- Çalıştırma: supabase/tests/run-local.sh supabase/tests/domains.sql  ("FAILED=0" beklenir).
 \set ON_ERROR_STOP off
 \pset pager off

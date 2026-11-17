@@ -1,4 +1,4 @@
--- Ortak ALAN sözlüğü (docs/history/425-*): ilgi alanı, Skill uzmanlık alanı ve prompt kategorileri AYNI "konu" kavramını tek tabloda paylaşır.
+-- Ortak ALAN sözlüğü (docs/history/426-*): ilgi alanı, Skill uzmanlık alanı ve prompt kategorileri AYNI "konu" kavramını tek tabloda paylaşır.
 -- Üç ayrı eksen karışmıştı: ortam (görsel/metin/ses/video; prompt taksonomisi), konu/alan (Skill listesi, 9 sabit ilgi alanı) ve amaç (topluluk).
 -- Burada yalnız "konu/alan" ekseni birleşir; ortam taksonomisi olduğu gibi kalır. Genişle → daralt (expand → contract): hiçbir sütun/işlev silinmez.
 --   1) `domains`: 14 alan (Skill'in 8'i + ilgi alanlarının karşılıkları). Skill uzmanlık alanı bunun alt kümesidir (`skill_categories.id → domains.id`).
@@ -216,7 +216,7 @@ AS $function$
   copied as (
     select e.prompt_id from public.prompt_copy_events e, params pr where e.user_id = pr.me and e.created_at > pr.as_of - interval '60 days'
   ),
-  -- Profil ilgi alanı = ortak ALAN sözlüğü (`domains`; docs/history/425-*). `profiles.interests` alan kimliği taşır (eski Türkçe değerler `interest_domain` ile aynı alana çözülür);
+  -- Profil ilgi alanı = ortak ALAN sözlüğü (`domains`; docs/history/426-*). `profiles.interests` alan kimliği taşır (eski Türkçe değerler `interest_domain` ile aynı alana çözülür);
   -- alan → içerik türü/kategori eşlemesi veridedir (`taxonomy_category_domains`, kategori '*' = türün tamamı), SQL'e gömülü liste YOKTUR.
   my_domains as (
     select distinct public.interest_domain(i) as domain
@@ -310,7 +310,7 @@ AS $function$
        and not exists (select 1 from public.content_interest ci where ci.preset_id = x.id and ci.user_id = pr.me)
        and not exists (select 1 from saved s where s.preset_id = x.id)
     union all
-    -- Skill (docs/history/406-*): yayında + herkese açık; etiketi takip/beğeni sinyali olur. Uzmanlık alanı ortak ALAN sözlüğündendir (docs/history/425-*): ilgi alanıyla aynı alandaki Skill "ilgi alanı" sinyali alır; araç sinyali Skill'de yoktur;
+    -- Skill (docs/history/406-*): yayında + herkese açık; etiketi takip/beğeni sinyali olur. Uzmanlık alanı ortak ALAN sözlüğündendir (docs/history/426-*): ilgi alanıyla aynı alandaki Skill "ilgi alanı" sinyali alır; araç sinyali Skill'de yoktur;
     -- "İlgimi çekiyor / çekmiyor" Skill için de verilir (docs/history/408-*): cevaplanan, beğenilen ya da kaydedilen Skill tekrar önüne çıkmaz.
     select 'skill'::text as kind, x.id, x.created_at, x.author_id as author_id, (x.like_count * 3 + x.save_count * 2 + x.comment_count * 2 + x.use_count * 2)::bigint as eng,
            (select min(tg.tag_slug) from public.skill_tags tg where tg.skill_id = x.id and tg.tag_slug in (select tag_slug from ftags)) as ft_tag,

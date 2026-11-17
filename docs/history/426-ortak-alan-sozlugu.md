@@ -1,4 +1,4 @@
-# 425 — Ortak ALAN sözlüğü (kategori / ilgi alanı / Skill alanı birleşti)
+# 426 — Ortak ALAN sözlüğü (kategori / ilgi alanı / Skill alanı birleşti)
 
 **Sorun:** "Konu" kavramı beş yerde ayrı ayrı, farklı adla ve farklı yerde tutuluyordu: prompt taksonomisi (DB), Skill uzmanlık alanı (ayrı tablo, 8 madde), profil ilgi alanı (kodda 9 Türkçe metin, `profiles.interests`'e metin olarak yazılıyordu), topluluk kategorisi (kodda 8 sabit değer), ekip (hiç yok). İlgi alanı → kategori eşlemesi `for_you_page` içinde elle yazılmış bir `VALUES` listesiydi (her migration'da kopyalanıyordu) ve tahminiydi ("Oyun Geliştirme" → insan karakter). Skill bu eşlemeye hiç katılmıyordu.
 

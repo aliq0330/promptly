@@ -1,7 +1,7 @@
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 /**
- * Ortak ALAN sözlüğü (docs/history/425-*): "konu/alan" ekseninin TEK kaynağı. Profil ilgi alanı (`profiles.interests`), Skill uzmanlık alanı
+ * Ortak ALAN sözlüğü (docs/history/426-*): "konu/alan" ekseninin TEK kaynağı. Profil ilgi alanı (`profiles.interests`), Skill uzmanlık alanı
  * (`skill_categories.id ⊂ domains.id`) ve prompt kategorileri (`taxonomy_category_domains`) aynı kimlikleri kullanır. Ortam (görsel/metin/ses/video)
  * ayrı bir eksendir ve `content-taxonomy.ts`'te kalır; bu liste onun yerine geçmez.
  *

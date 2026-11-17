@@ -1,4 +1,4 @@
-import { FeedTabs } from "@/features/feed/feed-tabs";
+import { HomeFeed } from "@/features/feed/guest-feed";
 import { HomeIntro } from "@/features/feed/home-intro";
 import { StoryTray } from "@/features/stories/story-tray";
 import { HomeRail } from "@/features/feed/home-rail";
@@ -20,7 +20,7 @@ export default function HomePage() {
         <div className="xl:hidden">
           <WeeklyChallengeBanner />
         </div>
-        <FeedTabs layout="home" />
+        <HomeFeed layout="home" />
       </div>
       <aside className="hidden w-[320px] shrink-0 xl:block">
         <div className="sticky top-24">

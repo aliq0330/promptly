@@ -604,6 +604,14 @@ export const translations = {
   "home.tabNewest": { tr: "En yeni", en: "Newest" },
   "home.tabPopular": { tr: "Popüler", en: "Popular" },
   "home.tabForYou": { tr: "Sana özel", en: "For you" },
+  "home.guestFeedTitle": { tr: "Popüler gönderiler", en: "Popular posts" },
+  "home.guestFeedBanner": {
+    tr: "Üye ol: takip ettiğin kişilere ve ilgi alanlarına göre sana özel bir akış kurulur.",
+    en: "Sign up to get a feed built around the people you follow and what you're into.",
+  },
+  "home.guestFeedBannerLabel": { tr: "Üyelik daveti", en: "Sign-up invitation" },
+  "home.guestFeedEmptyTitle": { tr: "Henüz paylaşım yok", en: "No posts yet" },
+  "home.guestFeedEmptyDescription": { tr: "İlk paylaşımlar geldiğinde burada görünür. Şimdilik Keşfet'e göz atabilirsin.", en: "The first posts will show up here. For now you can browse Discover." },
   "forYou.interestsTitle": { tr: "İlgi alanların", en: "Your interests" },
   "forYou.interestsHint": { tr: "Kalıcı bir tercih: seçtiklerin Sana özel'de o konulardaki gönderilere puan ekler ve profilinde görünür. Filtre değildir.", en: "A lasting preference: your picks add weight to matching posts in For you and show on your profile. It is not a filter." },
   "forYou.interestsSaveFailed": { tr: "İlgi alanların kaydedilemedi. Tekrar dene.", en: "Your interests could not be saved. Try again." },
@@ -1583,7 +1591,7 @@ export const translations = {
   "contributors.acceptedSingular": { tr: "Düzenleme önerisi kabul edildi", en: "An edit suggestion was accepted" },
   "contributors.acceptedCountPlural": { tr: "{{count}} düzenleme önerisi kabul edildi", en: "{{count}} edit suggestions accepted" },
 
-  // ---- Shared domains (docs/history/425-*): profile interests, Skill expertise, prompt categories ----
+  // ---- Shared domains (docs/history/426-*): profile interests, Skill expertise, prompt categories ----
   "domain.art": { tr: "Sanat & İllüstrasyon", en: "Art & Illustration" },
   "domain.photography": { tr: "Fotoğrafçılık", en: "Photography" },
   "domain.design": { tr: "Tasarım", en: "Design" },

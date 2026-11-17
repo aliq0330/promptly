@@ -1,4 +1,4 @@
--- Topluluk Alan + Amaç (docs/history/425-*): chat_groups.domain, create/update_community, alan süzgeci, community_domains, ilgi puanı.
+-- Topluluk Alan + Amaç (docs/history/426-*): chat_groups.domain, create/update_community, alan süzgeci, community_domains, ilgi puanı.
 -- Çalıştırma: supabase/tests/run-local.sh supabase/tests/community-domain.sql  ("FAILED=0" beklenir).
 -- alice = sahip, erin = dışarıdan izleyen (ilgi alanı photography), dave = üye olmayan ikinci kişi.
 \pset pager off
