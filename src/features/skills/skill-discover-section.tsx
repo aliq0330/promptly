@@ -42,7 +42,7 @@ const MATCH_LABEL: Record<SkillMatchSource, TranslationKey> = {
 /**
  * Keşfet → Skill'ler (docs/history/392-*): sunucu sorgusu `skill_feed_page` (keyset). Süzgeçler (uzmanlık alanı, uyumlu araç, paketli mi) ve sıralama
  * (Önerilen · En yeni · Popüler · En çok kullanılan) veritabanında uygulanır; metin araması varsa her kartın altında eşleşmenin nerede bulunduğu yazar.
- * Skill'ler karma akışa (`feed_page`) GİRMEZ — ayrı bir bölümdür.
+ * Bu, Skill'lerin TEK liste yüzeyidir (docs/history/418-*): eski `/skills` adresi buraya yönlenir, Ana Sayfa'da Skill çipi yoktur.
  */
 export function SkillDiscoverSection() {
   const { t, language } = useTranslation();
