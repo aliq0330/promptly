@@ -6,7 +6,7 @@
  * every icon into every page.
  *
  * Icons: Phosphor Icons (https://phosphoricons.com), MIT License, Copyright (c) 2020-present Phosphor Icons.
- * One weight (regular), one tone. Shapes converted to JSX; Loader2 is Promptly's own ring.
+ * One weight (bold), one tone. Shapes converted to JSX; Loader2 is Promptly's own ring.
  */
 import { forwardRef, type ForwardRefExoticComponent, type ReactNode, type RefAttributes, type SVGProps } from "react";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 export interface IconProps extends Omit<SVGProps<SVGSVGElement>, "ref"> {
   /** Width and height in px (default 24). */
   size?: number | string;
-  /** Accepted for compatibility; has no effect (the weight is fixed — Phosphor Regular) except on the stroke spinner. */
+  /** Accepted for compatibility; has no effect (the weight is fixed — Phosphor Bold) except on the stroke spinner. */
   strokeWidth?: number | string;
   /** Accepted for compatibility; has no effect. */
   absoluteStrokeWidth?: boolean;
@@ -42,7 +42,7 @@ export function icon(displayName: string, body: ReactNode, linear: boolean, soli
         aria-hidden={labelled ? undefined : true}
         focusable="false"
         {...(linear
-          ? { fill: "none", stroke: "currentColor", strokeWidth: strokeWidth ?? 1.75, strokeLinecap: "round" as const, strokeLinejoin: "round" as const }
+          ? { fill: "none", stroke: "currentColor", strokeWidth: strokeWidth ?? 2.25, strokeLinecap: "round" as const, strokeLinejoin: "round" as const }
           : { fill: "currentColor" })}
         className={cn("icon", className)}
         {...rest}

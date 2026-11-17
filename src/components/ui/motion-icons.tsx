@@ -7,15 +7,15 @@ import { cn } from "@/lib/utils";
  * Promptly'nin kendi hareketli ikonları (docs/history/335-*). Tepki emojileriyle aynı ilke: dış kütüphane yok, sayfa açılışında hiçbir şey
  * oynamaz — ikon yalnızca bir kullanıcı eylemi ya da durum değişimi `seq`'i artırınca bir kez oynar (svg `key` ile yeniden kurulur).
  * Animasyonlar `globals.css`'teki `.mi-*` kurallarıdır; hareketi azalt açıkken tüm süreler 0'a iner, ikon dinlenme karesinde kalır.
- * Şekiller sitenin ikon diliyle aynıdır (docs/history/377-*): Phosphor Regular (Phosphor Icons, MIT) — tek kalınlık, tek ton. Phosphor'un
+ * Şekiller sitenin ikon diliyle aynıdır (docs/history/377-*): Phosphor Bold (Phosphor Icons, MIT) — tek kalınlık, tek ton. Phosphor'un
  * 256'lık ızgarasındaki şekiller 24'lük `viewBox` içinde `<g transform="scale(.09375)">` ile çizilir; böylece `globals.css`'teki `.mi-*`
- * hareketleri (24 birimlik kaynak noktaları/öteleme) değişmeden çalışır. Çizgi parçalarında kalınlık 16/256 (= Phosphor Regular).
+ * hareketleri (24 birimlik kaynak noktaları/öteleme) değişmeden çalışır. Çizgi parçalarında kalınlık 24/256 (= Phosphor Bold).
  */
 
 /** Phosphor 256 ızgarası → 24 birimlik `viewBox`. */
 const PH = "scale(0.09375)";
-/** Phosphor Regular kontur kalınlığı (256 ızgarasında). */
-const PH_STROKE = 16;
+/** Phosphor Bold kontur kalınlığı (256 ızgarasında). */
+const PH_STROKE = 24;
 
 function Ph({ children, line = false }: { children: React.ReactNode; line?: boolean }) {
   return (
@@ -36,7 +36,7 @@ export interface MotionIconProps {
 
 function Svg({
   size = 24,
-  strokeWidth = 1.5,
+  strokeWidth = 2.25,
   className,
   seq,
   kind,
@@ -92,7 +92,7 @@ export function CheckDrawIcon({ drawn = true, ...props }: MotionIconProps & { dr
 }
 
 const BOOKMARK_REGULAR =
-  "M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z";
+  "M184 28H72a20 20 0 0 0-20 20v176a12 12 0 0 0 18.36 10.18l57.63-36l57.65 36A12 12 0 0 0 204 224V48a20 20 0 0 0-20-20m-4 174.35l-45.65-28.53a12 12 0 0 0-12.72 0L76 202.35V52h104Z";
 const BOOKMARK_FILL = "M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Z";
 
 /** Yer imi: `filled` olunca alttan yukarı dolar; `popSeq` artınca (yalnız kaydedilirken) sıçrar ve beş kıvılcım çıkar. */
@@ -134,7 +134,7 @@ export function PinIcon({ pinned, size = 24, className }: Omit<MotionIconProps, 
         {pinned ? (
           <path d="m235.33 104l-53.47 53.65c4.56 12.67 6.45 33.89-13.19 60A15.93 15.93 0 0 1 157 224h-1.13a16 16 0 0 1-11.32-4.69L96.29 171l-42.63 42.66a8 8 0 0 1-11.32-11.32L85 159.71l-48.3-48.3A16 16 0 0 1 38 87.63c25.42-20.51 49.75-16.48 60.4-13.14L152 20.7a16 16 0 0 1 22.63 0l60.69 60.68a16 16 0 0 1 .01 22.62" />
         ) : (
-          <path d="m235.32 81.37l-60.69-60.68a16 16 0 0 0-22.63 0l-53.63 53.8c-10.66-3.34-35-7.37-60.4 13.14a16 16 0 0 0-1.29 23.78L85 159.71l-42.66 42.63a8 8 0 0 0 11.32 11.32L96.29 171l48.29 48.29A16 16 0 0 0 155.9 224h1.13a15.93 15.93 0 0 0 11.64-6.33c19.64-26.1 17.75-47.32 13.19-60L235.33 104a16 16 0 0 0-.01-22.63M224 92.69l-57.27 57.46a8 8 0 0 0-1.49 9.22c9.46 18.93-1.8 38.59-9.34 48.62L48 100.08c12.08-9.74 23.64-12.31 32.48-12.31A40.1 40.1 0 0 1 96.81 91a8 8 0 0 0 9.25-1.51L163.32 32L224 92.68Z" />
+          <path d="m238.15 78.54l-60.69-60.68a20 20 0 0 0-28.3 0L97.2 70c-12.43-3.33-36.68-5.72-61.74 14.5a20 20 0 0 0-1.6 29.73l45.46 45.47l-39.8 39.8a12 12 0 0 0 17 17l39.8-39.81l45.47 45.46a20 20 0 0 0 14.12 5.85c.46 0 .93 0 1.4-.05a20 20 0 0 0 14.56-7.95c4.69-6.23 11-16.13 14.44-28s3.45-22.88.16-33.4l51.7-51.87a20 20 0 0 0-.02-28.19m-74.26 68.79a12 12 0 0 0-2.23 13.84c3.43 6.86 6.9 21-6.28 40.65L54.08 100.53c21.09-14.59 39.53-6.64 41-6a11.67 11.67 0 0 0 13.81-2.29l54.43-54.61l55 55Z" />
         )}
       </svg>
     </i>
@@ -164,7 +164,7 @@ export function SendIcon(props: MotionIconProps) {
   return (
     <Svg {...props} kind="send">
       <Ph>
-        <path d="M227.32,28.68a16,16,0,0,0-15.66-4.08l-.15,0L19.57,82.84a16,16,0,0,0-2.49,29.8L102,154l41.3,84.87A15.86,15.86,0,0,0,157.74,248q.69,0,1.38-.06a15.88,15.88,0,0,0,14-11.51l58.2-191.94c0-.05,0-.1,0-.15A16,16,0,0,0,227.32,28.68ZM157.83,231.85l-.05.14,0-.07-40.06-82.3,48-48a8,8,0,0,0-11.31-11.31l-48,48L24.08,98.25l-.07,0,.14,0L216,40Z" />
+        <path d="M230.14 25.86a20 20 0 0 0-19.57-5.11l-.22.07L18.44 79a20 20 0 0 0-3.06 37.25L99 157l40.71 83.65a19.81 19.81 0 0 0 18 11.38c.57 0 1.15 0 1.73-.07a19.82 19.82 0 0 0 17.56-14.4l58.18-191.91a1.4 1.4 0 0 0 .07-.22a20 20 0 0 0-5.11-19.57m-73.23 195.21l-34.37-70.64l46-45.95a12 12 0 0 0-17-17l-46 46l-70.61-34.39L210 46Z" />
       </Ph>
     </Svg>
   );
@@ -181,7 +181,7 @@ export function SendArrowIcon(props: MotionIconProps) {
 }
 
 /** Kişi+ ↔ tik: `done` olunca kişi küçülüp çıkar, tik çizilir (Takip Et). */
-export function FollowIcon({ done, size = 16, strokeWidth = 1.5, className }: Omit<MotionIconProps, "seq"> & { done: boolean }) {
+export function FollowIcon({ done, size = 16, strokeWidth = 2.25, className }: Omit<MotionIconProps, "seq"> & { done: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden focusable="false" className={cn("mi mi-follow", className)} data-done={done}>
       <g className="mi-person">
@@ -220,11 +220,11 @@ export function CompassIcon(props: MotionIconProps) {
   return (
     <Svg {...props} kind="compass">
       <Ph>
-        <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z" />
+        <path d="M128 20a108 108 0 1 0 108 108A108.12 108.12 0 0 0 128 20m0 192a84 84 0 1 1 84-84a84.09 84.09 0 0 1-84 84" />
       </Ph>
       <g className="mi-needle">
         <Ph>
-          <path d="M172.42,72.84l-64,32a8.05,8.05,0,0,0-3.58,3.58l-32,64A8,8,0,0,0,80,184a8.1,8.1,0,0,0,3.58-.84l64-32a8.05,8.05,0,0,0,3.58-3.58l32-64a8,8,0,0,0-10.74-10.74ZM138,138,97.89,158.11,118,118l40.15-20.07Z" />
+          <path d="M163.27 77l-56 24a12 12 0 0 0-6.3 6.3l-24 56A12 12 0 0 0 92.73 179l56-24a12 12 0 0 0 6.3-6.3l24-56A12 12 0 0 0 163.27 77m-28.41 57.89l-24 10.29l10.29-24l24-10.29Z" />
         </Ph>
       </g>
     </Svg>
@@ -238,13 +238,12 @@ export function CommunityIcon(props: MotionIconProps) {
     <Svg {...props} kind="community">
       <g className="mi-pb">
         <Ph>
-          <path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1-7.37-4.89,8,8,0,0,1,0-6.22A8,8,0,0,1,192,112a24,24,0,1,0-23.24-30,8,8,0,1,1-15.5-4A40,40,0,1,1,219,117.51a67.94,67.94,0,0,1,27.43,21.68A8,8,0,0,1,244.8,150.4Z" />
-          <path d="M72,120a8,8,0,0,0-8-8A24,24,0,1,1,87.24,82a8,8,0,1,0,15.5-4A40,40,0,1,0,37,117.51,67.94,67.94,0,0,0,9.6,139.19a8,8,0,1,0,12.8,9.61A51.6,51.6,0,0,1,64,128,8,8,0,0,0,72,120Z" />
+          <path d="M247.21 153.59a12 12 0 0 1-16.81-2.39c-8.33-11.09-19.85-19.59-29.33-21.64a12 12 0 0 1-1.82-22.91a20 20 0 1 0-24.78-28.3a12 12 0 1 1-21-11.6a44 44 0 1 1 73.28 48.35a92.2 92.2 0 0 1 22.85 21.69a12 12 0 0 1-2.39 16.8m-192.28-24c-9.48 2.05-21 10.55-29.33 21.65a12 12 0 0 1-19.19-14.45a92.4 92.4 0 0 1 22.85-21.69a44 44 0 1 1 73.28-48.35a12 12 0 1 1-21 11.6a20 20 0 1 0-24.78 28.3a12 12 0 0 1-1.82 22.91Z" />
         </Ph>
       </g>
       <g className="mi-pa">
         <Ph>
-          <path d="M190.92,212a8,8,0,1,1-13.84,8,57,57,0,0,0-98.16,0,8,8,0,1,1-13.84-8,72.06,72.06,0,0,1,33.74-29.92,48,48,0,1,1,58.36,0A72.06,72.06,0,0,1,190.92,212ZM128,176a32,32,0,1,0-32-32A32,32,0,0,0,128,176Z" />
+          <path d="M164.38 181.1a52 52 0 1 0-72.76 0a75.9 75.9 0 0 0-30 28.89a12 12 0 0 0 20.78 12a53 53 0 0 1 91.22 0a12 12 0 1 0 20.78-12a75.9 75.9 0 0 0-30.02-28.89M100 144a28 28 0 1 1 28 28a28 28 0 0 1-28-28" />
         </Ph>
       </g>
     </Svg>
@@ -276,7 +275,7 @@ export function FocusIcon(props: MotionIconProps) {
 }
 
 /** Oluştur "+": `open` olunca 135° dönüp ✕ olur. */
-export function PlusIcon({ open = false, size = 24, strokeWidth = 1.5, className }: Omit<MotionIconProps, "seq"> & { open?: boolean }) {
+export function PlusIcon({ open = false, size = 24, strokeWidth = 2.25, className }: Omit<MotionIconProps, "seq"> & { open?: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden focusable="false" data-open={open} className={cn("mi mi-plus", className)}>
       <path d="M12 5v14M5 12h14" />
