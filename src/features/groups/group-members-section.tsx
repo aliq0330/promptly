@@ -27,11 +27,11 @@ import {
 } from "@/lib/supabase/chat-groups";
 import { fetchCommunityMembers, type CommunityMember as GroupMember } from "@/lib/supabase/communities";
 import { assignableRoles, canBanMember, canRemoveMember } from "@/lib/chat-groups";
-import { cn, profileHref } from "@/lib/utils";
+import { profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
 import { iconButtonClassName } from "@/components/ui/icon-button";
-import { MENU_PANEL_CLASS } from "@/components/ui/menu";
+import { PopoverMenu } from "@/components/ui/popover-menu";
 
 type Pending =
   | { kind: "remove"; member: GroupMember }
@@ -81,7 +81,6 @@ export function GroupMembersSection({
   const [reloadKey, setReloadKey] = useState(0);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [menuFor, setMenuFor] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [ban, setBan] = useState(false);
   const action = useAsyncAction();
@@ -119,23 +118,6 @@ export function GroupMembersSection({
       cancelled = true;
     };
   }, [group.id, debounced, roleFilter, onlineOnly, key]);
-
-  // Menü dışına tıklanınca kapanır.
-  useEffect(() => {
-    if (!menuFor) return;
-    function close(event: MouseEvent) {
-      if (!(event.target instanceof Element) || !event.target.closest("[data-member-menu]")) setMenuFor(null);
-    }
-    function escape(event: KeyboardEvent) {
-      if (event.key === "Escape") setMenuFor(null);
-    }
-    document.addEventListener("mousedown", close);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [menuFor]);
 
   const current = loaded && loaded.key === key ? loaded : null;
   const viewerRole = group.myRole;
@@ -180,7 +162,6 @@ export function GroupMembersSection({
   function ask(next: Pending) {
     action.setError(null);
     setBan(false);
-    setMenuFor(null);
     setPending(next);
   }
 
@@ -244,32 +225,16 @@ export function GroupMembersSection({
                     </span>
                   </Link>
                   {hasMenu && (
-                    <div className="relative" data-member-menu>
-                      <button
-                        type="button"
-                        aria-label={t("groups.members.actionsFor", { name: member.displayName })}
-                        aria-haspopup="menu"
-                        aria-expanded={menuFor === member.userId}
-                        onClick={() => setMenuFor((prev) => (prev === member.userId ? null : member.userId))}
-                        className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                      {menuFor === member.userId && (
-                        <div role="menu" className={cn(MENU_PANEL_CLASS, "absolute right-0 top-10 z-30 w-56")}>
-                          {roles.map((role) => (
-                            <MenuButton
-                              key={role}
-                              icon={<ShieldCheck size={16} />}
-                              label={t(`groups.members.makeRole.${role}`)}
-                              onClick={() => ask({ kind: "role", member, role })}
-                            />
-                          ))}
-                          {canTransfer && <MenuButton icon={<UserRound size={16} />} label={t("groups.members.transferOwnership")} onClick={() => ask({ kind: "transfer", member })} />}
-                          {canRemove && <MenuButton icon={<UserMinus size={16} />} label={t("groups.members.remove")} danger onClick={() => ask({ kind: "remove", member })} />}
-                        </div>
-                      )}
-                    </div>
+                    <PopoverMenu
+                      label={t("groups.members.actionsFor", { name: member.displayName })}
+                      triggerClassName={iconButtonClassName(false, "h-9 w-9 rounded-md")}
+                      trigger={<MoreVertical size={16} aria-hidden />}
+                      items={[
+                        ...roles.map((role) => ({ key: `role-${role}`, label: t(`groups.members.makeRole.${role}`), icon: ShieldCheck, onSelect: () => ask({ kind: "role", member, role }) })),
+                        { key: "transfer", label: t("groups.members.transferOwnership"), icon: UserRound, hidden: !canTransfer, onSelect: () => ask({ kind: "transfer", member }) },
+                        { key: "remove", label: t("groups.members.remove"), icon: UserMinus, danger: true, hidden: !canRemove, onSelect: () => ask({ kind: "remove", member }) },
+                      ]}
+                    />
                   )}
                 </li>
               );
@@ -328,19 +293,5 @@ export function GroupMembersSection({
         </ConfirmDialog>
       )}
     </div>
-  );
-}
-
-function MenuButton({ icon, label, onClick, danger }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
-  return (
-    <button
-      type="button"
-      role="menuitem"
-      onClick={onClick}
-      className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-small hover:bg-surface-soft", danger ? "text-danger hover:bg-danger-soft" : "text-text")}
-    >
-      {icon}
-      {label}
-    </button>
   );
 }

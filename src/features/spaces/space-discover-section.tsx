@@ -14,7 +14,7 @@ import { fetchLeadPalettes, fetchSpaceStats, listSpaces, summaryArt, type SpaceS
 import { StarRatingDisplay } from "@/components/ui/star-rating";
 import { formatRating } from "./tabs/comments-tab";
 import { absoluteUrl } from "@/lib/utils";
-import { SpaceMenu } from "./space-menu";
+import { PopoverMenu } from "@/components/ui/popover-menu";
 import { PaletteStrip, SpaceCoverArt, SpacesIcon } from "./space-visuals";
 
 /**
@@ -47,7 +47,7 @@ export function SpaceDiscoverCard({ space, palette, stats }: { space: SpaceSumma
         typeIcon={SpacesIcon}
         badges={<ContentTypePill icon={SpacesIcon} label="Space" detail={t(SPACE_KIND_LABEL[space.kind])} />}
         menu={
-          <SpaceMenu
+          <PopoverMenu
             label={t("spaces.card.menu", { title: space.title })}
             items={[{ key: "copy", label: copied ? t("common.copied") : t("common.copyLink"), icon: Link2, onSelect: () => void copyLink() }]}
           />

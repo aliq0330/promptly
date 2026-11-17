@@ -14,7 +14,6 @@ import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
 import { SquareTerminal } from "@/components/icons/square-terminal";
 import { StickyNote } from "@/components/icons/sticky-note";
-import { X } from "@/components/icons/x";
 import { Filter } from "@/components/icons/filter";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,7 @@ import { SpaceCard } from "./space-card";
 import { type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBand, HubCardSkeleton, HubControlRow, HubCreateButton } from "@/features/hub/hub-kit";
 import { Tabs } from "@/components/ui/tabs";
+import { SearchField } from "@/components/ui/search-field";
 import { SpacesFilterSheet, SpaceTemplates } from "./spaces-controls";
 import { SpaceCoverArt, SpacesIcon } from "./space-visuals";
 
@@ -236,28 +236,16 @@ export function SpacesHome() {
       {user && <Tabs items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} />}
 
       {searchOpen || query ? (
-        <form role="search" className="relative" onSubmit={(event) => event.preventDefault()}>
-          <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-          <input
-            type="search"
+        <form role="search" onSubmit={(event) => event.preventDefault()}>
+          <SearchField
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={setQuery}
             placeholder={t("spaces.home.searchPlaceholder")}
-            aria-label={t("spaces.home.searchPlaceholder")}
+            clearLabel={t("common.clear")}
+            alwaysClear
+            onClear={() => setSearchOpen(false)}
             autoFocus
-            className="h-12 w-full rounded-xl border-2 border-primary bg-surface pl-11 pr-12 text-body text-text placeholder:text-text-muted"
           />
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setSearchOpen(false);
-            }}
-            aria-label={t("common.clear")}
-            className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg text-text hover:bg-surface-soft"
-          >
-            <X size={20} />
-          </button>
         </form>
       ) : (
         <HubControlRow count={items ? t("hub.count.spaces", { count: `${shown?.length ?? items.length}${hasMore ? "+" : ""}` }) : undefined}>

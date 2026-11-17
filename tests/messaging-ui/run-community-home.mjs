@@ -306,10 +306,10 @@ await scenario("17. Tüm topluluklar: arama kutusu en üstte; arama sunucuya ile
   await page.locator("li", { hasText: "Üye Açık" }).getByRole("button", { name: /Katıldın/ }).waitFor();
   await page.locator("li", { hasText: "Dış Açık" }).getByRole("button", { name: "Dış Açık topluluğuna katıl" }).waitFor();
   assert.equal(calls(db, "browse_communities")[0].body.p_sort, "relevant", "default order is by relevance");
-  await page.getByTestId("all-search").fill("kapalı");
+  await page.getByTestId("all-search").locator("input").fill("kapalı");
   await page.waitForFunction(() => document.querySelectorAll('[data-testid="all-communities-list"] > li').length === 2);
   assert.ok(calls(db, "browse_communities").some((c) => c.body.p_query === "kapalı"));
-  await page.getByTestId("all-search").fill("zzzzz");
+  await page.getByTestId("all-search").locator("input").fill("zzzzz");
   await page.getByText("Eşleşen topluluk bulunamadı").waitFor();
 }, { setup: world });
 

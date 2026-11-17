@@ -31,7 +31,7 @@ import { usePageTitle } from "@/components/layout/page-title";
 import { Tabs } from "@/components/ui/tabs";
 import { PhoneSubBar } from "@/features/content/phone-sections";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { HUB_PAGE_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
+import { HUB_BAND_MENU_BUTTON_CLASS, HUB_PAGE_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -58,7 +58,7 @@ import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
 import { ShareModal } from "@/features/prompts/share-modal";
 import { ReportButton } from "@/features/moderation/report-button";
-import { SpaceMenu, type SpaceMenuItem } from "./space-menu";
+import { PopoverMenu, type PopoverMenuItem } from "@/components/ui/popover-menu";
 import { PaletteStrip, SpaceCoverArt, SpacesIcon, VisibilityBadge } from "./space-visuals";
 import { OverviewTab } from "./tabs/overview-tab";
 import { ImagesTab } from "./tabs/images-tab";
@@ -248,7 +248,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
     }
   }
 
-  const menuItems: SpaceMenuItem[] = [
+  const menuItems: PopoverMenuItem[] = [
     { key: "pin", label: favorite ? t("spaces.card.unfavorite") : t("spaces.card.favorite"), icon: favorite ? PinOff : Pin, onSelect: () => void toggleFavorite(), hidden: !userId },
     { key: "share", label: t("spaces.card.share"), icon: Share2, onSelect: share, hidden: !canShare },
     { key: "settings", label: t("spaces.page.settings"), icon: Settings, onSelect: () => setDialog("settings"), hidden: !caps.owner || Boolean(space.archivedAt) },
@@ -276,7 +276,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                   <Share2 size={20} aria-hidden />
                 </button>
               )}
-              <SpaceMenu items={menuItems} />
+              <PopoverMenu items={menuItems} />
             </>
           }
         />
@@ -350,12 +350,12 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                   </Button>
                 )}
                 <span data-detail-menu="">
-                  <SpaceMenu items={menuItems} />
+                  <PopoverMenu items={menuItems} triggerClassName={HUB_BAND_MENU_BUTTON_CLASS} />
                 </span>
               </div>
             ) : (
               <span data-detail-menu="">
-                <SpaceMenu items={menuItems} />
+                <PopoverMenu items={menuItems} triggerClassName={HUB_BAND_MENU_BUTTON_CLASS} />
               </span>
             )
           }

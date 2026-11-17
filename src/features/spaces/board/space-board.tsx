@@ -120,7 +120,7 @@ import { useSpaceContext } from "../space-provider";
 import { DraftEditorModal, GroupsManagerModal, ITEM_KIND_LABEL, ItemDetailModal, NoteEditorModal, resolveSource, usePlaceNewItems, useItemTitle, type ResolvedSource } from "../space-items";
 import { SaveIndicator } from "../save-indicator";
 import { SpaceDialog } from "../space-modals";
-import { SpaceMenu } from "../space-menu";
+import { PopoverMenu } from "@/components/ui/popover-menu";
 import { SPACE_COLOR_CLASS } from "../space-visuals";
 import { BoardItem } from "./board-item";
 
@@ -1675,7 +1675,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
       <div className="relative flex min-w-0 flex-1 flex-col">
       {!teamMode && (
         <ScrollRow role="toolbar" aria-label={t("spaces.board.toolbar")} wrapperClassName="z-20 shrink-0 border-b border-border-soft bg-surface" className="items-center gap-1 px-2 py-1.5" data-board-toolbar={phoneBar ? "phone" : "full"}>
-          {editable && <SpaceMenu align="left" label={t("spaces.board.add")} trigger={<Plus size={20} aria-hidden />} items={addMenuItems} />}
+          {editable && <PopoverMenu align="left" label={t("spaces.board.add")} trigger={<Plus size={20} aria-hidden />} items={addMenuItems} />}
           {phoneBar ? (
             <>
               <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
@@ -1691,7 +1691,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
               <button type="button" onClick={fit} title={t("spaces.board.fit")} className="h-9 min-w-14 shrink-0 rounded-full px-2 text-caption font-semibold tabular-nums text-text-secondary hover:bg-surface-soft" data-board-zoom={Math.round(vp.zoom * 100)}>
                 {Math.round(vp.zoom * 100)}%
               </button>
-              <SpaceMenu
+              <PopoverMenu
                 label={t("spaces.board.moreTools")}
                 trigger={<Ellipsis size={20} aria-hidden />}
                 items={[
@@ -1996,7 +1996,7 @@ export function SpaceBoard({ focusId, team }: { focusId: string | null; team?: T
                 {selectedItems.length >= 2 && <ToolButton icon={Spline} label={t("spaces.connect.selection")} onClick={() => void connectItems(chainPairs(selection, connections))} />}
                 {selectionGrouped && <ToolButton icon={Ungroup} label={t("spaces.board.ungroup")} onClick={ungroupSelection} />}
                 {selectedItems.length >= 2 && (
-                  <SpaceMenu
+                  <PopoverMenu
                     label={t("spaces.board.align")}
                     trigger={<AlignStartVertical size={16} aria-hidden />}
                     items={[

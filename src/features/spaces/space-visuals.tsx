@@ -16,6 +16,7 @@ import { UserRound } from "@/components/icons/user-round";
 import { Globe } from "@/components/icons/globe";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { VisibilityTag } from "@/components/ui/visibility-tag";
 import { cn } from "@/lib/utils";
 import { SPACE_VISIBILITY_LABEL, type SpaceColor, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
 
@@ -38,16 +39,7 @@ export const VISIBILITY_ICON: Record<SpaceVisibility, IconComponent> = { private
 
 export function VisibilityBadge({ visibility, className }: { visibility: SpaceVisibility; className?: string }) {
   const { t } = useTranslation();
-  const Icon = VISIBILITY_ICON[visibility];
-  return (
-    <span
-      data-space-visibility={visibility}
-      className={cn("inline-flex items-center gap-1 rounded-full bg-surface-soft px-2 py-0.5 text-caption font-medium text-text-secondary", className)}
-    >
-      <Icon size={12} aria-hidden />
-      {t(SPACE_VISIBILITY_LABEL[visibility])}
-    </span>
-  );
+  return <VisibilityTag icon={VISIBILITY_ICON[visibility]} label={t(SPACE_VISIBILITY_LABEL[visibility])} className={className} data-space-visibility={visibility} />;
 }
 
 /** Not / grup rengi → palet token'ları (hex yok: tema ve paletle birlikte değişir). */

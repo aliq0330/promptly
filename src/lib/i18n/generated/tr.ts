@@ -3322,6 +3322,7 @@ const dictionary: Record<string, string> = {
   "communities.post.new.help": "Seçtiğin türün oluşturma ekranı bu topluluk bağlamıyla açılır. Görünürlüğü orada seçersin.",
   "communities.post.new.skillSpaceHint": "Skill ve Space bir topluluğa özgü oluşturulmaz; kendi sayfasında hazırla, sonra buradan alıntıla.",
   "communities.aside.since": "{{date}} tarihinde kuruldu",
+  "communities.card.menu": "{{name}} menüsü",
   "communities.menu.label": "Topluluk menüsü",
   "communities.menu.preferences": "Bildirim tercihleri",
   "communities.post.back": "Geri",

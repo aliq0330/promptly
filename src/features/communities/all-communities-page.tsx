@@ -6,8 +6,9 @@ import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { ArrowLeft } from "@/components/icons/arrow-left";
 import { Compass } from "@/components/icons/compass";
-import { Search } from "@/components/icons/search";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Chip } from "@/components/ui/chip";
+import { SearchField } from "@/components/ui/search-field";
 import { SectionMenu } from "@/features/content/section-menu";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
@@ -133,36 +134,22 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
   return (
     <div className="space-y-4">
       {!hideSearch && (
-        <label className="relative block">
-          <span className="sr-only">{t("communities.all.searchPlaceholder")}</span>
-          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            maxLength={100}
-            placeholder={t("communities.all.searchPlaceholder")}
-            data-testid="all-search"
-            className="h-11 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-small text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
-          />
-        </label>
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          maxLength={100}
+          placeholder={t("communities.all.searchPlaceholder")}
+          clearLabel={t("common.clear")}
+          data-testid="all-search"
+        />
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <ScrollRow className="flex gap-1.5 pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
           {[null, ...COMMUNITY_CATEGORIES].map((value) => (
-            <button
-              key={value ?? "all"}
-              type="button"
-              onClick={() => setCategory(value)}
-              aria-pressed={category === value}
-              className={
-                "shrink-0 rounded-full border px-3 py-1.5 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary " +
-                (category === value ? "border-primary/50 bg-primary-soft text-primary" : "border-border-soft bg-surface text-text-secondary hover:border-border-strong")
-              }
-            >
+            <Chip key={value ?? "all"} selected={category === value} onClick={() => setCategory(value)}>
               {value ? t(CATEGORY_LABEL_KEYS[value]) : t("communities.filter.all")}
-            </button>
+            </Chip>
           ))}
         </ScrollRow>
         <SectionMenu ariaLabel={t("groups.page.sortAria")} title={t("groups.page.sortAria")} active={sort} onChange={setSort} items={SORTS.map((value) => ({ key: value, label: t(SORT_LABEL[value]) }))} />

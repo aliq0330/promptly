@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { HUB_GRID_CLASS, HubCardSkeleton } from "@/features/hub/hub-kit";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { JoinState } from "./community-join-button";
 import type { CommunitySummary } from "@/lib/supabase/communities";
@@ -15,12 +16,13 @@ export interface ListState {
   nextOffset?: number;
 }
 
+/** Yüklenen kart ızgarasının yer tutucusu: gerçek `HubGrid` + `HubCardSkeleton` (Space/Ekip ile aynı; yükleme bitince düzen sıçramaz). */
 export function LoadingRows({ count = 3 }: { count?: number }) {
   const { t } = useTranslation();
   return (
-    <ul className="space-y-3" aria-busy="true" aria-label={t("common.loadingAriaLabel")}>
+    <ul className={HUB_GRID_CLASS} aria-busy="true" aria-label={t("common.loadingAriaLabel")}>
       {Array.from({ length: count }, (_, i) => (
-        <li key={i} className="h-28 skeleton-shimmer rounded-xl border border-border-soft" />
+        <HubCardSkeleton key={i} />
       ))}
     </ul>
   );

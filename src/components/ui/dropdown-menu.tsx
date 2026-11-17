@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MoreVertical } from "@/components/icons/more-vertical";
-import { MENU_PANEL_CLASS } from "@/components/ui/menu";
+import { MENU_ITEM_CLASS, MENU_ITEM_DANGER_CLASS, MENU_PANEL_CLASS } from "@/components/ui/menu";
 import { focusMenuItem, menuKeyDown } from "@/components/ui/menu-keys";
 import { cn } from "@/lib/utils";
 
@@ -74,13 +74,7 @@ export function DropdownMenu({
 
 export function MenuItem({ icon, label, onClick, danger = false, disabled = false }: { icon: ReactNode; label: string; onClick: () => void; danger?: boolean; disabled?: boolean }) {
   return (
-    <button
-      type="button"
-      role="menuitem"
-      onClick={onClick}
-      disabled={disabled}
-      className={"flex w-full items-center gap-3 px-4 py-2 text-left text-small transition-colors hover:bg-surface-soft disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent " + (danger ? "text-danger" : "text-text")}
-    >
+    <button type="button" role="menuitem" onClick={onClick} disabled={disabled} className={cn(MENU_ITEM_CLASS, danger && MENU_ITEM_DANGER_CLASS)}>
       <span aria-hidden className="shrink-0">
         {icon}
       </span>

@@ -27,6 +27,10 @@ export const HUB_PAGE_CLASS = `mx-auto w-full ${PAGE_WIDTH_CLASS.hub} ${PAGE_GUT
 
 const HUB_BAND_TONE = { primary: "bg-primary-soft text-primary", secondary: "bg-secondary-soft text-secondary", neutral: "bg-surface-soft text-text" } as const;
 
+/** Detay bandındaki ⋮ düğmesi (docs/history/420-*): üç alanda aynı 40 px kenarlıklı yuvarlak; menüyü kendi bileşeni çizer. */
+export const HUB_BAND_MENU_BUTTON_CLASS =
+  "grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface/80 text-text transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+
 /** Ana sayfa bandı. Telefonda düğme kısa etiketle aynı satırda kalır. */
 export function HubBand({
   icon: Icon,

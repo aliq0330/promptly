@@ -3322,6 +3322,7 @@ const dictionary: Record<string, string> = {
   "communities.post.new.help": "That type's creation screen opens in this community's context. You pick the visibility there.",
   "communities.post.new.skillSpaceHint": "Skills and Spaces aren't created inside a community; build them on their own page, then quote them here.",
   "communities.aside.since": "Created {{date}}",
+  "communities.card.menu": "{{name}} menu",
   "communities.menu.label": "Community menu",
   "communities.menu.preferences": "Notification settings",
   "communities.post.back": "Back",

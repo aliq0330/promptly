@@ -7,7 +7,11 @@ import { LogOut } from "@/components/icons/log-out";
 import { MoreVertical } from "@/components/icons/more-vertical";
 import { Avatar } from "@/components/ui/avatar";
 import { Tabs } from "@/components/ui/tabs";
-import { HubDetailBand } from "@/features/hub/hub-kit";
+import { HUB_BAND_MENU_BUTTON_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
+import { Button } from "@/components/ui/button";
+import { MENU_ITEM_CLASS, MENU_ITEM_DANGER_CLASS, MENU_PANEL_CLASS } from "@/components/ui/menu";
+import { Lock } from "@/components/icons/lock";
+import { VisibilityTag } from "@/components/ui/visibility-tag";
 import { focusMenuItem, menuKeyDown } from "@/components/ui/menu-keys";
 import { useOnlineIds } from "@/features/presence/use-presence";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -92,7 +96,7 @@ export function TeamBand({
     };
   }, [menuOpen]);
 
-  const meta = [t("tm.card.members", { count: team.memberCount }), t("tp.header.projects", { count: team.spaceCount }), t("tm.header.inviteOnly")];
+  const meta = [t("tm.card.members", { count: team.memberCount }), t("tp.header.projects", { count: team.spaceCount })];
 
   return (
     <HubDetailBand
@@ -107,7 +111,12 @@ export function TeamBand({
           <TeamMark name={team.name} tone={team.tone} solid size={52} className="rounded-md" />
         </span>
       }
-      kicker={<span className="rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">{t("tc.band.kicker")}</span>}
+      kicker={
+        <>
+          <span className="rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">{t("tc.band.kicker")}</span>
+          <VisibilityTag icon={Lock} label={t("tm.header.inviteOnly")} data-team-visibility="" />
+        </>
+      }
       title={<h1 data-team-name="">{team.name}</h1>}
       byline={
         <p className="min-w-0 truncate text-small text-text-secondary" data-team-meta data-team-header-block>
@@ -137,16 +146,10 @@ export function TeamBand({
             </div>
           )}
           {canInvite && (
-            <button
-              type="button"
-              onClick={onInvite}
-              data-team-invite-header
-              aria-label={t("tm.invite.title")}
-              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover md:px-5"
-            >
+            <Button type="button" onClick={onInvite} data-team-invite-header aria-label={t("tm.invite.title")} className="shrink-0">
               <UserPlus size={20} aria-hidden />
               <span>{t("tm.invite.title")}</span>
-            </button>
+            </Button>
           )}
           <div className="relative shrink-0" ref={menuRef}>
             <button
@@ -157,15 +160,15 @@ export function TeamBand({
               aria-haspopup="menu"
               aria-expanded={menuOpen}
               data-team-menu
-              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/80 text-text hover:bg-surface"
+              className={HUB_BAND_MENU_BUTTON_CLASS}
             >
               <MoreVertical size={20} aria-hidden />
             </button>
             {menuOpen && (
-              <ul ref={listRef} role="menu" onKeyDown={(event) => menuKeyDown(event, listRef.current)} className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-lg border border-border-soft bg-surface-elevated p-1.5 shadow-pop" data-team-menu-list>
+              <ul ref={listRef} role="menu" onKeyDown={(event) => menuKeyDown(event, listRef.current)} className={cn(MENU_PANEL_CLASS, "absolute right-0 top-full z-30 mt-1.5 w-56")} data-team-menu-list>
                 {menuItems.map((item) => (
                   <li key={item.key} role="none">
-                    <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center rounded-lg px-3 text-small font-medium text-text hover:bg-surface-soft">
+                    <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className={MENU_ITEM_CLASS}>
                       {item.label}
                     </Link>
                   </li>
@@ -180,7 +183,7 @@ export function TeamBand({
                         onLeave();
                       }}
                       data-team-menu-leave
-                      className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-small font-medium text-danger hover:bg-danger-soft"
+                      className={cn(MENU_ITEM_CLASS, MENU_ITEM_DANGER_CLASS)}
                     >
                       <LogOut size={16} aria-hidden />
                       {t("tm.members.leave")}
