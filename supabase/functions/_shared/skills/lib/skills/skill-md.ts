@@ -127,7 +127,9 @@ export function parseSkillMd(source: string): ParsedSkillMd {
   const text = source.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
   const empty: ParsedSkillMd = { name: null, description: null, license: null, version: null, author: null, source: null, body: text.trim(), hasFrontmatter: false };
   if (!text.startsWith("---\n")) return empty;
-  const end = text.indexOf("\n---", 4);
+  // Kapanış çiti TAM `---` satırıdır (`----` ya da `---x` gibi satırlar frontmatter'ı bitirmez).
+  const fence = /\n---[ \t]*(?:\n|$)/.exec(text.slice(3));
+  const end = fence ? fence.index + 3 : -1;
   if (end === -1) return empty;
   const afterFence = text.indexOf("\n", end + 1);
   const front = text.slice(4, end);
