@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
 import { createDb, installMock, U } from "./mock.mjs";
 import { setupCommunities } from "./mock-communities.mjs";
+import { openSearch, searchFor, searchOverlay } from "./search-helpers.mjs";
 
 const BASE = "http://localhost:4184/promptly";
 const server = await serve(4184);
@@ -59,11 +60,10 @@ const seedCommunities = (db) => {
   db.addCommunity(C2, { name: "Atölye Kapalı", visibility: "restricted", members: [[U.bob, "admin"]], myRole: "none" });
   db.addCommunity(C3, { name: "Atölye Gizli", visibility: "private", members: [[U.bob, "admin"]], myRole: "none" });
 };
-const searchBox = (page) => page.getByRole("combobox").first();
 
 await scenario("2. Arama: Tümü'nde Topluluklar bölümü (tamamen kapalı yok); Topluluklar sekmesi kartları + adres ?tab=; Gönderiler'de topluluk yok, sıralama var", async ({ page, db }) => {
   await page.goto(`${BASE}/search`);
-  await searchBox(page).fill("Atölye");
+  await searchFor(page, "Atölye");
   await resultMenu(page).waitFor();
   assert.deepEqual(await resultTabNames(page), ["Tümü", "Gönderiler", "Kişiler", "Topluluklar"]);
   const list = page.locator("[data-search-communities]");
@@ -119,10 +119,11 @@ await scenario("6. Arama (İngilizce, telefon): sekmeler çevrilmiş, yatay taş
 
 await scenario("7. Keşfet: arama kutusuna yazınca aynı sekmeler; boşaltınca Keşfet içeriği geri gelir", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  await searchBox(page).fill("Atölye");
+  await searchFor(page, "Atölye");
   await page.locator("[data-search-communities]").waitFor();
   await resultMenu(page).waitFor();
-  await searchBox(page).fill("");
+  await (await openSearch(page)).fill("");
+  await page.keyboard.press("Escape");
   await page.locator("[data-section-menu]").waitFor();
   assert.equal(await page.locator("[data-search-communities]").count(), 0);
 }, { setup: seedCommunities });
@@ -155,9 +156,8 @@ await scenario("7a. Arama düzeni: Filtre penceresinden Görsel + Metin seçilir
 
 await scenario("7b. Arama kutusu: boşken son aramalar; '@bo' + Enter ilk kişiyi çip yapar; boş sonuçta 'şunu kaldır' çıkışı", async ({ page }) => {
   await page.goto(`${BASE}/search`);
-  const box = searchBox(page);
-  await box.fill("sinematik");
-  await box.press("Enter");
+  await searchFor(page, "sinematik");
+  const box = await openSearch(page);
   await box.fill("");
   await page.getByText("Son aramalar").waitFor();
   assert.ok((await page.getByRole("listbox").textContent()).includes("sinematik"), "yazılan arama geçmişte");
@@ -166,8 +166,11 @@ await scenario("7b. Arama kutusu: boşken son aramalar; '@bo' + Enter ilk kişiy
   await box.fill("@bob");
   await page.getByRole("option", { name: /@bob/ }).waitFor();
   await box.press("Enter");
+  await searchOverlay(page).getByRole("group", { name: /Seçili süzgeçler|Selected filters/ }).getByText("@bob").waitFor();
+  assert.equal(await box.inputValue(), "", "çip eklenince yazı temizlenir; katman açık kalır, sorgu büyür");
+  await page.keyboard.press("Escape");
+  await searchOverlay(page).waitFor({ state: "detached" });
   await chipStrip(page).getByText("@bob").waitFor();
-  assert.equal(await box.inputValue(), "", "çip eklenince yazı temizlenir");
   // Sonuç yok (search_content boş) → dead end names its way out.
   await page.locator("[data-search-remove-filters]").waitFor();
   await page.locator("[data-search-remove-filters] button").first().click();
@@ -184,6 +187,70 @@ await scenario("7c. Filtre penceresi: kişi arama alanı sunucudan bulur, çip o
   await dialog.getByRole("button", { name: /Remove filter: @bob/ }).waitFor();
   await dialog.getByRole("button", { name: "Apply filters" }).click();
   await chipStrip(page).getByText("@bob").waitFor();
+  assert.ok(await overflowFree(page));
+}, { lang: "en", viewport: { width: 390, height: 844 } });
+
+// docs/history/421-*: arama kutusu tam ekran katmanın kapısıdır (telefon: tüm ekran · md+: komut paleti).
+await scenario("7d. Arama (telefon): kutuya dokununca tam ekran katman; Filtre aynı ekranda sekmeler; 'Sonuçları göster' katmanı kapatır", async ({ page }) => {
+  await page.goto(`${BASE}/search`);
+  const input = await openSearch(page);
+  const vp = page.viewportSize();
+  const panel = await searchOverlay(page).locator("> div").first().boundingBox();
+  assert.ok(panel.width >= vp.width - 1 && panel.height >= vp.height - 1, `katman tüm ekranı kaplar: ${JSON.stringify(panel)}`);
+  assert.equal(await input.evaluate((el) => document.activeElement === el), true, "yazı girişi odakta (klavye hemen gelir)");
+  const filterButton = searchOverlay(page).locator("[data-search-overlay-filter]");
+  const fb = await filterButton.boundingBox();
+  assert.ok(fb && fb.y >= 0 && fb.y + fb.height <= vp.height, "Filtre düğmesi üst çubukta, ekranın içinde");
+  assert.equal(await searchOverlay(page).getByText("Popüler etiketler").count() + (await searchOverlay(page).getByText("Son aramalar").count()) >= 0, true);
+  await filterButton.click();
+  await searchOverlay(page).getByRole("heading", { name: "Filtrele" }).waitFor();
+  assert.equal(await searchOverlay(page).getByRole("tab").count(), 6, "altı filtre sekmesi (Biçim · Tür · Kullanıcılar · Etiketler · Araçlar · Sıralama)");
+  await searchOverlay(page).locator("[data-search-overlay-filters]").getByRole("button", { name: "Görsel", exact: true }).click();
+  await searchOverlay(page).getByRole("tab", { name: /Araçlar/ }).click();
+  await searchOverlay(page).locator("[data-search-overlay-filters]").getByRole("button", { name: "Midjourney" }).first().click();
+  await searchOverlay(page).getByRole("tab", { name: /Sıralama/ }).click();
+  await searchOverlay(page).getByRole("radio", { name: "Popüler" }).click();
+  await searchOverlay(page).getByRole("button", { name: "Geri" }).click();
+  await input.waitFor({ state: "visible" });
+  await input.fill("portre");
+  const show = searchOverlay(page).getByRole("button", { name: /“portre” için sonuçları göster/ });
+  await show.waitFor();
+  const sb = await show.boundingBox();
+  assert.ok(sb.y + sb.height <= vp.height, "ana eylem ekranın içinde");
+  await show.click();
+  await searchOverlay(page).waitFor({ state: "detached" });
+  await chipStrip(page).getByText("Görsel").waitFor();
+  assert.match(await page.locator("[data-list-filter]").getAttribute("aria-label"), /2/, "iki çip: Görsel + Midjourney");
+  assert.ok(await overflowFree(page));
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("7e. Arama (masaüstü): ortada komut paleti; sol rayda Ara + filtre grupları; Esc önce aramaya döner, sonra kapatır", async ({ page }) => {
+  await page.goto(`${BASE}/search`);
+  await openSearch(page);
+  const panel = await searchOverlay(page).locator("> div").first().boundingBox();
+  assert.ok(panel.width <= 768 && panel.width > 500 && panel.y > 20, `palet ortada ve sınırlı: ${JSON.stringify(panel)}`);
+  const rail = searchOverlay(page).getByRole("navigation", { name: "Filtre bölümleri" });
+  await rail.waitFor();
+  assert.equal(await searchOverlay(page).locator("[data-search-overlay-filter]").isVisible(), false, "masaüstünde ayrı Filtre düğmesi yok, ray var");
+  await rail.getByRole("button", { name: /Biçim/ }).click();
+  await searchOverlay(page).locator("[data-search-overlay-filters]").getByRole("button", { name: "Video", exact: true }).click();
+  assert.equal(await rail.getByRole("button", { name: /Biçim/ }).textContent().then((x) => /1/.test(x)), true, "rayda seçili sayısı");
+  await page.keyboard.press("Escape");
+  await searchOverlay(page).getByRole("combobox").waitFor({ state: "visible" });
+  assert.equal(await searchOverlay(page).count(), 1, "ilk Esc yalnız aramaya döner");
+  await page.keyboard.press("Escape");
+  await searchOverlay(page).waitFor({ state: "detached" });
+  await chipStrip(page).getByText("Video").waitFor();
+});
+
+await scenario("7f. Arama katmanı (İngilizce, telefon): metinler çevrilmiş, taşma yok", async ({ page }) => {
+  await page.goto(`${BASE}/search`);
+  const input = await openSearch(page);
+  await input.fill("kedi");
+  await searchOverlay(page).getByRole("button", { name: /Show results for “kedi”/ }).waitFor();
+  await searchOverlay(page).locator("[data-search-overlay-filter]").click();
+  await searchOverlay(page).getByRole("heading", { name: "Filter" }).waitFor();
+  await searchOverlay(page).getByRole("button", { name: "Apply filters" }).waitFor();
   assert.ok(await overflowFree(page));
 }, { lang: "en", viewport: { width: 390, height: 844 } });
 
