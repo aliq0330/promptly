@@ -10,10 +10,13 @@ import {
   canRemoveItem,
   collectionRole,
   hasInviteRoom,
+  SHAREABLE_ENTRY_TYPES,
 } from "./collection-permissions.ts";
 import { COLLAB_TEMPLATES } from "./notification-message.ts";
 
 const MIGRATION = readFileSync(new URL("../../supabase/migrations/20261125100000_collaborative_collections.sql", import.meta.url), "utf8");
+// Ortak koleksiyon koruması Skill dalıyla yeniden yazıldı (docs/history/417-*): güncel gövde bu dosyadadır.
+const SHARED_GUARD = readFileSync(new URL("../../supabase/migrations/20261207100000_skill_integrity_followups.sql", import.meta.url), "utf8");
 
 test("roles: owner, member (partner) and visitor — there is no viewer role", () => {
   assert.equal(collectionRole({ ownerId: "a", userId: "a", isMember: false }), "owner");
@@ -96,4 +99,12 @@ test("the notification sentences written by SQL are recognised by COLLAB_TEMPLAT
     assert.ok(MIGRATION.includes(tail), `the migration does not write: ${tail}`);
   }
   assert.equal(COLLAB_TEMPLATES.length, sentences.length);
+});
+
+test("shareable entry types: the shared-collection guard checks every one of them (and nothing else)", () => {
+  for (const type of SHAREABLE_ENTRY_TYPES) {
+    assert.ok(SHARED_GUARD.includes(`quote_target_ok('${type}', new.${type}_id)`), `the guard does not check ${type}`);
+  }
+  const checked = [...SHARED_GUARD.matchAll(/quote_target_ok\('(\w+)', new\./g)].map((match) => match[1]);
+  assert.deepEqual([...checked].sort(), [...SHAREABLE_ENTRY_TYPES].sort());
 });

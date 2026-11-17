@@ -33,6 +33,8 @@ const EN_PREFIXES: [tr: string, en: string][] = [
   ["İsteğine yorum yaptı", "commented on your request"],
   ["Workflow'una yorum yaptı", "commented on your workflow"],
   ["Hazır ayarına yorum yaptı", "commented on your preset"],
+  // Yalnız `comment` türü Telegram'a gider (`_telegram_pending`); Skill yayın/sürüm bildirimleri `system` olduğu için buraya girmez.
+  ["Skill'ine yorum yaptı", "commented on your Skill"],
   ["Sonucuna yorum yaptı", "commented on your result"],
   ["Alıntına yorum yaptı", "commented on your quote"],
   ["Yorumuna yanıt verdi", "replied to your comment"],

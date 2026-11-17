@@ -246,7 +246,7 @@ export const translations = {
   "admin.user.stat.conversations": { tr: "Konuşma", en: "Conversations" },
   "admin.user.stat.reportsFiled": { tr: "Yaptığı şikâyet", en: "Reports filed" },
   "admin.user.stat.reportsAgainst": { tr: "Hakkındaki şikâyet", en: "Reports against" },
-  "admin.user.postsBreakdown": { tr: "Prompt {{prompts}} · İstek {{requests}} · Workflow {{workflows}} · Ayar Paketi {{presets}}", en: "Prompts {{prompts}} · Requests {{requests}} · Workflows {{workflows}} · Presets {{presets}}" },
+  "admin.user.postsBreakdown": { tr: "Prompt {{prompts}} · İstek {{requests}} · Workflow {{workflows}} · Ayar Paketi {{presets}} · Skill {{skills}}", en: "Prompts {{prompts}} · Requests {{requests}} · Workflows {{workflows}} · Presets {{presets}} · Skills {{skills}}" },
   "admin.user.storageTitle": { tr: "Depolama kullanımı", en: "Storage usage" },
   "admin.user.storageImages": { tr: "Görseller", en: "Images" },
   "admin.user.storageVideos": { tr: "Videolar", en: "Videos" },

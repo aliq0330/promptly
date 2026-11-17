@@ -23,6 +23,7 @@ const KIND_KEYS: Record<string, TranslationKey> = {
   request: "admin.kind.request",
   workflow: "admin.kind.workflow",
   preset: "admin.kind.preset",
+  skill: "admin.kind.skill",
   comment: "admin.kind.comment",
   result: "admin.kind.result",
   following: "admin.kind.following",

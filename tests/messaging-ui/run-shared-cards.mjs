@@ -156,6 +156,32 @@ await scenario("4c. Yanıt çubuğu 'Bir prompt / Bir istek / Bir workflow' yeri
   assert.doesNotMatch(await bar.textContent(), /https?:/, "the raw share block is never shown");
 }, { setup: seed });
 
+await scenario("4d. Yanıt çubuğu Skill ve Space paylaşım bloklarında da ham blok değil BAŞLIK yazar (docs/history/417-*)", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?id=${CONV}`);
+  await page.locator("[data-message-id]").first().waitFor();
+  await page.waitForTimeout(900);
+  const barFor = async (index) => {
+    const m = page.locator("[data-message-id]").nth(index);
+    await m.hover();
+    await m.getByRole("button", { name: "Mesaj seçenekleri" }).click();
+    await page.getByRole("menuitem", { name: "Yanıtla", exact: true }).click();
+    return page.locator("[data-reply-bar]");
+  };
+  let bar = await barFor(0); // Skill paylaşım bloğu
+  await bar.getByText("Logo tasarım Skill'i").waitFor();
+  assert.doesNotMatch(await bar.textContent(), /https?:/, "the raw skill share block is never shown");
+  bar = await barFor(1); // Space paylaşım bloğu
+  await bar.getByText("Kampanya panosu").waitFor();
+  assert.doesNotMatch(await bar.textContent(), /https?:/, "the raw Space share block is never shown");
+}, {
+  setup: (db) => {
+    db.addConv(CONV, U.bob, { texts: [] });
+    const add = (body) => db.addMessage(CONV, U.bob.id, body);
+    add(shareBody("skills", "Logo tasarım Skill'i", "56000000-0000-4000-8000-000000000001"));
+    add(shareBody("spaces", "Kampanya panosu", "5a000000-0000-4000-8000-000000000001"));
+  },
+});
+
 await scenario("5. Gönderilen yanıtın alıntısı (balon üstü) görsel varsa küçük görselle gelir; yoksa yalnız metin", async ({ page }) => {
   await openThread(page);
   await replyTo(page, "bob düz metin");
