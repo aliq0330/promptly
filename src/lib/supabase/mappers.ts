@@ -1,4 +1,5 @@
 import type { UserProfile } from "@/types";
+import { normalizeInterests } from "@/lib/domains";
 
 /**
  * Hand-written mirror of the `public.profiles` row shape (see
@@ -34,7 +35,7 @@ export function mapProfileRow(row: ProfileRow): UserProfile {
     followerCount: row.follower_count,
     followingCount: row.following_count,
     createdAt: row.created_at,
-    interests: row.interests ?? [],
+    interests: normalizeInterests(row.interests),
     isDemo: row.is_demo === true,
   };
 }

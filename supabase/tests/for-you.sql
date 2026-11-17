@@ -92,11 +92,11 @@ select public._check(2, 'kendi/beğenilen/kaydedilen/kopyalanan/gizli/taslak gir
     'f0000000-0000-4000-8000-000000000010', 'f0000000-0000-4000-8000-000000000011', -- kaydedilen, kopyalanan
     'f0000000-0000-4000-8000-000000000008', 'f0000000-0000-4000-8000-000000000009')), -- gizli, taslak
   (select string_agg(id::text, ',') from public._page));
-select public._check(3, 'nedenler: takip edilen kişi → creator, etiket → tag/resim, ilgi alanı → interest/Fotoğrafçılık, beğenilen etiket → liked_tag/kedi, sinyalsiz → popular',
+select public._check(3, 'nedenler: takip edilen kişi → creator, etiket → tag/resim, ilgi alanı → interest/photography (eski Türkçe değer alana çözülür), beğenilen etiket → liked_tag/kedi, sinyalsiz → popular',
   (select reason_kind from public._page where id = 'f0000000-0000-4000-8000-000000000001') = 'creator'
   and (select reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000001') is null
   and (select reason_kind || '/' || reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000002') = 'tag/resim'
-  and (select reason_kind || '/' || reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000003') = 'interest/Fotoğrafçılık'
+  and (select reason_kind || '/' || reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000003') = 'interest/photography'
   and (select reason_kind || '/' || reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000004') = 'liked_tag/kedi'
   and (select reason_kind from public._page where id = 'f0000000-0000-4000-8000-000000000006') = 'popular',
   (select string_agg(id::text || '=' || reason_kind || '/' || coalesce(reason_ref, '-'), ' ') from public._page));

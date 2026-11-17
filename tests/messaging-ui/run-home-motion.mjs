@@ -40,14 +40,14 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
   db.rpc.feed_page = () => ({ body: rows.map((r) => ({ kind: "prompt", id: r.id, created_at: r.created_at, sort_rank: 0 })) });
   db.rpc.for_you_page = (body) => {
     state.forYouCalls.push(body);
-    const photo = state.interests.includes("Fotoğrafçılık");
+    const photo = state.interests.includes("photography");
     const ordered = photo ? [rows[2], ...rows.filter((_, i) => i !== 2)] : rows;
     return {
       body: ordered.map((r, i) => ({
         kind: "prompt", id: r.id, created_at: r.created_at, sort_rank: 100 - i,
         // Sunucu kuralı (docs/history/223-*): takip edilen kişinin gönderisi girer ve nedeni `creator` olur (ref yok); son satır böyle bir gönderi.
         reason_kind: i === ordered.length - 1 ? "creator" : r.id === pid(3) && photo ? "interest" : i === 0 ? "tag" : i === 1 ? "liked_tag" : "popular",
-        reason_ref: i === ordered.length - 1 ? null : r.id === pid(3) && photo ? "Fotoğrafçılık" : i <= 1 ? "resim" : null,
+        reason_ref: i === ordered.length - 1 ? null : r.id === pid(3) && photo ? "photography" : i <= 1 ? "resim" : null,
       })),
     };
   };
@@ -191,7 +191,7 @@ await scenario("4. üye: ilgi alanı seçilince kaydedilir, kart kalkar, akış 
   await page.locator("[data-for-you-setup]").getByRole("button", { name: /Sana özel'i ayarla/ }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Fotoğrafçılık" }).click();
   await page.getByText("İlgi alanın: Fotoğrafçılık").waitFor();
-  assert.deepEqual(state.patches.at(-1), { interests: ["Fotoğrafçılık"] }, "only interests are written");
+  assert.deepEqual(state.patches.at(-1), { interests: ["photography"] }, "only interests are written");
   assert.equal(await page.locator("[data-for-you-setup]").count(), 0, "ilgi alanı seçilince ilk kullanım bandı kalkar");
   assert.equal(await page.getByRole("dialog").count(), 1, "ayar penceresi seçimle birlikte kapanmaz");
   await page.getByRole("dialog").getByRole("button", { name: "Kapat" }).click();

@@ -135,6 +135,7 @@ export function FirstRunSetup({ onDone }: { onDone: () => void }) {
 function TopicRow({ topic, selected, atMax, onToggle }: { topic: FirstRunTopic; selected: boolean; atMax: boolean; onToggle: () => void }) {
   const { t } = useTranslation();
   const label = t(INTEREST_OPTION_LABELS[topic.value]);
+  const images = topicImagePaths(topic);
   const blocked = atMax && !selected;
   return (
     <button
@@ -149,12 +150,16 @@ function TopicRow({ topic, selected, atMax, onToggle }: { topic: FirstRunTopic; 
         blocked && "opacity-60",
       )}
     >
-      <span className="grid grid-cols-3">
-        {topicImagePaths(topic).map((path) => (
-          // eslint-disable-next-line @next/next/no-img-element -- statik dışa aktarma: next/image sunucusu yok, dosyalar zaten küçük (560×420) JPEG
-          <img key={path} src={publicAssetUrl(path)} alt="" loading="lazy" draggable={false} className="h-24 w-full object-cover sm:h-28" />
-        ))}
-      </span>
+      {images.length > 0 ? (
+        <span className="grid grid-cols-3">
+          {images.map((path) => (
+            // eslint-disable-next-line @next/next/no-img-element -- statik dışa aktarma: next/image sunucusu yok, dosyalar zaten küçük (560×420) JPEG
+            <img key={path} src={publicAssetUrl(path)} alt="" loading="lazy" draggable={false} className="h-24 w-full object-cover sm:h-28" />
+          ))}
+        </span>
+      ) : (
+        <span className={cn("block h-12 w-full sm:h-14", selected ? "bg-primary-hover" : "bg-primary-soft")} aria-hidden />
+      )}
       <span className="flex min-h-14 items-center justify-between gap-3 px-4 py-2">
         <span className="min-w-0 font-display text-body font-bold leading-tight">{label}</span>
         {selected ? (
