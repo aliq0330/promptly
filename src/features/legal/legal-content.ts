@@ -394,11 +394,13 @@ export const TERMS_OF_USE: LegalDocument = {
           [
             "İkonlar: Phosphor Icons (phosphoricons.com) — MIT Lisansı, Telif Hakkı (c) 2020-günümüz Phosphor Icons; Promptly için bileşenlere dönüştürüldü ve bazıları canlandırıldı.",
             "Yazı tipleri: Bricolage Grotesque, DM Sans ve JetBrains Mono — SIL Open Font License 1.1.",
+            "Yapay zekâ araçlarının logoları: LobeHub \"lobe-icons\" (MIT Lisansı) derlemesinden alınmıştır; logolar ilgili sahiplerinin ticari markalarıdır ve yalnızca temsil ettikleri aracı belirtmek için kullanılır.",
             "Promptly logosu, tepki emojileri ve efektleri Promptly'nindir.",
           ],
           [
             "Icons: Phosphor Icons (phosphoricons.com), MIT License, Copyright (c) 2020-present Phosphor Icons; converted into components for Promptly, some of them animated.",
             "Fonts: Bricolage Grotesque, DM Sans and JetBrains Mono, under the SIL Open Font License 1.1.",
+            "AI tool logos: taken from the LobeHub \"lobe-icons\" collection (MIT License); the logos are trademarks of their respective owners and are used only to identify the tool they stand for.",
             "The Promptly logo, reaction emoji and their effects are Promptly's own.",
           ],
         ),

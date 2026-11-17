@@ -20,6 +20,7 @@ import {
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { iconButtonClassName } from "@/components/ui/icon-button";
+import { ToolLogo } from "./tool-logo";
 
 /**
  * Optional, multi-select (max 3) "recommended tool/model" field shared by the
@@ -59,8 +60,9 @@ export function ToolPicker({
         {resolved.map((item) => (
           <span
             key={item.ref}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-primary-soft pl-3 pr-1.5 text-label font-medium text-text"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-primary-soft pl-2 pr-1.5 text-label font-medium text-text"
           >
+            <ToolLogo toolId={item.tool.id} name={item.tool.name} size="sm" tile={false} className="h-4 w-4" />
             {item.label}
             <button
               type="button"
@@ -216,6 +218,7 @@ function ToolPickerModal({
                   >
                     {selected && <Check size={12} />}
                   </span>
+                  <ToolLogo toolId={tool.id} name={tool.name} />
                   <span className="min-w-0">
                     <span className="font-medium text-text">{tool.name}</span>
                     <span className="ml-2 text-caption text-text-muted">{tool.provider}</span>

@@ -5,16 +5,15 @@ import { Check } from "@/components/icons/check";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { ExternalLink } from "@/components/icons/external-link";
 import { Play } from "@/components/icons/play";
-import { X } from "@/components/icons/x";
 import { AlertCircle } from "@/components/icons/alert-circle";
 import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
+import { SpaceDialog } from "@/features/spaces/space-modals";
+import { ToolLogo } from "./tool-logo";
 import { buildRunToolList, getPreferredRunTool, runWithAI, type RunToolOption, type RunWithAIResult } from "@/lib/run-with-ai";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/auth-provider";
 import { recordPromptCopy } from "@/lib/supabase/prompt-usage";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { iconButtonClassName } from "@/components/ui/icon-button";
 
 /**
  * The one "Çalıştır" surface — a button plus the tool-picker modal behind it,
@@ -124,26 +123,18 @@ function RunModal({
 
   const visible: RunToolOption[] = showMore ? [...list.primary, ...list.more] : list.primary;
 
-  return (
-    <Modal onClose={onClose} labelledBy="run-modal-title">
-      <div
-        className="w-full max-w-md space-y-4 rounded-lg card-flat p-5 shadow-lg"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <h2 id="run-modal-title" className="text-body font-semibold text-text">
-            {t("run.button")}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("common.close")}
-            className={iconButtonClassName(false, "h-9 w-9 rounded-md")}
-          >
-            <X size={20} />
-          </button>
-        </div>
+  const footer =
+    preview && !result ? (
+      <Button type="button" onClick={() => selectedId && void run(selectedId)} disabled={!selectedId || running}>
+        <Play size={16} aria-hidden />
+        {t("run.button")}
+      </Button>
+    ) : undefined;
 
+  // `SpaceDialog`: başlık + ✕ sabit, orta kayar, alt düğme sabit — araç listesi uzun olunca kart taşmaz, içi kaydırılır.
+  return (
+    <SpaceDialog title={t("run.button")} onClose={onClose} footer={footer} busy={running}>
+      <div className="space-y-4">
         {result ? (
           <RunOutcome result={result} text={text} manualRef={manualRef} onClose={onClose} />
         ) : (
@@ -177,13 +168,11 @@ function RunModal({
                           selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:border-border hover:bg-surface-soft",
                         )}
                       >
-                        <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-label font-semibold text-primary">
-                          {tool.name.charAt(0)}
-                        </span>
+                        <ToolLogo toolId={tool.id} name={tool.name} />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-small font-medium text-text">{tool.name}</span>
                           {(recommended || tool.id === lastUsedId) && (
-                            <span className="block text-caption text-text-muted">
+                            <span className="block truncate text-caption text-text-muted">
                               {recommended ? t("run.recommended") : t("run.lastUsed")}
                             </span>
                           )}
@@ -206,19 +195,10 @@ function RunModal({
                 </button>
               )}
             </div>
-
-            {preview && (
-              <div className="flex justify-end">
-                <Button type="button" onClick={() => selectedId && void run(selectedId)} disabled={!selectedId || running}>
-                  <Play size={16} aria-hidden />
-                  {t("run.button")}
-                </Button>
-              </div>
-            )}
           </>
         )}
       </div>
-    </Modal>
+    </SpaceDialog>
   );
 }
 
