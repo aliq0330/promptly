@@ -62,7 +62,7 @@ export function ManageTab({ group, role, onToast, reload, section }: CommunityTa
         {active === "settings" && (
           <div className="space-y-4">
             <div className={SETTINGS_CARD}>
-            <CommunitySettingsSection key={`${group.category}|${group.feedPolicy}|${group.rulesVersion}|${group.rulesRequired}|${group.closedAt ?? ""}`} group={group} onChanged={reload} onToast={onToast} />
+            <CommunitySettingsSection key={`${group.category}|${group.domain ?? ""}|${group.feedPolicy}|${group.rulesVersion}|${group.rulesRequired}|${group.closedAt ?? ""}`} group={group} onChanged={reload} onToast={onToast} />
             </div>
             {canSeeSettingsTab(role, perms) && (
               <div className={SETTINGS_CARD}>

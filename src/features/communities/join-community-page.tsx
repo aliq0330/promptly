@@ -15,7 +15,7 @@ import { VisibilityLabel } from "./visibility-label";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { RulesAcceptBox } from "./rules-accept";
 import { joinCommunityViaLink, previewCommunityLink, type CommunityLinkPreview } from "@/lib/supabase/communities";
-import { CATEGORY_LABEL_KEYS, communityHref } from "@/lib/communities";
+import { communityHref, communityTopicLabelKey } from "@/lib/communities";
 import { Badge } from "@/components/ui/badge";
 import { GROUP_REQUEST_MESSAGE_MAX, isValidGroupToken } from "@/lib/chat-groups";
 import { authHref } from "@/lib/auth-redirect";
@@ -177,7 +177,7 @@ export function JoinCommunityPage() {
         <div className="min-w-0 space-y-1">
           <h1 className="break-words text-h3 font-bold text-text">{preview.name}</h1>
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-muted">
-            <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[preview.category])}</Badge>
+            <Badge variant="neutral">{t(communityTopicLabelKey(preview))}</Badge>
             <span>{memberCountText(t, preview.memberCount)}</span>
             <VisibilityLabel visibility={preview.visibility} className="flex items-center gap-1" />
           </p>

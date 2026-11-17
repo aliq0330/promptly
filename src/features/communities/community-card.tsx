@@ -17,7 +17,7 @@ import { useReport } from "@/features/moderation/report-provider";
 import { VisibilityLabel } from "./visibility-label";
 import { useCommunityPresenceCount } from "@/features/presence/community-presence";
 import { OnlineCountText } from "@/features/presence/presence-ui";
-import { CATEGORY_LABEL_KEYS, communityHref, REASON_LABEL_KEYS } from "@/lib/communities";
+import { communityHref, communityTopicLabelKey, REASON_LABEL_KEYS } from "@/lib/communities";
 import { memberCountText } from "@/lib/group-labels";
 import { absoluteUrl, formatUnread } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -103,7 +103,7 @@ export function CommunityCard({
           </span>
         </>
       }
-      chip={<span className={HUB_CARD_CHIP_CLASS}>{t(CATEGORY_LABEL_KEYS[community.category])}</span>}
+      chip={<span className={HUB_CARD_CHIP_CLASS}>{t(communityTopicLabelKey(community))}</span>}
       corner={
         // Kart ⋮ menüsü (Space kartıyla aynı yer ve ortak `PopoverMenu`): bağlantıyı kopyala · şikâyet (sahibi hariç, oturumlu).
         <PopoverMenu

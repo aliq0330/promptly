@@ -29,11 +29,11 @@ export function setupCommunities(db) {
   db.collectionItems = []; // { id, collection_id, prompt_id?, workflow_id?, preset_id?, community_post_id?, created_at }
 
   db.addCommunity = (id, opts = {}) => {
-    const { name = "Prompt Atölyesi", visibility = "public", category = "image", myRole = "member", members = [], rules = null, rulesRequired = false, closed = false, feedPolicy = "members", description = "Topluluk açıklaması", texts = [], pending = 0, origin = "native" } = opts;
+    const { name = "Prompt Atölyesi", visibility = "public", category = "image", domain = null, myRole = "member", members = [], rules = null, rulesRequired = false, closed = false, feedPolicy = "members", description = "Topluluk açıklaması", texts = [], pending = 0, origin = "native" } = opts;
     db.addGroup(id, { name, visibility, myRole: myRole === "none" ? "member" : myRole, members, description, texts, pending });
     if (myRole === "none") { db.members = db.members.filter((m) => !(m.conversation_id === id && m.user_id === ME)); }
     const g = db.groups.find((x) => x.id === id);
-    Object.assign(g, { category, feed_policy: feedPolicy, rules, rules_required: rulesRequired, closed_at: closed ? "2026-02-01T00:00:00Z" : null, origin });
+    Object.assign(g, { category, domain, feed_policy: feedPolicy, rules, rules_required: rulesRequired, closed_at: closed ? "2026-02-01T00:00:00Z" : null, origin });
     g.member_count = db.members.filter((m) => m.conversation_id === id).length;
     return g;
   };
@@ -60,6 +60,10 @@ export function setupCommunities(db) {
 
     // ---- keşif / listeler ----
     // Topluluk KARTI (üye olmayanın gördüğü tek şey; docs/history/177-*): açık/kapalı herkese, tamamen kapalı yalnız üye/davetli/başvurana.
+    if (table === "rpc/community_domains") {
+      log("community_domains", body);
+      return json(200, db.groups.filter((x) => (body.p_ids ?? []).includes(x.id) && x.domain && x.visibility !== "private").map((x) => ({ id: x.id, domain: x.domain })));
+    }
     if (table === "rpc/community_cards") {
       log("community_cards", body);
       const invited = (x) => db.invitations.some((i) => i.group_id === x.id && i.invitee_id === signedIn && i.status === "pending");
@@ -84,7 +88,7 @@ export function setupCommunities(db) {
       log("discover_communities", body);
       const term = (body.p_query ?? "").toLowerCase();
       const list = db.groups
-        .filter((x) => x.visibility === "public" && !x.closed_at && (!body.p_category || x.category === body.p_category) && (!term || x.name.toLowerCase().includes(term) || (x.description ?? "").toLowerCase().includes(term)))
+        .filter((x) => x.visibility === "public" && !x.closed_at && (!body.p_category || x.category === body.p_category || x.domain === body.p_category) && (!term || x.name.toLowerCase().includes(term) || (x.description ?? "").toLowerCase().includes(term)))
         .map((x) => ({
           id: x.id, name: x.name, description: x.description, avatar_url: x.avatar_url ?? null, category: x.category, member_count: x.member_count, member_limit: x.member_limit, post_count: x.post_count,
           upcoming_event_count: db.events.filter((e) => e.community_id === x.id && e.status === "scheduled").length, rules_required: x.rules_required, created_at: x.created_at, last_activity_at: null,
@@ -142,7 +146,7 @@ export function setupCommunities(db) {
       const term = (body.p_query ?? "").trim().toLowerCase();
       if (!term) return json(200, []);
       const list = db.groups
-        .filter((x) => ["public", "restricted"].includes(x.visibility) && !x.closed_at && (!body.p_category || x.category === body.p_category) && (x.name.toLowerCase().includes(term) || (x.description ?? "").toLowerCase().includes(term)))
+        .filter((x) => ["public", "restricted"].includes(x.visibility) && !x.closed_at && (!body.p_category || x.category === body.p_category || x.domain === body.p_category) && (x.name.toLowerCase().includes(term) || (x.description ?? "").toLowerCase().includes(term)))
         .map((x) => searchRow(x));
       return json(200, list.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + (body.p_limit ?? 20)));
     }
@@ -168,7 +172,7 @@ export function setupCommunities(db) {
       db.members.push({ conversation_id: id, user_id: signedIn, role: "owner", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null });
       db.groups.push({
         id, name, description: body.p_description ?? null, avatar_url: body.p_avatar_url ?? null, visibility: body.p_visibility, posting_policy: body.p_posting_policy, member_limit: body.p_member_limit, member_count: 1,
-        pending_request_count: 0, history_visible: false, members_can_pin: false, role_permissions: { admin: {}, moderator: {} }, created_at: db.stamp(), category: body.p_category, feed_policy: body.p_feed_policy,
+        pending_request_count: 0, history_visible: false, members_can_pin: false, role_permissions: { admin: {}, moderator: {} }, created_at: db.stamp(), category: body.p_category, domain: body.p_domain ?? null, feed_policy: body.p_feed_policy,
         rules: body.p_rules ?? null, rules_version: 1, rules_required: Boolean(body.p_rules_required), closed_at: null, post_count: 0, origin: "native",
       });
       return json(200, { group_id: id, invited_count: (body.p_invite_user_ids ?? []).length, skipped: [] });
@@ -250,6 +254,7 @@ export function setupCommunities(db) {
       if (!manager(x.id)) return err("forbidden");
       const patch = body.p_patch ?? {};
       if ("category" in patch) x.category = patch.category;
+      if ("domain" in patch) x.domain = patch.domain;
       if ("feed_policy" in patch) x.feed_policy = patch.feed_policy;
       if ("rules" in patch) { x.rules = patch.rules; x.rules_version += 1; }
       if ("rules_required" in patch) x.rules_required = patch.rules_required;
@@ -315,7 +320,7 @@ export function setupCommunities(db) {
     if (table === "rpc/browse_communities") {
       log("browse_communities", body);
       const term = (body.p_query ?? "").trim().toLowerCase();
-      let list = db.groups.filter((x) => ["public", "restricted"].includes(x.visibility) && !x.closed_at && (!body.p_category || x.category === body.p_category) && (!term || x.name.toLowerCase().includes(term) || (x.description ?? "").toLowerCase().includes(term)));
+      let list = db.groups.filter((x) => ["public", "restricted"].includes(x.visibility) && !x.closed_at && (!body.p_category || x.category === body.p_category || x.domain === body.p_category) && (!term || x.name.toLowerCase().includes(term) || (x.description ?? "").toLowerCase().includes(term)));
       const sort = body.p_sort ?? "relevant";
       list = list.sort((a, b) => sort === "newest" ? b.created_at.localeCompare(a.created_at) : sort === "popular" || sort === "active" ? b.member_count - a.member_count : relevanceOf(b) - relevanceOf(a) || b.member_count - a.member_count);
       return json(200, list.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + (body.p_limit ?? 20)).map((x) => searchRow(x, { reason: reasonOf(x) })));

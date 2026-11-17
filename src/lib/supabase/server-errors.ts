@@ -110,6 +110,8 @@ const OPTIONAL_COLUMNS = [
   "is_shared", "member_count", "added_by",
   // Skill kapak görseli (docs/history/399-*): sütun yoksa Skill yine açılır, yalnız kapak görünmez.
   "cover_path",
+  // Topluluk alanı (docs/history/426-*): sütun yoksa topluluk yine açılır, yalnız konu etiketi görünmez.
+  "domain",
 ] as const;
 const missingOptional = new Set<string>();
 

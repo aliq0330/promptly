@@ -676,7 +676,7 @@ select public._check(96, 'birebir: sohbet başlatma/mesaj/okuma topluluk eklenti
   and public._try(format($q$insert into public.messages (conversation_id, sender_id, body) values (%L, %L, 'cevap')$q$, (select id from _dm), :frank)) = 'ok');
 reset role;
 select public._check(97, 'EXECUTE: anon yalnız keşif/okuma yardımcılarını çağırır (yazma/üye/istatistik/öneri yok); iç yardımcılar kimseye açık değil; raporlar, kural kabulleri ve chat_groups anon''a kapalı',
-  not has_function_privilege('anon', 'public.create_community(text,text,text,text,integer,uuid[],text,text,text,text,boolean)', 'execute')
+  not has_function_privilege('anon', 'public.create_community(text,text,text,text,integer,uuid[],text,text,text,text,boolean,text)', 'execute')
   and not has_function_privilege('anon', 'public.share_to_community(uuid,text,uuid,text)', 'execute')
   and not has_function_privilege('anon', 'public.community_stats(uuid,integer)', 'execute')
   and has_function_privilege('anon', 'public.discover_communities(text,text,text,integer,integer)', 'execute')

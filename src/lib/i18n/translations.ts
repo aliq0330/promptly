@@ -1591,16 +1591,21 @@ export const translations = {
   "contributors.acceptedSingular": { tr: "Düzenleme önerisi kabul edildi", en: "An edit suggestion was accepted" },
   "contributors.acceptedCountPlural": { tr: "{{count}} düzenleme önerisi kabul edildi", en: "{{count}} edit suggestions accepted" },
 
-  // ---- Profile interest categories ----
-  "interest.digitalArt": { tr: "Dijital Sanat", en: "Digital Art" },
-  "interest.photography": { tr: "Fotoğrafçılık", en: "Photography" },
-  "interest.graphicDesign": { tr: "Grafik Tasarım", en: "Graphic Design" },
-  "interest.softwareAndCoding": { tr: "Yazılım ve Kodlama", en: "Software & Coding" },
-  "interest.storyAndCreativeWriting": { tr: "Hikaye ve Yaratıcı Yazarlık", en: "Storytelling & Creative Writing" },
-  "interest.videoProduction": { tr: "Video Üretimi", en: "Video Production" },
-  "interest.musicAndAudio": { tr: "Müzik ve Ses", en: "Music & Audio" },
-  "interest.threeDDesign": { tr: "3D Tasarım", en: "3D Design" },
-  "interest.gameDevelopment": { tr: "Oyun Geliştirme", en: "Game Development" },
+  // ---- Shared domains (docs/history/426-*): profile interests, Skill expertise, prompt categories ----
+  "domain.art": { tr: "Sanat & İllüstrasyon", en: "Art & Illustration" },
+  "domain.photography": { tr: "Fotoğrafçılık", en: "Photography" },
+  "domain.design": { tr: "Tasarım", en: "Design" },
+  "domain.software": { tr: "Yazılım", en: "Software" },
+  "domain.writing": { tr: "Yazarlık", en: "Writing" },
+  "domain.marketing": { tr: "Pazarlama", en: "Marketing" },
+  "domain.business": { tr: "İş", en: "Business" },
+  "domain.education": { tr: "Eğitim", en: "Education" },
+  "domain.research": { tr: "Araştırma", en: "Research" },
+  "domain.data": { tr: "Veri", en: "Data" },
+  "domain.musicAudio": { tr: "Müzik & Ses", en: "Music & Audio" },
+  "domain.video": { tr: "Video & Animasyon", en: "Video & Animation" },
+  "domain.game3d": { tr: "Oyun & 3D", en: "Games & 3D" },
+  "domain.productivity": { tr: "Üretkenlik", en: "Productivity" },
 
   // ---- Messages ----
   "messages.noConversationsYet": { tr: "Henüz bir konuşman yok.", en: "You don't have any conversations yet." },

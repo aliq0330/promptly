@@ -16,13 +16,13 @@ const fresh = { createdAt: "2026-11-18T09:00:00Z", interests: [] as string[] };
 
 test("a new account without enough topics must go through the setup", () => {
   assert.equal(firstRunRequired(fresh, false, SINCE), true);
-  assert.equal(firstRunRequired({ ...fresh, interests: ["Dijital Sanat"] }, false, SINCE), true);
+  assert.equal(firstRunRequired({ ...fresh, interests: ["art"] }, false, SINCE), true);
   assert.equal(firstRunRequired({ ...fresh, interests: undefined }, false, SINCE), true);
   assert.equal(firstRunRequired({ ...fresh, interests: null }, false, SINCE), true);
 });
 
 test("two topics (or more) finish it — the server-side column is the source of truth", () => {
-  assert.equal(firstRunRequired({ ...fresh, interests: ["Dijital Sanat", "Fotoğrafçılık"] }, false, SINCE), false);
+  assert.equal(firstRunRequired({ ...fresh, interests: ["art", "photography"] }, false, SINCE), false);
   assert.equal(firstRunRequired({ ...fresh, interests: ["a", "b", "c"] }, false, SINCE), false);
 });
 

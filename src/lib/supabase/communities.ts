@@ -5,12 +5,13 @@ import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { REQUEST_SELECT, mapRequestRow, type RequestRow } from "./requests";
 import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
-import { callRpc, fetchCommunityCards, PROFILE_EMBED, toGroupError, type CommunityCard } from "./chat-groups";
+import { callRpc, fetchCommunityCards, fetchCommunityDomains, forgetCommunityDomain, PROFILE_EMBED, toGroupError, type CommunityCard } from "./chat-groups";
 import { fetchSpaceFeedCards, type SpaceFeedCard } from "./spaces";
 import { fetchOwnShareableSkillsWindow, fetchSkillsByIds } from "./skills";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/lib/chat-groups";
 import type { ReportReasonCode } from "@/lib/report-reasons";
 import { isDiscoverFeedSource, orderByIds, type DiscoverFeedSource } from "@/lib/community-home";
+import type { DomainId } from "@/lib/domains";
 import { parseInviteResult, parseGroupJoinToken, type InviteResult } from "@/lib/chat-groups";
 import {
   normalizeCategory,
@@ -53,6 +54,8 @@ export interface CreateCommunityInput {
   memberLimit: number;
   inviteUserIds: string[];
   category: CommunityCategory;
+  /** Topluluğun konusu (ortak ALAN sözlüğü); boş bırakılabilir. */
+  domain: DomainId | null;
   postingPolicy: "members" | "admins";
   feedPolicy: CommunityFeedPolicy;
   rules: string;
@@ -72,12 +75,14 @@ export async function createCommunity(input: CreateCommunityInput): Promise<{ gr
     p_feed_policy: input.feedPolicy,
     p_rules: input.rules.trim() || null,
     p_rules_required: input.rulesRequired,
+    p_domain: input.domain,
   });
   return { groupId: data.group_id, invite: parseInviteResult(data) };
 }
 
 export interface UpdateCommunityPatch {
   category?: CommunityCategory;
+  domain?: DomainId | null;
   feedPolicy?: CommunityFeedPolicy;
   rules?: string | null;
   rulesRequired?: boolean;
@@ -86,10 +91,12 @@ export interface UpdateCommunityPatch {
 export async function updateCommunity(groupId: string, patch: UpdateCommunityPatch): Promise<{ changed: boolean; rulesVersion: number | null }> {
   const body: Record<string, unknown> = {};
   if (patch.category !== undefined) body.category = patch.category;
+  if (patch.domain !== undefined) body.domain = patch.domain;
   if (patch.feedPolicy !== undefined) body.feed_policy = patch.feedPolicy;
   if (patch.rules !== undefined) body.rules = patch.rules === null ? null : patch.rules.trim();
   if (patch.rulesRequired !== undefined) body.rules_required = patch.rulesRequired;
   const data = await callRpc<{ changed: boolean; rules_version?: number }>("update_community", { p_group_id: groupId, p_patch: body });
+  if (patch.domain !== undefined) forgetCommunityDomain(groupId);
   return { changed: Boolean(data?.changed), rulesVersion: typeof data?.rules_version === "number" ? data.rules_version : null };
 }
 
@@ -274,6 +281,8 @@ export interface CommunitySummary {
   description: string | null;
   avatarUrl: string | null;
   category: CommunityCategory;
+  /** Topluluğun konusu (ortak ALAN sözlüğü, `community_domains`); yoksa `null`. */
+  domain: DomainId | null;
   visibility: GroupVisibility;
   memberCount: number;
   memberLimit: number;
@@ -299,6 +308,13 @@ function normalizeReason(value: unknown): CommunityReason {
 
 export const COMMUNITY_PAGE_SIZE = 20;
 
+/** Listenin topluluklarına konularını (alan) ekler: tek toplu istek + modül önbelleği; alan okunamazsa liste olduğu gibi döner. */
+async function withDomains(list: CommunitySummary[]): Promise<CommunitySummary[]> {
+  if (list.length === 0) return list;
+  const domains = await fetchCommunityDomains(list.map((c) => c.id));
+  return list.map((c) => ({ ...c, domain: domains.get(c.id) ?? null }));
+}
+
 interface DiscoverRow {
   id: string; name: string; description: string | null; avatar_url: string | null; category: string; member_count: number; member_limit: number;
   post_count: number; upcoming_event_count: number; rules_required: boolean; created_at: string; last_activity_at: string | null;
@@ -309,7 +325,7 @@ interface DiscoverRow {
 export async function discoverCommunities(params: {
   query: string;
   sort: CommunitySort;
-  category: CommunityCategory | null;
+  category: CommunityCategory | DomainId | null;
   offset: number;
 }): Promise<{ communities: CommunitySummary[]; hasMore: boolean }> {
   const rows = await callRpc<DiscoverRow[]>("discover_communities", {
@@ -322,12 +338,13 @@ export async function discoverCommunities(params: {
   const list = rows ?? [];
   return {
     hasMore: list.length > COMMUNITY_PAGE_SIZE,
-    communities: list.slice(0, COMMUNITY_PAGE_SIZE).map((row) => ({
+    communities: await withDomains(list.slice(0, COMMUNITY_PAGE_SIZE).map((row): CommunitySummary => ({
       id: row.id,
       name: row.name,
       description: row.description,
       avatarUrl: row.avatar_url,
       category: normalizeCategory(row.category),
+      domain: null,
       visibility: "public",
       memberCount: row.member_count,
       memberLimit: row.member_limit,
@@ -341,7 +358,7 @@ export async function discoverCommunities(params: {
       myRole: null,
       unreadCount: 0,
       pendingRequestCount: 0,
-    })),
+    }))),
   };
 }
 
@@ -360,6 +377,7 @@ function mapSearchRow(row: SearchRow): CommunitySummary {
     description: row.description,
     avatarUrl: row.avatar_url,
     category: normalizeCategory(row.category),
+    domain: null,
     visibility: normalizeVisibility(row.visibility),
     memberCount: row.member_count,
     memberLimit: row.member_limit,
@@ -383,7 +401,8 @@ function mapSearchRow(row: SearchRow): CommunitySummary {
  */
 export async function searchCommunities(params: {
   query: string;
-  category: CommunityCategory | null;
+  /** Amaç ya da ALAN kimliği (sunucu ikisini de süzgeç olarak kabul eder). */
+  category: CommunityCategory | DomainId | null;
   offset: number;
 }): Promise<{ communities: CommunitySummary[]; hasMore: boolean }> {
   const term = params.query.trim();
@@ -395,19 +414,19 @@ export async function searchCommunities(params: {
     p_offset: params.offset,
   });
   const list = rows ?? [];
-  return { hasMore: list.length > COMMUNITY_PAGE_SIZE, communities: list.slice(0, COMMUNITY_PAGE_SIZE).map(mapSearchRow) };
+  return { hasMore: list.length > COMMUNITY_PAGE_SIZE, communities: await withDomains(list.slice(0, COMMUNITY_PAGE_SIZE).map(mapSearchRow)) };
 }
 
 /** Sana önerilen topluluklar (herkese açık + kapalı): ortak kategori önce, sonra yaygınlık. Üye olduklarım/bekleyen başvurularım yok. */
 export async function suggestCommunities(limit = 6): Promise<CommunitySummary[]> {
   const rows = await callRpc<SearchRow[]>("suggest_communities", { p_limit: limit });
-  return (rows ?? []).map(mapSearchRow);
+  return withDomains((rows ?? []).map(mapSearchRow));
 }
 
 /** "Sana uygun topluluklar" adayları (ilgi puanı sırasıyla; tamamen kapalı asla). Şerit boyuna indirme/tekrar azaltma istemcidedir (`reduceRepeatedSuggestions`). */
 export async function recommendCommunities(limit = 30): Promise<CommunitySummary[]> {
   const rows = await callRpc<SearchRow[]>("recommend_communities", { p_limit: limit });
-  return (rows ?? []).map(mapSearchRow);
+  return withDomains((rows ?? []).map(mapSearchRow));
 }
 
 /** "Tüm topluluklar" sıralaması: `relevant` = ilgi puanı (sinyal yoksa yaygınlık). */
@@ -416,7 +435,7 @@ export type BrowseSort = "relevant" | "popular" | "newest" | "active";
 /** Tüm topluluklar: herkese açık + kapalı (tamamen kapalı asla), üye olduklarım dahil; ad/açıklama/etiket araması, kategori süzgeci. */
 export async function browseCommunities(params: {
   query: string;
-  category: CommunityCategory | null;
+  category: CommunityCategory | DomainId | null;
   sort: BrowseSort;
   offset: number;
 }): Promise<{ communities: CommunitySummary[]; hasMore: boolean }> {
@@ -428,7 +447,7 @@ export async function browseCommunities(params: {
     p_offset: params.offset,
   });
   const list = rows ?? [];
-  return { hasMore: list.length > COMMUNITY_PAGE_SIZE, communities: list.slice(0, COMMUNITY_PAGE_SIZE).map(mapSearchRow) };
+  return { hasMore: list.length > COMMUNITY_PAGE_SIZE, communities: await withDomains(list.slice(0, COMMUNITY_PAGE_SIZE).map(mapSearchRow)) };
 }
 
 export type MyCommunityScope = "member" | "managed";
@@ -451,12 +470,13 @@ export async function listMyCommunities(
   return {
     hasMore: list.length > COMMUNITY_PAGE_SIZE,
     nextOffset: offset + Math.min(list.length, COMMUNITY_PAGE_SIZE),
-    communities: list.slice(0, COMMUNITY_PAGE_SIZE).map((row) => ({
+    communities: await withDomains(list.slice(0, COMMUNITY_PAGE_SIZE).map((row): CommunitySummary => ({
       id: row.id,
       name: row.name,
       description: row.description,
       avatarUrl: row.avatar_url,
       category: normalizeCategory(row.category),
+      domain: null,
       visibility: row.visibility,
       memberCount: row.member_count,
       memberLimit: row.member_limit,
@@ -470,7 +490,7 @@ export async function listMyCommunities(
       myRole: row.my_role,
       unreadCount: row.unread_count,
       pendingRequestCount: row.pending_request_count,
-    })),
+    }))),
   };
 }
 

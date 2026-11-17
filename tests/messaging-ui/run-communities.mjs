@@ -76,9 +76,10 @@ await scenario("2. Tüm topluluklar: arama ve kategori süzgeci sunucuya iletili
   await page.goto(`${BASE}/communities/all`);
   await page.getByRole("heading", { name: "Görsel Topluluk" }).waitFor();
   await page.getByRole("heading", { name: "Ses Topluluğu" }).waitFor();
-  await page.getByRole("button", { name: "Ses", exact: true }).click();
+  await page.locator("li", { hasText: "Görsel Topluluk" }).first().getByText("Sanat & İllüstrasyon", { exact: true }).waitFor(); // kartta konu etiketi = alan adı (eski ortam kategorisi değil)
+  await page.getByRole("button", { name: "Müzik & Ses", exact: true }).click();
   await page.getByRole("heading", { name: "Görsel Topluluk" }).waitFor({ state: "detached" });
-  assert.ok(calls(db, "browse_communities", "RPC").some((c) => c.body.p_category === "audio"));
+  assert.ok(calls(db, "browse_communities", "RPC").some((c) => c.body.p_category === "music-audio"), "konu süzgeci alan kimliğiyle gider");
   await page.getByRole("button", { name: "Tümü", exact: true }).click();
   await page.getByPlaceholder("Topluluk, konu veya etiket ara…").fill("zzzz");
   await page.getByText("Eşleşen topluluk bulunamadı").waitFor();
@@ -90,7 +91,7 @@ await scenario("2. Tüm topluluklar: arama ve kategori süzgeci sunucuya iletili
   fail = false;
   await page.getByRole("button", { name: "Tekrar dene" }).click();
   await page.getByText("Eşleşen topluluk bulunamadı").waitFor();
-}, { setup: (db) => { db.addCommunity(C2, { name: "Görsel Topluluk", category: "image", myRole: "none", members: [[U.bob, "owner"]] }); db.addCommunity(C3, { name: "Ses Topluluğu", category: "audio", myRole: "none", members: [[U.bob, "owner"]] }); } });
+}, { setup: (db) => { db.addCommunity(C2, { name: "Görsel Topluluk", category: "image", domain: "art", myRole: "none", members: [[U.bob, "owner"]] }); db.addCommunity(C3, { name: "Ses Topluluğu", category: "audio", domain: "music-audio", myRole: "none", members: [[U.bob, "owner"]] }); } });
 
 // 3
 await scenario("3. Katıl (kural yok): tek istek, kabul bayrağı yok; topluluk sayfasına gider ve üye olur", async ({ page, db }) => {
@@ -191,7 +192,8 @@ await scenario("8. Topluluk oluştur: boş ad → hata ve istek yok; geçerli �
   assert.equal(calls(db, "create_community", "RPC").length, 0);
   await d.getByLabel("Topluluk adı").fill("  Prompt Kulübü  ");
   await d.getByLabel("Açıklama (opsiyonel)").fill("Haftalık paylaşımlar");
-  await d.getByLabel("Kategori").selectOption("workflow");
+  await d.getByLabel("Konu").selectOption("software");
+  await d.getByLabel("Amaç").selectOption("learning");
   await d.getByRole("radio", { name: /Herkese açık|Açık/ }).first().check();
   await d.getByLabel("Topluluk kuralları").fill("Saygılı ol.");
   await d.getByLabel(/Katılmadan önce kuralları kabul etmek/).check();
@@ -200,7 +202,8 @@ await scenario("8. Topluluk oluştur: boş ad → hata ve istek yok; geçerli �
   const made = calls(db, "create_community", "RPC");
   assert.equal(made.length, 1, "double submit sends one request");
   assert.equal(made[0].body.p_name, "Prompt Kulübü");
-  assert.equal(made[0].body.p_category, "workflow");
+  assert.equal(made[0].body.p_category, "learning", "amaç");
+  assert.equal(made[0].body.p_domain, "software", "konu (ortak alan sözlüğü)");
   assert.equal(made[0].body.p_rules, "Saygılı ol.");
   assert.equal(made[0].body.p_rules_required, true);
   assert.equal(calls(db, "create_chat_group", "RPC").length, 0, "the old standalone-group RPC is never called from the UI");
@@ -566,10 +569,11 @@ await scenario("17b. Yönetim · Moderasyon kuyruğu: reddet / içeriği kaldır
 await scenario("17c. Yönetim · Ayarlar: yalnızca değişen alanlar gönderilir; kapatma onaylıdır; geçmiş sekmesi işlemleri listeler", async ({ page, db }) => {
   await open(page, C1, "manage");
   await pickManage(page, "Ayarlar");
-  await page.getByLabel("Kategori").selectOption("learning");
+  await page.getByLabel("Amaç").selectOption("learning");
+  await page.getByLabel("Konu").selectOption("design");
   await page.getByRole("tabpanel").getByRole("button", { name: "Kaydet", exact: true }).first().click();
   await page.getByText("Ayarlar kaydedildi.").waitFor();
-  assert.deepEqual(calls(db, "update_community", "RPC")[0].body.p_patch, { category: "learning" });
+  assert.deepEqual(calls(db, "update_community", "RPC")[0].body.p_patch, { category: "learning", domain: "design" });
   await page.getByRole("button", { name: "Topluluğu kapat" }).click();
   await dlg(page).getByText("Tüm üyelere bildirim gider.").waitFor();
   await dlg(page).getByRole("button", { name: "Topluluğu kapat" }).click();

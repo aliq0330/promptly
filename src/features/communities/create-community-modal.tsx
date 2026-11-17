@@ -14,7 +14,9 @@ import { uploadGroupAvatar } from "@/lib/supabase/chat-groups";
 import { imageSourceProblem } from "@/lib/image-processing";
 import { createCommunity } from "@/lib/supabase/communities";
 import { VisibilityPicker } from "./visibility-picker";
-import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, COMMUNITY_RULES_MAX, COMMUNITY_VISIBILITY_OPTIONS } from "@/lib/communities";
+import { COMMUNITY_RULES_MAX, COMMUNITY_VISIBILITY_OPTIONS } from "@/lib/communities";
+import type { DomainId } from "@/lib/domains";
+import { CommunityTopicFields } from "./topic-fields";
 import {
   clampMemberLimit,
   GROUP_DESCRIPTION_MAX,
@@ -51,6 +53,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
   const [visibility, setVisibility] = useState<GroupVisibility>("restricted");
   const [memberLimit, setMemberLimit] = useState(String(GROUP_MEMBER_LIMIT_DEFAULT));
   const [category, setCategory] = useState<CommunityCategory>("general");
+  const [domain, setDomain] = useState<DomainId | null>(null);
   const [postingPolicy, setPostingPolicy] = useState<GroupPostingPolicy>("members");
   const [feedPolicy, setFeedPolicy] = useState<CommunityFeedPolicy>("members");
   const [rules, setRules] = useState("");
@@ -109,6 +112,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
         memberLimit: clampMemberLimit(limitNumber),
         inviteUserIds: invitees.map((p) => p.id),
         category,
+        domain,
         postingPolicy,
         feedPolicy,
         rules,
@@ -269,19 +273,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
           </div>
 
 
-          <div>
-            <label htmlFor="community-category" className={fieldLabelClassName}>
-              {t("communities.create.categoryLabel")}
-            </label>
-            <select id="community-category" value={category} onChange={(event) => setCategory(event.target.value as CommunityCategory)} disabled={busy} className={`${fieldInputClassName} max-w-[16rem]`}>
-              {COMMUNITY_CATEGORIES.map((value) => (
-                <option key={value} value={value}>
-                  {t(CATEGORY_LABEL_KEYS[value])}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-caption text-text-muted">{t("communities.create.categoryHelp")}</p>
-          </div>
+          <CommunityTopicFields idPrefix="community" domain={domain} onDomainChange={setDomain} category={category} onCategoryChange={setCategory} disabled={busy} />
 
           <fieldset className="space-y-2">
             <legend className={fieldLabelClassName}>{t("communities.create.chatPolicyLabel")}</legend>

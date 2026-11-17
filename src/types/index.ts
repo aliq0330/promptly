@@ -1,4 +1,5 @@
 import type { ReactionKey } from "@/lib/reactions";
+import type { DomainId } from "@/lib/domains";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import type { PresetField, PresetSelection } from "@/lib/preset-fields";
 /**
@@ -452,8 +453,9 @@ export interface ChatGroup {
   createdAt: string;
   /** Bu kullanıcının grup içindeki rolü. */
   myRole: GroupRole;
-  /** Topluluk alanları (docs/history/175-*). */
+  /** Topluluk alanları (docs/history/175-*). `category` = AMAÇ (genel/öğrenme/vitrin; eski ortam değerleri yalnız eski kayıtlarda), `domain` = konu (ortak ALAN sözlüğü, docs/history/426-*). */
   category: CommunityCategory;
+  domain?: DomainId | null;
   feedPolicy: CommunityFeedPolicy;
   rules: string | null;
   rulesVersion: number;

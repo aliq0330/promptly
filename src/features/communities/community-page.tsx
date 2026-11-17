@@ -36,7 +36,7 @@ import { useCommunity } from "./use-community";
 import { CommunityAside, MemberStack, useCommunityPeople } from "./community-aside";
 import { CommunityCover } from "./community-cover";
 import { Eyebrow } from "@/features/content/detail-parts";
-import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, resolveCommunityView, type CommunityTab } from "@/lib/communities";
+import { accessibleTabs, communityChatHref, communityHref, communityTopicLabelKey, resolveCommunityView, type CommunityTab } from "@/lib/communities";
 import { can } from "@/lib/chat-groups";
 import { memberCountText } from "@/lib/group-labels";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -160,7 +160,7 @@ function CommunityPageInner() {
   const common: CommunityTabProps = { group: ready.group, role, viewerId: user?.id ?? null, membership: ready.membership, reload, onToast: show, goTab, section: view?.section ?? null, actionsEl };
   const g = ready.group;
 
-  const categoryLabel = t(CATEGORY_LABEL_KEYS[g.category]);
+  const categoryLabel = t(communityTopicLabelKey(g));
 
   const joinButton = (
     <CommunityJoinButton

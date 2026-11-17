@@ -9,7 +9,9 @@ import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { closeCommunity, reopenCommunity, updateCommunity, type UpdateCommunityPatch } from "@/lib/supabase/communities";
 import { can } from "@/lib/chat-groups";
-import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, COMMUNITY_RULES_MAX } from "@/lib/communities";
+import { COMMUNITY_RULES_MAX } from "@/lib/communities";
+import type { DomainId } from "@/lib/domains";
+import { CommunityTopicFields } from "./topic-fields";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, CommunityCategory, CommunityFeedPolicy } from "@/types";
 import { InlineAlert } from "@/components/ui/inline-alert";
@@ -28,6 +30,7 @@ export function CommunitySettingsSection({ group, onChanged, onToast }: { group:
   const isOwner = group.myRole === "owner";
 
   const [category, setCategory] = useState<CommunityCategory>(group.category);
+  const [domain, setDomain] = useState<DomainId | null>(group.domain ?? null);
   const [feedPolicy, setFeedPolicy] = useState<CommunityFeedPolicy>(group.feedPolicy);
   const [rules, setRules] = useState(group.rules ?? "");
   const [rulesRequired, setRulesRequired] = useState(group.rulesRequired);
@@ -36,6 +39,7 @@ export function CommunitySettingsSection({ group, onChanged, onToast }: { group:
 
   const patch: UpdateCommunityPatch = {};
   if (canSettings && category !== group.category) patch.category = category;
+  if (canSettings && domain !== (group.domain ?? null)) patch.domain = domain;
   if (canSettings && feedPolicy !== group.feedPolicy) patch.feedPolicy = feedPolicy;
   if (canRules && rules.trim() !== (group.rules ?? "")) patch.rules = rules.trim() || null;
   if (canRules && rulesRequired !== group.rulesRequired) patch.rulesRequired = rulesRequired;
@@ -80,18 +84,7 @@ export function CommunitySettingsSection({ group, onChanged, onToast }: { group:
           </h3>
           {canSettings && (
             <>
-              <div>
-                <label htmlFor="settings-category" className={fieldLabelClassName}>
-                  {t("communities.create.categoryLabel")}
-                </label>
-                <select id="settings-category" value={category} onChange={(e) => setCategory(e.target.value as CommunityCategory)} disabled={save.busy} className={`${fieldInputClassName} max-w-[16rem]`}>
-                  {COMMUNITY_CATEGORIES.map((value) => (
-                    <option key={value} value={value}>
-                      {t(CATEGORY_LABEL_KEYS[value])}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CommunityTopicFields idPrefix="settings" domain={domain} onDomainChange={setDomain} category={category} onCategoryChange={setCategory} disabled={save.busy} />
               <fieldset className="space-y-2" disabled={save.busy}>
                 <legend className={fieldLabelClassName}>{t("communities.create.feedPolicyLabel")}</legend>
                 <ChoiceCard>

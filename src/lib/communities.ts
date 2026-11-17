@@ -6,6 +6,7 @@
  * (SECURITY DEFINER RPC'ler + RLS: `supabase/migrations/20260920040000…60000_communities_*.sql`); aynı tablo orada da vardır.
  * Grup sohbetinin rol/yetenek kuralları `chat-groups.ts`'te kalır; topluluk onları yeniden kullanır, ikinci bir tablo kurmaz.
  */
+import { DOMAIN_LABEL_KEYS, isDomainId, type DomainId } from "./domains.ts";
 import { can, canSeeSettingsTab, isGroupManager, isGroupStaff, roleRank } from "./chat-groups.ts";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { CommunityCategory, CommunityFeedPolicy, CommunityNotifyLevel, GroupRole, GroupVisibility, RolePermissions } from "@/types";
@@ -27,6 +28,17 @@ export const EVENT_REMINDER_WINDOW_HOURS = 24;
 // ---------------------------------------------------------------------------------------------
 
 export const COMMUNITY_CATEGORIES: readonly CommunityCategory[] = ["general", "image", "text", "audio", "video", "workflow", "learning", "showcase"];
+
+/**
+ * Oluşturma/ayar ekranının sunduğu AMAÇlar (docs/history/426-*): topluluğun konusu artık ortak ALAN sözlüğündendir (`domain`); `category` yalnız amaçtır.
+ * Ortam değerleri (görsel/metin/ses/video/workflow) eski kayıtlarda geçerli kalır ve gösterilir ama yeni seçenek olarak SUNULMAZ.
+ */
+export const COMMUNITY_PURPOSES: readonly CommunityCategory[] = ["general", "learning", "showcase"];
+
+/** Kart/başlıktaki konu etiketi: alan varsa alanın adı, yoksa amaç (ya da eski ortam) adı. */
+export function communityTopicLabelKey(community: { domain?: DomainId | null; category: CommunityCategory }): TranslationKey {
+  return community.domain && isDomainId(community.domain) ? DOMAIN_LABEL_KEYS[community.domain] : CATEGORY_LABEL_KEYS[community.category];
+}
 
 /** Öneri/gözat nedeninin etiketi (`recommend_communities` / `browse_communities` `reason`). */
 export const REASON_LABEL_KEYS: Record<"followed" | "interest" | "category" | "popular", TranslationKey> = {

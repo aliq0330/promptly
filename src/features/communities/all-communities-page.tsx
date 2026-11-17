@@ -21,10 +21,9 @@ import { DiscoverView } from "./communities-page";
 import { applyJoinState, ErrorBox, LoadingRows, type ListState } from "./home-shared";
 import { toGroupError } from "@/lib/supabase/chat-groups";
 import { browseCommunities, type BrowseSort } from "@/lib/supabase/communities";
-import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES } from "@/lib/communities";
+import { DOMAIN_IDS, DOMAIN_LABEL_KEYS, type DomainId } from "@/lib/domains";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import type { CommunityCategory } from "@/types";
 import { ScrollRow } from "@/components/ui/scroll-row";
 
 const SORTS: BrowseSort[] = ["relevant", "popular", "newest", "active"];
@@ -74,7 +73,7 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
     setQuery(urlQuery);
   }, [urlQuery]);
   const [sort, setSort] = useState<BrowseSort>("relevant");
-  const [category, setCategory] = useState<CommunityCategory | null>(null);
+  const [category, setCategory] = useState<DomainId | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<ListState | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -146,9 +145,9 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <ScrollRow className="flex gap-1.5 pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
-          {[null, ...COMMUNITY_CATEGORIES].map((value) => (
+          {[null, ...DOMAIN_IDS].map((value) => (
             <Chip key={value ?? "all"} selected={category === value} onClick={() => setCategory(value)}>
-              {value ? t(CATEGORY_LABEL_KEYS[value]) : t("communities.filter.all")}
+              {value ? t(DOMAIN_LABEL_KEYS[value]) : t("communities.filter.all")}
             </Chip>
           ))}
         </ScrollRow>

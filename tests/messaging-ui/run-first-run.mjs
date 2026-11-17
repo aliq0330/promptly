@@ -95,8 +95,8 @@ await scenario("1. yeni hesap: kurulum ekranı açılır, site (menü + sayfa) h
   await page.getByRole("heading", { name: "Bir veya birkaç konu seçin" }).waitFor();
   assert.equal(await shell(page).count(), 0, "sayfa içeriği çizilmez");
   assert.equal(await page.locator("nav").count(), 0, "gezinme çizilmez");
-  assert.equal(await page.locator("[data-first-run-topic]").count(), 9, "9 konu satırı");
-  assert.equal(await topic(page, "foto").locator("img").count(), 3, "her satırda 3 görsel");
+  assert.equal(await page.locator("[data-first-run-topic]").count(), 14, "14 alan satırı");
+  assert.equal(await topic(page, "photography").locator("img").count(), 3, "her satırda 3 görsel");
   assert.equal(await next(page).isDisabled(), true);
   assert.match(await page.locator("[data-first-run-hint]").innerText(), /en az 2 kategoriyi takip edin/);
   assert.equal(await page.getByRole("button", { name: /Atla|Kapat|Şimdilik/ }).count(), 0, "atlama / kapatma yok");
@@ -107,33 +107,33 @@ await scenario("1. yeni hesap: kurulum ekranı açılır, site (menü + sayfa) h
 await scenario("2. bir konu yetmez, iki konu İleri'yi açar; seçili satır 'Takip Edildi' der; en çok 5 konu", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await gate(page).waitFor();
-  await topic(page, "dijital").click();
-  assert.equal(await topic(page, "dijital").getAttribute("aria-pressed"), "true");
-  await topic(page, "dijital").getByText("Takip Edildi").waitFor();
+  await topic(page, "art").click();
+  assert.equal(await topic(page, "art").getAttribute("aria-pressed"), "true");
+  await topic(page, "art").getByText("Takip Edildi").waitFor();
   assert.equal(await next(page).isDisabled(), true);
   assert.match(await page.locator("[data-first-run-hint]").innerText(), /1 kategori daha/);
-  await topic(page, "foto").click();
+  await topic(page, "photography").click();
   assert.equal(await next(page).isDisabled(), false);
   assert.match(await page.locator("[data-first-run-hint]").innerText(), /İyi iş çıkardınız/);
   await shot(page, "2-two-picked");
-  for (const s of ["grafik", "kod", "yazi"]) await topic(page, s).click();
+  for (const s of ["design", "software", "writing"]) await topic(page, s).click();
   assert.equal(await topic(page, "video").getAttribute("aria-disabled"), "true", "dolunca diğer satırlar soluk");
   await topic(page, "video").click({ force: true });
   assert.equal(await topic(page, "video").getAttribute("aria-pressed"), "false", "6. konu eklenmez");
   assert.equal(await page.locator('[data-first-run-topic][aria-pressed="true"]').count(), 5);
-  await topic(page, "yazi").click();
+  await topic(page, "writing").click();
   assert.equal(await page.locator('[data-first-run-topic][aria-pressed="true"]').count(), 4, "seçim geri alınabilir");
 });
 
 await scenario("3. tam akış: konular profile yazılır → kişi önerileri → takip → 'Özel akışın oluşturuluyor' → site açılır", async ({ page, state }) => {
   await page.goto(`${BASE}/`);
   await gate(page).waitFor();
-  await topic(page, "dijital").click();
-  await topic(page, "grafik").click();
+  await topic(page, "art").click();
+  await topic(page, "design").click();
   await next(page).click();
   const people = page.locator("[data-first-run-person]");
   await people.first().waitFor();
-  assert.deepEqual(state.patches, [{ interests: ["Dijital Sanat", "Grafik Tasarım"] }], "konular profiles.interests'e yazıldı");
+  assert.deepEqual(state.patches, [{ interests: ["art", "design"] }], "konular profiles.interests'e yazıldı");
   assert.equal(await people.count(), 3, "3 öneri");
   await page.getByRole("heading", { name: "Kimleri takip edelim?" }).waitFor();
   assert.match(await page.locator("[data-first-run-follow-hint]").innerText(), /0 \/ 3/);
@@ -160,8 +160,8 @@ await scenario("3. tam akış: konular profile yazılır → kişi önerileri �
 await scenario("4. kişi adımı isteğe bağlı: takip etmeden 'Şimdilik geç' siteyi açar", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await gate(page).waitFor();
-  await topic(page, "oyun").click();
-  await topic(page, "muzik").click();
+  await topic(page, "game-3d").click();
+  await topic(page, "music-audio").click();
   await next(page).click();
   await page.locator("[data-first-run-person]").first().waitFor();
   await page.getByRole("button", { name: "Şimdilik geç" }).click();
@@ -192,14 +192,14 @@ await scenario("7. yeni hesap ama 2 konusu zaten kayıtlı → zorlanmaz (kayıt
   await page.goto(`${BASE}/`);
   await shell(page).waitFor();
   assert.equal(await gate(page).count(), 0);
-}, { interests: ["Dijital Sanat", "Fotoğrafçılık"] });
+}, { interests: ["art", "photography"] });
 
 await scenario("8. kayıt hatası: ekranda kalır, hata gösterilir, tekrar denenebilir", async ({ page, state }) => {
   await page.route(/\/rest\/v1\/profiles\?/, (route) => (route.request().method() === "PATCH" && !state.allowPatch ? route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "boom" }) }) : route.fallback()));
   await page.goto(`${BASE}/`);
   await gate(page).waitFor();
-  await topic(page, "dijital").click();
-  await topic(page, "foto").click();
+  await topic(page, "art").click();
+  await topic(page, "photography").click();
   await next(page).click();
   await page.locator("[data-first-run-error]").waitFor();
   assert.equal(await page.locator("[data-first-run-person]").count(), 0, "kişi adımına geçilmedi");
@@ -209,8 +209,8 @@ await scenario("8. kayıt hatası: ekranda kalır, hata gösterilir, tekrar dene
 await scenario("9. öneriler yüklenemezse 'Tekrar dene' görünür ve kurulum yine bitirilebilir", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await gate(page).waitFor();
-  await topic(page, "dijital").click();
-  await topic(page, "foto").click();
+  await topic(page, "art").click();
+  await topic(page, "photography").click();
   await next(page).click();
   await page.getByText("Öneriler yüklenemedi.").waitFor();
   await page.getByRole("button", { name: "Tekrar dene" }).waitFor();
@@ -223,10 +223,10 @@ await scenario("10. İngilizce metinler + masaüstü düzeni (taşma yok)", asyn
   await gate(page).waitFor();
   await page.getByRole("heading", { name: "Pick a few topics" }).waitFor();
   await page.getByText("Follow at least 2 topics to continue").waitFor();
-  await topic(page, "dijital").click();
-  await topic(page, "3d").click();
+  await topic(page, "art").click();
+  await topic(page, "game-3d").click();
   await page.getByText("Nice work!").waitFor();
-  await topic(page, "dijital").getByText("Following").waitFor();
+  await topic(page, "art").getByText("Following").waitFor();
   await shot(page, "10-en-desktop");
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 1280, height: 800 }, lang: "en" });

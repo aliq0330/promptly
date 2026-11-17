@@ -64,9 +64,9 @@ create or replace function public._lbls(p_ids uuid[]) returns text language sql 
   $$ select coalesce(string_agg(public._lbl(x), ',' order by o), '') from unnest(p_ids) with ordinality t(x, o) $$;
 grant execute on function public._mkc(text, text, uuid[], text), public._lbl(uuid), public._lbls(uuid[]) to public;
 
--- A "Alfa Resim" (herkese açık, görsel: bobby, carol) · B "Bravo Atölye" (herkese açık: bobby) · R "Rüzgar" (kapalı: erin, bobby) · P "Gizli Oda" (tamamen kapalı: bobby, erin)
+-- A "Alfa Resim" (herkese açık, görsel: bobby, carol) · B "Fotoğrafçılık Atölye" (herkese açık: bobby) · R "Rüzgar" (kapalı: erin, bobby) · P "Gizli Oda" (tamamen kapalı: bobby, erin)
 select public._mkc('Alfa Resim', 'public', array[:bobby, :carol]::uuid[], 'image') as v \gset a_
-select public._mkc('Bravo Atölye', 'public', array[:bobby]::uuid[]) as v \gset b_
+select public._mkc('Fotoğrafçılık Atölye', 'public', array[:bobby]::uuid[]) as v \gset b_
 select public._mkc('Rüzgar', 'restricted', array[:erin, :bobby]::uuid[]) as v \gset r_
 select public._mkc('Gizli Oda', 'private', array[:bobby, :erin]::uuid[]) as v \gset p_
 insert into public._ctx values ('A', :'a_v'), ('B', :'b_v'), ('R', :'r_v'), ('P', :'p_v');
@@ -245,14 +245,14 @@ delete from public.chat_group_bans where user_id = :dave;
 -- ============================================================================
 -- 4. Topluluk önerileri
 -- ============================================================================
-update public.profiles set interests = array['bravo'] where id = :dave;
+update public.profiles set interests = array['photography'] where id = :dave;
 set role authenticated;
 select public._as_user(:dave);
 select public._check(24, 'öneri: üye olunmayan herkese açık + kapalı topluluklar (A,B,R); tamamen kapalı P ASLA; en çok istenen sayı',
   (select public._lbls(array_agg(id order by id)) from (select id from public.recommend_communities(10) order by id) s) = (select public._lbls(array_agg(x order by x)) from unnest(array[public._g('A'), public._g('B'), public._g('R')]) x)
   and (select count(*) from public.recommend_communities(2)) = 2,
   (select string_agg(public._lbl(id) || ':' || reason, ',') from public.recommend_communities(10)));
-select public._check(25, 'öneri nedeni gerçek sinyalden: B = ilgi alanı (''bravo'' adında), A = ortak üyelik/kategori yok → popüler, R = popüler',
+select public._check(25, 'öneri nedeni gerçek sinyalden: B = ilgi alanı (''photography'' alanı → ''Fotoğrafçılık'' adında), A = ortak üyelik/kategori yok → popüler, R = popüler',
   (select reason from public.recommend_communities(10) where public._lbl(id) = 'B') = 'interest'
   and (select reason from public.recommend_communities(10) where public._lbl(id) = 'R') = 'popular',
   (select string_agg(public._lbl(id) || ':' || reason, ',') from public.recommend_communities(10)));
