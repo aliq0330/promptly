@@ -116,13 +116,17 @@ export function CreateMenuList({ tag = null, community = null, onPick }: { tag?:
 /** "+" / "Oluştur": menü alttan açılır (masaüstünde ortada pencere); seçim yapılınca kapanır. */
 export function CreateMenuSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
+  // Telefonda `Modal` kartın yüksekliğini sınırlar (%75/%90): başlık sabit, liste kendi içinde kayar — aksi hâlde alttaki satır kartın dışına taşar
+  // (altı çizgili/dolgulu güvenli alan boşluğunu da `Modal` verir, buraya ayrıca yazılmaz).
   return (
     <Modal onClose={onClose} labelledBy="create-menu-title">
-      <DialogShell className="w-full max-w-md rounded-t-lg border border-border-soft bg-surface px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-pop sm:rounded-lg sm:pb-4">
-        <h2 id="create-menu-title" className="px-1 pb-1 text-h3 font-bold text-text">
+      <DialogShell className="flex w-full max-w-md flex-col overflow-hidden rounded-t-lg border border-border-soft bg-surface shadow-pop sm:rounded-lg">
+        <h2 id="create-menu-title" className="shrink-0 px-5 pb-1 pt-4 text-h3 font-bold text-text">
           {t("create.eyebrow")}
         </h2>
-        <CreateMenuList onPick={onClose} />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
+          <CreateMenuList onPick={onClose} />
+        </div>
       </DialogShell>
     </Modal>
   );
