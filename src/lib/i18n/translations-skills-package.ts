@@ -34,6 +34,8 @@ export const skillPackageTranslations = {
   "error.skillPublishRateLimit": { tr: "Bugün çok sayıda sürüm yayınladın. Yarın tekrar dene.", en: "You've published a lot of versions today. Try again tomorrow." },
   "error.skillNotFound": { tr: "Skill bulunamadı ya da sana ait değil.", en: "Skill not found, or it isn't yours." },
   "error.skillVersionImmutable": { tr: "Yayınlanmış bir sürüm değiştirilemez.", en: "A published version can't be changed." },
+  "error.skillPublishViaEdge": { tr: "Dosyalı bir Skill yalnız yayın penceresinden yayınlanır; sürüm numarası da oradan gelir.", en: "A Skill with files can only be published from the publish dialog; the version number comes from there too." },
+  "error.skillSecretFound": { tr: "Metinde özel anahtar ya da JWT var gibi görünüyor; yayınlamadan önce kaldır.", en: "The text appears to contain a private key or a JWT; remove it before publishing." },
 
   // --- Paket bölümü ---
   "skill.pkg.sectionTitle": { tr: "Paket dosyaları", en: "Package files" },

@@ -4655,6 +4655,8 @@ const dictionary: Record<string, string> = {
   "error.skillPublishRateLimit": "Bugün çok sayıda sürüm yayınladın. Yarın tekrar dene.",
   "error.skillNotFound": "Skill bulunamadı ya da sana ait değil.",
   "error.skillVersionImmutable": "Yayınlanmış bir sürüm değiştirilemez.",
+  "error.skillPublishViaEdge": "Dosyalı bir Skill yalnız yayın penceresinden yayınlanır; sürüm numarası da oradan gelir.",
+  "error.skillSecretFound": "Metinde özel anahtar ya da JWT var gibi görünüyor; yayınlamadan önce kaldır.",
   "skill.pkg.sectionTitle": "Paket dosyaları",
   "skill.pkg.intro": "Skill'inin yanında gelen dosyalar: kurallar, referanslar, örnekler, betikler ve araç tanımı. Yayınladığında bunlardan SKILL.md, metadata.json ve LICENSE ile birlikte değişmez bir ZIP oluşur.",
   "skill.pkg.noRunNotice": "Promptly hiçbir dosyayı çalıştırmaz; betikler yalnızca veridir. İzinli türler: .md .txt .json .yaml .csv .pdf .png .jpg .webp ve işaretli betikler (.sh .py .js .ps1 .bat).",

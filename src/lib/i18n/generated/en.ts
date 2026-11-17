@@ -4655,6 +4655,8 @@ const dictionary: Record<string, string> = {
   "error.skillPublishRateLimit": "You've published a lot of versions today. Try again tomorrow.",
   "error.skillNotFound": "Skill not found, or it isn't yours.",
   "error.skillVersionImmutable": "A published version can't be changed.",
+  "error.skillPublishViaEdge": "A Skill with files can only be published from the publish dialog; the version number comes from there too.",
+  "error.skillSecretFound": "The text appears to contain a private key or a JWT; remove it before publishing.",
   "skill.pkg.sectionTitle": "Package files",
   "skill.pkg.intro": "The files that ship with your Skill: rules, references, examples, scripts and tool definitions. When you publish, they're packaged with SKILL.md, metadata.json and LICENSE into an immutable ZIP.",
   "skill.pkg.noRunNotice": "Promptly never runs any file; scripts are only data. Allowed types: .md .txt .json .yaml .csv .pdf .png .jpg .webp and flagged scripts (.sh .py .js .ps1 .bat).",

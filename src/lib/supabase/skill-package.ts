@@ -120,6 +120,8 @@ export const SKILL_ERROR_CODES = {
   skill_publish_rate_limit: true,
   skill_not_found: true,
   skill_version_immutable: true,
+  skill_publish_via_edge: true,
+  skill_secret_found: true,
   skill_incomplete: true,
   package_too_large: true,
   file_integrity: true,

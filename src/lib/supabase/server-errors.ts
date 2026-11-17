@@ -60,6 +60,8 @@ const SERVER_ERROR_KEYS: Record<string, TranslationKey> = {
   skill_publish_rate_limit: "error.skillPublishRateLimit",
   skill_not_found: "error.skillNotFound",
   skill_version_immutable: "error.skillVersionImmutable",
+  skill_publish_via_edge: "error.skillPublishViaEdge",
+  skill_secret_found: "error.skillSecretFound",
 };
 
 /** Hata zaten kendi ekranında (ör. şikâyet penceresi) gösterildiğinden ayrıca toast çıkmayan kodlar. */
