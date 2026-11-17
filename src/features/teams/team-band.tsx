@@ -9,6 +9,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { Tabs } from "@/components/ui/tabs";
 import { HUB_BAND_MENU_BUTTON_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
 import { Button } from "@/components/ui/button";
+import { Lock } from "@/components/icons/lock";
+import { VisibilityTag } from "@/components/ui/visibility-tag";
 import { focusMenuItem, menuKeyDown } from "@/components/ui/menu-keys";
 import { useOnlineIds } from "@/features/presence/use-presence";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -93,7 +95,7 @@ export function TeamBand({
     };
   }, [menuOpen]);
 
-  const meta = [t("tm.card.members", { count: team.memberCount }), t("tp.header.projects", { count: team.spaceCount }), t("tm.header.inviteOnly")];
+  const meta = [t("tm.card.members", { count: team.memberCount }), t("tp.header.projects", { count: team.spaceCount })];
 
   return (
     <HubDetailBand
@@ -108,7 +110,12 @@ export function TeamBand({
           <TeamMark name={team.name} tone={team.tone} solid size={52} className="rounded-md" />
         </span>
       }
-      kicker={<span className="rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">{t("tc.band.kicker")}</span>}
+      kicker={
+        <>
+          <span className="rounded-full bg-surface/80 px-2.5 py-0.5 font-semibold text-text">{t("tc.band.kicker")}</span>
+          <VisibilityTag icon={Lock} label={t("tm.header.inviteOnly")} data-team-visibility="" />
+        </>
+      }
       title={<h1 data-team-name="">{team.name}</h1>}
       byline={
         <p className="min-w-0 truncate text-small text-text-secondary" data-team-meta data-team-header-block>

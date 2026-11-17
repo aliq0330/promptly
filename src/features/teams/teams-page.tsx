@@ -18,6 +18,9 @@ import { usePagedList } from "@/features/content/use-paged-list";
 import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { HUB_CARD_CHIP_CLASS, HUB_GRID_CLASS, HUB_PAGE_CLASS, HubAttentionStrip, HubBadge, HubBand, HubCard, HubCardSkeleton, HubControlRow, HubCreateButton, HubFaces, HubGrid } from "@/features/hub/hub-kit";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { SearchField } from "@/components/ui/search-field";
+import { VisibilityTag } from "@/components/ui/visibility-tag";
+import { Lock } from "@/components/icons/lock";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { useToast } from "@/features/groups/use-toast";
 import { PHONE_HOME_BOTTOM_PAD, PhoneHomeSection } from "@/features/content/phone-home";
@@ -152,12 +155,14 @@ function TeamsPageInner() {
             </button>
           </HubControlRow>
           {searchOpen && (
-            <Input
-              type="search"
+            <SearchField
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={setQuery}
               placeholder={t("tm.filter.search")}
-              aria-label={t("tm.filter.search")}
+              clearLabel={t("common.clear")}
+              alwaysClear
+              onClear={() => setSearchOpen(false)}
+              autoFocus
             />
           )}
           {todos.length > 0 && (
@@ -344,7 +349,12 @@ function TeamCard({ team, approvals }: { team: TeamSummary; approvals: number })
         </span>
       }
       chip={<span className={HUB_CARD_CHIP_CLASS}>{t("tc.band.kicker")}</span>}
-      coverOverlay={team.recent ? <span className="max-w-full truncate rounded-full bg-surface/90 px-2.5 py-0.5 text-caption text-text-secondary shadow-xs">{recentLine(t, language, team.recent)}</span> : undefined}
+      coverOverlay={
+        <>
+          <VisibilityTag icon={Lock} label={t("tm.header.inviteOnly")} data-team-visibility="" />
+          {team.recent && <span className="min-w-0 truncate rounded-full bg-surface/90 px-2.5 py-0.5 text-caption text-text-secondary shadow-xs">{recentLine(t, language, team.recent)}</span>}
+        </>
+      }
       footerStart={
         preview.length > 0 ? (
           <span data-team-avatars className="flex min-w-0">
