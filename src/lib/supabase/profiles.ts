@@ -332,6 +332,20 @@ export async function updateOwnInterests(userId: string, interests: string[]): P
   return mapProfileRow(data as ProfileRow);
 }
 
+/** Whether another member already uses `username` (the live check of the first-run profile step; the database's unique rule still decides on save). */
+export async function isUsernameTaken(username: string, exceptUserId: string): Promise<boolean> {
+  const { data, error } = await supabase.from("profiles").select("id").eq("username", username).neq("id", exceptUserId).limit(1);
+  if (error) throw new Error(error.message);
+  return (data ?? []).length > 0;
+}
+
+/** Saves only the avatar address (already uploaded with `uploadAvatar`); `null` removes the picture. */
+export async function updateOwnAvatarUrl(userId: string, avatarUrl: string | null): Promise<UserProfile> {
+  const { data, error } = await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", userId).select(PROFILE_SELECT).maybeSingle();
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("profile.updateFailed"));
+  return mapProfileRow(data as ProfileRow);
+}
+
 export const USERNAME_PATTERN = /^[a-z0-9_.]{3,30}$/;
 
 /**

@@ -86,3 +86,59 @@ export function markFirstRunDone(userId: string, storage: DoneStorage | null = d
     /* depolama engelli — profil yüklenince karar yine ilgi alanlarından verilir */
   }
 }
+
+/**
+ * Üçüncü adım: kullanıcı adı + profil resmi. Kayıtta kullanıcı adını veritabanı üretir (`handle_new_user`); burada yeni üye onu görür ve
+ * isterse değiştirir. Biçim kuralı `profiles_username_format` / `lib/supabase/profiles.ts` `USERNAME_PATTERN` ile AYNIDIR (test karşılaştırır).
+ */
+export const USERNAME_FORMAT = /^[a-z0-9_.]{3,30}$/;
+export const USERNAME_MAX = 30;
+
+/** Hazır profil resmi renkleri (kullanıcı verisinin varsayılanı: resme çizilen piksel renkleridir, arayüz token'ı değil). Beyaz harfle ≥ 4.5:1. */
+export const AVATAR_COLORS = ["#3b5be2", "#b4530f", "#17653a", "#6b2fa3", "#0e5a73", "#a3204a"] as const;
+
+/** Yazılanı kullanıcı adına çevirir: küçük harf, boşluksuz, en çok 30 karakter. */
+export function normalizeUsername(raw: string): string {
+  return raw.toLowerCase().replace(/\s/g, "").slice(0, USERNAME_MAX);
+}
+
+export type UsernameFormat = "empty" | "short" | "invalid" | "valid";
+
+export function usernameFormat(username: string): UsernameFormat {
+  if (username.length === 0) return "empty";
+  if (!/^[a-z0-9_.]+$/.test(username)) return "invalid";
+  if (username.length < 3) return "short";
+  return USERNAME_FORMAT.test(username) ? "valid" : "invalid";
+}
+
+/** Sunucuya sorulan "bu ad alınmış mı?" yanıtının durumu. */
+export type UsernameCheck = "idle" | "checking" | "taken" | "free" | "error";
+export type UsernameStatus = UsernameFormat | "checking" | "taken" | "available";
+
+/**
+ * Alan altındaki durum. Kişinin şu anki adı hep "müsait"tir (kendi adı); sorgu hatası engellemez ("available" — kesin karar kayıtta,
+ * veritabanının benzersizlik kuralındadır).
+ */
+export function usernameStatus(username: string, check: UsernameCheck, current: string): UsernameStatus {
+  const format = usernameFormat(username);
+  if (format !== "valid") return format;
+  if (username === current) return "available";
+  if (check === "taken") return "taken";
+  if (check === "free" || check === "error") return "available";
+  return "checking";
+}
+
+export function usernameCanFinish(status: UsernameStatus): boolean {
+  return status === "available";
+}
+
+/** Alınmış bir ad için iki öneri (geçerli biçimde, 30 karakteri aşmadan). */
+export function usernameSuggestions(username: string): [string, string] {
+  const base = username.slice(0, USERNAME_MAX - 3);
+  return [`${base}_1`, `${base}.tr`];
+}
+
+/** Resmin üstündeki baş harf (büyük harf; ad boşsa "M"). */
+export function avatarInitial(username: string): string {
+  return (username[0] ?? "m").toUpperCase();
+}
