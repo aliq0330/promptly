@@ -26,7 +26,7 @@ const EDGE = 8;
  * olarak geçmesin diye olaylar durdurulur. Menü `body`'ye taşınır ve `position: fixed` ile düğmenin yanına konur — `overflow` kırpan
  * ataların (yatay kaydırmalı pano araç çubuğu, kart) içinde kesilmesin; yer yoksa düğmenin ÜSTÜNE açılır, kaydırma/boyut değişince yeniden konur.
  */
-export function SpaceMenu({ items, label, align = "right", trigger, className }: { items: SpaceMenuItem[]; label?: string; align?: "left" | "right"; trigger?: ReactNode; className?: string }) {
+export function SpaceMenu({ items, label, align = "right", trigger, className, triggerClassName }: { items: SpaceMenuItem[]; label?: string; align?: "left" | "right"; trigger?: ReactNode; className?: string; triggerClassName?: string }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -101,7 +101,7 @@ export function SpaceMenu({ items, label, align = "right", trigger, className }:
           event.preventDefault();
           setOpen((value) => !value);
         }}
-        className="flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className={triggerClassName ?? "flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"}
       >
         {trigger ?? <MoreVertical size={20} aria-hidden />}
       </button>

@@ -14,7 +14,7 @@ import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { useReport } from "@/features/moderation/report-provider";
 import { absoluteUrl } from "@/lib/utils";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
-import { HUB_PAGE_CLASS, HubDetailBand, HubDetailLayout } from "@/features/hub/hub-kit";
+import { HUB_BAND_MENU_BUTTON_CLASS, HUB_PAGE_CLASS, HubDetailBand, HubDetailLayout } from "@/features/hub/hub-kit";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -168,7 +168,6 @@ function CommunityPageInner() {
       status={joinState}
       role={role}
       rules={g.rules}
-      size="lg"
       onChange={(next) => void membershipChanged(next)}
       onToast={show}
     />
@@ -205,7 +204,7 @@ function CommunityPageInner() {
         menu={
           // Topluluğun ⋮ menüsü (Space ve Ekip bandıyla aynı yer): bağlantı, bildirim tercihi (üye), şikâyet (sahibi hariç).
           <span data-community-menu="">
-            <DropdownMenu label={t("communities.menu.label")} triggerClassName="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/80 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <DropdownMenu label={t("communities.menu.label")} triggerClassName={HUB_BAND_MENU_BUTTON_CLASS}>
               {(close) => (
                 <>
                   <MenuItem
@@ -252,7 +251,7 @@ function CommunityPageInner() {
         actions={
           <div className="flex w-full flex-wrap items-center gap-2 xl:max-w-72" data-community-actions="">
             {role && (
-              <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg" })}>
+              <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName()}>
                 <MessagesSquare size={20} aria-hidden /> {t("communities.detail.openChat")}
                 {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground px-1.5 text-caption text-primary">{unread}</span>}
               </Link>
@@ -263,7 +262,7 @@ function CommunityPageInner() {
                 href={communityHref(g.id, "members", "requests")}
                 data-pending-requests
                 aria-label={t("communities.detail.pendingRequests", { count: pendingForMe })}
-                className={buttonClassName({ size: "lg", variant: "secondary" })}
+                className={buttonClassName({ variant: "secondary" })}
               >
                 <UserCog size={16} aria-hidden />
                 <span className="sm:hidden" aria-hidden>{t("communities.detail.pendingShort", { count: pendingForMe })}</span>

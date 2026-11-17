@@ -31,7 +31,7 @@ import { usePageTitle } from "@/components/layout/page-title";
 import { Tabs } from "@/components/ui/tabs";
 import { PhoneSubBar } from "@/features/content/phone-sections";
 import { useMediaQuery } from "@/lib/use-media-query";
-import { HUB_PAGE_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
+import { HUB_BAND_MENU_BUTTON_CLASS, HUB_PAGE_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -350,12 +350,12 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                   </Button>
                 )}
                 <span data-detail-menu="">
-                  <SpaceMenu items={menuItems} />
+                  <SpaceMenu items={menuItems} triggerClassName={HUB_BAND_MENU_BUTTON_CLASS} />
                 </span>
               </div>
             ) : (
               <span data-detail-menu="">
-                <SpaceMenu items={menuItems} />
+                <SpaceMenu items={menuItems} triggerClassName={HUB_BAND_MENU_BUTTON_CLASS} />
               </span>
             )
           }

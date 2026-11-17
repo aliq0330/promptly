@@ -7,7 +7,8 @@ import { LogOut } from "@/components/icons/log-out";
 import { MoreVertical } from "@/components/icons/more-vertical";
 import { Avatar } from "@/components/ui/avatar";
 import { Tabs } from "@/components/ui/tabs";
-import { HubDetailBand } from "@/features/hub/hub-kit";
+import { HUB_BAND_MENU_BUTTON_CLASS, HubDetailBand } from "@/features/hub/hub-kit";
+import { Button } from "@/components/ui/button";
 import { focusMenuItem, menuKeyDown } from "@/components/ui/menu-keys";
 import { useOnlineIds } from "@/features/presence/use-presence";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -137,16 +138,10 @@ export function TeamBand({
             </div>
           )}
           {canInvite && (
-            <button
-              type="button"
-              onClick={onInvite}
-              data-team-invite-header
-              aria-label={t("tm.invite.title")}
-              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-4 text-small font-semibold text-primary-foreground hover:bg-primary-hover md:px-5"
-            >
+            <Button type="button" onClick={onInvite} data-team-invite-header aria-label={t("tm.invite.title")} className="shrink-0">
               <UserPlus size={20} aria-hidden />
               <span>{t("tm.invite.title")}</span>
-            </button>
+            </Button>
           )}
           <div className="relative shrink-0" ref={menuRef}>
             <button
@@ -157,7 +152,7 @@ export function TeamBand({
               aria-haspopup="menu"
               aria-expanded={menuOpen}
               data-team-menu
-              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/80 text-text hover:bg-surface"
+              className={HUB_BAND_MENU_BUTTON_CLASS}
             >
               <MoreVertical size={20} aria-hidden />
             </button>
