@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MoreVertical } from "@/components/icons/more-vertical";
 import { MENU_PANEL_CLASS } from "@/components/ui/menu";
+import { focusMenuItem, menuKeyDown } from "@/components/ui/menu-keys";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,6 +23,13 @@ export function DropdownMenu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Açılışta odak ilk öğeye girer (klavyeyle açılan menü içinde gezilebilsin); Escape odağı düğmeye geri verir.
+  useEffect(() => {
+    if (open) focusMenuItem(panelRef.current);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -29,7 +37,10 @@ export function DropdownMenu({
       if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus({ preventScroll: true });
+      }
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -42,6 +53,7 @@ export function DropdownMenu({
   return (
     <div ref={ref} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         aria-label={label}
@@ -52,7 +64,7 @@ export function DropdownMenu({
         {trigger ?? <MoreVertical size={16} />}
       </button>
       {open && (
-        <div role="menu" className={cn(MENU_PANEL_CLASS, "absolute right-0 top-full z-30 mt-1 min-w-48")}>
+        <div ref={panelRef} role="menu" onKeyDown={(event) => menuKeyDown(event, panelRef.current)} className={cn(MENU_PANEL_CLASS, "absolute right-0 top-full z-30 mt-1 min-w-48")}>
           {children(() => setOpen(false))}
         </div>
       )}

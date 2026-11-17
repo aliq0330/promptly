@@ -5,6 +5,7 @@ import type { IconComponent } from "@/components/icons/icon";
 import { Check } from "@/components/icons/check";
 import { ChevronDown } from "@/components/icons/chevron-down";
 import { Modal } from "@/components/ui/modal";
+import { focusMenuItem, menuKeyDown } from "@/components/ui/menu-keys";
 import { cn } from "@/lib/utils";
 import { DialogShell } from "@/components/ui/dialog-shell";
 
@@ -65,6 +66,8 @@ export function SectionMenu<K extends string>({
   const wide = useWide();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const activeItem = items.find((item) => item.key === active);
   const current = activeItem ?? (variant === "tab" ? undefined : items[0]);
   const pending = items.find((item) => item.count)?.count ?? 0;
@@ -74,7 +77,11 @@ export function SectionMenu<K extends string>({
     const onPointer = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
     };
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      triggerRef.current?.focus({ preventScroll: true });
+    };
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -83,8 +90,13 @@ export function SectionMenu<K extends string>({
     };
   }, [open, wide]);
 
+  // Açılışta odak seçili satıra girer (klavyeyle gezilir; Escape odağı düğmeye geri verir).
+  useEffect(() => {
+    if (open && wide) focusMenuItem(listRef.current, '[role="radio"]');
+  }, [open, wide]);
+
   const list = (
-    <div role="radiogroup" aria-label={ariaLabel} className="space-y-0.5">
+    <div ref={listRef} role="radiogroup" aria-label={ariaLabel} className="space-y-0.5" onKeyDown={(event) => menuKeyDown(event, listRef.current, '[role="radio"]')}>
       {items.map((item) => {
         const selected = item.key === active;
         const Icon = item.icon;
@@ -119,6 +131,7 @@ export function SectionMenu<K extends string>({
   return (
     <div ref={rootRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-haspopup="true"

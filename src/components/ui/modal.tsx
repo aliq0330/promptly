@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FOCUSABLE_SELECTOR, tabTarget } from "@/lib/modal-focus";
 import { TEXT_ENTRY_SELECTOR } from "@/lib/keyboard-open";
 import { useKeyboardViewport } from "@/lib/use-keyboard-viewport";
 import { Portal } from "./portal";
@@ -298,7 +299,34 @@ export function Modal({
   useEffect(() => {
     onCloseRef.current = onClose;
   });
-  const { overlayRef, sheetRef } = useSheetDismiss(centered && variant === "dialog" ? "side" : variant, onCloseRef);
+  const { overlayRef: setSheetOverlay, sheetRef } = useSheetDismiss(centered && variant === "dialog" ? "side" : variant, onCloseRef);
+  // Odak yönetimi (docs/history/418-*): açılışta odak pencereye girer, Tab pencerenin içinde döner, kapanınca açan öğeye geri verilir.
+  const [overlayEl, setOverlayEl] = useState<HTMLDivElement | null>(null);
+  const overlayElRef = useRef<HTMLDivElement | null>(null);
+  const overlayRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      setSheetOverlay(element);
+      setOverlayEl(element);
+    },
+    [setSheetOverlay],
+  );
+  useEffect(() => {
+    overlayElRef.current = overlayEl;
+  });
+  const [opener] = useState(() => (typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null));
+  useEffect(() => {
+    if (!overlayEl) return;
+    // Çocuk kendi alanına `autoFocus` verdiyse (klavye açmak istemeyen dokunmatikte verilmez) dokunulmaz; yoksa odak pencerenin kendisine girer.
+    const panel = overlayEl.firstElementChild as HTMLElement | null;
+    if (panel && !overlayEl.contains(document.activeElement)) {
+      panel.setAttribute("tabindex", "-1");
+      panel.style.setProperty("outline", "none");
+      panel.focus({ preventScroll: true });
+    }
+    return () => {
+      if (opener && opener !== document.body && opener.isConnected) opener.focus({ preventScroll: true });
+    };
+  }, [overlayEl, opener]);
   // Ekran klavyesi açıkken (iOS Safari) katman görünür alana oturur: alt sayfa klavyenin ÜSTÜNDE kalır, başlığı ekranın dışına kaçmaz.
   const keyboard = useKeyboardViewport();
   // `--sheet-max-h`: klavye açıkken kartın en çok yüksekliği görünür alanı (klavyenin üstünü) aşmaz; kapalıyken %75 sınırı geçerlidir.
@@ -332,9 +360,27 @@ export function Modal({
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape" && openModals[openModals.length - 1] === id) onCloseRef.current();
     }
+    function handleTab(event: KeyboardEvent) {
+      if (event.key !== "Tab" || openModals[openModals.length - 1] !== id) return;
+      const root = overlayElRef.current;
+      if (!root) return;
+      const items = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((element) => element.getClientRects().length > 0);
+      if (items.length === 0) {
+        event.preventDefault();
+        (root.firstElementChild as HTMLElement | null)?.focus({ preventScroll: true });
+        return;
+      }
+      const target = tabTarget(items.length, items.indexOf(document.activeElement as HTMLElement), event.shiftKey);
+      if (target >= 0) {
+        event.preventDefault();
+        items[target].focus();
+      }
+    }
     document.addEventListener("keydown", handleEscape);
+    document.addEventListener("keydown", handleTab);
     return () => {
       document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleTab);
       const index = openModals.indexOf(id);
       if (index >= 0) openModals.splice(index, 1);
       unlockBodyScroll();

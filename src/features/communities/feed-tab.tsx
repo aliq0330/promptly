@@ -18,7 +18,7 @@ import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/fiel
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
-import { DropdownMenu, MenuItem } from "./dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { ReportModal } from "@/features/moderation/report-modal";
 import { communityPostReportTarget } from "./post-report";
 import { ShareToCommunityModal } from "./share-to-community-modal";

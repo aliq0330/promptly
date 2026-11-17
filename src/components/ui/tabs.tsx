@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { IconComponent } from "@/components/icons/icon";
 import { ScrollRow } from "@/components/ui/scroll-row";
+import { nextRovingIndex } from "@/lib/modal-focus";
 import { cn } from "@/lib/utils";
 
 export interface TabItem<K extends string> {
@@ -85,6 +86,14 @@ export function Tabs<K extends string>({
       ref={listRef}
       role="tablist"
       aria-label={ariaLabel}
+      onKeyDown={(event) => {
+        // WAI-ARIA tablist: oklar sekmeler arasında odağı taşır (etkinleştirme Enter/Space ile; roving tabindex).
+        const tabs = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]'));
+        const next = nextRovingIndex(tabs.length, tabs.indexOf(document.activeElement as HTMLElement), event.key);
+        if (next === null) return;
+        event.preventDefault();
+        tabs[next].focus();
+      }}
       wrapperClassName={className}
       className={cn(
         "relative",
@@ -108,8 +117,9 @@ export function Tabs<K extends string>({
           style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
         />
       )}
-      {items.map((item) => {
+      {items.map((item, index) => {
         const selected = item.key === active;
+        const tabStop = selected || (activeIndex < 0 && index === 0);
         const Icon = item.icon;
         const tabClassName = cn(
               "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-label font-medium transition-[color,background-color,border-color,box-shadow] duration-200 ease-soft",
@@ -155,13 +165,13 @@ export function Tabs<K extends string>({
         );
         if (item.href) {
           return (
-            <Link key={item.key} href={item.href} replace role="tab" aria-selected={selected} aria-current={selected ? "page" : undefined} className={tabClassName} {...item.attrs}>
+            <Link key={item.key} href={item.href} replace role="tab" tabIndex={tabStop ? 0 : -1} aria-selected={selected} aria-current={selected ? "page" : undefined} className={tabClassName} {...item.attrs}>
               {content}
             </Link>
           );
         }
         return (
-          <button key={item.key} type="button" role="tab" aria-selected={selected} onClick={() => onChange(item.key)} className={tabClassName} {...item.attrs}>
+          <button key={item.key} type="button" role="tab" tabIndex={tabStop ? 0 : -1} aria-selected={selected} onClick={() => onChange(item.key)} className={tabClassName} {...item.attrs}>
             {content}
           </button>
         );

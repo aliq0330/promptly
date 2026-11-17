@@ -17,7 +17,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useToast } from "@/features/groups/use-toast";
 import { ReportModal } from "@/features/moderation/report-modal";
 import { communityPostReportTarget } from "./post-report";
-import { DropdownMenu, MenuItem } from "./dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { PostScopeProvider } from "./post-scope";
 import { summarizeContent } from "./content-summary";
 import { SpacePreview } from "@/features/spaces/space-preview";

@@ -8,6 +8,7 @@ import { MoreVertical } from "@/components/icons/more-vertical";
 import { Avatar } from "@/components/ui/avatar";
 import { Tabs } from "@/components/ui/tabs";
 import { HubDetailBand } from "@/features/hub/hub-kit";
+import { focusMenuItem, menuKeyDown } from "@/components/ui/menu-keys";
 import { useOnlineIds } from "@/features/presence/use-presence";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { listTeamMembers, type TeamMember, type TeamSummary } from "@/lib/supabase/teams";
@@ -54,6 +55,8 @@ export function TeamBand({
   const [faces, setFaces] = useState<TeamMember[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     let alive = true;
@@ -70,9 +73,13 @@ export function TeamBand({
 
   useEffect(() => {
     if (!menuOpen) return;
+    focusMenuItem(listRef.current);
     const close = (event: MouseEvent | KeyboardEvent) => {
       if (event instanceof KeyboardEvent) {
-        if (event.key === "Escape") setMenuOpen(false);
+        if (event.key === "Escape") {
+          setMenuOpen(false);
+          triggerRef.current?.focus({ preventScroll: true });
+        }
         return;
       }
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false);
@@ -143,6 +150,7 @@ export function TeamBand({
           )}
           <div className="relative shrink-0" ref={menuRef}>
             <button
+              ref={triggerRef}
               type="button"
               onClick={() => setMenuOpen((open) => !open)}
               aria-label={t("tc.band.menu")}
@@ -154,7 +162,7 @@ export function TeamBand({
               <MoreVertical size={20} aria-hidden />
             </button>
             {menuOpen && (
-              <ul role="menu" className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-lg border border-border-soft bg-surface-elevated p-1.5 shadow-pop" data-team-menu-list>
+              <ul ref={listRef} role="menu" onKeyDown={(event) => menuKeyDown(event, listRef.current)} className="absolute right-0 top-full z-30 mt-1.5 w-56 rounded-lg border border-border-soft bg-surface-elevated p-1.5 shadow-pop" data-team-menu-list>
                 {menuItems.map((item) => (
                   <li key={item.key} role="none">
                     <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className="flex min-h-11 items-center rounded-lg px-3 text-small font-medium text-text hover:bg-surface-soft">

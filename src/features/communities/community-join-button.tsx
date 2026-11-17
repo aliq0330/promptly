@@ -11,7 +11,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { LeaveCommunityDialog } from "@/features/groups/leave-community-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
-import { DropdownMenu, MenuItem } from "./dropdown-menu";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
 import { RulesAcceptModal } from "./rules-accept";
 import { cancelMyJoinRequest, fetchCommunityCard, joinCommunity, requestJoinCommunity } from "@/lib/supabase/communities";
 import { leaveOutcome } from "@/lib/chat-groups";

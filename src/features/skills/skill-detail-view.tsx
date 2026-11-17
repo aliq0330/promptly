@@ -15,7 +15,7 @@ import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
-import { MenuItem } from "@/features/communities/dropdown-menu";
+import { MenuItem } from "@/components/ui/dropdown-menu";
 import { Copy } from "@/components/icons/copy";
 import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { FollowButton } from "@/features/profile/follow-button";
