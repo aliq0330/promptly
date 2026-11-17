@@ -123,6 +123,7 @@ function TeamsPageInner() {
     <div className={cn(HUB_PAGE_CLASS, "space-y-4", PHONE_HOME_BOTTOM_PAD, "md:pb-16")} data-testid="teams-page">
       <HubBand
         icon={Briefcase}
+        tone="neutral"
         title={t("tm.title")}
         description={t("hub.teams.intro")}
         action={<HubCreateButton label={t("tm.create")} shortLabel={t("hub.teams.createShort")} onClick={() => setCreateOpen(true)} attr={{ "data-team-create": true, "data-team-create-phone": true }} />}

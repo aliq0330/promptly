@@ -4,7 +4,7 @@
  */
 export const teamCenterTranslations = {
   // --- Bant ve sekmeler ---
-  "tc.band.kicker": { tr: "EKİP", en: "TEAM" },
+  "tc.band.kicker": { tr: "Ekip", en: "Team" },
   "tc.band.menu": { tr: "Ekip menüsü", en: "Team menu" },
   "tc.band.menu.info": { tr: "Ekip bilgisi", en: "Team info" },
   "tc.band.menu.notifications": { tr: "Sohbet bildirimleri", en: "Chat notifications" },

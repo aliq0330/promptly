@@ -226,6 +226,7 @@ export function SpacesHome() {
       {/* Hub düzeni (docs/history/379-*): üç alanda aynı bant + sekmeler + kontrol satırı + kart ızgarası. */}
       <HubBand
         icon={SpacesIcon}
+        tone="secondary"
         title={t("spaces.home.title")}
         description={t("hub.spaces.intro")}
         data-space-home-band=""

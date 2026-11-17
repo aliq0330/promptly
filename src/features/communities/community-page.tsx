@@ -7,6 +7,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { RefreshCw } from "@/components/icons/refresh-cw";
 import { UserCog } from "@/components/icons/user-cog";
 import { MessagesSquare } from "@/components/icons/messages-square";
+import { Bell } from "@/components/icons/bell";
+import { Flag } from "@/components/icons/flag";
+import { Link2 } from "@/components/icons/link-2";
+import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
+import { useReport } from "@/features/moderation/report-provider";
+import { absoluteUrl } from "@/lib/utils";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { HUB_PAGE_CLASS, HubDetailBand, HubDetailLayout } from "@/features/hub/hub-kit";
 import { Badge } from "@/components/ui/badge";
@@ -87,6 +93,7 @@ function CommunityPageInner() {
   const tab = view?.tab ?? null;
   const unread = conversations.find((c) => c.id === id)?.unreadCount ?? 0;
   const people = useCommunityPeople(id ?? "", Boolean(id && role));
+  const { openReport } = useReport();
 
   function goTab(next: CommunityTab, section?: string) {
     if (id) router.replace(communityHref(id, next, section));
@@ -195,6 +202,46 @@ function CommunityPageInner() {
           </>
         }
         title={<h1>{g.name}</h1>}
+        menu={
+          // Topluluğun ⋮ menüsü (Space ve Ekip bandıyla aynı yer): bağlantı, bildirim tercihi (üye), şikâyet (sahibi hariç).
+          <span data-community-menu="">
+            <DropdownMenu label={t("communities.menu.label")} triggerClassName="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface/80 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              {(close) => (
+                <>
+                  <MenuItem
+                    icon={<Link2 size={16} />}
+                    label={t("common.copyLink")}
+                    onClick={() => {
+                      close();
+                      void navigator.clipboard?.writeText(absoluteUrl(communityHref(g.id))).then(() => show(t("common.copied")), () => undefined);
+                    }}
+                  />
+                  {role && (
+                    <MenuItem
+                      icon={<Bell size={16} />}
+                      label={t("communities.menu.preferences")}
+                      onClick={() => {
+                        close();
+                        goTab("about");
+                      }}
+                    />
+                  )}
+                  {user && role !== "owner" && (
+                    <MenuItem
+                      icon={<Flag size={16} />}
+                      label={t("communities.about.reportCommunity")}
+                      danger
+                      onClick={() => {
+                        close();
+                        openReport({ type: "community", id: g.id, title: g.name });
+                      }}
+                    />
+                  )}
+                </>
+              )}
+            </DropdownMenu>
+          </span>
+        }
         byline={
           <span className="flex flex-wrap items-center gap-2">
             <MemberStack people={people} />
@@ -203,7 +250,7 @@ function CommunityPageInner() {
         }
         description={g.description ? <span data-community-description>{g.description}</span> : undefined}
         actions={
-          <div className="flex w-full flex-wrap items-center gap-2" data-community-actions="">
+          <div className="flex w-full flex-wrap items-center gap-2 xl:max-w-72" data-community-actions="">
             {role && (
               <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg" })}>
                 <MessagesSquare size={20} aria-hidden /> {t("communities.detail.openChat")}

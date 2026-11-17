@@ -25,6 +25,8 @@ import { Badge } from "@/components/ui/badge";
 /** Sayfa kabuğu: telefonda 12, tablette 24, masaüstünde 32 px kenar boşluğu — üç alanda aynı genişlik. */
 export const HUB_PAGE_CLASS = `mx-auto w-full ${PAGE_WIDTH_CLASS.hub} ${PAGE_GUTTER_CLASS} pb-16 pt-4 sm:pt-6 lg:pt-7`;
 
+const HUB_BAND_TONE = { primary: "bg-primary-soft text-primary", secondary: "bg-secondary-soft text-secondary", neutral: "bg-surface-soft text-text" } as const;
+
 /** Ana sayfa bandı. Telefonda düğme kısa etiketle aynı satırda kalır. */
 export function HubBand({
   icon: Icon,
@@ -32,18 +34,21 @@ export function HubBand({
   description,
   action,
   testId,
+  tone = "primary",
   ...rest
 }: {
   icon: IconComponent;
   title: string;
   description?: string;
   action?: ReactNode;
+  /** Alanın simge tonu (P1-4): Topluluk mavi, Space turuncu ("senin olan"), Ekip nötr — üç ana sayfa ilk bakışta ayrışsın. */
+  tone?: "primary" | "secondary" | "neutral";
   testId?: string;
   [data: `data-${string}`]: string | undefined;
 }) {
   return (
     <div className="flex items-center gap-3 sm:gap-4" data-hub-band="" data-testid={testId} {...rest}>
-      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
+      <span className={cn("grid h-12 w-12 shrink-0 place-items-center rounded-lg", HUB_BAND_TONE[tone])}>
         <Icon size={24} aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
