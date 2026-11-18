@@ -1,5 +1,5 @@
 /**
- * Odak (`/focus`, docs/history/199-*) — the pure presentation rules, kept free of
+ * Odak (`/focus`, docs/history/199-*, 436-*) — the pure presentation rules, kept free of
  * React / Supabase imports so they can be unit-tested (`focus-feed.test.ts`):
  * which picture (if any) fronts a feed entry, which slide layout it gets,
  * what counts as "media" for the Medya filter, where the feed starts and when
@@ -43,6 +43,18 @@ export function focusFeedCover(entry: PostEntry): FocusFeedCover | null {
     case "skill":
       return null;
   }
+}
+
+/**
+ * Every picture a post can page through sideways (docs/history/436-*, "1/4 sonuç"): an image prompt's outputs; every other kind
+ * fronts only its cover (a video poster set or a workflow's media is not a gallery).
+ */
+export function focusFeedImages(entry: PostEntry): FocusFeedCover[] {
+  if (entry.kind === "prompt" && entry.data.contentType === "image") {
+    return entry.data.media.map((item) => ({ url: item.url, alt: item.alt || entry.data.title }));
+  }
+  const cover = focusFeedCover(entry);
+  return cover ? [cover] : [];
 }
 
 /** How many further pictures the entry has beyond its cover (a quiet "+N"; browsing them is the detail page's job). */
@@ -103,4 +115,50 @@ export const FOCUS_FEED_PREFETCH = 3;
 
 export function focusFeedShouldLoadMore(active: number, total: number, state: { hasMore: boolean; loadingMore: boolean; failed: boolean }): boolean {
   return state.hasMore && !state.loadingMore && !state.failed && active >= total - FOCUS_FEED_PREFETCH;
+}
+
+/**
+ * The tint of a post's scene when it has no picture to show (docs/history/436-*): the post's OWN content is the scene — a text prompt its
+ * words, a request its brief, a preset its parameters, a workflow its chain, a Skill its summary. `null` = a picture / playing media fronts it.
+ * A playable prompt whose output (and poster) turned out to be missing falls back to the words (`playableFallback`).
+ */
+export type FocusTone = "text" | "request" | "preset" | "workflow" | "skill";
+
+export function focusFeedTone(entry: PostEntry, playableFallback = false): FocusTone | null {
+  const layout = focusFeedLayout(entry);
+  if (layout === "visual") return null;
+  if (layout === "playable") return playableFallback ? "text" : null;
+  return layout;
+}
+
+/** A prompt's words cut into plain text and `{name}` tokens — the scene shows tokens as chips before the variables have loaded. */
+export function focusPromptTokens(text: string): { text: string; name: string | null }[] {
+  const parts: { text: string; name: string | null }[] = [];
+  let last = 0;
+  for (const match of text.matchAll(/\{([^{}\n]+)\}/g)) {
+    const index = match.index ?? 0;
+    if (index > last) parts.push({ text: text.slice(last, index), name: null });
+    parts.push({ text: match[0], name: match[1] });
+    last = index + match[0].length;
+  }
+  if (last < text.length) parts.push({ text: text.slice(last), name: null });
+  return parts;
+}
+
+/** What the prompt strip's one big button does for each kind (docs/history/436-*) — an open request of someone else is answered, the rest open or run. */
+export type FocusPrimaryAction = "copy" | "reply" | "detail" | "tryPreset" | "runWorkflow" | "openSkill";
+
+export function focusFeedPrimaryAction(entry: PostEntry, viewerId: string | null): FocusPrimaryAction {
+  switch (entry.kind) {
+    case "prompt":
+      return "copy";
+    case "request":
+      return entry.data.status === "open" && viewerId !== entry.data.author.id ? "reply" : "detail";
+    case "preset":
+      return "tryPreset";
+    case "workflow":
+      return "runWorkflow";
+    case "skill":
+      return "openSkill";
+  }
 }

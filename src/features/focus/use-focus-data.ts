@@ -2,8 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
+import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
+import { fetchPromptWorks } from "@/lib/supabase/prompt-works";
+import { fetchVersionsForPrompt } from "@/lib/supabase/prompt-versions";
 import { loadAuthorOutput } from "@/features/prompts/prompt-playable-output";
-import type { Prompt, PromptResult, WorkflowStep } from "@/types";
+import type { WorksState } from "@/lib/prompt-works";
+import type { Prompt, PromptResult, PromptVariable, PromptVersion, WorkflowStep } from "@/types";
 
 /**
  * Focus View shows a generator's real parameters and a workflow's real step
@@ -95,4 +99,19 @@ export function usePromptOutput(prompt: Prompt | null, enabled: boolean) {
   return useLazy<PromptResult>(prompt ? `out:${prompt.id}` : null, enabled, () =>
     prompt ? loadAuthorOutput(prompt.id, prompt.author.id, prompt.contentType) : Promise.resolve(null),
   );
+}
+
+/** A prompt's variable definitions (docs/history/436-*): fetched once per prompt near view — the strip's value chips and the stage's tappable `{tokens}` need them. */
+export function usePromptVariables(promptId: string | null, enabled: boolean) {
+  return useLazy<PromptVariable[]>(promptId ? `vars:${promptId}` : null, enabled, () => (promptId ? fetchVariablesForPrompt(promptId) : Promise.resolve(null)));
+}
+
+/** A prompt's "Çalıştı mı?" tally (docs/history/296-*), read only for the ACTIVE post: the meta line and the card header say "128 kişide çalıştı" from it. */
+export function usePromptWorks(promptId: string | null, enabled: boolean) {
+  return useLazy<WorksState>(promptId ? `works:${promptId}` : null, enabled, () => (promptId ? fetchPromptWorks(promptId) : Promise.resolve(null)));
+}
+
+/** A prompt's saved versions (the card's "Sürümler" tab exists only when there are some, like the detail page's history tab). */
+export function usePromptVersions(promptId: string | null, enabled: boolean) {
+  return useLazy<PromptVersion[]>(promptId ? `versions:${promptId}` : null, enabled, () => (promptId ? fetchVersionsForPrompt(promptId) : Promise.resolve(null)));
 }

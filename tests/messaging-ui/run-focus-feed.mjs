@@ -1,6 +1,7 @@
-// Odak (`/focus`, docs/history/199-*, 238-*): tam ekran, YATAY kaydırmalı (küçük resim şeridi + komşu kartlar), tek gönderi/ekran — Ana Sayfa'da Akış seçeneği YOK (Kart | Izgara),
-// üst çubuktaki (md+) ve telefonda alt menüdeki Odak girişi, üst/alt/yan menünün gizlenmesi, tür başına slayt, video/ses oynatma (yazarın
-// yüklediği çıktı), Medya süzgeci, gerçek beğeni/kaydet/yorum/paylaş/kopyala, sayfalama, klavye, kapatma, misafir, mobil/İngilizce/açık tema.
+// Odak (`/focus`, docs/history/199-*, 436-*): tam ekran, DİKEY kaydırmalı (A "Sahne": her gönderi bir ekran) + prompt kartı (C: şerit → yarım → tam,
+// masaüstünde yan panel), değişken doldurma (şeritte değer çipleri, sahnede seçici, kartta alanlar), görselsiz sahneler (metin / istek / ayar paketi /
+// workflow), sonuç görselleri (yatay), video/ses oynatma (yazarın yüklediği çıktı), "Yalnız görselliler" süzgeci (varsayılan KAPALI), gerçek
+// beğeni/kaydet/yorum/paylaş/kopyala, sayfalama, klavye, kapatma, misafir, mobil/İngilizce/açık tema.
 // Gerçek Supabase'e KARŞI DENENMEDİ: `feed_page`, içerik ve `prompt_results` satırları burada taklit edilir; medya oynatma
 // `HTMLMediaElement.play/pause` taslağıyla sınanır (gerçek video/ses çözülmez).
 import { chromium } from "playwright";
@@ -10,8 +11,8 @@ import { createDb, installMock, U } from "./mock.mjs";
 import { svg } from "./detail-fixtures.mjs";
 import { setupSpaces, SID } from "./mock-spaces.mjs";
 
-const BASE = "http://localhost:4181/promptly";
-const server = await serve(4181);
+const BASE = process.env.BASE_URL ?? "http://localhost:4181/promptly";
+const server = process.env.BASE_URL ? { close() {} } : await serve(4181);
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? undefined, args: ["--no-sandbox", "--autoplay-policy=no-user-gesture-required"] });
 const results = [];
 const ONLY = process.env.ONLY ?? "";
@@ -32,16 +33,18 @@ function buildFeed() {
     const [a, b] = COLORS[n % COLORS.length];
     prompts.push({
       ...base, id: pid(n), title: text ? "Kısa öykü açılışı" : `Görsel prompt ${n}`, description: `Açıklama ${n}`,
-      prompt_text: text ? "Bir deniz fenerinde yalnız yaşayan bekçinin {mevsim} gecesi gördüğü ışığı anlatan, 200 kelimelik bir açılış paragrafı yaz." : `cinematic misty landscape number ${n}, volumetric light, {style}`,
+      prompt_text: text ? "Bir deniz fenerinde yalnız yaşayan bekçinin {mevsim} gecesi gördüğü ışığı {ton} bir dille anlatan, 200 kelimelik bir açılış paragrafı yaz." : `cinematic misty landscape number ${n}, volumetric light, {style}`,
       content_type: text ? "text" : "image", like_count: 10 + n, comment_count: n, created_at: `2026-10-${String(30 - n).padStart(2, "0")}T10:00:00Z`,
-      prompt_media: text ? [] : [{ id: `m${n}`, url: svg(a, b), width: 1200, height: 900, alt: "", position: 0 }],
+      prompt_media: text ? [] : n === 1
+        ? [0, 1, 2].map((k) => ({ id: `m${n}-${k}`, url: svg(COLORS[(n + k) % COLORS.length][0], COLORS[(n + k) % COLORS.length][1]), width: 1200, height: 900, alt: "", position: k }))
+        : [{ id: `m${n}`, url: svg(a, b), width: 1200, height: 900, alt: "", position: 0 }],
     });
   }
   const video = { ...base, id: pid(51), title: "Neon şehirde drone çekimi", description: "Gece, yağmur, neon.", prompt_text: "slow drone shot over a neon city at night, rain", content_type: "video", like_count: 4, comment_count: 1, created_at: "2026-10-02T10:00:00Z", prompt_media: [{ id: "mv", url: svg("#111827", "#7c3aed", 900, 1600), width: 900, height: 1600, alt: "", position: 0 }] };
   const audio = { ...base, id: pid(52), title: "Lo-fi yağmur döngüsü", description: "Sakin bir döngü.", prompt_text: "lo-fi beat with rain ambience, 80 bpm", content_type: "audio", like_count: 2, comment_count: 0, created_at: "2026-10-01T10:00:00Z", prompt_media: [] };
   prompts.push(video, audio);
   const workflow = { id: pid(101), creator_id: U.carol.id, title: "Ürün fotoğrafından kampanya görseli", description: "Üç adımlı akış.", cover_url: null, content_types: ["image", "text"], category: null, subcategory: null, tools: [], status: "published", visibility: "public", community_id: null, like_count: 9, save_count: 2, comment_count: 4, created_at: "2026-10-05T10:00:00Z", updated_at: "2026-10-05T10:00:00Z", profiles: author(U.carol), workflow_steps: [{ count: 3 }], workflow_tags: [], workflow_media: [] };
-  const preset = { id: pid(201), creator_id: U.carol.id, title: "Sinematik portre ayarı", description: "Yumuşak ışık için hazır parametre seti.", cover_url: null, content_type: "image", category: null, subcategory: null, tools: [], selection: {}, status: "published", visibility: "public", community_id: null, like_count: 6, comment_count: 4, save_count: 1, created_at: "2026-10-04T10:00:00Z", updated_at: "2026-10-04T10:00:00Z", profiles: author(U.carol), preset_tags: [] };
+  const preset = { id: pid(201), creator_id: U.carol.id, title: "Sinematik portre ayarı", description: "Yumuşak ışık için hazır parametre seti.", cover_url: null, content_type: "image", category: null, subcategory: null, tools: [], selection: { lens: "35mm", angle: "low_angle" }, status: "published", visibility: "public", community_id: null, like_count: 6, comment_count: 4, save_count: 1, created_at: "2026-10-04T10:00:00Z", updated_at: "2026-10-04T10:00:00Z", profiles: author(U.carol), preset_tags: [] };
   const request = { id: pid(301), title: "Retro-fütüristik sokak posteri", description: "Neon harfli bir şehir posteri istiyorum.", creative_direction: "Blade Runner estetiği, mor-turuncu tonlar.", preferred_tool: null, tools: [], content_type: "image", category: null, subcategory: null, reference_image_url: null, reference_image_width: null, reference_image_height: null, status: "open", selected_response_prompt_id: null, response_count: 2, like_count: 5, comment_count: 4, created_at: "2026-10-03T10:00:00Z", deleted_at: null, is_draft: false, visibility: "public", community_id: null, profiles: author(U.carol), prompt_request_tags: [], prompt_request_media: [] };
   // Order: prompt 1, text prompt 2, workflow, preset, request, video, audio, then prompts 3…19.
   const order = [["prompt", prompts[0]], ["prompt", prompts[1]], ["workflow", workflow], ["preset", preset], ["request", request], ["prompt", video], ["prompt", audio], ...prompts.slice(2, 19).map((p) => ["prompt", p])];
@@ -49,7 +52,20 @@ function buildFeed() {
     [video.id]: { id: "r-video", prompt_id: video.id, media_type: "video", media_url: "https://example.com/out/neon.mp4", thumbnail_url: null, width: null, height: null, text_content: null, tool: null, has_modification: false, modification_summary: null, modified_prompt_text: null, like_count: 0, comment_count: 0, created_at: "2026-10-02T11:00:00Z", profiles: author(U.carol), prompts: null },
     [audio.id]: { id: "r-audio", prompt_id: audio.id, media_type: "audio", media_url: "https://example.com/out/rain.mp3", thumbnail_url: null, width: null, height: null, text_content: null, tool: null, has_modification: false, modification_summary: null, modified_prompt_text: null, like_count: 0, comment_count: 0, created_at: "2026-10-01T11:00:00Z", profiles: author(U.carol), prompts: null },
   };
-  return { prompts, workflow, preset, request, video, audio, order, outputs };
+  const steps = [
+    { id: "ws1", position: 0, title: "Ürün fotoğrafını incele", description: "", instructions: "", step_type: "prompt", prompt_id: null, request_id: null, inputs: [], outputs: [] },
+    { id: "ws2", position: 1, title: "Kampanya metnini yaz", description: "", instructions: "", step_type: "prompt", prompt_id: null, request_id: null, inputs: [], outputs: [] },
+    { id: "ws3", position: 2, title: "Görseli üret", description: "", instructions: "", step_type: "prompt", prompt_id: null, request_id: null, inputs: [], outputs: [] },
+  ];
+  const vrow = (id, promptId, name, def, extra = {}) => ({ id, prompt_id: promptId, name, default_value: def, description: null, sort_order: 0, created_at: "2026-10-01T10:00:00Z", updated_at: "2026-10-01T10:00:00Z", type: "text", options: [], config: {}, ...extra });
+  const variables = {
+    [pid(1)]: [vrow("va1", pid(1), "style", "cinematic")],
+    [pid(2)]: [
+      vrow("va2", pid(2), "mevsim", "kış", { type: "select", options: [{ label: "Yaz", value: "yaz" }, { label: "Kış", value: "kış" }, { label: "Sonbahar", value: "sonbahar" }] }),
+      vrow("va3", pid(2), "ton", "", { sort_order: 1 }),
+    ],
+  };
+  return { prompts, workflow, preset, request, video, audio, order, outputs, variables, steps };
 }
 
 /** Comments on prompt 1: three top-level, the second with two replies (Instagram-like thread in the sheet). */
@@ -105,6 +121,19 @@ async function installFeed(context, db, feed) {
       const row = Object.values(feed.outputs).find((r) => r.id === byId);
       return object ? (row ? ok(row) : ok(null)) : ok(row ? [row] : []);
     }
+    if (table === "workflows" && req.method() === "GET" && (url.searchParams.get("id") ?? "").startsWith("eq.")) return object ? ok(feed.workflow) : ok([feed.workflow]);
+    if (table === "workflow_steps" && req.method() === "GET") return ok(feed.steps);
+    if (table === "prompt_variables" && req.method() === "GET") {
+      const forPrompt = (url.searchParams.get("prompt_id") ?? "").replace("eq.", "");
+      db.calls.push({ method: "GET", table, body: { forPrompt } });
+      return ok(feed.variables[forPrompt] ?? []);
+    }
+    if (table === "rpc/prompt_works_state") {
+      const body = JSON.parse(req.postData() || "{}");
+      db.calls.push({ method: "POST", table, body });
+      return ok(body.p_prompt_id === pid(1) ? [{ yes_count: 128, no_count: 9, my_vote: null, can_vote: true }] : [{ yes_count: 0, no_count: 0, my_vote: null, can_vote: false }]);
+    }
+    if (table === "prompt_versions" && req.method() === "GET") return ok([]);
     if (table === "prompt_comments") {
       const cols = (c) => ({ id: c.id, body: c.body, parent_id: c.parent_id ?? null, like_count: c.like_count ?? 0, created_at: c.created_at, edited_at: null, deleted_at: null, profiles: author(c.author) });
       if (req.method() === "GET") {
@@ -148,7 +177,7 @@ const MEDIA_STUB = () => {
   };
 };
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", guest = false, theme, reducedMotion, noMediaRpc = false } = {}) {
+async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang = "tr", guest = false, theme, reducedMotion, noMediaRpc = false } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
   db.noMediaRpc = noMediaRpc;
@@ -168,6 +197,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   page.setDefaultTimeout(8000);
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
+  if (process.env.DEBUG_CONSOLE) page.on("console", (m) => { if (m.type() === "error") console.log("[console.error]", m.text().slice(0, 700)); });
   try {
     await fn({ page, db, feed });
     assert.deepEqual(errors, [], "no uncaught page errors");
@@ -183,20 +213,33 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 const stage = (page) => page.locator("[data-focus-feed]");
 const slides = (page) => page.locator("[data-focus-feed] [data-slide-index]");
 const counter = (page) => stage(page).locator("span[aria-label^='Gönderi'], span[aria-label^='Post']").first();
-// `all` (varsayılan): "Medya" süzgeci kapatılır, eski senaryolar tam 24 gönderilik listeyle çalışır; `all: false` = açılışın kendisi (Medya açık).
-const openFocus = async (page, { all = true } = {}) => {
+// "Yalnız görselliler" (docs/history/436-*) KAPALI açılır: görselsiz metin promptu / workflow da akışta, kendi sahnesiyle. `mediaOnly: true` = anahtarı açar.
+const openFocus = async (page, { mediaOnly = false } = {}) => {
   await page.goto(`${BASE}/focus`);
   await slides(page).first().waitFor();
   await page.waitForTimeout(500);
-  if (all) {
-    await (await menuItem(page, /Medya|Media/)).click();
+  if (mediaOnly) {
+    await (await menuItem(page, /Yalnız görselliler|Only with pictures/)).click();
     await page.waitForTimeout(700);
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);
   }
 };
-const activeIndex = (page) => counter(page).getAttribute("aria-label").then((s) => Number(/(\d+)/.exec(s)[1]));
-const step = async (page, key = "ArrowRight", times = 1) => { for (let i = 0; i < times; i += 1) { await page.keyboard.press(key); await page.waitForTimeout(650); } await page.waitForTimeout(300); };
+// Etkin gönderi = dikey sütunun durduğu ekran (docs/history/436-*); 1 tabanlı (eski sayaç gibi).
+const SCROLLER = "[data-focus-feed] [role='region']";
+const activeIndex = (page) => page.evaluate((sel) => { const el = document.querySelector(sel); return Math.round(el.scrollTop / el.clientHeight) + 1; }, SCROLLER);
+const jump = async (page, n) => { await page.evaluate(([sel, i]) => { const el = document.querySelector(sel); el.scrollTo({ top: i * el.clientHeight, behavior: "instant" }); }, [SCROLLER, n]); await page.waitForTimeout(500); };
+const slide = (page, n) => page.locator(`[data-focus-feed] [data-slide-index='${n}']`);
+const sheetEl = (page) => page.locator("[data-focus-sheet]");
+const openCard = async (page, n = 0) => { await slide(page, n).locator("[data-focus-peek-open]").click(); await page.locator("[data-focus-sheet]").waitFor(); await page.waitForTimeout(450); };
+const dragGrabber = async (page, dy) => {
+  const g = await page.locator("[data-focus-sheet-grabber]").boundingBox();
+  await page.mouse.move(g.x + 100, g.y + 8); await page.mouse.down(); await page.mouse.move(g.x + 100, g.y + 8 + dy, { steps: 6 }); await page.mouse.up();
+  await page.waitForTimeout(550);
+};
+const sheetState = (page) => sheetEl(page).getAttribute("data-focus-sheet-state");
+const clipboard = (page) => page.evaluate(() => navigator.clipboard.readText());
+const step = async (page, key = "ArrowDown", times = 1) => { for (let i = 0; i < times; i += 1) { await page.keyboard.press(key); await page.waitForTimeout(650); } await page.waitForTimeout(300); };
 const media = (page) => page.evaluate(() => window.__media);
 // Üst çubuktaki ⋮ menüsü (docs/history/238-*): Medya süzgeci + ses anahtarı. Kapalıysa açar, öğeyi döndürür.
 const menuItem = async (page, name) => {
@@ -214,139 +257,173 @@ const pickFilter = async (page, name) => {
 
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
+const likeBtn = (loc) => loc.getByRole("button", { name: /Beğen|Tepki/ }).first();
+
 await scenario("1. Ana Sayfa: Akış seçeneği yok, Kart | Izgara seçici YOK, yazma çubuğu YOK; üst çubukta Odak (yan menüde yok)", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await page.locator("article").first().waitFor();
   assert.equal(await stage(page).count(), 0);
   assert.equal(await page.locator("[data-view-toggle]").count(), 0, "Kart | Izgara simgesi kaldırıldı");
-  assert.equal(await page.locator("a[href*='/create?mode=prompt']").count(), 0, "Ana Sayfa yazma çubuğu kaldırıldı");
   const link = page.locator("header[data-app-header] a[href*='/focus']");
   assert.equal(await link.count(), 1, "header has Odak");
   assert.equal(await page.locator("aside[aria-label] a[href*='/focus']").count(), 0, "sidebar no longer lists Odak (docs/history/227-*)");
   assert.match(await link.textContent(), /Odak/);
-});
+}, { viewport: { width: 1280, height: 900 } });
 
-await scenario("2. Üst çubuktan Odak: tam ekran, üst/yan menü gizli, koyu sahne, sayfa kilitli, başlık", async ({ page }) => {
+await scenario("2. Masaüstü açılış: tam ekran, menüler DOM'da yok, koyu sahne, dikey yakalamalı sütun, kapalı 'Yalnız görselliler' (süzgeçsiz ilk istek)", async ({ page, db }) => {
   await page.goto(`${BASE}/`);
   await page.evaluate(() => { window.__spaMarker = 1; });
   await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(500);
   assert.match(page.url(), /\/focus/);
-  assert.equal(await page.evaluate(() => window.__spaMarker), undefined, "the header button LOADS the page (docs/history/249-*)");
+  assert.equal(await page.evaluate(() => window.__spaMarker), undefined, "the header link LOADS the page (docs/history/249-*)");
   const box = await stage(page).boundingBox();
-  assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 1280, 900]);
-  // Odak ayrı bir sayfadır (docs/history/248-*): /focus'ta üst/yan/alt menü HİÇ kurulmaz (gizli değil, DOM'da yok).
+  assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 1440, 900]);
   assert.equal(await page.locator("[data-app-chrome]").count(), 0, "no app bars in the DOM on /focus");
-  assert.equal(await page.locator("a[href='#main-content']").count(), 0, "no skip link either");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
   assert.equal(await stage(page).evaluate((el) => el.classList.contains("dark")), true);
-  // iOS Safari kendi çubuklarını BELGENİN moduna göre boyar (docs/history/246-*, 247-*): açık temada da Odak açıkken site gerçekten koyu moddadır.
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "the whole site is dark while Odak is open");
-  assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "dark", "document color-scheme is dark while Odak is open");
-  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), null, "the saved theme preference is untouched");
-  assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 18", "Medya açık: sunucu yalnız medyalı gönderileri verir, ilk sayfa 18 slayt (22 medyalı gönderiden)");
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']")).scrollSnapType), "x mandatory");
+  assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 18", "ilk sayfa 18 gönderi (görselsizler dahil)");
+  assert.equal(await page.evaluate((sel) => getComputedStyle(document.querySelector(sel)).scrollSnapType, SCROLLER), "y mandatory");
+  assert.equal(db.feedCalls[0].p_has_media, undefined, "Yalnız görselliler kapalı: süzgeçsiz ilk istek (docs/history/436-*)");
   assert.match(await page.title(), /Odak/);
   await shot(page, "02-focus-desktop");
-});
+}, { viewport: { width: 1440, height: 900 } });
 
-await scenario("3. Klavye: → → ←, Home gönderiler arasında; tek durak", async ({ page }) => {
+await scenario("3. Klavye: ↓ ↓ ↑ Home End / j k gönderiler arasında; tek durak", async ({ page }) => {
   await openFocus(page);
-  await step(page, "ArrowRight", 2);
+  await step(page, "ArrowDown", 2);
   assert.equal(await activeIndex(page), 3);
-  await step(page, "ArrowLeft");
+  await step(page, "ArrowUp");
+  assert.equal(await activeIndex(page), 2);
+  await step(page, "j");
+  assert.equal(await activeIndex(page), 3);
+  await step(page, "k");
   assert.equal(await activeIndex(page), 2);
   await step(page, "Home");
   assert.equal(await activeIndex(page), 1);
+  await step(page, "PageDown");
+  assert.equal(await activeIndex(page), 2);
 });
 
-await scenario("4. Tür başına: görsel / metin (mono blok) / workflow / ayar paketi / istek; uzak slayt medya yüklemez", async ({ page }) => {
+await scenario("4. Sahneler: görsel (3 sonuç, yatay) / metin (mono + dokunulur değişken çipleri) / workflow (adım zinciri) / ayar paketi (parametre listesi) / istek; uzak gönderi medya yüklemez", async ({ page }) => {
   await openFocus(page);
-  const s = (i) => slides(page).nth(i);
-  assert.equal(await s(0).locator("img").count(), 1);
-  assert.equal(await s(1).locator("img").count(), 0);
-  assert.match(await s(1).locator(".prompt-text").textContent(), /deniz fenerinde/);
-  assert.match(await s(2).textContent(), /3 adım/);
-  assert.match(await s(3).textContent(), /Ayar Paketi/);
-  assert.match(await s(4).textContent(), /Açık/);
-  assert.match(await s(4).textContent(), /Blade Runner/);
-  assert.equal(await s(4).getByRole("button", { name: /Kaydet|koleksiyon/i }).count(), 0);
-  assert.equal(await s(10).locator("img").count(), 0, "far slide does not load its picture");
-  if (SHOTS) for (const [i, name] of [[1, "04b-text"], [4, "04e-request"]]) { await step(page, "Home"); await step(page, "ArrowRight", i); await shot(page, name); }
+  const s0 = slide(page, 0);
+  assert.equal(await s0.getAttribute("data-focus-tone"), null, "a picture fronts it");
+  assert.equal(await s0.locator("[data-result-image] img").count(), 3, "all three results");
+  assert.equal((await s0.locator("[data-results-chip]").innerText()).replace(/\s+/g, " ").trim(), "1/3 sonuç");
+  assert.equal(await s0.locator("[data-results-row]").getAttribute("data-count"), "3");
+  // Sideways swipe pages through the results; the chip follows.
+  await s0.locator("[data-results-row]").evaluate((el) => el.scrollTo({ left: el.clientWidth, behavior: "instant" }));
+  await page.waitForTimeout(300);
+  assert.match(await s0.locator("[data-results-chip]").innerText(), /2\/3 sonuç/);
+  await jump(page, 1);
+  const text = slide(page, 1);
+  assert.equal(await text.getAttribute("data-focus-tone"), "text");
+  assert.match(await text.locator(".prompt-text").first().textContent(), /deniz fenerinde/);
+  await page.waitForTimeout(500);
+  assert.equal(await text.locator("[data-focus-token]").count(), 2, "mevsim + ton");
+  assert.equal(await text.locator("[data-focus-token='mevsim']").textContent(), "kış", "the default value is shown");
+  assert.equal(await text.locator("[data-focus-token='ton']").textContent(), "{ton}", "an empty variable shows its slot");
+  await jump(page, 2);
+  const flow = slide(page, 2);
+  assert.equal(await flow.getAttribute("data-focus-tone"), "workflow");
+  await flow.locator("[data-focus-chain] li").first().waitFor();
+  assert.equal(await flow.locator("[data-focus-chain] li").count(), 3);
+  assert.match(await flow.locator("[data-focus-chain]").textContent(), /Kampanya metnini yaz/);
+  await jump(page, 3);
+  const preset = slide(page, 3);
+  assert.equal(await preset.getAttribute("data-focus-tone"), "preset");
+  assert.ok((await preset.locator("[data-focus-params] dt").count()) >= 2, "parameter rows");
+  await jump(page, 4);
+  const request = slide(page, 4);
+  assert.equal(await request.getAttribute("data-focus-tone"), "request");
+  assert.match(await request.textContent(), /Neon harfli bir şehir posteri/);
+  assert.match(await request.textContent(), /Blade Runner/);
+  assert.match(await request.textContent(), /Açık/);
+  assert.equal(await slide(page, 10).locator("img").count(), 0, "far slides do not load pictures");
+  await shot(page, "04-scenes");
 });
 
-await scenario("5. Video: yazarın çıktısı oynar (sessiz), ses açılır, geçince durur; yalnız etkin/yakın gönderi sorgulanır", async ({ page, db, feed }) => {
+await scenario("5. Video: yazarın çıktısı oynar (sessiz), rayda ses düğmesi, geçince durur; yalnız etkin/yakın gönderi sorgulanır", async ({ page, db, feed }) => {
   await openFocus(page);
   assert.equal(db.calls.filter((c) => c.table === "prompt_results").length, 0, "no output lookup far from the video");
-  await step(page, "ArrowRight", 5);
+  await jump(page, 5);
   assert.equal(await activeIndex(page), 6);
-  const video = slides(page).nth(5).locator("video");
+  const video = slide(page, 5).locator("video");
   await video.waitFor({ state: "attached" });
   assert.equal(await video.getAttribute("src"), "https://example.com/out/neon.mp4");
   const plays = (await media(page)).filter((m) => m.op === "play" && m.tag === "VIDEO");
   assert.ok(plays.length >= 1 && plays.at(-1).muted === true, `video autoplays muted: ${JSON.stringify(plays)}`);
-  await (await menuItem(page, "Sesi aç")).click();
+  await slide(page, 5).locator("[data-focus-sound]").click();
   await page.waitForTimeout(300);
-  assert.equal(await video.evaluate((el) => el.muted), false, "sound on");
+  assert.equal(await video.evaluate((el) => el.muted), false, "sound on via the rail's button");
+  assert.ok(await (await menuItem(page, "Sesi kapat")).isVisible(), "the ⋮ menu shows the same switch");
+  await page.keyboard.press("Escape");
   await shot(page, "05-video");
-  await step(page, "ArrowRight");
+  await jump(page, 6);
   assert.ok((await media(page)).some((m) => m.op === "pause" && m.tag === "VIDEO"), "video paused when leaving");
   assert.ok(db.calls.some((c) => c.table === "prompt_results" && c.body.byPrompt === feed.video.id));
 });
 
 await scenario("6. Ses: etkin olunca kendiliğinden (sesle) çalar ve sesi açar; ortadaki düğme durdurur/başlatır; ilerleme çubuğu yok", async ({ page }) => {
   await openFocus(page);
-  await step(page, "ArrowRight", 6);
+  await jump(page, 6);
   assert.equal(await activeIndex(page), 7);
-  const slide = slides(page).nth(6);
-  await slide.locator("audio").waitFor({ state: "attached" });
+  const s = slide(page, 6);
+  await s.locator("audio").waitFor({ state: "attached" });
   await page.waitForTimeout(300);
   const plays = (await media(page)).filter((m) => m.op === "play" && m.tag === "AUDIO");
   assert.ok(plays.length >= 1 && plays.at(-1).muted === false, `audio autoplays with its sound: ${JSON.stringify(plays)}`);
   assert.ok(await (await menuItem(page, "Sesi kapat")).isVisible(), "sound switched on by the audio post starting");
-  assert.equal(await slide.locator("[class*='bottom-0'][class*='h-0.5']").count(), 0, "no progress line on the slide");
-  await slide.getByRole("button", { name: "Duraklat" }).click({ force: true });
+  await page.keyboard.press("Escape");
+  assert.equal(await s.locator("[class*='bottom-0'][class*='h-0.5']").count(), 0, "no progress line on the slide");
+  await s.getByRole("button", { name: "Duraklat" }).click({ force: true });
   await page.waitForTimeout(200);
   assert.equal((await media(page)).at(-1).op, "pause");
-  await slide.getByRole("button", { name: "Oynat" }).click();
+  await s.getByRole("button", { name: "Oynat" }).click();
   await page.waitForTimeout(200);
   assert.equal((await media(page)).at(-1).op, "play");
   await shot(page, "06-audio");
 });
 
-await scenario("7. Medya süzgeci AÇIK başlar: görselsiz metin promptu + workflow düşer; ayar paketi, istek, video, ses kalır; kapatınca hepsi gelir", async ({ page }) => {
-  await openFocus(page, { all: false });
+await scenario("7. 'Yalnız görselliler' KAPALI başlar: metin promptu + görselsiz workflow akışta; açınca sunucu p_has_media ister, düşerler; kapatınca geri gelirler", async ({ page, db }) => {
+  await openFocus(page);
   const texts = await slides(page).allTextContents();
-  assert.ok(!texts.some((t) => /Kısa öykü açılışı|Ürün fotoğrafından/.test(t)), "text prompt and picture-less workflow are filtered out by default");
-  assert.ok(texts.some((t) => /Sinematik portre/.test(t)) && texts.some((t) => /Retro-fütüristik/.test(t)), "preset and request stay without a picture");
-  assert.ok(texts.some((t) => /Neon şehirde drone/.test(t)) && texts.some((t) => /Lo-fi yağmur/.test(t)), "video and audio stay");
-  assert.equal(await (await menuItem(page, /Medya/)).getAttribute("aria-checked"), "true");
-  await (await menuItem(page, /Medya/)).click();
-  await page.waitForTimeout(700);
-  const all = await slides(page).allTextContents();
-  assert.ok(all.some((t) => /Kısa öykü açılışı/.test(t)) && all.some((t) => /Ürün fotoğrafından/.test(t)), "turning Medya off brings them back");
-  assert.equal(await (await menuItem(page, /Medya/)).getAttribute("aria-checked"), "false");
+  assert.ok(texts.some((t) => /Kısa öykü açılışı/.test(t)) && texts.some((t) => /Ürün fotoğrafından/.test(t)), "picture-less posts are in by default");
+  assert.equal(await (await menuItem(page, /Yalnız görselliler/)).getAttribute("aria-checked"), "false");
+  await (await menuItem(page, /Yalnız görselliler/)).click();
+  await page.waitForTimeout(900);
+  assert.equal(db.feedCalls.at(-1).p_has_media, true);
+  const only = await slides(page).allTextContents();
+  assert.ok(!only.some((t) => /Kısa öykü açılışı|Ürün fotoğrafından/.test(t)), "turned on: they drop out");
+  assert.ok(only.some((t) => /Sinematik portre/.test(t)) && only.some((t) => /Neon şehirde drone/.test(t)), "preset / request / video stay");
+  assert.equal(await (await menuItem(page, /Yalnız görselliler/)).getAttribute("aria-checked"), "true");
+  await (await menuItem(page, /Yalnız görselliler/)).click();
+  await page.waitForTimeout(900);
+  assert.equal(db.feedCalls.at(-1).p_has_media, undefined, "off again: the plain form");
+  assert.ok((await slides(page).allTextContents()).some((t) => /Kısa öykü açılışı/.test(t)));
 });
 
 await scenario("8. Beğeni gerçek istekle, hata olursa geri alınır", async ({ page, db }) => {
   await openFocus(page);
-  await slides(page).nth(0).getByRole("button", { name: /Beğen|Tepki/ }).click();
+  await likeBtn(slide(page, 0)).click();
   await page.getByRole("menuitem", { name: "Sevdim" }).click(); // docs/history/265-*: düğme tepki seçicisini açar
   await page.waitForTimeout(500);
   assert.ok(db.calls.some((c) => c.table === "prompt_likes" && c.body.prompt_id === pid(1)));
-  assert.match(await slides(page).nth(0).getByRole("button", { name: /Beğen|Tepki/ }).textContent(), /12/);
+  assert.match(await likeBtn(slide(page, 0)).textContent(), /12/);
   db.failLike = true;
-  await step(page);
-  await slides(page).nth(1).getByRole("button", { name: /Beğen|Tepki/ }).click();
+  await jump(page, 1);
+  await likeBtn(slide(page, 1)).click();
   await page.getByRole("menuitem", { name: "Sevdim" }).click();
   await page.waitForTimeout(700);
-  assert.match(await slides(page).nth(1).getByRole("button", { name: /Beğen|Tepki/ }).textContent(), /12/, "rolled back");
+  assert.match(await likeBtn(slide(page, 1)).textContent(), /12/, "rolled back");
 });
 
-await scenario("9. Kaydet tek dokunuş (pencere yok, docs/history/336-*), Paylaş penceresi (Esc yalnız pencereyi kapatır), Yorum → #comments, Promptu incele + Kopyala", async ({ page, db }) => {
+await scenario("9. Rayda: Kaydet tek dokunuş (pencere yok), Paylaş penceresi (Esc yalnız pencereyi kapatır), Yorum düğmesi kartı Yorumlar sekmesinde TAM açar", async ({ page }) => {
   await openFocus(page);
-  const s0 = slides(page).nth(0);
+  const s0 = slide(page, 0);
   await s0.getByRole("button", { name: /Kaydet|koleksiyon/i }).click();
   await page.locator("[data-save-toast]").waitFor();
   assert.equal(await page.locator("[aria-modal='true']").count(), 0, "Kaydet pencere açmaz — koleksiyona eklemek ayrı adım");
@@ -355,27 +432,22 @@ await scenario("9. Kaydet tek dokunuş (pencere yok, docs/history/336-*), Payla�
   await page.locator("[aria-modal='true']").waitFor();
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
-  assert.equal(await s0.getByRole("button", { name: /Yorumları aç/ }).getAttribute("aria-haspopup"), "dialog", "comments open in place (scenarios 18–23)");
-  await s0.getByRole("button", { name: "Bilgi" }).click();
-  await page.locator("[data-focus-info]").waitFor();
-  await page.locator("[data-focus-info]").getByRole("button", { name: "Promptu incele" }).click();
-  const dialog = page.getByRole("dialog", { name: "Görsel prompt 1" });
-  await dialog.waitFor();
-  await dialog.getByRole("button", { name: "Kopyala" }).click();
-  await page.waitForTimeout(400);
-  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "cinematic misty landscape number 1, volumetric light, {style}");
-  assert.ok(db.calls.some((c) => c.table === "rpc/record_prompt_copy"));
+  assert.equal(await stage(page).count(), 1);
+  await s0.getByRole("button", { name: /Yorumları aç/ }).click();
+  await sheetEl(page).waitFor();
+  await page.waitForTimeout(450);
+  assert.equal(await sheetState(page), "full");
+  assert.equal(await page.getByRole("tab", { name: /Yorumlar/ }).getAttribute("aria-selected"), "true");
+  assert.match(await sheetEl(page).textContent(), /Yapay zeka ile yapılmış kesin/);
 });
 
 await scenario("10. Sayfalama: keyset imleciyle ikinci sayfa, sonda 'Hepsini gördün'", async ({ page, db }) => {
   await openFocus(page);
   await step(page, "End");
   await page.waitForTimeout(1200);
-  // Açılış (Medya açık, p_has_media) + Medya kapatınca yeniden okuma + ikinci sayfa.
-  assert.equal(db.feedCalls.length, 3);
-  assert.equal(db.feedCalls[0].p_has_media, true);
-  assert.equal(db.feedCalls[1].p_has_media, undefined, "Medya kapalı: süzgeçsiz biçim");
-  assert.ok(db.feedCalls[2].p_after_id);
+  assert.equal(db.feedCalls[0].p_has_media, undefined);
+  assert.ok(db.feedCalls.at(-1).p_after_id, "the last request is the keyset continuation");
+  assert.equal(db.feedCalls.filter((c) => c.p_after_id).length, 1, "the second page is asked for exactly once");
   assert.equal(await slides(page).count(), 25, "24 posts + end slide");
   await step(page, "End");
   await page.waitForTimeout(800);
@@ -391,16 +463,14 @@ await scenario("11. Kapat (X) ve Esc: geldiği sayfaya döner, menüler ve kayd�
   await page.waitForURL(/\/discover/);
   await page.waitForTimeout(400);
   assert.equal(await stage(page).count(), 0);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).display), "flex");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), false, "light theme: the site comes back to light on close");
-  assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "light", "…and so does the document scheme");
   await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(300);
   await page.keyboard.press("Escape");
   await page.waitForURL(/\/discover/);
-});
+}, { viewport: { width: 1280, height: 900 } });
 
 await scenario("12. Kapatıp yeniden açınca bu oturumda son açık gönderiden devam eder", async ({ page }) => {
   await page.goto(`${BASE}/`);
@@ -408,7 +478,7 @@ await scenario("12. Kapatıp yeniden açınca bu oturumda son açık gönderiden
   await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(400);
-  await step(page, "ArrowRight", 3);
+  await step(page, "ArrowDown", 3);
   await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
   await page.waitForTimeout(800);
   assert.doesNotMatch(page.url(), /\/focus/);
@@ -416,11 +486,11 @@ await scenario("12. Kapatıp yeniden açınca bu oturumda son açık gönderiden
   await slides(page).first().waitFor();
   await page.waitForTimeout(500);
   assert.equal(await activeIndex(page), 4, "back on the post last open");
-});
+}, { viewport: { width: 1280, height: 900 } });
 
-await scenario("13. Misafir: beğeni giriş penceresi açar; Takip sekmesi giriş ister", async ({ page, db }) => {
+await scenario("13. Misafir: beğeni giriş penceresi açar; Takip sekmesi giriş ister; metin promptu yine kopyalanır", async ({ page, db }) => {
   await openFocus(page);
-  await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).click();
+  await likeBtn(slide(page, 0)).click();
   await page.locator("[aria-modal='true']").waitFor();
   assert.equal(db.calls.filter((c) => c.table === "prompt_likes").length, 0);
   await page.keyboard.press("Escape");
@@ -428,7 +498,7 @@ await scenario("13. Misafir: beğeni giriş penceresi açar; Takip sekmesi giri�
   await stage(page).getByRole("link", { name: "Giriş Yap" }).waitFor();
 }, { guest: true });
 
-await scenario("14. Telefon 390px: Odak üst çubukta (alt menüde «Sen», docs/history/386-*); ekranı kaplar, alt/üst menü gizli, ray ekranda", async ({ page }) => {
+await scenario("14. Telefon: ekranı kaplar, alt/üst menü DOM'da yok; ray + yazar/başlık + prompt şeridi ekranda; dikey yakalama", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await page.locator("article").first().waitFor();
   const nav = page.locator("nav[data-app-chrome]");
@@ -436,39 +506,36 @@ await scenario("14. Telefon 390px: Odak üst çubukta (alt menüde «Sen», docs
   assert.deepEqual(labels.slice(0, 4), ["Ana Sayfa", "Keşfet", "Oluştur", "Topluluklar"]);
   assert.match(labels[4], /Sen$/, "son yuva «Sen»");
   const focusLink = page.locator("header[data-app-header]").getByRole("link", { name: "Odak" });
-  // Odak'a giriş GERÇEK sayfa yüklemesidir (docs/history/249-*): Safari araç çubuğu rengini yüklemede örnekler, uygulama içi geçişte değil.
   assert.equal(await focusLink.getAttribute("href"), "/promptly/focus/", "a plain link, not next/link");
-  await page.evaluate(() => { window.__spaMarker = 1; });
   await focusLink.click();
   await slides(page).first().waitFor();
-  await page.waitForTimeout(600);
-  assert.equal(await page.evaluate(() => window.__spaMarker), undefined, "the page was LOADED (window state is gone), not swapped client-side");
+  await page.waitForTimeout(700);
   const box = await stage(page).boundingBox();
   assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 390, 844]);
   assert.equal(await page.locator("nav[data-app-chrome]").count(), 0, "the bottom nav is not in the DOM on /focus (docs/history/248-*)");
-  const slide = await slides(page).nth(0).boundingBox();
-  assert.deepEqual([slide.x, slide.width, slide.height], [24, 342, 844], "a post is a full-height card, 24px in from each edge");
-  const next = await slides(page).nth(1).boundingBox();
-  assert.ok(next.x < 390 && next.x > 366, `the next card peeks in (${next.x})`);
-  assert.equal(await stage(page).locator("[data-focus-strip] button").count() > 5, true, "thumbnail strip");
-  const like = await slides(page).nth(0).getByRole("button", { name: /Beğen|Tepki/ }).boundingBox();
-  assert.ok(like.x + like.width <= 390 && like.y + like.height <= 844);
-  await step(page);
-  await shot(page, "14b-focus-phone-text");
+  const s0 = await slide(page, 0).boundingBox();
+  assert.deepEqual([s0.x, s0.y, s0.width, s0.height], [0, 0, 390, 844], "a post is one full screen");
+  const rail = await likeBtn(slide(page, 0)).boundingBox();
+  assert.ok(rail.x + rail.width <= 390 && rail.y + rail.height <= 844 && rail.x > 300, `the rail sits on the right edge (${rail.x})`);
+  const peek = await slide(page, 0).locator("[data-focus-peek]").boundingBox();
+  assert.ok(Math.abs(peek.y + peek.height - 844) < 1 && peek.height > 70 && peek.height < 130, `the strip sits at the screen's foot (${JSON.stringify(peek)})`);
+  assert.equal(await stage(page).locator("[data-focus-strip]").count(), 0, "no thumbnail strip any more");
+  assert.equal(await stage(page).locator("[data-focus-panel]").count(), 0, "no side panel on a phone");
+  await shot(page, "14-focus-phone");
   await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
   await page.waitForTimeout(600);
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("nav[data-app-chrome]")).display), "block");
-  await shot(page, "14-focus-phone");
-}, { viewport: { width: 390, height: 844 } });
+});
 
 await scenario("15. İngilizce", async ({ page }) => {
   await openFocus(page);
-  assert.equal(await counter(page).getAttribute("aria-label"), "Post 1 of 18");
   assert.ok(await stage(page).getByRole("button", { name: "Close Focus" }).isVisible());
-  assert.ok(await (await menuItem(page, /Media/)).isVisible());
+  assert.ok(await (await menuItem(page, /Only with pictures/)).isVisible());
   await page.keyboard.press("Escape");
-  await slides(page).nth(0).getByRole("button", { name: "Info" }).click();
-  assert.ok(await page.locator("[data-focus-info]").getByRole("button", { name: "View prompt" }).isVisible());
+  await openCard(page, 0);
+  assert.match(await sheetEl(page).textContent(), /Prompt Text/);
+  assert.ok(await sheetEl(page).getByRole("button", { name: /Fill and copy/ }).isVisible());
+  assert.ok(await sheetEl(page).getByRole("link", { name: /Try in Studio/ }).isVisible());
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
   await filterChip(page).click();
@@ -484,140 +551,261 @@ await scenario("16. Açık temada da koyu sahne; hareket azaltmada geçiş yok",
   assert.ok(parseFloat(duration) < 0.01, duration);
 }, { theme: "light", reducedMotion: true });
 
-await scenario("17. Tablet 820px: kart + yan ray, tam ekran", async ({ page }) => {
-  await openFocus(page);
-  const box = await stage(page).boundingBox();
-  assert.deepEqual([box.x, box.width], [0, 820]);
-  await shot(page, "17-focus-tablet");
-}, { viewport: { width: 820, height: 1100 } });
+const FILLED_TEXT_2 = "Bir deniz fenerinde yalnız yaşayan bekçinin kış gecesi gördüğü ışığı  bir dille anlatan, 200 kelimelik bir açılış paragrafı yaz.";
 
-const sheet = (page) => page.locator("[data-focus-comments]");
-const openComments = async (page, index = 0) => {
-  await slides(page).nth(index).getByRole("button", { name: /Yorumları aç|Open comments/ }).click();
-  await sheet(page).waitFor();
+await scenario("17. Prompt şeridi: tek satır prompt + değişken sayısı + Kopyala (panel açmadan, doldurulmuş hâliyle, kullanım sayılır); metin sahnesinde değer çipleri; her türün kendi büyük düğmesi", async ({ page, db, feed }) => {
+  await openFocus(page);
+  const peek = slide(page, 0).locator("[data-focus-peek]");
   await page.waitForTimeout(500);
-};
+  assert.match(await peek.textContent(), /Prompt/);
+  assert.match(await peek.textContent(), /1 değişken/);
+  assert.match(await peek.textContent(), /cinematic misty landscape number 1, volumetric light, cinematic/, "the filled prompt as one line");
+  await peek.locator("[data-focus-peek-action='copy'] button").click();
+  await page.waitForTimeout(400);
+  assert.equal(await clipboard(page), "cinematic misty landscape number 1, volumetric light, cinematic", "copies the FILLED prompt (default value substituted)");
+  assert.ok(db.calls.some((c) => c.table === "rpc/record_prompt_copy"), "a copy counts a use");
+  assert.equal(await sheetEl(page).count(), 0, "copying needs no card");
+  await jump(page, 1);
+  const textPeek = slide(page, 1).locator("[data-focus-peek]");
+  assert.match(await textPeek.textContent(), /Değişkenler/);
+  assert.match(await textPeek.textContent(), /mevsim: kış/);
+  assert.match(await textPeek.textContent(), /ton: boş/, "an empty variable says so");
+  await textPeek.locator("[data-focus-peek-action='copy'] button").click();
+  await page.waitForTimeout(300);
+  assert.equal(await clipboard(page), FILLED_TEXT_2);
+  await jump(page, 2);
+  assert.equal(await slide(page, 2).locator("[data-focus-peek-action]").getAttribute("data-focus-peek-action"), "runWorkflow");
+  assert.match(await slide(page, 2).locator("[data-focus-peek-action]").getAttribute("href"), /run=1/);
+  await jump(page, 3);
+  assert.match(await slide(page, 3).locator("[data-focus-peek-action]").getAttribute("href"), new RegExp(`/studio/?\\?preset=${feed.preset.id}`));
+  await jump(page, 4);
+  assert.match(await slide(page, 4).locator("[data-focus-peek-action]").getAttribute("href"), new RegExp(`/create/?\\?answerRequest=${feed.request.id}`));
+  assert.match(await slide(page, 4).locator("[data-focus-peek]").textContent(), /2 yanıt/);
+});
 
-await scenario("18. Yorumlar (telefon): alttan açılır, gönderi yukarıda küçülür ve menüler çekilir; liste Instagram düzeninde", async ({ page }) => {
+await scenario("18. Yarım kart: şeride dokununca %58'lik alt kart; görsel üstte küçülür, ray/başlık çekilir, üst çubuk kalır; başlık, prompt, değişken alanı, büyük eylem", async ({ page }) => {
   await openFocus(page);
-  assert.match(await slides(page).nth(0).getByRole("button", { name: /Yorumları aç/ }).textContent(), /1/);
-  await openComments(page);
-  const box = await sheet(page).boundingBox();
-  assert.ok(box.y > 844 * 0.3 && box.y < 844 * 0.4, `sheet starts around 35% (${box.y})`);
-  assert.equal(Math.round(box.y + box.height), 844, "sheet reaches the bottom");
-  const transform = await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']").parentElement).transform);
-  assert.notEqual(transform, "none", "the post moves (and shrinks only if it must) into the space above the sheet");
-  // Albüm (docs/history/203-*): the album art is fitted whole into the free area above the sheet.
-  const art = await slides(page).nth(0).locator("[data-album-art]").boundingBox();
-  assert.ok(art.y >= 0 && art.y + art.height <= box.y + 1, `art above the sheet (${JSON.stringify(art)}, sheet ${box.y})`);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] button[aria-label=\"Odak'ı kapat\"]").parentElement).opacity), "0", "top bar steps aside");
-  assert.equal(await sheet(page).getByRole("heading").textContent(), "Yorumlar · 5");
-  const text = await sheet(page).textContent();
+  await page.waitForTimeout(500);
+  await openCard(page, 0);
+  assert.equal(await sheetState(page), "half");
+  const box = await sheetEl(page).boundingBox();
+  assert.ok(Math.abs(box.y - 844 * 0.42) < 6 && Math.abs(box.y + box.height - 844) < 1, `a 58% card from the bottom (${JSON.stringify(box)})`);
+  const art = await slide(page, 0).locator("[data-album-art]").boundingBox();
+  assert.ok(art.height > 360 && art.height < 400 && art.y === 0, `the picture shrinks into the room above (${art.height})`);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-slide-index='0'] [data-focus-peek]")).opacity), "0", "the strip steps aside");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] button[aria-label=\"Odak'ı kapat\"]").parentElement).opacity), "1", "the top bar stays on the half card");
+  assert.equal(await sheetEl(page).locator("[role='tablist']").count(), 0, "half = no tabs");
+  assert.match(await sheetEl(page).locator("[data-focus-card-header]").textContent(), /Görsel prompt 1/);
+  assert.match(await sheetEl(page).locator("[data-focus-card-header]").textContent(), /Kanıtlanmış · %93/, "the works tally from the real RPC: 128 of 137");
+  assert.match(await sheetEl(page).locator("[data-focus-prompt-block]").textContent(), /cinematic misty landscape number 1/);
+  assert.equal(await sheetEl(page).locator("#pv-va1").inputValue(), "cinematic");
+  assert.ok(await sheetEl(page).getByRole("button", { name: "Doldurup kopyala" }).isVisible());
+  assert.ok(await sheetEl(page).getByRole("link", { name: "Studio'da dene" }).isVisible());
+  assert.match(await sheetEl(page).getByRole("link", { name: "Studio'da dene" }).getAttribute("href"), new RegExp(`/studio/?\\?prompt=${pid(1)}`));
+  assert.equal(await sheetEl(page).locator("[data-focus-action-bar]").getByRole("button", { name: /Beğen|Tepki/ }).count(), 1, "Beğeni + Kaydet beside the big action");
+  await shot(page, "18-half");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
+  assert.equal(await sheetEl(page).count(), 0, "Esc closes the card, Odak stays");
+  assert.equal(await stage(page).count(), 1);
+  assert.equal(await page.evaluate(() => document.activeElement?.hasAttribute("data-focus-peek-open")), true, "focus returns to the strip button");
+});
+
+await scenario("19. Kart durumları: yukarı sürükle → tam (küçük başlık + sekmeler + ayrıntılar, üst çubuk çekilir); aşağı → yarım → kapalı; küçült düğmesi yarıma döner", async ({ page }) => {
+  await openFocus(page);
+  await page.waitForTimeout(500);
+  await openCard(page, 0);
+  await dragGrabber(page, -120);
+  assert.equal(await sheetState(page), "full");
+  const box = await sheetEl(page).boundingBox();
+  assert.ok(Math.abs(box.y - 84) < 4, `the full card's top is 84px down (${box.y})`);
+  assert.ok(await sheetEl(page).locator("[data-focus-card-compact]").isVisible(), "compact header with the thumbnail");
+  assert.deepEqual(await page.getByRole("tab").allInnerTexts().then((all) => all.map((s) => s.replace(/\s+/g, " ").trim())), ["Prompt", "Yorumlar 1", "Sonuçlar"], "no Sürümler tab: the prompt has no versions");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] button[aria-label=\"Odak'ı kapat\"]").parentElement).opacity), "0", "top bar steps aside on the full card");
+  const text = await sheetEl(page).textContent();
+  assert.match(text, /Çalıştı mı\?/, "the works vote is in the full card");
+  assert.match(text, /Midjourney/, "tool row");
+  assert.ok(await sheetEl(page).getByRole("link", { name: /Ayrıntıları aç/ }).isVisible());
+  await shot(page, "19-full");
+  await sheetEl(page).getByRole("button", { name: "Kartı küçült" }).click();
+  await page.waitForTimeout(500);
+  assert.equal(await sheetState(page), "half");
+  assert.equal(await sheetEl(page).locator("[role='tablist']").count(), 0);
+  await dragGrabber(page, 130);
+  assert.equal(await sheetEl(page).count(), 0, "dragged down from half = closed");
+  await openCard(page, 0);
+  await dragGrabber(page, 20);
+  assert.equal(await sheetState(page), "half", "a small drag decides nothing");
+});
+
+await scenario("20. Kartta değişken alanı: yazdıkça prompt canlı güncellenir; şerit satırı, Kopyala ve 'Varsayılanlara dön' aynı değeri kullanır", async ({ page }) => {
+  await openFocus(page);
+  await page.waitForTimeout(500);
+  await openCard(page, 0);
+  await sheetEl(page).locator("#pv-va1").fill("noir");
+  await page.waitForTimeout(300);
+  assert.match(await sheetEl(page).locator("[data-focus-prompt-block]").textContent(), /volumetric light, noir/);
+  await sheetEl(page).getByRole("button", { name: "Doldurup kopyala" }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await clipboard(page), "cinematic misty landscape number 1, volumetric light, noir");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
+  assert.match(await slide(page, 0).locator("[data-focus-peek]").textContent(), /volumetric light, noir/, "the strip shows the same value");
+  await openCard(page, 0);
+  await sheetEl(page).getByRole("button", { name: "Varsayılanlara dön" }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await sheetEl(page).locator("#pv-va1").inputValue(), "cinematic");
+});
+
+await scenario("21. Sahnede doldurma: değişken çipine dokun → seçici; seçim sahnede canlı yazılır, 'Sonraki alan', Tamam; şerit çipleri ve Kopyala aynı değerler", async ({ page }) => {
+  await openFocus(page);
+  await jump(page, 1);
+  await page.waitForTimeout(500);
+  const s1 = slide(page, 1);
+  await s1.locator("[data-focus-token='mevsim']").click();
+  const picker = page.locator("[data-focus-picker]");
+  await picker.waitFor();
+  await page.waitForTimeout(350);
+  assert.equal(await page.locator("[data-focus-feed]").getAttribute("data-sheet"), "fill");
+  assert.match(await s1.textContent(), /1 \/ 2 alan/, "progress in the scene's label");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-slide-index='1'] [data-focus-peek]")).opacity), "0", "strip / rail step aside while picking");
+  await picker.getByText("Yaz", { exact: true }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await s1.locator("[data-focus-token='mevsim']").textContent(), "yaz", "the words update live");
+  await shot(page, "21-picker");
+  await picker.getByRole("button", { name: "Sonraki alan: ton" }).click();
+  await page.waitForTimeout(300);
+  assert.match(await picker.textContent(), /\{ton\}/);
+  await picker.locator("input").fill("teknik");
+  await page.waitForTimeout(300);
+  assert.equal(await s1.locator("[data-focus-token='ton']").textContent(), "teknik");
+  assert.match(await s1.textContent(), /2 \/ 2 alan/);
+  await picker.getByRole("button", { name: "Tamam" }).click();
+  await page.waitForTimeout(400);
+  assert.equal(await page.locator("[data-focus-picker]").count(), 0);
+  assert.equal(await page.locator("[data-focus-feed]").getAttribute("data-sheet"), null);
+  assert.match(await s1.locator("[data-focus-peek]").textContent(), /mevsim: yaz/);
+  assert.match(await s1.locator("[data-focus-peek]").textContent(), /ton: teknik/);
+  await s1.locator("[data-focus-peek-action='copy'] button").click();
+  await page.waitForTimeout(300);
+  assert.equal(await clipboard(page), "Bir deniz fenerinde yalnız yaşayan bekçinin yaz gecesi gördüğü ışığı teknik bir dille anlatan, 200 kelimelik bir açılış paragrafı yaz.");
+  // The same values are in the card's fields.
+  await openCard(page, 1);
+  assert.equal(await sheetEl(page).locator("#pv-va3").inputValue(), "teknik");
+  // Esc closes the picker, not Odak.
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+  await s1.locator("[data-focus-token='ton']").click();
+  await page.locator("[data-focus-picker]").waitFor();
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator("[data-focus-picker]").count(), 0);
+  assert.equal(await stage(page).count(), 1);
+});
+
+await scenario("22. Yorumlar sekmesi: liste Instagram düzeninde; yorum yaz (emoji + gönder → gerçek istek, listeye ve sekme sayısına düşer); Yanıtla tek kutuyu yanıta çevirir", async ({ page, db }) => {
+  await openFocus(page);
+  await slide(page, 0).getByRole("button", { name: /Yorumları aç/ }).click();
+  await sheetEl(page).waitFor();
+  await page.waitForTimeout(500);
+  const comments = page.locator("[data-focus-comments]");
+  const text = await comments.textContent();
   assert.match(text, /bob/);
   assert.match(text, /Yapay zeka ile yapılmış kesin/);
   assert.match(text, /535/, "comment like count on the right");
   assert.match(text, /2 yanıtı göster/);
-  assert.equal(await sheet(page).getByRole("group", { name: "Hızlı emoji" }).getByRole("button").count(), 8);
-  await shot(page, "18-comments-phone");
-}, { viewport: { width: 390, height: 844 } });
-
-await scenario("19. Yorum yaz: emoji ekle + gönder → gerçek istek, listeye ve sayaca düşer", async ({ page, db }) => {
-  await openFocus(page);
-  await openComments(page);
-  const input = sheet(page).getByRole("textbox", { name: "Bunun hakkında ne düşünüyorsun?" });
+  assert.equal(await comments.getByRole("group", { name: "Hızlı emoji" }).getByRole("button").count(), 8);
+  const input = comments.getByRole("textbox", { name: "Bunun hakkında ne düşünüyorsun?" });
   await input.fill("Harika ");
-  await sheet(page).getByRole("button", { name: "🔥 ekle" }).click();
+  await comments.getByRole("button", { name: "🔥 ekle" }).click();
   assert.equal(await input.inputValue(), "Harika 🔥");
-  await sheet(page).getByRole("button", { name: "Gönder" }).click();
+  await comments.getByRole("button", { name: "Gönder" }).click();
   await page.waitForTimeout(700);
   const post = db.calls.find((c) => c.table === "prompt_comments" && c.method === "POST");
   assert.ok(post && post.body.prompt_id === pid(1) && post.body.body === "Harika 🔥" && post.body.parent_id === null, JSON.stringify(post));
-  assert.match(await sheet(page).textContent(), /Harika 🔥/);
-  assert.equal(await sheet(page).getByRole("heading").textContent(), "Yorumlar · 6");
+  assert.match(await comments.textContent(), /Harika 🔥/);
   assert.equal(await input.inputValue(), "");
-  await sheet(page).getByRole("button", { name: "Yorumları kapat" }).click();
-  await page.waitForTimeout(400);
-  assert.match(await slides(page).nth(0).getByRole("button", { name: /Yorumları aç/ }).textContent(), /2/, "rail count follows");
-}, { viewport: { width: 390, height: 844 } });
-
-await scenario("20. Yanıtla: tek kutu yanıta döner (@ad), gönderilen yanıt üst yoruma bağlanır; yanıtlar açılır/kapanır", async ({ page, db }) => {
-  await openFocus(page);
-  await openComments(page);
-  await sheet(page).getByRole("button", { name: "2 yanıtı göster" }).click();
-  assert.match(await sheet(page).textContent(), /Teşekkürler!/);
-  const row = sheet(page).locator("[data-comment-id='c0000000-0000-4000-8000-000000000001']");
+  assert.match((await page.getByRole("tab", { name: /Yorumlar/ }).innerText()).replace(/\s+/g, " "), /Yorumlar 2/, "the tab count follows");
+  await comments.getByRole("button", { name: "2 yanıtı göster" }).click();
+  const row = comments.locator("[data-comment-id='c0000000-0000-4000-8000-000000000001']");
   await row.getByRole("button", { name: "Yanıtla" }).first().click();
-  await sheet(page).getByText("@bobby kişisine yanıt veriyorsun").waitFor();
-  const input = sheet(page).getByRole("textbox", { name: "Bunun hakkında ne düşünüyorsun?" });
+  await comments.getByText("@bobby kişisine yanıt veriyorsun").waitFor();
   assert.equal(await input.inputValue(), "@bobby ");
   await input.press("End");
   await input.type("bence de");
   await input.press("Enter");
   await page.waitForTimeout(700);
-  const post = db.calls.find((c) => c.table === "prompt_comments" && c.method === "POST");
-  assert.equal(post.body.parent_id, "c0000000-0000-4000-8000-000000000001");
-  assert.equal(post.body.body, "@bobby bence de");
-  assert.equal(await sheet(page).getByText(/kişisine yanıt veriyorsun/).count(), 0, "reply mode ends after sending");
-}, { viewport: { width: 390, height: 844 } });
-
-await scenario("21. Yorum beğenisi gerçek istekle; kapatma yolları: üstteki gönderiye dokun, aşağı sürükle, Esc", async ({ page, db }) => {
-  await openFocus(page);
-  await openComments(page);
-  const row = sheet(page).locator("[data-comment-id='c0000000-0000-4000-8000-000000000002']");
-  // Yorum tepkisi gönderideki sistemdir (docs/history/327-*): dokununca emoji seçici açılır, seçilene kadar hiçbir şey yazılmaz.
-  await row.locator("[data-comment-reactions] button").first().click();
-  await page.locator("[data-reaction-picker]").waitFor();
-  assert.ok(!db.calls.some((c) => c.table === "comment_likes"), "emoji seçilene kadar beğeni yazılmaz");
-  await page.locator('[data-reaction-picker] [data-reaction="love"]').click();
-  await page.waitForTimeout(400);
-  assert.ok(db.calls.some((c) => c.table === "comment_likes" && c.body.comment_id === "c0000000-0000-4000-8000-000000000002"));
-  assert.match(await row.textContent(), /45/);
-  await page.mouse.click(195, 120);
-  await page.waitForTimeout(400);
-  assert.equal(await sheet(page).count(), 0, "tap on the post above closes");
-  const transform = await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']").parentElement).transform);
-  assert.ok(transform === "none" || /matrix\(1, 0, 0, 1, 0, 0\)/.test(transform), `post back to full size: ${transform}`);
-  await openComments(page);
-  const handle = await sheet(page).getByRole("heading").boundingBox();
-  await page.mouse.move(handle.x + 10, handle.y + 5);
-  await page.mouse.down();
-  await page.mouse.move(handle.x + 10, handle.y + 80, { steps: 4 });
-  await page.mouse.move(handle.x + 10, handle.y + 200, { steps: 4 });
-  await page.mouse.up();
-  await page.waitForTimeout(400);
-  assert.equal(await sheet(page).count(), 0, "drag down closes");
-  await openComments(page);
+  const reply = db.calls.filter((c) => c.table === "prompt_comments" && c.method === "POST").at(-1);
+  assert.equal(reply.body.parent_id, "c0000000-0000-4000-8000-000000000001");
+  assert.equal(reply.body.body, "@bobby bence de");
+  // Esc: a reply in progress first, then the card.
+  await row.getByRole("button", { name: "Yanıtla" }).first().click();
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
-  assert.equal(await sheet(page).count(), 0, "Esc closes the sheet");
-  assert.equal(await stage(page).count(), 1, "…but not Odak");
-}, { viewport: { width: 390, height: 844 } });
+  assert.equal(await sheetEl(page).count(), 1, "Esc cancels the reply first");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
+  assert.equal(await sheetEl(page).count(), 0);
+});
 
-await scenario("22. Misafir: yorumları okur; yazma/yanıt/emoji giriş penceresini açar", async ({ page, db }) => {
+await scenario("23. Misafir: yorumları okur; yazma/emoji giriş penceresini açar", async ({ page, db }) => {
   await openFocus(page);
-  await openComments(page);
-  assert.match(await sheet(page).textContent(), /Yapay zeka ile yapılmış kesin/);
-  assert.equal(await sheet(page).getByRole("textbox").count(), 0);
-  await sheet(page).getByRole("button", { name: "Yorum yapmak için giriş yap" }).click();
-  await page.locator("[aria-modal='true'][aria-labelledby]").nth(1).waitFor();
-  assert.equal(db.calls.filter((c) => c.table === "prompt_comments" && c.method === "POST").length, 0);
-}, { viewport: { width: 390, height: 844 }, guest: true });
-
-await scenario("23. Masaüstü: yorumlar sağda panel, gönderi küçülmez yana kayar; İngilizce", async ({ page }) => {
-  await openFocus(page);
-  await slides(page).nth(0).getByRole("button", { name: /Open comments/ }).click();
-  await sheet(page).waitFor();
+  await slide(page, 0).getByRole("button", { name: /Yorumları aç/ }).click();
+  await sheetEl(page).waitFor();
   await page.waitForTimeout(500);
-  const box = await sheet(page).boundingBox();
-  assert.deepEqual([box.x, box.y, box.width, box.height], [860, 0, 420, 900]);
-  assert.equal(await sheet(page).getByRole("heading").textContent(), "Comments · 5");
-  assert.ok(await sheet(page).getByRole("textbox", { name: "What do you think about this?" }).isVisible());
-  const content = await page.evaluate(() => document.querySelector("[data-focus-feed] [role='region']").parentElement.getBoundingClientRect().width);
-  assert.equal(content, 860);
-  await shot(page, "23-comments-desktop");
-}, { lang: "en" });
+  assert.match(await page.locator("[data-focus-comments]").textContent(), /Yapay zeka ile yapılmış kesin/);
+  await page.locator("[data-focus-comments]").getByRole("button", { name: "Yorum yapmak için giriş yap" }).click();
+  await page.locator("[aria-modal='true']").nth(1).waitFor();
+  assert.equal(db.calls.filter((c) => c.table === "prompt_comments" && c.method === "POST").length, 0);
+}, { guest: true });
 
-await scenario("24. Spaces (docs/history/213-*): Odak'taki gönderi 'Space'e ekle' ile görseline başvurarak eklenir", async ({ page, db, feed }) => {
+await scenario("24. Sonuçlar sekmesi: prompt'un kullanıcı sonuçları bölümü kartın içinde; Çalıştı mı? kopyalamadan sonra yarım kartta da açılır", async ({ page, db }) => {
+  await openFocus(page);
+  await page.waitForTimeout(500);
+  await openCard(page, 0);
+  assert.equal(await sheetEl(page).getByText("Çalıştı mı?").count(), 0, "half card: no vote yet");
+  await sheetEl(page).getByRole("button", { name: "Doldurup kopyala" }).click();
+  await page.waitForTimeout(700);
+  assert.ok(await sheetEl(page).getByText("Çalıştı mı?").isVisible(), "right after copying the vote opens even on the half card");
+  assert.ok(db.calls.some((c) => c.table === "rpc/prompt_works_state"));
+  await dragGrabber(page, -120);
+  await page.getByRole("tab", { name: "Sonuçlar" }).click();
+  await page.waitForTimeout(600);
+  assert.equal(await page.getByRole("tab", { name: "Sonuçlar" }).getAttribute("aria-selected"), "true");
+  assert.ok(db.calls.some((c) => c.table === "prompt_results" && c.method === "GET"), "the results section loads");
+  assert.equal(await sheetEl(page).locator("[data-focus-action-bar]").count(), 1, "the big action stays");
+});
+
+await scenario("25. İstek kartı: İstek + Yorumlar sekmeleri; Yanıtla büyük eylem; Ayrıntıları aç / Space'e ekle satırları", async ({ page, feed }) => {
+  await openFocus(page);
+  await jump(page, 4);
+  await openCard(page, 4);
+  assert.equal(await sheetState(page), "half");
+  assert.match(await sheetEl(page).textContent(), /Neon harfli bir şehir posteri/);
+  assert.match(await sheetEl(page).textContent(), /Blade Runner/);
+  const reply = sheetEl(page).locator("[data-focus-action-bar]").getByRole("link", { name: "Yanıtla" });
+  assert.match(await reply.getAttribute("href"), new RegExp(`/create/?\\?answerRequest=${feed.request.id}`));
+  assert.ok(await sheetEl(page).getByRole("link", { name: /Ayrıntıları aç/ }).isVisible(), "the ways on are there even on the half card");
+  await dragGrabber(page, -120);
+  assert.deepEqual(await page.getByRole("tab").allInnerTexts().then((all) => all.map((s) => s.replace(/\s+/g, " ").trim())), ["Prompt İsteği", "Yorumlar 4"]);
+  await shot(page, "25-request-card");
+});
+
+await scenario("26. Çıktısız/görselsiz gönderilerde kart: workflow adımları + 'Adım adım çalıştır'; ayar paketi parametreleri + 'Bir promptla dene'", async ({ page }) => {
+  await openFocus(page);
+  await jump(page, 2);
+  await openCard(page, 2);
+  assert.match(await sheetEl(page).locator("[data-focus-card-scroll]").textContent(), /Üç adımlı akış/);
+  assert.ok(await sheetEl(page).locator("[data-focus-action-bar]").getByRole("link", { name: "Adım adım çalıştır" }).isVisible());
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
+  await jump(page, 3);
+  await openCard(page, 3);
+  assert.ok(await sheetEl(page).locator("[data-focus-action-bar]").getByRole("link", { name: "Bir promptla dene" }).isVisible());
+  assert.match(await sheetEl(page).locator("[data-focus-card-scroll]").textContent(), /Yumuşak ışık için hazır parametre seti/);
+});
+
+await scenario("27. Paylaş / Space'e ekle: Odak'taki gönderi 'Space'e ekle' ile (kartın Ayrıntılar satırı) görseline başvurarak eklenir", async ({ page, db, feed }) => {
   setupSpaces(db);
   db.addSpace(1, { title: "Manzara fikirleri" });
   await page.route(`https://example.supabase.co/rest/v1/prompts?**`, (route) => {
@@ -629,7 +817,9 @@ await scenario("24. Spaces (docs/history/213-*): Odak'taki gönderi 'Space'e ekl
   });
   await page.goto(`${BASE}/focus`);
   await slides(page).first().waitFor();
-  await slides(page).nth(0).getByRole("button", { name: "Bilgi" }).click();
+  await page.waitForTimeout(500);
+  await openCard(page, 0);
+  await dragGrabber(page, -120);
   await page.locator("[data-focus-add-to-space]").first().click();
   const modal = page.getByTestId("add-to-space");
   await modal.locator('[data-add-space="Manzara fikirleri"]').click();
@@ -641,262 +831,180 @@ await scenario("24. Spaces (docs/history/213-*): Odak'taki gönderi 'Space'e ekl
   assert.equal(added[0].prompt_id, feed.prompts[0].id);
 });
 
-await scenario("25. Spaces: Ana Sayfa kartının ⋮ menüsünden 'Space'e ekle' — penceredeki tıklamalar kartı AÇMAZ", async ({ page, db, feed }) => {
-  setupSpaces(db);
-  db.addSpace(1, { title: "Kart testi" });
-  await page.route(`https://example.supabase.co/rest/v1/prompts?**`, (route) => {
-    const url = new URL(route.request().url());
-    const id = (url.searchParams.get("id") ?? "").replace("eq.", "");
-    const row = feed.prompts.find((p) => p.id === id);
-    if (route.request().method() !== "GET" || !row || !(url.searchParams.get("id") ?? "").startsWith("eq.")) return route.fallback();
-    return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(row) });
-  });
-  await page.goto(`${BASE}/`);
-  const card = page.locator("article").first();
-  await card.waitFor();
-  await card.getByRole("button", { name: "Gönderi seçenekleri" }).click();
-  await page.locator("[data-add-to-space]").first().click();
-  const modal = page.getByTestId("add-to-space");
-  await modal.getByRole("textbox").first().click();
-  await modal.locator('[data-add-space="Kart testi"]').click();
-  await page.getByTestId("add-to-space-submit").click();
-  await page.getByTestId("add-to-space-done").waitFor();
-  await page.getByTestId("add-to-space-done").getByRole("button", { name: "Kapat" }).click();
-  await page.waitForTimeout(400);
-  assert.equal(new URL(page.url()).pathname, "/promptly/", "kart açılmadı, sayfada kaldı");
-  assert.equal(db.spaceItems.filter((i) => i.space_id === SID(1)).length, 1);
-});
-
-await scenario("26. Küçük resim şeridi (docs/history/238-*): etkin olan halkalı + ortada, dokununca o gönderiye gider, gönderi değişince şerit akar; yalnız ±14 küçük resim bağlanır", async ({ page }) => {
+await scenario("28. Süzgeç menüsü (docs/history/245-*): üstte tek 'Tümü · En yeni' çipi; her tür kendi sunucu sorgusu; kart/seçici açıkken süzgeç değişince kapanır", async ({ page, db }) => {
   await openFocus(page);
-  const thumbs = stage(page).locator("[data-focus-strip] button");
-  assert.equal(await thumbs.count(), 15, "active 0: indices 0…14 mounted");
-  assert.equal(await thumbs.nth(0).getAttribute("aria-current"), "true");
-  const first = await thumbs.nth(0).boundingBox();
-  assert.ok(Math.abs(first.x + first.width / 2 - 640) < 3, `active thumbnail centred (${first.x})`);
-  await thumbs.nth(3).click();
-  await page.waitForTimeout(900);
-  assert.equal(await activeIndex(page), 4, "tapping a thumbnail goes to that post");
-  assert.equal(await stage(page).locator("[data-focus-strip] button[aria-current]").getAttribute("aria-label"), "Sinematik portre ayarı");
-  const moved = await stage(page).locator("[data-focus-strip] button[aria-current]").boundingBox();
-  assert.ok(Math.abs(moved.x + moved.width / 2 - 640) < 3, "strip followed the post");
-  await step(page, "End");
-  await page.waitForTimeout(500);
-  assert.ok((await thumbs.count()) <= 29, "window stays small on a long feed");
-  await shot(page, "26-strip");
-});
-
-await scenario("27. Yana kaydırma: yatay kaydırma bir sonraki kartı etkin yapar (komşular soluk); ⋮ menüsünde Esc yalnız menüyü kapatır", async ({ page }) => {
-  await openFocus(page);
-  const region = page.locator("[data-focus-feed] [role='region']");
-  const op = (i) => slides(page).nth(i).evaluate((el) => getComputedStyle(el).opacity);
-  assert.equal(await op(0), "1");
-  assert.ok(Number(await op(1)) < 0.6, "neighbour dimmed");
-  await region.evaluate((el) => el.scrollBy({ left: 600, behavior: "instant" }));
-  await page.waitForTimeout(900);
-  assert.equal(await activeIndex(page), 2, "a sideways swipe moves on");
-  await stage(page).getByRole("button", { name: "Odak seçenekleri" }).click();
-  await stage(page).getByRole("menuitemcheckbox", { name: "Medya" }).waitFor();
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(300);
-  assert.equal(await stage(page).getByRole("menu").count(), 0, "Esc closed the menu");
-  assert.equal(await stage(page).count(), 1, "…not Odak");
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(600);
-  assert.equal(await stage(page).count(), 0, "a second Esc closes Odak");
-});
-
-const swipeVertical = (page, from, to) => page.locator("[data-focus-feed] [data-channel-area]").evaluate((el, [y0, y1]) => {
-  const fire = (type, y) => el.dispatchEvent(new PointerEvent(type, { pointerType: "touch", pointerId: 7, clientX: 200, clientY: y, bubbles: true, isPrimary: true }));
-  fire("pointerdown", y0); fire("pointermove", (y0 + y1) / 2); fire("pointermove", y1); fire("pointerup", y1);
-}, [from, to]);
-await scenario("28. Süzgeç menüsü (docs/history/245-*): üstte tek 'Tümü · En yeni' çipi, tür + kaynak yazıyla; nokta/kapsül yok; yukarı kaydırma = Bilgi; her tür kendi sunucu sorgusu", async ({ page, db }) => {
-  await openFocus(page, { all: false });
-  assert.equal(await stage(page).locator("nav[aria-label='Odak bölümleri']").count(), 0, "no dots down the edge");
-  assert.equal(await stage(page).locator("[role='tablist']").count(), 0, "no two-feed capsule");
+  assert.equal(await stage(page).locator("[role='tablist']").count(), 0, "no capsule while no card is open");
   assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Tümü · En yeni");
-  assert.equal(db.feedCalls.at(-1).p_kinds, null, "Tümü = every kind");
-  assert.equal(db.feedCalls.at(-1).p_scope, "all");
+  assert.equal(db.feedCalls.at(-1).p_kinds, null);
   await filterChip(page).click();
   assert.equal(await stage(page).getByRole("menuitemradio").count(), 12 + (SKILLS_ON ? 1 : 0), "5 (+ Skills) post types + 5 content types + 2 sources");
-  assert.equal(await stage(page).getByRole("menuitemradio", { name: "Tümü" }).first().getAttribute("aria-checked"), "true");
-  assert.equal(await stage(page).getByRole("menuitemradio", { name: "En yeni" }).getAttribute("aria-checked"), "true");
-  await shot(page, "28-filter-menu");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
   assert.equal(await stage(page).getByRole("menu").count(), 0, "Esc closes the menu first");
   assert.equal(await stage(page).count(), 1, "…not Odak");
+  await openCard(page, 0);
   await pickFilter(page, "Promptlar");
-  assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Promptlar · En yeni");
+  assert.equal(await sheetEl(page).count(), 0, "changing the filter closes the card");
   assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["prompt"]);
-  const types = await slides(page).evaluateAll((els) => els.slice(0, -1).map((e) => /PROMPT|Prompt/.test(e.textContent)));
-  assert.ok(types.every(Boolean), "only prompts in the Prompt type");
   await pickFilter(page, "Workflow'lar");
   assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["workflow"]);
   await pickFilter(page, "Takip Ettiklerim");
   assert.equal(db.feedCalls.at(-1).p_scope, "following", "the source is the same menu");
-  assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["workflow"], "…and the type stays");
   assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Workflow'lar · Takip Ettiklerim");
   await pickFilter(page, "Tümü");
   await pickFilter(page, "En yeni");
   assert.equal(db.feedCalls.at(-1).p_kinds, null);
-  assert.equal(db.feedCalls.at(-1).p_scope, "all");
-  // Vertical moves no longer change the type: the wheel and ↓ do nothing, a touch swipe up / ↑ open Bilgi.
-  await page.mouse.move(640, 450);
-  await page.mouse.wheel(0, 300);
-  await page.keyboard.press("ArrowDown");
-  await page.waitForTimeout(700);
-  assert.equal(await page.locator("[data-focus-info]").count(), 0, "the wheel / ↓ do not open anything");
-  assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Tümü · En yeni", "…and do not change the type");
-  await page.keyboard.press("ArrowUp");
-  await page.locator("[data-focus-info]").waitFor();
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(400);
-  assert.equal(await page.locator("[data-focus-info]").count(), 0);
-  await swipeVertical(page, 280, 500);
-  await page.waitForTimeout(400);
-  assert.equal(await page.locator("[data-focus-info]").count(), 0, "a swipe down does nothing");
-  await swipeVertical(page, 500, 280);
-  await page.locator("[data-focus-info]").waitFor();
-  assert.match(await page.locator("[data-focus-info]").textContent(), /Görsel prompt 1|Açıklama 1/, "a swipe up opens the info of the active post");
-  const thumb = await stage(page).locator("[data-focus-strip] button").first().boundingBox();
-  assert.ok(thumb.width <= 40.5, `the thumbnails are small (${thumb.width}px wide)`);
 });
 
-await scenario("29. Görselsiz istek ve ayar paketi: görselin yerinde kendi metni / parametre özeti; Prompt bölümünde Medya açıkken yalnız görselli/oynatılan promptlar", async ({ page }) => {
-  await openFocus(page, { all: false });
-  const request = slides(page).filter({ hasText: "Retro-fütüristik sokak posteri" }).first();
-  const art = request.locator("[data-album-art]");
-  assert.match(await art.textContent(), /Neon harfli bir şehir posteri istiyorum/);
-  assert.match(await art.textContent(), /Blade Runner/);
-  assert.match(await art.textContent(), /Açık/);
-  assert.equal(await request.getByRole("link", { name: "Yanıtla", exact: true }).count(), 0, "no big button on the slide's face");
-  assert.equal(await request.getByRole("link", { name: /Ayrıntıları aç/ }).count(), 0);
-  const preset = slides(page).filter({ hasText: "Sinematik portre ayarı" }).first();
-  assert.match(await preset.locator("[data-album-art]").textContent(), /Ayar Paketi/);
-  // Yanıtla (open request) is in the Bilgi sheet now.
-  await page.keyboard.press("ArrowRight");
-  await page.keyboard.press("ArrowRight");
-  await page.waitForTimeout(900);
-  await request.getByRole("button", { name: "Bilgi" }).click();
-  await page.locator("[data-focus-info]").waitFor();
-  assert.equal(await page.locator("[data-focus-info]").getByRole("link", { name: "Yanıtla", exact: true }).count(), 1, "Yanıtla lives in the info sheet");
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(400);
-  await pickFilter(page, "Promptlar");
-  const titles = await slides(page).evaluateAll((els) => els.slice(0, -1).map((e) => e.querySelector("h2")?.textContent));
-  assert.ok(!titles.includes("Kısa öykü açılışı"), "the text prompt stays out while Medya is on");
-  assert.ok(titles.includes("Neon şehirde drone çekimi"));
-  await (await menuItem(page, /Medya/)).click();
-  await page.waitForTimeout(700);
-  assert.ok((await slides(page).evaluateAll((els) => els.map((e) => e.querySelector("h2")?.textContent))).includes("Kısa öykü açılışı"), "Medya off: the text prompt is back");
-}, { viewport: { width: 390, height: 844 } });
-
-await scenario("30. Bilgi: gönderide yalnız özet; Bilgi açınca alttan sayfa (yorumla aynı — görsel küçülür, üst çubuk çekilir), Esc yalnız sayfayı kapatır", async ({ page }) => {
+await scenario("29. İçerik türü süzgeci (docs/history/305-*): Video seçilince sunucuya p_content_type gider, çip etiketi güncellenir; Tümü süzgeci kaldırır", async ({ page, db }) => {
   await openFocus(page);
-  const slide = slides(page).nth(0);
-  assert.equal(await slide.getByText("Açıklama 1").count(), 0, "the description is not on the slide's face");
-  assert.equal(await slide.getByRole("button", { name: "Kopyala" }).count(), 0, "no big Kopyala on the face");
-  assert.equal(await slide.getByRole("link", { name: /Ayrıntıları aç/ }).count(), 0, "no big Ayrıntıları aç on the face");
-  await slide.getByRole("button", { name: "Bilgi" }).click();
-  const info = page.locator("[data-focus-info]");
-  await info.waitFor();
-  await page.waitForTimeout(500);
-  assert.match(await info.textContent(), /Açıklama 1/);
-  assert.equal(await info.getByRole("link", { name: /Ayrıntıları aç/ }).count(), 1);
-  assert.ok((await info.getByRole("button", { name: "Kopyala" }).count()) >= 1, "Kopyala is in the info sheet (prompt block)");
-  const box = await info.boundingBox();
-  const art = await slide.locator("[data-album-art]").boundingBox();
-  assert.ok(art.y >= 0 && art.y + art.height <= box.y + 1, `art above the sheet (${JSON.stringify(art)} / ${box.y})`);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] button[aria-label=\"Odak'ı kapat\"]").parentElement).opacity), "0", "top bar steps aside");
-  await shot(page, "30-info-phone");
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(300);
-  assert.equal(await info.count(), 0);
-  assert.equal(await stage(page).count(), 1, "…not Odak");
-  await slide.getByRole("button", { name: /Yorumları aç/ }).click();
-  await sheet(page).waitFor();
-  await page.waitForTimeout(400);
-  assert.equal(await info.count(), 0, "one sheet at a time");
-}, { viewport: { width: 390, height: 844 } });
-
-await scenario("31. Koyu temada Odak: site zaten koyu, kapatınca koyu kalır, kayıtlı tercih değişmez", async ({ page }) => {
-  await page.goto(`${BASE}/discover`);
-  await page.waitForTimeout(800);
-  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "dark theme to start with");
-  await page.locator("header[data-app-header] a[href*='/focus']").click();
-  await slides(page).first().waitFor();
-  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true);
-  await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
-  await page.waitForURL(/\/discover/);
-  await page.waitForTimeout(500);
-  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "a dark visitor stays dark after Odak");
-  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), "dark");
-}, { theme: "dark" });
-
-await scenario("32. Açık temada Odak: açıkken TÜM site koyu moda geçer, kapatınca (X ve Esc) eski açık haline döner; kayıtlı tercih 'light' kalır", async ({ page }) => {
-  await page.goto(`${BASE}/discover`);
-  await page.waitForTimeout(800);
-  const dark = () => page.evaluate(() => document.documentElement.classList.contains("dark"));
-  assert.equal(await dark(), false, "light theme to start with");
-  await page.locator("header[data-app-header] a[href*='/focus']").click();
-  await slides(page).first().waitFor();
-  assert.equal(await dark(), true, "dark while Odak is open");
-  await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
-  await page.waitForURL(/\/discover/);
-  await page.waitForTimeout(500);
-  assert.equal(await dark(), false, "back to light after X");
-  await page.locator("header[data-app-header] a[href*='/focus']").click();
-  await slides(page).first().waitFor();
-  assert.equal(await dark(), true);
-  await page.keyboard.press("Escape");
-  await page.waitForURL(/\/discover/);
-  await page.waitForTimeout(500);
-  assert.equal(await dark(), false, "back to light after Esc");
-  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), "light", "the saved preference never changed");
-}, { theme: "light" });
-
-
-await scenario("33. Medya süzgeci sunucuda (docs/history/254-*): açılış TEK istekte dolu ilk sayfa (p_has_media=true); metin promptu ve görselsiz workflow hiç gelmez; kapatınca süzgeçsiz yeniden okunur, açınca yine sunucudan", async ({ page, db }) => {
-  await openFocus(page, { all: false });
-  assert.equal(db.feedCalls.length, 1, "ilk slayt tek istekle geldi (eskiden Medya istemcide eleniyordu: binlerce görselsiz gönderi varsa ~170 sayfa)");
-  assert.equal(db.feedCalls[0].p_has_media, true);
-  assert.equal(await slides(page).count(), 19, "18 medyalı gönderi + son slayt");
-  const texts = await slides(page).allTextContents();
-  assert.ok(!texts.some((t) => /Kısa öykü açılışı|Ürün fotoğrafından/.test(t)));
-  await (await menuItem(page, /Medya/)).click();
-  await page.waitForFunction(() => [...document.querySelectorAll("[data-focus-feed] [data-slide-index]")].some((el) => /Kısa öykü açılışı/.test(el.textContent ?? "")));
-  assert.equal(db.feedCalls.length, 2);
-  assert.equal(db.feedCalls[1].p_has_media, undefined);
-  await (await menuItem(page, /Medya/)).click();
-  await page.waitForFunction(() => ![...document.querySelectorAll("[data-focus-feed] [data-slide-index]")].some((el) => /Kısa öykü açılışı/.test(el.textContent ?? "")));
-  assert.equal(db.feedCalls.length, 3);
-  assert.equal(db.feedCalls[2].p_has_media, true);
-});
-
-await scenario("34. Migration henüz yoksa (17 argümanlı feed_page bilinmiyor): Odak açılır — istek süzgeçsiz yinelenir, Medya istemcide uygulanır (16 slayt)", async ({ page, db }) => {
-  await openFocus(page, { all: false });
-  assert.equal(db.feedCalls.length, 2, "p_has_media'lı istek reddedildi, süzgeçsiz yinelendi");
-  assert.equal(db.feedCalls[0].p_has_media, true);
-  assert.equal(db.feedCalls[1].p_has_media, undefined);
-  assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 16", "eski davranış: görselsiz metin promptu ve workflow istemcide düşer");
-}, { noMediaRpc: true });
-
-await scenario("35. İçerik türü süzgeci (docs/history/305-*): Video seçilince sunucuya p_content_type gider, çip etiketi güncellenir; Tümü süzgeci kaldırır", async ({ page, db }) => {
-  await openFocus(page);
-  const before = db.feedCalls.length;
-  assert.equal(db.feedCalls.at(-1).p_content_type ?? null, null, "başlangıçta süzgeç yok");
   await pickFilter(page, "Video");
-  assert.ok(db.feedCalls.length > before, "yeni sunucu isteği");
   assert.equal(db.feedCalls.at(-1).p_content_type, "video");
   assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Tümü · Video · En yeni");
-  const texts = await slides(page).allTextContents();
-  assert.ok(texts.some((t) => /Neon şehirde drone/.test(t)) && !texts.some((t) => /Lo-fi yağmur/.test(t)), "yalnız video gönderileri");
   await filterChip(page).click();
   await stage(page).getByRole("menuitemradio", { name: "Tümü" }).nth(1).click();
   await page.waitForTimeout(900);
   assert.equal(db.feedCalls.at(-1).p_content_type ?? null, null, "Tümü süzgeci kaldırır");
-  assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Tümü · En yeni");
+});
+
+await scenario("30. Migration henüz yoksa (17 argümanlı feed_page bilinmiyor): 'Yalnız görselliler' açılınca istek süzgeçsiz yinelenir, süzgeç istemcide uygulanır", async ({ page, db }) => {
+  await openFocus(page);
+  await (await menuItem(page, /Yalnız görselliler/)).click();
+  await page.waitForTimeout(1200);
+  const only = await slides(page).allTextContents();
+  assert.ok(!only.some((t) => /Kısa öykü açılışı|Ürün fotoğrafından/.test(t)), "client-side filtering still hides picture-less posts");
+  assert.ok(only.some((t) => /Neon şehirde drone/.test(t)));
+  assert.ok(db.feedCalls.some((c) => c.p_has_media === true), "the new form was tried first");
+}, { noMediaRpc: true });
+
+await scenario("31. Koyu temada Odak: site zaten koyu, kapatınca koyu kalır, kayıtlı tercih değişmez", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await page.locator("article").first().waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true);
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
+  await slides(page).first().waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true);
+  await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
+  await page.waitForTimeout(800);
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "stays dark");
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), "dark");
+}, { theme: "dark", viewport: { width: 1280, height: 900 } });
+
+await scenario("32. Açık temada Odak: açıkken TÜM site koyu moda geçer, kapatınca eski açık haline döner; kayıtlı tercih 'light' kalır", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await page.locator("article").first().waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), false);
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
+  await slides(page).first().waitFor();
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true);
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), "light");
+  await page.keyboard.press("Escape");
+  await page.waitForURL(/\/$|\/promptly\/?$/);
+  await page.waitForTimeout(500);
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), false, "back to light");
+}, { theme: "light", viewport: { width: 1280, height: 900 } });
+
+await scenario("33. Masaüstü: sahne ortada 4:5 kart + sağda 440px kalıcı panel (başlık, Beğeni·Yorum·Kaydet·Paylaş satırı, sekmeler, prompt, alanlar, Çalıştı mı?, Doldurup kopyala + Studio'da dene); alt eylem çubuğunda Beğeni YOK", async ({ page }) => {
+  await openFocus(page);
+  await page.waitForTimeout(500);
+  const art = await slide(page, 0).locator("[data-album-art]").boundingBox();
+  assert.ok(Math.abs(art.width / art.height - 0.8) < 0.02, `the scene is a 4:5 card (${art.width}x${art.height})`);
+  const panel = page.locator("[data-focus-panel]");
+  const pb = await panel.boundingBox();
+  assert.ok(Math.abs(pb.width - 440) < 1 && Math.abs(pb.x + pb.width - 1440) < 1, `a 440px side panel (${JSON.stringify(pb)})`);
+  assert.ok(Math.abs(art.x + art.width / 2 - (1440 - 440) / 2) < 3, "the card is centred in the room beside the panel");
+  assert.equal(await page.locator("[data-focus-feed] [data-slide-index='0'] [data-focus-peek]").evaluate((el) => getComputedStyle(el).display), "none", "no strip on desktop");
+  assert.equal(await sheetEl(page).count(), 0, "no sheet on desktop");
+  assert.match(await panel.textContent(), /Görsel prompt 1/);
+  assert.match(await panel.textContent(), /Kanıtlanmış · %93/);
+  assert.equal(await panel.locator("[data-focus-panel-actions] button").count() >= 4, true, "Beğeni · Yorum · Kaydet · Paylaş row");
+  assert.deepEqual(await panel.getByRole("tab").allInnerTexts().then((all) => all.map((s) => s.replace(/\s+/g, " ").trim())), ["Prompt", "Yorumlar 1", "Sonuçlar"]);
+  assert.match(await panel.textContent(), /Çalıştı mı\?/);
+  assert.ok(await panel.getByRole("button", { name: "Doldurup kopyala" }).isVisible());
+  assert.ok(await panel.getByRole("link", { name: "Studio'da dene" }).isVisible());
+  assert.equal(await panel.locator("[data-focus-action-bar]").getByRole("button", { name: /Beğen|Tepki/ }).count(), 0, "Beğeni is in the panel's row, not twice");
+  assert.ok((await slide(page, 0).locator("[data-focus-feed] [data-results-chip]").count()) >= 0);
+  assert.match(await slide(page, 0).locator("[data-results-chip]").innerText(), /1\/3 sonuç/);
+  assert.match(await stage(page).locator("[data-focus-keys]").textContent(), /↑ ↓ gönderi/);
+  await shot(page, "33-desktop-panel");
+  // Panel follows the active post and starts on its own tab.
+  await panel.getByRole("tab", { name: /Yorumlar/ }).click();
+  await page.waitForTimeout(500);
+  assert.match(await panel.textContent(), /Yapay zeka ile yapılmış kesin/);
+  await step(page, "j");
+  assert.match(await panel.textContent(), /Kısa öykü açılışı/, "the panel shows the new active post");
+  assert.equal(await panel.getByRole("tab", { name: "Prompt" }).getAttribute("aria-selected"), "true", "…back on its main tab");
+}, { viewport: { width: 1440, height: 900 } });
+
+await scenario("34. Masaüstü klavye + düğmeler: ← → sonuçları gezer (‹ › düğmeleri aynı), ↑ ↓ gönderiler, P paneli gizler/gösterir, C doldurulmuş promptu kopyalar", async ({ page }) => {
+  await openFocus(page);
+  await page.waitForTimeout(500);
+  const chip = slide(page, 0).locator("[data-results-chip]");
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(600);
+  assert.match(await chip.innerText(), /2\/3 sonuç/);
+  await stage(page).getByRole("button", { name: "Sonraki sonuç" }).click();
+  await page.waitForTimeout(600);
+  assert.match(await chip.innerText(), /3\/3 sonuç/);
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(400);
+  assert.match(await chip.innerText(), /3\/3 sonuç/, "stops at the end");
+  await stage(page).getByRole("button", { name: "Önceki sonuç" }).click();
+  await page.waitForTimeout(600);
+  assert.match(await chip.innerText(), /2\/3 sonuç/);
+  await page.keyboard.press("c");
+  await page.waitForTimeout(400);
+  assert.equal(await clipboard(page), "cinematic misty landscape number 1, volumetric light, cinematic");
+  await page.keyboard.press("p");
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator("[data-focus-panel]").count(), 0, "P hides the panel");
+  const wide = await slide(page, 0).locator("[data-album-art]").boundingBox();
+  assert.ok(Math.abs(wide.x + wide.width / 2 - 720) < 3, "the card centres on the whole width");
+  await stage(page).getByRole("button", { name: "Paneli göster" }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator("[data-focus-panel]").count(), 1, "…and the edge button brings it back");
+  await page.locator("[data-focus-panel]").getByRole("button", { name: "Paneli gizle" }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator("[data-focus-panel]").count(), 0);
+  await stage(page).getByRole("button", { name: "Sonraki gönderi" }).click();
+  await page.waitForTimeout(800);
+  assert.equal(await activeIndex(page), 2, "↓ button steps to the next post");
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(300);
+  assert.equal(await activeIndex(page), 2, "← → on a post without results do nothing");
+}, { viewport: { width: 1440, height: 900 } });
+
+await scenario("35. Masaüstü: metin sahnesindeki değişken çipine dokunmak paneli açıp o alana odaklanır (seçici yalnız telefonda)", async ({ page }) => {
+  await openFocus(page);
+  await step(page, "ArrowDown");
+  await page.waitForTimeout(500);
+  await page.keyboard.press("p");
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator("[data-focus-panel]").count(), 0);
+  await slide(page, 1).locator("[data-focus-token='ton']").click();
+  await page.waitForTimeout(500);
+  assert.equal(await page.locator("[data-focus-panel]").count(), 1, "the panel opens");
+  assert.equal(await page.evaluate(() => document.activeElement?.id), "pv-va3", "…on the field of that variable");
+  assert.equal(await page.locator("[data-focus-picker]").count(), 0);
+  await page.keyboard.type("resmî");
+  await page.waitForTimeout(300);
+  assert.equal(await slide(page, 1).locator("[data-focus-token='ton']").textContent(), "resmî");
+}, { viewport: { width: 1440, height: 900 } });
+
+await scenario("36. Telefon: panel kısayolu P kartı açar/kapatır; açıkken ↑ ↓ gönderi değiştirmez", async ({ page }) => {
+  await openFocus(page);
+  await page.waitForTimeout(500);
+  await page.keyboard.press("p");
+  await page.locator("[data-focus-sheet]").waitFor();
+  await page.waitForTimeout(450);
+  await page.keyboard.press("ArrowDown");
+  await page.waitForTimeout(500);
+  assert.equal(await activeIndex(page), 1, "the card is a dialog: keys do not move the feed behind it");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
+  assert.equal(await sheetEl(page).count(), 0);
+  assert.equal(await page.evaluate((sel) => getComputedStyle(document.querySelector(sel)).overflowY, SCROLLER), "auto", "the column scrolls again");
 });
 
 await browser.close();

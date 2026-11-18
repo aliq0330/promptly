@@ -257,6 +257,14 @@
   --color-story-stage: #0a0a0d;
   --color-story-scrim: rgb(0 0 0 / 0.5);
 
+  /* Odak scenes without a picture (docs/history/436-*): the post's own content is the scene, tinted by what it is. Fixed dark grounds
+   * (Odak is always on the dark stage); every pairing with `text-on-art` is far above 4.5:1. The kind is also named by its icon and label. */
+  --color-focus-text: #11172e;
+  --color-focus-request: #241a18;
+  --color-focus-preset: #10241f;
+  --color-focus-workflow: #1b1430;
+  --color-focus-skill: #142229;
+
   /* Radius — Meydan's softer, friendlier corners (cards 16px); never pill-shaped cards */
   --radius-2xs: 0.125rem;
   --radius-xs: 0.375rem;

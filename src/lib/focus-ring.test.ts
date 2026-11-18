@@ -11,7 +11,8 @@ import { join, relative } from "node:path";
 const SRC = new URL("..", import.meta.url).pathname;
 const EXEMPT: Record<string, string> = {
   "features/focus/focus-feed.tsx": "scroller with tabIndex=-1 (programmatic focus)",
-  "features/focus/focus-sheet-frame.tsx": "sheet container, programmatic focus",
+  "features/focus/focus-post-card.tsx": "sheet container, programmatic focus",
+  "features/focus/focus-fill-picker.tsx": "picker container, programmatic focus",
   "features/focus/focus-comments-sheet.tsx": "input inside a wrapper that draws focus-within",
   "features/stories/story-viewer-sheets.tsx": "sheet container, programmatic focus",
   "features/stories/story-viewer.tsx": "viewer stage, programmatic focus",
