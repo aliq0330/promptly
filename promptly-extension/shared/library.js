@@ -9,7 +9,7 @@ self.PLib = (() => {
 
   const typeOf = (v) => (["image", "text", "audio", "video"].includes(v) ? v : "text");
   const fromMe = (row, source) => ({ id: row.id, title: row.title || "", description: row.description || "", type: typeOf(row.contentType), source, status: row.status || "", visibility: row.visibility || "", url: row.url || "", tools: [], author: "" });
-  const fromPublic = (row, source) => ({ id: row.id, title: row.title || "", description: row.description || "", type: typeOf(row.contentType), source, status: "", visibility: "", url: row.url || "", tools: row.tools || [], author: (row.author && row.author.username) || "", preview: row.promptPreview || "", variableNames: row.variableNames || [] });
+  const fromPublic = (row, source) => ({ id: row.id, title: row.title || "", description: row.description || "", type: typeOf(row.contentType), source, status: "", visibility: "", url: row.url || "", tools: row.tools || [], author: (row.author && row.author.username) || "", preview: row.promptPreview || "", variableNames: row.variableNames || [], tags: row.tags || [], stats: row.stats || null });
 
   function matches(item, query, type) {
     if (type && type !== "all" && item.type !== type) return false;
@@ -18,26 +18,26 @@ self.PLib = (() => {
     return `${item.title} ${item.description} ${item.preview || ""} ${(item.tools || []).join(" ")} ${item.author || ""}`.toLowerCase().includes(q);
   }
 
-  async function fetchPage(source, { query, type, cursor }) {
+  async function fetchPage(source, { query, type, cursor, tools, tags, sort }) {
     const ct = type && type !== "all" ? type : null;
     if (source === "mine") { const p = await PApi.myPrompts({ limit: PAGE, cursor }); return { items: p.items.map((r) => fromMe(r, "mine")), nextCursor: p.nextCursor || null }; }
     if (source === "drafts") { const p = await PApi.myPrompts({ status: "draft", limit: PAGE, cursor }); return { items: p.items.map((r) => fromMe(r, "drafts")), nextCursor: p.nextCursor || null }; }
     if (source === "saved") { const p = await PApi.mySaved({ limit: PAGE, cursor }); return { items: p.items.map((r) => fromMe(r, "saved")), nextCursor: p.nextCursor || null }; }
     if (source === "popular") { const p = await PApi.popular({ limit: PAGE, contentType: ct }); return { items: (p.items || []).map((r) => fromPublic(r, "popular")), nextCursor: null }; }
-    const p = await PApi.search({ q: query, contentType: ct, limit: PAGE, cursor });
+    const p = await PApi.search({ q: query, contentType: ct, limit: PAGE, cursor, sort, tools, tags });
     return { items: p.items.map((r) => fromPublic(r, "explore")), nextCursor: p.nextCursor || null };
   }
 
   // Bir kaynağın sayfasını verir. Benim/Kaydettiğim sorgu ve tür süzgecini istemcide uygular (API'de q yok); Keşfet/Popüler sunucuda.
   // Ağ yoksa ilk sayfa için son kaydedilen liste döner (`cached: true`).
-  async function list(source, { query = "", type = "all", cursor = null } = {}) {
+  async function list(source, { query = "", type = "all", cursor = null, tools, tags, sort } = {}) {
     if (source === "recent") {
       const recent = await PStore.get("recent");
       return { items: recent.filter((i) => matches(i, query, type)), nextCursor: null, cached: false };
     }
     if (!SOURCES.includes(source)) throw new PErr("bad_request", "source");
     try {
-      const page = await fetchPage(source, { query, type, cursor });
+      const page = await fetchPage(source, { query, type, cursor, tools, tags, sort });
       if (!cursor && (source === "mine" || source === "saved" || source === "drafts" || (source === "popular" && type === "all"))) {
         const libCache = await PStore.get("libCache");
         await PStore.set({ libCache: { ...libCache, [source]: { items: page.items, at: new Date().toISOString() } } });

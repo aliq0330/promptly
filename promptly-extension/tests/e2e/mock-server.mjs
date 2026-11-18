@@ -11,6 +11,7 @@ export function startMock() {
     m1: { promptText: "Sisli bir sabah ormanında yürüyen kız, {mekan} atmosferi, 35mm", variables: ["mekan"] },
     m2: { promptText: "{okur} için {ton} bir bülten özeti yaz.", variables: ["okur", "ton"] },
     p1: { promptText: "Işıldayan kanatlı bir orman perisi, {renk} tonlarında", variables: [{ name: "renk", defaultValue: "mavi" }] },
+    c1: { promptText: "Şunu üç maddede özetle: {seçim}", variables: ["seçim"] },
   };
   const pub = (id, title, type = "image") => ({ id, title, description: "", contentType: type, tools: ["midjourney"], author: { username: "ayse" }, promptPreview: "...", variableNames: [], url: `https://site.example/prompts/local?id=${id}` });
   const server = http.createServer(async (req, res) => {
@@ -44,7 +45,12 @@ export function startMock() {
       if (m && texts[m[1]]) return send(200, { id: m[1], ...texts[m[1]] });
     }
     if (r.startsWith("/prompts/popular")) return send(200, { items: [pub("p1", "Orman perisi karakter")] });
-    if (r === "/prompts") return send(200, { items: [pub("e1", "Keşfet sonucu: " + (url.searchParams.get("q") || "yeni"))], nextCursor: null });
+    if (r === "/prompts") {
+      const q = url.searchParams.get("q") || "", tags = url.searchParams.getAll("tag"), tools = url.searchParams.getAll("tool");
+      if (tools.includes("chatgpt")) return send(200, { items: [{ ...pub("c1", "ChatGPT özet promptu", "text"), tools: ["chatgpt"], variableNames: ["seçim"] }], nextCursor: null });
+      if (url.searchParams.get("sort") === "popular" && !q && !tags.length) return send(200, { items: [{ ...pub("p1", "Orman perisi karakter"), variableNames: ["renk"], stats: { likes: 3, saves: 1, comments: 0, copies: 9 } }, pub("p2", "Değişkensiz resim")], nextCursor: null });
+      return send(200, { items: [{ ...pub("e1", "Keşfet sonucu: " + (q || "yeni") + (tags.length ? " #" + tags.join(",") : "")), variableNames: ["renk"] }, pub("e2", "Değişkensiz sonuç")], nextCursor: null });
+    }
     const m = /^\/prompts\/(.+)$/.exec(r);
     if (m && texts[m[1]]) return send(200, { id: m[1], ...texts[m[1]] });
     return send(404, { error: { code: "not_found", message: "x" } });

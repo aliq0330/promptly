@@ -13,7 +13,7 @@ import extensionManifest from "../../../promptly-extension/manifest.json";
 /** `scripts/build-extension.mjs` her derlemede üretir (`prebuild`); sürüm uzantının kendi manifestinden gelir, ikinci bir sayı tutulmaz. */
 export const EXTENSION_ZIP_PATH = "/downloads/promptly-extension.zip";
 
-const USE_KEYS = ["devSettings.extUseSave", "devSettings.extUseImage", "devSettings.extUsePalette", "devSettings.extUseSlash", "devSettings.extUseLibrary", "devSettings.extUseVote"] as const;
+const USE_KEYS = ["devSettings.extUseSave", "devSettings.extUseImage", "devSettings.extUsePalette", "devSettings.extUseSlash", "devSettings.extUseLibrary", "devSettings.extUseRun", "devSettings.extUseContext", "devSettings.extUseVote"] as const;
 const SAFE_KEYS = ["devSettings.extSafe1", "devSettings.extSafe2", "devSettings.extSafe3", "devSettings.extSafe4", "devSettings.extSafe5"] as const;
 
 /**

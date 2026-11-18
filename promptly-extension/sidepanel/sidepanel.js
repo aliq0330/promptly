@@ -55,7 +55,98 @@ function render() {
   $("lang").textContent = PI.getLang() === "tr" ? "EN" : "TR";
   if (!signed) return;
   renderStatus(); renderNow(); showTab();
+  renderContext();
 }
+
+// ---- Sayfa bağlamı: açık sekme bir yapay zekâ sitesi mi? Seçili metin, uygun promptlar. İzin yokken hiçbir sekmenin adresi okunmaz. ----
+let ctxSig = "", useSel = true;
+const ctxSuggest = new Map(); // araç kimliği → prompt listesi (bu oturumda bir kez)
+
+async function suggestionsFor(platform) {
+  if (ctxSuggest.has(platform.tool)) return ctxSuggest.get(platform.tool);
+  try {
+    const res = await PLib.list("explore", { type: "text", tools: [platform.tool], sort: "popular" });
+    ctxSuggest.set(platform.tool, res.items);
+    return res.items;
+  } catch { return []; }
+}
+
+function paintSuggestions(box, c, items) {
+  box.replaceChildren();
+  const list = items.slice().sort((a, b) => Number(PBrowse.usesSelection(b.variableNames)) - Number(PBrowse.usesSelection(a.variableNames))).slice(0, 4);
+  if (!list.length) { box.append(PUI.el("p", "hint", t("ctxNoSuggest"))); return; }
+  for (const it of list) {
+    const row = PUI.el("div", "row");
+    const main = PUI.el("div", "main");
+    main.append(PUI.el("span", "t", it.title));
+    const m = PUI.el("span", "m"); m.append(PUI.el("span", "pill", t(PUI.typeKey[it.type] || "typeText")));
+    if (PBrowse.usesSelection(it.variableNames)) m.append(PUI.el("span", "vchip", "{" + (it.variableNames.find((n) => PBrowse.SELECTION_VARS.includes(String(n).toLowerCase())) || "seçim") + "}"));
+    if (it.author) m.append(PUI.el("span", "", t("byAuthor", { a: it.author })));
+    main.append(m);
+    const sel = useSel ? c.selection : "";
+    const go = PUI.btn("btn sm pri", t("ctxWrite"), async () => {
+      const r = await PRunUI.runItem(it, { selection: sel, platformId: c.platform.id });
+      if (r && r.needVars) PBrowser.openDetail(it, { selection: sel });
+    });
+    row.append(main, go); box.append(row);
+  }
+}
+
+async function renderContext() {
+  const box = $("ctx");
+  if (!box || $("signedin").hidden) return;
+  let c;
+  try { c = await PContext.read(); } catch { c = { granted: false, platform: null, selection: "", tab: null }; }
+  const sig = [c.granted, c.platform && c.platform.id, c.selection, useSel].join("|");
+  if (sig === ctxSig) return;
+  ctxSig = sig;
+  box.replaceChildren();
+  const card = PUI.el("div", "ctxcard");
+  if (!c.granted) {
+    card.append(PUI.el("div", "label", t("ctxEnableTitle")), PUI.el("p", "hint", t("ctxEnableNote")));
+    card.append(PUI.btn("btn sm pri", t("ctxEnableBtn"), async () => { const ok = await PContext.enable(); if (!ok) PUI.toast(t("slashDenied")); ctxSig = ""; renderContext(); }));
+    box.append(card); return;
+  }
+  if (!c.platform) {
+    card.append(PUI.el("p", "hint", t("ctxNoSite")), PUI.btn("linkbtn", t("ctxDisableBtn"), async () => { await PContext.disable(); ctxSig = ""; renderContext(); }));
+    box.append(card); return;
+  }
+  const ban = PUI.el("div", "banner ok");
+  const body = PUI.el("div", "grow");
+  body.append(PUI.el("strong", "", t("ctxOn", { name: c.platform.name })), PUI.el("div", "", t("ctxFilter", { tool: c.platform.name })));
+  ban.append(body, PUI.btn("linkbtn", t("ctxDisableBtn"), async () => { await PContext.disable(); ctxSig = ""; renderContext(); }));
+  box.append(ban);
+
+  const selCard = PUI.el("div", "ctxcard");
+  const head = PUI.el("div", "ctxhead"); head.append(PUI.el("span", "label", t("ctxSelectionTitle")));
+  if (c.selection) head.append(PUI.el("span", "hint", t("ctxChars", { n: c.selection.length })));
+  selCard.append(head);
+  if (c.selection) {
+    selCard.append(PUI.el("blockquote", "quote", c.selection));
+    const l = PUI.el("label", "chk"); const cb = PUI.el("input"); cb.type = "checkbox"; cb.checked = useSel;
+    cb.addEventListener("change", () => { useSel = cb.checked; ctxSig = ""; renderContext(); });
+    l.append(cb, document.createTextNode(t("ctxUseSelection"))); selCard.append(l);
+    selCard.append(PUI.btn("btn sm", t("ctxCapture"), async () => {
+      const res = await PUI.bg({ type: "ply:save", draft: { text: c.selection, type: "text", origin: "external", sourceUrl: c.tab ? c.tab.url : "", sourceTitle: c.tab ? c.tab.title : "" } });
+      PUI.toast(res && res.error ? PUI.errText(res.error) : t("ctxCaptured"));
+    }));
+  } else selCard.append(PUI.el("p", "hint", t("ctxSelectionNone")));
+  box.append(selCard);
+
+  const sug = PUI.el("div", "ctxcard");
+  sug.append(PUI.el("div", "label", t("ctxSuggestions")));
+  const list = PUI.el("div", "stack"); list.append(PUI.el("p", "hint", t("loading"))); sug.append(list);
+  box.append(sug);
+  suggestionsFor(c.platform).then((items) => { if (list.isConnected) paintSuggestions(list, c, items); });
+}
+
+let ctxTimer = null;
+function startContext() {
+  clearInterval(ctxTimer);
+  ctxTimer = setInterval(() => { if (!document.hidden) renderContext(); }, 2000);
+  for (const ev of [chrome.tabs.onActivated, chrome.tabs.onUpdated]) { try { ev.addListener(() => { clearTimeout(startContext.deb); startContext.deb = setTimeout(renderContext, 250); }); } catch { /* olay yok */ } }
+}
+
 
 document.querySelectorAll("#tabs [data-tab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; showTab(); }));
 $("connect").addEventListener("click", connectFlow);
@@ -76,6 +167,8 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
   await PI.init();
   $("head-brand").innerHTML = PUI.brand(22); $("search-ico").innerHTML = PUI.icon("search");
   data = await PStore.getAll();
+  await Promise.all([PRunUI.init(), PBrowser.loadEnv()]);
+  startContext();
   libCtl = PUI.createLibrary({ sourcesEl: $("sources"), typesEl: $("types"), searchEl: $("search"), listEl: $("lib-list"), noteEl: $("lib-note"), sources: ["recent", "mine", "saved", "popular", "explore"], source: data.recent.length ? "recent" : "mine" });
   draftsCtl = PUI.createLibrary({ listEl: $("drafts-list"), sources: ["drafts"], source: "drafts" });
   render();

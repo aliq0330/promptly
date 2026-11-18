@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Promptly</title>
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/wide.css">
   <link rel="stylesheet" href="sidepanel.css">
 </head>
 <body>
@@ -22,6 +23,7 @@
     </div>
     <div id="signedin" class="stack" hidden>
       <div id="status" class="banner" hidden></div>
+      <section id="ctx" class="stack" aria-live="polite"></section>
       <div class="seg" id="tabs" role="tablist">
         <button type="button" role="tab" data-tab="now" class="on" data-i18n="tabNow"></button>
         <button type="button" role="tab" data-tab="library" data-i18n="tabLibrary"></button>
@@ -62,7 +64,12 @@
   <script src="../shared/api.js"></script>
   <script src="../shared/queue.js"></script>
   <script src="../shared/library.js"></script>
+  <script src="../shared/platforms.js"></script>
+  <script src="../shared/browse.js"></script>
+  <script src="../shared/context.js"></script>
   <script src="../shared/ui.js"></script>
+  <script src="../shared/run-ui.js"></script>
+  <script src="../shared/browser.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

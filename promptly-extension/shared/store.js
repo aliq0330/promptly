@@ -10,6 +10,10 @@ self.PStore = self.PStore || (() => {
     lastError: null,   // { code, message, at }
     libCache: {},      // kaynak → { items, at } (ilk sayfa, çevrimdışı için)
     textCache: {},     // prompt kimliği → { text, variables, at } (en çok 40)
+    platform: "chatgpt", // "Çalıştır" hedefi (shared/platforms.js)
+    views: [],         // Görünümlerim: kayıtlı süzgeç setleri [{ id, name, tab, filters }] (yalnız bu cihazda)
+    slots: [],         // sabit slotlar (en çok 5): { id, title, type, source, own, url, author, description }
+    prefs: {},         // görünüm tercihleri: { density, shown } (shared/browse.js)
   };
   const KEYS = Object.keys(DEFAULTS);
   async function getAll() {
