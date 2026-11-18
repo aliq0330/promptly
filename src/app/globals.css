@@ -1248,6 +1248,27 @@
 @keyframes live-toast-in-phone {
   from { opacity: 0; transform: translateY(-22px) scale(0.98); }
 }
+/* Kilometre taşı kutlaması (docs/history/435-*): kartın üst kenarından 14 küçük parça düşer ve söner; hareketi azalt'ta son kare (görünmez) anında gelir. */
+.live-toast-confetti {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+.live-toast-confetti i {
+  position: absolute;
+  top: -6px;
+  width: 6px;
+  height: 10px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: live-toast-confetti 1500ms var(--ease-soft) backwards;
+}
+@keyframes live-toast-confetti {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate3d(var(--drift, 10px), 96px, 0) rotate(260deg); }
+}
 .live-toast-bar {
   transform-origin: left center;
   animation: live-toast-drain linear forwards;

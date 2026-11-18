@@ -50,10 +50,10 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   };
   setup?.(db, state);
   const hub = createRealtimeHub();
-  const context = await browser.newContext({ viewport, reducedMotion });
+  const context = await browser.newContext({ viewport, reducedMotion, deviceScaleFactor: process.env.SHOT_DIR ? 2 : 1 });
   await installMock(context, db, {});
   await hub.install(context, ME);
-  await context.addInitScript(([l, p]) => { try { localStorage.setItem("promptly-language", l); localStorage.setItem("promptly-tour-seen", "1"); localStorage.setItem("promptly-terms-notice", "2026-11-01"); if (p) localStorage.setItem("promptly-live-toasts", p); } catch {} }, [lang, pref]);
+  await context.addInitScript(([l, p]) => { try { localStorage.setItem("promptly-language", l); localStorage.setItem("promptly-tour-seen", "1"); localStorage.setItem("promptly-terms-notice", "2026-11-18"); if (p) localStorage.setItem("promptly-live-toasts", p); } catch {} }, [lang, pref]);
   const page = await context.newPage(); page.setDefaultTimeout(8000);
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
@@ -73,6 +73,7 @@ async function ready(page, hub, path = "/") {
   const start = Date.now();
   while (Date.now() - start < 6000 && !hub.joinedTopics(ME).some((t) => t.includes("notifications:"))) await new Promise((r) => setTimeout(r, 40));
   assert.ok(hub.joinedTopics(ME).some((t) => t.includes("notifications:")), "bildirim kanalı bağlandı");
+  await page.waitForTimeout(250); // dinleyici/oturum etkileri otursun: ilk olay kaybolmasın
 }
 async function until(fn, message = "koşul gerçekleşmedi", ms = 4000) {
   const start = Date.now();
@@ -167,6 +168,8 @@ await scenario("6. Karta dokununca bildirim okundu olur ve hedef sayfa açılır
   const toast = page.locator("[data-live-toast]").first();
   await toast.waitFor();
   await toast.locator("[data-action=reply]").click();
+  await toast.locator("[data-live-toast-reply]").waitFor();
+  await toast.locator("[data-action=reply-detail]").click();
   await page.waitForURL(/\/notifications\/?\?n=/);
   assert.ok(decodeURIComponent(page.url()).includes(`n|${r.id}`), "kart anahtarı adreste");
   assert.ok(state.calls.some((c) => c[0] === "mark_read" && c[1] === `n|${r.id}`), "okundu");
@@ -229,7 +232,17 @@ await scenario("9. Mesaj: o sohbetteyken kart çıkmaz, başka sayfadayken çık
   await toast.waitFor();
   assert.match(await toast.textContent(), /Bob/);
   assert.match(await toast.textContent(), /Selam!/);
+  // Düz sohbet: Yanıtla kartın içinde açılır ve mesaj gerçekten gönderilir.
   await toast.locator("[data-action=reply]").click();
+  await toast.locator("[data-live-toast-reply] textarea").fill("Selam, buradayım");
+  await toast.locator("[data-action=reply-send]").click();
+  await page.locator("[data-live-toast]").waitFor({ state: "detached" });
+  assert.ok(db.messages.some((m) => m.body === "Selam, buradayım" && m.conversation_id === CONV), "mesaj yazıldı");
+  // Topluluk odası/ekip kanalı adresi: yanlış odaya yazılmasın diye satır içi değil, sohbeti açar.
+  emit(hub, { ...msg(), target_href: `/messages/local?id=${CONV}&room=r1` });
+  const roomToast = page.locator("[data-live-toast]").first();
+  await roomToast.waitFor();
+  await roomToast.locator("[data-action=reply]").click();
   await page.waitForURL(/\/messages\/local\/?\?id=/);
 });
 

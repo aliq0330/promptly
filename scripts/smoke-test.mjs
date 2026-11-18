@@ -230,6 +230,9 @@ const CHECKS = [
   { name: "rpc presence_lookup ziyaretçiye KAPALI olmalı (docs/history/329-*)", rpc: "presence_lookup", body: { p_ids: [] }, mustBeDenied: true },
   { name: "rpc my_presence ziyaretçiye KAPALI olmalı (docs/history/329-*)", rpc: "my_presence", body: {}, mustBeDenied: true },
   { name: "rpc community_presence_counts ziyaretçiye KAPALI olmalı (docs/history/329-*)", rpc: "community_presence_counts", body: { p_ids: [] }, mustBeDenied: true },
+  // Rahatsız etme saatleri (docs/history/435-*): yalnız oturumlu; tablo istemciye hiç açık değil.
+  { name: "rpc get_my_quiet_hours ziyaretçiye KAPALI olmalı (docs/history/435-*)", rpc: "get_my_quiet_hours", body: {}, mustBeDenied: true },
+  { name: "notification_quiet_hours ziyaretçiye KAPALI olmalı (docs/history/435-*)", get: () => `notification_quiet_hours?select=user_id&limit=1`, mustBeDenied: true },
 ];
 
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };

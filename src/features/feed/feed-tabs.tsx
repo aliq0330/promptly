@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedGrid } from "./feed-grid";
 import { useFeedPages } from "./use-feed-pages";
+import { NewPostsPill } from "./new-posts-pill";
 import { useForYouPages } from "./use-for-you-pages";
 import { useInterestFeedback } from "./interest-feedback";
 import { useCreatorStrips } from "./creator-suggestions";
@@ -135,6 +136,8 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       tools: followedFilter.tools,
     },
     !isForYou && enabled,
+    // "N yeni gönderi" hapı yalnız Ana Sayfa'nın Takip Ettiklerim sekmesinde (docs/history/435-*).
+    { watchNew: layout === "home" },
   );
   const forYou = useForYouPages({ kind: feedKind, taxonomy }, isForYou && enabled);
   const feed = isForYou ? { ...forYou, retry: forYou.refresh } : feedPages;
@@ -196,6 +199,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
 
   return (
     <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
+      {!isForYou && <NewPostsPill count={feedPages.newCount} plus={feedPages.newPlus} onClick={() => void feedPages.showNew()} />}
       {layout === "home" ? (
         // Meydan "Bölüm balonları" (docs/history/207-*): the two views as tiles; once they scroll away they fold into a bar pinned under the header.
         <SectionNav
