@@ -20,6 +20,9 @@
 # production
 /build
 
+# Chrome uzantısı paketi (scripts/build-extension.mjs üretir)
+/public/downloads/
+
 # misc
 .DS_Store
 *.pem

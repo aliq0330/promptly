@@ -62,6 +62,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // MCP paketi: kendi bağımlılıkları/derlemesi (`mcp/`); üretilmiş tek dosyalık paket lint edilmez.
     "mcp/dist/**",
+    // Chrome uzantısı: bağımsız klasik betikler (tarayıcı globalleri, kendi testleri); Next/React kuralları uygulanmaz.
+    "promptly-extension/**",
     // Yerel ajan becerileri (.claude/skills/…): proje kaynağı değil.
     ".claude/**",
     "mcp/node_modules/**",

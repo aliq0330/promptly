@@ -1,0 +1,187 @@
+// Promptly uzantısı — TR/EN metinler. Tek kaynak; arayüzde sabit metin yok.
+// Dil: kayıtlı tercih (`lang`) → yoksa tarayıcı dili. Kullanıcı içeriği ve "Promptly" markası çevrilmez.
+// Sayfaya enjekte edilen katman depoya erişemez (güvenlik): dili `use()` ile arka plandan alır.
+self.PI = self.PI || (() => {
+  const S = {
+    // genel
+    signOut: { tr: "Çıkış yap", en: "Sign out" },
+    close: { tr: "Kapat", en: "Close" },
+    cancel: { tr: "Vazgeç", en: "Cancel" },
+    copy: { tr: "Kopyala", en: "Copy" },
+    copied: { tr: "Kopyalandı", en: "Copied" },
+    copyFailed: { tr: "Kopyalanamadı: tarayıcı panoya izin vermedi.", en: "Couldn't copy: the browser blocked clipboard access." },
+    remove: { tr: "Kaldır", en: "Remove" },
+    retry: { tr: "Tekrar dene", en: "Retry" },
+    loadMore: { tr: "Daha fazla yükle", en: "Load more" },
+    loading: { tr: "Yükleniyor…", en: "Loading…" },
+    openOnSite: { tr: "Sitede aç", en: "Open on site" },
+    language: { tr: "Dil", en: "Language" },
+    account: { tr: "Hesap", en: "Account" },
+    // giriş
+    connectTitle: { tr: "Promptly hesabını bağla", en: "Connect your Promptly account" },
+    connectLead: { tr: "Kütüphaneni her sayfada kullan, gördüğün promptları tek dokunuşla taslağa kaydet.", en: "Use your library on any page and save prompts you find as drafts in one tap." },
+    connectPt1: { tr: "Google ile kayıt olduysan da girersin.", en: "Works if you signed up with Google too." },
+    connectPt2: { tr: "Şifreni uzantı görmez; Promptly'nin kendi giriş sayfası açılır.", en: "The extension never sees your password; Promptly's own sign-in page opens." },
+    connectPt3: { tr: "Ayarlar → Geliştirici → Bağlı uygulamalar'dan istediğin an iptal edersin.", en: "Revoke any time under Settings → Developer → Connected apps." },
+    connectBtn: { tr: "Promptly ile bağlan", en: "Connect with Promptly" },
+    connecting: { tr: "Bağlanıyor…", en: "Connecting…" },
+    connectHintWrite: { tr: "Açılan sayfada \"yazma\" iznini açık bırak; yoksa taslak kaydedemeyiz. Uzantı yayınlamaz, silmez.", en: "Leave the \"write\" permission on in the page that opens, or we can't save drafts. The extension never publishes or deletes." },
+    connectFailed: { tr: "Bağlanılamadı: {error}", en: "Could not connect: {error}" },
+    connectCancelled: { tr: "Bağlantı iptal edildi.", en: "Connection cancelled." },
+    // hata kodları (api/oauth)
+    errOffline: { tr: "Ağa ulaşılamıyor. Bağlantı gelince yeniden denenir.", en: "Can't reach the network. We'll retry when you're back online." },
+    errUnauthorized: { tr: "Oturum geçersiz. Yeniden bağlan.", en: "Your session is invalid. Please reconnect." },
+    errScope: { tr: "Yazma izni yok. Taslak kaydetmek için yeniden bağlan ve \"yazma\" iznini aç.", en: "No write permission. Reconnect and enable \"write\" to save drafts." },
+    errRate: { tr: "Çok fazla istek. Biraz sonra yeniden denenecek.", en: "Too many requests. Will retry shortly." },
+    errServer: { tr: "Sunucu şu an yanıt vermiyor. Yeniden denenecek.", en: "The server isn't responding right now. Will retry." },
+    errInvalid: { tr: "Promptly bu kaydı kabul etmedi: {detail}", en: "Promptly did not accept this capture: {detail}" },
+    errGeneric: { tr: "Beklenmeyen bir hata oldu.", en: "An unexpected error occurred." },
+    errImage: { tr: "Görsel eklenemedi ({detail}). Taslak kaydedildi; görseli sitede ekleyebilirsin.", en: "The image could not be added ({detail}). The draft was saved; add the image on the site." },
+    fieldTitle: { tr: "başlık", en: "title" },
+    fieldPromptText: { tr: "prompt metni", en: "prompt text" },
+    fieldTools: { tr: "araçlar", en: "tools" },
+    fieldTags: { tr: "etiketler", en: "tags" },
+    fieldOther: { tr: "alanlar", en: "fields" },
+    // durum
+    statusSignedOut: { tr: "Oturum yok", en: "Signed out" },
+    statusOffline: { tr: "Ağ yok", en: "Offline" },
+    statusNeedsWrite: { tr: "Yazma izni yok", en: "No write permission" },
+    statusError: { tr: "Sorun var", en: "Problem" },
+    statusPending: { tr: "{n} yakalama bekliyor", en: "{n} capture(s) waiting" },
+    statusOk: { tr: "Bağlandı", en: "Connected" },
+    statusOkLine: { tr: "Bağlandı · bekleyen yakalama yok", en: "Connected · nothing pending" },
+    statusAs: { tr: "@{user} olarak bağlısın", en: "Connected as @{user}" },
+    reconnect: { tr: "Yeniden bağlan", en: "Reconnect" },
+    sendNow: { tr: "Şimdi gönder", en: "Send now" },
+    // popup
+    searchPh: { tr: "Ara…", en: "Search…" },
+    tabLibrary: { tr: "Kütüphane", en: "Library" },
+    tabDrafts: { tr: "Taslaklar", en: "Drafts" },
+    tabPending: { tr: "Bekleyen", en: "Pending" },
+    tabNow: { tr: "Şimdi", en: "Now" },
+    srcRecent: { tr: "Son", en: "Recent" },
+    srcMine: { tr: "Benim", en: "Mine" },
+    srcSaved: { tr: "Kaydettiklerim", en: "Saved" },
+    srcPopular: { tr: "Popüler", en: "Popular" },
+    srcExplore: { tr: "Keşfet", en: "Explore" },
+    typeAll: { tr: "Tümü", en: "All" },
+    typeImage: { tr: "Görsel", en: "Image" },
+    typeText: { tr: "Metin", en: "Text" },
+    typeAudio: { tr: "Ses", en: "Audio" },
+    typeVideo: { tr: "Video", en: "Video" },
+    byAuthor: { tr: "@{a}", en: "@{a}" },
+    statusDraft: { tr: "taslak", en: "draft" },
+    statusPrivate: { tr: "özel", en: "private" },
+    noResults: { tr: "Eşleşen prompt yok.", en: "No matching prompts." },
+    emptyMine: { tr: "Henüz promptun yok. Bir sayfada metin seçip sağ tıkla.", en: "You have no prompts yet. Select text on a page and right-click." },
+    emptySaved: { tr: "Kaydettiğin prompt yok.", en: "You haven't saved any prompts." },
+    emptyRecent: { tr: "Henüz bir prompt kullanmadın.", en: "You haven't used a prompt yet." },
+    emptyDrafts: { tr: "Taslak yok. Bir sayfada metin seçip sağ tıkla.", en: "No drafts. Select text on a page and right-click." },
+    emptyPending: { tr: "Bekleyen yakalama yok.", en: "Nothing pending." },
+    loadFailed: { tr: "Liste yüklenemedi: {error}", en: "Could not load the list: {error}" },
+    showingCached: { tr: "Çevrimdışı: son kaydedilen liste gösteriliyor.", en: "Offline: showing the last saved list." },
+    textLoading: { tr: "Metin yükleniyor…", en: "Loading text…" },
+    textFailed: { tr: "Metin alınamadı.", en: "Could not load the text." },
+    fillCopy: { tr: "Doldurup kopyala", en: "Fill & copy" },
+    noVars: { tr: "Bu promptta değişken yok.", en: "This prompt has no variables." },
+    waitingSince: { tr: "Bekliyor · {when}", en: "Waiting · {when}" },
+    holdingFor: { tr: "{s} sn sonra gönderilir", en: "Sends in {s}s" },
+    failedItem: { tr: "Gönderilemedi", en: "Not sent" },
+    draftItem: { tr: "Taslak", en: "Draft" },
+    external: { tr: "başka yerden", en: "from elsewhere" },
+    shortcutHint: { tr: "Metni kaydet: sağ tık ya da {k1}. Palet: {k2}.", en: "Save text: right-click or {k1}. Palette: {k2}." },
+    openSidePanel: { tr: "Yan paneli aç", en: "Open side panel" },
+    slashHere: { tr: "Bu sitede / ile aç", en: "Open with / on this site" },
+    slashOn: { tr: "Bu sitede / açık", en: "/ is on for this site" },
+    slashNeedPage: { tr: "Bir web sayfasında aç.", en: "Open this on a web page." },
+    slashDenied: { tr: "İzin verilmedi.", en: "Permission was not granted." },
+    slashHint: { tr: "Sayfa erişimi yalnız bu site için verilir; istediğin an kapatırsın.", en: "Page access is granted for this site only; turn it off any time." },
+    // sağ tık menüsü
+    menuSaveText: { tr: "Promptly'ye kaydet", en: "Save to Promptly" },
+    menuSaveImage: { tr: "Prompt'a görsel olarak ekle", en: "Add as image to a prompt" },
+    // yakalama kartı
+    capDraftHint: { tr: "Taslak olarak kaydedilir", en: "Saved as a draft" },
+    capTitle: { tr: "Başlık", en: "Title" },
+    capPrompt: { tr: "Prompt", en: "Prompt" },
+    capVarsFound: { tr: "{n} değişken bulundu", en: "{n} variable(s) found" },
+    capVarsNone: { tr: "Değişken yok", en: "No variables" },
+    capVarsAuto: { tr: "{list} otomatik değişken yapıldı.", en: "{list} converted to variable(s)." },
+    capUndoVars: { tr: "Geri al", en: "Undo" },
+    capType: { tr: "Tür", en: "Type" },
+    capTool: { tr: "Araç (en çok 3)", en: "Tool (up to 3)" },
+    capTags: { tr: "Etiketler", en: "Tags" },
+    capTagsPh: { tr: "Etiket yaz, Enter'a bas", en: "Type a tag, press Enter" },
+    capWhose: { tr: "Bu prompt kimin?", en: "Whose prompt is this?" },
+    capMine: { tr: "Kendi promptum", en: "My own prompt" },
+    capElsewhere: { tr: "Başka yerden aldım", en: "I found it elsewhere" },
+    capSourceNote: { tr: "Kaynak olarak kaydedilir: {src}", en: "Saved as the source: {src}" },
+    capImage: { tr: "Görsel (1)", en: "Image (1)" },
+    capImageNote: { tr: "Taslakla birlikte Promptly'ye yüklenir.", en: "Uploaded to Promptly together with the draft." },
+    capImageNeedsHttps: { tr: "Bu görsel yüklenemez (yalnız herkese açık https adresleri). Taslak görselsiz kaydedilir.", en: "This image can't be uploaded (public https links only). The draft is saved without it." },
+    capSave: { tr: "Taslak olarak kaydet", en: "Save as draft" },
+    capNoPublish: { tr: "Uzantı yayınlamaz. Kategori ve açıklamayı sitede tamamlayıp yayınlarsın.", en: "The extension never publishes. Finish category and description on the site, then publish." },
+    capEmpty: { tr: "Prompt metni boş. Metni yaz ya da sayfadan seç.", en: "The prompt text is empty. Type it or select it on the page." },
+    capTooLong: { tr: "Metin çok uzun (en çok 50.000 karakter).", en: "The text is too long (50,000 characters max)." },
+    capNeedSignIn: { tr: "Oturum yok: kayıt bekleyenlere alınır, bağlanınca gönderilir.", en: "Not signed in: the capture is kept pending and sent once you connect." },
+    capSaving: { tr: "Taslağa gönderiliyor…", en: "Sending to drafts…" },
+    capHeld: { tr: "Taslağa gönderilecek", en: "Will be sent to drafts" },
+    capHeldIn: { tr: "{s} sn içinde göndereceğiz; istersen geri al.", en: "We'll send it in {s}s; undo if you like." },
+    capUndo: { tr: "Geri al", en: "Undo" },
+    capUndone: { tr: "Geri alındı, hiçbir şey gönderilmedi.", en: "Undone, nothing was sent." },
+    capSent: { tr: "Taslağa kaydedildi", en: "Saved to drafts" },
+    capSentDup: { tr: "Bu prompt zaten hesabında var", en: "This prompt is already in your account" },
+    capSentNote: { tr: "Yayınlamak için sitede aç, kategori ve açıklamayı tamamla.", en: "Open it on the site to add a category and description, then publish." },
+    capQueued: { tr: "Bekleyenlere eklendi", en: "Added to pending" },
+    capQueuedWhy: { tr: "Şu an gönderilemedi; bağlantı ya da oturum gelince taslağa gönderilir.", en: "Couldn't send right now; it will go to drafts once you're back online or signed in." },
+    capFailed: { tr: "Gönderilemedi", en: "Could not send" },
+    capFailedNote: { tr: "Kayıt bekleyenlerde duruyor; uzantı penceresinden tekrar deneyebilirsin.", en: "The capture is kept pending; retry from the extension popup." },
+    // palet
+    palSearchPh: { tr: "Ara…", en: "Search…" },
+    palPreview: { tr: "Prompt", en: "Prompt" },
+    palInsert: { tr: "Metin kutusuna ekle", en: "Insert into text box" },
+    palNoField: { tr: "Odakta metin kutusu yok; kopyalandı.", en: "No text box in focus; copied instead." },
+    palInserted: { tr: "Metin kutusuna eklendi", en: "Inserted into the text box" },
+    palKeys: { tr: "↑↓ seç · Tab değişkene geç · Enter ekle · Esc kapat", en: "↑↓ choose · Tab next variable · Enter insert · Esc close" },
+    palEmpty: { tr: "Eşleşen prompt yok.", en: "No matching prompts." },
+    palSignIn: { tr: "Kütüphaneni kullanmak için uzantı penceresinden Promptly'ye bağlan.", en: "Connect to Promptly from the extension popup to use your library." },
+    // yan panel
+    justUsed: { tr: "Son kullandığın", en: "Last used" },
+    nothingUsed: { tr: "Henüz bir prompt kullanmadın. {k} ile paleti aç ya da Kütüphane'den kopyala.", en: "You haven't used a prompt yet. Open the palette with {k} or copy one from Library." },
+    didItWork: { tr: "Sonuç nasıldı?", en: "How did it turn out?" },
+    didItWorkNote: { tr: "\"Çalıştı mı?\" oyu ve sonuç paylaşımı Promptly'nin prompt sayfasında yapılır. Oy vermek için promptu sitede de kopyalamış olman gerekir.", en: "The \"Did it work?\" vote and result sharing happen on the prompt's Promptly page. To vote you must also have copied the prompt on the site." },
+    voteOnSite: { tr: "Sitede oy ver / sonuç paylaş", en: "Vote / share a result on the site" },
+    usedAt: { tr: "Kullanıldı · {when}", en: "Used · {when}" },
+    // demo yok: gerçek sürümde deneme sayfası bulunmaz
+  };
+  const TOOLS = { // katalog kimliği → görünen ad (marka adları çevrilmez)
+    midjourney: "Midjourney", "gpt-image": "GPT Image", flux: "FLUX", imagen: "Imagen", "nano-banana": "Nano Banana", ideogram: "Ideogram",
+    veo: "Veo", runway: "Runway", kling: "Kling", luma: "Luma", seedance: "Seedance",
+    suno: "Suno", udio: "Udio", elevenlabs: "ElevenLabs",
+    chatgpt: "ChatGPT", claude: "Claude", gemini: "Gemini", grok: "Grok", perplexity: "Perplexity", deepseek: "DeepSeek",
+  };
+  const TOOLS_BY_TYPE = {
+    image: ["midjourney", "gpt-image", "flux", "imagen", "nano-banana", "ideogram"],
+    video: ["veo", "runway", "kling", "luma", "seedance"],
+    audio: ["suno", "udio", "elevenlabs"],
+    text: ["chatgpt", "claude", "gemini", "grok", "perplexity", "deepseek"],
+  };
+  let lang = "tr";
+  const detect = () => ((self.chrome && chrome.i18n && chrome.i18n.getUILanguage && chrome.i18n.getUILanguage()) || "en").toLowerCase().startsWith("tr") ? "tr" : "en";
+  async function init() {
+    const stored = (await chrome.storage.local.get("lang")).lang;
+    lang = stored === "tr" || stored === "en" ? stored : detect();
+    return lang;
+  }
+  function use(next) { lang = next === "en" ? "en" : "tr"; return lang; }
+  async function setLang(next) { use(next); await chrome.storage.local.set({ lang }); }
+  function t(key, params) {
+    const e = S[key];
+    let s = e ? e[lang] : key;
+    if (params) for (const k of Object.keys(params)) s = s.split("{" + k + "}").join(String(params[k]));
+    return s;
+  }
+  function when(iso) {
+    return new Date(iso).toLocaleString(lang === "tr" ? "tr-TR" : "en-US", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  return { init, use, setLang, t, when, getLang: () => lang, TOOLS, TOOLS_BY_TYPE, _S: S };
+})();

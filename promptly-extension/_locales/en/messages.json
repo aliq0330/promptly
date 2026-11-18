@@ -1,0 +1,6 @@
+{
+  "extName": { "message": "Promptly" },
+  "extDesc": { "message": "Save prompts you find as Promptly drafts in one tap, and use your library wherever you type." },
+  "cmdSave": { "message": "Save selected text to Promptly" },
+  "cmdPalette": { "message": "Open the prompt palette (library + insert into a text box)" }
+}

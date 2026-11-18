@@ -465,3 +465,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy NEXT_PUBLIC_SKILLS_ENABLED=true npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-skills-social.mjs   # 11/11 beklenir (port 4190)
 ```
+
+## Chrome uzantısı kartı (`docs/history/429-*`)
+
+`run-extension-card.mjs`: Ayarlar → Geliştirici → "Chrome uzantısı" kartı — sürüm uzantının manifestinden, indirme bağlantısı gerçek zip'e gider (içerik doğrulanır, `tests/` yok), `chrome://extensions` kopyalanabilir blok (asla bağlantı değil), kullanım + izin metinleri, "Bağlı uygulamalar" bağlantısı, İngilizce (çeviri parametreleri dolu), telefonda taşma yok. Derleme `npm run build` ile zip'i üretir. Uzantının KENDİSİ bu pakette değil, `promptly-extension/tests/e2e/run.mjs` ile gerçek Chromium'da sınanır.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-extension-card.mjs   # 6/6 beklenir
+```
+
