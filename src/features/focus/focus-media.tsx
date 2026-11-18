@@ -172,7 +172,7 @@ function ResultImage({ cover, priority, near }: { cover: FocusFeedCover; priorit
 }
 
 /**
- * A post's results (docs/history/435-*): one full-bleed picture per result in a sideways scroll-snap row — a swipe (or ← →) pages through them,
+ * A post's results (docs/history/436-*): one full-bleed picture per result in a sideways scroll-snap row — a swipe (or ← →) pages through them,
  * the vertical swipe stays the feed's. `onIndex` reports the result in view for the "1/4 sonuç" chip.
  */
 export function ResultsRow({ covers, active, near, onIndex }: { covers: FocusFeedCover[]; active: boolean; near: boolean; onIndex: (index: number) => void }) {

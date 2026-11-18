@@ -671,7 +671,7 @@ await scenario("35. Prompt sayfasıyla aynı düzen (docs/history/409-*): Talima
   assert.equal(await page.locator("article [data-skill-quality]").count(), 0);
 });
 
-await scenario("31. Odak: Skill sahnesi (özet + araç), prompt kartı (Skill + Yorumlar), beğeni/yorum/kaydet düğmeleri; Space'e ekle de var (docs/history/435-*)", async ({ page, state }) => {
+await scenario("31. Odak: Skill sahnesi (özet + araç), prompt kartı (Skill + Yorumlar), beğeni/yorum/kaydet düğmeleri; Space'e ekle de var (docs/history/436-*)", async ({ page, state }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/focus`);
   const slide = page.locator("[data-focus-feed] [data-slide-index]").first();

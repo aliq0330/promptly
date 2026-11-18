@@ -1,4 +1,4 @@
-# 435 — Odak: "Sahne" (dikey akış) + "Prompt kartı" (A + C birleşimi) ve görselsiz sahneler
+# 436 — Odak: "Sahne" (dikey akış) + "Prompt kartı" (A + C birleşimi) ve görselsiz sahneler
 
 **Durum:** uygulandı (yalnız istemci kodu; migration YOK, yeni RPC YOK). Ağ taklitli Playwright'ta (`run-focus-feed`, 36 senaryo) ve birim testlerinde (`focus-feed.test.ts`, `focus-sheet.test.ts`) sınandı.
 **Gerçek Supabase'e / gerçek telefona (iOS Safari dokunmatik sürükleme, klavye, güvenli alan) / gerçek video-ses çözmeye karşı DENENMEDİ.** İngilizce karşılıklar eklendi (`translations-focus.ts`: `focusFeed.*` ve `focusSheet.*`; `focusFeed.mediaOnly` + `keyboardHint` güncellendi).

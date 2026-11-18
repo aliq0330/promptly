@@ -11,7 +11,7 @@ import type { PromptFill } from "./focus-fill";
 const TOKEN_INK = "rounded-xs bg-secondary-soft px-1.5 text-secondary";
 
 /**
- * A text prompt's own words as Odak's scene (docs/history/435-*): the signature mono block at reading size, every `{variable}` a
+ * A text prompt's own words as Odak's scene (docs/history/436-*): the signature mono block at reading size, every `{variable}` a
  * tappable chip (a filled one shows its value, an empty one its dashed `{name}`) that opens the picker. Until the variable
  * definitions have loaded the tokens are plain chips — the words themselves are real from the first paint.
  */

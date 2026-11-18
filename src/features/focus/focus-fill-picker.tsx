@@ -6,7 +6,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptFill } from "./focus-fill";
 
 /**
- * Filling a text prompt right on its scene (docs/history/435-*): a tap on a `{variable}` chip turns the prompt strip's place into this picker — the
+ * Filling a text prompt right on its scene (docs/history/436-*): a tap on a `{variable}` chip turns the prompt strip's place into this picker — the
  * variable's own control (choice chips, a text field, a number, a slider, a toggle: `VariableField`) — while the words above update live.
  * "Tamam" closes it; when more fields are left the next one is one tap away. Phone only: from `md` the chip focuses the field in the side panel.
  */

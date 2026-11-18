@@ -41,7 +41,7 @@ import { FocusAddToSpace, modelOf, RequestStatus, StructureBlock } from "./focus
 import { usePromptVersions, usePromptWorks } from "./use-focus-data";
 
 /**
- * Odak's card (docs/history/435-*, the "C" half of the merge): everything a post keeps off its face. On a phone it is the bottom sheet the prompt
+ * Odak's card (docs/history/436-*, the "C" half of the merge): everything a post keeps off its face. On a phone it is the bottom sheet the prompt
  * strip opens — half (58%: header, prompt, variable fields, the big action) → full (90%: a compact header, tabs, details) — and from
  * `md` the same body is the persistent side panel. A prompt's tabs are Prompt · Yorumlar · Sonuçlar · Sürümler; every other kind has its own
  * main tab + Yorumlar. The bottom bar carries the kind's big action (the strip's, `focusFeedPrimaryAction`) beside Beğeni and Kaydet.
@@ -137,7 +137,7 @@ function PromptPane({ prompt, fill, expanded }: { prompt: Prompt; fill: PromptFi
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const hasVariables = (fill?.variables.length ?? 0) > 0;
-  // Right after copying, "Çalıştı mı?" opens even on the half card (docs/history/435-*): the person has the text in hand, now they can say how it went.
+  // Right after copying, "Çalıştı mı?" opens even on the half card (docs/history/436-*): the person has the text in hand, now they can say how it went.
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     const mark = (event: Event) => {

@@ -30,7 +30,7 @@ import { FocusPromptLine, FocusPromptWords } from "./focus-words";
 import { usePromptOutput, usePromptWorks, useWorkflowFocusSteps } from "./use-focus-data";
 
 /**
- * One post of Odak, the "Sahne" (docs/history/435-*, the A + C merge): a full screen of the vertical feed. The post's own content is the scene —
+ * One post of Odak, the "Sahne" (docs/history/436-*, the A + C merge): a full screen of the vertical feed. The post's own content is the scene —
  * its picture(s) (a sideways row of results), its playing video / audio, or, with nothing to look at, its words / brief / parameters /
  * step chain / summary on a tint of its own; over it on a phone the action rail, the author + title, and the prompt strip (the card's closed
  * state — tap or drag it up to open the card). From `md` the scene is a centred 4:5 card; the actions and the prompt live in the side panel.
@@ -288,7 +288,7 @@ function ValueChip({ name, value, empty }: { name: string; value: string; empty:
 }
 
 /**
- * The prompt strip (docs/history/435-*): the card's closed state, a thin bar at the screen's foot. Its left side opens the card
+ * The prompt strip (docs/history/436-*): the card's closed state, a thin bar at the screen's foot. Its left side opens the card
  * (a tap, or a drag up); its right side is the post kind's one big action — copying needs no panel.
  */
 function FocusPeek({ item, model, fill, textScene }: { item: PostFeedItem; model: SlideModel; fill: PromptFill | null; textScene: boolean }) {

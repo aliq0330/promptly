@@ -1,5 +1,5 @@
 /**
- * Odak'ın prompt kartı (`docs/history/435-*`) — saf kurallar (React / Supabase yok, `focus-sheet.test.ts` sınar): kartın üç durumu
+ * Odak'ın prompt kartı (`docs/history/436-*`) — saf kurallar (React / Supabase yok, `focus-sheet.test.ts` sınar): kartın üç durumu
  * (kapalı şerit → yarım → tam), sürükleme eşiği, sekmeler, sonuç görsellerinde gezinme, klavye eşlemesi ve etkin gönderi hesabı.
  */
 import type { PostEntry } from "@/lib/supabase/feed";

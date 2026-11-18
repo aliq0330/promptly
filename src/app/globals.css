@@ -257,7 +257,7 @@
   --color-story-stage: #0a0a0d;
   --color-story-scrim: rgb(0 0 0 / 0.5);
 
-  /* Odak scenes without a picture (docs/history/435-*): the post's own content is the scene, tinted by what it is. Fixed dark grounds
+  /* Odak scenes without a picture (docs/history/436-*): the post's own content is the scene, tinted by what it is. Fixed dark grounds
    * (Odak is always on the dark stage); every pairing with `text-on-art` is far above 4.5:1. The kind is also named by its icon and label. */
   --color-focus-text: #11172e;
   --color-focus-request: #241a18;
@@ -1255,6 +1255,27 @@
 }
 @keyframes live-toast-in-phone {
   from { opacity: 0; transform: translateY(-22px) scale(0.98); }
+}
+/* Kilometre taşı kutlaması (docs/history/435-*): kartın üst kenarından 14 küçük parça düşer ve söner; hareketi azalt'ta son kare (görünmez) anında gelir. */
+.live-toast-confetti {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+.live-toast-confetti i {
+  position: absolute;
+  top: -6px;
+  width: 6px;
+  height: 10px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: live-toast-confetti 1500ms var(--ease-soft) backwards;
+}
+@keyframes live-toast-confetti {
+  0% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate3d(var(--drift, 10px), 96px, 0) rotate(260deg); }
 }
 .live-toast-bar {
   transform-origin: left center;

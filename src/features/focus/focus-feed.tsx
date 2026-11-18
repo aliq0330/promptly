@@ -41,11 +41,11 @@ import { FocusPostSheet, FocusSidePanel } from "./focus-post-card";
 import { FocusFeedSlide } from "./focus-scene";
 
 /**
- * Odak (`/focus`, docs/history/199-*, 435-*) — everyone's public posts, one per screen, full screen (the header, sidebar and bottom nav
+ * Odak (`/focus`, docs/history/199-*, 436-*) — everyone's public posts, one per screen, full screen (the header, sidebar and bottom nav
  * hide while it is open, like the story viewer). Always on a dark stage (the site's one palette, dark mode). Data is Ana Sayfa's: `feed_page`
  * (newest, every kind; "Takip" = people you follow) through `useFeedPages`, so only published + public, non-community content appears.
  *
- * Since 435 the feed is VERTICAL (A, "Sahne"): a native `scroll-snap` column of full-screen posts the browser drives (JS only scrolls on an explicit
+ * Since 436 the feed is VERTICAL (A, "Sahne"): a native `scroll-snap` column of full-screen posts the browser drives (JS only scrolls on an explicit
  * keyboard / button step); sideways a post pages through its own results. A post's card (C, "Prompt sahnesi") opens from the prompt strip at the
  * screen's foot — a bottom sheet on a phone (half → full), the persistent side panel from `md`. The post type and the source are chosen in the
  * bar's one filter menu (docs/history/245-*). The active post is the one the column rests on; only it and its neighbours mount pictures / video /
@@ -285,7 +285,7 @@ function FocusScreen() {
   const { user, loading: authLoading } = useAuth();
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [tab, setTab] = useState<FocusTab>("newest");
-  // "Yalnız görselliler" is OFF from the start (docs/history/435-*): a post without a picture is a scene of its own (its words, brief, parameters, chain), so
+  // "Yalnız görselliler" is OFF from the start (docs/history/436-*): a post without a picture is a scene of its own (its words, brief, parameters, chain), so
   // text prompts and workflows belong in the feed; turning the switch on brings back the old "only posts with something to look at".
   const [mediaOnly, setMediaOnly] = useState(false);
   const [channel, setChannel] = useState<FocusChannel>("all");

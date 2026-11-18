@@ -1,4 +1,4 @@
-// Odak (`/focus`, docs/history/199-*, 435-*): tam ekran, DİKEY kaydırmalı (A "Sahne": her gönderi bir ekran) + prompt kartı (C: şerit → yarım → tam,
+// Odak (`/focus`, docs/history/199-*, 436-*): tam ekran, DİKEY kaydırmalı (A "Sahne": her gönderi bir ekran) + prompt kartı (C: şerit → yarım → tam,
 // masaüstünde yan panel), değişken doldurma (şeritte değer çipleri, sahnede seçici, kartta alanlar), görselsiz sahneler (metin / istek / ayar paketi /
 // workflow), sonuç görselleri (yatay), video/ses oynatma (yazarın yüklediği çıktı), "Yalnız görselliler" süzgeci (varsayılan KAPALI), gerçek
 // beğeni/kaydet/yorum/paylaş/kopyala, sayfalama, klavye, kapatma, misafir, mobil/İngilizce/açık tema.
@@ -213,7 +213,7 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
 const stage = (page) => page.locator("[data-focus-feed]");
 const slides = (page) => page.locator("[data-focus-feed] [data-slide-index]");
 const counter = (page) => stage(page).locator("span[aria-label^='Gönderi'], span[aria-label^='Post']").first();
-// "Yalnız görselliler" (docs/history/435-*) KAPALI açılır: görselsiz metin promptu / workflow da akışta, kendi sahnesiyle. `mediaOnly: true` = anahtarı açar.
+// "Yalnız görselliler" (docs/history/436-*) KAPALI açılır: görselsiz metin promptu / workflow da akışta, kendi sahnesiyle. `mediaOnly: true` = anahtarı açar.
 const openFocus = async (page, { mediaOnly = false } = {}) => {
   await page.goto(`${BASE}/focus`);
   await slides(page).first().waitFor();
@@ -225,7 +225,7 @@ const openFocus = async (page, { mediaOnly = false } = {}) => {
     await page.waitForTimeout(300);
   }
 };
-// Etkin gönderi = dikey sütunun durduğu ekran (docs/history/435-*); 1 tabanlı (eski sayaç gibi).
+// Etkin gönderi = dikey sütunun durduğu ekran (docs/history/436-*); 1 tabanlı (eski sayaç gibi).
 const SCROLLER = "[data-focus-feed] [role='region']";
 const activeIndex = (page) => page.evaluate((sel) => { const el = document.querySelector(sel); return Math.round(el.scrollTop / el.clientHeight) + 1; }, SCROLLER);
 const jump = async (page, n) => { await page.evaluate(([sel, i]) => { const el = document.querySelector(sel); el.scrollTo({ top: i * el.clientHeight, behavior: "instant" }); }, [SCROLLER, n]); await page.waitForTimeout(500); };
@@ -286,7 +286,7 @@ await scenario("2. Masaüstü açılış: tam ekran, menüler DOM'da yok, koyu s
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "the whole site is dark while Odak is open");
   assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 18", "ilk sayfa 18 gönderi (görselsizler dahil)");
   assert.equal(await page.evaluate((sel) => getComputedStyle(document.querySelector(sel)).scrollSnapType, SCROLLER), "y mandatory");
-  assert.equal(db.feedCalls[0].p_has_media, undefined, "Yalnız görselliler kapalı: süzgeçsiz ilk istek (docs/history/435-*)");
+  assert.equal(db.feedCalls[0].p_has_media, undefined, "Yalnız görselliler kapalı: süzgeçsiz ilk istek (docs/history/436-*)");
   assert.match(await page.title(), /Odak/);
   await shot(page, "02-focus-desktop");
 }, { viewport: { width: 1440, height: 900 } });

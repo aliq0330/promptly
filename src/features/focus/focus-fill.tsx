@@ -7,7 +7,7 @@ import type { Prompt, PromptVariable } from "@/types";
 import { usePromptVariables } from "./use-focus-data";
 
 /**
- * The values the viewer typed into a prompt's `{variables}` in Odak (docs/history/435-*), kept per prompt for the whole visit: the
+ * The values the viewer typed into a prompt's `{variables}` in Odak (docs/history/436-*), kept per prompt for the whole visit: the
  * strip's value chips, the stage's tappable words, the picker and the sheet's fields are all views of the SAME values, so a value
  * set in one is in every other and in what "Kopyala" copies. Purely local, throwaway state — the stored prompt is never touched
  * (the detail page's own rule, `PromptDetailView`).

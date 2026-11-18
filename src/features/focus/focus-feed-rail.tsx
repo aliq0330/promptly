@@ -17,7 +17,7 @@ import { cn, formatCount, requestHref } from "@/lib/utils";
 import { FocusPanelContext, FocusPlaybackContext } from "./focus-context";
 
 /**
- * Odak's action icons (docs/history/435-*): the SAME database-backed Beğeni / Yorum / Kaydet / Paylaş buttons every card uses
+ * Odak's action icons (docs/history/436-*): the SAME database-backed Beğeni / Yorum / Kaydet / Paylaş buttons every card uses
  * (`LikeButton`'s reaction picker with its optimistic toggle + rollback, `SaveButton`'s collection picker, `ShareTriggerButton`'s
  * `ShareModal`), laid out three ways. Guests get each button's own login prompt. A request has no save (as everywhere): its replies link takes that slot.
  *   - `reel`: the bare column on a phone post's right edge — icon over count, light ink on the picture.

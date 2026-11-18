@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { ScrollRow } from "@/components/ui/scroll-row";
 
 /**
- * Odak's comments (docs/history/200-*, 435-*), Instagram-style, now the card's "Yorumlar" tab: the thread is the detail pages' own
+ * Odak's comments (docs/history/200-*, 436-*), Instagram-style, now the card's "Yorumlar" tab: the thread is the detail pages' own
  * (`useCommentThread`: load, like, reply at any depth, edit, delete, report, @mentions) in its `sheet` layout — one composer at the bottom
  * writes comments AND replies ("Yanıtla" turns it into a reply to that person), with a row of quick emoji above it.
  */

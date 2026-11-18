@@ -1,5 +1,5 @@
 /**
- * Odak (`/focus`, docs/history/199-*, 435-*) — the pure presentation rules, kept free of
+ * Odak (`/focus`, docs/history/199-*, 436-*) — the pure presentation rules, kept free of
  * React / Supabase imports so they can be unit-tested (`focus-feed.test.ts`):
  * which picture (if any) fronts a feed entry, which slide layout it gets,
  * what counts as "media" for the Medya filter, where the feed starts and when
@@ -46,7 +46,7 @@ export function focusFeedCover(entry: PostEntry): FocusFeedCover | null {
 }
 
 /**
- * Every picture a post can page through sideways (docs/history/435-*, "1/4 sonuç"): an image prompt's outputs; every other kind
+ * Every picture a post can page through sideways (docs/history/436-*, "1/4 sonuç"): an image prompt's outputs; every other kind
  * fronts only its cover (a video poster set or a workflow's media is not a gallery).
  */
 export function focusFeedImages(entry: PostEntry): FocusFeedCover[] {
@@ -118,7 +118,7 @@ export function focusFeedShouldLoadMore(active: number, total: number, state: { 
 }
 
 /**
- * The tint of a post's scene when it has no picture to show (docs/history/435-*): the post's OWN content is the scene — a text prompt its
+ * The tint of a post's scene when it has no picture to show (docs/history/436-*): the post's OWN content is the scene — a text prompt its
  * words, a request its brief, a preset its parameters, a workflow its chain, a Skill its summary. `null` = a picture / playing media fronts it.
  * A playable prompt whose output (and poster) turned out to be missing falls back to the words (`playableFallback`).
  */
@@ -145,7 +145,7 @@ export function focusPromptTokens(text: string): { text: string; name: string | 
   return parts;
 }
 
-/** What the prompt strip's one big button does for each kind (docs/history/435-*) — an open request of someone else is answered, the rest open or run. */
+/** What the prompt strip's one big button does for each kind (docs/history/436-*) — an open request of someone else is answered, the rest open or run. */
 export type FocusPrimaryAction = "copy" | "reply" | "detail" | "tryPreset" | "runWorkflow" | "openSkill";
 
 export function focusFeedPrimaryAction(entry: PostEntry, viewerId: string | null): FocusPrimaryAction {

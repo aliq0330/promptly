@@ -1,5 +1,5 @@
 /**
- * Odak'ın dikey akışı + prompt kartı (docs/history/435-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar (`...focusTranslations`).
+ * Odak'ın dikey akışı + prompt kartı (docs/history/436-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar (`...focusTranslations`).
  * Eski Odak metinleri (`focusFeed.*` çekirdeği) `translations.ts`'te kalır.
  */
 export const focusTranslations = {

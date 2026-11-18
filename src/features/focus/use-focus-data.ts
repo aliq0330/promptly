@@ -101,7 +101,7 @@ export function usePromptOutput(prompt: Prompt | null, enabled: boolean) {
   );
 }
 
-/** A prompt's variable definitions (docs/history/435-*): fetched once per prompt near view — the strip's value chips and the stage's tappable `{tokens}` need them. */
+/** A prompt's variable definitions (docs/history/436-*): fetched once per prompt near view — the strip's value chips and the stage's tappable `{tokens}` need them. */
 export function usePromptVariables(promptId: string | null, enabled: boolean) {
   return useLazy<PromptVariable[]>(promptId ? `vars:${promptId}` : null, enabled, () => (promptId ? fetchVariablesForPrompt(promptId) : Promise.resolve(null)));
 }

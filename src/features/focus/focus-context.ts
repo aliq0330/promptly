@@ -12,7 +12,7 @@ import type { FocusTabId } from "@/lib/focus-sheet";
 export const FocusPlaybackContext = createContext<{ muted: boolean; setMuted: (muted: boolean) => void }>({ muted: true, setMuted: () => undefined });
 
 /**
- * What a post's face can ask of Odak's screen (docs/history/435-*): open the prompt card (a phone's bottom sheet, a desktop's side panel) on a
+ * What a post's face can ask of Odak's screen (docs/history/436-*): open the prompt card (a phone's bottom sheet, a desktop's side panel) on a
  * tab, or edit one `{variable}` of the active text prompt (a phone's picker, a desktop's field in the panel).
  */
 export interface FocusPanelApi {
