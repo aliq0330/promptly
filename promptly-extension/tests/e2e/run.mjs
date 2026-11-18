@@ -28,7 +28,7 @@ fs.writeFileSync(path.join(tmp, "manifest.json"), JSON.stringify(mf));
 const results = [];
 const ok = (name) => { results.push(name); console.log("  ✓", name); };
 const ctx = await chromium.launchPersistentContext(fs.mkdtempSync(path.join(os.tmpdir(), "ply-e2e-prof-")), {
-  headless: true, channel: "chromium", viewport: { width: 1100, height: 800 }, locale: "tr-TR",
+  headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : { channel: "chromium" }), viewport: { width: 1100, height: 800 }, locale: "tr-TR",
   args: [`--disable-extensions-except=${tmp}`, `--load-extension=${tmp}`, "--no-sandbox", "--disable-features=DisableLoadExtensionCommandLineSwitch"],
 });
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
