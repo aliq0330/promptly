@@ -18,8 +18,9 @@ import { fetchSuggestedCreators, type SuggestedCreator } from "@/lib/supabase/cr
 import { updateOwnInterests } from "@/lib/supabase/profiles";
 import { cn, profileHref, publicAssetUrl } from "@/lib/utils";
 import { FIRST_RUN_TOPICS, topicImagePaths, type FirstRunTopic } from "./first-run-topics";
+import { FirstRunProfileStep } from "./first-run-profile";
 
-type Step = "topics" | "people" | "building";
+type Step = "topics" | "people" | "profile" | "building";
 
 /** The "Özel akışın oluşturuluyor" screen is short on purpose: it only covers the moment the feed re-ranks on the new topics. */
 const BUILDING_TICK_MS = 900;
@@ -43,7 +44,7 @@ export function FirstRunSetup({ onDone }: { onDone: () => void }) {
   const [followed, setFollowed] = useState<ReadonlySet<string>>(() => new Set());
 
   const progress = topicProgress(picked.length);
-  const stepNumber = step === "topics" ? 1 : 2;
+  const stepNumber = step === "topics" ? 1 : step === "people" ? 2 : 3;
 
   const saveTopics = useCallback(async () => {
     if (!user || saving || !topicProgress(picked.length).canContinue) return;
@@ -77,7 +78,7 @@ export function FirstRunSetup({ onDone }: { onDone: () => void }) {
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border-soft px-3 py-2 sm:px-6">
         <BrandWordmark className="text-h2" />
         <div className="flex items-center gap-2">
-          <span className="text-small text-text-muted">{t("firstRun.stepLabel", { current: stepNumber, total: 2 })}</span>
+          <span className="text-small text-text-muted">{t("firstRun.stepLabel", { current: stepNumber, total: 3 })}</span>
           <Button type="button" variant="ghost" size="sm" onClick={() => void signOut()} data-first-run-signout>
             {t("settings.signOut")}
           </Button>
@@ -125,8 +126,10 @@ export function FirstRunSetup({ onDone }: { onDone: () => void }) {
             </div>
           </footer>
         </>
+      ) : step === "people" ? (
+        <PeopleStep followedCount={followed.size} onFollowChange={onFollowChange} onFinish={() => setStep("profile")} />
       ) : (
-        <PeopleStep followedCount={followed.size} onFollowChange={onFollowChange} onFinish={() => setStep("building")} />
+        <FirstRunProfileStep onDone={() => setStep("building")} />
       )}
     </div>
   );
@@ -255,7 +258,7 @@ function PeopleStep({
             {reachedGoal ? t("firstRun.followDone", { count: followedCount }) : t("firstRun.followProgress", { count: followedCount, total: FIRST_RUN_SUGGESTED_FOLLOWS })}
           </p>
           <Button type="button" size="lg" onClick={onFinish} variant={reachedGoal ? "primary" : "outline"} data-first-run-finish>
-            {followedCount > 0 ? t("firstRun.finish") : t("firstRun.skipPeople")}
+            {reachedGoal ? t("firstRun.finish") : t("firstRun.skipPeople")}
           </Button>
         </div>
       </footer>

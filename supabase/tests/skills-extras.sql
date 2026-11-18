@@ -27,7 +27,8 @@ reset role; set role anon; select pg_temp.as_user('');
 select pg_temp.check(1, 'a visitor reads the 8 seeded categories', (select count(*) = 8 from public.skill_categories));
 select pg_temp.check(1, 'clients cannot write categories', pg_temp.raises($$insert into public.skill_categories (id, label_tr, label_en) values ('x1', 'a', 'b')$$, 'permission denied'));
 reset role;
-select pg_temp.check(1, 'an unknown category is refused by the foreign key', pg_temp.raises(format($$update public.skills set category = 'cooking' where id = %L$$, :sk), 'violates foreign key'));
+select pg_temp.check(1, 'a category that is not a skill area is refused by the foreign key', pg_temp.raises(format($$update public.skills set category = 'cooking' where id = %L$$, :sk), 'violates foreign key'));
+insert into public.domains (id, label_tr, label_en, position) values ('cooking', 'Mutfak', 'Cooking', 150); -- Skill alanı ortak ALAN sözlüğünün alt kümesidir (docs/history/426-*): önce alan
 insert into public.skill_categories (id, label_tr, label_en, position) values ('cooking', 'Mutfak', 'Cooking', 90);
 select pg_temp.check(1, 'a new row is usable at once (no deploy)', not pg_temp.raises(format($$update public.skills set category = 'cooking' where id = %L$$, :sk), 'zzz_never'));
 set role authenticated; select pg_temp.as_user(:alice);

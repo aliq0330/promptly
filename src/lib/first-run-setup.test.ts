@@ -1,14 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
+  AVATAR_COLORS,
   FIRST_RUN_MAX_TOPICS,
   FIRST_RUN_MIN_TOPICS,
   firstRunDoneKey,
   firstRunRequired,
   markFirstRunDone,
+  normalizeUsername,
   readFirstRunDone,
   toggleTopic,
   topicProgress,
+  USERNAME_FORMAT,
+  avatarInitial,
+  usernameCanFinish,
+  usernameFormat,
+  usernameStatus,
+  usernameSuggestions,
 } from "./first-run-setup.ts";
 
 const SINCE = Date.parse("2026-11-17T00:00:00Z");
@@ -77,4 +86,46 @@ test("the done flag is per user and survives blocked storage", () => {
   assert.equal(readFirstRunDone("u1", blocked), false);
   assert.doesNotThrow(() => markFirstRunDone("u1", blocked));
   assert.equal(readFirstRunDone("u1", null), false);
+});
+
+test("username format matches the database pattern used by the settings page", () => {
+  const profiles = readFileSync(new URL("./supabase/profiles.ts", import.meta.url), "utf8");
+  assert.ok(profiles.includes(`USERNAME_PATTERN = ${USERNAME_FORMAT.toString()}`), "same regex as lib/supabase/profiles.ts");
+});
+
+test("typing is normalised and the format says what is wrong", () => {
+  assert.equal(normalizeUsername("  Ali Veli "), "aliveli");
+  assert.equal(normalizeUsername("A".repeat(40)).length, 30);
+  assert.equal(usernameFormat(""), "empty");
+  assert.equal(usernameFormat("ab"), "short");
+  assert.equal(usernameFormat("a b"), "invalid");
+  assert.equal(usernameFormat("Ab1"), "invalid");
+  assert.equal(usernameFormat("ali-2"), "invalid");
+  assert.equal(usernameFormat("ali_2.x"), "valid");
+});
+
+test("status: own name is always free, a taken name blocks, a failed check never blocks", () => {
+  assert.equal(usernameStatus("merve_k", "idle", "merve_k"), "available");
+  assert.equal(usernameStatus("yeni_ad", "idle", "merve_k"), "checking");
+  assert.equal(usernameStatus("yeni_ad", "checking", "merve_k"), "checking");
+  assert.equal(usernameStatus("yeni_ad", "free", "merve_k"), "available");
+  assert.equal(usernameStatus("yeni_ad", "taken", "merve_k"), "taken");
+  assert.equal(usernameStatus("yeni_ad", "error", "merve_k"), "available");
+  assert.equal(usernameStatus("ab", "free", "merve_k"), "short");
+  assert.equal(usernameCanFinish("available"), true);
+  for (const blocked of ["empty", "short", "invalid", "checking", "taken"] as const) assert.equal(usernameCanFinish(blocked), false);
+});
+
+test("suggestions stay valid and within 30 characters", () => {
+  assert.deepEqual(usernameSuggestions("ali"), ["ali_1", "ali.tr"]);
+  for (const name of ["ali", "a".repeat(30)]) {
+    for (const suggestion of usernameSuggestions(name)) assert.ok(USERNAME_FORMAT.test(suggestion), suggestion);
+  }
+});
+
+test("avatar initial and colours", () => {
+  assert.equal(avatarInitial("merve_k"), "M");
+  assert.equal(avatarInitial(""), "M");
+  assert.equal(AVATAR_COLORS.length, 6);
+  assert.equal(new Set(AVATAR_COLORS).size, 6);
 });
