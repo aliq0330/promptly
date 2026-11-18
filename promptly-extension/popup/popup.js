@@ -13,9 +13,9 @@ async function connectFlow() {
   const b = $("connect"); b.disabled = true; b.textContent = t("connecting");
   $("login-error").hidden = true;
   try {
-    await PAuth.connect();
-    await PApi.syncIdentity();
-    chrome.runtime.sendMessage({ type: "flush" });
+    // Giriş arka planda yürür (giriş sekmesi açılınca popup kapanabilir); oturum açılınca depo değişimi arayüzü günceller.
+    const res = await PUI.bg({ type: "connect" });
+    if (res && res.error) throw res.error;
   } catch (err) {
     if (err && err.code !== "cancelled") { $("login-error").hidden = false; $("login-error").textContent = t("connectFailed", { error: PUI.errText(err) }); }
     else if (err) { $("login-error").hidden = false; $("login-error").textContent = t("connectCancelled"); }

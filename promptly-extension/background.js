@@ -156,6 +156,18 @@ const handlers = {
   },
   async "ply:used"(msg) { const i = msg.item || {}; await PLib.markUsed({ id: str(i.id, 64), title: str(i.title, 200), type: str(i.type, 10), source: str(i.source, 12), own: Boolean(i.own), url: str(i.url, 500), author: str(i.author, 60), description: str(i.description, 300), tools: [] }); return { ok: true }; },
   // popup/yan panel
+  // Giriş burada çalışır: açılan giriş sekmesi/penceresi popup'ı kapatır (özellikle Android tarayıcılarda), popup'ta çalışan `connect()` sonucu yutulurdu.
+  // Sonuç `storage` değişimiyle popup/yan panele yansır; akış uzun sürebilir, bu yüzden hizmet çalışanı canlı tutulur.
+  async connect() {
+    const keepAlive = setInterval(() => chrome.runtime.getPlatformInfo(() => {}), 20000);
+    try {
+      await PAuth.connect();
+      await PApi.syncIdentity();
+      serial(flushNow);
+      return { ok: true };
+    } catch (e) { return fail(e); }
+    finally { clearInterval(keepAlive); }
+  },
   async flush() { const r = await serial(flushNow); return { sent: r.sent, stopped: r.stopped }; },
   async "queue:retry"(msg) { await PQueue.retry(String(msg.id)); return serial(flushNow); },
   async "queue:retryAll"() { await PQueue.retryAll(); return serial(flushNow); },
