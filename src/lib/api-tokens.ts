@@ -3,7 +3,7 @@
  * (`supabase/migrations/20261102110000_api_tokens.sql`) asıl koruma; burası yalnız ekranın doğru seçenekleri göstermesi içindir.
  */
 
-export type ApiTokenScope = "read" | "write";
+export type ApiTokenScope = "read" | "write" | "interact";
 export type ApiTokenStatus = "active" | "expired" | "revoked";
 
 export interface ApiTokenRow {
@@ -30,6 +30,11 @@ export const API_TOKEN_DEFAULT_EXPIRY = 90;
 export type ApiTokenPreset = "read" | "write";
 export const API_TOKEN_PRESET_SCOPES: Record<ApiTokenPreset, ApiTokenScope[]> = { read: ["read"], write: ["read", "write"] };
 
+/** Hazır kapsam + (işaretliyse) etkileşim kapsamı (beğeni, kaydet, koleksiyon, oy, takip — docs/history/432-*). */
+export function apiTokenScopes(preset: ApiTokenPreset, interact: boolean): ApiTokenScope[] {
+  return interact ? [...API_TOKEN_PRESET_SCOPES[preset], "interact"] : [...API_TOKEN_PRESET_SCOPES[preset]];
+}
+
 export function apiTokenStatus(row: Pick<ApiTokenRow, "revokedAt" | "expiresAt">, now: number = Date.now()): ApiTokenStatus {
   if (row.revokedAt) return "revoked";
   if (row.expiresAt && new Date(row.expiresAt).getTime() <= now) return "expired";
@@ -52,7 +57,7 @@ export function isValidApiTokenName(name: string): boolean {
 /** Ham anahtarın biçimi (`pmt_` + 43 karakter) — yalnız kopyalama ekranının "bu gerçekten bir anahtar" denetimi için. */
 export const API_TOKEN_PATTERN = /^pmt_[A-Za-z0-9_-]{43}$/;
 
-const SCOPES: readonly ApiTokenScope[] = ["read", "write"];
+const SCOPES: readonly ApiTokenScope[] = ["read", "write", "interact"];
 
 /** RPC satırı → arayüz satırı; bozuk satır (kimlik/ad yok) null döner ve listeden atılır. */
 export function mapApiTokenRow(raw: Record<string, unknown>): ApiTokenRow | null {

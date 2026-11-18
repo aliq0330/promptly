@@ -61,7 +61,7 @@ test("the user is established in ONE transaction, in order: authenticate → rol
   assert.equal(calls[1].sql, "set local role authenticated");
   assert.ok(calls[2].sql.includes("request.jwt.claims"));
   assert.deepEqual(JSON.parse(String(calls[2].params[0])), { sub: USER, role: "authenticated", token_id: "tok-1", via: "key" });
-  assert.ok(calls[3].sql.includes("api_me_throttle") && calls[3].params[0] === false);
+  assert.ok(calls[3].sql.includes("api_me_throttle") && calls[3].params[0] === "read");
   assert.ok(calls[4].sql.includes("api_me_whoami"));
   assert.deepEqual(await response.json(), {
     user: { id: USER, username: "ayse", displayName: "Ayşe K.", avatarUrl: null, profileUrl: `${SITE}/profile/real?username=ayse` },
@@ -213,7 +213,7 @@ test("POST /me/prompts: the write bucket is used for the throttle; a report that
   });
   const response = await handlerWith(db)(get("/me/prompts", KEY, "POST", serializeJson([filePrompt])));
   assert.equal(response.status, 422);
-  assert.ok(calls.some((c) => c.sql.includes("api_me_throttle") && c.params[0] === true));
+  assert.ok(calls.some((c) => c.sql.includes("api_me_throttle") && c.params[0] === "write"));
 });
 
 test("POST /me/prompts: garbage, empty and oversized bodies are 400 before the import runs", async () => {

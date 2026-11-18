@@ -22,6 +22,12 @@ self.PUI = (() => {
     pin: '<path d="M12 17v5M8 3h8l-1 7 3 3H6l3-3z"/>',
     download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
     heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+    bookmark: '<path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"/>',
+    folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    thumbup: '<path d="M8 11V20H5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM8 11l3.5-6.5a2 2 0 0 1 3.5 1.7L14.3 9H19a2 2 0 0 1 2 2.4l-1.3 6.5A2 2 0 0 1 17.7 19.5H8"/>',
+    thumbdown: '<path d="M8 13V4H5a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1zM8 13l3.5 6.5a2 2 0 0 0 3.5-1.7L14.3 15H19a2 2 0 0 0 2-2.4l-1.3-6.5A2 2 0 0 0 17.7 4.5H8"/>',
+    userplus: '<circle cx="10" cy="8" r="3.5"/><path d="M3.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/>',
+    back: '<path d="m14 6-6 6 6 6"/>',
   };
   const icon = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${PATHS[n] || ""}</svg>`;
   const brand = (size = 24) => `<svg width="${size}" height="${size}" viewBox="8 8 48 48" aria-hidden="true"><g fill="none" stroke="var(--primary)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"><path d="M25 13c-6 0-7.5 3-7.5 8v5.5c0 3.5-2 5.5-5.5 5.5 3.5 0 5.5 2 5.5 5.5V43c0 5 1.5 8 7.5 8"/><path d="M39 13c6 0 7.5 3 7.5 8v5.5c0 3.5 2 5.5 5.5 5.5-3.5 0-5.5 2-5.5 5.5V43c0 5-1.5 8-7.5 8"/></g><path d="M32 41.5c-1-.8-9-6.4-9-12.2a4.6 4.6 0 0 1 9-1.5a4.6 4.6 0 0 1 9 1.5c0 5.8-8 11.4-9 12.2z" fill="var(--heart)" stroke="var(--heart)" stroke-width="1.6" stroke-linejoin="round"/></svg>`;

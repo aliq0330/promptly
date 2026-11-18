@@ -64,7 +64,7 @@ function render() {
   renderStatus(); renderBadge(); renderFooter();
 }
 
-const openItem = (item, opts) => PBrowser.openDetail(item, { ...(opts || {}), onSlotsChange: () => lib && lib.repaint() });
+const openItem = (item, opts) => PBrowser.openDetail(item, { ...(opts || {}), onSlotsChange: () => lib && lib.repaint(), onEngageChange: () => { if (lib && started.library) lib.afterEngage(); } });
 
 function build() {
   started = {};
@@ -144,7 +144,8 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
   await load();
   const nowSigned = Boolean(data.auth && data.auth.refreshToken);
   if (changes.lang) await PI.init();
-  if (changes.slots || changes.views || changes.prefs) await PBrowser.loadEnv();
+  if (changes.slots || changes.views || changes.prefs || changes.auth) await PBrowser.loadEnv();
+  if (changes.auth) PEngage.reset(); // izin/kapsam ya da hesap değişince önbelleğe alınmış durum geçersizdir
   if (changes.auth || changes.queue || changes.lastError || changes.lang || changes.sent) render();
   if (wasSigned !== nowSigned || changes.lang) {
     build();

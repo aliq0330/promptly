@@ -14,8 +14,9 @@ export async function fetchOauthRequestInfo(request: string): Promise<unknown> {
 }
 
 /** Karar: onay ya da ret. Dönen nesne `{ redirect_uri, params }` — adresi `buildReturnUrl` kurar. İstek TEK KULLANIMLIKTIR. */
-export async function decideOauthRequest(request: string, approve: boolean, write: boolean): Promise<unknown> {
-  const { data, error } = await supabase.rpc("oauth_decide", { p_request: request, p_approve: approve, p_write: write });
+export async function decideOauthRequest(request: string, approve: boolean, write: boolean, interact = false): Promise<unknown> {
+  // `p_interact` yalnız işaretliyse gönderilir: eski imzalı (3 argümanlı) bir veritabanında da onay çalışmaya devam eder.
+  const { data, error } = await supabase.rpc("oauth_decide", { p_request: request, p_approve: approve, p_write: write, ...(interact ? { p_interact: true } : {}) });
   if (error) throw new Error(error.message);
   return data;
 }

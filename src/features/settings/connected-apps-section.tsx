@@ -112,9 +112,9 @@ export function ConnectedAppsSection() {
                   grant.scopes.map((scope) => (
                     <span
                       key={scope}
-                      className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scope === "write" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary")}
+                      className={cn("rounded-full px-2.5 py-0.5 text-caption font-semibold", scope === "write" || scope === "interact" ? "bg-secondary-soft text-secondary" : "bg-primary-soft text-primary")}
                     >
-                      {scope === "write" ? t("apps.scope.write") : t("apps.scope.read")}
+                      {scope === "write" ? t("apps.scope.write") : scope === "interact" ? t("apps.scope.interact") : t("apps.scope.read")}
                     </span>
                   ))
                 )}

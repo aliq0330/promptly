@@ -137,3 +137,39 @@
 .thumbimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .art.hasimg .arttype { display: none; }
 .art.hasimg .artText { display: none; }
+
+/* Ana Sayfa sekmeleri, nedeni, koleksiyonlar, etkileşim (docs/history/432-*) */
+.homeseg { align-self: flex-start; }
+.reason { margin: 4px 0 0; font-size: 11.5px; color: var(--muted); }
+.engbtns { display: inline-flex; gap: 4px; }
+.art .engbtns { position: absolute; right: 8px; top: 8px; }
+.art .engbtns .ico { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 0; background: rgba(255, 255, 255, .94); color: #121218; }
+.art .engbtns .ico svg.i { width: 15px; height: 15px; }
+.engbtns .ico.on { background: var(--primary-soft); color: var(--primary); }
+.art .engbtns .ico.on { background: var(--primary); color: var(--primary-fg, #fff); }
+.engbtns .ico.on svg.i path { fill: currentColor; fill-opacity: .25; }
+.engage { display: flex; flex-direction: column; gap: 8px; }
+.engage:empty { display: none; }
+.reacts { display: flex; gap: 4px; flex-wrap: wrap; }
+.rbtn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-strong); background: var(--surface); font-size: 18px; line-height: 1; display: grid; place-items: center; }
+.rbtn.on { border-color: var(--primary); background: var(--primary-soft); }
+.engrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.engrow .btn.on { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+.engrow .btn { gap: 5px; }
+.worksvote .label { margin-right: 2px; }
+.engoff { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; border: 1px dashed var(--border-strong); border-radius: 12px; }
+.engoff .hint { margin: 0; flex: 1; min-width: 160px; }
+.backbtn { display: inline-flex; align-items: center; gap: 4px; }
+.backbtn svg.i { width: 14px; height: 14px; }
+.colrow .colicon { width: 40px; height: 40px; border-radius: 12px; background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; flex: none; }
+.colrow .colicon svg.i { width: 20px; height: 20px; }
+.dtabs { align-self: flex-start; }
+.sublist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.subrow { padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.subrow.reply { margin-top: 6px; margin-left: 12px; background: var(--soft); }
+.subhead { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.subtext { margin: 0; font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.subfoot { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); }
+.subfoot-col { display: flex; flex-direction: column; gap: 6px; }
+.rimg { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; }
+.code.clamp { max-height: 120px; overflow: hidden; }

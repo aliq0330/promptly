@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check } from "@/components/icons/check";
+import { Heart } from "@/components/icons/heart";
 import { Plus } from "@/components/icons/plus";
 import { ShieldAlert } from "@/components/icons/shield-alert";
 import { X } from "@/components/icons/x";
@@ -29,6 +30,7 @@ function ConnectInner() {
   const request = parseConnectRequest(params.get("request"));
   const [state, setState] = useState<State>(request ? { kind: "loading" } : { kind: "error" });
   const [write, setWrite] = useState(false);
+  const [interact, setInteract] = useState(false);
 
   useEffect(() => {
     if (!request) return;
@@ -50,7 +52,7 @@ function ConnectInner() {
     const info = state.info;
     setState({ kind: "working", info });
     try {
-      const target = buildReturnUrl(await decideOauthRequest(request, approve, approve && write));
+      const target = buildReturnUrl(await decideOauthRequest(request, approve, approve && write, approve && interact));
       if (!target) return setState({ kind: "error" });
       setState({ kind: "leaving" });
       window.location.assign(target);
@@ -122,6 +124,15 @@ function ConnectInner() {
           <span className="min-w-0 flex-1">
             <span className="block text-small font-semibold text-text">{t("connect.writeLabel")}</span>
             <span className="block text-caption leading-relaxed text-text-muted">{t("connect.writeHint")}</span>
+          </span>
+        </SwitchRow>
+        <SwitchRow checked={interact} onChange={setInteract} disabled={busy} label={t("connect.interactLabel")} className="cursor-pointer p-4">
+          <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+            <Heart size={16} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-small font-semibold text-text">{t("connect.interactLabel")}</span>
+            <span className="block text-caption leading-relaxed text-text-muted">{t("connect.interactHint")}</span>
           </span>
         </SwitchRow>
         <div className="flex items-start gap-3 p-4">

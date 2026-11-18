@@ -124,7 +124,7 @@ test("PATCH: the change goes to api_me_update_draft with the expected time, as T
   assert.deepEqual(sent[0].slice(0, 2), ["preset", ID_A]);
   assert.deepEqual(JSON.parse(String(sent[0][2])), { title: "New" });
   assert.equal(sent[0][3], STAMP);
-  assert.ok(calls.some((c) => c.sql.includes("api_me_throttle") && c.params[0] === true));
+  assert.ok(calls.some((c) => c.sql.includes("api_me_throttle") && c.params[0] === "write"));
   assert.ok(calls.some((c) => c.sql.includes("$3::text::jsonb")));
 });
 

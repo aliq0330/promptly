@@ -2,14 +2,14 @@
 // Tek yer: popup, yan panel ve (arka plan üzerinden) sayfadaki palet bunu kullanır; ikinci bir listeleme yolu yazılmaz.
 self.PLib = (() => {
   const PAGE = 25;
-  const SOURCES = ["recent", "mine", "saved", "drafts", "popular", "explore"];
+  const SOURCES = ["recent", "mine", "saved", "drafts", "popular", "explore", "feed_for_you", "feed_following", "collection"];
   const TEXT_CACHE_MAX = 40;
   const RECENT_MAX = 20;
   const memText = new Map();
 
   const typeOf = (v) => (["image", "text", "audio", "video"].includes(v) ? v : "text");
   const fromMe = (row, source) => ({ id: row.id, title: row.title || "", description: row.description || "", type: typeOf(row.contentType), source, status: row.status || "", visibility: row.visibility || "", url: row.url || "", tools: [], author: "" });
-  const fromPublic = (row, source) => ({ id: row.id, title: row.title || "", description: row.description || "", type: typeOf(row.contentType), source, status: "", visibility: "", url: row.url || "", tools: row.tools || [], author: (row.author && row.author.username) || "", preview: row.promptPreview || "", variableNames: row.variableNames || [], tags: row.tags || [], stats: row.stats || null, thumbnailUrl: typeof row.thumbnailUrl === "string" ? row.thumbnailUrl : "", works: row.works || null });
+  const fromPublic = (row, source) => ({ id: row.id, title: row.title || "", description: row.description || "", type: typeOf(row.contentType), source, status: "", visibility: "", url: row.url || "", tools: row.tools || [], author: (row.author && row.author.username) || "", preview: row.promptPreview || "", variableNames: row.variableNames || [], tags: row.tags || [], stats: row.stats || null, thumbnailUrl: typeof row.thumbnailUrl === "string" ? row.thumbnailUrl : "", works: row.works || null, reason: row.reason && row.reason.kind ? { kind: String(row.reason.kind), ref: row.reason.ref || null } : null });
 
   function matches(item, query, type) {
     if (type && type !== "all" && item.type !== type) return false;
@@ -18,8 +18,10 @@ self.PLib = (() => {
     return `${item.title} ${item.description} ${item.preview || ""} ${(item.tools || []).join(" ")} ${item.author || ""}`.toLowerCase().includes(q);
   }
 
-  async function fetchPage(source, { query, type, cursor, tools, tags, sort }) {
+  async function fetchPage(source, { query, type, cursor, tools, tags, sort, collectionId }) {
     const ct = type && type !== "all" ? type : null;
+    if (source === "feed_for_you" || source === "feed_following") { const p = await PApi.feed({ tab: source === "feed_for_you" ? "for_you" : "following", contentType: ct, limit: PAGE, cursor }); return { items: p.items.map((r) => fromPublic(r, "feed")), nextCursor: p.nextCursor || null }; }
+    if (source === "collection") { const p = await PApi.collectionPrompts(collectionId, { limit: PAGE, cursor }); return { items: p.items.map((r) => fromPublic(r, "collection")), nextCursor: p.nextCursor || null }; }
     if (source === "mine") { const p = await PApi.myPrompts({ limit: PAGE, cursor }); return { items: p.items.map((r) => fromMe(r, "mine")), nextCursor: p.nextCursor || null }; }
     if (source === "drafts") { const p = await PApi.myPrompts({ status: "draft", limit: PAGE, cursor }); return { items: p.items.map((r) => fromMe(r, "drafts")), nextCursor: p.nextCursor || null }; }
     if (source === "saved") { const p = await PApi.mySaved({ limit: PAGE, cursor }); return { items: p.items.map((r) => fromMe(r, "saved")), nextCursor: p.nextCursor || null }; }
@@ -30,14 +32,14 @@ self.PLib = (() => {
 
   // Bir kaynağın sayfasını verir. Benim/Kaydettiğim sorgu ve tür süzgecini istemcide uygular (API'de q yok); Keşfet/Popüler sunucuda.
   // Ağ yoksa ilk sayfa için son kaydedilen liste döner (`cached: true`).
-  async function list(source, { query = "", type = "all", cursor = null, tools, tags, sort } = {}) {
+  async function list(source, { query = "", type = "all", cursor = null, tools, tags, sort, collectionId } = {}) {
     if (source === "recent") {
       const recent = await PStore.get("recent");
       return { items: recent.filter((i) => matches(i, query, type)), nextCursor: null, cached: false };
     }
     if (!SOURCES.includes(source)) throw new PErr("bad_request", "source");
     try {
-      const page = await fetchPage(source, { query, type, cursor, tools, tags, sort });
+      const page = await fetchPage(source, { query, type, cursor, tools, tags, sort, collectionId });
       if (!cursor && (source === "mine" || source === "saved" || source === "drafts" || (source === "popular" && type === "all"))) {
         const libCache = await PStore.get("libCache");
         await PStore.set({ libCache: { ...libCache, [source]: { items: page.items, at: new Date().toISOString() } } });
@@ -53,6 +55,9 @@ self.PLib = (() => {
       throw err;
     }
   }
+
+  // Koleksiyonlarım (sahibi olduklarım + ortak olduklarım).
+  async function collections() { const r = await PApi.collections(); return (r.items || []).map((c) => ({ id: c.id, name: c.name || "", promptCount: c.promptCount || 0, shared: Boolean(c.shared), mine: c.mine !== false, owner: c.ownerUsername || "" })); }
 
   // Tam metin + değişkenler. Önce bellek, sonra çevrimdışı önbellek yedeği.
   async function text(item) {
@@ -90,5 +95,5 @@ self.PLib = (() => {
     return row;
   }
 
-  return { PAGE, SOURCES, list, text, markUsed, matches, _test: { fromMe, fromPublic } };
+  return { PAGE, SOURCES, list, text, collections, markUsed, matches, _test: { fromMe, fromPublic } };
 })();

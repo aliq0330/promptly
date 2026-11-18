@@ -240,6 +240,7 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
   data = await PStore.getAll();
   if (was !== Boolean(data.auth && data.auth.refreshToken)) loaded = { library: false, drafts: false };
   if (changes.lang) await PI.init();
+  if (changes.auth) { PEngage.reset(); await PBrowser.loadEnv(); }
   render();
   if (changes.wf) renderWorkflow();
   if (changes.recent && libCtl.state.source === "recent") libCtl.load(true);
