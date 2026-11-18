@@ -7,6 +7,7 @@ import { RealPresetsProvider } from "@/features/presets/real-presets-provider";
 import { RealMessagesProvider } from "@/features/messages/real-messages-provider";
 import { NotificationsProvider } from "@/features/notifications/notifications-provider";
 import { EngagementRealtimeProvider } from "@/features/content/engagement-realtime-provider";
+import { UnreadTabBadge } from "@/features/notifications/unread-tab-badge";
 import { StoryViewerProvider } from "@/features/stories/story-viewer-provider";
 import { ReportProvider } from "@/features/moderation/report-provider";
 import { PresenceProvider } from "@/features/presence/presence-provider";
@@ -30,6 +31,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
                 <RealMessagesProvider>
                   <NotificationsProvider>
                     <EngagementRealtimeProvider />
+                    {/* Sekme başlığında (3) ve simgede rozet (docs/history/435-*). */}
+                    <UnreadTabBadge />
                     {/* Hikâye görüntüleyicisi her sayfanın üstünde açılabilir (docs/history/198-*). */}
                     {/* Çevrimiçi durum (docs/history/329-*): kendi kanalım, nabız, çoklu sekme, Telegram odağı. */}
                     <PresenceProvider>

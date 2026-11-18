@@ -481,3 +481,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-live-toasts.mjs   # 19/19 beklenir
 ```
+
+## Canlı bildirim ek özellikleri (`docs/history/435-*`)
+
+`run-live-notify-extras.mjs`: tür grubu anahtarları, Rahatsız etme kartı (RPC ile kaydet, hata, saat dilimi) ve sessiz saatte kart/ses yok, bildirim sesi (AudioContext taklidi), sekme başlığı + simge rozeti, yoğunlukta özet kartı (bilgisayar/telefon), kilometre taşı kutlama kartı, kartın içinden yanıt (yorum + mesaj) ve hızlı tepki, Ana Sayfa "N yeni gönderi" hapı, İngilizce, koyu tema (21/21 beklenir). Sessiz saat SQL'i `supabase/tests/notification-quiet-hours.sql`'dedir. Gerçek Supabase'e/Realtime'a KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-live-notify-extras.mjs   # 21/21 beklenir
+SHOT_DIR=/tmp/shots node tests/messaging-ui/run-live-notify-extras.mjs   # ekran görüntüleri (isteğe bağlı)
+```

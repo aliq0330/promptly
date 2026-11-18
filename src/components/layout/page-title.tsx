@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { badgedTitle } from "@/lib/tab-badge";
 
 const SITE = "Promptly";
 
@@ -73,6 +74,17 @@ function setOverride(next: string | null) {
   listeners.forEach((l) => l());
 }
 
+// Okunmamış bildirim sayısı (docs/history/435-*): sekme başlığının önüne `(3) ` olarak konur. Başlığın TEK sahibi bu bileşendir (aşağıdaki gözlemci başlığı kendi
+// değerine geri çevirir): rozet ayrı bir gözlemciyle eklenseydi ikisi birbirini sonsuza kadar geri yazardı.
+let badge = 0;
+const badgeListeners = new Set<() => void>();
+export function setTitleBadge(next: number) {
+  const value = Math.max(0, Math.floor(next));
+  if (badge === value) return;
+  badge = value;
+  badgeListeners.forEach((l) => l());
+}
+
 /** Set the browser-tab title for a detail page. Pass nothing while loading. */
 export function usePageTitle(title: string | null | undefined) {
   useEffect(() => {
@@ -94,12 +106,21 @@ export function PageTitle() {
     () => null,
   );
 
+  const unread = useSyncExternalStore(
+    (cb) => {
+      badgeListeners.add(cb);
+      return () => badgeListeners.delete(cb);
+    },
+    () => badge,
+    () => 0,
+  );
+
   const clean = pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
   const key = ROUTE_TITLES[clean];
 
   useEffect(() => {
     const base = custom ?? (key ? t(key) : null);
-    const wanted = base && base !== SITE ? `${base} · ${SITE}` : SITE;
+    const wanted = badgedTitle(base && base !== SITE ? `${base} · ${SITE}` : SITE, unread);
     const apply = () => {
       if (document.title !== wanted) document.title = wanted;
     };
@@ -109,7 +130,7 @@ export function PageTitle() {
     const observer = new MutationObserver(apply);
     observer.observe(document.head, { childList: true, subtree: true, characterData: true });
     return () => observer.disconnect();
-  }, [custom, key, t]);
+  }, [custom, key, t, unread]);
 
   return null;
 }

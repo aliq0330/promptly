@@ -1,8 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  LIVE_TOAST_DURATION_MS,
   LIVE_TOAST_MAX,
+  LIVE_TOAST_MILESTONE_MS,
   addLiveToast,
+  addSummaryToast,
+  isMilestoneCard,
+  liveToastDurationMs,
+  liveToastInlineReply,
   dropLiveToast,
   leaveLiveToast,
   liveEntries,
@@ -42,6 +48,8 @@ const ctx = (over: Partial<LiveToastContext> = {}): LiveToastContext => ({
   storyOpen: false,
   popoverOpen: false,
   dockConversationId: null,
+  groupEnabled: true,
+  quiet: false,
   ...over,
 });
 
@@ -154,4 +162,58 @@ test("hızlı eylem: yorum ve mesajda Yanıtla, tek kişilik takipte Takip et, d
   assert.equal(liveToastAction({ ...follow, rowCount: 2 }), null);
   assert.equal(liveToastAction(toastCardFromRow(row({ type: "follow", targetHref: "/collections/local?id=c1" }), actor("a"))), null);
   assert.equal(liveToastAction(toastCardFromRow(row(), actor("a"))), null);
+});
+
+test("kart grubu kapalıysa ve sessiz saatteyse çıkmaz (nedenler ayrı)", () => {
+  assert.equal(liveToastSkipReason(row(), ctx({ groupEnabled: false })), "type-off");
+  assert.equal(liveToastSkipReason(row(), ctx({ quiet: true })), "quiet");
+  assert.equal(liveToastSkipReason(row(), ctx({ groupEnabled: false, quiet: true })), "type-off");
+  assert.equal(liveToastSkipReason(row({ isRead: true }), ctx({ quiet: true })), "read", "önce daha temel neden");
+});
+
+test("kilometre taşı kartı tanınır ve daha uzun kalır", () => {
+  const milestone = toastCardFromRow(row({ type: "system", actorId: null, message: 'Promptun "Gece" 100 kopyalamaya ulaştı.', targetHref: "/insights/local?id=p1", dedupeKey: "milestone:p1:100" }), null);
+  assert.equal(isMilestoneCard(milestone), true);
+  assert.equal(isMilestoneCard(toastCardFromRow(row(), actor("a"))), false);
+  assert.equal(isMilestoneCard(toastCardFromRow(row({ type: "system", message: "Hesabın güncellendi." }), null)), false);
+  const entry = addLiveToast([], milestone, false)[0];
+  assert.equal(liveToastDurationMs(entry), LIVE_TOAST_MILESTONE_MS);
+  assert.ok(LIVE_TOAST_MILESTONE_MS > LIVE_TOAST_DURATION_MS);
+  assert.equal(liveToastDurationMs(addLiveToast([], toastCardFromRow(row(), actor("a")), false)[0]), LIVE_TOAST_DURATION_MS);
+});
+
+test("özet kartı: ekrandaki kartlar kapanır, tek özet çıkar, sonraki bildirim sayıyı artırır", () => {
+  let stack = [] as ReturnType<typeof addLiveToast>;
+  for (const id of ["c1", "c2", "c3"]) stack = addLiveToast(stack, toastCardFromRow(row({ id, type: "comment" }), actor("a")), false);
+  stack = addSummaryToast(stack, 5, [actor("z1")], "summary-n5");
+  assert.equal(liveEntries(stack).length, 1, "yalnız özet canlı");
+  assert.equal(stack.filter((e) => e.leaving).length, 3, "üç kart kapanmaya alındı");
+  const summary = liveEntries(stack)[0];
+  assert.equal(summary.summary, true);
+  assert.equal(summary.card.rowCount, 5);
+  stack = addSummaryToast(stack, 6, [actor("z2")], "summary-n6");
+  const after = liveEntries(stack);
+  assert.equal(after.length, 1, "ikinci özet açılmadı");
+  assert.equal(after[0].card.rowCount, 6);
+  assert.equal(after[0].seq, 1, "süre yeniden başlar");
+  assert.deepEqual(after[0].card.actors.map((a) => a.id), ["z2", "z1"]);
+  assert.equal(after[0].id, "summary-n5", "kimlik değişmez (React anahtarı)");
+});
+
+test("özet kartı varken gelen tekil bildirim özetle birleşmez, yalnız kendi kartına gider", () => {
+  let stack = addSummaryToast([], 5, [], "s1");
+  stack = addLiveToast(stack, toastCardFromRow(row({ id: "n9" }), actor("a")), false);
+  assert.equal(liveEntries(stack).length, 2);
+});
+
+test("satır içi yanıt: yorumda ve düz sohbette; oda/ekip/hub adreslerinde yok", () => {
+  const comment = toastCardFromRow(row({ type: "comment", targetHref: "/prompts/local?id=p1&hl=comment:c1" }), actor("a"));
+  assert.equal(liveToastInlineReply(comment), "comment");
+  assert.equal(liveToastInlineReply(toastCardFromRow(row({ type: "comment", targetHref: "/spaces/local?id=s1" }), actor("a"))), null);
+  assert.equal(liveToastInlineReply(toastCardFromRow(row({ type: "message", targetHref: "/messages/local?id=c1" }), actor("a"))), "message");
+  for (const href of ["/messages/local?id=c1&room=r1", "/messages/local?hub=team&team=t1&id=c1", "/messages/local?id=c1&channel=x", "/messages/local?id=c1&project=p1"]) {
+    assert.equal(liveToastInlineReply(toastCardFromRow(row({ type: "message", targetHref: href }), actor("a"))), null, href);
+  }
+  assert.equal(liveToastInlineReply(toastCardFromRow(row({ type: "message_request", targetHref: "/messages/local?id=c1" }), actor("a"))), null);
+  assert.equal(liveToastInlineReply(toastCardFromRow(row(), actor("a"))), null);
 });
