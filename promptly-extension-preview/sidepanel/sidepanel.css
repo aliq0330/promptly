@@ -1,0 +1,9 @@
+body { min-height: 100vh; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.two { display: flex; gap: 10px; }
+.two .btn { flex: 1; }
+.btn.chosen { background: var(--success-soft); border-color: var(--success-soft); color: var(--success); }
+.drop { display: flex; gap: 12px; align-items: center; padding: 14px; border: 1.5px dashed var(--border-strong); border-radius: 12px; color: var(--text2); font-size: 12.5px; cursor: pointer; }
+.drop.over, .drop:focus-visible { border-color: var(--primary); background: var(--primary-soft); }
+.drop img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex: none; }
+#used .row { cursor: default; }

@@ -1,0 +1,13 @@
+.wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 16px; }
+.top { display: flex; align-items: center; gap: 8px; }
+h1 { margin: 8px 0 0; font-family: var(--display); font-weight: 800; font-size: 32px; letter-spacing: -.02em; line-height: 1.1; }
+h2 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; }
+.lead { margin: 0; font-size: 15px; color: var(--text2); }
+.blog, .chat { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; }
+.blog p { margin: 0; color: var(--text2); }
+blockquote.code { margin: 0; font-size: 13px; user-select: text; }
+figure { margin: 0; }
+figure img { width: 100%; max-width: 420px; border-radius: 12px; display: block; background: var(--soft); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+textarea { width: 100%; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); color: var(--text); padding: 10px 12px; font: inherit; resize: vertical; }
+textarea:focus { outline: 0; border-color: var(--primary); }

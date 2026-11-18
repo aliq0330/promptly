@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Promptly önizleme</title>
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="top"><span id="brand"></span><span class="wm">promptly</span><span class="grow"></span><button id="lang" type="button" class="pillbtn" data-i18n-title="language"></button></header>
+    <h1 data-i18n="demoTitle"></h1>
+    <p class="lead" data-i18n="demoLead"></p>
+
+    <article class="blog">
+      <h2 data-i18n="demoBlogH"></h2>
+      <p data-i18n="demoBlogP1"></p>
+      <blockquote id="prompt" class="code"></blockquote>
+      <p data-i18n="demoBlogP2"></p>
+      <figure>
+        <img id="pic" alt="">
+      </figure>
+      <div class="actions">
+        <button id="cap" type="button" class="btn pri" data-i18n="demoSaveBtn"></button>
+        <button id="capImg" type="button" class="btn"></button>
+      </div>
+      <p class="hint" data-i18n="demoSourceNote"></p>
+    </article>
+
+    <section class="chat">
+      <label for="chat" class="label" data-i18n="demoChatLabel"></label>
+      <textarea id="chat" rows="5" data-i18n-ph="demoChatPh"></textarea>
+      <div class="actions">
+        <button id="pal" type="button" class="btn"></button>
+        <span class="hint"><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></span>
+      </div>
+    </section>
+  </div>
+  <script src="../shared/i18n.js"></script>
+  <script src="../shared/store.js"></script>
+  <script src="../shared/ui.js"></script>
+  <script src="../content/overlay.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>
