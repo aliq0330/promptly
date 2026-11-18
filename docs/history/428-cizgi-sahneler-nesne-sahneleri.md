@@ -37,4 +37,4 @@ bir konumda olacak şekilde periyotlar seçildi.
 
 `tsc` temiz; `registry.test.ts` + `i18n-dictionary.test.ts` geçti; 25 sahne bağımsız bir sayfada (kitle aynı kod, derlenmiş) açık ve koyu
 modda çizildi ve gözle denetlendi, konsol hatası yok. Gerçek cihazda/gerçek sayfa akışında (yükleme hatası ekranlarını tetikleyerek)
-DENENMEDİ. `tests/messaging-ui/run-line-art.mjs`'e 15–16 eklendi (geçersiz davet sayfasında `invite`: TR/EN etiket, 2:1, telefonda taşmaz, koyu + hareketi azalt tek kare). Aynı dosyadaki 11–12 bu işten ÖNCE de kırmızıdır (`/prompts/` ve `/workflows/` artık Keşfet'e yönleniyor, `419-*`).
+DENENMEDİ. `tests/messaging-ui/run-line-art.mjs`'e 15–16 eklendi (geçersiz davet sayfasında `invite`: TR/EN etiket, 2:1, telefonda taşmaz, koyu + hareketi azalt tek kare). Aynı dosyadaki 11–12 bu çalıştırmada kırmızıydı: `/prompts/` ve `/workflows/` artık Keşfet'e yönleniyor (`419-*`), eski senaryo o adreslerde sahne arıyor. Bu işten önce de kırmızı olduğu ana dalda ayrıca DENENMEDİ; senaryolar güncellenmedi.
