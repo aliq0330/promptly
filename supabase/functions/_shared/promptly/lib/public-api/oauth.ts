@@ -27,7 +27,7 @@ export interface OauthHandlerOptions {
   onError?: (error: unknown) => void;
 }
 
-export const OAUTH_SCOPES = ["read", "write"] as const;
+export const OAUTH_SCOPES = ["read", "write", "interact"] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_BODY = 16 * 1024;
 

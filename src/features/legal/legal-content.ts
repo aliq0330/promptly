@@ -27,12 +27,12 @@ export const LEGAL_CONTACT_EMAIL = "aliq0330@gmail.com";
  * "Kullanım Koşulları güncellendi" bandı yeniden çıkar (`features/legal/terms-update-notice.tsx`, karar `lib/legal-notice.ts`).
  * Yürürlükten sonra hesap açan kişi bandı görmez (kayıt ekranında yeni metni zaten görmüştür). Yalnız yazım düzeltmesi için artırma.
  */
-export const TERMS_VERSION = "2026-11-15";
-export const TERMS_EFFECTIVE_AT = "2026-11-15T12:00:00Z";
+export const TERMS_VERSION = "2026-11-18";
+export const TERMS_EFFECTIVE_AT = "2026-11-18T12:00:00Z";
 
 // İki belge ayrı güncellenir: birinin değişmesi diğerinin tarihini oynatmaz.
-const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 15 Kasım 2026", en: "Last updated: November 15, 2026" };
-const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 15 Kasım 2026", en: "Last updated: November 15, 2026" };
+const PRIVACY_UPDATED: Bilingual = { tr: "Son güncelleme: 18 Kasım 2026", en: "Last updated: November 18, 2026" };
+const TERMS_UPDATED: Bilingual = { tr: "Son güncelleme: 18 Kasım 2026", en: "Last updated: November 18, 2026" };
 
 const p = (tr: string, en: string): LegalBlock => ({ type: "p", text: { tr, en } });
 const ul = (tr: string[], en: string[]): LegalBlock => ({ type: "ul", items: { tr, en } });
@@ -56,7 +56,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Yüklediğin dosyalar: görsel, ses ve video dosyaları.",
             "Tercihlerin: tema, palet ve dil seçimin. Bunlar hesabında ve tarayıcında saklanır.",
             "API anahtarların: kişisel API anahtarı oluşturursan anahtarın adını, ilk karakterlerini (listede tanıman için), erişim kapsamını ve oluşturulma, bitiş, iptal ve son kullanım zamanlarını saklarız. Anahtarın kendisini değil, yalnızca geri döndürülemeyen bir özetini tutarız; bu yüzden anahtarı sonradan gösteremeyiz. Hesabını sildiğinde anahtarların da silinir.",
-            "Bağlı uygulamalar: bir uygulamaya \"Promptly hesabınla giriş\" (OAuth) izni verirsen, uygulamanın kendi bildirdiği adı ve dönüş adresini, senin onu hangi kapsamla (okuma / özel taslak ekleme ve düzenleme) ve ne zaman yetkilendirdiğini ve son kullanım zamanını veritabanımızda saklarız; belirteçlerin kendisi saklanmaz, yalnızca geri döndürülemez özetleri tutulur. İzni Ayarlar'dan istediğin zaman geri alabilirsin; geri alınan ve süresi dolan izinler 30 gün sonra silinir.",
+            "Bağlı uygulamalar: bir uygulamaya \"Promptly hesabınla giriş\" (OAuth) izni verirsen, uygulamanın kendi bildirdiği adı ve dönüş adresini, senin onu hangi kapsamla (okuma / özel taslak ekleme ve düzenleme / beğeni, kaydetme, koleksiyon, takip ve \"Çalıştı mı?\" oyu gibi etkileşim) ve ne zaman yetkilendirdiğini ve son kullanım zamanını veritabanımızda saklarız; belirteçlerin kendisi saklanmaz, yalnızca geri döndürülemez özetleri tutulur. İzni Ayarlar'dan istediğin zaman geri alabilirsin; geri alınan ve süresi dolan izinler 30 gün sonra silinir.",
           ],
           [
             "Your account details: your email address, your password (stored only in encrypted form), your username and your display name. If you sign in with Google, we receive your name and email address from Google; we do not import your profile picture automatically.",
@@ -65,7 +65,7 @@ export const PRIVACY_POLICY: LegalDocument = {
             "Files you upload: image, audio and video files.",
             "Your preferences: theme, palette and language. These are stored in your account and in your browser.",
             "Your API keys: if you create a personal API key, we store its name, its first characters (so you can recognise it in the list), its access scope, and when it was created, expires, was revoked and was last used. We do not keep the key itself, only a one-way digest of it, so we cannot show it to you again. Your keys are deleted when you delete your account.",
-            "Connected apps: if you allow an app to sign in with your Promptly account (OAuth), we store in our database the name and return address the app declared, the scope you authorized (read / add and edit private drafts), when, and when it was last used; the tokens themselves are not stored, only irreversible digests. You can take the permission back in Settings at any time; revoked and expired permissions are deleted after 30 days.",
+            "Connected apps: if you allow an app to sign in with your Promptly account (OAuth), we store in our database the name and return address the app declared, the scope you authorized (read / add and edit private drafts / interactions such as reactions, saving, collections, following and \"Did it work?\" votes), when, and when it was last used; the tokens themselves are not stored, only irreversible digests. You can take the permission back in Settings at any time; revoked and expired permissions are deleted after 30 days.",
           ],
         ),
         p(
@@ -308,12 +308,12 @@ export const TERMS_OF_USE: LegalDocument = {
       title: { tr: "Otomatik erişim (API ve MCP)", en: "Automated access (API and MCP)" },
       blocks: [
         p(
-          "Promptly'nin herkese açık API'sini ve MCP paketini (promptly-mcp) kullanabilirsin; bunlar yalnızca herkese açık içeriği (prompt, istek, ayar paketi, workflow ve Skill'lerin metni ile dosya listesi) okur ve hesap gerektirmez. Siteyi aşırı yüklememeli ve uyguladığımız sınırları aşmaya çalışmamalısın; sınırları aşan ya da siteye zarar veren kullanımı engelleyebiliriz. Bu araçların döndürdüğü metinler kullanıcı içeriğidir: bir yapay zekâ aracına ya da otomasyona vermeden önce kontrol etmek ve sonuçlarından sorumlu olmak sana aittir.",
-          "You may use Promptly's public API and MCP package (promptly-mcp); they only read public content (prompts, requests, presets, workflows and the text and file list of Skills) and need no account. You must not overload the site or try to get around the limits we apply; we may block use that exceeds them or harms the site. The text these tools return is user content: checking it before you give it to an AI tool or automation, and being responsible for the results, is up to you.",
+          "Promptly'nin herkese açık API'sini ve MCP paketini (promptly-mcp) kullanabilirsin; bunlar yalnızca herkese açık içeriği (prompt, istek, ayar paketi, workflow ve Skill'lerin metni ile dosya listesi; herkese açık bir promptun sonuçları, sürüm geçmişi ve yorumları dahil) okur ve hesap gerektirmez. Siteyi aşırı yüklememeli ve uyguladığımız sınırları aşmaya çalışmamalısın; sınırları aşan ya da siteye zarar veren kullanımı engelleyebiliriz. Bu araçların döndürdüğü metinler kullanıcı içeriğidir: bir yapay zekâ aracına ya da otomasyona vermeden önce kontrol etmek ve sonuçlarından sorumlu olmak sana aittir.",
+          "You may use Promptly's public API and MCP package (promptly-mcp); they only read public content (prompts, requests, presets, workflows and the text and file list of Skills; including the results, version history and comments of a public prompt) and need no account. You must not overload the site or try to get around the limits we apply; we may block use that exceeds them or harms the site. The text these tools return is user content: checking it before you give it to an AI tool or automation, and being responsible for the results, is up to you.",
         ),
         p(
-          "Kişisel bir API anahtarı oluşturursan, o anahtarla yapılan her işlem senin adına yapılmış sayılır. Anahtarını kimseyle paylaşma ve herkese açık yerlere (depo, ekran görüntüsü, paylaşılan not) koyma; sızdığını düşünürsen hemen iptal et. Anahtarla da içerik kuralları, hız sınırları ve hesap kısıtlamaları aynen geçerlidir; kötüye kullanılan ya da siteye zarar veren anahtarları iptal edebiliriz.",
-          "If you create a personal API key, everything done with that key counts as done by you. Do not share your key or put it anywhere public (a repository, a screenshot, a shared note); if you think it has leaked, revoke it right away. The content rules, rate limits and account restrictions apply to actions made with a key too; we may revoke keys that are abused or that harm the site.",
+          "Kişisel bir API anahtarı oluşturursan, o anahtarla yapılan her işlem senin adına yapılmış sayılır. Anahtarını kimseyle paylaşma ve herkese açık yerlere (depo, ekran görüntüsü, paylaşılan not) koyma; sızdığını düşünürsen hemen iptal et. Anahtarla da içerik kuralları, hız sınırları ve hesap kısıtlamaları aynen geçerlidir; kötüye kullanılan ya da siteye zarar veren anahtarları iptal edebiliriz. Bir anahtarı ya da bağlı bir uygulamayı \"etkileşim\" kapsamıyla yetkilendirirsen, o anahtar ya da uygulama senin adına başkalarının herkese açık promptlarına tepki verebilir, onları kaydedebilir, koleksiyonlarına ekleyebilir, \"Çalıştı mı?\" oyu verebilir ve kişileri takip edebilir; bunların hepsini sitede de geri alabilirsin. Bu kapsam yorum yazmayı, mesaj göndermeyi, yayınlamayı ve silmeyi içermez.",
+          "If you create a personal API key, everything done with that key counts as done by you. Do not share your key or put it anywhere public (a repository, a screenshot, a shared note); if you think it has leaked, revoke it right away. The content rules, rate limits and account restrictions apply to actions made with a key too; we may revoke keys that are abused or that harm the site. If you authorize a key or a connected app with the \"interact\" scope, that key or app can, on your behalf, react to other people's public prompts, save them, add them to your collections, cast \"Did it work?\" votes and follow people; you can undo all of these on the site too. This scope does not include writing comments, sending messages, publishing or deleting.",
         ),
       ],
     },

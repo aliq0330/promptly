@@ -43,10 +43,15 @@ let [sw] = ctx.serviceWorkers(); if (!sw) sw = await ctx.waitForEvent("servicewo
 const id = sw.url().split("/")[2];
 // Dil sabitlenir: tarayıcı arayüz dili ortama göre değişir (CI/sandbox en-US); ürün davranışı (dili algıla) birim testli. Arayüz metinleri Türkçe sınanır.
 await sw.evaluate(() => chrome.storage.local.set({ lang: "tr" }));
-const live = { clientId: "cid", redirectUri: "r", accessToken: "LIVE", refreshToken: "R1", expiresAt: Date.now() + 3_600_000, scopes: ["read", "write"], user: { username: "aliq" } };
+const live = { clientId: "cid", redirectUri: "r", accessToken: "LIVE", refreshToken: "R1", expiresAt: Date.now() + 3_600_000, scopes: ["read", "write", "interact"], user: { username: "aliq" } };
 const seed = (auth) => sw.evaluate((a) => PStore.set({ auth: a, queue: [], sent: [], recent: [], lastError: null }), auth);
 const tabIdOf = (page) => sw.evaluate(async (url) => (await chrome.tabs.query({})).find((t) => t.url === url).id, page.url());
 const pageUrl = `http://127.0.0.1:${site.port}/`;
+// İyimser arayüz yazma bitmeden günceller: sunucuya ulaşan yazmayı bekle (en çok 4 sn).
+async function waitWrite(entry) {
+  for (let i = 0; i < 80; i++) { if (mock.state.writes.includes(entry)) return; await new Promise((r) => setTimeout(r, 50)); }
+  assert.fail(`yazma sunucuya ulaşmadı: ${entry} — görülenler: ${mock.state.writes.join(" | ")}`);
+}
 
 async function popup() {
   const p = await ctx.newPage(); p.on("pageerror", (e) => errors.push("popup: " + e.message));
@@ -71,6 +76,17 @@ try {
   await seed(live); await pop.reload();
   await pop.waitForSelector("#app:not([hidden])");
   assert.equal(await pop.locator("#tabs [role=tab]").count(), 3);
+  // Ana Sayfa artık Sana özel / Takip ettiklerim / Popüler (docs/history/432-*): varsayılan Sana özel, nedeni kartta yazar
+  await pop.waitForSelector("text=Sana özel kart");
+  assert.match(await pop.locator("#tab-home .card", { hasText: "Sana özel kart" }).locator(".reason").innerText(), /Takip ettiğin etiket: #neon/);
+  assert.match(mock.state.hits.find((h) => h.includes("/me/feed")), /tab=for_you/);
+  await pop.waitForSelector("text=Sana özel ikinci sayfa", { timeout: 8000 }).catch(() => {}); // sonsuz kaydırma yedeği: düğmeyle
+  if (!(await pop.locator("text=Sana özel ikinci sayfa").count())) await pop.locator("#tab-home").getByRole("button", { name: "Daha fazla yükle" }).click();
+  await pop.waitForSelector("text=Sana özel ikinci sayfa");
+  assert.ok(mock.state.hits.some((h) => h.includes("/me/feed") && h.includes("cursor=n2")), "ikinci sayfa imleçle istenir");
+  await pop.locator("#tab-home .homeseg").getByRole("button", { name: "Takip ettiklerim" }).click(); await pop.waitForSelector("text=Takipten gelen kart");
+  assert.ok(mock.state.hits.some((h) => h.includes("/me/feed?tab=following")));
+  await pop.locator("#tab-home .homeseg").getByRole("button", { name: "Popüler" }).click();
   await pop.waitForSelector("text=Orman perisi karakter");
   assert.ok(await pop.locator(".card").count() >= 2, "görsel kartlar çizilir");
   assert.equal(await pop.locator(".card .art").count() >= 2, true);
@@ -170,6 +186,72 @@ try {
   assert.equal(file.format, "promptly.prompts"); assert.equal(file.items.length, 1);
   assert.ok(file.items[0].promptText.includes("{"), "değişkenli metin dosyaya yazılır");
   ok("slot sabitleme kalıcı; toplu seçimde 'promptly.prompts' JSON indirilir");
+
+  // 3d) Etkileşim (docs/history/432-*): kartta ♥/🔖, ayrıntıda tepki · kaydet · koleksiyon · takip · "Çalıştı mı?"; alt sekmeler: sonuçlar · sürümler · yorumlar
+  await pop.getByRole("tab", { name: "Ana Sayfa" }).click();
+  await pop.locator("#tab-home .homeseg").getByRole("button", { name: "Popüler" }).click();
+  await pop.waitForSelector("#tab-home .card:has-text('Orman perisi karakter') .engbtns");
+  const p1card = pop.locator("#tab-home .card", { hasText: "Orman perisi karakter" });
+  await p1card.locator("[data-kind=like]").click();
+  await pop.waitForSelector("#tab-home .card:has-text('Orman perisi karakter') [data-kind=like].on");
+  await waitWrite('PUT /me/prompts/p1/reaction {"reaction":"love"}');
+  await p1card.locator("[data-kind=like]").click(); await pop.waitForSelector("#tab-home .card:has-text('Orman perisi karakter') [data-kind=like]:not(.on)");
+  await waitWrite("DELETE /me/prompts/p1/reaction");
+  assert.equal(await pop.locator("#tab-home .card", { hasText: "Orman perisi karakter" }).locator("[data-kind=like]").count(), 1);
+  await p1card.locator(".ctitle").click();
+  await pop.waitForSelector(".detailpane .engage .reacts .rbtn");
+  assert.equal(await pop.locator(".detailpane .reacts .rbtn").count(), 6);
+  await pop.locator(".detailpane .reacts .rbtn[aria-label=Ateş]").click();
+  await pop.waitForSelector(".detailpane .reacts .rbtn.on");
+  await waitWrite('PUT /me/prompts/p1/reaction {"reaction":"fire"}');
+  await pop.locator(".detailpane .engrow").getByRole("button", { name: "Kaydet", exact: true }).click();
+  await pop.waitForSelector(".detailpane .engrow >> text=Kaydedildi");
+  await waitWrite("PUT /me/prompts/p1/saved");
+  await pop.locator(".detailpane .engrow").getByRole("button", { name: /^Koleksiyon/ }).click();
+  await pop.locator(".pmenu.custom label.chk", { hasText: "Logolar" }).locator("input").check();
+  await pop.waitForFunction(() => document.querySelector(".detailpane .engrow")?.textContent.includes("Koleksiyon (1)"));
+  await waitWrite("PUT /me/collections/col1/prompts/p1");
+  await pop.keyboard.press("Escape");
+  await pop.locator(".detailpane .engrow").getByRole("button", { name: "@ayse takip et" }).click();
+  await pop.waitForSelector(".detailpane .engrow >> text=@ayse takipte");
+  await waitWrite("PUT /me/following/ayse");
+  await pop.locator(".detailpane .worksvote").getByRole("button", { name: "Çalıştı", exact: true }).click();
+  await pop.waitForSelector(".detailpane .worksvote button.on");
+  await waitWrite('PUT /me/prompts/p1/works {"works":true}');
+  await pop.locator(".detailpane .dtabs").getByRole("tab", { name: "Sonuçlar" }).click();
+  await pop.waitForSelector(".detailpane >> text=Harika çıktı aldım"); await pop.waitForSelector(".detailpane >> text=rengi değiştirdim");
+  await pop.locator(".detailpane .dtabs").getByRole("tab", { name: "Sürümler" }).click();
+  await pop.waitForSelector(".detailpane >> text=v2 · Orman perisi v2"); assert.equal(await pop.locator(".detailpane .subrow .code").count(), 2);
+  await pop.locator(".detailpane .dtabs").getByRole("tab", { name: "Yorumlar" }).click();
+  await pop.waitForSelector(".detailpane >> text=Üst yorum"); await pop.waitForSelector(".detailpane .subrow.reply >> text=Yanıt yorumu");
+  assert.ok(mock.state.hits.some((h) => h.includes("/prompts/p1/comments")));
+  await pop.locator(".detailpane .dtabs").getByRole("tab", { name: "Prompt" }).click(); await pop.waitForSelector(".detailpane .code");
+  await pop.screenshot({ path: `${OUT}/3d-engage.png` });
+  await pop.keyboard.press("Escape");
+  // Kütüphane → Koleksiyonlar: liste → koleksiyonun promptları → geri
+  await pop.getByRole("tab", { name: /Kütüphane/ }).click();
+  await pop.locator(".chips .chip", { hasText: "Koleksiyonlar" }).click();
+  await pop.waitForSelector(".liblist .colrow >> text=Logolar"); await pop.waitForSelector(".liblist >> text=1 prompt");
+  await pop.locator(".liblist .ctitle", { hasText: "Logolar" }).click();
+  await pop.waitForSelector(".liblist >> text=Koleksiyondaki prompt");
+  assert.ok(mock.state.hits.some((h) => h.includes("/me/collections/col1/prompts")));
+  await pop.locator(".libtools .backbtn").click(); await pop.waitForSelector(".liblist .colrow >> text=Logolar");
+  await pop.locator(".chips .chip", { hasText: "Benim" }).click(); await pop.waitForSelector(".liblist >> text=Sisli sabah ormanı");
+  assert.equal(await pop.locator(".liblist .engbtns").count(), 0, "kendi promptlarında beğeni/kaydet düğmesi yoktur");
+  ok("etkileşim: kartta ♥ (yaz/geri al), ayrıntıda tepki·kaydet·koleksiyon·takip·oy PUT/DELETE olarak gider; sonuç/sürüm/yorum sekmeleri; Koleksiyonlar görünümü");
+
+  // 3e) Etkileşim izni yoksa: kartta düğme çizilmez, ayrıntıda "İzni aç" çağrısı; hiçbir yazma denenmez
+  await seed({ ...live, scopes: ["read", "write"] }); await pop.reload(); await pop.waitForSelector("#app:not([hidden])");
+  await pop.waitForSelector("text=Sana özel kart");
+  assert.equal(await pop.locator("#tab-home .engbtns").count(), 0);
+  const writesBefore = mock.state.writes.length;
+  await pop.locator("#tab-home .ctitle", { hasText: "Sana özel kart" }).click();
+  await pop.waitForSelector(".detailpane .engoff"); assert.match(await pop.locator(".detailpane .engoff").innerText(), /etkileşim iznini aç/);
+  assert.equal(await pop.locator(".detailpane .engoff").getByRole("button", { name: "İzni aç" }).count(), 1);
+  assert.equal(mock.state.writes.length, writesBefore);
+  await pop.keyboard.press("Escape");
+  await seed(live); await pop.reload(); await pop.waitForSelector("#app:not([hidden])");
+  ok("etkileşim izni yokken: kartta düğme yok, ayrıntıda 'İzni aç' çağrısı, hiçbir yazma denenmez");
 
   // 4) Taslaklar (Bekleyen rozeti ayrı sekmede değil, Kütüphane içinde)
   ok("taslaklar kütüphane içinde");
@@ -285,9 +367,9 @@ try {
   // 12) Yazma izni yok → bant + hiçbir yazma denenmez/erişim reddi sınıflanır
   mock.state.scopes = ["read"];
   await seed({ ...live, scopes: ["read"] }); await pop.reload();
-  await pop.waitForSelector("#status:not([hidden])"); assert.match(await pop.locator("#status").innerText(), /Yazma izni yok/);
+  await pop.waitForSelector("#status:not([hidden])"); assert.match(await pop.locator("#status").innerText(), /izin verilmemiş/);
   await pop.screenshot({ path: `${OUT}/9-needs-write.png` }); ok("yazma izni yokken bant 'Yeniden bağlan' sunar");
-  mock.state.scopes = ["read", "write"];
+  mock.state.scopes = ["read", "write", "interact"];
 
   // 13) Yan panel: Şimdi (son kullanılan + siteye bağlantı), kütüphane
   await seed(live); await sw.evaluate(() => PLib.markUsed({ id: "m1", title: "Sisli sabah ormanı", type: "image", source: "mine", url: "https://site.example/prompts/local?id=m1" }));
@@ -316,7 +398,7 @@ try {
   await runPop.close();
   ok("Çalıştır: açık sekmeye gerçekten yazar (sonuna ekler), başka hedefte adresle yeni sekme açar");
 
-  const rp = await popup(); await rp.waitForSelector("text=Orman perisi karakter");
+  const rp = await popup(); await rp.locator("#tab-home .homeseg").getByRole("button", { name: "Popüler" }).click(); await rp.waitForSelector("text=Orman perisi karakter");
   assert.equal(await rp.locator("#target option").count(), 5);
   await rp.locator(".card", { hasText: "Orman perisi karakter" }).locator(".hbtn.pri").click({ force: true });
   assert.ok(await openedHas((u) => u.startsWith("https://chatgpt.com/?q=") && u.includes(encodeURIComponent("Işıldayan kanatlı bir orman perisi, mavi tonlarında"))), "kartın Çalıştır düğmesi varsayılan değerlerle ChatGPT'yi açar");

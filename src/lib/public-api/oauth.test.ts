@@ -55,7 +55,7 @@ test("metadata: public clients only, PKCE S256, our own endpoints and scopes", a
   assert.equal(body.registration_endpoint, `${ISSUER}/register`);
   assert.deepEqual(body.code_challenge_methods_supported, ["S256"]);
   assert.deepEqual(body.token_endpoint_auth_methods_supported, ["none"]);
-  assert.deepEqual(body.scopes_supported, ["read", "write"]);
+  assert.deepEqual(body.scopes_supported, ["read", "write", "interact"]);
   assert.equal(response.headers.get("access-control-allow-origin"), "*");
 });
 

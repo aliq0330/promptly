@@ -14,7 +14,9 @@ import { serializeMarkdown } from "../exchange/markdown.ts";
 import type { ExchangePrompt } from "../exchange/prompt-format.ts";
 import { bearerOf, getMyPrompt, importMyPrompts, listMyPrompts, listMySaved, type MeBackend } from "./me.ts";
 import { getMyContent, getWhoami, importMyContent, listMyContent, ME_KIND_SEGMENTS, updateMyDraft, type MeDraftKind } from "./me-content.ts";
+import { getMeFeed, getMyEngagement, listMyCollectionPrompts, listMyCollections, setMyCollectionItem, setMyFollow, setMyReaction, setMySaved, setMyWorksVote } from "./me-social.ts";
 import { openApiDocument, PUBLIC_API_VERSION } from "./openapi.ts";
+import { listPromptComments, listPromptResults, listPromptVersions } from "./public-detail.ts";
 import { getPublicContent, PUBLIC_KIND_SEGMENTS, searchPublicContent } from "./public-content.ts";
 import { getPublicSkill, listPublicSkillFiles, searchPublicSkills } from "./public-skills.ts";
 import { fillPrompt, getPrompt, popularPrompts, searchPrompts, type PublicPrompt } from "./prompts.ts";
@@ -24,7 +26,7 @@ import type { PromptUseRecorder } from "./usage.ts";
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "content-type, authorization, apikey, x-client-info",
   "Access-Control-Expose-Headers": RATE_LIMIT_EXPOSE_HEADERS,
   "Access-Control-Max-Age": "86400",
@@ -141,14 +143,14 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
       version: PUBLIC_API_VERSION,
       docs: `${serverUrlOf(url, publicBaseUrl)}/openapi.json`,
       site: client.siteUrl,
-      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /requests", "GET /requests/{id}", "GET /presets", "GET /presets/{id}", "GET /workflows", "GET /workflows/{id}", "GET /skills", "GET /skills/{id}", "GET /skills/{id}/files", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "PATCH /me/prompts/{id}", "GET /me/requests", "POST /me/requests", "GET /me/requests/{id}", "PATCH /me/requests/{id}", "GET /me/presets", "POST /me/presets", "GET /me/presets/{id}", "PATCH /me/presets/{id}", "GET /me/workflows", "POST /me/workflows", "GET /me/workflows/{id}", "PATCH /me/workflows/{id}", "GET /me/saved"],
+      endpoints: ["GET /prompts", "GET /prompts/popular", "GET /prompts/{id}", "POST /prompts/{id}/fill", "GET /requests", "GET /requests/{id}", "GET /presets", "GET /presets/{id}", "GET /workflows", "GET /workflows/{id}", "GET /skills", "GET /skills/{id}", "GET /skills/{id}/files", "GET /me", "GET /me/prompts", "POST /me/prompts", "GET /me/prompts/{id}", "PATCH /me/prompts/{id}", "GET /me/requests", "POST /me/requests", "GET /me/requests/{id}", "PATCH /me/requests/{id}", "GET /me/presets", "POST /me/presets", "GET /me/presets/{id}", "PATCH /me/presets/{id}", "GET /me/workflows", "POST /me/workflows", "GET /me/workflows/{id}", "PATCH /me/workflows/{id}", "GET /me/saved", "GET /prompts/{id}/results", "GET /prompts/{id}/versions", "GET /prompts/{id}/comments", "GET /me/feed", "GET /me/collections", "GET /me/collections/{id}/prompts", "GET /me/engagement", "PUT /me/prompts/{id}/reaction", "DELETE /me/prompts/{id}/reaction", "PUT /me/prompts/{id}/saved", "DELETE /me/prompts/{id}/saved", "PUT /me/prompts/{id}/works", "DELETE /me/prompts/{id}/works", "PUT /me/collections/{id}/prompts/{promptId}", "DELETE /me/collections/{id}/prompts/{promptId}", "PUT /me/following/{username}", "DELETE /me/following/{username}"],
     });
   }
   if (segments.length === 1 && segments[0] === "openapi.json") {
     if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
     return json(openApiDocument(serverUrlOf(url, publicBaseUrl)));
   }
-  if (segments[0] === "me") return meRoute(request, url, segments, method, me);
+  if (segments[0] === "me") return meRoute(request, url, segments, method, client, me);
   // Herkese açık istek / hazır ayar / workflow (docs/history/322-*): arama + tek kayıt, salt okunur.
   const contentKind = PUBLIC_KIND_SEGMENTS[segments[0]];
   if (contentKind && segments.length <= 2) {
@@ -229,6 +231,15 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
     if (file.ok) await recordUse(prompt.id); // geçersiz `format` bir kullanım değildir
     return file;
   }
+  // Alt kaynaklar (432): sonuçlar, sürümler, yorumlar — yalnız okuma; sonuçta/yorumda kullanıcı içeriği vardır (veri, talimat değil).
+  if (segments[2] === "results" || segments[2] === "versions" || segments[2] === "comments") {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    const input = { limit: intParam(url, "limit"), cursor: url.searchParams.get("cursor") };
+    const key = decodeURIComponent(segments[1]);
+    if (segments[2] === "results") return json(await listPromptResults(client, key, input));
+    if (segments[2] === "versions") return json(await listPromptVersions(client, key, input));
+    return json(await listPromptComments(client, key, input));
+  }
   if (segments[2] === "fill") {
     if (method !== "POST") return errorResponse("method_not_allowed", "Use POST with {\"values\": {...}}.", 405);
     const values = await readValues(request);
@@ -245,7 +256,7 @@ async function route(request: Request, client: RestClient, publicBaseUrl: string
  * Yazma (`write` kapsamı) YALNIZ özel taslaktır: `POST /me/{prompts|requests|presets|workflows}` ekler, `PATCH /me/{…}/{id}` taslağı günceller
  * (`expectedUpdatedAt` ister; yayınlama ve silme YOK).
  */
-async function meRoute(request: Request, url: URL, segments: string[], method: string, me?: MeBackend): Promise<Response> {
+async function meRoute(request: Request, url: URL, segments: string[], method: string, client: RestClient, me?: MeBackend): Promise<Response> {
   if (!me) return errorResponse("not_found", "Unknown endpoint — see /v1/openapi.json.", 404);
   const bearer = bearerOf(request.headers);
   if (!bearer) {
@@ -259,6 +270,56 @@ async function meRoute(request: Request, url: URL, segments: string[], method: s
   if (sub.length === 0) {
     if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
     return reply(await me.withUser(bearer, "read", (tx, identity) => getWhoami(tx, identity, me.siteUrl)));
+  }
+  if (sub[0] === "feed" && sub.length === 1) {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    return reply(await me.withUser(bearer, "read", (tx) => getMeFeed(tx, client, { tab: url.searchParams.get("tab"), contentType: url.searchParams.get("content_type"), limit: intParam(url, "limit"), cursor: url.searchParams.get("cursor") })));
+  }
+  if (sub[0] === "engagement" && sub.length === 1) {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    return reply(await me.withUser(bearer, "read", (tx) => getMyEngagement(tx, listParam(url, "ids"))));
+  }
+  if (sub[0] === "collections" && sub.length === 1) {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    return reply(await me.withUser(bearer, "read", (tx) => listMyCollections(tx)));
+  }
+  if (sub[0] === "collections" && sub[2] === "prompts" && sub.length === 3) {
+    if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);
+    const collectionId = decodeURIComponent(sub[1]);
+    return reply(await me.withUser(bearer, "read", (tx) => listMyCollectionPrompts(tx, client, collectionId, { limit: intParam(url, "limit"), cursor: url.searchParams.get("cursor") })));
+  }
+  // Etkileşim yazmaları (`interact` kapsamı): PUT = yap/ayarla, DELETE = geri al. Gövde yalnız `reaction` / `works` içindir.
+  const readBody = async (): Promise<Record<string, unknown>> => {
+    const text = await request.text();
+    if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) throw new PublicApiError("bad_request", "Request body is too large.");
+    if (text.trim() === "") return {};
+    try {
+      const body = JSON.parse(text);
+      return body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : {};
+    } catch {
+      throw new PublicApiError("bad_request", "Body must be JSON.");
+    }
+  };
+  const putOrDelete = method === "PUT" || method === "DELETE";
+  if (sub[0] === "prompts" && sub.length === 3 && (sub[2] === "reaction" || sub[2] === "saved" || sub[2] === "works")) {
+    if (!putOrDelete) return errorResponse("method_not_allowed", "Use PUT or DELETE.", 405);
+    const id = decodeURIComponent(sub[1]);
+    const on = method === "PUT";
+    if (sub[2] === "saved") return reply(await me.withUser(bearer, "interact", (tx) => setMySaved(tx, id, on)));
+    const body = on ? await readBody() : {};
+    if (sub[2] === "reaction") return reply(await me.withUser(bearer, "interact", (tx) => setMyReaction(tx, id, on ? (body.reaction ?? "love") : null)));
+    return reply(await me.withUser(bearer, "interact", (tx) => setMyWorksVote(tx, id, on ? (body.works === undefined ? true : body.works) : null)));
+  }
+  if (sub[0] === "collections" && sub[2] === "prompts" && sub.length === 4) {
+    if (!putOrDelete) return errorResponse("method_not_allowed", "Use PUT or DELETE.", 405);
+    const collectionId = decodeURIComponent(sub[1]);
+    const id = decodeURIComponent(sub[3]);
+    return reply(await me.withUser(bearer, "interact", (tx) => setMyCollectionItem(tx, collectionId, id, method === "PUT")));
+  }
+  if (sub[0] === "following" && sub.length === 2) {
+    if (!putOrDelete) return errorResponse("method_not_allowed", "Use PUT or DELETE.", 405);
+    const username = decodeURIComponent(sub[1]);
+    return reply(await me.withUser(bearer, "interact", (tx) => setMyFollow(tx, username, method === "PUT")));
   }
   if (sub[0] === "saved" && sub.length === 1) {
     if (method !== "GET") return errorResponse("method_not_allowed", "Use GET.", 405);

@@ -100,6 +100,18 @@ await scenario("3b the draft permission is a real switch: off by default, flips 
   await page.getByText("Asla yapamaz", { exact: true }).waitFor();
 });
 
+await scenario("3c the interact permission (reactions, saving, following) is its own switch, OFF by default, independent of the draft switch; ticking it sends p_interact=true", async ({ page, srv }) => {
+  const interact = page.getByRole("switch", { name: /Beğeni, kaydetme ve takip yapmasına da izin ver/ });
+  assert.equal(await interact.isChecked(), false, "interact is off by default");
+  await page.getByText(/Senin adına başkalarının herkese açık promptlarına tepki verir/).waitFor();
+  await page.getByText("Beğeni, kaydetme ve takip yapmasına da izin ver", { exact: true }).click();
+  assert.equal(await interact.isChecked(), true);
+  assert.equal(await writeSwitch(page).isChecked(), false, "the draft switch is untouched");
+  await page.getByRole("button", { name: "İzin ver" }).click();
+  await page.waitForURL(/auth_callback\?code=/);
+  assert.deepEqual(srv.calls.decide, [{ p_request: REQ, p_approve: true, p_write: false, p_interact: true }]);
+});
+
 await scenario("4 Deny sends approve=false (even with the box ticked) and returns the error to the app", async ({ page, srv }) => {
   await tapWrite(page);
   srv.decided = { redirect_uri: BACK, params: { error: "access_denied", state: "ST" } };

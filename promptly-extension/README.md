@@ -1,4 +1,4 @@
-# Promptly Chrome uzantısı (v1.2)
+# Promptly Chrome uzantısı (v1.3)
 
 Manifest V3, bağımlılıksız (derleme adımı yok). Kullanıcıya anlatım Ayarlar → Geliştirici → "Chrome uzantısı" kartındadır
 (`src/features/settings/extension-section.tsx`); bu dosya geliştiriciler içindir. Tarihçe: `docs/history/429-*`.
@@ -40,7 +40,8 @@ Manifest V3, bağımlılıksız (derleme adımı yok). Kullanıcıya anlatım Ay
 8. Config'te gizli anahtar yok (yalnız adresler); eski sürümdeki anon anahtar kalktı.
 
 ## Bilinen sınırlar
-- 1.2: küçük resim/Çalıştı % için canlı API'nin yeni sürümü (Edge `api` deploy) gerekir, yoksa yer tutucu; Ana Sayfa'da sana özel/takip akışı, koleksiyonlar, sonuç/sürüm/yorum sekmeleri, beğeni/kaydet/oy ve ayar paketi uygulama YOK (sunucu + yazma kapsamı onayı bekliyor, `431-*`); slot kısayolu popup içinde 1–5 tuşu (Chrome 4 öneri kısayolu sınırı). Çalıştır adres parametreleri/seçicileri gerçek sitelere karşı DENENMEDİ (sitelerin arayüzüne bağlıdır, bozulursa kopyalanır). Ayrıntı: `docs/history/430-*`.
+- 1.2: küçük resim/Çalıştı % için canlı API'nin yeni sürümü (Edge `api` deploy) gerekir, yoksa yer tutucu; slot kısayolu popup içinde 1–5 tuşu (Chrome 4 öneri kısayolu sınırı). Çalıştır adres parametreleri/seçicileri gerçek sitelere karşı DENENMEDİ (sitelerin arayüzüne bağlıdır, bozulursa kopyalanır). Ayrıntı: `docs/history/430-*`.
+- 1.3: Ana Sayfa **Sana özel / Takip ettiklerim / Popüler** (`/me/feed`), Kütüphane → **Koleksiyonlar**, ayrıntıda **Sonuçlar · Sürümler · Yorumlar** sekmeleri, **beğeni/tepki, kaydet, koleksiyona ekle, yazarı takip et, "Çalıştı mı?" oyu** (yeni `interact` kapsamı; OAuth onay sayfasında varsayılan KAPALI — izin yoksa ayrıntıda "İzni aç" çıkar, kartlarda düğme çizilmez; hepsi geri alınabilir, yorum/yayınlama/silme yok). Yeni sunucu uçları ve `interact` kapsamı için canlıda migration + Edge `api` deploy gerekir (yoksa eylemler hata verir, okuma sekmeleri boş kalır). Yalnız PROMPT gösterilir (istek, ayar paketi, workflow, skill listeleri bilerek yok); ayar paketi uygulama yok. Ayrıntı: `docs/history/432-*`.
 - `launchWebAuthFlow` (gerçek giriş penceresi) headless Chromium'da çalıştırılamadı: OAuth birim testli (PKCE vektörü, kod değişimi, yenileme yarışı), canlı sunucunun herkese açık uçları ve OAuth metadatası gerçek istemciyle okundu; gerçek Chrome'da uçtan uca giriş DENENMEDİ.
 - Kayıtlı yönlendirme adresi `https://<uzantı-kimliği>.chromiumapp.org/`: paketlenmemiş yüklemede kimlik klasör yoluna göre değişir, bu yüzden istemci kaydı (DCR) yüklemeye özgüdür ve yönlendirme değişirse yeniden kaydolur. Web Store'a çıkılırsa kimlik sabitlenir.
 - Skill ve Space'e ekleme yok (Skill bayrağı kapalı; Space yazma yeteneği açık API'de yok).

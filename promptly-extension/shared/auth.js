@@ -1,6 +1,6 @@
 // Promptly uzantısı — giriş: sitenin KENDİ OAuth sunucusu (docs/history/317-*), `chrome.identity.launchWebAuthFlow` + PKCE (S256).
 // Şifre uzantıya hiç girmez; Google ile kayıtlı hesaplar da girer. Verilen belirteç hesabın tamamı değil SINIRLI `pmt_` anahtarıdır
-// (`read` + kullanıcı işaretlerse `write` = yalnız özel taslak). Yenileme belirteci her kullanımda döner; bu yüzden yenileme
+// (`read` + kullanıcı işaretlerse `write` = yalnız özel taslak, `interact` = beğeni/kaydet/koleksiyon/oy/takip; ikisi de onay ekranında varsayılan KAPALI). Yenileme belirteci her kullanımda döner; bu yüzden yenileme
 // TÜM bağlamlar (arka plan, popup, yan panel) arasında tek kilitle (`navigator.locks`) sıraya girer — eski sürümdeki yarış bu.
 self.PErr = self.PErr || class PErr extends Error {
   constructor(code, message, extra) {
@@ -14,7 +14,7 @@ self.PAuth = (() => {
   const cfg = self.PROMPTLY_CONFIG;
   const oauthBase = () => `${cfg.supabaseUrl}/functions/v1/oauth`;
   const SKEW_MS = 60_000;
-  const SCOPE = "read write";
+  const SCOPE = "read write interact";
 
   const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   const randomString = (n = 48) => b64url(crypto.getRandomValues(new Uint8Array(n)));
@@ -140,6 +140,7 @@ self.PAuth = (() => {
 
   const signedIn = async () => { const a = await PStore.get("auth"); return Boolean(a && a.refreshToken); };
   const canWrite = (a) => Boolean(a && Array.isArray(a.scopes) && a.scopes.includes("write"));
+  const canInteract = (a) => Boolean(a && Array.isArray(a.scopes) && a.scopes.includes("interact"));
 
-  return { SCOPE, connect, getToken, signOut, signedIn, canWrite, _test: { b64url, challengeOf, authorizeUrl, parseRedirect, ensureClient, storeTokens } };
+  return { SCOPE, connect, getToken, signOut, signedIn, canWrite, canInteract, _test: { b64url, challengeOf, authorizeUrl, parseRedirect, ensureClient, storeTokens } };
 })();

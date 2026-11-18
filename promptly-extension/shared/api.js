@@ -1,5 +1,6 @@
 // Promptly uzantısı — açık API istemcisi (`/functions/v1/api/v1`, docs/developers). Kişisel uçlar OAuth belirteciyle, herkese açık uçlar belirteçsiz.
-// Yazma YALNIZ `POST /v1/me/prompts` (sunucu hep özel TASLAK yazar: yayınlama, görünürlük, silme yoktur) + `media-upload` (taslağa görsel).
+// Yazma: `POST /v1/me/prompts` (sunucu hep özel TASLAK yazar: yayınlama, görünürlük, silme yoktur) + `media-upload` (taslağa görsel) + `interact` kapsamıyla
+// geri alınabilir etkileşimler (tepki, kaydet, koleksiyon, "Çalıştı mı?" oyu, kişi takibi — PUT/DELETE; yorum, yayınlama, silme YOK).
 self.PApi = (() => {
   const cfg = self.PROMPTLY_CONFIG;
   const apiBase = () => `${cfg.supabaseUrl}/functions/v1/api/v1`;
@@ -62,6 +63,23 @@ self.PApi = (() => {
   const workflows = ({ q, limit, cursor } = {}) => call(`${apiBase()}/workflows${qs({ q, limit, cursor })}`);
   const workflow = (id) => call(`${apiBase()}/workflows/${encodeURIComponent(id)}`);
 
+  // Ana Sayfa akışı (yalnız prompt): tab = "for_you" (Sana özel) | "following" (Takip ettiklerim). İmleç opaktır (Sana özel'de sıralamayı sabitler).
+  const feed = ({ tab, contentType, limit, cursor } = {}) => call(`${apiBase()}/me/feed${qs({ tab, content_type: contentType, limit, cursor })}`, { auth: true });
+  const collections = () => call(`${apiBase()}/me/collections`, { auth: true });
+  const collectionPrompts = (id, { limit, cursor } = {}) => call(`${apiBase()}/me/collections/${encodeURIComponent(id)}/prompts${qs({ limit, cursor })}`, { auth: true });
+  // Benim durumum (en çok 30 kimlik): tepkim, kaydettim mi, koleksiyonlarım, yazarı takip ediyor muyum, "Çalıştı mı?" durumu.
+  const engagement = (ids) => call(`${apiBase()}/me/engagement${qs({ ids: ids.join(",") })}`, { auth: true });
+  // Etkileşim yazmaları (`interact` kapsamı): PUT = yap, DELETE = geri al.
+  const mutate = (path, on, body) => call(`${apiBase()}${path}`, { method: on ? "PUT" : "DELETE", body: on ? body : undefined, auth: true });
+  const setReaction = (id, reaction) => mutate(`/me/prompts/${encodeURIComponent(id)}/reaction`, Boolean(reaction), reaction ? { reaction } : undefined);
+  const setSaved = (id, on) => mutate(`/me/prompts/${encodeURIComponent(id)}/saved`, on);
+  const setWorks = (id, works) => mutate(`/me/prompts/${encodeURIComponent(id)}/works`, works !== null, works === null ? undefined : { works });
+  const setCollectionItem = (collectionId, id, on) => mutate(`/me/collections/${encodeURIComponent(collectionId)}/prompts/${encodeURIComponent(id)}`, on);
+  const setFollow = (username, on) => mutate(`/me/following/${encodeURIComponent(username)}`, on);
+  // Herkese açık alt kaynaklar (belirteçsiz): sonuçlar, sürümler, yorumlar — kullanıcı içeriği, veri.
+  const sub = (kind) => (id, { limit, cursor } = {}) => call(`${apiBase()}/prompts/${encodeURIComponent(id)}/${kind}${qs({ limit, cursor })}`);
+  const results = sub("results"), versions = sub("versions"), comments = sub("comments");
+
   // Kimlik: kullanıcı adı + kapsamlar (`/me`); oturum kaydına yazılır.
   async function syncIdentity() {
     const info = await me();
@@ -94,5 +112,5 @@ self.PApi = (() => {
     return out;
   }
 
-  return { call, me, myPrompts, myPrompt, mySaved, popular, search, prompt, workflows, workflow, syncIdentity, savePrompts, attachImage, sendDraft, _test: { toError, qs } };
+  return { call, me, myPrompts, myPrompt, mySaved, popular, search, prompt, workflows, workflow, feed, collections, collectionPrompts, engagement, setReaction, setSaved, setWorks, setCollectionItem, setFollow, results, versions, comments, syncIdentity, savePrompts, attachImage, sendDraft, _test: { toError, qs } };
 })();

@@ -332,7 +332,7 @@ test("http: index and OpenAPI document point at the same server and cover every 
     const [method, path] = endpoint.split(" ");
     assert.ok(doc.paths[path]?.[method.toLowerCase()], `${endpoint} documented`);
   }
-  assert.deepEqual(Object.keys(openApiDocument("x").paths as object).sort(), ["/me", "/me/presets", "/me/presets/{id}", "/me/prompts", "/me/prompts/{id}", "/me/requests", "/me/requests/{id}", "/me/saved", "/me/workflows", "/me/workflows/{id}", "/presets", "/presets/{id}", "/prompts", "/prompts/popular", "/prompts/{id}", "/prompts/{id}/fill", "/requests", "/requests/{id}", "/skills", "/skills/{id}", "/skills/{id}/files", "/workflows", "/workflows/{id}"]);
+  assert.deepEqual(Object.keys(openApiDocument("x").paths as object).sort(), ["/me", "/me/collections", "/me/collections/{id}/prompts", "/me/collections/{id}/prompts/{promptId}", "/me/engagement", "/me/feed", "/me/following/{username}", "/me/presets", "/me/presets/{id}", "/me/prompts", "/me/prompts/{id}", "/me/prompts/{id}/reaction", "/me/prompts/{id}/saved", "/me/prompts/{id}/works", "/me/requests", "/me/requests/{id}", "/me/saved", "/me/workflows", "/me/workflows/{id}", "/presets", "/presets/{id}", "/prompts", "/prompts/popular", "/prompts/{id}", "/prompts/{id}/comments", "/prompts/{id}/fill", "/prompts/{id}/results", "/prompts/{id}/versions", "/requests", "/requests/{id}", "/skills", "/skills/{id}", "/skills/{id}/files", "/workflows", "/workflows/{id}"]);
 });
 
 test("http: hosted path shape (/api/v1/...) with publicBaseUrl advertises the external address", async () => {

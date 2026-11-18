@@ -55,7 +55,7 @@ export interface OauthGrantRow {
 
 export function mapOauthGrantRow(raw: Record<string, unknown>): OauthGrantRow | null {
   if (typeof raw.id !== "string" || typeof raw.client_name !== "string") return null;
-  const scopes = Array.isArray(raw.scopes) ? raw.scopes.filter((s): s is string => s === "read" || s === "write") : [];
+  const scopes = Array.isArray(raw.scopes) ? raw.scopes.filter((s): s is string => s === "read" || s === "write" || s === "interact") : [];
   return {
     id: raw.id,
     name: raw.client_name.slice(0, 80) || "—",

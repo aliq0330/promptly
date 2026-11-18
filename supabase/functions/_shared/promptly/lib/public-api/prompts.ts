@@ -467,6 +467,23 @@ export async function getPrompt(client: RestClient, id: string): Promise<PublicP
   return toPublicPrompt(row, client.siteUrl, variables.get(row.id) ?? []);
 }
 
+/** Verilen sırada özet satırlar (küçük resimli); okunamayan/herkese açık olmayanlar atlanır. Kişisel akış/koleksiyon uçları kimlik listesini bununla doldurur. */
+export async function summariesByIds(client: RestClient, ids: string[]): Promise<PublicPromptSummary[]> {
+  const rows = await fetchRowsByIds(client, ids.filter(isUuid).slice(0, PUBLIC_LIMITS.maxLimit));
+  const thumbs = await signThumbnails(client, rows);
+  return rows.map((row) => toSummary(row, client.siteUrl, thumbs.get(row.id) ?? null));
+}
+
+/** Herkese açık, yayında, topluluğa ait olmayan prompt var mı (alt kaynak uçları — sonuç/sürüm/yorum — önce bunu doğrular; yoksa `not_found`, varlığı sızmaz). */
+export async function assertPublicPrompt(client: RestClient, id: string): Promise<string> {
+  const key = id.trim();
+  if (!isUuid(key)) bad("id must be a prompt UUID.");
+  const params = publicFilters(new URLSearchParams({ select: "id", id: `eq.${key}`, limit: "1" }));
+  const [row] = await client.select<{ id: string }>("prompts", params);
+  if (!row) throw new PublicApiError("not_found", "Prompt not found.");
+  return key;
+}
+
 /** Birden çok prompt, değişkenleriyle, verilen sırada (MCP'nin hazır prompt listesi). Okunamayanlar atlanır. */
 export async function getPrompts(client: RestClient, ids: string[]): Promise<PublicPrompt[]> {
   const keys = [...new Set(ids.filter(isUuid))].slice(0, PUBLIC_LIMITS.maxLimit);

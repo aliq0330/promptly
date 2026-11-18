@@ -15,7 +15,7 @@ test("yetkilendirme adresi: S256, kod akışı, kapsam ve kayıtlı yönlendirme
   const { PAuth } = loadExtension();
   const u = new URL(PAuth._test.authorizeUrl({ clientId: "cid", redirectUri: "https://abc.chromiumapp.org/", challenge: "CH", state: "ST" }));
   assert.equal(u.origin + u.pathname, `${SUPA}/functions/v1/oauth/authorize`);
-  assert.deepEqual(plain(Object.fromEntries(u.searchParams)), { client_id: "cid", redirect_uri: "https://abc.chromiumapp.org/", response_type: "code", code_challenge: "CH", code_challenge_method: "S256", state: "ST", scope: "read write" });
+  assert.deepEqual(plain(Object.fromEntries(u.searchParams)), { client_id: "cid", redirect_uri: "https://abc.chromiumapp.org/", response_type: "code", code_challenge: "CH", code_challenge_method: "S256", state: "ST", scope: "read write interact" });
 });
 
 test("yönlendirme: durum uyuşmazlığı, ret ve kod eksikliği reddedilir", () => {

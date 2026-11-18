@@ -14,7 +14,9 @@ import { extractVariableTokenNames } from "../prompt-variables.ts";
 import { isUuid, promptUrl, PUBLIC_LIMITS } from "./prompts.ts";
 import { PublicApiError } from "./rest.ts";
 
-export type MeScope = "read" | "write";
+/** `read` okur · `write` yalnız özel taslak yazar (321-*) · `interact` başkasının herkese açık promptuna tepki/kaydet/koleksiyon/oy ve kişi takibi yapar (432-*). */
+export type MeScope = "read" | "write" | "interact";
+const ALL_SCOPES: readonly MeScope[] = ["read", "write", "interact"];
 
 export interface MeIdentity {
   userId: string;
@@ -68,7 +70,7 @@ function unauthorized(): PublicApiError {
   return new PublicApiError("unauthorized", "Missing or invalid credentials. Send an API key (or an OAuth access token) as `Authorization: Bearer …`.");
 }
 
-const scopesOf = (value: unknown): MeScope[] => (Array.isArray(value) ? value.filter((s): s is MeScope => s === "read" || s === "write") : []);
+const scopesOf = (value: unknown): MeScope[] => (Array.isArray(value) ? value.filter((s): s is MeScope => (ALL_SCOPES as readonly unknown[]).includes(s)) : []);
 
 /** Kimlik kurulduktan sonra: kapsam denetimi → kullanıcı rolü + iddialar → hesap başına hız sınırı → işlem. `withUser` ve `withTelegram` ortak kullanır. */
 async function runAsUser<T>(tx: MeTx, identity: MeIdentity, need: MeScope, fn: (tx: MeTx, identity: MeIdentity) => Promise<T>): Promise<T> {
@@ -77,7 +79,7 @@ async function runAsUser<T>(tx: MeTx, identity: MeIdentity, need: MeScope, fn: (
   }
   await tx("set local role authenticated");
   await tx("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: identity.userId, role: "authenticated", token_id: identity.tokenId, via: identity.via })]);
-  await tx("select public.api_me_throttle($1)", [need === "write"]);
+  await tx("select public.api_me_throttle_kind($1)", [need]);
   return await fn(tx, identity);
 }
 
@@ -85,6 +87,18 @@ async function runAsUser<T>(tx: MeTx, identity: MeIdentity, need: MeScope, fn: (
 function translateDbError(error: unknown): PublicApiError {
   if (error instanceof PublicApiError) return error;
   const message = error instanceof Error ? error.message : String(error);
+  // Etkileşim RPC'lerinin bilerek fırlattığı kısa kodlar (CLAUDE.md §6): HTTP karşılığına çevrilir, ayrıntı sızmaz.
+  if (/\b(collection_)?not_found\b/.test(message)) return new PublicApiError("not_found", "Not found, or not available to you.");
+  if (/\binvalid_reaction\b/.test(message)) return new PublicApiError("bad_request", "reaction must be one of: love, fire, wow, clap, haha, idea.");
+  if (/\bself_(follow|like|vote)_not_allowed\b/.test(message)) return new PublicApiError("unprocessable", "You cannot do this on your own content or account.");
+  if (/\bcopy_required\b/.test(message)) return new PublicApiError("unprocessable", "Copy the prompt first — only people who used it can vote on whether it worked.");
+  if (/\binteraction_blocked\b/.test(message)) return new PublicApiError("unprocessable", "This interaction is not available.");
+  // Etkileşim RPC'lerinin bilerek fırlattığı kısa kodlar (CLAUDE.md §6): HTTP karşılığına çevrilir, ayrıntı sızmaz.
+  if (/\b(collection_)?not_found\b/.test(message)) return new PublicApiError("not_found", "Not found, or not available to you.");
+  if (/\binvalid_reaction\b/.test(message)) return new PublicApiError("bad_request", "reaction must be one of: love, fire, wow, clap, haha, idea.");
+  if (/\bself_(follow|like|vote)_not_allowed\b/.test(message)) return new PublicApiError("unprocessable", "You cannot do this on your own content or account.");
+  if (/\bcopy_required\b/.test(message)) return new PublicApiError("unprocessable", "Copy the prompt first — only people who used it can vote on whether it worked.");
+  if (/\binteraction_blocked\b/.test(message)) return new PublicApiError("unprocessable", "This interaction is not available.");
   if (/\brate_limit\b/.test(message)) return new PublicApiError("rate_limited", "Too many requests for this account. Slow down and retry shortly.");
   if (/askıya alındı|suspended/i.test(message)) return new PublicApiError("insufficient_scope", "This account is currently restricted.");
   if (/paylaşım yapma yetkisi|posting/i.test(message)) return new PublicApiError("insufficient_scope", "This account cannot create content right now.");
@@ -188,7 +202,7 @@ function decodeCursor(cursor: string | null | undefined): { time: string; id: st
   }
 }
 
-const TIME = `'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'`;
+export const TIME = `'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'`;
 
 function summaryOf(row: Record<string, unknown>, siteUrl: string): MePromptSummary {
   return {

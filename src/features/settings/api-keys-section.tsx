@@ -13,7 +13,7 @@ import {
   API_TOKEN_DEFAULT_EXPIRY,
   API_TOKEN_EXPIRY_OPTIONS,
   API_TOKEN_NAME_MAX,
-  API_TOKEN_PRESET_SCOPES,
+  apiTokenScopes,
   activeApiTokenCount,
   apiTokenStatus,
   canCreateApiToken,
@@ -36,6 +36,7 @@ export function ApiKeysSection() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [name, setName] = useState("");
   const [preset, setPreset] = useState<ApiTokenPreset>("read");
+  const [interact, setInteract] = useState(false);
   const [expiry, setExpiry] = useState<number | null>(API_TOKEN_DEFAULT_EXPIRY);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -75,7 +76,7 @@ export function ApiKeysSection() {
     setCreating(true);
     setFormError(null);
     try {
-      const token = await createApiToken({ name, scopes: API_TOKEN_PRESET_SCOPES[preset], expiresInDays: expiry });
+      const token = await createApiToken({ name, scopes: apiTokenScopes(preset, interact), expiresInDays: expiry });
       setCreated(token);
       setCopied(false);
       setName("");
@@ -169,6 +170,13 @@ export function ApiKeysSection() {
               <span className="block text-caption text-text-muted">{t("apiKeys.accessWriteHint")}</span>
             </span>
           </ChoiceCard>
+          <ChoiceCard>
+            <input type="checkbox" name="api-key-interact" checked={interact} onChange={(event) => setInteract(event.target.checked)} className="mt-0.5" />
+            <span>
+              <span className="font-medium">{t("apiKeys.accessInteract")}</span>
+              <span className="block text-caption text-text-muted">{t("apiKeys.accessInteractHint")}</span>
+            </span>
+          </ChoiceCard>
         </fieldset>
 
         <div>
@@ -221,7 +229,7 @@ export function ApiKeysSection() {
                       {t(status === "active" ? "apiKeys.statusActive" : status === "expired" ? "apiKeys.statusExpired" : "apiKeys.statusRevoked")}
                     </Badge>
                     {row.scopes.map((scope) => (
-                      <Badge key={scope} variant="outline">{t(scope === "write" ? "apiKeys.scopeWrite" : "apiKeys.scopeRead")}</Badge>
+                      <Badge key={scope} variant="outline">{t(scope === "write" ? "apiKeys.scopeWrite" : scope === "interact" ? "apiKeys.scopeInteract" : "apiKeys.scopeRead")}</Badge>
                     ))}
                   </div>
                   <p className="prompt-text text-caption text-text-muted">{row.prefix}…</p>
