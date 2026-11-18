@@ -22,7 +22,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ply-e2e-ext-"));
 fs.cpSync(SRC, tmp, { recursive: true, filter: (p) => !p.includes(`${path.sep}tests`) });
 fs.writeFileSync(path.join(tmp, "config.js"), `self.PROMPTLY_CONFIG = { supabaseUrl: "http://127.0.0.1:${mock.port}", siteUrl: "https://site.example" };\n`);
 const mf = JSON.parse(fs.readFileSync(path.join(tmp, "manifest.json"), "utf8"));
-mf.host_permissions = ["http://127.0.0.1/*"];
+mf.host_permissions = ["http://127.0.0.1/*", "https://chatgpt.com/*", "https://claude.ai/*", "https://gemini.google.com/*", "https://www.perplexity.ai/*", "https://perplexity.ai/*"];
 fs.writeFileSync(path.join(tmp, "manifest.json"), JSON.stringify(mf));
 
 const results = [];
@@ -32,6 +32,9 @@ const ctx = await chromium.launchPersistentContext(fs.mkdtempSync(path.join(os.t
   args: [`--disable-extensions-except=${tmp}`, `--load-extension=${tmp}`, "--no-sandbox", "--disable-features=DisableLoadExtensionCommandLineSwitch"],
 });
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+const aiHtml = `<!doctype html><meta charset="utf-8"><title>AI</title><body><p id="out">Yapay zekâ çıktısı: gelir %12 arttı.</p><textarea id="prompt-textarea" rows="3" cols="40"></textarea></body>`;
+const aiHits = [];
+await ctx.route(/^https:\/\/(chatgpt\.com|claude\.ai|gemini\.google\.com|www\.perplexity\.ai|perplexity\.ai)\//, (route) => { const r = route.request(); aiHits.push(r.url()); if (r.resourceType() !== "document") return route.fulfill({ status: 204, body: "" }); route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: aiHtml }); });
 const errors = [];
 ctx.on("weberror", (e) => errors.push(String(e.error())));
 let [sw] = ctx.serviceWorkers(); if (!sw) sw = await ctx.waitForEvent("serviceworker", { timeout: 20000 });
@@ -43,7 +46,7 @@ const pageUrl = `http://127.0.0.1:${site.port}/`;
 
 async function popup() {
   const p = await ctx.newPage(); p.on("pageerror", (e) => errors.push("popup: " + e.message));
-  await p.setViewportSize({ width: 380, height: 640 });
+  await p.setViewportSize({ width: 780, height: 600 });
   await p.goto(`chrome-extension://${id}/popup/popup.html`); return p;
 }
 async function testPage() {
@@ -60,35 +63,87 @@ try {
   assert.match(await pop.locator("#connect").innerText(), /Promptly ile bağlan/);
   await pop.screenshot({ path: `${OUT}/1-login.png` }); ok("giriş ekranı: şifre alanı yok, 'Promptly ile bağlan'");
 
-  // 2) Oturum + kütüphane kaynakları
+  // 2) Oturum + sabit sekmeler: Ana Sayfa (popüler, sunucuda), Keşfet (arama sunucuda), süzgeçler API'ye gider
   await seed(live); await pop.reload();
   await pop.waitForSelector("#app:not([hidden])");
-  await pop.getByRole("button", { name: "Benim", exact: true }).click();
-  await pop.waitForSelector("text=Sisli sabah ormanı");
-  assert.ok(await pop.locator("#lib-list .row").count() >= 2);
-  await pop.getByRole("button", { name: "Kaydettiklerim" }).click(); await pop.waitForSelector("text=Kaydettiğim prompt");
-  await pop.getByRole("button", { name: "Popüler" }).click(); await pop.waitForSelector("text=Orman perisi karakter");
-  await pop.getByRole("button", { name: "Keşfet" }).click(); await pop.waitForSelector("text=Keşfet sonucu");
-  await pop.fill("#search", "orman"); await pop.waitForSelector("text=Keşfet sonucu: orman");
-  ok("kütüphane: Benim / Kaydettiklerim / Popüler / Keşfet (arama sunucuda)");
+  assert.equal(await pop.locator("#tabs [role=tab]").count(), 3);
+  await pop.waitForSelector("text=Orman perisi karakter");
+  assert.ok(await pop.locator(".card").count() >= 2, "görsel kartlar çizilir");
+  assert.equal(await pop.locator(".card .art").count() >= 2, true);
+  await pop.getByRole("tab", { name: "Keşfet" }).click();
+  await pop.fill("#search", "orman"); await pop.waitForSelector("#tab-discover >> text=Keşfet sonucu: orman");
+  await pop.locator("#tab-discover .fbar .chip", { hasText: "Görsel" }).click();
+  await pop.waitForFunction(() => true); await pop.waitForTimeout(400);
+  const lastHit = () => mock.state.hits.filter((h) => h.includes("/api/v1/prompts?")).at(-1);
+  assert.match(lastHit(), /content_type=image/);
+  await pop.locator("#tab-discover .fbar input.tag").fill("Sinematik Portre"); await pop.waitForSelector("#tab-discover >> text=#sinematik-portre");
+  assert.match(lastHit(), /tag=sinematik-portre/);
+  await pop.locator("#tab-discover .fbar select.sel").selectOption("midjourney");
+  await pop.waitForTimeout(400); assert.match(lastHit(), /tool=midjourney/);
+  const nBefore = await pop.locator("#tab-discover .card").count();
+  await pop.locator("#tab-discover .fbar .chk", { hasText: "Yalnızca değişkenli" }).locator("input").check();
+  await pop.waitForTimeout(300);
+  assert.ok(await pop.locator("#tab-discover .card").count() < nBefore, "'yalnız değişkenli' istemcide eler");
+  await pop.screenshot({ path: `${OUT}/2-discover.png` }); ok("sabit sekmeler; Ana Sayfa popüler kartlar; Keşfet: arama + tür/etiket/araç süzgeçleri API'ye gider; 'yalnız değişkenli' istemcide");
 
-  // 3) Satırı aç → metin + değişken doldur + kopyala
-  await pop.fill("#search", ""); await pop.getByRole("button", { name: "Benim", exact: true }).click();
+  // 2b) Görünümlerim: kaydet → kalıcı → uygula → sil; ⚙ ile süzgeç gizle
+  await pop.locator("#tab-discover").getByRole("button", { name: "Görünüm olarak kaydet" }).click();
+  await pop.locator("#tab-discover .fact input.in").fill("Orman görselleri"); await pop.locator("#tab-discover .fact input.in").press("Enter");
+  await pop.waitForSelector("#tab-discover .vpill:has-text('Orman görselleri')");
+  assert.equal((await sw.evaluate(() => PStore.get("views"))).length, 1);
+  await pop.reload(); await pop.waitForSelector("#app:not([hidden])"); await pop.getByRole("tab", { name: "Keşfet" }).click();
+  await pop.waitForSelector("#tab-discover .vpill:has-text('Orman görselleri')");
+    await pop.locator("#tab-discover .vapply", { hasText: "Orman görselleri" }).click(); await pop.waitForTimeout(400);
+  assert.match(lastHit(), /content_type=image/); assert.match(lastHit(), /tag=sinematik-portre/);
+  await pop.locator("#tab-discover .fbar .ico.round").click();
+  await pop.locator(".pmenu.custom .chk", { hasText: "Etiket" }).locator("input").uncheck();
+  assert.equal(await pop.locator("#tab-discover .fbar input.tag").count(), 0, "kapatılan süzgeç çubuktan kalkar");
+  await pop.locator(".pmenu.custom .chk", { hasText: "Etiket" }).locator("input").check();
+  await pop.keyboard.press("Escape");
+  await pop.locator("#tab-discover .vdel").first().click();
+  assert.equal((await sw.evaluate(() => PStore.get("views"))).length, 0);
+  ok("Görünümlerim: kaydet/uygula/sil kalıcı; ⚙ süzgeç görünürlüğü");
+
+  // 3) Kütüphane: alt sekmeler, satırlar, bekleyen rozeti
+  await pop.fill("#search", ""); await pop.getByRole("tab", { name: /Kütüphane/ }).click();
   await pop.waitForSelector("text=Sisli sabah ormanı");
-  await pop.locator("#lib-list .rowhead", { hasText: "Sisli sabah ormanı" }).click();
-  await pop.waitForSelector("#lib-list .code");
-  await pop.locator("#lib-list .detail input.in").fill("kuzey sahili");
-  await pop.getByRole("button", { name: "Doldurup kopyala" }).click();
+  assert.ok(await pop.locator(".liblist .lrow").count() >= 2);
+  await pop.locator(".chips .chip", { hasText: "Kaydettiklerim" }).click(); await pop.waitForSelector("text=Kaydettiğim prompt");
+  await pop.locator(".chips .chip", { hasText: "Taslaklar" }).click(); await pop.waitForSelector("text=Eski taslak");
+  await pop.locator(".chips .chip", { hasText: "Benim" }).click(); await pop.waitForSelector("text=Sisli sabah ormanı");
+  ok("kütüphane: Benim / Kaydettiklerim / Taslaklar sunucudan");
+
+  // 3b) Ayrıntı bölmesi: değişken doldur → önizleme → kopyala → 'son kullanılan'a yazılır
+  await pop.locator(".liblist .ctitle", { hasText: "Sisli sabah ormanı" }).click();
+  await pop.waitForSelector(".detailpane .code");
+  await pop.locator(".detailpane input.in").fill("kuzey sahili");
+  assert.match(await pop.locator(".detailpane .code.resolved").innerText(), /kuzey sahili atmosferi/);
+  await pop.locator(".detailpane").getByRole("button", { name: "Kopyala", exact: true }).click();
   await pop.waitForSelector(".toast");
   const clip = await pop.evaluate(() => navigator.clipboard.readText()).catch(() => "");
   if (clip) assert.match(clip, /kuzey sahili atmosferi/);
-  const recent = await sw.evaluate(() => PStore.get("recent"));
-  assert.equal(recent[0].id, "m1");
-  await pop.screenshot({ path: `${OUT}/2-library.png` }); ok("satır açılır, değişken doldurulur, kopyalanır, 'son kullanılan'a yazılır");
+  assert.equal((await sw.evaluate(() => PStore.get("recent")))[0].id, "m1");
+  await pop.screenshot({ path: `${OUT}/3-detail.png` }); ok("ayrıntı: değişken doldurulur, önizleme canlı, kopyalanır, 'son kullanılan'a yazılır");
+  await pop.keyboard.press("Escape");
 
-  // 4) Taslaklar sekmesi (sunucudaki gerçek taslaklar)
-  await pop.getByRole("tab", { name: "Taslaklar" }).click(); await pop.waitForSelector("text=Eski taslak");
-  ok("taslaklar sekmesi sunucudaki taslakları gösterir");
+  // 3c) Slot: sabitle → çubukta görünür → 1 tuşu çalıştırır; toplu seçim + JSON dışa aktarma
+  await pop.locator(".liblist .ctitle", { hasText: "Haftalık bülten özeti" }).click();
+  await pop.waitForSelector(".detailpane .code");
+  await pop.locator(".detailpane").getByRole("button", { name: "Slota sabitle" }).click();
+  await pop.keyboard.press("Escape");
+  await pop.waitForSelector(".slotsbar .slot.on:has-text('Haftalık bülten özeti')");
+  assert.equal((await sw.evaluate(() => PStore.get("slots"))).length, 1);
+  const dl = pop.waitForEvent("download");
+  await pop.locator(".liblist .lrow input[type=checkbox]").first().check();
+  await pop.waitForSelector(".bulkbar");
+  await pop.getByRole("button", { name: "JSON dışa aktar" }).click();
+  const file = JSON.parse(fs.readFileSync(await (await dl).path(), "utf8"));
+  assert.equal(file.format, "promptly.prompts"); assert.equal(file.items.length, 1);
+  assert.ok(file.items[0].promptText.includes("{"), "değişkenli metin dosyaya yazılır");
+  ok("slot sabitleme kalıcı; toplu seçimde 'promptly.prompts' JSON indirilir");
+
+  // 4) Taslaklar (Bekleyen rozeti ayrı sekmede değil, Kütüphane içinde)
+  ok("taslaklar kütüphane içinde");
 
   // 5) Yakalama kartı: [mekan] → {mekan}, kaynak/atıf, araç, etiket → 6 sn sonra TEK istek
   const pg = await testPage();
@@ -181,7 +236,7 @@ try {
   await sw.evaluate(() => flushNow());
   assert.equal(mock.state.posts.length, n0 + 1, "bozuktan sonraki öğe gitmeli");
   const q = await sw.evaluate(() => PStore.get("queue")); assert.equal(q.length, 1); assert.equal(q[0].state, "failed");
-  pop = await popup(); await pop.getByRole("tab", { name: /Bekleyen/ }).click();
+  pop = await popup(); await pop.getByRole("tab", { name: /Kütüphane/ }).click(); await pop.locator(".chips .chip", { hasText: "Bekleyen" }).click();
   await pop.waitForSelector("text=Gönderilemedi"); await pop.waitForSelector("text=Promptly bu kaydı kabul etmedi");
   await pop.screenshot({ path: `${OUT}/7-failed.png`, fullPage: true }); ok("kalıcı hata: öğe 'Gönderilemedi' olur, kuyruk devam eder, sebep gösterilir");
   await sw.evaluate(() => PStore.set({ queue: [] }));
@@ -212,6 +267,65 @@ try {
   await side.waitForSelector("text=Sisli sabah ormanı");
   assert.equal(await side.locator("#voteLink").getAttribute("href"), "https://site.example/prompts/local?id=m1");
   await side.screenshot({ path: `${OUT}/10-sidepanel.png` }); ok("yan panel: son kullanılan + sitede oy/sonuç bağlantısı");
+
+  // 13b) Çalıştır — gerçek yazma (host izniyle), adres yolu, hedef seçici, arayüzden çalıştırma
+  // Uzantının açtığı sekmelerin adresi (ağ yanıtına değil, açılış adresine bakılır; sandbox'ta dış ağ güvenilmez)
+  await sw.evaluate(() => { self.__opened = []; chrome.tabs.onCreated.addListener((t) => self.__opened.push(t.pendingUrl || t.url || "")); chrome.tabs.onUpdated.addListener((_id, ch) => { if (ch.url) self.__opened.push(ch.url); }); });
+  const openedHas = async (pred) => { for (let i = 0; i < 30; i++) { const l = await sw.evaluate(() => self.__opened.slice()); const hit = l.find(pred); if (hit) return hit; await new Promise((r) => setTimeout(r, 200)); } return null; };
+  const chat = await ctx.newPage(); chat.on("pageerror", (e) => errors.push("chat: " + e.message)); await chat.goto("https://chatgpt.com/");
+  const chatTab = await tabIdOf(chat);
+  const runPop = await popup();
+  const viaTab = (url, tabId) => ({ tabs: { query: async () => [{ id: tabId, url }], create: (o) => chrome.tabs.create(o) }, scripting: chrome.scripting });
+  const r1 = await runPop.evaluate(async ([tabId]) => { const d = { tabs: { query: async () => [{ id: tabId, url: "https://chatgpt.com/" }], create: (o) => chrome.tabs.create(o) }, scripting: chrome.scripting }; return PPlatforms.run("chatgpt", "Merhaba dünya", d); }, [chatTab]);
+  assert.equal(r1.mode, "insert"); assert.equal(r1.ok, true);
+  assert.equal(await chat.locator("#prompt-textarea").inputValue(), "Merhaba dünya");
+  await runPop.evaluate(async ([tabId]) => PPlatforms.run("chatgpt", "ikinci", { tabs: { query: async () => [{ id: tabId, url: "https://chatgpt.com/" }], create: (o) => chrome.tabs.create(o) }, scripting: chrome.scripting }), [chatTab]);
+  assert.equal(await chat.locator("#prompt-textarea").inputValue(), "Merhaba dünya\n\nikinci", "mevcut yazı silinmez, sonuna eklenir");
+  const r2 = await runPop.evaluate(() => PPlatforms.run("perplexity", "kedi nedir"));
+  assert.equal(r2.mode, "open");
+  assert.ok(await openedHas((u) => u === "https://www.perplexity.ai/search?q=kedi%20nedir"), "adresle yeni sekme açıldı");
+  await runPop.close();
+  ok("Çalıştır: açık sekmeye gerçekten yazar (sonuna ekler), başka hedefte adresle yeni sekme açar");
+
+  const rp = await popup(); await rp.waitForSelector("text=Orman perisi karakter");
+  assert.equal(await rp.locator("#target option").count(), 4);
+  await rp.locator(".card", { hasText: "Orman perisi karakter" }).locator(".hbtn.pri").click({ force: true });
+  assert.ok(await openedHas((u) => u.startsWith("https://chatgpt.com/?q=") && u.includes(encodeURIComponent("Işıldayan kanatlı bir orman perisi, mavi tonlarında"))), "kartın Çalıştır düğmesi varsayılan değerlerle ChatGPT'yi açar");
+  assert.equal((await sw.evaluate(() => PStore.get("recent")))[0].id, "p1");
+  await rp.selectOption("#target", "claude");
+  assert.equal(await sw.evaluate(() => PStore.get("platform")), "claude");
+  await rp.locator(".card", { hasText: "Orman perisi karakter" }).locator(".hbtn.pri").click({ force: true });
+  assert.ok(await openedHas((u) => u.startsWith("https://claude.ai/new?q=")), "hedef seçici Claude'a çevirir");
+  // bölünmüş düğme: ayrıntıda ▾ menüsü yöntemleri yazar ve hedefi hatırlar
+  await rp.locator(".card", { hasText: "Orman perisi karakter" }).locator(".ctitle").click();
+  await rp.waitForSelector(".detailpane .split");
+  await rp.locator(".detailpane .splitchev").click();
+  await rp.waitForSelector(".pmenu .pitem");
+  assert.equal(await rp.locator(".pmenu .pitem").count(), 4);
+  assert.match(await rp.locator(".pmenu").innerText(), /Kopyalar ve yeni sekmede açar/, "Gemini: adres parametresi yok → kopyala + aç");
+  await rp.screenshot({ path: `${OUT}/11-run-menu.png` });
+  await rp.locator(".pmenu .pitem", { hasText: "Perplexity" }).click();
+  assert.ok(await openedHas((u) => u.startsWith("https://www.perplexity.ai/search?q=") && u.includes("orman")), "▾ menüsünden seçilen hedef hemen çalıştırılır");
+  assert.equal(await sw.evaluate(() => PStore.get("platform")), "perplexity");
+  await rp.close();
+  ok("Çalıştır arayüzü: kart düğmesi, hedef seçici, ▾ menüsü (yöntem satırları) ve hedefi hatırlama");
+
+  // 13c) Yan panel bağlamı: açık sekme ChatGPT → tanınır, seçili metin okunur, uygun prompt "Yaz" ile açık sekmeye yazılır
+  await chat.bringToFront();
+  await chat.locator("#prompt-textarea").fill("");
+  await chat.evaluate(() => { const r = document.createRange(); r.selectNodeContents(document.getElementById("out")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+  const ctxRead = await side.evaluate(async () => { const c = await PContext.read(); return { platform: c.platform && c.platform.id, selection: c.selection, granted: c.granted }; });
+  assert.equal(ctxRead.platform, "chatgpt"); assert.match(ctxRead.selection, /gelir %12 arttı/); assert.equal(ctxRead.granted, true);
+  await side.evaluate(() => { ctxSig = ""; return renderContext(); });
+  await side.waitForSelector("#ctx >> text=ChatGPT'desin");
+  await side.waitForSelector("#ctx .quote");
+  await side.waitForSelector("#ctx >> text=ChatGPT özet promptu");
+  await side.screenshot({ path: `${OUT}/12-context.png` });
+  await side.evaluate(async () => { const c = await PContext.read(); const items = ctxSuggest.get("chatgpt"); return PRunUI.runItem(items[0], { selection: c.selection, platformId: "chatgpt" }); });
+  await chat.waitForFunction(() => document.getElementById("prompt-textarea").value.includes("gelir %12 arttı"));
+  assert.match(await chat.locator("#prompt-textarea").inputValue(), /^Şunu üç maddede özetle: Yapay zekâ çıktısı: gelir %12 arttı\./);
+  ok("yan panel bağlamı: ChatGPT tanınır, seçili metin okunur, {seçim} değişkenine yazılıp açık sekmeye eklenir");
+  await chat.close();
 
   // 14) Güvenlik: sayfaya enjekte edilen (içerik betiği) bağlam depoya/belirtece ERİŞEMEZ (setAccessLevel TRUSTED_CONTEXTS)
   const denied = await sw.evaluate(async (tabId) => {

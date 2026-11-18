@@ -42,7 +42,10 @@ self.PApi = (() => {
 
   const qs = (obj) => {
     const p = new URLSearchParams();
-    for (const [k, v] of Object.entries(obj)) if (v !== undefined && v !== null && v !== "") p.set(k, String(v));
+    for (const [k, v] of Object.entries(obj)) {
+      if (Array.isArray(v)) { for (const x of v) if (x !== undefined && x !== null && x !== "") p.append(k, String(x)); }
+      else if (v !== undefined && v !== null && v !== "") p.set(k, String(v));
+    }
     const s = p.toString();
     return s ? `?${s}` : "";
   };
@@ -52,7 +55,8 @@ self.PApi = (() => {
   const myPrompt = (id) => call(`${apiBase()}/me/prompts/${encodeURIComponent(id)}`, { auth: true });
   const mySaved = ({ limit, cursor } = {}) => call(`${apiBase()}/me/saved${qs({ limit, cursor })}`, { auth: true });
   const popular = ({ limit, contentType, by, period } = {}) => call(`${apiBase()}/prompts/popular${qs({ limit, content_type: contentType, by, period })}`);
-  const search = ({ q, contentType, limit, cursor, sort } = {}) => call(`${apiBase()}/prompts${qs({ q, content_type: contentType, limit, cursor, sort })}`);
+  // tools: araç başvuruları (biri yeter), tags: etiket slug'ları (hepsi gerekir) — sunucu kuralı.
+  const search = ({ q, contentType, limit, cursor, sort, tools, tags, category } = {}) => call(`${apiBase()}/prompts${qs({ q, content_type: contentType, limit, cursor, sort, tool: tools, tag: tags, category })}`);
   const prompt = (id) => call(`${apiBase()}/prompts/${encodeURIComponent(id)}`);
 
   // Kimlik: kullanıcı adı + kapsamlar (`/me`); oturum kaydına yazılır.

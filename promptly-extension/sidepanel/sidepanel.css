@@ -3,3 +3,8 @@ body { min-height: 100vh; }
 .lead { margin: 0; color: var(--text2); font-size: 14px; }
 .err { margin: 0; color: var(--danger); font-size: 12.5px; }
 a.btn { text-decoration: none; }
+.ctxcard { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.ctxcard .hint { margin: 0; }
+.ctxhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.quote { margin: 0; padding: 8px 10px; border-left: 3px solid var(--border-strong); background: var(--soft); border-radius: 0 10px 10px 0; font-size: 12px; color: var(--text2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+#ctx .row { align-items: center; }

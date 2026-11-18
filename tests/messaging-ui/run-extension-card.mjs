@@ -71,8 +71,8 @@ await scenario("3 chrome://extensions is a copyable block (Chrome pages cannot b
   assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "chrome://extensions");
 });
 
-await scenario("4 usage + privacy: save, image, palette, slash, library, vote; no password, drafts only, no standing site access, revoke link", async ({ page }) => {
-  for (const re of [/Kaydet: bir sayfada metin seç/, /Görsel: bir görsele sağ tıkla/, /Palet: yazdığın yerde/, /Slash: bir sitede/, /Kütüphane: uzantı simgesine/, /Oy ve sonuç:/]) await card(page).getByText(re).waitFor();
+await scenario("4 usage + privacy: save, image, palette, slash, browse, run, context, vote; no password, drafts only, no standing site access, revoke link", async ({ page }) => {
+  for (const re of [/Kaydet: bir sayfada metin seç/, /Görsel: bir görsele sağ tıkla/, /Palet: yazdığın yerde/, /Slash: bir sitede/, /Gezinme: uzantı simgesine/, /Çalıştır: bir promptta/, /Yan panel bağlamı:/, /Oy ve sonuç:/]) await card(page).getByText(re).waitFor();
   await card(page).getByText(/Şifreni uzantı görmez/).waitFor();
   await card(page).getByText(/yalnız özel taslak ekler/).waitFor();
   await card(page).getByText(/Hiçbir sitede kalıcı erişimi yoktur/).waitFor();

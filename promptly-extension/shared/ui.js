@@ -16,6 +16,12 @@ self.PUI = (() => {
     panel: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/>',
     alert: '<path d="M12 4 3 20h18z"/><path d="M12 10v4M12 17h.01"/>',
     external: '<path d="M7 17 17 7M9 7h8v8"/>',
+    play: '<path d="M7 4.5v15l13-7.5z"/>',
+    chevron: '<path d="m6 9 6 6 6-6"/>',
+    sliders: '<path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/>',
+    pin: '<path d="M12 17v5M8 3h8l-1 7 3 3H6l3-3z"/>',
+    download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+    heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
   };
   const icon = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${PATHS[n] || ""}</svg>`;
   const brand = (size = 24) => `<svg width="${size}" height="${size}" viewBox="8 8 48 48" aria-hidden="true"><g fill="none" stroke="var(--primary)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"><path d="M25 13c-6 0-7.5 3-7.5 8v5.5c0 3.5-2 5.5-5.5 5.5 3.5 0 5.5 2 5.5 5.5V43c0 5 1.5 8 7.5 8"/><path d="M39 13c6 0 7.5 3 7.5 8v5.5c0 3.5 2 5.5 5.5 5.5-3.5 0-5.5 2-5.5 5.5V43c0 5-1.5 8-7.5 8"/></g><path d="M32 41.5c-1-.8-9-6.4-9-12.2a4.6 4.6 0 0 1 9-1.5a4.6 4.6 0 0 1 9 1.5c0 5.8-8 11.4-9 12.2z" fill="var(--heart)" stroke="var(--heart)" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
@@ -187,6 +193,7 @@ self.PUI = (() => {
           if (ok) await PLib.markUsed(item);
           toast(t(ok ? "copied" : "copyFailed"));
         }));
+        if (self.PRunUI) row.append(PRunUI.splitButton(async (id) => { await PRunUI.runItem(item, { values, platformId: id, force: true }); }, { small: true }));
         row.append(anchor(itemHref(item), t("openOnSite")));
         box.append(row);
       }).catch((err) => { box.replaceChildren(el("span", "hint", errText(err) || t("textFailed"))); });
