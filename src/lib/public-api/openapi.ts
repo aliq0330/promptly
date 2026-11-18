@@ -347,6 +347,8 @@ export function openApiDocument(serverUrl: string): Record<string, unknown> {
             variableNames: { type: "array", items: { type: "string" } },
             author: { $ref: "#/components/schemas/Author" },
             stats: { $ref: "#/components/schemas/Stats" },
+            thumbnailUrl: { type: ["string", "null"], description: "Short-lived (~10 min) signed URL of the first image, or null. Not a permanent link: fetch a fresh list instead of storing it." },
+            works: { type: ["object", "null"], description: "\"Did it work?\" votes (null when nobody voted).", properties: { yes: { type: "integer" }, no: { type: "integer" } } },
             createdAt: { type: "string", format: "date-time" },
           },
         },

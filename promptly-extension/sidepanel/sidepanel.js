@@ -43,9 +43,10 @@ function renderStatus() {
 
 function showTab() {
   document.querySelectorAll("#tabs [data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
-  for (const id of ["now", "library", "drafts"]) $(`tab-${id}`).hidden = id !== tab;
+  for (const id of ["now", "library", "drafts", "workflow"]) $(`tab-${id}`).hidden = id !== tab;
   if (tab === "library" && !loaded.library) { loaded.library = true; libCtl.load(true); }
   if (tab === "drafts" && !loaded.drafts) { loaded.drafts = true; draftsCtl.load(true); }
+  if (tab === "workflow") renderWorkflow();
 }
 
 function render() {
@@ -148,6 +149,87 @@ function startContext() {
 }
 
 
+// ---- Workflow adım adım: bir adımın çıktısı sonrakinin girdisi olur. Hiçbir adım otomatik gönderilmez. ----
+let wfQuery = "", wfList = null, wfBusy = false;
+// Çıktı kutusuna yazılan metin: panel her depo değişiminde (ör. "son kullanılan") yeniden çizilir; yazılan metin kaybolmasın. Adım/kapatma değişince sıfırlanır.
+let wfDraft = null;
+
+async function wfSearch() {
+  try { const res = await PApi.workflows({ q: wfQuery || undefined, limit: 20 }); wfList = res.items || []; } catch (err) { wfList = { error: err }; }
+  renderWorkflow();
+}
+
+async function wfBegin(id) {
+  if (wfBusy) return; wfBusy = true;
+  try {
+    const detail = await PApi.workflow(id);
+    const st = PWorkflow.start(detail);
+    if (!st) { PUI.toast(t("wfEmpty")); return; }
+    wfDraft = null;
+    await PStore.set({ wf: st });
+  } catch (err) { PUI.toast(PUI.errText(err)); } finally { wfBusy = false; }
+}
+
+async function renderWorkflow() {
+  const box = $("tab-workflow");
+  if (!box || box.hidden) return;
+  const st = PWorkflow.clean((await PStore.get("wf")));
+  box.replaceChildren();
+  if (!st) {
+    const f = PUI.el("label", "field"); const inp = PUI.el("input"); inp.type = "search"; inp.value = wfQuery; inp.placeholder = t("wfSearchPh"); inp.autocomplete = "off";
+    let timer = null; inp.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => { wfQuery = inp.value.trim(); wfSearch(); }, 300); });
+    f.append(inp); box.append(f);
+    if (wfList === null) { wfSearch(); box.append(PUI.el("p", "hint", t("loading"))); return; }
+    if (wfList.error) { box.append(PUI.el("p", "hint", t("loadFailed", { error: PUI.errText(wfList.error) }))); return; }
+    if (!wfList.length) box.append(PUI.el("p", "empty", t("wfEmpty")));
+    for (const w of wfList) {
+      const row = PUI.el("div", "row"); const main = PUI.el("div", "main");
+      main.append(PUI.el("span", "t", w.title));
+      const m = PUI.el("span", "m"); m.append(PUI.el("span", "pill", t("wfSteps", { n: w.stepCount || 0 })));
+      if (w.author && w.author.username) m.append(PUI.el("span", "", t("byAuthor", { a: w.author.username })));
+      main.append(m); row.append(main, PUI.btn("btn sm pri", t("wfStart"), () => wfBegin(w.id))); box.append(row);
+    }
+    return;
+  }
+  const head = PUI.el("div", "ctxhead"); head.append(PUI.el("strong", "", st.title), PUI.btn("linkbtn", t("wfClose"), async () => { wfDraft = null; await PStore.set({ wf: null }); wfList = null; }));
+  box.append(head);
+  const bars = PUI.el("div", "wfbars");
+  st.steps.forEach((_, i) => bars.append(PUI.el("span", "wfbar" + (i < st.index ? " done" : i === st.index ? " now" : ""))));
+  box.append(bars);
+  if (PWorkflow.isDone(st)) {
+    box.append(PUI.el("div", "banner ok", t("wfDone")));
+    const acts = PUI.el("div", "actions-row"); acts.append(PUI.btn("btn sm", t("wfBack"), () => { wfDraft = null; PStore.set({ wf: PWorkflow.back(st) }); }));
+    if (st.url) acts.append(PUI.anchor(st.url, t("wfOpenSite")));
+    box.append(acts); return;
+  }
+  const step = PWorkflow.current(st);
+  const card = PUI.el("div", "ctxcard");
+  card.append(PUI.el("span", "label", t("wfStepOf", { n: st.index + 1, total: st.steps.length })), PUI.el("div", "t", step.title || ""));
+  const text = [step.description, step.instructions].filter(Boolean).join("\n\n");
+  if (text) card.append(PUI.el("p", "hint wfinstr", text));
+  const out = PUI.el("textarea", "in wfout"); out.rows = 4; out.value = wfDraft !== null ? wfDraft : st.carry || ""; out.setAttribute("aria-label", t("wfCarry"));
+  out.addEventListener("input", () => { wfDraft = out.value; });
+  if (step.promptId) {
+    const item = { id: step.promptId, title: step.promptTitle || step.title, type: "text", source: "explore", own: false, url: "", author: "", description: "" };
+    card.append(PUI.el("span", "label", step.promptTitle || ""));
+    const acts = PUI.el("div", "actions-row");
+    acts.append(PRunUI.splitButton(async (id) => { const r = await PRunUI.runItem(item, { selection: out.value, platformId: id }); if (r && r.needVars) PBrowser.openDetail(item, { selection: out.value }); }, { small: true }));
+    card.append(acts);
+  } else {
+    card.append(PUI.el("p", "hint", t("wfNoPrompt")));
+    card.append(PUI.btn("btn sm", t("wfCopyInstr"), async () => { const ok = await PUI.copyText(text); PUI.toast(t(ok ? "copied" : "copyFailed")); }));
+  }
+  card.append(PUI.el("span", "label", t("wfCarry")), out);
+  card.append(PUI.btn("linkbtn", t("wfGrab"), async () => { const c = await PContext.read().catch(() => null); if (c && c.selection) out.value = c.selection; else PUI.toast(t("ctxSelectionNone")); }));
+  box.append(card);
+  const nav = PUI.el("div", "actions-row");
+  nav.append(PUI.btn("btn sm", t("wfBack"), () => { wfDraft = null; PStore.set({ wf: PWorkflow.back(st) }); }));
+  const last = st.index === st.steps.length - 1;
+  nav.append(PUI.btn("btn sm pri", t(last ? "wfFinish" : "wfNext"), () => { const next = PWorkflow.advance(st, out.value); wfDraft = null; PStore.set({ wf: next }); }));
+  box.append(nav);
+}
+
+
 document.querySelectorAll("#tabs [data-tab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; showTab(); }));
 $("connect").addEventListener("click", connectFlow);
 $("lang").addEventListener("click", async () => { await PI.setLang(PI.getLang() === "tr" ? "en" : "tr"); render(); libCtl.render(); draftsCtl.render(); });
@@ -159,6 +241,7 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
   if (was !== Boolean(data.auth && data.auth.refreshToken)) loaded = { library: false, drafts: false };
   if (changes.lang) await PI.init();
   render();
+  if (changes.wf) renderWorkflow();
   if (changes.recent && libCtl.state.source === "recent") libCtl.load(true);
   if (changes.sent && loaded.drafts) draftsCtl.load(true);
 });

@@ -14,6 +14,7 @@ self.PStore = self.PStore || (() => {
     views: [],         // Görünümlerim: kayıtlı süzgeç setleri [{ id, name, tab, filters }] (yalnız bu cihazda)
     slots: [],         // sabit slotlar (en çok 5): { id, title, type, source, own, url, author, description }
     prefs: {},         // görünüm tercihleri: { density, shown } (shared/browse.js)
+    wf: null,          // yan paneldeki workflow adım adım çalıştırma durumu: { id, title, steps, index, carry } (shared/workflow-run.js)
   };
   const KEYS = Object.keys(DEFAULTS);
   async function getAll() {

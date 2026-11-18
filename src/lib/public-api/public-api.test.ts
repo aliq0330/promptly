@@ -342,3 +342,69 @@ test("http: hosted path shape (/api/v1/...) with publicBaseUrl advertises the ex
   assert.equal(doc.servers[0].url, external);
   assert.equal((await api(new Request(`http://localhost:9999/api/v1/prompts/${ID_A}`))).status, 200);
 });
+
+
+// ---- Küçük resim + "çalıştı" oyları (docs/history/431-*) ----
+
+function mediaFetch(options: { signed?: "ok" | "fail" | "reject" } = {}) {
+  const signCalls: { path: string; body: { expiresIn: number; paths: string[] }; headers: Record<string, string> }[] = [];
+  const base = row(ID_A, {
+    prompt_media: [{ url: `https://x.supabase.co/storage/v1/object/public/prompt-media/u1/a%20b.jpg`, position: 0 }],
+    prompt_works_stats: { yes_count: 9, no_count: 1 },
+  });
+  const other = row(ID_B, { prompt_media: [], prompt_works_stats: null });
+  const impl = async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(String(input));
+    if (url.pathname.startsWith("/storage/v1/object/sign/")) {
+      signCalls.push({ path: url.pathname, body: JSON.parse(String(init?.body)), headers: init?.headers as Record<string, string> });
+      if (options.signed === "reject") throw new TypeError("network down");
+      if (options.signed === "fail") return new Response("{}", { status: 403 });
+      return Response.json([{ error: null, path: "u1/a b.jpg", signedURL: "/object/sign/prompt-media/u1/a%20b.jpg?token=T" }]);
+    }
+    const path = url.pathname.replace("/rest/v1/", "");
+    if (path === "rpc/search_content") return Response.json([{ id: ID_A, created_at: "2026-10-01T10:00:00.000Z", sort_rank: 1 }, { id: ID_B, created_at: "2026-10-01T09:00:00.000Z", sort_rank: 0 }]);
+    if (path === "prompts") return Response.json([base, other]);
+    return new Response("nf", { status: 404 });
+  };
+  return { signCalls, fetch: impl as typeof fetch };
+}
+
+test("küçük resim: ilk görsel anon anahtarla imzalatılır (tek istek), tam https adres döner; görselsiz prompt null", async () => {
+  const fake = mediaFetch();
+  const c = createRestClient({ url: "https://x.supabase.co", anonKey: "eyJ.anon.key", fetch: fake.fetch, siteUrl: SITE });
+  const page = await searchPrompts(c, { limit: 2 });
+  assert.equal(page.items[0].thumbnailUrl, "https://x.supabase.co/storage/v1/object/sign/prompt-media/u1/a%20b.jpg?token=T");
+  assert.equal(page.items[1].thumbnailUrl, null);
+  assert.equal(fake.signCalls.length, 1, "tek toplu imza isteği");
+  assert.deepEqual(fake.signCalls[0].body, { expiresIn: 600, paths: ["u1/a b.jpg"] }, "yol çözülmüş (decodeURIComponent), kısa ömür");
+  assert.equal(fake.signCalls[0].path, "/storage/v1/object/sign/prompt-media");
+  assert.equal(fake.signCalls[0].headers.Authorization, "Bearer eyJ.anon.key", "yalnız anon anahtar; service role yok");
+});
+
+test("çalıştı oyları: satırda oy varsa {yes,no}, yoksa null", async () => {
+  const c = createRestClient({ url: "https://x.supabase.co", anonKey: "eyJ.anon.key", fetch: mediaFetch().fetch, siteUrl: SITE });
+  const page = await searchPrompts(c, { limit: 2 });
+  assert.deepEqual(page.items[0].works, { yes: 9, no: 1 });
+  assert.equal(page.items[1].works, null);
+});
+
+test("küçük resim HATA GÜVENLİDİR: imza reddedilir/ağ düşer → liste yine döner, küçük resim null (API düşmez)", async () => {
+  for (const signed of ["fail", "reject"] as const) {
+    const c = createRestClient({ url: "https://x.supabase.co", anonKey: "eyJ.anon.key", fetch: mediaFetch({ signed }).fetch, siteUrl: SITE });
+    const page = await searchPrompts(c, { limit: 2 });
+    assert.equal(page.items.length, 2);
+    assert.equal(page.items[0].thumbnailUrl, null);
+    assert.equal(page.items[0].title.length > 0, true);
+  }
+});
+
+test("mediaPathOf: yalnız prompt-media adresleri; harici/data/bozuk adres null", async () => {
+  const { mediaPathOf } = await import("./prompts.ts");
+  assert.equal(mediaPathOf("https://x.supabase.co/storage/v1/object/public/prompt-media/u/1.png"), "u/1.png");
+  assert.equal(mediaPathOf("https://x.supabase.co/storage/v1/object/sign/prompt-media/u/1.png?token=t"), "u/1.png");
+  assert.equal(mediaPathOf("https://x.supabase.co/storage/v1/object/public/avatars/u/1.png"), null);
+  assert.equal(mediaPathOf("https://evil.example/pic.png"), null);
+  assert.equal(mediaPathOf("data:image/png;base64,AAAA"), null);
+  assert.equal(mediaPathOf(null), null);
+  assert.equal(mediaPathOf("https://x.supabase.co/storage/v1/object/public/prompt-media/%E0%A4%A"), null, "bozuk kodlama atılır");
+});

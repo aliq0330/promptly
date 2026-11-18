@@ -34,11 +34,15 @@ const ctx = await chromium.launchPersistentContext(fs.mkdtempSync(path.join(os.t
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
 const aiHtml = `<!doctype html><meta charset="utf-8"><title>AI</title><body><p id="out">Yapay zekâ çıktısı: gelir %12 arttı.</p><textarea id="prompt-textarea" rows="3" cols="40"></textarea></body>`;
 const aiHits = [];
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+await ctx.route("https://img.example.test/**", (route) => (route.request().url().endsWith("p1.png") ? route.fulfill({ status: 200, contentType: "image/png", body: PNG }) : route.fulfill({ status: 404, body: "" })));
 await ctx.route(/^https:\/\/(chatgpt\.com|claude\.ai|gemini\.google\.com|www\.perplexity\.ai|perplexity\.ai)\//, (route) => { const r = route.request(); aiHits.push(r.url()); if (r.resourceType() !== "document") return route.fulfill({ status: 204, body: "" }); route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: aiHtml }); });
 const errors = [];
 ctx.on("weberror", (e) => errors.push(String(e.error())));
 let [sw] = ctx.serviceWorkers(); if (!sw) sw = await ctx.waitForEvent("serviceworker", { timeout: 20000 });
 const id = sw.url().split("/")[2];
+// Dil sabitlenir: tarayıcı arayüz dili ortama göre değişir (CI/sandbox en-US); ürün davranışı (dili algıla) birim testli. Arayüz metinleri Türkçe sınanır.
+await sw.evaluate(() => chrome.storage.local.set({ lang: "tr" }));
 const live = { clientId: "cid", redirectUri: "r", accessToken: "LIVE", refreshToken: "R1", expiresAt: Date.now() + 3_600_000, scopes: ["read", "write"], user: { username: "aliq" } };
 const seed = (auth) => sw.evaluate((a) => PStore.set({ auth: a, queue: [], sent: [], recent: [], lastError: null }), auth);
 const tabIdOf = (page) => sw.evaluate(async (url) => (await chrome.tabs.query({})).find((t) => t.url === url).id, page.url());
@@ -70,6 +74,16 @@ try {
   await pop.waitForSelector("text=Orman perisi karakter");
   assert.ok(await pop.locator(".card").count() >= 2, "görsel kartlar çizilir");
   assert.equal(await pop.locator(".card .art").count() >= 2, true);
+  await pop.waitForSelector(".card .art.hasimg");
+  assert.equal(await pop.locator(".card .art.hasimg").count(), 1, "yalnız yüklenen küçük resim yer tutucunun üstüne biner");
+  await pop.waitForFunction(() => document.querySelectorAll(".thumbimg").length === 1);
+  assert.equal(await pop.locator(".card", { hasText: "Orman perisi karakter" }).locator(".pill.ok").innerText(), "✓ %90");
+  assert.equal(await pop.locator(".card", { hasText: "Değişkensiz resim" }).locator(".pill.ok").count(), 0, "az oyla (2) yüzde gösterilmez");
+  // JSON biçimli prompt renklendirilir (metin değişmez)
+  await pop.locator(".card", { hasText: "Yapılandırılmış prompt" }).locator(".ctitle").click();
+  await pop.waitForSelector(".detailpane .code.structured .tk-key");
+  assert.equal(await pop.locator(".detailpane .code.structured").first().innerText(), '{"prompt": "a {subject} portrait", "style": "noir", "steps": 30}');
+  await pop.keyboard.press("Escape");
   await pop.getByRole("tab", { name: "Keşfet" }).click();
   await pop.fill("#search", "orman"); await pop.waitForSelector("#tab-discover >> text=Keşfet sonucu: orman");
   await pop.locator("#tab-discover .fbar .chip", { hasText: "Görsel" }).click();
@@ -103,6 +117,21 @@ try {
   await pop.locator("#tab-discover .vdel").first().click();
   assert.equal((await sw.evaluate(() => PStore.get("views"))).length, 0);
   ok("Görünümlerim: kaydet/uygula/sil kalıcı; ⚙ süzgeç görünürlüğü");
+
+  // 2c) Boyut: açılır pencere önce KÜÇÜK açılır; kök boyut görünüm birimine bağlı olsaydı (eski hata) hiç büyümezdi. Küçük pencerede bile sabit 780×600 / 400 px.
+  for (const [auth, wantW, label] of [[live, 780, "oturumlu"], [null, 400, "oturumsuz"]]) {
+    await seed(auth);
+    const tiny = await ctx.newPage(); tiny.on("pageerror", (e) => errors.push("tiny: " + e.message));
+    await tiny.setViewportSize({ width: 240, height: 300 });
+    await tiny.goto(`chrome-extension://${id}/popup/popup.html`);
+    await tiny.waitForSelector(auth ? "#app:not([hidden])" : "#login:not([hidden])");
+    const box = await tiny.evaluate(() => { const r = document.body.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; });
+    assert.equal(box.w, wantW, `${label}: gövde genişliği küçük pencerede de sabit olmalı (${box.w})`);
+    if (auth) assert.equal(box.h, 600, `${label}: yükseklik sabit 600 (${box.h})`);
+    await tiny.close();
+  }
+  await seed(live);
+  ok("popup boyutu pencere küçükken de sabit: oturumlu 780×600, oturumsuz 400 px (görünüm birimi yok)");
 
   // 3) Kütüphane: alt sekmeler, satırlar, bekleyen rozeti
   await pop.fill("#search", ""); await pop.getByRole("tab", { name: /Kütüphane/ }).click();
@@ -288,7 +317,7 @@ try {
   ok("Çalıştır: açık sekmeye gerçekten yazar (sonuna ekler), başka hedefte adresle yeni sekme açar");
 
   const rp = await popup(); await rp.waitForSelector("text=Orman perisi karakter");
-  assert.equal(await rp.locator("#target option").count(), 4);
+  assert.equal(await rp.locator("#target option").count(), 5);
   await rp.locator(".card", { hasText: "Orman perisi karakter" }).locator(".hbtn.pri").click({ force: true });
   assert.ok(await openedHas((u) => u.startsWith("https://chatgpt.com/?q=") && u.includes(encodeURIComponent("Işıldayan kanatlı bir orman perisi, mavi tonlarında"))), "kartın Çalıştır düğmesi varsayılan değerlerle ChatGPT'yi açar");
   assert.equal((await sw.evaluate(() => PStore.get("recent")))[0].id, "p1");
@@ -301,7 +330,8 @@ try {
   await rp.waitForSelector(".detailpane .split");
   await rp.locator(".detailpane .splitchev").click();
   await rp.waitForSelector(".pmenu .pitem");
-  assert.equal(await rp.locator(".pmenu .pitem").count(), 4);
+  assert.equal(await rp.locator(".pmenu .pitem").count(), 5);
+  assert.match(await rp.locator(".pmenu").innerText(), /Uygulamada açar/, "Cursor: derin bağlantı");
   assert.match(await rp.locator(".pmenu").innerText(), /Kopyalar ve yeni sekmede açar/, "Gemini: adres parametresi yok → kopyala + aç");
   await rp.screenshot({ path: `${OUT}/11-run-menu.png` });
   await rp.locator(".pmenu .pitem", { hasText: "Perplexity" }).click();
@@ -326,6 +356,27 @@ try {
   assert.match(await chat.locator("#prompt-textarea").inputValue(), /^Şunu üç maddede özetle: Yapay zekâ çıktısı: gelir %12 arttı\./);
   ok("yan panel bağlamı: ChatGPT tanınır, seçili metin okunur, {seçim} değişkenine yazılıp açık sekmeye eklenir");
   await chat.close();
+
+  // 13d) Workflow adım adım (yan panel): ara → başlat → adımı ÇALIŞTIR (çıktı değişkene) → çıktıyı sonraki adıma taşı → bitir
+  await side.bringToFront();
+  await side.getByRole("tab", { name: "Workflow" }).click();
+  await side.waitForSelector("#tab-workflow >> text=Ürün lansmanı");
+  await side.locator("#tab-workflow").getByRole("button", { name: "Başlat" }).click();
+  await side.waitForSelector("#tab-workflow >> text=Adım 1 / 2");
+  assert.equal((await sw.evaluate(() => PStore.get("wf"))).index, 0);
+  await side.locator("#tab-workflow textarea").fill("ilk çıktı metni");
+  await side.locator("#tab-workflow .splitmain").click();
+  assert.ok(await openedHas((u) => u.includes(encodeURIComponent("Şunu üç maddede özetle: ilk çıktı metni"))), "adımın promptu önceki çıktıyla çözülüp çalıştırılır");
+  await side.locator("#tab-workflow").getByRole("button", { name: "Sonraki adım" }).click();
+  await side.waitForSelector("#tab-workflow >> text=Adım 2 / 2");
+  await side.waitForSelector("#tab-workflow >> text=Bu adımda herkese açık prompt yok");
+  assert.equal(await side.locator("#tab-workflow textarea").inputValue(), "ilk çıktı metni", "çıktı sonraki adıma taşınır");
+  await side.locator("#tab-workflow").getByRole("button", { name: "Bitir" }).click();
+  await side.waitForSelector("#tab-workflow >> text=Workflow tamamlandı");
+  await side.locator("#tab-workflow").getByRole("button", { name: "Workflow'u kapat" }).click();
+  await side.waitForSelector("#tab-workflow input[type=search]");
+  assert.equal(await sw.evaluate(() => PStore.get("wf")), null);
+  ok("workflow adım adım: arama, başlatma, adımı çıktıyla çalıştırma, çıktı taşıma, bitirme, kapatma");
 
   // 14) Güvenlik: sayfaya enjekte edilen (içerik betiği) bağlam depoya/belirtece ERİŞEMEZ (setAccessLevel TRUSTED_CONTEXTS)
   const denied = await sw.evaluate(async (tabId) => {

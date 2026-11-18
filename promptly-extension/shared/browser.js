@@ -20,6 +20,14 @@ self.PBrowser = (() => {
     const art = el("div", "art" + (big ? " big" : "")); art.style.background = a.bg;
     if (item.type === "text" && (item.preview || item.description)) art.append(el("div", "artText", item.preview || item.description));
     else { const ic = el("span", "arttype"); ic.innerHTML = icon(a.kind); art.append(ic); }
+    // Gerçek küçük resim (açık API'nin ~10 dk'lık imzalı adresi): yüklenirse yer tutucunun üstüne biner, yüklenemezse (süresi dolmuş/ağ) yer tutucu kalır.
+    if (item.thumbnailUrl && /^https:\/\//.test(item.thumbnailUrl)) {
+      const img = el("img", "thumbimg"); img.alt = ""; img.loading = "lazy"; img.decoding = "async"; img.referrerPolicy = "no-referrer";
+      img.addEventListener("load", () => art.classList.add("hasimg"));
+      img.addEventListener("error", () => img.remove());
+      img.src = item.thumbnailUrl;
+      art.prepend(img);
+    }
     return art;
   }
   async function quickCopy(item, ctx) {
@@ -42,6 +50,8 @@ self.PBrowser = (() => {
       const s2 = el("span", "cstat"); s2.innerHTML = icon("copy"); s2.append(String(item.stats.copies || 0));
       m.append(s1, s2);
     }
+    const w = item.works, total = w ? w.yes + w.no : 0;
+    if (total >= 5) { const b = el("span", "pill ok", `✓ %${Math.round((w.yes / total) * 100)}`); b.title = t("worksTitle", { yes: w.yes, total }); m.append(b); } // az oyla yüzde gösterilmez (site kuralı)
     if (item.status === "draft") m.append(el("span", "pill warn", t("statusDraft")));
     else if (item.visibility === "private") m.append(el("span", "pill", t("statusPrivate")));
     return m;

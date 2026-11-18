@@ -9,7 +9,7 @@ self.PLib = (() => {
 
   const typeOf = (v) => (["image", "text", "audio", "video"].includes(v) ? v : "text");
   const fromMe = (row, source) => ({ id: row.id, title: row.title || "", description: row.description || "", type: typeOf(row.contentType), source, status: row.status || "", visibility: row.visibility || "", url: row.url || "", tools: [], author: "" });
-  const fromPublic = (row, source) => ({ id: row.id, title: row.title || "", description: row.description || "", type: typeOf(row.contentType), source, status: "", visibility: "", url: row.url || "", tools: row.tools || [], author: (row.author && row.author.username) || "", preview: row.promptPreview || "", variableNames: row.variableNames || [], tags: row.tags || [], stats: row.stats || null });
+  const fromPublic = (row, source) => ({ id: row.id, title: row.title || "", description: row.description || "", type: typeOf(row.contentType), source, status: "", visibility: "", url: row.url || "", tools: row.tools || [], author: (row.author && row.author.username) || "", preview: row.promptPreview || "", variableNames: row.variableNames || [], tags: row.tags || [], stats: row.stats || null, thumbnailUrl: typeof row.thumbnailUrl === "string" ? row.thumbnailUrl : "", works: row.works || null });
 
   function matches(item, query, type) {
     if (type && type !== "all" && item.type !== type) return false;
