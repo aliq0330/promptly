@@ -40,7 +40,6 @@ export const focusTranslations = {
   "focusSheet.provenPercent": { tr: "Kanıtlanmış · %{{percent}}", en: "Proven · {{percent}}%" },
   "focusSheet.fillAndCopy": { tr: "Doldurup kopyala", en: "Fill and copy" },
   "focusSheet.tryInStudio": { tr: "Studio'da dene", en: "Try in Studio" },
-  "focusSheet.collapse": { tr: "Kartı küçült", en: "Shrink the card" },
   "focusSheet.hidePanel": { tr: "Paneli gizle", en: "Hide panel" },
   "focusSheet.showPanel": { tr: "Paneli göster", en: "Show panel" },
 } as const;

@@ -232,9 +232,19 @@ const jump = async (page, n) => { await page.evaluate(([sel, i]) => { const el =
 const slide = (page, n) => page.locator(`[data-focus-feed] [data-slide-index='${n}']`);
 const sheetEl = (page) => page.locator("[data-focus-sheet]");
 const openCard = async (page, n = 0) => { await slide(page, n).locator("[data-focus-peek-open]").click(); await page.locator("[data-focus-sheet]").waitFor(); await page.waitForTimeout(450); };
-const dragGrabber = async (page, dy) => {
+// Sürükleme (docs/history/437-*): başlık tutamağından; `slow` = parmak gibi yavaş (hız kararı etkilemez), `flick` = hızlı fırlatma.
+const dragGrabber = async (page, dy, { flick = false } = {}) => {
   const g = await page.locator("[data-focus-sheet-grabber]").boundingBox();
-  await page.mouse.move(g.x + 100, g.y + 8); await page.mouse.down(); await page.mouse.move(g.x + 100, g.y + 8 + dy, { steps: 6 }); await page.mouse.up();
+  const x = g.x + 100;
+  const y = g.y + 8;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  const steps = 8;
+  for (let i = 1; i <= steps; i += 1) {
+    await page.mouse.move(x, y + (dy * i) / steps);
+    if (!flick) await page.waitForTimeout(35);
+  }
+  await page.mouse.up();
   await page.waitForTimeout(550);
 };
 const sheetState = (page) => sheetEl(page).getAttribute("data-focus-sheet-state");
@@ -583,20 +593,26 @@ await scenario("17. Prompt şeridi: tek satır prompt + değişken sayısı + Ko
   assert.match(await slide(page, 4).locator("[data-focus-peek]").textContent(), /2 yanıt/);
 });
 
-await scenario("18. Yarım kart: şeride dokununca %58'lik alt kart; görsel üstte küçülür, ray/başlık çekilir, üst çubuk kalır; başlık, prompt, değişken alanı, büyük eylem", async ({ page }) => {
+await scenario("18. Yarım kart (docs/history/437-*): şeride dokununca YERDEN KOPUK %75'lik yüzen kart (altta %3 boşluk, yanlardan 10px, dört köşe yuvarlak), arkada karartı, sahne küçülmez; sekmeler hep görünür; başlık, prompt, değişken alanı, büyük eylem", async ({ page }) => {
   await openFocus(page);
   await page.waitForTimeout(500);
   await openCard(page, 0);
   assert.equal(await sheetState(page), "half");
   const box = await sheetEl(page).boundingBox();
-  assert.ok(Math.abs(box.y - 844 * 0.42) < 6 && Math.abs(box.y + box.height - 844) < 1, `a 58% card from the bottom (${JSON.stringify(box)})`);
+  assert.ok(Math.abs(box.height - 844 * 0.75) < 2, `a 75% card (${JSON.stringify(box)})`);
+  assert.ok(Math.abs(box.y + box.height - 844 * 0.97) < 2, `floating: 3% above the bottom edge (${JSON.stringify(box)})`);
+  assert.ok(Math.abs(box.x - 10) < 1 && Math.abs(box.width - 370) < 1, `10px in from each side (${JSON.stringify(box)})`);
+  assert.notEqual(await sheetEl(page).evaluate((el) => getComputedStyle(el).borderBottomLeftRadius), "0px", "all four corners are round");
   const art = await slide(page, 0).locator("[data-album-art]").boundingBox();
-  assert.ok(art.height > 360 && art.height < 400 && art.y === 0, `the picture shrinks into the room above (${art.height})`);
+  assert.ok(art.height > 840 && art.y === 0, `the scene stays full behind the card (${art.height})`);
+  const scrim = page.locator("[data-focus-scrim]");
+  assert.equal(await scrim.evaluate((el) => el.style.opacity), "1", "dimmed scrim behind the card");
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-slide-index='0'] [data-focus-peek]")).opacity), "0", "the strip steps aside");
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] button[aria-label=\"Odak'ı kapat\"]").parentElement).opacity), "1", "the top bar stays on the half card");
-  assert.equal(await sheetEl(page).locator("[role='tablist']").count(), 0, "half = no tabs");
+  assert.deepEqual(await sheetEl(page).getByRole("tab").allInnerTexts().then((all) => all.map((x) => x.replace(/\s+/g, " ").trim())), ["Prompt", "Yorumlar 1", "Sonuçlar"], "tabs are on the half card too");
   assert.match(await sheetEl(page).locator("[data-focus-card-header]").textContent(), /Görsel prompt 1/);
-  assert.match(await sheetEl(page).locator("[data-focus-card-header]").textContent(), /Kanıtlanmış · %93/, "the works tally from the real RPC: 128 of 137");
+  assert.ok(await sheetEl(page).getByRole("button", { name: "Kapat" }).isVisible(), "the ✕");
+  assert.match(await sheetEl(page).locator("[data-focus-works]").textContent(), /Kanıtlanmış · %93/, "the works tally from the real RPC: 128 of 137");
   assert.match(await sheetEl(page).locator("[data-focus-prompt-block]").textContent(), /cinematic misty landscape number 1/);
   assert.equal(await sheetEl(page).locator("#pv-va1").inputValue(), "cinematic");
   assert.ok(await sheetEl(page).getByRole("button", { name: "Doldurup kopyala" }).isVisible());
@@ -605,37 +621,47 @@ await scenario("18. Yarım kart: şeride dokununca %58'lik alt kart; görsel üs
   assert.equal(await sheetEl(page).locator("[data-focus-action-bar]").getByRole("button", { name: /Beğen|Tepki/ }).count(), 1, "Beğeni + Kaydet beside the big action");
   await shot(page, "18-half");
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(500);
   assert.equal(await sheetEl(page).count(), 0, "Esc closes the card, Odak stays");
   assert.equal(await stage(page).count(), 1);
   assert.equal(await page.evaluate(() => document.activeElement?.hasAttribute("data-focus-peek-open")), true, "focus returns to the strip button");
+  // The scrim and the ✕ close it too.
+  await openCard(page, 0);
+  await page.mouse.click(195, 60);
+  await page.waitForTimeout(500);
+  assert.equal(await sheetEl(page).count(), 0, "a tap on the dimmed scrim closes");
+  await openCard(page, 0);
+  await sheetEl(page).getByRole("button", { name: "Kapat" }).click();
+  await page.waitForTimeout(500);
+  assert.equal(await sheetEl(page).count(), 0, "✕ closes");
 });
 
-await scenario("19. Kart durumları: yukarı sürükle → tam (küçük başlık + sekmeler + ayrıntılar, üst çubuk çekilir); aşağı → yarım → kapalı; küçült düğmesi yarıma döner", async ({ page }) => {
+await scenario("19. Kart durumları: başlıktan yukarı sürükle → %90 (üstte %7, ayrıntılar açılır); yavaş aşağı → yarım; hızlı aşağı/yarımdan aşağı → kapalı; küçük sürükleme karar vermez; sekmeye dokunmak sekmeyi seçer", async ({ page }) => {
   await openFocus(page);
   await page.waitForTimeout(500);
   await openCard(page, 0);
   await dragGrabber(page, -120);
   assert.equal(await sheetState(page), "full");
   const box = await sheetEl(page).boundingBox();
-  assert.ok(Math.abs(box.y - 84) < 4, `the full card's top is 84px down (${box.y})`);
-  assert.ok(await sheetEl(page).locator("[data-focus-card-compact]").isVisible(), "compact header with the thumbnail");
-  assert.deepEqual(await page.getByRole("tab").allInnerTexts().then((all) => all.map((s) => s.replace(/\s+/g, " ").trim())), ["Prompt", "Yorumlar 1", "Sonuçlar"], "no Sürümler tab: the prompt has no versions");
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] button[aria-label=\"Odak'ı kapat\"]").parentElement).opacity), "0", "top bar steps aside on the full card");
+  assert.ok(Math.abs(box.height - 844 * 0.9) < 2 && Math.abs(box.y + box.height - 844 * 0.97) < 2, `a 90% card, still 3% off the edge (${JSON.stringify(box)})`);
+  assert.deepEqual(await sheetEl(page).getByRole("tab").allInnerTexts().then((all) => all.map((x) => x.replace(/\s+/g, " ").trim())), ["Prompt", "Yorumlar 1", "Sonuçlar"], "no Sürümler tab: the prompt has no versions");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] button[aria-label=\"Odak'ı kapat\"]").parentElement).opacity), "0", "top bar steps aside on the large card");
   const text = await sheetEl(page).textContent();
-  assert.match(text, /Çalıştı mı\?/, "the works vote is in the full card");
+  assert.match(text, /Çalıştı mı\?/, "the works vote is in the card");
   assert.match(text, /Midjourney/, "tool row");
   assert.ok(await sheetEl(page).getByRole("link", { name: /Ayrıntıları aç/ }).isVisible());
   await shot(page, "19-full");
-  await sheetEl(page).getByRole("button", { name: "Kartı küçült" }).click();
-  await page.waitForTimeout(500);
-  assert.equal(await sheetState(page), "half");
-  assert.equal(await sheetEl(page).locator("[role='tablist']").count(), 0);
-  await dragGrabber(page, 130);
+  await dragGrabber(page, 100);
+  assert.equal(await sheetState(page), "half", "a slow pull down from large settles on half");
+  assert.ok(Math.abs((await sheetEl(page).boundingBox()).height - 844 * 0.75) < 2);
+  await dragGrabber(page, 300, { flick: true });
   assert.equal(await sheetEl(page).count(), 0, "dragged down from half = closed");
   await openCard(page, 0);
   await dragGrabber(page, 20);
-  assert.equal(await sheetState(page), "half", "a small drag decides nothing");
+  assert.equal(await sheetState(page), "half", "a small slow drag decides nothing");
+  await sheetEl(page).getByRole("tab", { name: /Sonuçlar/ }).click();
+  assert.equal(await sheetEl(page).getByRole("tab", { name: /Sonuçlar/ }).getAttribute("aria-selected"), "true", "a tap on a tab selects it (no drag)");
+  assert.equal(await sheetState(page), "half");
 });
 
 await scenario("20. Kartta değişken alanı: yazdıkça prompt canlı güncellenir; şerit satırı, Kopyala ve 'Varsayılanlara dön' aynı değeri kullanır", async ({ page }) => {
@@ -759,14 +785,14 @@ await scenario("23. Misafir: yorumları okur; yazma/emoji giriş penceresini aç
   assert.equal(db.calls.filter((c) => c.table === "prompt_comments" && c.method === "POST").length, 0);
 }, { guest: true });
 
-await scenario("24. Sonuçlar sekmesi: prompt'un kullanıcı sonuçları bölümü kartın içinde; Çalıştı mı? kopyalamadan sonra yarım kartta da açılır", async ({ page, db }) => {
+await scenario("24. Sonuçlar sekmesi: prompt'un kullanıcı sonuçları bölümü kartın içinde; Çalıştı mı? yarım kartta da görünür (docs/history/437-*)", async ({ page, db }) => {
   await openFocus(page);
   await page.waitForTimeout(500);
   await openCard(page, 0);
-  assert.equal(await sheetEl(page).getByText("Çalıştı mı?").count(), 0, "half card: no vote yet");
+  assert.ok(await sheetEl(page).getByText("Çalıştı mı?").isVisible(), "the vote is on the half card too");
   await sheetEl(page).getByRole("button", { name: "Doldurup kopyala" }).click();
   await page.waitForTimeout(700);
-  assert.ok(await sheetEl(page).getByText("Çalıştı mı?").isVisible(), "right after copying the vote opens even on the half card");
+  assert.ok(await sheetEl(page).getByText("Çalıştı mı?").isVisible(), "…and stays after copying");
   assert.ok(db.calls.some((c) => c.table === "rpc/prompt_works_state"));
   await dragGrabber(page, -120);
   await page.getByRole("tab", { name: "Sonuçlar" }).click();
@@ -831,7 +857,7 @@ await scenario("27. Paylaş / Space'e ekle: Odak'taki gönderi 'Space'e ekle' il
   assert.equal(added[0].prompt_id, feed.prompts[0].id);
 });
 
-await scenario("28. Süzgeç menüsü (docs/history/245-*): üstte tek 'Tümü · En yeni' çipi; her tür kendi sunucu sorgusu; kart/seçici açıkken süzgeç değişince kapanır", async ({ page, db }) => {
+await scenario("28. Süzgeç menüsü (docs/history/245-*): üstte tek 'Tümü · En yeni' çipi; her tür kendi sunucu sorgusu; kart açıkken süzgeç çipi karartının altındadır", async ({ page, db }) => {
   await openFocus(page);
   assert.equal(await stage(page).locator("[role='tablist']").count(), 0, "no capsule while no card is open");
   assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Tümü · En yeni");
@@ -843,8 +869,10 @@ await scenario("28. Süzgeç menüsü (docs/history/245-*): üstte tek 'Tümü �
   assert.equal(await stage(page).getByRole("menu").count(), 0, "Esc closes the menu first");
   assert.equal(await stage(page).count(), 1, "…not Odak");
   await openCard(page, 0);
+  await page.mouse.click(195, 60);
+  await page.waitForTimeout(500);
+  assert.equal(await sheetEl(page).count(), 0, "the scrim covers the filter chip: a tap there closes the card instead of opening the menu");
   await pickFilter(page, "Promptlar");
-  assert.equal(await sheetEl(page).count(), 0, "changing the filter closes the card");
   assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["prompt"]);
   await pickFilter(page, "Workflow'lar");
   assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["workflow"]);

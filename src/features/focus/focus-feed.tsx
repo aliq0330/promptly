@@ -27,7 +27,7 @@ import { feedItemKey } from "@/features/feed/types";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
 import { type ContentTypeId } from "@/lib/content-taxonomy";
 import { FOCUS_CHANNELS, focusFeedCover, focusFeedImages, focusFeedIsNear, focusFeedLayout, focusFeedShouldLoadMore, focusFeedShown, focusFeedStartIndex, type FocusChannel } from "@/lib/focus-feed";
-import { focusActiveIndex, focusKeyAction, focusResultStep, focusSheetStep, type FocusSheetState, type FocusTabId } from "@/lib/focus-sheet";
+import { focusActiveIndex, focusKeyAction, focusResultStep, type FocusSheetState, type FocusTabId } from "@/lib/focus-sheet";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -462,12 +462,9 @@ function FocusScreen() {
     [isDesktop, activeFill],
   );
 
-  const stepSheet = useCallback((direction: "up" | "down") => {
-    setSheet((current) => {
-      const next = focusSheetStep(current?.state ?? null, direction);
-      if (!next) return null;
-      return { state: next, tab: next === "half" ? "main" : (current?.tab ?? "main") };
-    });
+  // The card settled on a new size (a drag release): half or large. Closing goes through `onClose`.
+  const snapSheet = useCallback((state: FocusSheetState) => {
+    setSheet((current) => (current ? { ...current, state } : current));
   }, []);
 
   // ↑ ↓ / PageUp PageDown / j k step through the posts, ← → / h l through the active post's results, P the card, C copies, Esc closes Odak.
@@ -668,7 +665,7 @@ function FocusScreen() {
                 state={sheet.state}
                 tab={sheet.tab}
                 onTab={(next) => setSheet((current) => (current ? { ...current, tab: next } : current))}
-                onStep={stepSheet}
+                onSnap={snapSheet}
                 onClose={() => setSheet(null)}
               />
             )}

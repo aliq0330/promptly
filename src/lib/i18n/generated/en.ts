@@ -6735,7 +6735,6 @@ const dictionary: Record<string, string> = {
   "focusSheet.provenPercent": "Proven · {{percent}}%",
   "focusSheet.fillAndCopy": "Fill and copy",
   "focusSheet.tryInStudio": "Try in Studio",
-  "focusSheet.collapse": "Shrink the card",
   "focusSheet.hidePanel": "Hide panel",
   "focusSheet.showPanel": "Show panel",
   "workflow.auto.title": "Run automatically",

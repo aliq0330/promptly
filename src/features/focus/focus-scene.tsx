@@ -434,8 +434,7 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
       <div
         data-album-art
         className={cn(
-          "absolute inset-x-0 top-0 h-full overflow-hidden transition-[height] duration-300 ease-soft motion-reduce:transition-none",
-          "max-md:group-data-[sheet=half]/stage:h-[calc(100%-58dvh+1.75rem)] max-md:group-data-[sheet=full]/stage:h-0",
+          "absolute inset-x-0 top-0 h-full overflow-hidden",
           "md:relative md:inset-auto md:aspect-[4/5] md:h-[min(44rem,calc(100%-9rem))] md:shrink-0 md:rounded-xl md:shadow-[0_30px_70px_rgb(0_0_0/0.5)]",
           tone ? TONE_BG[tone] : "bg-story-stage",
         )}
@@ -466,7 +465,7 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
         {images.length > 1 && (
           <div
             data-results-chip=""
-            className="pointer-events-none absolute left-3 top-[calc(4.5rem+env(safe-area-inset-top))] z-10 flex h-9 items-center gap-3 rounded-full bg-art-chip px-4 text-caption font-semibold text-on-art max-md:group-data-[sheet=half]/stage:top-auto max-md:group-data-[sheet=half]/stage:bottom-10 md:top-auto md:bottom-4 md:left-auto md:right-4"
+            className="pointer-events-none absolute left-3 top-[calc(4.5rem+env(safe-area-inset-top))] z-10 flex h-9 items-center gap-3 rounded-full bg-art-chip px-4 text-caption font-semibold text-on-art md:top-auto md:bottom-4 md:left-auto md:right-4"
           >
             <span aria-hidden className="flex items-center gap-1">
               {images.map((_, i) => (

@@ -6735,7 +6735,6 @@ const dictionary: Record<string, string> = {
   "focusSheet.provenPercent": "Kanıtlanmış · %{{percent}}",
   "focusSheet.fillAndCopy": "Doldurup kopyala",
   "focusSheet.tryInStudio": "Studio'da dene",
-  "focusSheet.collapse": "Kartı küçült",
   "focusSheet.hidePanel": "Paneli gizle",
   "focusSheet.showPanel": "Paneli göster",
   "workflow.auto.title": "Otomatik çalıştır",
