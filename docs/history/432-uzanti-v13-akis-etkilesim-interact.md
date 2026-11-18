@@ -47,3 +47,8 @@ istek / ayar paketi / workflow / skill listeleri uzantıya **konmadı** (yalnız
 
 ## Canlıya alma
 Migration `deploy.yml` ile merge'de uygulanır; **Edge `api` + `oauth` işlevleri CI ile deploy EDİLMEZ** — "Deploy Edge Functions" iş akışı elle çalıştırılır (yeni uçlar, küçük resim, Çalıştı %).
+
+## v1.3.1 düzeltmesi
+Ayrıntı bölmesinde (`.dbody`, esnek sütun + `overflow-y: auto`) çocuklar varsayılan olarak küçüldüğünden, etkileşim satırı + sekmeler eklenince gövde uzadı ve kaymak yerine
+görsel ile açıklama sıkıştı (görsel 0 px'e düşüyordu; telefon/dar pencerede ekran görüntüsüyle bildirildi). `.dbody > * { flex-shrink: 0 }` ile gövde artık kayar;
+e2e senaryosu görselin ≥165 px kaldığını ve gövdenin kaydığını denetler (düzeltme olmadan 0 px ile kırmızı olduğu doğrulandı).
