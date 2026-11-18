@@ -12,6 +12,7 @@ import { WelcomeTour } from "@/features/onboarding/welcome-tour";
 import { AnnounceReportNotice } from "@/features/communities/announce-picker";
 import { TermsUpdateNotice } from "@/features/legal/terms-update-notice";
 import { NoticeHost } from "@/components/layout/notice-host";
+import { LiveNotificationToasts } from "@/features/notifications/live-toasts";
 import { MessageDock } from "@/features/messages/message-dock";
 import { MessageDockProvider } from "@/features/messages/message-dock-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -70,6 +71,7 @@ export function AppShell({ children }: AppShellProps) {
       </div>
       <MobileNav />
       <MessageDock />
+      <LiveNotificationToasts />
       <WelcomeTour />
       <TermsUpdateNotice />
       <AnnounceReportNotice />

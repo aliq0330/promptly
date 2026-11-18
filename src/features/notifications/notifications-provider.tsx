@@ -21,6 +21,7 @@ import { announceNotice } from "@/lib/app-notice";
 import { applyMute } from "./mute-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { NotificationCategoryName } from "@/lib/notification-mirror";
+import { parseIncomingRow, type IncomingNotificationRow } from "@/lib/live-notification-toast";
 import type { NotificationCard } from "@/types";
 
 /** Etkinlik hatırlatması penceresi 24 saat; 30 dakikalık gecikme zararsızdır. */
@@ -55,6 +56,8 @@ interface NotificationsContextValue {
   loadCategoryCounts: () => Promise<Partial<Record<NotificationCategoryName, number>>>;
   refreshCounters: () => Promise<void>;
   subscribe: (listener: (event: CardEvent) => void) => () => void;
+  /** Gerçek zamanlı gelen YENİ bildirim satırını dinler (canlı bildirim kartı, docs/history/434-*); kanal tektir, ikinci abonelik açılmaz. */
+  subscribeIncoming: (listener: (row: IncomingNotificationRow) => void) => () => void;
   markRead: (card: NotificationCard) => Promise<void>;
   markUnread: (card: NotificationCard) => Promise<void>;
   markAllRead: () => Promise<void>;
@@ -88,6 +91,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const [incoming, setIncoming] = useState(0);
   const [undoNotice, setUndoNotice] = useState<UndoNotice | null>(null);
   const listeners = useRef(new Set<(event: CardEvent) => void>());
+  const incomingListeners = useRef(new Set<(row: IncomingNotificationRow) => void>());
   const wakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const undoSeq = useRef(0);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,6 +108,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     listeners.current.add(listener);
     return () => {
       listeners.current.delete(listener);
+    };
+  }, []);
+
+  const subscribeIncoming = useCallback((listener: (row: IncomingNotificationRow) => void) => {
+    incomingListeners.current.add(listener);
+    return () => {
+      incomingListeners.current.delete(listener);
     };
   }, []);
 
@@ -175,7 +186,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     const channel = supabase
       .channel(`notifications:${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${user.id}` }, (payload) => {
-        if (payload.eventType === "INSERT") setIncoming((n) => n + 1);
+        if (payload.eventType === "INSERT") {
+          setIncoming((n) => n + 1);
+          const row = parseIncomingRow(payload.new);
+          if (row) incomingListeners.current.forEach((listener) => listener(row));
+        }
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => void refreshCounters(), 400);
       })
@@ -404,6 +419,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       loadCategoryCounts,
       refreshCounters,
       subscribe,
+      subscribeIncoming,
       markRead,
       markUnread,
       markAllRead,
@@ -418,7 +434,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       runUndo,
       dismissUndo,
     }),
-    [unread, snoozed, incoming, loadCategoryCounts, refreshCounters, subscribe, markRead, markUnread, markAllRead, clearAll, remove, snooze, unsnooze, mute, unmute, undoNotice, pushUndo, runUndo, dismissUndo],
+    [unread, snoozed, incoming, loadCategoryCounts, refreshCounters, subscribe, subscribeIncoming, markRead, markUnread, markAllRead, clearAll, remove, snooze, unsnooze, mute, unmute, undoNotice, pushUndo, runUndo, dismissUndo],
   );
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;

@@ -159,6 +159,22 @@ export const notificationCenterTranslations = {
   "nc.settings.snoozedHint": { tr: "Hatırlatılmak üzere ertelediğin bildirimler, zamanı gelince okunmamış olarak en üste döner.", en: "Notifications you snoozed come back to the top as unread when their time is up." },
   "nc.settings.snoozedCount": { tr: "{{count}} ertelenmiş bildirim", en: "{{count}} snoozed notifications" },
   "nc.settings.snoozedOpen": { tr: "Göster", en: "Show" },
+
+  // --- Canlı bildirim kartı (docs/history/434-*) ---------------------------------------------------------------------------------------
+  "nc.live.region": { tr: "Canlı bildirimler", en: "Live notifications" },
+  "nc.live.now": { tr: "şimdi", en: "now" },
+  "nc.live.close": { tr: "Bildirimi kapat", en: "Dismiss notification" },
+  "nc.live.follow": { tr: "Takip et", en: "Follow" },
+  "nc.settings.live": { tr: "Canlı bildirim kartı", en: "Live notification pop-ups" },
+  "nc.settings.liveHint": {
+    tr: "Siteyi kullanırken yeni bir bildirim gelince üst köşede birkaç saniye görünen önizleme kartı. Kapatırsan bildirimler yine gelir; yalnız kart çıkmaz.",
+    en: "A preview card that appears in the top corner for a few seconds when a new notification arrives while you use the site. If you turn it off you still get notifications; only the card is hidden.",
+  },
+  "nc.settings.liveTitle": { tr: "Bildirimi kart olarak göster", en: "Show new notifications as a card" },
+  "nc.settings.liveRowHint": {
+    tr: "Üstüne gelince süre durur. Aynı içeriğe gelenler tek kartta birleşir. Bu tercih yalnız bu cihaz için geçerlidir.",
+    en: "Hovering pauses the timer. Several notifications for the same content merge into one card. This choice applies to this device only.",
+  },
   "nc.pref.reactions.title": { tr: "Beğeni ve tepkiler", en: "Likes and reactions" },
   "nc.pref.reactions.hint": { tr: "İçeriklerine gelen beğeni ve tepkiler.", en: "Likes and reactions on your content." },
   "nc.pref.comment_likes.title": { tr: "Yorum beğenileri", en: "Comment likes" },

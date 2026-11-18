@@ -474,3 +474,10 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-skills-socia
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-extension-card.mjs   # 6/6 beklenir
 ```
 
+## Canlı bildirim kartı (`docs/history/434-*`)
+
+`run-live-toasts.mjs`: sitedeyken Realtime `notifications` INSERT'i gelince üst köşede kart (bilgisayar sağ üst / telefon üstten), 5 sn'de kapanma + üstüne gelince/basılı tutunca duraklama, aynı içeriğe gelen beğenilerin birleşmesi, en çok 3 kart, ✕/Esc, dokununca okundu + hedef sayfa, Yanıtla/Takip et, gösterilmeme kuralları (bildirimler sayfası, zil paneli, o sohbet, haftalık özet, ertelenmiş, okunmuş), Ayarlar → Bildirimler anahtarı (kalıcılık), İngilizce, hareketi azalt, koyu tema/tablet, bozuk yük (19/19 beklenir). Realtime `realtime-hub.mjs` ile taklit edilir; gerçek Supabase'e/Realtime'a KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-live-toasts.mjs   # 19/19 beklenir
+```
