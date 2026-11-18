@@ -19,7 +19,7 @@ export function ProfileSkillsPanel({ ownerId, isOwn }: { ownerId: string; isOwn:
   return (
     <PagedListState list={list}>
       {list.items.length === 0 ? (
-        <ProfileEmptyState
+        <ProfileEmptyState scene="toolbox"
           icon={GraduationCap}
           title={t("skill.noneYetTitle")}
           description={isOwn ? t("skill.profile.noneOwn") : t("skill.profile.noneOther")}

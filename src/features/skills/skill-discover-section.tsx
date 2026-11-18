@@ -194,7 +194,7 @@ export function SkillDiscoverSection() {
       {loading ? (
         <PromptCardSkeletonGrid count={6} />
       ) : failed && skills.length === 0 ? (
-        <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: () => setRetry((n) => n + 1) }} />
+        <EmptyState scene="fishing" icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: () => setRetry((n) => n + 1) }} />
       ) : skills.length === 0 ? (
         <EmptyState icon={GraduationCap} scene="search" title={t("skill.discover.noMatchTitle")} description={t("skill.discover.noMatchBody")} />
       ) : (

@@ -45,7 +45,7 @@ export function ToolsSection({ query = "" }: { query?: string }) {
     <section className="space-y-4" data-tools-section>
       <p className="text-small text-text-muted">{t("discover.toolsIntro")}</p>
       {tools.length === 0 ? (
-        <EmptyState icon={Wrench} title={t("discover.toolsNoMatch")} compact />
+        <EmptyState scene="filter" icon={Wrench} title={t("discover.toolsNoMatch")} compact />
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {tools.map((tool) => (

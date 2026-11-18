@@ -118,7 +118,7 @@ export function TeamProjectPage({ ctx }: { ctx: TeamCtx }) {
   if (missingKey && (stale || retried !== missingKey)) return <Skeleton className="h-72 w-full rounded-xl" />;
   if (state !== "ready" || !detail) {
     return (
-      <EmptyState
+      <EmptyState scene={state === "failed" ? "halfBridge" : "files"}
         icon={FolderOpen}
         title={t(state === "failed" ? "tp.error.load" : "tp.page.missing")}
         description={t(state === "failed" ? "tp.page.failedBody" : "tp.page.missingBody")}
@@ -132,7 +132,7 @@ export function TeamProjectPage({ ctx }: { ctx: TeamCtx }) {
   if (params.get("sub") === "board" && !params.get("item")) return <BoardMode ctx={ctx} detail={detail} onChanged={reload} />;
   if (fileId) {
     const file = detail.files.find((item) => item.id === fileId);
-    if (!file) return <EmptyState icon={FolderOpen} title={t("tp.file.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, detail.project.id) }} />;
+    if (!file) return <EmptyState scene="files" icon={FolderOpen} title={t("tp.file.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, detail.project.id) }} />;
     return <FilePage ctx={ctx} detail={detail} file={file} onChanged={reload} />;
   }
   if (boardId) return <BoardPage ctx={ctx} detail={detail} boardId={boardId} onChanged={reload} />;
@@ -723,7 +723,7 @@ function BoardPage({ ctx, detail, boardId, onChanged }: { ctx: TeamCtx; detail: 
   }, [redirectToCanvas, router, team.id, project.id, boardId]);
   if (redirectToCanvas) return <Skeleton className="h-72 w-full rounded-xl" />;
 
-  if (!known) return <EmptyState icon={Presentation} title={t("tp.board.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, project.id) }} />;
+  if (!known) return <EmptyState scene="files" icon={Presentation} title={t("tp.board.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, project.id) }} />;
   const heading = isMain ? t("tp.area.projectWide") : (board?.title ?? "");
   const lead = canReview(myRole);
   const fileOfBoard = board?.fileId ? detail.files.find((item) => item.id === board.fileId) : null;
@@ -914,7 +914,7 @@ function BoardMode({ ctx, detail, onChanged }: { ctx: TeamCtx; detail: ProjectDe
   }, [current, areaId, team.id, team.name, team.myRole, project, scopeFileId, scopeFile?.title, myRole, pages, mainTitle, groupId, groupTitle, detail.people, comment, backHref, lead, onChanged]);
 
   if (!areaId || !current || !config) {
-    return <EmptyState icon={Presentation} title={t("tp.board.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, project.id) }} />;
+    return <EmptyState scene="files" icon={Presentation} title={t("tp.board.missing")} action={{ label: t("tp.page.back"), href: projectLink(team.id, project.id) }} />;
   }
 
   return (

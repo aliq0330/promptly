@@ -197,7 +197,7 @@ export function GroupMembersSection({
           {t("presence.hiddenSelfNote")}
         </p>
       ) : current.members.length === 0 ? (
-        <EmptyState icon={UsersRound} title={onlineOnly ? t("presence.onlineMembersEmpty") : t("groups.members.empty")} compact />
+        <EmptyState scene="members" icon={UsersRound} title={onlineOnly ? t("presence.onlineMembersEmpty") : t("groups.members.empty")} compact />
       ) : (
         <>
           <ul className="divide-y divide-border-soft rounded-lg border border-border-soft" aria-label={t("groups.members.listLabel")}>

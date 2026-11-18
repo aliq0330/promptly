@@ -156,7 +156,7 @@ export function SpaceDiscoverSection() {
 
   if (pages.loading) return <PromptCardSkeletonGrid count={6} />;
   if (pages.failed && pages.spaces.length === 0) {
-    return <EmptyState icon={SpacesIcon} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: pages.retry }} />;
+    return <EmptyState scene="fishing" icon={SpacesIcon} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: pages.retry }} />;
   }
   if (pages.spaces.length === 0) return <EmptyState scene="spaces" icon={SpacesIcon} title={t("discover.noSpacesYet")} />;
   return (

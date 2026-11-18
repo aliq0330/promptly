@@ -21,8 +21,34 @@ import { drafts } from "./scene-drafts";
 import { insights } from "./scene-insights";
 import { team } from "./scene-team";
 import { collection } from "./scene-collection";
+import { feedStalled } from "./scene-feedStalled";
+import { focusJam } from "./scene-focusJam";
+import { fishing } from "./scene-fishing";
+import { cutString } from "./scene-cutString";
+import { halfBridge } from "./scene-halfBridge";
+import { invite } from "./scene-invite";
+import { locked } from "./scene-locked";
+import { story } from "./scene-story";
+import { emptyFrame } from "./scene-emptyFrame";
+import { files } from "./scene-files";
+import { mailbox } from "./scene-mailbox";
+import { following } from "./scene-following";
+import { shelf } from "./scene-shelf";
+import { talk } from "./scene-talk";
+import { stars } from "./scene-stars";
+import { filter } from "./scene-filter";
+import { members } from "./scene-members";
+import { archive } from "./scene-archive";
+import { sprout } from "./scene-sprout";
+import { params } from "./scene-params";
+import { notebook } from "./scene-notebook";
+import { bottle } from "./scene-bottle";
+import { dominoes } from "./scene-dominoes";
+import { quoteBoard } from "./scene-quoteBoard";
+import { toolbox } from "./scene-toolbox";
 
-const SCENES: Record<LineArtKind, (host: Element, labels: SceneLabels) => () => void> = { meydan, lost, share, milestone, studio, offline, loader, inbox, chat, saved, search, community, spaces, requests, workflow, preset, drafts, insights, team, collection };
+const SCENES: Record<LineArtKind, (host: Element, labels: SceneLabels) => () => void> = { meydan, lost, share, milestone, studio, offline, loader, inbox, chat, saved, search, community, spaces, requests, workflow, preset, drafts, insights, team, collection,
+  feedStalled, focusJam, fishing, cutString, halfBridge, invite, locked, story, emptyFrame, files, mailbox, following, shelf, talk, stars, filter, members, archive, sprout, params, notebook, bottle, dominoes, quoteBoard, toolbox };
 
 /** Draw a scene into `host`; returns the unmount, which also removes the drawing. */
 export function mountLineArt(kind: LineArtKind, host: Element, labels: SceneLabels): () => void {

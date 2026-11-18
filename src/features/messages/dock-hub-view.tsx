@@ -161,7 +161,7 @@ function DockTeamList({ teamId }: { teamId: string }) {
         <DockHeader onBack={() => dock.setView({ kind: "list" })} onMinimize={dock.minimize}>
           <span className="pl-1" />
         </DockHeader>
-        <EmptyState icon={Users} title={t("th.notFound")} className="m-3" compact />
+        <EmptyState scene="mailbox" icon={Users} title={t("th.notFound")} className="m-3" compact />
       </>
     );
   }
@@ -281,7 +281,7 @@ function DockProjectList({ teamId, projectId }: { teamId: string; projectId: str
         <DockHeader onBack={backToTeam} onMinimize={dock.minimize}>
           <span className="pl-1" />
         </DockHeader>
-        <EmptyState icon={Users} title={t("th.project.notFound")} className="m-3" compact />
+        <EmptyState scene="mailbox" icon={Users} title={t("th.project.notFound")} className="m-3" compact />
       </>
     );
   }
@@ -359,7 +359,7 @@ function DockCommunityList({ communityId }: { communityId: string }) {
         <DockHeader onBack={() => dock.setView({ kind: "list" })} onMinimize={dock.minimize}>
           <span className="pl-1" />
         </DockHeader>
-        <EmptyState icon={Users} title={t("th.community.notFound")} className="m-3" compact />
+        <EmptyState scene="mailbox" icon={Users} title={t("th.community.notFound")} className="m-3" compact />
       </>
     );
   }

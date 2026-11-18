@@ -72,7 +72,7 @@ export function TeamJoinPage() {
   );
 
   if (token === undefined || status === "loading") return loading;
-  if (!token) return shell(<EmptyState icon={Link2Off} title={t("tm.join.invalidTitle")} description={t("tm.join.invalidBody")} action={{ label: t("tm.page.backToTeams"), href: "/teams" }} />);
+  if (!token) return shell(<EmptyState scene="invite" icon={Link2Off} title={t("tm.join.invalidTitle")} description={t("tm.join.invalidBody")} action={{ label: t("tm.page.backToTeams"), href: "/teams" }} />);
   if (status === "unauthenticated") {
     return shell(
       <div className="space-y-4 rounded-lg card-flat p-6 text-center shadow-card">
@@ -86,7 +86,7 @@ export function TeamJoinPage() {
   }
   if (preview === null) return loading;
   if (preview === "error" || !preview.valid) {
-    return shell(<EmptyState icon={Link2Off} title={t("tm.join.invalidTitle")} description={t("tm.join.invalidBody")} action={{ label: t("tm.page.backToTeams"), href: "/teams" }} />);
+    return shell(<EmptyState scene="invite" icon={Link2Off} title={t("tm.join.invalidTitle")} description={t("tm.join.invalidBody")} action={{ label: t("tm.page.backToTeams"), href: "/teams" }} />);
   }
 
   const join = async () => {

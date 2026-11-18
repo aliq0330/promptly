@@ -132,7 +132,7 @@ export function UserInteractionList({
   }
 
   if (list.items.length === 0 && !list.hasMore) {
-    return <EmptyState compact icon={icon} title={t(EMPTY_KEYS[kind])} className="m-4" />;
+    return <EmptyState scene="sprout" compact icon={icon} title={t(EMPTY_KEYS[kind])} className="m-4" />;
   }
 
   return (

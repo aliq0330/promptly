@@ -82,7 +82,7 @@ export function GroupRequestsSection({
     );
   }
   if (pages.items.length === 0) {
-    return <EmptyState icon={Inbox} title={t("groups.requests.empty")} description={t("groups.requests.emptyHelp")} compact />;
+    return <EmptyState scene="members" icon={Inbox} title={t("groups.requests.empty")} description={t("groups.requests.emptyHelp")} compact />;
   }
 
   return (

@@ -89,7 +89,7 @@ export function PresetParametersBuilder({
       className="space-y-3"
     >
       {rowIds.length === 0 ? (
-        <EmptyState compact icon={SlidersHorizontal} title={t("presetBuilder.emptyTitle")} description={t("presetBuilder.emptyBody")} action={{ label: t("presetField.addTitle"), onClick: () => setAdding(true) }} />
+        <EmptyState scene="params" compact icon={SlidersHorizontal} title={t("presetBuilder.emptyTitle")} description={t("presetBuilder.emptyBody")} action={{ label: t("presetField.addTitle"), onClick: () => setAdding(true) }} />
       ) : (
         <ul className="space-y-3">
           {rowIds.map((id) => {

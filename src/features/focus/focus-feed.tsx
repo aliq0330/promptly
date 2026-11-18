@@ -170,7 +170,7 @@ function FocusFailed({ onRetry }: { onRetry: () => void }) {
   useFullScreenChrome();
   return createPortal(
     <Stage className="items-center justify-center px-4">
-      <EmptyState icon={Focus} title={t("focusFeed.failedTitle")} action={{ label: t("common.retry"), onClick: onRetry }} />
+      <EmptyState scene="focusJam" icon={Focus} title={t("focusFeed.failedTitle")} action={{ label: t("common.retry"), onClick: onRetry }} />
       <Button variant="outline" className="mt-3" onClick={() => router.push("/")}>
         {t("focusFeed.backHome")}
       </Button>
@@ -686,15 +686,15 @@ function FocusScreen() {
           </div>
         ) : needsLogin ? (
           <CenteredState>
-            <EmptyState icon={UserCheck} title={t("feed.emptyFollowingTitle")} description={t("feed.emptyFollowingDescription")} action={{ label: t("common.login"), href: "/login" }} />
+            <EmptyState scene="following" icon={UserCheck} title={t("feed.emptyFollowingTitle")} description={t("feed.emptyFollowingDescription")} action={{ label: t("common.login"), href: "/login" }} />
           </CenteredState>
         ) : failed && total === 0 && !hasMore ? (
           <CenteredState>
-            <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
+            <EmptyState scene="focusJam" icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
           </CenteredState>
         ) : total === 0 && !hasMore ? (
           <CenteredState>
-            <EmptyState
+            <EmptyState scene={tab === "following" ? "following" : "shelf"}
               icon={Inbox}
               title={mediaOnly ? t("focusFeed.noMediaTitle") : tab === "following" ? t("feed.emptyFollowingNoPosts") : t("feed.emptyDefault")}
               description={tab === "following" && !mediaOnly ? t("feed.emptyFollowingHint") : undefined}
@@ -801,7 +801,7 @@ function FeedEndSlide({
   return (
     <section data-slide-index={index} className={cn("flex h-full shrink-0 snap-center snap-always items-center justify-center", FOCUS_SLIDE_WIDTH)}>
       {failed ? (
-        <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: onRetry }} />
+        <EmptyState scene="focusJam" icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: onRetry }} />
       ) : hasMore || loadingMore ? (
         <p role="status" className="text-small text-text-muted">
           {t("common.loadingMore")}
