@@ -12,6 +12,7 @@ export function startMock() {
     m2: { promptText: "{okur} için {ton} bir bülten özeti yaz.", variables: ["okur", "ton"] },
     p1: { promptText: "Işıldayan kanatlı bir orman perisi, {renk} tonlarında", variables: [{ name: "renk", defaultValue: "mavi" }] },
     c1: { promptText: "Şunu üç maddede özetle: {seçim}", variables: ["seçim"] },
+    j1: { promptText: '{"prompt": "a {subject} portrait", "style": "noir", "steps": 30}', variables: ["subject"] },
   };
   const pub = (id, title, type = "image") => ({ id, title, description: "", contentType: type, tools: ["midjourney"], author: { username: "ayse" }, promptPreview: "...", variableNames: [], url: `https://site.example/prompts/local?id=${id}` });
   const server = http.createServer(async (req, res) => {
@@ -48,9 +49,11 @@ export function startMock() {
     if (r === "/prompts") {
       const q = url.searchParams.get("q") || "", tags = url.searchParams.getAll("tag"), tools = url.searchParams.getAll("tool");
       if (tools.includes("chatgpt")) return send(200, { items: [{ ...pub("c1", "ChatGPT özet promptu", "text"), tools: ["chatgpt"], variableNames: ["seçim"] }], nextCursor: null });
-      if (url.searchParams.get("sort") === "popular" && !q && !tags.length) return send(200, { items: [{ ...pub("p1", "Orman perisi karakter"), variableNames: ["renk"], stats: { likes: 3, saves: 1, comments: 0, copies: 9 } }, pub("p2", "Değişkensiz resim")], nextCursor: null });
+      if (url.searchParams.get("sort") === "popular" && !q && !tags.length) return send(200, { items: [{ ...pub("p1", "Orman perisi karakter"), variableNames: ["renk"], stats: { likes: 3, saves: 1, comments: 0, copies: 9 }, thumbnailUrl: "https://img.example.test/p1.png", works: { yes: 9, no: 1 } }, { ...pub("p2", "Değişkensiz resim"), thumbnailUrl: "https://img.example.test/gone.png", works: { yes: 1, no: 1 } }, { ...pub("j1", "Yapılandırılmış prompt", "text"), variableNames: ["subject"] }], nextCursor: null });
       return send(200, { items: [{ ...pub("e1", "Keşfet sonucu: " + (q || "yeni") + (tags.length ? " #" + tags.join(",") : "")), variableNames: ["renk"] }, pub("e2", "Değişkensiz sonuç")], nextCursor: null });
     }
+    if (r === "/workflows") return send(200, { items: [{ id: "w1", kind: "workflow", title: "Ürün lansmanı", stepCount: 2, author: { username: "ayse" } }], nextCursor: null });
+    if (r === "/workflows/w1") return send(200, { id: "w1", title: "Ürün lansmanı", url: "https://site.example/workflows/local?id=w1", steps: [{ position: 1, title: "Özet", description: "Önce özetle.", instructions: "", prompt: { id: "c1", title: "ChatGPT özet promptu" } }, { position: 2, title: "Duyuru", description: "", instructions: "Elle duyuru yaz.", prompt: null }] });
     const m = /^\/prompts\/(.+)$/.exec(r);
     if (m && texts[m[1]]) return send(200, { id: m[1], ...texts[m[1]] });
     return send(404, { error: { code: "not_found", message: "x" } });

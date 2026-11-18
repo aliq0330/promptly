@@ -105,5 +105,13 @@ self.PBrowse = (() => {
     return out;
   }
 
-  return { TYPES, SORTS, FILTER_KEYS, DENSITIES, MAX_VIEWS, MAX_SLOTS, DEFAULT_FILTERS, DEFAULT_PREFS, cleanFilters, tagSlug, isDefault, sameFilters, activeCount, searchArgs, clientFilter, cleanPrefs, addView, removeView, pinSlot, unpinSlot, isPinned, slimItem, artOf, exportFile, usesSelection, selectionValues, SELECTION_VARS };
+  // Workflow zinciri: önceki adımın çıktısı bu adlı değişkenlere yazılır (seçim değişkenleri de dahil: kullanıcı çıktıyı sayfada seçip alır).
+  const CHAIN_VARS = ["önceki", "onceki", "previous", "girdi", "input", "çıktı", "output"];
+  const chainValues = (names, text) => {
+    const out = {};
+    for (const n of names || []) if (CHAIN_VARS.includes(String(n).toLowerCase()) || SELECTION_VARS.includes(String(n).toLowerCase())) out[n] = text;
+    return out;
+  };
+
+  return { CHAIN_VARS, chainValues, TYPES, SORTS, FILTER_KEYS, DENSITIES, MAX_VIEWS, MAX_SLOTS, DEFAULT_FILTERS, DEFAULT_PREFS, cleanFilters, tagSlug, isDefault, sameFilters, activeCount, searchArgs, clientFilter, cleanPrefs, addView, removeView, pinSlot, unpinSlot, isPinned, slimItem, artOf, exportFile, usesSelection, selectionValues, SELECTION_VARS };
 })();

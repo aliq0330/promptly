@@ -52,6 +52,10 @@ export interface PublicPromptSummary {
   variableNames: string[];
   author: PublicAuthor;
   stats: PublicStats;
+  /** İlk görselin KISA ÖMÜRLÜ (≈10 dk) imzalı adresi; görsel yoksa ya da imzalanamadıysa null. Kalıcı bağlantı DEĞİL: saklama, her listede yeniden al. */
+  thumbnailUrl: string | null;
+  /** "Çalıştı mı?" oyları (`prompt_works_stats`); hiç oy yoksa null. Yüzde hesabı/rozet eşiği istemcinin işidir. */
+  works: { yes: number; no: number } | null;
   createdAt: string;
 }
 
@@ -122,6 +126,9 @@ interface PromptRow {
   created_at: string;
   profiles: { username: string; display_name: string | null } | null;
   prompt_tags: { tags: { slug: string; label: string } | null }[] | null;
+  prompt_media?: { url: string; position: number }[] | null;
+  /** Birebir ilişki (anahtar = prompt_id): PostgREST nesne döner; yine de dizi gelirse ilkini al. */
+  prompt_works_stats?: { yes_count: number; no_count: number } | { yes_count: number; no_count: number }[] | null;
 }
 
 interface VariableRow {
@@ -136,7 +143,7 @@ interface VariableRow {
 
 const PROMPT_COLUMNS =
   "id,title,description,prompt_text,content_type,category,subcategory,tool,tools,like_count,save_count,comment_count,copy_count,created_at," +
-  "profiles:author_id(username,display_name),prompt_tags(tags(slug,label))";
+  "profiles:author_id(username,display_name),prompt_tags(tags(slug,label)),prompt_media(url,position),prompt_works_stats(yes_count,no_count)";
 const VARIABLE_COLUMNS = "prompt_id,name,default_value,description,type,options,config,sort_order";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -145,6 +152,61 @@ export const TOOL_REF_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,59}(:[A-Za-z0-9][A-Za-z0
 
 export function isUuid(value: string): boolean {
   return UUID_PATTERN.test(value);
+}
+
+/** Gömülü ilişkiler: yalnız İLK görsel (liste kartı küçük resmi). */
+function withEmbeds(params: URLSearchParams): URLSearchParams {
+  params.set("prompt_media.order", "position.asc");
+  params.set("prompt_media.limit", "1");
+  return params;
+}
+
+const MEDIA_BUCKET = "prompt-media";
+const THUMBNAIL_TTL_SECONDS = 10 * 60;
+const MEDIA_PATH_PATTERN = /\/object\/(?:public|sign|authenticated)\/prompt-media\/([^?#]+)/;
+
+/** Satırda saklanan görsel adresinden (kimlik olarak) bucket içi yolu çıkarır; tanınmayan adres (harici, data:) için null. */
+export function mediaPathOf(url: string | null | undefined): string | null {
+  if (!url || url.startsWith("data:") || url.startsWith("blob:")) return null;
+  const match = MEDIA_PATH_PATTERN.exec(url);
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Listedeki promptların ilk görselini ANON anahtarla imzalatır (tek istek). Yetkiyi Storage politikası verir: görsel, onu gösteren satır
+ * herkese açıkken okunur — burada hiçbir kural genişletilmez. HATA GÜVENLİDİR: imza alınamazsa (istemci desteklemiyor, ağ, politika) liste
+ * yine döner, küçük resim null olur; API'yi düşürmez.
+ */
+export async function signThumbnails(client: RestClient, rows: PromptRow[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (!client.signUrls) return out;
+  const wanted = rows.flatMap((row) => {
+    const path = mediaPathOf(row.prompt_media?.[0]?.url);
+    return path ? [{ id: row.id, path }] : [];
+  });
+  if (wanted.length === 0) return out;
+  try {
+    const signed = await client.signUrls(MEDIA_BUCKET, wanted.map((w) => w.path), THUMBNAIL_TTL_SECONDS);
+    wanted.forEach((w, i) => {
+      const url = signed[i];
+      if (typeof url === "string" && /^https:\/\//.test(url)) out.set(w.id, url);
+    });
+  } catch {
+    // küçük resimsiz devam
+  }
+  return out;
+}
+
+function worksOf(row: PromptRow): { yes: number; no: number } | null {
+  const raw = Array.isArray(row.prompt_works_stats) ? row.prompt_works_stats[0] : row.prompt_works_stats;
+  if (!raw) return null;
+  const yes = Math.max(0, Number(raw.yes_count) || 0), no = Math.max(0, Number(raw.no_count) || 0);
+  return yes + no > 0 ? { yes, no } : null;
 }
 
 function publicFilters(params: URLSearchParams): URLSearchParams {
@@ -216,7 +278,7 @@ function parseOptions(raw: unknown): { label: string; value: string; color?: str
   });
 }
 
-export function toSummary(row: PromptRow, siteUrl: string): PublicPromptSummary {
+export function toSummary(row: PromptRow, siteUrl: string, thumbnailUrl: string | null = null): PublicPromptSummary {
   const exchange = toExchange(row, siteUrl, []);
   return {
     id: row.id,
@@ -232,6 +294,8 @@ export function toSummary(row: PromptRow, siteUrl: string): PublicPromptSummary 
     variableNames: extractVariableTokenNames(exchange.promptText),
     author: authorOf(row),
     stats: statsOf(row),
+    thumbnailUrl,
+    works: worksOf(row),
     createdAt: row.created_at,
   };
 }
@@ -309,7 +373,7 @@ export function decodeCursor(raw: string): SearchCursor {
 
 async function fetchRowsByIds(client: RestClient, ids: string[]): Promise<PromptRow[]> {
   if (ids.length === 0) return [];
-  const params = publicFilters(new URLSearchParams({ select: PROMPT_COLUMNS }));
+  const params = withEmbeds(publicFilters(new URLSearchParams({ select: PROMPT_COLUMNS })));
   params.set("id", `in.(${ids.join(",")})`);
   params.set("limit", String(ids.length));
   const rows = await client.select<PromptRow>("prompts", params);
@@ -347,8 +411,9 @@ export async function searchPrompts(client: RestClient, input: SearchParams = {}
   const list = rows ?? [];
   const last = list[list.length - 1];
   const hydrated = await fetchRowsByIds(client, list.map((row) => row.id));
+  const thumbs = await signThumbnails(client, hydrated);
   return {
-    items: hydrated.map((row) => toSummary(row, client.siteUrl)),
+    items: hydrated.map((row) => toSummary(row, client.siteUrl, thumbs.get(row.id) ?? null)),
     nextCursor: list.length >= limit && last ? encodeCursor({ r: Number(last.sort_rank), c: last.created_at, i: last.id }) : null,
   };
 }
@@ -363,7 +428,7 @@ export async function popularPrompts(client: RestClient, input: PopularParams = 
   const limit = clampLimit(input.limit);
   const period = oneOf(input.period, POPULAR_PERIODS, "period", "all");
   const by = oneOf(input.by, POPULAR_BY, "by", "copies");
-  const params = publicFilters(new URLSearchParams({ select: PROMPT_COLUMNS }));
+  const params = withEmbeds(publicFilters(new URLSearchParams({ select: PROMPT_COLUMNS })));
   const contentType = optionalContentType(input.contentType);
   if (contentType) params.set("content_type", `eq.${contentType}`);
   const days = PERIOD_DAYS[period];
@@ -371,7 +436,8 @@ export async function popularPrompts(client: RestClient, input: PopularParams = 
   params.set("order", by === "copies" ? "copy_count.desc,like_count.desc,created_at.desc,id.desc" : "like_count.desc,copy_count.desc,created_at.desc,id.desc");
   params.set("limit", String(limit));
   const rows = await client.select<PromptRow>("prompts", params);
-  return rows.map((row) => toSummary(row, client.siteUrl));
+  const thumbs = await signThumbnails(client, rows);
+  return rows.map((row) => toSummary(row, client.siteUrl, thumbs.get(row.id) ?? null));
 }
 
 async function fetchVariables(client: RestClient, ids: string[]): Promise<Map<string, VariableRow[]>> {

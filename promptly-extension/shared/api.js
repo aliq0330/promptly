@@ -58,6 +58,9 @@ self.PApi = (() => {
   // tools: araç başvuruları (biri yeter), tags: etiket slug'ları (hepsi gerekir) — sunucu kuralı.
   const search = ({ q, contentType, limit, cursor, sort, tools, tags, category } = {}) => call(`${apiBase()}/prompts${qs({ q, content_type: contentType, limit, cursor, sort, tool: tools, tag: tags, category })}`);
   const prompt = (id) => call(`${apiBase()}/prompts/${encodeURIComponent(id)}`);
+  // Herkese açık workflow'lar (adımlar: başlık, açıklama, yönerge, varsa herkese açık prompt'un kimlik + başlığı).
+  const workflows = ({ q, limit, cursor } = {}) => call(`${apiBase()}/workflows${qs({ q, limit, cursor })}`);
+  const workflow = (id) => call(`${apiBase()}/workflows/${encodeURIComponent(id)}`);
 
   // Kimlik: kullanıcı adı + kapsamlar (`/me`); oturum kaydına yazılır.
   async function syncIdentity() {
@@ -91,5 +94,5 @@ self.PApi = (() => {
     return out;
   }
 
-  return { call, me, myPrompts, myPrompt, mySaved, popular, search, prompt, syncIdentity, savePrompts, attachImage, sendDraft, _test: { toError, qs } };
+  return { call, me, myPrompts, myPrompt, mySaved, popular, search, prompt, workflows, workflow, syncIdentity, savePrompts, attachImage, sendDraft, _test: { toError, qs } };
 })();

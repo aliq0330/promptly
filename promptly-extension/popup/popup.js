@@ -53,6 +53,7 @@ function renderFooter() {
 function render() {
   const signed = Boolean(data.auth && data.auth.refreshToken);
   $("login").hidden = signed; $("app").hidden = !signed;
+  document.body.classList.toggle("app", signed); // oturumsuzken dar (400px), oturumluyken geniş (780×600) — sabit px, vw/vh YOK
   PUI.applyLang();
   const langLabel = PI.getLang() === "tr" ? "EN" : "TR";
   $("lang").textContent = langLabel; $("lang-login").textContent = langLabel;

@@ -1,4 +1,4 @@
-# Promptly Chrome uzantısı (v1.1)
+# Promptly Chrome uzantısı (v1.2)
 
 Manifest V3, bağımlılıksız (derleme adımı yok). Kullanıcıya anlatım Ayarlar → Geliştirici → "Chrome uzantısı" kartındadır
 (`src/features/settings/extension-section.tsx`); bu dosya geliştiriciler içindir. Tarihçe: `docs/history/429-*`.
@@ -22,12 +22,14 @@ Manifest V3, bağımlılıksız (derleme adımı yok). Kullanıcıya anlatım Ay
 | `shared/platforms.js` | **Çalıştır**: hedef tanıma, yol kararı (yaz / adresle aç / kopyala+aç), sayfaya yazan işlev; hiçbir yolda otomatik göndermez |
 | `shared/browse.js` | saf gezinme mantığı: süzgeç → API argümanı, Görünümlerim, slotlar, kart yer tutucusu, dışa aktarma dosyası |
 | `shared/browser.js`, `shared/run-ui.js`, `shared/wide.css` | geniş görünümün DOM parçaları: kart, süzgeç çubuğu, Ana Sayfa/Keşfet/Kütüphane, ayrıntı bölmesi, bölünmüş düğme |
+| `shared/structured.js`, `shared/workflow-run.js` | JSON/YAML renklendirme (yalnız gösterim, metin değişmez); workflow adım adım durum mantığı (yan panel "Workflow" sekmesi) |
 | `shared/context.js` | yan panel bağlamı: açık sekme yapay zekâ sitesi mi, seçili metin (isteğe bağlı 4 site izniyle) |
 | `shared/slash.js` | site başına "/ ile aç": `optional_host_permissions` + dinamik içerik betiği; kapatınca ikisi de kalkar |
 | `shared/ui.js`, `popup/`, `sidepanel/` | arayüz; kütüphane görünümü tek yerde (`createLibrary`) |
 | `content/overlay.js` | sayfaya enjekte edilen yakalama kartı + palet + "/" (Shadow DOM) |
 
 ## Kurallar (bozma)
+0. **Popup kök boyutu sabit px'tir** (`popup.css`: oturumlu `body.app` 780×600, oturumsuz 400 px): `vw/vh/dvh/%` YASAK. Açılır pencere önce küçük açılır ve içeriğe göre büyür; görünüm birimi o küçük boyuta kilitler ve pencere hiç büyümez (1.1'de Android'de dar/kırpık görünen hata, `docs/history/431-*`). `extension.test.mjs` + e2e korur.
 1. **Sayfaya enjekte edilen betik depoya/belirtece/ağa ERİŞEMEZ**: arka plan `storage.setAccessLevel(TRUSTED_CONTEXTS)` koyar; `overlay.js` yalnız `chrome.runtime.sendMessage` kullanır ve `auth/api/store/queue/library` modüllerini İÇERMEZ (`tests/extension.test.mjs` + e2e bunu doğrular). Yeni bir sayfa özelliği mesaj kapısına (`handlers`, `FROM_CONTENT`) eklenir.
 2. **Kalıcı site erişimi YOK** (1.1: yan panel bağlamı için kullanıcı İSTERSE yalnız ChatGPT/Claude/Gemini/Perplexity adreslerine izin verir; `PContext.enable()` kullanıcı hareketiyle, kaldırılabilir; "tabs" izni EKLENMEZ): `host_permissions` yalnız Promptly sunucusu; `activeTab` + `scripting` yalnız kullanıcı eylemiyle. "/" için izin site başına, kullanıcı hareketiyle (`permissions.request`) istenir. `<all_urls>` ve `content_scripts` bildirimi YASAK (test korur).
 3. **Yazma = yalnız özel taslak** (`write` kapsamı). Yayınlama, görünürlük, silme, "Çalıştı mı?" oyu, sonuç paylaşımı açık API'de YOKTUR; bunlar sitede yapılır (yan panel → "Sitede oy ver"). Bu yetenekleri eklemek kapsamı genişletmektir: ürün kararı, OAuth izin ekranı ve `me.ts` birlikte.
@@ -38,7 +40,7 @@ Manifest V3, bağımlılıksız (derleme adımı yok). Kullanıcıya anlatım Ay
 8. Config'te gizli anahtar yok (yalnız adresler); eski sürümdeki anon anahtar kalktı.
 
 ## Bilinen sınırlar
-- 1.1: kart görseli yok (API görsel adresi vermiyor; renk yüzeyi yer tutucu), Ana Sayfa'da sana özel/takip akışı yok (`/me/feed` yok), workflow adım adım yok, slot kısayolu popup içinde 1–5 tuşu (Chrome 4 öneri kısayolu sınırı). Çalıştır adres parametreleri/seçicileri gerçek sitelere karşı DENENMEDİ (sitelerin arayüzüne bağlıdır, bozulursa kopyalanır). Ayrıntı: `docs/history/430-*`.
+- 1.2: küçük resim/Çalıştı % için canlı API'nin yeni sürümü (Edge `api` deploy) gerekir, yoksa yer tutucu; Ana Sayfa'da sana özel/takip akışı, koleksiyonlar, sonuç/sürüm/yorum sekmeleri, beğeni/kaydet/oy ve ayar paketi uygulama YOK (sunucu + yazma kapsamı onayı bekliyor, `431-*`); slot kısayolu popup içinde 1–5 tuşu (Chrome 4 öneri kısayolu sınırı). Çalıştır adres parametreleri/seçicileri gerçek sitelere karşı DENENMEDİ (sitelerin arayüzüne bağlıdır, bozulursa kopyalanır). Ayrıntı: `docs/history/430-*`.
 - `launchWebAuthFlow` (gerçek giriş penceresi) headless Chromium'da çalıştırılamadı: OAuth birim testli (PKCE vektörü, kod değişimi, yenileme yarışı), canlı sunucunun herkese açık uçları ve OAuth metadatası gerçek istemciyle okundu; gerçek Chrome'da uçtan uca giriş DENENMEDİ.
 - Kayıtlı yönlendirme adresi `https://<uzantı-kimliği>.chromiumapp.org/`: paketlenmemiş yüklemede kimlik klasör yoluna göre değişir, bu yüzden istemci kaydı (DCR) yüklemeye özgüdür ve yönlendirme değişirse yeniden kaydolur. Web Store'a çıkılırsa kimlik sabitlenir.
 - Skill ve Space'e ekleme yok (Skill bayrağı kapalı; Space yazma yeteneği açık API'de yok).

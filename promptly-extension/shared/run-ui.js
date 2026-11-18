@@ -57,7 +57,7 @@ self.PRunUI = (() => {
     const m = el("div", "pmenu"); m.setAttribute("role", "menu");
     m.append(el("div", "label", t("runWhere")));
     for (const p of PPlatforms.LIST) {
-      const how = here && here.id === p.id ? "runHowInsert" : p.build ? "runHowOpen" : "runHowCopy";
+      const how = here && here.id === p.id ? "runHowInsert" : p.app ? "runHowApp" : p.build ? "runHowOpen" : "runHowCopy";
       const b = el("button", "pitem" + (p.id === current ? " on" : "")); b.type = "button"; b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", String(p.id === current));
       b.append(el("span", "pname", p.name), el("span", "phow", t(how)));
       b.addEventListener("click", () => { close(); onPick(p.id); });

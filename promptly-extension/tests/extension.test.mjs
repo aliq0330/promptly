@@ -64,3 +64,15 @@ test("arayüzde sabit metin yok: kullanılan her anahtar TR ve EN olarak tanıml
   assert.deepEqual(missing, []);
   for (const [k, v] of Object.entries(S)) { assert.ok(v.tr && v.en, `çeviri eksik: ${k}`); assert.equal((v.tr.match(/\{\w+\}/g) || []).sort().join(), (v.en.match(/\{\w+\}/g) || []).sort().join(), `parametre uyumsuz: ${k}`); }
 });
+
+test("popup kök boyutu vw/vh/% ile verilmez: açılır pencere önce küçük açılır, görünüm birimi o boyuta kilitler (Android'de dar/kırpık görünen hata)", () => {
+  const css = read("popup/popup.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.equal(/\b\d+(\.\d+)?(vw|vh|dvh|dvw|svh|svw)\b/.test(css), false, "popup.css'te görünüm birimi var");
+  for (const sel of ["body", "body.app", "#app"]) {
+    const m = new RegExp(`(^|\\n)${sel.replace(".", "\\.")}\\s*\\{([^}]*)\\}`).exec(css);
+    assert.ok(m, `${sel} kuralı yok`);
+    assert.equal(/(width|height)\s*:\s*[\d.]+%/.test(m[2]), false, `${sel} yüzde boyut kullanıyor`);
+  }
+  assert.match(css, /body\.app\s*\{[^}]*width:\s*780px[^}]*height:\s*600px/, "geniş görünüm sabit 780×600 (Chrome üst sınırı 800×600)");
+  assert.match(css, /(^|\n)body\s*\{[^}]*width:\s*400px/, "oturumsuz görünüm sabit genişlikte");
+});

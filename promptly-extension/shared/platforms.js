@@ -9,6 +9,8 @@ self.PPlatforms = (() => {
     { id: "chatgpt", name: "ChatGPT", tool: "chatgpt", hosts: ["chatgpt.com"], home: "https://chatgpt.com/", build: (t) => `https://chatgpt.com/?q=${enc(t)}`, selector: "#prompt-textarea, textarea" },
     { id: "claude", name: "Claude", tool: "claude", hosts: ["claude.ai"], home: "https://claude.ai/new", build: (t) => `https://claude.ai/new?q=${enc(t)}`, selector: '[contenteditable="true"], textarea' },
     { id: "gemini", name: "Gemini", tool: "gemini", hosts: ["gemini.google.com"], home: "https://gemini.google.com/app", build: null, selector: 'rich-textarea [contenteditable="true"], rich-textarea p, [contenteditable="true"], textarea' },
+    // Uygulama (derin bağlantı): adres parametresi yerine işletim sistemi bağlantısı; sayfa yok, kutuya yazma yok. Açılamazsa kopyala + site yedeği.
+    { id: "cursor", name: "Cursor", tool: "", hosts: [], app: true, home: "https://cursor.com/", build: (t) => `cursor://anysphere.cursor-deeplink/prompt?text=${enc(t)}`, selector: "" },
     { id: "perplexity", name: "Perplexity", tool: "perplexity", hosts: ["www.perplexity.ai", "perplexity.ai"], home: "https://www.perplexity.ai/", build: (t) => `https://www.perplexity.ai/search?q=${enc(t)}`, selector: 'textarea, [contenteditable="true"]' },
   ];
   const DEFAULT_ID = "chatgpt";
@@ -76,7 +78,9 @@ self.PPlatforms = (() => {
       const copied = await copy(text);
       return { mode: "copy", ok: false, copied, platform, reason: "insert_failed" };
     }
-    if (p.mode === "open") { await tabsApi.create({ url: p.url }); return { mode: "open", ok: true, copied: false, platform }; }
+    if (p.mode === "open") {
+      try { await tabsApi.create({ url: p.url }); return { mode: "open", ok: true, copied: false, platform }; } catch { /* özel şema açılamadı: aşağıda kopyala + site */ }
+    }
     const copied = await copy(text);
     await tabsApi.create({ url: platform.home });
     return { mode: "copy-open", ok: copied, copied, platform };

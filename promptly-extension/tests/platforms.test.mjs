@@ -146,3 +146,23 @@ test("insertIntoPage: kutu yoksa ok:false; görünmeyen kutu atlanır; contented
   ctx.PPlatforms.insertIntoPage("x", "ek");
   assert.deepEqual(calls[1], ["insertText", "\n\nek"]);
 });
+
+test("Cursor (derin bağlantı): sayfa/giriş kutusu yok, hiçbir sekmede 'yaz' olmaz; cursor:// adresiyle açar; açılamazsa kopyalar + siteyi açar", async () => {
+  const p = P();
+  const cursor = p.byId("cursor");
+  assert.equal(cursor.app, true); assert.deepEqual([...cursor.hosts], []);
+  assert.equal(p.origins().some((o) => o.includes("cursor")), false, "izin isteğine girmez");
+  assert.equal(p.byUrl("https://cursor.com/"), null);
+  const plan = p.plan(cursor, "https://chatgpt.com/", "Merhaba {x}");
+  assert.equal(plan.mode, "open");
+  assert.equal(plan.url, "cursor://anysphere.cursor-deeplink/prompt?text=" + encodeURIComponent("Merhaba {x}"));
+  const e = fakeEnv("https://example.com/");
+  const r = await p.run("cursor", "metin", e.deps);
+  assert.equal(r.mode, "open"); assert.deepEqual(e.log.map((l) => l[0]), ["create"]);
+  const f = fakeEnv("https://example.com/");
+  f.deps.tabs.create = async (o) => { f.log.push(["create", o.url]); if (o.url.startsWith("cursor:")) throw new Error("Invalid URL scheme"); };
+  const r2 = await p.run("cursor", "metin", f.deps);
+  assert.equal(r2.mode, "copy-open"); assert.equal(r2.copied, true);
+  assert.deepEqual(f.log.map((l) => l[0]), ["create", "copy", "create"], "özel şema reddedilince: kopyala + siteyi aç");
+  assert.equal(f.log[2][1], "https://cursor.com/");
+});

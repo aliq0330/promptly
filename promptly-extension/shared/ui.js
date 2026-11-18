@@ -34,8 +34,18 @@ self.PUI = (() => {
   const openTab = (url) => chrome.tabs.create({ url });
   const anchor = (href, text, cls) => { const a = el("a", cls || "linkbtn", text); a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer"; return a; };
 
+  // Metni `node`'a yazar: JSON/YAML biçimliyse renklendirir; {değişken} jetonları her yerde vurgulanır. Metin DEĞİŞMEZ (yalnız gösterim).
+  function appendWithVars(node, text, cls) {
+    let last = 0;
+    const put = (s, c) => { if (!s) return; if (c) node.append(el("span", c, s)); else node.append(s); };
+    for (const m of text.matchAll(PVars.VAR_RE)) { put(text.slice(last, m.index), cls); node.append(el("span", "var", m[0])); last = m.index + m[0].length; }
+    put(text.slice(last), cls);
+  }
   function writePrompt(node, text) {
     node.replaceChildren();
+    const kind = self.PStructured ? PStructured.detect(text) : null;
+    node.classList.toggle("structured", Boolean(kind));
+    if (kind) { for (const tk of PStructured.tokens(text, kind)) appendWithVars(node, tk.v, tk.k === "text" ? "" : `tk-${tk.k}`); return; }
     let last = 0;
     for (const m of text.matchAll(PVars.VAR_RE)) {
       node.append(text.slice(last, m.index));
