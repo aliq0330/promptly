@@ -131,8 +131,8 @@ await scenario("10 phone: nothing overflows sideways (long client name + host)",
 const GRANT = (id, name) => ({ client: { id, name, uri: "https://claude.ai", logo_uri: "" }, scopes: ["openid", "profile"], granted_at: new Date(Date.now() - 86400000).toISOString() });
 
 await scenario("11 Settings lists connected apps and revoking is two steps (DELETE with the client id, then the list refreshes)", async ({ page, srv }) => {
-  const apps = page.locator("[data-connected-apps]");
-  await apps.getByRole("heading", { name: "Bağlı uygulamalar" }).waitFor();
+  const apps = page.locator("[data-access-list]");
+  await apps.getByRole("heading", { name: "Erişimlerim" }).waitFor();
   const row = apps.locator("[data-connected-app='legacy:c-1']");
   await row.getByText("Claude", { exact: true }).waitFor();
   await row.getByRole("button", { name: "İzni geri al" }).click();
@@ -141,14 +141,13 @@ await scenario("11 Settings lists connected apps and revoking is two steps (DELE
   assert.equal(srv.calls.filter((c) => c.method === "DELETE").length, 0, "nothing is sent before confirming");
   await row.getByRole("button", { name: "İzni geri al" }).click();
   await row.getByRole("button", { name: "Evet, geri al" }).click();
-  await apps.getByText("Bağlı uygulama yok.").waitFor();
+  await apps.getByText("Henüz hesabına erişen bir şey yok.").waitFor();
   assert.deepEqual(srv.calls.find((c) => c.method === "DELETE").query, { client_id: "c-1" });
 }, { path: "/settings/developer/", oauth: { grants: [GRANT("c-1", "Claude")] } });
 
-await scenario("12 when Supabase's OAuth server is off, the section still exists (our own grants) and just lists nothing", async ({ page }) => {
-  await page.getByRole("heading", { name: "Anahtarlarım" }).waitFor();
-  const apps = page.locator("[data-connected-apps]");
-  await apps.getByText("Bağlı uygulama yok.").waitFor();
+await scenario("12 when Supabase's OAuth server is off, Erişimlerim still renders (our own grants) and just lists nothing", async ({ page }) => {
+  const apps = page.locator("[data-access-list]");
+  await apps.getByText("Henüz hesabına erişen bir şey yok.").waitFor();
   assert.equal(await apps.locator("[data-connected-app]").count(), 0);
 }, { path: "/settings/developer/", oauth: { grantsStatus: 404 } });
 

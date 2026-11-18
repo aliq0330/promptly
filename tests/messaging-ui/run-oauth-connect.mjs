@@ -167,16 +167,16 @@ await scenario("12 the app name is shown as text, never as markup", async ({ pag
 
 const GRANT = (id, name, over = {}) => ({ id, client_name: name, redirect_host: "claude.ai", scopes: ["read"], created_at: new Date(Date.now() - 86400000).toISOString(), last_used_at: null, ...over });
 
-await scenario("13 Settings lists connected apps with scopes and last use; revoking is two steps and refreshes the list", async ({ page, srv }) => {
-  const apps = page.locator("[data-connected-apps]");
-  await apps.getByRole("heading", { name: "Bağlı uygulamalar" }).waitFor();
+await scenario("13 Developer page lists connected apps in Erişimlerim with scopes and last use; revoking is two steps and refreshes the list", async ({ page, srv }) => {
+  const apps = page.locator("[data-access-list]");
+  await apps.getByRole("heading", { name: "Erişimlerim" }).waitFor();
   const first = apps.locator("[data-connected-app='own:g1']");
   await first.getByText("Claude", { exact: true }).waitFor();
-  await first.getByText("Bağlı", { exact: true }).waitFor();
+  await first.getByText(/Yapay zekâ aracı · claude\.ai/).waitFor();
   await first.getByText("Okuma", { exact: true }).waitFor();
   await first.getByText("Henüz kullanılmadı").waitFor();
   const second = apps.locator("[data-connected-app='own:g2']");
-  await second.getByText("Taslak ekleme ve düzenleme", { exact: true }).waitFor();
+  await second.getByText("Taslak", { exact: true }).waitFor();
   await second.getByText(/Son kullanım/).waitFor();
   await first.getByRole("button", { name: "İzni geri al" }).click();
   await first.getByRole("button", { name: "Vazgeç" }).click();
@@ -188,9 +188,9 @@ await scenario("13 Settings lists connected apps with scopes and last use; revok
   await second.waitFor();
 }, { path: "/settings/developer/", oauth: { grants: [GRANT("g1", "Claude"), GRANT("g2", "Cursor", { scopes: ["read", "write"], last_used_at: new Date().toISOString() })] } });
 
-await scenario("14 with no connected apps the section says so", async ({ page }) => {
-  const apps = page.locator("[data-connected-apps]");
-  await apps.getByText("Bağlı uygulama yok.").waitFor();
+await scenario("14 with nothing connected Erişimlerim says so", async ({ page }) => {
+  const apps = page.locator("[data-access-list]");
+  await apps.getByText("Henüz hesabına erişen bir şey yok.").waitFor();
 }, { path: "/settings/developer/" });
 
 await scenario("15 the /developers page has the account wizard with the 'experimental' route first (English too)", async ({ page }) => {

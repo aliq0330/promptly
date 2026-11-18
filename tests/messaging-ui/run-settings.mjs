@@ -132,14 +132,32 @@ await scenario("8 developer: the guide is a wizard — pick a route, one step at
   await guide.locator("pre", { hasText: new RegExp(`^${MCP_ME.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}$`) }).waitFor();
   await guide.locator("[data-guide-sketch]").waitFor();
   await guide.getByText(/Client ID.*Secret.*boş/).first().waitFor();
-  await page.getByRole("heading", { name: "Anahtarlarım", level: 3 }).waitFor();
-  await page.locator("[data-api-keys]").waitFor();
-  await page.getByRole("heading", { name: "Bağlı uygulamalar" }).waitFor();
   assert.match(await page.getByRole("link", { name: /Geliştirici belgeleri/ }).first().getAttribute("href"), /\/developers\/?$/);
   assert.equal(await page.getByText(/henüz yayında değil/).count(), 0, "no stale preview note");
   assert.ok(!(await page.locator("body").innerText()).match(/pmt_[A-Za-z0-9_-]{43}/), "no real-looking key on the page");
   void db;
   await shot(page, "settings-developer");
+}, { path: "/settings/developer/ai/" });
+
+await scenario("8a developer hub: four ways to connect as tiles, one access list, a docs row; each tile opens its own sub-page with a way back", async ({ page }) => {
+  await page.getByRole("heading", { name: "Geliştirici", level: 1 }).waitFor();
+  const tiles = page.locator("[data-developer-tile]");
+  const order = (await tiles.evaluateAll((els) => els.map((e) => e.getAttribute("data-developer-tile")))).filter((id) => id !== "telegram");
+  assert.deepEqual(order, ["ai", "extension", "api"], "the Telegram tile only shows when the bot is configured at build time");
+  await page.locator("[data-access-list]").getByRole("heading", { name: "Erişimlerim" }).waitFor();
+  await page.locator("[data-permission-legend]").getByText("Okuma", { exact: true }).waitFor();
+  const hubText = await page.locator("main").innerText();
+  assert.ok(!/\{\{?\w+\}\}?/.test(hubText), "no unfilled {placeholder} on the hub");
+  assert.ok(!/devSettings\./.test(hubText), "no raw translation keys on the hub");
+  assert.equal(await page.locator("[data-dev-connect]").count(), 0, "the wizard is not on the hub any more");
+  assert.equal(await page.locator("[data-api-keys]").count(), 0, "the key form is not on the hub any more");
+  assert.match(await page.getByRole("link", { name: /Geliştirici belgeleri/ }).first().getAttribute("href"), /\/developers\/?$/);
+  for (const [tile, marker] of [["ai", "[data-dev-connect]"], ["extension", "[data-extension-card]"], ["api", "[data-api-keys]"]]) {
+    await page.locator(`[data-developer-tile='${tile}']`).click();
+    await page.locator(marker).waitFor();
+    await page.locator("[data-settings-back]").click();
+    await page.locator("[data-access-list]").waitFor();
+  }
 }, { path: "/settings/developer/" });
 
 await scenario("8b developer: the key route walks to 'Oturum açma yok', the header name, the Bearer value + warning, and ends with a done note", async ({ page }) => {
@@ -166,7 +184,7 @@ await scenario("8b developer: the key route walks to 'Oturum açma yok', the hea
   await guide.getByText("Adım 1 / 8").waitFor();
   await guide.getByRole("radio", { name: /İzin vererek bağlan/ }).click();
   await guide.getByText("Adım 1 / 5").waitFor();
-}, { path: "/settings/developer/" });
+}, { path: "/settings/developer/ai/" });
 
 await scenario("9 developer: the address copy button copies the personal MCP address", async ({ page }) => {
   const guide = page.locator("[data-dev-connect]");
@@ -174,12 +192,14 @@ await scenario("9 developer: the address copy button copies the personal MCP add
   await guide.getByRole("button", { name: /Sonraki adım/ }).click();
   await guide.getByRole("button", { name: /Kopyala: Kişisel bağlayıcı adresi/ }).click();
   assert.equal(await page.evaluate(() => navigator.clipboard.readText()), MCP_ME);
-}, { path: "/settings/developer/" });
+}, { path: "/settings/developer/ai/" });
 
 await scenario("10 English: hub and developer guide use English labels", async ({ page }) => {
   await page.getByRole("heading", { name: "Settings", level: 1 }).waitFor();
   await page.getByRole("navigation", { name: "Settings sections" }).getByRole("link", { name: /^Developer/ }).click();
   await page.getByRole("heading", { name: "Developer", level: 1 }).waitFor();
+  await page.locator("[data-access-list]").getByRole("heading", { name: "My access" }).waitFor();
+  await page.locator("[data-developer-tile='ai']").click();
   const guide = page.locator("[data-dev-connect]");
   await guide.getByText("Connect by granting access").waitFor();
   await guide.getByText("Experimental", { exact: true }).waitFor();
@@ -193,9 +213,12 @@ await scenario("11 phone: the hub and the developer page do not overflow sideway
   await page.getByRole("heading", { name: "Ayarlar", level: 1 }).waitFor();
   assert.ok(await overflowFree(page));
   await page.goto(BASE + "/settings/developer/");
-  await page.locator("[data-dev-connect]").waitFor();
+  await page.locator("[data-access-list]").waitFor();
   assert.ok(await overflowFree(page));
   await shot(page, "settings-developer-phone");
+  await page.goto(BASE + "/settings/developer/ai/");
+  await page.locator("[data-dev-connect]").waitFor();
+  assert.ok(await overflowFree(page), "the wizard page does not overflow either");
 }, { viewport: { width: 390, height: 844 } });
 
 await scenario("12 an old #settings-developer link still opens the hub (no crash)", async ({ page }) => {

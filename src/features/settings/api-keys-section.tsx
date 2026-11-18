@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Check } from "@/components/icons/check";
 import { Copy } from "@/components/icons/copy";
 import { KeyRound } from "@/components/icons/key-round";
-import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, Input, Select } from "@/components/ui/field";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -15,14 +15,13 @@ import {
   API_TOKEN_NAME_MAX,
   apiTokenScopes,
   activeApiTokenCount,
-  apiTokenStatus,
   canCreateApiToken,
   isValidApiTokenName,
   type ApiTokenPreset,
   type ApiTokenRow,
 } from "@/lib/api-tokens";
-import { createApiToken, listMyApiTokens, revokeApiToken, type CreatedApiToken } from "@/lib/supabase/api-tokens";
-import { copyTextToClipboard, formatRelativeTime } from "@/lib/utils";
+import { createApiToken, listMyApiTokens, type CreatedApiToken } from "@/lib/supabase/api-tokens";
+import { copyTextToClipboard } from "@/lib/utils";
 
 const labelClassName = "mb-1.5 block text-small text-text-secondary";
 
@@ -31,7 +30,7 @@ const labelClassName = "mb-1.5 block text-small text-text-secondary";
  * yanıtında bir kez görünür (sunucuda yalnız özeti durur); bu bileşen onu yalnız bellekte tutar ve "kaydettim" denince atar.
  */
 export function ApiKeysSection() {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const [rows, setRows] = useState<ApiTokenRow[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [name, setName] = useState("");
@@ -42,9 +41,6 @@ export function ApiKeysSection() {
   const [formError, setFormError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedApiToken | null>(null);
   const [copied, setCopied] = useState(false);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [revokingId, setRevokingId] = useState<string | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
 
   // Yeniden yükleme anahtarı: oluşturma/iptal/"Tekrar dene" bunu artırır; okuma efekt içinde, durum yalnız cevap gelince yazılır.
   const [reloadKey, setReloadKey] = useState(0);
@@ -93,21 +89,6 @@ export function ApiKeysSection() {
     if (await copyTextToClipboard(created.token)) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
-    }
-  }
-
-  async function handleRevoke(id: string) {
-    setRevokingId(id);
-    setListError(null);
-    try {
-      await revokeApiToken(id);
-      setConfirmId(null);
-      reload();
-    } catch (error) {
-      console.error("revokeApiToken", error);
-      setListError(t("apiKeys.revokeFailed"));
-    } finally {
-      setRevokingId(null);
     }
   }
 
@@ -203,65 +184,16 @@ export function ApiKeysSection() {
         </Button>
       </form>
 
-      <div className="space-y-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <h4 className="text-small font-semibold text-text">{t("apiKeys.listTitle")}</h4>
-          {rows !== null && <span className="text-caption text-text-muted">{t("apiKeys.activeCount", { count: activeCount, max: API_TOKEN_ACTIVE_LIMIT })}</span>}
+      <p className="text-caption leading-relaxed text-text-muted" data-api-keys-count="">
+        {rows !== null && <>{t("apiKeys.activeCount", { count: activeCount, max: API_TOKEN_ACTIVE_LIMIT })} · </>}
+        <Link href="/settings/developer/" className="font-medium text-primary hover:underline">{t("devSettings.access.title")}</Link>
+      </p>
+      {loadFailed && (
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="alert" className="text-small text-danger">{t("apiKeys.loadFailed")}</p>
+          <Button type="button" size="sm" variant="outline" onClick={reload}>{t("apiKeys.retry")}</Button>
         </div>
-        {rows === null && !loadFailed && <p className="text-caption text-text-muted">{t("apiKeys.loading")}</p>}
-        {loadFailed && (
-          <div className="flex flex-wrap items-center gap-3">
-            <p role="alert" className="text-small text-danger">{t("apiKeys.loadFailed")}</p>
-            <Button type="button" size="sm" variant="outline" onClick={reload}>{t("apiKeys.retry")}</Button>
-          </div>
-        )}
-        {rows !== null && rows.length === 0 && <p className="text-caption text-text-muted">{t("apiKeys.empty")}</p>}
-        {listError && <p role="alert" className="text-small text-danger">{listError}</p>}
-        {rows !== null && rows.length > 0 && (
-          <ul className="divide-y divide-border-soft rounded-lg border border-border-soft">
-            {rows.map((row) => {
-              const status = apiTokenStatus(row);
-              return (
-                <li key={row.id} className="space-y-2 px-4 py-3" data-api-key-row={row.id} data-status={status}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="min-w-0 break-words text-small font-medium text-text">{row.name}</span>
-                    <Badge variant={status === "active" ? "success" : status === "expired" ? "warning" : "neutral"}>
-                      {t(status === "active" ? "apiKeys.statusActive" : status === "expired" ? "apiKeys.statusExpired" : "apiKeys.statusRevoked")}
-                    </Badge>
-                    {row.scopes.map((scope) => (
-                      <Badge key={scope} variant="outline">{t(scope === "write" ? "apiKeys.scopeWrite" : scope === "interact" ? "apiKeys.scopeInteract" : "apiKeys.scopeRead")}</Badge>
-                    ))}
-                  </div>
-                  <p className="prompt-text text-caption text-text-muted">{row.prefix}…</p>
-                  <p className="text-caption text-text-muted">
-                    {t("apiKeys.createdAt", { when: formatRelativeTime(row.createdAt, language) })} ·{" "}
-                    {row.expiresAt ? t("apiKeys.expiresAt", { date: new Date(row.expiresAt).toLocaleDateString(language) }) : t("apiKeys.neverExpires")} ·{" "}
-                    {row.lastUsedAt ? t("apiKeys.lastUsed", { when: formatRelativeTime(row.lastUsedAt, language) }) : t("apiKeys.neverUsed")}
-                  </p>
-                  {status === "active" &&
-                    (confirmId === row.id ? (
-                      <div className="space-y-2">
-                        <p className="text-caption text-text-secondary">{t("apiKeys.revokeConfirm")}</p>
-                        <div className="flex flex-wrap gap-2">
-                          <Button type="button" size="sm" variant="danger" disabled={revokingId === row.id} onClick={() => void handleRevoke(row.id)}>
-                            {revokingId === row.id ? t("apiKeys.revoking") : t("apiKeys.revokeYes")}
-                          </Button>
-                          <Button type="button" size="sm" variant="outline" disabled={revokingId === row.id} onClick={() => setConfirmId(null)}>
-                            {t("apiKeys.revokeNo")}
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button type="button" size="sm" variant="outline" onClick={() => setConfirmId(row.id)}>
-                        {t("apiKeys.revoke")}
-                      </Button>
-                    ))}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      )}
     </div>
   );
 }

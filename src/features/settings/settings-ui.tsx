@@ -15,14 +15,14 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 export const settingsLabelClassName = "mb-1.5 block text-small text-text-secondary";
 
 /** Alt sayfa iskeleti: "← Ayarlar" bağlantısı, büyük başlık, kısa açıklama, kartlar (tek okuma sütunu). */
-export function SettingsSubpage({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function SettingsSubpage({ title, description, children, backHref = "/settings", backLabel }: { title: string; description?: string; children: ReactNode; backHref?: string; backLabel?: string }) {
   const { t } = useTranslation();
   usePageTitle(title);
   return (
     <div className="mx-auto w-full max-w-2xl animate-rise-in space-y-6 px-3 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-10">
-      <Link href="/settings" className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text" data-settings-back="">
+      <Link href={backHref} className="inline-flex items-center gap-1 text-small text-text-muted hover:text-text" data-settings-back="">
         <ArrowLeft size={16} />
-        {t("settings.backToSettings")}
+        {backLabel ?? t("settings.backToSettings")}
       </Link>
       <header className="space-y-1.5">
         <h1 className="text-h1 text-text">{title}</h1>

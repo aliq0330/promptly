@@ -1,5 +1,5 @@
 // Ayarlar → Geliştirici → "Chrome uzantısı" kartı (docs/history/429-*): indirme bağlantısı gerçek zip'e gider, sürüm uzantının manifestinden gelir,
-// yükleme adımları ve kullanım/gizlilik metinleri, kopyalanabilir chrome://extensions adresi, "Bağlı uygulamalar" bağlantısı, iki dil, telefonda taşma yok.
+// yükleme adımları ve kullanım/gizlilik metinleri, kopyalanabilir chrome://extensions adresi, "Erişimlerim" bağlantısı, iki dil, telefonda taşma yok.
 // Ağ taklitli; uzantının KENDİSİ gerçek Chromium'da promptly-extension/tests/e2e/run.mjs ile sınanır.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
@@ -25,7 +25,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   try {
-    await page.goto(BASE + "/settings/developer/");
+    await page.goto(BASE + "/settings/developer/extension/");
     await page.locator("[data-extension-card]").waitFor();
     await fn({ page, context });
     assert.deepEqual(errors, [], "no uncaught page errors");
@@ -40,11 +40,13 @@ const card = (page) => page.locator("[data-extension-card]");
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name) => { if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${name}.png`, fullPage: true }); };
 
-await scenario("1 card: title, lead, version from the extension's own manifest, five install steps", async ({ page }) => {
+await scenario("1 card: title, lead, version from the extension's own manifest, three install steps, usage and privacy collapsed", async ({ page }) => {
   await page.getByRole("heading", { name: "Chrome uzantısı" }).waitFor();
   await page.getByText(/Henüz Chrome Web Store'da yok/).waitFor();
   await card(page).getByText(`Sürüm ${manifest.version} · Chrome 127 veya üstü`).waitFor();
-  assert.equal(await card(page).locator("ol > li").count(), 5);
+  assert.equal(await card(page).locator("ol > li").count(), 3, "install is three steps: download, load, connect");
+  assert.equal(await card(page).locator("details[open]").count(), 0, "usage and privacy start collapsed");
+  assert.equal(await card(page).locator("details").count(), 2);
   await card(page).getByText(/Paketlenmemiş öğe yükle/).waitFor();
   await card(page).getByText(/Geliştirici modu/).first().waitFor();
   await shot(page, "extension-card");
@@ -72,14 +74,16 @@ await scenario("3 chrome://extensions is a copyable block (Chrome pages cannot b
 });
 
 await scenario("4 usage + privacy: save, image, palette, slash, browse, run, context, vote; no password, drafts only, no standing site access, revoke link", async ({ page }) => {
+  await card(page).getByText("Nasıl kullanılır", { exact: true }).click();
+  await card(page).getByText("İzinler ve gizlilik", { exact: true }).click();
   for (const re of [/Kaydet: bir sayfada metin seç/, /Görsel: bir görsele sağ tıkla/, /Palet: yazdığın yerde/, /Slash: bir sitede/, /Gezinme: uzantı simgesine/, /Çalıştır: bir promptta/, /Yan panel bağlamı:/, /Oy ve sonuç:/]) await card(page).getByText(re).waitFor();
   await card(page).getByText(/Şifreni uzantı görmez/).waitFor();
   await card(page).getByText(/yalnız özel taslak ekler/).waitFor();
   await card(page).getByText(/Hiçbir sitede kalıcı erişimi yoktur/).waitFor();
   await card(page).getByText(/sayfaya yüklenen kod ona ulaşamaz/).waitFor();
-  await card(page).getByRole("link", { name: "Bağlı uygulamalar" }).click();
-  await page.waitForFunction(() => location.hash === "#bagli-uygulamalar");
-  assert.ok(await page.locator("#bagli-uygulamalar").isVisible());
+  await card(page).getByRole("link", { name: "Erişimlerim" }).click();
+  await page.waitForURL(/\/settings\/developer\/?$/);
+  await page.locator("[data-access-list]").waitFor();
 });
 
 await scenario("5 English: every block is translated and the placeholders are filled", async ({ page }) => {
@@ -87,6 +91,7 @@ await scenario("5 English: every block is translated and the placeholders are fi
   await card(page).getByText(`Version ${manifest.version} · Chrome 127 or later`).waitFor();
   await card(page).getByRole("link", { name: /Download the extension/ }).waitFor();
   await card(page).getByText(/Click Load unpacked/).waitFor();
+  await card(page).getByText("Permissions and privacy", { exact: true }).click();
   await card(page).getByText(/The extension never sees your password/).waitFor();
   const text = await card(page).innerText();
   assert.ok(!/\{\{?\w+\}\}?/.test(text), "no unfilled {placeholder}");
