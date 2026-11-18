@@ -16,6 +16,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { applyMute } from "@/features/notifications/mute-store";
 import type { NotificationMute } from "@/types";
 import { SwitchRow } from "@/components/ui/switch";
+import { setLiveToastsEnabled, useLiveToastsEnabled } from "@/features/notifications/live-toast-pref";
 
 /**
  * Ayarlar → Bildirimler (docs/history/326-*). Tür anahtarları `notification_type_prefs` (satırı olmayan tür AÇIKTIR); kapalı tür için bildirim hiç yazılmaz
@@ -24,6 +25,7 @@ import { SwitchRow } from "@/components/ui/switch";
 export function NotificationSettings() {
   const { t } = useTranslation();
   const { snoozedCount } = useNotifications();
+  const liveToasts = useLiveToastsEnabled();
   const [disabled, setDisabled] = useState<Set<NotificationPrefKeyName>>(new Set());
   const [mutes, setMutes] = useState<NotificationMute[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -89,6 +91,20 @@ export function NotificationSettings() {
 
   return (
     <>
+      <SettingsCard title={t("nc.settings.live")} hint={t("nc.settings.liveHint")}>
+        <SwitchRow
+          checked={liveToasts}
+          onChange={() => setLiveToastsEnabled(!liveToasts)}
+          data-pref="live-toasts"
+          className="min-h-14 rounded-lg border border-border-soft px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-soft"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-small font-medium text-text">{t("nc.settings.liveTitle")}</span>
+            <span className="block text-caption text-text-muted">{t("nc.settings.liveRowHint")}</span>
+          </span>
+        </SwitchRow>
+      </SettingsCard>
+
       <SettingsCard title={t("nc.settings.types")} hint={t("nc.settings.typesHint")}>
         {status === "loading" ? (
           <div aria-busy className="space-y-1.5" data-notification-pref-loading="">

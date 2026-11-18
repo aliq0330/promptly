@@ -1218,6 +1218,44 @@
   to { opacity: 1; transform: none; }
 }
 
+/* Canlı bildirim kartı (docs/history/434-*, features/notifications/live-toasts.tsx): bilgisayarda sağdan kayarak girer, telefonda üstten iner; kapanırken
+   yüksekliği 0'a iner (alttaki kartlar yukarı kayar). Süre JS zamanlayıcısıdır; çizgi yalnız kalan süreyi gösterir (hareketi azalt'ta kendiliğinden sönük). */
+.live-toast-slot {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 240ms var(--ease-soft), opacity 200ms var(--ease-soft);
+}
+.live-toast-slot > div {
+  min-height: 0;
+}
+.live-toast-slot[data-leaving] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+.live-toast-slot[data-leaving] > div {
+  overflow: hidden;
+}
+.live-toast {
+  margin-bottom: 0.5rem;
+  animation: live-toast-in-desk 340ms var(--ease-soft) backwards;
+}
+[data-live-toasts="phone"] .live-toast {
+  animation-name: live-toast-in-phone;
+}
+@keyframes live-toast-in-desk {
+  from { opacity: 0; transform: translateX(28px) scale(0.98); }
+}
+@keyframes live-toast-in-phone {
+  from { opacity: 0; transform: translateY(-22px) scale(0.98); }
+}
+.live-toast-bar {
+  transform-origin: left center;
+  animation: live-toast-drain linear forwards;
+}
+@keyframes live-toast-drain {
+  to { transform: scaleX(0); }
+}
+
 /* Scroll-reveal: hidden until its IntersectionObserver fires (src/components/ui/reveal.tsx). */
 [data-reveal="pending"] {
   opacity: 0;
