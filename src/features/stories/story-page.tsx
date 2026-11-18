@@ -53,7 +53,7 @@ export function StoryPage() {
   if (state === "missing") {
     return (
       <div className="mx-auto max-w-md px-3 py-16">
-        <EmptyState
+        <EmptyState scene="story"
           icon={CircleSlash}
           title={t("stories.page.missingTitle")}
           description={t("stories.page.missingBody")}

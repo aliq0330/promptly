@@ -76,13 +76,13 @@ export function SpaceLinkPage() {
         </p>
       ) : state === "guest" ? (
         <div className="space-y-4 text-center">
-          <EmptyState icon={Link2} title={t("spaces.link.signInTitle")} description={t("spaces.link.signInBody")} />
+          <EmptyState scene="locked" icon={Link2} title={t("spaces.link.signInTitle")} description={t("spaces.link.signInBody")} />
           <Link href={authHref("/login", "/spaces/link")} className={buttonClassName()}>
             {t("header.login")}
           </Link>
         </div>
       ) : (
-        <EmptyState icon={Link2} title={t("spaces.link.invalidTitle")} description={t("spaces.link.invalidBody")} action={{ label: t("spaces.page.backToSpaces"), href: "/spaces" }} />
+        <EmptyState scene="locked" icon={Link2} title={t("spaces.link.invalidTitle")} description={t("spaces.link.invalidBody")} action={{ label: t("spaces.page.backToSpaces"), href: "/spaces" }} />
       )}
     </div>
   );

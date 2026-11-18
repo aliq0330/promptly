@@ -118,7 +118,7 @@ export function CommunityHubView({ communityId, embedded = false }: { communityI
   };
   const selection = useHubSelection(actions, { word: () => "room", deleteBody: t("rooms.manage.deleteBody") });
 
-  if (conversations.length > 0 && !group) return <EmptyState icon={Users} title={t("th.community.notFound")} />;
+  if (conversations.length > 0 && !group) return <EmptyState scene="mailbox" icon={Users} title={t("th.community.notFound")} />;
 
   async function toggleCommunityMute(next: boolean) {
     if (!user || muteBusy) return;

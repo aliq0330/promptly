@@ -347,7 +347,7 @@ export function MyContentView() {
                 action={createLinks[kind]}
               />
             ) : (
-              <EmptyState
+              <EmptyState scene="filter"
                 icon={Search}
                 title={t("myContent.noMatchTitle")}
                 description={t("myContent.noMatchBody")}

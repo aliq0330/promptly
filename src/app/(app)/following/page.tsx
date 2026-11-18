@@ -34,7 +34,7 @@ export default function FollowingPage() {
         </div>
         {!feed.loading && (
           <>
-            <FeedGrid items={feed.items} />
+            <FeedGrid items={feed.items} emptyScene="following" />
             <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
           </>
         )}

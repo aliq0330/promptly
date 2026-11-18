@@ -112,7 +112,7 @@ export function NotesTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: strin
           action={caps.edit ? { label: t("spaces.notes.new"), onClick: () => setEditing("new") } : undefined}
         />
       ) : notes.length === 0 ? (
-        <EmptyState icon={Search} title={t("spaces.home.noResults")} compact />
+        <EmptyState scene="filter" icon={Search} title={t("spaces.home.noResults")} compact />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {notes.map((note) => {

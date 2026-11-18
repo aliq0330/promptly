@@ -73,7 +73,7 @@ export function PromptInsightsView() {
       </Link>
 
       {state.status === "error" && state.notFound ? (
-        <EmptyState icon={BarChart3} title={t("insights.detail.notFoundTitle")} description={t("insights.detail.notFoundDescription")} action={{ label: t("insights.detail.back"), href: "/insights" }} />
+        <EmptyState scene="emptyFrame" icon={BarChart3} title={t("insights.detail.notFoundTitle")} description={t("insights.detail.notFoundDescription")} action={{ label: t("insights.detail.back"), href: "/insights" }} />
       ) : (
         <>
           <div className="flex flex-wrap items-end justify-between gap-3">

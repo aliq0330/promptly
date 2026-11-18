@@ -132,7 +132,7 @@ export function TeamChatSection({ ctx }: { ctx: TeamCtx }) {
     );
   };
 
-  if (failed) return <EmptyState icon={Hash} title={t("tm.chat.failed")} action={{ label: t("common.retry"), onClick: load }} />;
+  if (failed) return <EmptyState scene="cutString" icon={Hash} title={t("tm.chat.failed")} action={{ label: t("common.retry"), onClick: load }} />;
   if (!channels) return <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>;
 
   return (

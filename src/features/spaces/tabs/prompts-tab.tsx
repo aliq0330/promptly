@@ -143,7 +143,7 @@ export function PromptsTab({ onShowOnBoard, autoAdd }: { onShowOnBoard: (id: str
           action={caps.edit ? { label: t("spaces.prompts.newDraft"), onClick: () => setEditing("new") } : undefined}
         />
       ) : visible.length === 0 ? (
-        <EmptyState icon={Search} title={t("spaces.home.noResults")} compact />
+        <EmptyState scene="filter" icon={Search} title={t("spaces.home.noResults")} compact />
       ) : (
         <ul className="space-y-3">
           {visible.map(({ item, source: rowSource }) => {

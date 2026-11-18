@@ -152,7 +152,7 @@ export function StoryArchiveView() {
           <Loader2 size={16} className="animate-spin" aria-hidden /> {t("common.loading")}
         </p>
       ) : stories.length === 0 ? (
-        <EmptyState icon={Archive} title={t("stories.archive.empty")} description={t("stories.archive.emptyHint")} />
+        <EmptyState scene="archive" icon={Archive} title={t("stories.archive.empty")} description={t("stories.archive.emptyHint")} />
       ) : (
         <div className="space-y-6">
           {days.map((day) => (

@@ -166,10 +166,10 @@ export function TopicPage({
         {feed.loading ? (
           <PromptCardSkeletonGrid count={4} />
         ) : feed.failed && feed.items.length === 0 ? (
-          <EmptyState icon={icon} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
+          <EmptyState scene="feedStalled" icon={icon} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
         ) : (
           <>
-            <FeedGrid items={feed.items} emptyTitle={section === "all" && !taxonomyActiveCount(picked, true) ? t("topic.empty") : t("topic.emptyFilter")} />
+            <FeedGrid items={feed.items} emptyScene="shelf" emptyTitle={section === "all" && !taxonomyActiveCount(picked, true) ? t("topic.empty") : t("topic.emptyFilter")} />
             <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
           </>
         )}

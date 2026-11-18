@@ -54,7 +54,7 @@ function GuestFeed({ layout }: { layout: "grid" | "home" }) {
       {feed.loading ? (
         <PromptCardSkeletonGrid count={layout === "home" ? 4 : 6} columns={layout === "home" ? GRID_COLUMNS_ASIDE : undefined} />
       ) : feed.failed && feed.items.length === 0 ? (
-        <EmptyState icon={Clock} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
+        <EmptyState scene="feedStalled" icon={Clock} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
       ) : (
         <div className="space-y-4">
           <FeedGrid

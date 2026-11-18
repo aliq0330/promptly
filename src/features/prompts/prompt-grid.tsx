@@ -27,7 +27,7 @@ export function PromptGrid(props: PromptGridProps) {
 
   if (items.length === 0) {
     return (
-      <EmptyState icon={SquareTerminal} title={t("prompt.noPromptsToShow")} compact />
+      <EmptyState scene="shelf" icon={SquareTerminal} title={t("prompt.noPromptsToShow")} compact />
     );
   }
 

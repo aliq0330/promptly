@@ -339,7 +339,7 @@ export function ProfileView({
             ) : activeTab === "requests" ? (
               <PagedListState list={requests}>
                 {requests.items.length === 0 ? (
-                  <ProfileEmptyState
+                  <ProfileEmptyState scene="bottle"
                     icon={Sparkles}
                     title={t("profile.noRequestsYetTitle")}
                     description={isOwnProfile ? t("profile.noRequestsYetOwnBody") : t("profile.noRequestsYetOtherBody")}
@@ -352,7 +352,7 @@ export function ProfileView({
             ) : activeTab === "workflows" ? (
               <PagedListState list={workflows}>
                 {workflows.items.length === 0 ? (
-                  <ProfileEmptyState
+                  <ProfileEmptyState scene="dominoes"
                     icon={WorkflowIcon}
                     title={t("workflow.noneYetTitle")}
                     description={isOwnProfile ? t("workflow.noneYetBody") : t("workflow.noneYetOtherBody")}
@@ -416,7 +416,7 @@ export function ProfileView({
                       onDeleted={handleDeleted}
                       emptyState={
                         hasActiveFilters ? (
-                          <ProfileEmptyState
+                          <ProfileEmptyState scene="filter"
                             icon={SearchX}
                             title={t("profile.noMatchForFilterTitle")}
                             description={t("profile.noMatchForFilterBody")}
@@ -442,7 +442,7 @@ function TabEmptyState({ tab, isOwnProfile }: { tab: ProfileTabKey; isOwnProfile
   const { t } = useTranslation();
   if (tab === "liked") {
     return (
-      <ProfileEmptyState
+      <ProfileEmptyState scene="sprout"
         icon={Heart}
         title={t("profile.likedPromptsHereTitle")}
         description={t("profile.likedPromptsHereBody")}
@@ -451,7 +451,7 @@ function TabEmptyState({ tab, isOwnProfile }: { tab: ProfileTabKey; isOwnProfile
     );
   }
   return (
-    <ProfileEmptyState
+    <ProfileEmptyState scene="notebook"
       icon={Sparkles}
       title={t("profile.creativeJourneyStartsHereTitle")}
       description={t("profile.creativeJourneyStartsHereBody")}

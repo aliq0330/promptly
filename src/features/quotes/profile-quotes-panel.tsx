@@ -64,10 +64,10 @@ export function ProfileQuotesPanel({ authorId, isOwn }: { authorId: string; isOw
 
   if (status === "loading") return <PromptCardSkeletonGrid count={3} />;
   if (status === "failed") {
-    return <EmptyState icon={QuoteIcon} title={t("quotes.profile.loadError")} action={{ label: t("common.retry"), onClick: loadFirst }} />;
+    return <EmptyState scene="fishing" icon={QuoteIcon} title={t("quotes.profile.loadError")} action={{ label: t("common.retry"), onClick: loadFirst }} />;
   }
   if (quotes.length === 0) {
-    return <ProfileEmptyState icon={QuoteIcon} title={t("quotes.profile.tab")} description={isOwn ? t("quotes.profile.emptyOwn") : t("quotes.profile.emptyOther")} />;
+    return <ProfileEmptyState scene="quoteBoard" icon={QuoteIcon} title={t("quotes.profile.tab")} description={isOwn ? t("quotes.profile.emptyOwn") : t("quotes.profile.emptyOther")} />;
   }
   return (
     <div data-profile-quotes={authorId} className="space-y-4">
