@@ -106,5 +106,7 @@ ayrıntılı liste kelimesi kelimesine `docs/history/286-*` içinde.
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
+- **Chrome uzantısı v1 (`docs/history/429-*`, 2026-11-18):** kodlandı, sunucu/migration/Edge değişikliği YOK (yalnız mevcut açık API + OAuth + `media-upload` kullanılır). Zip her derlemede üretilir (`prebuild`). **Açık/denenmedi:** gerçek Chrome'da `launchWebAuthFlow` ile uçtan uca giriş (headless'ta açılamadı; OAuth birim testli, canlı sunucunun herkese açık uçları ve OAuth metadatası gerçek istemciyle okundu), gerçek hesapla taslak yazma/görsel yükleme (canlıya yazı yapılmadı). **Kullanıcı kararları bekliyor:** Chrome Web Store'a çıkılacak mı (kimlik/yönlendirme sabitleme, gizlilik metni, mağaza görselleri; hukuk metni değiştirilmedi); oy ("Çalıştı mı?") ve sonuç paylaşımının uzantıya taşınması `write` kapsamını genişletir (migration + `me.ts` + izin ekranı), şimdilik sitede.
+
 **Arşiv:** [`docs/history/README.md`](docs/history/README.md) — en son 351. bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

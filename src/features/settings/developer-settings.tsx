@@ -5,6 +5,7 @@ import { Code2 } from "@/components/icons/code-2";
 import { ConnectWizard } from "@/features/developers/connect-wizard";
 import { ApiKeysSection } from "@/features/settings/api-keys-section";
 import { ConnectedAppsSection } from "@/features/settings/connected-apps-section";
+import { ExtensionSection } from "@/features/settings/extension-section";
 import { TelegramSection } from "@/features/settings/telegram-section";
 import { SettingsCard, SettingsLinkRow, SettingsSubpage } from "@/features/settings/settings-ui";
 import { developerEndpoints } from "@/lib/developers";
@@ -12,7 +13,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Ayarlar → Geliştirici (docs/history/318-*, 319-*): (1) bir yapay zekâ aracına bağlama sihirbazı (izin vererek "deneysel" / anahtarla), (2) kişisel anahtarlar,
- * (3) bağlı uygulamalar. Sihirbaz `features/developers/connect-wizard.tsx`'tir (aynısı /developers → Hesabınla bağla'da); adres
+ * (3) Chrome uzantısı (indirme + yükleme + kullanım, `extension-section.tsx`), (4) bağlı uygulamalar. Sihirbaz `features/developers/connect-wizard.tsx`'tir (aynısı /developers → Hesabınla bağla'da); adres
  * `NEXT_PUBLIC_SUPABASE_URL`'den türetilir (`lib/developers.ts`), uydurma adres gösterilmez.
  */
 export function DeveloperSettings() {
@@ -33,13 +34,17 @@ export function DeveloperSettings() {
         </div>
       </SettingsCard>
 
+      <ExtensionSection />
+
       <div id="anahtarlarim" className="scroll-mt-24">
         <SettingsCard title={t("devSettings.keysTitle")} hint={t("apiKeys.hint")}>
           <ApiKeysSection />
         </SettingsCard>
       </div>
 
-      <ConnectedAppsSection />
+      <div id="bagli-uygulamalar" className="scroll-mt-24">
+        <ConnectedAppsSection />
+      </div>
 
       <TelegramSection />
 

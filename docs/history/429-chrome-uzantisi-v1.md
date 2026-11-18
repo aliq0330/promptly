@@ -1,0 +1,26 @@
+# 429 — Chrome uzantısı v1: dört faz + Ayarlar'da indirme/yükleme kartı
+
+**Tarih:** 2026-11-18 · **Klasör:** `promptly-extension/` (eski 0.4.0 MVP baştan yazıldı) · **Karar kaynağı:** kullanıcı ("4 fazı da önerdiğin sırayla yap, Ayarlar → Geliştirici'ye kullanım ve yükleme bölümü koy, eksik/hata olmasın").
+
+## Neden
+Eski uzantı yalnız "seçili metni taslağa kaydet"ti ve sitenin gerisinde kalmıştı: Google ile kayıtlı hesap giremiyordu (yalnız şifre girişi), yenileme belirteci popup ile arka plan arasında yarışabiliyordu, web'den alınan metin `origin_type: original` ile "özgün" yazılıyordu, tabloya doğrudan ekleme yinelenme/doğrulama yolunu atlıyordu, tek hatalı öğe kuyruğu durduruyordu, yalnız metin vardı, kütüphane kullanılamıyordu, testi/belgesi/CI'ı yoktu.
+
+## Ne yapıldı (öneri sırasıyla)
+- **Faz 0 — taban:** sitenin kendi OAuth sunucusuyla giriş (`chrome.identity.launchWebAuthFlow` + PKCE; şifre uzantıya girmez, Google hesapları girer); yenileme `navigator.locks` ile tek kilit; yazma açık API'nin `POST /v1/me/prompts` ucundan (yinelenme + doğrulama + hız sınırı sunucuda), web içeriği "başka yerden" + `source` atfı; kuyruk: 6 sn bekletme (Geri al), kalıcı hata `failed` olur ve kuyruğu durdurmaz, geçici hata durdurur ve alarmla yeniden denenir; Meydan görünümü (token'lar, DM Sans/Bricolage/JetBrains Mono kendi dosyalarımız), `_locales`, TR/EN; birim testleri + e2e + `npm test`; zip paketleme.
+- **Faz 1 — yakalama:** sağ tık/`Alt+Shift+S` ile sayfada yakalama kartı (başlık, tür, araç [katalog kimlikleri], etiket, kimin?), `[konu]`/`{{konu}}` → `{konu}` önerisi + geri al, görsele sağ tık (https görsel `media-upload` ile taslağa), sonuç ekranı ("Sitede aç" = `/create/?edit=`).
+- **Faz 2 — kullanma:** popup + yan panelde kütüphane (Son · Benim · Kaydettiklerim · Popüler · Keşfet, taslaklar), sayfalama + çevrimdışı önbellek, açınca prompt + değişken doldurma + kopyala; sayfada palet (`Alt+Shift+P`, Enter ile odaktaki metin kutusuna ekler); site başına "/ ile aç" (`optional_host_permissions` + dinamik betik; boş alanda tetiklenir, Esc "/" yazar).
+- **Faz 3 — döngü:** "Şimdi" sekmesi (durum bandı, son kullanılan, bekleyen/sorunlu kuyruk, tek tek tekrar dene/kaldır), oy ve sonuç paylaşımı için **siteye derin bağlantı**.
+- **Ayarlar → Geliştirici → "Chrome uzantısı" kartı** (`extension-section.tsx`): indirme (zip), 5 adımlı yükleme, kullanım, izin/gizlilik özeti, "Bağlı uygulamalar" bağlantısı. Zip `scripts/build-extension.mjs` ile her derlemede üretilir (`prebuild`/`predev`; `public/downloads/` gitignore'da), sürüm manifestten gelir.
+
+## Bilinçli kararlar / sınırlar
+- **Oy ("Çalıştı mı?") ve sonuç paylaşımı uzantıda YAPILMAZ**, sitede yapılır. Sebep: kişisel API/OAuth yazma kapsamı bilerek yalnız özel taslaktır (`315-*`, `321-*`); oy için ayrıca "promptu kopyalamış olma" kuralı var ve kopyalama kaydı istemciye kapalı. Bu yetenekleri açmak kapsamı genişletmektir (migration + `me.ts` + izin ekranı + kullanıcı onayı) ve bu işte yapılmadı. Yan panel bunu açıkça söyler ve prompt sayfasına götürür.
+- **Skill ve Space'e ekleme yok** (Skill bayrağı kapalı; Space yazma yeteneği açık API'de yok).
+- **Geri al yalnız bekletme süresinde**: gönderilen taslak API'den silinemez (silme yeteneği yok, bilerek).
+- **"/" için sayfa erişimi site başına, kullanıcı hareketiyle**; varsayılan kapalı. Alternatif (tüm sitelerde kalıcı betik) "siteleri oku" uyarısı gösterirdi; seçilmedi. Karar bekliyor: Chrome Web Store'a çıkılacak mı (çıkılırsa uzantı kimliği/yönlendirme sabitlenir, gizlilik metni + mağaza görselleri gerekir; hukuk metni değiştirilmedi).
+- **Güvenlik:** sayfaya enjekte edilen betik `chrome.storage`'a erişemez (`setAccessLevel(TRUSTED_CONTEXTS)`, gerçek Chromium'da doğrulandı) ve auth/api modüllerini içermez; belirteç yalnız arka plan/uzantı sayfalarında. Manifest testi: `content_scripts`/`<all_urls>` yok, izin kümesi sabit.
+
+## Doğrulama (dürüst)
+- Birim: `promptly-extension/tests/*.test.mjs` 47 test (PKCE RFC 7636 vektörü, kod değişimi, **yenileme yarışında tek istek**, invalid_grant/geçici hata ayrımı, kuyruk kalıcı/geçici hata, `buildPromptsFile` çıktısını sitenin KENDİ `parseJson`/`withSourceNote`'u kabul eder, manifest izinleri, TR/EN anahtar+parametre eşitliği) + `scripts/build-extension.test.mjs` (zip içeriği/kararlılık).
+- Uçtan uca (gerçek Chromium + yüklenmiş uzantı + sahte sunucu): `node promptly-extension/tests/e2e/run.mjs` 15 senaryo (giriş ekranı, kütüphane kaynakları, doldur+kopyala, yakalama [6 sn bekletme, tek POST, atıf], Geri al, görsel, palet, "/", kalıcı/geçici hata, yazma izni yok bandı, yan panel, içerik betiği depoyu OKUYAMAZ).
+- Arayüz (ağ taklitli): `tests/messaging-ui/run-extension-card.mjs` 6/6 (gerçek zip indirilir ve içeriği doğrulanır, iki dil, telefonda taşma yok). Test bir hata yakaladı: çeviri parametresi `{{version}}` biçimindedir (`{version}` doldurulmuyordu).
+- Canlı sunucuya karşı yalnız OKUMA (popüler, keşfet, prompt metni, OAuth metadatası, oturumsuz `/me` → 401) gerçek istemci koduyla denendi. **DENENMEDİ:** gerçek Chrome'da `launchWebAuthFlow` ile uçtan uca giriş + onay ekranı (headless'ta pencere açılamaz), gerçek hesapla taslak yazma/görsel yükleme (canlıya yazı yapılmadı), Chrome Web Store.

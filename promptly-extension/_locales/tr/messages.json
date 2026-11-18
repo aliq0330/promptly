@@ -1,0 +1,6 @@
+{
+  "extName": { "message": "Promptly" },
+  "extDesc": { "message": "Gördüğün promptları tek dokunuşla Promptly'ye taslak olarak kaydet, kütüphaneni yazdığın her yerde kullan." },
+  "cmdSave": { "message": "Seçili metni Promptly'ye kaydet" },
+  "cmdPalette": { "message": "Prompt paletini aç (kütüphane + metin kutusuna ekle)" }
+}

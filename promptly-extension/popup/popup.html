@@ -1,54 +1,80 @@
 <!doctype html>
 <html lang="tr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Promptly</title>
-    <link rel="stylesheet" href="popup.css" />
-  </head>
-  <body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Promptly</title>
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Giriş: sitenin kendi OAuth sayfası (şifre uzantıya girmez) -->
+  <main id="login" hidden>
+    <div class="login-hero"><span id="login-brand"></span><span class="wm big">promptly</span></div>
+    <h1 data-i18n="connectTitle"></h1>
+    <p class="lead" data-i18n="connectLead"></p>
+    <ul class="points">
+      <li data-i18n="connectPt1"></li>
+      <li data-i18n="connectPt2"></li>
+      <li data-i18n="connectPt3"></li>
+    </ul>
+    <button id="connect" type="button" class="btn pri full" data-i18n="connectBtn"></button>
+    <p id="login-error" class="err" role="alert" hidden></p>
+    <p class="hint" data-i18n="connectHintWrite"></p>
+    <button id="lang-login" type="button" class="pillbtn self" data-i18n-title="language"></button>
+  </main>
+
+  <div id="app" hidden>
     <header class="head">
-      <span class="logo">✦</span>
-      <h1>Promptly</h1>
-      <span id="user" class="user" hidden></span>
-      <button id="logout" type="button" class="link" data-i18n="signOut" hidden></button>
-      <button id="lang" type="button" class="lang" data-i18n-aria="language"></button>
+      <span id="head-brand"></span><span class="wm">promptly</span>
+      <span class="grow"></span>
+      <button id="lang" type="button" class="pillbtn" data-i18n-title="language"></button>
+      <button id="account" type="button" class="avatar" data-i18n-title="account" aria-haspopup="true" aria-expanded="false"></button>
     </header>
+    <div id="menu" class="menu" role="menu" hidden>
+      <div id="menu-user" class="hint"></div>
+      <button id="signout" type="button" role="menuitem" class="linkbtn" data-i18n="signOut"></button>
+    </div>
+    <div class="body">
+      <div id="status" class="banner" hidden></div>
+      <div class="seg" id="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="library" class="on" data-i18n="tabLibrary"></button>
+        <button type="button" role="tab" data-tab="drafts" data-i18n="tabDrafts"></button>
+        <button type="button" role="tab" data-tab="pending"><span data-i18n="tabPending"></span><em id="pend-n" hidden></em></button>
+      </div>
 
-    <main>
-      <form id="login" class="stack" hidden>
-        <p class="note" data-i18n="loginHint"></p>
-        <label class="label" for="identifier" data-i18n="identifier"></label>
-        <input id="identifier" class="field" autocomplete="username" required />
-        <label class="label" for="password" data-i18n="password"></label>
-        <input id="password" class="field" type="password" autocomplete="current-password" required />
-        <p id="login-error" class="error" role="alert" hidden></p>
-        <button id="login-btn" type="submit" class="btn primary" data-i18n="signIn"></button>
-      </form>
-
-      <section id="pending" hidden>
-        <h2 id="pending-title" class="section"></h2>
-        <p id="pending-note" class="note"></p>
-        <p id="pending-error" class="error" role="alert" hidden></p>
-        <ul id="pending-list" class="items"></ul>
-        <button id="retry" type="button" class="btn" data-i18n="retry" hidden></button>
+      <section id="tab-library" class="stack">
+        <label class="field"><span id="search-ico"></span><input id="search" type="search" data-i18n-ph="searchPh" autocomplete="off"></label>
+        <div id="sources" class="chips compact"></div>
+        <div id="types" class="chips compact"></div>
+        <div id="lib-note" class="banner" hidden></div>
+        <ul id="lib-list" class="list"></ul>
       </section>
-
-      <section id="saved" hidden>
-        <h2 class="section" data-i18n="savedDrafts"></h2>
-        <ul id="saved-list" class="items"></ul>
+      <section id="tab-drafts" class="stack" hidden>
+        <ul id="drafts-list" class="list"></ul>
       </section>
-
-      <section id="empty" class="empty" hidden>
-        <p class="empty-title" data-i18n="emptyTitle"></p>
-        <p class="empty-hint" data-i18n="emptyHint"></p>
+      <section id="tab-pending" class="stack" hidden>
+        <ul id="pending-list" class="list"></ul>
+        <p id="pending-empty" class="empty" hidden data-i18n="emptyPending"></p>
       </section>
-    </main>
-
-    <script src="../i18n.js"></script>
-    <script src="../config.js"></script>
-    <script src="../api.js"></script>
-    <script src="../queue.js"></script>
-    <script src="popup.js"></script>
-  </body>
+    </div>
+    <footer class="foot">
+      <p id="shortcuts" class="hint"></p>
+      <button id="sidepanel" type="button" class="btn sm full"></button>
+      <button id="slash" type="button" class="btn sm full"></button>
+      <p id="slash-hint" class="hint" hidden data-i18n="slashHint"></p>
+    </footer>
+  </div>
+  <script src="../config.js"></script>
+  <script src="../shared/i18n.js"></script>
+  <script src="../shared/vars.js"></script>
+  <script src="../shared/store.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/api.js"></script>
+  <script src="../shared/queue.js"></script>
+  <script src="../shared/library.js"></script>
+  <script src="../shared/slash.js"></script>
+  <script src="../shared/ui.js"></script>
+  <script src="popup.js"></script>
+</body>
 </html>

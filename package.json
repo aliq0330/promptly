@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/build-i18n.mjs",
+    "predev": "node scripts/build-i18n.mjs && node scripts/build-extension.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/build-i18n.mjs",
+    "prebuild": "node scripts/build-i18n.mjs && node scripts/build-extension.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings=25",

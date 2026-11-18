@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Promptly</title>
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="head">
+    <span id="head-brand"></span><span class="wm">promptly</span>
+    <span class="grow"></span>
+    <button id="lang" type="button" class="pillbtn" data-i18n-title="language"></button>
+  </header>
+  <main class="body">
+    <div id="signedout" class="stack" hidden>
+      <p class="lead" data-i18n="connectLead"></p>
+      <button id="connect" type="button" class="btn pri full" data-i18n="connectBtn"></button>
+      <p id="login-error" class="err" role="alert" hidden></p>
+      <p class="hint" data-i18n="connectHintWrite"></p>
+    </div>
+    <div id="signedin" class="stack" hidden>
+      <div id="status" class="banner" hidden></div>
+      <div class="seg" id="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="now" class="on" data-i18n="tabNow"></button>
+        <button type="button" role="tab" data-tab="library" data-i18n="tabLibrary"></button>
+        <button type="button" role="tab" data-tab="drafts" data-i18n="tabDrafts"></button>
+      </div>
+
+      <section id="tab-now" class="stack">
+        <div class="label" data-i18n="justUsed"></div>
+        <div id="used"></div>
+        <div id="usedActions" class="stack" hidden>
+          <div class="label" data-i18n="didItWork"></div>
+          <p class="hint" data-i18n="didItWorkNote"></p>
+          <a id="voteLink" class="btn full" target="_blank" rel="noopener noreferrer"></a>
+        </div>
+        <div id="pendingBox" class="stack" hidden>
+          <div class="label" data-i18n="tabPending"></div>
+          <ul id="pending-list" class="list"></ul>
+        </div>
+      </section>
+
+      <section id="tab-library" class="stack" hidden>
+        <label class="field"><span id="search-ico"></span><input id="search" type="search" data-i18n-ph="searchPh" autocomplete="off"></label>
+        <div id="sources" class="chips compact"></div>
+        <div id="types" class="chips compact"></div>
+        <div id="lib-note" class="banner" hidden></div>
+        <ul id="lib-list" class="list"></ul>
+      </section>
+      <section id="tab-drafts" class="stack" hidden>
+        <ul id="drafts-list" class="list"></ul>
+      </section>
+    </div>
+  </main>
+  <script src="../config.js"></script>
+  <script src="../shared/i18n.js"></script>
+  <script src="../shared/vars.js"></script>
+  <script src="../shared/store.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/api.js"></script>
+  <script src="../shared/queue.js"></script>
+  <script src="../shared/library.js"></script>
+  <script src="../shared/ui.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

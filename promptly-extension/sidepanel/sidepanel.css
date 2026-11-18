@@ -1,0 +1,5 @@
+body { min-height: 100vh; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.lead { margin: 0; color: var(--text2); font-size: 14px; }
+.err { margin: 0; color: var(--danger); font-size: 12.5px; }
+a.btn { text-decoration: none; }
