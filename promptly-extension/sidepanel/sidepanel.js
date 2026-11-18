@@ -7,7 +7,7 @@ let loaded = { library: false, drafts: false };
 
 async function connectFlow() {
   const b = $("connect"); b.disabled = true; b.textContent = t("connecting"); $("login-error").hidden = true;
-  try { await PAuth.connect(); await PApi.syncIdentity(); chrome.runtime.sendMessage({ type: "flush" }); }
+  try { const res = await PUI.bg({ type: "connect" }); if (res && res.error) throw res.error; }
   catch (err) { $("login-error").hidden = false; $("login-error").textContent = err && err.code === "cancelled" ? t("connectCancelled") : t("connectFailed", { error: PUI.errText(err) }); }
   finally { b.disabled = false; b.textContent = t("connectBtn"); }
 }
