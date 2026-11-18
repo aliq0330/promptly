@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { focusActiveIndex, focusKeyAction, focusResultStep, focusSheetGesture, focusSheetStep, focusTabs } from "./focus-sheet.ts";
+import { focusActiveIndex, focusKeyAction, focusResultStep, focusSheetDrag, focusSheetGesture, focusSheetRelease, focusSheetStep, focusTabs } from "./focus-sheet.ts";
 
 test("the card steps closed → half → full and back; the ends stay put", () => {
   assert.equal(focusSheetStep(null, "up"), "half");
@@ -52,4 +52,29 @@ test("keys: ↑ ↓ move between posts, ← → between results, P panel, C copy
   assert.equal(focusKeyAction("Escape"), "close");
   assert.equal(focusKeyAction("Home"), "first");
   assert.equal(focusKeyAction("x"), null);
+});
+
+test("focusSheetRelease: yarımın %70'inin altı kapatır, yolun üçte birini geçmek büyütür, ötesi yarımda kalır", () => {
+  const half = 600;
+  const tall = 720;
+  assert.equal(focusSheetRelease(half, 0, half, tall), "half");
+  assert.equal(focusSheetRelease(half - 100, 0, half, tall), "half", "küçük bir aşağı çekiş yarımda kalır");
+  assert.equal(focusSheetRelease(half * 0.7 - 1, 0, half, tall), "closed");
+  assert.equal(focusSheetRelease(half, -1, half, tall), "closed", "hızlı aşağı fırlatma kapatır (izdüşüm 600 - 200)");
+  assert.equal(focusSheetRelease(half + 39, 0, half, tall), "half", "yolun üçte biri = 639,6");
+  assert.equal(focusSheetRelease(half + 41, 0, half, tall), "full");
+  assert.equal(focusSheetRelease(half, 0.4, half, tall), "full", "hızlı yukarı fırlatma büyütür");
+  assert.equal(focusSheetRelease(tall, 0, half, tall), "full");
+});
+
+test("focusSheetDrag: başlıktan yukarı büyütür, %90'da durur; içerikten %90'a kadar kaymaz, sonra kayar; en üstteyken aşağı küçültür", () => {
+  const g = (over: Partial<Parameters<typeof focusSheetDrag>[0]>) => focusSheetDrag({ height: 600, dy: 0, region: "head", tall: 720, floor: -50, scrollTop: 0, ...over });
+  assert.deepEqual(g({ dy: -50 }), { height: 650, scroll: 0 }, "yukarı = büyür");
+  assert.deepEqual(g({ dy: -200 }), { height: 720, scroll: 0 }, "başlıktan %90'ı aşmaz");
+  assert.deepEqual(g({ dy: -200, region: "body" }), { height: 720, scroll: 80 }, "içerikten artan hareket içeriği kaydırır");
+  assert.deepEqual(g({ dy: -30, region: "body" }), { height: 630, scroll: 0 }, "yarımda içerik kaymaz");
+  assert.deepEqual(g({ height: 720, dy: -40, region: "body", scrollTop: 10 }), { height: 720, scroll: 40 }, "%90'da içerik kayar");
+  assert.deepEqual(g({ height: 720, dy: 40, region: "body", scrollTop: 0 }), { height: 680, scroll: 0 }, "üstteyken aşağı kart küçülür");
+  assert.deepEqual(g({ height: 720, dy: 40, region: "body", scrollTop: 100 }), { height: 720, scroll: -40 }, "içerik aşağıdayken aşağı çekmek içeriği geri kaydırır");
+  assert.equal(g({ dy: 900 }).height, -50, "kapalının biraz ötesinde durur");
 });

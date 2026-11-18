@@ -7,8 +7,15 @@ import type { PostEntry } from "@/lib/supabase/feed";
 /** `null` = kapalı (yalnız alttaki prompt şeridi görünür). */
 export type FocusSheetState = "half" | "full";
 
-/** Kartın yüksekliği (dvh): yarım = %58, tam = üstte 84 px'lik küçük başlık kalacak kadar (CSS tarafında). */
-export const FOCUS_SHEET_HALF_DVH = 58;
+/**
+ * Kart yerden kopuk, yüzen bir alt penceredir (diğer alt pencerelerle aynı davranış; yalnız alttaki boşluk %3): yarım = sahnenin %75'i, büyük = %90'ı.
+ * Oranlar sahne (kartın kabı) yüksekliğine göredir.
+ */
+export const FOCUS_SHEET_GAP = 0.03;
+export const FOCUS_SHEET_HALF = 0.75;
+export const FOCUS_SHEET_TALL = 0.9;
+/** Bir dokunuş ile sürükleme arasındaki sınır (px): daha azı sekmeyi/düğmeyi seçer, fazlası kartı sürükler. */
+export const FOCUS_SHEET_DRAG_SLOP = 6;
 
 export function focusSheetStep(current: FocusSheetState | null, direction: "up" | "down"): FocusSheetState | null {
   if (direction === "up") return current === null ? "half" : "full";
@@ -21,6 +28,42 @@ export function focusSheetGesture(dy: number, elapsedMs: number): "up" | "down" 
   const velocity = Math.abs(dy) / Math.max(1, elapsedMs);
   if (Math.abs(dy) > 48 || (Math.abs(dy) > 12 && velocity > 0.5)) return dy < 0 ? "up" : "down";
   return null;
+}
+
+/** Sürükleme bırakılınca kartın gideceği yer: hız (px/ms, + = yukarı) 200 ms ileri izdüşürülür; yarımın %70'inin altı kapatır, yarımdan büyüğe giden yolun üçte birinin üstü büyütür. */
+export function focusSheetRelease(height: number, velocity: number, half: number, tall: number): "closed" | FocusSheetState {
+  const projected = height + velocity * 200;
+  if (projected < half * 0.7) return "closed";
+  if (projected > half + (tall - half) * 0.33) return "full";
+  return "half";
+}
+
+export interface FocusSheetDragInput {
+  /** Kartın görünen yüksekliği (px); yarımın altı = aşağı iniyor, `floor` altına inmez. */
+  height: number;
+  /** Bu hareketteki dikey değişim (+ = aşağı). */
+  dy: number;
+  /** `body` = içerik alanından başlayan sürükleme (kaydırılabilir bir atası var), `head` = başlık/tutamak/sekmeler/alt çubuk. */
+  region: "head" | "body";
+  /** İçerik kaydırıcısının şimdiki `scrollTop`'u (`head`'te önemsiz). */
+  scrollTop: number;
+  tall: number;
+  floor: number;
+}
+
+/**
+ * Bir sürükleme adımı: kartın yeni yüksekliği ve içeriğin ne kadar kaydırılacağı (`scroll`, + = aşağı kaydır).
+ * Yukarı çekmek kartı büyütür, içerik %90'a varana kadar kaymaz; %90'da içerik kayar, en üstteyken aşağı çekmek kartı küçültür.
+ */
+export function focusSheetDrag({ height, dy, region, scrollTop, tall, floor }: FocusSheetDragInput): { height: number; scroll: number } {
+  const wanted = height - dy;
+  if (region === "body" && height >= tall - 0.5) {
+    if (dy > 0 && scrollTop <= 0) return { height: Math.max(floor, wanted), scroll: 0 };
+    return { height, scroll: -dy };
+  }
+  const over = wanted - tall;
+  if (over > 0) return { height: tall, scroll: region === "body" ? over : 0 };
+  return { height: Math.max(floor, wanted), scroll: 0 };
 }
 
 export type FocusTabId = "main" | "comments" | "results" | "versions";

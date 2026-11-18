@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "@/components/icons/arrow-up-right";
-import { ChevronDown } from "@/components/icons/chevron-down";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { Check } from "@/components/icons/check";
 import { Reply } from "@/components/icons/reply";
 import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { Sparkles } from "@/components/icons/sparkles";
 import { WandSparkles } from "@/components/icons/wand-sparkles";
+import { X } from "@/components/icons/x";
 import { Avatar } from "@/components/ui/avatar";
-import { StorageImg } from "@/components/ui/storage-media";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
 import { FollowButton } from "@/features/profile/follow-button";
@@ -26,8 +25,18 @@ import { PromptWorksVote } from "@/features/prompts/prompt-works-vote";
 import { VariableField } from "@/features/prompts/variable-field";
 import { useCommentCountDelta } from "@/features/prompts/comment-count-store";
 import type { PostFeedItem } from "@/features/feed/types";
-import { focusFeedCover, focusFeedPrimaryAction } from "@/lib/focus-feed";
-import { focusSheetGesture, focusTabs, type FocusSheetState, type FocusTabId } from "@/lib/focus-sheet";
+import { focusFeedPrimaryAction } from "@/lib/focus-feed";
+import {
+  FOCUS_SHEET_DRAG_SLOP,
+  FOCUS_SHEET_GAP,
+  FOCUS_SHEET_HALF,
+  FOCUS_SHEET_TALL,
+  focusSheetDrag,
+  focusSheetRelease,
+  focusTabs,
+  type FocusSheetState,
+  type FocusTabId,
+} from "@/lib/focus-sheet";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { isContentTypeId, taxonomyPathLabel } from "@/lib/content-taxonomy";
@@ -41,9 +50,9 @@ import { FocusAddToSpace, modelOf, RequestStatus, StructureBlock } from "./focus
 import { usePromptVersions, usePromptWorks } from "./use-focus-data";
 
 /**
- * Odak's card (docs/history/436-*, the "C" half of the merge): everything a post keeps off its face. On a phone it is the bottom sheet the prompt
- * strip opens — half (58%: header, prompt, variable fields, the big action) → full (90%: a compact header, tabs, details) — and from
- * `md` the same body is the persistent side panel. A prompt's tabs are Prompt · Yorumlar · Sonuçlar · Sürümler; every other kind has its own
+ * Odak's card (docs/history/436-*, the "C" half of the merge): everything a post keeps off its face. On a phone it is the floating bottom card the
+ * prompt strip opens (docs/history/437-*: like every other bottom sheet — detached from the edge with a 3% gap, 10px in from the sides, a dimmed
+ * scrim behind, half 75% → large 90%, the header / handle / tabs / content all drag it) and from `md` the same body is the persistent side panel. A prompt's tabs are Prompt · Yorumlar · Sonuçlar · Sürümler; every other kind has its own
  * main tab + Yorumlar. The bottom bar carries the kind's big action (the strip's, `focusFeedPrimaryAction`) beside Beğeni and Kaydet.
  */
 
@@ -101,30 +110,30 @@ function ExpandedHeader({ item, titleId, enabled }: { item: PostFeedItem; titleI
   );
 }
 
-function CompactHeader({ item, titleId, onCollapse }: { item: PostFeedItem; titleId: string; onCollapse: () => void }) {
-  const { t } = useTranslation();
+/** The floating card's own header: avatar, title, "@user · tool · when" and the ✕ — the strip the whole card is dragged by (docs/history/437-*). */
+function SheetHeader({ item, titleId, onClose }: { item: PostFeedItem; titleId: string; onClose: () => void }) {
+  const { t, language } = useTranslation();
   const model = modelOf(item, t);
-  const cover = focusFeedCover(item);
-  const Icon = model.icon;
+  const when = postMeta(model.author.username, model.createdAt, language).split(" · ").pop();
+  const sub = [`@${model.author.username}`, model.tool || model.typeLabel, when].filter(Boolean).join(" · ");
   return (
-    <div className="flex h-[5.25rem] items-center gap-3 bg-background px-4 pt-[env(safe-area-inset-top)]" data-focus-card-compact="">
-      <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-soft text-text-secondary">
-        {cover ? <StorageImg src={cover.url} alt="" className="h-full w-full object-cover" /> : <Icon size={24} aria-hidden />}
-      </span>
+    <div className="flex items-center gap-3 px-4 pb-3" data-focus-card-header="">
+      <Avatar src={model.author.avatarUrl} alt={model.author.displayName} size={36} />
       <div className="min-w-0 flex-1">
         <p id={titleId} className="truncate font-display text-h3 font-bold text-text">
           {model.title}
         </p>
-        <p className="truncate text-small text-text-muted">@{model.author.username}</p>
+        <p className="truncate text-caption text-text-muted">{sub}</p>
       </div>
       <button
         type="button"
-        onClick={onCollapse}
-        aria-label={t("focusSheet.collapse")}
-        title={t("focusSheet.collapse")}
-        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        data-no-sheet-drag=""
+        onClick={onClose}
+        aria-label={t("common.close")}
+        title={t("common.close")}
+        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        <ChevronDown size={20} aria-hidden />
+        <X size={20} aria-hidden />
       </button>
     </div>
   );
@@ -133,7 +142,7 @@ function CompactHeader({ item, titleId, onCollapse }: { item: PostFeedItem; titl
 /* --------------------------------------------------------------------- panes */
 
 /** The prompt itself: the assembled text, then its variable fields — typing updates the text live and what "Kopyala" copies. */
-function PromptPane({ prompt, fill, expanded }: { prompt: Prompt; fill: PromptFill | null; expanded: boolean }) {
+function PromptPane({ prompt, fill, expanded, inline }: { prompt: Prompt; fill: PromptFill | null; expanded: boolean; inline: boolean }) {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const hasVariables = (fill?.variables.length ?? 0) > 0;
@@ -157,6 +166,8 @@ function PromptPane({ prompt, fill, expanded }: { prompt: Prompt; fill: PromptFi
     isContentTypeId(prompt.contentType) && (prompt.category || prompt.subcategory) ? taxonomyPathLabel({ contentType: prompt.contentType, category: prompt.category, subcategory: prompt.subcategory }, language, false) : "";
   return (
     <div className="space-y-4 px-5 pt-3 pb-4">
+      {/* The floating card has no tall header, so the "Çalıştı mı?" tally sits on top of its prompt (the side panel's header carries it). */}
+      {inline && <WorksLine prompt={prompt} enabled />}
       <div className={cn(SOFT_PANEL, "px-4 py-3")} data-focus-prompt-block="">
         <div className="mb-1.5 flex items-center justify-between gap-2">
           <span className="text-caption font-semibold text-text-secondary">{t("prompt.promptTextHeading")}</span>
@@ -188,7 +199,7 @@ function PromptPane({ prompt, fill, expanded }: { prompt: Prompt; fill: PromptFi
         </section>
       )}
 
-      {(expanded || copied) && <PromptWorksVote promptId={prompt.id} isOwn={user?.id === prompt.author.id} contentType={prompt.contentType} />}
+      {(inline || expanded || copied) && <PromptWorksVote promptId={prompt.id} isOwn={user?.id === prompt.author.id} contentType={prompt.contentType} />}
 
       {expanded && (
         <div className="flex flex-col" data-focus-details="">
@@ -221,11 +232,12 @@ function PromptPane({ prompt, fill, expanded }: { prompt: Prompt; fill: PromptFi
 }
 
 /** Every kind but a prompt: the description, the structure (steps / parameters / brief), then the ways on. */
-function KindPane({ item }: { item: PostFeedItem }) {
+function KindPane({ item, inline }: { item: PostFeedItem; inline: boolean }) {
   const { t } = useTranslation();
   const model = modelOf(item, t);
   return (
     <div className="space-y-4 px-5 pt-3 pb-4">
+      {inline && item.kind === "request" && <RequestStatus request={item.data} />}
       {model.description && <p className="whitespace-pre-line break-words text-body leading-relaxed text-text-secondary">{model.description}</p>}
       <StructureBlock item={item} near onImage={false} />
     </div>
@@ -314,7 +326,7 @@ function ActionBar({ item, fill, side }: { item: PostFeedItem; fill: PromptFill 
     );
   }
   return (
-    <div className="flex shrink-0 items-center gap-2 border-t border-border-soft bg-surface px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] md:px-6 md:pb-6" data-focus-action-bar="">
+    <div className={cn("flex shrink-0 items-center gap-2 border-t border-border-soft bg-surface pt-3", side ? "px-6 pb-6" : "px-4 pb-3")} data-focus-action-bar="">
       {main}
       {/* The side panel already has Beğeni / Yorum / Kaydet / Paylaş in its own row. */}
       {!side && <FocusFeedRail item={item} layout="bar" />}
@@ -347,39 +359,56 @@ interface BodyProps {
   fill: PromptFill | null;
   tab: FocusTabId;
   onTab: (tab: FocusTabId) => void;
-  /** `half` = no tabs, the main pane only; `full` / `side` = tabs + details. */
-  mode: "half" | "full" | "side";
+  /** `sheet` = the phone's floating card (its own drag header + tabs); `side` = the desktop panel. */
+  mode: "sheet" | "side";
+  /** Sheet only: the card is large, so the prompt's details (tool, category, tags, "try") and the ways on are shown too. */
+  large?: boolean;
+  /** Sheet only: the ✕. */
+  onClose?: () => void;
   titleId: string;
 }
 
-/** The card's inside — header, tabs, the current pane, the action bar — shared by the phone sheet and the desktop side panel. */
-function CardBody({ item, fill, tab, onTab, mode, titleId }: BodyProps) {
+/** The card's inside — header, tabs, the current pane, the action bar — shared by the phone card and the desktop side panel. */
+function CardBody({ item, fill, tab, onTab, mode, large = false, onClose, titleId }: BodyProps) {
   const { t } = useTranslation();
   const prompt = item.kind === "prompt" ? item.data : null;
   const { data: versions } = usePromptVersions(prompt?.id ?? null, true);
   const commentDelta = useCommentCountDelta(item.data.id);
   const commentCount = Math.max(0, item.data.commentCount + commentDelta);
   const tabs = useMemo(() => focusTabs(item.kind, (versions?.length ?? 0) > 0), [item.kind, versions?.length]);
-  const current: FocusTabId = mode === "half" || !tabs.includes(tab) ? "main" : tab;
+  const current: FocusTabId = tabs.includes(tab) ? tab : "main";
   const items: TabItem<FocusTabId>[] = tabs.map((key) => ({
     key,
     label: tabLabel(item, key, t),
     ...(key === "comments" ? { count: commentCount } : key === "versions" ? { count: versions?.length ?? 0 } : {}),
   }));
-  const expanded = mode !== "half";
+  const sheet = mode === "sheet";
+  const expanded = !sheet || large;
+  const tabList = (
+    <div className={cn("shrink-0 border-b border-border-soft px-3", !sheet && "pt-1")}>
+      <Tabs items={items} active={current} onChange={onTab} ariaLabel={t("focusSheet.tabsAria")} />
+    </div>
+  );
 
   return (
     <>
-      {mode !== "full" && <ExpandedHeader item={item} titleId={titleId} enabled />}
-      {mode === "side" && (
-        <div className="px-3 pt-2" data-focus-panel-actions="">
-          <FocusFeedRail item={item} layout="panel" />
+      {sheet ? (
+        // Header, handle and tabs are the card's drag strip (docs/history/437-*): a tap on a tab selects it, a move past the slop drags the card.
+        <div data-focus-sheet-head="" className="shrink-0 cursor-grab select-none active:cursor-grabbing">
+          <div data-focus-sheet-grabber="" className="flex h-7 items-center justify-center">
+            <span aria-hidden className="block h-1.5 w-11 rounded-full bg-border-strong transition-[width,background-color] group-data-[drag]/ov:w-14 group-data-[drag]/ov:bg-primary" />
+          </div>
+          <SheetHeader item={item} titleId={titleId} onClose={onClose ?? (() => undefined)} />
+          {tabList}
         </div>
-      )}
-      {expanded && (
-        <div className="shrink-0 border-b border-border-soft px-3 pt-1">
-          <Tabs items={items} active={current} onChange={onTab} ariaLabel={t("focusSheet.tabsAria")} />
-        </div>
+      ) : (
+        <>
+          <ExpandedHeader item={item} titleId={titleId} enabled />
+          <div className="px-3 pt-2" data-focus-panel-actions="">
+            <FocusFeedRail item={item} layout="panel" />
+          </div>
+          {tabList}
+        </>
       )}
 
       {current === "comments" ? (
@@ -397,7 +426,7 @@ function CardBody({ item, fill, tab, onTab, mode, titleId }: BodyProps) {
               </div>
             ) : (
               <>
-                {prompt ? <PromptPane prompt={prompt} fill={fill} expanded={expanded} /> : <KindPane item={item} />}
+                {prompt ? <PromptPane prompt={prompt} fill={fill} expanded={expanded} inline={sheet} /> : <KindPane item={item} inline={sheet} />}
                 {(expanded || prompt === null) && <MoreRows item={item} />}
               </>
             )}
@@ -410,30 +439,6 @@ function CardBody({ item, fill, tab, onTab, mode, titleId }: BodyProps) {
 }
 
 /* --------------------------------------------------------------------- sheet */
-
-/** Drag the handle / header: up steps the card open, down steps it shut (`focusSheetGesture`); a sideways or tiny move is nothing. */
-function useSheetDrag(onStep: (direction: "up" | "down") => void) {
-  const [offset, setOffset] = useState(0);
-  const start = useRef<{ y: number; t: number } | null>(null);
-  const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
-    if (event.button !== 0 || (event.target as HTMLElement).closest("button, a, input, textarea, select")) return;
-    start.current = { y: event.clientY, t: performance.now() };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-  const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
-    if (!start.current) return;
-    setOffset(Math.max(0, event.clientY - start.current.y));
-  };
-  const finish = (event: ReactPointerEvent<HTMLElement>) => {
-    const begun = start.current;
-    start.current = null;
-    setOffset(0);
-    if (!begun) return;
-    const direction = focusSheetGesture(event.clientY - begun.y, performance.now() - begun.t);
-    if (direction) onStep(direction);
-  };
-  return { offset, handlers: { onPointerDown, onPointerMove, onPointerUp: finish, onPointerCancel: finish } };
-}
 
 /** How far the on-screen keyboard covers the layout viewport (iOS Safari keeps fixed boxes behind it). */
 function useKeyboardInset() {
@@ -452,14 +457,44 @@ function useKeyboardInset() {
   return inset;
 }
 
-/** The phone's bottom card, half or full. Esc / the grabber dragged down closes; the compact header's chevron steps back to half. */
+/** Keeps a drag from starting inside a text field / slider (they own their pointer), or on anything that opts out. */
+const NO_DRAG = "input, textarea, select, [contenteditable='true'], [role='slider'], [data-no-sheet-drag]";
+
+/** The nearest ancestor of `from` (inside `root`) that scrolls vertically and has something to scroll — the card's body, the comments list. */
+function scrollerOf(from: Element | null, root: HTMLElement): HTMLElement | null {
+  for (let el = from; el && el !== root; el = el.parentElement) {
+    if (!(el instanceof HTMLElement)) continue;
+    const overflow = getComputedStyle(el).overflowY;
+    if ((overflow === "auto" || overflow === "scroll") && el.scrollHeight > el.clientHeight + 1) return el;
+  }
+  return null;
+}
+
+interface Drag {
+  id: number;
+  y0: number;
+  last: number;
+  samples: { y: number; t: number }[];
+  moved: boolean;
+  scroller: HTMLElement | null;
+}
+
+const CLOSE_MS = 340;
+
+/**
+ * The phone's bottom card (docs/history/437-*), built like every other bottom sheet: it floats 3% above the edge, 10px in from the sides, with a
+ * dimmed scrim behind it. Half = 75% of the stage, large = 90%. Dragging the header / handle / tabs / action bar — or the content, which scrolls
+ * only once the card is large and at its top — resizes it continuously; on release the speed decides: past a third of the way up → large,
+ * below 70% of half or a fast flick → closed. The scrim, Esc and ✕ close it. Height is written straight to the element while dragging
+ * (no re-render per pointer move); the `state` prop is the settled size.
+ */
 export function FocusPostSheet({
   item,
   fill,
   state,
   tab,
   onTab,
-  onStep,
+  onSnap,
   onClose,
 }: {
   item: PostFeedItem;
@@ -467,13 +502,102 @@ export function FocusPostSheet({
   state: FocusSheetState;
   tab: FocusTabId;
   onTab: (tab: FocusTabId) => void;
-  onStep: (direction: "up" | "down") => void;
+  onSnap: (state: FocusSheetState) => void;
   onClose: () => void;
 }) {
   const titleId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const scrimRef = useRef<HTMLDivElement>(null);
   const keyboard = useKeyboardInset();
-  const drag = useSheetDrag(onStep);
+  const keyboardRef = useRef(0);
+
+  const geo = useRef({ p: 0, gap: 0, half: 0, tall: 0, closed: 0 });
+  const height = useRef(0); // visible height (px); ≤ 0 = shut (negative: below the edge)
+  const snap = useRef<"closed" | FocusSheetState>("closed");
+  const drag = useRef<Drag | null>(null);
+  const closing = useRef(false);
+  const closeTimer = useRef<number | undefined>(undefined);
+  const suppressClick = useRef(false);
+  const onSnapRef = useRef(onSnap);
+  const onCloseRef = useRef(onClose);
+  useLayoutEffect(() => {
+    keyboardRef.current = keyboard;
+    onSnapRef.current = onSnap;
+    onCloseRef.current = onClose;
+  });
+
+  const measure = useCallback(() => {
+    const p = rootRef.current?.clientHeight ?? 0;
+    const gap = p * FOCUS_SHEET_GAP;
+    geo.current = { p, gap, half: p * FOCUS_SHEET_HALF, tall: p * FOCUS_SHEET_TALL, closed: -(gap + 12) };
+  }, []);
+
+  const paint = useCallback(() => {
+    const sheet = sheetRef.current;
+    const scrim = scrimRef.current;
+    if (!sheet || !scrim) return;
+    const { p, gap, half, tall } = geo.current;
+    const kb = keyboardRef.current;
+    const v = height.current;
+    // With the keyboard up the card sits right above it (not floating) and never grows taller than what is left.
+    const bottom = kb > 0 ? kb + 8 : gap;
+    const h = Math.min(Math.max(half, Math.min(v, tall)), Math.max(0, p - bottom - 8));
+    sheet.style.height = `${h}px`;
+    sheet.style.bottom = kb > 0 ? `${bottom}px` : `max(${gap}px, env(safe-area-inset-bottom))`;
+    sheet.style.transform = v < half ? `translateY(${half - v}px)` : "";
+    scrim.style.opacity = String(Math.max(0, Math.min(1, v / half)));
+  }, []);
+
+  const go = useCallback(
+    (name: "closed" | FocusSheetState, animate = true) => {
+      const g = geo.current;
+      snap.current = name;
+      rootRef.current?.toggleAttribute("data-anim", animate);
+      height.current = name === "closed" ? g.closed : name === "half" ? g.half : g.tall;
+      paint();
+    },
+    [paint],
+  );
+
+  const requestClose = useCallback(() => {
+    if (closing.current) return;
+    closing.current = true;
+    go("closed");
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    closeTimer.current = window.setTimeout(() => onCloseRef.current(), reduce ? 0 : CLOSE_MS);
+  }, [go]);
+
+  // First paint is the shut card (no transition); after a forced reflow it slides up to its size.
+  useLayoutEffect(() => {
+    measure();
+    go("closed", false);
+    void sheetRef.current?.offsetHeight;
+    go(state);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only: later `state` changes are handled below
+  }, []);
+
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+
+  // The state changed from outside (the rail's comment button, a key): follow it.
+  useEffect(() => {
+    if (!closing.current && !drag.current && state !== snap.current) go(state);
+  }, [state, go]);
+
+  // The keyboard came or went / the screen turned: lay the card out again without animating.
+  useEffect(() => {
+    if (!drag.current && !closing.current) go(snap.current === "closed" ? state : snap.current, false);
+  }, [keyboard, go, state]);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      measure();
+      if (!drag.current && !closing.current) go(snap.current === "closed" ? state : snap.current, false);
+    });
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [measure, go, state]);
 
   // Focus moves into the card when it opens and back to the strip button that opened it when it closes.
   useEffect(() => {
@@ -488,37 +612,117 @@ export function FocusPostSheet({
       if (event.key !== "Escape" || event.defaultPrevented) return;
       if (document.querySelectorAll('[aria-modal="true"]').length > 1) return;
       event.preventDefault();
-      onClose();
+      requestClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [requestClose]);
+
+  // Dragging: down on the sheet, then window-level move / up so a finger that leaves the card keeps steering it.
+  useEffect(() => {
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+
+    function onDown(event: PointerEvent) {
+      if (event.button !== 0 || closing.current || !sheet) return;
+      const target = event.target as Element;
+      if (target.closest(NO_DRAG)) return;
+      const head = target.closest("[data-focus-sheet-head]");
+      drag.current = {
+        id: event.pointerId,
+        y0: event.clientY,
+        last: event.clientY,
+        samples: [{ y: event.clientY, t: performance.now() }],
+        moved: false,
+        scroller: head ? null : scrollerOf(target, sheet),
+      };
+    }
+    function onMove(event: PointerEvent) {
+      const g = drag.current;
+      if (!g || event.pointerId !== g.id || !sheet) return;
+      if (!g.moved) {
+        if (Math.abs(event.clientY - g.y0) < FOCUS_SHEET_DRAG_SLOP) return;
+        g.moved = true;
+        try {
+          sheet.setPointerCapture(event.pointerId);
+        } catch {
+          /* the pointer is already gone */
+        }
+        rootRef.current?.removeAttribute("data-anim");
+        rootRef.current?.setAttribute("data-drag", "");
+      }
+      const dy = event.clientY - g.last;
+      g.last = event.clientY;
+      g.samples.push({ y: event.clientY, t: performance.now() });
+      if (g.samples.length > 6) g.samples.shift();
+      const { tall, closed } = geo.current;
+      const step = focusSheetDrag({ height: height.current, dy, region: g.scroller ? "body" : "head", scrollTop: g.scroller?.scrollTop ?? 0, tall, floor: closed - 30 });
+      height.current = step.height;
+      if (g.scroller && step.scroll !== 0) g.scroller.scrollTop += step.scroll;
+      paint();
+    }
+    function onUp(event: PointerEvent) {
+      const g = drag.current;
+      if (!g || event.pointerId !== g.id) return;
+      drag.current = null;
+      rootRef.current?.removeAttribute("data-drag");
+      if (!g.moved) return;
+      // The click that follows a drag (a tab, a button under the finger) must not fire.
+      suppressClick.current = true;
+      window.setTimeout(() => {
+        suppressClick.current = false;
+      }, 60);
+      const first = g.samples[0];
+      const lastSample = g.samples[g.samples.length - 1];
+      const velocity = lastSample.t > first.t ? -(lastSample.y - first.y) / (lastSample.t - first.t) : 0; // px/ms, + = up
+      const { half, tall } = geo.current;
+      const next = focusSheetRelease(height.current, velocity, half, tall);
+      if (next === "closed") {
+        requestClose();
+        return;
+      }
+      go(next);
+      if (next !== state) onSnapRef.current(next);
+    }
+    function onClick(event: MouseEvent) {
+      if (!suppressClick.current) return;
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    sheet.addEventListener("pointerdown", onDown);
+    sheet.addEventListener("click", onClick, true);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      sheet.removeEventListener("pointerdown", onDown);
+      sheet.removeEventListener("click", onClick, true);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [go, paint, requestClose, state]);
 
   return (
-    <div
-      ref={sheetRef}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-      tabIndex={-1}
-      data-focus-sheet=""
-      data-focus-sheet-state={state}
-      className={cn(
-        "absolute inset-x-0 bottom-0 z-40 outline-none transition-[height,transform] duration-300 ease-soft motion-reduce:transition-none md:hidden",
-        state === "half" ? "h-[58dvh]" : "h-[calc(100%-5.25rem)]",
-      )}
-      style={{ transform: drag.offset || keyboard ? `translateY(${drag.offset - keyboard}px)` : undefined }}
-    >
-      {state === "full" && (
-        <div className="absolute inset-x-0 bottom-full" {...drag.handlers}>
-          <CompactHeader item={item} titleId={titleId} onCollapse={() => onStep("down")} />
-        </div>
-      )}
-      <div className="flex h-full flex-col rounded-t-xl border-t border-border-soft bg-surface text-text shadow-pop animate-sheet-up motion-reduce:animate-none">
-        <div className="shrink-0 touch-none select-none pb-1 pt-2" {...drag.handlers} data-focus-sheet-grabber="">
-          <span aria-hidden className="mx-auto block h-1 w-10 rounded-full bg-border-strong" />
-        </div>
-        <CardBody item={item} fill={fill} tab={tab} onTab={onTab} mode={state} titleId={state === "full" ? `${titleId}-x` : titleId} />
+    <div ref={rootRef} data-focus-sheet-root="" className="group/ov absolute inset-0 z-40 md:hidden">
+      <div
+        ref={scrimRef}
+        aria-hidden
+        onClick={requestClose}
+        data-focus-scrim=""
+        className="absolute inset-0 bg-scrim opacity-0 group-data-[anim]/ov:transition-opacity group-data-[anim]/ov:duration-[340ms] motion-reduce:transition-none"
+      />
+      <div
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        data-focus-sheet=""
+        data-focus-sheet-state={state}
+        className="absolute left-[0.625rem] right-[0.625rem] flex touch-none flex-col overflow-hidden rounded-xl card-flat text-text shadow-pop outline-none group-data-[anim]/ov:transition-[height,transform] group-data-[anim]/ov:duration-[340ms] group-data-[anim]/ov:ease-soft motion-reduce:transition-none [&_*:not(input,textarea,select)]:touch-none"
+      >
+        <CardBody item={item} fill={fill} tab={tab} onTab={onTab} mode="sheet" large={state === "full"} onClose={requestClose} titleId={titleId} />
       </div>
     </div>
   );
