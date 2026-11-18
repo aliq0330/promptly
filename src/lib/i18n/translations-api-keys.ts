@@ -131,7 +131,7 @@ export const apiKeysTranslations = {
   "oauth.deny": { tr: "Reddet", en: "Deny" },
   "oauth.working": { tr: "İşleniyor…", en: "Working…" },
   "oauth.leaving": { tr: "Uygulamaya dönülüyor…", en: "Returning to the app…" },
-  "oauth.revokeHint": { tr: "Daha sonra Ayarlar → Geliştirici → Bağlı uygulamalar bölümünden izni geri alabilirsin.", en: "You can take the permission back later in Settings → Developer → Connected apps." },
+  "oauth.revokeHint": { tr: "Daha sonra Ayarlar → Geliştirici → Erişimlerim bölümünden izni geri alabilirsin.", en: "You can take the permission back later in Settings → Developer → My access." },
   "oauth.errorTitle": { tr: "İzin isteği açılamadı", en: "Couldn't open the access request" },
   "oauth.errorBody": { tr: "Bu istek geçersiz ya da süresi dolmuş olabilir. Uygulamaya dönüp bağlantıyı yeniden başlat.", en: "This request may be invalid or expired. Go back to the app and start the connection again." },
   // --- Promptly'nin kendi OAuth onay sayfası (docs/history/317-*) ---
@@ -150,7 +150,7 @@ export const apiKeysTranslations = {
     tr: "Yayınlayamaz, silemez, yayındaki içeriğini düzenleyemez; yorum yazamaz, mesaj gönderemez; mesajlarını, yorumlarını ya da hesap ayarlarını göremez ve değiştiremez.",
     en: "Publish, delete or edit your published content; write comments or send messages; or see or change your messages, comments or account settings.",
   },
-  "connect.revokeHint": { tr: "İzin 1 saatlik belirteçlerle çalışır; Ayarlar → Geliştirici → Bağlı uygulamalar'dan istediğin an geri alabilirsin.", en: "The permission works with 1-hour tokens; you can take it back any time in Settings → Developer → Connected apps." },
+  "connect.revokeHint": { tr: "İzin 1 saatlik belirteçlerle çalışır; Ayarlar → Geliştirici → Erişimlerim'den istediğin an geri alabilirsin.", en: "The permission works with 1-hour tokens; you can take it back any time in Settings → Developer → My access." },
   "apps.title": { tr: "Bağlı uygulamalar", en: "Connected apps" },
   "apps.hint": { tr: "Hesabınla giriş yaparak (OAuth) bağlanan uygulamalar. İzni geri alırsan o uygulamanın belirteçleri hemen kapanır.", en: "Apps connected by signing in with your account (OAuth). If you take the permission back, that app's tokens stop working immediately." },
   "apps.scope.read": { tr: "Okuma", en: "Read" },

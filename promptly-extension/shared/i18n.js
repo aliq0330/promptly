@@ -22,7 +22,7 @@ self.PI = self.PI || (() => {
     connectLead: { tr: "Kütüphaneni her sayfada kullan, gördüğün promptları tek dokunuşla taslağa kaydet.", en: "Use your library on any page and save prompts you find as drafts in one tap." },
     connectPt1: { tr: "Google ile kayıt olduysan da girersin.", en: "Works if you signed up with Google too." },
     connectPt2: { tr: "Şifreni uzantı görmez; Promptly'nin kendi giriş sayfası açılır.", en: "The extension never sees your password; Promptly's own sign-in page opens." },
-    connectPt3: { tr: "Ayarlar → Geliştirici → Bağlı uygulamalar'dan istediğin an iptal edersin.", en: "Revoke any time under Settings → Developer → Connected apps." },
+    connectPt3: { tr: "Ayarlar → Geliştirici → Erişimlerim'den istediğin an iptal edersin.", en: "Revoke any time under Settings → Developer → My access." },
     connectBtn: { tr: "Promptly ile bağlan", en: "Connect with Promptly" },
     connecting: { tr: "Bağlanıyor…", en: "Connecting…" },
     connectHintWrite: { tr: "Açılan sayfada \"yazma\" iznini açık bırak (yoksa taslak kaydedemeyiz); beğeni, kaydetme ve takip için \"etkileşim\" iznini de aç. Uzantı yayınlamaz, silmez, yorum yazmaz.", en: "Leave the \"write\" permission on in the page that opens (or we can't save drafts), and turn on \"interact\" to like, save and follow. The extension never publishes, deletes or comments." },

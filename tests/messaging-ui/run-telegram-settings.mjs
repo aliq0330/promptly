@@ -65,7 +65,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   try {
-    await page.goto(BASE + "/settings/developer/");
+    await page.goto(BASE + "/settings/developer/telegram/");
     await page.locator("[data-telegram]").waitFor();
     await fn({ page, s: ts.s });
     assert.deepEqual(errors, [], "no uncaught page errors");

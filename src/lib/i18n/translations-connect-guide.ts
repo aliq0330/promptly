@@ -19,8 +19,8 @@ export const connectGuideTranslations = {
   "guide.keysLink": { tr: "Anahtarlarım'a git", en: "Go to My keys" },
   "guide.address": { tr: "Kişisel bağlayıcı adresi", en: "Personal connector address" },
   "guide.oauth.done": {
-    tr: "Bitti. Araç artık promptlarını okuyabilir. İzni istediğin an «Bağlı uygulamalar»dan geri alırsın.",
-    en: "Done. The tool can now read your prompts. You can take the permission back any time in “Connected apps”.",
+    tr: "Bitti. Araç artık promptlarını okuyabilir. İzni istediğin an Ayarlar → Geliştirici → «Erişimlerim»den geri alırsın.",
+    en: "Done. The tool can now read your prompts. You can take the permission back any time under Settings → Developer → “My access”.",
   },
   "guide.key.done": {
     tr: "Bitti. Anahtarı kimseyle paylaşma; sızdığını düşünürsen «Anahtarlarım»dan hemen iptal et.",

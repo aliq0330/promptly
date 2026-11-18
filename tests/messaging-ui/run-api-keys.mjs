@@ -65,7 +65,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   try {
-    await page.goto(BASE + "/settings/developer/");
+    await page.goto(BASE + "/settings/developer/api/");
     await page.locator("[data-api-keys]").waitFor();
     await fn({ page, s: ks.s });
     assert.deepEqual(errors, [], "no uncaught page errors");
@@ -77,13 +77,20 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 }
 
 const section = (page) => page.locator("[data-api-keys]");
+const HUB = BASE + "/settings/developer/";
+/** Anahtar listesi artık Geliştirici merkez sayfasındaki "Erişimlerim"dedir (docs/history/433-*). */
+const openHub = async (page) => { await page.goto(HUB); await page.locator("[data-access-list]").waitFor(); };
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name) => { if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${name}.png`, fullPage: true }); };
 
 await scenario("1 empty state: preview note, empty message, 0 / 10 counter", async ({ page }) => {
   await page.getByRole("heading", { name: "Anahtarlarım" }).waitFor();
-  await section(page).getByText("Henüz anahtarın yok.").waitFor();
-  await section(page).getByText("0 / 10 etkin anahtar").waitFor();
+  await section(page).getByText(/0 \/ 10 etkin anahtar/).waitFor();
+  assert.equal(await section(page).getByRole("link", { name: "Erişimlerim" }).count(), 1, "the list lives on the Developer page now");
+  await openHub(page);
+  await page.getByText("Henüz hesabına erişen bir şey yok.").waitFor();
+  await page.goto(BASE + "/settings/developer/api/");
+  await section(page).waitFor();
   assert.equal(await section(page).getByRole("button", { name: "Anahtar oluştur" }).isDisabled(), true, "disabled until a name is typed");
 });
 
@@ -96,17 +103,19 @@ await scenario("2 create (defaults): RPC body, one-time reveal, copy, dismiss re
   await reveal.getByText(TOKEN).waitFor();
   await reveal.getByRole("button", { name: /Kopyala: Anahtar/ }).click();
   assert.equal(await page.evaluate(() => navigator.clipboard.readText()), TOKEN);
-  const listed = page.locator("[data-api-key-row]").first();
-  await listed.getByText("Dizüstü").waitFor();
-  await listed.getByText("Etkin").waitFor();
-  await listed.getByText("Okuma", { exact: true }).waitFor();
-  assert.equal(await listed.getByText("Yazma", { exact: true }).count(), 0);
-  await listed.getByText(/pmt_Ab3d…/).waitFor();
   await shot(page, "api-keys-reveal");
   await reveal.getByRole("button", { name: "Anahtarı kaydettim" }).click();
   await reveal.waitFor({ state: "detached" });
   assert.ok(!(await page.locator("body").innerText()).includes(TOKEN), "the raw key is gone from the page after dismissal");
   assert.equal(await section(page).getByLabel("Ad").inputValue(), "", "the name field was cleared");
+  await openHub(page);
+  const listed = page.locator("[data-api-key-row]").first();
+  await listed.getByText("Dizüstü").waitFor();
+  await listed.getByText("API anahtarı", { exact: true }).waitFor();
+  await listed.getByText("Okuma", { exact: true }).waitFor();
+  assert.equal(await listed.getByText("Taslak", { exact: true }).count(), 0);
+  await listed.getByText(/pmt_Ab3d…/).waitFor();
+  assert.ok(!(await page.locator("body").innerText()).includes(TOKEN), "the raw key never shows up in the list");
 });
 
 await scenario("3 create with write access and no expiry sends write scopes and null expiry; the no-expiry hint shows", async ({ page, s }) => {
@@ -117,8 +126,9 @@ await scenario("3 create with write access and no expiry sends write scopes and 
   await section(page).getByRole("button", { name: "Anahtar oluştur" }).click();
   await page.locator("[data-api-key-reveal]").waitFor();
   assert.deepEqual(s.calls.create, [{ p_name: "Bot", p_scopes: ["read", "write"], p_expires_in_days: null }]);
+  await openHub(page);
   const listed = page.locator("[data-api-key-row]").first();
-  await listed.getByText("Yazma", { exact: true }).waitFor();
+  await listed.getByText("Taslak", { exact: true }).waitFor();
   await listed.getByText(/Süresiz/).waitFor();
 });
 
@@ -128,10 +138,12 @@ await scenario("3b interact is an extra checkbox on top of read or write: read+i
   await section(page).getByRole("button", { name: "Anahtar oluştur" }).click();
   await page.locator("[data-api-key-reveal]").waitFor();
   assert.deepEqual(s.calls.create, [{ p_name: "Uzantı", p_scopes: ["read", "interact"], p_expires_in_days: 90 }]);
+  await openHub(page);
   await page.locator("[data-api-key-row]").first().getByText("Etkileşim", { exact: true }).waitFor();
 });
 
-await scenario("4 revoke is two steps: confirm shown, 'Vazgeç' keeps it, confirm revokes (status + no more button)", async ({ page, s }) => {
+await scenario("4 revoke is two steps: confirm shown, 'Vazgeç' keeps it, confirm revokes (the row leaves the list)", async ({ page, s }) => {
+  await openHub(page);
   const item = page.locator("[data-api-key-row]").first();
   await item.getByRole("button", { name: "İptal et" }).click();
   await item.getByText(/hemen çalışmayı bırakır/).waitFor();
@@ -139,21 +151,26 @@ await scenario("4 revoke is two steps: confirm shown, 'Vazgeç' keeps it, confir
   assert.equal(s.calls.revoke.length, 0, "nothing sent before confirming");
   await item.getByRole("button", { name: "İptal et" }).click();
   await item.getByRole("button", { name: "Evet, iptal et" }).click();
-  await page.locator("[data-api-key-row][data-status='revoked']").waitFor();
+  await page.getByText("Henüz hesabına erişen bir şey yok.").waitFor();
   assert.equal(s.calls.revoke.length, 1);
-  assert.equal(await page.locator("[data-api-key-row]").first().getByRole("button", { name: /İptal et/ }).count(), 0);
-  await section(page).getByText("0 / 10 etkin anahtar").waitFor();
+  assert.equal(await page.locator("[data-api-key-row]").count(), 0);
+  await page.goto(BASE + "/settings/developer/api/");
+  await section(page).getByText(/0 \/ 10 etkin anahtar/).waitFor();
 }, { initial: [row({ id: "k1", name: "Dizüstü" })] });
 
-await scenario("5 expired and revoked keys show their status; only active ones count", async ({ page }) => {
-  await page.locator("[data-api-key-row][data-status='expired']").waitFor();
-  await page.locator("[data-api-key-row][data-status='revoked']").waitFor();
+await scenario("5 an expired key shows its status without a revoke button, a revoked one is gone; only active ones count", async ({ page }) => {
+  await openHub(page);
+  const expired = page.locator("[data-api-key-row][data-status='expired']");
+  await expired.waitFor();
+  assert.equal(await expired.getByRole("button").count(), 0, "nothing left to revoke on an expired key");
   await page.locator("[data-api-key-row][data-status='active']").waitFor();
-  await section(page).getByText("1 / 10 etkin anahtar").waitFor();
+  assert.equal(await page.locator("[data-api-key-row]").count(), 2, "the revoked key is not listed");
+  await page.goto(BASE + "/settings/developer/api/");
+  await section(page).getByText(/1 \/ 10 etkin anahtar/).waitFor();
 }, { initial: [row({ name: "A" }), row({ name: "S", expires_at: new Date(Date.now() - 86400000).toISOString() }), row({ name: "R", revoked_at: new Date().toISOString() })] });
 
 await scenario("6 ten active keys: the form is blocked with the limit message", async ({ page, s }) => {
-  await section(page).getByText("10 / 10 etkin anahtar").waitFor();
+  await section(page).getByText(/10 \/ 10 etkin anahtar/).waitFor();
   await section(page).getByText(/sınırına ulaştın/).waitFor();
   await section(page).getByLabel("Ad").fill("Fazla");
   assert.equal(await section(page).getByRole("button", { name: "Anahtar oluştur" }).isDisabled(), true);
@@ -168,20 +185,27 @@ await scenario("7 a server limit error (race) shows the translated sentence inli
   assert.equal(await page.locator("[data-api-key-reveal]").count(), 0, "no key is revealed on failure");
 });
 
-await scenario("8 a failed list shows an error and 'Tekrar dene' loads it", async ({ page, s }) => {
+await scenario("8 a failed list shows an error and 'Tekrar dene' loads it (form page and the access list)", async ({ page, s }) => {
   await section(page).getByText("Anahtarlar yüklenemedi.").waitFor();
   s.failList = false;
   s.rows.push(row({ name: "Geldi" }));
   await section(page).getByRole("button", { name: "Tekrar dene" }).click();
-  await section(page).getByText("Geldi").waitFor();
+  await section(page).getByText(/1 \/ 10 etkin anahtar/).waitFor();
+  s.failList = true;
+  await openHub(page);
+  await page.getByText("Anahtarlar yüklenemedi.").waitFor();
+  s.failList = false;
+  await page.getByRole("button", { name: "Tekrar dene" }).click();
+  await page.locator("[data-api-key-row]").getByText("Geldi").waitFor();
 }, { setup: (s) => { s.failList = true; } });
 
 await scenario("9 English labels and revoke", async ({ page, s }) => {
   await page.getByRole("heading", { name: "My keys" }).waitFor();
-  await section(page).getByText("Never used").waitFor();
   await section(page).getByLabel("Name").fill("Laptop");
   await section(page).getByRole("button", { name: "Create key" }).click();
   await page.locator("[data-api-key-reveal]").getByText("Copy your key now").waitFor();
+  await openHub(page);
+  await page.locator("[data-api-key-row]", { hasText: "Old" }).getByText("Not used yet").waitFor();
   const item = page.locator("[data-api-key-row]", { hasText: "Old" }).first();
   await item.getByRole("button", { name: "Revoke" }).click();
   await item.getByRole("button", { name: "Yes, revoke" }).waitFor();
@@ -194,6 +218,9 @@ await scenario("10 phone: nothing overflows sideways (form, reveal and a long na
   await page.locator("[data-api-key-reveal]").waitFor();
   assert.ok(await overflowFree(page));
   await shot(page, "api-keys-phone");
+  await page.locator("[data-api-key-reveal]").getByRole("button", { name: "Anahtarı kaydettim" }).click();
+  await openHub(page);
+  assert.ok(await overflowFree(page), "the access list does not overflow with a long key name");
 }, { viewport: { width: 390, height: 844 }, initial: [row({ name: "y".repeat(60) })] });
 
 await scenario("11 the settings hub has a Developer row that leads to the Developer page", async ({ page }) => {
@@ -201,6 +228,9 @@ await scenario("11 the settings hub has a Developer row that leads to the Develo
   const hub = page.getByRole("navigation", { name: "Ayar bölümleri" });
   await hub.getByRole("link", { name: /Geliştirici/ }).click();
   await page.waitForURL(/\/settings\/developer\/?$/);
+  await page.locator("[data-access-list]").waitFor();
+  await page.locator("[data-developer-tile='api']").click();
+  await page.waitForURL(/\/settings\/developer\/api\/?$/);
   await page.locator("[data-api-keys]").waitFor();
 });
 
