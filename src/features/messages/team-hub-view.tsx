@@ -156,7 +156,7 @@ function TeamHub({ teamId, embedded, openId }: { teamId: string; embedded: boole
   };
   const selection = useHubSelection(actions, { word: (keys) => (keys.some(isProjectKey) ? "item" : "channel"), deleteBody: t("tm.chan.deleteBody") });
 
-  if (loaded && !summary && channels.length === 0) return <EmptyState icon={Users} title={t("th.notFound")} />;
+  if (loaded && !summary && channels.length === 0) return <EmptyState scene="mailbox" icon={Users} title={t("th.notFound")} />;
 
   const searchShown = searchOpen || query.trim() !== "";
   const noRows = loaded && channelRows.length === 0 && sortedProjects.length === 0;
@@ -330,7 +330,7 @@ function ProjectHub({ teamId, projectId, embedded, openId }: { teamId: string; p
   };
   const selection = useHubSelection(actions, { word: () => "chat", deleteBody: t("tm.chan.deleteBody") });
 
-  if (detail === null || (loaded && !project && detail === undefined && channels.length === 0)) return <EmptyState icon={Users} title={t("th.project.notFound")} />;
+  if (detail === null || (loaded && !project && detail === undefined && channels.length === 0)) return <EmptyState scene="mailbox" icon={Users} title={t("th.project.notFound")} />;
 
   const title = detail?.project.title ?? project?.title ?? "…";
   const createFileChat = async (fileId: string) => {

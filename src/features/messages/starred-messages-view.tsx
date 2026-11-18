@@ -134,7 +134,7 @@ export function StarredMessagesView() {
           </div>
         )}
         {status === "ready" && items.length === 0 && (
-          <EmptyState icon={Star} title={t("chat.starred.empty")} description={t("chat.starred.emptyHint")} compact />
+          <EmptyState scene="stars" icon={Star} title={t("chat.starred.empty")} description={t("chat.starred.emptyHint")} compact />
         )}
         {status === "ready" && items.length > 0 && (
           <ul className="space-y-2">

@@ -161,7 +161,7 @@ function TeamPageInner() {
   if (state !== "ready" || !team) {
     return (
       <div className="mx-auto w-full max-w-3xl px-3 py-10 sm:px-5">
-        <EmptyState
+        <EmptyState scene={state === "failed" ? "halfBridge" : "files"}
           icon={Briefcase}
           title={t(state === "failed" ? "tm.page.failed" : "tm.page.notFound")}
           description={t(state === "failed" ? "tm.page.failedBody" : "tm.page.notFoundBody")}

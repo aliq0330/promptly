@@ -91,7 +91,7 @@ export function DockListView({ kind, onExpand }: { kind: "list" | "requests"; on
         )}
         {inRequests && <p className="px-4 pb-2 text-caption text-text-muted">{t("messages.messageRequestsHint")}</p>}
         {nothingAtAll ? (
-          <EmptyState
+          <EmptyState scene="talk"
             icon={MessagesSquare}
             title={t("messages.emptyTitle")}
             description={t("messages.emptyDescription")}

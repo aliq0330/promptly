@@ -244,7 +244,7 @@ export function DiscoverFeed() {
           creatorPages.loading ? (
             <PromptCardSkeletonGrid count={3} />
           ) : creatorPages.failed && creatorPages.creators.length === 0 ? (
-            <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: creatorPages.retry }} />
+            <EmptyState scene="feedStalled" icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: creatorPages.retry }} />
           ) : creatorPages.creators.length === 0 ? (
             <EmptyState scene="community" icon={UsersRound} title={t("discover.noCreatorsYet")} />
           ) : (
@@ -260,7 +260,7 @@ export function DiscoverFeed() {
         ) : feed.loading ? (
           <PromptCardSkeletonGrid count={6} />
         ) : feed.failed && feed.items.length === 0 ? (
-          <EmptyState icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
+          <EmptyState scene="feedStalled" icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
         ) : (
           <>
             <FeedGrid

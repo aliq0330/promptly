@@ -120,7 +120,7 @@ export function JoinCommunityPage() {
     );
   }
   if (!token) {
-    return shell(<EmptyState icon={Link2Off} title={t("groups.join.invalidTitle")} description={t("groups.join.invalidBody")} action={{ label: t("communities.join.toCommunities"), href: "/communities" }} />);
+    return shell(<EmptyState scene="invite" icon={Link2Off} title={t("groups.join.invalidTitle")} description={t("groups.join.invalidBody")} action={{ label: t("communities.join.toCommunities"), href: "/communities" }} />);
   }
   if (status === "loading") {
     return shell(
@@ -163,7 +163,7 @@ export function JoinCommunityPage() {
   }
   const preview = current.preview;
   if (!preview) {
-    return shell(<EmptyState icon={Link2Off} title={t("groups.join.invalidTitle")} description={t("groups.join.invalidBody")} action={{ label: t("communities.join.toCommunities"), href: "/communities" }} />);
+    return shell(<EmptyState scene="invite" icon={Link2Off} title={t("groups.join.invalidTitle")} description={t("groups.join.invalidBody")} action={{ label: t("communities.join.toCommunities"), href: "/communities" }} />);
   }
 
   const full = preview.memberCount >= preview.memberLimit;

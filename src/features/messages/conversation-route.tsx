@@ -39,7 +39,7 @@ function OpenDefaultChannel({ teamId, projectId }: { teamId: string; projectId: 
   useEffect(() => {
     if (pickId) router.replace(teamHubHref(teamId, projectId, pickId));
   }, [pickId, teamId, projectId, router]);
-  if (loaded && !pickId) return <EmptyState icon={MessagesSquare} title={t("th.noChannels")} className="m-auto" compact />;
+  if (loaded && !pickId) return <EmptyState scene="talk" icon={MessagesSquare} title={t("th.noChannels")} className="m-auto" compact />;
   return null;
 }
 

@@ -224,7 +224,7 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
           action={caps.edit ? { label: t("spaces.images.upload"), onClick: () => fileRef.current?.click() } : undefined}
         />
       ) : images.length === 0 ? (
-        <EmptyState icon={Search} title={t("spaces.home.noResults")} compact />
+        <EmptyState scene="filter" icon={Search} title={t("spaces.home.noResults")} compact />
       ) : view === "grid" ? (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((item) => {

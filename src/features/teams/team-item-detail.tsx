@@ -128,7 +128,7 @@ export function AreaItemDetail({ ctx, role, onChanged }: { ctx: AreaItemContext;
     const missing = (
       <div className="space-y-4" data-testid="area-item-missing">
         {!ctx.drawer && <ProjectPathBar crumbs={ctx.crumbs} backHref={ctx.listHref} />}
-        <EmptyState icon={LayoutDashboard} title={t("tp.item.missing")} description={t("tp.item.missingBody")} action={{ label: t("tp.item.backToList"), href: ctx.listHref }} />
+        <EmptyState scene="files" icon={LayoutDashboard} title={t("tp.item.missing")} description={t("tp.item.missingBody")} action={{ label: t("tp.item.backToList"), href: ctx.listHref }} />
       </div>
     );
     return ctx.drawer ? <DrawerFrame ctx={ctx} title={t("tp.item.missing")}>{missing}</DrawerFrame> : missing;

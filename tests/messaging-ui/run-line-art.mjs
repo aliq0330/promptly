@@ -196,6 +196,32 @@ await scenario("14 every scene survives a tap on its figures (no errors)", async
   await page.waitForTimeout(800);
 }, { guest: false });
 
+// 428: the object scenes of the error / not-found / empty states — here the invalid invite link ("invite"), in both languages, on a phone,
+// at night and as a single frame under reduced motion
+await scenario("15 an invalid invite link shows the torn-ticket scene, labelled in Turkish, 2:1, no overflow on a phone", async ({ page }) => {
+  await page.goto(BASE + "/communities/join/");
+  const svg = svgOf(page, "invite").first();
+  await svg.waitFor();
+  assert.match(await svg.getAttribute("aria-label"), /davet bileti/i);
+  const box = await scene(page, "invite").first().boundingBox();
+  assert.ok(Math.abs(box.width / box.height - 2) < 0.05, `2:1 (${box.width}×${box.height})`);
+  assert.ok(await overflowFree(page), "no horizontal scroll");
+  const paths = await svg.locator("path").count(); assert.ok(paths >= 8, `the drawing has its paths (${paths})`);
+  await shot(page, "line-art-invite-phone");
+}, { viewport: { width: 375, height: 760 } });
+
+await scenario("16 the same scene in English, at night, and as one still frame under reduced motion", async ({ page }) => {
+  await page.goto(BASE + "/communities/join/");
+  const svg = svgOf(page, "invite").first();
+  await svg.waitFor();
+  assert.match(await svg.getAttribute("aria-label"), /torn in two/i);
+  await page.waitForTimeout(400);
+  const frame = () => svg.evaluate((n) => n.innerHTML);
+  const a = await frame();
+  await page.waitForTimeout(700);
+  assert.equal(await frame(), a, "reduced motion: nothing moves");
+}, { lang: "en", theme: "dark", reducedMotion: "reduce" });
+
 await browser.close();
 server.close();
 const failed = results.filter(([s]) => s === "FAIL");
