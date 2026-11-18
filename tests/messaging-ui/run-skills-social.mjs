@@ -671,14 +671,17 @@ await scenario("35. Prompt sayfasıyla aynı düzen (docs/history/409-*): Talima
   assert.equal(await page.locator("article [data-skill-quality]").count(), 0);
 });
 
-await scenario("31. Odak: Skill slaytı (özet + araç), Bilgi sayfası, beğeni/yorum/kaydet düğmeleri; Space'e ekle de var", async ({ page, state }) => {
+await scenario("31. Odak: Skill sahnesi (özet + araç), prompt kartı (Skill + Yorumlar), beğeni/yorum/kaydet düğmeleri; Space'e ekle de var (docs/history/435-*)", async ({ page, state }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/focus`);
-  const slide = page.locator("[data-album-slide]").first();
+  const slide = page.locator("[data-focus-feed] [data-slide-index]").first();
   await slide.waitFor();
   assert.match(await slide.innerText(), /Skill 1/);
+  assert.equal(await slide.getAttribute("data-focus-tone"), "skill", "görselsiz Skill kendi sahnesi");
+  assert.equal(await slide.locator("[data-focus-peek-action]").getAttribute("data-focus-peek-action"), "openSkill");
   assert.ok(state.mixedFeedCalls.length >= 1, "Odak feed_page'i çağırdı");
-  await page.locator("[data-focus-info-button]").first().click();
-  const info = page.locator("[data-focus-info]");
+  await slide.locator("[data-focus-peek-open]").click();
+  const info = page.locator("[data-focus-sheet]");
   await info.waitFor();
   assert.match(await info.innerText(), /Skill 1/);
   assert.equal(await info.locator("[data-focus-add-to-space]").count(), 1, "Skill'de de Space'e ekle var (docs/history/404-*)");

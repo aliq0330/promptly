@@ -1,9 +1,9 @@
 "use client";
 
-import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ErrorInfo, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ErrorInfo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import type { IconComponent } from "@/components/icons/icon";
+import { ChevronDown } from "@/components/icons/chevron-down";
 import { ChevronLeft } from "@/components/icons/chevron-left";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { ChevronUp } from "@/components/icons/chevron-up";
@@ -11,54 +11,47 @@ import { Focus } from "@/components/icons/focus";
 import { Images } from "@/components/icons/images";
 import { Inbox } from "@/components/icons/inbox";
 import { MoreVertical } from "@/components/icons/more-vertical";
-import { GraduationCap } from "@/components/icons/graduation-cap";
-import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
-import { Sparkles } from "@/components/icons/sparkles";
 import { UserCheck } from "@/components/icons/user-check";
 import { Volume2 } from "@/components/icons/volume-2";
 import { VolumeX } from "@/components/icons/volume-x";
-import { Workflow as WorkflowIcon } from "@/components/icons/workflow";
 import { X } from "@/components/icons/x";
 import { AlertCircle } from "@/components/icons/alert-circle";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StorageImg, useStorageSrc } from "@/components/ui/storage-media";
+import { useStorageSrc } from "@/components/ui/storage-media";
 import { holdDarkMode } from "@/components/theme/theme-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { feedItemKey } from "@/features/feed/types";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
 import { type ContentTypeId } from "@/lib/content-taxonomy";
-import { FOCUS_CHANNELS, focusFeedCover, focusFeedIsNear, focusFeedShouldLoadMore, focusFeedShown, focusFeedStartIndex, type FocusChannel } from "@/lib/focus-feed";
+import { FOCUS_CHANNELS, focusFeedCover, focusFeedImages, focusFeedIsNear, focusFeedLayout, focusFeedShouldLoadMore, focusFeedShown, focusFeedStartIndex, type FocusChannel } from "@/lib/focus-feed";
+import { focusActiveIndex, focusKeyAction, focusResultStep, focusSheetStep, type FocusSheetState, type FocusTabId } from "@/lib/focus-sheet";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { usePrefersReducedMotion } from "@/lib/motion";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
-import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { FOCUS_SLIDE_WIDTH, FocusFeedSlide, FocusInfoContext, FocusPlaybackContext, HIDE_WHILE_COMMENTS } from "./focus-feed-slide";
-import { FocusInfoSheet } from "./focus-info-sheet";
-import { FocusFilterMenu, type FocusTab } from "./focus-filter-menu";
-import { FocusCommentsContext, FocusCommentsSheet } from "./focus-comments-sheet";
 import { isPostItem, type PostFeedItem } from "@/features/feed/types";
+import { FocusPanelContext, FocusPlaybackContext, HIDE_WHILE_FULL, type FocusPanelApi } from "./focus-context";
+import { FocusFillProvider, usePromptFill } from "./focus-fill";
+import { FocusFillPicker } from "./focus-fill-picker";
+import { FocusFilterMenu, type FocusTab } from "./focus-filter-menu";
+import { FocusPostSheet, FocusSidePanel } from "./focus-post-card";
+import { FocusFeedSlide } from "./focus-scene";
 
 /**
- * Odak (`/focus`, docs/history/199-*) — everyone's public posts, one per screen, scrolled vertically, full screen (the
- * header, sidebar and bottom nav hide while it is open, like the story viewer). Always on a dark stage (the site's
- * one palette, dark mode). Data is Ana Sayfa's: `feed_page` (newest, every kind; "Takip" = people you follow) through `useFeedPages`,
- * so only published + public, non-community content appears. Like / comment / save / share / copy and the login prompts
- * are the cards' own components.
+ * Odak (`/focus`, docs/history/199-*, 435-*) — everyone's public posts, one per screen, full screen (the header, sidebar and bottom nav
+ * hide while it is open, like the story viewer). Always on a dark stage (the site's one palette, dark mode). Data is Ana Sayfa's: `feed_page`
+ * (newest, every kind; "Takip" = people you follow) through `useFeedPages`, so only published + public, non-community content appears.
  *
- * Scrolling is native: a HORIZONTAL `scroll-snap` carousel (docs/history/238-*; mandatory, one stop per post, the neighbours'
- * edges peeking) the browser drives; JS only scrolls on an explicit keyboard / button / thumbnail step. Up on a post (a swipe, ↑)
- * opens its info sheet; the post type and the source are chosen in the bar's one filter menu (docs/history/245-*). The active post is the one nearest the carousel's centre; only it and its
- * neighbours mount pictures / video / audio, and its picture is mirrored, blurred, into the cross-fading backdrop. The
- * active video / audio plays (muted until the sound switch is turned on), the others pause.
+ * Since 435 the feed is VERTICAL (A, "Sahne"): a native `scroll-snap` column of full-screen posts the browser drives (JS only scrolls on an explicit
+ * keyboard / button step); sideways a post pages through its own results. A post's card (C, "Prompt sahnesi") opens from the prompt strip at the
+ * screen's foot — a bottom sheet on a phone (half → full), the persistent side panel from `md`. The post type and the source are chosen in the
+ * bar's one filter menu (docs/history/245-*). The active post is the one the column rests on; only it and its neighbours mount pictures / video /
+ * audio, and its picture is mirrored, blurred, into the cross-fading backdrop (desktop). The active video / audio plays (muted until the sound
+ * switch is turned on), the others pause.
  */
-
-/** Scroll position that centres a slide in the carousel (the scroller is the slide's `offsetParent`). */
-function slideScrollLeft(scroller: HTMLElement, slide: HTMLElement): number {
-  return slide.offsetLeft + slide.offsetWidth / 2 - scroller.clientWidth / 2;
-}
 
 /**
  * Last open post per feed (tab + filter), kept for the browser session: Odak is entered by a full page load (docs/history/249-*), so a
@@ -93,7 +86,9 @@ export function FocusPage() {
   if (!isClient) return null;
   return (
     <FocusFeedBoundary>
-      <FocusScreen />
+      <FocusFillProvider>
+        <FocusScreen />
+      </FocusFillProvider>
     </FocusFeedBoundary>
   );
 }
@@ -131,13 +126,13 @@ function useFullScreenChrome() {
   }, []);
 }
 
-/** The dark stage (`.dark` re-scopes every token for this subtree, globals.css). */
-function Stage({ children, className, commentsOpen = false }: { children: ReactNode; className?: string; commentsOpen?: boolean }) {
+/** The dark stage (`.dark` re-scopes every token for this subtree, globals.css). `data-sheet` = the card state over a post (phone): half · full · fill. */
+function Stage({ children, className, sheet }: { children: ReactNode; className?: string; sheet?: string }) {
   return (
     <div
       data-focus-feed
-      data-comments-open={commentsOpen ? "" : undefined}
-      className={cn("group/stage dark fixed inset-0 z-(--z-fullscreen) flex flex-col overflow-hidden bg-background text-text", className)}
+      data-sheet={sheet}
+      className={cn("group/stage dark fixed inset-0 z-(--z-fullscreen) flex overflow-hidden bg-background text-text", className)}
     >
       {children}
     </div>
@@ -169,7 +164,7 @@ function FocusFailed({ onRetry }: { onRetry: () => void }) {
   const router = useRouter();
   useFullScreenChrome();
   return createPortal(
-    <Stage className="items-center justify-center px-4">
+    <Stage className="flex-col items-center justify-center px-4">
       <EmptyState scene="focusJam" icon={Focus} title={t("focusFeed.failedTitle")} action={{ label: t("common.retry"), onClick: onRetry }} />
       <Button variant="outline" className="mt-3" onClick={() => router.push("/")}>
         {t("focusFeed.backHome")}
@@ -212,101 +207,6 @@ function FocusFeedBackdrop({ url }: { url: string | null }) {
     </div>
   );
 }
-
-/**
- * The on-screen box of a slide's picture / video as actually painted (`object-contain` letterboxes it inside its element),
- * or `null` when the slide has none (yet).
- */
-function mediaBox(slide: HTMLElement): DOMRect | null {
-  const art = slide.querySelector<HTMLElement>("[data-album-art]");
-  if (!art) return null;
-  const media = art instanceof HTMLImageElement || art instanceof HTMLVideoElement ? art : art.querySelector<HTMLImageElement | HTMLVideoElement>("video, img");
-  // A post without a picture: its own card (text / steps / request / parameters) is what shrinks into view.
-  if (!media) return art.getBoundingClientRect();
-  const rect = media.getBoundingClientRect();
-  const width = media instanceof HTMLVideoElement ? media.videoWidth : media.naturalWidth;
-  const height = media instanceof HTMLVideoElement ? media.videoHeight : media.naturalHeight;
-  if (!width || !height || !rect.width || !rect.height) return rect.width && rect.height ? rect : null;
-  const fit = Math.min(rect.width / width, rect.height / height);
-  const w = width * fit;
-  const h = height * fit;
-  return new DOMRect(rect.left + (rect.width - w) / 2, rect.top + (rect.height - h) / 2, w, h);
-}
-
-/* ----------------------------------------------------------------------- strip */
-
-/** Thumbnails this far either side of the active post are mounted (the rest are empty room in the strip). */
-const STRIP_RADIUS = 14;
-
-function thumbIcon(item: PostFeedItem): IconComponent {
-  switch (item.kind) {
-    case "prompt":
-      return CONTENT_TYPE_META[item.data.contentType].icon;
-    case "workflow":
-      return WorkflowIcon;
-    case "preset":
-      return SlidersHorizontal;
-    case "request":
-      return Sparkles;
-    case "skill":
-      return GraduationCap;
-  }
-}
-
-/**
- * The thumbnail strip above the carousel (docs/history/238-*): every post as a small square (its cover, or its kind's icon),
- * the active one taller with a white ring and centred — the strip glides as the posts do; tapping a thumbnail goes to it.
- * Positioned with CSS only (`--ts` = one thumbnail's step), so a long feed costs only the ±14 thumbnails around the active one.
- */
-function FocusStrip({ items, active, onGo }: { items: PostFeedItem[]; active: number; onGo: (index: number) => void }) {
-  const { t } = useTranslation();
-  const from = Math.max(0, active - STRIP_RADIUS);
-  const to = Math.min(items.length - 1, active + STRIP_RADIUS);
-  return (
-    <div
-      role="group"
-      aria-label={t("focusFeed.strip")}
-      data-focus-strip
-      className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none absolute inset-x-0 top-[calc(4.25rem+env(safe-area-inset-top))] z-20 h-[3.5rem] overflow-hidden [--ts:2.25rem] md:top-[4.75rem] md:h-[4.25rem] md:[--ts:3rem]")}
-    >
-      <div
-        className="absolute left-1/2 top-2 h-full transition-transform duration-300 ease-soft motion-reduce:transition-none"
-        style={{ transform: `translateX(calc(var(--ts) * ${-active} - (var(--ts) - 0.5rem) / 2))` }}
-      >
-        {items.slice(from, to + 1).map((item, offset) => {
-          const index = from + offset;
-          const cover = focusFeedCover(item);
-          const Icon = thumbIcon(item);
-          const on = index === active;
-          return (
-            <button
-              key={feedItemKey(item)}
-              type="button"
-              tabIndex={-1}
-              aria-current={on ? "true" : undefined}
-              aria-label={item.data.title}
-              onClick={() => onGo(index)}
-              style={{ left: `calc(var(--ts) * ${index})`, width: "calc(var(--ts) - 0.5rem)" }}
-              className={cn(
-                "pointer-events-auto absolute top-0 overflow-hidden rounded-lg bg-white/15 transition-[height,opacity] duration-300 ease-soft motion-reduce:transition-none",
-                on ? "h-[calc((var(--ts)-0.5rem)*1.35)] opacity-100 ring-2 ring-white ring-offset-2 ring-offset-transparent" : "h-[calc(var(--ts)-0.5rem)] opacity-75 hover:opacity-100",
-              )}
-            >
-              {cover ? (
-                <StorageImg src={cover.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center text-on-art-muted">
-                  <Icon size={16} aria-hidden />
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------------- menu */
 
 function MenuSwitch({ on }: { on: boolean }) {
@@ -376,7 +276,6 @@ function FocusMenu({ mediaOnly, onToggleMedia, muted, onToggleMuted }: { mediaOn
     </div>
   );
 }
-
 /* ------------------------------------------------------------------------ screen */
 
 function FocusScreen() {
@@ -384,9 +283,11 @@ function FocusScreen() {
   const router = useRouter();
   const reducedMotion = usePrefersReducedMotion();
   const { user, loading: authLoading } = useAuth();
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [tab, setTab] = useState<FocusTab>("newest");
-  // "Medya" is on from the start (docs/history/239-*): prompts and workflows with nothing to look at stay out until it is turned off.
-  const [mediaOnly, setMediaOnly] = useState(true);
+  // "Yalnız görselliler" is OFF from the start (docs/history/435-*): a post without a picture is a scene of its own (its words, brief, parameters, chain), so
+  // text prompts and workflows belong in the feed; turning the switch on brings back the old "only posts with something to look at".
+  const [mediaOnly, setMediaOnly] = useState(false);
   const [channel, setChannel] = useState<FocusChannel>("all");
   // Görsel · Metin · Ses · Video süzgeci (docs/history/305-*): sunucuda `p_content_type`; null = hepsi.
   const [contentType, setContentType] = useState<ContentTypeId | null>(null);
@@ -394,21 +295,19 @@ function FocusScreen() {
   // Which way the last type change went (1 = further down the menu's list) — only for the entrance animation; 0 = none yet.
   const [channelShift, setChannelShift] = useState<0 | 1 | -1>(0);
   const [muted, setMuted] = useState(true);
-  // The post whose comments are open (docs/history/200-*): the sheet slides up, the post shrinks above it and keeps playing.
-  // The sheet over the post (comments or info, docs/history/239-*): one at a time.
-  const [panel, setPanel] = useState<{ kind: "comments" | "info"; item: PostFeedItem } | null>(null);
-  const openComments = useCallback((item: PostFeedItem) => setPanel({ kind: "comments", item }), []);
-  const openInfo = useCallback((item: PostFeedItem) => setPanel({ kind: "info", item }), []);
-  const closePanel = useCallback(() => setPanel(null), []);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [shrink, setShrink] = useState<{ scale: number; x: number; y: number } | null>(null);
+  // The card over a post (phone): half / full + its tab; `null` = closed (the prompt strip). From `md` the card is the side panel: `panelOpen` + its tab.
+  const [sheet, setSheet] = useState<{ state: FocusSheetState; tab: FocusTabId } | null>(null);
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelTab, setPanelTab] = useState<FocusTabId>("main");
+  // The `{variable}` of a text prompt the picker is open on (phone), keyed by post.
+  const [fillEdit, setFillEdit] = useState<{ key: string; name: string } | null>(null);
   const playback = useMemo(() => ({ muted, setMuted }), [muted]);
   useFullScreenChrome();
 
   // "Takip" needs an account: a guest gets the login prompt and no request is made (while the session restores we wait).
   const waitingForAuth = tab === "following" && authLoading;
   const needsLogin = tab === "following" && !authLoading && !user;
-  // "Medya" is decided by the database (docs/history/254-*): a page is full of posts with something to look at, not empty because thousands of text prompts come first.
+  // "Yalnız görselliler" is decided by the database (docs/history/254-*): a page is full of posts with something to look at, not empty because thousands of text prompts come first.
   const feed = useFeedPages({ scope: tab === "following" ? "following" : "all", order: "newest", kind: channel, taxonomy, hasMedia: mediaOnly }, !needsLogin && !waitingForAuth);
   // Odak plays posts; a Space shared to the feed has its own page (docs/history/215-*).
   const items = useMemo(() => {
@@ -430,6 +329,9 @@ function FocusScreen() {
   const positionedFor = useRef<string | null>(null);
   const total = items.length;
 
+  // Scroll position that puts a slide at the top of the column (each post is one screen high).
+  const slideTop = (slide: HTMLElement) => slide.offsetTop;
+
   // First items of a list: open on the post last open in it this session, instantly, before paint.
   useLayoutEffect(() => {
     if (loading || total === 0 || positionedFor.current === memoryKey) return;
@@ -438,7 +340,7 @@ function FocusScreen() {
     setActive(start);
     const scroller = scrollerRef.current;
     const slide = scroller?.querySelector<HTMLElement>(`[data-slide-index="${start}"]`);
-    if (scroller && slide) scroller.scrollLeft = slideScrollLeft(scroller, slide);
+    if (scroller && slide) scroller.scrollTop = slideTop(slide);
     scroller?.focus({ preventScroll: true });
   }, [loading, total, memoryKey, items]);
 
@@ -447,20 +349,14 @@ function FocusScreen() {
     if (loading) positionedFor.current = null;
   }, [loading]);
 
-  // Active post = the slide nearest the carousel's centre. With neighbours peeking several slides can be mostly on screen at
-  // once, so (unlike a full-screen snap) "≥ 60% visible" is no rule; the slides are evenly spaced, so the index is arithmetic.
+  // Active post = the screen the column rests on (every post is one screen high, so the index is arithmetic).
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller || total === 0) return;
     let frame = 0;
     const update = () => {
       frame = 0;
-      const all = scroller.querySelectorAll<HTMLElement>("[data-slide-index]");
-      const first = all[0];
-      if (!first) return;
-      const step = all[1] ? all[1].offsetLeft - first.offsetLeft : 0;
-      const index = step > 0 ? Math.round((scroller.scrollLeft - slideScrollLeft(scroller, first)) / step) : 0;
-      setActive(Math.max(0, Math.min(index, all.length - 1)));
+      setActive(focusActiveIndex(scroller.scrollTop, scroller.clientHeight, scroller.querySelectorAll("[data-slide-index]").length));
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -472,13 +368,23 @@ function FocusScreen() {
     };
   }, [total, loading]);
 
-  const activeItem = items[Math.min(active, Math.max(0, total - 1))];
+  const activeIndex = Math.min(active, Math.max(0, total - 1));
+  const activeItem: PostFeedItem | undefined = items[activeIndex];
   const activeKey = activeItem ? feedItemKey(activeItem) : null;
+  const activePrompt = activeItem?.kind === "prompt" ? activeItem.data : null;
+  const activeFill = usePromptFill(activePrompt, true);
   useEffect(() => {
     if (activeKey) lastOpen.set(memoryKey, activeKey);
   }, [activeKey, memoryKey]);
 
-  // Next page a few posts before the end (Ana Sayfa's own paging). The raw count is a dependency too: with "Medya" a page
+  // A new post starts on its main tab; a picker / sheet of the previous post never carries over.
+  const [tabFor, setTabFor] = useState<string | null>(activeKey);
+  if (tabFor !== activeKey) {
+    setTabFor(activeKey);
+    setPanelTab("main");
+  }
+
+  // Next page a few posts before the end (Ana Sayfa's own paging). The raw count is a dependency too: with "Yalnız görselliler" a page
   // can add no slide at all, and paging must still continue.
   const { hasMore, loadingMore, failed, loadMore } = feed;
   const rawCount = feed.items.length;
@@ -487,273 +393,306 @@ function FocusScreen() {
     if (focusFeedShouldLoadMore(active, total, { hasMore, loadingMore, failed })) void loadMore();
   }, [active, total, rawCount, hasMore, loadingMore, failed, loadMore, loading, needsLogin]);
 
-  // Phone: with the sheet open the post's MEDIA (its picture / video as actually shown — `object-contain`) is fitted into the
-  // space above the sheet and centred there, Instagram-style; a post without media fits as a whole. Measured on open and on
-  // resize; from `md` the sheet is a side panel and nothing is scaled.
-  useEffect(() => {
-    if (!panel) return;
-    const measure = () => {
-      const content = contentRef.current;
-      const sheetBox = content?.closest("[data-focus-feed]")?.querySelector<HTMLElement>("[data-focus-sheet]");
-      const slide = content?.querySelector<HTMLElement>(`[data-slide-index="${active}"]`);
-      if (!content || !sheetBox || !slide || !window.matchMedia("(max-width: 767.98px)").matches) {
-        setShrink(null);
-        return;
-      }
-      const origin = content.getBoundingClientRect();
-      const box = mediaBox(slide) ?? slide.getBoundingClientRect();
-      const safeTop = parseFloat(getComputedStyle(content).getPropertyValue("--focus-safe-top")) || 0;
-      const top = safeTop + 8;
-      const bottom = sheetBox.getBoundingClientRect().top - 8;
-      const scale = Math.min(1, (bottom - top) / box.height, (origin.width - 16) / box.width);
-      // Transform origin is the content box's top-left: map the media box's centre to the centre of the free area.
-      const cx = box.left - origin.left + box.width / 2;
-      const cy = box.top - origin.top + box.height / 2;
-      setShrink({ scale, x: origin.width / 2 - cx * scale, y: (top + bottom) / 2 - origin.top - cy * scale });
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [panel, active]);
-
   const go = useCallback(
     (index: number) => {
       const scroller = scrollerRef.current;
       const last = scroller ? scroller.querySelectorAll("[data-slide-index]").length - 1 : -1;
       const target = Math.max(0, Math.min(index, last));
       const slide = scroller?.querySelector<HTMLElement>(`[data-slide-index="${target}"]`);
-      if (scroller && slide) scroller.scrollTo({ left: slideScrollLeft(scroller, slide), behavior: reducedMotion ? "auto" : "smooth" });
+      if (scroller && slide) scroller.scrollTo({ top: slideTop(slide), behavior: reducedMotion ? "auto" : "smooth" });
     },
     [reducedMotion],
   );
+
+  // ← → page through the active post's results (a sideways row of pictures); posts without one ignore the key.
+  const stepResult = useCallback(
+    (direction: 1 | -1) => {
+      const row = scrollerRef.current?.querySelector<HTMLElement>(`[data-slide-index="${activeIndex}"] [data-results-row]`);
+      if (!row || row.clientWidth === 0) return;
+      const count = Number(row.dataset.count ?? 0);
+      const next = focusResultStep(Math.round(row.scrollLeft / row.clientWidth), count, direction);
+      row.scrollTo({ left: next * row.clientWidth, behavior: reducedMotion ? "auto" : "smooth" });
+    },
+    [activeIndex, reducedMotion],
+  );
+  const activeResults = activeItem && focusFeedLayout(activeItem) === "visual" ? focusFeedImages(activeItem).length : 0;
+
+  const closeOverlays = useCallback(() => {
+    setSheet(null);
+    setFillEdit(null);
+  }, []);
 
   // The post type is picked in the bar's filter menu (docs/history/245-*); each type is its own server query, so it opens at its
   // own start. Same type picked again = nothing happens.
   const pickChannel = useCallback(
     (next: FocusChannel) => {
       if (next === channel) return;
-      setPanel(null);
+      closeOverlays();
       setChannelShift(FOCUS_CHANNELS.indexOf(next) > FOCUS_CHANNELS.indexOf(channel) ? 1 : -1);
       setChannel(next);
     },
-    [channel],
+    [channel, closeOverlays],
   );
 
-  // Up on a post opens its info sheet (the "Bilgi ⌃" button's own gesture). The scroller is `touch-action: pan-x`, so the
-  // browser keeps the sideways scroll and leaves vertical moves to us. Mouse drags do nothing (desktop: the button, or ↑).
-  const activeIndex = Math.min(active, Math.max(0, total - 1));
-  const swipe = useRef<{ x: number; y: number; t: number; axis: "v" | "h" | null } | null>(null);
-  const swipeHandlers = {
-    onPointerDown: (event: ReactPointerEvent<HTMLElement>) => {
-      if (event.pointerType === "mouse" || panel) return;
-      swipe.current = { x: event.clientX, y: event.clientY, t: performance.now(), axis: null };
-    },
-    onPointerMove: (event: ReactPointerEvent<HTMLElement>) => {
-      const start = swipe.current;
-      if (!start || start.axis) return;
-      const dx = event.clientX - start.x;
-      const dy = event.clientY - start.y;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) > 12) start.axis = Math.abs(dy) > Math.abs(dx) * 1.2 ? "v" : "h";
-    },
-    onPointerUp: (event: ReactPointerEvent<HTMLElement>) => {
-      const start = swipe.current;
-      swipe.current = null;
-      if (!start || start.axis !== "v") return;
-      const dy = event.clientY - start.y;
-      const velocity = Math.abs(dy) / Math.max(1, performance.now() - start.t);
-      const item = items[activeIndex];
-      if (item && dy < 0 && (Math.abs(dy) > 60 || velocity > 0.5)) openInfo(item);
-    },
-    onPointerCancel: () => {
-      swipe.current = null;
-    },
-  };
+  // What a post's face can ask of the screen: open the card on a tab, or edit one variable of the active text prompt.
+  const panelApi = useMemo<FocusPanelApi>(
+    () => ({
+      openSheet: (_item, next = "main") => {
+        void _item;
+        if (isDesktop) {
+          setPanelOpen(true);
+          setPanelTab(next);
+          return;
+        }
+        setFillEdit(null);
+        setSheet({ state: next === "main" ? "half" : "full", tab: next });
+      },
+      editVariable: (item, name) => {
+        if (isDesktop) {
+          setPanelOpen(true);
+          setPanelTab("main");
+          const variable = activeFill?.variables.find((entry) => entry.name === name);
+          if (variable) requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(`pv-${variable.id}`)?.focus()));
+          return;
+        }
+        setSheet(null);
+        setFillEdit({ key: feedItemKey(item), name });
+      },
+    }),
+    [isDesktop, activeFill],
+  );
 
-  // ← → / PageUp PageDown / h l / Home End step through the posts, ↑ / k open the post's info; Esc closes Odak.
-  // Ignored while a dialog (save / share / prompt / login) is open or a field has focus.
+  const stepSheet = useCallback((direction: "up" | "down") => {
+    setSheet((current) => {
+      const next = focusSheetStep(current?.state ?? null, direction);
+      if (!next) return null;
+      return { state: next, tab: next === "half" ? "main" : (current?.tab ?? "main") };
+    });
+  }, []);
+
+  // ↑ ↓ / PageUp PageDown / j k step through the posts, ← → / h l through the active post's results, P the card, C copies, Esc closes Odak.
+  // Ignored while a dialog (save / share / the card itself / login) is open or a field has focus.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
       if (document.querySelector('[aria-modal="true"]')) return;
       const target = event.target as HTMLElement | null;
       if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
-      const openActiveInfo = () => {
-        const item = items[activeIndex];
-        if (item && !panel) openInfo(item);
-      };
-      const keys: Record<string, () => void> = {
-        ArrowRight: () => go(active + 1),
-        PageDown: () => go(active + 1),
-        l: () => go(active + 1),
-        ArrowLeft: () => go(active - 1),
-        PageUp: () => go(active - 1),
-        h: () => go(active - 1),
-        ArrowUp: openActiveInfo,
-        k: openActiveInfo,
-        Home: () => go(0),
-        End: () => go(Number.MAX_SAFE_INTEGER),
-        Escape: close,
-      };
-      const action = keys[event.key];
+      const action = focusKeyAction(event.key);
       // Arrow keys inside a tab list move between tabs (Tabs' own roving focus), not posts.
       if (!action || (target?.closest('[role="tablist"]') && event.key.startsWith("Arrow"))) return;
+      const run: Record<string, () => void> = {
+        next: () => go(activeIndex + 1),
+        prev: () => go(activeIndex - 1),
+        first: () => go(0),
+        last: () => go(Number.MAX_SAFE_INTEGER),
+        resultNext: () => stepResult(1),
+        resultPrev: () => stepResult(-1),
+        close,
+        panel: () => {
+          if (!activeItem) return;
+          if (isDesktop) setPanelOpen((open) => !open);
+          else setSheet((current) => (current ? null : { state: "half", tab: "main" }));
+        },
+        copy: () => {
+          if (activeItem?.kind !== "prompt") return;
+          const button = document.querySelector<HTMLElement>(
+            isDesktop ? "[data-focus-panel] [data-focus-action-bar] button" : `[data-slide-index="${activeIndex}"] [data-focus-peek-action="copy"] button`,
+          );
+          button?.click();
+        },
+      };
       event.preventDefault();
-      action();
+      run[action]();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [active, activeIndex, items, panel, go, close, openInfo]);
+  }, [activeIndex, activeItem, isDesktop, go, stepResult, close]);
 
   const backdropUrl = activeItem && !loading ? (focusFeedCover(activeItem)?.url ?? null) : null;
-  // Albüm (docs/history/203-*): one roomy row — round 44px buttons on the ends, the two feeds as a capsule between them.
+  // Albüm (docs/history/203-*): one roomy row — round 44px buttons on the ends, the feed filter between.
   const barButton =
     "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const phoneSheetOpen = !isDesktop && sheet !== null;
+  const locked = phoneSheetOpen || (!isDesktop && fillEdit !== null);
+  const stageSheet = !isDesktop ? (sheet ? sheet.state : fillEdit ? "fill" : undefined) : undefined;
+  const editingFor = (item: PostFeedItem) => (fillEdit && fillEdit.key === feedItemKey(item) ? fillEdit.name : null);
 
   // Rendered into <body>, over the whole app (client only — see `FocusPage`).
   return createPortal(
-    <Stage commentsOpen={Boolean(panel)}>
+    <Stage sheet={stageSheet}>
       <FocusPlaybackContext.Provider value={playback}>
-      <FocusCommentsContext.Provider value={openComments}>
-      <FocusInfoContext.Provider value={openInfo}>
-        <FocusFeedBackdrop url={backdropUrl} />
+        <FocusPanelContext.Provider value={panelApi}>
+          <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+            <FocusFeedBackdrop url={backdropUrl} />
 
-        {/* Floating bar: over the posts on a phone (a soft scrim keeps it legible), the same from `md`. */}
-        <div className={cn(HIDE_WHILE_COMMENTS, "md:group-data-[comments-open]/stage:right-[420px]", "absolute inset-x-0 top-0 z-30 flex min-w-0 items-center gap-2 art-scrim-top px-3 pb-7 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:gap-3 sm:px-5")}>
-          <button type="button" onClick={close} aria-label={t("focusFeed.close")} title={t("focusFeed.close")} className={cn(barButton, "w-11")}>
-            <X size={20} aria-hidden />
-          </button>
-          <span className="hidden shrink-0 font-display text-h3 font-bold tracking-[-0.03em] text-on-art sm:inline">{t("nav.focus")}</span>
-          <div className="flex min-w-0 flex-1 justify-center">
-            <FocusFilterMenu
-              channel={channel}
-              tab={tab}
-              onChannel={pickChannel}
-              contentType={contentType}
-              onContentType={(next) => {
-                if (next === contentType) return;
-                closePanel();
-                setContentType(next);
-              }}
-              onTab={(next) => {
-                if (next === tab) return;
-                closePanel();
-                setTab(next);
-              }}
-            />
-          </div>
-          {total > 0 && !loading && (
-            <span
-              className="hidden shrink-0 rounded-full border border-white/15 bg-art-chip px-2.5 py-1 text-caption font-semibold tabular-nums text-on-art backdrop-blur-md md:inline"
-              aria-label={t("focusFeed.position", { current: Math.min(active + 1, total), total })}
-            >
-              {String(Math.min(active + 1, total)).padStart(2, "0")}
-              <span aria-hidden className="px-1 text-on-art-faint">/</span>
-              {String(total).padStart(2, "0")}
-              {hasMore ? "+" : ""}
-            </span>
-          )}
-          <FocusMenu
-            mediaOnly={mediaOnly}
-            onToggleMedia={() => {
-              closePanel();
-              setMediaOnly((value) => !value);
-            }}
-            muted={muted}
-            onToggleMuted={() => setMuted(!muted)}
-          />
-        </div>
-
-        {!loading && total > 0 && !needsLogin && <FocusStrip items={items} active={Math.min(active, total - 1)} onGo={go} />}
-
-        <div
-          key={channel}
-          data-channel-area
-          {...swipeHandlers}
-          className={cn(
-            "relative flex min-h-0 flex-1 touch-pan-x flex-col motion-reduce:animate-none",
-            channelShift === 1 && "animate-channel-down",
-            channelShift === -1 && "animate-channel-up",
-          )}
-        >
-        {loading ? (
-          <div className="relative flex min-h-0 flex-1 justify-center px-6 pb-5 pt-[calc(8rem+env(safe-area-inset-top))] md:pt-[9.25rem]" aria-busy="true">
-            <div className="flex h-full w-full max-w-[36rem] flex-col gap-3">
-              <Skeleton className="min-h-0 flex-1 rounded-xl" />
-              <Skeleton className="h-5 w-2/3" />
-              <Skeleton className="h-7 w-5/6" />
-              <Skeleton className="h-12 w-full rounded-full" />
+            {/* Floating bar: over the posts on a phone (a soft scrim keeps it legible), the same from `md`. */}
+            <div className={cn(HIDE_WHILE_FULL, "absolute inset-x-0 top-0 z-30 flex min-w-0 items-center gap-2 art-scrim-top px-3 pb-7 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:gap-3 sm:px-5")}>
+              <button type="button" onClick={close} aria-label={t("focusFeed.close")} title={t("focusFeed.close")} className={cn(barButton, "w-11")}>
+                <X size={20} aria-hidden />
+              </button>
+              <span className="hidden shrink-0 font-display text-h3 font-bold tracking-[-0.03em] text-on-art sm:inline">{t("nav.focus")}</span>
+              <div className="flex min-w-0 flex-1 justify-center">
+                <FocusFilterMenu
+                  channel={channel}
+                  tab={tab}
+                  onChannel={pickChannel}
+                  contentType={contentType}
+                  onContentType={(next) => {
+                    if (next === contentType) return;
+                    closeOverlays();
+                    setContentType(next);
+                  }}
+                  onTab={(next) => {
+                    if (next === tab) return;
+                    closeOverlays();
+                    setTab(next);
+                  }}
+                />
+              </div>
+              {total > 0 && !loading && (
+                <span
+                  className="hidden shrink-0 rounded-full border border-white/15 bg-art-chip px-2.5 py-1 text-caption font-semibold tabular-nums text-on-art backdrop-blur-md md:inline"
+                  aria-label={t("focusFeed.position", { current: Math.min(active + 1, total), total })}
+                >
+                  {String(Math.min(active + 1, total)).padStart(2, "0")}
+                  <span aria-hidden className="px-1 text-on-art-faint">/</span>
+                  {String(total).padStart(2, "0")}
+                  {hasMore ? "+" : ""}
+                </span>
+              )}
+              <FocusMenu
+                mediaOnly={mediaOnly}
+                onToggleMedia={() => {
+                  closeOverlays();
+                  setMediaOnly((value) => !value);
+                }}
+                muted={muted}
+                onToggleMuted={() => setMuted(!muted)}
+              />
             </div>
-          </div>
-        ) : needsLogin ? (
-          <CenteredState>
-            <EmptyState scene="following" icon={UserCheck} title={t("feed.emptyFollowingTitle")} description={t("feed.emptyFollowingDescription")} action={{ label: t("common.login"), href: "/login" }} />
-          </CenteredState>
-        ) : failed && total === 0 && !hasMore ? (
-          <CenteredState>
-            <EmptyState scene="focusJam" icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
-          </CenteredState>
-        ) : total === 0 && !hasMore ? (
-          <CenteredState>
-            <EmptyState scene={tab === "following" ? "following" : "shelf"}
-              icon={Inbox}
-              title={mediaOnly ? t("focusFeed.noMediaTitle") : tab === "following" ? t("feed.emptyFollowingNoPosts") : t("feed.emptyDefault")}
-              description={tab === "following" && !mediaOnly ? t("feed.emptyFollowingHint") : undefined}
-            />
-          </CenteredState>
-        ) : (
-          <div
-            ref={contentRef}
-            className={cn(
-              "relative min-h-0 flex-1 origin-top-left transition-transform duration-300 ease-soft [--focus-safe-top:env(safe-area-inset-top)] [container-type:inline-size] motion-reduce:transition-none",
-              panel && "md:mr-[420px]",
-            )}
-            style={panel && shrink ? { transform: `translate(${shrink.x}px, ${shrink.y}px) scale(${shrink.scale})` } : undefined}
-          >
+
             <div
-              ref={scrollerRef}
-              tabIndex={-1}
-              role="region"
-              aria-label={t("focusFeed.ariaLabel")}
-              aria-describedby="focus-feed-hint"
-              aria-busy={loadingMore}
+              key={channel}
+              data-channel-area
               className={cn(
-                "scrollbar-none absolute inset-0 flex snap-x snap-mandatory gap-2 overscroll-x-contain px-6 outline-none md:gap-6 md:px-[max(1.5rem,calc(50cqw-18rem))]",
-                panel ? "overflow-hidden" : "overflow-x-auto overflow-y-hidden",
+                "relative flex min-h-0 flex-1 flex-col motion-reduce:animate-none",
+                channelShift === 1 && "animate-channel-down",
+                channelShift === -1 && "animate-channel-up",
               )}
             >
-              {items.map((item, index) => (
-                <FocusFeedSlide key={feedItemKey(item)} item={item} index={index} active={index === active} near={focusFeedIsNear(index, active)} />
-              ))}
-              <FeedEndSlide index={total} hasMore={hasMore} loadingMore={loadingMore} failed={failed} onRetry={() => void loadMore()} onTop={() => go(0)} onClose={close} />
+              {loading ? (
+                <div className="relative flex min-h-0 flex-1 justify-center px-6 pb-5 pt-[calc(5rem+env(safe-area-inset-top))] md:pt-[6rem]" aria-busy="true">
+                  <div className="flex h-full w-full max-w-[36rem] flex-col gap-4">
+                    <Skeleton className="min-h-0 flex-1 rounded-xl" />
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-7 w-5/6" />
+                    <Skeleton className="h-12 w-full rounded-full" />
+                  </div>
+                </div>
+              ) : needsLogin ? (
+                <CenteredState>
+                  <EmptyState scene="following" icon={UserCheck} title={t("feed.emptyFollowingTitle")} description={t("feed.emptyFollowingDescription")} action={{ label: t("common.login"), href: "/login" }} />
+                </CenteredState>
+              ) : failed && total === 0 && !hasMore ? (
+                <CenteredState>
+                  <EmptyState scene="focusJam" icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
+                </CenteredState>
+              ) : total === 0 && !hasMore ? (
+                <CenteredState>
+                  <EmptyState
+                    scene={tab === "following" ? "following" : "shelf"}
+                    icon={Inbox}
+                    title={mediaOnly ? t("focusFeed.noMediaTitle") : tab === "following" ? t("feed.emptyFollowingNoPosts") : t("feed.emptyDefault")}
+                    description={tab === "following" && !mediaOnly ? t("feed.emptyFollowingHint") : undefined}
+                  />
+                </CenteredState>
+              ) : (
+                <div className="relative min-h-0 flex-1">
+                  <div
+                    ref={scrollerRef}
+                    tabIndex={-1}
+                    role="region"
+                    aria-label={t("focusFeed.ariaLabel")}
+                    aria-describedby="focus-feed-hint"
+                    aria-busy={loadingMore}
+                    className={cn(
+                      "scrollbar-none absolute inset-0 snap-y snap-mandatory overscroll-y-contain outline-none",
+                      locked ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden",
+                    )}
+                  >
+                    {items.map((item, index) => (
+                      <FocusFeedSlide key={feedItemKey(item)} item={item} index={index} active={index === active} near={focusFeedIsNear(index, active)} editing={editingFor(item)} />
+                    ))}
+                    <FeedEndSlide index={total} hasMore={hasMore} loadingMore={loadingMore} failed={failed} onRetry={() => void loadMore()} onTop={() => go(0)} onClose={close} />
+                  </div>
+
+                  {/* From `md`: ‹ › page through a post's results; ↑ ↓ step between posts. */}
+                  {activeResults > 1 && (
+                    <div className="pointer-events-none absolute inset-x-4 top-1/2 hidden -translate-y-1/2 justify-between md:flex">
+                      <StepButton label={t("focusFeed.prevResult")} onClick={() => stepResult(-1)}>
+                        <ChevronLeft size={20} aria-hidden />
+                      </StepButton>
+                      <StepButton label={t("focusFeed.nextResult")} onClick={() => stepResult(1)}>
+                        <ChevronRight size={20} aria-hidden />
+                      </StepButton>
+                    </div>
+                  )}
+                  <div className="pointer-events-none absolute bottom-5 right-4 hidden flex-col gap-2 md:flex">
+                    <StepButton label={t("focusFeed.prevPost")} disabled={active <= 0} onClick={() => go(active - 1)}>
+                      <ChevronUp size={20} aria-hidden />
+                    </StepButton>
+                    <StepButton label={t("focusFeed.nextPost")} disabled={active >= total} onClick={() => go(active + 1)}>
+                      <ChevronDown size={20} aria-hidden />
+                    </StepButton>
+                  </div>
+                  <p id="focus-feed-hint" className="sr-only">
+                    {t("focusFeed.keyboardHint")}
+                  </p>
+                  <p aria-hidden className="pointer-events-none absolute bottom-5 left-5 hidden h-9 items-center gap-4 rounded-full bg-art-chip px-4 text-caption font-medium text-on-art-muted md:flex" data-focus-keys="">
+                    <span>{t("focusFeed.keysPosts")}</span>
+                    <span>{t("focusFeed.keysResults")}</span>
+                    <span>{t("focusFeed.keysCopy")}</span>
+                    <span>{t("focusFeed.keysPanel")}</span>
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none absolute inset-x-4 top-1/2 hidden -translate-y-1/2 justify-between lg:flex")}>
-              <StepButton label={t("focusFeed.prevPost")} disabled={active <= 0} onClick={() => go(active - 1)}>
-                <ChevronLeft size={20} aria-hidden />
-              </StepButton>
-              <StepButton label={t("focusFeed.nextPost")} disabled={active >= total} onClick={() => go(active + 1)}>
-                <ChevronRight size={20} aria-hidden />
-              </StepButton>
-            </div>
-            <p id="focus-feed-hint" className="sr-only">
-              {t("focusFeed.keyboardHint")}
-            </p>
-          </div>
-        )}
-        </div>
-        {panel && (
-          <>
-            {/* Phone: the shrunken post above the sheet — tapping it closes the sheet (which has its own X / Esc). */}
-            <button type="button" tabIndex={-1} aria-hidden onClick={closePanel} className="absolute inset-x-0 top-0 z-30 h-[35dvh] md:hidden" />
-            {panel.kind === "comments" ? (
-              <FocusCommentsSheet key={feedItemKey(panel.item)} item={panel.item} onClose={closePanel} />
-            ) : (
-              <FocusInfoSheet key={feedItemKey(panel.item)} item={panel.item} onClose={closePanel} />
+            {/* Phone: the card over the post (half / full) or the variable picker in the strip's place. */}
+            {!isDesktop && activeItem && sheet && (
+              <FocusPostSheet
+                key={feedItemKey(activeItem)}
+                item={activeItem}
+                fill={activeFill}
+                state={sheet.state}
+                tab={sheet.tab}
+                onTab={(next) => setSheet((current) => (current ? { ...current, tab: next } : current))}
+                onStep={stepSheet}
+                onClose={() => setSheet(null)}
+              />
             )}
-          </>
-        )}
-      </FocusInfoContext.Provider>
-      </FocusCommentsContext.Provider>
+            {!isDesktop && activeFill && fillEdit && fillEdit.key === activeKey && (
+              <FocusFillPicker fill={activeFill} name={fillEdit.name} onClose={() => setFillEdit(null)} onPick={(name) => setFillEdit({ key: fillEdit.key, name })} />
+            )}
+
+            {isDesktop && !panelOpen && activeItem && (
+              <button
+                type="button"
+                onClick={() => setPanelOpen(true)}
+                aria-label={t("focusSheet.showPanel")}
+                title={t("focusSheet.showPanel")}
+                className="absolute right-4 top-24 z-30 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <ChevronLeft size={20} aria-hidden />
+              </button>
+            )}
+          </div>
+
+          {isDesktop && panelOpen && activeItem && (
+            <FocusSidePanel key={feedItemKey(activeItem)} item={activeItem} fill={activeFill} tab={panelTab} onTab={setPanelTab} onHide={() => setPanelOpen(false)} />
+          )}
+        </FocusPanelContext.Provider>
       </FocusPlaybackContext.Provider>
     </Stage>,
     document.body,
@@ -764,7 +703,7 @@ function CenteredState({ children }: { children: ReactNode }) {
   return <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4 pt-16">{children}</div>;
 }
 
-function StepButton({ label, disabled, onClick, children }: { label: string; disabled: boolean; onClick: () => void; children: ReactNode }) {
+function StepButton({ label, disabled = false, onClick, children }: { label: string; disabled?: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button
       type="button"
@@ -772,7 +711,7 @@ function StepButton({ label, disabled, onClick, children }: { label: string; dis
       title={label}
       disabled={disabled}
       onClick={onClick}
-      className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface/85 text-text-secondary shadow-sm backdrop-blur-md transition-colors hover:bg-surface hover:text-text disabled:opacity-50"
+      className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-on-art backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
     >
       {children}
     </button>
@@ -799,7 +738,7 @@ function FeedEndSlide({
 }) {
   const { t } = useTranslation();
   return (
-    <section data-slide-index={index} className={cn("flex h-full shrink-0 snap-center snap-always items-center justify-center", FOCUS_SLIDE_WIDTH)}>
+    <section data-slide-index={index} className="relative flex h-full shrink-0 snap-start snap-always items-center justify-center px-6">
       {failed ? (
         <EmptyState scene="focusJam" icon={AlertCircle} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: onRetry }} />
       ) : hasMore || loadingMore ? (

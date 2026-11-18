@@ -3,6 +3,10 @@ import assert from "node:assert/strict";
 import {
   focusFeedCover,
   focusFeedExtraImages,
+  focusFeedImages,
+  focusFeedPrimaryAction,
+  focusFeedTone,
+  focusPromptTokens,
   focusFeedHasMedia,
   focusFeedIsNear,
   focusFeedLayout,
@@ -97,3 +101,51 @@ test("the Medya switch hides prompts and workflows without anything to look at, 
   assert.equal(focusFeedShown(request, true), true);
 });
 
+
+test("an image prompt pages through all its outputs; other kinds front only their cover", () => {
+  assert.equal(focusFeedImages(prompt("image", 4)).length, 4);
+  assert.equal(focusFeedImages(prompt("image", 4))[2].alt, "Başlık");
+  assert.equal(focusFeedImages(prompt("video", 3)).length, 1, "a video poster set is not a gallery");
+  assert.equal(focusFeedImages(prompt("text", 0)).length, 0);
+  const preset = { kind: "preset", data: { id: "s2", title: "S", coverUrl: "https://example.com/c.jpg" } } as unknown as PostEntry;
+  assert.equal(focusFeedImages(preset).length, 1);
+});
+
+test("a post without a picture is tinted by what it is; a playable one falls back to its words", () => {
+  const workflow = { kind: "workflow", data: { id: "w", title: "W", media: [] } } as unknown as PostEntry;
+  const request = { kind: "request", data: { id: "r", title: "R", media: [] } } as unknown as PostEntry;
+  const preset = { kind: "preset", data: { id: "s", title: "S", coverUrl: null } } as unknown as PostEntry;
+  const skill = { kind: "skill", data: { id: "k", title: "K" } } as unknown as PostEntry;
+  assert.equal(focusFeedTone(prompt("image", 1)), null);
+  assert.equal(focusFeedTone(prompt("text", 0)), "text");
+  assert.equal(focusFeedTone(workflow), "workflow");
+  assert.equal(focusFeedTone(request), "request");
+  assert.equal(focusFeedTone(preset), "preset");
+  assert.equal(focusFeedTone(skill), "skill");
+  assert.equal(focusFeedTone(prompt("video", 0)), null, "playing media fronts it");
+  assert.equal(focusFeedTone(prompt("video", 0), true), "text", "no output found: the words");
+});
+
+test("prompt words are cut into text and {tokens}", () => {
+  assert.deepEqual(focusPromptTokens("Ton: {ton}. Biçim: {biçim}"), [
+    { text: "Ton: ", name: null },
+    { text: "{ton}", name: "ton" },
+    { text: ". Biçim: ", name: null },
+    { text: "{biçim}", name: "biçim" },
+  ]);
+  assert.deepEqual(focusPromptTokens("düz metin"), [{ text: "düz metin", name: null }]);
+  assert.deepEqual(focusPromptTokens(""), []);
+  assert.deepEqual(focusPromptTokens("{}"), [{ text: "{}", name: null }], "an empty pair is not a token");
+});
+
+test("the strip's big button per kind: copy, reply (open request of someone else), details, preset, workflow, skill", () => {
+  const request = (status: string) => ({ kind: "request", data: { id: "r", title: "R", status, author: { id: "u1" } } }) as unknown as PostEntry;
+  assert.equal(focusFeedPrimaryAction(prompt("text", 0), null), "copy");
+  assert.equal(focusFeedPrimaryAction(request("open"), "u2"), "reply");
+  assert.equal(focusFeedPrimaryAction(request("open"), null), "reply", "a guest gets the login prompt on the reply page");
+  assert.equal(focusFeedPrimaryAction(request("open"), "u1"), "detail", "not your own request");
+  assert.equal(focusFeedPrimaryAction(request("closed"), "u2"), "detail");
+  assert.equal(focusFeedPrimaryAction({ kind: "preset", data: { id: "s" } } as unknown as PostEntry, null), "tryPreset");
+  assert.equal(focusFeedPrimaryAction({ kind: "workflow", data: { id: "w" } } as unknown as PostEntry, null), "runWorkflow");
+  assert.equal(focusFeedPrimaryAction({ kind: "skill", data: { id: "k" } } as unknown as PostEntry, null), "openSkill");
+});

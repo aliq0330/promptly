@@ -42,6 +42,7 @@ import { firstRunTranslations } from "./translations-first-run";
 import { settingsTranslations } from "./translations-settings";
 import { connectGuideTranslations } from "./translations-connect-guide";
 import { worksTranslations } from "./translations-works";
+import { focusTranslations } from "./translations-focus";
 import { workflowAutoTranslations } from "./translations-workflow-auto";
 import { chatRedesignTranslations } from "./translations-chat-redesign";
 import { quoteTranslations } from "./translations-quotes";
@@ -2488,7 +2489,7 @@ export const translations = {
   "nav.focus": { tr: "Odak", en: "Focus" },
   "focusFeed.close": { tr: "Odak'ı kapat", en: "Close Focus" },
   "focusFeed.all": { tr: "Tümü", en: "All" },
-  "focusFeed.mediaOnly": { tr: "Medya", en: "Media" },
+  "focusFeed.mediaOnly": { tr: "Yalnız görselliler", en: "Only with pictures" },
   "focusFeed.mediaOnlyTitle": { tr: "Görseli, videosu ya da sesi olmayan prompt ve workflow'ları gizle", en: "Hide prompts and workflows without an image, video or audio" },
   "focusFeed.soundOn": { tr: "Sesi aç", en: "Turn sound on" },
   "focusFeed.soundOff": { tr: "Sesi kapat", en: "Turn sound off" },
@@ -2515,7 +2516,7 @@ export const translations = {
   "focusFeed.openDetail": { tr: "Ayrıntıları aç", en: "Open details" },
   "focusFeed.viewPrompt": { tr: "Promptu incele", en: "View prompt" },
   "focusFeed.promptDialogTitle": { tr: "Prompt ayrıntısı", en: "Prompt details" },
-  "focusFeed.keyboardHint": { tr: "← → ile gönderiler arasında geç, ↑ ile bilgiyi aç · Esc ile Odak'ı kapat", en: "← → to move between posts, ↑ opens info · Esc closes Focus" },
+  "focusFeed.keyboardHint": { tr: "↑ ↓ ile gönderiler arasında geç, ← → ile sonuçlar arasında, P ile prompt kartını aç, C ile kopyala · Esc ile Odak'ı kapat", en: "↑ ↓ to move between posts, ← → between results, P opens the prompt card, C copies · Esc closes Focus" },
   "focusFeed.info": { tr: "Bilgi", en: "Info" },
   "focusFeed.infoClose": { tr: "Bilgiyi kapat", en: "Close info" },
   "focusFeed.filter": { tr: "Odak süzgeci", en: "Focus filter" },
@@ -3384,6 +3385,7 @@ export const translations = {
   ...settingsTranslations,
   ...connectGuideTranslations,
   ...worksTranslations,
+  ...focusTranslations,
   ...workflowAutoTranslations,
   ...chatRedesignTranslations,
   ...storyTranslations,

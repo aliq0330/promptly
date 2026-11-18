@@ -3,33 +3,24 @@
 import { SendArrowIcon } from "@/components/ui/motion-icons";
 import { useCompletionSeq } from "@/lib/use-motion-seq";
 import { LoadMore } from "@/features/feed/load-more";
-import { createContext, useCallback, useContext, useEffect, useId, useRef } from "react";
-import { MessageCircle } from "@/components/icons/message-circle";
+import { useCallback, useEffect, useRef } from "react";
 import { X } from "@/components/icons/x";
-import { FocusSheetFrame } from "./focus-sheet-frame";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { contentActionClassName } from "@/features/content/action-styles";
-import { useCommentCountDelta } from "@/features/prompts/comment-count-store";
 import { CommentNode, type CommentTree } from "@/features/prompts/comment-node";
 import { CommentExtrasPreview, CommentExtrasToolbar } from "@/features/prompts/comment-extras";
 import { useCommentThread, type CommentTarget } from "@/features/prompts/use-comment-thread";
 import { MentionInput } from "@/features/mentions/mention-field";
 import type { PostFeedItem } from "@/features/feed/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn, formatCount } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { ScrollRow } from "@/components/ui/scroll-row";
 
 /**
- * Odak's comments (docs/history/200-*), Instagram-style: the comment button opens a sheet from the bottom while the post
- * shrinks into the space above it and keeps playing (`FocusScreen`); from `md` it is a panel on the right. The thread is the
- * detail pages' own (`useCommentThread`: load, like, reply at any depth, edit, delete, report, @mentions) in its `sheet`
- * layout — one composer at the bottom writes comments AND replies ("Yanıtla" turns it into a reply to that person),
- * with a row of quick emoji above it. Dragging the grabber down, tapping the post above, Esc or X closes it.
+ * Odak's comments (docs/history/200-*, 435-*), Instagram-style, now the card's "Yorumlar" tab: the thread is the detail pages' own
+ * (`useCommentThread`: load, like, reply at any depth, edit, delete, report, @mentions) in its `sheet` layout — one composer at the bottom
+ * writes comments AND replies ("Yanıtla" turns it into a reply to that person), with a row of quick emoji above it.
  */
-
-/** Opens the comment sheet for a post — provided by `FocusScreen`. */
-export const FocusCommentsContext = createContext<(item: PostFeedItem) => void>(() => undefined);
 
 const QUICK_EMOJI = ["❤️", "🙌", "🔥", "👏", "😢", "😍", "😮", "😂"] as const;
 
@@ -48,34 +39,8 @@ function targetOf(item: PostFeedItem): CommentTarget {
   }
 }
 
-/** The rail's comment button in Odak: same look and live count as `CommentCountLink`, but opens the sheet in place. */
-export function FocusCommentButton({ item, size, className }: { item: PostFeedItem; size: number; className?: string }) {
+export function FocusCommentsBody({ item }: { item: PostFeedItem }) {
   const { t } = useTranslation();
-  const openComments = useContext(FocusCommentsContext);
-  const delta = useCommentCountDelta(item.data.id);
-  const count = Math.max(0, item.data.commentCount + delta);
-  return (
-    <button
-      type="button"
-      onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        openComments(item);
-      }}
-      aria-haspopup="dialog"
-      aria-label={t("focusComments.open", { count: formatCount(count) })}
-      title={t("comments.title")}
-      className={contentActionClassName(false, className)}
-    >
-      <MessageCircle size={size} />
-      <span aria-hidden>{formatCount(count)}</span>
-    </button>
-  );
-}
-
-export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onClose: () => void }) {
-  const { t } = useTranslation();
-  const titleId = useId();
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const thread = useCommentThread(targetOf(item));
@@ -129,33 +94,23 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
     inputRef.current?.focus();
   }
 
-  // Esc closes the sheet (a reply in progress first), unless a dialog opened from inside it (report…) is on top.
+  // Esc cancels a reply in progress first (the card's own Esc then sees the key as handled and stays open).
   useEffect(() => {
+    if (!replyingTo) return;
     function onKey(event: KeyboardEvent) {
       if (event.key !== "Escape" || event.defaultPrevented) return;
       if (document.querySelectorAll('[aria-modal="true"]').length > 1) return;
       event.preventDefault();
-      if (replyingTo) baseTree.onCancelReply();
-      else onClose();
+      baseTree.onCancelReply();
     }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [replyingTo, baseTree, onClose]);
+    // Capture phase: the card's own Esc listener (registered earlier, bubbling) must see the key as already handled.
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [replyingTo, baseTree]);
 
   return (
-    <FocusSheetFrame
-      kind="comments"
-      titleId={titleId}
-      title={
-        <>
-          {t("comments.title")}
-          {thread.loaded && <span className="font-normal tabular-nums text-text-muted"> · {formatCount(thread.comments.length)}{thread.hasMore ? "+" : ""}</span>}
-        </>
-      }
-      closeLabel={t("focusComments.close")}
-      onClose={onClose}
-    >
-        <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain border-t border-border-soft px-3 py-3">
+    <div className="flex min-h-0 flex-1 flex-col" data-focus-comments="">
+        <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3">
           {!thread.loaded ? (
             <div className="space-y-4" role="status" aria-label={t("comments.loadingComments")}>
               {[0, 1, 2].map((i) => (
@@ -256,6 +211,6 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
             </div>
           )}
         </div>
-    </FocusSheetFrame>
+    </div>
   );
 }
