@@ -200,6 +200,11 @@ try {
   assert.equal(await pop.locator("#tab-home .card", { hasText: "Orman perisi karakter" }).locator("[data-kind=like]").count(), 1);
   await p1card.locator(".ctitle").click();
   await pop.waitForSelector(".detailpane .engage .reacts .rbtn");
+  // Ayrıntı gövdesi KAYAR; görsel ve açıklama içerik uzayınca sıkışmaz (eski hata: esnek sütunda çocuklar küçülüp görsel kayboluyordu)
+  await pop.waitForSelector(".detailpane .code");
+  const fit = await pop.evaluate(() => { const b = document.querySelector(".detailpane .dbody"), a = b.querySelector(".art"); return { art: Math.round(a.getBoundingClientRect().height), scrolls: b.scrollHeight > b.clientHeight, overflowY: getComputedStyle(b).overflowY }; });
+  assert.ok(fit.art >= 165, `ayrıntıda görsel sıkışmamalı (${fit.art}px)`);
+  assert.equal(fit.scrolls, true, "uzun ayrıntı gövdesi kaydırılabilir olmalı"); assert.equal(fit.overflowY, "auto");
   assert.equal(await pop.locator(".detailpane .reacts .rbtn").count(), 6);
   await pop.locator(".detailpane .reacts .rbtn[aria-label=Ateş]").click();
   await pop.waitForSelector(".detailpane .reacts .rbtn.on");

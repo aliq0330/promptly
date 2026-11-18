@@ -111,6 +111,8 @@
 .dhead { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
 .dtitle { flex: 1; margin: 0; font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.25; letter-spacing: -.01em; }
 .dbody { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+/* Esnek sütunda çocuklar varsayılan olarak küçülür: içerik uzayınca görsel/açıklama sıkışıp kayboluyordu; küçülmesin, gövde kaysın. */
+.dbody > * { flex-shrink: 0; }
 .dacts { display: flex; gap: 8px; flex-wrap: wrap; }
 .dacts a.btn { text-decoration: none; }
 .dfoot { padding: 12px 14px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
