@@ -71,7 +71,7 @@ Bir görev bitmeden `tsc`, `lint`, `test` ve `build` temiz olmalıdır.
 
 Şema `supabase/migrations/` altındaki sıralı SQL dosyalarıdır; uygulama talimatı
 ve ayrıntılar [`supabase/README.md`](./supabase/README.md) içindedir. Tohum veriler
-`supabase/seed/`, Edge Function'lar (`analyze-image`, `username-login`,
+`supabase/seed/`, Edge Function'lar (`username-login`,
 `cleanup-orphan-storage`) `supabase/functions/` altındadır.
 
 > **Önemli:** GitHub Actions yalnızca statik siteyi yayınlar. **Migration'lar ve

@@ -313,7 +313,7 @@ await scenario("14. İngilizce: form, Kim görsün? ve ✕ penceresi çevrilmiş
   await page.getByText("Save as a draft?").waitFor();
 }, { lang: "en" });
 
-await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken ekle, Görselden yardım) · Ayar paketi · Görseller · Açıklama; isteğe bağlı satırlar Araç/Kategori/Etiketler/DNA/Referans satır içinde açılır", async ({ page }) => {
+await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken ekle) · Ayar paketi · Görseller · Açıklama; isteğe bağlı satırlar Araç/Kategori/Etiketler/DNA/Referans satır içinde açılır", async ({ page }) => {
   await openForm(page, "/create?mode=prompt");
   await page.locator("[data-compose-body]").waitFor();
   assert.equal(await page.locator("[data-compose-toolbar]").count(), 0);
@@ -330,7 +330,7 @@ await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken
   await images.first().waitFor({ state: "detached" });
   await page.locator("[data-compose-type] [data-taxonomy-type=image]").click();
   await images.first().waitFor();
-  // Hazır ayar satırı eski pencereyi açar; Görselden yardım Şablon sekmesinde.
+  // Hazır ayar satırı eski pencereyi açar.
   await page.getByRole("button", { name: /Ayar Paketleri ve Ek Alan|Presets & Extra/ }).first().click();
   await page.locator("[data-extra-panel]").waitFor();
   await page.keyboard.press("Escape");

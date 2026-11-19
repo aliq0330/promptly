@@ -909,7 +909,6 @@ export function CreatePromptForm() {
               rows={5}
               placeholder={t("prompt.promptTextPlaceholder")}
               // "Görselden yardım" works on the image already picked below — no second upload.
-              visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
               onOpenPresets={() => setExtraPanelOpen(true)}
               presetCount={appliedPresetCount}
             />

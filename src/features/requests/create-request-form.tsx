@@ -18,7 +18,6 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { usePrefillTag } from "@/features/challenges/use-prefill-tag";
 import { TagPicker } from "@/features/prompts/tag-picker";
-import { RequestVisionAssist } from "./request-vision-assist";
 import { MultiImagePicker } from "@/features/content/multi-image-picker";
 import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } from "@/lib/supabase/media-input";
 import { requestHref } from "@/lib/utils";
@@ -467,14 +466,6 @@ export function CreateRequestForm() {
           <FormField label={t("compose.toolReference")} optional>
             <MultiImagePicker items={images} onChange={setImages} />
           </FormField>
-          {!isEditMode && contentType === "image" && (
-            <FormDisclosure id="vision" label={t("vision.helpTitle")} hint={t("compose.toolHelp")}>
-              <RequestVisionAssist
-                onApplyDescription={(text) => setDescription((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
-                onApplyCreativeDirection={(text) => setCreativeDirection((prev) => (prev.trim() ? `${prev} · ${text}` : text))}
-              />
-            </FormDisclosure>
-          )}
         </ComposeSection>
 
         <ComposeSection title={t("compose.sectionDetails")}>

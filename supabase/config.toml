@@ -3,9 +3,6 @@
 # canlı ayarlar Dashboard'dadır). Edge Function'ların JWT doğrulaması burada
 # sabitlenir; fonksiyon kodu supabase/functions/ altındadır.
 
-[functions.analyze-image]
-verify_jwt = true
-
 [functions.cleanup-orphan-storage]
 verify_jwt = true
 

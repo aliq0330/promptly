@@ -840,7 +840,6 @@ aşağıdaki "GitHub Actions ile deploy" workflow'u ile deploy edilir:
 
 | Fonksiyon | Ne yapar | Deploy |
 |---|---|---|
-| `analyze-image` | Görsel + MIME alıp Gemini Vision'a gönderen, yapılandırılmış JSON döndüren fonksiyon | `supabase functions deploy analyze-image` (kod değişince) |
 | `username-login` | Kullanıcı adı + şifreyle giriş; e-postayı yalnızca sunucuda çözer. Hız sınırı kalıcı (`auth_login_attempt` RPC), CORS `*` değil (site + localhost + `chrome-extension://`) — canlıda v2 (MCP ile deploy edildi; canlı istekle denenmedi) | `supabase functions deploy username-login --no-verify-jwt` |
 | `cleanup-orphan-storage` | Hiçbir satırın göstermediği Storage dosyalarını bulur/siler (yalnız moderatör) | `supabase functions deploy cleanup-orphan-storage` |
 | `delete-account` | Kullanıcının KENDİ hesabını siler (JWT'den; `docs/history/154-*`) | `supabase functions deploy delete-account` — JWT doğrulaması AÇIK. Canlıda (v1). |
@@ -856,7 +855,7 @@ oradaki işi beklemez ve başarısızlığı siteyi etkilemez. Repo secret'ları
   `xqxybhjcyrvaroknucdq` yalnızca örnektir)
 
 İkisinden biri yoksa "Require secrets" adımı hata verir ve hiçbir şey deploy
-edilmez. İş `scripts/deploy-functions.sh`'ı çalıştırır: `analyze-image`,
+edilmez. İş `scripts/deploy-functions.sh`'ı çalıştırır:
 `cleanup-orphan-storage`, `delete-account` (JWT doğrulaması açık) ve
 `username-login --no-verify-jwt` (yalnızca bu, çünkü giriş yapmamış kullanıcı
 çağırır). `supabase/config.toml` yalnızca bu dört fonksiyonun `verify_jwt`
@@ -864,26 +863,7 @@ değerini sabitler. Migration'lar bu workflow ile uygulanmaz; `username-login`'i
 yeni sürümünden önce `20260919830000` uygulanmış olmalıdır (canlıda uygulandı). Bu workflow henüz
 hiç çalıştırılmadı.
 
-Aşağıdaki not `analyze-image` içindir (tarihsel):
-
-`supabase/functions/analyze-image/index.ts` — AI Vision Generator sisteminin
-kullandığı, görsel + MIME type alıp Gemini Vision'a gönderen, yapılandırılmış
-JSON döndüren fonksiyon. Bu dosya, kullanıcının Supabase Dashboard'da zaten
-çalışır durumda tuttuğu koda dayanıyor; bu repoya ilk kez bu commit'te
-eklendi (öncesinde yalnızca Dashboard'da vardı, git'te izlenmiyordu).
-
-**Deploy:** Bu sandbox'ın `*.supabase.co`'ya ağ erişimi yok (bu depodaki
-diğer her modülle aynı, tekrarlanan sınırlama — bkz. yukarısı), bu yüzden bu
-dosya buradan hiç deploy edilemedi/canlıya karşı test edilemedi. Kullanıcı
-bunu ya doğrudan Dashboard → Edge Functions → `analyze-image` → Code'a
-yapıştırıp Deploy ederek, ya da yerel makinesinde
-`supabase functions deploy analyze-image --project-ref <proje-ref>` ile
-uygulamalı. `GEMINI_API_KEY` zaten Dashboard'da bir Function Secret olarak
-duruyor — bu dosyada literal bir key yok, değişmesi gerekmiyor.
-
-**Model adı:** `GEMINI_MODEL` sabitinde (`index.ts`'in başında) — Google
-modeli tekrar değiştirirse (bir "model artık kullanılamıyor" 404'ü gibi)
-güncellenmesi gereken tek satır burası.
+`analyze-image` (Gemini Vision ile "Görselden yardım") KALDIRILDI (`docs/history/441-*`): kaynak, `config.toml` girdisi ve deploy betiği silindi; canlıdaki fonksiyon Dashboard'dan elle silinmelidir.
 
 ## Sohbet geliştirmeleri (`docs/history/174-*`)
 
