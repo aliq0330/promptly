@@ -569,6 +569,19 @@ await scenario("28. Telefon: bant + kaydırmalı sekmeler; 'Akış' gönderileri
   await head.waitFor();
   assert.match(await head.innerText(), /Sahibi Olduğum/);
   await head.locator("[data-open-chat]").waitFor();
+  // Bant üst satırı: geri oku sola, ⋮ menüsü sağ üst köşeye dayanır; menü paneli ekranın içinde açılır (sola taşıp kırpılmaz).
+  const band = await head.boundingBox();
+  const back = await head.locator("[data-hub-back]").boundingBox();
+  const menuButton = head.locator("[data-community-menu] button");
+  const menuBox = await menuButton.boundingBox();
+  assert.ok(back.x - band.x <= 20, `geri oku bandın soluna dayalı (${back.x - band.x}px)`);
+  assert.ok(band.x + band.width - (menuBox.x + menuBox.width) <= 20, "⋮ menüsü bandın sağında");
+  assert.ok(menuBox.y - band.y <= 20, "⋮ menüsü bandın üstünde");
+  await menuButton.click();
+  const panel = await page.getByRole("menu").boundingBox();
+  assert.ok(panel.x >= 0 && panel.x + panel.width <= 390, `menü paneli ekranın içinde (${panel.x}..${panel.x + panel.width})`);
+  if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT });
+  await page.keyboard.press("Escape");
   assert.deepEqual(await page.getByRole("tablist").first().getByRole("tab").allInnerTexts().then((names) => names.map((n) => n.split("\n")[0].replace(/\d+$/, "").trim())), ["Akış", "Etkinlikler", "Üyeler", "Hakkında ve kurallar", "Yönetim"]);
   await page.locator("[data-community-post]").first().waitFor();
   assert.ok(await overflowFree(page));
