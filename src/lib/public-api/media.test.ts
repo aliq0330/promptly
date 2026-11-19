@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   MEDIA_LIMITS,
   PublicApiError,
+  AttachImageError,
+  GENERATION_ID_PATTERN,
   assertFetchableImageUrl,
   attachImageToDraft,
   createMediaUploadClient,
@@ -12,6 +14,7 @@ import {
   isPublicIp,
   sniffImage,
   type AttachDeps,
+  type AttachImageResult,
   type MediaStorage,
   type MeDb,
   type MeTx,
@@ -214,8 +217,12 @@ test("attach: authenticates as a WRITE key, checks the draft BEFORE downloading,
   const commit = calls.findIndex((c) => c.sql.includes("api_me_media_commit"));
   assert.ok(begin >= 0 && commit > begin);
   const commitCall = calls[commit];
-  assert.deepEqual(commitCall.params, [PROMPT, `${USER}/${FILE_ID}.jpg`, `https://x.supabase.co/storage/v1/object/public/prompt-media/${USER}/${FILE_ID}.jpg`, 1600, 900, "A fox"]);
-  assert.deepEqual(result, { promptId: PROMPT, mediaId: "m-1", position: 0, imageCount: 1, width: 1600, height: 900, bytes: jpeg(1600, 900).length, contentType: "image/jpeg" });
+  assert.deepEqual(commitCall.params, [PROMPT, `${USER}/${FILE_ID}.jpg`, `https://x.supabase.co/storage/v1/object/public/prompt-media/${USER}/${FILE_ID}.jpg`, 1600, 900, "A fox", null]);
+  assert.deepEqual(result, {
+    promptId: PROMPT, mediaId: "m-1", position: 0, imageCount: 1, width: 1600, height: 900, bytes: jpeg(1600, 900).length, contentType: "image/jpeg",
+    generationId: null, duplicate: false,
+    pipeline: { draftCheck: "success", imageSource: "success", storageUpload: "success", imageAttachment: "success", published: false },
+  });
 });
 
 test("attach: a read-only key cannot attach; nothing is downloaded or stored", async () => {
@@ -303,7 +310,7 @@ test("createMediaUploadClient forwards the key and turns error bodies back into 
     },
   });
   assert.equal((await okClient(KEY, { promptId: PROMPT, imageUrl: "https://cdn.example.com/a.png" })).imageCount, 1);
-  assert.deepEqual(seen, { url: "https://x.supabase.co/functions/v1/media-upload", auth: `Bearer ${KEY}`, body: { prompt_id: PROMPT, image_url: "https://cdn.example.com/a.png", alt: null } });
+  assert.deepEqual(seen, { url: "https://x.supabase.co/functions/v1/media-upload", auth: `Bearer ${KEY}`, body: { prompt_id: PROMPT, image_url: "https://cdn.example.com/a.png", generation_id: null, alt: null } });
 
   const failing = createMediaUploadClient({ url: "https://x/y", fetch: async () => Response.json({ error: { code: "conflict", message: "Images can only be added to an unpublished draft." } }, { status: 409 }) });
   await assert.rejects(() => failing(KEY, { promptId: PROMPT, imageUrl: "https://a.b/c" }), (e: unknown) => e instanceof PublicApiError && e.code === "conflict");
@@ -311,4 +318,153 @@ test("createMediaUploadClient forwards the key and turns error bodies back into 
   await assert.rejects(() => down(KEY, { promptId: PROMPT, imageUrl: "https://a.b/c" }), (e: unknown) => e instanceof PublicApiError && e.code === "upstream");
   const html = createMediaUploadClient({ url: "https://x/y", fetch: async () => new Response("<html>gateway</html>", { status: 502 }) });
   await assert.rejects(() => html(KEY, { promptId: PROMPT, imageUrl: "https://a.b/c" }), (e: unknown) => e instanceof PublicApiError && e.code === "upstream");
+});
+
+// --- docs/history/438-*: doğrudan bayt kaynağı, idempotens, aşama raporu, ikili yükleme --------------------------------------------------------------------------------
+const stageOf = (e: unknown) => (e instanceof AttachImageError ? e.stage : undefined);
+
+test("attach (bytes): the caller's own bytes are validated and stored with NO download and NO network", async () => {
+  const { deps, puts, downloads, calls } = setup();
+  const bytes = webpLossless(1024, 1024);
+  const result = await attachImageToDraft(KEY, { promptId: PROMPT, imageBytes: bytes, generationId: "promptly_visual_trend_2026-11-19T10:00" }, deps);
+  assert.equal(downloads.length, 0, "nothing is fetched when the bytes are given");
+  assert.deepEqual(puts, [{ path: `${USER}/${FILE_ID}.webp`, type: "image/webp", size: bytes.length }]);
+  assert.equal(result.generationId, "promptly_visual_trend_2026-11-19T10:00");
+  assert.equal(result.duplicate, false);
+  const commit = calls.find((c) => c.sql.includes("api_me_media_commit"));
+  assert.equal(commit?.params[6], "promptly_visual_trend_2026-11-19T10:00");
+  const begin = calls.find((c) => c.sql.includes("api_me_media_begin"));
+  assert.deepEqual(begin?.params, [PROMPT, "promptly_visual_trend_2026-11-19T10:00"]);
+});
+
+test("attach (bytes): non-images, empty and oversized bytes are refused and never stored; exactly one source is required", async () => {
+  const { deps, puts } = setup();
+  await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT, imageBytes: new TextEncoder().encode("<svg/>") }, deps), (e: unknown) => e instanceof PublicApiError && e.code === "unprocessable" && stageOf(e) === "imageSource");
+  await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT, imageBytes: new Uint8Array(0) }, deps), (e: unknown) => e instanceof PublicApiError && e.code === "unprocessable");
+  await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT, imageBytes: new Uint8Array(MEDIA_LIMITS.maxBytes + 1) }, deps), (e: unknown) => e instanceof PublicApiError && e.code === "unprocessable");
+  await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT }, deps), (e: unknown) => e instanceof PublicApiError && e.code === "bad_request");
+  await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT, imageUrl: "https://cdn.example.com/a.png", imageBytes: png(10, 10) }, deps), (e: unknown) => e instanceof PublicApiError && e.code === "bad_request");
+  assert.equal(puts.length, 0);
+});
+
+test("attach (idempotency): a generation_id that is already attached returns the FIRST attachment — nothing downloaded, stored or written", async () => {
+  const existing = { mediaId: "m-first", position: 2, width: 1536, height: 1024 };
+  const { deps, puts, downloads, calls } = setup({ begin: { ok: true, userId: USER, count: 4, existing } });
+  const result = await attachImageToDraft(KEY, { promptId: PROMPT, imageUrl: "https://cdn.example.com/a.png", generationId: "job-1" }, deps);
+  assert.equal(downloads.length + puts.length, 0);
+  assert.equal(calls.filter((c) => c.sql.includes("api_me_media_commit")).length, 0, "no second row");
+  assert.deepEqual(result, {
+    promptId: PROMPT, mediaId: "m-first", position: 2, imageCount: 4, width: 1536, height: 1024, bytes: null, contentType: null, generationId: "job-1", duplicate: true,
+    pipeline: { draftCheck: "success", imageSource: "skipped", storageUpload: "skipped", imageAttachment: "success", published: false },
+  });
+});
+
+test("attach (idempotency): losing a race on the same generation_id returns the winner's attachment and deletes the file we just uploaded", async () => {
+  const { deps, removed } = setup({ commit: { ok: true, duplicate: true, mediaId: "m-winner", position: 0, count: 1, width: 640, height: 480 } });
+  const result = await attachImageToDraft(KEY, { promptId: PROMPT, imageUrl: "https://cdn.example.com/a.png", generationId: "job-2" }, deps);
+  assert.equal(result.mediaId, "m-winner");
+  assert.equal(result.duplicate, true);
+  assert.deepEqual([result.width, result.height], [640, 480]);
+  assert.equal(result.pipeline.storageUpload, "skipped");
+  assert.deepEqual(removed, [`${USER}/${FILE_ID}.png`]);
+});
+
+test("attach: a malformed generation_id is refused before any database or network work", async () => {
+  const { deps, calls, downloads } = setup();
+  for (const bad of ["has space", "-leading", "x".repeat(121), "emoji🙂", "a/b", "semi;colon"]) {
+    await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT, imageUrl: "https://cdn.example.com/a.png", generationId: bad }, deps), (e: unknown) => e instanceof PublicApiError && e.code === "bad_request", bad);
+  }
+  assert.equal(calls.length + downloads.length, 0);
+  for (const good of ["a", "visual_trend_2026-11-19T10:00", "promptly:trend.1-2_3"]) assert.ok(GENERATION_ID_PATTERN.test(good), good);
+});
+
+test("attach: every failure names the stage that broke, earlier stages succeeded and later ones are skipped; published is ALWAYS false", async () => {
+  const draft = setup({ begin: { ok: false, code: "not_draft" } });
+  await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT, imageUrl: "https://cdn.example.com/a.png" }, draft.deps), (e: unknown) => {
+    assert.ok(e instanceof AttachImageError);
+    assert.equal(e.stage, "draftCheck");
+    assert.deepEqual(e.pipeline, { draftCheck: "failed", imageSource: "skipped", storageUpload: "skipped", imageAttachment: "skipped", published: false });
+    return true;
+  });
+
+  const source = setup({ image: new TextEncoder().encode("<html/>") });
+  await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT, imageUrl: "https://cdn.example.com/a.png" }, source.deps), (e: unknown) => {
+    assert.ok(e instanceof AttachImageError);
+    assert.deepEqual(e.pipeline, { draftCheck: "success", imageSource: "failed", storageUpload: "skipped", imageAttachment: "skipped", published: false });
+    return true;
+  });
+
+  const store = setup({ putFails: true });
+  await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT, imageUrl: "https://cdn.example.com/a.png" }, store.deps), (e: unknown) => {
+    assert.ok(e instanceof AttachImageError);
+    assert.deepEqual(e.pipeline, { draftCheck: "success", imageSource: "success", storageUpload: "failed", imageAttachment: "skipped", published: false });
+    return true;
+  });
+
+  const row = setup({ commit: { ok: false, code: "too_many_images" } });
+  await assert.rejects(() => attachImageToDraft(KEY, { promptId: PROMPT, imageUrl: "https://cdn.example.com/a.png" }, row.deps), (e: unknown) => {
+    assert.ok(e instanceof AttachImageError);
+    assert.equal(e.stage, "imageAttachment");
+    assert.deepEqual(e.pipeline, { draftCheck: "success", imageSource: "success", storageUpload: "success", imageAttachment: "failed", published: false });
+    return true;
+  });
+});
+
+const postBinary = (query: string, bytes: Uint8Array, type = "image/png", headers: Record<string, string> = {}) =>
+  new Request(`https://x.supabase.co/functions/v1/media-upload${query}`, { method: "POST", headers: { authorization: `Bearer ${KEY}`, "content-type": type, ...headers }, body: bytes as BodyInit });
+
+test("media-upload handler (binary): the image bytes go straight in — no download; params in the query; stage report in the answer", async () => {
+  const { deps, puts, downloads } = setup();
+  const handler = createMediaUploadHandler({ ...deps, onError: () => undefined });
+  const ok = await handler(postBinary(`?prompt_id=${PROMPT}&generation_id=job-9&alt=A%20fox`, png(2048, 2048)));
+  assert.equal(ok.status, 200);
+  const body = (await ok.json()) as AttachImageResult;
+  assert.equal(body.generationId, "job-9");
+  assert.equal(body.pipeline.published, false);
+  assert.equal(downloads.length, 0);
+  assert.equal(puts.length, 1);
+  // application/octet-stream is accepted too (some HTTP tools cannot set image/*); the type comes from the BYTES either way.
+  assert.equal((await handler(postBinary(`?prompt_id=${PROMPT}`, jpeg(100, 100), "application/octet-stream"))).status, 200);
+  assert.equal(puts[1].type, "image/jpeg");
+});
+
+test("media-upload handler (binary): missing prompt_id, junk bytes, oversized bodies (declared or streamed) and bad stages answer clearly", async () => {
+  const { deps, puts } = setup({ begin: { ok: false, code: "not_draft" } });
+  const handler = createMediaUploadHandler({ ...deps, onError: () => undefined });
+  assert.equal((await handler(postBinary("", png(1, 1)))).status, 400, "no prompt_id");
+
+  const declared = await handler(postBinary(`?prompt_id=${PROMPT}`, png(1, 1), "image/png", { "content-length": String(MEDIA_LIMITS.maxBytes + 1) }));
+  assert.equal(declared.status, 422);
+
+  const ok = setup();
+  const okHandler = createMediaUploadHandler({ ...ok.deps, onError: () => undefined });
+  const junk = await okHandler(postBinary(`?prompt_id=${PROMPT}`, new TextEncoder().encode("GIF89a")));
+  assert.equal(junk.status, 422);
+  const junkBody = (await junk.json()) as { error: { stage: string; pipeline: { imageSource: string; storageUpload: string } } };
+  assert.equal(junkBody.error.stage, "imageSource");
+  assert.deepEqual([junkBody.error.pipeline.imageSource, junkBody.error.pipeline.storageUpload], ["failed", "skipped"]);
+  assert.equal(ok.puts.length + puts.length, 0);
+
+  const refused = await handler(postBinary(`?prompt_id=${PROMPT}`, png(10, 10)));
+  assert.equal(refused.status, 409);
+  assert.equal(((await refused.json()) as { error: { stage: string } }).error.stage, "draftCheck");
+});
+
+test("createMediaUploadClient: sends bytes as a binary POST with the params in the query, and rebuilds the stage report from the error body", async () => {
+  let seen: { url: string; type: string | null; size: number } | null = null;
+  const client = createMediaUploadClient({
+    url: "https://x.supabase.co/functions/v1/media-upload",
+    fetch: async (url, init) => {
+      seen = { url: String(url), type: new Headers(init?.headers).get("content-type"), size: (init?.body as Uint8Array).length };
+      return Response.json({ promptId: PROMPT, mediaId: "m", position: 0, imageCount: 1, width: 1, height: 1, bytes: 33, contentType: "image/png", generationId: "g1", duplicate: false, pipeline: { draftCheck: "success", imageSource: "success", storageUpload: "success", imageAttachment: "success", published: false } });
+    },
+  });
+  await client(KEY, { promptId: PROMPT, imageBytes: png(4, 4), generationId: "g1", alt: "x" });
+  assert.deepEqual(seen, { url: `https://x.supabase.co/functions/v1/media-upload?prompt_id=${PROMPT}&generation_id=g1&alt=x`, type: "application/octet-stream", size: png(4, 4).length });
+
+  const failing = createMediaUploadClient({
+    url: "https://x/y",
+    fetch: async () => Response.json({ error: { code: "unprocessable", message: "nope", stage: "imageSource", pipeline: { draftCheck: "success", imageSource: "failed", storageUpload: "skipped", imageAttachment: "skipped", published: false } } }, { status: 422 }),
+  });
+  await assert.rejects(() => failing(KEY, { promptId: PROMPT, imageUrl: "https://a.b/c" }), (e: unknown) => e instanceof AttachImageError && e.stage === "imageSource" && e.pipeline.imageSource === "failed" && e.code === "unprocessable");
 });

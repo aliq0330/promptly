@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { createMeBackend, createMemoryRateLimiter, createRestClient, PublicApiError, type MeDb, type MeTx } from "../../src/lib/public-api/index.ts";
+import { AttachImageError, createMeBackend, createMemoryRateLimiter, createRestClient, PublicApiError, type MeDb, type MeTx } from "../../src/lib/public-api/index.ts";
 import { UNTRUSTED_NOTICE } from "../src/server.ts";
 import { createRemoteHandler, REMOTE_MAX_BODY_BYTES } from "../src/remote.ts";
 
@@ -438,16 +438,20 @@ test("search_content / get_content read PUBLIC presets (no key needed) and say s
 });
 
 // --- attach_image (docs/history/333-*) -------------------------------------------------------------------------------------------------------------------
-function meHandlerWithImages(calls: { bearer: string; promptId: string; imageUrl: string; alt: string | null }[], failWith?: Error) {
+type ImageCall = { bearer: string; promptId: string; imageUrl: string; alt: string | null; generationId?: string | null };
+function meHandlerWithImages(calls: ImageCall[], failWith?: Error) {
   return createRemoteHandler({
     version: "0.0.0-test",
     getClient: () => createRestClient({ url: "https://demo.supabase.co", anonKey: "eyJ.k", fetch: fakeSupabase() }),
     me: {
       backend: createMeBackend({ db: fakeMeDb(["read", "write"], []), siteUrl: "https://aliq0330.github.io/promptly" }),
       attachImage: async (bearer, input) => {
-        calls.push({ bearer, promptId: input.promptId, imageUrl: input.imageUrl, alt: input.alt ?? null });
+        calls.push({ bearer, promptId: input.promptId, imageUrl: input.imageUrl as string, alt: input.alt ?? null, ...(input.generationId ? { generationId: input.generationId } : {}) });
         if (failWith) throw failWith;
-        return { promptId: input.promptId, mediaId: "m-1", position: 0, imageCount: 1, width: 800, height: 600, bytes: 1234, contentType: "image/png" };
+        return {
+          promptId: input.promptId, mediaId: "m-1", position: 0, imageCount: 1, width: 800, height: 600, bytes: 1234, contentType: "image/png", generationId: input.generationId ?? null, duplicate: false,
+          pipeline: { draftCheck: "success", imageSource: "success", storageUpload: "success", imageAttachment: "success", published: false },
+        };
       },
       resourceUrl: ME_URL,
       resourceMetadataUrl: META_URL,
@@ -468,7 +472,7 @@ test("attach_image exists only when the image service is wired; it is a write to
 });
 
 test("attach_image forwards the caller's key and the URL (or the client's file reference) to the image service", async () => {
-  const calls: { bearer: string; promptId: string; imageUrl: string; alt: string | null }[] = [];
+  const calls: ImageCall[] = [];
   const client = await connectMe(meHandlerWithImages(calls));
   const ok = textOf(await client.callTool({ name: "attach_image", arguments: { prompt_id: MY_ID, image_url: "https://cdn.example.com/fox.png", alt: "Fox" } }));
   assert.ok(ok.includes('"imageCount": 1'));
@@ -480,7 +484,7 @@ test("attach_image forwards the caller's key and the URL (or the client's file r
 });
 
 test("attach_image: no image given, or the service refuses → a tool error with the reason, never a crash", async () => {
-  const calls: { bearer: string; promptId: string; imageUrl: string; alt: string | null }[] = [];
+  const calls: ImageCall[] = [];
   const client = await connectMe(meHandlerWithImages(calls));
   const none = (await client.callTool({ name: "attach_image", arguments: { prompt_id: MY_ID } })) as { isError?: boolean; content: { text: string }[] };
   assert.equal(none.isError, true);
@@ -493,3 +497,31 @@ test("attach_image: no image given, or the service refuses → a tool error with
   assert.match(result.content[0].text, /conflict: Images can only be added/);
 });
 
+
+test("attach_image: generation_id reaches the image service (idempotency key) and the tool is idempotent; the result carries the stage report", async () => {
+  const calls: ImageCall[] = [];
+  const client = await connectMe(meHandlerWithImages(calls));
+  const tool = (await client.listTools()).tools.find((t) => t.name === "attach_image");
+  assert.equal(tool?.annotations?.idempotentHint, true);
+  assert.ok("generation_id" in ((tool?.inputSchema as { properties?: object }).properties ?? {}));
+  const text = textOf(await client.callTool({ name: "attach_image", arguments: { prompt_id: MY_ID, image_url: "https://cdn.example.com/fox.png", generation_id: "visual_trend_2026-11-19T10:00" } }));
+  assert.deepEqual(calls, [{ bearer: KEY, promptId: MY_ID, imageUrl: "https://cdn.example.com/fox.png", alt: null, generationId: "visual_trend_2026-11-19T10:00" }]);
+  assert.match(text, /"duplicate": false/);
+  assert.match(text, /"published": false/);
+});
+
+test("attach_image: a failure names the broken stage; an unreachable client file link explains how to continue (background runs)", async () => {
+  const broken = new AttachImageError("upstream", "image_url answered with status 403.", "imageSource");
+  const client = await connectMe(meHandlerWithImages([], broken));
+  const viaUrl = (await client.callTool({ name: "attach_image", arguments: { prompt_id: MY_ID, image_url: "https://cdn.example.com/fox.png" } })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(viaUrl.isError, true);
+  assert.match(viaUrl.content[0].text, /"failedStage":"imageSource"/);
+  assert.match(viaUrl.content[0].text, /"imageSource":"failed"/);
+  assert.match(viaUrl.content[0].text, /"storageUpload":"skipped"/);
+  assert.doesNotMatch(viaUrl.content[0].text, /persistent public https/, "a URL the caller chose is not second-guessed");
+
+  const viaFile = (await client.callTool({ name: "attach_image", arguments: { prompt_id: MY_ID, image_file: { download_url: "https://files.example.com/f/abc" } } })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(viaFile.isError, true);
+  assert.match(viaFile.content[0].text, /persistent public https location/);
+  assert.match(viaFile.content[0].text, /"failedStage":"imageSource"/);
+});

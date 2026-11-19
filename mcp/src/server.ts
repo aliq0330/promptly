@@ -39,6 +39,7 @@ import {
   PUBLIC_SKILL_COMPAT,
   PUBLIC_SKILL_LICENSES,
   PUBLIC_SKILL_SORTS,
+  AttachImageError,
   type AttachImageInput,
   type AttachImageResult,
   type MeBackend,
@@ -72,7 +73,9 @@ function ok(data: unknown): ToolResult {
 }
 
 function fail(error: unknown): ToolResult {
-  const message = error instanceof PublicApiError ? `${error.code}: ${error.message}` : `error: ${error instanceof Error ? error.message : String(error)}`;
+  let message = error instanceof PublicApiError ? `${error.code}: ${error.message}` : `error: ${error instanceof Error ? error.message : String(error)}`;
+  // attach_image: hangi aşamanın kırıldığını söyle (docs/history/438-*): draftCheck · imageSource · storageUpload · imageAttachment · published.
+  if (error instanceof AttachImageError) message += `\n${JSON.stringify({ failedStage: error.stage, pipeline: error.pipeline })}`;
   return { content: [{ type: "text", text: message }], isError: true };
 }
 
@@ -586,22 +589,41 @@ export function createPromptlyServer({ client, version, log = () => {}, onPrompt
             "Downloads ONE image from a public https URL and attaches it to one of YOUR OWN unpublished image prompts (content_type \"image\") — e.g. the picture " +
             "you just generated for it. Create the draft first with save_prompt_draft (content_type \"image\"), then call this with the returned id. PNG, JPEG or WebP, " +
             "up to 8 MB, at most 4 images per prompt. Needs the write scope. Nothing is published. " +
-            "Pass `image_url` (a public https link the server can open) or, in clients that hand over files, `image_file`. If neither works, tell the user to add the image on the site.",
+            "Pass `image_url` (a PERSISTENT public https link the server can open — a temporary or signed link must still be valid when the server fetches it) or, in clients that hand over files, `image_file`. " +
+            "Pass a `generation_id` that is unique per job (e.g. \"visual_trend_2026-11-19T10:00\"): if the same job runs again, nothing is added twice — you get the first attachment back with duplicate=true. " +
+            "The result and any error include a `pipeline` report (draftCheck, imageSource, storageUpload, imageAttachment, published=false) so you can tell which step failed. " +
+            "Background/scheduled runs often CANNOT hand over files (the client blocks the file reference): then upload the image somewhere persistent first and pass its https URL, or tell the user to add the image on the site.",
           inputSchema: {
             prompt_id: z.string().describe("Draft id (UUID) from save_prompt_draft or list_my_prompts."),
-            image_url: z.string().max(2048).optional().describe("Public https URL of the image."),
+            image_url: z.string().max(2048).optional().describe("Persistent public https URL of the image."),
             image_file: z.object({ download_url: z.string().max(2048), file_id: z.string().max(200).optional() }).optional().describe("A file reference from the client (download_url)."),
+            generation_id: z.string().max(120).optional().describe("Idempotency key, unique per generation job (letters, digits, . _ : -). Repeating the same key never attaches twice."),
             alt: z.string().max(300).optional().describe("Short description of the image."),
           },
-          annotations: writeTool,
-          // ChatGPT (Apps SDK): `image_file` istemci tarafından yüklenmiş bir dosya başvurusu (`download_url`) olarak doldurulur. Denenmedi (docs/history/333-*).
+          annotations: { ...writeTool, idempotentHint: true },
+          // ChatGPT (Apps SDK): `image_file` istemci tarafından yüklenmiş bir dosya başvurusu (`download_url`) olarak doldurulur. Arka planda (uygulama kapalı/otomasyon) istemci bunu
+          // BLOCKED_FILE_REFERENCE ile engeller ve araç hiç çağrılmaz (docs/history/438-*) — o durumda `image_url` gerekir.
           _meta: { "openai/fileParams": ["image_file"] },
         },
-        (args: { prompt_id: string; image_url?: string; image_file?: { download_url: string; file_id?: string }; alt?: string }) =>
+        (args: { prompt_id: string; image_url?: string; image_file?: { download_url: string; file_id?: string }; generation_id?: string; alt?: string }) =>
           run(async () => {
             const imageUrl = args.image_url ?? args.image_file?.download_url;
-            if (!imageUrl) throw new PublicApiError("bad_request", "Pass image_url (a public https link) or image_file.");
-            return await attachImage(me.bearer, { promptId: args.prompt_id, imageUrl, alt: args.alt ?? null });
+            if (!imageUrl) throw new AttachImageError("bad_request", "Pass image_url (a persistent public https link) or image_file.", "imageSource");
+            try {
+              return await attachImage(me.bearer, { promptId: args.prompt_id, imageUrl, generationId: args.generation_id ?? null, alt: args.alt ?? null });
+            } catch (error) {
+              // Dosya başvurusu sunucudan açılamadıysa nedenini ve çıkış yolunu söyle (kısa ömürlü/oturumlu bağlantılar sunucuya açılmaz).
+              if (!args.image_url && error instanceof AttachImageError && error.stage === "imageSource") {
+                throw new AttachImageError(
+                  error.code,
+                  `${error.message} The client's file link could not be opened by Promptly's server (temporary or private links often cannot, especially in background runs). ` +
+                    "Upload the image to a persistent public https location and pass it as image_url, or add the image on the site.",
+                  error.stage,
+                  error.pipeline,
+                );
+              }
+              throw error;
+            }
           }),
       );
     }
