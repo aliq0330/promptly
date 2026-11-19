@@ -189,6 +189,26 @@ await scenario("9. Mobil (390x800): yatay taşma yok; sabit satır metin kaydır
   assert.equal(await page.evaluate(() => !!document.elementFromPoint(20, window.innerHeight - 10)?.closest("[data-prompt-fullscreen]")), true, "layer covers the whole screen");
 }, { viewport: { width: 390, height: 800 } });
 
+await scenario("9b. Mobil: ayna katmanı ile saydam textarea AYNI yazı boyunda (textarea 16px zorlanır) ve aynı satır sayısında — seçim vurgusu metinden kaymaz (docs/history/442-*)", async ({ page }) => {
+  const long = Array.from({ length: 30 }, (_, i) => `Cümle ${i + 1} sığ alan derinliği {Ortam${i}} gerçekçi makro fotoğraf hissi bulunmasın.`).join(" ");
+  await openFullscreen(page, long);
+  const m = await page.evaluate(() => {
+    const ta = document.querySelector("[data-prompt-fullscreen] textarea");
+    const mirror = ta.previousElementSibling;
+    const cs = (el) => getComputedStyle(el);
+    return {
+      taSize: cs(ta).fontSize, mirrorSize: cs(mirror).fontSize,
+      taLine: cs(ta).lineHeight, mirrorLine: cs(mirror).lineHeight,
+      taPad: cs(ta).paddingLeft, mirrorPad: cs(mirror).paddingLeft,
+      taH: ta.scrollHeight, mirrorH: mirror.scrollHeight,
+    };
+  });
+  assert.equal(m.taSize, m.mirrorSize, "same font size in both layers");
+  assert.equal(m.taLine, m.mirrorLine);
+  assert.equal(m.taPad, m.mirrorPad);
+  assert.equal(m.taH, m.mirrorH, "both layers wrap to the same number of lines");
+}, { viewport: { width: 390, height: 800 } });
+
 await scenario("10. Klavye açılınca (görünür alan küçülür/kayar, ölçüm bayat da olsa) katman tüm ekranı kaplar: arkadaki form görünmez, içerik görünür alana oturur", async ({ page }) => {
   await openFullscreen(page);
   const insideLayer = (y) => page.evaluate((yy) => !!document.elementFromPoint(20, yy)?.closest("[data-prompt-fullscreen]"), y);
