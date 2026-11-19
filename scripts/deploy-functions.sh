@@ -17,13 +17,12 @@ cd "$(dirname "$0")/.."
 # Tek fonksiyon deploy'u canlıdaki diğer fonksiyonlara dokunmaz (kaynakları canlı sürümle karşılaştırılmadı — CLAUDE.md §9).
 TARGET="${1:-all}"
 case "$TARGET" in
-  all|analyze-image|cleanup-orphan-storage|delete-account|username-login|api|mcp|oauth|telegram|media-upload|skill-package) ;;
+  all|cleanup-orphan-storage|delete-account|username-login|api|mcp|oauth|telegram|media-upload|skill-package) ;;
   *) echo "Unknown function: $TARGET" >&2; exit 1 ;;
 esac
 want() { [ "$TARGET" = all ] || [ "$TARGET" = "$1" ]; }
 
 # JWT doğrulaması AÇIK kalanlar (supabase/config.toml ile aynı).
-want analyze-image && supabase functions deploy analyze-image --yes --project-ref "$SUPABASE_PROJECT_REF"
 want cleanup-orphan-storage && supabase functions deploy cleanup-orphan-storage --yes --project-ref "$SUPABASE_PROJECT_REF"
 want delete-account && supabase functions deploy delete-account --yes --project-ref "$SUPABASE_PROJECT_REF"
 

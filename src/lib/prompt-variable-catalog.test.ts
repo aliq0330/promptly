@@ -1,14 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { catalogFieldToVariable, uniqueVariableName } from "./prompt-variable-catalog.ts";
-import {
-  cleanVisionSuggestions,
-  resolveVariableVisionValues,
-  suggestionToVariable,
-  variablesToVisionContext,
-  type VisionVariable,
-} from "./prompt-variable-vision.ts";
-import type { GeneratorBuilderResult } from "./image-analysis-types.ts";
+
 
 const opt = (label: string, value = label.toLowerCase()) => ({ label, value });
 
@@ -76,62 +69,4 @@ test("aynı alan iki kez eklenince adlar çakışmaz", () => {
   taken.add(a.name.toLowerCase());
   const b = catalogFieldToVariable({ label: "Stil", type: "text", options: [] }, taken);
   assert.notEqual(a.name.toLowerCase(), b.name.toLowerCase());
-});
-
-const vars: VisionVariable[] = [
-  { name: "Saç_Rengi", type: "select", options: [opt("Kahverengi", "Kahverengi"), opt("Siyah", "Siyah")], config: {} },
-  { name: "Aksesuar", type: "multi_select", options: [opt("Şapka", "Şapka"), opt("Gözlük", "Gözlük"), opt("Atkı", "Atkı")], config: {} },
-  { name: "Yaş", type: "slider", options: [], config: { min: 1, max: 99, step: 1 } },
-  { name: "HDR", type: "toggle", options: [], config: { onText: "HDR", offText: "" } },
-  { name: "Ortam", type: "text", options: [], config: {} },
-];
-
-test("vision bağlamı: toggle hariç, slider number, seçenek adları gider", () => {
-  const ctx = variablesToVisionContext(vars);
-  assert.deepEqual(ctx.map((c) => c.key), ["Saç_Rengi", "Aksesuar", "Yaş", "Ortam"]);
-  assert.equal(ctx.find((c) => c.key === "Yaş")?.type, "number");
-  assert.deepEqual(ctx.find((c) => c.key === "Saç_Rengi")?.options, ["Kahverengi", "Siyah"]);
-  assert.equal(ctx.find((c) => c.key === "Ortam")?.options, undefined);
-});
-
-test("vision değerleri: gerçek seçenekle eşleşir, icat edilen düşer, sayı aralığa sıkışır, çoklu sıra korunur", () => {
-  const result: GeneratorBuilderResult = {
-    mappedValues: {
-      Saç_Rengi: "brown",
-      Aksesuar: ["Gözlük", "Şapka", "uydurma"],
-      Yaş: "250",
-      Ortam: "Sahil kenarı",
-      HDR: "true",
-      Bilinmeyen: "x",
-    },
-    suggestedFields: [],
-  };
-  const out = Object.fromEntries(resolveVariableVisionValues(vars, result).map((m) => [m.name, m]));
-  assert.equal(out["Saç_Rengi"].value, "Kahverengi");
-  assert.equal(out["Aksesuar"].value, "Şapka, Gözlük");
-  assert.equal(out["Yaş"].value, "99");
-  assert.equal(out["Ortam"].value, "Sahil kenarı");
-  assert.equal(out["HDR"], undefined);
-  assert.equal(out["Bilinmeyen"], undefined);
-  const bad = resolveVariableVisionValues(vars, { mappedValues: { Saç_Rengi: "mor" }, suggestedFields: [] });
-  assert.equal(bad.length, 0);
-});
-
-test("öneriler: mevcut değişkenle çakışan atılır, geçerli olan değişkene çevrilir", () => {
-  const result: GeneratorBuilderResult = {
-    mappedValues: {},
-    suggestedFields: [
-      { label: "Saç Rengi", type: "text" },
-      { label: "Işık", type: "select", options: ["Yumuşak", "Sert"] },
-      { label: "Arka plan rengi", type: "color" },
-    ],
-  };
-  const clean = cleanVisionSuggestions(result, vars);
-  assert.deepEqual(clean.map((c) => c.label), ["Işık", "Arka plan rengi"]);
-  const taken = new Set(vars.map((v) => v.name.toLowerCase()));
-  const light = suggestionToVariable(clean[0], taken);
-  assert.equal(light.type, "select");
-  assert.deepEqual(light.options.map((o) => o.value), ["Yumuşak", "Sert"]);
-  const bg = suggestionToVariable(clean[1], taken);
-  assert.equal(bg.type, "text");
 });

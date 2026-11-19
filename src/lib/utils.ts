@@ -326,29 +326,6 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
   }
 }
 
-/**
- * Reads a File/Blob as a bare Base64 string (the `data:image/png;base64,`
- * prefix stripped) — the one shared conversion the ortak Image Analysis
- * client (`src/lib/supabase/image-analysis.ts`) sends to the `analyze-image`
- * Edge Function, so there is only ever one implementation of this step.
- */
-export function readBlobAsBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== "string") {
-        reject(new Error("Dosya okunamadı."));
-        return;
-      }
-      const commaIndex = result.indexOf(",");
-      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
-    };
-    reader.onerror = () => reject(reader.error ?? new Error("Dosya okunamadı."));
-    reader.readAsDataURL(blob);
-  });
-}
-
 /** Okunmamış sayısı rozeti: sunucu grup sohbetinde en çok 100'e kadar sayar → 100 ve üstü "99+" (docs/history/258-*). */
 export function formatUnread(count: number): string {
   return count >= 100 ? "99+" : String(count);

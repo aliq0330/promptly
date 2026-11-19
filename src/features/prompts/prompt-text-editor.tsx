@@ -26,8 +26,6 @@ import {
 } from "@/lib/prompt-variable-types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { catalogFieldToVariable, type CatalogFieldLike } from "@/lib/prompt-variable-catalog";
-import { suggestionToVariable, type MatchedVariableValue } from "@/lib/prompt-variable-vision";
-import type { CleanSuggestedField } from "@/lib/generator-vision-mapping";
 import { PromptComposer, type ComposerHandle } from "@/features/content/prompt-composer/prompt-composer";
 import type { PickerFilter, PickerItem } from "@/features/content/prompt-composer/insert-picker";
 import type { EditorSelection } from "@/features/content/prompt-composer/prompt-doc-editor";
@@ -36,7 +34,6 @@ import { VariableEditorModal } from "./variable-editor-modal";
 import { VariableList } from "./variable-list";
 import { VariableField } from "./variable-field";
 import type { VariableFormValues } from "./variable-spec-editor";
-import { ImageHelpPanel } from "./image-help-panel";
 import { PromptFullscreenEditor } from "./prompt-fullscreen-editor";
 import { makeTempId, type DraftVariable } from "./draft-variable";
 
@@ -72,7 +69,6 @@ export function PromptTextEditor({
   rows = 5,
   placeholder,
   className,
-  visionFile,
   onOpenPresets,
   presetCount,
 }: {
@@ -84,8 +80,6 @@ export function PromptTextEditor({
   rows?: number;
   placeholder?: string;
   className?: string;
-  /** The image the author already picked in the form (feeds "Görselden yardım" without a second upload). */
-  visionFile?: File | null;
   /** Tam ekran yazma ekranının üstündeki "Hazır ayarlar" düğmesi (form Hazır ayarlar panelini açar); verilmezse düğme çizilmez. */
   onOpenPresets?: () => void;
   /** Uygulanan hazır ayar/alan sayısı (tam ekrandaki rozet). */
@@ -174,27 +168,6 @@ export function PromptTextEditor({
     });
     setCatalogRange(null);
     addDrafts(drafts, range);
-  }
-
-  function handleVisionApply({ values, suggestions }: { values: MatchedVariableValue[]; suggestions: CleanSuggestedField[] }) {
-    const byName = new Map(values.map((row) => [row.name, row.value]));
-    const updated = variables.map((variable) => (byName.has(variable.name) ? { ...variable, defaultValue: byName.get(variable.name)! } : variable));
-    // Önizlemede eski elle girilmiş değer yeni varsayılanı gölgelemesin.
-    setPreviewValues((prev) => {
-      const next = { ...prev };
-      for (const name of byName.keys()) delete next[name];
-      return next;
-    });
-    const range = cursorRange();
-    const taken = takenNames();
-    const drafts = suggestions.map((suggestion) => {
-      const draft = suggestionToVariable(suggestion, taken);
-      taken.add(draft.name.toLowerCase());
-      return draft;
-    });
-    // Tek `onVariablesChange` çağrısı: varsayılan güncellemeleri + yeni değişkenler birlikte.
-    onVariablesChange([...updated, ...drafts.map((draft) => ({ ...draft, tempId: makeTempId() }))]);
-    if (drafts.length > 0) composerRef.current?.insertTokens(drafts.map((draft) => draft.name), range);
   }
 
   /** Tam ekran: jetonun değişkenini düzenleme penceresini açar; tanımsız (yetim) jeton önce geçici bir taslakla tanımlanır. */
@@ -334,18 +307,6 @@ export function PromptTextEditor({
         onOpenCatalog={() => setCatalogRange(composerRef.current?.getPendingRange() ?? cursorRange())}
         panelExtra={variables.length > 0 ? list : undefined}
       />
-
-      {activeTab === "template" && (
-        <div className="space-y-2">
-          <ImageHelpPanel
-            promptText={value}
-            variables={variables}
-            sourceFile={visionFile}
-            onApplyPrompt={(text, mode) => onChange(mode === "replace" || !value.trim() ? text : `${value}\n\n${text}`)}
-            onApplyVariables={handleVisionApply}
-          />
-        </div>
-      )}
 
       {activeTab === "preview" && (
         <div className="space-y-3 rounded-md card-inset p-3">
