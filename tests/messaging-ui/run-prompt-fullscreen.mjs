@@ -237,6 +237,30 @@ await scenario("10. Klavye açılınca (görünür alan küçülür/kayar, ölç
   await page.waitForFunction(() => Math.round(document.querySelector("[data-testid=fullscreen-visible]").getBoundingClientRect().height) === window.innerHeight);
 }, { viewport: { width: 390, height: 800 } });
 
+await scenario("11. Katman açıkken arkadaki sayfa ve menüler GÖRÜNMEZ (iOS klavyede fixed katman kısa boyansa da form görünmez); kapanınca geri gelir (docs/history/443-*)", async ({ page }) => {
+  await openFullscreen(page);
+  const vis = () => page.evaluate(() => ({
+    main: getComputedStyle(document.querySelector("#main-content")).visibility,
+    attr: document.documentElement.hasAttribute("data-prompt-fullscreen-open"),
+    bg: (() => { const l = document.querySelector("[data-prompt-fullscreen]"); return l ? getComputedStyle(document.documentElement).backgroundColor === getComputedStyle(l).backgroundColor : null; })(),
+  }));
+  const open = await vis();
+  assert.equal(open.main, "hidden");
+  assert.equal(open.attr, true);
+  assert.equal(open.bg, true, "page background behind the layer is the layer's own colour");
+  // Katman üstünde açılan pencere (Ayar paketleri) etkilenmez.
+  await page.getByTestId("fullscreen-presets").click();
+  await page.locator("[data-extra-panel]").waitFor();
+  assert.equal(await page.locator("[data-extra-panel]").isVisible(), true);
+  await page.keyboard.press("Escape");
+  await page.locator("[data-extra-panel]").waitFor({ state: "detached" });
+  await page.getByTestId("fullscreen-done").click();
+  await layer(page).waitFor({ state: "detached" });
+  const closed = await vis();
+  assert.equal(closed.main, "visible");
+  assert.equal(closed.attr, false);
+}, { viewport: { width: 390, height: 800 } });
+
 await browser.close(); server.close();
 for (const [s, n] of results) console.log(`${s === "PASS" ? "✓" : "✗"} ${n}`);
 console.log(`${results.filter((r) => r[0] === "PASS").length}/${results.length} passed`);

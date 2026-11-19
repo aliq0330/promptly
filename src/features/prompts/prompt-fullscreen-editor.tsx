@@ -133,8 +133,14 @@ export function PromptFullscreenEditor({
 
   useEffect(() => {
     lockBodyScroll();
+    // Arkadaki sayfa/menüler görünmez olur (globals.css): iOS klavyede fixed katman kısa boyanırsa altta form görünmesin.
+    const root = document.documentElement;
+    root.setAttribute("data-prompt-fullscreen-open", "");
     editorRef.current?.setSelection(value.length, value.length);
-    return () => unlockBodyScroll();
+    return () => {
+      root.removeAttribute("data-prompt-fullscreen-open");
+      unlockBodyScroll();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız açılışta: imleç metnin sonunda, odak düzenleyicide
   }, []);
 
