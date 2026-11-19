@@ -263,7 +263,7 @@ export function HubBadge({ children, tone = "neutral" }: { children: ReactNode; 
 }
 
 /**
- * İç sayfa bandı: solda 16:9 (telefonda kare) kapak, ortada geri bağlantısı + tür etiketleri + başlık + alt bilgi, `xl`+'ta sağda, daha dar
+ * İç sayfa bandı: üstte tam genişlikli satır (solda geri oku + tür etiketleri, sağ üst köşede ⋮ `menu`), altında solda 16:9 (telefonda kare) kapak, ortada başlık + alt bilgi, `xl`+'ta sağda, daha dar
  * ekranda altta eylem satırı. `backdrop` kapağın bulanık kopyasıyla bandı boyar (verilmezse marka tonu).
  */
 export function HubDetailBand({
@@ -306,28 +306,31 @@ export function HubDetailBand({
         </div>
       )}
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 p-4 md:gap-x-5 md:p-5 xl:grid-cols-[auto_minmax(0,1fr)_auto]">
-        <div className="relative aspect-square w-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-surface shadow-card md:aspect-video md:w-32 xl:w-44" data-hub-band-art="">
-          {art}
-        </div>
-        <div className="min-w-0 space-y-1.5">
-          {(backHref || kicker) && (
+        {/* Üst satır bandın tam genişliğidir: geri oku + etiketler SOLA, ⋮ menüsü SAĞ ÜST köşeye dayanır (telefonda da; menü paneli sağa hizalı açıldığı için ekran dışına taşmaz). */}
+        {(backHref || kicker || menu) && (
+          <div className="col-span-full flex min-w-0 items-start justify-between gap-2" data-hub-band-top="">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-secondary">
               {backHref && (
-                <Link href={backHref} aria-label={backLabel} className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface/70 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-hub-back="" {...backAttrs}>
+                <Link href={backHref} aria-label={backLabel} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface/70 text-text hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-hub-back="" {...backAttrs}>
                   <ArrowLeft size={16} aria-hidden />
                 </Link>
               )}
               {kicker}
             </div>
-          )}
+            {menu && <div className="shrink-0" data-hub-band-menu="">{menu}</div>}
+          </div>
+        )}
+        <div className="relative aspect-square w-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-surface shadow-card md:aspect-video md:w-32 xl:w-44" data-hub-band-art="">
+          {art}
+        </div>
+        <div className="min-w-0 space-y-1.5">
           <div className="min-w-0 [&>h1]:break-words [&>h1]:font-display [&>h1]:text-h2 [&>h1]:font-extrabold [&>h1]:text-text md:[&>h1]:text-h1">{title}</div>
           {byline && <div className="min-w-0 text-small text-text-secondary">{byline}</div>}
           {description && <div className="line-clamp-2 min-w-0 max-w-3xl whitespace-pre-line break-words text-small text-text-secondary">{description}</div>}
         </div>
-        {(actions || menu) && (
+        {actions && (
           <div className="col-span-2 flex flex-wrap items-center gap-2 xl:col-span-1" data-hub-band-actions="">
             {actions}
-            {menu}
           </div>
         )}
       </div>
