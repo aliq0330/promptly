@@ -599,6 +599,17 @@
     padding-bottom: 0 !important;
   }
 
+  /* Prompt metni TAM EKRAN katmanı (docs/history/443-*): katman `fixed inset-0` olsa da iOS Safari klavye açılınca fixed katmanı bazen
+   * yalnız ilk boyandığı alana çizer ve altta kalan şerit arkadaki sayfayı gösterir. Katman açıkken sayfa içeriği (düzen yerinde kalır)
+   * ve menüler görünmez olur; kalan şerit katmanla aynı düz zemindir. Katmanın kendisi ve üstüne açılan pencereler `body` portalıdır → etkilenmez. */
+  html[data-prompt-fullscreen-open] {
+    background-color: var(--color-background);
+  }
+  html[data-prompt-fullscreen-open] #main-content,
+  html[data-prompt-fullscreen-open] [data-app-chrome] {
+    visibility: hidden;
+  }
+
   /* Telefonda tam ekran ayrıntı sayfası (Ekip kütüphanesi prompt ayrıntısı, docs/history/355-*): alt menü sabit düğmelerin üstünü örtmesin; üst menü de gizlenir (ayrıntı/inceleme/açık kanal kendi üst çubuğunu çizer). */
   @media (max-width: 767.98px) {
     html[data-fullscreen-detail] [data-app-nav],
