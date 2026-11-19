@@ -21,7 +21,7 @@ test("definableOrphanNames: yalnız tanımsız + değişken adına benzeyenleri,
 });
 
 test("SQL kuralı (api_me_sync_draft_variables) istemci kuralıyla aynı karakterleri dışlar", () => {
-  const sql = readFileSync(new URL("../../supabase/migrations/20261211100000_api_me_sync_draft_variables.sql", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../../supabase/migrations/20261211110000_api_me_sync_draft_variables.sql", import.meta.url), "utf8");
   const match = sql.match(/v_tok ~ '(\^\[\^\[:space:\][^']*(?:''[^']*)*\{1,40\}\$)'/);
   assert.ok(match, "definable-name regex found in the migration");
   const body = match[1].replace(/''/g, "'");

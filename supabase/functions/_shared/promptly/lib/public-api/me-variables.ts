@@ -1,6 +1,6 @@
 /**
  * MCP `save_prompt_draft` / REST için GELEN değişken tanımlarını (yapay zekâ ya da betik yazar) `import_prompts`'un okuduğu biçime çevirir
- * (docs/history/438-*). Yalnız biçim denetimi ve dönüştürme yapar; kural veritabanındadır (`import_prompts` aynı sınırları yeniden denetler).
+ * (docs/history/439-*). Yalnız biçim denetimi ve dönüştürme yapar; kural veritabanındadır (`import_prompts` aynı sınırları yeniden denetler).
  *
  * Amaç: skill/araç "şu metindeki `{city}`'nin türü, açıklaması, varsayılanı (= örnek görselde kullanılan değer) ve örnek değerleri şunlar" diyebilsin;
  * yanlış tanımlar (varsayılanı seçeneklerde olmayan seçim, bozuk aralık) sessizce başka değere dönmez, AÇIK hata verir — yoksa prompt sayfasındaki

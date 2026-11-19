@@ -319,7 +319,7 @@ export async function importMyPrompts(tx: MeTx, bodyText: string, dryRun: boolea
   if (parsed.fatal) throw new PublicApiError("bad_request", `Body is not a valid Promptly prompts file (${parsed.fatal}).`);
   const fills: VariableFillReport[] = [];
   const items: ExchangePrompt[] = parsed.items.map((item) => {
-    // Metinde `{ad}` geçip tanımı olmayan jetonlar boş metin değişkeni olur (docs/history/438-*): yoksa prompt sayfasında doldurma alanı çıkmaz.
+    // Metinde `{ad}` geçip tanımı olmayan jetonlar boş metin değişkeni olur (docs/history/439-*): yoksa prompt sayfasında doldurma alanı çıkmaz.
     const filled = withDefinedVariables(item);
     fills.push(filled.report);
     const payload = { ...withSourceNote(filled.item) };

@@ -112,7 +112,7 @@ export interface VariableDraft extends Partial<PromptVariableSpec> {
  * prompt editor, whether or not the variable list actually changed.
  */
 export async function replaceVariablesForPrompt(promptId: string, drafts: VariableDraft[]): Promise<PromptVariable[]> {
-  // Eski satırları sil-sonra-ekle arasında kaybetmemek için önce oku: ekleme başarısız olursa geri yüklenir (docs/history/438-*).
+  // Eski satırları sil-sonra-ekle arasında kaybetmemek için önce oku: ekleme başarısız olursa geri yüklenir (docs/history/439-*).
   // Okuma başarısızsa hiçbir şey silinmez.
   const { data: previousRows, error: readError } = await supabase.from("prompt_variables").select("*").eq("prompt_id", promptId);
   if (readError) throw new Error(readError.message);

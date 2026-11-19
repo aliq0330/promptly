@@ -1,4 +1,4 @@
-# 438 — Prompt değişkenleri: metindeki `{jeton` kendiliğinden değişken olur (MCP/API/editör)
+# 439 — Prompt değişkenleri: metindeki `{jeton` kendiliğinden değişken olur (MCP/API/editör)
 
 **Durum:** uygulandı. Birim testleri (`prompt-variables-auto`, `exchange/variable-fill`, `public-api/me-variables`, `me`, `me-content`, `mcp/test/remote`), yerel PostgreSQL'de SQL testi (`supabase/tests/api-me-sync-draft-variables.sql`, 15 denetim) ve ağ taklitli Playwright (`run-variable-define` 6/6) ile sınandı.
 **Gerçek Supabase'e / gerçek Edge Function'a / gerçek ChatGPT-Claude bağlantısına KARŞI DENENMEDİ.** Migration canlıya CI ile (deploy.yml) uygulanır; **Edge Function'lar `api` ve `mcp` elle deploy edilir** (aşağıda). İngilizce karşılıklar eklendi (`variable.defineAll`, `variable.suggestions*`, `variable.savePartialFailed`).
@@ -28,7 +28,7 @@ Yazarın 2–4 örneği `prompt_variables.config.suggestions` (jsonb, ≤6 öğe
 - **Değişken kaydı artık sessiz değil** (`create-prompt-form.tsx` `saveVariables`): düzenleme modunda sayfada hata gösterilir; yeni prompt oluşturulduysa `/create?edit=<id>&varsFailed=1` ile uyarıyla düzenleme ekranına gidilir (`outputFailed` kalıbı). `replaceVariablesForPrompt` silmeden önce eski satırları okur, ekleme başarısız olursa geri yükler.
 
 ## Deploy (elle)
-- Migration `20261211100000_api_me_sync_draft_variables.sql`: CI (`deploy.yml`) uygular; yalnız yeni fonksiyon ekler. `scripts/smoke-test.mjs` anon'a kapalı olduğunu denetler.
+- Migration `20261211110000_api_me_sync_draft_variables.sql`: CI (`deploy.yml`) uygular; yalnız yeni fonksiyon ekler. `scripts/smoke-test.mjs` anon'a kapalı olduğunu denetler.
 - Edge Function'lar CI ile deploy EDİLMEZ: **`api`** ve **`mcp`** yeniden deploy edilmeli (`supabase functions deploy api mcp` ya da "Deploy Edge Functions" workflow'u). Kopyalar `node scripts/sync-function-shared.mjs` ile güncellendi. Deploy EDİLMEZSE: site ve migration çalışır, ama ChatGPT/Claude bağlantısı eski davranışta kalır (değişken oluşturmaz).
 - `mcp/` npm paketi (`promptly-mcp`) yerel kullanım içindir; yayınlanacaksa sürüm artırılır.
 

@@ -6,6 +6,11 @@
  * baytlardan BİÇİMİ ve BOYUTU okunur (istemcinin söylediği tür/uzantıya güvenilmez); (3) `prompt-media/{kullanıcı}/{uuid}.{uzantı}` yoluna yazılır;
  * (4) `api_me_media_commit` — dosya orada mı + satırı yazar. Commit başarısızsa yüklenen dosya silinmeye çalışılır (yoksa yetim süpürücü 1 saatte alır).
  *
+ * İKİ KAYNAK (docs/history/438-*): `imageUrl` (herkese açık https adresi; SSRF korumalı indirme) YA DA `imageBytes` (çağıran baytları doğrudan verir — otomasyon betiği/arka plan işi;
+ * indirme yok). Hangisi olursa olsun baytlar aynı doğrulamadan (`sniffImage`) ve aynı yoldan geçer. İKİ kaynak aynı anda ya da hiçbiri verilemez.
+ * İDEMPOTENS: isteğe bağlı `generationId` (örn. "promptly_visual_trend_2026-11-19T10:00") aynı iş ikinci kez koşarsa HİÇBİR şey indirilmez/yazılmaz, ilk ek döner (`duplicate`).
+ * AŞAMA RAPORU: sonuç ve hata `pipeline` taşır (draftCheck · imageSource · storageUpload · imageAttachment · published) — hangi adımın bozulduğu açıkça görünür.
+ *
  * SINIRLAR (bilerek): sunucuda yeniden boyutlandırma/yeniden kodlama YOK (Deno'da görüntü kütüphanesi yok) — büyük dosya küçültülmez, reddedilir; baskın
  * renk ve bulanık önizleme hesaplanmaz (moderatör aracı doldurur). DNS yeniden bağlama (TOCTOU) tam kapatılamaz: ad çözülüp denetlenir ama `fetch` adı
  * yeniden çözer — bu yüzden ek olarak yalnız https/443, yönlendirmeler tek tek denetlenir ve gövde boyutu sınırlıdır.
@@ -246,8 +251,46 @@ export interface MediaStorage {
 
 export interface AttachImageInput {
   promptId: string;
-  imageUrl: string;
+  /** Herkese açık https adresi (SSRF korumalı indirilir). `imageBytes` ile BİRLİKTE verilemez. */
+  imageUrl?: string | null;
+  /** Doğrudan bayt (PNG/JPEG/WebP, ≤ 8 MB): arka plan işi görseli kendisi taşıyorsa. `imageUrl` ile birlikte verilemez. */
+  imageBytes?: Uint8Array | null;
+  /** İdempotens anahtarı: aynı (taslak, generationId) ikinci kez eklenmez. 1–120 karakter: harf/rakam ile başlar; harf, rakam, `. _ : -`. */
+  generationId?: string | null;
   alt?: string | null;
+}
+
+export type PipelineStatus = "success" | "failed" | "skipped";
+
+/** Hattın durumu. `published` HEP false'tur: bu yüzey hiçbir şeyi yayınlayamaz. Görsel ÜRETİMİ ve taslak OLUŞTURMA başka araçlarda (save_prompt_draft) yapılır. */
+export interface AttachPipeline {
+  draftCheck: PipelineStatus;
+  imageSource: PipelineStatus;
+  storageUpload: PipelineStatus;
+  imageAttachment: PipelineStatus;
+  published: false;
+}
+
+export type AttachStage = "draftCheck" | "imageSource" | "storageUpload" | "imageAttachment";
+const STAGES: AttachStage[] = ["draftCheck", "imageSource", "storageUpload", "imageAttachment"];
+
+/** Hangi aşamada kırıldığını taşıyan `PublicApiError`; kodu/iletisi aynıdır (var olan `instanceof PublicApiError` denetimleri çalışmaya devam eder). */
+export class AttachImageError extends PublicApiError {
+  stage: AttachStage;
+  pipeline: AttachPipeline;
+  constructor(code: ConstructorParameters<typeof PublicApiError>[0], message: string, stage: AttachStage, pipeline?: AttachPipeline) {
+    super(code, message);
+    this.name = "AttachImageError";
+    this.stage = stage;
+    this.pipeline = pipeline ?? pipelineFailedAt(stage);
+  }
+}
+
+/** `stage` aşamasında kırılmış bir hattın raporu: öncekiler başarılı, o başarısız, sonrakiler atlandı. */
+export function pipelineFailedAt(stage: AttachStage): AttachPipeline {
+  const at = STAGES.indexOf(stage);
+  const status = (name: AttachStage): PipelineStatus => (STAGES.indexOf(name) < at ? "success" : name === stage ? "failed" : "skipped");
+  return { draftCheck: status("draftCheck"), imageSource: status("imageSource"), storageUpload: status("storageUpload"), imageAttachment: status("imageAttachment"), published: false };
 }
 
 export interface AttachImageResult {
@@ -257,9 +300,17 @@ export interface AttachImageResult {
   imageCount: number;
   width: number;
   height: number;
-  bytes: number;
-  contentType: ImageType;
+  /** Yeni yüklenen dosyanın boyutu; `duplicate` ise null (hiçbir şey yüklenmedi). */
+  bytes: number | null;
+  contentType: ImageType | null;
+  generationId: string | null;
+  /** true = bu `generationId` zaten eklenmişti: hiçbir şey indirilmedi/yazılmadı, dönen ek ilk eklenendir. */
+  duplicate: boolean;
+  pipeline: AttachPipeline;
 }
+
+export const GENERATION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$/;
+const GENERATION_ID_MESSAGE = "generation_id must be 1–120 characters: start with a letter or digit, then letters, digits and . _ : -";
 
 const DB_CODES: Record<string, { code: ConstructorParameters<typeof PublicApiError>[0]; message: string }> = {
   not_found: { code: "not_found", message: "No such draft in your account." },
@@ -272,6 +323,7 @@ const DB_CODES: Record<string, { code: ConstructorParameters<typeof PublicApiErr
   invalid_url: { code: "upstream", message: "Could not store the image." },
   invalid_size: { code: "unprocessable", message: "The image dimensions are not supported." },
   invalid_alt: { code: "bad_request", message: "alt is too long (max 300 characters)." },
+  invalid_generation_id: { code: "bad_request", message: GENERATION_ID_MESSAGE },
 };
 
 function dbFailure(report: unknown): PublicApiError | null {
@@ -291,47 +343,111 @@ export interface AttachDeps extends ImageSourceDeps {
   newId?: () => string;
 }
 
+const GENERATION_ID_BAD = new PublicApiError("bad_request", GENERATION_ID_MESSAGE);
+
+/** Hatayı hangi aşamada olduğuyla işaretler (zaten işaretliyse dokunmaz). */
+function atStage(stage: AttachStage, error: unknown): unknown {
+  if (error instanceof AttachImageError) return error;
+  if (error instanceof PublicApiError) return new AttachImageError(error.code, error.message, stage);
+  return error;
+}
+
 export async function attachImageToDraft(bearer: string, input: AttachImageInput, deps: AttachDeps): Promise<AttachImageResult> {
-  if (!isUuid(input.promptId)) throw new PublicApiError("bad_request", "prompt_id must be a UUID.");
-  assertFetchableImageUrl(input.imageUrl); // ağa çıkmadan ucuz ön kontrol
+  if (!isUuid(input.promptId)) throw new AttachImageError("bad_request", "prompt_id must be a UUID.", "draftCheck");
+  const generationId = input.generationId?.trim() ? input.generationId.trim() : null;
+  if (generationId !== null && !GENERATION_ID_PATTERN.test(generationId)) throw new AttachImageError(GENERATION_ID_BAD.code, GENERATION_ID_BAD.message, "draftCheck");
+  const hasUrl = typeof input.imageUrl === "string" && input.imageUrl.length > 0;
+  const hasBytes = input.imageBytes instanceof Uint8Array;
+  if (hasUrl === hasBytes) throw new AttachImageError("bad_request", "Send exactly one image source: an https image_url OR the image bytes.", "imageSource");
+  try {
+    if (hasUrl) assertFetchableImageUrl(input.imageUrl as string); // ağa çıkmadan ucuz ön kontrol
+    else if ((input.imageBytes as Uint8Array).length === 0 || (input.imageBytes as Uint8Array).length > MEDIA_LIMITS.maxBytes) {
+      throw new PublicApiError("unprocessable", `The image must be between 1 byte and ${Math.round(MEDIA_LIMITS.maxBytes / 1048576)} MB.`);
+    }
+  } catch (error) {
+    throw atStage("imageSource", error);
+  }
   const alt = input.alt?.trim() ? input.alt.trim().slice(0, 300) : null;
 
-  // 1) Yetki/sahiplik/sınır — dosya indirilmeden önce (başkasının taslağına bant harcatmayız).
-  const begun = await deps.backend.withUser(bearer, "write", async (tx: MeTx) => {
-    const [row] = await tx("select public.api_me_media_begin($1::uuid) as r", [input.promptId]);
-    const failure = dbFailure(row?.r);
-    if (failure) throw failure;
-    return row?.r as { userId: string };
-  });
+  // 1) Yetki/sahiplik/sınır — dosya indirilmeden önce (başkasının taslağına bant harcatmayız). Aynı iş daha önce eklendiyse mevcut ek döner.
+  let begun: { userId: string; existing?: { mediaId: string; position: number; width: number; height: number }; count: number };
+  try {
+    begun = await deps.backend.withUser(bearer, "write", async (tx: MeTx) => {
+      const [row] = await tx("select public.api_me_media_begin($1::uuid, $2::text) as r", [input.promptId, generationId]);
+      const failure = dbFailure(row?.r);
+      if (failure) throw failure;
+      return row?.r as typeof begun;
+    });
+  } catch (error) {
+    throw atStage("draftCheck", error);
+  }
   const userId = String(begun.userId);
+  if (begun.existing) {
+    return {
+      promptId: input.promptId,
+      mediaId: String(begun.existing.mediaId),
+      position: Number(begun.existing.position),
+      imageCount: Number(begun.count),
+      width: Number(begun.existing.width),
+      height: Number(begun.existing.height),
+      bytes: null,
+      contentType: null,
+      generationId,
+      duplicate: true,
+      pipeline: { draftCheck: "success", imageSource: "skipped", storageUpload: "skipped", imageAttachment: "success", published: false },
+    };
+  }
 
-  // 2) İndir + doğrula (ağ; veritabanı işlemi açık DEĞİL).
-  const bytes = await downloadImage(input.imageUrl, deps);
-  const image = sniffImage(bytes);
-  if (!image) throw new PublicApiError("unprocessable", "image_url is not a PNG, JPEG or WebP image (or its size is not supported).");
+  // 2) Kaynak: indir (ağ; veritabanı işlemi açık DEĞİL) ya da verilen baytlar. İkisi de baytlardan doğrulanır.
+  let bytes: Uint8Array;
+  let image: SniffedImage | null;
+  try {
+    bytes = hasBytes ? (input.imageBytes as Uint8Array) : await downloadImage(input.imageUrl as string, deps);
+    image = sniffImage(bytes);
+    if (!image) throw new PublicApiError("unprocessable", "The image is not a PNG, JPEG or WebP image (or its size is not supported).");
+  } catch (error) {
+    throw atStage("imageSource", error);
+  }
 
   // 3) Yaz.
   const path = `${userId}/${(deps.newId ?? newId)()}.${image.ext}`;
   try {
     await deps.storage.put(path, bytes, image.type);
   } catch {
-    throw new PublicApiError("upstream", "Could not store the image.");
+    throw new AttachImageError("upstream", "Could not store the image.", "storageUpload");
   }
 
   // 4) Satırı yaz; olmazsa dosyayı geri al.
   try {
-    return await deps.backend.withUser(bearer, "write", async (tx: MeTx) => {
-      const [row] = await tx("select public.api_me_media_commit($1::uuid, $2, $3, $4, $5, $6) as r", [
+    const result = await deps.backend.withUser(bearer, "write", async (tx: MeTx) => {
+      const [row] = await tx("select public.api_me_media_commit($1::uuid, $2, $3, $4, $5, $6, $7::text) as r", [
         input.promptId,
         path,
         deps.storage.publicUrl(path),
         image.width,
         image.height,
         alt,
+        generationId,
       ]);
       const failure = dbFailure(row?.r);
       if (failure) throw failure;
-      const r = row?.r as { mediaId: string; position: number; count: number };
+      const r = row?.r as { mediaId: string; position: number; count: number; duplicate?: boolean; width?: number; height?: number };
+      if (r.duplicate === true) {
+        // Yarışı kaybettik (aynı iş bu arada başka bir istekle eklendi): mevcut ek döner, yüklediğimiz dosya sahipsiz kalır → aşağıda silinir.
+        return {
+          promptId: input.promptId,
+          mediaId: String(r.mediaId),
+          position: Number(r.position),
+          imageCount: Number(r.count),
+          width: Number(r.width ?? image.width),
+          height: Number(r.height ?? image.height),
+          bytes: null,
+          contentType: null,
+          generationId,
+          duplicate: true,
+          pipeline: { draftCheck: "success", imageSource: "success", storageUpload: "skipped", imageAttachment: "success", published: false },
+        } satisfies AttachImageResult;
+      }
       return {
         promptId: input.promptId,
         mediaId: String(r.mediaId),
@@ -341,11 +457,16 @@ export async function attachImageToDraft(bearer: string, input: AttachImageInput
         height: image.height,
         bytes: bytes.length,
         contentType: image.type,
-      };
+        generationId,
+        duplicate: false,
+        pipeline: { draftCheck: "success", imageSource: "success", storageUpload: "success", imageAttachment: "success", published: false },
+      } satisfies AttachImageResult;
     });
+    if (result.duplicate) await deps.storage.remove(path).catch(() => undefined);
+    return result;
   } catch (error) {
     await deps.storage.remove(path).catch(() => undefined);
-    throw error;
+    throw atStage("imageAttachment", error);
   }
 }
 
@@ -364,33 +485,84 @@ export interface MediaUploadHandlerOptions extends AttachDeps {
   onError?: (error: unknown) => void;
 }
 
-/** `POST` gövdesi `{ prompt_id, image_url, alt? }`; kimlik `Authorization: Bearer pmt_…`. Hata gövdesi `{ error: { code, message } }`. */
+/** İstek gövdesini boyut sınırıyla okur (Content-Length'e ve akışa bakar); aşarsa fırlatır. */
+async function readRequestCapped(request: Request, maxBytes: number): Promise<Uint8Array> {
+  const tooBig = () => new PublicApiError("unprocessable", `The image is larger than ${Math.round(maxBytes / 1048576)} MB.`);
+  const declared = Number(request.headers.get("content-length") ?? "");
+  if (Number.isFinite(declared) && declared > maxBytes) throw tooBig();
+  if (!request.body) return new Uint8Array(0);
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw tooBig();
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return out;
+}
+
+const BINARY_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "application/octet-stream"]);
+
+function errorReply(error: PublicApiError): Response {
+  const stage = error instanceof AttachImageError ? { stage: error.stage, pipeline: error.pipeline } : {};
+  return reply({ error: { code: error.code, message: error.message, ...stage } }, STATUS[error.code]);
+}
+
+/**
+ * `POST` + `Authorization: Bearer pmt_…`. İki gövde biçimi:
+ *  • JSON `{ prompt_id, image_url, generation_id?, alt? }` — görsel herkese açık bir https adresinde (sunucu indirir).
+ *  • İKİLİ: `Content-Type: image/png|image/jpeg|image/webp` (ya da application/octet-stream) + gövde = görselin kendisi (≤ 8 MB);
+ *    parametreler adreste: `?prompt_id=…&generation_id=…&alt=…`. Arka plan işi/otomasyon betiği görseli kendisi taşır; indirme yoktur.
+ * Hata gövdesi `{ error: { code, message, stage?, pipeline? } }`.
+ */
 export function createMediaUploadHandler(options: MediaUploadHandlerOptions): (request: Request) => Promise<Response> {
   return async (request) => {
     if (request.method !== "POST") return reply({ error: { code: "method_not_allowed", message: "Use POST." } }, 405);
     const bearer = bearerOf(request.headers);
     if (!bearer || !looksLikeCredential(bearer)) return reply({ error: { code: "unauthorized", message: "Send a Promptly API key as `Authorization: Bearer …`." } }, 401);
-    let text: string;
+    const contentType = (request.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+    let input: AttachImageInput;
     try {
-      text = await request.text();
-    } catch {
-      return reply({ error: { code: "bad_request", message: "Could not read the request body." } }, 400);
-    }
-    if (new TextEncoder().encode(text).length > MAX_REQUEST_BYTES) return reply({ error: { code: "bad_request", message: "Request body is too large." } }, 400);
-    let body: { prompt_id?: unknown; image_url?: unknown; alt?: unknown };
-    try {
-      body = JSON.parse(text) as typeof body;
-    } catch {
-      return reply({ error: { code: "bad_request", message: "Body must be JSON: { prompt_id, image_url, alt? }." } }, 400);
-    }
-    if (typeof body?.prompt_id !== "string" || typeof body?.image_url !== "string" || (body.alt !== undefined && body.alt !== null && typeof body.alt !== "string")) {
-      return reply({ error: { code: "bad_request", message: "Body must be JSON: { prompt_id, image_url, alt? }." } }, 400);
-    }
-    try {
-      const result = await attachImageToDraft(bearer, { promptId: body.prompt_id, imageUrl: body.image_url, alt: (body.alt as string | null | undefined) ?? null }, options);
-      return reply(result, 200);
+      if (BINARY_TYPES.has(contentType)) {
+        const query = new URL(request.url).searchParams;
+        const promptId = query.get("prompt_id");
+        if (!promptId) return reply({ error: { code: "bad_request", message: "Binary upload needs ?prompt_id=… (optionally &generation_id=…&alt=…)." } }, 400);
+        input = { promptId, imageBytes: await readRequestCapped(request, MEDIA_LIMITS.maxBytes), generationId: query.get("generation_id"), alt: query.get("alt") };
+      } else {
+        let text: string;
+        try {
+          text = await request.text();
+        } catch {
+          return reply({ error: { code: "bad_request", message: "Could not read the request body." } }, 400);
+        }
+        if (new TextEncoder().encode(text).length > MAX_REQUEST_BYTES) return reply({ error: { code: "bad_request", message: "Request body is too large." } }, 400);
+        let body: { prompt_id?: unknown; image_url?: unknown; alt?: unknown; generation_id?: unknown };
+        try {
+          body = JSON.parse(text) as typeof body;
+        } catch {
+          return reply({ error: { code: "bad_request", message: "Body must be JSON: { prompt_id, image_url, generation_id?, alt? } — or send the image bytes with an image/* content type." } }, 400);
+        }
+        const optionalString = (v: unknown) => v === undefined || v === null || typeof v === "string";
+        if (typeof body?.prompt_id !== "string" || typeof body?.image_url !== "string" || !optionalString(body.alt) || !optionalString(body.generation_id)) {
+          return reply({ error: { code: "bad_request", message: "Body must be JSON: { prompt_id, image_url, generation_id?, alt? } — or send the image bytes with an image/* content type." } }, 400);
+        }
+        input = { promptId: body.prompt_id, imageUrl: body.image_url, generationId: (body.generation_id as string | null | undefined) ?? null, alt: (body.alt as string | null | undefined) ?? null };
+      }
+      return reply(await attachImageToDraft(bearer, input, options), 200);
     } catch (error) {
-      if (error instanceof PublicApiError) return reply({ error: { code: error.code, message: error.message } }, STATUS[error.code]);
+      if (error instanceof PublicApiError) return errorReply(error);
       options.onError?.(error);
       return reply({ error: { code: "upstream", message: "Could not attach the image." } }, 502);
     }
@@ -401,21 +573,35 @@ export function createMediaUploadHandler(options: MediaUploadHandlerOptions): (r
 export function createMediaUploadClient(options: { url: string; fetch?: typeof fetch; timeoutMs?: number }): (bearer: string, input: AttachImageInput) => Promise<AttachImageResult> {
   const doFetch = options.fetch ?? fetch;
   return async (bearer, input) => {
-    let response: Response;
-    try {
-      response = await doFetch(options.url, {
+    const binary = input.imageBytes instanceof Uint8Array;
+    let url = options.url;
+    let init: RequestInit;
+    if (binary) {
+      const query = new URLSearchParams({ prompt_id: input.promptId });
+      if (input.generationId) query.set("generation_id", input.generationId);
+      if (input.alt) query.set("alt", input.alt);
+      url = `${options.url}${options.url.includes("?") ? "&" : "?"}${query}`;
+      init = { method: "POST", headers: { "Content-Type": "application/octet-stream", Authorization: `Bearer ${bearer}` }, body: input.imageBytes as Uint8Array as BodyInit };
+    } else {
+      init = {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${bearer}` },
-        body: JSON.stringify({ prompt_id: input.promptId, image_url: input.imageUrl, alt: input.alt ?? null }),
-        signal: AbortSignal.timeout(options.timeoutMs ?? 45_000),
-      });
-    } catch {
-      throw new PublicApiError("upstream", "The image service did not answer.");
+        body: JSON.stringify({ prompt_id: input.promptId, image_url: input.imageUrl, generation_id: input.generationId ?? null, alt: input.alt ?? null }),
+      };
     }
-    const payload = (await response.json().catch(() => null)) as (AttachImageResult & { error?: { code?: string; message?: string } }) | null;
+    let response: Response;
+    try {
+      response = await doFetch(url, { ...init, signal: AbortSignal.timeout(options.timeoutMs ?? 45_000) });
+    } catch {
+      throw new AttachImageError("upstream", "The image service did not answer.", "storageUpload");
+    }
+    const payload = (await response.json().catch(() => null)) as (AttachImageResult & { error?: { code?: string; message?: string; stage?: AttachStage; pipeline?: AttachPipeline } }) | null;
     if (!response.ok || !payload || payload.error) {
       const code = payload?.error?.code as PublicApiError["code"] | undefined;
-      throw new PublicApiError(code && code in STATUS ? code : "upstream", payload?.error?.message ?? "Could not attach the image.");
+      const message = payload?.error?.message ?? "Could not attach the image.";
+      const stage = payload?.error?.stage;
+      if (stage && STAGES.includes(stage)) throw new AttachImageError(code && code in STATUS ? code : "upstream", message, stage, payload?.error?.pipeline);
+      throw new PublicApiError(code && code in STATUS ? code : "upstream", message);
     }
     return payload;
   };

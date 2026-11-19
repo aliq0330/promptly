@@ -444,7 +444,7 @@ export function CreatePromptForm() {
 
   /**
    * Değişken satırlarını yazar. Prompt bu noktada zaten kaydedilmiştir, o yüzden hata "kayıt başarısız" sayılmaz ama SESSİZCE da yutulmaz:
-   * `false` dönerse çağıran kullanıcıya görünür bir mesaj gösterir ya da düzenleme ekranına `varsFailed` ile yönlendirir (docs/history/438-*).
+   * `false` dönerse çağıran kullanıcıya görünür bir mesaj gösterir ya da düzenleme ekranına `varsFailed` ile yönlendirir (docs/history/439-*).
    */
   async function saveVariables(promptId: string, drafts: Parameters<typeof replaceVariablesForPrompt>[1]): Promise<boolean> {
     try {

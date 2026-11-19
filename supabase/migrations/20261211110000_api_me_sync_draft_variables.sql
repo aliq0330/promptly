@@ -1,4 +1,4 @@
--- Taslak promptun DEĞİŞKENLERİNİ kişisel API'den eşitler (docs/history/438-*).
+-- Taslak promptun DEĞİŞKENLERİNİ kişisel API'den eşitler (docs/history/439-*).
 --
 -- Sorun: `update_my_draft` yalnız prompt sütunlarını yazıyordu; `promptText` değişince yeni `{jeton}`lar için `prompt_variables` satırı
 -- oluşmuyor, tanımlar da değiştirilemiyordu. Metinde geçip tanımı olmayan jeton, prompt sayfasında doldurma alanı çıkarmıyor ve kopyalanan metinde

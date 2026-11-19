@@ -1,4 +1,4 @@
--- Kişisel API: taslak promptun değişkenlerini eşitleme (20261211100000_api_me_sync_draft_variables.sql; docs/history/438-*): DB testi.
+-- Kişisel API: taslak promptun değişkenlerini eşitleme (20261211110000_api_me_sync_draft_variables.sql; docs/history/439-*): DB testi.
 -- Çalıştırma: supabase/tests/run-local.sh supabase/tests/api-me-sync-draft-variables.sql  ("FAILED=0" beklenir).
 -- me = anahtar sahibi; ot = başkası. Edge Function'ın yaptığı gibi: rol + JWT iddiaları kurulup RPC çağrılır.
 \pset pager off

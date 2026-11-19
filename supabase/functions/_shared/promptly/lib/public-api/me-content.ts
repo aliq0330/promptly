@@ -195,7 +195,7 @@ export interface MeUpdateResult {
   updatedAt: string;
   url: string;
   editUrl: string;
-  /** Yalnız prompt: değişkenler eşitlendiyse sonuçları (docs/history/438-*). */
+  /** Yalnız prompt: değişkenler eşitlendiyse sonuçları (docs/history/439-*). */
   variables?: { defined: string[]; autoDefined: string[]; skipped: string[] };
 }
 

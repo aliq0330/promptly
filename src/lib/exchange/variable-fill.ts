@@ -1,5 +1,5 @@
 /**
- * Metinde `{ad}` olarak geçip tanımı olmayan jetonlar için değişken satırı üretir (docs/history/438-*).
+ * Metinde `{ad}` olarak geçip tanımı olmayan jetonlar için değişken satırı üretir (docs/history/439-*).
  *
  * Neden var: içeri aktarma yolları (MCP, Telegram, açık API, uzantı, dosya) promptu `variables: []` ile yazınca metindeki jetonlar
  * "tanımsız" kalıyordu — prompt sayfasında doldurma alanı çıkmıyor, kopyalanan metinde süslü parantez duruyordu. Bu yardımcı TEK

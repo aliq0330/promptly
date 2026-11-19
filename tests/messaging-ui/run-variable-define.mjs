@@ -1,4 +1,4 @@
-// Prompt oluşturma ekranında değişkenler (docs/history/438-*): metinde `{ad}` geçip tanımı olmayan jetonlar için tek dokunuşluk "Tümünü tanımla",
+// Prompt oluşturma ekranında değişkenler (docs/history/439-*): metinde `{ad}` geçip tanımı olmayan jetonlar için tek dokunuşluk "Tümünü tanımla",
 // JSON/kod parantezlerinin değişken sayılmaması, metin değişkeninde "Örnek değerler" (okuyucuya dokununca dolduran çipler, serbest yazma sürer),
 // etiketlerde alt çizginin boşluk görünmesi, İngilizce ve mobil taşma. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ.
 // SHOTS=<klasör> verilirse ana adımların ekran görüntüsünü oraya yazar.
