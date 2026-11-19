@@ -638,8 +638,13 @@ await scenario("38. Telefon (Merkez): bant (geri · im · ad · Davet et · ⋯)
   await band.waitFor();
   await band.locator("[data-team-back-phone]").waitFor();
   await band.locator("[data-team-invite-header]").waitFor();
+  const bandBox = await band.boundingBox();
+  const menuBox = await band.locator("[data-team-menu]").boundingBox();
+  assert.ok(bandBox.x + bandBox.width - (menuBox.x + menuBox.width) <= 20 && menuBox.y - bandBox.y <= 20, "⋯ menüsü bandın sağ üst köşesinde");
   await band.locator("[data-team-menu]").click();
   await band.locator("[data-team-menu-list]").waitFor();
+  const listBox = await band.locator("[data-team-menu-list]").boundingBox();
+  assert.ok(listBox.x >= 0 && listBox.x + listBox.width <= 390, "menü paneli ekranın içinde");
   await page.keyboard.press("Escape");
   const tabs = page.getByTestId("team-tabs");
   for (const key of ["projects", "approvals", "chat", "members", "panel", "admin"]) await tabs.locator(`[data-team-tab-link=${key}]`).waitFor({ state: "attached" });

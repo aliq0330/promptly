@@ -8,3 +8,5 @@
 Gerçek cihazda denenmedi (ağ taklitli Chromium, 390 px).
 
 İngilizce karşılık: yeni metin yok.
+
+**Ek (Ekip bandı):** Ekip bandının ⋯ menüsü de `actions`'tan çıkarılıp `menu` prop'una taşındı (`features/teams/team-band.tsx`); artık o da sağ üst köşede. Davet/yüz yığını yoksa boş eylem satırı çizilmez. Test: `run-team-hub.mjs` senaryo 38.
