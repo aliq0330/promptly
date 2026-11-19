@@ -131,7 +131,52 @@ export function TeamBand({
           )}
         </p>
       }
+      menu={
+        <div className="relative shrink-0" ref={menuRef}>
+          <button
+            ref={triggerRef}
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={t("tc.band.menu")}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            data-team-menu
+            className={HUB_BAND_MENU_BUTTON_CLASS}
+          >
+            <MoreVertical size={20} aria-hidden />
+          </button>
+          {menuOpen && (
+            <ul ref={listRef} role="menu" onKeyDown={(event) => menuKeyDown(event, listRef.current)} className={cn(MENU_PANEL_CLASS, "absolute right-0 top-full z-30 mt-1.5 w-56")} data-team-menu-list>
+              {menuItems.map((item) => (
+                <li key={item.key} role="none">
+                  <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className={MENU_ITEM_CLASS}>
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              {onLeave && (
+                <li role="none">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onLeave();
+                    }}
+                    data-team-menu-leave
+                    className={cn(MENU_ITEM_CLASS, MENU_ITEM_DANGER_CLASS)}
+                  >
+                    <LogOut size={16} aria-hidden />
+                    {t("tm.members.leave")}
+                  </button>
+                </li>
+              )}
+            </ul>
+          )}
+        </div>
+      }
       actions={
+        faces.length > 0 || canInvite ? (
         <>
           {faces.length > 0 && (
             <div className="hidden items-center lg:flex" data-team-avatars>
@@ -151,49 +196,8 @@ export function TeamBand({
               <span>{t("tm.invite.title")}</span>
             </Button>
           )}
-          <div className="relative shrink-0" ref={menuRef}>
-            <button
-              ref={triggerRef}
-              type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-label={t("tc.band.menu")}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              data-team-menu
-              className={HUB_BAND_MENU_BUTTON_CLASS}
-            >
-              <MoreVertical size={20} aria-hidden />
-            </button>
-            {menuOpen && (
-              <ul ref={listRef} role="menu" onKeyDown={(event) => menuKeyDown(event, listRef.current)} className={cn(MENU_PANEL_CLASS, "absolute right-0 top-full z-30 mt-1.5 w-56")} data-team-menu-list>
-                {menuItems.map((item) => (
-                  <li key={item.key} role="none">
-                    <Link href={item.href} role="menuitem" onClick={() => setMenuOpen(false)} className={MENU_ITEM_CLASS}>
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-                {onLeave && (
-                  <li role="none">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onLeave();
-                      }}
-                      data-team-menu-leave
-                      className={cn(MENU_ITEM_CLASS, MENU_ITEM_DANGER_CLASS)}
-                    >
-                      <LogOut size={16} aria-hidden />
-                      {t("tm.members.leave")}
-                    </button>
-                  </li>
-                )}
-              </ul>
-            )}
-          </div>
         </>
+        ) : undefined
       }
     />
   );
