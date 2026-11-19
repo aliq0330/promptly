@@ -372,52 +372,67 @@ export const PromptComposer = forwardRef<
     />
   );
 
+  const addButton = (
+    <Button
+      ref={triggerRef}
+      type="button"
+      size="sm"
+      variant="secondary"
+      data-insert-trigger
+      data-testid="composer-add"
+      disabled={hideEditor}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={() => (picker ? closePicker() : openPicker())}
+      aria-haspopup="dialog"
+      aria-expanded={Boolean(picker)}
+      title={t("composer.shortcutHint")}
+    >
+      <Plus size={16} /> {triggerLabel}
+    </Button>
+  );
+
   return (
     <div className={cn("space-y-2", className)}>
-      {/* Mobilde uzun metinde bile "Değişken ekle" ekranda kalsın: üst bar'ın altına yapışır. */}
-      <div className="flex flex-wrap items-center justify-between gap-2 max-lg:sticky max-lg:top-14 max-lg:z-20 max-lg:-mx-1 max-lg:bg-surface max-lg:px-1 max-lg:py-1.5">
-        <div className="min-w-0">{leading}</div>
-        <Button
-          ref={triggerRef}
-          type="button"
-          size="sm"
-          variant="outline"
-          data-insert-trigger
-          data-testid="composer-add"
-          disabled={hideEditor}
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={() => (picker ? closePicker() : openPicker())}
-          aria-haspopup="dialog"
-          aria-expanded={Boolean(picker)}
-          title={t("composer.shortcutHint")}
-        >
-          <Plus size={16} /> {triggerLabel}
-        </Button>
+      {/* Sekmeler + metin + "Değişken ekle" TEK kartta ve sayfayla birlikte kayar (sabitlenen bant yok; docs/history/440-*). */}
+      <div
+        className={cn(
+          "overflow-hidden rounded-lg transition-colors duration-200 ease-soft",
+          !hideEditor && "card-inset shadow-xs hover:border-border-strong focus-within:border-primary/60",
+        )}
+      >
+        <div className={cn(!hideEditor && "border-b border-border-soft")}>{leading}</div>
+
+        <PromptDocEditor
+          ref={editorRef}
+          id={id}
+          value={value}
+          onChange={onChange}
+          tokenTone={tokenTone}
+          placeholder={placeholder}
+          minRows={minRows}
+          ariaLabel={ariaLabel}
+          required={required}
+          hidden={hideEditor}
+          bare
+          onSelectionChange={setSelection}
+          onFocusChange={setFocused}
+          onRequestInsert={() => openPicker()}
+        />
+
+        {!hideEditor && (
+          <div className="flex items-center justify-between gap-3 border-t border-border-soft bg-surface px-2.5 py-2">
+            {addButton}
+            {coarse && !hasSelection && (
+              <p className="flex min-w-0 flex-1 items-center justify-end gap-1.5 text-caption text-text-muted">
+                <TextCursorInput size={12} aria-hidden className="shrink-0" />
+                <span className="min-w-0">{isVariable ? t("composer.hintTouchVariable") : t("composer.hintTouchField")}</span>
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
-      <PromptDocEditor
-        ref={editorRef}
-        id={id}
-        value={value}
-        onChange={onChange}
-        tokenTone={tokenTone}
-        placeholder={placeholder}
-        minRows={minRows}
-        ariaLabel={ariaLabel}
-        required={required}
-        hidden={hideEditor}
-        onSelectionChange={setSelection}
-        onFocusChange={setFocused}
-        onRequestInsert={() => openPicker()}
-      />
-
       {toolbar}
-
-      {coarse && !hideEditor && !hasSelection && (
-        <p className="flex items-center gap-1.5 text-caption text-text-muted">
-          <TextCursorInput size={12} aria-hidden /> {isVariable ? t("composer.hintTouchVariable") : t("composer.hintTouchField")}
-        </p>
-      )}
 
       {picker?.surface === "sheet" && (
         <Modal variant="sheet" onClose={closePicker} labelledBy="insert-picker-title">

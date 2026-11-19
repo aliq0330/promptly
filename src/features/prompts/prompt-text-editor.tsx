@@ -14,6 +14,7 @@ import {
 } from "@/lib/prompt-variables";
 import { removeToken, renameToken, tokenUsageMap } from "@/lib/prompt-doc";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/lib/utils";
 import {
   clearConditionsOn,
@@ -262,43 +263,37 @@ export function PromptTextEditor({
   }
 
   const fullscreenButton = (
-    <Button
-      type="button"
-      size="sm"
-      variant="outline"
+    <IconButton
       onClick={() => setFullscreen(true)}
       disabled={activeTab === "preview"}
-      aria-label={t("fullscreen.open")}
-      title={t("fullscreen.open")}
+      label={t("fullscreen.open")}
+      className="shrink-0 disabled:opacity-40 disabled:hover:bg-transparent"
       data-testid="open-fullscreen"
     >
-      <Maximize2 size={16} aria-hidden /> <span className="max-sm:sr-only">{t("fullscreen.open")}</span>
-    </Button>
+      <Maximize2 size={16} aria-hidden />
+    </IconButton>
   );
 
+  const tabClass = (active: boolean) =>
+    cn(
+      "-mb-px flex h-10 items-center gap-1.5 border-b-2 px-3 text-label font-semibold transition-colors disabled:opacity-50",
+      active ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
+    );
   const tabSwitcher = (
-    <div className="flex rounded-md border border-border p-0.5 text-caption">
-      <button
-        type="button"
-        onClick={() => setTab("template")}
-        className={cn(
-          "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors",
-          activeTab === "template" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
-        )}
-      >
-        <FileText size={12} /> {t("variable.templateTab")}
+    <div className="flex" role="tablist">
+      <button type="button" role="tab" aria-selected={activeTab === "template"} onClick={() => setTab("template")} className={tabClass(activeTab === "template")}>
+        <FileText size={16} aria-hidden /> {t("variable.templateTab")}
       </button>
       <button
         type="button"
+        role="tab"
+        aria-selected={activeTab === "preview"}
         onClick={() => setTab("preview")}
         disabled={variables.length === 0}
         title={variables.length === 0 ? t("variable.previewDisabledHint") : undefined}
-        className={cn(
-          "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors disabled:opacity-50",
-          activeTab === "preview" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
-        )}
+        className={tabClass(activeTab === "preview")}
       >
-        <Eye size={12} /> {t("variable.previewTab")}
+        <Eye size={16} aria-hidden /> {t("variable.previewTab")}
       </button>
     </div>
   );
@@ -328,7 +323,7 @@ export function PromptTextEditor({
         ariaLabel={t("prompt.promptTextHeading")}
         required
         leading={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2 pr-1">
             {tabSwitcher}
             {fullscreenButton}
           </div>
