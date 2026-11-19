@@ -90,6 +90,8 @@ export const PromptDocEditor = forwardRef<
     hidden?: boolean;
     /** Tam ekran yazma katmanı: çerçevesiz, 16 px yazı (iOS yakınlaştırmaz), iç kaydırma yok (kaydıran dış katmandır). */
     fill?: boolean;
+    /** Çerçevesiz: sarmalayan kart kenarlığı/odak halkasını çizer (Composer kartı). */
+    bare?: boolean;
     className?: string;
     onSelectionChange?: (selection: EditorSelection) => void;
     onFocusChange?: (focused: boolean) => void;
@@ -109,6 +111,7 @@ export const PromptDocEditor = forwardRef<
     required,
     hidden,
     fill = false,
+    bare = false,
     className,
     onSelectionChange,
     onFocusChange,
@@ -303,7 +306,7 @@ export const PromptDocEditor = forwardRef<
     <div
       className={cn(
         "relative",
-        !fill && "rounded-lg card-inset shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60",
+        !fill && !bare && "rounded-lg card-inset shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60",
         hidden && "hidden",
         className,
       )}
