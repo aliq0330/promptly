@@ -13,6 +13,9 @@ import type {
   PromptVariableSpec,
   PromptVariableType,
 } from "@/types";
+import { MAX_SUGGESTIONS, sanitizeSuggestions } from "./prompt-variables.ts";
+
+export { MAX_SUGGESTIONS, sanitizeSuggestions };
 
 export const VARIABLE_TYPES: PromptVariableType[] = ["text", "select", "multi_select", "number", "slider", "toggle"];
 
@@ -186,7 +189,8 @@ function normalizeCore(
     const config = { onText, offText };
     return { spec: { type, options: [], config }, defaultValue: defaultValue === onText ? onText : offText };
   }
-  return { spec: { type: "text", options: [], config: {} }, defaultValue };
+  const suggestions = sanitizeSuggestions(spec.config.suggestions);
+  return { spec: { type: "text", options: [], config: suggestions.length ? { suggestions } : {} }, defaultValue };
 }
 
 export type VariableSpecError =
@@ -244,6 +248,8 @@ export function parseStoredConfig(raw: unknown): PromptVariableConfig {
     const value = source[key];
     if (typeof value === "string") config[key] = value;
   }
+  const suggestions = sanitizeSuggestions(source.suggestions);
+  if (suggestions.length) config.suggestions = suggestions;
   const condition = parseStoredCondition(source.condition);
   if (condition) config.condition = condition;
   return config;

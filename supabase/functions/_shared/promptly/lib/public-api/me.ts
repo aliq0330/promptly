@@ -10,7 +10,8 @@
  */
 import { parseJson } from "../exchange/json.ts";
 import { withSourceNote, type ExchangePrompt } from "../exchange/prompt-format.ts";
-import { extractVariableTokenNames } from "../prompt-variables.ts";
+import { withDefinedVariables, type VariableFillReport } from "../exchange/variable-fill.ts";
+import { definableOrphanNames, extractVariableTokenNames, sanitizeSuggestions } from "../prompt-variables.ts";
 import { isUuid, promptUrl, PUBLIC_LIMITS } from "./prompts.ts";
 import { PublicApiError } from "./rest.ts";
 
@@ -166,10 +167,42 @@ export interface MePromptSummary {
   url: string;
 }
 
+/** Kaydedilmiş bir değişken satırı (`prompt_variables`) — `variables` yalnız METİNDEKİ jetonları söyler, bu ise gerçekten TANIMLI olanları. */
+export interface MeVariable {
+  name: string;
+  description: string | null;
+  defaultValue: string;
+  type: string;
+  /** Seçim türlerinde seçenek değerleri. */
+  options: string[];
+  /** Serbest metin türünde yazarın örnek değerleri. */
+  examples: string[];
+}
+
 export interface MePrompt extends MePromptSummary {
   promptText: string;
   tags: string[];
+  /** Metinde geçen `{ad}` jetonları (tanımlı olsun olmasın). */
   variables: string[];
+  /** Gerçekten tanımlı değişkenler (tür, varsayılan, açıklama, örnekler). */
+  variableDetails: MeVariable[];
+  /** Metinde geçip tanımı olmayan, değişken adı gibi duran jetonlar: prompt sayfasında doldurma alanı çıkmaz. */
+  undefinedVariables: string[];
+}
+
+function toMeVariable(row: Record<string, unknown>): MeVariable {
+  const options = Array.isArray(row.options)
+    ? row.options.flatMap((option) => (option && typeof option === "object" && typeof (option as { value?: unknown }).value === "string" ? [String((option as { value: string }).value)] : []))
+    : [];
+  const config = row.config && typeof row.config === "object" && !Array.isArray(row.config) ? (row.config as Record<string, unknown>) : {};
+  return {
+    name: String(row.name ?? ""),
+    description: typeof row.description === "string" && row.description !== "" ? row.description : null,
+    defaultValue: String(row.default_value ?? ""),
+    type: String(row.type ?? "text"),
+    options,
+    examples: sanitizeSuggestions(config.suggestions),
+  };
 }
 
 export interface MePage<T> {
@@ -252,12 +285,16 @@ export async function getMyPrompt(tx: MeTx, siteUrl: string, id: string): Promis
   const [row] = await tx("select * from public.api_me_prompt($1::uuid)", [id]);
   if (!row) throw new PublicApiError("not_found", "No such prompt in your account.");
   const promptText = String(row.prompt_text ?? "");
+  // Çağıranın kendi promptu: `prompt_variables` okuması RLS'ten (yazar) geçer.
+  const defined = (await tx("select name, default_value, description, type, options, config from public.prompt_variables where prompt_id = $1::uuid order by sort_order, id", [id])).map(toMeVariable);
   return {
     ...summaryOf(row, siteUrl),
     description: String(row.description ?? ""),
     promptText,
     tags: Array.isArray(row.tags) ? row.tags.map(String) : [],
     variables: extractVariableTokenNames(promptText),
+    variableDetails: defined,
+    undefinedVariables: definableOrphanNames(promptText, defined.map((variable) => variable.name)),
   };
 }
 
@@ -268,6 +305,8 @@ export interface MeImportReport {
   items: unknown[];
   /** Dosyada okunamayan/geçersiz kayıtlar (yazılmadı); veritabanına yalnız geçerliler gider. */
   skipped?: unknown[];
+  /** Her kayıt için (`items` sırasıyla): metindeki jetonlardan kendiliğinden TANIMLANAN değişkenler, sığmayanlar ve kullanılmayanlar. */
+  variables?: VariableFillReport[];
 }
 
 /**
@@ -278,15 +317,19 @@ export async function importMyPrompts(tx: MeTx, bodyText: string, dryRun: boolea
   if (new TextEncoder().encode(bodyText).length > ME_LIMITS.importMaxBytes) throw new PublicApiError("bad_request", "Request body is too large.");
   const parsed = bodyText.trim() === "" ? { items: [] as ExchangePrompt[], issues: [], fatal: "empty" as const } : parseJson(bodyText, ME_LIMITS.importMaxItems);
   if (parsed.fatal) throw new PublicApiError("bad_request", `Body is not a valid Promptly prompts file (${parsed.fatal}).`);
+  const fills: VariableFillReport[] = [];
   const items: ExchangePrompt[] = parsed.items.map((item) => {
-    const payload = { ...withSourceNote(item) };
+    // Metinde `{ad}` geçip tanımı olmayan jetonlar boş metin değişkeni olur (docs/history/438-*): yoksa prompt sayfasında doldurma alanı çıkmaz.
+    const filled = withDefinedVariables(item);
+    fills.push(filled.report);
+    const payload = { ...withSourceNote(filled.item) };
     delete payload.source;
     return payload;
   });
   if (items.length === 0) throw new PublicApiError("bad_request", "The file has no prompts.");
   // `$1::text::jsonb`: Edge sürücüsü (postgres.js) jsonb parametresini kendisi JSON.stringify eder → çift kodlama; text olarak gönderilip sunucuda çevrilir.
   const [row] = await tx("select public.import_prompts($1::text::jsonb, $2) as report", [JSON.stringify(items), dryRun]);
-  const report = (row?.report ?? { dryRun, ok: false, created: 0, items: [] }) as MeImportReport;
+  const report = { ...((row?.report ?? { dryRun, ok: false, created: 0, items: [] }) as MeImportReport), variables: fills };
   return parsed.issues.length ? { ...report, skipped: parsed.issues } : report;
 }
 

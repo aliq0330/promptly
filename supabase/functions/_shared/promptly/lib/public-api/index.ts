@@ -10,6 +10,7 @@ export * from "./rate-limit.ts";
 export * from "./usage.ts";
 export * from "./me.ts";
 export * from "./me-content.ts";
+export * from "./me-variables.ts";
 export * from "./me-social.ts";
 export * from "./public-detail.ts";
 export * from "./media.ts";

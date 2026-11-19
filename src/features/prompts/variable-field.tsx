@@ -11,6 +11,7 @@ import {
   isToggleOn,
   numericRange,
   parseMultiValue,
+  sanitizeSuggestions,
   toggleMultiValue,
   toggleValue,
 } from "@/lib/prompt-variable-types";
@@ -59,12 +60,17 @@ export function VariableField({
   return (
     <div className={cn("min-w-0", wide && "sm:col-span-2")}>
       <label id={labelId} htmlFor={controlId} className="mb-1 block text-caption font-medium text-text-secondary">
-        <span className="break-words">{variable.name}</span>
+        <span className="break-words">{displayName(variable.name)}</span>
         {variable.description && <span className="ml-1.5 font-normal text-text-muted">— {variable.description}</span>}
       </label>
       <Control id={controlId} labelId={labelId} variable={variable} value={value} onChange={onChange} placeholder={variable.defaultValue || t("prompt.enterValue")} />
     </div>
   );
+}
+
+/** Etiket: `hava_durumu` → "hava durumu" (jeton adı değişmez, yalnız gösterim). */
+function displayName(name: string): string {
+  return name.replace(/_/g, " ");
 }
 
 function isChoice(variable: PromptVariableSpec): boolean {
@@ -304,7 +310,8 @@ function Control({
     );
   }
 
-  return (
+  const suggestions = sanitizeSuggestions(variable.config.suggestions);
+  const input = (
     <input
       id={id}
       type="text"
@@ -313,5 +320,21 @@ function Control({
       placeholder={placeholder}
       className={INPUT_CLASS}
     />
+  );
+  if (suggestions.length === 0) return input;
+  // Örnek değerler: dokununca doldurur, serbest yazma kısıtlanmaz (seçim türünden farkı budur).
+  return (
+    <div className="space-y-2">
+      {input}
+      <div role="group" aria-label={t("variable.suggestionsGroup", { name: variable.name })}>
+        <ChipRow>
+          {suggestions.map((suggestion) => (
+            <Chip key={suggestion} selected={value === suggestion} aria-pressed={value === suggestion} onClick={() => onChange(suggestion)}>
+              {suggestion}
+            </Chip>
+          ))}
+        </ChipRow>
+      </div>
+    </div>
   );
 }

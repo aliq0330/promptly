@@ -174,6 +174,7 @@ const CHECKS = [
   { name: "rpc api_me_whoami ziyaretçiye KAPALI olmalı (docs/history/321-*)", rpc: "api_me_whoami", body: {}, mustBeDenied: true },
   { name: "rpc api_me_requests ziyaretçiye KAPALI olmalı (docs/history/321-*)", rpc: "api_me_requests", body: { p_limit: 1 }, mustBeDenied: true },
   { name: "rpc api_me_update_draft ziyaretçiye KAPALI olmalı (docs/history/321-*)", rpc: "api_me_update_draft", body: { p_kind: "prompt", p_id: "00000000-0000-0000-0000-000000000000", p_patch: {}, p_expected_updated_at: "2026-01-01T00:00:00Z" }, mustBeDenied: true },
+  { name: "rpc api_me_sync_draft_variables ziyaretçiye KAPALI olmalı (docs/history/438-*)", rpc: "api_me_sync_draft_variables", body: { p_id: "00000000-0000-0000-0000-000000000000" }, mustBeDenied: true },
   { name: "rpc api_me_media_begin ziyaretçiye KAPALI olmalı (docs/history/333-*)", rpc: "api_me_media_begin", body: { p_prompt_id: "00000000-0000-0000-0000-000000000000" }, mustBeDenied: true },
   { name: "rpc api_me_media_commit ziyaretçiye KAPALI olmalı (docs/history/333-*)", rpc: "api_me_media_commit", body: { p_prompt_id: "00000000-0000-0000-0000-000000000000", p_path: "x", p_url: "y", p_width: 1, p_height: 1 }, mustBeDenied: true },
   { name: "rpc api_me_throttle_kind ziyaretçiye KAPALI olmalı (docs/history/432-*)", rpc: "api_me_throttle_kind", body: { p_kind: "read" }, mustBeDenied: true },

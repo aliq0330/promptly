@@ -7,6 +7,7 @@
  */
 import { parseContent, type ExchangeContentKind } from "../exchange/content-format.ts";
 import { ME_LIMITS, type MeImportReport, type MeIdentity, type MePage, type MeTx } from "./me.ts";
+import { variablesFromInput } from "./me-variables.ts";
 import { isUuid } from "./prompts.ts";
 import { PublicApiError } from "./rest.ts";
 
@@ -194,11 +195,13 @@ export interface MeUpdateResult {
   updatedAt: string;
   url: string;
   editUrl: string;
+  /** Yalnız prompt: değişkenler eşitlendiyse sonuçları (docs/history/438-*). */
+  variables?: { defined: string[]; autoDefined: string[]; skipped: string[] };
 }
 
 /** Güncellenebilen alanlar (veritabanı da aynısını zorlar; bilinmeyen alan reddedilir). Metin ve yönergeler araç açıklamalarında bundan okur. */
 export const ME_PATCH_FIELDS: Record<MeDraftKind, readonly string[]> = {
-  prompt: ["title", "description", "promptText", "contentType", "category", "subcategory", "tools", "tags"],
+  prompt: ["title", "description", "promptText", "contentType", "category", "subcategory", "tools", "tags", "variables"],
   request: ["title", "description", "creativeDirection", "contentType", "category", "subcategory", "tools", "tags"],
   preset: ["title", "description", "contentType", "category", "subcategory", "tools", "tags", "selection"],
   workflow: ["title", "description", "category", "subcategory", "tools", "tags", "stepEdits"],
@@ -248,18 +251,52 @@ export async function updateMyDraft(
   if (typeof expectedUpdatedAt !== "string" || Number.isNaN(Date.parse(expectedUpdatedAt))) {
     throw new PublicApiError("bad_request", "expectedUpdatedAt is required: pass the updatedAt value you read last (ISO time).");
   }
-  const body = JSON.stringify(patch);
+  // Prompt taslağında `variables` ayrı RPC'dedir (`api_me_sync_draft_variables`): değişken tablosu prompt satırı değildir. Aynı işlemde çalışır,
+  // biri reddederse işlem geri alınır (hiçbir şey yazılmaz).
+  let rest = patch as Record<string, unknown>;
+  let definitions: ReturnType<typeof variablesFromInput> | null = null;
+  const wantsVariables = kind === "prompt" && "variables" in rest;
+  if (wantsVariables) {
+    const { variables, ...others } = rest;
+    definitions = variablesFromInput(variables);
+    rest = others;
+  }
+  const syncAfter = kind === "prompt" && (wantsVariables || typeof rest.promptText === "string");
+  const body = JSON.stringify(rest);
   if (new TextEncoder().encode(body).length > ME_LIMITS.importMaxBytes) throw new PublicApiError("bad_request", "Request body is too large.");
-  const [row] = await tx("select public.api_me_update_draft($1, $2::uuid, $3::text::jsonb, $4::timestamptz) as result", [kind, id, body, expectedUpdatedAt]);
-  const result = (row?.result ?? null) as { ok?: boolean; id?: string; changed?: string[]; warnings?: unknown[]; updatedAt?: string; code?: unknown; field?: unknown; currentUpdatedAt?: unknown } | null;
-  if (!result) throw new PublicApiError("upstream", "Could not complete the request.");
-  if (!result.ok) throw updateError(result);
+
+  type UpdateRpcResult = { ok?: boolean; id?: string; changed?: string[]; warnings?: unknown[]; updatedAt?: string; code?: unknown; field?: unknown; currentUpdatedAt?: unknown };
+  let result = null as UpdateRpcResult | null;
+  let expected = expectedUpdatedAt;
+  if (Object.keys(rest).length > 0 || !wantsVariables) {
+    const [row] = await tx("select public.api_me_update_draft($1, $2::uuid, $3::text::jsonb, $4::timestamptz) as result", [kind, id, body, expectedUpdatedAt]);
+    const updated = (row?.result ?? null) as UpdateRpcResult | null;
+    if (!updated) throw new PublicApiError("upstream", "Could not complete the request.");
+    if (!updated.ok) throw updateError(updated);
+    result = updated;
+    expected = String(updated.updatedAt ?? expectedUpdatedAt);
+  }
+
+  let variables: MeUpdateResult["variables"];
+  if (syncAfter) {
+    const [syncRow] = await tx("select public.api_me_sync_draft_variables($1::uuid, $2::text::jsonb, $3::timestamptz) as result", [id, definitions ? JSON.stringify(definitions) : null, expected]);
+    const sync = (syncRow?.result ?? null) as { ok?: boolean; variables?: unknown; autoDefined?: unknown; skipped?: unknown; updatedAt?: unknown; code?: unknown; field?: unknown; currentUpdatedAt?: unknown } | null;
+    if (!sync) throw new PublicApiError("upstream", "Could not complete the request.");
+    if (!sync.ok) throw updateError(sync);
+    const names = (value: unknown) => (Array.isArray(value) ? value.map(String) : []);
+    variables = { defined: names(sync.variables), autoDefined: names(sync.autoDefined), skipped: names(sync.skipped) };
+    if (!result) result = { ok: true, id, changed: [], warnings: [], updatedAt: String(sync.updatedAt ?? expected) };
+  }
+  const final = result as UpdateRpcResult | null;
+  if (!final) throw new PublicApiError("upstream", "Could not complete the request.");
+  const changed = Array.isArray(final.changed) ? final.changed.map(String) : [];
   return {
     id,
-    changed: Array.isArray(result.changed) ? result.changed.map(String) : [],
-    warnings: Array.isArray(result.warnings) ? result.warnings : [],
-    updatedAt: String(result.updatedAt ?? ""),
+    changed: wantsVariables ? [...changed, "variables"] : changed,
+    warnings: Array.isArray(final.warnings) ? final.warnings : [],
+    updatedAt: String(final.updatedAt ?? ""),
     url: detailUrl(siteUrl, kind, id),
     editUrl: editUrl(siteUrl, kind, id),
+    ...(variables ? { variables } : {}),
   };
 }

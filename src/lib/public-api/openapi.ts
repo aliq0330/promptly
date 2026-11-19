@@ -15,7 +15,7 @@ const idParam = { name: "id", in: "path", required: true, schema: { type: "strin
 const bearer = [{ bearerAuth: [] }];
 const cursorParam = { name: "cursor", in: "query", schema: { type: "string" } };
 const PATCH_FIELDS = {
-  prompt: "title, description, promptText, contentType, category, subcategory, tools, tags",
+  prompt: "title, description, promptText, contentType, category, subcategory, tools, tags, variables (replaces the whole variable list: name, description, default_value, type, examples, options…; any {token} left undefined is added as an empty text variable)",
   request: "title, description, creativeDirection, contentType, category, subcategory, tools, tags",
   preset: "title, description, contentType, category, subcategory, tools, tags, selection",
   workflow: "title, description, category, subcategory, tools, tags, stepEdits (text of existing steps by 1-based position)",
@@ -335,12 +335,15 @@ export function openApiDocument(serverUrl: string): Record<string, unknown> {
           properties: {
             id: { type: "string", format: "uuid" }, url: { type: "string" }, title: { type: "string" }, description: { type: "string" }, promptText: { type: "string" },
             contentType: { type: "string", enum: CONTENT_TYPES }, status: { type: "string", enum: ["draft", "published"] }, visibility: { type: "string" },
-            tags: { type: "array", items: { type: "string" } }, variables: { type: "array", items: { type: "string" } }, createdAt: { type: "string", format: "date-time" }, updatedAt: { type: "string", format: "date-time" },
+            tags: { type: "array", items: { type: "string" } }, variables: { type: "array", items: { type: "string" }, description: "Every {token} found in the text, defined or not." },
+            variableDetails: { type: "array", description: "The variables that are actually DEFINED.", items: { type: "object", properties: { name: { type: "string" }, description: { type: ["string", "null"] }, defaultValue: { type: "string" }, type: { type: "string" }, options: { type: "array", items: { type: "string" } }, examples: { type: "array", items: { type: "string" } } } } },
+            undefinedVariables: { type: "array", items: { type: "string" }, description: "Tokens in the text with no definition: the prompt page shows no fill-in field for them." },
+            createdAt: { type: "string", format: "date-time" }, updatedAt: { type: "string", format: "date-time" },
           },
         },
         MeUpdateResult: {
           type: "object",
-          properties: { id: { type: "string", format: "uuid" }, changed: { type: "array", items: { type: "string" } }, warnings: { type: "array", items: { type: "object" } }, updatedAt: { type: "string", format: "date-time", description: "The new value to send as expectedUpdatedAt next time." }, url: { type: "string" }, editUrl: { type: "string" } },
+          properties: { id: { type: "string", format: "uuid" }, changed: { type: "array", items: { type: "string" } }, warnings: { type: "array", items: { type: "object" } }, updatedAt: { type: "string", format: "date-time", description: "The new value to send as expectedUpdatedAt next time." }, url: { type: "string" }, editUrl: { type: "string" }, variables: { type: "object", description: "Prompt drafts only: the result of the variable sync.", properties: { defined: { type: "array", items: { type: "string" } }, autoDefined: { type: "array", items: { type: "string" } }, skipped: { type: "array", items: { type: "string" } } } } },
         },
         PublicContent: {
           type: "object",

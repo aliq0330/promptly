@@ -355,6 +355,7 @@ export function CreatePromptForm() {
   const [draftNotice, setDraftNotice] = useState(false);
   const isEditingDraft = isEditMode && editingPrompt?.status === "draft";
   const outputFailedParam = isEditMode ? searchParams.get("outputFailed") : null;
+  const varsFailedParam = isEditMode ? searchParams.get("varsFailed") : null;
   const canSaveDraft = !isAnswerMode && (!isEditMode || isEditingDraft);
   // Yazma ekranı (docs/history/216-*): araç çubuğunun alt sayfası, son kontrol penceresi ve ✕'teki "kaydedilsin mi?".
   const panelRef = useRef<PublishPanelHandle>(null);
@@ -441,7 +442,21 @@ export function CreatePromptForm() {
     }
   }
 
-  /** Soft-fail like variables/tags: the prompt itself is already saved. */
+  /**
+   * Değişken satırlarını yazar. Prompt bu noktada zaten kaydedilmiştir, o yüzden hata "kayıt başarısız" sayılmaz ama SESSİZCE da yutulmaz:
+   * `false` dönerse çağıran kullanıcıya görünür bir mesaj gösterir ya da düzenleme ekranına `varsFailed` ile yönlendirir (docs/history/438-*).
+   */
+  async function saveVariables(promptId: string, drafts: Parameters<typeof replaceVariablesForPrompt>[1]): Promise<boolean> {
+    try {
+      await replaceVariablesForPrompt(promptId, drafts);
+      return true;
+    } catch (variableErr) {
+      console.error("replaceVariablesForPrompt", variableErr);
+      return false;
+    }
+  }
+
+  /** Soft-fail like tags: the prompt itself is already saved. */
   async function saveDna(promptId: string) {
     if (!dnaLoaded || (!isEditMode && dnaSections.length === 0)) return;
     try {
@@ -491,15 +506,12 @@ export function CreatePromptForm() {
           requiresReferenceAudio: effectiveReferences.audio,
           visibility: showsVisibilityChoice ? undefined : visibility,
         });
-        try {
-          await replaceVariablesForPrompt(updated.id, variableDrafts);
-        } catch (variableErr) {
-          console.error("replaceVariablesForPrompt", variableErr);
-        }
+        const variablesSaved = await saveVariables(updated.id, variableDrafts);
         await saveDna(updated.id);
-        setDraftNotice(true);
+        if (variablesSaved) setDraftNotice(true);
+        else setPublishError(t("variable.savePartialFailed"));
         setIsSubmitting(false);
-        return true;
+        return variablesSaved;
       }
       const draft = await addPrompt(
         {
@@ -522,12 +534,12 @@ export function CreatePromptForm() {
         },
         ownProfile,
       );
-      try {
-        await replaceVariablesForPrompt(draft.id, variableDrafts);
-      } catch (variableErr) {
-        console.error("replaceVariablesForPrompt", variableErr);
-      }
+      const variablesSaved = await saveVariables(draft.id, variableDrafts);
       await saveDna(draft.id);
+      if (!variablesSaved) {
+        router.push(`/create?edit=${draft.id}&varsFailed=1`);
+        return false;
+      }
       if (!leaving) router.push(`/create?edit=${draft.id}`);
       return true;
     } catch (err) {
@@ -575,13 +587,15 @@ export function CreatePromptForm() {
         // Soft-fail, same precedent as tags (createRealPrompt) — the edit
         // itself already succeeded and is already live; a variable-save
         // hiccup shouldn't be reported as "the edit failed".
-        try {
-          await replaceVariablesForPrompt(updated.id, variableDrafts);
-        } catch (variableErr) {
-          console.error("replaceVariablesForPrompt", variableErr);
-        }
+        const variablesSaved = await saveVariables(updated.id, variableDrafts);
         await saveDna(updated.id);
         if (!(await uploadOutputIfAny(updated.id))) {
+          setIsSubmitting(false);
+          return;
+        }
+        if (!variablesSaved) {
+          // Değişiklik yayında, ama değişkenler yazılamadı: sayfada kal, kullanıcı tekrar kaydetsin (aynı düzenleme yeniden uygulanır).
+          setPublishError(t("variable.savePartialFailed"));
           setIsSubmitting(false);
           return;
         }
@@ -613,17 +627,18 @@ export function CreatePromptForm() {
         },
         ownProfile,
       );
-      try {
-        await replaceVariablesForPrompt(published.id, variableDrafts);
-      } catch (variableErr) {
-        console.error("replaceVariablesForPrompt", variableErr);
-      }
+      const variablesSaved = await saveVariables(published.id, variableDrafts);
       await saveDna(published.id);
       if (!(await uploadOutputIfAny(published.id))) {
         setIsSubmitting(false);
         return;
       }
       announcePublished();
+      if (!variablesSaved) {
+        // Prompt yayında ama değişkenleri yazılamadı: düzenleme ekranında uyarıyla aç (metindeki jetonlar "Tümünü tanımla" ile tek dokunuşta tanımlanır).
+        router.push(`/create?edit=${published.id}&varsFailed=1`);
+        return;
+      }
       router.push((await returnToTeam("prompt", published.id)) ?? (await returnToCommunity("prompt", published.id)) ?? promptHref(published));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("prompt.publishFailed"));
@@ -843,6 +858,12 @@ export function CreatePromptForm() {
               </Link>{" "}
               {t("prompt.duplicatePrefillHint")}
             </p>
+          </div>
+        )}
+
+        {varsFailedParam && (
+          <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-small text-danger">
+            {t("variable.savePartialFailed")}
           </div>
         )}
 

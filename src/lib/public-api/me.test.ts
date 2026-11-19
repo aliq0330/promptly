@@ -170,6 +170,45 @@ test("one prompt: text, tags and detected variables; not found → 404; bad id �
   assert.equal((await handler(get("/me/prompts/not-a-uuid"))).status, 400);
 });
 
+test("one prompt: the DEFINED variables (type, default, examples) come from prompt_variables; tokens without a definition are listed as undefinedVariables", async () => {
+  const { db } = fakeDb({
+    query: (sql, params) => {
+      if (sql.includes("api_me_prompt($1") && params[0] === ID_A) {
+        return [{ id: ID_A, title: "Logo", description: "d", prompt_text: "A {city} at {time_of_day} in {era} with {\"a\": 1}", content_type: "image", status: "draft", visibility: "private", tags: [], created_at: new Date(), updated_at: new Date() }];
+      }
+      if (sql.includes("public.prompt_variables")) {
+        return [
+          { name: "city", default_value: "Istanbul", description: "Şehir", type: "text", options: [], config: { suggestions: ["Tokyo", "Paris"] } },
+          { name: "era", default_value: "1980s", description: null, type: "select", options: [{ label: "1980s", value: "1980s" }, { label: "1990s", value: "1990s" }], config: {} },
+        ];
+      }
+      return [];
+    },
+  });
+  const found = await (await handlerWith(db)(get(`/me/prompts/${ID_A}`))).json();
+  assert.deepEqual(found.variableDetails, [
+    { name: "city", description: "Şehir", defaultValue: "Istanbul", type: "text", options: [], examples: ["Tokyo", "Paris"] },
+    { name: "era", description: null, defaultValue: "1980s", type: "select", options: ["1980s", "1990s"], examples: [] },
+  ]);
+  assert.deepEqual(found.undefinedVariables, ["time_of_day"], "JSON braces are not variables, defined ones are not listed");
+  assert.deepEqual(found.variables, ["city", "time_of_day", "era", "\"a\": 1"], "variables keeps meaning: every token found in the text");
+});
+
+test("POST /me/prompts: tokens in the text that the file does not define are sent as empty text variables, and the report says which", async () => {
+  const sent: unknown[][] = [];
+  const { db } = fakeDb({
+    authenticate: [{ token_id: "t", user_id: USER, scopes: ["read", "write"] }],
+    query: (sql, params) => { if (sql.includes("import_prompts")) { sent.push(params); return [{ report: { dryRun: false, ok: true, created: 1, items: [{ index: 1, status: "ok", id: ID_A }] } }]; } return []; },
+  });
+  const file = { ...filePrompt, promptText: "A logo for {brand} in {style}, JSON {\"k\": 1}", variables: [{ name: "brand", defaultValue: "Acme", description: "Marka", type: "text" as const, options: [], config: {} }] };
+  const report = await (await handlerWith(db)(get("/me/prompts", KEY, "POST", serializeJson([file])))).json();
+  const items = JSON.parse(String(sent[0][0]));
+  assert.deepEqual(items[0].variables.map((v: { name: string }) => v.name), ["brand", "style"]);
+  assert.equal(items[0].variables[0].defaultValue, "Acme", "the given definition is untouched");
+  assert.equal(items[0].variables[1].type, "text");
+  assert.deepEqual(report.variables, [{ autoDefined: ["style"], skipped: [], unused: [] }]);
+});
+
 test("saved prompts are listed with their save time", async () => {
   const { db } = fakeDb({ query: (sql) => sql.includes("api_me_saved") ? [{ id: ID_A, title: "S", description: "d", content_type: "text", saved_at: new Date("2026-10-02T00:00:00Z"), saved_cursor: "2026-10-02T00:00:00.000000Z" }] : [] });
   const page = await (await handlerWith(db)(get("/me/saved"))).json();
