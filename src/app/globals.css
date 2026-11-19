@@ -1319,6 +1319,12 @@
   select {
     font-size: 16px;
   }
+  /* Prompt editörü (docs/history/442-*): metni gösteren ayna katmanı ile üstündeki saydam textarea AYNI boyda olmalı; textarea yukarıdaki
+   * kuralla 16px'e zorlandığından ayna da (div olduğu için kural uymaz) aynı boyu bu sınıfla alır — yoksa metin iki katmanda farklı
+   * satırlara kırılır ve iOS seçim vurgusu/tutamaçları metinden kayar. Sınıf element seçicisini ve katmanlı yardımcıları yener. */
+  .doc-editor-text {
+    font-size: 16px;
+  }
 }
 
 /*

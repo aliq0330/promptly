@@ -300,7 +300,8 @@ export const PromptDocEditor = forwardRef<
   );
 
   // Ayna ve textarea AYNI ölçüleri paylaşmalı (jeton çipleri metinle hizalı kalsın).
-  const metricsClass = fill ? "px-4 py-3 text-body leading-7" : "px-3 py-2 text-small leading-6 max-lg:text-body";
+  // `doc-editor-text`: dar ekranda ikisi de 16px (textarea'yı globals.css zorlar; ayna aynı boyu bu sınıftan alır, docs/history/442-*).
+  const metricsClass = fill ? "doc-editor-text px-4 py-3 text-body leading-7" : "doc-editor-text px-3 py-2 text-small leading-6 max-lg:text-body";
 
   return (
     <div
