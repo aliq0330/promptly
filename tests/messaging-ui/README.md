@@ -490,3 +490,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-live-toasts.
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-live-notify-extras.mjs   # 21/21 beklenir
 SHOT_DIR=/tmp/shots node tests/messaging-ui/run-live-notify-extras.mjs   # ekran görüntüleri (isteğe bağlı)
 ```
+
+## Prompt değişkenleri: tek dokunuşla tanımlama + örnek değerler (docs/history/439-*)
+
+`run-variable-define.mjs` (6 senaryo): metinde tanımsız `{jeton` için uyarının yanında "Tümünü tanımla (N)" (JSON/kod parantezi sayılmaz, tıklayınca değişkenler oluşur, tamamı tanımlıysa uyarı kalkar), metin değişkeninde "Örnek değerler" (düzenleme penceresinde yazılır, Önizlemede çip olur, çip doldurur, serbest yazma sürer, virgül yazarken kaybolmaz, boşsa çip alanı çizilmez), etiketlerde `time_of_day` → "time of day", İngilizce ve mobil (taşma yok, düğme ≥36px). Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-variable-define.mjs   # 6/6 beklenir
+SHOTS=/tmp/shots node tests/messaging-ui/run-variable-define.mjs                          # ekran görüntüleri (isteğe bağlı)
+```

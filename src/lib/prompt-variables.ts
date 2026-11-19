@@ -45,6 +45,45 @@ export function extractVariableTokenNames(text: string): string[] {
   return ordered;
 }
 
+/**
+ * "Gerçek bir değişken adına benziyor mu?" — metindeki `{...}` her zaman değişken değildir (JSON örneği, kod, `{1}`).
+ * Otomatik tanımlama YALNIZ bunu geçen jetonlara uygulanır: boşluk, süslü/köşeli/yuvarlak parantez, tırnak, `: ; , < > = / \`
+ * yok, en çok 40 karakter ve yalnızca rakam/`_`/`-`'den oluşmuyor. Aynı kural SQL'de `api_me_sync_draft_variables`'ta
+ * (`prompt-variables-auto.test.ts` iki yeri metin olarak karşılaştırır).
+ */
+export const DEFINABLE_TOKEN_PATTERN = /^[^\s{}"'`:;,<>()[\]\\/=]{1,40}$/u;
+const DIGITS_ONLY_PATTERN = /^[0-9_-]+$/;
+
+export function isDefinableTokenName(name: string): boolean {
+  return DEFINABLE_TOKEN_PATTERN.test(name) && !DIGITS_ONLY_PATTERN.test(name);
+}
+
+/** `text`'te geçen, tanımsız ve değişken adı gibi duran jetonlar (ilk görünüş sırasıyla). Jeton motoru ve `unique (prompt_id, name)` tam eşleşir → karşılaştırma da tam eşleşmedir. */
+export function definableOrphanNames(text: string, defined: Iterable<string>): string[] {
+  const known = new Set<string>(defined);
+  return extractVariableTokenNames(text).filter((name) => isDefinableTokenName(name) && !known.has(name));
+}
+
+/** `text` değişkeninin örnek değer çipleri: en çok bu kadar, her biri en çok `MAX_SUGGESTION_LENGTH` karakter (seçenek uzunluğuyla aynı). */
+export const MAX_SUGGESTIONS = 6;
+export const MAX_SUGGESTION_LENGTH = 80;
+
+/** Örnek değerleri temizler: kırpar, boşları ve tekrarları atar, virgül/satır sonunu boşluğa çevirir, uzunluğu ve adedi sınırlar. */
+export function sanitizeSuggestions(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item !== "string") continue;
+    const value = item.replace(/[\r\n,]+/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_SUGGESTION_LENGTH).trim();
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    out.push(value);
+    if (out.length >= MAX_SUGGESTIONS) break;
+  }
+  return out;
+}
+
 /** How many times `{name}` literally appears in `text` — used for the "bu değişken N yerde kullanılıyor" delete warning. */
 export function countVariableUsages(text: string, name: string): number {
   if (!name) return 0;

@@ -940,6 +940,12 @@ export const translations = {
   "variable.previewDisabledHint": { tr: "Önizlemek için önce en az bir değişken ekle.", en: "Add at least one variable first to preview." },
   "variable.resetToDefaults": { tr: "Varsayılanlara dön", en: "Reset to defaults" },
   "variable.orphanTokensWarning": { tr: "Metinde tanımlanmamış değişken(ler) var: {{tokens}} — bunları \"Değişken Ekle\" ile tanımlayabilirsin.", en: "The text has undefined variable(s): {{tokens}} — you can define them with \"Add Variable\"." },
+  "variable.defineAll": { tr: "Tümünü tanımla ({{count}})", en: "Define all ({{count}})" },
+  "variable.suggestionsLabel": { tr: "Örnek değerler", en: "Example values" },
+  "variable.suggestionsHint": { tr: "Okuyucu birine dokunarak doldurabilir, yine de istediğini yazabilir. Virgülle ayır (en çok 6).", en: "Readers can tap one to fill it in, or still type anything. Separate with commas (up to 6)." },
+  "variable.suggestionsPlaceholder": { tr: "Istanbul, Tokyo, Paris", en: "Istanbul, Tokyo, Paris" },
+  "variable.suggestionsGroup": { tr: "{{name}} için örnek değerler", en: "Example values for {{name}}" },
+  "variable.savePartialFailed": { tr: "Prompt kaydedildi ama değişkenleri kaydedilemedi. Düzenleme ekranını açıp tekrar kaydetmeyi dene.", en: "The prompt was saved, but its variables could not be saved. Open the editor and save again." },
   // ---- Ortak prompt düzenleyici (Bölüm 9.136): normal değişkenler + Generator şablon alanları ----
   "variable.convertTitle": { tr: "Değişkene dönüştür", en: "Convert to variable" },
   "variable.createTitle": { tr: "Yeni değişken", en: "New variable" },

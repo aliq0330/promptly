@@ -14,6 +14,7 @@ import {
   toExchangeSkill,
   withSkillSourceNote,
   toExchangeWorkflow,
+  withDefinedVariables,
   withSourceNote,
   type BulkBatchReport,
   type BulkOutcome,
@@ -96,7 +97,8 @@ export interface ImportReport {
  * `dryRun` nothing is written. The database re-validates the same rules as `parsePrompts`, so this call is the only authority.
  */
 export async function importPrompts(items: ExchangePrompt[], dryRun: boolean): Promise<ImportReport> {
-  const { data, error } = await supabase.rpc("import_prompts", { p_items: items.map(forServer), p_dry_run: dryRun });
+  // Metinde `{ad}` geçip tanımı olmayan jetonlar boş metin değişkeni olur: yoksa prompt sayfasında doldurma alanı çıkmaz (docs/history/439-*).
+  const { data, error } = await supabase.rpc("import_prompts", { p_items: items.map((item) => forServer(withDefinedVariables(item).item)), p_dry_run: dryRun });
   if (error) throw new Error(error.message);
   return data as ImportReport;
 }

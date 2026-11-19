@@ -5,6 +5,7 @@ import { EXCHANGE_LIMITS, fatalResult, type ExchangeFormat, type ExchangePrompt,
 
 export * from "./prompt-format.ts";
 export { PROMPT_SEPARATOR } from "./markdown.ts";
+export { withDefinedVariables, emptyTextVariable, type VariableFillReport } from "./variable-fill.ts";
 export {
   CONTENT_JSON_FORMAT,
   CONTENT_LIMITS,

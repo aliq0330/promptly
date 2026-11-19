@@ -88,6 +88,8 @@ export function VariableSpecEditor({
   const [uploadIndex, setUploadIndex] = useState<number | null>(null);
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // Örnek değerler virgüllü metin olarak yazılır; ham metin burada tutulur (her tuşta temizlenirse "Istanbul," virgülü kaybolurdu), temizleme kayıtta yapılır.
+  const [suggestionText, setSuggestionText] = useState(() => (value.spec.config.suggestions ?? []).join(", "));
 
   function pickImage(index: number) {
     setUploadError(null);
@@ -126,6 +128,7 @@ export function VariableSpecEditor({
   }
 
   function setType(type: PromptVariableType) {
+    if (type !== spec.type) setSuggestionText("");
     onChange(convertSpec(value, type, seedText));
   }
 
@@ -239,6 +242,20 @@ export function VariableSpecEditor({
             onChange={(event) => onChange({ spec, defaultValue: event.target.value })}
             placeholder={t("variable.defaultValuePlaceholder")}
           />
+          <label htmlFor={`${idPrefix}-suggestions`} className={cn(fieldLabelClassName, "mt-3")}>
+            {t("variable.suggestionsLabel")} <span className="text-text-muted">({t("common.optional")})</span>
+          </label>
+          <Input
+            id={`${idPrefix}-suggestions`}
+            type="text"
+            value={suggestionText}
+            onChange={(event) => {
+              setSuggestionText(event.target.value);
+              setConfig({ suggestions: event.target.value.split(",").map((part) => part.trim()) });
+            }}
+            placeholder={t("variable.suggestionsPlaceholder")}
+          />
+          <p className="mt-1 text-caption text-text-muted">{t("variable.suggestionsHint")}</p>
         </div>
       )}
 

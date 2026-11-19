@@ -251,6 +251,9 @@ const META_URL = "https://example.test/functions/v1/mcp/oauth-protected-resource
 const USER = "99999999-9999-4999-8999-999999999999";
 const MY_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
+/** `import_prompts`'e giden son dosya (JSON metni) — değişken tanımlarının sunucuya ulaştığını denetlemek için. */
+let lastImportBody = "";
+
 function fakeMeDb(scopes: string[], sqls: string[] = []): MeDb {
   return {
     async transaction<T>(fn: (tx: MeTx) => Promise<T>): Promise<T> {
@@ -259,6 +262,7 @@ function fakeMeDb(scopes: string[], sqls: string[] = []): MeDb {
         if (sql.includes("_api_token_authenticate")) return params[0] === KEY ? [{ token_id: "t", user_id: USER, scopes }] : [];
         if (sql.includes("api_me_prompts")) return [{ id: MY_ID, title: "Gizli taslak", description: "d", content_type: "text", status: "draft", visibility: "private", created_at: new Date("2026-10-01"), updated_at: new Date("2026-10-01"), created_cursor: "2026-10-01T00:00:00.000000Z" }];
         if (sql.includes("api_me_prompt($1")) return [{ id: MY_ID, title: "Gizli taslak", description: "d", prompt_text: "Logo for {brand}", content_type: "text", status: "draft", visibility: "private", tags: [], created_at: new Date(), updated_at: new Date() }];
+        if (sql.includes("import_prompts")) lastImportBody = String(params[0]);
         if (sql.includes("import_prompts")) return [{ report: { dryRun: false, ok: true, created: 1, items: [{ index: 1, status: "ok", id: MY_ID }] } }];
         if (sql.includes("api_me_whoami")) return [{ user_id: USER, username: "ayse", display_name: "Ayşe K.", avatar_url: null }];
         if (sql.includes("api_me_requests(")) return [{ id: MY_ID, title: "Neon istek", description: "d", content_type: "image", status: "draft", visibility: "private", created_at: new Date("2026-10-01"), updated_at: new Date("2026-10-01T10:00:00.123Z"), created_cursor: "2026-10-01T00:00:00.000000Z" }];
@@ -363,6 +367,42 @@ test("a write key saves ONE private draft through import_prompts", async () => {
   const result = textOf(await client.callTool({ name: "save_prompt_draft", arguments: { title: "Logo", prompt_text: "A logo for {brand}", tags: ["neon"] } }));
   assert.ok(result.includes('"created": 1'));
   assert.ok(sqls.some((sql) => sql.includes("import_prompts")));
+});
+
+test("save_prompt_draft sends the variable definitions; tokens it was not told about are defined too, and the answer lists them", async () => {
+  const client = await connectMe(meHandler(["read", "write"]));
+  const result = textOf(
+    await client.callTool({
+      name: "save_prompt_draft",
+      arguments: {
+        title: "Neon city",
+        prompt_text: "A neon {city} at {time_of_day} in the {era}",
+        content_type: "image",
+        variables: [{ name: "{city}", description: "Sahnenin şehri", default_value: "Istanbul", examples: ["Istanbul", "Tokyo", "Paris"] }, { name: "era", type: "select", options: ["1980s", "1990s"], default_value: "1980s" }],
+      },
+    }),
+  );
+  const sent = JSON.parse(lastImportBody)[0];
+  assert.deepEqual(sent.variables.map((v: { name: string; type: string }) => [v.name, v.type]), [["city", "text"], ["era", "select"], ["time_of_day", "text"]]);
+  assert.equal(sent.variables[0].defaultValue, "Istanbul");
+  assert.deepEqual(sent.variables[0].config, { suggestions: ["Istanbul", "Tokyo", "Paris"] });
+  assert.ok(result.includes('"autoDefined": [') && result.includes("time_of_day"), "the answer says which variable the server defined on its own");
+});
+
+test("save_prompt_draft: a select default that is not one of its options is a clear tool error and nothing is written", async () => {
+  const sqls: string[] = [];
+  const client = await connectMe(meHandler(["read", "write"], sqls));
+  const result = (await client.callTool({ name: "save_prompt_draft", arguments: { title: "T", prompt_text: "A {era}", variables: [{ name: "era", type: "select", options: ["1980s", "1990s"], default_value: "2000s" }] } })) as { isError?: boolean; content: { text: string }[] };
+  assert.equal(result.isError, true);
+  assert.match(result.content[0].text, /not one of its options/);
+  assert.ok(!sqls.some((sql) => sql.includes("import_prompts")));
+});
+
+test("get_my_prompt reports the tokens that have no definition, so the caller can check its own save", async () => {
+  const client = await connectMe(meHandler(["read"]));
+  const one = JSON.parse(textOf(await client.callTool({ name: "get_my_prompt", arguments: { id: MY_ID } })).replace(/^[^{]*(?=\{)/s, ""));
+  assert.deepEqual(one.undefinedVariables, ["brand"]);
+  assert.deepEqual(one.variableDetails, []);
 });
 
 test("a revoked / unknown key: the call fails inside the tool (isError) and nothing is read", async () => {

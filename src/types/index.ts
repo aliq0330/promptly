@@ -647,6 +647,8 @@ export interface PromptVariableConfig {
   step?: number;
   onText?: string;
   offText?: string;
+  /** Yalnız `text` türü: yazarın verdiği örnek değerler — okuyucuya dokununca dolduran çipler olarak gösterilir, serbest yazma kısıtlanmaz. */
+  suggestions?: string[];
   condition?: PromptVariableCondition;
 }
 

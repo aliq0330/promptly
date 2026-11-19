@@ -7,6 +7,7 @@ import { FileText } from "@/components/icons/file-text";
 import { Maximize2 } from "@/components/icons/maximize-2";
 import {
   countRawOccurrences,
+  definableOrphanNames,
   extractVariableTokenNames,
   replaceAllOccurrencesWithToken,
   resolvePromptText,
@@ -37,6 +38,9 @@ import type { VariableFormValues } from "./variable-spec-editor";
 import { ImageHelpPanel } from "./image-help-panel";
 import { PromptFullscreenEditor } from "./prompt-fullscreen-editor";
 import { makeTempId, type DraftVariable } from "./draft-variable";
+
+/** Bir promptun en çok değişken sayısı (`prompt_variables` / `import_prompts` ile aynı). */
+const MAX_VARIABLES = 30;
 
 // 196 alanlık katalog yalnızca seçici açılınca yüklenir (ana pakete girmez).
 const FieldCatalogPicker = dynamic(() => import("@/features/prompts/field-catalog-picker").then((m) => m.FieldCatalogPicker), { ssr: false });
@@ -245,6 +249,17 @@ export function PromptTextEditor({
   const previewText = resolvePromptText(value, previewEffective);
 
   const orphanTokens = extractVariableTokenNames(value).filter((name) => !definedNames.has(name));
+  // Değişken adına benzeyen yetim jetonlar tek dokunuşla tanımlanabilir (JSON/kod parantezleri sayılmaz); sunucudaki sınır 30.
+  const definableOrphans = definableOrphanNames(value, definedNames).slice(0, Math.max(0, MAX_VARIABLES - variables.length));
+
+  /** Tanımsız jetonları boş metin değişkeni yapar: varsayılan değer ve açıklamayı yazar sonradan düzenler. */
+  function defineAllOrphans() {
+    if (definableOrphans.length === 0) return;
+    onVariablesChange([
+      ...variables,
+      ...definableOrphans.map((name): DraftVariable => ({ ...emptySpec("text"), tempId: makeTempId(), name, defaultValue: "", description: "" })),
+    ]);
+  }
 
   const fullscreenButton = (
     <Button
@@ -359,9 +374,16 @@ export function PromptTextEditor({
       )}
 
       {orphanTokens.length > 0 && (
-        <p className="text-caption text-warning">
-          {t("variable.orphanTokensWarning", { tokens: orphanTokens.map((name) => `{${name}}`).join(", ") })}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2" data-testid="orphan-tokens">
+          <p className="min-w-0 flex-1 text-caption text-warning">
+            {t("variable.orphanTokensWarning", { tokens: orphanTokens.map((name) => `{${name}}`).join(", ") })}
+          </p>
+          {definableOrphans.length > 0 && (
+            <Button type="button" size="sm" variant="outline" onClick={defineAllOrphans} data-testid="define-all-orphans">
+              {t("variable.defineAll", { count: definableOrphans.length })}
+            </Button>
+          )}
+        </div>
       )}
 
       {list}

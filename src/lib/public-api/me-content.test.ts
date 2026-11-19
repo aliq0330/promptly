@@ -128,6 +128,61 @@ test("PATCH: the change goes to api_me_update_draft with the expected time, as T
   assert.ok(calls.some((c) => c.sql.includes("$3::text::jsonb")));
 });
 
+test("PATCH prompt with variables: update first, then api_me_sync_draft_variables with the NEW token — definitions are validated before anything is sent", async () => {
+  const calls2: { sql: string; params: unknown[] }[] = [];
+  const { db } = fakeDb(WRITE, (sql, params) => {
+    if (sql.includes("api_me_update_draft") || sql.includes("api_me_sync_draft_variables")) calls2.push({ sql, params });
+    if (sql.includes("api_me_update_draft")) return [{ result: { ok: true, id: ID_A, changed: ["promptText"], warnings: [], updatedAt: "2026-11-02T10:05:00.000Z" } }];
+    if (sql.includes("api_me_sync_draft_variables")) return [{ result: { ok: true, id: ID_A, variables: ["city", "era"], autoDefined: ["era"], skipped: [], updatedAt: "2026-11-02T10:05:00.000Z" } }];
+    return [];
+  });
+  const handler = handlerWith(db);
+  const response = await handler(call(`/me/prompts/${ID_A}`, "PATCH", { expectedUpdatedAt: STAMP, changes: { promptText: "A {city} in {era}", variables: [{ name: "city", default_value: "Istanbul", examples: ["Tokyo"] }] } }));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.deepEqual(body.variables, { defined: ["city", "era"], autoDefined: ["era"], skipped: [] });
+  assert.deepEqual(body.changed, ["promptText", "variables"]);
+  assert.match(calls2[0].sql, /api_me_update_draft/);
+  assert.deepEqual(JSON.parse(String(calls2[0].params[2])), { promptText: "A {city} in {era}" }, "variables never reach the prompt update");
+  assert.match(calls2[1].sql, /api_me_sync_draft_variables/);
+  assert.equal(calls2[1].params[2], "2026-11-02T10:05:00.000Z", "the sync uses the token the update just returned");
+  const sentDefs = JSON.parse(String(calls2[1].params[1]));
+  assert.deepEqual(sentDefs[0].config, { suggestions: ["Tokyo"] });
+  assert.match(calls2[1].sql, /\$2::text::jsonb/);
+
+  // geçersiz tanım: hiçbir RPC çağrılmaz
+  const before = calls2.length;
+  const refused = await handler(call(`/me/prompts/${ID_A}`, "PATCH", { expectedUpdatedAt: STAMP, changes: { promptText: "x {a}", variables: [{ name: "a", type: "select", options: ["only"] }] } }));
+  assert.equal(refused.status, 400);
+  assert.equal(calls2.length, before);
+});
+
+test("PATCH prompt: only variables → only the sync RPC (with the caller's expected time); only text → the sync still runs so new tokens get a variable; other kinds never sync", async () => {
+  const seen: string[] = [];
+  const { db } = fakeDb(WRITE, (sql) => {
+    if (sql.includes("api_me_update_draft")) { seen.push("update"); return [{ result: { ok: true, id: ID_A, changed: ["title"], warnings: [], updatedAt: STAMP } }]; }
+    if (sql.includes("api_me_sync_draft_variables")) { seen.push("sync"); return [{ result: { ok: true, id: ID_A, variables: [], autoDefined: [], skipped: [], updatedAt: STAMP } }]; }
+    return [];
+  });
+  const handler = handlerWith(db);
+  assert.equal((await handler(call(`/me/prompts/${ID_A}`, "PATCH", { expectedUpdatedAt: STAMP, changes: { variables: [] } }))).status, 200);
+  assert.deepEqual(seen.splice(0), ["sync"]);
+  assert.equal((await handler(call(`/me/prompts/${ID_A}`, "PATCH", { expectedUpdatedAt: STAMP, changes: { promptText: "new {tok}" } }))).status, 200);
+  assert.deepEqual(seen.splice(0), ["update", "sync"]);
+  assert.equal((await handler(call(`/me/prompts/${ID_A}`, "PATCH", { expectedUpdatedAt: STAMP, changes: { title: "only title" } }))).status, 200);
+  assert.deepEqual(seen.splice(0), ["update"]);
+  await handler(call(`/me/presets/${ID_A}`, "PATCH", { expectedUpdatedAt: STAMP, changes: { title: "x" } }));
+  assert.deepEqual(seen.splice(0), ["update"]);
+});
+
+test("PATCH prompt variables: a conflict from the sync RPC is 409 and a refused definition is 422", async () => {
+  for (const [outcome, status] of [[{ ok: false, code: "conflict", currentUpdatedAt: STAMP }, 409], [{ ok: false, code: "invalid_variable", field: "variables" }, 422], [{ ok: false, code: "not_draft" }, 422]] as const) {
+    const { db } = fakeDb(WRITE, (sql) => (sql.includes("api_me_sync_draft_variables") ? [{ result: outcome }] : []));
+    const response = await handlerWith(db)(call(`/me/prompts/${ID_A}`, "PATCH", { expectedUpdatedAt: STAMP, changes: { variables: [{ name: "a" }] } }));
+    assert.equal(response.status, status, JSON.stringify(outcome));
+  }
+});
+
 test("PATCH maps the database refusals: conflict → 409 (with the current time), not_draft/validation → 422, unknown field → 400, missing token → 400", async () => {
   const outcomes: Record<string, Record<string, unknown>> = {
     conflict: { ok: false, code: "conflict", currentUpdatedAt: "2026-11-02T11:00:00.000Z" },

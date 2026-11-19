@@ -112,6 +112,10 @@ export interface VariableDraft extends Partial<PromptVariableSpec> {
  * prompt editor, whether or not the variable list actually changed.
  */
 export async function replaceVariablesForPrompt(promptId: string, drafts: VariableDraft[]): Promise<PromptVariable[]> {
+  // Eski satırları sil-sonra-ekle arasında kaybetmemek için önce oku: ekleme başarısız olursa geri yüklenir (docs/history/439-*).
+  // Okuma başarısızsa hiçbir şey silinmez.
+  const { data: previousRows, error: readError } = await supabase.from("prompt_variables").select("*").eq("prompt_id", promptId);
+  if (readError) throw new Error(readError.message);
   const { error: deleteError } = await supabase.from("prompt_variables").delete().eq("prompt_id", promptId);
   if (deleteError) throw new Error(deleteError.message);
   if (drafts.length === 0) return [];
@@ -144,6 +148,13 @@ export async function replaceVariablesForPrompt(promptId: string, drafts: Variab
       })),
     )
     .select(anyTyped ? VARIABLE_SELECT : LEGACY_VARIABLE_SELECT);
-  if (insertError || !data) throw new Error(insertError?.message ?? translateForRuntime("variable.saveFailed"));
+  if (insertError || !data) {
+    // En iyi çaba: yazar eski tanımlarını kaybetmesin.
+    if (previousRows && previousRows.length > 0) {
+      const { error: restoreError } = await supabase.from("prompt_variables").insert(previousRows);
+      if (restoreError) console.error("replaceVariablesForPrompt: restore", restoreError);
+    }
+    throw new Error(insertError?.message ?? translateForRuntime("variable.saveFailed"));
+  }
   return (data as unknown as PromptVariableRow[]).map(mapVariableRow);
 }
