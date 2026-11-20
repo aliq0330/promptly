@@ -1,5 +1,5 @@
 /**
- * Oluşturma ekranının adımlı düzeni (docs/history/445-*) — bölüm listesi, adım kartları, hazır olma göstergesi, alt eylem çubuğu,
+ * Oluşturma ekranının adımlı düzeni (docs/history/446-*) — bölüm listesi, adım kartları, hazır olma göstergesi, alt eylem çubuğu,
  * önizleme penceresi, "Paylaşmadan önce" listesi; İstek/Ayar paketi/Topluluk/Taslaklar ekranlarının yeni metinleri. `translations.ts` açar.
  */
 export const composeStudioTranslations = {

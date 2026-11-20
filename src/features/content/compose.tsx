@@ -31,7 +31,7 @@ import {
 } from "./compose-steps";
 
 /**
- * Oluşturma ekranı kabuğu (docs/history/216-*, 244 "tek sayfa form", 445 "Creator Studio"): açıkken üst menü, kenar çubuğu ve alt menü kalkar
+ * Oluşturma ekranı kabuğu (docs/history/216-*, 244 "tek sayfa form", 446 "Creator Studio"): açıkken üst menü, kenar çubuğu ve alt menü kalkar
  * (`html[data-compose-open]` → `[data-app-chrome]` yok), yerine yapışkan üst çubuk: ✕ · başlık (+ taslaklar) · durum · "Taslak" · "Paylaş".
  * "Paylaş" formun kendi yayın bölümünü (`PublishPanel`) çalıştırır; eksik varken soluktur ama basılabilir (eksikleri gösterir).
  *  - `steps` verilirse ADIMLI düzen (`compose-steps.tsx`): `md`+ solda bölüm listesi, `lg`+ sağda canlı önizleme + "Paylaşmadan önce"

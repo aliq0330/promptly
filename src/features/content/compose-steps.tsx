@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import type { IconComponent } from "@/components/icons/icon";
 
 /*
- * Oluşturma ekranının adımlı düzeni (docs/history/445-*; mockup "Creator Studio"): form bölümleri ADIM'dır. Masaüstünde solda bölüm
+ * Oluşturma ekranının adımlı düzeni (docs/history/446-*; mockup "Creator Studio"): form bölümleri ADIM'dır. Masaüstünde solda bölüm
  * listesi + ortada akordeon + sağda canlı önizleme, tablette solda bölüm listesi + yalnız seçili adım (önceki/sonraki), telefonda akordeon
  * + üstte ilerleme çizgisi + altta sabit eylem çubuğu. Bir adımın içeriği kapalıyken de BAĞLI kalır (`hidden`): alan durumu, dosya
  * seçimleri, düzenleyici kaybolmaz. Eksik alana gitmek `revealComposeField(id)` ile olur: alanın adımı açılır, sonra alana odaklanılır.

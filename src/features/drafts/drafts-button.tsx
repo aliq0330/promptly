@@ -57,7 +57,7 @@ const MISSING_KEY: Record<DraftMissing, TranslationKey> = {
  * drafts, so a list never mixes types. A draft is continued through that
  * page's existing `?edit=<id>` mode; nothing here edits content.
  *
- * Kartlar "Taslaklar · A" düzenindedir (docs/history/445-*): küçük resim (ilk görsel ya da kapak; yoksa metnin ilk satırları), tür, değişken /
+ * Kartlar "Taslaklar · A" düzenindedir (docs/history/446-*): küçük resim (ilk görsel ya da kapak; yoksa metnin ilk satırları), tür, değişken /
  * adım sayısı, son düzenleme, tek satırlık durum ("Paylaşmaya hazır" ya da eksikler), "Devam et" ve ⋯ menüsündeki Sil (onay kartın içinde
  * satır olarak çıkar). Ayrıntılar yalnız GÖRÜNEN kartlar için sorulur (`loadDetails`).
  */

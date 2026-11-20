@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import type { Preset, Prompt } from "@/types";
 
 /**
- * Ayar paketi formunun sağ sütunu (docs/history/445-*): "Bir promptla dene" — bir prompt seçilir (Studio'nun seçicisi, uyuma göre
+ * Ayar paketi formunun sağ sütunu (docs/history/446-*): "Bir promptla dene" — bir prompt seçilir (Studio'nun seçicisi, uyuma göre
  * sıralı), paketin o anki parametreleri Studio'nun birleştirme kuralıyla (`composePromptParts`) promptun sonuna eklenir; paketten gelen
  * parçalar turuncu. Altında uyum (`presetFit`) ve promptun aracında kapanan alanlar. Hiçbir şey kaydedilmez, model çağrılmaz.
  */

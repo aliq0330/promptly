@@ -34,7 +34,7 @@ import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import type { ContentVisibility, PromptContentType, PromptRequest } from "@/types";
 import { MentionTextarea } from "@/features/mentions/mention-field";
 
-/** Yön alanının hızlı satırları (docs/history/445-*): dokununca "Stil: " gibi bir satır eklenir. */
+/** Yön alanının hızlı satırları (docs/history/446-*): dokununca "Stil: " gibi bir satır eklenir. */
 const DIRECTION_CHIPS: TranslationKey[] = ["cs.request.chipStyle", "cs.request.chipColor", "cs.request.chipComposition", "cs.request.chipAvoid"];
 /** İsteğin referans görseli sınırı (eskiden de 6'ydı: `MultiImagePicker` varsayılanı). */
 const REFERENCE_MAX = 6;

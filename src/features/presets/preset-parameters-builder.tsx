@@ -46,7 +46,7 @@ export function PresetParametersBuilder({
   fields: PresetField[];
   selection: PresetSelection;
   onChange: (fields: PresetField[], selection: PresetSelection) => void;
-  /** Ayar paketi formunun büyük "Parametreler" kartının içinde (docs/history/445-*): başlık/ipucu kartın kendisinde, burada yalnız "Parametre ekle" + liste. */
+  /** Ayar paketi formunun büyük "Parametreler" kartının içinde (docs/history/446-*): başlık/ipucu kartın kendisinde, burada yalnız "Parametre ekle" + liste. */
   embedded?: boolean;
 }) {
   const { t, language } = useTranslation();

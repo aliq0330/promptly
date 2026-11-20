@@ -14,12 +14,20 @@ const SIZE_CLASSES: Record<"sm" | "md", string> = {
   md: "h-10 px-4 text-small gap-2",
 };
 
+/**
+ * `tone="art"` (Odak's byline over a picture): a small, see-through outline pill in light ink — the same shape for "Takip Et" and "Takip Ediliyor".
+ * Deliberately smaller than a normal button, so it is flagged `data-small-target` and grows its touch area with `tap-area`.
+ */
+const ART_CLASS =
+  "tap-area inline-flex h-7 items-center justify-center gap-1 rounded-full border border-on-art-faint bg-transparent px-2.5 text-caption font-semibold text-on-art transition-colors duration-200 hover:bg-art-chip focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-art disabled:opacity-60";
+
 interface FollowButtonViewProps {
   isFollowing: boolean;
   toggle: () => void;
   canFollow: boolean;
   loading: boolean;
   size?: "sm" | "md";
+  tone?: "default" | "art";
   className?: string;
 }
 
@@ -32,7 +40,7 @@ interface FollowButtonViewProps {
  * optimistic state for a real target, so clicking the button wouldn't
  * move the count next to it until the whole profile reloaded.
  */
-export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size = "sm", className }: FollowButtonViewProps) {
+export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size = "sm", tone = "default", className }: FollowButtonViewProps) {
   const { t } = useTranslation();
   const { requireAuth } = useAuthPrompt();
   // The viewer's own follow/unfollow settles with one small pop (a remount restarts it). Counted on the
@@ -49,13 +57,37 @@ export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size
         }}
         aria-haspopup="dialog"
         title={t("common.loginToFollowTitle")}
+        data-small-target={tone === "art" ? "" : undefined}
         className={cn(
-          "inline-flex items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover",
-          SIZE_CLASSES[size],
+          tone === "art"
+            ? ART_CLASS
+            : cn("inline-flex items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover", SIZE_CLASSES[size]),
           className,
         )}
       >
         {t("common.follow")}
+      </button>
+    );
+  }
+
+  if (tone === "art") {
+    return (
+      <button
+        key={pressSeq}
+        type="button"
+        data-small-target=""
+        aria-pressed={isFollowing}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setPressSeq((n) => n + 1);
+          toggle();
+        }}
+        disabled={loading}
+        className={cn(ART_CLASS, pressSeq > 0 && "animate-state-pop", className)}
+      >
+        <FollowIcon done={isFollowing} size={12} />
+        {isFollowing ? t("common.unfollow") : t("common.follow")}
       </button>
     );
   }
@@ -83,12 +115,14 @@ export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size
 export function FollowButton({
   user,
   size = "sm",
+  tone = "default",
   className,
 }: {
   user: UserProfile;
   size?: "sm" | "md";
+  tone?: "default" | "art";
   className?: string;
 }) {
   const state = useFollowState(user);
-  return <FollowButtonView {...state} size={size} className={className} />;
+  return <FollowButtonView {...state} size={size} tone={tone} className={className} />;
 }

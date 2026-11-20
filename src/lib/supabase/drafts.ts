@@ -46,7 +46,7 @@ export async function fetchOwnDrafts(kind: DraftKind, userId: string): Promise<D
   }
 }
 
-/** Taslak kartının ayrıntısı (docs/history/445-*, "Taslaklar · A"): küçük resim, tür, metin önizlemesi, sayılar ve eksikler. */
+/** Taslak kartının ayrıntısı (docs/history/446-*, "Taslaklar · A"): küçük resim, tür, metin önizlemesi, sayılar ve eksikler. */
 export interface DraftDetail {
   thumbnail: string | null;
   contentType: PromptContentType | null;

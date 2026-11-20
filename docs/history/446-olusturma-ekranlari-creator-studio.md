@@ -1,4 +1,4 @@
-# 445 — Oluşturma ekranları: "Creator Studio" düzeni + görselli taslak kartları
+# 446 — Oluşturma ekranları: "Creator Studio" düzeni + görselli taslak kartları
 
 Kullanıcı oluşturma ekranlarının PC/tablet/telefon incelemesinden sonra bir tasarım tuvalinde (Artifact, "Promptly Oluşturma Ekranları — Öneri Mockup") önerilen düzeni onayladı ve uygulanmasını istedi; taslak penceresi için üç seçenekten **A · görselli liste**yi seçti.
 

@@ -41,7 +41,7 @@ async function openForm(page, text = TEXT) {
   await page.goto(`${BASE}/create?mode=prompt`);
   await page.locator("[data-compose-body]").waitFor();
   await page.waitForTimeout(300);
-  // Adımlı form (docs/history/445-*): prompt metni "Prompt" adımındadır, önce o adım açılır.
+  // Adımlı form (docs/history/446-*): prompt metni "Prompt" adımındadır, önce o adım açılır.
   await page.locator('[data-compose-step-summary="prompt"]:visible, [data-compose-nav-item="prompt"]:visible').first().click();
   await page.locator("#prompt-text").fill(text);
 }

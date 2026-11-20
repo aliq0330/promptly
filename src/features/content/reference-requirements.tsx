@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckRow } from "@/components/ui/check-row";
 import { Music } from "@/components/icons/music";
 import { Video } from "@/components/icons/video";
 import { ImageIcon } from "@/components/icons/image-icon";
@@ -71,24 +72,12 @@ export function ReferenceRequirementsField({
   const kinds = applicableReferenceKinds(contentType);
   if (kinds.length === 0) return null;
   return (
-    <fieldset className="space-y-2 rounded-lg card-soft p-3">
+    <fieldset className="space-y-2">
       <legend className="sr-only">{t("prompt.requiresReferenceTitle")}</legend>
       <p className="text-caption text-text-muted">{t("prompt.requiresReferenceHint")}</p>
-      {kinds.map((kind) => {
-        const Icon = ICONS[kind];
-        return (
-          <label key={kind} className="flex cursor-pointer items-center gap-3 py-0.5">
-            <input
-              type="checkbox"
-              checked={value[kind]}
-              onChange={(event) => onChange({ ...value, [kind]: event.target.checked })}
-              className="size-4 shrink-0"
-            />
-            <Icon size={16} aria-hidden className="shrink-0 text-text-muted" />
-            <span className="min-w-0 text-small font-medium text-text">{t(LABEL_KEYS[kind])}</span>
-          </label>
-        );
-      })}
+      {kinds.map((kind) => (
+        <CheckRow key={kind} checked={value[kind]} onChange={(checked) => onChange({ ...value, [kind]: checked })} icon={ICONS[kind]} label={t(LABEL_KEYS[kind])} />
+      ))}
     </fieldset>
   );
 }

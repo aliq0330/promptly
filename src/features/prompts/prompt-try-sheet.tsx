@@ -90,8 +90,11 @@ export function PromptTryButton({ prompt, text, className }: { prompt: Prompt; t
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={className}>
-        <SlidersHorizontal size={16} aria-hidden className="text-primary" />
-        {t("promptTry.title")}
+        {/* Simge + yazı TEK grup: bir `justify-between` satırında (Odak kartı) ayrı çocuk olarak üçe bölünüp yazıyı ortaya iterdi. */}
+        <span className="inline-flex min-w-0 items-center gap-2">
+          <SlidersHorizontal size={16} aria-hidden className="shrink-0 text-primary" />
+          <span className="min-w-0 truncate">{t("promptTry.title")}</span>
+        </span>
         {matches > 0 && (
           <span data-fit-count aria-label={t("promptTry.countAria", { count: matches })} className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-caption font-semibold text-primary-foreground">
             {matches}

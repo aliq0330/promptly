@@ -46,7 +46,7 @@ const postPage = (id, extra = "") => `${BASE}/communities/post/local?id=${id}${e
 const own = (db) => db.ownContent.prompt.push({ id: PROMPT_ID, title: "Açık Prompt", visibility: "public" }, { id: PRIVATE_ID, title: "Özel Prompt", visibility: "private" });
 
 // 1
-await scenario("1. 'Gönderi oluştur' tek ekran (docs/history/445-*): dört tür karosu → normal oluşturma ekranı ?community=; altında var olan içeriklerden en yeniler + 'Tümünü gör' tam seçici", async ({ page }) => {
+await scenario("1. 'Gönderi oluştur' tek ekran (docs/history/446-*): dört tür karosu → normal oluşturma ekranı ?community=; altında var olan içeriklerden en yeniler + 'Tümünü gör' tam seçici", async ({ page }) => {
   await open(page, C1);
   await page.getByRole("button", { name: "Gönderi oluştur" }).click();
   const d = dlg(page);

@@ -875,7 +875,7 @@ export async function fetchOwnShareableContentWindow(userId: string, type: Commu
 }
 
 /**
- * "Gönderi oluştur" penceresinin "var olan içeriğini paylaş" listesi (docs/history/445-*): dört içerik türünden en yeni paylaşılabilir
+ * "Gönderi oluştur" penceresinin "var olan içeriğini paylaş" listesi (docs/history/446-*): dört içerik türünden en yeni paylaşılabilir
  * olanlar TEK listede (tür başına `limit`, sonra tarihe göre birleşip `limit`'e kesilir). Süzgeç `fetchOwnShareableContentWindow` ile
  * aynıdır (yayında + herkese açık + topluluğa/ekibe özgü değil). Eski içerik, Space ve Skill tam seçicide (`ShareToCommunityModal`).
  */

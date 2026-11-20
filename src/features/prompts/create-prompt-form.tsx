@@ -794,7 +794,7 @@ export function CreatePromptForm() {
 
   const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
 
-  // Adımlı düzen (docs/history/445-*): her adımın durumu ve kapalıyken görünen tek satırlık özeti formun o anki değerlerinden.
+  // Adımlı düzen (docs/history/446-*): her adımın durumu ve kapalıyken görünen tek satırlık özeti formun o anki değerlerinden.
   const typeLabel = t(typeMeta.labelKey);
   const hasOutput = contentType === "image" ? images.length > 0 : Boolean(outputFile);
   const detailParts = [toolLabel, categoryPath, tagPicker.accepted.length > 0 ? t("cs.tagCount", { count: tagPicker.accepted.length }) : ""].filter(Boolean);

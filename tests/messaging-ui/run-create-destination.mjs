@@ -57,7 +57,7 @@ const openStep = async (page, id) => {
   await page.locator(`[data-compose-step-summary="${id}"]`).click();
   await page.locator(`[data-compose-step="${id}"][data-step-active]`).waitFor();
 };
-/** Adımlı formlarda (Prompt, docs/history/445-*) "Kim görsün?" bir adımdır: önce açılır. */
+/** Adımlı formlarda (Prompt, docs/history/446-*) "Kim görsün?" bir adımdır: önce açılır. */
 const openSheet = async (page) => { await openStep(page, "publish"); await sheet(page).waitFor(); await sheet(page).scrollIntoViewIfNeeded(); await page.waitForTimeout(250); };
 const openPicker = async (page) => { await option(page, "community").click(); await page.getByRole("listbox").waitFor(); await page.waitForTimeout(350); };
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
@@ -284,7 +284,7 @@ await scenario("13. Mobil (390px): tek sütun form — önce 'Ne arıyorsun?', a
   assert.equal(await page.locator("[data-compose-toolbar]").count(), 0, "no tool row any more: every field is in the form");
   const type = await page.locator("[data-compose-type] [data-taxonomy-type]").first().boundingBox();
   const titleBox = await page.locator("#request-title").boundingBox();
-  assert.ok(type && titleBox && titleBox.y < type.y, "the request starts with what you are looking for (docs/history/445-*)");
+  assert.ok(type && titleBox && titleBox.y < type.y, "the request starts with what you are looking for (docs/history/446-*)");
   await page.getByText("Ne arıyorsun?", { exact: true }).waitFor();
   assert.ok(titleBox.height >= 44 && titleBox.width >= 390 - 2 * 16 - 2, `title field is a full-width touch target (${JSON.stringify(titleBox)})`);
   assert.equal(await page.locator("[data-compose-type] [data-taxonomy-type]").evaluateAll((els) => els.every((el) => el.getBoundingClientRect().height >= 44)), true, "type radios >= 44px");
@@ -329,7 +329,7 @@ await scenario("14. İngilizce: form, Kim görsün? ve ✕ penceresi çevrilmiş
   await page.getByText("Save as a draft?").waitFor();
 }, { lang: "en" });
 
-await scenario("15. Prompt formu (adımlı, docs/history/445-*): Temel bilgiler (Tür · Başlık · Açıklama) → Prompt (metin + Değişken + Ayar paketi) → Çıktı görselleri → Ayrıntılar (Araç/Kategori/Etiketler/DNA/Referans) → Kim görsün?", async ({ page }) => {
+await scenario("15. Prompt formu (adımlı, docs/history/446-*): Temel bilgiler (Tür · Başlık · Açıklama) → Prompt (metin + Değişken + Ayar paketi) → Çıktı görselleri → Ayrıntılar (Araç/Kategori/Etiketler/DNA/Referans) → Kim görsün?", async ({ page }) => {
   await openForm(page, "/create?mode=prompt");
   await page.locator("[data-compose-body]").waitFor();
   assert.equal(await page.locator("[data-compose-toolbar]").count(), 0);

@@ -33,7 +33,7 @@ const ICON_OF: Record<NewType, IconComponent> = { prompt: SquareTerminal, reques
 type Recent = ShareableContent & { createdAt: string };
 
 /**
- * "Gönderi oluştur" (docs/history/445-*; 178'in iki adımlı seçiminin yerini alır): TEK ekran —
+ * "Gönderi oluştur" (docs/history/446-*; 178'in iki adımlı seçiminin yerini alır): TEK ekran —
  *   1) Yeni oluştur: dört tür karosu → NORMAL oluşturma ekranı topluluk bağlamıyla (`?community=`); yayınlanınca içerik bu toplulukta
  *      kendi gönderisi olur (yerel gönderi).
  *   2) Var olan içeriğini paylaş: kendi yayında + herkese açık içeriklerinden en yeniler (arama ile) → "Seç" not penceresini açar

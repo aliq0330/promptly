@@ -1,5 +1,5 @@
 /**
- * Taslak kartının durum satırı (docs/history/445-*, "Taslaklar · A"): taslağı açmadan neyin eksik olduğu. Saf (React/Supabase yok) ve
+ * Taslak kartının durum satırı (docs/history/446-*, "Taslaklar · A"): taslağı açmadan neyin eksik olduğu. Saf (React/Supabase yok) ve
  * birim testli; kurallar oluşturma formlarının yayın denetimiyle AYNIDIR (Prompt: başlık + açıklama + prompt metni; İstek: başlık +
  * açıklama; Workflow: başlık + en az bir adım; Ayar paketi: en az 3 karakter başlık + en az bir parametre; Skill: başlık).
  */
