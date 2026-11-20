@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { findCategory, findSubcategory, taxonomyLabel, type ContentTypeId } from "@/lib/content-taxonomy";
-import { categoryHref, cn } from "@/lib/utils";
+import { ChevronRight } from "@/components/icons/chevron-right";
+import { DetailMetaBlock } from "@/features/content/detail-meta-card";
+import { categoryHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -20,23 +22,27 @@ export function TaxonomyLinks({
   subcategory?: string | null;
   className?: string;
 }) {
-  const { language } = useTranslation();
+  const { t, language } = useTranslation();
   const cat = findCategory(contentType, category);
   if (!cat) return null;
   const sub = findSubcategory(contentType, cat.id, subcategory);
   const hrefFor = (subId?: string) => categoryHref(contentType, cat.id, subId);
-  const chip =
-    "inline-flex h-7 items-center rounded-full border border-primary/25 bg-primary-soft px-2.5 text-caption font-medium text-primary transition-colors hover:border-primary/50";
+  const link = "font-medium text-text transition-colors hover:text-primary";
   return (
-    <div className={cn("flex flex-wrap gap-1.5", className)}>
-      <Link href={hrefFor()} className={chip}>
-        {taxonomyLabel(cat.labelKey, language)}
-      </Link>
-      {sub && (
-        <Link href={hrefFor(sub.id)} className={chip}>
-          {taxonomyLabel(sub.labelKey, language)}
+    <DetailMetaBlock label={t("taxonomy.categoryLabel")} className={className}>
+      <nav data-taxonomy-path className="flex flex-wrap items-center gap-x-1 gap-y-1 text-label">
+        <Link href={hrefFor()} className={link}>
+          {taxonomyLabel(cat.labelKey, language)}
         </Link>
-      )}
-    </div>
+        {sub && (
+          <>
+            <ChevronRight size={12} className="text-text-muted" aria-hidden />
+            <Link href={hrefFor(sub.id)} className={link}>
+              {taxonomyLabel(sub.labelKey, language)}
+            </Link>
+          </>
+        )}
+      </nav>
+    </DetailMetaBlock>
   );
 }

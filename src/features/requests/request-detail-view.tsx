@@ -284,8 +284,8 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               quoteCount={live.quoteCount}
               footer={<RelationMapRow kind="request" id={live.id} />}
             >
-              {live.contentType && <TaxonomyLinks className="contents" contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
-              <DetailTags className="contents" tags={live.tags} />
+              {live.contentType && <TaxonomyLinks contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
+              <DetailTags tags={live.tags} />
             </DetailMetaCard>
           </AsideSection>
           <ContributorsList answers={answers} />

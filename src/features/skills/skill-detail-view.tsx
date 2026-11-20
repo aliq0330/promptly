@@ -14,7 +14,7 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { AsideSection, DetailActionBar, DetailArtPlaceholder, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
-import { DetailMetaCard } from "@/features/content/detail-meta-card";
+import { DetailMetaBlock, DetailMetaCard } from "@/features/content/detail-meta-card";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { MenuItem } from "@/components/ui/dropdown-menu";
 import { Copy } from "@/components/icons/copy";
@@ -179,8 +179,12 @@ export function SkillDetailView({ skillId }: { skillId?: string } = {}) {
           quoteCount={skill.quoteCount ?? 0}
           footer={published ? <RelationMapRow kind="skill" id={skill.id} /> : undefined}
         >
-          {category && <span className="inline-flex items-center rounded-full py-1 border border-border-soft bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{category}</span>}
-          <DetailTags className="contents" tags={tags.map((tag) => ({ ...tag }) as Tag)} />
+          {category && (
+            <DetailMetaBlock label={t("taxonomy.categoryLabel")}>
+              <p className="text-label font-medium text-text">{category}</p>
+            </DetailMetaBlock>
+          )}
+          <DetailTags tags={tags.map((tag) => ({ ...tag }) as Tag)} />
         </DetailMetaCard>
         {/* "Skill bilgisi" kartı Hakkında'ya katıldı (docs/history/409-*): prompt sayfasında ikinci bir bilgi kartı yoktur. */}
         <dl className="divide-y divide-border-soft border-t border-border-soft text-small" data-skill-info="">

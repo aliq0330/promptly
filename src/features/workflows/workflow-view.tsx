@@ -130,7 +130,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
     <DetailAside>
       <AsideSection id="detail-about-title" title={t("profile.tabAbout")} bare>
         <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={workflow.tools} hasChips={workflow.tags.length > 0} quoteCount={workflow.quoteCount} footer={<RelationMapRow kind="workflow" id={workflow.id} />}>
-          <DetailTags className="contents" tags={workflow.tags} />
+          <DetailTags tags={workflow.tags} />
         </DetailMetaCard>
       </AsideSection>
       <AsideSection id="workflow-info-title" title={t("workflow.sidebarInfo")}>
