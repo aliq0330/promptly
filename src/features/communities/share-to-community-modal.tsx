@@ -37,8 +37,6 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
   const loadError = list.failed && items !== null && items.length === 0;
   const [selected, setSelected] = useState<{ id: string; title: string } | null>(null);
   const [noteOpen, setNoteOpen] = useState(false);
-  const [note, setNote] = useState("");
-  const { busy, error, run } = useAsyncAction();
 
   // Tür değişince seçim ve arama sıfırlanır.
   function changeType(next: CommunityPostType) {
@@ -48,18 +46,9 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
     setSearch("");
   }
 
-  async function submit() {
-    if (!selected) return;
-    const ok = await run(async () => {
-      await shareToCommunity(communityId, type, selected.id, note);
-      return true;
-    });
-    if (ok) await onShared();
-  }
-
   return (
     <>
-      <Modal onClose={busy ? () => undefined : onClose} labelledBy="share-community-title">
+      <Modal onClose={onClose} labelledBy="share-community-title">
         <DialogShell className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-lg card-flat shadow-pop">
           <div className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-5">
             <div className="min-w-0 space-y-1">
@@ -127,45 +116,81 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
       </Modal>
 
       {selected && noteOpen && (
-        <Modal onClose={busy ? () => undefined : () => setNoteOpen(false)} labelledBy="share-note-title" overLayers>
-          <DialogShell data-share-note-dialog="" className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-lg card-flat shadow-pop">
-            <div className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-5">
-              <div className="min-w-0">
-                <h2 id="share-note-title" className="text-body font-semibold text-text">
-                  {t("communities.feed.shareTitle")}
-                </h2>
-                <p className="truncate text-small text-text-muted">{selected.title}</p>
-              </div>
-              <button type="button" onClick={() => setNoteOpen(false)} disabled={busy} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
-                <X size={20} aria-hidden />
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
-              <div>
-                <label htmlFor="share-note" className={fieldLabelClassName}>
-                  {t("communities.feed.noteLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
-                </label>
-                <textarea id="share-note" value={note} onChange={(event) => setNote(event.target.value)} rows={3} maxLength={COMMUNITY_NOTE_MAX} disabled={busy} placeholder={t("communities.feed.notePlaceholder")} className={`${fieldControlClassName} resize-none py-2.5`} />
-                <p className="mt-1 text-caption text-text-muted">{`${[...note.trim()].length}/${COMMUNITY_NOTE_MAX}`} · {t("communities.feed.visibilityNote")}</p>
-              </div>
-              {error && (
-                <InlineAlert>
-                  {error}
-                </InlineAlert>
-              )}
-            </div>
-            <div data-dialog-footer="" className="flex shrink-0 justify-end gap-2 border-t border-border-soft px-5 py-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => setNoteOpen(false)} disabled={busy}>
-                {t("common.cancel")}
-              </Button>
-              <Button type="button" size="sm" onClick={() => void submit()} disabled={busy}>
-                {busy ? <Loader2 size={16} className="animate-spin" /> : null}
-                {t("communities.feed.shareSubmit")}
-              </Button>
-            </div>
-          </DialogShell>
-        </Modal>
+        <ShareNoteDialog
+          communityId={communityId}
+          type={type}
+          item={selected}
+          onClose={() => setNoteOpen(false)}
+          onShared={onShared}
+        />
       )}
     </>
+  );
+}
+
+/**
+ * Seçilen içeriği not ile toplulukta alıntılama penceresi (listenin ÜSTÜNDE ikinci pencere, docs/history/338-*). Tam seçici
+ * (`ShareToCommunityModal`) ve "Gönderi oluştur" penceresinin kısa listesi aynı pencereyi kullanır.
+ */
+export function ShareNoteDialog({
+  communityId,
+  type,
+  item,
+  onClose,
+  onShared,
+}: {
+  communityId: string;
+  type: CommunityPostType;
+  item: { id: string; title: string };
+  onClose: () => void;
+  onShared: () => void | Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const [note, setNote] = useState("");
+  const { busy, error, run } = useAsyncAction();
+
+  async function submit() {
+    const ok = await run(async () => {
+      await shareToCommunity(communityId, type, item.id, note);
+      return true;
+    });
+    if (ok) await onShared();
+  }
+
+  return (
+    <Modal onClose={busy ? () => undefined : onClose} labelledBy="share-note-title" overLayers>
+      <DialogShell data-share-note-dialog="" className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-lg card-flat shadow-pop">
+        <div className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-5">
+          <div className="min-w-0">
+            <h2 id="share-note-title" className="text-body font-semibold text-text">
+              {t("communities.feed.shareTitle")}
+            </h2>
+            <p className="truncate text-small text-text-muted">{item.title}</p>
+          </div>
+          <button type="button" onClick={onClose} disabled={busy} aria-label={t("common.close")} className={iconButtonClassName(false, "h-9 w-9 rounded-md")}>
+            <X size={20} aria-hidden />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
+          <div>
+            <label htmlFor="share-note" className={fieldLabelClassName}>
+              {t("communities.feed.noteLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
+            </label>
+            <textarea id="share-note" value={note} onChange={(event) => setNote(event.target.value)} rows={3} maxLength={COMMUNITY_NOTE_MAX} disabled={busy} placeholder={t("communities.feed.notePlaceholder")} className={`${fieldControlClassName} resize-none py-2.5`} />
+            <p className="mt-1 text-caption text-text-muted">{`${[...note.trim()].length}/${COMMUNITY_NOTE_MAX}`} · {t("communities.feed.visibilityNote")}</p>
+          </div>
+          {error && <InlineAlert>{error}</InlineAlert>}
+        </div>
+        <div data-dialog-footer="" className="flex shrink-0 justify-end gap-2 border-t border-border-soft px-5 py-3">
+          <Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={busy}>
+            {t("common.cancel")}
+          </Button>
+          <Button type="button" size="sm" onClick={() => void submit()} disabled={busy}>
+            {busy ? <Loader2 size={16} className="animate-spin" /> : null}
+            {t("communities.feed.shareSubmit")}
+          </Button>
+        </div>
+      </DialogShell>
+    </Modal>
   );
 }

@@ -13,6 +13,12 @@ import { SlidersHorizontal } from "@/components/icons/sliders-horizontal";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
 import { ComposeAudienceLine, ComposeSection, FormDisclosure, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
+import { ComposeAudienceRow, revealComposeField } from "@/features/content/compose-steps";
+import { PresetTryPanel } from "./preset-try-panel";
+import { Globe } from "@/components/icons/globe";
+import { Lock } from "@/components/icons/lock";
+import { Users } from "@/components/icons/users";
+import { cn } from "@/lib/utils";
 import { ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
 import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/features/content/publish-panel";
 import { MultiImagePicker, type MultiImageItem } from "@/features/content/multi-image-picker";
@@ -235,8 +241,8 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   };
 
   const problems: PublishProblem[] = [
-    ...(title.trim().length < 3 ? [{ key: "title", label: t("preset.errorTitle"), onFix: () => document.getElementById("preset-title")?.focus() }] : []),
-    ...(Object.keys(effectiveSelection).length === 0 ? [{ key: "fields", label: t("presetBuilder.errorNoFields") }] : []),
+    ...(title.trim().length < 3 ? [{ key: "title", label: t("preset.errorTitle"), onFix: () => revealComposeField("preset-title") }] : []),
+    ...(Object.keys(effectiveSelection).length === 0 ? [{ key: "fields", label: t("presetBuilder.errorNoFields"), onFix: () => revealComposeField("preset-parameters") }] : []),
   ];
 
   /** Tür değişince parametre katalogu da değişir: alanlar ve seçim sıfırlanır (eski davranış). */
@@ -251,6 +257,9 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   }
 
   const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
+  const resolvedFields = resolvePresetFields({ fields, selection: effectiveSelection });
+  const audienceLabel = team && !editId ? t("tf.create.destination") : communityId ? (communityName ?? t("compose.aCommunity")) : visibility === "private" ? t("publish.private") : t("publish.public");
+  const audienceIcon = communityId || (team && !editId) ? Users : visibility === "private" ? Lock : Globe;
 
   return (
     <ComposeShell
@@ -262,13 +271,14 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       publishDisabled={isSaving}
       publishDimmed={problems.length > 0}
       onSaveDraft={communityId ? undefined : () => void save(true)}
+      problems={problems}
+      phoneActionBar
+      preview={{ card: <PresetCard preset={previewPreset} /> }}
       aside={
-        <>
-          <p className="mb-2 text-caption font-semibold text-text-muted">{t("forms.livePreview")}</p>
-          <div className="pointer-events-none select-none">
-            <PresetCard preset={previewPreset} />
-          </div>
-        </>
+        <div className="space-y-5">
+          <PresetTryPanel preset={previewPreset} fields={resolvedFields} selection={effectiveSelection} />
+          <ComposeAudienceRow label={audienceLabel} icon={audienceIcon} />
+        </div>
       }
     >
       <form
@@ -280,25 +290,65 @@ export function PresetEditor({ editId }: { editId: string | null }) {
         className="min-w-0 space-y-6"
       >
         {communityId && (
-          <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => document.getElementById("compose-publish")?.scrollIntoView({ behavior: "smooth", block: "center" })} />
+          <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => revealComposeField("compose-publish")} />
         )}
 
-        <ComposeSection title={t("formSection.basics")}>
-          <FormField label={t("compose.whatMaking")} required>
+        <section className="space-y-5" data-preset-head="">
+          <div className="grid grid-cols-[96px_minmax(0,1fr)] items-start gap-4">
+            <div className="space-y-1.5">
+              <span className="block text-caption font-semibold text-text-muted">{t("cs.preset.coverLabel")}</span>
+              <MultiImagePicker max={1} items={cover} onChange={setCover} hint="" gridClassName="grid-cols-1" />
+            </div>
+            <FormField
+              label={t("cs.preset.nameLabel")}
+              htmlFor="preset-title"
+              required
+              error={titleError ? t("preset.errorTitle") : null}
+            >
+              <input
+                id="preset-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                onBlur={() => setTitleTouched(true)}
+                maxLength={120}
+                placeholder={t("preset.titlePlaceholder")}
+                aria-invalid={titleError}
+                className={cn(formTextInputClassName, "font-display text-h3 font-bold")}
+              />
+            </FormField>
+          </div>
+          <FormField label={t("cs.preset.typeLabel")} required>
             <ContentTypePicker value={contentType} onChange={(type) => changeTaxonomy({ contentType: type, category: null, subcategory: null })} />
           </FormField>
-          <FormField label={t("preset.titleLabel")} htmlFor="preset-title" required error={titleError ? t("preset.errorTitle") : null}>
-            <input
-              id="preset-title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              onBlur={() => setTitleTouched(true)}
-              maxLength={120}
-              placeholder={t("preset.titlePlaceholder")}
-              aria-invalid={titleError}
-              className={formTextInputClassName}
+        </section>
+
+        <section id="preset-parameters" className="overflow-hidden rounded-xl border border-border-strong bg-surface shadow-card" data-preset-parameters="">
+          <div className="flex flex-wrap items-center gap-3 px-4 pb-3 pt-4 sm:px-5">
+            <h2 className="font-display text-h2 font-bold text-text">{t("compose.sectionParameters")}</h2>
+            <span className="rounded-full bg-primary-soft px-3 py-0.5 text-caption font-semibold text-primary">{t("cs.preset.paramCount", { count: Object.keys(effectiveSelection).length })}</span>
+            <p className="w-full text-caption text-text-muted lg:ml-auto lg:w-auto">{t("cs.preset.paramHint")}</p>
+          </div>
+          <div className="border-t border-border-soft px-4 py-4 sm:px-5">
+            <PresetParametersBuilder
+              contentType={contentType}
+              category={category}
+              subcategory={subcategory}
+              tools={tools}
+              fields={fields}
+              selection={selection}
+              onChange={(nextFields, nextSelection) => {
+                setFields(nextFields);
+                setSelection(nextSelection);
+              }}
+              embedded
             />
-          </FormField>
+          </div>
+        </section>
+
+        <section className="space-y-3" data-preset-details="">
+          <p className="text-body font-semibold text-text">
+            {t("cs.preset.details")} <span className="font-normal text-text-muted">· {t("cs.optional")}</span>
+          </p>
           <FormField label={t("preset.descriptionLabel")} htmlFor="preset-desc" optional>
             <textarea
               id="preset-desc"
@@ -310,27 +360,6 @@ export function PresetEditor({ editId }: { editId: string | null }) {
               className={formTextareaClassName}
             />
           </FormField>
-          <FormField label={t("formSection.cover")} optional>
-            <MultiImagePicker max={1} items={cover} onChange={setCover} hint="" />
-          </FormField>
-        </ComposeSection>
-
-        <ComposeSection title={t("compose.sectionParameters")}>
-          <PresetParametersBuilder
-            contentType={contentType}
-            category={category}
-            subcategory={subcategory}
-            tools={tools}
-            fields={fields}
-            selection={selection}
-            onChange={(nextFields, nextSelection) => {
-              setFields(nextFields);
-              setSelection(nextSelection);
-            }}
-          />
-        </ComposeSection>
-
-        <ComposeSection title={t("compose.sectionDetails")}>
           <FormDisclosure id="tool" label={t("formSection.tool")} value={resolveToolRefs(tools)[0]?.label}>
             <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
           </FormDisclosure>
@@ -346,7 +375,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
             <TagPicker picker={tagPicker} />
           </FormDisclosure>
           <SuggestedTagsRow picker={tagPicker} />
-        </ComposeSection>
+        </section>
 
         <ComposeSection title={t("publish.whoSees")} id="compose-publish">
           <PublishPanel

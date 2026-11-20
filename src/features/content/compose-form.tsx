@@ -37,6 +37,7 @@ export function FormField({
   optional = false,
   hint,
   error,
+  labelClassName,
   children,
   ...rest
 }: {
@@ -46,11 +47,13 @@ export function FormField({
   optional?: boolean;
   hint?: string;
   error?: string | null;
+  /** Büyük soru etiketi (İstek'in "Ne arıyorsun?"u): varsayılan etiket sınıfının yerine geçer. */
+  labelClassName?: string;
   children: ReactNode;
 } & Omit<HTMLAttributes<HTMLDivElement>, "children">) {
   const { t } = useTranslation();
   const labelId = useId();
-  const labelClass = "text-body font-semibold text-text";
+  const labelClass = labelClassName ?? "text-body font-semibold text-text";
   // Eksik zorunlu alan: hata belirince ve her "Paylaş" denemesinde alan bir kez titrer (docs/history/335-*).
   const [shaking, setShaking] = useState(false);
   const errorRef = useRef(error);
