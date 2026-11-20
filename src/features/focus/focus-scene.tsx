@@ -67,7 +67,7 @@ function SlideByline({ author, createdAt, language, near }: { author: UserProfil
           <Link href={href} className="min-w-0 truncate text-label font-semibold text-on-art hover:underline">
             {author.displayName}
           </Link>
-          {near && user?.id !== author.id && <FollowButton user={author} size="sm" className="shrink-0" />}
+          {near && user?.id !== author.id && <FollowButton user={author} tone="art" className="shrink-0" />}
         </div>
         <p className="mt-0.5 truncate text-caption text-on-art-muted">{postMeta(author.username, createdAt, language)}</p>
       </div>
@@ -489,10 +489,10 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
       </div>
 
       {/* Phone: rail, author + title, prompt strip. */}
-      <div className={cn(HIDE_WHILE_SHEET, "absolute right-2 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] z-20 md:hidden")}>
+      <div className={cn(HIDE_WHILE_SHEET, "absolute right-2 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-20 md:hidden")}>
         <FocusFeedRail item={item} layout="reel" playable={layout === "playable" && !playableWithoutMedia} />
       </div>
-      <div className={cn(HIDE_WHILE_SHEET, "absolute bottom-[calc(8rem+env(safe-area-inset-bottom))] left-4 right-[5rem] z-20 space-y-2 md:hidden")}>
+      <div className={cn(HIDE_WHILE_SHEET, "absolute bottom-[calc(5.75rem+env(safe-area-inset-bottom))] left-4 right-[5rem] z-20 space-y-2 md:hidden")}>
         <SlideByline author={model.author} createdAt={model.createdAt} language={language} near={near} />
         <h2 id={titleId} className="line-clamp-2 break-words font-display text-h1 font-bold leading-[1.12] text-on-art">
           {model.title}

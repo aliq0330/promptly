@@ -423,6 +423,13 @@ await scenario("8. Beğeni gerçek istekle, hata olursa geri alınır", async ({
   await page.waitForTimeout(500);
   assert.ok(db.calls.some((c) => c.table === "prompt_likes" && c.body.prompt_id === pid(1)));
   assert.match(await likeBtn(slide(page, 0)).textContent(), /12/);
+  // The card's own round like button (beside Kopyala) shows the chosen emoji — only its COUNT is screen-reader-only (it was an empty circle).
+  await openCard(page, 0);
+  const barEmoji = likeBtn(sheetEl(page)).locator("img");
+  assert.equal(await barEmoji.isVisible(), true, "the chosen emoji is visible in the card's like button");
+  assert.ok((await barEmoji.boundingBox()).width >= 16, "…and it is a real size, not clipped to 1px");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(500);
   db.failLike = true;
   await jump(page, 1);
   await likeBtn(slide(page, 1)).click();
@@ -529,6 +536,28 @@ await scenario("14. Telefon: ekranı kaplar, alt/üst menü DOM'da yok; ray + ya
   assert.ok(rail.x + rail.width <= 390 && rail.y + rail.height <= 844 && rail.x > 300, `the rail sits on the right edge (${rail.x})`);
   const peek = await slide(page, 0).locator("[data-focus-peek]").boundingBox();
   assert.ok(Math.abs(peek.y + peek.height - 844) < 1 && peek.height > 70 && peek.height < 130, `the strip sits at the screen's foot (${JSON.stringify(peek)})`);
+  // The rail: the four icons share ONE vertical axis (the bookmark used to sit ~6px left of the others) and Paylaş carries no text.
+  const railButtons = likeBtn(slide(page, 0)).locator("xpath=..").locator("button");
+  assert.equal(await railButtons.count(), 4, "Beğeni · Yorum · Kaydet · Paylaş");
+  const centers = await railButtons.evaluateAll((buttons) =>
+    buttons.map((b) => {
+      const r = (b.firstElementChild ?? b).getBoundingClientRect();
+      return r.x + r.width / 2;
+    }),
+  );
+  assert.ok(Math.max(...centers) - Math.min(...centers) <= 1, `rail icons share one axis (${centers.join(", ")})`);
+  assert.equal((await railButtons.last().innerText()).trim(), "", "Paylaş has no visible text");
+  // The author/title block ends just above the prompt strip (no 50px hole) and clears it.
+  const textBlock = await slide(page, 0).locator("h2").locator("xpath=..").boundingBox();
+  const gap = peek.y - (textBlock.y + textBlock.height);
+  assert.ok(gap >= 4 && gap <= 32, `title block sits close above the strip (gap ${gap})`);
+  // "Takip Et": a small see-through outline pill (not a filled primary button).
+  const follow = slide(page, 0).getByRole("button", { name: /^(Takip Et|Takip Ediliyor)$/ }).first();
+  if (await follow.count()) {
+    const fb = await follow.boundingBox();
+    assert.ok(fb.height <= 30, `the byline follow button is small (${fb.height}px)`);
+    assert.equal(await follow.evaluate((el) => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0)", "…and transparent");
+  }
   assert.equal(await stage(page).locator("[data-focus-strip]").count(), 0, "no thumbnail strip any more");
   assert.equal(await stage(page).locator("[data-focus-panel]").count(), 0, "no side panel on a phone");
   await shot(page, "14-focus-phone");

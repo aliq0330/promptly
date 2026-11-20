@@ -8,6 +8,7 @@ import { Settings } from "@/components/icons/settings";
 import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/ui/collapsible";
 import { Modal } from "@/components/ui/modal";
+import { CheckRow } from "@/components/ui/check-row";
 import { Tabs } from "@/components/ui/tabs";
 import { PresetFieldList } from "@/features/presets/preset-field-list";
 import { PresetLists, type PresetBundle } from "@/features/presets/preset-picker";
@@ -258,13 +259,13 @@ function ExtraSettingsPanel({
             <SelectionSummary fields={fields} selection={clean} onChange={setDraft} className="rounded-md card-soft p-3" />
 
             {language === "tr" && (
-              <label className="flex cursor-pointer items-start gap-3 rounded-md card-soft px-3 py-2.5">
-                <input type="checkbox" data-english-fragments checked={englishFragments} onChange={(e) => onEnglishFragmentsChange(e.target.checked)} className="mt-0.5" />
-                <span>
-                  <span className="block text-label font-semibold text-text">{t("extra.englishFragments")}</span>
-                  <span className="block text-caption text-text-secondary">{t("extra.englishFragmentsHint")}</span>
-                </span>
-              </label>
+              <CheckRow
+                checked={englishFragments}
+                onChange={onEnglishFragmentsChange}
+                label={t("extra.englishFragments")}
+                hint={t("extra.englishFragmentsHint")}
+                inputProps={{ "data-english-fragments": "" }}
+              />
             )}
 
             {hasTool && fields.some((f) => f.kind === "suffix") && <p className="rounded-md bg-primary-soft px-3 py-2 text-caption text-text-secondary">{t("extra.toolHint")}</p>}
