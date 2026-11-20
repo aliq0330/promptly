@@ -499,3 +499,13 @@ SHOT_DIR=/tmp/shots node tests/messaging-ui/run-live-notify-extras.mjs   # ekran
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-variable-define.mjs   # 6/6 beklenir
 SHOTS=/tmp/shots node tests/messaging-ui/run-variable-define.mjs                          # ekran görüntüleri (isteğe bağlı)
 ```
+
+## 1-1 sesli/görüntülü arama (`docs/history/449-*`)
+
+`run-calls.mjs` (22 senaryo): iki ayrı tarayıcı bağlamı (Alice = ME, Bob) aynı ağ/Realtime taklidine bağlanır ve Chromium **sahte kamera/mikrofon cihazlarıyla** açılır — bu yüzden iki taraf arasında GERÇEK bir `RTCPeerConnection` (P2P, host adayları) kurulur; ses/video akışı, süre, mikrofon/kamera durumu, reddet/vazgeç/cevapsız (zaman `page.clock` ile hızlandırılır), izin reddi, meşgul/engel, WebRTC'siz tarayıcı, sayfa yenileme, çoklu sekme, masaüstü/mobil/İngilizce/koyu tema ve sinyalleşme güvenliği (private kanal, SDP/ICE'in REST'e gitmemesi) sınanır. Sunucu kuralları testte `installCallServer` ile TAKLİT edilir (`mock.mjs` `db.rpc` kancası artık üçüncü argüman olarak oturumdaki kullanıcıyı verir); **gerçek Supabase'e KARŞI DENENMEDİ** — DB/RLS doğrulaması `supabase/tests/calls.sql`'dedir.
+
+```bash
+npm i --no-save playwright   # yoksa
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-calls.mjs   # 22/22 beklenir (port 4207; PORT=… ile değişir)
+```

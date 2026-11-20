@@ -255,6 +255,8 @@
   --color-story-orange: #ff9a52;
   --color-story-mint: #63e6b8;
   --color-story-stage: #0a0a0d;
+  /* 1-1 arama sahnesi (docs/history/449-*): sabit koyu zemin; üstündeki metin `text-on-art*`, kontrol zeminleri `bg-art-chip`. */
+  --color-call-stage: #0a0a0d;
   --color-story-scrim: rgb(0 0 0 / 0.5);
 
   /* Odak scenes without a picture (docs/history/436-*): the post's own content is the scene, tinted by what it is. Fixed dark grounds
