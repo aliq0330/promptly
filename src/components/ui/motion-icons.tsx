@@ -101,11 +101,12 @@ export function BookmarkIcon({ filled, popSeq = 0, size = 24, className }: Omit<
   return (
     // Kök <span> DEĞİL <i>: kartlardaki `CARD_SAVE_CLASS = "[&>span]:hidden"` düğmenin doğrudan <span> çocuklarını (sayıyı) gizler; kök <span> olursa ikonun kendisi de gizlenirdi.
     <i key={popSeq} data-filled={filled} className={cn("mi-bm relative inline-block shrink-0 not-italic", popSeq > 0 && filled && "mi-bm-pop", className)} style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" aria-hidden focusable="false" className="absolute inset-0">
+      {/* `m-auto`: kutuya dolgu verilirse (Odak rayı `box-content p-1.5`) ikon dolgulu kutunun sol-üstüne yapışmasın, ortada kalsın. */}
+      <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" aria-hidden focusable="false" className="absolute inset-0 m-auto">
         <path d={BOOKMARK_REGULAR} />
       </svg>
       {/* Dolu hâl (kaydedildi): Phosphor Fill gövdesi alttan yukarı dolar. */}
-      <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" aria-hidden focusable="false" className="mi-bm-fill absolute inset-0">
+      <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor" aria-hidden focusable="false" className="mi-bm-fill absolute inset-0 m-auto">
         <path d={BOOKMARK_FILL} />
       </svg>
       {popSeq > 0 && filled && (

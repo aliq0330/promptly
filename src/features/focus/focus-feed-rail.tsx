@@ -29,7 +29,8 @@ export type FocusRailLayout = "reel" | "panel" | "bar";
 const ACTION: Record<FocusRailLayout, string> = {
   reel: "h-auto min-w-12 flex-col gap-0.5 rounded-lg bg-transparent px-1 py-0.5 text-caption font-semibold text-on-art hover:bg-transparent hover:text-on-art [&>:first-child]:box-content [&>:first-child]:p-1.5",
   panel: "h-11 min-w-11 flex-row gap-2 rounded-full bg-transparent px-3 text-label font-semibold text-text hover:bg-surface-soft",
-  bar: "h-12 w-12 min-w-12 shrink-0 rounded-full border border-border bg-transparent px-0 text-text hover:bg-surface-soft [&>span]:sr-only",
+  // Only the COUNT is for screen readers: the reaction emoji is itself a `<span>` (first child) and must stay visible.
+  bar: "h-12 w-12 min-w-12 shrink-0 rounded-full border border-border bg-transparent px-0 text-text hover:bg-surface-soft [&>span:not(:first-child)]:sr-only",
 };
 
 const ICON: Record<FocusRailLayout, number> = { reel: 24, panel: 20, bar: 20 };
@@ -126,7 +127,7 @@ export function FocusFeedRail({ item, layout, playable = false }: { item: PostFe
           <span aria-hidden>{formatCount(item.data.responseCount)}</span>
         </Link>
       ) : null}
-      {!bar && <ShareTriggerButton target={shareTargetOf(item)} size={size} label={layout === "reel" ? t("common.share") : undefined} className={cn(action, layout === "reel" ? "[&>span]:inline" : undefined)} />}
+      {!bar && <ShareTriggerButton target={shareTargetOf(item)} size={size} className={action} />}
     </div>
   );
 }
