@@ -166,7 +166,7 @@ export function SelectionActionBar({
   const { t } = useTranslation();
   const pill = cn(
     "pointer-events-auto h-12 rounded-full border border-border-soft bg-surface/95 font-semibold text-text shadow-md backdrop-blur-xl transition-[opacity,background-color] duration-200 ease-soft hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50",
-    compact ? "h-11 shrink-0 whitespace-nowrap px-2.5 text-label" : "px-4 text-body sm:px-6",
+    compact ? "h-11 min-w-0 flex-1 truncate whitespace-nowrap px-2 text-label" : "px-4 text-body sm:px-6",
   );
   return (
     <div

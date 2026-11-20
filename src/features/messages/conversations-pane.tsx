@@ -446,6 +446,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         {selectionActive && embedded && (
           <SelectionActionBar
             embedded
+            compact
             archiveLabel={inArchive ? t("messages.unarchive") : t("messages.archive")}
             disabled={selectedList.length === 0}
             busy={bulkBusy}
