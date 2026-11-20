@@ -162,7 +162,7 @@ export async function installMock(context, db, opts = {}) {
     const groupOf = (gid) => db.groups.find((g) => g.id === gid);
     const roleOf = (gid, uid = signedIn) => db.member(gid, uid)?.role ?? null;
     const err = (code) => json(400, { code: "P0001", message: code, details: "", hint: "" });
-    if (table.startsWith("rpc/") && db.rpc[table.slice(4)]) { const r = db.rpc[table.slice(4)](body, db); return json(r.status ?? 200, r.body ?? null); }
+    if (table.startsWith("rpc/") && db.rpc[table.slice(4)]) { const r = db.rpc[table.slice(4)](body, db, signedIn); return json(r.status ?? 200, r.body ?? null); }
     // Topluluk uçları (docs/history/175-*): mock-communities.mjs `db.extraRoutes`'u kurar.
     if (db.extraRoutes) {
       let used = false;

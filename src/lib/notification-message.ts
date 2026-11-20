@@ -221,6 +221,9 @@ export function localizeNotificationMessage(rawMessage: string, language: "tr" |
     "ekip erişim süreni uzattı.": "notifMsg.teamGuestExtended",
   };
   if (TEAM_FIXED[message]) return t(TEAM_FIXED[message] as TranslationKey);
+  // Cevapsız arama (docs/history/449-*, SQL: 20261212100000_calls.sql `_call_mark_missed`): kart başlığı aktör adını başa ekler.
+  if (message === "seni sesli aradı, cevapsız kaldı.") return t("notifMsg.missedVoiceCall");
+  if (message === "seni görüntülü aradı, cevapsız kaldı.") return t("notifMsg.missedVideoCall");
   // Ortak koleksiyon (docs/history/386-*): koleksiyon adı çevrilmez.
   for (const [re, key] of COLLAB_TEMPLATES) {
     const m = re.exec(message);

@@ -78,3 +78,9 @@ test("ekip bildirimleri (docs/history/353-*) adlar çevrilmeden doğru anahtara 
   assert.deepEqual(JSON.parse(run("Elif #gizli kanalında bir mesajı bildirdi.")), { key: "notifMsg.teamMessageReported", params: { name: "Elif", channel: "gizli", preview: "" } });
   assert.equal(JSON.parse(run("ekipteki rolünü değiştirdi.")).key, "notifMsg.teamRoleChanged");
 });
+
+test("cevapsız arama cümleleri (docs/history/449-*) doğru anahtara düşer; Türkçe olduğu gibi kalır", () => {
+  assert.equal(JSON.parse(run("seni sesli aradı, cevapsız kaldı.")).key, "notifMsg.missedVoiceCall");
+  assert.equal(JSON.parse(run("seni görüntülü aradı, cevapsız kaldı.")).key, "notifMsg.missedVideoCall");
+  assert.equal(run("seni sesli aradı, cevapsız kaldı.", "tr"), "seni sesli aradı, cevapsız kaldı.");
+});

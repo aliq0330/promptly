@@ -109,4 +109,4 @@ jobs:
       - name: Run UI suites
         # Paketler paralel koşar (her birinin kendi portu var, docs/history/412-*); en uzun paketler başta, iş dengesi için. Sonuçlar bu sırayla yazılır.
         run: |
-          tests/messaging-ui/run-parallel.sh run-detail-pages run-skills-social run-comment-extras run-feed-filters run-skills-package run-shared-cards run-home-motion run-collab-collections run-safety run-search-notifications run-telegram-settings run-save-collections run-chat-load run-run-modal run-first-run run-extension-card run-live-toasts run-live-notify-extras run-variable-define
+          tests/messaging-ui/run-parallel.sh run-detail-pages run-skills-social run-comment-extras run-feed-filters run-skills-package run-shared-cards run-home-motion run-collab-collections run-safety run-search-notifications run-telegram-settings run-save-collections run-chat-load run-run-modal run-first-run run-extension-card run-live-toasts run-live-notify-extras run-variable-define run-calls

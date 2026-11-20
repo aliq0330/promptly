@@ -53,6 +53,7 @@ import { exchangeTranslations } from "./translations-exchange";
 import { notificationCenterTranslations } from "./translations-notification-center";
 import { hubTranslations } from "./translations-hub";
 import { messageDockTranslations } from "./translations-message-dock";
+import { callsTranslations } from "./translations-calls";
 import { presenceTranslations } from "./translations-presence";
 import { collabTranslations } from "./translations-collab";
 
@@ -3357,6 +3358,7 @@ export const translations = {
   ...notificationCenterTranslations,
   ...hubTranslations,
   ...messageDockTranslations,
+  ...callsTranslations,
   ...presenceTranslations,
   ...collabTranslations,
   "report.modal.title": { tr: "İçeriği şikâyet et", en: "Report content" },

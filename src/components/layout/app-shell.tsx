@@ -15,6 +15,7 @@ import { NoticeHost } from "@/components/layout/notice-host";
 import { LiveNotificationToasts } from "@/features/notifications/live-toasts";
 import { MessageDock } from "@/features/messages/message-dock";
 import { MessageDockProvider } from "@/features/messages/message-dock-provider";
+import { CallProvider } from "@/features/calls/call-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 interface AppShellProps {
@@ -34,6 +35,15 @@ interface AppShellProps {
  * From `lg` a signed-in member also gets the Messages dock (docs/history/328-*): a pill fixed to the bottom-right that opens a chat panel without leaving the page.
  */
 export function AppShell({ children }: AppShellProps) {
+  // 1-1 arama (docs/history/449-*): gelen arama her sayfada (Odak dahil) çalar; sağlayıcı yalnız oturumlu üyede abone olur.
+  return (
+    <CallProvider>
+      <AppShellFrame>{children}</AppShellFrame>
+    </CallProvider>
+  );
+}
+
+function AppShellFrame({ children }: AppShellProps) {
   const { t } = useTranslation();
   useChromeAutoHide();
   const bare = /^\/focus\/?$/.test(usePathname() ?? "");

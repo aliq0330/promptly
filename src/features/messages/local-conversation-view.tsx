@@ -74,6 +74,7 @@ import { mergeIncomingMessage, applyMessageUpdate } from "./realtime-helpers";
 import { useFitPanelToKeyboard } from "./viewport-helpers";
 import { ComposerReplyBar } from "./reply-quote";
 import { DockHeader, DOCK_ICON_BUTTON } from "./dock-header";
+import { ConversationCallButtons } from "@/features/calls/call-buttons";
 import type { DockHandlers } from "./message-dock-provider";
 import { supabase } from "@/lib/supabase/client";
 import { parseHighlightValue } from "@/lib/notification-utils";
@@ -1323,6 +1324,17 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
     blockState.isBlocked || typingIds.length === 0
       ? ""
       : formatTypingText(typingNames, typingIds.length - typingNames.length, isGroup, (key, params) => t(key as TranslationKey, params));
+  // 1-1 sesli/görüntülü arama düğmeleri (docs/history/449-*): yalnız birebir sohbette; engel ya da bekleyen mesaj isteğinde soluk (asıl denetim sunucuda: `call_start`).
+  const callDisabledReason = blockState.isBlocked || conversation.myStatus === "pending" ? t("calls.unavailable") : null;
+  const renderCallButtons = (buttonClassName: string) =>
+    !isGroup && participant ? (
+      <ConversationCallButtons
+        conversationId={conversation.id}
+        peer={{ id: participant.id, displayName: participant.displayName, username: participant.username, avatarUrl: participant.avatarUrl }}
+        disabledReason={callDisabledReason}
+        buttonClassName={buttonClassName}
+      />
+    ) : null;
   // A pending bubble is hidden the instant its real message is in the thread (the INSERT response or the Realtime echo, whichever lands first) — never both at once.
   const visiblePending = pendingSends.filter((p) => !messagesById.has(p.id));
   const messageLayout = layoutChatMessages(messages);
@@ -1346,17 +1358,20 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
           expandLabel={t("dock.openChatPage")}
           onMinimize={dock.onMinimize}
           actions={
-            <button
-              type="button"
-              onClick={() => setSearchOpen((open) => !open)}
-              aria-label={t("chat.search.open")}
-              title={t("chat.search.open")}
-              aria-pressed={searchOpen}
-              data-chat-search-toggle
-              className={cn(DOCK_ICON_BUTTON, searchOpen && "bg-primary-soft text-primary")}
-            >
-              <Search size={20} aria-hidden />
-            </button>
+            <>
+              {renderCallButtons(DOCK_ICON_BUTTON)}
+              <button
+                type="button"
+                onClick={() => setSearchOpen((open) => !open)}
+                aria-label={t("chat.search.open")}
+                title={t("chat.search.open")}
+                aria-pressed={searchOpen}
+                data-chat-search-toggle
+                className={cn(DOCK_ICON_BUTTON, searchOpen && "bg-primary-soft text-primary")}
+              >
+                <Search size={20} aria-hidden />
+              </button>
+            </>
           }
         >
           <span className="flex min-w-0 items-center gap-3" data-dock-chat-title="">
@@ -1488,6 +1503,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             <Users size={16} aria-hidden /> {group.memberCount.toLocaleString()}
           </button>
         )}
+        {renderCallButtons("flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary")}
         <button
           type="button"
           onClick={() => setSearchOpen((open) => !open)}
