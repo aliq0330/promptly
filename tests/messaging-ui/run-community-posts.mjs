@@ -46,30 +46,29 @@ const postPage = (id, extra = "") => `${BASE}/communities/post/local?id=${id}${e
 const own = (db) => db.ownContent.prompt.push({ id: PROMPT_ID, title: "Açık Prompt", visibility: "public" }, { id: PRIVATE_ID, title: "Özel Prompt", visibility: "private" });
 
 // 1
-await scenario("1. 'Gönderi oluştur' iki yol sunar: yeni içerik (dört tür → normal oluşturma ekranı ?community=) ve mevcut içeriğe başvur", async ({ page }) => {
+await scenario("1. 'Gönderi oluştur' tek ekran (docs/history/446-*): dört tür karosu → normal oluşturma ekranı ?community=; altında var olan içeriklerden en yeniler + 'Tümünü gör' tam seçici", async ({ page }) => {
   await open(page, C1);
   await page.getByRole("button", { name: "Gönderi oluştur" }).click();
   const d = dlg(page);
-  await d.getByRole("button", { name: /Yeni içerik oluştur/ }).waitFor();
-  await d.getByRole("button", { name: /Var olan içeriği alıntıla/ }).waitFor();
-  await d.getByRole("button", { name: /Yeni içerik oluştur/ }).click();
+  await d.getByRole("heading", { name: "Gönderi oluştur" }).waitFor();
+  await d.getByText("Yeni oluştur", { exact: true }).waitFor();
   const hrefs = await d.locator("a[data-post-new-type]").evaluateAll((els) => els.map((a) => [a.dataset.postNewType, a.getAttribute("href")]));
   assert.deepEqual(hrefs.map(([t]) => t), ["prompt", "request", "workflow", "preset"]);
   const expected = { prompt: "/create?mode=prompt", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
   for (const [type, href] of hrefs) assert.ok(href.replace("/promptly", "").replace(/\/\?/, "?") === `${expected[type]}${expected[type].includes("?") ? "&" : "?"}community=${C1}`, `${type} opens the EXISTING creation screen with the community context: ${href}`);
-  await d.getByRole("button", { name: "Geri" }).click();
-  await d.getByRole("button", { name: /Var olan içeriği alıntıla/ }).click();
+  await d.getByText("Ya da var olan içeriğini paylaş", { exact: true }).waitFor();
+  await d.locator("[data-post-recent]").getByText("Açık Prompt").waitFor();
+  assert.equal(await d.getByText("Özel Prompt").count(), 0, "private content is never offered");
+  await d.locator("[data-post-option=apply]").click();
   await dlg(page).getByText("Var olan içeriği alıntıla", { exact: true }).waitFor();
 }, { setup: (db) => { seed(db, { myRole: "member" }); own(db); } });
 
-// 2
 await scenario("2. Başvuru: kendi kimliğiyle gönderi olur; not varsa görünür; orijinal içeriğe belirgin bağlantı; not yoksa boş yer tutucu YOK", async ({ page, db }) => {
   await open(page, C1);
   await page.getByRole("button", { name: "Gönderi oluştur" }).click();
-  await dlg(page).getByRole("button", { name: /Var olan içeriği alıntıla/ }).click();
-  await dlg(page).getByText("Açık Prompt").waitFor();
+  await dlg(page).locator("[data-post-recent]").getByText("Açık Prompt").waitFor();
   assert.equal(await dlg(page).getByText("Özel Prompt").count(), 0, "private content is never offered");
-  await dlg(page).getByRole("radio").first().click();
+  await dlg(page).locator(`[data-post-recent-pick='${PROMPT_ID}']`).click();
   await dlg(page).locator("#share-note").fill("Bu topluluğa uyar");
   await dlg(page).getByRole("button", { name: "Paylaş", exact: true }).click();
   await page.getByText("İçerik toplulukta paylaşıldı.").waitFor();
@@ -120,7 +119,7 @@ await scenario("3c. Yerel içeriğin (detay sayfasından) paylaşımı özel iç
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
   await post(page, "Yerel prompt").locator("article").first().getByRole("link", { name: "Yerel prompt" }).click();
   await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
-  await dlg(page).getByRole("button", { name: /Diğer uygulamalarla paylaş/ }).click();
+  await dlg(page).locator("[data-share-link]").click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /prompts\/local\/?\?id=/);
   assert.doesNotMatch(copied, /\/share\//, "private community content has no public share page");
@@ -147,8 +146,8 @@ await scenario("3d. Başvuru gönderisinin sayfası Kaydet + İstatistik + Payla
   await d.getByRole("button", { name: /Kapat/ }).click();
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
   await bar3d.getByRole("button", { name: "Paylaş" }).click();
-  await dlg(page).getByText(/mesaj olarak/i).first().waitFor();
-  await dlg(page).getByRole("button", { name: /Diğer uygulamalarla paylaş/ }).click();
+  await dlg(page).locator("[data-share-people-more]").waitFor();
+  await dlg(page).locator("[data-share-link]").click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /communities\/post\/local\/?\?id=/);
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Başvuru prompt", kind: "application" }); } });
@@ -486,7 +485,7 @@ await scenario("17. Başvuru gönderisi site içi mesajla paylaşılır: Paylaş
   await page.goto(postPage(p.id));
   await page.locator("[data-community-post-page]").waitFor();
   await page.getByRole("button", { name: "Paylaş" }).first().click();
-  await dlg(page).getByRole("link", { name: /mesaj olarak gönder/ }).click();
+  await dlg(page).locator("[data-share-people-more]").click();
   await page.waitForURL(/messages\/?\?sharePostId=/);
   assert.match(page.url(), new RegExp(`sharePostId=${p.id}`));
   await page.locator("a[href*='/messages/local'][href*='sharePostId=']", { hasText: "Carol" }).first().click();
@@ -514,7 +513,7 @@ await scenario("17b. Alıcı gönderiyi okuyamıyorsa (topluluğa erişimi yok) 
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addConv(DM, U.carol, { texts: ["selam"] }); } });
 
 // 14 — i18n
-await scenario("14. İngilizce: Create post / Quote an existing item / Application / Community content / post engagement metinleri", async ({ page }) => {
+await scenario("14. İngilizce: Create a post / Create new / Or share something / Application / Community content / post engagement metinleri", async ({ page }) => {
   await open(page, C1);
   const app = post(page, "App post");
   await app.getByText("Quote", { exact: true }).waitFor();
@@ -522,8 +521,9 @@ await scenario("14. İngilizce: Create post / Quote an existing item / Applicati
   const nat = post(page, "Native post");
   assert.equal(await nat.getByText("Community content").count(), 0);
   await page.getByRole("button", { name: "Create post" }).click();
-  await dlg(page).getByRole("button", { name: /Create new content/ }).waitFor();
-  await dlg(page).getByRole("button", { name: /Quote an existing item/ }).waitFor();
+  await dlg(page).getByRole("heading", { name: "Create a post" }).waitFor();
+  await dlg(page).getByText("Create new", { exact: true }).waitFor();
+  await dlg(page).getByText("Or share something you already made", { exact: true }).waitFor();
 }, { lang: "en", setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "App post", kind: "application" }); db.addPost(C1, { title: "Native post", kind: "native" }); } });
 
 // 15 — mobil / koyu tema / masaüstü

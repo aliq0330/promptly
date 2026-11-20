@@ -486,7 +486,7 @@ await scenario("18. Alıntıla: Skill detayında Paylaş → Alıntıla; create_
   await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
   const modal = page.locator('[data-share-modal="skill"]');
   await modal.waitFor();
-  await modal.locator("[data-quote-section] button[aria-expanded]").click();
+  await modal.locator("[data-share-quote]").click();
   const quote = page.locator("[data-quote-popup]");
   await quote.locator("[data-quote-destination=feed]").waitFor();
   assert.equal(await quote.getByText("Topluluklarda alıntıla").count(), 0, "Skill topluluğa duyurulmaz");
@@ -513,12 +513,12 @@ await scenario("20. Kalite göstergeleri: detayda 7 ölçüt + 'x / 7 ölçüt t
   assert.match(await block.innerText(), /puan ya da güvenlik onayı değildir/);
 });
 
-await scenario("21. Mesajla paylaş: Skill'in Paylaş penceresinde 'Promptly'de mesaj olarak gönder' bağlantısı shareSkillId taşır", async ({ page }) => {
+await scenario("21. Mesajla paylaş: Skill'in Paylaş penceresinde kişi ızgarasındaki 'Tümü' bağlantısı shareSkillId taşır", async ({ page }) => {
   await openDetail(page);
   await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
   const modal = page.locator('[data-share-modal="skill"]');
   await modal.waitFor();
-  const link = modal.locator('a[href*="shareSkillId="]');
+  const link = modal.locator('[data-share-people-more][href*="shareSkillId="]');
   await link.waitFor();
   assert.match((await link.getAttribute("href")) ?? "", new RegExp(`/messages/?\\?shareSkillId=${S_PUB}`));
 });

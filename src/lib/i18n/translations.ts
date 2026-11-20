@@ -36,12 +36,14 @@ import { reactionTranslations } from "./translations-reactions";
 import { insightsTranslations } from "./translations-insights";
 import { commentExtrasTranslations } from "./translations-comment-extras";
 import { commentOrderTranslations } from "./translations-comment-order";
+import { sharePeopleTranslations } from "./translations-share-people";
 import { apiKeysTranslations } from "./translations-api-keys";
 import { telegramTranslations } from "./translations-telegram";
 import { firstRunTranslations } from "./translations-first-run";
 import { settingsTranslations } from "./translations-settings";
 import { connectGuideTranslations } from "./translations-connect-guide";
 import { worksTranslations } from "./translations-works";
+import { composeStudioTranslations } from "./translations-compose-studio";
 import { focusTranslations } from "./translations-focus";
 import { workflowAutoTranslations } from "./translations-workflow-auto";
 import { chatRedesignTranslations } from "./translations-chat-redesign";
@@ -2506,7 +2508,7 @@ export const translations = {
   "presetBuilder.oneValue": { tr: "Tek değer", en: "Single value" },
   "presetBuilder.errorNoFields": { tr: "Yayınlamak için en az bir parametre ekle (ya da taslak olarak kaydet).", en: "Add at least one parameter to publish (or save it as a draft)." },
   "presetField.fieldsHeading": { tr: "Alanlar", en: "Fields" },
-  "presetField.addShort": { tr: "+ Parametre ekle", en: "+ Add parameter" },
+  "presetField.addShort": { tr: "Parametre ekle", en: "Add parameter" },
   "presetField.addTitle": { tr: "Parametre ekle", en: "Add a parameter" },
   "presetField.createNew": { tr: "Yeni parametre oluştur", en: "Create a new parameter" },
   "presetField.searchPlaceholder": { tr: "Parametre ara…", en: "Search parameters…" },
@@ -3337,12 +3339,14 @@ export const translations = {
   ...insightsTranslations,
   ...commentExtrasTranslations,
   ...commentOrderTranslations,
+  ...sharePeopleTranslations,
   ...apiKeysTranslations,
   ...telegramTranslations,
   ...firstRunTranslations,
   ...settingsTranslations,
   ...connectGuideTranslations,
   ...worksTranslations,
+  ...composeStudioTranslations,
   ...focusTranslations,
   ...workflowAutoTranslations,
   ...chatRedesignTranslations,

@@ -44,6 +44,7 @@ import { MessageInfoModal } from "./message-info-modal";
 import { usePinnedMessages } from "./use-pinned-messages";
 import { useTyping } from "./use-typing";
 import { readShareParams, usePendingShare } from "./use-pending-share";
+import { composeShareMessage } from "./share-message";
 import { useMessageReactions } from "./use-message-reactions";
 import { useRealMessages } from "./real-messages-provider";
 import { ChatLoadFailed, ChatLoadingSkeleton } from "./chat-load-state";
@@ -76,7 +77,7 @@ import { DockHeader, DOCK_ICON_BUTTON } from "./dock-header";
 import type { DockHandlers } from "./message-dock-provider";
 import { supabase } from "@/lib/supabase/client";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { absoluteUrl, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { messageRoomId, pickRoom, readLastRoomId, roomSlug, totalRoomUnread } from "@/lib/community-rooms";
 import { markRoomReadUpTo, setRoomMuted } from "@/lib/supabase/community-rooms";
 import { getCachedRooms, patchCachedRoom, refreshCommunityRooms, useCommunityRooms } from "./rooms/use-community-rooms";
@@ -97,14 +98,9 @@ import { teamLink } from "@/lib/teams";
 import { channelBackHref, communityHubHref } from "@/lib/team-chat";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { translateForRuntime } from "@/lib/i18n/runtime";
-import { composeWorkflowShareBody } from "./workflow-share-format";
-import { composePresetShareBody } from "./preset-share-format";
-import { composeSpaceShareBody } from "./space-share-format";
 import { ChatLibraryPicker, type ChatLibraryType, type ChatShareable } from "./chat-attach";
-import { composeSkillShareBody } from "./skill-share-format";
 import { ContactInfoPanel } from "./contact-info-panel";
 import { ImportPromptsModal } from "@/features/exchange/import-prompts-modal";
-import { composeCommunityPostShareBody } from "./community-post-share-format";
 import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
 import { ToastBar } from "@/components/ui/toast";
 
@@ -761,17 +757,8 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
 
   /** The finished `body` for an outgoing message — workflow/preset shares have no embed column (Bölüm 9.52), so they're composed into the text itself. */
   function composeOutgoingBody(trimmed: string): string | undefined {
-    return pendingShare?.type === "workflow"
-      ? composeWorkflowShareBody(trimmed, pendingShare.title, pendingShare.id)
-      : pendingShare?.type === "preset"
-        ? composePresetShareBody(trimmed, pendingShare.title, pendingShare.id)
-        : pendingShare?.type === "space"
-          ? composeSpaceShareBody(trimmed, pendingShare.title, pendingShare.id)
-          : pendingShare?.type === "skill"
-          ? composeSkillShareBody(trimmed, pendingShare.title, pendingShare.id, (path) => absoluteUrl(path))
-          : pendingShare?.type === "community_post"
-          ? composeCommunityPostShareBody(trimmed, pendingShare.title, pendingShare.id)
-          : trimmed || undefined;
+    // Prompt/İstek gömme sütunuyla gider (gövde yalnız nottur); diğerleri düz metin bloğu — tek kural `share-message.ts`'te.
+    return composeShareMessage(pendingShare, trimmed).body;
   }
 
   function afterSuccessfulSend() {

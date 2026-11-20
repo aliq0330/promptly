@@ -267,10 +267,17 @@ export function FeedTab(props: CommunityTabProps) {
       {createOpen && viewerId && (
         <CreatePostModal
           communityId={group.id}
+          communityName={group.name}
+          userId={viewerId}
           onClose={() => setCreateOpen(false)}
           onApply={() => {
             setCreateOpen(false);
             setShareOpen(true);
+          }}
+          onShared={async () => {
+            setCreateOpen(false);
+            onToast(t("communities.feed.sharedToast"));
+            await refreshAll();
           }}
         />
       )}

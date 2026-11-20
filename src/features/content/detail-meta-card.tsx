@@ -45,7 +45,7 @@ export function DetailMetaCard({
 
   const linkClass = "transition-colors hover:text-primary";
   return (
-    // One context card (docs/history/440-*): tool, category path and #tags as labelled blocks on one left edge, the relation-map strip last.
+    // One context card (docs/history/448-*): tool, category path and #tags as labelled blocks on one left edge, the relation-map strip last.
     <section data-testid="detail-meta" className="overflow-hidden rounded-lg card-flat shadow-card">
       {hasTool && (
         <DetailMetaBlock label={toolLabel}>

@@ -211,8 +211,8 @@ await scenario("4. Sahip: Paylaş tek pencere — 'Akışta paylaş' anahtarı; 
   assert.equal(last.p_content_id, SID(2));
   await page.locator('[data-space-feed-toggle="on"]').waitFor();
   // Alıntıla satırında akış hedefi yok (yönetim yukarıdaki anahtarda); yalnız topluluklar.
-  await page.locator("[data-quote-section]").waitFor();
-  await page.locator("[data-quote-section] button").first().click();
+  await page.locator("[data-share-quote]").waitFor();
+  await page.locator("[data-share-quote]").click();
   await page.locator("[data-quote-popup]").waitFor();
   assert.equal(await page.locator('[data-quote-popup] [data-quote-destination="feed"]').count(), 0);
   await shot(page, "sp-share-modal");

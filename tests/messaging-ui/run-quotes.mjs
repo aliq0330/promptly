@@ -194,7 +194,7 @@ await scenario("4. Paylaş → Alıntıla: not + 'Akışta' seçili; create_quot
   await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
   const modal = page.locator('[data-share-modal="prompt"]');
   await modal.waitFor();
-  await modal.locator("[data-quote-section] button[aria-expanded]").click();
+  await modal.locator("[data-share-quote]").click();
   // Alıntıla formu Paylaş penceresinin ÜSTÜNDE ikinci bir pencerede açılır (docs/history/338-*).
   const quote = page.locator("[data-quote-popup]");
   await quote.locator("[data-quote-destination=feed]").waitFor();
@@ -217,7 +217,7 @@ await scenario("5. Alıntıla: sunucu hatası (already_quoted) nedeniyle açıkl
   await post.getByRole("link", { name: /./ }).first().click();
   await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
   const modal = page.locator('[data-share-modal="prompt"]');
-  await modal.locator("[data-quote-section] button[aria-expanded]").click();
+  await modal.locator("[data-share-quote]").click();
   const quote = page.locator("[data-quote-popup]");
   await quote.locator("[data-quote-submit]").click();
   await quote.getByText("Bu içeriği son 24 saatte zaten alıntıladın.").waitFor();
@@ -300,7 +300,7 @@ await scenario("12. Alıntı sayfası = normal detay + ALINTININ eylemleri: beğ
   assert.equal(state.likes[0].quote_id, Q_BOB);
   assert.ok(!state.likes[0].prompt_id, "orijinalin beğenisine karışmaz");
   await page.getByRole("button", { name: "Paylaş" }).first().click();
-  await page.locator("[data-quote-section]").waitFor({ state: "detached" }).catch(() => {});
+  await page.locator("[data-share-actions]").waitFor({ state: "detached" }).catch(() => {});
   await page.keyboard.press("Escape");
   const menu = page.locator('button[aria-label="Gönderi seçenekleri"]').first();
   await menu.click();

@@ -25,12 +25,19 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
 import { ComposeAudienceLine, ComposeSection, FormDisclosure, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
+import { revealComposeField } from "@/features/content/compose-steps";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import { ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
 import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/features/content/publish-panel";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import type { ContentVisibility, PromptContentType, PromptRequest } from "@/types";
 import { MentionTextarea } from "@/features/mentions/mention-field";
+
+/** Yön alanının hızlı satırları (docs/history/446-*): dokununca "Stil: " gibi bir satır eklenir. */
+const DIRECTION_CHIPS: TranslationKey[] = ["cs.request.chipStyle", "cs.request.chipColor", "cs.request.chipComposition", "cs.request.chipAvoid"];
+/** İsteğin referans görseli sınırı (eskiden de 6'ydı: `MultiImagePicker` varsayılanı). */
+const REFERENCE_MAX = 6;
 
 
 const TITLE_MIN = 10;
@@ -371,7 +378,7 @@ export function CreateRequestForm() {
   };
 
   const isSaveMode = isEditMode && !isEditingDraft;
-  const focusField = (id: string) => () => document.getElementById(id)?.focus();
+  const focusField = (id: string) => () => revealComposeField(id);
   const problems: PublishProblem[] = [
     ...(titleError ? [{ key: "title", label: titleError, onFix: focusField("request-title") }] : []),
     ...(descriptionError ? [{ key: "description", label: descriptionError, onFix: focusField("request-description") }] : []),
@@ -381,24 +388,33 @@ export function CreateRequestForm() {
   const showDescriptionError = descriptionTouched && Boolean(descriptionError);
   const publishLabel = isSubmitting ? (isSaveMode ? t("common.saving") : t("prompt.publishing")) : isSaveMode ? t("common.save") : t("common.share");
 
+  /** "+ Stil" gibi çipler yöne yeni bir başlıklı satır ekler ve imleci satırın sonuna koyar (metin kullanıcınındır, üzerine yazılmaz). */
+  function addDirectionLine(label: string) {
+    const line = `${label}: `;
+    const next = creativeDirection.trim() ? `${creativeDirection.replace(/\s+$/, "")}\n${line}` : line;
+    setCreativeDirection(next);
+    requestAnimationFrame(() => {
+      const field = document.getElementById("request-direction") as HTMLTextAreaElement | null;
+      if (!field) return;
+      field.focus();
+      field.setSelectionRange(next.length, next.length);
+    });
+  }
+
   return (
     <ComposeShell
       title={isEditMode ? t("request.editRequestTitle") : t("compose.newRequest")}
       titleExtra={<KindDraftsButton kind="request" compact />}
       onClose={leave.requestClose}
       onPublish={() => panelRef.current?.publish()}
-      publishLabel={isSaveMode ? t("common.save") : t("common.share")}
+      publishLabel={isSaveMode ? t("common.save") : t("cs.request.share")}
       publishDisabled={isSubmitting}
       publishDimmed={problems.length > 0}
       onSaveDraft={canSaveDraft && !communityId ? () => void handleSaveDraft() : undefined}
-      aside={
-        <>
-          <p className="mb-2 text-caption font-semibold text-text-muted">{t("forms.livePreview")}</p>
-          <div className="pointer-events-none select-none">
-            <RequestCard request={previewRequest} />
-          </div>
-        </>
-      }
+      problems={problems}
+      phoneActionBar
+      previewButton={false}
+      preview={{ card: <RequestCard request={previewRequest} /> }}
     >
       <form
         onSubmit={(event) => {
@@ -409,22 +425,17 @@ export function CreateRequestForm() {
         className="space-y-6"
       >
         {communityId && (
-          <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => document.getElementById("compose-publish")?.scrollIntoView({ behavior: "smooth", block: "center" })} />
+          <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => revealComposeField("compose-publish")} />
         )}
 
-        <ComposeSection title={t("formSection.basics")}>
-          <FormField label={t("compose.whatMaking")} required>
-            <ContentTypePicker
-              value={contentType}
-              onChange={(type) => {
-                setContentType(type);
-                setCategory(null);
-                setSubcategory(null);
-              }}
-              locked={isEditMode}
-            />
-          </FormField>
-          <FormField label={t("request.requestTitleLabel")} htmlFor="request-title" required error={showTitleError ? titleError : null}>
+        <section className="space-y-5" data-request-intro="">
+          <FormField
+            label={t("cs.request.whatLooking")}
+            labelClassName="font-display text-h2 font-bold text-text"
+            htmlFor="request-title"
+            required
+            error={showTitleError ? titleError : null}
+          >
             <input
               id="request-title"
               value={title}
@@ -436,39 +447,75 @@ export function CreateRequestForm() {
               className={formTextInputClassName}
             />
           </FormField>
-          <FormField label={t("request.requestDescriptionLabel")} htmlFor="request-description" required error={showDescriptionError ? descriptionError : null}>
+          <FormField label={t("compose.whatMaking")} required>
+            <ContentTypePicker
+              value={contentType}
+              onChange={(type) => {
+                setContentType(type);
+                setCategory(null);
+                setSubcategory(null);
+              }}
+              locked={isEditMode}
+            />
+          </FormField>
+          <FormField label={t("cs.request.tellMore")} htmlFor="request-description" required error={showDescriptionError ? descriptionError : null}>
             <textarea
               id="request-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               onBlur={() => setDescriptionTouched(true)}
               maxLength={DESCRIPTION_MAX}
-              rows={4}
+              rows={3}
               placeholder={t("request.descriptionPlaceholder")}
               aria-invalid={showDescriptionError}
               className={formTextareaClassName}
             />
             <p className="text-right text-caption text-text-muted">{`${description.length}/${DESCRIPTION_MAX}`}</p>
           </FormField>
-        </ComposeSection>
+        </section>
 
-        <ComposeSection title={t("compose.sectionDirection")}>
-          <FormField label={t("request.creativeDirection")} htmlFor="request-direction" optional>
-            <MentionTextarea
-              id="request-direction"
-              rows={3}
-              value={creativeDirection}
-              onChange={setCreativeDirection}
-              placeholder={t("request.creativeDirectionPlaceholder")}
-              className={formTextareaClassName}
-            />
-          </FormField>
-          <FormField label={t("compose.toolReference")} optional>
-            <MultiImagePicker items={images} onChange={setImages} />
-          </FormField>
-        </ComposeSection>
+        <section className="space-y-3 rounded-lg border border-border-strong bg-surface p-4 shadow-card sm:p-5" data-request-direction="">
+          <div className="space-y-0.5">
+            <label htmlFor="request-direction" className="block text-h3 font-bold text-text">
+              {t("cs.request.directionTitle")}
+            </label>
+            <p className="text-small text-text-muted">{t("cs.request.directionHint")}</p>
+          </div>
+          <MentionTextarea
+            id="request-direction"
+            rows={7}
+            value={creativeDirection}
+            onChange={setCreativeDirection}
+            placeholder={t("request.creativeDirectionPlaceholder")}
+            className={formTextareaClassName}
+          />
+          <div className="flex flex-wrap gap-2">
+            {DIRECTION_CHIPS.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => addDirectionLine(t(key))}
+                aria-label={t("cs.request.addChipAria", { label: t(key) })}
+                data-direction-chip={key}
+                className="inline-flex h-9 items-center gap-1 rounded-full border border-border bg-surface px-4 text-small font-medium text-text-secondary transition-colors hover:border-border-strong hover:text-text"
+              >
+                + {t(key)}
+              </button>
+            ))}
+          </div>
+        </section>
 
-        <ComposeSection title={t("compose.sectionDetails")}>
+        <section className="space-y-2" data-request-references="">
+          <p className="text-body font-semibold text-text">
+            {t("cs.request.references")} <span className="font-normal text-text-muted">· {t("cs.request.referencesMax", { count: REFERENCE_MAX })}</span>
+          </p>
+          <MultiImagePicker items={images} onChange={setImages} max={REFERENCE_MAX} />
+        </section>
+
+        <section className="space-y-3" data-request-preferences="">
+          <p className="text-body font-semibold text-text">
+            {t("cs.request.preferences")} <span className="font-normal text-text-muted">· {t("cs.optional")}</span>
+          </p>
           <FormDisclosure id="tool" label={t("formSection.tool")} value={resolveToolRefs(tools)[0]?.label}>
             <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
           </FormDisclosure>
@@ -494,7 +541,7 @@ export function CreateRequestForm() {
             <TagPicker picker={tagPicker} />
           </FormDisclosure>
           <SuggestedTagsRow picker={tagPicker} />
-        </ComposeSection>
+        </section>
 
         <ComposeSection title={t("publish.whoSees")} id="compose-publish">
           <PublishPanel

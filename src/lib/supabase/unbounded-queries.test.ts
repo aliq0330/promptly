@@ -15,6 +15,7 @@ const DIR = new URL("./", import.meta.url);
 
 /** "file.ts:function" → why it stays small. */
 const BOUNDED_BY_DESIGN: Record<string, string> = {
+  "drafts.ts:fetchDraftDetails": "details of the draft cards on screen: `.in(ids)` with at most 100 ids per request",
   "challenges.ts:fetchChallenges": "weekly themes: a few per year",
   "chat-features.ts:fetchStarredMessages": "the viewer's own starred messages",
   "chat-groups.ts:fetchGroupLinks": "invite links of one community",

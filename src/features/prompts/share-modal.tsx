@@ -5,11 +5,11 @@ import Link from "next/link";
 import { Bookmark } from "@/components/icons/bookmark";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { CircleFadingPlus } from "@/components/icons/circle-fading-plus";
-import { Send } from "@/components/icons/send";
+import { Check } from "@/components/icons/check";
+import { Quote as QuoteIcon } from "@/components/icons/quote";
 import { Shapes } from "@/components/icons/shapes";
 import { Share2 } from "@/components/icons/share-2";
 import { X } from "@/components/icons/x";
-import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
@@ -18,10 +18,12 @@ import type { Language } from "@/lib/i18n/translations";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
-import { presetHref, promptHref, requestHref, resultHref, skillHref, workflowHref } from "@/lib/utils";
+import { cn, presetHref, promptHref, requestHref, resultHref, skillHref, workflowHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { shareRefFromQuery } from "@/features/messages/share-message";
 import { CONTENT_TYPE_META } from "./content-type-meta";
+import { SharePeople } from "./share-people";
 import { shareOrCopyLink } from "./share-button";
 import type { Preset, Prompt, PromptRequest, PromptResult, Skill, StoryLinkedType, Workflow } from "@/types";
 import { StorageBackground } from "@/components/ui/storage-media";
@@ -36,6 +38,7 @@ import { summarizeContent } from "@/features/communities/content-summary";
 import { quoteHref } from "@/lib/quotes";
 import type { Quote } from "@/lib/supabase/quotes";
 import { iconButtonClassName } from "@/components/ui/icon-button";
+import type { IconComponent } from "@/components/icons/icon";
 
 export type ShareModalTarget =
   | { contentType: "prompt"; prompt: Prompt }
@@ -323,6 +326,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
   // Space: sahibin aynı pencerede yaptığı görünürlük / akış değişiklikleri duyuru uygunluğunu anında değiştirir.
   const [space, setSpace] = useState<Space | null>(target.contentType === "space" ? target.space : null);
   const [self, setSelf] = useState<"space" | "save" | null>(null);
+  const [quoteOpen, setQuoteOpen] = useState(false);
   const preview = getSharePreview(target.contentType === "space" && space ? { ...target, space } : target, t, language);
   const announce = user ? announceTarget(target, space) : null;
   const selfOptions = user ? selfTargets(target) : { space: null, save: null };
@@ -341,6 +345,21 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
       onClose();
     }
   }
+
+  const shareRef = user ? shareRefFromQuery(preview.messageParam, preview.title) : null;
+  const quoteBlocked = announce?.blockedKey ? t(announce.blockedKey) : null;
+  // Eylem satırı (docs/history/447-*): kimse seçili değilken kişi ızgarasının altında durur; hepsi tek tür simge + kısa etiket.
+  const actionRow = (
+    <div className="flex flex-wrap items-start justify-around gap-x-1 gap-y-3" data-share-actions="">
+      <ShareAction icon={copied ? Check : Share2} label={copied ? t("share.action.copied") : t("share.action.link")} onClick={handleNativeShare} data-share-link="" />
+      {announce && (
+        <ShareAction icon={QuoteIcon} label={t("quotes.section.title")} onClick={() => setQuoteOpen(true)} disabled={Boolean(quoteBlocked)} title={quoteBlocked ?? undefined} data-share-quote="" />
+      )}
+      {user && preview.storyLink && <ShareAction icon={CircleFadingPlus} label={t("share.action.story")} href={preview.storyLink} onClick={onClose} data-share-to-story="" />}
+      {selfOptions.space && <ShareAction icon={Shapes} label={t("share.action.space")} onClick={() => setSelf("space")} data-share-add-to-space="" />}
+      {selfOptions.save && <ShareAction icon={Bookmark} label={t("share.action.collection")} onClick={() => setSelf("save")} data-share-save="" />}
+    </div>
+  );
 
   return (
     <Modal onClose={onClose} labelledBy="share-modal-title">
@@ -363,19 +382,17 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
           </button>
         </div>
 
-        <div className="mt-4 flex items-center gap-3 rounded-md card-soft p-3">
+        {/* Küçük içerik çipi: neyin paylaşıldığını söyler, açıklama göstermez (docs/history/447-*; eski kart uzun açıklamayı kesmeden gösteriyordu). */}
+        <div className="mt-3 flex min-w-0 items-center gap-2 rounded-full bg-surface-soft py-1 pl-1 pr-3" data-share-preview="">
           <StorageBackground
             as="span"
             url={preview.thumbnailUrl}
             fallback={placeholderArt(preview.id, 96, 96)}
-            className="h-12 w-12 shrink-0 rounded-md bg-cover bg-center"
+            className="h-6 w-6 shrink-0 rounded-full bg-cover bg-center"
           />
-          <span className="min-w-0 flex-1 space-y-0.5">
-            <Badge variant={preview.badgeVariant}>{preview.badgeLabel}</Badge>
-            <span className="block truncate text-small font-semibold text-text">{preview.title}</span>
-            {preview.description && (
-              <span className="line-clamp-1 block text-caption text-text-muted">{preview.description}</span>
-            )}
+          <span className="min-w-0 truncate text-small text-text">
+            <span className="text-text-muted">{preview.badgeLabel} · </span>
+            <span className="font-semibold">{preview.title}</span>
           </span>
         </div>
 
@@ -392,82 +409,41 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
           </section>
         )}
 
-        <div className="mt-4 space-y-2">
-          {announce && <QuoteSection mode="popup" contextTitle={preview.title} type={announce.type} contentId={announce.id} blockedReason={announce.blockedKey ? t(announce.blockedKey) : null} hideFeed={ownsSpace} />}
-          {user && preview.messageParam && (
-            <Link
-              href={`/messages?${preview.messageParam}`}
-              onClick={onClose}
-              className="flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-                <Send size={20} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-small font-semibold text-text">{t("share.sendAsMessage")}</span>
-                <span className="block text-caption text-text-muted">{t("share.sendAsMessageHint")}</span>
-              </span>
-              <ChevronRight size={16} className="shrink-0 text-text-muted" />
-            </Link>
-          )}
-          {user && preview.storyLink && (
-            <Link
-              href={preview.storyLink}
-              onClick={onClose}
-              data-share-to-story
-              className="flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-                <CircleFadingPlus size={20} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-small font-semibold text-text">{t("share.toStory")}</span>
-                <span className="block text-caption text-text-muted">{t("share.toStoryHint")}</span>
-              </span>
-              <ChevronRight size={16} className="shrink-0 text-text-muted" />
-            </Link>
-          )}
-          <button
-            type="button"
-            onClick={handleNativeShare}
-            data-share-link=""
-            className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50"
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
-              <Share2 size={20} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-small font-semibold text-text">
-                {copied ? t("common.linkCopied") : t("share.shareElsewhere")}
-              </span>
-              <span className="block text-caption text-text-muted">{t("share.shareElsewhereHint")}</span>
-            </span>
-            <ChevronRight size={16} className="shrink-0 text-text-muted" />
-          </button>
-        </div>
-
-        {(selfOptions.space || selfOptions.save) && (
+        {user && shareRef ? (
+          <SharePeople share={shareRef} moreHref={`/messages?${preview.messageParam}`} onDone={onClose} actions={actionRow} />
+        ) : user ? (
+          <div className="mt-4 border-t border-border-soft pt-3">{actionRow}</div>
+        ) : (
           <div className="mt-4 space-y-2">
-            <p className="px-1 text-label font-semibold text-text-muted">{t("share.forYourself")}</p>
-            {selfOptions.space && (
-              <button type="button" onClick={() => setSelf("space")} data-share-add-to-space className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
-                  <Shapes size={20} />
-                </span>
-                <span className="min-w-0 flex-1 text-small font-semibold text-text">{t("share.addToSpace")}</span>
-                <ChevronRight size={16} className="shrink-0 text-text-muted" />
-              </button>
-            )}
-            {selfOptions.save && (
-              <button type="button" onClick={() => setSelf("save")} data-share-save className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
-                  <Bookmark size={20} />
-                </span>
-                <span className="min-w-0 flex-1 text-small font-semibold text-text">{t("share.saveToCollection")}</span>
-                <ChevronRight size={16} className="shrink-0 text-text-muted" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleNativeShare}
+              data-share-link=""
+              className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-surface text-text">
+                <Share2 size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-small font-semibold text-text">{copied ? t("common.linkCopied") : t("share.shareElsewhere")}</span>
+                <span className="block text-caption text-text-muted">{t("share.shareElsewhereHint")}</span>
+              </span>
+              <ChevronRight size={16} className="shrink-0 text-text-muted" />
+            </button>
           </div>
+        )}
+        {announce && (
+          <QuoteSection
+            mode="popup"
+            hideTrigger
+            open={quoteOpen}
+            onOpenChange={setQuoteOpen}
+            contextTitle={preview.title}
+            type={announce.type}
+            contentId={announce.id}
+            blockedReason={announce.blockedKey ? t(announce.blockedKey) : null}
+            hideFeed={ownsSpace}
+          />
         )}
       </div>
     </Modal>
@@ -513,5 +489,44 @@ export function ShareTriggerButton({
       </button>
       {open && <ShareModal target={target} onClose={() => setOpen(false)} />}
     </>
+  );
+}
+
+
+/** Eylem satırındaki simge düğmesi: yuvarlak simge + altında kısa etiket; `href` verilirse bağlantı olur. */
+function ShareAction({
+  icon: Icon,
+  label,
+  onClick,
+  href,
+  disabled,
+  title,
+  ...data
+}: {
+  icon: IconComponent;
+  label: string;
+  onClick?: () => void;
+  href?: string;
+  disabled?: boolean;
+  title?: string;
+  [key: `data-${string}`]: string | undefined;
+}) {
+  const className = "flex w-16 flex-col items-center gap-1 text-center disabled:cursor-not-allowed disabled:opacity-50";
+  const face = (
+    <>
+      <span className="grid h-11 w-11 place-items-center rounded-full bg-surface-soft text-text transition-colors group-hover:bg-primary-soft group-hover:text-primary">
+        <Icon size={20} />
+      </span>
+      <span className="w-full truncate text-caption text-text-secondary">{label}</span>
+    </>
+  );
+  return href ? (
+    <Link href={href} onClick={onClick} className={cn(className, "group")} {...data}>
+      {face}
+    </Link>
+  ) : (
+    <button type="button" onClick={onClick} disabled={disabled} title={title} className={cn(className, "group")} {...data}>
+      {face}
+    </button>
   );
 }

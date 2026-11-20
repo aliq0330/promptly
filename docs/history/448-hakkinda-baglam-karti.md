@@ -1,4 +1,4 @@
-# 446 — Detay sayfası "Hakkında" bloğu: tek bağlam kartı
+# 448 — Detay sayfası "Hakkında" bloğu: tek bağlam kartı
 
 **Sorun:** Araç, kategori/alt kategori ve etiketler aynı mavi hapla çiziliyordu (hangisi kategori, hangisi etiket belli değildi); araç büyük simgeli satır, harita bağlantısı çıplak metindi; sol kenarlar hizasızdı.
 

@@ -547,11 +547,11 @@ export function setupCommunities(db) {
       db.posts = db.posts.filter((p) => p.id !== post.id); x.post_count -= 1;
       return json(200, null);
     }
-    if ((table === "prompts" || table === "prompt_requests" || table === "workflows" || table === "presets") && method === "GET" && (q.get("select") ?? "").replace(/\s/g, "") === "id,title") {
+    if ((table === "prompts" || table === "prompt_requests" || table === "workflows" || table === "presets") && method === "GET" && ["id,title", "id,title,created_at"].includes((q.get("select") ?? "").replace(/\s/g, ""))) {
       const type = table === "prompts" ? "prompt" : table === "prompt_requests" ? "request" : table === "workflows" ? "workflow" : "preset";
       const needle = /ilike\.%(.*)%/.exec(q.get("title") ?? "")?.[1]?.toLowerCase();
       db.shareQueries = [...(db.shareQueries ?? []), { type, limit: Number(q.get("limit") ?? 0), search: needle ?? "" }];
-      return rows(db.ownContent[type].filter((c) => c.visibility !== "private" && (!needle || c.title.toLowerCase().includes(needle))).slice(0, Number(q.get("limit") ?? 0) || undefined).map((c) => ({ id: c.id, title: c.title })));
+      return rows(db.ownContent[type].filter((c) => c.visibility !== "private" && (!needle || c.title.toLowerCase().includes(needle))).slice(0, Number(q.get("limit") ?? 0) || undefined).map((c, i) => ({ id: c.id, title: c.title, created_at: c.created_at ?? new Date(Date.UTC(2026, 0, 20 - i)).toISOString() })));
     }
 
     // ---- duyurular ----

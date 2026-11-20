@@ -874,6 +874,37 @@ export async function fetchOwnShareableContentWindow(userId: string, type: Commu
   return { items: rows.slice(0, limit).map((row) => ({ id: row.id, type, title: row.title })), hasMore: rows.length > limit };
 }
 
+/**
+ * "Gönderi oluştur" penceresinin "var olan içeriğini paylaş" listesi (docs/history/446-*): dört içerik türünden en yeni paylaşılabilir
+ * olanlar TEK listede (tür başına `limit`, sonra tarihe göre birleşip `limit`'e kesilir). Süzgeç `fetchOwnShareableContentWindow` ile
+ * aynıdır (yayında + herkese açık + topluluğa/ekibe özgü değil). Eski içerik, Space ve Skill tam seçicide (`ShareToCommunityModal`).
+ */
+export async function fetchOwnShareableRecent(userId: string, { search = "", limit = 8 }: { search?: string; limit?: number } = {}): Promise<(ShareableContent & { createdAt: string })[]> {
+  const text = sanitizeSearchText(search);
+  const sources: { type: CommunityPostType; table: string; owner: string }[] = [
+    { type: "prompt", table: "prompts", owner: "author_id" },
+    { type: "request", table: "prompt_requests", owner: "author_id" },
+    { type: "workflow", table: "workflows", owner: "creator_id" },
+    { type: "preset", table: "presets", owner: "creator_id" },
+  ];
+  const lists = await Promise.all(
+    sources.map(async ({ type, table, owner }) => {
+      let query = supabase.from(table).select("id, title, created_at").eq(owner, userId).eq("visibility", "public").is("community_id", null).is("team_file_id", null);
+      if (type === "prompt") query = query.eq("status", "published").is("deleted_at", null);
+      else if (type === "request") query = query.eq("is_draft", false).is("deleted_at", null);
+      else query = query.eq("status", "published");
+      if (text) query = query.ilike("title", `%${text}%`);
+      const { data, error } = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit);
+      if (error) throw toGroupError(error);
+      return ((data ?? []) as { id: string; title: string; created_at: string }[]).map((row) => ({ id: row.id, type, title: row.title, createdAt: row.created_at }));
+    }),
+  );
+  return lists
+    .flat()
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
+    .slice(0, limit);
+}
+
 // ---------------------------------------------------------------------------------------------
 // Duyurular
 // ---------------------------------------------------------------------------------------------
