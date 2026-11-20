@@ -1,5 +1,6 @@
 "use client";
 
+import { MoreVertical } from "@/components/icons/more-vertical";
 import { Mic } from "@/components/icons/mic";
 import { MicOff } from "@/components/icons/mic-off";
 import { PhoneOff } from "@/components/icons/phone-off";
@@ -20,6 +21,8 @@ export function CallControls({
   camOn,
   onToggleMic,
   onToggleCamera,
+  onMore,
+  moreOpen,
   onEnd,
   endLabel,
   className,
@@ -29,6 +32,8 @@ export function CallControls({
   camOn: boolean;
   onToggleMic: () => void;
   onToggleCamera: () => void;
+  onMore: () => void;
+  moreOpen: boolean;
   onEnd: () => void;
   endLabel: string;
   className?: string;
@@ -62,6 +67,18 @@ export function CallControls({
           {camOn ? <Video size={24} aria-hidden /> : <VideoOff size={24} aria-hidden />}
         </button>
       )}
+      <button
+        type="button"
+        onClick={onMore}
+        aria-label={t("calls.menu.open")}
+        title={t("calls.menu.open")}
+        aria-haspopup="menu"
+        aria-expanded={moreOpen}
+        data-call-more
+        className={cn(ROUND, "w-12", moreOpen ? "bg-surface text-text" : "bg-art-chip text-on-art hover:bg-art-chip/80")}
+      >
+        <MoreVertical size={24} aria-hidden />
+      </button>
       <button type="button" onClick={onEnd} aria-label={endLabel} title={endLabel} data-call-end className={cn(ROUND, "w-16 bg-danger text-danger-foreground hover:bg-danger/90")}>
         <PhoneOff size={24} aria-hidden />
       </button>

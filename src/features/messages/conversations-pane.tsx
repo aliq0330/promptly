@@ -6,11 +6,15 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Archive } from "@/components/icons/archive";
 import { Inbox } from "@/components/icons/inbox";
 import { MessagesSquare } from "@/components/icons/messages-square";
+import { Phone } from "@/components/icons/phone";
 import { Plus } from "@/components/icons/plus";
 import { Search } from "@/components/icons/search";
 import { Star } from "@/components/icons/star";
 import { Briefcase } from "@/components/icons/briefcase";
 import { Users } from "@/components/icons/users";
+import { CallHistoryList } from "@/features/calls/call-history-list";
+import { useMissedCallCount } from "@/features/calls/call-log-store";
+import { useAuth } from "@/features/auth/auth-provider";
 import { ConversationList } from "./conversation-list";
 import { ConversationsMoreMenu, SelectionActionBar, SelectionHeader, useSelectionChrome } from "./conversation-selection";
 import { NewChatModal } from "./new-chat-modal";
@@ -41,7 +45,7 @@ function kindOf(conversation: Conversation): Exclude<KindFilter, "all"> {
   return conversation.group.team ? "team" : "community";
 }
 
-type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities" | "teams";
+type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities" | "teams" | "calls";
 
 /**
  * The conversation list (message requests + chats) with its own search box.
@@ -52,6 +56,8 @@ type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities
 export function ConversationsPane({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation();
   const { conversations, startConversationWith, unarchiveConversation, archiveConversation, pinConversation, deleteConversation, markConversationRead } = useRealMessages();
+  const { user: authUser } = useAuth();
+  const missedCalls = useMissedCallCount(authUser?.id ?? null);
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -231,6 +237,8 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     { key: "inbox", label: t("messages.chatsHeading"), icon: MessagesSquare },
     { key: "requests", label: t("messages.messageRequestsHeading"), icon: Inbox, count: buckets.requests.length || undefined },
     { key: "archived", label: t("messages.archivedHeading"), icon: Archive, meta: buckets.archived.length },
+    // Arama geçmişi (docs/history/450-*): bitmiş sesli/görüntülü aramalar; rozet = cevapsız gelen aramalar.
+    { key: "calls", label: t("calls.list.menu"), icon: Phone, count: missedCalls || undefined },
     // Not views but doors: the starred messages screen and the communities (their chats live there).
     { key: "starred", label: t("chat.starred.title"), icon: Star, dividerBefore: true },
     { key: "communities", label: t("communities.messages.entryAria"), icon: Users },
@@ -359,6 +367,8 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           <div className={cn(embedded && "px-4")}>
             <TeamChannelsInbox />
           </div>
+        ) : view === "calls" ? (
+          <CallHistoryList embedded={embedded} />
         ) : noMatches ? (
           <p className="py-10 text-center text-small text-text-muted">{t("messages.noConversationMatches")}</p>
         ) : kindEmpty ? (

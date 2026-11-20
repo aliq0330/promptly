@@ -16,9 +16,9 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 /**
  * Tablet (md–lg): 84 px ince ray (docs/history/387-*). Kenar çubuğunun aynı hedefleri, ikonun altında 12 px etiketle; yalnız `rail` işaretli
  * girişler gelir (Ana Sayfa · Keşfet · Topluluklar │ Spaces · Ekipler · Kaydedilen), kalanlar (Takip, Panel, Studio) «Sen» menüsünde kısayoldur.
- * Üstte marka + tek mavi «Oluştur», en altta «Sen».
+ * Üstte marka + tek mavi «Oluştur», en altta «Sen». `desktop`: Mesajlar çalışma alanında (docs/history/450-*) masaüstünde de bu ray görünür (kenar çubuğu yerine).
  */
-export function NavRail() {
+export function NavRail({ desktop = false }: { desktop?: boolean }) {
   const pathname = usePathname();
   const { t } = useTranslation();
   const status = useAuthStatus();
@@ -50,7 +50,7 @@ export function NavRail() {
   }
 
   return (
-    <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className="sticky top-0 z-(--z-nav) hidden h-dvh w-(--nav-rail-w) shrink-0 flex-col items-center border-r border-border-soft bg-surface px-1.5 pb-4 md:flex lg:hidden">
+    <aside data-app-chrome aria-label={t("nav.sidebarLabel")} className={cn("sticky top-0 z-(--z-nav) hidden h-dvh w-(--nav-rail-w) shrink-0 flex-col items-center border-r border-border-soft bg-surface px-1.5 pb-4 md:flex", desktop ? "" : "lg:hidden")}>
       <div className="flex h-16 items-center justify-center">
         <Link href="/" className="rounded-md" aria-label="Promptly">
           <BrandMark size={34} />

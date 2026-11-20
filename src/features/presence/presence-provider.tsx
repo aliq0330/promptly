@@ -130,6 +130,7 @@ export function PresenceProvider({ children }: { children: ReactNode }) {
       viewerId: userId,
       enabled: Boolean(userId && available && me),
       selfHidden: me ? isSelfHidden(me.mode, me.audience) : true,
+      selfInvisible: me ? isSelfHidden(me.mode, me.audience) : false,
     });
   }, [userId, available, me]);
 

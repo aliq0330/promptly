@@ -61,4 +61,22 @@ export type CallFailure = "connection" | "signaling";
 
 export type MediaErrorKind = "permission" | "notFound" | "inUse" | "unsupported" | "unknown";
 
-export type CallStartErrorKind = "busy" | "blocked" | "notAllowed" | "notDirect" | "rateLimit" | "unknown";
+export type CallStartErrorKind = "busy" | "blocked" | "notAllowed" | "notDirect" | "privacy" | "rateLimit" | "unknown";
+
+/** Bağlantı kalitesi (RTT + paket kaybından, bkz. `qualityFrom`). */
+export type CallQuality = "good" | "mid" | "low";
+
+/** `RTCPeerConnection.getStats()` özeti: gidiş-dönüş süresi (ms) ve alınan medyadaki paket kaybı yüzdesi; ölçülemeyen null. */
+export interface QualitySample {
+  rttMs: number | null;
+  lossPct: number | null;
+}
+
+/** Kullanıcının seçtiği cihazlar (cihaz kimliği; boş = varsayılan). Cihaza özeldir, yalnız tarayıcıda tutulur. */
+export interface CallDevicePrefs {
+  mic: string | null;
+  camera: string | null;
+  speaker: string | null;
+}
+
+export type CameraFacing = "user" | "environment";

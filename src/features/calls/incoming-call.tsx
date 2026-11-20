@@ -18,12 +18,15 @@ export function IncomingCall({
   peer,
   type,
   busy,
+  ring = true,
   onAccept,
   onReject,
 }: {
   peer: CallPeerInfo;
   type: CallType;
   busy: boolean;
+  /** Zil sesi çalsın mı (cihaz tercihi, rahatsız etme saatleri ve "Görünmez" durumuna göre sağlayıcı karar verir). */
+  ring?: boolean;
   onAccept: () => void;
   onReject: () => void;
 }) {
@@ -34,12 +37,12 @@ export function IncomingCall({
   useEffect(() => {
     lockBodyScroll();
     rootRef.current?.focus();
-    const stop = startRingtone("incoming");
+    const stop = ring ? startRingtone("incoming") : () => {};
     return () => {
       stop();
       unlockBodyScroll();
     };
-  }, []);
+  }, [ring]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

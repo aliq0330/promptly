@@ -5,6 +5,8 @@
  */
 import type {
   CallAction,
+  CallQuality,
+  QualitySample,
   CallPhase,
   CallRow,
   CallSignalEvent,
@@ -23,8 +25,14 @@ import type {
 export const CALL_RING_TIMEOUT_MS = 45_000;
 /** Kabul edildikten sonra medya bağlantısı bu sürede kurulamazsa "başarısız". */
 export const CALL_CONNECT_TIMEOUT_MS = 30_000;
-/** `disconnected` (geçici kopma) bu sürede düzelmezse "başarısız". WebRTC çoğu zaman kendiliğinden toparlar. */
-export const CALL_DISCONNECT_GRACE_MS = 10_000;
+/** `disconnected`/`failed` (geçici kopma) bu sürede düzelmezse "başarısız". Bu sürede arayan ICE'i yeniden başlatmayı dener (aşağıdaki sabitler). */
+export const CALL_DISCONNECT_GRACE_MS = 20_000;
+/** Kopma sürerse arayan ilk ICE yeniden başlatmayı bu kadar sonra, sonrakileri bu aralıkla dener (en çok `CALL_RESTART_MAX`). */
+export const CALL_RESTART_FIRST_MS = 3_000;
+export const CALL_RESTART_EVERY_MS = 5_000;
+export const CALL_RESTART_MAX = 3;
+/** Bağlantı kalitesi örnekleme aralığı. */
+export const CALL_QUALITY_POLL_MS = 3_000;
 /** Biten/reddedilen/cevapsız aramanın ekranda kalma süresi (başarısız arama kullanıcı kapatana kadar kalır). */
 export const CALL_ENDED_DISMISS_MS = 2_500;
 /** Aranan "hazırım" (`call_accepted`) sinyalini teklif gelene dek bu aralıkla tekrarlar (Broadcast kalıcı değildir). */
@@ -141,6 +149,7 @@ export function classifyCallStartError(message: string | null | undefined): Call
   if (text.includes("interaction_blocked")) return "blocked";
   if (text.includes("call_not_allowed")) return "notAllowed";
   if (text.includes("call_not_direct")) return "notDirect";
+  if (text.includes("call_privacy")) return "privacy";
   if (text.includes("rate_limit")) return "rateLimit";
   return "unknown";
 }
@@ -294,4 +303,44 @@ export function decideOpenCall(row: CallRow, userId: string, owned: boolean, now
     return owned ? { kind: "ignore" } : { kind: "end", action: "end", reason: "interrupted" };
   }
   return { kind: "ignore" };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Bağlantı kalitesi
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * RTT (ms) + paket kaybı (%) → kalite. Ölçülemeyen değer (null) o ölçütü atlar; ikisi de yoksa null (önceki değer korunur).
+ * Eşikler VoIP için yaygın değerlerdir: iyi < 150 ms ve < %2 kayıp, orta < 350 ms ve < %8, kalanı zayıf.
+ */
+export function qualityFrom(sample: QualitySample | null): CallQuality | null {
+  if (!sample) return null;
+  const { rttMs, lossPct } = sample;
+  if (rttMs === null && lossPct === null) return null;
+  const rtt = rttMs ?? 0;
+  const loss = lossPct ?? 0;
+  if (rtt < 150 && loss < 2) return "good";
+  if (rtt < 350 && loss < 8) return "mid";
+  return "low";
+}
+
+/** Kapalı kamera/mikrofon göstergesi ve cihaz seçimi için kayıtlı cihaz kimliğinden `getUserMedia` kısıtı üretir (kimlik yoksa kısıt koyulmaz). */
+export function deviceConstraint(deviceId: string | null | undefined): { deviceId: { ideal: string } } | Record<string, never> {
+  return deviceId ? { deviceId: { ideal: deviceId } } : {};
+}
+
+export const CALL_DEVICES_KEY = "promptly-call-devices";
+
+/** Kayıtlı cihaz tercihleri (bozuk/eksik kayıt = varsayılanlar). */
+export function parseDevicePrefs(raw: string | null): { mic: string | null; camera: string | null; speaker: string | null } {
+  const empty = { mic: null, camera: null, speaker: null };
+  if (!raw) return empty;
+  try {
+    const v: unknown = JSON.parse(raw);
+    if (!isRecord(v)) return empty;
+    const pick = (x: unknown) => (typeof x === "string" && x.length > 0 && x.length < 300 ? x : null);
+    return { mic: pick(v.mic), camera: pick(v.camera), speaker: pick(v.speaker) };
+  } catch {
+    return empty;
+  }
 }

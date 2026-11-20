@@ -53,6 +53,8 @@ let version = 0;
 let viewerId: string | null = null;
 let enabled = false;
 let selfHidden = false;
+// Durumum AÇIKÇA "Görünmez" mi (ayar yüklendiyse)? `selfHidden` yüklenmemişken gizlilik için true sayılır; bu bayrak yüklenmemişken false kalır (arama zili ona bakar).
+let selfInvisible = false;
 let tabActive = true;
 let unavailable = false;
 let pending = new Set<string>();
@@ -299,12 +301,13 @@ export function refreshWatchedPresence(force = false) {
 }
 
 /** Sağlayıcıdan: oturum, özelliğin açıklığı ve izleyicinin kendi gizliliği. */
-export function configurePresenceStore(next: { viewerId: string | null; enabled: boolean; selfHidden: boolean }) {
+export function configurePresenceStore(next: { viewerId: string | null; enabled: boolean; selfHidden: boolean; selfInvisible?: boolean }) {
   const changedViewer = next.viewerId !== viewerId;
   const wasRunning = canRun();
   viewerId = next.viewerId;
   enabled = next.enabled;
   selfHidden = next.selfHidden;
+  selfInvisible = next.selfInvisible ?? false;
   if (changedViewer || !canRun()) {
     closeAll();
     entries.clear();
@@ -315,6 +318,11 @@ export function configurePresenceStore(next: { viewerId: string | null; enabled:
   }
   reconcile();
   emit();
+}
+
+/** Kendi durumum AÇIKÇA "Görünmez" mi? (Arama zili sessiz gelir, docs/history/450-*.) Ayar henüz yüklenmediyse ya da okunamadıysa false: zil sırf bu yüzden susmasın. */
+export function isSelfPresenceHidden(): boolean {
+  return selfInvisible;
 }
 
 /** Sekme görünürlüğü (uzun gizlilikte kanallar kapanır). */

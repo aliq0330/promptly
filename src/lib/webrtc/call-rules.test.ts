@@ -8,7 +8,11 @@ import {
   callerCanSendOffer,
   classifyCallStartError,
   classifyMediaError,
+  CALL_DEVICES_KEY,
   decideOpenCall,
+  deviceConstraint,
+  parseDevicePrefs,
+  qualityFrom,
   elapsedSeconds,
   formatCallDuration,
   incomingRemainingMs,
@@ -117,6 +121,7 @@ test("call_start hataları sunucu kodundan sınıflanır", () => {
   assert.equal(classifyCallStartError("interaction_blocked"), "blocked");
   assert.equal(classifyCallStartError("call_not_allowed"), "notAllowed");
   assert.equal(classifyCallStartError("call_not_direct"), "notDirect");
+  assert.equal(classifyCallStartError("call_privacy"), "privacy");
   assert.equal(classifyCallStartError("rate_limit"), "rateLimit");
   assert.equal(classifyCallStartError("başka bir şey"), "unknown");
   assert.equal(classifyCallStartError(null), "unknown");
@@ -222,4 +227,29 @@ test("açılışta takılı çağrı kararı", () => {
   assert.deepEqual(decideOpenCall(accepted, ME, true, NOW), { kind: "ignore" });
   // Sonlanmış satırlara dokunulmaz
   assert.deepEqual(decideOpenCall(row({ status: "ended" }), ME, false, NOW), { kind: "ignore" });
+});
+
+test("bağlantı kalitesi: eşikler; ölçülemeyen ölçüt atlanır; hiçbiri yoksa null", () => {
+  assert.equal(qualityFrom({ rttMs: 40, lossPct: 0 }), "good");
+  assert.equal(qualityFrom({ rttMs: 149, lossPct: 1.9 }), "good");
+  assert.equal(qualityFrom({ rttMs: 150, lossPct: 0 }), "mid");
+  assert.equal(qualityFrom({ rttMs: 60, lossPct: 2 }), "mid");
+  assert.equal(qualityFrom({ rttMs: 349, lossPct: 7.9 }), "mid");
+  assert.equal(qualityFrom({ rttMs: 350, lossPct: 0 }), "low");
+  assert.equal(qualityFrom({ rttMs: 20, lossPct: 8 }), "low");
+  assert.equal(qualityFrom({ rttMs: null, lossPct: 12 }), "low", "yalnız kayıp ölçüldü");
+  assert.equal(qualityFrom({ rttMs: 30, lossPct: null }), "good", "yalnız RTT ölçüldü");
+  assert.equal(qualityFrom({ rttMs: null, lossPct: null }), null);
+  assert.equal(qualityFrom(null), null);
+});
+
+test("cihaz kısıtı ve kayıtlı tercihler", () => {
+  assert.deepEqual(deviceConstraint("abc"), { deviceId: { ideal: "abc" } });
+  assert.deepEqual(deviceConstraint(null), {});
+  assert.deepEqual(deviceConstraint(""), {});
+  assert.equal(CALL_DEVICES_KEY, "promptly-call-devices");
+  assert.deepEqual(parseDevicePrefs(JSON.stringify({ mic: "m", camera: "c", speaker: "s", extra: 1 })), { mic: "m", camera: "c", speaker: "s" });
+  assert.deepEqual(parseDevicePrefs(JSON.stringify({ mic: 5, camera: "", speaker: "x".repeat(400) })), { mic: null, camera: null, speaker: null }, "geçersiz değerler elenir");
+  assert.deepEqual(parseDevicePrefs("bozuk"), { mic: null, camera: null, speaker: null });
+  assert.deepEqual(parseDevicePrefs(null), { mic: null, camera: null, speaker: null });
 });
