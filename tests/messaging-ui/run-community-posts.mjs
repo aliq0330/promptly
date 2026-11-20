@@ -120,7 +120,7 @@ await scenario("3c. Yerel içeriğin (detay sayfasından) paylaşımı özel iç
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
   await post(page, "Yerel prompt").locator("article").first().getByRole("link", { name: "Yerel prompt" }).click();
   await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
-  await dlg(page).getByRole("button", { name: /Diğer uygulamalarla paylaş/ }).click();
+  await dlg(page).locator("[data-share-link]").click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /prompts\/local\/?\?id=/);
   assert.doesNotMatch(copied, /\/share\//, "private community content has no public share page");
@@ -147,8 +147,8 @@ await scenario("3d. Başvuru gönderisinin sayfası Kaydet + İstatistik + Payla
   await d.getByRole("button", { name: /Kapat/ }).click();
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
   await bar3d.getByRole("button", { name: "Paylaş" }).click();
-  await dlg(page).getByText(/mesaj olarak/i).first().waitFor();
-  await dlg(page).getByRole("button", { name: /Diğer uygulamalarla paylaş/ }).click();
+  await dlg(page).locator("[data-share-people-more]").waitFor();
+  await dlg(page).locator("[data-share-link]").click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /communities\/post\/local\/?\?id=/);
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Başvuru prompt", kind: "application" }); } });
@@ -486,7 +486,7 @@ await scenario("17. Başvuru gönderisi site içi mesajla paylaşılır: Paylaş
   await page.goto(postPage(p.id));
   await page.locator("[data-community-post-page]").waitFor();
   await page.getByRole("button", { name: "Paylaş" }).first().click();
-  await dlg(page).getByRole("link", { name: /mesaj olarak gönder/ }).click();
+  await dlg(page).locator("[data-share-people-more]").click();
   await page.waitForURL(/messages\/?\?sharePostId=/);
   assert.match(page.url(), new RegExp(`sharePostId=${p.id}`));
   await page.locator("a[href*='/messages/local'][href*='sharePostId=']", { hasText: "Carol" }).first().click();
