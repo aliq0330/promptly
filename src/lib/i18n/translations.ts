@@ -42,6 +42,7 @@ import { firstRunTranslations } from "./translations-first-run";
 import { settingsTranslations } from "./translations-settings";
 import { connectGuideTranslations } from "./translations-connect-guide";
 import { worksTranslations } from "./translations-works";
+import { composeStudioTranslations } from "./translations-compose-studio";
 import { focusTranslations } from "./translations-focus";
 import { workflowAutoTranslations } from "./translations-workflow-auto";
 import { chatRedesignTranslations } from "./translations-chat-redesign";
@@ -3343,6 +3344,7 @@ export const translations = {
   ...settingsTranslations,
   ...connectGuideTranslations,
   ...worksTranslations,
+  ...composeStudioTranslations,
   ...focusTranslations,
   ...workflowAutoTranslations,
   ...chatRedesignTranslations,

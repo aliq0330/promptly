@@ -47,7 +47,11 @@ import {
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
-import { ComposeAudienceLine, ComposeSection, FormDisclosure, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
+import { ComposeAudienceLine, FormDisclosure, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
+import { ComposeDetailPreview, ComposeStep, revealComposeField, type ComposeChecklistItem, type ComposeStepMeta } from "@/features/content/compose-steps";
+import { Globe } from "@/components/icons/globe";
+import { Lock } from "@/components/icons/lock";
+import { Users } from "@/components/icons/users";
 import { ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
 import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/features/content/publish-panel";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -769,10 +773,11 @@ export function CreatePromptForm() {
 
   const isSaveMode = isEditMode && !isEditingDraft;
   const typeMeta = CONTENT_TYPE_META[contentType];
-  const focusField = (id: string) => () => document.getElementById(id)?.focus();
+  const focusField = (id: string) => () => revealComposeField(id);
   const problems: PublishProblem[] = [
     ...(title.trim() ? [] : [{ key: "title", label: t("compose.problemTitle"), onFix: focusField("prompt-title") }]),
     ...(description.trim() ? [] : [{ key: "description", label: t("compose.problemDescription"), onFix: focusField("prompt-description") }]),
+    ...(promptText.trim() ? [] : [{ key: "promptText", label: t("cs.problem.promptText"), onFix: focusField("prompt-text") }]),
   ];
   const toolLabel = resolveToolRefs(tools)[0]?.label;
 
@@ -788,6 +793,73 @@ export function CreatePromptForm() {
   }
 
   const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
+
+  // Adımlı düzen (docs/history/445-*): her adımın durumu ve kapalıyken görünen tek satırlık özeti formun o anki değerlerinden.
+  const typeLabel = t(typeMeta.labelKey);
+  const hasOutput = contentType === "image" ? images.length > 0 : Boolean(outputFile);
+  const detailParts = [toolLabel, categoryPath, tagPicker.accepted.length > 0 ? t("cs.tagCount", { count: tagPicker.accepted.length }) : ""].filter(Boolean);
+  const audienceLabel = team && !isEditMode
+    ? t("tf.create.destination")
+    : communityId
+      ? (communityName ?? t("compose.aCommunity"))
+      : !showsVisibilityChoice && visibility === "private"
+        ? t("publish.private")
+        : t("publish.public");
+  const audienceIcon = communityId || (team && !isEditMode) ? Users : !showsVisibilityChoice && visibility === "private" ? Lock : Globe;
+  const steps: ComposeStepMeta[] = [
+    {
+      id: "basics",
+      title: t("formSection.basics"),
+      summary: [typeLabel, title.trim()].filter(Boolean).join(" · "),
+      state: title.trim() && description.trim() ? "done" : "missing",
+      required: true,
+      intro: t("cs.prompt.introBasics"),
+    },
+    {
+      id: "prompt",
+      title: t("formSection.prompt"),
+      summary: promptText.trim()
+        ? [t("cs.charCount", { count: promptText.length }), variables.length > 0 ? t("cs.varCount", { count: variables.length }) : ""].filter(Boolean).join(" · ")
+        : undefined,
+      state: promptText.trim() ? "done" : "missing",
+      required: true,
+      intro: t("cs.prompt.introPrompt"),
+    },
+    ...(contentType !== "text"
+      ? [
+          {
+            id: "output",
+            title: contentType === "image" ? t("cs.prompt.outputImages") : t("cs.prompt.output"),
+            summary: contentType === "image" ? (images.length > 0 ? t("cs.imageCount", { count: images.length }) : t("cs.none")) : outputFile ? t("cs.fileChosen") : t("cs.none"),
+            state: (hasOutput ? "done" : "optional") as ComposeStepMeta["state"],
+            intro: t("cs.prompt.introOutput"),
+          },
+        ]
+      : []),
+    {
+      id: "details",
+      title: t("compose.sectionDetails"),
+      summary: detailParts.length > 0 ? detailParts.join(" · ") : t("cs.detailsSummary"),
+      state: detailParts.length > 0 ? "done" : "optional",
+      intro: t("cs.prompt.introDetails"),
+    },
+    {
+      id: "publish",
+      title: t("publish.whoSees"),
+      summary: audienceLabel,
+      state: "done",
+      intro: t("cs.prompt.introPublish"),
+    },
+  ];
+  const checklist: ComposeChecklistItem[] = [
+    { key: "title", label: t("cs.check.titleType"), state: title.trim() ? "ok" : "missing" },
+    { key: "description", label: t("cs.check.description"), state: description.trim() ? "ok" : "missing" },
+    { key: "promptText", label: t("cs.check.promptText"), state: promptText.trim() ? "ok" : "missing" },
+    ...(variables.length > 0
+      ? [{ key: "vars", label: t("cs.check.varDefaults"), state: (variables.every((variable) => variable.defaultValue.trim() || variable.options.length > 0) ? "ok" : "todo") as ComposeChecklistItem["state"] }]
+      : []),
+    ...(contentType !== "text" ? [{ key: "output", label: t("cs.check.output"), state: (hasOutput ? "ok" : "todo") as ComposeChecklistItem["state"] }] : []),
+  ];
   const publishLabel = isSubmitting ? (isSaveMode ? t("common.saving") : t("prompt.publishing")) : isSaveMode ? t("common.save") : t("common.share");
 
   return (
@@ -808,14 +880,26 @@ export function CreatePromptForm() {
       publishDisabled={isSubmitting}
       publishDimmed={problems.length > 0}
       onSaveDraft={canSaveDraft && !communityId ? () => void handleSaveDraft() : undefined}
-      aside={
-        <>
-          <p className="mb-2 text-caption font-semibold text-text-muted">{t("forms.livePreview")}</p>
-          <div className="pointer-events-none select-none">
-            <PromptCard prompt={previewPrompt} />
-          </div>
-        </>
-      }
+      steps={steps}
+      problems={problems}
+      checklist={checklist}
+      audience={{ label: audienceLabel, icon: audienceIcon }}
+      phoneActionBar
+      previewHint={contentType === "image" && images.length === 0 ? t("cs.coverHint") : undefined}
+      preview={{
+        card: <PromptCard prompt={previewPrompt} />,
+        detail: (
+          <ComposeDetailPreview
+            typeLabel={[`${typeLabel} Prompt`, toolLabel].filter(Boolean).join(" · ")}
+            title={title.trim() || t("prompt.untitledPrompt")}
+            author={{ name: ownProfile?.displayName ?? t("prompt.previewAuthorName"), avatarUrl: ownProfile?.avatarUrl ?? null }}
+            images={contentType === "image" ? images.map((item) => item.url) : []}
+            promptText={promptText.trim() ? promptText : undefined}
+            description={description.trim() || undefined}
+            tags={tagPicker.accepted.map((entry) => entry.tag.label)}
+          />
+        ),
+      }}
     >
       <form
         onSubmit={(event) => {
@@ -823,7 +907,7 @@ export function CreatePromptForm() {
           panelRef.current?.publish();
         }}
         data-compose-body=""
-        className="space-y-6"
+        className="space-y-3 md:space-y-4"
       >
         {isAnswerMode && answeredRequest && (
           <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-small">
@@ -874,10 +958,10 @@ export function CreatePromptForm() {
         )}
 
         {communityId && (
-          <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => document.getElementById("compose-publish")?.scrollIntoView({ behavior: "smooth", block: "center" })} />
+          <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => revealComposeField("compose-publish")} />
         )}
 
-        <ComposeSection title={t("formSection.basics")}>
+        <ComposeStep id="basics">
           <FormField label={t("compose.whatMaking")} required>
             <ContentTypePicker
               value={contentType}
@@ -896,9 +980,21 @@ export function CreatePromptForm() {
               className={formTextInputClassName}
             />
           </FormField>
-        </ComposeSection>
+          <FormField label={t("compose.descriptionLabel")} htmlFor="prompt-description" required error={attempted && !description.trim() ? t("compose.problemDescription") : null}>
+            <textarea
+              id="prompt-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              maxLength={200}
+              rows={3}
+              placeholder={t("prompt.descriptionPlaceholder")}
+              aria-invalid={attempted && !description.trim() ? true : undefined}
+              className={formTextareaClassName}
+            />
+          </FormField>
+        </ComposeStep>
 
-        <ComposeSection title={t("formSection.prompt")}>
+        <ComposeStep id="prompt">
           <FormField label={t("compose.promptText")} required>
             <PromptTextEditor
               id="prompt-text"
@@ -933,6 +1029,10 @@ export function CreatePromptForm() {
             onOpenChange={setExtraPanelOpen}
           />
 
+        </ComposeStep>
+
+        {contentType !== "text" && (
+        <ComposeStep id="output">
           {contentType === "image" && (
             <FormField label={t("formSection.images")} optional>
               <MultiImagePicker items={images} onChange={setImages} hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")} />
@@ -944,22 +1044,10 @@ export function CreatePromptForm() {
               <OutputFilePicker kind={outputKind} file={outputFile} onChange={(file) => setPickedOutput(file ? { kind: outputKind, file } : null)} disabled={isSubmitting} />
             </FormField>
           )}
+        </ComposeStep>
+        )}
 
-          <FormField label={t("compose.descriptionLabel")} htmlFor="prompt-description" required error={attempted && !description.trim() ? t("compose.problemDescription") : null}>
-            <textarea
-              id="prompt-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              maxLength={200}
-              rows={3}
-              placeholder={t("prompt.descriptionPlaceholder")}
-              aria-invalid={attempted && !description.trim() ? true : undefined}
-              className={formTextareaClassName}
-            />
-          </FormField>
-        </ComposeSection>
-
-        <ComposeSection title={t("compose.sectionDetails")}>
+        <ComposeStep id="details">
           <FormDisclosure id="tool" label={t("formSection.tool")} value={toolLabel}>
             <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
           </FormDisclosure>
@@ -991,9 +1079,9 @@ export function CreatePromptForm() {
               <ReferenceRequirementsField contentType={contentType} value={references} onChange={setReferences} />
             </FormDisclosure>
           )}
-        </ComposeSection>
+        </ComposeStep>
 
-        <ComposeSection title={t("publish.whoSees")} id="compose-publish">
+        <ComposeStep id="publish" anchorId="compose-publish">
           <PublishPanel
             ref={panelRef}
             onConfirm={() => void publish()}
@@ -1043,7 +1131,7 @@ export function CreatePromptForm() {
               </div>
             )}
           </PublishPanel>
-        </ComposeSection>
+        </ComposeStep>
       </form>
       {leave.dialog}
     </ComposeShell>
