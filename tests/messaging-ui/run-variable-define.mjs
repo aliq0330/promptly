@@ -41,6 +41,8 @@ async function openForm(page, text = TEXT) {
   await page.goto(`${BASE}/create?mode=prompt`);
   await page.locator("[data-compose-body]").waitFor();
   await page.waitForTimeout(300);
+  // Adımlı form (docs/history/446-*): prompt metni "Prompt" adımındadır, önce o adım açılır.
+  await page.locator('[data-compose-step-summary="prompt"]:visible, [data-compose-nav-item="prompt"]:visible').first().click();
   await page.locator("#prompt-text").fill(text);
 }
 
@@ -76,7 +78,7 @@ await scenario("3. Örnek değerler: düzenleme penceresinde yazılır, Önizlem
   await shot("3-ornek-degerler-penceresi", dialog);
   await dialog.getByRole("button", { name: "Kaydet" }).click();
   await dialog.waitFor({ state: "detached" });
-  await page.getByRole("button", { name: "Önizleme" }).click();
+  await page.getByRole("tab", { name: "Önizleme" }).click();
   const group = page.getByRole("group", { name: "city için örnek değerler" });
   await group.waitFor();
   assert.deepEqual((await group.getByRole("button").allInnerTexts()).map((t) => t.trim()), ["Istanbul", "Tokyo", "Paris"]);
@@ -103,7 +105,7 @@ await scenario("4. Örnek değerlerde virgül yazarken kaybolmaz; boş bırakıl
   assert.equal(await input.inputValue(), "Istanbul,");
   await input.fill("");
   await dialog.getByRole("button", { name: "Kaydet" }).click();
-  await page.getByRole("button", { name: "Önizleme" }).click();
+  await page.getByRole("tab", { name: "Önizleme" }).click();
   assert.equal(await page.getByRole("group", { name: /için örnek değerler/ }).count(), 0);
 });
 

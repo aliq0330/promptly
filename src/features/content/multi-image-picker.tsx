@@ -7,6 +7,7 @@ import { ImagePlus } from "@/components/icons/image-plus";
 import { X } from "@/components/icons/x";
 import { resizeImageToDataUrlFit } from "@/lib/utils";
 import { ImageProcessingError } from "@/lib/image-processing";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { MultiImageItem } from "@/lib/supabase/media-input";
 import { StorageImg } from "@/components/ui/storage-media";
@@ -30,6 +31,7 @@ export function MultiImagePicker({
   disabled,
   label,
   hint,
+  gridClassName,
 }: {
   items: MultiImageItem[];
   onChange: (items: MultiImageItem[]) => void;
@@ -38,6 +40,8 @@ export function MultiImagePicker({
   disabled?: boolean;
   label?: string;
   hint?: string;
+  /** Izgaranın sütunları (Ayar paketi kapağı tek kare: `grid-cols-1`). */
+  gridClassName?: string;
 }) {
   const { t } = useTranslation();
   const inputId = useId();
@@ -84,7 +88,7 @@ export function MultiImagePicker({
           {label} <span className="text-text-muted">({t("common.optional")})</span>
         </label>
       )}
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+      <div className={cn("grid gap-2", gridClassName ?? "grid-cols-3 sm:grid-cols-4 md:grid-cols-5")}>
         {items.map((item, index) => (
           <figure key={item.key} className="relative aspect-square overflow-hidden rounded-md card-soft">
             <StorageImg src={item.url} alt="" className="h-full w-full object-cover" draggable={false} />

@@ -1,4 +1,4 @@
-# 446 — Paylaş penceresi: "Kişiler önce" düzeni
+# 447 — Paylaş penceresi: "Kişiler önce" düzeni
 
 **Sorun.** Paylaş penceresindeki önizleme kartı içeriğin açıklamasını tamamen gösteriyordu (`line-clamp-1` ile aynı öğede `block` olduğundan kırpma hiç çalışmıyordu) ve pencerenin yarısını kaplayıp asıl işleri (Alıntıla, mesaj, bağlantı) aşağı itiyordu. Mesaj göndermek iki pencere sürüyordu (Paylaş → Mesaj → sohbet seçici sayfası).
 

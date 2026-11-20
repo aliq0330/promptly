@@ -1,5 +1,5 @@
 /**
- * Paylaş penceresinin "kime gönderilsin" ızgarasının SIRALAMA ve uygunluk kuralları (saf; docs/history/446-*).
+ * Paylaş penceresinin "kime gönderilsin" ızgarasının SIRALAMA ve uygunluk kuralları (saf; docs/history/447-*).
  * Kaynak, Mesajlar'ın zaten yüklü sohbet listesidir (`Conversation`): ikinci bir sohbet sorgusu ya da mesajlaşma yolu yoktur.
  *
  * Sıra puanı: sabitlenen sohbet · son mesajlaşma (yakın zaman daha yüksek, ~2 haftalık yarı ömür) · bu cihazdan en çok paylaşım yapılanlar

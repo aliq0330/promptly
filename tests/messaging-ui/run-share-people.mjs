@@ -1,4 +1,4 @@
-// Paylaş penceresi "Kişiler önce" (docs/history/446-*): sıralama, çoklu seçim + not, topluluk/ekip hedefleri, hata/yeniden deneme, eylem satırı — ağ taklitli.
+// Paylaş penceresi "Kişiler önce" (docs/history/447-*): sıralama, çoklu seçim + not, topluluk/ekip hedefleri, hata/yeniden deneme, eylem satırı — ağ taklitli.
 // Gerçek Supabase'e / gerçek telefona KARŞI DENENMEDİ (yetki/RLS kararı sunucudadır; burada istemci davranışı sınanır).
 import { chromium } from "playwright";
 import assert from "node:assert/strict";

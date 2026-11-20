@@ -348,7 +348,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
 
   const shareRef = user ? shareRefFromQuery(preview.messageParam, preview.title) : null;
   const quoteBlocked = announce?.blockedKey ? t(announce.blockedKey) : null;
-  // Eylem satırı (docs/history/446-*): kimse seçili değilken kişi ızgarasının altında durur; hepsi tek tür simge + kısa etiket.
+  // Eylem satırı (docs/history/447-*): kimse seçili değilken kişi ızgarasının altında durur; hepsi tek tür simge + kısa etiket.
   const actionRow = (
     <div className="flex flex-wrap items-start justify-around gap-x-1 gap-y-3" data-share-actions="">
       <ShareAction icon={copied ? Check : Share2} label={copied ? t("share.action.copied") : t("share.action.link")} onClick={handleNativeShare} data-share-link="" />
@@ -382,7 +382,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
           </button>
         </div>
 
-        {/* Küçük içerik çipi: neyin paylaşıldığını söyler, açıklama göstermez (docs/history/446-*; eski kart uzun açıklamayı kesmeden gösteriyordu). */}
+        {/* Küçük içerik çipi: neyin paylaşıldığını söyler, açıklama göstermez (docs/history/447-*; eski kart uzun açıklamayı kesmeden gösteriyordu). */}
         <div className="mt-3 flex min-w-0 items-center gap-2 rounded-full bg-surface-soft py-1 pl-1 pr-3" data-share-preview="">
           <StorageBackground
             as="span"

@@ -51,7 +51,14 @@ const draft = (page) => page.locator("[data-publish-panel] [data-action=save-dra
 const dimmed = (page) => publish(page).evaluate((el) => el.className.includes("opacity-60"));
 const openForm = async (page, url = "/requests/new") => { await page.goto(`${BASE}${url}`); await page.locator("[data-compose]").waitFor(); await page.waitForTimeout(400); };
 /** "Kim görsün?" bölümü formun içinde (pencere yok): görünür alana getirir. */
-const openSheet = async (page) => { await sheet(page).waitFor(); await sheet(page).scrollIntoViewIfNeeded(); await page.waitForTimeout(250); };
+const openStep = async (page, id) => {
+  const step = page.locator(`[data-compose-step="${id}"]`);
+  if ((await step.count()) === 0 || (await step.getAttribute("data-step-active")) !== null) return;
+  await page.locator(`[data-compose-step-summary="${id}"]`).click();
+  await page.locator(`[data-compose-step="${id}"][data-step-active]`).waitFor();
+};
+/** Adımlı formlarda (Prompt, docs/history/446-*) "Kim görsün?" bir adımdır: önce açılır. */
+const openSheet = async (page) => { await openStep(page, "publish"); await sheet(page).waitFor(); await sheet(page).scrollIntoViewIfNeeded(); await page.waitForTimeout(250); };
 const openPicker = async (page) => { await option(page, "community").click(); await page.getByRole("listbox").waitFor(); await page.waitForTimeout(350); };
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const fillRequest = async (page) => {
@@ -272,16 +279,24 @@ await scenario("12. Hiç topluluğu olmayan kullanıcı: seçicide boş durum + 
   assert.equal(await field(page).getAttribute("data-audience-field"), "public");
 }, { setup: () => {} });
 
-await scenario("13. Mobil (390px): tek sütun form — başlık ve alanlar tam genişlikte, seçenekler ≥44px, alt çubuk yok, yatay taşma yok", async ({ page }) => {
+await scenario("13. Mobil (390px): tek sütun form — önce 'Ne arıyorsun?', alanlar tam genişlikte, seçenekler ≥44px; Taslak/Paylaş alttaki sabit çubukta (klavyede gizlenir), yatay taşma yok", async ({ page }) => {
   await openForm(page);
   assert.equal(await page.locator("[data-compose-toolbar]").count(), 0, "no tool row any more: every field is in the form");
   const type = await page.locator("[data-compose-type] [data-taxonomy-type]").first().boundingBox();
   const titleBox = await page.locator("#request-title").boundingBox();
-  assert.ok(type && titleBox && type.y < titleBox.y, "the type choice comes before the title");
+  assert.ok(type && titleBox && titleBox.y < type.y, "the request starts with what you are looking for (docs/history/446-*)");
+  await page.getByText("Ne arıyorsun?", { exact: true }).waitFor();
   assert.ok(titleBox.height >= 44 && titleBox.width >= 390 - 2 * 16 - 2, `title field is a full-width touch target (${JSON.stringify(titleBox)})`);
   assert.equal(await page.locator("[data-compose-type] [data-taxonomy-type]").evaluateAll((els) => els.every((el) => el.getBoundingClientRect().height >= 44)), true, "type radios >= 44px");
-  assert.equal(await page.locator("*").evaluateAll((els) => els.filter((el) => getComputedStyle(el).position === "fixed" && !el.closest("[role=dialog]") && el.getBoundingClientRect().bottom > innerHeight - 4).length), 0, "no fixed bottom bar (iOS keyboard)");
+  const bar = page.locator("[data-compose-actions]");
+  assert.equal(await bar.evaluate((el) => getComputedStyle(el).position), "fixed", "the actions sit in a bottom bar on a phone");
+  assert.equal(await bar.getAttribute("data-keyboard-hide"), "", "the bar hides while the keyboard is open");
+  const barBox = await bar.boundingBox();
+  assert.ok(barBox.y + barBox.height >= 844 - 1, "bar is at the bottom of the screen");
+  assert.equal(await page.locator("[data-compose-preview]").count(), 0, "the request form has no preview button (mockup)");
+  await page.locator("[data-compose-bar-hint]").waitFor();
   await fillRequest(page);
+  await page.locator("[data-compose-bar-hint]").waitFor({ state: "detached" });
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/cd-compose.png`, fullPage: true });
   await openSheet(page);
   for (const key of ["public", "private", "community"]) {
@@ -297,8 +312,9 @@ await scenario("13. Mobil (390px): tek sütun form — başlık ve alanlar tam g
 await scenario("14. İngilizce: form, Kim görsün? ve ✕ penceresi çevrilmiş", async ({ page }) => {
   await openForm(page);
   await page.getByRole("heading", { level: 1, name: "New request" }).waitFor();
-  await page.getByText("Required").first().waitFor();
-  await page.getByRole("heading", { name: "Optional details" }).waitFor();
+  await page.getByText("Required", { exact: true }).first().waitFor();
+  await page.getByText("What are you looking for?", { exact: true }).waitFor();
+  await page.getByText("Preferences", { exact: false }).first().waitFor();
   await openSheet(page);
   await page.getByRole("heading", { name: "Who can see it?" }).waitFor();
   assert.match(await option(page, "public").textContent(), /Public/);
@@ -313,29 +329,38 @@ await scenario("14. İngilizce: form, Kim görsün? ve ✕ penceresi çevrilmiş
   await page.getByText("Save as a draft?").waitFor();
 }, { lang: "en" });
 
-await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken ekle) · Ayar paketi · Görseller · Açıklama; isteğe bağlı satırlar Araç/Kategori/Etiketler/DNA/Referans satır içinde açılır", async ({ page }) => {
+await scenario("15. Prompt formu (adımlı, docs/history/446-*): Temel bilgiler (Tür · Başlık · Açıklama) → Prompt (metin + Değişken + Ayar paketi) → Çıktı görselleri → Ayrıntılar (Araç/Kategori/Etiketler/DNA/Referans) → Kim görsün?", async ({ page }) => {
   await openForm(page, "/create?mode=prompt");
   await page.locator("[data-compose-body]").waitFor();
   assert.equal(await page.locator("[data-compose-toolbar]").count(), 0);
+  assert.deepEqual(await page.locator("[data-compose-step]").evaluateAll((els) => els.map((el) => el.getAttribute("data-compose-step"))), ["basics", "prompt", "output", "details", "publish"]);
+  assert.equal(await page.locator("[data-compose-step=basics]").getAttribute("data-step-active"), "", "the first step is open");
+  await page.locator("[data-compose-progress]:visible").first().waitFor();
   const types = await page.locator("[data-compose-type] [data-taxonomy-type]").evaluateAll((els) => els.map((el) => el.getAttribute("data-taxonomy-type")));
   assert.deepEqual(types, ["image", "text", "audio", "video"], "the four types are radios on the page");
   await page.locator("#prompt-title").waitFor();
   await page.locator("#prompt-description").waitFor();
+  // Eksik zorunlu alan alttaki çubukta yazar; dokununca alana götürür.
+  await page.locator("[data-compose-bar-hint]").waitFor();
+  await openStep(page, "prompt");
   await page.locator("[data-insert-trigger]:visible").first().waitFor();
   await page.locator("#prompt-text").fill("cinematic portrait of a fox");
-  const images = page.getByText("Görseller", { exact: true });
-  await images.first().waitFor();
-  // Metin türünde görsele özgü alanlar kalkar; geri dönülünce gelir.
-  await page.locator("[data-compose-type] [data-taxonomy-type=text]").click();
-  await images.first().waitFor({ state: "detached" });
-  await page.locator("[data-compose-type] [data-taxonomy-type=image]").click();
-  await images.first().waitFor();
   // Hazır ayar satırı eski pencereyi açar.
   await page.getByRole("button", { name: /Ayar Paketleri ve Ek Alan|Presets & Extra/ }).first().click();
   await page.locator("[data-extra-panel]").waitFor();
   await page.keyboard.press("Escape");
+  await openStep(page, "output");
+  const images = page.getByText("Görseller", { exact: true });
+  await images.first().waitFor();
+  // Metin türünde "Çıktı" adımı kalkar; geri dönülünce gelir.
+  await openStep(page, "basics");
+  await page.locator("[data-compose-type] [data-taxonomy-type=text]").click();
+  await page.locator("[data-compose-step=output]").waitFor({ state: "detached" });
+  await page.locator("[data-compose-type] [data-taxonomy-type=image]").click();
+  await page.locator("[data-compose-step=output]").waitFor();
   assert.equal(await overflowFree(page), true);
   // İsteğe bağlı ayrıntılar: satır → altında kendi seçicisi (alt sayfa yok).
+  await openStep(page, "details");
   const rows = await page.locator("[data-form-row]").evaluateAll((els) => els.map((el) => el.getAttribute("data-form-row")));
   assert.deepEqual(rows, ["tool", "category", "tags", "dna", "references"]);
   await page.locator("[data-form-row=category] button").first().click();
@@ -343,6 +368,12 @@ await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken
   await page.locator("[data-form-row=dna] button").first().click();
   await page.locator("[data-form-row=dna]").getByText("Prompt DNA").first().waitFor();
   assert.equal(await page.locator("[data-compose-sheet]").count(), 0, "no bottom sheets for fields any more");
+  // Önizle: alttan açılan önizleme (Kart / Detay).
+  await page.locator("[data-compose-preview]").click();
+  await page.locator("[data-compose-preview-dialog]").waitFor();
+  await page.locator("[data-compose-preview-dialog]").getByRole("tab", { name: "Detay" }).click();
+  await page.locator("[data-compose-detail-preview]").getByText("cinematic portrait of a fox").waitFor();
+  await page.locator("[data-compose-preview-dialog]").getByRole("button", { name: "Düzenlemeye dön" }).click();
   await openSheet(page);
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 390, height: 844 } });

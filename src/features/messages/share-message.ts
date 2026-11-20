@@ -6,7 +6,7 @@ import { composeSpaceShareBody } from "./space-share-format";
 import { composeWorkflowShareBody } from "./workflow-share-format";
 
 /**
- * Sohbete gönderilecek paylaşımın TEK kuralı (docs/history/446-*): hem sohbet ekranı (`?sharePromptId=` … bekleyen paylaşım) hem de Paylaş
+ * Sohbete gönderilecek paylaşımın TEK kuralı (docs/history/447-*): hem sohbet ekranı (`?sharePromptId=` … bekleyen paylaşım) hem de Paylaş
  * penceresinin kişi ızgarası aynı gövdeyi kurar. Prompt/İstek mesajın gömme sütunlarıyla, diğerleri (`messages`'ta gömme sütunu yok)
  * tanınabilir düz metin bloğuyla gider; yeni mesaj şeması YOK.
  */

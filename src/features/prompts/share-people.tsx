@@ -29,7 +29,7 @@ const MAX_SELECTED = 10;
 type SendState = "sent" | "failed";
 
 /**
- * Paylaş penceresinin "Kişiler önce" bölümü (docs/history/446-*, mockup B): son/sık yazışılan kişiler, topluluk sohbetleri ve ekip kanalları
+ * Paylaş penceresinin "Kişiler önce" bölümü (docs/history/447-*, mockup B): son/sık yazışılan kişiler, topluluk sohbetleri ve ekip kanalları
  * 4 sütunlu ızgarada; kimse seçili değilken altta `actions` (Bağlantı, Alıntıla, Hikâye…), biri seçilince alt satır not alanı + gönder düğmesine
  * döner. Gönderim mevcut `sendMessage` yoludur (RLS/yetki/hız sınırı sunucuda); sıra kuralları saf `lib/share-targets.ts`'tedir.
  */

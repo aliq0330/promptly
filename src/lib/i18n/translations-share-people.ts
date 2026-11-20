@@ -1,5 +1,5 @@
 /**
- * Paylaş penceresi "Kişiler önce" düzeni (docs/history/446-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar (`...sharePeopleTranslations`).
+ * Paylaş penceresi "Kişiler önce" düzeni (docs/history/447-*) — TR/EN metinleri. `translations.ts` bu nesneyi açar (`...sharePeopleTranslations`).
  */
 export const sharePeopleTranslations = {
   "share.people.title": { tr: "Sohbetlere gönder", en: "Send to chats" },
