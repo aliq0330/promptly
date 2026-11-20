@@ -36,6 +36,7 @@ import { reactionTranslations } from "./translations-reactions";
 import { insightsTranslations } from "./translations-insights";
 import { commentExtrasTranslations } from "./translations-comment-extras";
 import { commentOrderTranslations } from "./translations-comment-order";
+import { sharePeopleTranslations } from "./translations-share-people";
 import { apiKeysTranslations } from "./translations-api-keys";
 import { telegramTranslations } from "./translations-telegram";
 import { firstRunTranslations } from "./translations-first-run";
@@ -3338,6 +3339,7 @@ export const translations = {
   ...insightsTranslations,
   ...commentExtrasTranslations,
   ...commentOrderTranslations,
+  ...sharePeopleTranslations,
   ...apiKeysTranslations,
   ...telegramTranslations,
   ...firstRunTranslations,
