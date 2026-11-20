@@ -2214,7 +2214,7 @@ const dictionary: Record<string, string> = {
   "presetBuilder.oneValue": "Tek değer",
   "presetBuilder.errorNoFields": "Yayınlamak için en az bir parametre ekle (ya da taslak olarak kaydet).",
   "presetField.fieldsHeading": "Alanlar",
-  "presetField.addShort": "+ Parametre ekle",
+  "presetField.addShort": "Parametre ekle",
   "presetField.addTitle": "Parametre ekle",
   "presetField.createNew": "Yeni parametre oluştur",
   "presetField.searchPlaceholder": "Parametre ara…",

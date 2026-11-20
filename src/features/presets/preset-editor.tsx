@@ -340,6 +340,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
                 setFields(nextFields);
                 setSelection(nextSelection);
               }}
+              embedded
             />
           </div>
         </section>

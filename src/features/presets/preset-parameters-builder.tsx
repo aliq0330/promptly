@@ -37,6 +37,7 @@ export function PresetParametersBuilder({
   fields,
   selection,
   onChange,
+  embedded = false,
 }: {
   contentType: ContentTypeId;
   category: string | null;
@@ -45,6 +46,8 @@ export function PresetParametersBuilder({
   fields: PresetField[];
   selection: PresetSelection;
   onChange: (fields: PresetField[], selection: PresetSelection) => void;
+  /** Ayar paketi formunun büyük "Parametreler" kartının içinde (docs/history/445-*): başlık/ipucu kartın kendisinde, burada yalnız "Parametre ekle" + liste. */
+  embedded?: boolean;
 }) {
   const { t, language } = useTranslation();
   const [adding, setAdding] = useState(false);
@@ -78,15 +81,15 @@ export function PresetParametersBuilder({
 
   return (
     <FormSection
-      title={`${t("presetBuilder.fieldsTitle")} (${rowIds.length})`}
-      description={t("presetBuilder.fieldsHint")}
+      title={embedded ? undefined : `${t("presetBuilder.fieldsTitle")} (${rowIds.length})`}
+      description={embedded ? undefined : t("presetBuilder.fieldsHint")}
       action={
         <Button type="button" size="sm" onClick={() => setAdding(true)} data-builder-add-field>
           <Plus size={16} aria-hidden />
           {t("presetField.addShort")}
         </Button>
       }
-      className="space-y-3"
+      className={embedded ? "space-y-3 rounded-none border-0 bg-transparent p-0 shadow-none sm:p-0" : "space-y-3"}
     >
       {rowIds.length === 0 ? (
         <EmptyState scene="params" compact icon={SlidersHorizontal} title={t("presetBuilder.emptyTitle")} description={t("presetBuilder.emptyBody")} action={{ label: t("presetField.addTitle"), onClick: () => setAdding(true) }} />

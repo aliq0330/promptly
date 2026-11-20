@@ -2214,7 +2214,7 @@ const dictionary: Record<string, string> = {
   "presetBuilder.oneValue": "Single value",
   "presetBuilder.errorNoFields": "Add at least one parameter to publish (or save it as a draft).",
   "presetField.fieldsHeading": "Fields",
-  "presetField.addShort": "+ Add parameter",
+  "presetField.addShort": "Add parameter",
   "presetField.addTitle": "Add a parameter",
   "presetField.createNew": "Create a new parameter",
   "presetField.searchPlaceholder": "Search parameters…",
