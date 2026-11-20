@@ -38,3 +38,63 @@ export async function fetchMyOpenCalls(): Promise<CallRow[]> {
   if (!Array.isArray(data)) return [];
   return data.map((row) => mapCallRow(row)).filter((row): row is CallRow => row !== null);
 }
+
+const CALL_COLUMNS = "id, conversation_id, caller_id, callee_id, type, status, started_at, answered_at, ended_at";
+const TERMINAL = ["ended", "rejected", "missed"];
+
+function mapRows(data: unknown): CallRow[] {
+  if (!Array.isArray(data)) return [];
+  return data.map((row) => mapCallRow(row)).filter((row): row is CallRow => row !== null);
+}
+
+/**
+ * Aramalar bölümü: BENİM bitmiş çağrılarım, en yeni önce, `before` (başlangıç anı) imleciyle sayfalı (docs/history/450-*).
+ * RLS yalnız arayan/aranan satırı verir; ek süzgeç yalnız kapsamı netleştirir.
+ */
+export async function fetchCallHistory(userId: string, before: string | null, limit = 30): Promise<CallRow[]> {
+  let query = supabase
+    .from("calls")
+    .select(CALL_COLUMNS)
+    .in("status", TERMINAL)
+    .or(`caller_id.eq.${userId},callee_id.eq.${userId}`)
+    .order("started_at", { ascending: false })
+    .limit(limit);
+  if (before) query = query.lt("started_at", before);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return mapRows(data);
+}
+
+/** Bir sohbetin bitmiş çağrıları (sohbet akışına karışır); en yeni 100. */
+export async function fetchConversationCalls(conversationId: string, limit = 100): Promise<CallRow[]> {
+  const { data, error } = await supabase
+    .from("calls")
+    .select(CALL_COLUMNS)
+    .eq("conversation_id", conversationId)
+    .in("status", TERMINAL)
+    .order("started_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return mapRows(data);
+}
+
+export interface MyCallSettings {
+  privacy: "everyone" | "following" | "nobody";
+  notifyMissed: boolean;
+}
+
+export const DEFAULT_CALL_SETTINGS: MyCallSettings = { privacy: "everyone", notifyMissed: true };
+
+/** Arama ayarlarım (sunucu varsayılanları satır yoksa verir). */
+export async function fetchMyCallSettings(): Promise<MyCallSettings> {
+  const { data, error } = await supabase.rpc("get_my_call_settings");
+  if (error) throw new Error(error.message);
+  const row = Array.isArray(data) ? data[0] : data;
+  const privacy = row && (row.privacy === "following" || row.privacy === "nobody" || row.privacy === "everyone") ? row.privacy : "everyone";
+  return { privacy, notifyMissed: row ? row.notify_missed !== false : true };
+}
+
+export async function saveMyCallSettings(next: MyCallSettings): Promise<void> {
+  const { error } = await supabase.rpc("set_my_call_settings", { p_privacy: next.privacy, p_notify_missed: next.notifyMissed });
+  if (error) throw new Error(error.message);
+}

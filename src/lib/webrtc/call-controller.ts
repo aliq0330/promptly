@@ -14,17 +14,22 @@ import {
   CALL_CONNECT_TIMEOUT_MS,
   CALL_DISCONNECT_GRACE_MS,
   CALL_OWNER_REFRESH_MS,
+  CALL_QUALITY_POLL_MS,
   CALL_READY_MAX_RETRIES,
   CALL_READY_RETRY_MS,
+  CALL_RESTART_EVERY_MS,
+  CALL_RESTART_FIRST_MS,
+  CALL_RESTART_MAX,
   CALL_RING_TIMEOUT_MS,
   callerCanSendOffer,
   isTerminalPhase,
   phaseForRowStatus,
+  qualityFrom,
   reduceConnectionState,
 } from "./call-rules.ts";
 import { stopStream, type PeerLike, type PeerOptions } from "./peer.ts";
 import type { SignalingLike } from "./signaling.ts";
-import type { CallAction, CallFailure, CallPhase, CallRole, CallRow, CallSignalEvent, CallSignalHandlers, CallSignalPayloads, CallType } from "./types.ts";
+import type { CallAction, CallFailure, CallPhase, CallQuality, CallRole, CallRow, CallSignalEvent, CallSignalHandlers, CallSignalPayloads, CallType, CameraFacing } from "./types.ts";
 
 export interface CallDeps {
   iceServers: RTCIceServer[];
@@ -36,6 +41,10 @@ export interface CallDeps {
   /** Aynı kullanıcının başka sekmesi bu çağrıya dokunmasın diye sahiplik kaydı (yoksa atlanır). */
   claimOwner?: (callId: string) => void;
   releaseOwner?: (callId: string) => void;
+  /** Ekranın uyumasını engeller (bağlanınca çağrılır; dönen fonksiyon bırakır). */
+  keepAwake?: () => () => void;
+  /** Görüşme sırasında tek iz (mikrofon/kamera) alır: cihaz değiştirme, ön↔arka kamera. */
+  acquireTrack?: (kind: "audio" | "video", opts: { deviceId?: string | null; facing?: CameraFacing }) => Promise<MediaStreamTrack>;
 }
 
 export interface CallSnapshot {
@@ -56,6 +65,12 @@ export interface CallSnapshot {
   connectedAt: number | null;
   localStream: MediaStream;
   remoteStream: MediaStream | null;
+  /** Son ölçülen bağlantı kalitesi (bağlanmadıysa/ölçülemediyse null). */
+  quality: CallQuality | null;
+  /** Telefonda kullanılan kamera yönü. */
+  facing: CameraFacing;
+  /** Yerel izler cihaz değişimiyle yenilendiğinde artar (arayüz cihaz listesini/önizlemeyi tazeler). */
+  devicesRev: number;
 }
 
 type FinalPhase = "ended" | "rejected" | "missed" | "failed";
@@ -79,10 +94,15 @@ export class CallController {
   private offerSdp: string | null = null;
   private offerReceived = false;
   private answerReceived = false;
+  private restartCount = 0;
+  private negotiating = false;
+  private releaseAwake: (() => void) | null = null;
 
   constructor(call: CallRow, role: CallRole, localStream: MediaStream, deps: CallDeps) {
     this.deps = deps;
     const audioOn = localStream.getAudioTracks().every((t) => t.enabled);
+    // Hazırlık ekranında kamera kapalı başlatılmış olabilir (docs/history/450-*): başlangıç durumu izlerden okunur.
+    const videoOn = call.type === "video" && localStream.getVideoTracks().every((t) => t.enabled);
     this.snap = {
       callId: call.id,
       conversationId: call.conversationId,
@@ -92,12 +112,15 @@ export class CallController {
       unstable: false,
       failure: null,
       micOn: audioOn,
-      camOn: call.type === "video",
+      camOn: videoOn,
       remoteMic: true,
       remoteCamera: call.type === "video",
       connectedAt: null,
       localStream,
       remoteStream: null,
+      quality: null,
+      facing: "user",
+      devicesRev: 0,
     };
   }
 
@@ -125,6 +148,9 @@ export class CallController {
   private setRepeat(name: string, ms: number, fn: () => void): void {
     this.clearTimer(name);
     this.timers.set(name, setInterval(fn, ms));
+  }
+  private hasTimer(name: string): boolean {
+    return this.timers.has(name);
   }
   private clearTimer(name: string): void {
     const handle = this.timers.get(name);
@@ -220,21 +246,28 @@ export class CallController {
     await this.send("call_offer", { sdp: this.offerSdp });
   }
 
-  /** Aranan: teklifi uygula, yanıt gönder. */
+  /**
+   * Aranan: teklifi uygula, yanıt gönder. İlk teklifin yinelenenleri (bağlanırken) yok sayılır; bağlıyken ya da kopukken gelen teklif
+   * arayanın ICE yeniden başlatmasıdır (docs/history/450-*) ve yeniden yanıtlanır.
+   */
   private async onOffer(sdp: string): Promise<void> {
-    if (this.finished || this.snap.role !== "callee" || this.offerReceived || !this.peer) return;
+    if (this.finished || this.snap.role !== "callee" || !this.peer || this.negotiating) return;
+    if (this.offerReceived && this.snap.phase !== "connected") return;
     this.offerReceived = true;
     this.clearTimer("ready");
+    this.negotiating = true;
     try {
       const answer = await this.peer.acceptOffer(sdp);
       if (this.finished || !answer.sdp) return;
       await this.send("call_answer", { sdp: answer.sdp });
     } catch {
       this.fail("connection");
+    } finally {
+      this.negotiating = false;
     }
   }
 
-  /** Arayan: yanıtı uygula. */
+  /** Arayan: yanıtı uygula (ICE yeniden başlatmada `answerReceived` sıfırlanır, yeni yanıt da uygulanır). */
   private async onAnswer(sdp: string): Promise<void> {
     if (this.finished || this.snap.role !== "caller" || this.answerReceived || !this.offerSdp || !this.peer) return;
     this.answerReceived = true;
@@ -245,27 +278,69 @@ export class CallController {
     }
   }
 
+  /** Arayan: bağlantı koptu → ICE'i yeni adaylarla yeniden başlat (en çok `CALL_RESTART_MAX` kez, `CALL_RESTART_EVERY_MS` arayla). */
+  private async restartIce(): Promise<void> {
+    if (this.finished || this.snap.role !== "caller" || !this.snap.unstable || !this.peer || this.restartCount >= CALL_RESTART_MAX) return;
+    this.restartCount += 1;
+    try {
+      const offer = await this.peer.createOffer({ iceRestart: true });
+      if (this.finished || !offer.sdp) return;
+      this.offerSdp = offer.sdp;
+      this.answerReceived = false;
+      await this.send("call_offer", { sdp: offer.sdp });
+    } catch {
+      /* süre aşımı (grace) aramayı bitirir */
+    }
+    if (!this.finished && this.snap.unstable && this.restartCount < CALL_RESTART_MAX) this.setTimer("restart", CALL_RESTART_EVERY_MS, () => void this.restartIce());
+  }
+
+  private markUnstable(): void {
+    if (!this.snap.unstable) this.patch({ unstable: true });
+    if (!this.hasTimer("grace")) this.setTimer("grace", CALL_DISCONNECT_GRACE_MS, () => this.fail("connection"));
+  }
+
+  private async pollQuality(): Promise<void> {
+    const peer = this.peer;
+    if (this.finished || !peer) return;
+    const q = qualityFrom(await peer.getQuality().catch(() => null));
+    if (q && !this.finished && q !== this.snap.quality) this.patch({ quality: q });
+  }
+
   private onConnectionState(state: RTCPeerConnectionState): void {
     if (this.finished) return;
-    const { phase, unstable } = this.snap;
+    const { phase, unstable, role } = this.snap;
+    // Bağlıyken `failed`: hemen bitirme, önce toparlanmayı dene (arayan ICE'i yeniden başlatır, aranan teklifi bekler); süre dolarsa biter.
+    if (state === "failed" && phase === "connected" && (role === "callee" || this.restartCount < CALL_RESTART_MAX)) {
+      this.markUnstable();
+      if (role === "caller") void this.restartIce();
+      return;
+    }
     const out = reduceConnectionState(state, phase);
     if (out.phase === "failed") {
       this.fail("connection");
       return;
     }
     if (out.phase === "connected" && phase !== "connected") {
+      this.clearTimer("ring");
       this.clearTimer("connect");
       this.clearTimer("grace");
       this.patch({ phase: "connected", unstable: false, connectedAt: this.now() });
+      this.setRepeat("quality", CALL_QUALITY_POLL_MS, () => void this.pollQuality());
+      void this.pollQuality();
+      this.releaseAwake = this.deps.keepAwake?.() ?? null;
+      // Mikrofon/kamera kapalı başlatıldıysa (hazırlık ekranı) karşı taraf bağlanır bağlanmaz öğrenir.
+      if (!this.snap.micOn || (this.snap.type === "video" && !this.snap.camOn)) void this.send("call_media", { mic: this.snap.micOn, camera: this.snap.camOn });
       return;
     }
     if (state === "disconnected" && phase === "connected" && !unstable) {
-      this.patch({ unstable: true });
-      this.setTimer("grace", CALL_DISCONNECT_GRACE_MS, () => this.fail("connection"));
+      this.markUnstable();
+      if (role === "caller") this.setTimer("restart", CALL_RESTART_FIRST_MS, () => void this.restartIce());
       return;
     }
     if (state === "connected" && unstable) {
       this.clearTimer("grace");
+      this.clearTimer("restart");
+      this.restartCount = 0;
       this.patch({ unstable: false });
     }
   }
@@ -300,6 +375,8 @@ export class CallController {
     }
     this.peer?.close();
     stopStream(this.snap.localStream);
+    this.releaseAwake?.();
+    this.releaseAwake = null;
     this.deps.releaseOwner?.(this.snap.callId);
     if (opts.rpc) {
       const { action, reason } = opts.rpc;
@@ -307,7 +384,7 @@ export class CallController {
         /* arama yerelde zaten bitti; sunucu kaydı bir sonraki açılışta/zaman aşımında düzelir */
       });
     }
-    this.patch({ phase: final, unstable: false, failure: opts.failure ?? null, remoteStream: null });
+    this.patch({ phase: final, unstable: false, failure: opts.failure ?? null, remoteStream: null, quality: null });
   }
 
   // ---- arayüz eylemleri ----
@@ -343,5 +420,45 @@ export class CallController {
     for (const track of this.snap.localStream.getVideoTracks()) track.enabled = next;
     this.patch({ camOn: next });
     void this.send("call_media", { mic: this.snap.micOn, camera: next });
+  }
+
+  /**
+   * Görüşme sırasında giden mikrofon/kamera izini değiştirir (cihaz seçimi, ön↔arka kamera): yeni iz alınır, gönderici izi yer
+   * değiştirir (teklif/yanıt gerekmez), eski iz durdurulur. Başarısızsa mevcut iz AYNEN kalır ve false döner.
+   */
+  async switchInput(kind: "audio" | "video", opts: { deviceId?: string | null; facing?: CameraFacing } = {}): Promise<boolean> {
+    const { acquireTrack } = this.deps;
+    if (this.finished || !acquireTrack || !this.peer) return false;
+    if (kind === "video" && this.snap.type !== "video") return false;
+    let track: MediaStreamTrack;
+    try {
+      track = await acquireTrack(kind, opts);
+    } catch {
+      return false;
+    }
+    if (this.finished || !this.peer) {
+      track.stop();
+      return false;
+    }
+    try {
+      await this.peer.replaceTrack(kind, track);
+    } catch {
+      track.stop();
+      return false;
+    }
+    const stream = this.snap.localStream;
+    for (const old of kind === "audio" ? stream.getAudioTracks() : stream.getVideoTracks()) {
+      stream.removeTrack(old);
+      old.stop();
+    }
+    track.enabled = kind === "audio" ? this.snap.micOn : this.snap.camOn;
+    stream.addTrack(track);
+    this.patch({ devicesRev: this.snap.devicesRev + 1, facing: opts.facing ?? this.snap.facing });
+    return true;
+  }
+
+  /** Telefonda ön ↔ arka kamera. */
+  flipCamera(): Promise<boolean> {
+    return this.switchInput("video", { facing: this.snap.facing === "user" ? "environment" : "user" });
   }
 }

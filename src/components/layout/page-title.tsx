@@ -85,6 +85,15 @@ export function setTitleBadge(next: number) {
   badgeListeners.forEach((l) => l());
 }
 
+// Gelen arama uyarısı (docs/history/450-*): sekme arka plandayken başlığın önüne "Gelen arama · " konur. Rozet gibi başlığın TEK sahibi bu bileşendir.
+let callAlert: string | null = null;
+const callAlertListeners = new Set<() => void>();
+export function setTitleCallAlert(next: string | null) {
+  if (callAlert === next) return;
+  callAlert = next;
+  callAlertListeners.forEach((l) => l());
+}
+
 /** Set the browser-tab title for a detail page. Pass nothing while loading. */
 export function usePageTitle(title: string | null | undefined) {
   useEffect(() => {
@@ -115,12 +124,22 @@ export function PageTitle() {
     () => 0,
   );
 
+  const alertText = useSyncExternalStore(
+    (cb) => {
+      callAlertListeners.add(cb);
+      return () => callAlertListeners.delete(cb);
+    },
+    () => callAlert,
+    () => null,
+  );
+
   const clean = pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
   const key = ROUTE_TITLES[clean];
 
   useEffect(() => {
     const base = custom ?? (key ? t(key) : null);
-    const wanted = badgedTitle(base && base !== SITE ? `${base} · ${SITE}` : SITE, unread);
+    const wanted0 = badgedTitle(base && base !== SITE ? `${base} · ${SITE}` : SITE, unread);
+    const wanted = alertText ? `${alertText} · ${wanted0}` : wanted0;
     const apply = () => {
       if (document.title !== wanted) document.title = wanted;
     };
@@ -130,7 +149,7 @@ export function PageTitle() {
     const observer = new MutationObserver(apply);
     observer.observe(document.head, { childList: true, subtree: true, characterData: true });
     return () => observer.disconnect();
-  }, [custom, key, t, unread]);
+  }, [custom, key, t, unread, alertText]);
 
   return null;
 }

@@ -10,6 +10,10 @@ import { User } from "@/components/icons/user";
 import { Ban } from "@/components/icons/ban";
 import { Users } from "@/components/icons/users";
 import { PresenceAvatar, PresenceStatusText } from "@/features/presence/presence-ui";
+import { Phone } from "@/components/icons/phone";
+import { useAuth } from "@/features/auth/auth-provider";
+import { CallLogRow } from "@/features/calls/call-log-row";
+import { useCallRows } from "@/features/calls/use-call-rows";
 import { ReportButton } from "@/features/moderation/report-button";
 import type { useBlockState } from "@/features/moderation/use-block-state";
 import { ChatHeaderMenu } from "@/features/groups/chat-header-menu";
@@ -70,6 +74,10 @@ export function ContactInfoPanel({
   const [stats, setStats] = useState<{ prompts: number } | null>(null);
   const [common, setCommon] = useState<CommunityCard[] | null>(null);
   const [commonOpen, setCommonOpen] = useState(false);
+  // Arama geçmişi (docs/history/450-*): bu kişiyle son 5 arama.
+  const { user: authUser } = useAuth();
+  const { rows: callRows } = useCallRows({ userId: authUser?.id ?? null, conversationId: conversation.id });
+  const recentCalls = callRows.slice(0, 5);
 
   useEffect(() => {
     let alive = true;
@@ -169,6 +177,19 @@ export function ContactInfoPanel({
         <InfoRow icon={<Pin size={20} />} onClick={pinnedCount > 0 ? onShowPinned : undefined} value={pinnedCount > 0 ? pinnedCount : t("messages.contact.none")} testId="pinned">
           {t("messages.contact.pinned")}
         </InfoRow>
+      </InfoCard>
+
+      <InfoCard>
+        <div data-contact-calls className="px-4 py-3">
+          <p className="mb-1 inline-flex items-center gap-2 text-small font-semibold text-text">
+            <Phone size={20} aria-hidden /> {t("calls.list.info")}
+          </p>
+          {recentCalls.length === 0 ? (
+            <p className="text-small text-text-muted">{t("calls.list.infoEmpty")}</p>
+          ) : (
+            recentCalls.map((row) => <CallLogRow key={row.id} call={row} userId={authUser?.id ?? ""} />)
+          )}
+        </div>
       </InfoCard>
 
       <InfoCard>

@@ -65,6 +65,50 @@ function installCallServer(db, hub) {
     return { body: row };
   };
   db.rpc.calls_my_open = (_body, _db, uid) => ({ body: open(uid) });
+  // ---- Arama ayarları (docs/history/450-*): kim arayabilir + cevapsız bildirimi (SQL: set_my_call_settings) ----
+  // Keşfet sayfasına gezinme testi (24) için boş yanıtlar: sayfa içi gezinmede konsol hatası çıkmasın.
+  for (const name of ["feed_page", "trending_tags", "suggest_creators", "discover_tool_counts", "discover_highlights", "community_cards"]) db.rpc[name] ??= () => ({ body: [] });
+  db.callSettings = {};
+  db.callFollows = []; // { follower_id, following_id }
+  const settingsOf = (uid) => (db.callSettings[uid] ??= { privacy: "everyone", notify_missed: true });
+  db.rpc.get_my_call_settings = (_b, _d, uid) => ({ body: [settingsOf(uid)] });
+  db.rpc.set_my_call_settings = (body, _d, uid) => {
+    db.callLog.push({ rpc: "set_my_call_settings", uid, ...body });
+    if (!["everyone", "following", "nobody"].includes(body.p_privacy)) return err("call_invalid_privacy");
+    db.callSettings[uid] = { privacy: body.p_privacy, notify_missed: body.p_notify_missed };
+    return { body: null };
+  };
+  const startBase = db.rpc.call_start;
+  db.rpc.call_start = (body, _db, uid) => {
+    const other = db.members.find((m) => m.conversation_id === body.p_conversation_id && m.user_id !== uid);
+    if (other) {
+      const pv = settingsOf(other.user_id).privacy;
+      if (pv === "nobody" || (pv === "following" && !db.callFollows.some((f) => f.follower_id === other.user_id && f.following_id === uid))) return err("call_privacy");
+    }
+    return startBase(body, _db, uid);
+  };
+  // ---- Geçmiş okuması: PostgREST `calls` GET (RLS: yalnız arayan/aranan; süzgeç + imleç + sınır) ----
+  const prevExtra = db.extraRoutes;
+  db.extraRoutes = async (ctx) => {
+    const { table, method, q, json, signedIn } = ctx;
+    if (table === "calls" && method === "GET") {
+      let rows = db.callRows.filter((r) => ["ended", "rejected", "missed"].includes(r.status) && (r.caller_id === signedIn || r.callee_id === signedIn));
+      const conv = q.get("conversation_id"); if (conv) rows = rows.filter((r) => r.conversation_id === conv.replace(/^eq\./, ""));
+      const lt = q.get("started_at"); if (lt?.startsWith("lt.")) rows = rows.filter((r) => r.started_at < lt.slice(3));
+      rows = [...rows].sort((a, b) => b.started_at.localeCompare(a.started_at));
+      json(200, rows.slice(0, Number(q.get("limit") ?? 1000)));
+      return true;
+    }
+    return prevExtra ? prevExtra(ctx) : undefined;
+  };
+}
+
+/** Geçmişe hazır çağrı satırı ekler (`ago`: saniye önce başladı; `dur`: görüşme süresi sn). */
+function seedCall(db, { from, to, conv = CONV, type = "audio", status, ago = 60, dur = 0 }) {
+  const started = Date.now() - ago * 1000;
+  const row = { id: crypto.randomUUID(), conversation_id: conv, caller_id: from, callee_id: to, type, status, end_reason: null, started_at: new Date(started).toISOString(), answered_at: status === "ended" ? new Date(started + 2000).toISOString() : null, ended_at: new Date(started + (status === "ended" ? 2000 + dur * 1000 : 30000)).toISOString(), created_at: new Date(started).toISOString() };
+  db.callRows.push(row);
+  return row;
 }
 
 const callAuthorize = (db) => (topic, userId) => {
@@ -78,9 +122,9 @@ const callAuthorize = (db) => (topic, userId) => {
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, setup, lang = "tr", theme, mediaInit } = {}) {
   if (process.env.ONLY && !name.startsWith(process.env.ONLY)) return;
   const db = createDb();
-  setup?.(db);
   const hub = createRealtimeHub({ authorize: (topic, userId) => callAuthorize(db)(topic, userId) });
   installCallServer(db, hub);
+  setup?.(db);
   const opened = [];
   const errors = [];
   const consoleErrors = [];
@@ -114,6 +158,11 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, set
   finally { for (const c of opened) await c.close(); }
 }
 
+/** Arama başlatır; görüntülüde hazırlık ekranındaki "Ara"ya da basar (docs/history/450-*). */
+const startCall = async (page, type) => {
+  await page.locator(`[data-call-start="${type}"]`).click();
+  if (type === "video") { await page.locator("[data-lobby-start]").waitFor(); await page.locator("[data-lobby-start]").click(); }
+};
 const seedDm = (db, opts = {}) => db.addConv(CONV, BOB, { texts: ["selam", "merhaba"], ...opts });
 const openThread = async (page, id = CONV) => { await page.goto(`${BASE}/messages/local?id=${id}`); await page.locator("[data-message-id]").first().waitFor(); await page.waitForTimeout(300); };
 const screen = (page) => page.locator("[data-call-screen]");
@@ -201,7 +250,7 @@ await scenario("3. Sesli arama (Alice → Bob): çalar → Bob gelen arama gör�
 
 await scenario("4. Karşı yön (Bob → Alice) görüntülü arama: uzak VİDEO karesi gelir, yerel önizleme görünür; kamera kapat/aç karşıya yansır; arayan bitirir", async ({ alice, bob, db }) => {
   await openThread(alice); await openThread(bob);
-  await bob.locator('[data-call-start="video"]').click();
+  await startCall(bob, "video");
   await waitPhase(bob, "ringing");
   const inc = incoming(alice); await inc.waitFor();
   assert.equal(await inc.getAttribute("data-call-type"), "video");
@@ -246,7 +295,7 @@ await scenario("5. Reddet: Bob reddeder → Alice 'Arama reddedildi' görür, ek
 
 await scenario("6. Vazgeç: arayan çalarken iptal eder → Bob'un gelen arama kartı kapanır; satır missed/cancelled; RPC 'cancel'", async ({ alice, bob, db }) => {
   await openThread(alice); await openThread(bob);
-  await alice.locator('[data-call-start="video"]').click();
+  await startCall(alice, "video");
   await incoming(bob).waitFor();
   assert.equal(await alice.locator("[data-call-end]").getAttribute("aria-label"), "Aramayı iptal et");
   await alice.locator("[data-call-end]").click();
@@ -389,7 +438,7 @@ await scenario("17. Zaten görüşmedeyken ikinci arama başlatılamaz (düğmel
 // ====================================================================== DÜZEN
 await scenario("18. Masaüstü: görüşme ekranı ortalanmış kart (tam ekran DEĞİL), kontrol çubuğu görünür; taşma yok", async ({ alice, bob }) => {
   await openThread(alice); await openThread(bob);
-  await alice.locator('[data-call-start="video"]').click();
+  await startCall(alice, "video");
   await incoming(bob).waitFor(); await incoming(bob).locator("[data-incoming-accept]").click();
   await waitPhase(alice, "connected");
   const vp = alice.viewportSize();
@@ -404,7 +453,7 @@ await scenario("18. Masaüstü: görüşme ekranı ortalanmış kart (tam ekran 
 
 await scenario("19. Mobil (iPhone ölçüsü): görüşme ekranı TAM EKRAN, kontroller altta ve ≥44px, gelen arama kartı sığar, taşma yok", async ({ alice, bob }) => {
   await openThread(alice); await openThread(bob);
-  await alice.locator('[data-call-start="video"]').click();
+  await startCall(alice, "video");
   const inc = incoming(bob); await inc.waitFor();
   const ib = await inc.boundingBox(); const vp = bob.viewportSize();
   assert.ok(ib.x >= 0 && ib.x + ib.width <= vp.width, "incoming card fits the width");
@@ -468,6 +517,306 @@ await scenario("22. Sinyalleşme güvenliği: arama kanalı PRIVATE; Realtime'a 
   assert.equal(callAuthorize(db)(topic, U.carol.id), false, "stranger cannot join");
   assert.equal(callAuthorize(db)(topic, ME), true);
 }, { setup: (db) => seedDm(db) });
+
+
+// ====================================================================== FAZ 1–3 (docs/history/450-*)
+const bothConnected = async (alice, bob, type = "audio") => {
+  await startCall(alice, type);
+  await incoming(bob).waitFor(); await incoming(bob).locator("[data-incoming-accept]").click();
+  await waitPhase(alice, "connected"); await waitPhase(bob, "connected");
+};
+
+await scenario("23. Görüntülü hazırlık ekranı: önizleme + anahtarlar; Vazgeç çağrı OLUŞTURMAZ ve kamera ışığı söner; kamera kapalı başlatınca karşı taraf görür", async ({ alice, bob, db }) => {
+  await openThread(alice); await openThread(bob);
+  await alice.locator('[data-call-start="video"]').click();
+  await alice.locator("[data-call-lobby]").waitFor();
+  assert.equal(await alice.locator("[data-lobby-preview] video").count(), 1, "camera preview");
+  assert.equal(rpcs(db, "call_start").length, 0, "no call before Ara");
+  await alice.locator("[data-lobby-cancel]").click();
+  await alice.locator("[data-call-lobby]").waitFor({ state: "detached" });
+  assert.equal(rpcs(db, "call_start").length, 0);
+  assert.equal(await tracksEnded(alice), true, "camera/mic released on cancel");
+  await alice.locator('[data-call-start="video"]').click();
+  await alice.locator("[data-call-lobby]").waitFor();
+  await alice.locator("[data-lobby-camera]").click();
+  assert.equal(await alice.locator("[data-lobby-camera]").getAttribute("data-lobby-camera"), "off");
+  await alice.locator("[data-lobby-start]").click();
+  await incoming(bob).waitFor(); await incoming(bob).locator("[data-incoming-accept]").click();
+  await waitPhase(alice, "connected"); await waitPhase(bob, "connected");
+  await bob.locator("[data-call-remote-state]").waitFor();
+  assert.match(await bob.locator("[data-call-remote-state]").innerText(), /kamerasını kapattı/);
+  assert.equal(await alice.locator("[data-call-camera]").getAttribute("data-call-camera"), "off");
+  await alice.locator("[data-call-end]").click();
+}, { setup: (db) => seedDm(db) });
+
+await scenario("24. Küçült: görüşme mini pencereye döner; ses kesilmez, sayfa değişince sürer; mini'den mikrofon karşıya yansır; Büyüt ekranı getirir; mini'den bitirince iki taraf kapanır", async ({ alice, bob }) => {
+  await openThread(alice); await openThread(bob);
+  await bothConnected(alice, bob);
+  await alice.evaluate(() => { window.__marker = 1; });
+  await alice.locator("[data-call-minimize]").click();
+  await alice.locator("[data-mini-call]").waitFor();
+  assert.equal(await screen(alice).count(), 0, "full screen gone");
+  assert.equal(await alice.evaluate(() => { const a = document.querySelector("[data-remote-audio]"); return Boolean(a && a.srcObject && !a.paused); }), true, "remote audio keeps playing");
+  const vp = alice.viewportSize(); const mb = await alice.locator("[data-mini-call]").boundingBox();
+  assert.ok(mb.x >= 0 && mb.y >= 0 && mb.x + mb.width <= vp.width && mb.y + mb.height <= vp.height, "mini inside the viewport");
+  await alice.locator('nav a[href$="/discover"], nav a[href$="/discover/"]').first().click();
+  await alice.waitForURL(/\/discover/);
+  assert.equal(await alice.evaluate(() => window.__marker), 1, "client-side navigation, page not reloaded");
+  await alice.locator("[data-mini-call]").waitFor();
+  assert.equal(await phaseOf(bob), "connected", "call survives navigation");
+  await alice.locator("[data-mini-call] [data-call-mic]").click();
+  await bob.locator("[data-call-remote-state]").waitFor();
+  assert.match(await bob.locator("[data-call-remote-state]").innerText(), /mikrofonunu kapattı/);
+  await alice.locator("[data-call-expand]").click();
+  await screen(alice).waitFor();
+  assert.equal(await alice.locator("[data-mini-call]").count(), 0);
+  await alice.locator("[data-call-minimize]").click();
+  await alice.locator("[data-mini-call] [data-call-end]").click();
+  await alice.locator("[data-mini-call]").waitFor({ state: "detached" });
+  await screen(bob).waitFor({ state: "detached", timeout: 8000 });
+  assert.equal(await tracksEnded(alice), true, "media released");
+}, { setup: (db) => seedDm(db) });
+
+await scenario("25. Görüntülü: küçük pencere fareyle sürüklenip köşeye yapışır; dokununca görüntüler yer değiştirir; kalite çipi görünür", async ({ alice, bob }) => {
+  await openThread(alice); await openThread(bob);
+  await bothConnected(alice, bob, "video");
+  const pip = alice.locator("[data-local-preview]"); await pip.waitFor();
+  const card = await screen(alice).locator("> div").first().boundingBox();
+  const b0 = await pip.boundingBox();
+  assert.ok(b0.x > card.x + card.width / 2, "starts at the right");
+  await alice.mouse.move(b0.x + b0.width / 2, b0.y + b0.height / 2);
+  await alice.mouse.down();
+  await alice.mouse.move(card.x + 90, card.y + card.height - 170, { steps: 8 });
+  await alice.mouse.up();
+  await alice.waitForTimeout(450);
+  const b1 = await pip.boundingBox();
+  assert.ok(b1.x < card.x + card.width / 2 && b1.y > card.y + card.height / 2, `snapped to bottom-left ${JSON.stringify(b1)}`);
+  assert.equal(await pip.getAttribute("data-pip-swapped"), "false", "dragging does not swap");
+  assert.equal(await alice.locator("[data-local-preview] [data-remote-video]").count(), 0, "pip shows my own view");
+  await pip.click();
+  assert.equal(await pip.getAttribute("data-pip-swapped"), "true");
+  assert.equal(await alice.locator("[data-local-preview] [data-remote-video]").count(), 1, "pip now shows the speaker");
+  await pip.click();
+  assert.equal(await pip.getAttribute("data-pip-swapped"), "false");
+  await alice.locator("[data-call-quality]").waitFor({ timeout: 10000 });
+  assert.match(await alice.locator("[data-call-quality]").innerText(), /İyi|Orta|Zayıf/);
+  await alice.locator("[data-call-end]").click();
+}, { setup: (db) => seedDm(db) });
+
+await scenario("26. ⋯ menüsü: görüntüleri değiştir menüden de çalışır; mikrofon seçimi görüşmeyi koparmadan yeni mikrofonu alır ve tercih olarak saklanır", async ({ alice, bob }) => {
+  await openThread(alice); await openThread(bob);
+  await bothConnected(alice, bob, "video");
+  await alice.locator("[data-call-more]").click();
+  await alice.locator("[data-call-menu]").waitFor();
+  await alice.locator("[data-call-swap]").click();
+  assert.equal(await alice.locator("[data-local-preview]").getAttribute("data-pip-swapped"), "true");
+  assert.equal(await alice.locator("[data-call-menu]").count(), 0, "menu closes after the action");
+  await alice.locator("[data-call-more]").click();
+  const mics = alice.locator('[data-call-menu] [role="group"]').first().locator('[role="menuitemradio"]');
+  await mics.first().waitFor();
+  assert.ok((await mics.count()) >= 1, "microphone list");
+  const before = await alice.evaluate(() => window.__gumCalls);
+  await mics.last().click();
+  await alice.waitForFunction((n) => window.__gumCalls > n, before);
+  assert.equal(await phaseOf(alice), "connected", "call stays connected");
+  assert.equal(await alice.evaluate(() => Boolean(JSON.parse(localStorage.getItem("promptly-call-devices") || "{}").mic)), true, "device remembered");
+  await alice.locator("[data-call-end]").click();
+}, { setup: (db) => seedDm(db) });
+
+const seedHistory = (db) => {
+  seedDm(db);
+  seedCall(db, { from: BOB.id, to: ME, status: "missed", type: "audio", ago: 300 });
+  seedCall(db, { from: ME, to: BOB.id, status: "ended", type: "video", ago: 200, dur: 65 });
+  seedCall(db, { from: ME, to: BOB.id, status: "rejected", type: "audio", ago: 100 });
+};
+
+await scenario("27. Sohbet akışı: bitmiş aramalar kayıt satırı olur (cevapsız kırmızı, süre, 'Geri ara'); canlı arama bitince yeni kayıt kendiliğinden eklenir", async ({ alice, bob, db }) => {
+  await openThread(alice);
+  const rows = alice.locator("[data-call-log]");
+  assert.equal(await rows.count(), 3);
+  assert.deepEqual(await rows.evaluateAll((els) => els.map((e) => e.getAttribute("data-call-outcome"))), ["missed", "completed", "declined"], "oldest → newest, after the messages");
+  assert.match(await rows.nth(0).innerText(), /Cevapsız sesli arama/);
+  assert.equal(await rows.nth(0).locator("span.text-danger").count() > 0, true, "missed is red");
+  assert.match(await rows.nth(1).innerText(), /Giden görüntülü arama/);
+  assert.match(await rows.nth(1).innerText(), /01:05/);
+  assert.match(await rows.nth(2).innerText(), /Arama reddedildi/);
+  assert.equal(await rows.nth(2).locator("[data-call-callback]").innerText(), "Tekrar ara");
+  assert.equal(await rows.nth(1).locator("[data-call-callback]").count(), 0, "completed has no action");
+  await openThread(bob);
+  await rows.nth(0).locator("[data-call-callback]").click();
+  await incoming(bob).waitFor();
+  assert.equal(rpcs(db, "call_start").at(-1).p_type, "audio", "callback keeps the call type");
+  await alice.locator("[data-call-end]").click();
+  await alice.waitForFunction(() => document.querySelectorAll("[data-call-log]").length === 4);
+  assert.match(await alice.locator("[data-call-log]").last().innerText(), /Cevap vermedi/);
+}, { setup: seedHistory });
+
+await scenario("28. Mesaj listesi: son arama son mesajdan yeniyse önizleme aramayı gösterir (cevapsız kırmızı)", async ({ alice }) => {
+  await alice.goto(`${BASE}/messages`);
+  const row = alice.locator("[data-conversation-row]").first(); await row.waitFor();
+  const prev = row.locator('[data-call-preview="missed"]'); await prev.waitFor();
+  assert.match(await prev.innerText(), /Cevapsız sesli arama/);
+  assert.equal(await row.locator("[data-call-preview]").count(), 1);
+}, { setup: (db) => { seedDm(db); seedCall(db, { from: BOB.id, to: ME, status: "missed", type: "audio", ago: 20 }); } });
+
+await scenario("28b. Mesaj listesi: eski arama son mesajın yerine geçmez", async ({ alice }) => {
+  await alice.goto(`${BASE}/messages`);
+  await alice.locator("[data-conversation-row]").first().waitFor(); await alice.waitForTimeout(600);
+  assert.equal(await alice.locator("[data-call-preview]").count(), 0);
+}, { setup: (db) => { seedDm(db); seedCall(db, { from: BOB.id, to: ME, status: "missed", type: "audio", ago: 90_000_000 }); } });
+
+await scenario("29. Aramalar bölümü: menüde cevapsız rozeti; satırlar kişi adı + sonuç; süzgeç çipleri; satırdan tekrar arama", async ({ alice, bob, db }) => {
+  await alice.goto(`${BASE}/messages`);
+  await alice.locator("[data-conversation-row]").first().waitFor();
+  await alice.locator("[data-section-menu]").first().click();
+  const option = alice.locator('[data-section-option="calls"]'); await option.waitFor();
+  assert.match(await option.innerText(), /Aramalar/);
+  await option.click();
+  await alice.locator("[data-call-history]").waitFor();
+  const items = alice.locator("[data-call-item]");
+  await items.first().waitFor();
+  assert.equal(await items.count(), 3);
+  assert.match(await items.first().innerText(), /Bob/);
+  assert.match(await items.first().innerText(), /Arama reddedildi/, "newest first");
+  await alice.locator('[data-call-filter="missed"]').click();
+  assert.equal(await items.count(), 1);
+  assert.equal(await items.first().getAttribute("data-call-outcome"), "missed");
+  await alice.locator('[data-call-filter="video"]').click();
+  assert.equal(await items.count(), 1);
+  await alice.locator('[data-call-filter="all"]').click();
+  await openThread(bob);
+  await items.first().locator('[data-call-again="audio"]').click();
+  await incoming(bob).waitFor();
+  assert.equal(rpcs(db, "call_start").at(-1).p_type, "audio");
+  await alice.locator("[data-call-end]").click();
+}, { setup: seedHistory });
+
+await scenario("29b. Aramalar bölümü: hiç arama yoksa boş durum gösterilir", async ({ alice }) => {
+  await alice.goto(`${BASE}/messages`);
+  await alice.locator("[data-conversation-row]").first().waitFor();
+  await alice.locator("[data-section-menu]").first().click();
+  await alice.locator('[data-section-option="calls"]').click();
+  await alice.getByText("Henüz arama yok.").waitFor();
+}, { setup: (db) => seedDm(db) });
+
+await scenario("30. Kişi bilgisi: bu kişiyle son aramalar listelenir", async ({ alice }) => {
+  await openThread(alice);
+  await alice.locator("[data-contact-open]").click();
+  const box = alice.locator("[data-contact-calls]"); await box.waitFor();
+  await box.locator("[data-call-log]").first().waitFor();
+  assert.equal(await box.locator("[data-call-log]").count(), 3);
+}, { setup: seedHistory });
+
+await scenario("31. Ayarlar → Aramalar: kim arayabilir (sunucuda zorlanır), cevapsız bildirimi, cihaz tercihleri; kalıcı", async ({ alice, bob, db }) => {
+  await alice.goto(`${BASE}/settings`);
+  await alice.locator('a[href$="/settings/calls"], a[href$="/settings/calls/"]').first().waitFor();
+  await alice.goto(`${BASE}/settings/calls`);
+  await alice.locator('[data-call-privacy="everyone"]').waitFor();
+  assert.equal(await alice.locator('[data-call-privacy="everyone"]').isChecked(), true);
+  await alice.locator('[data-call-privacy="nobody"]').click();
+  await alice.waitForFunction(() => document.querySelector('[data-call-privacy="nobody"]')?.checked);
+  assert.equal(rpcs(db, "set_my_call_settings").at(-1).p_privacy, "nobody");
+  await openThread(bob);
+  const bobCallEnabled = () => bob.waitForFunction(() => { const b = document.querySelector('[data-call-start="audio"]'); return b && !b.disabled; });
+  await bob.locator('[data-call-start="audio"]').click();
+  await bob.getByText("Bu kişi şu an senden arama kabul etmiyor.").waitFor();
+  assert.equal(db.callRows.length, 0, "no call row created");
+  await alice.locator("[data-call-notify-missed]").click();
+  await alice.waitForFunction(() => document.querySelector("[data-call-notify-missed]")?.getAttribute("aria-checked") === "false");
+  assert.equal(rpcs(db, "set_my_call_settings").at(-1).p_notify_missed, false);
+  await alice.locator('[data-call-pref="ring"]').click();
+  assert.equal(await alice.evaluate(() => JSON.parse(localStorage.getItem("promptly-call-prefs")).ringSound), false);
+  await alice.reload();
+  await alice.waitForFunction(() => document.querySelector('[data-call-privacy="nobody"]')?.checked, null, { timeout: 8000 });
+  assert.equal(await alice.locator('[data-call-privacy="nobody"]').isChecked(), true, "persisted");
+  assert.equal(await alice.locator('[data-call-pref="ring"]').getAttribute("aria-checked"), "false");
+  assert.match(await alice.locator("[data-call-privacy-note]").innerText(), /IP adresini/);
+  // Takip ettiklerim: aranan arayanı takip ediyorsa arama başlar
+  await alice.locator('[data-call-privacy="following"]').click();
+  await alice.waitForFunction(() => document.querySelector('[data-call-privacy="following"]')?.checked);
+  await bobCallEnabled();
+  await bob.locator('[data-call-start="audio"]').click();
+  await bob.waitForFunction(() => document.body.innerText.includes("kabul etmiyor"));
+  await bobCallEnabled();
+  db.callFollows.push({ follower_id: ME, following_id: BOB.id });
+  await bob.locator('[data-call-start="audio"]').click();
+  await bob.locator("[data-call-screen]").waitFor();
+  await bob.locator("[data-call-end]").click();
+}, { setup: (db) => seedDm(db) });
+
+await scenario("32. Gelen arama zili cihaz tercihine uyar (kapalıysa ses üretilmez); kart yine görünür", async ({ alice, bob }) => {
+  await openThread(alice); await openThread(bob);
+  await alice.locator('[data-call-start="audio"]').click();
+  await incoming(bob).waitFor();
+  await bob.waitForFunction(() => window.__acCount >= 1);
+  await incoming(bob).locator("[data-incoming-reject]").click();
+  await bob.evaluate(() => localStorage.setItem("promptly-call-prefs", JSON.stringify({ ringSound: false, respectQuietHours: true, browserNotify: true })));
+  await bob.reload(); await bob.locator("[data-message-id]").first().waitFor(); await bob.waitForTimeout(400);
+  await bob.evaluate(() => { window.__acCount = 0; });
+  await alice.locator('[data-call-start="audio"]').click();
+  await incoming(bob).waitFor(); await bob.waitForTimeout(700);
+  assert.equal(await bob.evaluate(() => window.__acCount), 0, "no ringtone");
+  await incoming(bob).locator("[data-incoming-reject]").click();
+}, { setup: (db) => { seedDm(db); db.rpc.get_my_quiet_hours = () => ({ body: [{ enabled: false, start_minute: 1380, end_minute: 480, tz: "UTC" }] }); },
+  mediaInit: () => { window.__acCount = 0; const A = window.AudioContext; if (A) window.AudioContext = class extends A { constructor(...a) { super(...a); window.__acCount += 1; } }; } });
+
+await scenario("32b. Sekme arka plandayken gelen arama başlığa 'Gelen arama' uyarısı koyar, kapanınca kaldırır", async ({ alice, bob }) => {
+  await openThread(alice); await openThread(bob);
+  const base = await bob.title();
+  await alice.locator('[data-call-start="audio"]').click();
+  await incoming(bob).waitFor();
+  await bob.waitForFunction(() => /^Gelen arama/.test(document.title));
+  await incoming(bob).locator("[data-incoming-reject]").click();
+  await bob.waitForFunction((b) => document.title === b, base);
+}, { setup: (db) => { seedDm(db); db.rpc.get_my_quiet_hours = () => ({ body: [{ enabled: false, start_minute: 1380, end_minute: 480, tz: "UTC" }] }); },
+  mediaInit: () => { Object.defineProperty(document, "hidden", { configurable: true, get: () => true }); } });
+
+await scenario("33. Mesajlar çalışma alanı: masaüstünde 84 px ince ray (248 px kenar çubuğu YOK); diğer sayfalarda kenar çubuğu kalır", async ({ alice }) => {
+  await alice.goto(`${BASE}/messages`);
+  await alice.locator("[data-conversation-row]").first().waitFor();
+  const rail = alice.locator("aside[data-app-chrome]");
+  assert.equal(await rail.count(), 1, "only the rail on /messages");
+  const rb = await rail.boundingBox();
+  assert.ok(Math.abs(rb.width - 84) <= 1, `rail width ${rb.width}`);
+  const rowX = (await alice.locator("[data-conversation-row]").first().boundingBox()).x;
+  assert.ok(rowX >= 84 && rowX < 130, `workspace starts right after the rail (${rowX})`);
+  assert.equal(await alice.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, "no overflow");
+  await alice.goto(`${BASE}/discover`);
+  await alice.waitForSelector("aside[data-app-chrome]", { state: "attached" });
+  await alice.waitForTimeout(400);
+  const widths = await alice.locator("aside[data-app-chrome]").evaluateAll((els) => els.filter((e) => e.getBoundingClientRect().width > 0).map((e) => Math.round(e.getBoundingClientRect().width)));
+  assert.deepEqual(widths, [248], "regular pages keep the 248px sidebar at lg+");
+}, { setup: (db) => seedDm(db), viewport: { width: 1440, height: 900 } });
+
+await scenario("34. Mobil: küçültülmüş görüşme ekrana sığar ve dokununca büyür", async ({ alice, bob }) => {
+  await openThread(alice); await openThread(bob);
+  await bothConnected(alice, bob);
+  await alice.locator("[data-call-minimize]").click();
+  const mini = alice.locator("[data-mini-call]"); await mini.waitFor();
+  const vp = alice.viewportSize(); const b = await mini.boundingBox();
+  assert.ok(b.x >= 0 && b.x + b.width <= vp.width && b.y >= 0 && b.y + b.height <= vp.height, `mini fits ${JSON.stringify(b)}`);
+  for (const sel of ["[data-call-expand]", "[data-call-mic]", "[data-call-end]"]) { const bb = await mini.locator(sel).boundingBox(); assert.ok(bb.width >= 36 && bb.height >= 36, `${sel} touch target ${bb.width}x${bb.height}`); }
+  await mini.locator("[data-call-expand]").click();
+  await screen(alice).waitFor();
+  await alice.locator("[data-call-end]").click();
+}, { setup: (db) => seedDm(db), viewport: { width: 390, height: 844 } });
+
+await scenario("35. İngilizce: hazırlık ekranı, mini pencere, kayıt satırları ve ayarlar çevrilmiş", async ({ alice, bob }) => {
+  await openThread(alice); await openThread(bob);
+  await alice.locator('[data-call-start="video"]').click();
+  await alice.locator("[data-call-lobby]").waitFor();
+  assert.match(await alice.locator("[data-call-lobby]").innerText(), /Video call[\s\S]*Call/);
+  await alice.locator("[data-lobby-start]").click();
+  await incoming(bob).waitFor(); await incoming(bob).locator("[data-incoming-accept]").click();
+  await waitPhase(alice, "connected");
+  assert.equal(await alice.locator("[data-call-minimize]").getAttribute("aria-label"), "Minimize");
+  assert.equal(await alice.locator("[data-local-preview]").getAttribute("title"), "Drag to move · Tap to swap");
+  await alice.locator("[data-call-end]").click();
+  await alice.waitForFunction(() => document.querySelectorAll("[data-call-log]").length >= 1);
+  assert.match(await alice.locator("[data-call-log]").first().innerText(), /Missed voice call|Outgoing|No answer|Incoming/);
+  await alice.goto(`${BASE}/settings/calls`);
+  await alice.getByText("Who can call you?").waitFor();
+}, { setup: seedHistory, lang: "en" });
 
 console.log(results.map(([s, n]) => `${s}  ${n}`).join("\n"));
 const failed = results.filter(([s]) => s === "FAIL").length;

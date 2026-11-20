@@ -53,7 +53,7 @@ import { MessageBubble, type DeleteMode } from "./message-bubble";
 import { MessageComposer, useImageDrop } from "./message-composer";
 import { PendingMessageBubble, type PendingSend } from "./pending-message-bubble";
 import { DaySeparator } from "./day-separator";
-import { layoutChatMessages } from "@/lib/chat-grouping";
+import { chatDayKey, layoutChatMessages } from "@/lib/chat-grouping";
 import { useComposerImages } from "./use-composer-images";
 import { gifAttachment, removeMessageImages, uploadMessageImage } from "@/lib/supabase/message-images";
 import type { GifItem } from "@/lib/giphy";
@@ -75,6 +75,10 @@ import { useFitPanelToKeyboard } from "./viewport-helpers";
 import { ComposerReplyBar } from "./reply-quote";
 import { DockHeader, DOCK_ICON_BUTTON } from "./dock-header";
 import { ConversationCallButtons } from "@/features/calls/call-buttons";
+import { CallLogRow } from "@/features/calls/call-log-row";
+import { useCalls } from "@/features/calls/call-provider";
+import { useCallRows } from "@/features/calls/use-call-rows";
+import { interleaveCalls } from "@/lib/webrtc/call-history";
 import type { DockHandlers } from "./message-dock-provider";
 import { supabase } from "@/lib/supabase/client";
 import { parseHighlightValue } from "@/lib/notification-utils";
@@ -257,6 +261,9 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   // kullanılıyor — `useBlockState`'in `canBlock`'u zaten oturum yokken
   // false, ve id boş olduğunda sorgu hiçbir şeye eşleşmiyor.
   const isGroup = conversation?.kind === "group";
+  // Arama kayıtları (docs/history/450-*): birebir sohbette bitmiş çağrılar mesajlarla zaman sırasıyla serpiştirilir (grupta arama yok).
+  const callsApi = useCalls();
+  const { rows: callRows } = useCallRows({ userId: user?.id ?? null, conversationId: id, enabled: Boolean(id && conversation && !isGroup) });
   const group = conversation?.group ?? null;
   // Ekip kanalı (docs/history/353-*): topluluk özellikleri (oda, topluluk bilgisi, çevrimiçi sayısı) kapalıdır; bilgi/yönetim ekip sayfasındadır.
   const teamChannel = group?.team ?? null;
@@ -728,7 +735,7 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
       bottomRef.current?.scrollIntoView({ block: "end" });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately only reacts to the message/pending counts changing, reads the rest fresh via refs/closures
-  }, [messages.length, pendingSends.length]);
+  }, [messages.length, pendingSends.length, callRows.length]);
 
   // Mobil klavye (iPhone): panel klavye açıkken görünür alana oturur (docs/history/332-*); liste sondaysa sonda kalır.
   useFitPanelToKeyboard(panelEl, !isDock, () => {
@@ -1338,6 +1345,11 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
   // A pending bubble is hidden the instant its real message is in the thread (the INSERT response or the Realtime echo, whichever lands first) — never both at once.
   const visiblePending = pendingSends.filter((p) => !messagesById.has(p.id));
   const messageLayout = layoutChatMessages(messages);
+  const timeline = interleaveCalls(messages, isGroup ? [] : callRows, { hasOlder, dayKey: chatDayKey, userId: user.id });
+  const callBack = (type: "audio" | "video") => {
+    if (!callsApi || isGroup || !participant || callDisabledReason) return;
+    void callsApi.startCall({ conversationId: conversation.id, peer: { id: participant.id, displayName: participant.displayName, username: participant.username, avatarUrl: participant.avatarUrl }, type });
+  };
 
   const panelClass = roomPanel === "closed" ? "hidden" : roomPanel === "open" ? "hidden lg:flex" : "hidden 2xl:flex";
   return (
@@ -1711,18 +1723,31 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
             {t("messages.messageNotViewable")}
           </p>
         )}
-        {messages.length === 0 && visiblePending.length === 0 ? (
+        {messages.length === 0 && visiblePending.length === 0 && timeline.length === 0 ? (
           <p className="py-10 text-center text-small text-text-muted">
             {t("messages.noMessagesYet")}
           </p>
         ) : (
-          messages.map((message, index) => (
+          timeline.map((entry, entryIndex) => {
+            if (entry.kind === "call") {
+              return (
+                <Fragment key={`call-${entry.call.id}`}>
+                  {entry.dayStart && <DaySeparator iso={entry.call.endedAt ?? entry.call.startedAt} />}
+                  <CallLogRow call={entry.call} userId={user.id} onCallBack={callsApi && !callDisabledReason ? callBack : undefined} />
+                </Fragment>
+              );
+            }
+            const { message, index } = entry;
+            // Arama kaydı iki mesajın arasındaysa öbek bölünür (avatar/kuyruk köşesi yeniden başlar).
+            const prevIsCall = timeline[entryIndex - 1]?.kind === "call";
+            const nextIsCall = timeline[entryIndex + 1]?.kind === "call";
+            return (
             <Fragment key={message.id}>
-            {messageLayout[index].dayStart && <DaySeparator iso={message.createdAt} />}
+            {entry.dayStart && <DaySeparator iso={message.createdAt} />}
             <MessageBubble
               message={message}
-              groupStart={messageLayout[index].groupStart}
-              groupEnd={messageLayout[index].groupEnd}
+              groupStart={messageLayout[index].groupStart || prevIsCall}
+              groupEnd={messageLayout[index].groupEnd || nextIsCall}
               isMe={message.senderId === user.id}
               replyPreview={message.replyToMessageId ? (messagesById.get(message.replyToMessageId) ?? null) : null}
               isEditingHere={editingId === message.id}
@@ -1762,7 +1787,8 @@ export function LocalConversationView({ dock }: { dock?: DockHandlers & { conver
               }}
             />
             </Fragment>
-          ))
+            );
+          })
         )}
         {visiblePending.map((pending) => (
           <PendingMessageBubble key={pending.id} pending={pending} onRetry={retryPending} onDiscard={discardPending} />

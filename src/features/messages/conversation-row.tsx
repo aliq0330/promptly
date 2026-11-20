@@ -7,6 +7,12 @@ import { Check } from "@/components/icons/check";
 import { ChevronRight } from "@/components/icons/chevron-right";
 import { Pin } from "@/components/icons/pin";
 import { GroupAvatar } from "@/features/groups/group-avatar";
+import { useAuth } from "@/features/auth/auth-provider";
+import { callLabelKey } from "@/features/calls/call-log-row";
+import { useLastCalls } from "@/features/calls/call-log-store";
+import { Phone } from "@/components/icons/phone";
+import { Video } from "@/components/icons/video";
+import { callPreviewWins, summarizeCall } from "@/lib/webrtc/call-history";
 import { PresenceAvatar } from "@/features/presence/presence-ui";
 import { TeamMark } from "@/features/teams/team-ui";
 import { VisibilityLabel } from "@/features/communities/visibility-label";
@@ -49,6 +55,11 @@ export function ConversationRow({
   const participant = conversation.participants[0];
   const group = conversation.group;
   const team = group?.team ?? null;
+  // Son arama son mesajdan yeniyse önizleme aramayı gösterir (docs/history/450-*): "Cevapsız sesli arama" (kırmızı) gibi; grupta arama yok.
+  const { user: authUser } = useAuth();
+  const lastCalls = useLastCalls(authUser?.id ?? null);
+  const lastCall = !group ? lastCalls.get(conversation.id) : undefined;
+  const callSummary = authUser && lastCall && callPreviewWins(conversation.lastMessageAt, lastCall) ? summarizeCall(lastCall, authUser.id) : null;
   // Ekip satırında başlık ekibin adıdır (kanalın adı değil); kanal adı ikinci satırda "# kanal" olarak görünür.
   const title = team ? team.name : group ? group.name : participant?.displayName;
   const muted = Boolean(conversation.mutedAt);
@@ -110,7 +121,7 @@ export function ConversationRow({
             )}
           </span>
           <span className={cn("shrink-0 text-caption tabular-nums", unread ? "font-semibold text-text" : "text-text-muted")}>
-            {formatRelativeTime(conversation.lastMessageAt, language)}
+            {formatRelativeTime(callSummary?.at ?? conversation.lastMessageAt, language)}
           </span>
         </span>
         <span className="flex items-start justify-between gap-2">
@@ -128,7 +139,14 @@ export function ConversationRow({
               </span>
             )}
             {lastRoom && <span data-last-room className="font-semibold text-primary"># {roomSlug(lastRoom.name)} </span>}
-            {conversation.lastMessage}
+            {callSummary ? (
+              <span data-call-preview={callSummary.outcome} className={cn("inline-flex items-center gap-1", callSummary.outcome === "missed" && "font-semibold text-danger")}>
+                {callSummary.type === "video" ? <Video size={16} aria-hidden /> : <Phone size={16} aria-hidden />}
+                {t(callLabelKey(callSummary))}
+              </span>
+            ) : (
+              conversation.lastMessage
+            )}
           </span>
           )}
           {pinned && !unread && <Pin size={16} className="mt-1 shrink-0 text-text-muted" aria-label={t("rooms.list.pinned")} />}

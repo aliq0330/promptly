@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Bell } from "@/components/icons/bell";
 import { Code2 } from "@/components/icons/code-2";
+import { Phone } from "@/components/icons/phone";
 import { FileText } from "@/components/icons/file-text";
 import { LogOut } from "@/components/icons/log-out";
 import { Palette } from "@/components/icons/palette";
@@ -58,6 +59,7 @@ export default function SettingsPage() {
         <SettingsLinkRow href="/settings/account" icon={<UserRound size={20} className={iconClass} />} title={t("settings.groupAccount")} hint={t("settings.hub.accountDesc")} />
         <SettingsLinkRow href="/settings/privacy" icon={<Lock size={20} className={iconClass} />} title={t("settings.privacyTitle")} hint={t("settings.hub.privacyDesc")} />
         <SettingsLinkRow href="/settings/notifications" icon={<Bell size={20} className={iconClass} />} title={t("nc.settings.title")} hint={t("nc.settings.hubDesc")} />
+        <SettingsLinkRow href="/settings/calls" icon={<Phone size={20} className={iconClass} />} title={t("calls.settings.title")} hint={t("calls.settings.entry")} />
         <SettingsLinkRow href="/settings/preferences" icon={<Palette size={20} className={iconClass} />} title={t("settings.groupPreferences")} hint={t("settings.hub.preferencesDesc")} />
         <SettingsLinkRow href="/settings/developer" icon={<Code2 size={20} className={iconClass} />} title={t("settings.groupDeveloper")} hint={t("settings.hub.developerDesc")} />
         <SettingsLinkRow href="/settings/legal" icon={<FileText size={20} className={iconClass} />} title={t("legal.groupTitle")} hint={t("settings.hub.legalDesc")} />

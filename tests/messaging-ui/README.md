@@ -509,3 +509,12 @@ npm i --no-save playwright   # yoksa
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-calls.mjs   # 22/22 beklenir (port 4207; PORT=… ile değişir)
 ```
+
+## 1-1 arama (`docs/history/449-*`, `450-*`)
+
+`run-calls.mjs` (38 senaryo): **iki ayrı tarayıcı bağlamı + Chromium sahte kamera/mikrofon ile GERÇEK WebRTC bağlantısı** (ses akışı, video karesi, süre, mikrofon/kamera durumu), reddet/vazgeç/cevapsız, izin reddi, meşgul, engel, desteklenmeyen tarayıcı, yenileme, çoklu sekme, sinyalleşme güvenliği (private Broadcast) + 450: görüntülü hazırlık ekranı, küçült/mini pencere (sayfa değiştirince sürer), fareyle sürükle + dokununca görüntü yer değiştirme, ⋯ cihaz menüsü, kalite çipi, sohbet akışında arama kayıtları + canlı ekleme, mesaj listesi önizlemesi, Aramalar bölümü, kişi bilgisi geçmişi, Ayarlar → Aramalar (gizlilik/`call_privacy`, cevapsız bildirimi, cihaz tercihleri), zil tercihi, sekme başlığı uyarısı, Mesajlar ray düzeni, mobil, İngilizce. Ağ + Realtime taklitli (`realtime-hub.mjs`; sunucu kuralları `run-calls.mjs` içindeki `installCallServer`'da TAKLİT edilir, asıl doğrulama `supabase/tests/calls.sql` + `call-settings.sql`). Gerçek Supabase'e/cihaza/Safari'ye KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-calls.mjs   # 38/38 beklenir
+ONLY="24" node tests/messaging-ui/run-calls.mjs
+```

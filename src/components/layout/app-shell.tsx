@@ -26,7 +26,7 @@ interface AppShellProps {
  * Three compositions of one shell:
  *   mobile  (<md):  header + content + bottom nav
  *   tablet  (md–lg): 84px labelled rail + header + content
- *   desktop (lg+):  248px grouped sidebar + header + content (+ optional aside)
+ *   desktop (lg+):  248px grouped sidebar + header + content (+ optional aside); the Messages workspace (`/messages*`) keeps the 84px rail instead (docs/history/450-*)
  * One destination, one place (docs/history/387-*): the three navs list the same destinations, the header is status only (search, Odak, bell, messages).
  * Below `lg` the header and the bottom nav slide away while scrolling down (`useChromeAutoHide`).
  * Odak (`/focus`) is a page of its own (docs/history/248-*): its route gets NO bars at all — no header, sidebar, bottom nav or
@@ -46,7 +46,10 @@ export function AppShell({ children }: AppShellProps) {
 function AppShellFrame({ children }: AppShellProps) {
   const { t } = useTranslation();
   useChromeAutoHide();
-  const bare = /^\/focus\/?$/.test(usePathname() ?? "");
+  const pathname = usePathname() ?? "";
+  const bare = /^\/focus\/?$/.test(pathname);
+  // Mesajlar çalışma alanıdır (docs/history/450-*): masaüstünde de 84 px ince ray + tam genişlik çalışma alanı; 248 px kenar çubuğu çizilmez.
+  const workspace = /^\/messages(\/|$)/.test(pathname);
   if (bare) {
     return (
       <div className="flex min-h-dvh">
@@ -69,8 +72,8 @@ function AppShellFrame({ children }: AppShellProps) {
       >
         {t("common.skipToContent")}
       </a>
-      <NavRail />
-      <Sidebar />
+      <NavRail desktop={workspace} />
+      {!workspace && <Sidebar />}
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
         <div className="flex flex-1">
