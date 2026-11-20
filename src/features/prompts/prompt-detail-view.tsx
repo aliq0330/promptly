@@ -228,8 +228,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               quoteCount={prompt.quoteCount}
               footer={<RelationMapRow kind="prompt" id={prompt.id} />}
             >
-              <TaxonomyLinks className="contents" contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
-              <DetailTags className="contents" tags={prompt.tags} />
+              <TaxonomyLinks contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
+              <DetailTags tags={prompt.tags} />
             </DetailMetaCard>
           </AsideSection>
           <RelatedPrompts prompt={prompt} />

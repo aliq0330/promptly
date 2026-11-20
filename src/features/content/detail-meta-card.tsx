@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Quote } from "@/components/icons/quote";
 import { Wrench } from "@/components/icons/wrench";
+import { SectionLabel } from "@/components/ui/section-label";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ReactNode } from "react";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
@@ -10,7 +12,7 @@ import { toolHref } from "@/lib/utils";
 
 /**
  * Detail pages' "tool + classification" card: the recommended/preferred tool (or model) on the left, category and tag chips on the right —
- * one quiet surface instead of three loose rows. Renders nothing when there is neither a tool nor chips. Used by Prompt, Prompt İsteği,
+ * one labelled card (tool · category · #tags · relation map). Renders nothing when there is neither a tool nor chips. Used by Prompt, Prompt İsteği,
  * Workflow and Hazır Ayar alike; each passes its own label ("Tavsiye edilen" / "Tercih edilen") and chip components.
  */
 export function DetailMetaCard({
@@ -43,15 +45,15 @@ export function DetailMetaCard({
 
   const linkClass = "transition-colors hover:text-primary";
   return (
-    // An unboxed band between hairlines (docs/history/201-*): tool first, chips under it.
-    <section data-testid="detail-meta" className="flex flex-wrap items-center gap-x-4 gap-y-3 border-y border-border-soft py-4">
+    // One context card (docs/history/440-*): tool, category path and #tags as labelled blocks on one left edge, the relation-map strip last.
+    <section data-testid="detail-meta" className="overflow-hidden rounded-lg card-flat shadow-card">
       {hasTool && (
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary">
-            <Wrench size={16} aria-hidden />
-          </span>
-          <span className="min-w-0 leading-tight">
-            <span className="block text-label font-semibold text-text">
+        <DetailMetaBlock label={toolLabel}>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary">
+              <Wrench size={16} aria-hidden />
+            </span>
+            <span className="min-w-0 text-label font-semibold text-text">
               {items.length > 0
                 ? items.map((item, index) => (
                     <span key={item.ref}>
@@ -65,17 +67,26 @@ export function DetailMetaCard({
                   ? <Link href={`/discover?q=${encodeURIComponent(legacyTool)}`} className={linkClass}>{legacyTool}</Link>
                   : fallbackTool}
             </span>
-            <span className="block text-caption text-text-muted">{toolLabel}</span>
-          </span>
-        </div>
+          </div>
+        </DetailMetaBlock>
       )}
-      {hasChips && <div className="flex min-w-0 basis-full flex-wrap gap-1.5">{children}</div>}
+      {hasChips && children}
       {quoteCount > 0 && (
-        <p data-quote-count={quoteCount} className="flex basis-full items-center gap-1.5 text-caption text-text-muted">
+        <p data-quote-count={quoteCount} className="flex items-center gap-1.5 border-t border-border-soft px-4 py-3 text-caption text-text-muted">
           <Quote size={12} aria-hidden /> {t("quotes.count", { count: quoteCount })}
         </p>
       )}
       {footer}
     </section>
+  );
+}
+
+/** One labelled block of the meta card: a small label over its content, a hairline above every block but the first. */
+export function DetailMetaBlock({ label, className, children }: { label: ReactNode; className?: string; children: ReactNode }) {
+  return (
+    <div data-meta-block className={cn("space-y-2 border-t border-border-soft px-4 py-3 first:border-t-0", className)}>
+      <SectionLabel>{label}</SectionLabel>
+      {children}
+    </div>
   );
 }

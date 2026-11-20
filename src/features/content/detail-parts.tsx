@@ -9,6 +9,7 @@ import { DemoAccountBadge } from "@/components/ui/demo-badge";
 import { StorageImage, StorageImg } from "@/components/ui/storage-media";
 import { bandTint } from "@/features/content/content-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { DetailMetaBlock } from "@/features/content/detail-meta-card";
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Language } from "@/lib/i18n/translations";
 import type { Tag, UserProfile } from "@/types";
@@ -546,19 +547,19 @@ export function AsideLinkRow({
 
 /** Tag links under the content (same pill as the category chips; the page title row already says what they are). */
 export function DetailTags({ tags, className }: { tags: Tag[]; className?: string }) {
+  const { t } = useTranslation();
   if (tags.length === 0) return null;
   return (
-    <div className={cn("flex flex-wrap gap-1.5", className)}>
-      {tags.map((tag) => (
-        <Link
-          key={tag.slug}
-          href={tagHref(tag)}
-          className="inline-flex h-9 items-center rounded-full border border-primary/25 bg-primary-soft px-2.5 text-caption font-medium text-primary transition-colors hover:border-primary/50"
-        >
-          {tag.label}
-        </Link>
-      ))}
-    </div>
+    <DetailMetaBlock label={t("forms.tags")} className={className}>
+      <div className="flex flex-wrap gap-x-3 gap-y-1">
+        {tags.map((tag) => (
+          <Link key={tag.slug} href={tagHref(tag)} className="inline-flex min-h-9 items-center text-label font-medium text-primary transition-colors hover:text-primary-hover">
+            <span aria-hidden className="mr-px opacity-60">#</span>
+            {tag.label}
+          </Link>
+        ))}
+      </div>
+    </DetailMetaBlock>
   );
 }
 

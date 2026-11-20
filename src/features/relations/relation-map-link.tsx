@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ChevronRight } from "@/components/icons/chevron-right";
 import { Network } from "@/components/icons/network";
 import { PostMenuExtras, usePostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { contentActionClassName } from "@/features/content/action-styles";
@@ -37,10 +38,11 @@ export function RelationMapRow({ kind, id }: { kind: RelatableKind; id: string }
     <Link
       href={relationMapHref({ kind, id })}
       data-relation-map-link
-      className="flex min-h-11 basis-full items-center gap-3 border-t border-border-soft pt-2 text-label font-semibold text-text transition-colors hover:text-primary"
+      className="flex min-h-11 items-center gap-3 border-t border-border-soft bg-surface-soft px-4 py-3 text-label font-semibold text-text transition-colors hover:text-primary"
     >
       <Network size={20} aria-hidden />
-      {t("relations.open")}
+      <span className="flex-1">{t("relations.open")}</span>
+      <ChevronRight size={16} className="text-text-muted" aria-hidden />
     </Link>
   );
 }
