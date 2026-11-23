@@ -23,7 +23,7 @@ export const SORT_LABELS: Record<ContentSortKey, TranslationKey> = {
 export const SORT_KEYS: ContentSortKey[] = ["newest", "oldest", "most-liked"];
 
 /** Keşfet's sorts (docs/history/221-*): "most-used" is added only where a real use counter exists (Promptlar). */
-export const DISCOVER_SORT_KEYS: ContentSortKey[] = ["recommended", "popular", "newest", "rising"];
+export const DISCOVER_SORT_KEYS: ContentSortKey[] = ["recommended", "newest", "popular", "rising"];
 
 /** The En yeni / En eski / En çok beğenilen select — same look as the profile toolbar. */
 export function SortSelect({

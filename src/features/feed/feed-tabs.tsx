@@ -268,7 +268,8 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
           authors={followedFilter.people}
           tags={followedFilter.tags}
           tools={followedFilter.tools}
-          narrowed={kind !== "all" || followedCount > 0}
+          contentType={taxonomy.contentType}
+          narrowed={kind !== "all" || followedCount > 0 || taxonomy.contentType !== null}
           onClearNarrowing={clearFilters}
         />
       ) : needsLogin ? (

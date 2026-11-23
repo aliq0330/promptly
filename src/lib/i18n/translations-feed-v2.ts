@@ -133,7 +133,7 @@ export const feedV2Translations = {
   "discover.ed.topics": { tr: "Gündemdeki konular", en: "Trending topics" },
   "discover.ed.topicsHint": { tr: "Son 7 günde en hızlı büyüyen etiketler", en: "Tags growing fastest in the last 7 days" },
   "discover.ed.topicCount": { tr: "{{count}} paylaşım", en: "{{count}} posts" },
-  "discover.ed.growth": { tr: "%{{percent}}", en: "{{percent}}%" },
+  "discover.ed.growth": { tr: "{{sign}}%{{value}}", en: "{{sign}}{{value}}%" },
   "discover.ed.new": { tr: "yeni", en: "new" },
   "discover.ed.popular": { tr: "Popüler promptlar", en: "Popular prompts" },
   "discover.ed.popularHint": { tr: "Bu hafta en çok beğenilen ve “Çalıştı” oyu alan görsel promptlar", en: "This week's most liked and best voted visual prompts" },

@@ -175,7 +175,10 @@ create or replace function public.following_activity_page(
   p_kinds text[] default null,
   p_authors uuid[] default null,
   p_tags text[] default null,
-  p_tools text[] default null
+  p_tools text[] default null,
+  -- Ana Sayfa'nın ortak "İçerik türü" süzgeci (görsel/metin/ses/video; docs/history/245-*): paylaşımlarda feed_page'e gider, sürüm ve
+  -- sonuçta promptun türüne bakılır, Space etkinliği bu süzgeçte çıkmaz.
+  p_content_type text default null
 )
 returns table(event_key text, event_kind text, source text, actor_id uuid, occurred_at timestamptz,
               item_kind text, item_id uuid, member_ids text[], detail jsonb)
@@ -194,7 +197,7 @@ language sql stable security invoker set search_path = public as $$
   -- Kişilerin paylaşımları: feed_page (kapsam following, en yeni). Aday penceresi sayfanın 2,5 katı (toplama için), en çok 50.
   people_raw as (
     select f.kind, f.id, f.created_at
-    from public.feed_page('following', 'newest', p_kinds, null, null, null,
+    from public.feed_page('following', 'newest', p_kinds, p_content_type, null, null,
                           least((select n from lim) * 5 / 2, 50), 0::bigint,
                           p_before_at, case when p_before_at is null then null else 'ffffffff-ffff-4fff-bfff-ffffffffffff'::uuid end,
                           false, null, null, p_authors, p_tags, p_tools, false) f, src
@@ -202,14 +205,14 @@ language sql stable security invoker set search_path = public as $$
   ),
   tag_raw as (
     select f.kind, f.id, f.created_at
-    from public.feed_page('tags', 'newest', p_kinds, null, null, null, (select n from lim), 0::bigint,
+    from public.feed_page('tags', 'newest', p_kinds, p_content_type, null, null, (select n from lim), 0::bigint,
                           p_before_at, case when p_before_at is null then null else 'ffffffff-ffff-4fff-bfff-ffffffffffff'::uuid end,
                           false, null, null, p_authors, p_tags, p_tools, false) f, src, st
     where (src.v = 'tags' or (src.v = 'all' and st.include_tags)) and f.kind not in ('space', 'quote')
   ),
   tool_raw as (
     select f.kind, f.id, f.created_at
-    from public.feed_page('all', 'newest', p_kinds, null, null, null, (select n from lim), 0::bigint,
+    from public.feed_page('all', 'newest', p_kinds, p_content_type, null, null, (select n from lim), 0::bigint,
                           p_before_at, case when p_before_at is null then null else 'ffffffff-ffff-4fff-bfff-ffffffffffff'::uuid end,
                           false, null, null, p_authors, p_tags,
                           coalesce(p_tools, (select array_agg(tool_id) from my_tools)), false) f, src, st
@@ -319,6 +322,8 @@ language sql stable security invoker set search_path = public as $$
     ) ve, st, src
     where st.show_versions and src.v in ('all', 'people')
       and (p_kinds is null or ve.item_kind = any (p_kinds))
+      and (p_content_type is null or (ve.item_kind = 'prompt'
+           and exists (select 1 from public.prompts cp where cp.id = ve.item_id and cp.content_type = p_content_type)))
       and (p_authors is null or cardinality(p_authors) = 0 or ve.actor_id = any (p_authors))
       and (p_tags is null or cardinality(p_tags) = 0) and (p_tools is null or cardinality(p_tools) = 0)
       and ve.actor_id not in (select target_id from modes where mode = 'muted')
@@ -348,6 +353,7 @@ language sql stable security invoker set search_path = public as $$
       group by a.space_id, a.actor_id, date_trunc('hour', a.created_at)
     ) se, st, src
     where (src.v = 'spaces' or (src.v = 'all' and st.show_space_activity))
+      and p_content_type is null
       and (p_kinds is null or 'space' = any (p_kinds))
       and (p_authors is null or cardinality(p_authors) = 0 or se.actor_id = any (p_authors))
       and (p_tags is null or cardinality(p_tags) = 0) and (p_tools is null or cardinality(p_tools) = 0)
@@ -365,6 +371,7 @@ language sql stable security invoker set search_path = public as $$
       and r.creator_id in (select id from followed) and r.creator_id not in (select target_id from modes where mode in ('muted', 'highlights'))
       and x.status = 'published' and x.visibility = 'public' and x.deleted_at is null and x.community_id is null and x.team_file_id is null
       and (p_kinds is null or 'prompt' = any (p_kinds))
+      and (p_content_type is null or x.content_type = p_content_type)
       and (p_authors is null or cardinality(p_authors) = 0 or r.creator_id = any (p_authors))
       and (p_tags is null or cardinality(p_tags) = 0) and (p_tools is null or cardinality(p_tools) = 0)
       and (r.created_at, 'r:' || r.id::text) < ((select at from cur), (select k from cur))
@@ -512,7 +519,7 @@ revoke all on function public.follow_feed_visit(boolean) from public, anon;
 revoke all on function public.set_follow_feed_mode(uuid, text) from public, anon;
 revoke all on function public._follow_feed_modes_on_unfollow() from public, anon, authenticated;
 revoke all on function public._feed_item_actor(text, uuid) from public, anon;
-revoke all on function public.following_activity_page(integer, timestamptz, text, text, text[], uuid[], text[], text[]) from public, anon;
+revoke all on function public.following_activity_page(integer, timestamptz, text, text, text[], uuid[], text[], text[], text) from public, anon;
 revoke all on function public.following_activity_summary(timestamptz) from public, anon;
 revoke all on function public.following_people_overview(text, integer, integer) from public, anon;
 grant execute on function public.follow_feed_settings_get() to authenticated;
@@ -520,6 +527,6 @@ grant execute on function public.follow_feed_settings_set(boolean, boolean, bool
 grant execute on function public.follow_feed_visit(boolean) to authenticated;
 grant execute on function public.set_follow_feed_mode(uuid, text) to authenticated;
 grant execute on function public._feed_item_actor(text, uuid) to authenticated;
-grant execute on function public.following_activity_page(integer, timestamptz, text, text, text[], uuid[], text[], text[]) to authenticated;
+grant execute on function public.following_activity_page(integer, timestamptz, text, text, text[], uuid[], text[], text[], text) to authenticated;
 grant execute on function public.following_activity_summary(timestamptz) to authenticated;
 grant execute on function public.following_people_overview(text, integer, integer) to authenticated;

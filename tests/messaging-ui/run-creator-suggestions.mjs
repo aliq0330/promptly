@@ -155,17 +155,16 @@ await scenario("2. 'Bu gönderi ilgini çekiyor mu?' kartı 7. gönderide, şeri
 });
 
 // 3 — iki sekme, tek istek
-await scenario("3. Takip Ettiklerim sekmesinde de şerit var; iki sekme arasında geçmek öneriyi yeniden istemez (tek suggest_creators)", async ({ page, state }) => {
+await scenario("3. Takip Ettiklerim (etkinlik akışı, docs/history/451-*) şerit taşımaz; iki sekme arasında geçmek öneriyi yeniden istemez (tek suggest_creators)", async ({ page, state }) => {
   await page.goto(`${BASE}/`);
   await waitFeed(page);
   await strips(page).first().waitFor();
   await page.getByRole("tab", { name: /Takip Ettiklerim/ }).click();
-  await page.waitForTimeout(500);
-  await waitFeed(page);
-  await strips(page).first().waitFor();
-  assert.equal(await postsBeforeSlot(page, 0), 12);
+  await page.locator("[data-following-feed] [data-activity-row]").first().waitFor();
+  assert.equal(await strips(page).count(), 0, "Takip Ettiklerin'de öneri şeridi yok (kişileri yönetmek sağ sütunda)");
   await page.getByRole("tab", { name: /Sana özel/ }).click();
   await strips(page).first().waitFor();
+  assert.equal(await postsBeforeSlot(page, 0), 12);
   assert.equal(state.suggestCalls.length, 1, "bir kez istendi");
   assert.deepEqual(state.suggestCalls[0], { p_limit: 30 });
 });

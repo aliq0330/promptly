@@ -5,7 +5,7 @@ import { mapProfileRow, type ProfileRow } from "./mappers";
 import { fetchResultById } from "./prompt-results";
 import { fetchRequestsByIds } from "./requests";
 import { dedupeActivity, diffLines, addedVariables, nextActivityCursor, type ActivityCursor, type DiffLine } from "@/lib/following-feed";
-import type { PromptRequest, PromptResult, UserProfile } from "@/types";
+import type { PromptContentType, PromptRequest, PromptResult, UserProfile } from "@/types";
 
 /**
  * Takip Ettiklerin etkinlik akışı (docs/history/451-*). Sırayı ve görünürlüğü YALNIZ veritabanı belirler (`following_activity_page`,
@@ -75,6 +75,8 @@ export interface ActivityQuery {
   authors?: string[] | null;
   tags?: string[] | null;
   tools?: string[] | null;
+  /** Ana Sayfa'nın içerik türü süzgeci; yalnız seçiliyken gönderilir. */
+  contentType?: PromptContentType | null;
 }
 
 export const ACTIVITY_PAGE_SIZE = 20;
@@ -96,6 +98,7 @@ export async function fetchActivityPage(
     p_authors: query.authors?.length ? query.authors : null,
     p_tags: query.tags?.length ? query.tags : null,
     p_tools: query.tools?.length ? query.tools : null,
+    ...(query.contentType ? { p_content_type: query.contentType } : {}),
   });
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as ActivityRow[];

@@ -23,7 +23,7 @@ import type { ActivityEvent, ActivitySource } from "@/lib/supabase/following-act
 import type { FeedKind } from "@/lib/supabase/feed";
 import { summaryParts, summaryTotal } from "@/lib/following-feed";
 import { cn } from "@/lib/utils";
-import type { UserProfile } from "@/types";
+import type { PromptContentType, UserProfile } from "@/types";
 import { ActivityEventRow } from "./activity-event";
 import { setHomeTab, useFollowFeedSettings } from "./follow-feed-store";
 import { useActivitySummary, useFollowingActivity, useLastVisit } from "./use-following-activity";
@@ -40,6 +40,7 @@ export function FollowingFeed({
   authors,
   tags,
   tools,
+  contentType,
   narrowed,
   onClearNarrowing,
 }: {
@@ -47,6 +48,8 @@ export function FollowingFeed({
   authors: string[];
   tags: string[];
   tools: string[];
+  /** Ana Sayfa'nın ortak içerik türü süzgeci (docs/history/245-*). */
+  contentType: PromptContentType | null;
   /** Filtre penceresinden bir daraltma seçili mi (boş sonuçta "süzgeçleri temizle" için). */
   narrowed: boolean;
   onClearNarrowing: () => void;
@@ -59,8 +62,8 @@ export function FollowingFeed({
   const summary = useActivitySummary(lastVisit, true, reload);
 
   const query = useMemo(
-    () => ({ source, kinds, authors: person ? [person] : authors, tags, tools }),
-    [source, kinds, person, authors, tags, tools],
+    () => ({ source, kinds, authors: person ? [person] : authors, tags, tools, contentType }),
+    [source, kinds, person, authors, tags, tools, contentType],
   );
   const feed = useFollowingActivity(query, true, reload);
   const actors = useActorChips(summary?.actors ?? []);

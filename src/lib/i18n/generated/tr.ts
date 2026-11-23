@@ -8030,7 +8030,7 @@ const dictionary: Record<string, string> = {
   "discover.ed.topics": "Gündemdeki konular",
   "discover.ed.topicsHint": "Son 7 günde en hızlı büyüyen etiketler",
   "discover.ed.topicCount": "{{count}} paylaşım",
-  "discover.ed.growth": "%{{percent}}",
+  "discover.ed.growth": "{{sign}}%{{value}}",
   "discover.ed.new": "yeni",
   "discover.ed.popular": "Popüler promptlar",
   "discover.ed.popularHint": "Bu hafta en çok beğenilen ve “Çalıştı” oyu alan görsel promptlar",

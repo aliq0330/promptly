@@ -18,7 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedGrid } from "./feed-grid";
 import { LoadMore } from "./load-more";
-import { DiscoverAside, DiscoverHighlightsSkeleton, PopularStrip, TopicStrip, useDiscoverHighlights } from "./discover-highlights";
+import { DiscoverEditorial } from "./discover-editorial";
 import { useFeedPages } from "./use-feed-pages";
 import { useInterestFeedback } from "./interest-feedback";
 import type { FeedKind } from "@/lib/supabase/feed";
@@ -133,8 +133,11 @@ export function DiscoverFeed() {
   const postFilters = !entity && hasPostFilters(feedSection);
   // "Most used" / "Kanıtlanmış" rank prompts (by their use counter / their "Çalıştı mı?" votes), so they only exist while Promptlar is shown;
   // switching to another section falls back to the recommended order instead of an order that means nothing there.
-  const effectiveSort: ContentSortKey = (sort === "most-used" || sort === "most-proven") && section !== "prompts" ? "recommended" : sort;
-  const sortKeys: ContentSortKey[] = section === "prompts" ? [...DISCOVER_SORT_KEYS, "most-used", "most-proven"] : DISCOVER_SORT_KEYS;
+  // "Yükselen" (docs/history/451-*) ranks posts by their last-48-hour growth; a quote has no such counter, so Alıntılar falls back too.
+  const effectiveSort: ContentSortKey =
+    ((sort === "most-used" || sort === "most-proven") && section !== "prompts") || (sort === "rising" && section === "quotes") ? "recommended" : sort;
+  const sortKeys: ContentSortKey[] =
+    section === "prompts" ? [...DISCOVER_SORT_KEYS, "most-used", "most-proven"] : section === "quotes" ? DISCOVER_SORT_KEYS.filter((key) => key !== "rising") : DISCOVER_SORT_KEYS;
 
   // Only filters that mean something in the open section reach the query (a quote has no category: carrying one over would empty the list).
   const effectiveTaxonomy = postFilters ? taxonomy : EMPTY_TAXONOMY_FILTER;
@@ -156,7 +159,6 @@ export function DiscoverFeed() {
   // "İlgimi çekiyor / çekmiyor" (docs/history/275-*): answers here only tune Ana Sayfa → Sana özel; Keşfet's ranking and list stay as they are.
   const interest = useInterestFeedback(feed.items, { enabled: !entity, loadExisting: true, hideOnDislike: false });
   const creatorPages = useCreatorPages(section === "creators");
-  const highlights = useDiscoverHighlights();
 
   const activeCount = (postFilters ? taxonomyActiveCount(taxonomy, true) : 0) + (effectiveTool ? 1 : 0) + (effectiveOpenOnly ? 1 : 0);
   const clearFilters = () => {
@@ -176,19 +178,14 @@ export function DiscoverFeed() {
     </>
   );
 
-  // docs/history/227-*: the main column (chip row, popular strip, section tabs, posts) and — from `xl` — a right column with the creators and rising tags.
+  // docs/history/451-*: "Tümü" without filters opens on the editorial magazine (topics, popular, text/audio/video, workflows + open requests,
+  // creators, rising tools, Spaces, Skills); the section menu and the full post list follow under "Tüm paylaşımlar".
+  const editorial = section === "all" && activeCount === 0;
   const idleContent = (
-    <div className="xl:flex xl:items-start xl:gap-7">
-      <div className="min-w-0 flex-1 space-y-4">
-        {highlights.loading ? (
-          <DiscoverHighlightsSkeleton />
-        ) : (
-          <>
-            <TopicStrip sample={highlights.sample} tags={highlights.tags} />
-            <PopularStrip popular={highlights.popular} />
-          </>
-        )}
-
+    <div className="space-y-6">
+      {editorial && <DiscoverEditorial onSeeAllCreators={() => setSection("creators")} />}
+      <div className="space-y-4" data-discover-all="">
+        {editorial && <h2 className="pt-6 font-display text-h1 font-bold tracking-[-0.025em] text-text">{t("discover.ed.allPosts")}</h2>}
         <SectionNav
           variant="menu"
           menuTitle={t("nav.discover")}
@@ -270,18 +267,11 @@ export function DiscoverFeed() {
               emptyTitle={t("discover.noMatchTitle")}
               emptyDescription={t("discover.noMatchDescription")}
               emptyAction={activeCount > 0 ? { label: t("feed.clearFilters"), onClick: clearFilters } : undefined}
-              // The column sits next to the right column from `xl`: two post columns at most (as on Ana Sayfa).
-              layout="home"
             />
             <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
           </>
         )}
       </div>
-      {!highlights.loading && (
-        <aside className="hidden w-(--aside-w) shrink-0 xl:sticky xl:top-24 xl:block">
-          <DiscoverAside creators={highlights.creators} tags={highlights.tags} onSeeAllCreators={() => setSection("creators")} />
-        </aside>
-      )}
     </div>
   );
 

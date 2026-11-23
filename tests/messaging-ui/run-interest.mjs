@@ -217,10 +217,12 @@ await scenario("8. Takip Ettiklerim'de kart da menü cevabı da yok", async ({ p
   await page.goto(`${BASE}/`);
   await waitFeed(page);
   await page.getByRole("tab", { name: "Takip Ettiklerim" }).click();
-  await page.locator("[data-flip-key]").first().waitFor();
+  // Takip Ettiklerin bir etkinlik akışıdır (docs/history/451-*): paylaşım satırı normal kartı taşır, ilgi sorusu/cevabı yok.
+  const row = page.locator("[data-following-feed] [data-activity-row]").first();
+  await row.waitFor();
   await page.waitForTimeout(400);
   assert.equal(await page.locator("[data-interest-prompt]").count(), 0);
-  await menuButton(page, 0).click();
+  await row.getByRole("button", { name: /Gönderi seçenekleri|Post options/ }).first().click();
   await page.getByRole("menu").waitFor();
   assert.equal(await page.getByRole("menuitemcheckbox").count(), 0);
 });

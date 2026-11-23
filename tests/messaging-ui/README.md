@@ -105,10 +105,10 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 
 ## Keşfet sıkı üst (`docs/history/210-*`)
 
-`run-discover.mjs`: başlık arama satırında; Kategoriler → Yükselen etiketler → Bu hafta popüler → Öne çıkan yaratıcılar sırası; ilk gönderi kartı telefonun ilk ekranında; kategori hapı `feed_page` `p_category` süzgecini açıp kapatır; "Tümünü gör" → Yaratıcılar; trend boşken sayısız yedek; İngilizce; 1280px taşma yok. Gerçek Supabase'e KARŞI DENENMEDİ.
+`run-discover.mjs` (`docs/history/451-*`): görünür başlık + haftanın sayıları; editoryal bölümler sırası (Gündemdeki konular → Popüler promptlar → yaratıcılar → Yükselen araçlar → Tüm paylaşımlar); büyüme yüzdesi gerçek sayılardan; Promptlar bölümünde editoryal yok; konu/araç kartı bağlantıları; trend boşken bölüm yok; Geri'de önbellekten; İngilizce; 1280px taşma yok. `mock.mjs` `following_activity_page`'i paketin `feed_page` taklidine köprüler. Gerçek Supabase'e KARŞI DENENMEDİ.
 
 ```bash
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-discover.mjs   # 6/6 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-discover.mjs   # 8/8 beklenir
 ```
 
 ## Konu sayfaları (`docs/history/211-*`)

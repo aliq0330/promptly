@@ -8030,7 +8030,7 @@ const dictionary: Record<string, string> = {
   "discover.ed.topics": "Trending topics",
   "discover.ed.topicsHint": "Tags growing fastest in the last 7 days",
   "discover.ed.topicCount": "{{count}} posts",
-  "discover.ed.growth": "{{percent}}%",
+  "discover.ed.growth": "{{sign}}{{value}}%",
   "discover.ed.new": "new",
   "discover.ed.popular": "Popular prompts",
   "discover.ed.popularHint": "This week's most liked and best voted visual prompts",

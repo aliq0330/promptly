@@ -15,6 +15,7 @@ const DIR = new URL("./", import.meta.url);
 
 /** "file.ts:function" → why it stays small. */
 const BOUNDED_BY_DESIGN: Record<string, string> = {
+  "prompt-works.ts:fetchWorksStatsByIds": "\"Çalıştı mı?\" counts of the prompts on screen: one row per prompt, `.in(ids)` with at most 100 ids per request",
   "drafts.ts:fetchDraftDetails": "details of the draft cards on screen: `.in(ids)` with at most 100 ids per request",
   "challenges.ts:fetchChallenges": "weekly themes: a few per year",
   "chat-features.ts:fetchStarredMessages": "the viewer's own starred messages",

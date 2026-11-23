@@ -126,6 +126,13 @@ select public._check(12, 'Spaces süzgeci yalnız Space etkinliği döner',
   and exists (select 1 from public.following_activity_page(20, null, null, 'spaces')));
 select public._check(13, 'Etiketler süzgeci yalnız etiket kaynaklı paylaşımlar',
   (select bool_and(source = 'tag') from public.following_activity_page(20, null, null, 'tags')));
+-- İçerik türü (Ana Sayfa'nın ortak süzgeci): "metin" → görsel paylaşımlar ve Space etkinliği yok; metin promptunun kendisi ve sürümü kalır.
+select public._check(21, 'içerik türü süzgeci: yalnız metin promptu (paylaşım + sürüm), görsel paylaşım ve Space etkinliği yok',
+  (select bool_and(event_kind in ('post', 'version') and item_id = 'a0000000-0000-4000-8000-000000000009')
+     from public.following_activity_page(20, null, null, 'all', null, null, null, null, 'text'))
+  and exists (select 1 from public.following_activity_page(20, null, null, 'all', null, null, null, null, 'text'))
+  and exists (select 1 from public.following_activity_page(20, null, null, 'all', null, null, null, null, 'image') where event_kind in ('post', 'group'))
+  and not exists (select 1 from public.following_activity_page(20, null, null, 'all', null, null, null, null, 'image') where event_kind = 'space_activity'));
 
 -- Ziyaret: ilk çağrı null döner, ikincisi ilkinin zamanını.
 select public._check(14, 'ilk ziyaret önceki zaman olarak null döner', public.follow_feed_visit() is null);
