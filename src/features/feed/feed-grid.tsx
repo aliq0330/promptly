@@ -22,6 +22,23 @@ import { prefersReducedMotion } from "@/lib/motion";
 import { FEED_PAGE_SIZE } from "@/lib/supabase/feed";
 import { chunk } from "@/lib/supabase/paged";
 
+/** The card of one feed slot — the same card every list draws (Takip Ettiklerin's timeline reuses it, docs/history/451-*). */
+export function FeedItemCard({ item }: { item: FeedItem }) {
+  return item.kind === "prompt" ? (
+    <PromptCard prompt={item.data} />
+  ) : item.kind === "request" ? (
+    <RequestCard request={item.data} />
+  ) : item.kind === "preset" ? (
+    <PresetCard preset={item.data} />
+  ) : item.kind === "quote" ? (
+    <QuoteCard quote={item.data} />
+  ) : item.kind === "skill" ? (
+    <SkillCard skill={item.data} />
+  ) : (
+    <WorkflowCard workflow={item.data} />
+  );
+}
+
 /**
  * Same CSS-columns masonry as PromptGrid (see prompt-grid.tsx), but for a
  * mixed list of prompts (any content type), prompt requests, and — since
@@ -74,20 +91,7 @@ export function FeedGrid({
     );
   }
 
-  const card = (item: FeedItem) =>
-    item.kind === "prompt" ? (
-      <PromptCard prompt={item.data} />
-    ) : item.kind === "request" ? (
-      <RequestCard request={item.data} />
-    ) : item.kind === "preset" ? (
-      <PresetCard preset={item.data} />
-    ) : item.kind === "quote" ? (
-      <QuoteCard quote={item.data} />
-    ) : item.kind === "skill" ? (
-      <SkillCard skill={item.data} />
-    ) : (
-      <WorkflowCard workflow={item.data} />
-    );
+  const card = (item: FeedItem) => <FeedItemCard item={item} />;
 
   // Each loaded page is its OWN column block (docs/history/276-*): a single CSS-columns container re-balances every card whenever one is appended, so
   // posts already on screen jumped between columns while the next page loaded. Blocks of one page never change once drawn (the last, partial one balances itself).

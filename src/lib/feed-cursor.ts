@@ -12,10 +12,12 @@
  *                 prompt, + responses×2 on a request]), triple DESCENDING. Not personalised, and with no clock in it the keyset never drifts.
  *   proven  → rank is the Wilson lower bound of the "Çalıştı mı?" votes × 1 000 000 (docs/history/307-*), computed by the SEPARATE `feed_page_proven`
  *             RPC (prompts only, ≥ 5 votes) — `feed_page` itself never sees this order. Same triple, DESCENDING.
+ *   rising  → rank is the last 7 days' likes×3 + comments×2 + saves×2 on content shared in the last 30 days (docs/history/451-*), computed by the
+ *             SEPARATE `feed_page_rising` RPC (every post kind but quotes). Same triple, DESCENDING.
  * The next page is "every row strictly after the cursor row in that order":
  * `<` for the descending orders, `>` for oldest (see the SQL migrations).
  */
-export type FeedOrder = "newest" | "popular" | "oldest" | "used" | "recommended" | "proven";
+export type FeedOrder = "newest" | "popular" | "oldest" | "used" | "recommended" | "proven" | "rising";
 
 /** Keyset position of the last row of a page: `(sort_rank, created_at, id)` of `public.feed_page`. */
 export interface FeedCursor {
@@ -25,7 +27,7 @@ export interface FeedCursor {
 }
 
 /** Structural twin of `ContentSortKey` (kept literal here so this file imports nothing from the UI). */
-export type DiscoverSortKey = "recommended" | "newest" | "oldest" | "popular" | "most-liked" | "most-used" | "most-proven";
+export type DiscoverSortKey = "recommended" | "newest" | "oldest" | "popular" | "most-liked" | "most-used" | "most-proven" | "rising";
 
 /** Keşfet's sort select → the `p_order` the database understands. */
 export function feedOrderForSort(sort: DiscoverSortKey): FeedOrder {
@@ -33,6 +35,7 @@ export function feedOrderForSort(sort: DiscoverSortKey): FeedOrder {
   if (sort === "popular" || sort === "most-liked") return "popular";
   if (sort === "most-used") return "used";
   if (sort === "most-proven") return "proven";
+  if (sort === "rising") return "rising";
   if (sort === "oldest") return "oldest";
   return "newest";
 }

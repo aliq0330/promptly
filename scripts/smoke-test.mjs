@@ -241,6 +241,15 @@ const CHECKS = [
   // Rahatsız etme saatleri (docs/history/435-*): yalnız oturumlu; tablo istemciye hiç açık değil.
   { name: "rpc get_my_quiet_hours ziyaretçiye KAPALI olmalı (docs/history/435-*)", rpc: "get_my_quiet_hours", body: {}, mustBeDenied: true },
   { name: "notification_quiet_hours ziyaretçiye KAPALI olmalı (docs/history/435-*)", get: () => `notification_quiet_hours?select=user_id&limit=1`, mustBeDenied: true },
+  // Takip Ettiklerin etkinlik akışı (docs/history/451-*): yalnız oturumlu; ziyaretçi reddedilir (var olduğunu da gösterir).
+  { name: "rpc following_activity_page ziyaretçiye KAPALI olmalı (docs/history/451-*)", rpc: "following_activity_page", body: { p_limit: 1 }, mustBeDenied: true },
+  { name: "rpc following_activity_summary ziyaretçiye KAPALI olmalı (docs/history/451-*)", rpc: "following_activity_summary", body: {}, mustBeDenied: true },
+  { name: "rpc follow_feed_visit ziyaretçiye KAPALI olmalı (docs/history/451-*)", rpc: "follow_feed_visit", body: { p_peek: true }, mustBeDenied: true },
+  // Keşfet editoryal açılışı (docs/history/451-*): ziyaretçiye açık okuma RPC'leri.
+  { name: "rpc discover_weekly_stats (docs/history/451-*)", rpc: "discover_weekly_stats", body: {} },
+  { name: "rpc discover_trending_topics (docs/history/451-*)", rpc: "discover_trending_topics", body: { p_limit: 1 } },
+  { name: "rpc discover_rising_tools (docs/history/451-*)", rpc: "discover_rising_tools", body: { p_limit: 1 } },
+  { name: "rpc feed_page_rising (Keşfet → Yükselen, docs/history/451-*)", rpc: "feed_page_rising", body: { p_limit: 1 } },
 ];
 
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };

@@ -64,7 +64,7 @@ export interface FeedPageParams {
 export const FEED_PAGE_SIZE = 18;
 const DEFAULT_LIMIT = FEED_PAGE_SIZE;
 
-interface FeedRow {
+export interface FeedRow {
   kind: FeedKind;
   id: string;
   created_at: string;
@@ -100,6 +100,7 @@ export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
   // call that really carries a Home filter needs the 16-argument form (migration 20260922100000) — the rest keeps working without it.
   // "Kanıtlanmış" (docs/history/307-*): prompts only, ranked by the "Çalıştı mı?" votes — its own small RPC, `feed_page` is not touched.
   if (params.order === "proven") return fetchProvenPage(params, limit);
+  if (params.order === "rising") return fetchRisingPage(params, limit);
   const multi = Boolean(params.authors?.length || params.tags?.length || params.tools?.length);
   const media = Boolean(params.hasMedia);
   const topic = Boolean(params.tag || params.tool) || multi || media;
@@ -147,7 +148,7 @@ export async function fetchFeedCount(filter: { taxonomy: TaxonomyFilterValue; ta
 }
 
 /** Full rows for a page of feed ids, in the page's order; a row that vanished in between (deleted, blocked author) is skipped. */
-async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
+export async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
   const idsOf = (kind: FeedKind) => rows.filter((row) => row.kind === kind).map((row) => row.id);
   const [prompts, requests, workflows, presets, quotes, skills] = await Promise.all([
     fetchPromptsByIds(idsOf("prompt")),
@@ -226,6 +227,23 @@ export async function fetchForYouPage(params: {
   const reasons: Record<string, ForYouReason> = {};
   for (const row of rows) reasons[`${row.kind}-${row.id}`] = { kind: row.reason_kind, ref: row.reason_ref };
   return { items, reasons, nextCursor: nextFeedCursor(rows, limit) };
+}
+
+/** One keyset page of `public.feed_page_rising` ("Yükselen", docs/history/451-*): the same row shape and cursor triple as `feed_page`. Quotes never rank here. */
+async function fetchRisingPage(params: FeedPageParams, limit: number): Promise<FeedPage> {
+  const { data, error } = await supabase.rpc("feed_page_rising", {
+    p_limit: limit,
+    p_after_rank: params.cursor ? params.cursor.rank : null,
+    p_after_created_at: params.cursor ? params.cursor.createdAt : null,
+    p_after_id: params.cursor ? params.cursor.id : null,
+    p_kinds: params.kind === "all" ? null : [params.kind],
+    p_content_type: params.taxonomy.contentType,
+    p_category: params.taxonomy.category,
+    p_tool: params.tool ?? null,
+  });
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as FeedRow[];
+  return { items: await hydrateFeedRows(rows), nextCursor: nextFeedCursor(rows, limit) };
 }
 
 /** One keyset page of `public.feed_page_proven`: same row shape and cursor triple as `feed_page`, so hydration and paging are shared. */

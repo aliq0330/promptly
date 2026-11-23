@@ -3,7 +3,7 @@
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-export type ContentSortKey = "recommended" | "newest" | "oldest" | "popular" | "most-liked" | "most-used" | "most-proven";
+export type ContentSortKey = "recommended" | "newest" | "oldest" | "popular" | "most-liked" | "most-used" | "most-proven" | "rising";
 
 export const SORT_LABELS: Record<ContentSortKey, TranslationKey> = {
   recommended: "discover.sortRecommended",
@@ -13,6 +13,7 @@ export const SORT_LABELS: Record<ContentSortKey, TranslationKey> = {
   "most-liked": "profile.sortMostLiked",
   "most-used": "profile.sortMostUsed",
   "most-proven": "discover.sortProven",
+  rising: "discover.sortRising",
 };
 
 /**
@@ -22,7 +23,7 @@ export const SORT_LABELS: Record<ContentSortKey, TranslationKey> = {
 export const SORT_KEYS: ContentSortKey[] = ["newest", "oldest", "most-liked"];
 
 /** Keşfet's sorts (docs/history/221-*): "most-used" is added only where a real use counter exists (Promptlar). */
-export const DISCOVER_SORT_KEYS: ContentSortKey[] = ["recommended", "newest", "popular"];
+export const DISCOVER_SORT_KEYS: ContentSortKey[] = ["recommended", "popular", "newest", "rising"];
 
 /** The En yeni / En eski / En çok beğenilen select — same look as the profile toolbar. */
 export function SortSelect({
