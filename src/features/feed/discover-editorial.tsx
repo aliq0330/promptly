@@ -166,24 +166,6 @@ function useEditorial(): Editorial | null {
   return data;
 }
 
-/** Bu haftanın sayıları (başlığın altındaki cümle). */
-export function useWeeklyStats(): { prompts: number; workflows: number; skills: number } | null {
-  const [stats, setStats] = useState<{ prompts: number; workflows: number; skills: number } | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    void supabase.rpc("discover_weekly_stats").then(({ data, error }) => {
-      if (cancelled || error || !data) return;
-      if (typeof data !== "object" || Array.isArray(data)) return;
-      const row = data as Record<string, number>;
-      setStats({ prompts: Number(row.prompts ?? 0), workflows: Number(row.workflows ?? 0), skills: Number(row.skills ?? 0) });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return stats;
-}
-
 function SectionHead({ title, hint, href, onSeeAll }: { title: string; hint: string; href?: string; onSeeAll?: () => void }) {
   const { t } = useTranslation();
   const more = (

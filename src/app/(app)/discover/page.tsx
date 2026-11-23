@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { PageContainer } from "@/components/ui/page-header";
 import { DiscoverFeed } from "@/features/feed/discover-feed";
-import { useWeeklyStats } from "@/features/feed/discover-editorial";
+import { useWeeklyStats } from "@/features/feed/discover-weekly-stats";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatCount } from "@/lib/utils";
 

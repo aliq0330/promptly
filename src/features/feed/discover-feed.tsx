@@ -18,7 +18,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedGrid } from "./feed-grid";
 import { LoadMore } from "./load-more";
-import { DiscoverEditorial } from "./discover-editorial";
 import { useFeedPages } from "./use-feed-pages";
 import { useInterestFeedback } from "./interest-feedback";
 import type { FeedKind } from "@/lib/supabase/feed";
@@ -41,6 +40,31 @@ import { SkillDiscoverSection } from "@/features/skills/skill-discover-section";
 import { GraduationCap } from "@/components/icons/graduation-cap";
 import { SKILLS_MENU_ENABLED } from "@/lib/skills/flag";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import dynamic from "next/dynamic";
+
+/** Editoryal blok tembel yüklenir (docs/history/451-*): Keşfet'in ilk paketi ve hidrasyonu hafif kalır; yüklenirken aynı iskelet. */
+const DiscoverEditorial = dynamic(() => import("./discover-editorial").then((m) => m.DiscoverEditorial), {
+  ssr: false,
+  loading: () => <DiscoverEditorialSkeleton />,
+});
+
+function DiscoverEditorialSkeleton() {
+  return (
+    <div className="space-y-10" aria-busy="true" data-discover-editorial-loading="">
+      <div className="flex gap-3 overflow-hidden">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <span key={i} className="skeleton-shimmer h-36 w-48 shrink-0 rounded-lg" />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <span className="skeleton-shimmer col-span-2 row-span-2 aspect-square rounded-lg" />
+        {[0, 1, 2, 3].map((i) => (
+          <span key={i} className="skeleton-shimmer aspect-square rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type FeedSection = "all" | "prompts" | "requests" | "workflows" | "presets" | "quotes";
 type EntitySection = "spaces" | "skills" | "tools" | "tags" | "creators" | "communities";

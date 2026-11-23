@@ -143,8 +143,14 @@ await scenario("4. Oluştur menüsü kısa telefon ekranında: başlık sabit, l
 
 await scenario("5. Oluştur menüsü uzun ekranda: kaydırma gerekmez, tüm seçenekler görünür", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  await page.locator("nav[data-app-nav] [data-nav-create]").click();
-  await page.locator("[data-create-menu]").waitFor();
+  // Soğuk açılışta (yavaş CI makinesi) dokunuş hidrasyondan önce gelirse React onu kaçırır: kullanıcı gibi bir kez daha dokunulur
+  // (run-feed-filters `selectHomeTab` ile aynı kalıp). Üç denemeden sonra da menü açılmadıysa test düşer.
+  const menu = page.locator("[data-create-menu]");
+  for (let attempt = 0; attempt < 3 && !(await menu.isVisible()); attempt++) {
+    await page.locator("nav[data-app-nav] [data-nav-create]").click();
+    await menu.waitFor({ timeout: 2500 }).catch(() => {});
+  }
+  await menu.waitFor();
   await page.waitForTimeout(450);
   for (const key of ["prompt", "request", "story", "workflow", "preset", "space"]) {
     assert.ok(await page.locator(`[data-create-option='${key}']`).isVisible(), `${key} görünür`);
