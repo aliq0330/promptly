@@ -11,6 +11,7 @@ import { UserCheck } from "@/components/icons/user-check";
 import { Users } from "@/components/icons/users";
 import { CircleCheck } from "@/components/icons/circle-check";
 import { Avatar } from "@/components/ui/avatar";
+import { CountBadge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -132,7 +133,7 @@ export function FollowingFeed({
             <Chip key={actor.profile.id} selected={person === actor.profile.id} onClick={() => setPerson(person === actor.profile.id ? null : actor.profile.id)} className="pl-1">
               <Avatar src={actor.profile.avatarUrl} alt="" size={28} />
               {actor.profile.displayName.split(" ")[0]}
-              <span className="inline-grid h-5 min-w-5 place-items-center rounded-full bg-secondary px-1.5 text-micro font-semibold text-secondary-foreground">{actor.count}</span>
+              <CountBadge>{actor.count}</CountBadge>
             </Chip>
           ))}
         </ScrollRow>
@@ -198,17 +199,11 @@ export function FollowingFeed({
 function Timeline({ events, lastVisit }: { events: ActivityEvent[]; lastVisit: string | null }) {
   const { t, language } = useTranslation();
   const visitAt = lastVisit ? Date.parse(lastVisit) : null;
-  let previousDay: string | null = null;
-  let markerShown = false;
   const anyNew = visitAt !== null && events.some((event) => Date.parse(event.at) > visitAt);
+  const rows = planTimeline(events, (at) => dayLabel(at, language, t), anyNew ? visitAt : null);
   return (
     <div>
-      {events.map((event, index) => {
-        const day = dayLabel(event.at, language, t);
-        const showDay = day !== previousDay;
-        previousDay = day;
-        const showMarker = anyNew && !markerShown && visitAt !== null && Date.parse(event.at) <= visitAt;
-        if (showMarker) markerShown = true;
+      {rows.map(({ event, day, showDay, showMarker }, index) => {
         return (
           <Fragment key={event.key}>
             {showMarker && (
@@ -230,6 +225,21 @@ function Timeline({ events, lastVisit }: { events: ActivityEvent[]; lastVisit: s
       })}
     </div>
   );
+}
+
+/** Hangi satırın üstüne gün ayracı ve "son ziyaretin" çizgisi gelir (çizgi: ziyaretten eski ilk satırın üstü, bir kez). */
+function planTimeline(events: ActivityEvent[], labelOf: (at: string) => string, visitAt: number | null) {
+  const rows: { event: ActivityEvent; day: string; showDay: boolean; showMarker: boolean }[] = [];
+  let previousDay: string | null = null;
+  let markerShown = false;
+  for (const event of events) {
+    const day = labelOf(event.at);
+    const showMarker = visitAt !== null && !markerShown && Date.parse(event.at) <= visitAt;
+    if (showMarker) markerShown = true;
+    rows.push({ event, day, showDay: day !== previousDay, showMarker });
+    previousDay = day;
+  }
+  return rows;
 }
 
 function dayLabel(at: string, language: "tr" | "en", t: ReturnType<typeof useTranslation>["t"]): string {

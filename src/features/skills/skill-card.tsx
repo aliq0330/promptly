@@ -117,6 +117,10 @@ export function SkillCard({ skill, collectionRemoval }: { skill: Skill; collecti
             <SkillCoverCard path={skill.coverPath} fallback={<TextArt seed={skill.id}><TextArtTitle>{skill.title || t("skill.untitled")}</TextArtTitle></TextArt>} />
           ) : (
           <TextArt seed={skill.id}>
+            {/* Akış 2.1 (docs/history/451-*): paket kimliği — simge karosu başlığın üstünde. */}
+            <span aria-hidden className="grid h-12 w-12 place-items-center rounded-md bg-primary text-primary-foreground">
+              <GraduationCap size={24} />
+            </span>
             <TextArtTitle>{skill.title || t("skill.untitled")}</TextArtTitle>
             {skill.summary && <p className="line-clamp-3 break-words font-sans text-small leading-relaxed opacity-90">{skill.summary}</p>}
             <p className="truncate text-caption opacity-70">

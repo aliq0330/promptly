@@ -8017,6 +8017,7 @@ const dictionary: Record<string, string> = {
   "follow.mode.all": "Hepsi",
   "follow.mode.highlights": "Öne çıkanlar",
   "follow.mode.muted": "Sessiz",
+  "request.cardAnswers": "{{count}} yanıt",
   "featured.label": "Öne çıkan",
   "featured.worked": "Çalıştı %{{percent}} · {{votes}} oy",
   "featured.results": "{{count}} kullanıcı sonucu",

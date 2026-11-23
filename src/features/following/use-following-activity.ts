@@ -102,7 +102,8 @@ export function useFollowingActivity(query: ActivityQuery, enabled: boolean, rel
 
   useEffect(() => {
     if (!enabled) return;
-    void loadFirst();
+    // Bir sonraki mikro görevde: efektin içinde eşzamanlı durum yazımı zincirleme yeniden çizime yol açar.
+    void Promise.resolve().then(loadFirst);
   }, [enabled, loadFirst, reloadKey]);
 
   const loadMore = useCallback(async () => {

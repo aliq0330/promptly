@@ -74,6 +74,23 @@ export function WorkflowCard({
                   );
                 })}
               </span>
+              {/* Akış 2.1 (docs/history/451-*): adımlar küçük kutular zinciri; sonuncusu (çıktı) vurgulu. Beşten fazlası "+N". */}
+              <span className="flex items-center gap-1" aria-label={t("workflow.stepCount", { count: String(workflow.stepCount) })}>
+                {Array.from({ length: Math.min(workflow.stepCount, 5) }, (_, index) => {
+                  const lastShown = index === Math.min(workflow.stepCount, 5) - 1;
+                  const type = workflow.contentTypes[Math.min(index, workflow.contentTypes.length - 1)];
+                  const Icon = type ? CONTENT_TYPE_META[type].icon : WorkflowIcon;
+                  return (
+                    <span key={index} className="inline-flex items-center gap-1">
+                      {index > 0 && <ArrowRight size={12} aria-hidden className="opacity-50" />}
+                      <span className={lastShown ? "grid h-9 w-9 place-items-center rounded-md bg-current/15 ring-2 ring-current/40" : "grid h-9 w-9 place-items-center rounded-md bg-current/10"}>
+                        <Icon size={16} aria-hidden />
+                      </span>
+                    </span>
+                  );
+                })}
+                {workflow.stepCount > 5 && <span className="text-caption font-semibold opacity-70">+{workflow.stepCount - 5}</span>}
+              </span>
               <span className="text-caption opacity-70">{t("workflow.stepCount", { count: String(workflow.stepCount) })}</span>
             </TextArt>
           )

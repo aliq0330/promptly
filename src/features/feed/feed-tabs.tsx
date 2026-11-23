@@ -49,6 +49,7 @@ import { FollowFeedSettingsList } from "@/features/following/following-rail";
 import { FollowManageModal } from "@/features/following/follow-manage-modal";
 import { setHomeTab, useFollowFeedState } from "@/features/following/follow-feed-store";
 import { Button } from "@/components/ui/button";
+import { FeaturedPostCard, useFeaturedPosts } from "./featured-post-card";
 
 /**
  * Home is the viewer's own feed (docs/history/221-*; Keşfet is where new things are found). Two views, both real server queries
@@ -155,6 +156,8 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
   // "İlgimi çekiyor / çekmiyor" (docs/history/275-*): Sana özel only (Takip Ettiklerim is the strictly chronological list of people they chose).
   // Sana özel never lists a post already answered, so there is nothing to read first; an answer of "çekmiyor" collapses the card with "Geri al".
   const interest = useInterestFeedback(forYou.items, { enabled: isForYou && enabled, loadExisting: false, hideOnDislike: true });
+  // "Öne çıkan" büyük kart (docs/history/451-*): yalnız Sana Özel, en çok 8 gönderide bir.
+  const featuredPosts = useFeaturedPosts(forYou.items, isForYou && enabled && layout === "home");
   // "Takip edilecek kişiler" (docs/history/285-*): a strip of people between the posts of BOTH tabs — signed in only.
   const creatorStrips = useCreatorStrips(enabled);
   // Nothing to learn from yet (no interests, no followed person, tag or AI tool): "Sana özel" shows its first-time card instead of guessing.
@@ -292,6 +295,15 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
             items={feed.items}
             interest={isForYou ? interest : undefined}
             creatorStrips={creatorStrips}
+            featured={
+              isForYou
+                ? {
+                    keys: featuredPosts.keys,
+                    render: (item) =>
+                      item.kind === "prompt" ? <FeaturedPostCard prompt={item.data} stats={featuredPosts.stats.get(item.data.id)} /> : null,
+                  }
+                : undefined
+            }
             layout={layout}
             // "Sana özel": every card says why it is here, and a re-ranking (new interests) glides the cards into place.
             itemNote={isForYou ? (item) => <ForYouReasonNote item={item} reason={forYou.reasons[`${item.kind}-${item.data.id}`]} /> : undefined}

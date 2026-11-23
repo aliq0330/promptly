@@ -115,6 +115,9 @@ export const feedV2Translations = {
   "follow.mode.highlights": { tr: "Öne çıkanlar", en: "Highlights" },
   "follow.mode.muted": { tr: "Sessiz", en: "Muted" },
 
+  // Kart görselleri
+  "request.cardAnswers": { tr: "{{count}} yanıt", en: "{{count}} answers" },
+
   // Sana Özel — Öne çıkan kart
   "featured.label": { tr: "Öne çıkan", en: "Featured" },
   "featured.worked": { tr: "Çalıştı %{{percent}} · {{votes}} oy", en: "Worked {{percent}}% · {{votes}} votes" },

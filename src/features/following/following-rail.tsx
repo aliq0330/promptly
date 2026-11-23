@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,7 @@ export function FollowingRail() {
   const { t } = useTranslation();
   const { reload } = useFollowFeedSettings(true);
   const [manageOpen, setManageOpen] = useState(false);
-  const weekAgo = useMemo(() => new Date(Date.now() - 7 * 86_400_000).toISOString(), []);
+  const [weekAgo] = useState(() => new Date(Date.now() - 7 * 86_400_000).toISOString());
   const summary = useActivitySummary(weekAgo, true, reload);
   const top = (summary?.actors ?? []).slice(0, 5);
   const profiles = useActorProfiles(top.map((actor) => actor.id));

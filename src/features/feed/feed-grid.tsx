@@ -57,8 +57,11 @@ export function FeedGrid({
   flip = false,
   interest,
   creatorStrips,
+  featured,
 }: {
   items: FeedItem[];
+  /** Sana Özel'in "Öne çıkan" kartları (docs/history/451-*): bu anahtarlardaki gönderi tüm sütunları kaplayan büyük kartla çizilir. */
+  featured?: { keys: Set<string>; render: (item: FeedItem) => ReactNode };
   /** A short line drawn above a card ("Sana özel"'s reason, docs/history/209-*). */
   itemNote?: (item: FeedItem) => ReactNode;
   /** "İlgimi çekiyor / çekmiyor" (docs/history/275-*): the answers in each card's ⋮ menu + the occasional question strip. Sana özel and Keşfet only. */
@@ -102,6 +105,13 @@ export function FeedGrid({
         <ContentGrid key={`block-${blockIndex}`} columns={layout === "home" ? GRID_COLUMNS_ASIDE : undefined}>
           {block.map((item, offset) => {
             const index = blockIndex * FEED_PAGE_SIZE + offset;
+            if (featured?.keys.has(feedItemKey(item))) {
+              return (
+                <div key={feedItemKey(item)} data-flip-key={feedItemKey(item)} className="pb-4 [column-span:all] sm:pb-6">
+                  {featured.render(item)}
+                </div>
+              );
+            }
             return (
               <Fragment key={feedItemKey(item)}>
                 <div data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>

@@ -8017,6 +8017,7 @@ const dictionary: Record<string, string> = {
   "follow.mode.all": "All",
   "follow.mode.highlights": "Highlights",
   "follow.mode.muted": "Muted",
+  "request.cardAnswers": "{{count}} answers",
   "featured.label": "Featured",
   "featured.worked": "Worked {{percent}}% · {{votes}} votes",
   "featured.results": "{{count}} user results",

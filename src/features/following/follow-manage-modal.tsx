@@ -141,9 +141,9 @@ function PeopleTab() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setFailed(false);
     const timer = window.setTimeout(() => {
+      setLoading(true);
+      setFailed(false);
       load(0)
         .then((page) => {
           if (!cancelled) setPeople(page);
