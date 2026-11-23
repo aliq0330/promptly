@@ -25,6 +25,8 @@ const isDeletedComment = (comment: PromptComment) => Boolean(comment.deletedAt);
 
 /** Beyond this nesting level, indentation stops growing (mobile/readability) — the "@kime yanıt verdiği" hint below takes over showing the relationship instead. */
 const MAX_INDENT_DEPTH = 6;
+/** Replies sit in a soft tray (each with its own short hook) down to this level; deeper ones stay flat. */
+const TRAY_MAX_DEPTH = 2;
 
 export interface CommentTree {
   childrenByParent: Map<string, PromptComment[]>;
@@ -344,12 +346,25 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
       {hasChildren && isExpanded && (
         <div
           className={cn(
-            "space-y-3",
-            depth < MAX_INDENT_DEPTH && "border-l border-border pl-3",
+            depth < TRAY_MAX_DEPTH
+              ? cn(
+                  "ml-2 space-y-4 rounded-xl border border-border-soft p-2.5 pl-6 sm:ml-3 sm:p-3 sm:pl-7",
+                  depth === 0 ? "bg-surface-soft" : "bg-background",
+                )
+              : "space-y-3",
           )}
         >
           {children.map((child) => (
-            <CommentNode key={child.id} comment={child} depth={depth + 1} tree={tree} />
+            <div
+              key={child.id}
+              className={cn(
+                "relative",
+                depth < TRAY_MAX_DEPTH &&
+                  "before:pointer-events-none before:absolute before:-left-[18px] before:top-0 before:h-5 before:w-3.5 before:rounded-bl-md before:border-b-2 before:border-l-2 before:border-border-strong before:content-[''] hover:before:border-primary",
+              )}
+            >
+              <CommentNode comment={child} depth={depth + 1} tree={tree} />
+            </div>
           ))}
         </div>
       )}
