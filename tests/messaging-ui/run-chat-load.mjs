@@ -76,14 +76,19 @@ await scenario("2. Mesaj sayfası sunucu hatası verirse sonsuz 'Yükleniyor…'
 
 await scenario("2b. Mesaj isteği hiç cevap vermezse (bağlantı asıldı) 20 sn sonra 'Sohbet yüklenemedi' çıkar, tekrar deneyince açılır", async ({ page, context }) => {
   let stall = true;
+  // İskelet statik HTML'de de var: hidrasyondan önce görünür. Saat, yükleme GERÇEKTEN başladıktan (mesaj isteği gittikten) sonra
+  // ileri alınır — 20 sn'lik zamanlayıcı aynı anda kurulur; iskeleti beklemek, zamanlayıcı kurulmadan ileri almaya yol açabiliyordu.
+  let stalled;
+  const stalledReq = new Promise((resolve) => { stalled = resolve; });
   await context.route(/\/rest\/v1\/messages\?/, async (route) => {
-    if (stall && route.request().method() === "GET") return; // cevap yok: istek asılı kalır
+    if (stall && route.request().method() === "GET") { stalled(); return; } // cevap yok: istek asılı kalır
     return route.fallback();
   });
   await page.clock.install();
   await page.clock.resume();
   await page.goto(`${BASE}/messages/local?id=${CONV}`);
   await page.locator("[data-chat-loading]").waitFor();
+  await stalledReq;
   await page.clock.fastForward(21_000);
   const card = page.locator("[data-chat-load-failed]");
   await card.waitFor();
