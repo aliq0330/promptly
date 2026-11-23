@@ -1,0 +1,17 @@
+/* Mevcut görsel kart (ContentCardPost) AYNEN kalır; değişiklik yalnız kartın çevresinde */
+.hm-wrap{display:flex;gap:32px}
+.hm-main{flex:1;min-width:0}
+.hm-aside{display:none;flex:none;width:320px;padding-top:16px}
+.hm-aside .side-card{margin-bottom:16px}
+@media(min-width:1280px){.hm-aside{display:block}}
+.hm-main .mas{columns:1;margin-top:16px}
+@media(min-width:768px){.hm-main .mas{columns:2;column-gap:16px}}
+.hm-main .vc{margin-bottom:22px}
+.hm-main .vc-ft{gap:10px}
+.hm-main .vc-ft .nm{font-size:15px}
+.hm-main .vc-art.r45,.hm-main .vc-art.r34{border-radius:22px}
+.mas .dv{column-span:all;margin:4px 0 14px;padding:0}
+.mas .endstate{column-span:all;break-inside:avoid}
+.mas .tdwrap{column-span:all;break-inside:avoid}
+.hm-main .td-strip{margin-top:14px}
+.hm-main .pill-new{margin:12px 0 0}
