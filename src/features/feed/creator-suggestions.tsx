@@ -34,6 +34,7 @@ import { profileHref } from "@/lib/utils";
 /** The pool is kept for a few minutes so a Back to Ana Sayfa does not ask the server again (the page is reloaded on an account change). */
 const POOL_TTL_MS = 3 * 60 * 1000;
 let poolCache: { at: number; pool: SuggestedCreator[] } | null = null;
+let poolRequest: Promise<SuggestedCreator[]> | null = null;
 
 export interface CreatorStrips {
   /** The people of the `ordinal`-th strip (people dismissed in it already left out); empty = nothing to draw. */
@@ -72,16 +73,24 @@ export function useCreatorStrips(enabled: boolean): CreatorStrips | undefined {
   useEffect(() => {
     if (!enabled || paused || pool !== null) return;
     let cancelled = false;
-    fetchSuggestedCreators(CREATOR_STRIP_POOL)
+    // One request at a time for every list on the page: a remount (or `enabled` flickering while auth settles) joins the request in flight
+    // instead of asking `suggest_creators` again.
+    poolRequest ??= fetchSuggestedCreators(CREATOR_STRIP_POOL)
       .then((candidates) => {
-        if (cancelled) return;
         const ordered = orderCreatorPool(
           candidates.map((candidate) => ({ ...candidate, id: candidate.profile.id })),
           readShown(),
           Date.now(),
         );
         poolCache = { at: Date.now(), pool: ordered };
-        setPool(ordered);
+        return ordered;
+      })
+      .finally(() => {
+        poolRequest = null;
+      });
+    poolRequest
+      .then((ordered) => {
+        if (!cancelled) setPool(ordered);
       })
       .catch((err) => {
         // No suggestions this time: the posts simply continue without a strip.

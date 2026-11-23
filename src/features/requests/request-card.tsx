@@ -76,8 +76,17 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
             </figure>
           ) : (
             <TextArt seed={request.id}>
-              <TextArtTitle>{request.title}</TextArtTitle>
-              <p className="line-clamp-4 whitespace-pre-line break-words text-small leading-relaxed">{request.description}</p>
+              {/* Akış 2.1 (docs/history/451-*): istek bir SORUDUR — başlık tırnak içinde, büyük; altında kısa açıklama ve yanıt sayısı. */}
+              <TextArtTitle>
+                <span aria-hidden className="text-primary">“</span>
+                {request.title}
+                <span aria-hidden className="text-primary">”</span>
+              </TextArtTitle>
+              <p className="line-clamp-3 whitespace-pre-line break-words text-small leading-relaxed">{request.description}</p>
+              <p className="inline-flex items-center gap-1.5 text-caption font-semibold">
+                <Sparkles size={12} aria-hidden />
+                {t("request.cardAnswers", { count: formatCount(request.responseCount) })}
+              </p>
               {request.creativeDirection && (
                 <p className="line-clamp-1 text-caption opacity-75">
                   <span className="font-semibold">{t("request.creativeDirection")} · </span>

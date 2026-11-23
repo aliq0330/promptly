@@ -6,9 +6,10 @@ import { Avatar } from "@/components/ui/avatar";
 import { WeeklyChallengeBanner } from "@/features/challenges/weekly-challenge-banner";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchTrendingTags, type TrendingTag } from "@/lib/supabase/tags";
+import { useFollowFeedState } from "@/features/following/follow-feed-store";
+import { FollowingRail } from "@/features/following/following-rail";
 import { fetchCreatorsPage } from "@/lib/supabase/profiles";
-import { profileHref, tagHref } from "@/lib/utils";
+import { profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 
@@ -20,10 +21,14 @@ import type { UserProfile } from "@/types";
  * filled with placeholders.
  */
 export function HomeRail() {
+  const { user } = useAuth();
+  const { tab } = useFollowFeedState();
+  // Takip Ettiklerin açıkken sütun o akışın sütunudur; Sana Özel'de yalnız Haftalık tema + Önerilen yaratıcılar (docs/history/451-*: gündem
+  // ve araçlar Keşfet'te, aynı şey iki sayfada gösterilmez).
+  if (user && tab === "following") return <FollowingRail />;
   return (
     <div className="space-y-4">
       <WeeklyChallengeBanner />
-      <TrendingTagsCard />
       <SuggestedCreatorsCard />
     </div>
   );
@@ -35,37 +40,6 @@ function RailCard({ title, children }: { title: string; children: React.ReactNod
       <h2 className="mb-3 font-display text-h3 font-bold tracking-[-0.02em] text-text">{title}</h2>
       {children}
     </section>
-  );
-}
-
-function TrendingTagsCard() {
-  const { t } = useTranslation();
-  const [tags, setTags] = useState<TrendingTag[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetchTrendingTags(5).then((rows) => {
-      if (!cancelled) setTags(rows);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (!tags || tags.length === 0) return null;
-  return (
-    <RailCard title={t("home.railTrending")}>
-      <ul className="space-y-3">
-        {tags.map((tag) => (
-          <li key={tag.slug}>
-            <Link href={tagHref(tag)} className="group block rounded-sm">
-              <span className="block truncate font-semibold text-text group-hover:text-primary">#{tag.label}</span>
-              <span className="text-caption text-text-muted">{t("home.railTrendCount", { count: tag.recentCount })}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </RailCard>
   );
 }
 
