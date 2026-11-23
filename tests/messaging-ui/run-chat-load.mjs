@@ -62,7 +62,8 @@ await scenario("2. Mesaj sayfası sunucu hatası verirse sonsuz 'Yükleniyor…'
   });
   await page.goto(`${BASE}/messages/local?id=${CONV}`);
   const card = page.locator("[data-chat-load-failed]");
-  await card.waitFor();
+  // Yavaş CI makinesinde ilk boyama + hidrasyon + istek denemeleri 8 sn'yi aşabiliyor (senaryo 2 CI'da ara sıra düşüyordu).
+  await card.waitFor({ timeout: 20_000 });
   assert.match(await card.innerText(), /Sohbet yüklenemedi/);
   assert.equal(await page.locator("[data-chat-loading]").count(), 0, "iskelet kalıcı değil");
   assert.equal(await page.getByText("Konuşma bulunamadı").count(), 0, "'bulunamadı' ile karışmaz");
@@ -117,13 +118,22 @@ await scenario("3. Oturum yenilenip kullanıcı nesnesi değişince açık sohbe
   assert.ok(await page.locator("form textarea").isVisible());
 });
 
+// Soğuk açılışta (yavaş CI makinesi) dokunuş hidrasyondan önce gelirse React onu kaçırır: kullanıcı gibi menü açılana kadar
+// (en çok üç kez) yeniden dokunulur (run-feed-filters `selectHomeTab` ile aynı kalıp). Üç denemeden sonra da açılmadıysa test düşer.
+async function openCreateMenu(page) {
+  const menu = page.locator("[data-create-menu]");
+  for (let attempt = 0; attempt < 3 && !(await menu.isVisible()); attempt++) {
+    await page.locator("nav[data-app-nav] [data-nav-create]").click();
+    await menu.waitFor({ timeout: 2500 }).catch(() => {});
+  }
+  await menu.waitFor();
+  await page.waitForTimeout(450);
+  return menu;
+}
+
 await scenario("4. Oluştur menüsü kısa telefon ekranında: başlık sabit, liste kayar, son satır kartın dışına taşmaz", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  await page.locator("nav[data-app-nav] [data-nav-create]").waitFor();
-  await page.locator("nav[data-app-nav] [data-nav-create]").click();
-  const list = page.locator("[data-create-menu]");
-  await list.waitFor();
-  await page.waitForTimeout(450);
+  await openCreateMenu(page);
   const geometry = await page.evaluate(() => {
     const menu = document.querySelector("[data-create-menu]");
     const card = menu.closest("[class*='overflow-hidden']");
@@ -148,15 +158,7 @@ await scenario("4. Oluştur menüsü kısa telefon ekranında: başlık sabit, l
 
 await scenario("5. Oluştur menüsü uzun ekranda: kaydırma gerekmez, tüm seçenekler görünür", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  // Soğuk açılışta (yavaş CI makinesi) dokunuş hidrasyondan önce gelirse React onu kaçırır: kullanıcı gibi bir kez daha dokunulur
-  // (run-feed-filters `selectHomeTab` ile aynı kalıp). Üç denemeden sonra da menü açılmadıysa test düşer.
-  const menu = page.locator("[data-create-menu]");
-  for (let attempt = 0; attempt < 3 && !(await menu.isVisible()); attempt++) {
-    await page.locator("nav[data-app-nav] [data-nav-create]").click();
-    await menu.waitFor({ timeout: 2500 }).catch(() => {});
-  }
-  await menu.waitFor();
-  await page.waitForTimeout(450);
+  await openCreateMenu(page);
   for (const key of ["prompt", "request", "story", "workflow", "preset", "space"]) {
     assert.ok(await page.locator(`[data-create-option='${key}']`).isVisible(), `${key} görünür`);
   }
