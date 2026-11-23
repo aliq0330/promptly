@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Kişiler — Ana Sayfa</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./app.css">
+<link rel="stylesheet" href="./home.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="app">
+<aside class="side">
+<a class="brand brand-side" href="#"><svg class="i logo" viewBox="0 3 32 22" aria-hidden="true"><path d="M11 5C8 5 7.5 6.5 7.5 9v2.2c0 1.2-.9 2.3-2.5 2.8 1.6.5 2.5 1.6 2.5 2.8V19c0 2.5.5 4 3.5 4M21 5c3 0 3.5 1.5 3.5 4v2.2c0 1.2.9 2.3 2.5 2.8-1.6.5-2.5 1.6-2.5 2.8V19c0 2.5-.5 4-3.5 4"/><path class="heart" d="M16 20.5s-4.8-2.9-4.8-6.3a2.6 2.6 0 0 1 4.8-1.4 2.6 2.6 0 0 1 4.8 1.4c0 3.4-4.8 6.3-4.8 6.3z"/></svg><span class="brand-word">promptly</span></a>
+<button class="create" aria-label="Oluştur"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="create-lb">Oluştur</span></button>
+<nav class="nav">
+<a class="nav-it on" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg><span>Ana Sayfa</span></a>
+<a class="nav-it" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg><span>Keşfet</span></a>
+<a class="nav-it" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.5 3.5 5"/></svg><span>Topluluklar</span></a>
+<span class="nav-sep"></span><span class="nav-lb">Çalışma</span>
+<a class="nav-it" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3.5 3.8 11h8.4z"/><rect x="13" y="13" width="7.5" height="7.5" rx="1.5"/><circle cx="7.5" cy="16.5" r="3.5"/></svg><span>Spaces</span></a>
+<a class="nav-it" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></svg><span>Ekipler</span></a>
+<a class="nav-it only-d" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16v4M17 18h4"/></svg><span>Studio</span></a>
+<span class="nav-lb">Kütüphane</span>
+<a class="nav-it" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4.5L6 21z"/></svg><span>Kaydedilenler</span></a>
+<a class="nav-it only-d" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11M10 20V4M16 20v-7M22 20H2"/></svg><span>Yaratıcı paneli</span></a>
+</nav>
+<a class="me" href="#"><span class="av s32">A</span><span>Sen</span></a>
+</aside>
+<div class="stage">
+<header class="top">
+<a class="brand brand-top" href="#"><svg class="i logo" viewBox="0 3 32 22" aria-hidden="true"><path d="M11 5C8 5 7.5 6.5 7.5 9v2.2c0 1.2-.9 2.3-2.5 2.8 1.6.5 2.5 1.6 2.5 2.8V19c0 2.5.5 4 3.5 4M21 5c3 0 3.5 1.5 3.5 4v2.2c0 1.2.9 2.3 2.5 2.8-1.6.5-2.5 1.6-2.5 2.8V19c0 2.5-.5 4-3.5 4"/><path class="heart" d="M16 20.5s-4.8-2.9-4.8-6.3a2.6 2.6 0 0 1 4.8-1.4 2.6 2.6 0 0 1 4.8 1.4c0 3.4-4.8 6.3-4.8 6.3z"/></svg><span class="brand-word">promptly</span></a>
+<div class="t-field"><svg class="i i20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Prompt, kişi veya etiket ara</div>
+<span class="t-grow"></span>
+<button class="t-btn t-sbtn" aria-label="Ara"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+<button class="t-btn t-focus" aria-label="Odak"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14"/></svg><span class="t-focus-lb">Odak</span></button>
+<button class="t-btn" aria-label="Bildirimler"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg><span class="t-badge">1</span></button>
+<button class="t-btn" aria-label="Mesajlar"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1z"/></svg></button>
+</header>
+<main class="main">
+<div class="stories">
+<a class="story" href="#"><span class="ring me"><span class="av">A</span><span class="plusb"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></span>Hikâyen</a>
+<a class="story" href="#"><span class="ring"><span class="av c2">B</span></span>Burak</a>
+<a class="story" href="#"><span class="ring"><span class="av c3">D</span></span>Deniz</a>
+<a class="story" href="#"><span class="ring"><span class="av c4">E</span></span>Elif</a>
+<a class="story" href="#"><span class="ring seen"><span class="av c5">M</span></span>Mert</a>
+<a class="story" href="#"><span class="ring seen"><span class="av c6">S</span></span>Selin</a>
+</div>
+<div class="tabs"><button class="tab">Sana özel</button><button class="tab on">Takip Ettiklerim</button><span class="grow"></span><button class="t-btn" aria-label="Filtre"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6 7.5V19l-4 1.5v-8z"/></svg></button></div>
+<div class="kp-bar"><h2>Kişi kişi</h2><button class="chip"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>Hepsini okundu say</button></div>
+
+<section class="kp-lane kp-sp">
+<div class="kp-lh"><span class="ic"><svg class="i i20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16v4M17 18h4"/></svg></span><span class="bx"><span class="nm">Senin için seçildi</span><span class="sub">Sevdiğin etiketlere ve kopyaladıklarına göre</span></span></div>
+<div class="kp-strip">
+<a class="kc" href="#"><div class="kc-a a2"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9.5 3 2.5-3 2.5M13 15h3.5"/></svg></span></div><div class="kc-t">Sisli Orman Sabahı</div><div class="kc-m">Deniz Yıldız · Görsel</div></a>
+<a class="kc" href="#"><div class="kc-a a6"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="m17 10.5 4-2.5v8l-4-2.5"/></svg></span></div><div class="kc-t">Yağmurlu Gece Şehri</div><div class="kc-m">Kaan Demir · Video</div></a>
+<a class="kc" href="#"><div class="kc-a t-txt"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span><span style="padding-top:26px">Sen deneyimli bir metin yazarısın. <b>{ürün}</b> için <b>{ton}</b>…</span></div><div class="kc-t">Ürün Açıklaması Yazarı</div><div class="kc-m">Mert Aksoy · Metin</div></a>
+<a class="kc" href="#"><div class="kc-a a8"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9.5 3 2.5-3 2.5M13 15h3.5"/></svg></span></div><div class="kc-t">Cam Şişe Ürün Çekimi</div><div class="kc-m">Zeynep Ak · Görsel</div></a>
+<a class="kc" href="#"><div class="kc-a a3"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9.5 3 2.5-3 2.5M13 15h3.5"/></svg></span></div><div class="kc-t">Retro Poster Tipografisi</div><div class="kc-m">Elif Kaya · Görsel</div></a>
+</div>
+</section>
+
+<section class="kp-lane">
+<div class="kp-lh"><span class="av s40 c2">B</span><span class="bx"><span class="nm">Burak Arslan<span class="kp-dot"></span></span><span class="sub">2 sa önce · @burakarslan</span></span><span class="tag">3 yeni</span></div>
+<div class="kp-strip">
+<a class="kc" href="#"><div class="kc-a t-pst"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span><svg class="i big" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></div><div class="kc-t">Minimal İç Mekân Görselleştirme</div><div class="kc-m">Ayar paketi · 9 parametre</div></a>
+<a class="kc" href="#"><div class="kc-a a1"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9.5 3 2.5-3 2.5M13 15h3.5"/></svg></span></div><div class="kc-t">Sakin Salon Işığı</div><div class="kc-m">Görsel prompt</div></a>
+<a class="kc" href="#"><div class="kc-a a8"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9.5 3 2.5-3 2.5M13 15h3.5"/></svg></span></div><div class="kc-t">Mat Seramik Vazo Çekimi</div><div class="kc-m">Görsel prompt</div></a>
+</div>
+</section>
+
+<section class="kp-lane">
+<div class="kp-lh"><span class="av s40 c3">D</span><span class="bx"><span class="nm">Deniz Yıldız<span class="kp-dot"></span></span><span class="sub">3 sa önce · @denizyildiz</span></span><span class="tag">2 yeni</span></div>
+<div class="kp-strip">
+<a class="kc" href="#"><div class="kc-a a2"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9.5 3 2.5-3 2.5M13 15h3.5"/></svg></span></div><div class="kc-t">Sisli Orman Sabahı</div><div class="kc-m">Görsel prompt</div></a>
+<a class="kc" href="#"><div class="kc-a a5"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM19 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z"/></svg></span><svg class="i big f" viewBox="0 0 24 24" aria-hidden="true" style="color:#fff"><path d="M8 5.5v13l11-6.5z"/></svg></div><div class="kc-t">Gece Yarısı Synthwave</div><div class="kc-m">Ses prompt</div></a>
+</div>
+</section>
+
+<section class="kp-lane">
+<div class="kp-lh"><span class="av s40 c4">E</span><span class="bx"><span class="nm">Elif Kaya<span class="kp-dot"></span></span><span class="sub">5 sa önce · @elifkaya</span></span><span class="tag">2 yeni</span></div>
+<div class="kp-strip">
+<a class="kc" href="#"><div class="kc-a a3"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9.5 3 2.5-3 2.5M13 15h3.5"/></svg></span></div><div class="kc-t">Retro Poster Tipografisi</div><div class="kc-m">Görsel prompt</div></a>
+<a class="kc" href="#"><div class="kc-a a7"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7.5 9.5 3 2.5-3 2.5M13 15h3.5"/></svg></span></div><div class="kc-t">Çöl Gün Batımı Posteri</div><div class="kc-m">Görsel prompt</div></a>
+</div>
+</section>
+
+<section class="kp-lane">
+<div class="kp-lh"><span class="av s40 c6">S</span><span class="bx"><span class="nm">Selin Acar</span><span class="sub">1 g önce · @selinacar</span></span></div>
+<div class="kp-strip">
+<a class="kc" href="#"><div class="kc-a t-wf"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a3 3 0 0 1 3 3V14"/></svg></span><svg class="i big" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a3 3 0 0 1 3 3V14"/></svg></div><div class="kc-t">Haftalık Blog Planı</div><div class="kc-m">Workflow · 5 adım</div></a>
+<a class="kc" href="#"><div class="kc-a a5"><span class="vc-type"><svg class="i i16" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM19 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z"/></svg></span><svg class="i big f" viewBox="0 0 24 24" aria-hidden="true" style="color:#fff"><path d="M8 5.5v13l11-6.5z"/></svg></div><div class="kc-t">Lo-fi Çalışma Müziği</div><div class="kc-m">Ses prompt</div></a>
+</div>
+</section>
+</main>
+<nav class="bn">
+<a class="on" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>Ana Sayfa</a>
+<a href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>Keşfet</a>
+<a href="#" aria-label="Oluştur"><span class="plus"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></a>
+<a href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.5 3.5 5"/></svg>Topluluklar</a>
+<a href="#"><span class="av">A</span>Sen</a>
+</nav>
+</div>
+<a class="dock" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1z"/></svg>Mesajlar</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
