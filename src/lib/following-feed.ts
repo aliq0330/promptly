@@ -141,16 +141,26 @@ export function isFeaturedWorthy(stats: { yes: number; no: number } | null | und
   return total >= FEATURED_MIN_VOTES && stats.yes / total >= FEATURED_MIN_RATIO;
 }
 
+/** İlk büyük kart en erken bu konumda (ilk ekran normal kartlarla açılır). */
+export const FEATURED_MIN_INDEX = 4;
+
 /**
  * Listede hangi gönderiler büyük kart olur: eşiği geçenlerden, aralarında en az `every` gönderi olacak şekilde, sırayla.
  * Görselsiz prompt da olabilir (metin promptu büyük kartta metniyle görünür). Liste değişmeden aynı sonucu verir (sayfa eklenince
  * önceki seçimler kaymaz: yalnız ilerleyen konumlar eklenir).
+ *
+ * Büyük kart sütunların hepsini kaplar (`column-span: all`): önündeki kartlar kendi aralarında sütunlara dağılır. Önünde TEK sayıda kart
+ * kalırsa iki sütunlu Ana Sayfa'da bir sütun boş kalır, o yüzden büyük kart yalnız ÇİFT sayıda kartın ardından gelir — sayım her sayfa
+ * bloğunun (`blockSize`, FeedGrid her sayfayı ayrı sütun bloğunda çizer) ya da önceki büyük kartın ardından yeniden başlar.
  */
-export function pickFeatured(keys: string[], worthy: (key: string) => boolean, every = FEATURED_EVERY): Set<string> {
+export function pickFeatured(keys: string[], worthy: (key: string) => boolean, every = FEATURED_EVERY, blockSize = 18): Set<string> {
   const picked = new Set<string>();
   let lastIndex = -Infinity;
   keys.forEach((key, index) => {
-    if (index - lastIndex < every) return;
+    if (index < FEATURED_MIN_INDEX || index - lastIndex < every) return;
+    const blockStart = index - (index % blockSize);
+    const segmentStart = Math.max(blockStart, lastIndex + 1);
+    if ((index - segmentStart) % 2 !== 0) return;
     if (!worthy(key)) return;
     picked.add(key);
     lastIndex = index;

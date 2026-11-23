@@ -94,12 +94,18 @@ test("isFeaturedWorthy: at least 10 votes and 80 % yes", () => {
   assert.equal(isFeaturedWorthy(null), false);
 });
 
-test("pickFeatured: at most one in every 8 posts, earlier picks stay when a page is appended", () => {
+test("pickFeatured: at most one in every 8 posts, not before the 5th, only after an even number of cards; earlier picks stay", () => {
   const keys = Array.from({ length: 20 }, (_, i) => `k${i}`);
-  const worthy = (key: string) => ["k1", "k3", "k10", "k12", "k19"].includes(key);
+  const worthy = (key: string) => ["k1", "k3", "k4", "k10", "k12", "k13", "k19"].includes(key);
   const first = pickFeatured(keys.slice(0, 12), worthy);
   const all = pickFeatured(keys, worthy);
-  assert.deepEqual([...first], ["k1", "k10"]);
-  assert.deepEqual([...all], ["k1", "k10", "k19"]);
-  assert.ok(!all.has("k3"), "too close to the previous one");
+  assert.ok(!all.has("k1") && !all.has("k3"), "the first screen opens with normal cards");
+  assert.deepEqual([...first], ["k4"]);
+  // After k4 the count restarts: k13 has 8 cards before it (5..12) → even, and far enough from k4.
+  assert.deepEqual([...all], ["k4", "k13"]);
+  assert.ok(!all.has("k12"), "too close to the previous one");
+  assert.ok(!all.has("k19"), "an odd number of cards before it in the new page block (18) would leave a column empty");
+  // Page blocks restart the count: index 20 = 2 cards into the second block.
+  assert.deepEqual([...pickFeatured(Array.from({ length: 22 }, (_, i) => `k${i}`), (key) => key === "k20")], ["k20"]);
+  assert.deepEqual([...pickFeatured(Array.from({ length: 22 }, (_, i) => `k${i}`), (key) => key === "k19")], []);
 });
