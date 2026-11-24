@@ -18,10 +18,11 @@ import { ArrowUp } from "@/components/icons/arrow-up";
 import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import type { CommentSort } from "@/lib/comment-sort";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { MentionInput } from "@/features/mentions/mention-field";
 import { useCommentThread, type CommentTarget } from "./use-comment-thread";
 import { StarRatingInput } from "@/components/ui/star-rating";
 import { CommentExtrasPreview, CommentExtrasToolbar } from "./comment-extras";
+import { CommentComposerBox } from "./comment-composer-box";
+import { Send } from "@/components/icons/send";
 
 export type { CommentTarget };
 
@@ -245,20 +246,19 @@ export function CommentSection({
                 )}
               </div>
             )}
-          <div className="flex min-w-0 gap-2">
-            <MentionInput
-              value={draft}
-              onChange={setDraft}
-              placeholder={placeholder ?? t("comments.writeAComment")}
-              maxLength={2000}
-              className="h-11 w-full min-w-0 flex-1 rounded-lg card-flat px-4 text-body text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-            <Button type="submit" size="md" disabled={!(draft.trim() || composerExtras.hasExtras) || composerExtras.isPreparing || isPosting}>
-              {isPosting ? t("common.sending") : t("common.send")}
-            </Button>
-          </div>
-          <CommentExtrasPreview extras={composerExtras} />
-          <CommentExtrasToolbar extras={composerExtras} userId={user.id} disabled={isPosting} className="-ml-1.5" />
+          <CommentComposerBox
+            value={draft}
+            onChange={setDraft}
+            placeholder={placeholder ?? t("comments.writeAComment")}
+            toolbar={<CommentExtrasToolbar extras={composerExtras} userId={user.id} disabled={isPosting} />}
+            preview={<CommentExtrasPreview extras={composerExtras} />}
+            submit={
+              <Button type="submit" size="sm" disabled={!(draft.trim() || composerExtras.hasExtras) || composerExtras.isPreparing || isPosting}>
+                <Send size={16} aria-hidden />
+                {isPosting ? t("common.sending") : t("common.send")}
+              </Button>
+            }
+          />
           {ratingEnabled && !isSpaceOwner && !myRatedComment && <p className="text-caption text-text-muted">{t("spaces.rating.rules")}</p>}
           </div>
         </form>

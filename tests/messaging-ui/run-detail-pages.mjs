@@ -127,13 +127,13 @@ await scenario("3. yorumlar: en yeni 3 görünür, 'Tümünü gör' en eskiyi a�
   await section.getByRole("button", { name: "Daha az göster" }).click();
   assert.equal(await section.getByText("Deniz:").count(), 0);
 });
-await scenario("3b. yorum yazınca konu tamamen açılır ve yorum alanı satırı doldurur (Gönder yan yana, taşmaz)", "prompt", async ({ page }) => {
+await scenario("3b. yorum kutusu çerçevelidir: Gönder çerçevenin İÇİNDE (araç satırı), kutu satırı doldurur, taşmaz; yazınca konu tamamen açılır", "prompt", async ({ page }) => {
   const section = page.locator("#comments");
   const input = section.getByPlaceholder(/Bir yorum yaz/);
   await input.waitFor();
-  const i = await box(input); const send = await box(section.getByRole("button", { name: "Gönder" }));
-  assert.ok(i.right <= send.left + 1, "input and Gönder do not overlap");
-  assert.ok(send.left - i.right < 16, "input fills the row up to the button");
+  const frame = await box(section.locator("[data-comment-composer-box] > div").first()); const send = await box(section.getByRole("button", { name: "Gönder" }));
+  assert.ok(send.left >= frame.left && send.right <= frame.right && send.bottom <= frame.bottom, "Gönder çerçevenin içinde");
+  assert.ok(frame.right <= 390 - 12 + 1, "çerçeve ekran kenarını aşmaz");
   await input.fill("Yeni yorum");
   await section.getByRole("button", { name: "Gönder" }).click();
   await section.getByText("Yeni yorum").waitFor();

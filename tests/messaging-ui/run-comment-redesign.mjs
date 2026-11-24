@@ -211,25 +211,32 @@ await scenario("11. masaüstü: yanıt satır içi kutuda yazılır (pencere yok
   assert.equal(await page.locator("[data-comment-compose-sheet]").count(), 0, "pencere/kart yok");
   const ta = node(page, "Mert:").locator("form textarea");
   await ta.fill("Masaüstü yanıtı");
+  const frame = await node(page, "Mert:").locator("form [data-comment-composer-box] > div").first().boundingBox();
+  const send = await node(page, "Mert:").locator("form").getByRole("button", { name: "Gönder" }).boundingBox();
+  assert.ok(send.y + send.height <= frame.y + frame.height && send.x >= frame.x, "masaüstünde Gönder çerçevenin İÇİNDE (araç satırı)");
   await node(page, "Mert:").locator("form").getByRole("button", { name: "Gönder" }).click();
   await page.getByText("Masaüstü yanıtı").waitFor();
   const posted = db.comments.find((c) => c.body === "Masaüstü yanıtı");
   assert.equal(posted.parent_id, db.comments.find((c) => c.body.startsWith("Mert:")).id);
 });
 
-await scenario("12. telefon (390): Yanıtla alttan açılan kart (tam ekran sayfa değil); yanıtlanan yorum özeti görünür; gönderince kart kapanır", async ({ page, db }) => {
+await scenario("12. telefon (390): Yanıtla satır içi çerçeveli kutuda açılır (alttan kart yok); Gönder/Vazgeç kutunun ALTINDA ve ekrandan taşmaz; gönderince kutu kapanır", async ({ page, db }) => {
   await page.getByText(/Mert:/).first().waitFor();
   await node(page, "Mert:").getByRole("button", { name: "Yanıtla" }).first().click();
-  const sheet = page.locator("[data-comment-compose-sheet]");
-  await sheet.waitFor();
-  assert.equal(await node(page, "Mert:").locator("form").count(), 0, "satır içi kutu yok");
-  assert.match(await sheet.locator("[data-comment-quote]").textContent(), /Mert:/);
-  const box = await sheet.boundingBox();
-  assert.ok(box.height <= 800 * 0.9, "kart ekranı kaplamaz (≤ %90)");
-  await sheet.locator("textarea").fill("Telefon yanıtı");
-  await sheet.getByRole("button", { name: "Gönder" }).click();
+  assert.equal(await page.locator("[data-comment-compose-sheet]").count(), 0, "alttan kart yok");
+  const form = node(page, "Mert:").locator("form");
+  await form.locator("textarea").waitFor();
+  const frame = await form.locator("[data-comment-composer-box] > div").first().boundingBox();
+  const send = await form.getByRole("button", { name: "Gönder" }).boundingBox();
+  const cancel = await form.getByRole("button", { name: "Vazgeç" }).boundingBox();
+  assert.ok(send.y >= frame.y + frame.height - 1, "Gönder kutunun altında");
+  assert.ok(cancel.y >= frame.y + frame.height - 1, "Vazgeç kutunun altında");
+  assert.ok(cancel.x + cancel.width <= 390 && send.x >= 0, "düğmeler ekrandan taşmaz");
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), "yatay taşma yok");
+  await form.locator("textarea").fill("Telefon yanıtı");
+  await form.getByRole("button", { name: "Gönder" }).click();
   await page.getByText("Telefon yanıtı").waitFor();
-  await sheet.waitFor({ state: "detached" });
+  await form.waitFor({ state: "detached" });
   assert.equal(db.comments.find((c) => c.body === "Telefon yanıtı").parent_id, db.comments.find((c) => c.body.startsWith("Mert:")).id);
 }, { viewport: { width: 390, height: 800 } });
 

@@ -440,7 +440,7 @@ await scenario("18. Düzenleme: fotoğraf kaldırılınca PATCH medya sütunlar�
   assert.deepEqual(state.removed, [MINE_PHOTO], "the old file is removed from storage");
   // Metin boşaltılsa da (artık hiç eki yok) Kaydet kapalı olmalı
   await editOf(page, "Fotoğraflı yorum");
-  await section(page).locator("textarea").fill("");
+  await section(page).locator("[data-comment-id] textarea").fill("");
   assert.equal(await section(page).getByRole("button", { name: "Kaydet" }).isDisabled(), true, "no text and no extras");
 }, {
   setup: (db) => {
@@ -460,10 +460,10 @@ await scenario("19. Düzenleme: metinli yoruma içerik eki eklenir (PATCH attach
   // Şimdi metni boşalt: ek var → Kaydet açık, gövde ''
   await section(page).getByRole("button", { name: "Yorum menüsü" }).first().click();
   await page.getByRole("menuitem", { name: "Düzenle", exact: true }).click();
-  await section(page).locator("textarea").fill("");
+  await section(page).locator("[data-comment-id] textarea").fill("");
   assert.equal(await section(page).getByRole("button", { name: "Kaydet" }).isDisabled(), false, "an attachment alone is enough");
   await section(page).getByRole("button", { name: "Kaydet" }).click();
-  await section(page).locator("textarea").waitFor({ state: "detached" });
+  await section(page).locator("[data-comment-id] textarea").waitFor({ state: "detached" });
   assert.equal(state.patches[1].body.body, "");
 }, {
   setup: (db) => {

@@ -4,7 +4,7 @@ import { X } from "@/components/icons/x";
 import { Button } from "@/components/ui/button";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { Modal } from "@/components/ui/modal";
-import { MentionTextarea } from "@/features/mentions/mention-field";
+import { CommentComposerBox } from "./comment-composer-box";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommentAttachment } from "@/types";
 import type { AttachmentState } from "@/features/content/compact-content-card";
@@ -12,13 +12,12 @@ import { CommentExtrasPreview, CommentExtrasToolbar, type CommentExtrasControlle
 import { useId } from "react";
 
 /**
- * Telefonda yanıt yazma / yorum düzenleme: alttan açılan kart (docs/history/452-*). Tam ekran sayfa açılmaz — yanıtlanan yorumun özeti kartın
- * üstünde görünür, başlık ve Vazgeç/Gönder sabit, kart yukarı sürüklenince %90'a büyür (ortak `Modal` davranışı). Masaüstünde yanıt/düzenleme
- * satır içidir; bu bileşen yalnız telefonda (`< sm`) çizilir.
+ * Telefonda yorum düzenleme: alttan açılan kart (docs/history/452-*). Tam ekran sayfa açılmaz — başlık ve Vazgeç/Kaydet sabit, kart yukarı
+ * sürüklenince %90'a büyür (ortak `Modal` davranışı). Yanıt telefonda da satır içidir (docs/history/454-*); düzenleme masaüstünde satır içidir, bu
+ * bileşen yalnız telefonda (`< sm`) çizilir.
  */
 export function CommentComposeSheet({
   title,
-  quote,
   notice,
   value,
   onChange,
@@ -34,8 +33,6 @@ export function CommentComposeSheet({
   onCancel,
 }: {
   title: string;
-  /** Yanıtlanan yorumun özeti (yanıtta); düzenlemede yok. */
-  quote?: { name: string; text: string };
   /** Düzenlemede kısa not ("önceki sürüm geçmişte saklanır"). */
   notice?: string;
   value: string;
@@ -78,26 +75,15 @@ export function CommentComposeSheet({
           }}
         >
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
-            {quote && (
-              <div className="rounded-md bg-background px-3 py-2.5" data-comment-quote="">
-                <p className="text-small font-semibold text-text">{quote.name}</p>
-                <p className="line-clamp-2 break-words text-small text-text-secondary">{quote.text}</p>
-              </div>
-            )}
             {notice && <p className="text-caption text-text-muted">{notice}</p>}
-            <MentionTextarea
+            <CommentComposerBox
               value={value}
-              maxLength={2000}
               onChange={onChange}
-              rows={7}
               placeholder={placeholder}
-              className="w-full resize-none rounded-lg card-flat px-4 py-3 text-body text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              minHeightClass="min-h-32"
+              toolbar={<CommentExtrasToolbar extras={extras} userId={userId} disabled={submitting} />}
+              preview={<CommentExtrasPreview extras={extras} attachmentState={attachmentState} />}
             />
-            <CommentExtrasPreview extras={extras} attachmentState={attachmentState} />
-            <div className="flex items-center gap-1">
-              <CommentExtrasToolbar extras={extras} userId={userId} disabled={submitting} className="-ml-1.5" />
-              <span className="ml-auto text-caption tabular-nums text-text-muted">{t("comments.charCount", { count: value.length })}</span>
-            </div>
             {error && <p className="text-small text-danger">{error}</p>}
           </div>
           <div data-dialog-footer="" className="flex shrink-0 justify-end gap-2 border-t border-border-soft px-5 py-3">
