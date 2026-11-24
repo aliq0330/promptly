@@ -480,7 +480,7 @@ export function setupCommunities(db) {
       }
     }
     if (table === "prompt_comments") {
-      const COMMENT_COLS = (c) => ({ id: c.id, body: c.body, parent_id: c.parent_id ?? null, like_count: c.like_count ?? 0, created_at: c.created_at, edited_at: null, deleted_at: c.deleted_at ?? null, pinned_at: c.pinned_at ?? null, profiles: pub(userById(c.author_id)),
+      const COMMENT_COLS = (c) => ({ id: c.id, body: c.body, parent_id: c.parent_id ?? null, like_count: c.like_count ?? 0, created_at: c.created_at, edited_at: c.edited_at ?? null, deleted_at: c.deleted_at ?? null, pinned_at: c.pinned_at ?? null, profiles: pub(userById(c.author_id)),
         // Yorum medyası/eki (docs/history/308-*): satırda varsa olduğu gibi döner.
         media_kind: c.media_kind ?? null, media_ref: c.media_ref ?? null, media_width: c.media_width ?? null, media_height: c.media_height ?? null, attach_type: c.attach_type ?? null, attach_id: c.attach_id ?? null });
       if (method === "GET") {
@@ -518,6 +518,46 @@ export function setupCommunities(db) {
         db.comments.push(row);
         return json(201, COMMENT_COLS(row));
       }
+    }
+    // ---- yorum düzenleme geçmişi ve takibi (docs/history/451-*) ----
+    if (table === "prompt_comments" && method === "PATCH") {
+      const id = eq(q, "id");
+      const target = db.comments.find((c) => c.id === id);
+      if (!target) return rows([]);
+      if (typeof body.body === "string" && body.body !== target.body) {
+        db.commentVersions = [...(db.commentVersions ?? []), { id: crypto.randomUUID(), comment_id: id, body: target.body, written_at: target.edited_at ?? target.created_at, created_at: db.stamp() }];
+        target.body = body.body;
+        target.edited_at = db.stamp();
+      }
+      db.calls.push({ method: "PATCH", table: "prompt_comments", body });
+      return json(200, { edited_at: target.edited_at ?? null });
+    }
+    if (table === "prompt_comments" && method === "DELETE") {
+      const id = eq(q, "id");
+      db.comments = db.comments.filter((c) => c.id !== id);
+      db.calls.push({ method: "DELETE", table: "prompt_comments", id });
+      return json(204, null);
+    }
+    if (table === "rpc/comment_history") {
+      log("comment_history", body);
+      const list = (db.commentVersions ?? []).filter((v) => v.comment_id === body.p_comment_id).sort((a, b) => b.created_at.localeCompare(a.created_at));
+      return json(200, list.map((v) => ({ id: v.id, body: v.body, written_at: v.written_at })));
+    }
+    if (table === "rpc/set_comment_subscription") {
+      log("set_comment_subscription", body);
+      db.commentSubs = db.commentSubs ?? [];
+      const same = (s) => s.kind === body.p_kind && s.target === body.p_target && (s.comment ?? null) === (body.p_comment ?? null);
+      db.commentSubs = db.commentSubs.filter((s) => !same(s));
+      if (body.p_on) db.commentSubs.push({ id: crypto.randomUUID(), kind: body.p_kind, target: body.p_target, comment: body.p_comment ?? null, auto: false, created_at: db.stamp() });
+      return json(200, Boolean(body.p_on));
+    }
+    if (table === "rpc/my_comment_subscriptions") {
+      return json(200, (db.commentSubs ?? []).map((s) => ({ id: s.id, scope: s.comment ? "thread" : "content", target_kind: s.kind, target_id: s.target, title: s.title ?? "Başlık", comment_id: s.comment, comment_preview: s.comment ? "önizleme" : null, auto: s.auto, created_at: s.created_at })));
+    }
+    if (table === "comment_subscriptions" && method === "GET") {
+      const kind = (q.get("target_kind") ?? "").replace("eq.", "");
+      const target = (q.get("target_id") ?? "").replace("eq.", "");
+      return rows((db.commentSubs ?? []).filter((s) => s.kind === kind && s.target === target).map((s) => ({ scope: s.comment ? "thread" : "content", comment_id: s.comment })));
     }
     if (table === "rpc/set_comment_pinned") {
       log("set_comment_pinned", body);

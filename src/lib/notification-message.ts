@@ -31,6 +31,7 @@ const PREVIEW_TEMPLATES: [prefix: string, key: string, hasNoPreviewForm: boolean
   ["Alıntını beğendi", "notifMsg.likedQuote", false],
   ["Alıntına yorum yaptı", "notifMsg.commentedQuote", true],
   ["Seni bir yorumda andı", "notifMsg.mentionedComment", true],
+  ["Takip ettiğin başlığa yorum yaptı", "notifMsg.followedThread", true],
   ["Seni bir istekte andı", "notifMsg.mentionedRequest", false],
   ["Yorumuna yanıt verdi", "notifMsg.repliedComment", true],
   ["İsteğine yanıt verdi", "notifMsg.answeredRequest", false],

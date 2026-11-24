@@ -91,7 +91,8 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 const block = (page) => page.locator("[data-works-vote]");
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 /** Yorum satırı: yazar adı + rozet + metin aynı <p>'de durur. */
-const commentLine = (page, text) => page.locator("p", { hasText: text });
+// Yorum düğümü (docs/history/451-*): rozet artık gövde paragrafında değil, yorumun üst satırındadır; en içteki eşleşme (üst yorum alt yanıtın metnini de içerir).
+const commentLine = (page, text) => page.locator("[data-comment-id]", { hasText: text }).last();
 const openAllComments = async (page) => { await page.getByRole("button", { name: /Tümünü gör/ }).click().catch(() => {}); };
 
 await scenario("1. 'Çalışmadı' → belirgin yorum kutusu açılır, sonuç önerisi YOK; yazıp gönderince yorum listeye eklenir ve yazarın oyu rozet olarak yanında durur", async ({ page, s, db }) => {

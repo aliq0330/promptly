@@ -21,6 +21,7 @@ import { useQuietHours } from "@/features/notifications/quiet-hours-store";
 import { Input } from "@/components/ui/field";
 import { LIVE_TOAST_GROUPS, minutesToTime, timeToMinutes, isQuietNow, type LiveToastGroup } from "@/lib/live-notification-prefs";
 import { playNotificationChime } from "@/lib/notification-sound";
+import { CommentFollowSettings } from "./comment-follow-settings";
 
 /**
  * Ayarlar → Bildirimler (docs/history/326-*). Tür anahtarları `notification_type_prefs` (satırı olmayan tür AÇIKTIR); kapalı tür için bildirim hiç yazılmaz
@@ -303,6 +304,8 @@ export function NotificationSettings() {
           </ul>
         )}
       </SettingsCard>
+
+      <CommentFollowSettings />
 
       <SettingsCard title={t("nc.settings.snoozed")} hint={t("nc.settings.snoozedHint")}>
         <div className="flex items-center gap-3">
