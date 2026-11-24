@@ -1,4 +1,4 @@
--- Yorum düzenleme geçmişi + yorum takibi (20261214100000_comment_history_and_follow.sql; docs/history/452-*): DB testi.
+-- Yorum düzenleme geçmişi + yorum takibi (20261214120000_comment_history_and_follow.sql; docs/history/452-*): DB testi.
 -- Çalıştırma: supabase/tests/run-local.sh supabase/tests/comment-history-follow.sql  ("FAILED=0" beklenir).
 -- ow = içerik sahibi; me = yorum yazarı; fo = takipçi; ot = üçüncü kişi. P1 = ow'un herkese açık promptu, P2 = ow'un ÖZEL promptu.
 \pset pager off

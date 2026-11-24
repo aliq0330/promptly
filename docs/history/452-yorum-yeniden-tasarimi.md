@@ -23,7 +23,7 @@ Detay sayfalarının yorum bölümü baştan tasarlandı (tuvaldeki "Yorumlar Re
   yorumlarında düğme çizilmez (onların bildirimi üyelik/kendi akışına bağlı).
 - **Ayarlar → Bildirimler → "Takip ettiğin yorumlar"** (`settings/comment-follow-settings.tsx`): liste + "Takibi bırak".
 
-## Veritabanı (`20261214100000_comment_history_and_follow.sql`, test: `supabase/tests/comment-history-follow.sql`)
+## Veritabanı (`20261214120000_comment_history_and_follow.sql`, test: `supabase/tests/comment-history-follow.sql`)
 - `comment_versions`: gövde değişince (`AFTER UPDATE OF body`, silme hariç) ESKİ gövde yazılır; en çok 30; okuma = yorumu okuyabilen herkes (politika `prompt_comments` RLS'ine yaslanır),
   istemci yazamaz/silemez; `comment_history(p_comment_id)` INVOKER RPC. **Önceki sürümler yalnız bu migration'dan sonraki düzenlemeler için tutulur.**
 - `comment_subscriptions`: `scope` content|thread, hedef sütunları FK'li (`prompt_id`/`request_id`/`workflow_id`/`preset_id`/`skill_id`/`space_id`, silinince CASCADE); yazma yalnız
