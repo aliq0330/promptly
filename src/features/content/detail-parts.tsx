@@ -9,6 +9,7 @@ import { DemoAccountBadge } from "@/components/ui/demo-badge";
 import { StorageImage, StorageImg } from "@/components/ui/storage-media";
 import { bandTint } from "@/features/content/content-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useQuoteScope } from "@/features/quotes/quote-scope";
 import { DetailMetaBlock } from "@/features/content/detail-meta-card";
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Language } from "@/lib/i18n/translations";
@@ -43,8 +44,10 @@ export function DetailShell({
   /** "fade" while a card's cover is morphing into the art (a rising page would shift the measured target). */
   entrance?: "rise" | "fade";
 }) {
+  // Alıntı sayfasındaki çerçevenin içinde (docs/history/453-*) sayfa alt boşluğu küçülür: altında alıntının yorumları vardır.
+  const embedded = Boolean(useQuoteScope()?.embedded);
   return (
-    <div className={cn("w-full pb-16", entrance === "fade" ? "animate-fade-in" : "animate-rise-in")}>
+    <div className={cn("w-full", embedded ? "pb-6" : "pb-16", entrance === "fade" ? "animate-fade-in" : "animate-rise-in")}>
       {band}
       <div className="mx-auto w-full max-w-6xl px-3 sm:px-6 lg:px-8">
         {actions}
@@ -391,6 +394,7 @@ export function DetailActionBar({
   const { t } = useTranslation();
   const slotRef = useRef<HTMLDivElement>(null);
   const [dock, setDock] = useState<{ pinned: boolean; height?: number }>({ pinned: false });
+  const embedded = Boolean(useQuoteScope()?.embedded);
 
   useEffect(() => {
     const slot = slotRef.current;
@@ -408,6 +412,15 @@ export function DetailActionBar({
     observer.observe(slot);
     return () => observer.disconnect();
   }, []);
+
+  // Alıntı sayfasında çerçevenin içindeki içerik yalnız birincil eylemini taşır (Yanıtla, Studio'da aç…); beğeni/yorum/paylaş satırı ALINTININDIR ve çerçevenin üstünde çizilir.
+  if (embedded) {
+    return primary ? (
+      <div data-detail-actions-embedded className="border-b border-border-soft py-4">
+        <div className="flex flex-wrap items-center gap-2">{primary}</div>
+      </div>
+    ) : null;
+  }
 
   return (
     <div className="border-b border-border-soft">
@@ -566,6 +579,8 @@ export function DetailTags({ tags, className }: { tags: Tag[]; className?: strin
 /** The comments: the content column's last section, jump target `#comments` (pass `EngageComments … headless`). */
 export function DetailComments({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
+  // Alıntı sayfasında yorumlar ALINTININDIR ve çerçevenin altında sayfanın kendisince çizilir (docs/history/453-*).
+  if (useQuoteScope()?.embedded) return null;
   return (
     <DetailSection id="comments" title={t("comments.title")}>
       {children}
