@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { MessageCircle } from "@/components/icons/message-circle";
 import { LikeButton } from "@/features/prompts/like-button";
@@ -58,37 +57,42 @@ export function QuoteShareButton({ quote, label }: { quote: Quote; label?: strin
   return <ShareTriggerButton label={label} target={{ contentType: "quote", quote }} />;
 }
 
-/** Alıntı SAYFASINDAKİ etkileşim: beğeni + yorumlar (varsayılan AÇIK, `#comments`) + istatistik + paylaş. */
-export function QuoteEngagement({ quote, defaultOpen = true, highlightCommentId = null }: { quote: Quote; defaultOpen?: boolean; highlightCommentId?: string | null }) {
+/**
+ * Alıntı sayfasının ÜST etkileşim satırı (docs/history/452-*): alıntılayanın notunun hemen altında — beğeni · yorum (aşağıdaki yorumlara atlar) · istatistik · paylaş.
+ * Hepsi ALINTININDIR (orijinalin sayaçlarına karışmaz); yanındaki ipucu bunu söyler.
+ */
+export function QuoteActionBar({ quote }: { quote: Quote }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(defaultOpen);
   const delta = useCommentCountDelta(quote.id);
   const commentCount = Math.max(0, quote.commentCount + delta);
-
   return (
-    <div data-quote-engagement={quote.id} className="space-y-2">
-      <div className="flex items-center gap-0.5 border-t border-border-soft pt-1.5" role="group" aria-label={t("quotes.engage.sectionAria")}>
+    <div data-quote-engagement={quote.id} className="flex flex-wrap items-center gap-x-4 gap-y-1">
+      <div className="-ml-1.5 flex items-center gap-0.5" role="group" aria-label={t("quotes.engage.sectionAria")}>
         <QuoteLike quote={quote} />
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
+        <a
+          href="#comments"
           title={t("quotes.engage.comments")}
           aria-label={t("quotes.engage.commentsAria", { count: commentCount })}
-          className={contentActionClassName(open)}
+          className={contentActionClassName(false)}
         >
           <MessageCircle size={16} />
           <span aria-hidden>{formatCount(commentCount)}</span>
-        </button>
+        </a>
         <QuoteStatisticsButton quote={quote} />
-        <span className="ml-auto" />
         <QuoteShareButton quote={quote} />
       </div>
-      {open && (
-        <div id="comments" className="scroll-mt-20 rounded-lg bg-background/60 p-1 sm:p-2">
-          <CommentSection target={{ quoteId: quote.id }} highlightCommentId={highlightCommentId} />
-        </div>
-      )}
+      <p className="min-w-0 flex-1 basis-48 text-caption text-text-muted sm:text-right">{t("quotes.page.engageHint")}</p>
     </div>
+  );
+}
+
+/** Alıntının yorumları (`#comments`): çerçevenin altında; yorumlar `quote_id` ile yazılır. */
+export function QuoteComments({ quote, highlightCommentId = null }: { quote: Quote; highlightCommentId?: string | null }) {
+  const { t } = useTranslation();
+  return (
+    <section id="comments" aria-label={t("quotes.page.commentsTitle")} className="scroll-mt-20 space-y-2">
+      <h2 className="text-h3 font-bold text-text">{t("quotes.page.commentsTitle")}</h2>
+      <CommentSection target={{ quoteId: quote.id }} highlightCommentId={highlightCommentId} />
+    </section>
   );
 }

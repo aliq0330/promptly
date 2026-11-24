@@ -10,6 +10,12 @@ import type { Quote } from "@/lib/supabase/quotes";
  */
 export interface QuoteScopeValue {
   quote: Quote;
+  /**
+   * Alıntı sayfasında orijinal içerik "Alıntılanan içerik" çerçevesinin İÇİNDE çizilir (docs/history/452-*): alıntının beğeni/yorum/paylaş satırı ve yorumları
+   * çerçevenin DIŞINDA (üstte ve altta) sayfanın kendisince çizilir; detay bileşenleri kendi eylem çubuğunu (birincil eylem hariç), yorum bölümünü,
+   * ⋮ menüsünü ve sayfa alt boşluğunu çizmez. Ayarlı değilse (ya da yanlışsa) önceki davranış değişmez.
+   */
+  embedded?: boolean;
 }
 
 const QuoteScopeContext = createContext<QuoteScopeValue | null>(null);

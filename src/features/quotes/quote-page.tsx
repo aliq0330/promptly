@@ -1,7 +1,7 @@
 "use client";
 
 import { TrashIcon } from "@/components/ui/motion-icons";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "@/components/icons/arrow-left";
@@ -9,13 +9,11 @@ import { ArrowUpRight } from "@/components/icons/arrow-up-right";
 import { EyeOff } from "@/components/icons/eye-off";
 import { Flag } from "@/components/icons/flag";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { DropdownMenu, MenuItem } from "@/components/ui/dropdown-menu";
-import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { PromptDetailView } from "@/features/prompts/prompt-detail-view";
 import { RequestDetailView } from "@/features/requests/request-detail-view";
 import { WorkflowDetailView } from "@/features/workflows/workflow-view";
@@ -26,15 +24,16 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchQuoteById, type Quote } from "@/lib/supabase/quotes";
 import { formatRelativeTime, profileHref, skillHref } from "@/lib/utils";
 import { SkillCard } from "@/features/skills/skill-card";
-import { QuoteEngagement } from "./quote-engagement";
+import { QuoteActionBar, QuoteComments } from "./quote-engagement";
 import { QuoteDeleteDialog, QuoteReportDialog } from "./quote-menu";
 import { QuoteScopeProvider } from "./quote-scope";
 
 /**
- * `/quotes/local?id=<alıntı>`: bir alıntının kendi sayfası (docs/history/217-*). Topluluk başvuru gönderisi sayfasıyla (`CommunityPostPage`) AYNI yapı:
- * üstte alıntı şeridi (alıntılayan + not + "Orijinal içeriği aç"), altında alıntılanan içeriğin NORMAL detay sayfası (Albüm bandı, iki sütun,
- * tüm eylemler); beğeni/yorum/istatistik/paylaş ALINTININ kendisine bağlanır (`QuoteScope`, orijinale karışmaz). Space'in detay sayfası yok:
- * kapak kolajı + başlık + ALINTININ kendi etkileşimi gösterilir. Alıntıyı okuyamayan (silindi, içerik gizlendi, engel) "bulunamadı" görür.
+ * `/quotes/local?id=<alıntı>`: bir alıntının kendi sayfası (docs/history/217-*, düzen docs/history/452-*). Üstte ALINTIYA ait her şey (alıntılayan, not,
+ * beğeni · yorum · istatistik · paylaş, ⋮ menüsü); ortada "Alıntılanan içerik" çerçevesi — içinde alıntılanan içeriğin NORMAL detay sayfası (Albüm bandı, iki sütun,
+ * prompt metni, Kopyala; `QuoteScope embedded`: detay bileşenleri kendi eylem çubuğunu/yorumlarını/⋮ menüsünü çizmez); altta ALINTININ yorumları.
+ * Beğeni/yorum/istatistik/paylaş orijinale karışmaz (`QuoteScope`). Space'in detay sayfası yok: kapak kolajı + başlık çerçevede. Alıntıyı okuyamayan
+ * (silindi, içerik gizlendi, engel) "bulunamadı" görür.
  */
 export function QuotePage() {
   const { t, language } = useTranslation();
@@ -98,10 +97,11 @@ export function QuotePage() {
   const originalHref = summary?.href ?? (skill ? skillHref(skill) : null);
   const mine = user?.id === quote.author.id;
 
-  // Alıntı işleri içeriğin NORMAL ⋮ menüsüne eklenir (ikinci menü yok); içeriğin kendi yönetimi orijinalin sayfasında kalır.
-  const extras: PostMenuExtra[] = [];
-  if (user && mine) extras.push({ key: "delete", label: t("quotes.menu.delete"), icon: <TrashIcon size={16} />, danger: true, onSelect: () => setDialog("delete") });
-  if (user && !mine) extras.push({ key: "report", label: t("messages.reportAction"), icon: <Flag size={16} />, onSelect: () => setDialog("report") });
+  // Alıntı işleri alıntılayanın satırındaki ⋮ menüsündedir (içeriğin kendi yönetimi orijinalin sayfasında kalır; çerçevenin içinde menü çizilmez).
+  const menuItems: { key: string; label: string; icon: ReactNode; danger?: boolean; onSelect: () => void }[] = [];
+  if (user && mine) menuItems.push({ key: "delete", label: t("quotes.menu.delete"), icon: <TrashIcon size={16} />, danger: true, onSelect: () => setDialog("delete") });
+  if (user && !mine) menuItems.push({ key: "report", label: t("messages.reportAction"), icon: <Flag size={16} />, onSelect: () => setDialog("report") });
+  const originalAuthor = summary?.author ?? skill?.creator ?? null;
 
   return (
     <div data-quote-page={quote.id}>
@@ -119,18 +119,15 @@ export function QuotePage() {
                 </Link>{" "}
                 <span className="text-text-muted">{t(quoteVerbKey(quote))}</span>
               </p>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-muted">
-                <Badge variant="default">{t("quotes.badge")}</Badge>
-                <span>{formatRelativeTime(quote.createdAt, language)}</span>
-              </p>
+              <p className="mt-0.5 text-caption text-text-muted">{formatRelativeTime(quote.createdAt, language)}</p>
             </div>
-            {!content && extras.length > 0 && (
+            {menuItems.length > 0 && (
               <span data-quote-menu={quote.id} className="relative z-10">
                 <DropdownMenu label={t("quotes.card.menu")}>
                   {(close) => (
                     <>
-                      {extras.map((extra) => (
-                        <MenuItem key={extra.key} icon={extra.icon} label={extra.label} danger={extra.danger} onClick={() => { close(); extra.onSelect(); }} />
+                      {menuItems.map((item) => (
+                        <MenuItem key={item.key} icon={item.icon} label={item.label} danger={item.danger} onClick={() => { close(); item.onSelect(); }} />
                       ))}
                     </>
                   )}
@@ -139,49 +136,51 @@ export function QuotePage() {
             )}
           </div>
           {quote.note && (
-            <p data-quote-note className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-4 py-3 text-body text-text">
+            <p data-quote-note className="mt-3 whitespace-pre-wrap break-words text-body text-text">
               {quote.note}
             </p>
           )}
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border-soft pt-3">
-            <p className="min-w-0 flex-1 basis-56 text-caption text-text-muted">{t("quotes.page.scopeHelp")}</p>
-            {originalHref && (
-              <Link href={originalHref} data-open-original className={buttonClassName({ size: "sm", variant: "outline", className: "ml-auto shrink-0 gap-1.5" })}>
-                {t("quotes.page.openOriginal")}
-                <ArrowUpRight size={16} aria-hidden />
-              </Link>
-            )}
+          <div className="mt-3 border-t border-border-soft pt-2">
+            <QuoteActionBar quote={quote} />
           </div>
         </div>
       </section>
 
-      <QuoteScopeProvider value={{ quote }}>
-        <PostMenuExtras items={extras}>
-          {content?.type === "prompt" && <PromptDetailView prompt={content.data} />}
-          {content?.type === "request" && <RequestDetailView request={content.data} />}
-          {content?.type === "workflow" && <WorkflowDetailView workflowId={content.data.id} />}
-          {content?.type === "preset" && <PresetDetailView presetId={content.data.id} />}
-          {content?.type === "space" && <SpacePreview space={content.data} />}
-        </PostMenuExtras>
-      </QuoteScopeProvider>
-
-      {!content && (
-        <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
-          {skill ? (
-            <div data-quote-skill={skill.id} className="max-w-md">
-              <SkillCard skill={skill} />
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-3 py-4 sm:px-6 lg:px-10">
+        {content || skill ? (
+          <div data-quote-original className="card-inset rounded-lg">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-t-lg border-b border-border-soft bg-surface-soft px-4 py-2.5">
+              <p className="min-w-0 flex-1 truncate text-caption text-text-muted">
+                <span className="font-semibold text-text-secondary">{t("quotes.page.originalLabel")}</span>
+                {originalAuthor && <span> · {originalAuthor.displayName}</span>}
+              </p>
+              {originalHref && (
+                <Link href={originalHref} data-open-original className={buttonClassName({ size: "sm", variant: "outline", className: "shrink-0 gap-1.5" })}>
+                  {t("quotes.page.openOriginal")}
+                  <ArrowUpRight size={16} aria-hidden />
+                </Link>
+              )}
             </div>
-          ) : (
-            <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
-              <EyeOff size={16} aria-hidden /> {t("quotes.card.contentGone")}
-            </p>
-          )}
-          <section className="space-y-2" aria-label={t("quotes.page.commentsTitle")}>
-            <p className="text-caption text-text-muted">{t("quotes.page.commentsHelp")}</p>
-            <QuoteEngagement quote={quote} highlightCommentId={highlightCommentId} />
-          </section>
-        </div>
-      )}
+            <QuoteScopeProvider value={{ quote, embedded: true }}>
+              {content?.type === "prompt" && <PromptDetailView prompt={content.data} />}
+              {content?.type === "request" && <RequestDetailView request={content.data} />}
+              {content?.type === "workflow" && <WorkflowDetailView workflowId={content.data.id} />}
+              {content?.type === "preset" && <PresetDetailView presetId={content.data.id} />}
+              {content?.type === "space" && <SpacePreview space={content.data} />}
+            </QuoteScopeProvider>
+            {skill && (
+              <div data-quote-skill={skill.id} className="max-w-md p-4">
+                <SkillCard skill={skill} />
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
+            <EyeOff size={16} aria-hidden /> {t("quotes.card.contentGone")}
+          </p>
+        )}
+        <QuoteComments quote={quote} highlightCommentId={highlightCommentId} />
+      </div>
 
       {dialog === "delete" && <QuoteDeleteDialog quote={quote} onClose={() => setDialog(null)} onDeleted={() => router.replace("/")} />}
       {dialog === "report" && <QuoteReportDialog quote={quote} onClose={() => setDialog(null)} />}

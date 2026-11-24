@@ -146,8 +146,16 @@ await scenario("1. Ana Sayfa: alıntı normal gönderi kartıyla akışta — no
   const card = bobQuote(page);
   await card.waitFor();
   await card.locator("[data-quote-note]").waitFor();
-  await card.getByText("Alıntı", { exact: true }).first().waitFor();
   assert.match(await card.innerText(), /alıntıladı/);
+  // İç içe düzen (docs/history/452-*): DIŞ kart alıntıya, İÇ kart orijinal içeriğe ait — başlık, tür etiketi ve ORİJİNAL yazar iç kartta.
+  const inner = card.locator("[data-quote-original-card]");
+  await inner.waitFor();
+  assert.match(await inner.innerText(), /Ay ışığında bekleyen kitsune/);
+  assert.match(await inner.locator("[data-quote-original-author]").innerText(), /Carol/);
+  assert.match((await inner.locator("[data-quote-original-link]").getAttribute("href")) ?? "", new RegExp(`/prompts/local/?\\?id=${PROMPT}`));
+  assert.match((await card.locator("a[data-card-link]").first().getAttribute("href")) ?? "", new RegExp(`/quotes/local/?\\?id=${Q_BOB}`), "dış kart alıntının sayfasına gider");
+  assert.equal(await card.locator("[data-quote-engagement]").count(), 1, "sayaçlar alıntının (dış kartta)");
+  assert.equal(await inner.locator("[data-quote-engagement], button").count(), 0, "iç kartta etkileşim düğmesi yok");
   await card.scrollIntoViewIfNeeded();
   await page.waitForTimeout(500);
   await shot(page, "qt-feed-card");
@@ -168,7 +176,17 @@ await scenario("2. Alıntı sayfası: üstte alıntılayan + not, 'Orijinal içe
   // Topluluk gönderisiyle AYNI yapı: alıntılanan içeriğin NORMAL detay sayfası (Albüm bandı: başlık + prompt metni) altta çizilir.
   await page.getByRole("heading", { name: "Ay ışığında bekleyen kitsune" }).first().waitFor();
   await page.getByText("cinematic portrait, soft light").first().waitFor();
-  assert.equal(await page.locator("[data-quote-engagement]").count(), 0, "ayrı alıntı etkileşim bloğu yok; detay sayfasının kendi eylem satırı kullanılır");
+  // Sayfa düzeni (docs/history/452-*): alıntının beğeni/yorum/paylaş satırı notun hemen altında (çerçevenin ÜSTÜNDE), orijinal "Alıntılanan içerik" çerçevesinde
+  // (kendi eylem çubuğu ve yorumları çizilmez), alıntının yorumları çerçevenin ALTINDA.
+  const bar = page.locator("[data-quote-engagement]");
+  assert.equal(await bar.count(), 1);
+  const frame = page.locator("[data-quote-original]");
+  await frame.waitFor();
+  await frame.getByText("Alıntılanan içerik").waitFor();
+  assert.equal(await frame.locator("[data-detail-actions]").count(), 0, "çerçevenin içinde orijinalin eylem çubuğu yok");
+  assert.equal(await frame.locator("#comments").count(), 0, "çerçevenin içinde orijinalin yorumları yok");
+  const [noteBox, barBox, frameBox, commentsBox] = await Promise.all([page.locator("[data-quote-note]").boundingBox(), bar.boundingBox(), frame.boundingBox(), page.locator("#comments").boundingBox()]);
+  assert.ok(noteBox.y < barBox.y && barBox.y < frameBox.y && frameBox.y + frameBox.height <= commentsBox.y + 1, "sıra: not → alıntının satırı → çerçeve → yorumlar");
   const input = page.getByPlaceholder("Bir yorum yaz...").first();
   await input.fill("Aynı fikirdeyim");
   await input.press("Enter");
@@ -302,7 +320,8 @@ await scenario("12. Alıntı sayfası = normal detay + ALINTININ eylemleri: beğ
   await page.getByRole("button", { name: "Paylaş" }).first().click();
   await page.locator("[data-share-actions]").waitFor({ state: "detached" }).catch(() => {});
   await page.keyboard.press("Escape");
-  const menu = page.locator('button[aria-label="Gönderi seçenekleri"]').first();
+  // Alıntı işleri (sil / şikâyet) alıntılayanın satırındaki menüdedir; çerçevedeki orijinalin bandının ⋮ menüsü orijinale ait eylemleri taşır (ilişki haritası…).
+  const menu = page.locator("[data-quote-menu] button[aria-haspopup=menu]").first();
   await menu.click();
   await page.getByRole("menuitem", { name: /Şikayet/ }).first().waitFor();
   assert.equal(await page.getByRole("menuitem", { name: "Bağlantıyı kopyala" }).count(), 0, "içeriğin kendi yönetimi orijinalde kalır");
@@ -310,7 +329,7 @@ await scenario("12. Alıntı sayfası = normal detay + ALINTININ eylemleri: beğ
   await shot(page, "qt-page-scoped");
   await page.goto(`${BASE}/quotes/local?id=${Q_ME}`);
   await page.locator(`[data-quote-page="${Q_ME}"]`).waitFor();
-  await page.locator('button[aria-label="Gönderi seçenekleri"]').first().click();
+  await page.locator("[data-quote-menu] button[aria-haspopup=menu]").first().click();
   await page.getByRole("menuitem", { name: "Alıntıyı sil" }).waitFor();
 });
 
@@ -319,13 +338,14 @@ await scenario("11. İngilizce + telefon: kart, sayfa ve Alıntıla bölümü ç
   const card = bobQuote(page);
   await card.waitFor();
   assert.match(await card.innerText(), /quoted/);
-  await card.getByText("Quote", { exact: true }).first().waitFor();
   await card.scrollIntoViewIfNeeded();
   await page.waitForTimeout(500);
   assert.equal(await overflowFree(page), true);
   await page.goto(`${BASE}/quotes/local?id=${Q_BOB}`);
   await page.locator(`[data-quote-page="${Q_BOB}"]`).waitFor();
   await page.getByText("Open the original").waitFor();
+  await page.getByText("Quoted content").waitFor();
+  await page.getByText("Likes and comments belong to this quote").waitFor();
   assert.equal(await overflowFree(page), true);
   await shot(page, "qt-mobile");
 }, { lang: "en", viewport: { width: 390, height: 844 } });
