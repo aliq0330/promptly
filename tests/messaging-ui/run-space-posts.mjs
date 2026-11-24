@@ -236,12 +236,7 @@ await scenario("4b. Alıntı sayfası (Space): diğer türlerle AYNI iskelet —
   assert.match((await page.getByRole("link", { name: "Panoyu gez" }).first().getAttribute("href")) ?? "", /tab=board/);
   assert.match((await page.getByRole("link", { name: /Space'i aç/ }).first().getAttribute("href")) ?? "", /\/spaces\/local\/?\?id=/);
   await page.getByText("paylaştı").first().waitFor();
-  // Düzen docs/history/453-*: alıntının beğeni/yorum/paylaş satırı üstte, Space önizlemesi "Alıntılanan içerik" çerçevesinde (kendi eylem satırı yalnız birincil eylemleri taşır), alıntının yorumları çerçevenin altında.
-  const frame = page.locator("[data-quote-original]");
-  await frame.locator("[data-space-preview]").waitFor();
-  assert.equal(await frame.locator("section[aria-label='Alıntının yorumları']").count(), 0, "comments are not inside the quoted-content frame");
-  await page.locator("section[aria-label='Alıntının yorumları']").waitFor();
-  assert.equal(await frame.locator("[data-detail-actions]").count(), 0, "the frame has no engagement toolbar");
+  assert.equal(await page.locator("section[aria-label='Alıntının yorumları']").count(), 0, "no separate narrow engagement section");
   await page.getByRole("button", { name: /Beğen|Tepki/ }).first().click();
   await page.getByRole("menuitem", { name: /^(Sevdim|Love)/ }).click();
   const end = Date.now() + 4000;
