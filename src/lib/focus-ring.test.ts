@@ -22,6 +22,7 @@ const EXEMPT: Record<string, string> = {
   "features/messages/message-dock.tsx": "dock panel, programmatic focus",
   "features/messages/rooms/room-form-modal.tsx": "input inside a wrapper that draws focus-within",
   "features/messages/message-composer.tsx": "textarea inside the composer that draws focus-within",
+  "features/prompts/comment-composer-box.tsx": "textarea inside the comment box whose frame draws focus-within",
   "features/messages/message-action-sheet.tsx": "sheet container, programmatic focus",
   "features/teams/board/board-comments.tsx": "field that keeps a permanent primary border",
 };

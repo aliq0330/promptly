@@ -15,14 +15,15 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { useMediaQuery } from "@/lib/use-media-query";
 import type { PromptComment } from "@/types";
 import { MentionText } from "@/features/mentions/mention-text";
-import { MentionTextarea } from "@/features/mentions/mention-field";
 import { StarRatingDisplay, StarRatingInput } from "@/components/ui/star-rating";
 import { CompactContentCard, type AttachmentState } from "@/features/content/compact-content-card";
+import { MentionTextarea } from "@/features/mentions/mention-field";
 import { CommentExtrasPreview, CommentExtrasToolbar, CommentMediaView, type CommentExtrasController } from "./comment-extras";
 import type { CommentAttachment } from "@/types";
 import { WorksBadge } from "./works-badges";
 import { CommentMenu } from "./comment-menu";
 import { CommentComposeSheet } from "./comment-compose-sheet";
+import { CommentComposerBox } from "./comment-composer-box";
 import type { CommentFollowController } from "./use-comment-follow";
 
 const isDeletedComment = (comment: PromptComment) => Boolean(comment.deletedAt);
@@ -164,9 +165,6 @@ function CommentAttachments({ comment, tree }: { comment: PromptComment; tree: C
 
 /** Yorum kutusu: ince, arka plana yakın kenarlık, dolgu yok (panel yok). */
 const BUBBLE_CLASS = "rounded-lg border border-border-soft px-4 py-3";
-const FIELD_CLASS =
-  "w-full resize-none rounded-lg card-flat px-3 py-2 text-body text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60";
-
 /**
  * Bir yanıtın sarmalayıcısı: kendi KISA kancası (üst yorumdan inen çizgiden kavisle yanıta girer, ucunda nokta) ve — son yanıt değilse — çizginin devamı.
  * Çizgi arka plana yakın, 2 px; yanıtlar arasında uzun çizgi yoktur (docs/history/452-*). Girinti telefonda küçüktür, kutular tam genişliğe yakın kalır.
@@ -196,11 +194,10 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
   const isEditingHere = tree.editingId === comment.id;
   const isConfirmingDelete = tree.deleteConfirmId === comment.id;
   const isDeletingHere = tree.isDeletingId === comment.id;
-  // Masaüstü/tablet: yanıt ve düzenleme satır içi; telefon: alttan açılan kart (tam ekran sayfa yok).
+  // Yanıt her genişlikte satır içi (docs/history/454-*); düzenleme masaüstü/tablette satır içi, telefonda alttan açılan kart.
   const editInline = isEditingHere && !isPhone;
   const editSheet = isEditingHere && isPhone;
-  const replyInline = isReplyingHere && !isPhone;
-  const replySheet = isReplyingHere && isPhone;
+  const replyInline = isReplyingHere;
 
   const parent = comment.parentId ? tree.commentsById.get(comment.parentId) : undefined;
   // Once indentation stops growing, the visual nesting alone no longer shows
@@ -292,20 +289,26 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 {editInline ? (
                   <div className="mt-2 space-y-1.5">
                     <p className="text-caption text-text-muted">{t("comments.editNotice")}</p>
-                    <MentionTextarea value={tree.editDraft} maxLength={2000} onChange={tree.onEditDraftChange} rows={3} autoFocus className={FIELD_CLASS} />
-                    <CommentExtrasPreview extras={tree.editExtras} attachmentState={tree.attachmentStateFor} />
-                    <div className="flex flex-wrap items-center gap-2">
-                      {tree.currentUserId && <CommentExtrasToolbar extras={tree.editExtras} userId={tree.currentUserId} disabled={tree.isSavingEdit} className="-ml-1.5" />}
-                      <span className="ml-auto flex items-center gap-2">
-                        <span className="text-caption tabular-nums text-text-muted">{t("comments.charCount", { count: tree.editDraft.length })}</span>
-                        <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelEdit}>
-                          {t("common.cancel")}
-                        </Button>
-                        <Button type="button" size="sm" disabled={!canSaveEdit || tree.isSavingEdit} onClick={() => tree.onSubmitEdit(comment.id)}>
-                          {tree.isSavingEdit ? t("common.saving") : t("common.save")}
-                        </Button>
-                      </span>
-                    </div>
+                    {tree.currentUserId && (
+                      <CommentComposerBox
+                        value={tree.editDraft}
+                        onChange={tree.onEditDraftChange}
+                        autoFocus
+                        minHeightClass="min-h-22"
+                        toolbar={<CommentExtrasToolbar extras={tree.editExtras} userId={tree.currentUserId} disabled={tree.isSavingEdit} />}
+                        preview={<CommentExtrasPreview extras={tree.editExtras} attachmentState={tree.attachmentStateFor} />}
+                        cancel={
+                          <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelEdit}>
+                            {t("common.cancel")}
+                          </Button>
+                        }
+                        submit={
+                          <Button type="button" size="sm" disabled={!canSaveEdit || tree.isSavingEdit} onClick={() => tree.onSubmitEdit(comment.id)}>
+                            {tree.isSavingEdit ? t("common.saving") : t("common.save")}
+                          </Button>
+                        }
+                      />
+                    )}
                     {tree.editError && <p className="text-caption text-danger">{tree.editError}</p>}
                   </div>
                 ) : (
@@ -393,48 +396,38 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
                 event.preventDefault();
                 tree.onSubmitReply(comment.id);
               }}
-              className="mt-2 space-y-1.5"
+              className="mt-3 space-y-1.5"
             >
               <p className="text-caption text-text-muted">
                 <span className="font-medium text-primary">@{comment.author.username}</span> {t("comments.replyingToSuffix")}
               </p>
-              <MentionTextarea value={tree.replyDraft} maxLength={2000} onChange={tree.onReplyDraftChange} rows={3} autoFocus placeholder={t("comments.writeAReply")} className={FIELD_CLASS} />
-              <CommentExtrasPreview extras={tree.replyExtras} />
-              <div className="flex flex-wrap items-center gap-2">
-                {tree.currentUserId && <CommentExtrasToolbar extras={tree.replyExtras} userId={tree.currentUserId} disabled={tree.isPosting} className="-ml-1.5" />}
-                <span className="ml-auto flex items-center gap-2">
-                  <span className="text-caption tabular-nums text-text-muted">{t("comments.charCount", { count: tree.replyDraft.length })}</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelReply}>
-                    {t("common.cancel")}
-                  </Button>
-                  <Button type="submit" size="sm" disabled={!canSendReply || tree.isPosting}>
-                    {tree.isPosting ? t("common.sending") : t("common.send")}
-                  </Button>
-                </span>
-              </div>
+              {tree.currentUserId && (
+                <CommentComposerBox
+                  value={tree.replyDraft}
+                  onChange={tree.onReplyDraftChange}
+                  autoFocus
+                  placeholder={t("comments.writeAReply")}
+                  minHeightClass="min-h-22"
+                  toolbar={<CommentExtrasToolbar extras={tree.replyExtras} userId={tree.currentUserId} disabled={tree.isPosting} />}
+                  preview={<CommentExtrasPreview extras={tree.replyExtras} />}
+                  cancel={
+                    <Button type="button" variant="ghost" size={isPhone ? "md" : "sm"} onClick={tree.onCancelReply}>
+                      {t("common.cancel")}
+                    </Button>
+                  }
+                  submit={
+                    <Button type="submit" size={isPhone ? "md" : "sm"} disabled={!canSendReply || tree.isPosting}>
+                      {tree.isPosting ? t("common.sending") : t("common.send")}
+                    </Button>
+                  }
+                />
+              )}
               {tree.postError && <p className="text-caption text-danger">{tree.postError}</p>}
             </form>
           )}
         </div>
       </div>
 
-      {replySheet && tree.currentUserId && (
-        <CommentComposeSheet
-          title={t("comments.replySheetTitle")}
-          quote={{ name: comment.author.displayName, text: comment.body }}
-          value={tree.replyDraft}
-          onChange={tree.onReplyDraftChange}
-          placeholder={t("comments.writeAReply")}
-          extras={tree.replyExtras}
-          userId={tree.currentUserId}
-          submitLabel={t("common.send")}
-          submitting={tree.isPosting}
-          canSubmit={canSendReply}
-          error={tree.postError}
-          onSubmit={() => tree.onSubmitReply(comment.id)}
-          onCancel={tree.onCancelReply}
-        />
-      )}
       {editSheet && tree.currentUserId && (
         <CommentComposeSheet
           title={t("comments.editSheetTitle")}
