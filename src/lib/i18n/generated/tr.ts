@@ -6234,7 +6234,7 @@ const dictionary: Record<string, string> = {
   "commentExtras.picker.help": "Yorumu okuyan herkes görebilsin diye yalnızca herkese açık içerikler eklenebilir.",
   "commentExtras.picker.savedEmpty": "Bu türde kaydettiğin herkese açık içerik yok.",
   "commentExtras.picker.add": "Ekle",
-  "commentExtras.picker.selected": "Seçili",
+  "commentExtras.picker.pickOne": "Bir içerik seç",
   "gif.title": "GIF ekle",
   "gif.search": "GIF ara",
   "gif.clearSearch": "Aramayı temizle",

@@ -227,20 +227,17 @@ await scenario("6. İçerik eki: seçici (Prompt/İstek/Workflow/Ayar paketi/Spa
   const picker = page.locator("[data-comment-content-picker]");
   await picker.waitFor();
   await picker.getByText("yalnızca herkese açık içerikler eklenebilir").waitFor();
-  await picker.getByRole("tab", { name: "Benimkiler" }).waitFor();
-  await picker.getByRole("tab", { name: "Kaydettiklerim" }).waitFor();
-  assert.equal(await picker.locator("[data-comment-content-add]").count(), 0, "nothing picked yet: no Ekle button, the help line sits in its place");
-  // "Görsel ızgara" (docs/history/456-*): arama başlıktaki düğmeyle açılır, liste iki sütunlu karolardır.
-  assert.equal(await picker.locator("input[type='search']").count(), 0, "search is closed until its button is pressed");
-  assert.equal(await picker.locator("[role='radiogroup'] [role='radio']").count() > 0, true, "items are radio tiles");
-  const tile = picker.locator(`[data-comment-content-item='${PUBLIC_PROMPT.id}']`);
-  await tile.click();
-  assert.equal(await tile.getAttribute("aria-checked"), "true");
-  await picker.locator("[data-comment-content-selected]").getByText("Neon sokak portresi").waitFor();
-  await picker.locator("[data-comment-content-search-toggle]").click();
-  await picker.locator("input[type='search']").waitFor();
-  await picker.locator("[data-comment-content-search-toggle]").click();
-  assert.equal(await picker.locator("input[type='search']").count(), 0, "closing the search hides it");
+  // "Tek şerit" (docs/history/457-*): tür menüsü + arama TEK satırda, kaynak anahtarı altında, satırlar radyo + ✓.
+  await picker.locator("[data-section-menu]").waitFor();
+  await picker.locator("[data-comment-content-search] input").waitFor();
+  await picker.getByRole("radio", { name: "Benimkiler" }).waitFor();
+  await picker.getByRole("radio", { name: "Kaydettiklerim" }).waitFor();
+  assert.equal(await picker.locator("[data-comment-content-add]").isDisabled(), true, "nothing picked yet");
+  const row = picker.locator(`[data-comment-content-item='${PUBLIC_PROMPT.id}']`);
+  assert.equal(await row.getAttribute("role"), "radio");
+  await row.click();
+  assert.equal(await row.getAttribute("aria-checked"), "true");
+  assert.equal(await picker.locator("[data-comment-content-add]").isDisabled(), false);
   await picker.locator("[data-comment-content-add]").click();
   await picker.waitFor({ state: "detached" });
   const draft = section(page).locator("[data-comment-extras] [data-comment-attachment='prompt']");
@@ -266,13 +263,15 @@ await scenario("7. Kaydettiklerim kaynağı: kendi koleksiyonlarındaki herkese 
   await composerInput(page).waitFor();
   await extra(page, "content").click();
   const picker = page.locator("[data-comment-content-picker]");
-  await picker.getByRole("tab", { name: "Kaydettiklerim" }).click();
+  await picker.getByRole("radio", { name: "Kaydettiklerim" }).click();
   await picker.locator("[data-comment-content-item='b0000000-0000-4000-8000-0000000000c9']").waitFor();
   await picker.getByText("Başkasının kayıtlı promptu").waitFor();
-  await picker.getByRole("tab", { name: "İstek" }).click();
-  assert.equal(await picker.getByRole("tab", { name: "Kaydettiklerim" }).count(), 0, "requests cannot be saved");
-  await picker.getByRole("tab", { name: "Space" }).click();
-  assert.equal(await picker.getByRole("tab", { name: "Kaydettiklerim" }).count(), 0, "spaces cannot be saved");
+  await picker.locator("[data-section-menu]").click();
+  await page.locator('[data-section-option="request"]').click();
+  assert.equal(await picker.getByRole("radio", { name: "Kaydettiklerim" }).count(), 0, "requests cannot be saved");
+  await picker.locator("[data-section-menu]").click();
+  await page.locator('[data-section-option="space"]').click();
+  assert.equal(await picker.getByRole("radio", { name: "Kaydettiklerim" }).count(), 0, "spaces cannot be saved");
 }, {
   setup: (db, state) => { state.savedRows = [{ created_at: "2026-10-01T10:00:00Z", collections: { owner_id: ME }, prompts: { id: "b0000000-0000-4000-8000-0000000000c9", title: "Başkasının kayıtlı promptu" } }]; },
 });
@@ -370,6 +369,13 @@ await scenario("12. Dar ekran (390 px): yazma çubuğu + GIF seçici + içerik s
   await page.locator(`[data-comment-content-item='${PUBLIC_PROMPT.id}']`).click();
   await page.waitForTimeout(500);
   await shot(page, "content-picker-phone");
+  await page.locator("[data-comment-content-picker] [data-section-menu]").click();
+  await page.locator('[data-section-option="workflow"]').waitFor();
+  assert.ok(await page.locator('[data-section-option="workflow"]').isVisible(), "type menu opens over the picker on a phone");
+  await page.waitForTimeout(400);
+  await shot(page, "content-picker-phone-menu");
+  await page.locator('[data-section-option="workflow"]').click();
+  await page.locator("[data-comment-content-picker]").getByRole("radio", { name: "Kaydettiklerim" }).waitFor();
 }, { viewport: PHONE });
 
 await scenario("13. İngilizce: düğme adları, GIF seçici ve içerik seçici metinleri çevrilidir", async ({ page }) => {
