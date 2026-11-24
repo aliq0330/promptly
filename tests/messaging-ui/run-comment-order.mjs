@@ -52,6 +52,11 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 }
 
 const section = (page) => page.locator("#comments");
+// Yorum eylemleri ⋮ menüsündedir (docs/history/452-*): menüyü aç, öğeyi seç.
+const menuName = /^(Sabitle|Pin)$/;
+const unpinName = /Sabitlemeyi kaldır|Unpin/;
+const openMenu = (comment) => comment.getByRole("button", { name: /Yorum menüsü|Comment menu/ }).first().click();
+const pickMenu = async (page, comment, name) => { await openMenu(comment); await page.getByRole("menuitem", { name }).click(); };
 const names = async (page) => (await section(page).locator("[data-comment-id]").allTextContents()).map((t) => /(Deniz|Elif|Selin|Mert|Yeni)/.exec(t)?.[1]);
 // Tablet/masaüstü: satır içi çipler; telefon: SectionMenu alt sayfası (docs/history/385-*).
 const isPhone = (page) => (page.viewportSize()?.width ?? 1280) < 640;
@@ -92,7 +97,7 @@ await scenario("3. içerik sahibi yorumu sabitler: en üste çıkar, etiket gör
   await page.getByText(/Mert:/).first().waitFor();
   await showAll(page);
   const deniz = section(page).locator("[data-comment-id]", { hasText: "Deniz:" });
-  await deniz.locator("[data-comment-pin]").click();
+  await pickMenu(page, deniz, menuName);
   await page.locator("[data-comment-pinned]").waitFor();
   assert.deepEqual(await names(page), ["Deniz", "Mert", "Selin", "Elif"]);
   assert.equal(db.calls.filter((c) => c.table === "set_comment_pinned").length, 1);
@@ -104,18 +109,20 @@ await scenario("3. içerik sahibi yorumu sabitler: en üste çıkar, etiket gör
   assert.equal((await names(page))[0], "Deniz", "sabit yorum yenilemeden sonra da başta");
   await showAll(page);
   // En eski sıralamada da başta kalır; ikinci yorumu sabitlemek ilkini düşürür (hedef başına tek)
-  await section(page).locator("[data-comment-id]", { hasText: "Selin:" }).locator("[data-comment-pin]").click();
+  await pickMenu(page, section(page).locator("[data-comment-id]", { hasText: "Selin:" }), menuName);
   await page.waitForFunction(() => document.querySelectorAll("[data-comment-pinned]").length === 1);
   assert.equal((await names(page))[0], "Selin");
   assert.equal(find(db, "Deniz").pinned_at, null, "önceki sabit kalktı");
-  await section(page).locator("[data-comment-id]", { hasText: "Selin:" }).locator("[data-comment-pin]").click();
+  await pickMenu(page, section(page).locator("[data-comment-id]", { hasText: "Selin:" }), unpinName);
   await page.waitForFunction(() => document.querySelectorAll("[data-comment-pinned]").length === 0);
   assert.equal((await names(page))[0], "Mert");
 }, { signedIn: U.carol.id });
 
 await scenario("4. sahip olmayan 'Sabitle' görmez; sabit yorum etiketiyle başta durur; yazarın yorumunda 'Yazar' rozeti var", async ({ page, db }) => {
   await page.getByText(/Mert:/).first().waitFor();
-  assert.equal(await section(page).locator("[data-comment-pin]").count(), 0, "yorum yazarı / okuyucu sabitleyemez");
+  await openMenu(section(page).locator("[data-comment-id]").first());
+  assert.equal(await page.getByRole("menuitem", { name: /Sabitle|Pin/ }).count(), 0, "yorum yazarı / okuyucu sabitleyemez");
+  await page.keyboard.press("Escape");
   assert.equal(await section(page).locator("[data-comment-pinned]").count(), 1);
   assert.equal((await names(page))[0], "Deniz");
   await pick(page, "newest");
@@ -129,8 +136,8 @@ await scenario("4. sahip olmayan 'Sabitle' görmez; sabit yorum etiketiyle başt
 await scenario("5. sabitleme hata verirse geri alınır ve hata görünür", async ({ page, db }) => {
   await page.getByText(/Mert:/).first().waitFor();
   await showAll(page);
-  await section(page).locator("[data-comment-id]", { hasText: "Deniz:" }).locator("[data-comment-pin]").click();
-  await page.getByText(/Yalnızca ana yorumlar|Yorumu yalnızca içeriğin sahibi|Yorum sabitlenemedi|sabitle/i).first().waitFor();
+  await pickMenu(page, section(page).locator("[data-comment-id]", { hasText: "Deniz:" }), menuName);
+  await section(page).locator("p.text-danger").first().waitFor();
   assert.equal(await section(page).locator("[data-comment-pinned]").count(), 0, "iyimser sabit geri alındı");
   assert.equal((await names(page))[0], "Mert");
   void db;

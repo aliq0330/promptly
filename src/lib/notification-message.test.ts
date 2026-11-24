@@ -36,6 +36,7 @@ test("an attachment-only comment (empty quoted preview, docs/history/308-*) read
   assert.equal(JSON.parse(run('Yorumuna yanıt verdi: ""')).key, "notifMsg.repliedCommentNone");
   assert.equal(JSON.parse(run('Workflow\'una yorum yaptı: ""')).key, "notifMsg.commentedWorkflowNone");
   assert.equal(JSON.parse(run('Seni bir yorumda andı: ""')).key, "notifMsg.mentionedCommentNone");
+  assert.equal(JSON.parse(run('Takip ettiğin başlığa yorum yaptı: ""')).key, "notifMsg.followedThreadNone");
   assert.equal(JSON.parse(JSON.parse(run("Sana bir mesaj gönderdi: bir GIF gönderdi")).params.preview).key, "notifMsg.previewGif");
 });
 

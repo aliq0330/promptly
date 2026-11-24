@@ -1,6 +1,12 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { Bell } from "@/components/icons/bell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/features/groups/use-toast";
+import type { PromptComment } from "@/types";
+import { CommentHistoryDialog } from "./comment-history-dialog";
+import { useCommentFollow } from "./use-comment-follow";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { LoadMore } from "@/features/feed/load-more";
@@ -101,6 +107,18 @@ export function CommentSection({
     pinError,
   } = useCommentThread(target, { highlightCommentId, spaceOwnerId, contentOwnerId: ownerId, onChange });
 
+  // Yorum takibi + ⋮ menüsü + düzenleme geçmişi (docs/history/452-*).
+  const follow = useCommentFollow(target);
+  const toast = useToast();
+  const [historyFor, setHistoryFor] = useState<PromptComment | null>(null);
+  const menu = useMemo(() => ({ follow, notify: toast.show, openHistory: setHistoryFor }), [follow, toast.show]);
+  const treeWithMenu = useMemo(() => ({ ...tree, menu }), [tree, menu]);
+
+  async function toggleFollow() {
+    const next = await follow.toggleContent();
+    if (next !== null) toast.show(t(next ? "comments.follow.on" : "comments.follow.off"));
+  }
+
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     void submitComment();
@@ -108,7 +126,7 @@ export function CommentSection({
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         {headless ? (
           <p className="text-caption tabular-nums text-text-muted">{t("comments.countLabel", { count: hasMore ? `${comments.length}+` : comments.length })}</p>
         ) : (
@@ -117,7 +135,22 @@ export function CommentSection({
             <span className="font-normal tabular-nums text-text-muted"> · {hasMore ? `${comments.length}+` : comments.length}</span>
           </h2>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
+          {follow.canFollow && (
+            <button
+              type="button"
+              onClick={() => void toggleFollow()}
+              aria-pressed={follow.contentFollowing}
+              data-comment-follow
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-small font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                follow.contentFollowing ? "bg-primary text-primary-foreground hover:bg-primary-hover" : "bg-primary-soft text-primary hover:bg-primary-soft/70",
+              )}
+            >
+              <Bell size={16} aria-hidden />
+              {follow.contentFollowing ? t("comments.following") : t("comments.follow")}
+            </button>
+          )}
           {(topLevel.length > 1 || hasMore) && (
             <>
               {/* Tablet/masaüstü: satır içi çipler (pencere/açılır kutu yok). Telefon: tek hap, alt sayfa (SectionMenu). */}
@@ -194,7 +227,7 @@ export function CommentSection({
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex items-start gap-3">
-          <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? t("prompt.previewAuthorName")} size={32} />
+          <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? t("prompt.previewAuthorName")} size={36} />
           <div className="min-w-0 flex-1 space-y-2">
             {ratingEnabled && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1" data-space-rating-picker="">
@@ -218,9 +251,9 @@ export function CommentSection({
               onChange={setDraft}
               placeholder={placeholder ?? t("comments.writeAComment")}
               maxLength={2000}
-              className="h-9 w-full min-w-0 flex-1 rounded-md card-flat px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-11 w-full min-w-0 flex-1 rounded-lg card-flat px-4 text-body text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
-            <Button type="submit" size="sm" disabled={!(draft.trim() || composerExtras.hasExtras) || composerExtras.isPreparing || isPosting}>
+            <Button type="submit" size="md" disabled={!(draft.trim() || composerExtras.hasExtras) || composerExtras.isPreparing || isPosting}>
               {isPosting ? t("common.sending") : t("common.send")}
             </Button>
           </div>
@@ -234,6 +267,7 @@ export function CommentSection({
       {postError && <p className="text-small text-danger">{postError}</p>}
       {deleteError && <p className="text-small text-danger">{deleteError}</p>}
       {pinError && <p className="text-small text-danger">{pinError}</p>}
+      {follow.followError && <p role="alert" className="text-small text-danger">{follow.followError}</p>}
 
       {!loaded ? (
         <div className="space-y-3" role="status" aria-label={t("comments.loadingComments")}>
@@ -257,14 +291,16 @@ export function CommentSection({
       ) : topLevel.length === 0 ? (
         <p className="rounded-md border border-dashed border-border py-6 text-center text-small text-text-muted">{t("comments.noCommentsYet")}</p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {(showAll ? topLevel : topLevel.slice(0, COLLAPSED_COMMENTS)).map((comment) => (
-            <CommentNode key={comment.id} comment={comment} depth={0} tree={tree} />
+            <CommentNode key={comment.id} comment={comment} depth={0} tree={treeWithMenu} />
           ))}
           {/* Sonraki sayfa yalnız liste açıkken (kısa özet görünümünde bütün sayfaları gereksiz yüklemesin) ve kendiliğinden gelir. */}
           {showAll && <LoadMore failed={moreFailed} hasMore={hasMore} loadingMore={loadingMore} onLoadMore={() => void loadMore()} />}
         </div>
       )}
+      {toast.node}
+      {historyFor && <CommentHistoryDialog comment={historyFor} onClose={() => setHistoryFor(null)} />}
     </section>
   );
 }
